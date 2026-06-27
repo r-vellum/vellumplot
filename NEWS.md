@@ -32,6 +32,10 @@ A single-panel grammar of graphics that compiles a declarative spec into a
 * **Position adjustments** (`position =`): grouped bars **stack** by default;
   `"dodge"` places them side by side and `"fill"` normalises each group to 1.
   `mark_point(position = "jitter")` spreads overlapping points.
+* **Datashading**: `mark_datashade()` aggregates a large point cloud into a
+  density raster (via `vellum::datashade()`) that fills the panel — cost
+  independent of point count. `mark_point(auto = TRUE)` switches to this
+  automatically above ~50k rows.
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.

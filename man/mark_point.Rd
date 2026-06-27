@@ -7,7 +7,14 @@
 \alias{mark_bar}
 \title{Add marks to a plot}
 \usage{
-mark_point(plot, ..., size = NULL, shape = NULL, position = "identity")
+mark_point(
+  plot,
+  ...,
+  size = NULL,
+  shape = NULL,
+  position = "identity",
+  auto = FALSE
+)
 
 mark_line(plot, ...)
 
@@ -27,6 +34,10 @@ may be a constant or a mapped expression. One of \code{"circle"}, \code{"square"
 
 \item{position}{Position adjustment: \code{"identity"} (default), \code{"jitter"}
 (points), or \code{"stack"} / \code{"dodge"} / \code{"fill"} (bars).}
+
+\item{auto}{For \code{mark_point()}, when \code{TRUE} and the layer has very many rows,
+automatically render it as a datashaded density raster (see
+\code{\link[=mark_datashade]{mark_datashade()}}) instead of individual markers.}
 }
 \value{
 The modified \link{PlotSpec}.

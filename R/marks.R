@@ -70,14 +70,19 @@ after_stat <- function(x) x
 #'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`.
 #' @param position Position adjustment: `"identity"` (default), `"jitter"`
 #'   (points), or `"stack"` / `"dodge"` / `"fill"` (bars).
+#' @param auto For `mark_point()`, when `TRUE` and the layer has very many rows,
+#'   automatically render it as a datashaded density raster (see
+#'   [mark_datashade()]) instead of individual markers.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
 #' @export
-mark_point <- function(plot, ..., size = NULL, shape = NULL, position = "identity") {
+mark_point <- function(plot, ..., size = NULL, shape = NULL, position = "identity",
+                       auto = FALSE) {
   .check_plot(plot)
   .add_layer(plot, "point", rlang::enquos(...),
-             rlang::enquos(size = size, shape = shape), position = position)
+             rlang::enquos(size = size, shape = shape), position = position,
+             stat_params = list(auto = isTRUE(auto)))
 }
 
 #' @rdname mark_point
@@ -138,6 +143,34 @@ mark_smooth <- function(plot, ..., method = "lm", se = TRUE, level = 0.95) {
   .check_plot(plot)
   .add_layer(plot, "smooth", rlang::enquos(...), stat = "smooth",
              stat_params = list(method = method, se = se, level = level))
+}
+
+#' Datashade a large point cloud
+#'
+#' For data too dense to draw one marker each (overplotted, up to millions of
+#' points), `mark_datashade()` bins the points into a canvas-sized grid in one
+#' pass and colours each cell by density (via [vellum::datashade()]), drawing a
+#' single raster that fills the panel. Cost is decoupled from point count and
+#' overplotting. Per-point colour/size aesthetics do not apply; cell colour
+#' encodes density.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... Encodings; `x` and `y` are required.
+#' @param width,height Aggregation grid size in cells (output raster pixels).
+#' @param colors Two or more colours forming the low-to-high density ramp.
+#' @param how Density-to-colour mapping: `"eq_hist"` (default), `"log"`,
+#'   `"cbrt"`, or `"linear"`.
+#' @return The modified [PlotSpec].
+#' @examples
+#' n <- 1e5
+#' d <- data.frame(x = rnorm(n), y = rnorm(n))
+#' vplot(d) |> mark_datashade(x = x, y = y)
+#' @export
+mark_datashade <- function(plot, ..., width = 400, height = 300,
+                           colors = NULL, how = "eq_hist") {
+  .check_plot(plot)
+  .add_layer(plot, "datashade", rlang::enquos(...),
+             stat_params = list(width = width, height = height, colors = colors, how = how))
 }
 
 .check_plot <- function(plot, call = rlang::caller_env()) {

@@ -40,8 +40,14 @@ NULL
 
 # --- per-mark emitters (draw into the panel viewport, native units) ---------
 
+# Above this row count, `mark_point(auto = TRUE)` switches to datashading.
+.DATASHADE_AUTO <- 50000L
+
 .emit_point <- function(scene, L, scales) {
   n <- L$n
+  if (isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO) {
+    return(.emit_datashade(scene, L, scales))
+  }
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   if (identical(L$position, "jitter")) {
@@ -185,6 +191,21 @@ NULL
   scene
 }
 
+# Datashade: aggregate the points into a density raster filling the panel. The
+# raster is binned over the panel's native domain so it aligns with the axes.
+.emit_datashade <- function(scene, L, scales) {
+  xn <- scales$x$map(L$values$x)
+  yn <- scales$y$map(L$values$y)
+  sp <- L$stat_params
+  g <- vellum::datashade(
+    xn, yn,
+    width = as.integer(sp$width %||% 400L), height = as.integer(sp$height %||% 300L),
+    xlim = scales$x$domain, ylim = scales$y$domain,
+    colors = sp$colors %||% c("#deebf7", "#08306b"),
+    how = sp$how %||% "eq_hist", interpolate = FALSE)
+  vellum::draw(scene, g)
+}
+
 # Compile every layer's marks into the (already panel-positioned) scene.
 .compile_marks <- function(scene, resolved, scales) {
   for (L in resolved) {
@@ -195,6 +216,7 @@ NULL
       rule = .emit_rule(scene, L, scales),
       bar = .emit_bar(scene, L, scales),
       smooth = .emit_smooth(scene, L, scales),
+      datashade = .emit_datashade(scene, L, scales),
       cli::cli_abort("Unknown mark {.val {L$mark}}.")
     )
   }
