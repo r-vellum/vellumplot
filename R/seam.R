@@ -14,12 +14,12 @@ NULL
   guides <- .legend_guides(built$scales)
   lay <- .build_layout(built, guides)
 
-  scene <- vellum::push(scene, .vp(layout = vellum::grid_layout(lay$widths, lay$heights)))
+  scene <- vellum::push(scene, vellum::viewport(layout = vellum::grid_layout(lay$widths, lay$heights)))
 
   # panels: background + gridlines + marks, each in its own native scales
   for (p in built$panels) {
     psc <- list(x = p$x_sc, y = p$y_sc, color = built$scales$color, size = built$scales$size)
-    scene <- vellum::push(scene, .vp(
+    scene <- vellum::push(scene, vellum::viewport(
       row = lay$panel_row[p$r], col = lay$panel_col[p$c],
       xscale = p$x_sc$domain, yscale = p$y_sc$domain, clip = TRUE))
     scene <- .draw_panel_bg(scene, p$x_sc, p$y_sc, thm)

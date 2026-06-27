@@ -6,7 +6,9 @@ NULL
 # span; `dodge` and `jitter` are deferred to draw time (they only shift native
 # geometry within the trained scales). Identity is a no-op.
 .apply_position <- function(L) {
-  if (!identical(L$mark, "bar")) return(L)
+  if (!identical(L$mark, "bar")) {
+    return(L)
+  }
   if (L$position %in% c("stack", "fill") && !is.null(L$values$y)) {
     return(.position_stack(L, fill = identical(L$position, "fill")))
   }
@@ -27,7 +29,7 @@ NULL
     ymin[] <- 0
     ymax <- y
   } else {
-    order_levels <- sort(unique(as.character(grp)))
+    order_levels <- .cat_levels(grp)
     g <- as.character(grp)
     for (xi in unique(x)) {
       rows <- which(x == xi)

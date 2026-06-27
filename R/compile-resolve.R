@@ -25,28 +25,77 @@ NULL
     types[[nm]] <- if (nzchar(ch@type)) ch@type else .infer_type(v)
   }
   n <- if (length(values)) max(lengths(values)) else nrow(data)
-  list(mark = layer@mark, values = values, types = types, after = after,
-       params = layer@params, n = n,
-       stat = layer@stat, stat_params = layer@stat_params,
-       position = layer@position, blend = layer@blend)
+  list(
+    mark = layer@mark,
+    values = values,
+    types = types,
+    after = after,
+    params = layer@params,
+    n = n,
+    stat = layer@stat,
+    stat_params = layer@stat_params,
+    position = layer@position,
+    blend = layer@blend
+  )
 }
 
 # Resolve every layer of a spec against a given data frame (a facet panel's
 # subset, or the whole data): evaluate channels, apply the stat, then apply the
 # pre-train part of the position adjustment (stack/fill).
 .resolve_on <- function(spec, data) {
-  lapply(spec@layers, function(layer) .apply_position(.apply_stat(.resolve_layer(layer, data))))
+  lapply(spec@layers, function(layer) {
+    .apply_position(.apply_stat(.resolve_layer(layer, data)))
+  })
 }
 
 # Resolve every layer of a spec against its full data.
 .resolve_layers <- function(spec) .resolve_on(spec, spec@data)
 
+# The aesthetic name(s) that share one scale: `color` and `fill` are aliases for
+# a single colour scale.
+.aes_aliases <- function(aesthetic) {
+  if (aesthetic %in% c("color", "fill")) c("color", "fill") else aesthetic
+}
+
 # The user-declared scale for an aesthetic, or NULL. `color` and `fill` share a
 # colour scale; either declaration applies.
 .scale_for <- function(spec, aesthetic) {
-  match_aes <- if (aesthetic %in% c("color", "fill")) c("color", "fill") else aesthetic
-  for (s in rev(spec@scales)) if (s@aesthetic %in% match_aes) return(s)
+  match_aes <- .aes_aliases(aesthetic)
+  for (s in rev(spec@scales)) {
+    if (s@aesthetic %in% match_aes) return(s)
+  }
   NULL
+}
+
+# Category levels for a discrete aesthetic, preserving factor level order. `x`
+# may be a single vector or a list of vectors pooled across layers: the first
+# factor's levels win; otherwise sorted unique character values.
+.cat_levels <- function(x) {
+  vals <- if (is.list(x)) x else list(x)
+  for (v in vals) {
+    if (is.factor(v)) return(levels(v))
+  }
+  sort(unique(as.character(unlist(
+    lapply(vals, as.character),
+    use.names = FALSE
+  ))))
+}
+
+# Does any resolved layer draw bars (forcing the y axis through zero, and a
+# "count" default title when no y is mapped)?
+.has_bar <- function(resolved) {
+  any(vapply(resolved, function(L) identical(L$mark, "bar"), logical(1)))
+}
+
+# The default y-axis title: "count" when bars count rows (no y encoding on any
+# layer), otherwise the first y encoding's label.
+.y_axis_title <- function(spec, resolved) {
+  y_mapped <- any(vapply(
+    spec@layers,
+    function(L) "y" %in% names(L@encoding),
+    logical(1)
+  ))
+  if (.has_bar(resolved) && !y_mapped) "count" else .default_title(spec, "y")
 }
 
 # Pool the resolved values of an aesthetic across all layers that map it. For
@@ -54,14 +103,16 @@ NULL
 .pool_values <- function(resolved, aesthetic) {
   vs <- lapply(resolved, function(L) L$values[[aesthetic]])
   vs <- vs[!vapply(vs, is.null, logical(1))]
-  if (!length(vs)) return(NULL)
+  if (!length(vs)) {
+    return(NULL)
+  }
   vs
 }
 
 # Derive a default axis/legend title for an aesthetic from the first layer that
 # maps it (its channel expression as text).
 .default_title <- function(spec, aesthetic) {
-  match_aes <- if (aesthetic %in% c("color", "fill")) c("color", "fill") else aesthetic
+  match_aes <- .aes_aliases(aesthetic)
   for (layer in spec@layers) {
     for (a in match_aes) {
       ch <- layer@encoding[[a]]

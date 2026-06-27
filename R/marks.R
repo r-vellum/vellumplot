@@ -11,7 +11,9 @@ NULL
   params <- list()
   for (nm in names(quos)) {
     q <- quos[[nm]]
-    if (rlang::quo_is_null(q)) next
+    if (rlang::quo_is_null(q)) {
+      next
+    }
     e <- rlang::quo_get_expr(q)
     if (is.call(e) && identical(rlang::call_name(e), "after_stat")) {
       # after_stat(expr): a stage-2 channel evaluated against the stat output.
@@ -40,31 +42,58 @@ after_stat <- function(x) x
 
 # The CSS mix-blend-mode set vellum's viewport(blend=) accepts.
 .BLEND_MODES <- c(
-  "normal", "multiply", "screen", "overlay", "darken", "lighten",
-  "color-dodge", "color-burn", "hard-light", "soft-light", "difference",
-  "exclusion", "hue", "saturation", "color", "luminosity"
+  "normal",
+  "multiply",
+  "screen",
+  "overlay",
+  "darken",
+  "lighten",
+  "color-dodge",
+  "color-burn",
+  "hard-light",
+  "soft-light",
+  "difference",
+  "exclusion",
+  "hue",
+  "saturation",
+  "color",
+  "luminosity"
 )
 
 .check_blend <- function(blend, call = rlang::caller_env()) {
-  if (is.null(blend)) return("normal")
+  if (is.null(blend)) {
+    return("normal")
+  }
   modes <- .BLEND_MODES
   if (!is.character(blend) || length(blend) != 1L || !blend %in% modes) {
-    cli::cli_abort("{.arg blend} must be one of {.or {.val {modes}}}.", call = call)
+    cli::cli_abort(
+      "{.arg blend} must be one of {.or {.val {modes}}}.",
+      call = call
+    )
   }
   blend
 }
 
 # Capture `...` plus the explicit geometry args, append a LayerSpec.
-.add_layer <- function(plot, mark, dots, extra = list(),
-                       stat = "identity", stat_params = list(),
-                       position = "identity", blend = NULL) {
+.add_layer <- function(
+  plot,
+  mark,
+  dots,
+  extra = list(),
+  stat = "identity",
+  stat_params = list(),
+  position = "identity",
+  blend = NULL
+) {
   quos <- c(dots, extra)
   split <- .split_encodings(quos)
   layer <- LayerSpec(
     mark = mark,
     encoding = split$encoding,
     params = split$params,
-    stat = stat, stat_params = stat_params, position = position,
+    stat = stat,
+    stat_params = stat_params,
+    position = position,
     blend = .check_blend(blend)
   )
   plot@layers <- c(plot@layers, list(layer))
@@ -90,6 +119,8 @@ after_stat <- function(x) x
 #' @param auto For `mark_point()`, when `TRUE` and the layer has very many rows,
 #'   automatically render it as a datashaded density raster (see
 #'   [mark_datashade()]) instead of individual markers.
+#' @param seed For `mark_point(position = "jitter")`, an optional integer seed
+#'   making the jitter reproducible. The global RNG stream is restored afterwards.
 #' @param blend Optional blend mode for compositing this layer against what is
 #'   already drawn beneath it (the panel and earlier layers), one of the CSS
 #'   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The whole
@@ -98,12 +129,26 @@ after_stat <- function(x) x
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
 #' @export
-mark_point <- function(plot, ..., size = NULL, shape = NULL, position = "identity",
-                       auto = FALSE, blend = NULL) {
+mark_point <- function(
+  plot,
+  ...,
+  size = NULL,
+  shape = NULL,
+  position = "identity",
+  auto = FALSE,
+  seed = NULL,
+  blend = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "point", rlang::enquos(...),
-             rlang::enquos(size = size, shape = shape), position = position,
-             stat_params = list(auto = isTRUE(auto)), blend = blend)
+  .add_layer(
+    plot,
+    "point",
+    rlang::enquos(...),
+    rlang::enquos(size = size, shape = shape),
+    position = position,
+    stat_params = list(auto = isTRUE(auto), seed = seed),
+    blend = blend
+  )
 }
 
 #' @rdname mark_point
@@ -129,7 +174,13 @@ mark_rule <- function(plot, ..., blend = NULL) {
 #' @export
 mark_bar <- function(plot, ..., position = "stack", blend = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "bar", rlang::enquos(...), position = position, blend = blend)
+  .add_layer(
+    plot,
+    "bar",
+    rlang::enquos(...),
+    position = position,
+    blend = blend
+  )
 }
 
 #' Statistical marks
@@ -154,18 +205,44 @@ mark_bar <- function(plot, ..., position = "stack", blend = NULL) {
 #' vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg)
 #' @export
-mark_histogram <- function(plot, ..., bins = 30, position = "stack", blend = NULL) {
+mark_histogram <- function(
+  plot,
+  ...,
+  bins = 30,
+  position = "stack",
+  blend = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "bar", rlang::enquos(...), stat = "bin",
-             stat_params = list(bins = bins), position = position, blend = blend)
+  .add_layer(
+    plot,
+    "bar",
+    rlang::enquos(...),
+    stat = "bin",
+    stat_params = list(bins = bins),
+    position = position,
+    blend = blend
+  )
 }
 
 #' @rdname mark_histogram
 #' @export
-mark_smooth <- function(plot, ..., method = "lm", se = TRUE, level = 0.95, blend = NULL) {
+mark_smooth <- function(
+  plot,
+  ...,
+  method = "lm",
+  se = TRUE,
+  level = 0.95,
+  blend = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "smooth", rlang::enquos(...), stat = "smooth",
-             stat_params = list(method = method, se = se, level = level), blend = blend)
+  .add_layer(
+    plot,
+    "smooth",
+    rlang::enquos(...),
+    stat = "smooth",
+    stat_params = list(method = method, se = se, level = level),
+    blend = blend
+  )
 }
 
 #' Datashade a large point cloud
@@ -189,11 +266,26 @@ mark_smooth <- function(plot, ..., method = "lm", se = TRUE, level = 0.95, blend
 #' d <- data.frame(x = rnorm(n), y = rnorm(n))
 #' vplot(d) |> mark_datashade(x = x, y = y)
 #' @export
-mark_datashade <- function(plot, ..., width = 400, height = 300,
-                           colors = NULL, how = "eq_hist") {
+mark_datashade <- function(
+  plot,
+  ...,
+  width = 400,
+  height = 300,
+  colors = NULL,
+  how = "eq_hist"
+) {
   .check_plot(plot)
-  .add_layer(plot, "datashade", rlang::enquos(...),
-             stat_params = list(width = width, height = height, colors = colors, how = how))
+  .add_layer(
+    plot,
+    "datashade",
+    rlang::enquos(...),
+    stat_params = list(
+      width = width,
+      height = height,
+      colors = colors,
+      how = how
+    )
+  )
 }
 
 .check_plot <- function(plot, call = rlang::caller_env()) {

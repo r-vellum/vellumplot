@@ -8,7 +8,9 @@ NULL
 # Continuous colour is already quantized upstream, so the group count is bounded.
 .style_groups <- function(n, fields) {
   fields <- fields[!vapply(fields, is.null, logical(1))]
-  if (!length(fields)) return(list(seq_len(n)))
+  if (!length(fields)) {
+    return(list(seq_len(n)))
+  }
   codes <- lapply(fields, function(v) {
     v <- rep_len(v, n)
     match(v, unique(v))
@@ -20,7 +22,9 @@ NULL
 # scale), a constant colour param, or the supplied default.
 .aes_colour <- function(L, scales, default) {
   if (!is.null(scales$color)) {
-    if (!is.null(L$values$color)) return(scales$color$map(L$values$color))
+    if (!is.null(L$values$color)) {
+      return(scales$color$map(L$values$color))
+    }
     if (!is.null(L$values$fill)) return(scales$color$map(L$values$fill))
   }
   L$params$color %||% L$params$fill %||% default
@@ -31,7 +35,9 @@ NULL
 # Resolve a layer's point size (mm): a mapped size channel (via the trained size
 # scale), a constant size param, or the supplied default.
 .aes_size <- function(L, scales, default) {
-  if (!is.null(scales$size) && !is.null(L$values$size)) return(scales$size$map(L$values$size))
+  if (!is.null(scales$size) && !is.null(L$values$size)) {
+    return(scales$size$map(L$values$size))
+  }
   L$params$size %||% default
 }
 
@@ -43,6 +49,24 @@ NULL
 # Above this row count, `mark_point(auto = TRUE)` switches to datashading.
 .DATASHADE_AUTO <- 50000L
 
+# Evaluate `expr` with the RNG temporarily seeded, restoring the caller's RNG
+# stream afterwards (so a jitter seed gives reproducible output without
+# disturbing the global random state). `seed = NULL` runs `expr` untouched.
+.with_seed <- function(seed, expr) {
+  if (is.null(seed)) {
+    return(expr)
+  }
+  has_old <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (has_old) {
+    old <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old, envir = globalenv()))
+  } else {
+    on.exit(rm(".Random.seed", envir = globalenv()))
+  }
+  set.seed(seed)
+  expr
+}
+
 .emit_point <- function(scene, L, scales) {
   n <- L$n
   if (isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO) {
@@ -53,8 +77,15 @@ NULL
   if (identical(L$position, "jitter")) {
     ax <- 0.4 * (scales$x$band_width %||% .resolution(xn))
     ay <- 0.4 * .resolution(yn)
-    xn <- xn + stats::runif(n, -ax, ax)
-    yn <- yn + stats::runif(n, -ay, ay)
+    jit <- .with_seed(
+      L$stat_params$seed,
+      list(
+        x = stats::runif(n, -ax, ax),
+        y = stats::runif(n, -ay, ay)
+      )
+    )
+    xn <- xn + jit$x
+    yn <- yn + jit$y
   }
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   size <- rep_len(.aes_size(L, scales, 2), n)
@@ -63,12 +94,20 @@ NULL
 
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
-    scene <- vellum::draw(scene, vellum::points_grob(
-      vellum::unit(xn[idx], "native"), vellum::unit(yn[idx], "native"),
-      size = vellum::unit(size[idx], "mm"), shape = shape[idx],
-      gp = vellum::gpar(fill = col[idx[1]], col = col[idx[1]],
-                        alpha = if (is.na(a)) NULL else a)
-    ))
+    scene <- vellum::draw(
+      scene,
+      vellum::points_grob(
+        vellum::unit(xn[idx], "native"),
+        vellum::unit(yn[idx], "native"),
+        size = vellum::unit(size[idx], "mm"),
+        shape = shape[idx],
+        gp = vellum::gpar(
+          fill = col[idx[1]],
+          col = col[idx[1]],
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
   }
   scene
 }
@@ -84,11 +123,18 @@ NULL
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
     a <- alpha[idx[1]]
-    scene <- vellum::draw(scene, vellum::lines_grob(
-      vellum::unit(xn[o], "native"), vellum::unit(yn[o], "native"),
-      gp = vellum::gpar(col = col[idx[1]], lwd = lwd,
-                        alpha = if (is.na(a)) NULL else a)
-    ))
+    scene <- vellum::draw(
+      scene,
+      vellum::lines_grob(
+        vellum::unit(xn[o], "native"),
+        vellum::unit(yn[o], "native"),
+        gp = vellum::gpar(
+          col = col[idx[1]],
+          lwd = lwd,
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
   }
   scene
 }
@@ -101,16 +147,30 @@ NULL
   xi <- .intercept(L, "xintercept")
   if (!is.null(yi)) {
     for (v in scales$y$map(yi)) {
-      scene <- vellum::draw(scene, vellum::segments_grob(
-        vellum::unit(0, "npc"), vellum::unit(v, "native"),
-        vellum::unit(1, "npc"), vellum::unit(v, "native"), gp = gp))
+      scene <- vellum::draw(
+        scene,
+        vellum::segments_grob(
+          vellum::unit(0, "npc"),
+          vellum::unit(v, "native"),
+          vellum::unit(1, "npc"),
+          vellum::unit(v, "native"),
+          gp = gp
+        )
+      )
     }
   }
   if (!is.null(xi)) {
     for (v in scales$x$map(xi)) {
-      scene <- vellum::draw(scene, vellum::segments_grob(
-        vellum::unit(v, "native"), vellum::unit(0, "npc"),
-        vellum::unit(v, "native"), vellum::unit(1, "npc"), gp = gp))
+      scene <- vellum::draw(
+        scene,
+        vellum::segments_grob(
+          vellum::unit(v, "native"),
+          vellum::unit(0, "npc"),
+          vellum::unit(v, "native"),
+          vellum::unit(1, "npc"),
+          gp = gp
+        )
+      )
     }
   }
   scene
@@ -120,7 +180,9 @@ NULL
 # continuous x); 1 if there is only one bar.
 .resolution <- function(x) {
   u <- sort(unique(x[is.finite(x)]))
-  if (length(u) < 2) return(1)
+  if (length(u) < 2) {
+    return(1)
+  }
   min(diff(u))
 }
 
@@ -137,28 +199,37 @@ NULL
   y0 <- rep_len(scales$y$map(ymin_d), n)
   y1 <- rep_len(scales$y$map(ymax_d), n)
 
-  w <- 0.9 * band
+  # Bar width: a stat-provided `width` (histogram bins) fills the bin so bars
+  # touch; categorical / explicit bars leave a 10% gap around the band.
+  w <- rep_len(L$values$width %||% (0.9 * band), n)
   xc <- xp
   if (identical(L$position, "dodge")) {
     grp <- L$values$color %||% L$values$fill
     if (!is.null(grp)) {
-      levs <- sort(unique(as.character(grp)))
+      levs <- .cat_levels(grp)
       G <- length(levs)
       rank <- match(as.character(rep_len(grp, n)), levs)
-      w <- 0.9 * band / G
+      w <- w / G
       xc <- xp + (rank - (G + 1) / 2) / G * band
     }
   }
 
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     a <- alpha[idx[1]]
-    scene <- vellum::draw(scene, vellum::rect_grob(
-      x = vellum::unit(xc[idx], "native"), y = vellum::unit((y0[idx] + y1[idx]) / 2, "native"),
-      width = vellum::unit(rep(w, length(idx)), "native"),
-      height = vellum::unit(abs(y1[idx] - y0[idx]), "native"),
-      gp = vellum::gpar(fill = fill[idx[1]], col = NA,
-                        alpha = if (is.na(a)) NULL else a)
-    ))
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = vellum::unit(xc[idx], "native"),
+        y = vellum::unit((y0[idx] + y1[idx]) / 2, "native"),
+        width = vellum::unit(w[idx], "native"),
+        height = vellum::unit(abs(y1[idx] - y0[idx]), "native"),
+        gp = vellum::gpar(
+          fill = fill[idx[1]],
+          col = NA,
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
   }
   scene
 }
@@ -180,13 +251,23 @@ NULL
     if (has_se) {
       px <- c(xn[o], rev(xn[o]))
       py <- c(ymin[o], rev(ymax[o]))
-      scene <- vellum::draw(scene, vellum::polygon_grob(
-        vellum::unit(px, "native"), vellum::unit(py, "native"),
-        gp = vellum::gpar(fill = cc, col = NA, alpha = 0.25)))
+      scene <- vellum::draw(
+        scene,
+        vellum::polygon_grob(
+          vellum::unit(px, "native"),
+          vellum::unit(py, "native"),
+          gp = vellum::gpar(fill = cc, col = NA, alpha = 0.25)
+        )
+      )
     }
-    scene <- vellum::draw(scene, vellum::lines_grob(
-      vellum::unit(xn[o], "native"), vellum::unit(yn[o], "native"),
-      gp = vellum::gpar(col = cc, lwd = 1.5)))
+    scene <- vellum::draw(
+      scene,
+      vellum::lines_grob(
+        vellum::unit(xn[o], "native"),
+        vellum::unit(yn[o], "native"),
+        gp = vellum::gpar(col = cc, lwd = 1.5)
+      )
+    )
   }
   scene
 }
@@ -198,16 +279,22 @@ NULL
   yn <- scales$y$map(L$values$y)
   sp <- L$stat_params
   g <- vellum::datashade(
-    xn, yn,
-    width = as.integer(sp$width %||% 400L), height = as.integer(sp$height %||% 300L),
-    xlim = scales$x$domain, ylim = scales$y$domain,
+    xn,
+    yn,
+    width = as.integer(sp$width %||% 400L),
+    height = as.integer(sp$height %||% 300L),
+    xlim = scales$x$domain,
+    ylim = scales$y$domain,
     colors = sp$colors %||% c("#deebf7", "#08306b"),
-    how = sp$how %||% "eq_hist", interpolate = FALSE)
+    how = sp$how %||% "eq_hist",
+    interpolate = FALSE
+  )
   vellum::draw(scene, g)
 }
 
 .emit_layer <- function(scene, L, scales) {
-  switch(L$mark,
+  switch(
+    L$mark,
     point = .emit_point(scene, L, scales),
     line = .emit_line(scene, L, scales),
     rule = .emit_rule(scene, L, scales),
@@ -225,11 +312,19 @@ NULL
 # coordinates still resolve.
 .compile_marks <- function(scene, resolved, scales) {
   for (L in resolved) {
-    if (!L$n) next # empty facet panel
+    if (!L$n) {
+      next
+    } # empty facet panel
     blend <- L$blend %||% "normal"
     if (!identical(blend, "normal")) {
-      scene <- vellum::push(scene, vellum::viewport(
-        xscale = scales$x$domain, yscale = scales$y$domain, blend = blend))
+      scene <- vellum::push(
+        scene,
+        vellum::viewport(
+          xscale = scales$x$domain,
+          yscale = scales$y$domain,
+          blend = blend
+        )
+      )
       scene <- .emit_layer(scene, L, scales)
       scene <- vellum::pop(scene)
     } else {

@@ -120,21 +120,7 @@ NULL
 # A discrete (band) position scale: levels map to integer positions 1..k, each
 # occupying a unit-width band; the domain pads half a band each side.
 .train_position_discrete <- function(aesthetic, values, name) {
-  fac <- NULL
-  for (v in values) {
-    if (is.factor(v)) {
-      fac <- v
-      break
-    }
-  }
-  levs <- if (!is.null(fac)) {
-    levels(fac)
-  } else {
-    sort(unique(as.character(unlist(
-      lapply(values, as.character),
-      use.names = FALSE
-    ))))
-  }
+  levs <- .cat_levels(values)
   k <- length(levs)
   list(
     aesthetic = aesthetic,
@@ -216,12 +202,7 @@ NULL
       legend_labels = scales::label_number()(lbrk)
     )
   } else {
-    f <- unlist(lapply(values, as.character), use.names = FALSE)
-    levels <- if (is.factor(values[[1]])) {
-      levels(values[[1]])
-    } else {
-      sort(unique(f))
-    }
+    levels <- .cat_levels(values)
     cols <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
       rep_len(scalespec@palette, length(levels))
     } else {
@@ -287,11 +268,7 @@ NULL
 # Train all scales the plot needs: x, y (position), colour, and size. Bars force
 # the y axis to include the zero baseline.
 .train_scales <- function(spec, resolved) {
-  has_bar <- any(vapply(
-    resolved,
-    function(L) identical(L$mark, "bar"),
-    logical(1)
-  ))
+  has_bar <- .has_bar(resolved)
   xs <- .axis_pool(resolved, "x", "xintercept")
   ys <- .axis_pool(resolved, "y", "yintercept")
   if (is.null(xs) || is.null(ys)) {
@@ -299,13 +276,6 @@ NULL
       "Every layer needs an {.field x} and {.field y} encoding (v1)."
     )
   }
-  # When bars count rows (no y encoding anywhere), the y axis is a count.
-  y_mapped <- any(vapply(
-    spec@layers,
-    function(L) "y" %in% names(L@encoding),
-    logical(1)
-  ))
-  y_title <- if (has_bar && !y_mapped) "count" else .default_title(spec, "y")
   list(
     x = .train_position(
       "x",
@@ -317,7 +287,7 @@ NULL
       "y",
       ys,
       .scale_for(spec, "y"),
-      y_title,
+      .y_axis_title(spec, resolved),
       include_zero = has_bar
     ),
     color = .train_colour(spec, resolved),

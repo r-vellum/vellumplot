@@ -23,10 +23,30 @@ test_that("the bin stat counts all rows across bins", {
 })
 
 test_that("after_stat(density) integrates to ~1 over bin widths", {
-  p <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 10, y = after_stat(density))
+  p <- vplot(mtcars) |>
+    mark_histogram(x = mpg, bins = 10, y = after_stat(density))
   r <- vellumplot:::.resolve_layers(p)[[1]]
   width <- diff(sort(r$values$x))[1]
   expect_equal(sum(r$values$y) * width, 1, tolerance = 0.02)
+})
+
+test_that("the bin stat carries the bin width into the layer (bars touch)", {
+  p <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_false(is.null(r$values$width))
+  # the propagated width equals the spacing between adjacent bin centres, so
+  # histogram bars meet edge-to-edge rather than leaving a 10% gap
+  expect_equal(r$values$width[1], diff(sort(r$values$x))[1], tolerance = 1e-8)
+})
+
+test_that("the count stat preserves a custom factor level order on x", {
+  d <- data.frame(
+    g = factor(c("hi", "lo", "mid"), levels = c("lo", "mid", "hi"))
+  )
+  p <- vplot(d) |> mark_bar(x = g)
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_s3_class(r$values$x, "factor")
+  expect_equal(levels(r$values$x), c("lo", "mid", "hi"))
 })
 
 test_that("the count stat tallies rows per category", {
@@ -63,11 +83,15 @@ test_that("the y axis covers the smooth ribbon extent", {
 
 test_that("after_stat without a stat is an error; only lm smoothing", {
   expect_error(
-    vellum::as_vellum_scene(vplot(mtcars) |> mark_point(x = wt, y = after_stat(count))),
+    vellum::as_vellum_scene(
+      vplot(mtcars) |> mark_point(x = wt, y = after_stat(count))
+    ),
     "after_stat"
   )
   expect_error(
-    vellum::as_vellum_scene(vplot(mtcars) |> mark_smooth(x = wt, y = mpg, method = "loess")),
+    vellum::as_vellum_scene(
+      vplot(mtcars) |> mark_smooth(x = wt, y = mpg, method = "loess")
+    ),
     "lm"
   )
 })
@@ -77,6 +101,11 @@ test_that("statistical marks render", {
   render_plot(vplot(mtcars) |> mark_histogram(x = mpg, bins = 10), f1)
   expect_gt(file.info(f1)$size, 0)
   f2 <- withr::local_tempfile(fileext = ".png")
-  render_plot(vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg), f2)
+  render_plot(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg) |>
+      mark_smooth(x = wt, y = mpg),
+    f2
+  )
   expect_gt(file.info(f2)$size, 0)
 })

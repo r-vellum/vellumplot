@@ -31,7 +31,8 @@ test_that("a bar with no y counts rows per category", {
   d <- data.frame(g = factor(c("a", "a", "a", "b", "c", "c")))
   p <- vplot(d) |> mark_bar(x = g)
   r <- vellumplot:::.resolve_layers(p)[[1]]
-  expect_equal(r$values$x, c("a", "b", "c"))
+  # count keeps x as a factor so a custom level order survives downstream
+  expect_equal(as.character(r$values$x), c("a", "b", "c"))
   expect_equal(r$values$y, c(3, 1, 2))
   sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
   expect_identical(sc$y$name, "count")
@@ -57,8 +58,10 @@ test_that("colour + size produce two stacked legend guides", {
   sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
   guides <- vellumplot:::.legend_guides(sc)
   expect_length(guides, 2)
-  expect_identical(vapply(guides, function(g) g$kind, character(1)),
-                   c("color_continuous", "size"))
+  expect_identical(
+    vapply(guides, function(g) g$kind, character(1)),
+    c("color_continuous", "size")
+  )
 })
 
 test_that("a bar chart renders with bars on a zero baseline", {

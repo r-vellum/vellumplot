@@ -14,6 +14,7 @@ mark_point(
   shape = NULL,
   position = "identity",
   auto = FALSE,
+  seed = NULL,
   blend = NULL
 )
 
@@ -39,6 +40,9 @@ may be a constant or a mapped expression. One of \code{"circle"}, \code{"square"
 \item{auto}{For \code{mark_point()}, when \code{TRUE} and the layer has very many rows,
 automatically render it as a datashaded density raster (see
 \code{\link[=mark_datashade]{mark_datashade()}}) instead of individual markers.}
+
+\item{seed}{For \code{mark_point(position = "jitter")}, an optional integer seed
+making the jitter reproducible. The global RNG stream is restored afterwards.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS

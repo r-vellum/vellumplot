@@ -5,7 +5,9 @@ NULL
 # for a single factor and using sorted levels otherwise.
 .facet_key <- function(quos, data) {
   vals <- lapply(quos, function(q) rlang::eval_tidy(q, data))
-  if (length(vals) == 1 && is.factor(vals[[1]])) return(droplevels(vals[[1]]))
+  if (length(vals) == 1 && is.factor(vals[[1]])) {
+    return(droplevels(vals[[1]]))
+  }
   parts <- lapply(vals, as.character)
   combined <- do.call(paste, c(parts, sep = ", "))
   factor(combined, levels = sort(unique(combined)))
@@ -17,41 +19,78 @@ NULL
   data <- spec@data
   facet <- spec@facet
   if (is.null(facet)) {
-    return(list(type = "none", R = 1L, C = 1L,
-                panels = list(list(r = 1L, c = 1L, idx = seq_len(nrow(data)))),
-                col_labels = NULL, row_labels = NULL, wrap_labels = NULL))
+    return(list(
+      type = "none",
+      R = 1L,
+      C = 1L,
+      panels = list(list(r = 1L, c = 1L, idx = seq_len(nrow(data)))),
+      col_labels = NULL,
+      row_labels = NULL,
+      wrap_labels = NULL
+    ))
   }
 
   if (facet@type == "wrap") {
     key <- .facet_key(facet@cols, data)
     levs <- levels(key)
     n <- length(levs)
-    ncol <- facet@ncol %||% (if (!is.null(facet@nrow)) ceiling(n / facet@nrow) else ceiling(sqrt(n)))
+    ncol <- facet@ncol %||%
+      (if (!is.null(facet@nrow)) ceiling(n / facet@nrow) else ceiling(sqrt(n)))
     ncol <- max(1L, as.integer(ncol))
     nrow <- as.integer(ceiling(n / ncol))
     panels <- lapply(seq_len(n), function(i) {
-      list(r = (i - 1L) %/% ncol + 1L, c = (i - 1L) %% ncol + 1L,
-           idx = which(key == levs[i]))
+      list(
+        r = (i - 1L) %/% ncol + 1L,
+        c = (i - 1L) %% ncol + 1L,
+        idx = which(key == levs[i])
+      )
     })
-    list(type = "wrap", R = nrow, C = ncol, panels = panels,
-         col_labels = NULL, row_labels = NULL, wrap_labels = levs)
+    list(
+      type = "wrap",
+      R = nrow,
+      C = ncol,
+      panels = panels,
+      col_labels = NULL,
+      row_labels = NULL,
+      wrap_labels = levs
+    )
   } else {
-    rkey <- if (length(facet@rows)) .facet_key(facet@rows, data) else factor(rep("", nrow(data)))
-    ckey <- if (length(facet@cols)) .facet_key(facet@cols, data) else factor(rep("", nrow(data)))
+    rkey <- if (length(facet@rows)) {
+      .facet_key(facet@rows, data)
+    } else {
+      factor(rep("", nrow(data)))
+    }
+    ckey <- if (length(facet@cols)) {
+      .facet_key(facet@cols, data)
+    } else {
+      factor(rep("", nrow(data)))
+    }
     rlevs <- levels(rkey)
     clevs <- levels(ckey)
     R <- length(rlevs)
     C <- length(clevs)
     panels <- list()
-    for (r in seq_len(R)) for (cc in seq_len(C)) {
-      panels <- c(panels, list(list(
-        r = r, c = cc, idx = which(rkey == rlevs[r] & ckey == clevs[cc])
-      )))
+    for (r in seq_len(R)) {
+      for (cc in seq_len(C)) {
+        panels <- c(
+          panels,
+          list(list(
+            r = r,
+            c = cc,
+            idx = which(rkey == rlevs[r] & ckey == clevs[cc])
+          ))
+        )
+      }
     }
-    list(type = "grid", R = R, C = C, panels = panels,
-         col_labels = if (length(facet@cols)) clevs else NULL,
-         row_labels = if (length(facet@rows)) rlevs else NULL,
-         wrap_labels = NULL)
+    list(
+      type = "grid",
+      R = R,
+      C = C,
+      panels = panels,
+      col_labels = if (length(facet@cols)) clevs else NULL,
+      row_labels = if (length(facet@rows)) rlevs else NULL,
+      wrap_labels = NULL
+    )
   }
 }
 
@@ -67,23 +106,33 @@ NULL
   })
 
   all_res <- unlist(lapply(panels, function(p) p$resolved), recursive = FALSE)
-  has_bar <- any(vapply(all_res, function(L) identical(L$mark, "bar"), logical(1)))
-  y_mapped <- any(vapply(spec@layers, function(L) "y" %in% names(L@encoding), logical(1)))
-  y_title <- if (has_bar && !y_mapped) "count" else .default_title(spec, "y")
+  has_bar <- .has_bar(all_res)
+  y_title <- .y_axis_title(spec, all_res)
 
   free_x <- .resolve_for(spec, "x") == "independent"
   free_y <- .resolve_for(spec, "y") == "independent"
 
-  shared_x <- .train_position("x", .axis_pool(all_res, "x", "xintercept"),
-                              .scale_for(spec, "x"), .default_title(spec, "x"))
-  shared_y <- .train_position("y", .axis_pool(all_res, "y", "yintercept"),
-                              .scale_for(spec, "y"), y_title, include_zero = has_bar)
+  # Shared scales (x, y, colour, size) trained on the pooled data. Colour/size
+  # are always taken from here; x/y are used unless the aesthetic is free.
+  shared <- .train_scales(spec, all_res)
+  shared_x <- shared$x
+  shared_y <- shared$y
 
   # Group resolved layers for free training: per panel (wrap) or per column
   # (free x, grid) / per row (free y, grid).
-  group_res <- function(sel) unlist(lapply(panels[sel], function(p) p$resolved), recursive = FALSE)
-  train_free <- function(aes, intercept, title, inc0) function(res) {
-    .train_position(aes, .axis_pool(res, aes, intercept), .scale_for(spec, aes), title, include_zero = inc0)
+  group_res <- function(sel) {
+    unlist(lapply(panels[sel], function(p) p$resolved), recursive = FALSE)
+  }
+  train_free <- function(aes, intercept, title, inc0) {
+    function(res) {
+      .train_position(
+        aes,
+        .axis_pool(res, aes, intercept),
+        .scale_for(spec, aes),
+        title,
+        include_zero = inc0
+      )
+    }
   }
   tx <- train_free("x", "xintercept", .default_title(spec, "x"), FALSE)
   ty <- train_free("y", "yintercept", y_title, has_bar)
@@ -93,21 +142,33 @@ NULL
     if (!free_x) {
       p$x_sc <- shared_x
     } else if (fa$type == "grid") {
-      p$x_sc <- tx(group_res(vapply(panels, function(q) q$c == p$c, logical(1))))
+      p$x_sc <- tx(group_res(vapply(
+        panels,
+        function(q) q$c == p$c,
+        logical(1)
+      )))
     } else {
       p$x_sc <- tx(p$resolved)
     }
     if (!free_y) {
       p$y_sc <- shared_y
     } else if (fa$type == "grid") {
-      p$y_sc <- ty(group_res(vapply(panels, function(q) q$r == p$r, logical(1))))
+      p$y_sc <- ty(group_res(vapply(
+        panels,
+        function(q) q$r == p$r,
+        logical(1)
+      )))
     } else {
       p$y_sc <- ty(p$resolved)
     }
     panels[[i]] <- p
   }
 
-  scales <- list(color = .train_colour(spec, all_res), size = .train_size(spec, all_res),
-                 x = shared_x, y = shared_y)
-  list(fa = fa, panels = panels, scales = scales, free_x = free_x, free_y = free_y)
+  list(
+    fa = fa,
+    panels = panels,
+    scales = shared,
+    free_x = free_x,
+    free_y = free_y
+  )
 }
