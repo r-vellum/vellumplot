@@ -1,11 +1,10 @@
-# Render a plot to a temp PNG and read it back as an [height, width, channels]
-# array of 0..1 values (the only way to verify output without a raster
-# accessor; mirrors vellum's own pixel-probing tests).
-render_png <- function(plot) {
-  skip_if_not_installed("png")
-  f <- withr::local_tempfile(fileext = ".png", .local_envir = parent.frame())
-  render_plot(plot, f)
-  png::readPNG(f)
+# Compile a plot and read its pixels back via vellum's public raster accessor
+# (no temp file). `scene_raster()` returns an integer array [channel, x, y] in
+# 0:255 with a top-left origin; reshape to the [y, x, channel] 0..1 layout the
+# probes below expect (row 1 = top, matching a read-back PNG).
+render_px <- function(plot) {
+  arr <- vellum::scene_raster(plot)
+  aperm(arr, c(3, 2, 1)) / 255
 }
 
 # Count pixels whose RGB is within `tol` of a target (each channel 0..1).

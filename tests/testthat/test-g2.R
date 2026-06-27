@@ -63,7 +63,7 @@ test_that("colour + size produce two stacked legend guides", {
 
 test_that("a bar chart renders with bars on a zero baseline", {
   p <- vplot(bar_df, width = 4, height = 3) |> mark_bar(x = cat, y = val)
-  img <- render_png(p)
+  img <- render_px(p)
   # the grey panel is broken up by the default bar fill ("grey35")
   fill <- as.numeric(grDevices::col2rgb("grey35")) / 255
   expect_gt(count_near(img, fill, tol = 0.05), 0.03 * prod(dim(img)[1:2]))
