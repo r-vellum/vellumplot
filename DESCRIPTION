@@ -1,0 +1,43 @@
+Package: vellumplot
+Title: A Grammar of Graphics on the 'vellum' Backend
+Version: 0.0.0.9000
+Authors@R:
+    person("David", "Schoch", , "david.schoch@cynkra.com", role = c("aut", "cre"))
+Description: A declarative, pipe-first grammar of graphics that compiles an
+    inspectable plot specification into a 'vellum' scene and renders it. A plot
+    is built up as a serializable spec (data, layers, scales) and nothing is
+    drawn until it is compiled: encodings are resolved, scales are trained,
+    a panel layout is measured, and guides and marks are emitted as 'vellum'
+    grobs.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0.9000
+Depends:
+    R (>= 4.2)
+Imports:
+    cli,
+    grDevices,
+    rlang,
+    S7,
+    scales,
+    vellum
+Suggests:
+    png,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
+Collate:
+    'vellumplot-package.R'
+    'classes.R'
+    'compile-layout.R'
+    'compile-guides.R'
+    'compile-marks.R'
+    'compile-resolve.R'
+    'compile-train.R'
+    'marks.R'
+    'print.R'
+    'scales.R'
+    'seam.R'
+    'vplot.R'
+    'zzz.R'

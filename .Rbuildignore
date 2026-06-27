@@ -1,0 +1,7 @@
+^_docs$
+^LICENSE\.md$
+^README\.Rmd$
+^\.github$
+^\.vscode$
+^.*\.Rproj$
+^\.Rproj\.user$

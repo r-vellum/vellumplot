@@ -1,0 +1,111 @@
+#' @include classes.R
+NULL
+
+# Group row indices by the tuple of gpar-borne style fields, mirroring
+# `vellum:::.gv_groups`: a batched grob carries a single gpar, so rows that must
+# differ in fill/col/alpha/lwd have to be emitted as separate grobs. Geometry-
+# borne aesthetics (size, shape, x, y) are vectorised and do NOT force a split.
+# Continuous colour is already quantized upstream, so the group count is bounded.
+.style_groups <- function(n, fields) {
+  fields <- fields[!vapply(fields, is.null, logical(1))]
+  if (!length(fields)) return(list(seq_len(n)))
+  codes <- lapply(fields, function(v) {
+    v <- rep_len(v, n)
+    match(v, unique(v))
+  })
+  unname(split(seq_len(n), do.call(paste, c(codes, sep = "\036"))))
+}
+
+# Resolve a layer's mark colour: a mapped colour channel (via the trained colour
+# scale), a constant colour param, or the supplied default.
+.aes_colour <- function(L, scales, default) {
+  if (!is.null(scales$color)) {
+    if (!is.null(L$values$color)) return(scales$color$map(L$values$color))
+    if (!is.null(L$values$fill)) return(scales$color$map(L$values$fill))
+  }
+  L$params$color %||% L$params$fill %||% default
+}
+
+.aes_param <- function(L, name, default) L$params[[name]] %||% default
+
+# An intercept may arrive as a mapped channel or a constant param.
+.intercept <- function(L, name) L$values[[name]] %||% L$params[[name]]
+
+# --- per-mark emitters (draw into the panel viewport, native units) ---------
+
+.emit_point <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  col <- rep_len(.aes_colour(L, scales, "black"), n)
+  size <- rep_len(.aes_param(L, "size", 2), n)
+  shape <- rep_len(.aes_param(L, "shape", "circle"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+
+  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+    a <- alpha[idx[1]]
+    scene <- vellum::draw(scene, vellum::points_grob(
+      vellum::unit(xn[idx], "native"), vellum::unit(yn[idx], "native"),
+      size = vellum::unit(size[idx], "mm"), shape = shape[idx],
+      gp = vellum::gpar(fill = col[idx[1]], col = col[idx[1]],
+                        alpha = if (is.na(a)) NULL else a)
+    ))
+  }
+  scene
+}
+
+.emit_line <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  col <- rep_len(.aes_colour(L, scales, "black"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  lwd <- .aes_param(L, "linewidth", 1.5)
+
+  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+    o <- idx[order(xn[idx])] # a line is drawn in x order
+    a <- alpha[idx[1]]
+    scene <- vellum::draw(scene, vellum::lines_grob(
+      vellum::unit(xn[o], "native"), vellum::unit(yn[o], "native"),
+      gp = vellum::gpar(col = col[idx[1]], lwd = lwd,
+                        alpha = if (is.na(a)) NULL else a)
+    ))
+  }
+  scene
+}
+
+.emit_rule <- function(scene, L, scales) {
+  col <- .aes_colour(L, scales, "grey40")[1]
+  lwd <- .aes_param(L, "linewidth", 1)
+  gp <- vellum::gpar(col = col, lwd = lwd)
+  yi <- .intercept(L, "yintercept")
+  xi <- .intercept(L, "xintercept")
+  if (!is.null(yi)) {
+    for (v in scales$y$map(yi)) {
+      scene <- vellum::draw(scene, vellum::segments_grob(
+        vellum::unit(0, "npc"), vellum::unit(v, "native"),
+        vellum::unit(1, "npc"), vellum::unit(v, "native"), gp = gp))
+    }
+  }
+  if (!is.null(xi)) {
+    for (v in scales$x$map(xi)) {
+      scene <- vellum::draw(scene, vellum::segments_grob(
+        vellum::unit(v, "native"), vellum::unit(0, "npc"),
+        vellum::unit(v, "native"), vellum::unit(1, "npc"), gp = gp))
+    }
+  }
+  scene
+}
+
+# Compile every layer's marks into the (already panel-positioned) scene.
+.compile_marks <- function(scene, resolved, scales) {
+  for (L in resolved) {
+    scene <- switch(L$mark,
+      point = .emit_point(scene, L, scales),
+      line = .emit_line(scene, L, scales),
+      rule = .emit_rule(scene, L, scales),
+      cli::cli_abort("Unknown mark {.val {L$mark}}.")
+    )
+  }
+  scene
+}
