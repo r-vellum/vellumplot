@@ -9,7 +9,8 @@ NULL
   }
   resolved <- .resolve_layers(spec)
   scales <- .train_scales(spec, resolved)
-  lay <- .build_layout(scales)
+  guides <- .legend_guides(scales)
+  lay <- .build_layout(scales, guides)
   cells <- lay$cells
 
   scene <- vellum::vl_scene(width = spec@width, height = spec@height, bg = "white")
@@ -29,7 +30,7 @@ NULL
   scene <- .draw_x_axis(scene, cells$xlabel, scales)
   scene <- .draw_y_title(scene, cells$ytitle, scales)
   scene <- .draw_x_title(scene, cells$xtitle, scales)
-  if (!is.null(cells$legend)) scene <- .draw_legend(scene, cells$legend, scales)
+  if (!is.null(cells$legend)) scene <- .draw_legends(scene, cells$legend, guides)
 
   vellum::pop(scene)
 }

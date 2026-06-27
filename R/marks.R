@@ -74,6 +74,19 @@ mark_rule <- function(plot, ...) {
   .add_layer(plot, "rule", rlang::enquos(...))
 }
 
+#' @rdname mark_point
+#' @details
+#' `mark_bar()` draws bars from a zero baseline. With a discrete `x` and an
+#' explicit `y` it uses the `y` values as bar heights; with a discrete `x` and
+#' no `y` it counts rows per category (per category and `color`/`fill`, if those
+#' are mapped). Grouped bars are drawn at the same position for now — dodging and
+#' stacking arrive with the transform stage.
+#' @export
+mark_bar <- function(plot, ...) {
+  .check_plot(plot)
+  .add_layer(plot, "bar", rlang::enquos(...))
+}
+
 .check_plot <- function(plot, call = rlang::caller_env()) {
   if (!S7::S7_inherits(plot, PlotSpec)) {
     cli::cli_abort(

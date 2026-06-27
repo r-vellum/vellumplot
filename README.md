@@ -59,15 +59,17 @@ vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
 #> • mark_point(x = wt, y = mpg, color = hp)
 ```
 
-## What's included (v1)
+## What's included
 
-* Marks: `mark_point()`, `mark_line()`, `mark_rule()`.
+* Marks: `mark_point()`, `mark_line()`, `mark_rule()`, `mark_bar()` (explicit
+  heights, or row counts per category).
 * Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`, `alpha`.
 * Position scales (`scale_x_continuous()`, `scale_y_continuous()`; linear and
-  `log10`) with auto-trained, expanded domains.
-* Colour scales (`scale_color_continuous()`, `scale_color_discrete()`) with a
-  legend.
+  `log10`) with auto-trained, expanded domains; discrete band scales for
+  categorical axes.
+* Colour scales (`scale_color_continuous()`, `scale_color_discrete()`) and a
+  trained size scale, with stacked legends.
 * Trained axes, a panel with gridlines, and layering on one panel.
 
-Faceting, statistical transforms, and other features are planned for v2 — see
-`NEWS.md`.
+Faceting, statistical transforms, and spatial/network layers are on the roadmap
+— see `NEWS.md` and `_docs/DESIGN.md`.

@@ -6,14 +6,26 @@ NULL
 .viridis <- function(n = 256) grDevices::hcl.colors(n, "viridis")
 .qual_palette <- function(k) grDevices::hcl.colors(k, "Dark 3")
 
-# Train a continuous position scale. `values` is a list of vectors (one per
-# layer), which may be numeric or temporal (Date/POSIXct). Returns a trained-
-# scale list: the expanded native domain (for the viewport scale), break
-# positions in native (transformed) units, their labels, and a data->native
-# mapping function. Temporal axes map to numeric and get date-aware breaks.
-.train_position <- function(aesthetic, values, scalespec, title) {
-  is_log <- !is.null(scalespec) && identical(scalespec@type, "log10")
+# Point-size range (mm) a mapped `size` aesthetic spans.
+.SIZE_RANGE <- c(1.5, 6)
+
+# Train a position scale. Dispatches to a continuous (numeric/temporal) or a
+# discrete (factor/character/logical) scale. Returns a trained-scale list: the
+# native domain (for the viewport scale), break positions in native units, their
+# labels, a data->native mapping function, and `discrete`/`band_width` flags the
+# mark compiler uses (e.g. for bar widths).
+.train_position <- function(aesthetic, values, scalespec, title, include_zero = FALSE) {
+  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) scalespec@name else title
   raw <- do.call(c, values) # combine across layers, preserving class
+  if (is.numeric(raw) || inherits(raw, c("Date", "POSIXct"))) {
+    .train_position_continuous(aesthetic, raw, scalespec, name, include_zero)
+  } else {
+    .train_position_discrete(aesthetic, values, name)
+  }
+}
+
+.train_position_continuous <- function(aesthetic, raw, scalespec, name, include_zero) {
+  is_log <- !is.null(scalespec) && identical(scalespec@type, "log10")
   is_time <- inherits(raw, c("Date", "POSIXct"))
   tfun <- if (is_log) function(v) log10(as.numeric(v)) else function(v) as.numeric(v)
 
@@ -21,6 +33,7 @@ NULL
   num <- num[is.finite(num)]
   user_lim <- if (!is.null(scalespec)) scalespec@domain else NULL
   rng <- if (!is.null(user_lim)) as.numeric(user_lim) else range(num)
+  if (include_zero) rng <- range(c(rng, 0))
   if (!all(is.finite(rng)) || diff(rng) == 0) {
     centre <- if (all(is.finite(rng))) rng[1] else 0
     rng <- centre + c(-0.5, 0.5)
@@ -46,11 +59,29 @@ NULL
     labels <- scales::label_number()(braw)
   }
 
-  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) scalespec@name else title
   list(
     aesthetic = aesthetic, type = if (is_log) "log10" else "continuous",
+    discrete = FALSE, band_width = NULL,
     data_range = rng, domain = domain,
     breaks = breaks, labels = labels, map = tfun, name = name
+  )
+}
+
+# A discrete (band) position scale: levels map to integer positions 1..k, each
+# occupying a unit-width band; the domain pads half a band each side.
+.train_position_discrete <- function(aesthetic, values, name) {
+  fac <- NULL
+  for (v in values) if (is.factor(v)) { fac <- v; break }
+  levs <- if (!is.null(fac)) levels(fac) else {
+    sort(unique(as.character(unlist(lapply(values, as.character), use.names = FALSE))))
+  }
+  k <- length(levs)
+  list(
+    aesthetic = aesthetic, type = "discrete",
+    discrete = TRUE, band_width = 1,
+    data_range = c(1, k), domain = c(0.5, k + 0.5),
+    breaks = seq_len(k), labels = levs,
+    map = function(x) match(as.character(x), levs), name = name
   )
 }
 
@@ -110,6 +141,22 @@ NULL
   }
 }
 
+# Train the size scale (if any layer maps `size` to data). Maps values to a
+# point-size range in mm and carries representative breaks for a size legend.
+.train_size <- function(spec, resolved) {
+  values <- .pool_values(resolved, "size")
+  if (is.null(values)) return(NULL)
+  v <- as.numeric(unlist(values, use.names = FALSE))
+  rng <- range(v[is.finite(v)])
+  if (diff(rng) == 0) rng <- rng + c(-0.5, 0.5)
+  map <- function(x) scales::rescale(x, to = .SIZE_RANGE, from = rng)
+  lbrk <- scales::breaks_extended()(rng)
+  lbrk <- lbrk[is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]]
+  list(kind = "size", map = map, name = .default_title(spec, "size"), range = rng,
+       legend_breaks = lbrk, legend_sizes = map(lbrk),
+       legend_labels = scales::label_number()(lbrk))
+}
+
 # Pool numeric values feeding a position axis: the channel itself plus, for
 # rule layers, the matching intercept (which may be a constant in `params`).
 .axis_pool <- function(resolved, channel, intercept) {
@@ -121,16 +168,22 @@ NULL
   if (length(vs)) vs else NULL
 }
 
-# Train all scales the plot needs: x, y (position) and colour.
+# Train all scales the plot needs: x, y (position), colour, and size. Bars force
+# the y axis to include the zero baseline.
 .train_scales <- function(spec, resolved) {
+  has_bar <- any(vapply(resolved, function(L) identical(L$mark, "bar"), logical(1)))
   xs <- .axis_pool(resolved, "x", "xintercept")
   ys <- .axis_pool(resolved, "y", "yintercept")
   if (is.null(xs) || is.null(ys)) {
     cli::cli_abort("Every layer needs an {.field x} and {.field y} encoding (v1).")
   }
+  # When bars count rows (no y encoding anywhere), the y axis is a count.
+  y_mapped <- any(vapply(spec@layers, function(L) "y" %in% names(L@encoding), logical(1)))
+  y_title <- if (has_bar && !y_mapped) "count" else .default_title(spec, "y")
   list(
     x = .train_position("x", xs, .scale_for(spec, "x"), .default_title(spec, "x")),
-    y = .train_position("y", ys, .scale_for(spec, "y"), .default_title(spec, "y")),
-    color = .train_colour(spec, resolved)
+    y = .train_position("y", ys, .scale_for(spec, "y"), y_title, include_zero = has_bar),
+    color = .train_colour(spec, resolved),
+    size = .train_size(spec, resolved)
   )
 }

@@ -7,3 +7,6 @@
 *.tar.gz
 src/*.o
 src/*.so
+
+# stray render outputs at repo root (man/figures/ is fine)
+/*.png

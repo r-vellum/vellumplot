@@ -23,9 +23,40 @@ NULL
        params = layer@params, n = n)
 }
 
+# A bar with no `y` encoding counts rows per x (per x*colour, if colour is
+# mapped) — the only built-in stat in v1 (general transforms are a later stage).
+.bar_count_fixup <- function(L) {
+  if (!identical(L$mark, "bar") || !is.null(L$values$y)) return(L)
+  x <- L$values$x
+  if (is.null(x)) return(L)
+  if (is.numeric(x)) {
+    cli::cli_abort(c(
+      "{.fn mark_bar} on a continuous x needs an explicit {.field y}.",
+      i = "Binning a continuous variable into bars is not yet available."
+    ))
+  }
+  grp <- L$values$color %||% L$values$fill
+  if (is.null(grp)) {
+    tab <- table(as.character(x))
+    L$values$x <- names(tab)
+    L$values$y <- as.numeric(tab)
+    L$n <- length(tab)
+  } else {
+    agg <- as.data.frame(table(x = as.character(x), g = as.character(grp)),
+                         stringsAsFactors = FALSE)
+    agg <- agg[agg$Freq > 0, , drop = FALSE]
+    L$values$x <- agg$x
+    if (!is.null(L$values$color)) L$values$color <- agg$g else L$values$fill <- agg$g
+    L$values$y <- agg$Freq
+    L$n <- nrow(agg)
+  }
+  L$types$y <- "quantitative"
+  L
+}
+
 # Resolve every layer of a spec.
 .resolve_layers <- function(spec) {
-  lapply(spec@layers, .resolve_layer, data = spec@data)
+  lapply(spec@layers, function(layer) .bar_count_fixup(.resolve_layer(layer, spec@data)))
 }
 
 # The user-declared scale for an aesthetic, or NULL. `color` and `fill` share a

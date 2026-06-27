@@ -4,6 +4,7 @@
 \alias{mark_point}
 \alias{mark_line}
 \alias{mark_rule}
+\alias{mark_bar}
 \title{Add marks to a plot}
 \usage{
 mark_point(plot, ..., size = NULL, shape = NULL)
@@ -11,6 +12,8 @@ mark_point(plot, ..., size = NULL, shape = NULL)
 mark_line(plot, ...)
 
 mark_rule(plot, ...)
+
+mark_bar(plot, ...)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -31,6 +34,13 @@ column names (or expressions) captured with tidy evaluation, e.g.
 \verb{x = wt, y = mpg, color = hp}. Scalar values (e.g. \code{size = 3},
 \code{color = "red"}) are treated as constant aesthetics rather than data
 mappings.
+}
+\details{
+\code{mark_bar()} draws bars from a zero baseline. With a discrete \code{x} and an
+explicit \code{y} it uses the \code{y} values as bar heights; with a discrete \code{x} and
+no \code{y} it counts rows per category (per category and \code{color}/\code{fill}, if those
+are mapped). Grouped bars are drawn at the same position for now — dodging and
+stacking arrive with the transform stage.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)

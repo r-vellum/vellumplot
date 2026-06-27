@@ -28,6 +28,13 @@ NULL
 
 .aes_param <- function(L, name, default) L$params[[name]] %||% default
 
+# Resolve a layer's point size (mm): a mapped size channel (via the trained size
+# scale), a constant size param, or the supplied default.
+.aes_size <- function(L, scales, default) {
+  if (!is.null(scales$size) && !is.null(L$values$size)) return(scales$size$map(L$values$size))
+  L$params$size %||% default
+}
+
 # An intercept may arrive as a mapped channel or a constant param.
 .intercept <- function(L, name) L$values[[name]] %||% L$params[[name]]
 
@@ -38,7 +45,7 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
-  size <- rep_len(.aes_param(L, "size", 2), n)
+  size <- rep_len(.aes_size(L, scales, 2), n)
   shape <- rep_len(.aes_param(L, "shape", "circle"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
 
@@ -97,6 +104,36 @@ NULL
   scene
 }
 
+# Smallest positive gap between sorted unique positions (the bar width unit on a
+# continuous x); 1 if there is only one bar.
+.resolution <- function(x) {
+  u <- sort(unique(x[is.finite(x)]))
+  if (length(u) < 2) return(1)
+  min(diff(u))
+}
+
+.emit_bar <- function(scene, L, scales) {
+  n <- L$n
+  xp <- rep_len(scales$x$map(L$values$x), n)
+  yv <- rep_len(scales$y$map(L$values$y), n)
+  fill <- rep_len(.aes_colour(L, scales, "grey35"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  band <- scales$x$band_width %||% .resolution(xp)
+  w <- 0.9 * band
+
+  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+    a <- alpha[idx[1]]
+    scene <- vellum::draw(scene, vellum::rect_grob(
+      x = vellum::unit(xp[idx], "native"), y = vellum::unit(yv[idx] / 2, "native"),
+      width = vellum::unit(rep(w, length(idx)), "native"),
+      height = vellum::unit(abs(yv[idx]), "native"),
+      gp = vellum::gpar(fill = fill[idx[1]], col = NA,
+                        alpha = if (is.na(a)) NULL else a)
+    ))
+  }
+  scene
+}
+
 # Compile every layer's marks into the (already panel-positioned) scene.
 .compile_marks <- function(scene, resolved, scales) {
   for (L in resolved) {
@@ -104,6 +141,7 @@ NULL
       point = .emit_point(scene, L, scales),
       line = .emit_line(scene, L, scales),
       rule = .emit_rule(scene, L, scales),
+      bar = .emit_bar(scene, L, scales),
       cli::cli_abort("Unknown mark {.val {L$mark}}.")
     )
   }

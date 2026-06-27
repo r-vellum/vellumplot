@@ -29,7 +29,28 @@ NULL
 #   [ panel(null) | x-labels | x-title ].
 # Gutter tracks are absolute (mm) from grobwidth/grobheight measurement; the
 # panel track is `null` so it absorbs the remaining space.
-.build_layout <- function(scales) {
+# Width of the legend column: room for the widest swatch/bar/key needed by any
+# guide, plus the widest label or title across all guides.
+.legend_width <- function(guides) {
+  strs <- character(0)
+  swatch <- .LEGEND_SWATCH_MM
+  for (g in guides) {
+    sc <- g$sc
+    if (g$kind == "color_continuous") {
+      strs <- c(strs, sc$legend_labels, sc$name)
+      swatch <- max(swatch, .LEGEND_BAR_MM)
+    } else if (g$kind == "color_discrete") {
+      strs <- c(strs, sc$levels, sc$name)
+    } else if (g$kind == "size") {
+      strs <- c(strs, sc$legend_labels, sc$name)
+      swatch <- max(swatch, 2 * max(sc$legend_sizes))
+    }
+  }
+  vellum::grobwidth(.txt(.longest(strs), .LEGEND_TITLE_FS)) +
+    vellum::unit(swatch + 3 * .PAD_MM, "mm")
+}
+
+.build_layout <- function(scales, guides = list()) {
   yt <- vellum::grobwidth(.txt(scales$y$name, .TITLE_FS, rot = 90)) +
     vellum::unit(.PAD_MM, "mm")
   yl <- vellum::grobwidth(.txt(.longest(scales$y$labels), .AXIS_FS)) +
@@ -50,13 +71,8 @@ NULL
     xtitle = list(row = 3, col = 3)
   )
 
-  if (!is.null(scales$color)) {
-    cl <- scales$color
-    strs <- if (cl$kind == "continuous") c(cl$legend_labels, cl$name) else c(cl$levels, cl$name)
-    swatch <- if (cl$kind == "continuous") .LEGEND_BAR_MM else .LEGEND_SWATCH_MM
-    lw <- vellum::grobwidth(.txt(.longest(strs), .LEGEND_TITLE_FS)) +
-      vellum::unit(swatch + 3 * .PAD_MM, "mm")
-    widths <- c(widths, lw)
+  if (length(guides)) {
+    widths <- c(widths, .legend_width(guides))
     cells$legend <- list(row = 1, col = 4)
   }
 
