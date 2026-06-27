@@ -4,7 +4,27 @@ NULL
 # Default perceptual ramp for continuous colour and qualitative palette for
 # discrete colour.
 .viridis <- function(n = 256) grDevices::hcl.colors(n, "viridis")
-.qual_palette <- function(k) grDevices::hcl.colors(k, "Dark 3")
+
+# vellum's signature qualitative palette: muted, dark "ink" tones. More
+# distinctive than hcl's "Dark 3", ordered so that progressively smaller k stay
+# well separated (the most distinct hues come first).
+.VELLUM_QUAL <- c(
+  "#3B164D", # purple ink
+  "#006D77", # teal
+  "#A05A2C", # burnt sienna
+  "#4F6F2F", # olive
+  "#8C2F39", # madder red
+  "#2F4858"  # blue-black
+)
+
+# Return k qualitative colours. Up to length(.VELLUM_QUAL) we take the leading
+# colours as-is; beyond that we interpolate in Lab space to fill k slots
+# (distinctiveness necessarily degrades past the hand-picked set).
+.qual_palette <- function(k) {
+  n <- length(.VELLUM_QUAL)
+  if (k <= n) return(.VELLUM_QUAL[seq_len(k)])
+  grDevices::colorRampPalette(.VELLUM_QUAL, space = "Lab")(k)
+}
 
 # Point-size range (mm) a mapped `size` aesthetic spans.
 .SIZE_RANGE <- c(1.5, 6)
