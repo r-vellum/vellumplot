@@ -13,7 +13,7 @@ mark_line(plot, ...)
 
 mark_rule(plot, ...)
 
-mark_bar(plot, ..., position = "identity")
+mark_bar(plot, ..., position = "stack")
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}

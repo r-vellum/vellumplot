@@ -37,6 +37,7 @@ Collate:
     'compile-layout.R'
     'compile-guides.R'
     'compile-marks.R'
+    'compile-position.R'
     'compile-stat.R'
     'marks.R'
     'print.R'

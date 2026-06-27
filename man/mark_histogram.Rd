@@ -5,7 +5,7 @@
 \alias{mark_smooth}
 \title{Statistical marks}
 \usage{
-mark_histogram(plot, ..., bins = 30, position = "identity")
+mark_histogram(plot, ..., bins = 30, position = "stack")
 
 mark_smooth(plot, ..., method = "lm", se = TRUE, level = 0.95)
 }

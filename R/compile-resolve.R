@@ -31,9 +31,10 @@ NULL
 }
 
 # Resolve every layer of a spec against a given data frame (a facet panel's
-# subset, or the whole data), then apply each layer's statistical transform.
+# subset, or the whole data): evaluate channels, apply the stat, then apply the
+# pre-train part of the position adjustment (stack/fill).
 .resolve_on <- function(spec, data) {
-  lapply(spec@layers, function(layer) .apply_stat(.resolve_layer(layer, data)))
+  lapply(spec@layers, function(layer) .apply_position(.apply_stat(.resolve_layer(layer, data))))
 }
 
 # Resolve every layer of a spec against its full data.

@@ -44,6 +44,12 @@ NULL
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
+  if (identical(L$position, "jitter")) {
+    ax <- 0.4 * (scales$x$band_width %||% .resolution(xn))
+    ay <- 0.4 * .resolution(yn)
+    xn <- xn + stats::runif(n, -ax, ax)
+    yn <- yn + stats::runif(n, -ay, ay)
+  }
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   size <- rep_len(.aes_size(L, scales, 2), n)
   shape <- rep_len(.aes_param(L, "shape", "circle"), n)
@@ -115,18 +121,35 @@ NULL
 .emit_bar <- function(scene, L, scales) {
   n <- L$n
   xp <- rep_len(scales$x$map(L$values$x), n)
-  yv <- rep_len(scales$y$map(L$values$y), n)
   fill <- rep_len(.aes_colour(L, scales, "grey35"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
   band <- scales$x$band_width %||% .resolution(xp)
+
+  # vertical span: a stacked [ymin, ymax], else 0 -> y
+  ymin_d <- if (!is.null(L$values$ymin)) L$values$ymin else rep(0, n)
+  ymax_d <- if (!is.null(L$values$ymax)) L$values$ymax else L$values$y
+  y0 <- rep_len(scales$y$map(ymin_d), n)
+  y1 <- rep_len(scales$y$map(ymax_d), n)
+
   w <- 0.9 * band
+  xc <- xp
+  if (identical(L$position, "dodge")) {
+    grp <- L$values$color %||% L$values$fill
+    if (!is.null(grp)) {
+      levs <- sort(unique(as.character(grp)))
+      G <- length(levs)
+      rank <- match(as.character(rep_len(grp, n)), levs)
+      w <- 0.9 * band / G
+      xc <- xp + (rank - (G + 1) / 2) / G * band
+    }
+  }
 
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     a <- alpha[idx[1]]
     scene <- vellum::draw(scene, vellum::rect_grob(
-      x = vellum::unit(xp[idx], "native"), y = vellum::unit(yv[idx] / 2, "native"),
+      x = vellum::unit(xc[idx], "native"), y = vellum::unit((y0[idx] + y1[idx]) / 2, "native"),
       width = vellum::unit(rep(w, length(idx)), "native"),
-      height = vellum::unit(abs(yv[idx]), "native"),
+      height = vellum::unit(abs(y1[idx] - y0[idx]), "native"),
       gp = vellum::gpar(fill = fill[idx[1]], col = NA,
                         alpha = if (is.na(a)) NULL else a)
     ))

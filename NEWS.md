@@ -29,6 +29,9 @@ A single-panel grammar of graphics that compiles a declarative spec into a
   count bars) and `mark_smooth()` (an `"lm"` fit drawn as a line with an optional
   confidence ribbon). `mark_bar()` with no `y` uses the count stat. Map computed
   variables with `after_stat()`, e.g. `y = after_stat(density)`.
+* **Position adjustments** (`position =`): grouped bars **stack** by default;
+  `"dodge"` places them side by side and `"fill"` normalises each group to 1.
+  `mark_point(position = "jitter")` spreads overlapping points.
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
@@ -36,10 +39,10 @@ A single-panel grammar of graphics that compiles a declarative spec into a
 ## Not yet implemented (planned)
 
 `concat` / `repeat` composition, themes, reactivity, further statistical
-transforms (aggregation, density, 2-D contours), scene-space initializers
-(**bar dodging / stacking**, jitter, hexbin), `datashade` auto-marks,
-non-cartesian coordinates, the algebraic `*` / `+` layer combinators, and
-rich/plotmath axis labels.
+transforms (aggregation, density, 2-D contours), hexagonal binning (`hexbin` —
+deferred until display-aspect locking lands, see `_docs/DESIGN.md` §3.2),
+`datashade` auto-marks, non-cartesian coordinates, the algebraic `*` / `+` layer
+combinators, and rich/plotmath axis labels.
 Independent *non-position* (colour/size) scales across facets are not yet
 supported (those legends stay shared). Spatial (`sf`) and network (`igraph`)
 layers are on the roadmap (see `_docs/DESIGN.md`).

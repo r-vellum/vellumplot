@@ -101,7 +101,7 @@ mark_rule <- function(plot, ...) {
 #' stat). When `color`/`fill` is mapped, grouped bars are stacked by default; use
 #' `position = "dodge"` for side-by-side bars or `"fill"` to normalise to 1.
 #' @export
-mark_bar <- function(plot, ..., position = "identity") {
+mark_bar <- function(plot, ..., position = "stack") {
   .check_plot(plot)
   .add_layer(plot, "bar", rlang::enquos(...), position = position)
 }
@@ -126,7 +126,7 @@ mark_bar <- function(plot, ..., position = "identity") {
 #' vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg)
 #' @export
-mark_histogram <- function(plot, ..., bins = 30, position = "identity") {
+mark_histogram <- function(plot, ..., bins = 30, position = "stack") {
   .check_plot(plot)
   .add_layer(plot, "bar", rlang::enquos(...), stat = "bin",
              stat_params = list(bins = bins), position = position)
