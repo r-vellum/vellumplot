@@ -8,6 +8,8 @@ PlotSpec(
   data = NULL,
   layers = list(),
   scales = list(),
+  facet = NULL,
+  resolve = list(),
   width = 6,
   height = 4,
   theme = NULL
@@ -19,6 +21,12 @@ PlotSpec(
 \item{layers}{A list of layer specifications (one per \verb{mark_*()}).}
 
 \item{scales}{A list of declared scale overrides.}
+
+\item{facet}{A faceting specification (from \code{\link[=facet_wrap]{facet_wrap()}} / \code{\link[=facet_grid]{facet_grid()}}),
+or \code{NULL} for a single panel.}
+
+\item{resolve}{A named list mapping an aesthetic to \code{"shared"} or
+\code{"independent"} (the scale-resolution lattice; see \code{\link[=resolve_scale]{resolve_scale()}}).}
 
 \item{width, height}{Page size in inches.}
 

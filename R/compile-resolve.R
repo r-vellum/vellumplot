@@ -54,10 +54,14 @@ NULL
   L
 }
 
-# Resolve every layer of a spec.
-.resolve_layers <- function(spec) {
-  lapply(spec@layers, function(layer) .bar_count_fixup(.resolve_layer(layer, spec@data)))
+# Resolve every layer of a spec against a given data frame (a facet panel's
+# subset, or the whole data).
+.resolve_on <- function(spec, data) {
+  lapply(spec@layers, function(layer) .bar_count_fixup(.resolve_layer(layer, data)))
 }
+
+# Resolve every layer of a spec against its full data.
+.resolve_layers <- function(spec) .resolve_on(spec, spec@data)
 
 # The user-declared scale for an aesthetic, or NULL. `color` and `fill` share a
 # colour scale; either declaration applies.

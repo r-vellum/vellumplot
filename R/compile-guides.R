@@ -18,55 +18,64 @@ NULL
 PANEL_BG <- "grey92"
 GRID_COL <- "white"
 LABEL_COL <- "grey20"
+STRIP_BG <- "grey85"
 
 # Panel background + gridlines, drawn while the scene is positioned inside the
-# panel viewport (so `"native"` resolves against the trained scales).
-.draw_panel_bg <- function(scene, scales) {
+# panel viewport (so `"native"` resolves against the panel's trained scales).
+.draw_panel_bg <- function(scene, x_sc, y_sc) {
   scene <- vellum::draw(scene, .rect(gp = .g(fill = PANEL_BG, col = NA)))
-  for (b in scales$x$breaks) {
+  for (b in x_sc$breaks) {
     scene <- vellum::draw(scene, .seg(.na(b), .np(0), .na(b), .np(1),
                                       gp = .g(col = GRID_COL, lwd = 1)))
   }
-  for (b in scales$y$breaks) {
+  for (b in y_sc$breaks) {
     scene <- vellum::draw(scene, .seg(.np(0), .na(b), .np(1), .na(b),
                                       gp = .g(col = GRID_COL, lwd = 1)))
   }
   scene
 }
 
-# y-axis labels, right-aligned in the label gutter and aligned to the gridlines
-# (the gutter viewport shares the panel's y native scale).
-.draw_y_axis <- function(scene, cell, scales) {
-  scene <- vellum::push(scene, .vp(row = cell$row, col = cell$col, yscale = scales$y$domain))
-  for (i in seq_along(scales$y$breaks)) {
+# y-axis labels for `y_sc`, right-aligned in the gutter cell and aligned to the
+# gridlines (the gutter viewport shares the panel's y native scale).
+.draw_y_axis <- function(scene, row, col, y_sc) {
+  scene <- vellum::push(scene, .vp(row = row, col = col, yscale = y_sc$domain))
+  for (i in seq_along(y_sc$breaks)) {
     scene <- vellum::draw(scene, .text(
-      scales$y$labels[i], x = .np(0.96), y = .na(scales$y$breaks[i]),
+      y_sc$labels[i], x = .np(0.96), y = .na(y_sc$breaks[i]),
       just = c("right", "centre"), gp = .g(fontsize = .AXIS_FS, col = LABEL_COL)))
   }
   vellum::pop(scene)
 }
 
-# x-axis labels, centred under each gridline (gutter shares the x native scale).
-.draw_x_axis <- function(scene, cell, scales) {
-  scene <- vellum::push(scene, .vp(row = cell$row, col = cell$col, xscale = scales$x$domain))
-  for (i in seq_along(scales$x$breaks)) {
+# x-axis labels for `x_sc`, centred under each gridline.
+.draw_x_axis <- function(scene, row, col, x_sc) {
+  scene <- vellum::push(scene, .vp(row = row, col = col, xscale = x_sc$domain))
+  for (i in seq_along(x_sc$breaks)) {
     scene <- vellum::draw(scene, .text(
-      scales$x$labels[i], x = .na(scales$x$breaks[i]), y = .np(0.82),
+      x_sc$labels[i], x = .na(x_sc$breaks[i]), y = .np(0.82),
       just = c("centre", "top"), gp = .g(fontsize = .AXIS_FS, col = LABEL_COL)))
   }
   vellum::pop(scene)
 }
 
-.draw_y_title <- function(scene, cell, scales) {
-  scene <- vellum::push(scene, .vp(row = cell$row, col = cell$col))
-  scene <- vellum::draw(scene, .text(scales$y$name, rot = 90,
-                                     gp = .g(fontsize = .TITLE_FS)))
+# A facet strip: a filled background plus a centred label. `rot = 90` draws a
+# right-side (row) strip.
+.draw_strip <- function(scene, row, col, label, rot = 0, rowspan = 1, colspan = 1) {
+  scene <- vellum::push(scene, .vp(row = row, col = col, rowspan = rowspan, colspan = colspan))
+  scene <- vellum::draw(scene, .rect(gp = .g(fill = STRIP_BG, col = NA)))
+  scene <- vellum::draw(scene, .text(label, rot = rot, gp = .g(fontsize = .STRIP_FS, col = "grey10")))
   vellum::pop(scene)
 }
 
-.draw_x_title <- function(scene, cell, scales) {
-  scene <- vellum::push(scene, .vp(row = cell$row, col = cell$col))
-  scene <- vellum::draw(scene, .text(scales$x$name, gp = .g(fontsize = .TITLE_FS)))
+.draw_y_title <- function(scene, row, col, name, rowspan = 1) {
+  scene <- vellum::push(scene, .vp(row = row, col = col, rowspan = rowspan))
+  scene <- vellum::draw(scene, .text(name, rot = 90, gp = .g(fontsize = .TITLE_FS)))
+  vellum::pop(scene)
+}
+
+.draw_x_title <- function(scene, row, col, name, colspan = 1) {
+  scene <- vellum::push(scene, .vp(row = row, col = col, colspan = colspan))
+  scene <- vellum::draw(scene, .text(name, gp = .g(fontsize = .TITLE_FS)))
   vellum::pop(scene)
 }
 
@@ -89,7 +98,8 @@ LABEL_COL <- "grey20"
 # in its own 0..1 sub-viewport so the per-guide drawers share one coordinate
 # frame.
 .draw_legends <- function(scene, cell, guides) {
-  scene <- vellum::push(scene, .vp(row = cell$row, col = cell$col))
+  scene <- vellum::push(scene, .vp(row = cell$row, col = cell$col,
+                                   rowspan = cell$rowspan %||% 1))
   n <- length(guides)
   for (i in seq_along(guides)) {
     yc <- 1 - (i - 0.5) / n

@@ -1,38 +1,82 @@
-#' @include classes.R compile-resolve.R compile-train.R compile-layout.R compile-guides.R compile-marks.R
+#' @include classes.R compile-resolve.R compile-train.R compile-facet.R compile-layout.R compile-guides.R compile-marks.R
 NULL
 
-# The full compiler: spec -> resolve -> train -> layout -> guides -> marks ->
-# vellum_scene. This is the body of the as_vellum_scene() method.
+# The full compiler: spec -> build panels (facet split + resolve + train) ->
+# layout -> guides + strips + per-panel marks -> vellum_scene. This is the body
+# of the as_vellum_scene() method. The single-panel case is a 1x1 grid.
 .compile_plot <- function(spec) {
   if (!length(spec@layers)) {
     cli::cli_abort("Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}.")
   }
-  resolved <- .resolve_layers(spec)
-  scales <- .train_scales(spec, resolved)
-  guides <- .legend_guides(scales)
-  lay <- .build_layout(scales, guides)
-  cells <- lay$cells
+  built <- .build_panels(spec)
+  guides <- .legend_guides(built$scales)
+  lay <- .build_layout(built, guides)
 
   scene <- vellum::vl_scene(width = spec@width, height = spec@height, bg = "white")
   scene <- vellum::push(scene, .vp(layout = vellum::grid_layout(lay$widths, lay$heights)))
 
-  # panel: background + gridlines + marks, in native coordinates
-  pc <- cells$panel
-  scene <- vellum::push(scene, .vp(
-    row = pc$row, col = pc$col,
-    xscale = scales$x$domain, yscale = scales$y$domain, clip = TRUE, name = "panel"))
-  scene <- .draw_panel_bg(scene, scales)
-  scene <- .compile_marks(scene, resolved, scales)
-  scene <- vellum::pop(scene)
+  # panels: background + gridlines + marks, each in its own native scales
+  for (p in built$panels) {
+    psc <- list(x = p$x_sc, y = p$y_sc, color = built$scales$color, size = built$scales$size)
+    scene <- vellum::push(scene, .vp(
+      row = lay$panel_row[p$r], col = lay$panel_col[p$c],
+      xscale = p$x_sc$domain, yscale = p$y_sc$domain, clip = TRUE))
+    scene <- .draw_panel_bg(scene, p$x_sc, p$y_sc)
+    scene <- .compile_marks(scene, p$resolved, psc)
+    scene <- vellum::pop(scene)
+  }
 
-  # guides
-  scene <- .draw_y_axis(scene, cells$ylabel, scales)
-  scene <- .draw_x_axis(scene, cells$xlabel, scales)
-  scene <- .draw_y_title(scene, cells$ytitle, scales)
-  scene <- .draw_x_title(scene, cells$xtitle, scales)
-  if (!is.null(cells$legend)) scene <- .draw_legends(scene, cells$legend, guides)
+  # axes: per panel when scales are free, otherwise once down the left / along
+  # the bottom (drawn per panel row / column for alignment).
+  if (built$free_y) {
+    for (p in built$panels) scene <- .draw_y_axis(scene, lay$panel_row[p$r], lay$ylabels_col[p$c], p$y_sc)
+  } else {
+    for (r in seq_len(lay$R)) scene <- .draw_y_axis(scene, lay$panel_row[r], lay$ylabels_col[1], built$scales$y)
+  }
+  if (built$free_x) {
+    for (p in built$panels) scene <- .draw_x_axis(scene, lay$xlabels_row[p$r], lay$panel_col[p$c], p$x_sc)
+  } else {
+    for (cc in seq_len(lay$C)) scene <- .draw_x_axis(scene, lay$xlabels_row[1], lay$panel_col[cc], built$scales$x)
+  }
+
+  # strips
+  scene <- .draw_strips(scene, built, lay)
+
+  # titles span the panel block; legend spans the panel rows
+  scene <- .draw_y_title(scene, lay$panel_row[1], lay$ytitle_col, built$scales$y$name,
+                         rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1)
+  scene <- .draw_x_title(scene, lay$xtitle_row, lay$panel_col[1], built$scales$x$name,
+                         colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1)
+  if (!is.na(lay$legend_col)) {
+    scene <- .draw_legends(scene, list(row = 1, col = lay$legend_col, rowspan = length(lay$heights)), guides)
+  }
 
   vellum::pop(scene)
+}
+
+# Facet strips: wrap draws one above each panel; grid draws column strips along
+# the top and rotated row strips down the right.
+.draw_strips <- function(scene, built, lay) {
+  fa <- built$fa
+  if (fa$type == "wrap") {
+    labs <- fa$wrap_labels
+    for (i in seq_along(built$panels)) {
+      p <- built$panels[[i]]
+      scene <- .draw_strip(scene, lay$wrapstrip_row[p$r], lay$panel_col[p$c], labs[i])
+    }
+  } else if (fa$type == "grid") {
+    if (!is.null(fa$col_labels)) {
+      for (cc in seq_len(lay$C)) {
+        scene <- .draw_strip(scene, lay$colstrip_row, lay$panel_col[cc], fa$col_labels[cc])
+      }
+    }
+    if (!is.null(fa$row_labels)) {
+      for (r in seq_len(lay$R)) {
+        scene <- .draw_strip(scene, lay$panel_row[r], lay$rowstrip_col, fa$row_labels[r], rot = 90)
+      }
+    }
+  }
+  scene
 }
 
 # Register the compiler on vellum's seam generic. Bind the generic to a local

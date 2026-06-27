@@ -20,15 +20,21 @@ A single-panel grammar of graphics that compiles a declarative spec into a
   gridlines, and a legend area that **stacks multiple guides** — a colour legend
   (continuous gradient bar or discrete swatches) and a size legend.
 * Layering: multiple marks on one panel, with scales trained across all layers.
+* **Faceting**: `facet_wrap(~var)` and `facet_grid(rows ~ cols)` split the data
+  into a panel grid with facet strips and aligned, shared axes.
+* **Scale resolution** (`resolve_scale()` / `facet_*(scales=)`): position scales
+  are shared across panels by default; opt into `"free_x"` / `"free_y"` /
+  `"free"` (independent per panel) for per-panel ranges and axes.
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
 
 ## Not yet implemented (planned)
 
-Faceting / `concat` / `repeat`, the `resolve` (shared/independent) scale
-lattice, themes, reactivity, statistical transforms (binning, aggregation,
-smoothers), scene-space initializers (**bar dodging / stacking**, jitter,
-hexbin), `datashade` auto-marks, non-cartesian coordinates, the algebraic
-`*` / `+` layer combinators, and rich/plotmath axis labels. Spatial (`sf`) and
-network (`igraph`) layers are on the roadmap (see `_docs/DESIGN.md`).
+`concat` / `repeat` composition, themes, reactivity, statistical transforms
+(binning, aggregation, smoothers), scene-space initializers (**bar dodging /
+stacking**, jitter, hexbin), `datashade` auto-marks, non-cartesian coordinates,
+the algebraic `*` / `+` layer combinators, and rich/plotmath axis labels.
+Independent *non-position* (colour/size) scales across facets are not yet
+supported (those legends stay shared). Spatial (`sf`) and network (`igraph`)
+layers are on the roadmap (see `_docs/DESIGN.md`).

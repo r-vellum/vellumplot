@@ -44,6 +44,14 @@ NULL
     cli::cli_h3("scales")
     cli::cli_ul(vapply(x@scales, .format_scale, character(1)))
   }
+  if (!is.null(x@facet)) {
+    f <- x@facet
+    lab <- function(qs) paste(vapply(qs, function(q) rlang::as_label(rlang::quo_get_expr(q)), character(1)), collapse = " + ")
+    spec <- if (f@type == "wrap") paste0("wrap(", lab(f@cols), ")") else {
+      paste0("grid(", lab(f@rows), " ~ ", lab(f@cols), ")")
+    }
+    cli::cli_text("facet: {spec}")
+  }
   invisible(x)
 }
 

@@ -47,6 +47,17 @@ vplot(economics) |>
   render_plot("unemployment.png")
 ```
 
+Facet into a grid of panels (`facet_wrap()` / `facet_grid()`), with shared or
+free scales:
+
+
+``` r
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  facet_wrap(~cyl) |>
+  render_plot("by-cyl.png")
+```
+
 The spec is just data — inspect it before drawing:
 
 
@@ -70,6 +81,8 @@ vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
 * Colour scales (`scale_color_continuous()`, `scale_color_discrete()`) and a
   trained size scale, with stacked legends.
 * Trained axes, a panel with gridlines, and layering on one panel.
+* Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales, via the
+  `resolve_scale()` lattice.
 
-Faceting, statistical transforms, and spatial/network layers are on the roadmap
-— see `NEWS.md` and `_docs/DESIGN.md`.
+Statistical transforms and spatial/network layers are on the roadmap — see
+`NEWS.md` and `_docs/DESIGN.md`.
