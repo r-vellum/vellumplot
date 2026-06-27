@@ -5,9 +5,9 @@
 \alias{mark_smooth}
 \title{Statistical marks}
 \usage{
-mark_histogram(plot, ..., bins = 30, position = "stack")
+mark_histogram(plot, ..., bins = 30, position = "stack", blend = NULL)
 
-mark_smooth(plot, ..., method = "lm", se = TRUE, level = 0.95)
+mark_smooth(plot, ..., method = "lm", se = TRUE, level = 0.95, blend = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -18,6 +18,9 @@ mark_smooth(plot, ..., method = "lm", se = TRUE, level = 0.95)
 
 \item{position}{Position adjustment for the histogram bars (\code{"stack"},
 \code{"dodge"}, \code{"fill"}).}
+
+\item{blend}{Optional blend mode (CSS \code{mix-blend-mode}) for compositing the
+layer against the backdrop; see \code{\link[=mark_point]{mark_point()}}.}
 
 \item{method}{Smoothing method; \code{"lm"} (linear) for now.}
 

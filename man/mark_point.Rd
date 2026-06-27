@@ -13,14 +13,15 @@ mark_point(
   size = NULL,
   shape = NULL,
   position = "identity",
-  auto = FALSE
+  auto = FALSE,
+  blend = NULL
 )
 
-mark_line(plot, ...)
+mark_line(plot, ..., blend = NULL)
 
-mark_rule(plot, ...)
+mark_rule(plot, ..., blend = NULL)
 
-mark_bar(plot, ..., position = "stack")
+mark_bar(plot, ..., position = "stack", blend = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -38,6 +39,11 @@ may be a constant or a mapped expression. One of \code{"circle"}, \code{"square"
 \item{auto}{For \code{mark_point()}, when \code{TRUE} and the layer has very many rows,
 automatically render it as a datashaded density raster (see
 \code{\link[=mark_datashade]{mark_datashade()}}) instead of individual markers.}
+
+\item{blend}{Optional blend mode for compositing this layer against what is
+already drawn beneath it (the panel and earlier layers), one of the CSS
+\code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
+layer composites as one isolated group (not per element).}
 }
 \value{
 The modified \link{PlotSpec}.

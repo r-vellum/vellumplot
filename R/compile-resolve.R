@@ -27,7 +27,8 @@ NULL
   n <- if (length(values)) max(lengths(values)) else nrow(data)
   list(mark = layer@mark, values = values, types = types, after = after,
        params = layer@params, n = n,
-       stat = layer@stat, stat_params = layer@stat_params, position = layer@position)
+       stat = layer@stat, stat_params = layer@stat_params,
+       position = layer@position, blend = layer@blend)
 }
 
 # Resolve every layer of a spec against a given data frame (a facet panel's

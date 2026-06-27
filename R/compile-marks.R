@@ -206,19 +206,35 @@ NULL
   vellum::draw(scene, g)
 }
 
-# Compile every layer's marks into the (already panel-positioned) scene.
+.emit_layer <- function(scene, L, scales) {
+  switch(L$mark,
+    point = .emit_point(scene, L, scales),
+    line = .emit_line(scene, L, scales),
+    rule = .emit_rule(scene, L, scales),
+    bar = .emit_bar(scene, L, scales),
+    smooth = .emit_smooth(scene, L, scales),
+    datashade = .emit_datashade(scene, L, scales),
+    cli::cli_abort("Unknown mark {.val {L$mark}}.")
+  )
+}
+
+# Compile every layer's marks into the (already panel-positioned) scene. A layer
+# with a non-normal blend mode is wrapped in its own viewport(blend=) so its
+# whole content composites as one isolated group against the backdrop (the panel
+# and earlier layers); the wrapper carries the panel's scales so native
+# coordinates still resolve.
 .compile_marks <- function(scene, resolved, scales) {
   for (L in resolved) {
     if (!L$n) next # empty facet panel
-    scene <- switch(L$mark,
-      point = .emit_point(scene, L, scales),
-      line = .emit_line(scene, L, scales),
-      rule = .emit_rule(scene, L, scales),
-      bar = .emit_bar(scene, L, scales),
-      smooth = .emit_smooth(scene, L, scales),
-      datashade = .emit_datashade(scene, L, scales),
-      cli::cli_abort("Unknown mark {.val {L$mark}}.")
-    )
+    blend <- L$blend %||% "normal"
+    if (!identical(blend, "normal")) {
+      scene <- vellum::push(scene, vellum::viewport(
+        xscale = scales$x$domain, yscale = scales$y$domain, blend = blend))
+      scene <- .emit_layer(scene, L, scales)
+      scene <- vellum::pop(scene)
+    } else {
+      scene <- .emit_layer(scene, L, scales)
+    }
   }
   scene
 }

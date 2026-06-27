@@ -38,17 +38,34 @@ NULL
 #' @export
 after_stat <- function(x) x
 
+# The CSS mix-blend-mode set vellum's viewport(blend=) accepts.
+.BLEND_MODES <- c(
+  "normal", "multiply", "screen", "overlay", "darken", "lighten",
+  "color-dodge", "color-burn", "hard-light", "soft-light", "difference",
+  "exclusion", "hue", "saturation", "color", "luminosity"
+)
+
+.check_blend <- function(blend, call = rlang::caller_env()) {
+  if (is.null(blend)) return("normal")
+  modes <- .BLEND_MODES
+  if (!is.character(blend) || length(blend) != 1L || !blend %in% modes) {
+    cli::cli_abort("{.arg blend} must be one of {.or {.val {modes}}}.", call = call)
+  }
+  blend
+}
+
 # Capture `...` plus the explicit geometry args, append a LayerSpec.
 .add_layer <- function(plot, mark, dots, extra = list(),
                        stat = "identity", stat_params = list(),
-                       position = "identity") {
+                       position = "identity", blend = NULL) {
   quos <- c(dots, extra)
   split <- .split_encodings(quos)
   layer <- LayerSpec(
     mark = mark,
     encoding = split$encoding,
     params = split$params,
-    stat = stat, stat_params = stat_params, position = position
+    stat = stat, stat_params = stat_params, position = position,
+    blend = .check_blend(blend)
   )
   plot@layers <- c(plot@layers, list(layer))
   plot
@@ -73,30 +90,34 @@ after_stat <- function(x) x
 #' @param auto For `mark_point()`, when `TRUE` and the layer has very many rows,
 #'   automatically render it as a datashaded density raster (see
 #'   [mark_datashade()]) instead of individual markers.
+#' @param blend Optional blend mode for compositing this layer against what is
+#'   already drawn beneath it (the panel and earlier layers), one of the CSS
+#'   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The whole
+#'   layer composites as one isolated group (not per element).
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
 #' @export
 mark_point <- function(plot, ..., size = NULL, shape = NULL, position = "identity",
-                       auto = FALSE) {
+                       auto = FALSE, blend = NULL) {
   .check_plot(plot)
   .add_layer(plot, "point", rlang::enquos(...),
              rlang::enquos(size = size, shape = shape), position = position,
-             stat_params = list(auto = isTRUE(auto)))
+             stat_params = list(auto = isTRUE(auto)), blend = blend)
 }
 
 #' @rdname mark_point
 #' @export
-mark_line <- function(plot, ...) {
+mark_line <- function(plot, ..., blend = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "line", rlang::enquos(...))
+  .add_layer(plot, "line", rlang::enquos(...), blend = blend)
 }
 
 #' @rdname mark_point
 #' @export
-mark_rule <- function(plot, ...) {
+mark_rule <- function(plot, ..., blend = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "rule", rlang::enquos(...))
+  .add_layer(plot, "rule", rlang::enquos(...), blend = blend)
 }
 
 #' @rdname mark_point
@@ -106,9 +127,9 @@ mark_rule <- function(plot, ...) {
 #' stat). When `color`/`fill` is mapped, grouped bars are stacked by default; use
 #' `position = "dodge"` for side-by-side bars or `"fill"` to normalise to 1.
 #' @export
-mark_bar <- function(plot, ..., position = "stack") {
+mark_bar <- function(plot, ..., position = "stack", blend = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "bar", rlang::enquos(...), position = position)
+  .add_layer(plot, "bar", rlang::enquos(...), position = position, blend = blend)
 }
 
 #' Statistical marks
@@ -126,23 +147,25 @@ mark_bar <- function(plot, ..., position = "stack") {
 #' @param level Confidence level for the ribbon.
 #' @param position Position adjustment for the histogram bars (`"stack"`,
 #'   `"dodge"`, `"fill"`).
+#' @param blend Optional blend mode (CSS `mix-blend-mode`) for compositing the
+#'   layer against the backdrop; see [mark_point()].
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg)
 #' @export
-mark_histogram <- function(plot, ..., bins = 30, position = "stack") {
+mark_histogram <- function(plot, ..., bins = 30, position = "stack", blend = NULL) {
   .check_plot(plot)
   .add_layer(plot, "bar", rlang::enquos(...), stat = "bin",
-             stat_params = list(bins = bins), position = position)
+             stat_params = list(bins = bins), position = position, blend = blend)
 }
 
 #' @rdname mark_histogram
 #' @export
-mark_smooth <- function(plot, ..., method = "lm", se = TRUE, level = 0.95) {
+mark_smooth <- function(plot, ..., method = "lm", se = TRUE, level = 0.95, blend = NULL) {
   .check_plot(plot)
   .add_layer(plot, "smooth", rlang::enquos(...), stat = "smooth",
-             stat_params = list(method = method, se = se, level = level))
+             stat_params = list(method = method, se = se, level = level), blend = blend)
 }
 
 #' Datashade a large point cloud

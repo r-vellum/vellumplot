@@ -41,6 +41,10 @@ A single-panel grammar of graphics that compiles a declarative spec into a
   background).
 * **Composition**: `hconcat()`, `vconcat()`, and `concat()` arrange several
   independent plots (each with its own scales, axes, and legend) on a grid.
+* **Blend modes**: marks take a `blend =` argument (the CSS `mix-blend-mode` set
+  — `"multiply"`, `"screen"`, `"darken"`, ...). The layer composites as one
+  isolated group against the panel and earlier layers, e.g. two overlapping
+  translucent layers under `"multiply"`.
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
