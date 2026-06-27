@@ -7,13 +7,13 @@
 \alias{mark_bar}
 \title{Add marks to a plot}
 \usage{
-mark_point(plot, ..., size = NULL, shape = NULL)
+mark_point(plot, ..., size = NULL, shape = NULL, position = "identity")
 
 mark_line(plot, ...)
 
 mark_rule(plot, ...)
 
-mark_bar(plot, ...)
+mark_bar(plot, ..., position = "identity")
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -24,6 +24,9 @@ mark_bar(plot, ...)
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
 may be a constant or a mapped expression. One of \code{"circle"}, \code{"square"},
 \code{"triangle"}, \code{"diamond"}, \code{"plus"}, \code{"cross"}.}
+
+\item{position}{Position adjustment: \code{"identity"} (default), \code{"jitter"}
+(points), or \code{"stack"} / \code{"dodge"} / \code{"fill"} (bars).}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -36,11 +39,10 @@ column names (or expressions) captured with tidy evaluation, e.g.
 mappings.
 }
 \details{
-\code{mark_bar()} draws bars from a zero baseline. With a discrete \code{x} and an
-explicit \code{y} it uses the \code{y} values as bar heights; with a discrete \code{x} and
-no \code{y} it counts rows per category (per category and \code{color}/\code{fill}, if those
-are mapped). Grouped bars are drawn at the same position for now — dodging and
-stacking arrive with the transform stage.
+\code{mark_bar()} draws bars from a zero baseline. With an explicit \code{y} it uses the
+\code{y} values as heights; with no \code{y} it counts rows per category (the \code{"count"}
+stat). When \code{color}/\code{fill} is mapped, grouped bars are stacked by default; use
+\code{position = "dodge"} for side-by-side bars or \code{"fill"} to normalise to 1.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)

@@ -158,12 +158,16 @@ NULL
 }
 
 # Pool numeric values feeding a position axis: the channel itself plus, for
-# rule layers, the matching intercept (which may be a constant in `params`).
+# rule layers, the matching intercept (which may be a constant in `params`), and
+# any `<channel>min`/`<channel>max` extent (e.g. a smooth's confidence ribbon).
 .axis_pool <- function(resolved, channel, intercept) {
   vs <- list()
   for (L in resolved) {
     v <- L$values[[channel]] %||% L$values[[intercept]] %||% L$params[[intercept]]
     if (!is.null(v)) vs <- c(vs, list(v))
+    lo <- L$values[[paste0(channel, "min")]]
+    hi <- L$values[[paste0(channel, "max")]]
+    if (!is.null(lo)) vs <- c(vs, list(lo, hi))
   }
   if (length(vs)) vs else NULL
 }

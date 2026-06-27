@@ -10,19 +10,24 @@ channel <- S7::new_class(
   package = "vellumplot",
   properties = list(
     expr = S7::class_any, # a quosure (rlang)
-    type = S7::new_property(S7::class_character, default = "")
+    type = S7::new_property(S7::class_character, default = ""),
+    after = S7::new_property(S7::class_logical, default = FALSE) # after_stat() channel?
   )
 )
 
-# One drawing layer: a mark name, its encodings (named list<channel>), and any
-# constant aesthetics supplied as scalars (e.g. `size = 3`).
+# One drawing layer: a mark, its encodings (named list<channel>), constant
+# aesthetics (`params`), an optional statistical transform (`stat`, with its
+# own `stat_params`), and a position adjustment (`position`).
 LayerSpec <- S7::new_class(
   "LayerSpec",
   package = "vellumplot",
   properties = list(
-    mark = S7::class_character, # "point" | "line" | "rule" | "bar"
+    mark = S7::class_character, # "point" | "line" | "rule" | "bar" | "smooth" | "hex"
     encoding = S7::new_property(S7::class_list, default = list()),
-    params = S7::new_property(S7::class_list, default = list())
+    params = S7::new_property(S7::class_list, default = list()),
+    stat = S7::new_property(S7::class_character, default = "identity"),
+    stat_params = S7::new_property(S7::class_list, default = list()),
+    position = S7::new_property(S7::class_character, default = "identity")
   )
 )
 

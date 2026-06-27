@@ -37,9 +37,11 @@ test_that("a bar with no y counts rows per category", {
   expect_identical(sc$y$name, "count")
 })
 
-test_that("a continuous-x bar without y is an error (binning not available)", {
-  p <- vplot(data.frame(x = 1:3)) |> mark_bar(x = x)
-  expect_error(vellum::as_vellum_scene(p), "continuous x")
+test_that("a bar with no y counts per unique x value (stat = count)", {
+  p <- vplot(data.frame(x = c(1, 1, 2, 3))) |> mark_bar(x = x)
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_setequal(as.numeric(r$values$x), c(1, 2, 3))
+  expect_equal(r$values$y[match("1", as.character(r$values$x))], 2)
 })
 
 test_that("a mapped size trains a size scale and is used by points", {

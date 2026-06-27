@@ -134,14 +134,44 @@ NULL
   scene
 }
 
+# A fitted smooth: a confidence ribbon (polygon) under a fitted line, one per
+# colour group.
+.emit_smooth <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  col <- rep_len(.aes_colour(L, scales, "#3366CC"), n)
+  has_se <- !is.null(L$values$ymin)
+  ymin <- if (has_se) scales$y$map(L$values$ymin)
+  ymax <- if (has_se) scales$y$map(L$values$ymax)
+
+  for (idx in .style_groups(n, list(col = col))) {
+    o <- idx[order(xn[idx])]
+    cc <- col[idx[1]]
+    if (has_se) {
+      px <- c(xn[o], rev(xn[o]))
+      py <- c(ymin[o], rev(ymax[o]))
+      scene <- vellum::draw(scene, vellum::polygon_grob(
+        vellum::unit(px, "native"), vellum::unit(py, "native"),
+        gp = vellum::gpar(fill = cc, col = NA, alpha = 0.25)))
+    }
+    scene <- vellum::draw(scene, vellum::lines_grob(
+      vellum::unit(xn[o], "native"), vellum::unit(yn[o], "native"),
+      gp = vellum::gpar(col = cc, lwd = 1.5)))
+  }
+  scene
+}
+
 # Compile every layer's marks into the (already panel-positioned) scene.
 .compile_marks <- function(scene, resolved, scales) {
   for (L in resolved) {
+    if (!L$n) next # empty facet panel
     scene <- switch(L$mark,
       point = .emit_point(scene, L, scales),
       line = .emit_line(scene, L, scales),
       rule = .emit_rule(scene, L, scales),
       bar = .emit_bar(scene, L, scales),
+      smooth = .emit_smooth(scene, L, scales),
       cli::cli_abort("Unknown mark {.val {L$mark}}.")
     )
   }
