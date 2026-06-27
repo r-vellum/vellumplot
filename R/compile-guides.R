@@ -15,54 +15,58 @@ NULL
 .mm <- function(v) vellum::unit(v, "mm")
 .g <- function(...) vellum::gpar(...)
 
-PANEL_BG <- "grey92"
-GRID_COL <- "white"
-LABEL_COL <- "grey20"
-STRIP_BG <- "grey85"
+# A colour that may be NA ("draw nothing").
+.has_col <- function(x) !is.null(x) && !is.na(x)
 
 # Panel background + gridlines, drawn while the scene is positioned inside the
 # panel viewport (so `"native"` resolves against the panel's trained scales).
-.draw_panel_bg <- function(scene, x_sc, y_sc) {
-  scene <- vellum::draw(scene, .rect(gp = .g(fill = PANEL_BG, col = NA)))
-  for (b in x_sc$breaks) {
-    scene <- vellum::draw(scene, .seg(.na(b), .np(0), .na(b), .np(1),
-                                      gp = .g(col = GRID_COL, lwd = 1)))
+.draw_panel_bg <- function(scene, x_sc, y_sc, thm) {
+  if (.has_col(thm$panel_bg)) {
+    scene <- vellum::draw(scene, .rect(gp = .g(fill = thm$panel_bg, col = NA)))
   }
-  for (b in y_sc$breaks) {
-    scene <- vellum::draw(scene, .seg(.np(0), .na(b), .np(1), .na(b),
-                                      gp = .g(col = GRID_COL, lwd = 1)))
+  if (.has_col(thm$grid_col)) {
+    for (b in x_sc$breaks) {
+      scene <- vellum::draw(scene, .seg(.na(b), .np(0), .na(b), .np(1),
+                                        gp = .g(col = thm$grid_col, lwd = 1)))
+    }
+    for (b in y_sc$breaks) {
+      scene <- vellum::draw(scene, .seg(.np(0), .na(b), .np(1), .na(b),
+                                        gp = .g(col = thm$grid_col, lwd = 1)))
+    }
   }
   scene
 }
 
 # y-axis labels for `y_sc`, right-aligned in the gutter cell and aligned to the
 # gridlines (the gutter viewport shares the panel's y native scale).
-.draw_y_axis <- function(scene, row, col, y_sc) {
+.draw_y_axis <- function(scene, row, col, y_sc, thm) {
   scene <- vellum::push(scene, .vp(row = row, col = col, yscale = y_sc$domain))
   for (i in seq_along(y_sc$breaks)) {
     scene <- vellum::draw(scene, .text(
       y_sc$labels[i], x = .np(0.96), y = .na(y_sc$breaks[i]),
-      just = c("right", "centre"), gp = .g(fontsize = .AXIS_FS, col = LABEL_COL)))
+      just = c("right", "centre"), gp = .g(fontsize = .AXIS_FS, col = thm$label_col)))
   }
   vellum::pop(scene)
 }
 
 # x-axis labels for `x_sc`, centred under each gridline.
-.draw_x_axis <- function(scene, row, col, x_sc) {
+.draw_x_axis <- function(scene, row, col, x_sc, thm) {
   scene <- vellum::push(scene, .vp(row = row, col = col, xscale = x_sc$domain))
   for (i in seq_along(x_sc$breaks)) {
     scene <- vellum::draw(scene, .text(
       x_sc$labels[i], x = .na(x_sc$breaks[i]), y = .np(0.82),
-      just = c("centre", "top"), gp = .g(fontsize = .AXIS_FS, col = LABEL_COL)))
+      just = c("centre", "top"), gp = .g(fontsize = .AXIS_FS, col = thm$label_col)))
   }
   vellum::pop(scene)
 }
 
-# A facet strip: a filled background plus a centred label. `rot = 90` draws a
-# right-side (row) strip.
-.draw_strip <- function(scene, row, col, label, rot = 0, rowspan = 1, colspan = 1) {
+# A facet strip: an optional filled background plus a centred label. `rot = 90`
+# draws a right-side (row) strip.
+.draw_strip <- function(scene, row, col, label, thm, rot = 0, rowspan = 1, colspan = 1) {
   scene <- vellum::push(scene, .vp(row = row, col = col, rowspan = rowspan, colspan = colspan))
-  scene <- vellum::draw(scene, .rect(gp = .g(fill = STRIP_BG, col = NA)))
+  if (.has_col(thm$strip_bg)) {
+    scene <- vellum::draw(scene, .rect(gp = .g(fill = thm$strip_bg, col = NA)))
+  }
   scene <- vellum::draw(scene, .text(label, rot = rot, gp = .g(fontsize = .STRIP_FS, col = "grey10")))
   vellum::pop(scene)
 }
@@ -97,7 +101,7 @@ STRIP_BG <- "grey85"
 # Stack the guides vertically in the legend cell: each gets an equal slot, drawn
 # in its own 0..1 sub-viewport so the per-guide drawers share one coordinate
 # frame.
-.draw_legends <- function(scene, cell, guides) {
+.draw_legends <- function(scene, cell, guides, thm) {
   scene <- vellum::push(scene, .vp(row = cell$row, col = cell$col,
                                    rowspan = cell$rowspan %||% 1))
   n <- length(guides)
@@ -106,9 +110,9 @@ STRIP_BG <- "grey85"
     scene <- vellum::push(scene, .vp(y = .np(yc), height = .np(1 / n)))
     g <- guides[[i]]
     scene <- switch(g$kind,
-      color_continuous = .guide_color_continuous(scene, g$sc),
-      color_discrete = .guide_color_discrete(scene, g$sc),
-      size = .guide_size(scene, g$sc)
+      color_continuous = .guide_color_continuous(scene, g$sc, thm),
+      color_discrete = .guide_color_discrete(scene, g$sc, thm),
+      size = .guide_size(scene, g$sc, thm)
     )
     scene <- vellum::pop(scene)
   }
@@ -120,7 +124,7 @@ STRIP_BG <- "grey85"
                             just = c("left", "centre"), gp = .g(fontsize = .LEGEND_TITLE_FS)))
 }
 
-.guide_color_continuous <- function(scene, cl) {
+.guide_color_continuous <- function(scene, cl, thm) {
   scene <- .guide_title(scene, cl$name)
   y_lo <- 0.12
   y_hi <- 0.72
@@ -136,23 +140,23 @@ STRIP_BG <- "grey85"
     yy <- y_lo + frac * (y_hi - y_lo)
     scene <- vellum::draw(scene, .text(
       cl$legend_labels[i], x = .np(bar_x + bar_w / 2 + 0.06), y = .np(yy),
-      just = c("left", "centre"), gp = .g(fontsize = .LEGEND_FS, col = LABEL_COL)))
+      just = c("left", "centre"), gp = .g(fontsize = .LEGEND_FS, col = thm$label_col)))
   }
   scene
 }
 
-.guide_color_discrete <- function(scene, cl) {
+.guide_color_discrete <- function(scene, cl, thm) {
   scene <- .guide_title(scene, cl$name)
-  .draw_key_rows(scene, cl$levels, function(scene, yy, i) {
+  .draw_key_rows(scene, cl$levels, thm, function(scene, yy, i) {
     vellum::draw(scene, .rect(
       x = .np(0.14), y = .np(yy), width = .mm(.LEGEND_SWATCH_MM), height = .mm(.LEGEND_SWATCH_MM),
       gp = .g(fill = cl$colors[i], col = NA)))
   })
 }
 
-.guide_size <- function(scene, sc) {
+.guide_size <- function(scene, sc, thm) {
   scene <- .guide_title(scene, sc$name)
-  .draw_key_rows(scene, sc$legend_labels, function(scene, yy, i) {
+  .draw_key_rows(scene, sc$legend_labels, thm, function(scene, yy, i) {
     vellum::draw(scene, .pts(
       .np(0.16), .np(yy), size = .mm(sc$legend_sizes[i]), shape = "circle",
       gp = .g(fill = "grey35", col = "grey35")))
@@ -161,7 +165,7 @@ STRIP_BG <- "grey85"
 
 # Shared key-row layout for discrete/size legends: a column of `keys` (drawn by
 # `draw_key(scene, y, i)`) with labels to the right.
-.draw_key_rows <- function(scene, labels, draw_key) {
+.draw_key_rows <- function(scene, labels, thm, draw_key) {
   k <- length(labels)
   top <- 0.78
   step <- min(0.14, top / max(k, 1))
@@ -170,7 +174,7 @@ STRIP_BG <- "grey85"
     scene <- draw_key(scene, yy, i)
     scene <- vellum::draw(scene, .text(
       labels[i], x = .np(0.32), y = .np(yy), just = c("left", "centre"),
-      gp = .g(fontsize = .LEGEND_FS, col = LABEL_COL)))
+      gp = .g(fontsize = .LEGEND_FS, col = thm$label_col)))
   }
   scene
 }

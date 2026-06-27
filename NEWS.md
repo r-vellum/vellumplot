@@ -36,17 +36,22 @@ A single-panel grammar of graphics that compiles a declarative spec into a
   density raster (via `vellum::datashade()`) that fills the panel — cost
   independent of point count. `mark_point(auto = TRUE)` switches to this
   automatically above ~50k rows.
+* **Themes**: `theme_gray()` (default), `theme_minimal()`, `theme_bw()`, and
+  `set_theme()` for ad-hoc overrides (panel background, gridlines, text, strip
+  background).
+* **Composition**: `hconcat()`, `vconcat()`, and `concat()` arrange several
+  independent plots (each with its own scales, axes, and legend) on a grid.
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
 
 ## Not yet implemented (planned)
 
-`concat` / `repeat` composition, themes, reactivity, further statistical
-transforms (aggregation, density, 2-D contours), hexagonal binning (`hexbin` —
-deferred until display-aspect locking lands, see `_docs/DESIGN.md` §3.2),
-`datashade` auto-marks, non-cartesian coordinates, the algebraic `*` / `+` layer
-combinators, and rich/plotmath axis labels.
+`repeat` composition, reactivity, further statistical transforms (aggregation,
+density, 2-D contours), hexagonal binning (`hexbin` — deferred until
+display-aspect locking lands, see `_docs/DESIGN.md` §3.2), non-cartesian
+coordinates, the algebraic `*` / `+` layer combinators, independent
+*non-position* scales across facets, and rich/plotmath axis labels.
 Independent *non-position* (colour/size) scales across facets are not yet
 supported (those legends stay shared). Spatial (`sf`) and network (`igraph`)
 layers are on the roadmap (see `_docs/DESIGN.md`).
