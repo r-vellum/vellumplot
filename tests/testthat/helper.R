@@ -9,9 +9,9 @@ render_px <- function(plot) {
 
 # Count pixels whose RGB is within `tol` of a target (each channel 0..1).
 count_near <- function(img, rgb, tol = 0.06) {
-  r <- img[, , 1]
-  g <- img[, , 2]
-  b <- img[, , 3]
+  r <- img[,, 1]
+  g <- img[,, 2]
+  b <- img[,, 3]
   sum(abs(r - rgb[1]) < tol & abs(g - rgb[2]) < tol & abs(b - rgb[3]) < tol)
 }
 

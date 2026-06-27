@@ -29,7 +29,11 @@ test_that("continuous position scales train range + expansion + breaks", {
   # expanded domain brackets the data range by ~5% each side
   expect_lt(sc$x$domain[1], rng[1])
   expect_gt(sc$x$domain[2], rng[2])
-  expect_equal(sc$x$domain, scales::expand_range(rng, mul = 0.05), tolerance = 1e-8)
+  expect_equal(
+    sc$x$domain,
+    scales::expand_range(rng, mul = 0.05),
+    tolerance = 1e-8
+  )
   # breaks lie within the data range
   expect_true(all(sc$x$breaks >= rng[1] & sc$x$breaks <= rng[2]))
   expect_identical(sc$x$name, "wt")
@@ -44,7 +48,9 @@ test_that("scales are trained across all layers", {
 })
 
 test_that("a continuous colour scale quantizes to <=256 style groups", {
-  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp) |> scale_color_continuous()
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_continuous()
   sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
   expect_identical(sc$color$kind, "continuous")
   many <- sc$color$map(seq(min(mtcars$hp), max(mtcars$hp), length.out = 1000))

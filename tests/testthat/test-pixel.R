@@ -33,11 +33,13 @@ test_that("a discrete colour encoding paints each category colour", {
 })
 
 test_that("a continuous colour encoding produces a range of hues", {
-  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp) |> scale_color_continuous()
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_continuous()
   img <- render_px(p)
-  r <- img[, , 1]
-  g <- img[, , 2]
-  b <- img[, , 3]
+  r <- img[,, 1]
+  g <- img[,, 2]
+  b <- img[,, 3]
   # saturated pixels (not white / grey / black): meaningful channel spread
   sat <- pmax(r, g, b) - pmin(r, g, b) > 0.12
   keys <- unique(paste(round(r[sat], 1), round(g[sat], 1), round(b[sat], 1)))

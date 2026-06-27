@@ -27,14 +27,20 @@ FacetSpec <- S7::new_class(
 
 # Quosures for one side of a faceting formula (`.` or empty -> none).
 .side_quos <- function(side, env) {
-  if (is.null(side) || identical(side, quote(.))) return(list())
+  if (is.null(side) || identical(side, quote(.))) {
+    return(list())
+  }
   lapply(.split_plus(side), function(t) rlang::new_quosure(t, env))
 }
 
 # Translate a `scales=` argument into the resolve lattice (free => independent).
 .apply_free <- function(plot, scales) {
-  if (scales %in% c("free_x", "free")) plot@resolve[["x"]] <- "independent"
-  if (scales %in% c("free_y", "free")) plot@resolve[["y"]] <- "independent"
+  if (scales %in% c("free_x", "free")) {
+    plot@resolve[["x"]] <- "independent"
+  }
+  if (scales %in% c("free_y", "free")) {
+    plot@resolve[["y"]] <- "independent"
+  }
   plot
 }
 
@@ -57,22 +63,35 @@ FacetSpec <- S7::new_class(
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_grid(am ~ cyl)
 #' @export
-facet_wrap <- function(plot, facets, ncol = NULL, nrow = NULL,
-                       scales = c("fixed", "free_x", "free_y", "free")) {
+facet_wrap <- function(
+  plot,
+  facets,
+  ncol = NULL,
+  nrow = NULL,
+  scales = c("fixed", "free_x", "free_y", "free")
+) {
   .check_plot(plot)
   scales <- match.arg(scales)
   if (!rlang::is_formula(facets)) {
     cli::cli_abort("{.arg facets} must be a formula like {.code ~ cyl}.")
   }
   cols <- .side_quos(rlang::f_rhs(facets), environment(facets))
-  if (!length(cols)) cli::cli_abort("{.fn facet_wrap} needs at least one variable, e.g. {.code ~ cyl}.")
+  if (!length(cols)) {
+    cli::cli_abort(
+      "{.fn facet_wrap} needs at least one variable, e.g. {.code ~ cyl}."
+    )
+  }
   plot@facet <- FacetSpec(type = "wrap", cols = cols, ncol = ncol, nrow = nrow)
   .apply_free(plot, scales)
 }
 
 #' @rdname facet_wrap
 #' @export
-facet_grid <- function(plot, facets, scales = c("fixed", "free_x", "free_y", "free")) {
+facet_grid <- function(
+  plot,
+  facets,
+  scales = c("fixed", "free_x", "free_y", "free")
+) {
   .check_plot(plot)
   scales <- match.arg(scales)
   if (!rlang::is_formula(facets)) {
@@ -82,7 +101,9 @@ facet_grid <- function(plot, facets, scales = c("fixed", "free_x", "free_y", "fr
   rows <- .side_quos(rlang::f_lhs(facets), env)
   cols <- .side_quos(rlang::f_rhs(facets), env)
   if (!length(rows) && !length(cols)) {
-    cli::cli_abort("{.fn facet_grid} needs a variable on at least one side of the formula.")
+    cli::cli_abort(
+      "{.fn facet_grid} needs a variable on at least one side of the formula."
+    )
   }
   plot@facet <- FacetSpec(type = "grid", rows = rows, cols = cols)
   .apply_free(plot, scales)
@@ -113,4 +134,6 @@ resolve_scale <- function(plot, ...) {
 }
 
 # The resolution for an aesthetic ("shared" unless set otherwise).
-.resolve_for <- function(spec, aesthetic) spec@resolve[[aesthetic]] %||% "shared"
+.resolve_for <- function(spec, aesthetic) {
+  spec@resolve[[aesthetic]] %||% "shared"
+}

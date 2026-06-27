@@ -20,6 +20,9 @@ test_that("size and shape do NOT force a style split", {
 })
 
 test_that("alpha forces a split", {
-  g <- vellumplot:::.style_groups(3, list(col = rep("red", 3), alpha = c(1, 1, 0.5)))
+  g <- vellumplot:::.style_groups(
+    3,
+    list(col = rep("red", 3), alpha = c(1, 1, 0.5))
+  )
   expect_length(g, 2)
 })

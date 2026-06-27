@@ -18,7 +18,9 @@ NULL
 #' @export
 vplot <- function(data, width = 6, height = 4) {
   if (!is.data.frame(data)) {
-    cli::cli_abort("{.arg data} must be a data frame, not {.obj_type_friendly {data}}.")
+    cli::cli_abort(
+      "{.arg data} must be a data frame, not {.obj_type_friendly {data}}."
+    )
   }
   PlotSpec(
     data = data,

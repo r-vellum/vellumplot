@@ -17,23 +17,34 @@ NULL
     character(1)
   )
   out <- paste0("mark_", layer@mark, "(", paste(enc, collapse = ", "), ")")
-  if (length(par)) out <- paste0(out, "  [", paste(par, collapse = ", "), "]")
+  if (length(par)) {
+    out <- paste0(out, "  [", paste(par, collapse = ", "), "]")
+  }
   out
 }
 
 .format_scale <- function(s) {
   bits <- paste0(s@aesthetic, ": ", s@type)
   if (!is.null(s@domain)) {
-    bits <- paste0(bits, " domain[", paste(format(s@domain), collapse = ", "), "]")
+    bits <- paste0(
+      bits,
+      " domain[",
+      paste(format(s@domain), collapse = ", "),
+      "]"
+    )
   }
-  if (!is.null(s@name)) bits <- paste0(bits, " name=", s@name)
+  if (!is.null(s@name)) {
+    bits <- paste0(bits, " name=", s@name)
+  }
   bits
 }
 
 # Print a readable tree: data dims, page size, layers, declared scales.
 .print_plotspec <- function(x, ...) {
   d <- x@data
-  cli::cli_text("{.cls PlotSpec} {.field {nrow(d)}}x{.field {ncol(d)}} ({ncol(d)} column{?s}), page {x@width}x{x@height} in")
+  cli::cli_text(
+    "{.cls PlotSpec} {.field {nrow(d)}}x{.field {ncol(d)}} ({ncol(d)} column{?s}), page {x@width}x{x@height} in"
+  )
   if (length(x@layers)) {
     cli::cli_h3("layers")
     cli::cli_ul(vapply(x@layers, .format_layer, character(1)))
@@ -46,8 +57,19 @@ NULL
   }
   if (!is.null(x@facet)) {
     f <- x@facet
-    lab <- function(qs) paste(vapply(qs, function(q) rlang::as_label(rlang::quo_get_expr(q)), character(1)), collapse = " + ")
-    spec <- if (f@type == "wrap") paste0("wrap(", lab(f@cols), ")") else {
+    lab <- function(qs) {
+      paste(
+        vapply(
+          qs,
+          function(q) rlang::as_label(rlang::quo_get_expr(q)),
+          character(1)
+        ),
+        collapse = " + "
+      )
+    }
+    spec <- if (f@type == "wrap") {
+      paste0("wrap(", lab(f@cols), ")")
+    } else {
       paste0("grid(", lab(f@rows), " ~ ", lab(f@cols), ")")
     }
     cli::cli_text("facet: {spec}")

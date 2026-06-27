@@ -31,9 +31,14 @@ test_that("scalar aesthetics become params, mapped ones become channels", {
 })
 
 test_that("multiple marks stack into multiple layers", {
-  p <- vplot(mtcars) |> mark_line(x = wt, y = mpg) |> mark_point(x = wt, y = mpg)
+  p <- vplot(mtcars) |>
+    mark_line(x = wt, y = mpg) |>
+    mark_point(x = wt, y = mpg)
   expect_length(p@layers, 2)
-  expect_identical(vapply(p@layers, function(L) L@mark, character(1)), c("line", "point"))
+  expect_identical(
+    vapply(p@layers, function(L) L@mark, character(1)),
+    c("line", "point")
+  )
 })
 
 test_that("scale_*() appends and overrides last-wins per aesthetic", {
@@ -54,7 +59,9 @@ test_that("channel type is inferred at resolve time", {
 })
 
 test_that("print() shows a readable tree", {
-  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp) |> scale_color_continuous()
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_continuous()
   out <- cli::cli_fmt(print(p))
   expect_true(any(grepl("PlotSpec", out)))
   expect_true(any(grepl("mark_point", out)))
@@ -65,5 +72,8 @@ test_that("the spec round-trips through serialize()", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
   p2 <- unserialize(serialize(p, NULL))
   expect_length(p2@layers, 1)
-  expect_identical(vellumplot:::.channel_label(p2@layers[[1]]@encoding$y), "mpg")
+  expect_identical(
+    vellumplot:::.channel_label(p2@layers[[1]]@encoding$y),
+    "mpg"
+  )
 })

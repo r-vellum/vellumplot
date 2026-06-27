@@ -28,24 +28,42 @@ NULL
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_continuous(limits = c(0, 6))
 #' @export
-scale_x_continuous <- function(plot, limits = NULL, trans = "identity", name = NULL) {
+scale_x_continuous <- function(
+  plot,
+  limits = NULL,
+  trans = "identity",
+  name = NULL
+) {
   .check_plot(plot)
-  .add_scale(plot, ScaleSpec(
-    aesthetic = "x",
-    type = if (identical(trans, "log10")) "log10" else "continuous",
-    domain = limits, name = name
-  ))
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "x",
+      type = if (identical(trans, "log10")) "log10" else "continuous",
+      domain = limits,
+      name = name
+    )
+  )
 }
 
 #' @rdname scale_x_continuous
 #' @export
-scale_y_continuous <- function(plot, limits = NULL, trans = "identity", name = NULL) {
+scale_y_continuous <- function(
+  plot,
+  limits = NULL,
+  trans = "identity",
+  name = NULL
+) {
   .check_plot(plot)
-  .add_scale(plot, ScaleSpec(
-    aesthetic = "y",
-    type = if (identical(trans, "log10")) "log10" else "continuous",
-    domain = limits, name = name
-  ))
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "y",
+      type = if (identical(trans, "log10")) "log10" else "continuous",
+      domain = limits,
+      name = name
+    )
+  )
 }
 
 #' Colour scales
@@ -65,16 +83,28 @@ scale_y_continuous <- function(plot, limits = NULL, trans = "identity", name = N
 #' @export
 scale_color_continuous <- function(plot, palette = NULL, name = NULL) {
   .check_plot(plot)
-  .add_scale(plot, ScaleSpec(
-    aesthetic = "color", type = "continuous", palette = palette, name = name
-  ))
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "color",
+      type = "continuous",
+      palette = palette,
+      name = name
+    )
+  )
 }
 
 #' @rdname scale_color_continuous
 #' @export
 scale_color_discrete <- function(plot, palette = NULL, name = NULL) {
   .check_plot(plot)
-  .add_scale(plot, ScaleSpec(
-    aesthetic = "color", type = "discrete", palette = palette, name = name
-  ))
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "color",
+      type = "discrete",
+      palette = palette,
+      name = name
+    )
+  )
 }

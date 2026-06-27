@@ -16,10 +16,14 @@ PlotComposition <- S7::new_class(
 )
 
 .collect_plots <- function(dots) {
-  if (!length(dots)) cli::cli_abort("Provide at least one plot to arrange.")
+  if (!length(dots)) {
+    cli::cli_abort("Provide at least one plot to arrange.")
+  }
   for (p in dots) {
     if (!S7::S7_inherits(p, PlotSpec)) {
-      cli::cli_abort("Composition expects {.cls PlotSpec} objects from {.fn vplot}.")
+      cli::cli_abort(
+        "Composition expects {.cls PlotSpec} objects from {.fn vplot}."
+      )
     }
   }
   dots
@@ -44,16 +48,25 @@ PlotComposition <- S7::new_class(
 concat <- function(..., ncol = NULL, nrow = NULL, width = NULL, height = NULL) {
   plots <- .collect_plots(list(...))
   n <- length(plots)
-  if (is.null(ncol) && is.null(nrow)) ncol <- ceiling(sqrt(n))
-  if (is.null(ncol)) ncol <- ceiling(n / nrow)
-  if (is.null(nrow)) nrow <- ceiling(n / ncol)
+  if (is.null(ncol) && is.null(nrow)) {
+    ncol <- ceiling(sqrt(n))
+  }
+  if (is.null(ncol)) {
+    ncol <- ceiling(n / nrow)
+  }
+  if (is.null(nrow)) {
+    nrow <- ceiling(n / ncol)
+  }
   ncol <- as.double(ncol)
   nrow <- as.double(nrow)
   w0 <- plots[[1]]@width
   h0 <- plots[[1]]@height
   PlotComposition(
-    plots = plots, nrow = nrow, ncol = ncol,
-    width = width %||% (ncol * w0), height = height %||% (nrow * h0)
+    plots = plots,
+    nrow = nrow,
+    ncol = ncol,
+    width = width %||% (ncol * w0),
+    height = height %||% (nrow * h0)
   )
 }
 
@@ -75,9 +88,18 @@ vconcat <- function(..., width = NULL) {
 .compile_composition <- function(comp) {
   ncol <- comp@ncol
   nrow <- comp@nrow
-  nulls <- function(k) do.call(c, replicate(k, vellum::unit(1, "null"), simplify = FALSE))
-  scene <- vellum::vl_scene(width = comp@width, height = comp@height, bg = "white")
-  scene <- vellum::push(scene, vellum::viewport(layout = vellum::grid_layout(nulls(ncol), nulls(nrow))))
+  nulls <- function(k) {
+    do.call(c, replicate(k, vellum::unit(1, "null"), simplify = FALSE))
+  }
+  scene <- vellum::vl_scene(
+    width = comp@width,
+    height = comp@height,
+    bg = "white"
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(layout = vellum::grid_layout(nulls(ncol), nulls(nrow)))
+  )
   for (i in seq_along(comp@plots)) {
     r <- (i - 1L) %/% ncol + 1L
     cc <- (i - 1L) %% ncol + 1L
@@ -88,9 +110,13 @@ vconcat <- function(..., width = NULL) {
   vellum::pop(scene)
 }
 
-S7::method(.as_vellum_scene, PlotComposition) <- function(x, ...) .compile_composition(x)
+S7::method(.as_vellum_scene, PlotComposition) <- function(x, ...) {
+  .compile_composition(x)
+}
 
 S7::method(print, PlotComposition) <- function(x, ...) {
-  cli::cli_text("{.cls PlotComposition} {length(x@plots)} plot{?s} in a {x@nrow}x{x@ncol} grid")
+  cli::cli_text(
+    "{.cls PlotComposition} {length(x@plots)} plot{?s} in a {x@nrow}x{x@ncol} grid"
+  )
   invisible(x)
 }

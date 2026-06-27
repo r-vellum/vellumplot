@@ -2,13 +2,19 @@
 # isolated group against the backdrop.
 
 test_that("blend defaults to normal and is recorded", {
-  expect_identical((vplot(mtcars) |> mark_point(x = wt, y = mpg))@layers[[1]]@blend, "normal")
+  expect_identical(
+    (vplot(mtcars) |> mark_point(x = wt, y = mpg))@layers[[1]]@blend,
+    "normal"
+  )
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, blend = "multiply")
   expect_identical(p@layers[[1]]@blend, "multiply")
 })
 
 test_that("an unknown blend mode errors at build time", {
-  expect_error(vplot(mtcars) |> mark_point(x = wt, y = mpg, blend = "glow"), "blend")
+  expect_error(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg, blend = "glow"),
+    "blend"
+  )
 })
 
 test_that("multiply compositing of two overlapping layers darkens the overlap", {

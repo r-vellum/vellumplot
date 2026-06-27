@@ -17,7 +17,9 @@ NULL
 # The longest string in a vector (by character count); "" for an empty vector.
 .longest <- function(x) {
   x <- x[nzchar(x)]
-  if (!length(x)) return("0")
+  if (!length(x)) {
+    return("0")
+  }
   x[which.max(nchar(x))]
 }
 
@@ -81,14 +83,20 @@ NULL
   # Gutter sizes (measured from the widest labels across all panels).
   y_labs <- unique(unlist(lapply(built$panels, function(p) p$y_sc$labels)))
   x_labs <- unique(unlist(lapply(built$panels, function(p) p$x_sc$labels)))
-  yt <- vellum::grobwidth(.txt(sy$name, .TITLE_FS, rot = 90)) + vellum::unit(.PAD_MM, "mm")
-  yl <- vellum::grobwidth(.txt(.longest(y_labs), .AXIS_FS)) + vellum::unit(.TICK_MM + .PAD_MM, "mm")
-  xl <- vellum::grobheight(.txt(.longest(x_labs), .AXIS_FS)) + vellum::unit(.TICK_MM + .PAD_MM, "mm")
-  xt <- vellum::grobheight(.txt(sx$name, .TITLE_FS)) + vellum::unit(.PAD_MM, "mm")
-  strip <- vellum::grobheight(.txt("Ag", .STRIP_FS)) + vellum::unit(2 * .PAD_MM, "mm")
+  yt <- vellum::grobwidth(.txt(sy$name, .TITLE_FS, rot = 90)) +
+    vellum::unit(.PAD_MM, "mm")
+  yl <- vellum::grobwidth(.txt(.longest(y_labs), .AXIS_FS)) +
+    vellum::unit(.TICK_MM + .PAD_MM, "mm")
+  xl <- vellum::grobheight(.txt(.longest(x_labs), .AXIS_FS)) +
+    vellum::unit(.TICK_MM + .PAD_MM, "mm")
+  xt <- vellum::grobheight(.txt(sx$name, .TITLE_FS)) +
+    vellum::unit(.PAD_MM, "mm")
+  strip <- vellum::grobheight(.txt("Ag", .STRIP_FS)) +
+    vellum::unit(2 * .PAD_MM, "mm")
   gap <- vellum::unit(.PANEL_GAP_MM, "mm")
 
-  has_col_strip <- fa$type == "wrap" || (fa$type == "grid" && !is.null(fa$col_labels))
+  has_col_strip <- fa$type == "wrap" ||
+    (fa$type == "grid" && !is.null(fa$col_labels))
   has_row_strip <- fa$type == "grid" && !is.null(fa$row_labels)
 
   # --- columns: [ ytitle | (ylabels panel gap)xC | row-strip? | legend? ] ---
@@ -103,31 +111,54 @@ NULL
     if (c < C) .tk_add(W, gap)
   }
   rowstrip_col <- if (has_row_strip) .tk_add(W, strip) else NA_integer_
-  legend_col <- if (length(guides)) .tk_add(W, .legend_width(guides)) else NA_integer_
+  legend_col <- if (length(guides)) {
+    .tk_add(W, .legend_width(guides))
+  } else {
+    NA_integer_
+  }
 
   # --- rows: [ col-strip? | (strip? panel xlabels?)xR | xlabels? | xtitle ] ---
   H <- .tracks()
-  colstrip_row <- if (fa$type == "grid" && has_col_strip) .tk_add(H, strip) else NA_integer_
+  colstrip_row <- if (fa$type == "grid" && has_col_strip) {
+    .tk_add(H, strip)
+  } else {
+    NA_integer_
+  }
   panel_row <- integer(R)
   xlabels_row <- integer(R)
   wrapstrip_row <- integer(R)
   for (r in seq_len(R)) {
-    if (fa$type == "wrap") wrapstrip_row[r] <- .tk_add(H, strip)
+    if (fa$type == "wrap") {
+      wrapstrip_row[r] <- .tk_add(H, strip)
+    }
     panel_row[r] <- .tk_add(H, vellum::unit(1, "null"))
-    if (free_x) xlabels_row[r] <- .tk_add(H, xl)
+    if (free_x) {
+      xlabels_row[r] <- .tk_add(H, xl)
+    }
     if (r < R) .tk_add(H, gap)
   }
   shared_xl <- if (!free_x) .tk_add(H, xl) else NA_integer_
-  if (!free_x) for (r in seq_len(R)) xlabels_row[r] <- shared_xl
+  if (!free_x) {
+    for (r in seq_len(R)) {
+      xlabels_row[r] <- shared_xl
+    }
+  }
   xtitle_row <- .tk_add(H, xt)
 
   list(
-    widths = .tk_units(W), heights = .tk_units(H),
-    R = R, C = C,
-    panel_row = panel_row, panel_col = panel_col,
-    ylabels_col = ylabels_col, xlabels_row = xlabels_row,
-    ytitle_col = ytitle_col, xtitle_row = xtitle_row,
-    wrapstrip_row = wrapstrip_row, colstrip_row = colstrip_row, rowstrip_col = rowstrip_col,
+    widths = .tk_units(W),
+    heights = .tk_units(H),
+    R = R,
+    C = C,
+    panel_row = panel_row,
+    panel_col = panel_col,
+    ylabels_col = ylabels_col,
+    xlabels_row = xlabels_row,
+    ytitle_col = ytitle_col,
+    xtitle_row = xtitle_row,
+    wrapstrip_row = wrapstrip_row,
+    colstrip_row = colstrip_row,
+    rowstrip_col = rowstrip_col,
     legend_col = legend_col
   )
 }

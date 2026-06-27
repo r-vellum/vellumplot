@@ -10,7 +10,9 @@ test_that("themes set the visual settings", {
 })
 
 test_that("set_theme() overrides on top of the current theme", {
-  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_bw() |>
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    theme_bw() |>
     set_theme(panel_bg = "ivory")
   expect_identical(p@theme$panel_bg, "ivory")
   expect_identical(p@theme$grid_col, "grey90") # untouched theme_bw value
