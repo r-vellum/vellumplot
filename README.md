@@ -26,6 +26,10 @@ drawing primitives.
 
 ## Usage
 
+Building a plot returns a spec; printing it draws into the Plots pane (and
+embeds in a knitr/Quarto chunk), like ggplot2. Use `render_plot()` to write a
+file.
+
 
 ``` r
 library(vellumplot)
@@ -33,19 +37,27 @@ library(vellumplot)
 # a scatter with a continuous colour legend
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp) |>
-  scale_color_continuous() |>
-  render_plot("cars.png")
+  scale_color_continuous()
 ```
+
+<div class="figure">
+<img src="man/figures/README-example-1.png" alt="plot of chunk example" width="100%" />
+<p class="caption">plot of chunk example</p>
+</div>
 
 Layer marks on a single panel; scales train across every layer:
 
 
 ``` r
-vplot(economics) |>
-  mark_line(x = date, y = unemploy) |>
-  mark_point(x = date, y = unemploy) |>
-  render_plot("unemployment.png")
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg)
 ```
+
+<div class="figure">
+<img src="man/figures/README-layers-1.png" alt="plot of chunk layers" width="100%" />
+<p class="caption">plot of chunk layers</p>
+</div>
 
 Facet into a grid of panels (`facet_wrap()` / `facet_grid()`), with shared or
 free scales:
@@ -54,20 +66,31 @@ free scales:
 ``` r
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
-  facet_wrap(~cyl) |>
-  render_plot("by-cyl.png")
+  facet_wrap(~cyl)
 ```
 
-The spec is just data — inspect it before drawing:
+<div class="figure">
+<img src="man/figures/README-facet-1.png" alt="plot of chunk facet" width="100%" />
+<p class="caption">plot of chunk facet</p>
+</div>
+
+The spec is just data — `summary()` shows its structure without drawing:
 
 
 ``` r
-library(vellumplot)
-vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
 #> <PlotSpec> 32x11 (11 columns), page 6x4 in
 #> 
 #> ── layers
 #> • mark_point(x = wt, y = mpg, color = hp)
+```
+
+Write to a file with `render_plot()` (the format follows the extension):
+
+
+``` r
+p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+render_plot(p, "cars.png")
 ```
 
 ## What's included

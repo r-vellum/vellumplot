@@ -5,6 +5,10 @@ A single-panel grammar of graphics that compiles a declarative spec into a
 
 ## Features
 
+* **Auto-display**: printing a plot (or composition) draws it into the active
+  graphics device — the RStudio / Positron Plots pane, or a knitr/Quarto chunk —
+  like ggplot2 (via `vellum::display()`). `summary()` shows the inspectable spec
+  tree instead; `render_plot()` still writes a file.
 * `vplot()` starts an inspectable, serializable `PlotSpec`.
 * Marks: `mark_point()`, `mark_line()`, `mark_rule()` (reference lines via
   `xintercept` / `yintercept`), and `mark_bar()` (uses explicit `y` heights, or

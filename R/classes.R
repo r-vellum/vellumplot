@@ -54,7 +54,8 @@ ScaleSpec <- S7::new_class(
 #' `scale_*()` functions extend. It is a plain, inspectable, serializable data
 #' object: data, a list of layers, a list of scale overrides, and the page size.
 #' Nothing is drawn until it is compiled with [vellum::as_vellum_scene()] (e.g.
-#' via [render_plot()]). Inspect it with [print()].
+#' via [render_plot()]). Printing it draws the plot; inspect its structure with
+#' [summary()].
 #'
 #' @param data The data frame.
 #' @param layers A list of layer specifications (one per `mark_*()`).

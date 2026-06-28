@@ -40,7 +40,8 @@ A \code{PlotSpec}.
 \verb{scale_*()} functions extend. It is a plain, inspectable, serializable data
 object: data, a list of layers, a list of scale overrides, and the page size.
 Nothing is drawn until it is compiled with \code{\link[vellum:as_vellum_scene]{vellum::as_vellum_scene()}} (e.g.
-via \code{\link[=render_plot]{render_plot()}}). Inspect it with \code{\link[=print]{print()}}.
+via \code{\link[=render_plot]{render_plot()}}). Printing it draws the plot; inspect its structure with
+\code{\link[=summary]{summary()}}.
 }
 \seealso{
 \code{\link[=vplot]{vplot()}}, \code{\link[=mark_point]{mark_point()}}, \code{\link[=scale_x_continuous]{scale_x_continuous()}}

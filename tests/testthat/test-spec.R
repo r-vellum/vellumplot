@@ -58,14 +58,27 @@ test_that("channel type is inferred at resolve time", {
   expect_identical(r$types$color, "nominal")
 })
 
-test_that("print() shows a readable tree", {
+test_that("summary() shows a readable spec tree", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>
     scale_color_continuous()
-  out <- cli::cli_fmt(print(p))
+  out <- cli::cli_fmt(summary(p))
   expect_true(any(grepl("PlotSpec", out)))
   expect_true(any(grepl("mark_point", out)))
   expect_true(any(grepl("color", out)))
+})
+
+test_that("print() draws the plot and returns the spec invisibly", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  f <- withr::local_tempfile(fileext = ".png")
+  grDevices::png(f, width = 400, height = 300)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  out <- withVisible(print(p))
+  expect_false(out$visible)
+  expect_identical(out$value, p)
+  grDevices::dev.off()
+  on.exit()
+  expect_gt(file.info(f)$size, 0) # something was drawn into the device
 })
 
 test_that("the spec round-trips through serialize()", {

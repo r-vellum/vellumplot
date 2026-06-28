@@ -114,9 +114,20 @@ S7::method(.as_vellum_scene, PlotComposition) <- function(x, ...) {
   .compile_composition(x)
 }
 
+# Printing a composition draws it (like a plot); summary() reports its shape.
 S7::method(print, PlotComposition) <- function(x, ...) {
-  cli::cli_text(
-    "{.cls PlotComposition} {length(x@plots)} plot{?s} in a {x@nrow}x{x@ncol} grid"
-  )
+  vellum::display(vellum::as_vellum_scene(x))
   invisible(x)
+}
+
+S7::method(plot, PlotComposition) <- function(x, y, ...) {
+  vellum::display(vellum::as_vellum_scene(x))
+  invisible(x)
+}
+
+S7::method(summary, PlotComposition) <- function(object, ...) {
+  cli::cli_text(
+    "{.cls PlotComposition} {length(object@plots)} plot{?s} in a {object@nrow}x{object@ncol} grid"
+  )
+  invisible(object)
 }

@@ -36,40 +36,47 @@ drawing primitives.
 
 ## Usage
 
-```{r example, eval = FALSE}
+Building a plot returns a spec; printing it draws into the Plots pane (and
+embeds in a knitr/Quarto chunk), like ggplot2. Use `render_plot()` to write a
+file.
+
+```{r example}
 library(vellumplot)
 
 # a scatter with a continuous colour legend
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp) |>
-  scale_color_continuous() |>
-  render_plot("cars.png")
+  scale_color_continuous()
 ```
 
 Layer marks on a single panel; scales train across every layer:
 
-```{r layers, eval = FALSE}
-vplot(economics) |>
-  mark_line(x = date, y = unemploy) |>
-  mark_point(x = date, y = unemploy) |>
-  render_plot("unemployment.png")
+```{r layers}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg)
 ```
 
 Facet into a grid of panels (`facet_wrap()` / `facet_grid()`), with shared or
 free scales:
 
-```{r facet, eval = FALSE}
+```{r facet}
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
-  facet_wrap(~cyl) |>
-  render_plot("by-cyl.png")
+  facet_wrap(~cyl)
 ```
 
-The spec is just data — inspect it before drawing:
+The spec is just data — `summary()` shows its structure without drawing:
 
-```{r print}
-library(vellumplot)
-vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+```{r summary}
+summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
+```
+
+Write to a file with `render_plot()` (the format follows the extension):
+
+```{r save, eval = FALSE}
+p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+render_plot(p, "cars.png")
 ```
 
 ## What's included

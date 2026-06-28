@@ -77,6 +77,20 @@ NULL
   invisible(x)
 }
 
-# Registered as an S3 print method for the S7 class via S7::methods_register()
-# in .onLoad().
-S7::method(print, PlotSpec) <- .print_plotspec
+# Printing a plot draws it into the active graphics device (the RStudio /
+# Positron Plots pane, or a knitr/Quarto chunk), like ggplot2 — via vellum's
+# display(), which compiles through the as_vellum_scene() seam and no-ops when
+# there is no device (so scripts / R CMD check draw nothing). `summary()` shows
+# the inspectable spec tree instead. (Methods registered at load by
+# S7::methods_register().)
+S7::method(print, PlotSpec) <- function(x, ...) {
+  vellum::display(vellum::as_vellum_scene(x))
+  invisible(x)
+}
+
+S7::method(plot, PlotSpec) <- function(x, y, ...) {
+  vellum::display(vellum::as_vellum_scene(x))
+  invisible(x)
+}
+
+S7::method(summary, PlotSpec) <- function(object, ...) .print_plotspec(object, ...)
