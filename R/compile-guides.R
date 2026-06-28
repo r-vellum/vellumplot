@@ -1,17 +1,80 @@
 #' @include classes.R elements.R theme-tree.R compile-layout.R
 NULL
 
-# Panel background + gridlines, drawn while the scene is positioned inside the
-# panel viewport (so `"native"` resolves against the panel's trained scales).
-# `rt` is the resolved theme (a named list of resolved elements / settings).
+# Midpoints between sorted finite breaks (minor gridline positions); empty when
+# there are fewer than two breaks.
+.minor_breaks <- function(b) {
+  b <- sort(b[is.finite(b)])
+  if (length(b) < 2) {
+    return(numeric(0))
+  }
+  (utils::head(b, -1) + utils::tail(b, -1)) / 2
+}
+
+# Vertical gridlines at `xs` (native), spanning the panel height.
+.vlines <- function(scene, xs, gp) {
+  for (b in xs) {
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(b, "native"),
+        vellum::unit(0, "npc"),
+        vellum::unit(b, "native"),
+        vellum::unit(1, "npc"),
+        gp = gp
+      )
+    )
+  }
+  scene
+}
+
+# Horizontal gridlines at `ys` (native), spanning the panel width.
+.hlines <- function(scene, ys, gp) {
+  for (b in ys) {
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(0, "npc"),
+        vellum::unit(b, "native"),
+        vellum::unit(1, "npc"),
+        vellum::unit(b, "native"),
+        gp = gp
+      )
+    )
+  }
+  scene
+}
+
+# Panel background + gridlines + axis ticks, drawn while the scene is positioned
+# inside the panel viewport (so `"native"` resolves against the panel's trained
+# scales). `rt` is the resolved theme. Minor gridlines sit under major ones;
+# ticks point inward from the panel edges (their length is in mm from the edge,
+# which avoids mixed npc/mm unit arithmetic vellum disallows).
 .draw_panel_bg <- function(scene, x_sc, y_sc, rt) {
   pb <- rt[["panel.background"]]
   if (!.is_blank(pb)) {
     scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pb)))
   }
+  mnx <- rt[["panel.grid.minor.x"]]
+  if (!.is_blank(mnx)) {
+    scene <- .vlines(scene, .minor_breaks(x_sc$breaks), .el_gpar_line(mnx))
+  }
+  mny <- rt[["panel.grid.minor.y"]]
+  if (!.is_blank(mny)) {
+    scene <- .hlines(scene, .minor_breaks(y_sc$breaks), .el_gpar_line(mny))
+  }
   gx <- rt[["panel.grid.major.x"]]
   if (!.is_blank(gx)) {
-    gp <- .el_gpar_line(gx)
+    scene <- .vlines(scene, x_sc$breaks, .el_gpar_line(gx))
+  }
+  gy <- rt[["panel.grid.major.y"]]
+  if (!.is_blank(gy)) {
+    scene <- .hlines(scene, y_sc$breaks, .el_gpar_line(gy))
+  }
+  tlen <- rt[["axis.ticks.length"]]
+  tx <- rt[["axis.ticks.x"]]
+  if (!.is_blank(tx)) {
+    gp <- .el_gpar_line(tx)
     for (b in x_sc$breaks) {
       scene <- vellum::draw(
         scene,
@@ -19,22 +82,22 @@ NULL
           vellum::unit(b, "native"),
           vellum::unit(0, "npc"),
           vellum::unit(b, "native"),
-          vellum::unit(1, "npc"),
+          vellum::unit(tlen, "mm"),
           gp = gp
         )
       )
     }
   }
-  gy <- rt[["panel.grid.major.y"]]
-  if (!.is_blank(gy)) {
-    gp <- .el_gpar_line(gy)
+  ty <- rt[["axis.ticks.y"]]
+  if (!.is_blank(ty)) {
+    gp <- .el_gpar_line(ty)
     for (b in y_sc$breaks) {
       scene <- vellum::draw(
         scene,
         vellum::segments_grob(
           vellum::unit(0, "npc"),
           vellum::unit(b, "native"),
-          vellum::unit(1, "npc"),
+          vellum::unit(tlen, "mm"),
           vellum::unit(b, "native"),
           gp = gp
         )
@@ -48,25 +111,41 @@ NULL
 # gridlines (the gutter viewport shares the panel's y native scale).
 .draw_y_axis <- function(scene, row, col, y_sc, rt) {
   el <- rt[["axis.text.y"]]
-  if (.is_blank(el)) {
+  aline <- rt[["axis.line.y"]]
+  if (.is_blank(el) && .is_blank(aline)) {
     return(scene)
   }
-  gp <- .el_gpar_text(el)
   scene <- vellum::push(
     scene,
     vellum::viewport(row = row, col = col, yscale = y_sc$domain)
   )
-  for (i in seq_along(y_sc$breaks)) {
+  # axis line along the panel-adjacent (right) edge of the gutter
+  if (!.is_blank(aline)) {
     scene <- vellum::draw(
       scene,
-      vellum::text_grob(
-        y_sc$labels[i],
-        x = vellum::unit(0.96, "npc"),
-        y = vellum::unit(y_sc$breaks[i], "native"),
-        just = c("right", "centre"),
-        gp = gp
+      vellum::segments_grob(
+        vellum::unit(1, "npc"),
+        vellum::unit(0, "npc"),
+        vellum::unit(1, "npc"),
+        vellum::unit(1, "npc"),
+        gp = .el_gpar_line(aline)
       )
     )
+  }
+  if (!.is_blank(el)) {
+    gp <- .el_gpar_text(el)
+    for (i in seq_along(y_sc$breaks)) {
+      scene <- vellum::draw(
+        scene,
+        vellum::text_grob(
+          y_sc$labels[i],
+          x = vellum::unit(0.96, "npc"),
+          y = vellum::unit(y_sc$breaks[i], "native"),
+          just = c("right", "centre"),
+          gp = gp
+        )
+      )
+    }
   }
   vellum::pop(scene)
 }
@@ -74,25 +153,41 @@ NULL
 # x-axis labels for `x_sc`, centred under each gridline.
 .draw_x_axis <- function(scene, row, col, x_sc, rt) {
   el <- rt[["axis.text.x"]]
-  if (.is_blank(el)) {
+  aline <- rt[["axis.line.x"]]
+  if (.is_blank(el) && .is_blank(aline)) {
     return(scene)
   }
-  gp <- .el_gpar_text(el)
   scene <- vellum::push(
     scene,
     vellum::viewport(row = row, col = col, xscale = x_sc$domain)
   )
-  for (i in seq_along(x_sc$breaks)) {
+  # axis line along the panel-adjacent (top) edge of the gutter
+  if (!.is_blank(aline)) {
     scene <- vellum::draw(
       scene,
-      vellum::text_grob(
-        x_sc$labels[i],
-        x = vellum::unit(x_sc$breaks[i], "native"),
-        y = vellum::unit(0.82, "npc"),
-        just = c("centre", "top"),
-        gp = gp
+      vellum::segments_grob(
+        vellum::unit(0, "npc"),
+        vellum::unit(1, "npc"),
+        vellum::unit(1, "npc"),
+        vellum::unit(1, "npc"),
+        gp = .el_gpar_line(aline)
       )
     )
+  }
+  if (!.is_blank(el)) {
+    gp <- .el_gpar_text(el)
+    for (i in seq_along(x_sc$breaks)) {
+      scene <- vellum::draw(
+        scene,
+        vellum::text_grob(
+          x_sc$labels[i],
+          x = vellum::unit(x_sc$breaks[i], "native"),
+          y = vellum::unit(0.82, "npc"),
+          just = c("centre", "top"),
+          gp = gp
+        )
+      )
+    }
   }
   vellum::pop(scene)
 }
