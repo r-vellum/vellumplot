@@ -29,7 +29,7 @@ NULL
 }
 
 # Point-size range (mm) a mapped `size` aesthetic spans.
-.SIZE_RANGE <- c(1.5, 6)
+.SIZE_RANGE <- c(1, 4)
 
 # Train a position scale. Dispatches to a continuous (numeric/temporal) or a
 # discrete (factor/character/logical) scale. Returns a trained-scale list: the

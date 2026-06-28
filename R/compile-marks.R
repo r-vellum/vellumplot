@@ -88,7 +88,7 @@ NULL
     yn <- yn + jit$y
   }
   col <- rep_len(.aes_colour(L, scales, "black"), n)
-  size <- rep_len(.aes_size(L, scales, 2), n)
+  size <- rep_len(.aes_size(L, scales, 1), n)
   shape <- rep_len(.aes_param(L, "shape", "circle"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
 
