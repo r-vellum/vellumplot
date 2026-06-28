@@ -4,6 +4,9 @@
 \alias{theme_gray}
 \alias{theme_minimal}
 \alias{theme_bw}
+\alias{theme_classic}
+\alias{theme_void}
+\alias{theme}
 \alias{set_theme}
 \title{Plot themes}
 \usage{
@@ -12,6 +15,12 @@ theme_gray(plot)
 theme_minimal(plot)
 
 theme_bw(plot)
+
+theme_classic(plot)
+
+theme_void(plot)
+
+theme(plot, ...)
 
 set_theme(
   plot,
@@ -24,6 +33,10 @@ set_theme(
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
+\item{...}{Named theme elements, e.g. \code{plot.title = element_text(size = 16)},
+\code{panel.grid.minor = element_blank()}, or settings like
+\code{legend.position = "none"}.}
+
 \item{panel_bg, grid_col, label_col, strip_bg}{Colours (or \code{NA} to draw nothing)
 for the panel background, gridlines, axis-label/legend text, and facet strip
 background.}
@@ -34,10 +47,18 @@ The modified \link{PlotSpec}.
 \description{
 Control the non-data look of a plot. \code{theme_gray()} is the default (grey panel,
 white gridlines); \code{theme_minimal()} drops the panel fill for light gridlines on
-the page; \code{theme_bw()} is a white panel with light grey gridlines.
-\code{set_theme()} overrides individual settings on top of the current theme.
+the page; \code{theme_bw()} is a white panel with light grey gridlines;
+\code{theme_classic()} has axis lines and no gridlines; \code{theme_void()} strips
+everything but the marks, legend, and titles.
+}
+\details{
+\code{\link[=theme]{theme()}} overrides individual elements on top of the current theme using
+\code{\link[=element_text]{element_text()}} / \code{\link[=element_line]{element_line()}} / \code{\link[=element_rect]{element_rect()}} / \code{\link[=element_blank]{element_blank()}}.
+\code{set_theme()} is a small back-compatible shortcut for the most common colours.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_minimal()
-vplot(mtcars) |> mark_point(x = wt, y = mpg) |> set_theme(panel_bg = "white")
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  theme(panel.grid.minor = element_blank(), legend.position = "none")
 }

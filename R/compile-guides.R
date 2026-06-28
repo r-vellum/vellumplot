@@ -1,19 +1,17 @@
-#' @include classes.R compile-layout.R
+#' @include classes.R elements.R theme-tree.R compile-layout.R
 NULL
-
-# A colour that may be NA ("draw nothing").
-.has_col <- function(x) !is.null(x) && !is.na(x)
 
 # Panel background + gridlines, drawn while the scene is positioned inside the
 # panel viewport (so `"native"` resolves against the panel's trained scales).
-.draw_panel_bg <- function(scene, x_sc, y_sc, thm) {
-  if (.has_col(thm$panel_bg)) {
-    scene <- vellum::draw(
-      scene,
-      vellum::rect_grob(gp = vellum::gpar(fill = thm$panel_bg, col = NA))
-    )
+# `rt` is the resolved theme (a named list of resolved elements / settings).
+.draw_panel_bg <- function(scene, x_sc, y_sc, rt) {
+  pb <- rt[["panel.background"]]
+  if (!.is_blank(pb)) {
+    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pb)))
   }
-  if (.has_col(thm$grid_col)) {
+  gx <- rt[["panel.grid.major.x"]]
+  if (!.is_blank(gx)) {
+    gp <- .el_gpar_line(gx)
     for (b in x_sc$breaks) {
       scene <- vellum::draw(
         scene,
@@ -22,10 +20,14 @@ NULL
           vellum::unit(0, "npc"),
           vellum::unit(b, "native"),
           vellum::unit(1, "npc"),
-          gp = vellum::gpar(col = thm$grid_col, lwd = 1)
+          gp = gp
         )
       )
     }
+  }
+  gy <- rt[["panel.grid.major.y"]]
+  if (!.is_blank(gy)) {
+    gp <- .el_gpar_line(gy)
     for (b in y_sc$breaks) {
       scene <- vellum::draw(
         scene,
@@ -34,7 +36,7 @@ NULL
           vellum::unit(b, "native"),
           vellum::unit(1, "npc"),
           vellum::unit(b, "native"),
-          gp = vellum::gpar(col = thm$grid_col, lwd = 1)
+          gp = gp
         )
       )
     }
@@ -44,7 +46,12 @@ NULL
 
 # y-axis labels for `y_sc`, right-aligned in the gutter cell and aligned to the
 # gridlines (the gutter viewport shares the panel's y native scale).
-.draw_y_axis <- function(scene, row, col, y_sc, thm) {
+.draw_y_axis <- function(scene, row, col, y_sc, rt) {
+  el <- rt[["axis.text.y"]]
+  if (.is_blank(el)) {
+    return(scene)
+  }
+  gp <- .el_gpar_text(el)
   scene <- vellum::push(
     scene,
     vellum::viewport(row = row, col = col, yscale = y_sc$domain)
@@ -57,7 +64,7 @@ NULL
         x = vellum::unit(0.96, "npc"),
         y = vellum::unit(y_sc$breaks[i], "native"),
         just = c("right", "centre"),
-        gp = vellum::gpar(fontsize = .AXIS_FS, col = thm$label_col)
+        gp = gp
       )
     )
   }
@@ -65,7 +72,12 @@ NULL
 }
 
 # x-axis labels for `x_sc`, centred under each gridline.
-.draw_x_axis <- function(scene, row, col, x_sc, thm) {
+.draw_x_axis <- function(scene, row, col, x_sc, rt) {
+  el <- rt[["axis.text.x"]]
+  if (.is_blank(el)) {
+    return(scene)
+  }
+  gp <- .el_gpar_text(el)
   scene <- vellum::push(
     scene,
     vellum::viewport(row = row, col = col, xscale = x_sc$domain)
@@ -78,7 +90,7 @@ NULL
         x = vellum::unit(x_sc$breaks[i], "native"),
         y = vellum::unit(0.82, "npc"),
         just = c("centre", "top"),
-        gp = vellum::gpar(fontsize = .AXIS_FS, col = thm$label_col)
+        gp = gp
       )
     )
   }
@@ -92,7 +104,7 @@ NULL
   row,
   col,
   label,
-  thm,
+  rt,
   rot = 0,
   rowspan = 1,
   colspan = 1
@@ -101,52 +113,66 @@ NULL
     scene,
     vellum::viewport(row = row, col = col, rowspan = rowspan, colspan = colspan)
   )
-  if (.has_col(thm$strip_bg)) {
+  sb <- rt[["strip.background"]]
+  if (!.is_blank(sb)) {
+    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(sb)))
+  }
+  st <- rt[["strip.text"]]
+  if (!.is_blank(st)) {
     scene <- vellum::draw(
       scene,
-      vellum::rect_grob(gp = vellum::gpar(fill = thm$strip_bg, col = NA))
+      vellum::text_grob(label, rot = rot, gp = .el_gpar_text(st))
     )
   }
-  scene <- vellum::draw(
-    scene,
-    vellum::text_grob(
-      label,
-      rot = rot,
-      gp = vellum::gpar(fontsize = .STRIP_FS, col = "grey10")
-    )
-  )
   vellum::pop(scene)
 }
 
-.draw_y_title <- function(scene, row, col, name, rowspan = 1) {
+.draw_y_title <- function(scene, row, col, name, rt, rowspan = 1) {
+  el <- rt[["axis.title.y"]]
+  if (.is_blank(el)) {
+    return(scene)
+  }
   scene <- vellum::push(
     scene,
     vellum::viewport(row = row, col = col, rowspan = rowspan)
   )
   scene <- vellum::draw(
     scene,
-    vellum::text_grob(name, rot = 90, gp = vellum::gpar(fontsize = .TITLE_FS))
+    vellum::text_grob(name, rot = 90, gp = .el_gpar_text(el))
   )
   vellum::pop(scene)
 }
 
-.draw_x_title <- function(scene, row, col, name, colspan = 1) {
+.draw_x_title <- function(scene, row, col, name, rt, colspan = 1) {
+  el <- rt[["axis.title.x"]]
+  if (.is_blank(el)) {
+    return(scene)
+  }
   scene <- vellum::push(
     scene,
     vellum::viewport(row = row, col = col, colspan = colspan)
   )
-  scene <- vellum::draw(
-    scene,
-    vellum::text_grob(name, gp = vellum::gpar(fontsize = .TITLE_FS))
-  )
+  scene <- vellum::draw(scene, vellum::text_grob(name, gp = .el_gpar_text(el)))
   vellum::pop(scene)
 }
 
 # --- plot title / subtitle / caption / tag bands ----------------------------
-# Each spans the full page width (col = 1, colspan = ncol). Justification mirrors
-# ggplot2: title/subtitle flush left, caption flush right, tag in the top-left
-# corner of the title band.
-.draw_title <- function(scene, row, ncol, text) {
+# Each spans the full page width (col = 1, colspan = ncol). `default_hjust`
+# reproduces the ggplot2 default placement (title/subtitle/tag flush left,
+# caption flush right); a theme `hjust` overrides it.
+.draw_band <- function(scene, row, ncol, text, el, default_hjust) {
+  if (.is_blank(el)) {
+    return(scene)
+  }
+  hj <- el@hjust %||% default_hjust
+  x_npc <- 0.01 + hj * 0.98
+  just_h <- if (hj < 0.25) {
+    "left"
+  } else if (hj > 0.75) {
+    "right"
+  } else {
+    "centre"
+  }
   scene <- vellum::push(
     scene,
     vellum::viewport(row = row, col = 1, colspan = ncol)
@@ -155,63 +181,29 @@ NULL
     scene,
     vellum::text_grob(
       text,
-      x = vellum::unit(0.01, "npc"),
-      just = c("left", "centre"),
-      gp = vellum::gpar(fontsize = .PLOT_TITLE_FS, col = "grey10")
+      x = vellum::unit(x_npc, "npc"),
+      just = c(just_h, "centre"),
+      rot = .el_rot(el),
+      gp = .el_gpar_text(el)
     )
   )
   vellum::pop(scene)
 }
 
-.draw_subtitle <- function(scene, row, ncol, text) {
-  scene <- vellum::push(
-    scene,
-    vellum::viewport(row = row, col = 1, colspan = ncol)
-  )
-  scene <- vellum::draw(
-    scene,
-    vellum::text_grob(
-      text,
-      x = vellum::unit(0.01, "npc"),
-      just = c("left", "centre"),
-      gp = vellum::gpar(fontsize = .PLOT_SUBTITLE_FS, col = "grey30")
-    )
-  )
-  vellum::pop(scene)
+.draw_title <- function(scene, row, ncol, text, rt) {
+  .draw_band(scene, row, ncol, text, rt[["plot.title"]], 0)
 }
 
-.draw_caption <- function(scene, row, ncol, text) {
-  scene <- vellum::push(
-    scene,
-    vellum::viewport(row = row, col = 1, colspan = ncol)
-  )
-  scene <- vellum::draw(
-    scene,
-    vellum::text_grob(
-      text,
-      x = vellum::unit(0.99, "npc"),
-      just = c("right", "centre"),
-      gp = vellum::gpar(fontsize = .PLOT_CAPTION_FS, col = "grey30")
-    )
-  )
-  vellum::pop(scene)
+.draw_subtitle <- function(scene, row, ncol, text, rt) {
+  .draw_band(scene, row, ncol, text, rt[["plot.subtitle"]], 0)
 }
 
-.draw_tag <- function(scene, row, ncol, text) {
-  scene <- vellum::push(
-    scene,
-    vellum::viewport(row = row, col = 1, colspan = ncol)
-  )
-  scene <- vellum::draw(
-    scene,
-    vellum::text_grob(
-      text,
-      x = vellum::unit(0.01, "npc"),
-      just = c("left", "centre"),
-      gp = vellum::gpar(fontsize = .PLOT_TAG_FS, col = "grey10")
-    )
-  )
-  vellum::pop(scene)
+.draw_caption <- function(scene, row, ncol, text, rt) {
+  .draw_band(scene, row, ncol, text, rt[["plot.caption"]], 1)
+}
+
+.draw_tag <- function(scene, row, ncol, text, rt) {
+  .draw_band(scene, row, ncol, text, rt[["plot.tag"]], 0)
 }
 
 # --- legend -----------------------------------------------------------------
@@ -235,7 +227,7 @@ NULL
 # Stack the guides vertically in the legend cell: each gets an equal slot, drawn
 # in its own 0..1 sub-viewport so the per-guide drawers share one coordinate
 # frame.
-.draw_legends <- function(scene, cell, guides, thm) {
+.draw_legends <- function(scene, cell, guides, rt) {
   scene <- vellum::push(
     scene,
     vellum::viewport(
@@ -244,6 +236,10 @@ NULL
       rowspan = cell$rowspan %||% 1
     )
   )
+  lb <- rt[["legend.background"]]
+  if (!.is_blank(lb)) {
+    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(lb)))
+  }
   n <- length(guides)
   for (i in seq_along(guides)) {
     yc <- 1 - (i - 0.5) / n
@@ -257,16 +253,20 @@ NULL
     g <- guides[[i]]
     scene <- switch(
       g$kind,
-      color_continuous = .guide_color_continuous(scene, g$sc, thm),
-      color_discrete = .guide_color_discrete(scene, g$sc, thm),
-      size = .guide_size(scene, g$sc, thm)
+      color_continuous = .guide_color_continuous(scene, g$sc, rt),
+      color_discrete = .guide_color_discrete(scene, g$sc, rt),
+      size = .guide_size(scene, g$sc, rt)
     )
     scene <- vellum::pop(scene)
   }
   vellum::pop(scene)
 }
 
-.guide_title <- function(scene, name) {
+.guide_title <- function(scene, name, rt) {
+  el <- rt[["legend.title"]]
+  if (.is_blank(el)) {
+    return(scene)
+  }
   vellum::draw(
     scene,
     vellum::text_grob(
@@ -274,13 +274,14 @@ NULL
       x = vellum::unit(0.06, "npc"),
       y = vellum::unit(0.92, "npc"),
       just = c("left", "centre"),
-      gp = vellum::gpar(fontsize = .LEGEND_TITLE_FS)
+      gp = .el_gpar_text(el)
     )
   )
 }
 
-.guide_color_continuous <- function(scene, cl, thm) {
-  scene <- .guide_title(scene, cl$name)
+.guide_color_continuous <- function(scene, cl, rt) {
+  scene <- .guide_title(scene, cl$name, rt)
+  txt <- .el_gpar_text(rt[["legend.text"]])
   y_lo <- 0.12
   y_hi <- 0.72
   bar_x <- 0.18
@@ -306,16 +307,16 @@ NULL
         x = vellum::unit(bar_x + bar_w / 2 + 0.06, "npc"),
         y = vellum::unit(yy, "npc"),
         just = c("left", "centre"),
-        gp = vellum::gpar(fontsize = .LEGEND_FS, col = thm$label_col)
+        gp = txt
       )
     )
   }
   scene
 }
 
-.guide_color_discrete <- function(scene, cl, thm) {
-  scene <- .guide_title(scene, cl$name)
-  .draw_key_rows(scene, cl$levels, thm, function(scene, yy, i) {
+.guide_color_discrete <- function(scene, cl, rt) {
+  scene <- .guide_title(scene, cl$name, rt)
+  .draw_key_rows(scene, cl$levels, rt, function(scene, yy, i) {
     vellum::draw(
       scene,
       vellum::rect_grob(
@@ -329,9 +330,9 @@ NULL
   })
 }
 
-.guide_size <- function(scene, sc, thm) {
-  scene <- .guide_title(scene, sc$name)
-  .draw_key_rows(scene, sc$legend_labels, thm, function(scene, yy, i) {
+.guide_size <- function(scene, sc, rt) {
+  scene <- .guide_title(scene, sc$name, rt)
+  .draw_key_rows(scene, sc$legend_labels, rt, function(scene, yy, i) {
     vellum::draw(
       scene,
       vellum::points_grob(
@@ -347,7 +348,8 @@ NULL
 
 # Shared key-row layout for discrete/size legends: a column of `keys` (drawn by
 # `draw_key(scene, y, i)`) with labels to the right.
-.draw_key_rows <- function(scene, labels, thm, draw_key) {
+.draw_key_rows <- function(scene, labels, rt, draw_key) {
+  txt <- .el_gpar_text(rt[["legend.text"]])
   k <- length(labels)
   top <- 0.78
   step <- min(0.14, top / max(k, 1))
@@ -361,7 +363,7 @@ NULL
         x = vellum::unit(0.32, "npc"),
         y = vellum::unit(yy, "npc"),
         just = c("left", "centre"),
-        gp = vellum::gpar(fontsize = .LEGEND_FS, col = thm$label_col)
+        gp = txt
       )
     )
   }

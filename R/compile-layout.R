@@ -1,21 +1,11 @@
-#' @include classes.R
+#' @include classes.R elements.R theme-tree.R theme.R
 NULL
 
-# Typographic constants (font sizes in pt; paddings in mm).
-.AXIS_FS <- 9
-.TITLE_FS <- 11
-.LEGEND_FS <- 9
-.LEGEND_TITLE_FS <- 10
-.STRIP_FS <- 9
-.PLOT_TITLE_FS <- 14
-.PLOT_SUBTITLE_FS <- 11
-.PLOT_CAPTION_FS <- 9
-.PLOT_TAG_FS <- 12
-.TICK_MM <- 1.5
+# Layout geometry constants (mm). Font sizes, tick length, and panel spacing now
+# come from the resolved theme; only the legend geometry and the generic gutter
+# padding remain fixed here.
 .PAD_MM <- 1.4
-.PANEL_GAP_MM <- 1.6
 .LEGEND_BAR_MM <- 6
-.LEGEND_BAR_H_NPC <- 0.6 # gradient bar height as a fraction of the legend cell
 .LEGEND_SWATCH_MM <- 4
 
 # The longest string in a vector (by character count); "" for an empty vector.
@@ -31,6 +21,22 @@ NULL
   vellum::text_grob(label, rot = rot, gp = vellum::gpar(fontsize = fontsize))
 }
 
+# Size of a text gutter/band track from a resolved theme element: the measured
+# text extent at the element's font size plus `pad_mm`, or zero when the element
+# is blank (so the track collapses).
+.track_h <- function(el, label, pad_mm, rot = 0) {
+  if (.is_blank(el)) {
+    return(vellum::unit(0, "mm"))
+  }
+  vellum::grobheight(.txt(label, el@size, rot)) + vellum::unit(pad_mm, "mm")
+}
+.track_w <- function(el, label, pad_mm, rot = 0) {
+  if (.is_blank(el)) {
+    return(vellum::unit(0, "mm"))
+  }
+  vellum::grobwidth(.txt(label, el@size, rot)) + vellum::unit(pad_mm, "mm")
+}
+
 # Build the panel + gutter layout. Columns are
 #   [ y-title | y-labels | panel(null) | legend? ]
 # and rows are
@@ -39,7 +45,7 @@ NULL
 # panel track is `null` so it absorbs the remaining space.
 # Width of the legend column: room for the widest swatch/bar/key needed by any
 # guide, plus the widest label or title across all guides.
-.legend_width <- function(guides) {
+.legend_width <- function(guides, rt) {
   strs <- character(0)
   swatch <- .LEGEND_SWATCH_MM
   for (g in guides) {
@@ -54,7 +60,7 @@ NULL
       swatch <- max(swatch, 2 * max(sc$legend_sizes))
     }
   }
-  vellum::grobwidth(.txt(.longest(strs), .LEGEND_TITLE_FS)) +
+  vellum::grobwidth(.txt(.longest(strs), rt[["legend.title"]]@size)) +
     vellum::unit(swatch + 3 * .PAD_MM, "mm")
 }
 
@@ -75,7 +81,12 @@ NULL
 # the width/height track vectors plus the grid indices the seam needs to place
 # panels, axes, strips, titles and the legend. The 1x1, no-facet, fixed-scale
 # case reduces to the v1 single-panel layout.
-.build_layout <- function(built, guides = list(), labels = list()) {
+.build_layout <- function(
+  built,
+  guides = list(),
+  labels = list(),
+  rt = .resolve_theme(.theme_default())
+) {
   fa <- built$fa
   R <- fa$R
   C <- fa$C
@@ -84,20 +95,17 @@ NULL
   free_x <- built$free_x
   free_y <- built$free_y
 
-  # Gutter sizes (measured from the widest labels across all panels).
+  # Gutter sizes (measured from the widest labels across all panels) using the
+  # resolved theme's font sizes; blank elements collapse their track.
   y_labs <- unique(unlist(lapply(built$panels, function(p) p$y_sc$labels)))
   x_labs <- unique(unlist(lapply(built$panels, function(p) p$x_sc$labels)))
-  yt <- vellum::grobwidth(.txt(sy$name, .TITLE_FS, rot = 90)) +
-    vellum::unit(.PAD_MM, "mm")
-  yl <- vellum::grobwidth(.txt(.longest(y_labs), .AXIS_FS)) +
-    vellum::unit(.TICK_MM + .PAD_MM, "mm")
-  xl <- vellum::grobheight(.txt(.longest(x_labs), .AXIS_FS)) +
-    vellum::unit(.TICK_MM + .PAD_MM, "mm")
-  xt <- vellum::grobheight(.txt(sx$name, .TITLE_FS)) +
-    vellum::unit(.PAD_MM, "mm")
-  strip <- vellum::grobheight(.txt("Ag", .STRIP_FS)) +
-    vellum::unit(2 * .PAD_MM, "mm")
-  gap <- vellum::unit(.PANEL_GAP_MM, "mm")
+  tick <- rt[["axis.ticks.length"]]
+  yt <- .track_w(rt[["axis.title.y"]], sy$name, .PAD_MM, rot = 90)
+  yl <- .track_w(rt[["axis.text.y"]], .longest(y_labs), tick + .PAD_MM)
+  xl <- .track_h(rt[["axis.text.x"]], .longest(x_labs), tick + .PAD_MM)
+  xt <- .track_h(rt[["axis.title.x"]], sx$name, .PAD_MM)
+  strip <- .track_h(rt[["strip.text"]], "Ag", 2 * .PAD_MM)
+  gap <- vellum::unit(rt[["panel.spacing"]], "mm")
 
   has_col_strip <- fa$type == "wrap" ||
     (fa$type == "grid" && !is.null(fa$col_labels))
@@ -115,8 +123,9 @@ NULL
     if (c < C) .tk_add(W, gap)
   }
   rowstrip_col <- if (has_row_strip) .tk_add(W, strip) else NA_integer_
-  legend_col <- if (length(guides)) {
-    .tk_add(W, .legend_width(guides))
+  show_legend <- length(guides) && !identical(rt[["legend.position"]], "none")
+  legend_col <- if (show_legend) {
+    .tk_add(W, .legend_width(guides, rt))
   } else {
     NA_integer_
   }
@@ -129,29 +138,17 @@ NULL
   # so an unlabelled plot is byte-identical to v1.
   H <- .tracks()
   tag_row <- if (!is.null(labels$tag)) {
-    .tk_add(
-      H,
-      vellum::grobheight(.txt(labels$tag, .PLOT_TAG_FS)) +
-        vellum::unit(.PAD_MM, "mm")
-    )
+    .tk_add(H, .track_h(rt[["plot.tag"]], labels$tag, .PAD_MM))
   } else {
     NA_integer_
   }
   title_row <- if (!is.null(labels$title)) {
-    .tk_add(
-      H,
-      vellum::grobheight(.txt(labels$title, .PLOT_TITLE_FS)) +
-        vellum::unit(2 * .PAD_MM, "mm")
-    )
+    .tk_add(H, .track_h(rt[["plot.title"]], labels$title, 2 * .PAD_MM))
   } else {
     NA_integer_
   }
   subtitle_row <- if (!is.null(labels$subtitle)) {
-    .tk_add(
-      H,
-      vellum::grobheight(.txt(labels$subtitle, .PLOT_SUBTITLE_FS)) +
-        vellum::unit(.PAD_MM, "mm")
-    )
+    .tk_add(H, .track_h(rt[["plot.subtitle"]], labels$subtitle, .PAD_MM))
   } else {
     NA_integer_
   }
@@ -181,11 +178,7 @@ NULL
   }
   xtitle_row <- .tk_add(H, xt)
   caption_row <- if (!is.null(labels$caption)) {
-    .tk_add(
-      H,
-      vellum::grobheight(.txt(labels$caption, .PLOT_CAPTION_FS)) +
-        vellum::unit(.PAD_MM, "mm")
-    )
+    .tk_add(H, .track_h(rt[["plot.caption"]], labels$caption, .PAD_MM))
   } else {
     NA_integer_
   }

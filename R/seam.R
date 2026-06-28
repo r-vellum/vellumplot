@@ -11,15 +11,31 @@ NULL
       "Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}."
     )
   }
-  thm <- .theme_of(spec)
+  rt <- .resolve_theme(.theme_of(spec))
   built <- .build_panels(spec)
   guides <- .legend_guides(built$scales)
-  lay <- .build_layout(built, guides, spec@labels)
+  lay <- .build_layout(built, guides, spec@labels, rt)
 
   scene <- vellum::push(
     scene,
     vellum::viewport(layout = vellum::grid_layout(lay$widths, lay$heights))
   )
+
+  # plot background fills the whole page region (behind every panel/gutter)
+  pbg <- rt[["plot.background"]]
+  if (!.is_blank(pbg)) {
+    scene <- vellum::push(
+      scene,
+      vellum::viewport(
+        row = 1,
+        col = 1,
+        rowspan = length(lay$heights),
+        colspan = length(lay$widths)
+      )
+    )
+    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pbg)))
+    scene <- vellum::pop(scene)
+  }
 
   # panels: background + gridlines + marks, each in its own native scales
   for (p in built$panels) {
@@ -39,7 +55,7 @@ NULL
         clip = TRUE
       )
     )
-    scene <- .draw_panel_bg(scene, p$x_sc, p$y_sc, thm)
+    scene <- .draw_panel_bg(scene, p$x_sc, p$y_sc, rt)
     scene <- .compile_marks(scene, p$resolved, psc)
     scene <- vellum::pop(scene)
   }
@@ -53,7 +69,7 @@ NULL
         lay$panel_row[p$r],
         lay$ylabels_col[p$c],
         p$y_sc,
-        thm
+        rt
       )
     }
   } else {
@@ -63,7 +79,7 @@ NULL
         lay$panel_row[r],
         lay$ylabels_col[1],
         built$scales$y,
-        thm
+        rt
       )
     }
   }
@@ -74,7 +90,7 @@ NULL
         lay$xlabels_row[p$r],
         lay$panel_col[p$c],
         p$x_sc,
-        thm
+        rt
       )
     }
   } else {
@@ -84,12 +100,12 @@ NULL
         lay$xlabels_row[1],
         lay$panel_col[cc],
         built$scales$x,
-        thm
+        rt
       )
     }
   }
 
-  scene <- .draw_strips(scene, built, lay, thm)
+  scene <- .draw_strips(scene, built, lay, rt)
 
   # titles span the panel block; legend spans the panel rows
   scene <- .draw_y_title(
@@ -97,6 +113,7 @@ NULL
     lay$panel_row[1],
     lay$ytitle_col,
     built$scales$y$name,
+    rt,
     rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
   )
   scene <- .draw_x_title(
@@ -104,6 +121,7 @@ NULL
     lay$xtitle_row,
     lay$panel_col[1],
     built$scales$x$name,
+    rt,
     colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
   )
   if (!is.na(lay$legend_col)) {
@@ -111,7 +129,7 @@ NULL
       scene,
       list(row = 1, col = lay$legend_col, rowspan = length(lay$heights)),
       guides,
-      thm
+      rt
     )
   }
 
@@ -121,7 +139,8 @@ NULL
       scene,
       lay$title_row,
       lay$ncol_total,
-      spec@labels$title
+      spec@labels$title,
+      rt
     )
   }
   if (!is.na(lay$subtitle_row)) {
@@ -129,7 +148,8 @@ NULL
       scene,
       lay$subtitle_row,
       lay$ncol_total,
-      spec@labels$subtitle
+      spec@labels$subtitle,
+      rt
     )
   }
   if (!is.na(lay$caption_row)) {
@@ -137,11 +157,12 @@ NULL
       scene,
       lay$caption_row,
       lay$ncol_total,
-      spec@labels$caption
+      spec@labels$caption,
+      rt
     )
   }
   if (!is.na(lay$tag_row)) {
-    scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, spec@labels$tag)
+    scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, spec@labels$tag, rt)
   }
 
   vellum::pop(scene)
@@ -159,7 +180,7 @@ NULL
 
 # Facet strips: wrap draws one above each panel; grid draws column strips along
 # the top and rotated row strips down the right.
-.draw_strips <- function(scene, built, lay, thm) {
+.draw_strips <- function(scene, built, lay, rt) {
   fa <- built$fa
   if (fa$type == "wrap") {
     labs <- fa$wrap_labels
@@ -170,7 +191,7 @@ NULL
         lay$wrapstrip_row[p$r],
         lay$panel_col[p$c],
         labs[i],
-        thm
+        rt
       )
     }
   } else if (fa$type == "grid") {
@@ -181,7 +202,7 @@ NULL
           lay$colstrip_row,
           lay$panel_col[cc],
           fa$col_labels[cc],
-          thm
+          rt
         )
       }
     }
@@ -192,7 +213,7 @@ NULL
           lay$panel_row[r],
           lay$rowstrip_col,
           fa$row_labels[r],
-          thm,
+          rt,
           rot = 90
         )
       }

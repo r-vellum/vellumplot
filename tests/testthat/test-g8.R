@@ -1,12 +1,15 @@
 # G8: themes + concat composition.
 
 test_that("themes set the visual settings", {
-  expect_identical(vellumplot:::.theme_of(vplot(mtcars))$panel_bg, "grey92")
+  rt0 <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(vplot(mtcars)))
+  expect_identical(rt0[["panel.background"]]@fill, "grey92")
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_minimal()
-  expect_true(is.na(p@theme$panel_bg))
-  expect_identical(p@theme$grid_col, "grey92")
+  rt <- vellumplot:::.resolve_theme(p@theme)
+  expect_true(vellumplot:::.is_blank(rt[["panel.background"]]))
+  expect_identical(rt[["panel.grid.major.x"]]@colour, "grey92")
   p2 <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_bw()
-  expect_identical(p2@theme$panel_bg, "white")
+  rt2 <- vellumplot:::.resolve_theme(p2@theme)
+  expect_identical(rt2[["panel.background"]]@fill, "white")
 })
 
 test_that("set_theme() overrides on top of the current theme", {
@@ -14,8 +17,10 @@ test_that("set_theme() overrides on top of the current theme", {
     mark_point(x = wt, y = mpg) |>
     theme_bw() |>
     set_theme(panel_bg = "ivory")
-  expect_identical(p@theme$panel_bg, "ivory")
-  expect_identical(p@theme$grid_col, "grey90") # untouched theme_bw value
+  rt <- vellumplot:::.resolve_theme(p@theme)
+  expect_identical(rt[["panel.background"]]@fill, "ivory")
+  # untouched theme_bw gridline value
+  expect_identical(rt[["panel.grid.major.x"]]@colour, "grey90")
 })
 
 test_that("themed plots render", {
