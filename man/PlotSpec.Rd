@@ -12,7 +12,8 @@ PlotSpec(
   resolve = list(),
   width = 6,
   height = 4,
-  theme = NULL
+  theme = NULL,
+  labels = list()
 )
 }
 \arguments{

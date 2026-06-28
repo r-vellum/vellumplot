@@ -81,6 +81,7 @@ PlotSpec <- S7::new_class(
     resolve = S7::new_property(S7::class_list, default = list()), # aes -> shared|independent
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
-    theme = S7::new_property(S7::class_any, default = NULL)
+    theme = S7::new_property(S7::class_any, default = NULL),
+    labels = S7::new_property(S7::class_list, default = list()) # plot/axis labels
   )
 )

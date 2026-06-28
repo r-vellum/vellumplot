@@ -142,6 +142,78 @@ NULL
   vellum::pop(scene)
 }
 
+# --- plot title / subtitle / caption / tag bands ----------------------------
+# Each spans the full page width (col = 1, colspan = ncol). Justification mirrors
+# ggplot2: title/subtitle flush left, caption flush right, tag in the top-left
+# corner of the title band.
+.draw_title <- function(scene, row, ncol, text) {
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(row = row, col = 1, colspan = ncol)
+  )
+  scene <- vellum::draw(
+    scene,
+    vellum::text_grob(
+      text,
+      x = vellum::unit(0.01, "npc"),
+      just = c("left", "centre"),
+      gp = vellum::gpar(fontsize = .PLOT_TITLE_FS, col = "grey10")
+    )
+  )
+  vellum::pop(scene)
+}
+
+.draw_subtitle <- function(scene, row, ncol, text) {
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(row = row, col = 1, colspan = ncol)
+  )
+  scene <- vellum::draw(
+    scene,
+    vellum::text_grob(
+      text,
+      x = vellum::unit(0.01, "npc"),
+      just = c("left", "centre"),
+      gp = vellum::gpar(fontsize = .PLOT_SUBTITLE_FS, col = "grey30")
+    )
+  )
+  vellum::pop(scene)
+}
+
+.draw_caption <- function(scene, row, ncol, text) {
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(row = row, col = 1, colspan = ncol)
+  )
+  scene <- vellum::draw(
+    scene,
+    vellum::text_grob(
+      text,
+      x = vellum::unit(0.99, "npc"),
+      just = c("right", "centre"),
+      gp = vellum::gpar(fontsize = .PLOT_CAPTION_FS, col = "grey30")
+    )
+  )
+  vellum::pop(scene)
+}
+
+.draw_tag <- function(scene, row, ncol, text) {
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(row = row, col = 1, colspan = ncol)
+  )
+  scene <- vellum::draw(
+    scene,
+    vellum::text_grob(
+      text,
+      x = vellum::unit(0.01, "npc"),
+      just = c("left", "centre"),
+      gp = vellum::gpar(fontsize = .PLOT_TAG_FS, col = "grey10")
+    )
+  )
+  vellum::pop(scene)
+}
+
 # --- legend -----------------------------------------------------------------
 
 # The list of guides a plot needs, in draw order: colour first, then size. Each

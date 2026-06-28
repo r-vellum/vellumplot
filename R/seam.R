@@ -14,7 +14,7 @@ NULL
   thm <- .theme_of(spec)
   built <- .build_panels(spec)
   guides <- .legend_guides(built$scales)
-  lay <- .build_layout(built, guides)
+  lay <- .build_layout(built, guides, spec@labels)
 
   scene <- vellum::push(
     scene,
@@ -113,6 +113,35 @@ NULL
       guides,
       thm
     )
+  }
+
+  # plot title / subtitle / caption bands + tag overlay (full width)
+  if (!is.na(lay$title_row)) {
+    scene <- .draw_title(
+      scene,
+      lay$title_row,
+      lay$ncol_total,
+      spec@labels$title
+    )
+  }
+  if (!is.na(lay$subtitle_row)) {
+    scene <- .draw_subtitle(
+      scene,
+      lay$subtitle_row,
+      lay$ncol_total,
+      spec@labels$subtitle
+    )
+  }
+  if (!is.na(lay$caption_row)) {
+    scene <- .draw_caption(
+      scene,
+      lay$caption_row,
+      lay$ncol_total,
+      spec@labels$caption
+    )
+  }
+  if (!is.na(lay$tag_row)) {
+    scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, spec@labels$tag)
   }
 
   vellum::pop(scene)

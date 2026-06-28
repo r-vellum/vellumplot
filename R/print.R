@@ -55,6 +55,14 @@ NULL
     cli::cli_h3("scales")
     cli::cli_ul(vapply(x@scales, .format_scale, character(1)))
   }
+  if (length(x@labels)) {
+    cli::cli_h3("labels")
+    cli::cli_ul(vapply(
+      names(x@labels),
+      function(nm) paste0(nm, ": ", x@labels[[nm]]),
+      character(1)
+    ))
+  }
   if (!is.null(x@facet)) {
     f <- x@facet
     lab <- function(qs) {
@@ -93,4 +101,6 @@ S7::method(plot, PlotSpec) <- function(x, y, ...) {
   invisible(x)
 }
 
-S7::method(summary, PlotSpec) <- function(object, ...) .print_plotspec(object, ...)
+S7::method(summary, PlotSpec) <- function(object, ...) {
+  .print_plotspec(object, ...)
+}

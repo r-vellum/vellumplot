@@ -7,6 +7,10 @@ NULL
 .LEGEND_FS <- 9
 .LEGEND_TITLE_FS <- 10
 .STRIP_FS <- 9
+.PLOT_TITLE_FS <- 14
+.PLOT_SUBTITLE_FS <- 11
+.PLOT_CAPTION_FS <- 9
+.PLOT_TAG_FS <- 12
 .TICK_MM <- 1.5
 .PAD_MM <- 1.4
 .PANEL_GAP_MM <- 1.6
@@ -71,7 +75,7 @@ NULL
 # the width/height track vectors plus the grid indices the seam needs to place
 # panels, axes, strips, titles and the legend. The 1x1, no-facet, fixed-scale
 # case reduces to the v1 single-panel layout.
-.build_layout <- function(built, guides = list()) {
+.build_layout <- function(built, guides = list(), labels = list()) {
   fa <- built$fa
   R <- fa$R
   C <- fa$C
@@ -117,8 +121,40 @@ NULL
     NA_integer_
   }
 
-  # --- rows: [ col-strip? | (strip? panel xlabels?)xR | xlabels? | xtitle ] ---
+  # --- rows: [ tag? | title? | subtitle? | col-strip? |
+  #             (strip? panel xlabels?)xR | xlabels? | xtitle | caption? ] ---
+  # The tag, title, and subtitle bands stack above the panels (the tag in the
+  # top-left corner, like ggplot2's plot.tag.position = "topleft"); the caption
+  # band sits below. Each band only occupies a track when its label is present,
+  # so an unlabelled plot is byte-identical to v1.
   H <- .tracks()
+  tag_row <- if (!is.null(labels$tag)) {
+    .tk_add(
+      H,
+      vellum::grobheight(.txt(labels$tag, .PLOT_TAG_FS)) +
+        vellum::unit(.PAD_MM, "mm")
+    )
+  } else {
+    NA_integer_
+  }
+  title_row <- if (!is.null(labels$title)) {
+    .tk_add(
+      H,
+      vellum::grobheight(.txt(labels$title, .PLOT_TITLE_FS)) +
+        vellum::unit(2 * .PAD_MM, "mm")
+    )
+  } else {
+    NA_integer_
+  }
+  subtitle_row <- if (!is.null(labels$subtitle)) {
+    .tk_add(
+      H,
+      vellum::grobheight(.txt(labels$subtitle, .PLOT_SUBTITLE_FS)) +
+        vellum::unit(.PAD_MM, "mm")
+    )
+  } else {
+    NA_integer_
+  }
   colstrip_row <- if (fa$type == "grid" && has_col_strip) {
     .tk_add(H, strip)
   } else {
@@ -144,6 +180,15 @@ NULL
     }
   }
   xtitle_row <- .tk_add(H, xt)
+  caption_row <- if (!is.null(labels$caption)) {
+    .tk_add(
+      H,
+      vellum::grobheight(.txt(labels$caption, .PLOT_CAPTION_FS)) +
+        vellum::unit(.PAD_MM, "mm")
+    )
+  } else {
+    NA_integer_
+  }
 
   list(
     widths = .tk_units(W),
@@ -159,6 +204,11 @@ NULL
     wrapstrip_row = wrapstrip_row,
     colstrip_row = colstrip_row,
     rowstrip_col = rowstrip_col,
-    legend_col = legend_col
+    legend_col = legend_col,
+    title_row = title_row,
+    subtitle_row = subtitle_row,
+    tag_row = tag_row,
+    caption_row = caption_row,
+    ncol_total = length(W$u)
   )
 }

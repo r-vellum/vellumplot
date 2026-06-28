@@ -40,6 +40,7 @@ Collate:
     'compile-stat.R'
     'seam.R'
     'concat.R'
+    'labs.R'
     'marks.R'
     'print.R'
     'scales.R'

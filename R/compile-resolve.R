@@ -90,6 +90,9 @@ NULL
 # The default y-axis title: "count" when bars count rows (no y encoding on any
 # layer), otherwise the first y encoding's label.
 .y_axis_title <- function(spec, resolved) {
+  if (!is.null(spec@labels[["y"]])) {
+    return(spec@labels[["y"]])
+  }
   y_mapped <- any(vapply(
     spec@layers,
     function(L) "y" %in% names(L@encoding),
@@ -113,6 +116,12 @@ NULL
 # maps it (its channel expression as text).
 .default_title <- function(spec, aesthetic) {
   match_aes <- .aes_aliases(aesthetic)
+  for (a in match_aes) {
+    lab <- spec@labels[[a]]
+    if (!is.null(lab)) {
+      return(lab)
+    }
+  }
   for (layer in spec@layers) {
     for (a in match_aes) {
       ch <- layer@encoding[[a]]
