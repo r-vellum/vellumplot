@@ -126,7 +126,11 @@ NULL
   panel_h <- vellum::unit(1, "null")
   respect <- FALSE
   asp <- rt[["aspect.ratio"]]
-  if (!is.null(coord) && identical(coord@kind, "fixed")) {
+  polar <- !is.null(coord) && identical(coord@kind, "polar")
+  if (polar) {
+    # Polar panels are square (1 null x 1 null, respect = TRUE).
+    respect <- TRUE
+  } else if (!is.null(coord) && identical(coord@kind, "fixed")) {
     ratio <- coord@ratio %||% 1
     xr <- abs(diff(range(built$scales$x$domain)))
     yr <- abs(diff(range(built$scales$y$domain)))
@@ -153,6 +157,11 @@ NULL
   yl <- .track_w(rt[["axis.text.y"]], .longest(v_labs), tick + .PAD_MM)
   xl <- .track_h(rt[["axis.text.x"]], .longest(h_labs), tick + .PAD_MM)
   xt <- .track_h(rt[["axis.title.x"]], hsc$name, .PAD_MM)
+  # Polar panels carry their axis labels/titles inside the square panel, so the
+  # four cartesian gutter tracks collapse to zero.
+  if (polar) {
+    yt <- yl <- xl <- xt <- vellum::unit(0, "mm")
+  }
   strip <- .track_h(rt[["strip.text"]], "Ag", 2 * .PAD_MM)
   gap <- vellum::unit(rt[["panel.spacing"]], "mm")
 

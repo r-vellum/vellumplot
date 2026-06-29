@@ -70,7 +70,28 @@ NULL
 # final grob arguments swap.
 .flipped <- function(scales) isTRUE(scales$flip)
 
+# Map a pair of trained-scale native values to cartesian panel-native coordinates
+# under polar projection: the theta aesthetic drives the angle, the other the
+# radius, and the result lands in the [-1, 1] square panel. Vectorised.
+.polar_xy <- function(scales, x, y) {
+  ctx <- scales$polar
+  if (identical(ctx$theta_aes, "x")) {
+    ang <- ctx$theta_map(x)
+    rad <- ctx$r_map(y)
+  } else {
+    ang <- ctx$theta_map(y)
+    rad <- ctx$r_map(x)
+  }
+  list(
+    x = vellum::unit(rad * cos(ang), "native"),
+    y = vellum::unit(rad * sin(ang), "native")
+  )
+}
+
 .xy_units <- function(scales, x, y) {
+  if (!is.null(scales$polar)) {
+    return(.polar_xy(scales, x, y))
+  }
   if (.flipped(scales)) {
     list(x = vellum::unit(y, "native"), y = vellum::unit(x, "native"))
   } else {
@@ -258,7 +279,64 @@ NULL
   min(diff(u))
 }
 
+# Bars in polar space become annular sectors (wedges). With theta = "x" (rose /
+# coxcomb) the categorical x band sets the angular span and y the radius; with
+# theta = "y" (pie / bullseye) the stacked [ymin, ymax] sets the angular span —
+# normalized per x-group so a slice set always closes the full circle — and the
+# x band sets the radial ring. Wedges tile the full circle (no inter-bar gap).
+.emit_bar_polar <- function(scene, L, scales) {
+  ctx <- scales$polar
+  n <- L$n
+  xp <- rep_len(scales$x$map(L$values$x), n)
+  fill <- rep_len(.aes_colour(L, scales, "grey35"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  band <- scales$x$band_width %||% .resolution(xp)
+  w <- rep_len(L$values$width %||% band, n)
+
+  ymin_d <- if (!is.null(L$values$ymin)) L$values$ymin else rep(0, n)
+  ymax_d <- if (!is.null(L$values$ymax)) L$values$ymax else L$values$y
+  ymin <- rep_len(as.numeric(ymin_d), n)
+  ymax <- rep_len(as.numeric(ymax_d), n)
+
+  if (identical(ctx$theta_aes, "x")) {
+    a0 <- ctx$theta_map(xp - w / 2)
+    a1 <- ctx$theta_map(xp + w / 2)
+    r0 <- ctx$r_map(ymin)
+    r1 <- ctx$r_map(ymax)
+  } else {
+    total <- stats::ave(ymax, as.character(L$values$x), FUN = max)
+    total[total == 0] <- 1
+    a0 <- ctx$ang_frac(ymin / total)
+    a1 <- ctx$ang_frac(ymax / total)
+    r0 <- ctx$r_map(xp - w / 2)
+    r1 <- ctx$r_map(xp + w / 2)
+  }
+  theta0 <- pmin(a0, a1)
+  theta1 <- pmax(a0, a1)
+
+  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+    a <- alpha[idx[1]]
+    scene <- vellum::draw(
+      scene,
+      vellum::sector_grob(
+        x = vellum::unit(rep(0, length(idx)), "native"),
+        y = vellum::unit(rep(0, length(idx)), "native"),
+        r0 = vellum::unit(r0[idx], "native"),
+        r1 = vellum::unit(r1[idx], "native"),
+        theta0 = theta0[idx],
+        theta1 = theta1[idx],
+        fill = fill[idx],
+        gp = vellum::gpar(col = NA, alpha = if (is.na(a)) NULL else a)
+      )
+    )
+  }
+  scene
+}
+
 .emit_bar <- function(scene, L, scales) {
+  if (!is.null(scales$polar)) {
+    return(.emit_bar_polar(scene, L, scales))
+  }
   n <- L$n
   xp <- rep_len(scales$x$map(L$values$x), n)
   fill <- rep_len(.aes_colour(L, scales, "grey35"), n)
@@ -875,11 +953,13 @@ NULL
     } # empty facet panel
     blend <- L$blend %||% "normal"
     if (!identical(blend, "normal")) {
+      bx <- if (is.null(scales$polar)) scales$x$domain else c(-1, 1)
+      by <- if (is.null(scales$polar)) scales$y$domain else c(-1, 1)
       scene <- vellum::push(
         scene,
         vellum::viewport(
-          xscale = scales$x$domain,
-          yscale = scales$y$domain,
+          xscale = bx,
+          yscale = by,
           blend = blend
         )
       )

@@ -108,6 +108,119 @@ NULL
   scene
 }
 
+# Points around a circle of radius `r` (closed; native units), for polar
+# backgrounds and concentric gridlines.
+.circle_pts <- function(r, n = 120L) {
+  t <- seq(0, 2 * pi, length.out = n + 1L)
+  list(x = r * cos(t), y = r * sin(t))
+}
+
+# Polar panel background + gridlines + axis labels, drawn inside the square
+# [-1, 1] panel viewport (polar plots have no gutters). The theta aesthetic's
+# breaks become radial spokes + rim labels; the radius aesthetic's breaks become
+# concentric circles + labels up the top-centre. Theme elements follow the
+# underlying aesthetic, so theming flows as in the cartesian case.
+.draw_panel_polar <- function(scene, ctx, rt) {
+  theta_aes <- ctx$theta_aes
+  r_aes <- if (theta_aes == "x") "y" else "x"
+
+  # background disk
+  pb <- rt[["panel.background"]]
+  if (!.is_blank(pb)) {
+    cp <- .circle_pts(ctx$rmax)
+    scene <- vellum::draw(
+      scene,
+      vellum::polygon_grob(
+        vellum::unit(cp$x, "native"),
+        vellum::unit(cp$y, "native"),
+        gp = .el_gpar_rect(pb)
+      )
+    )
+  }
+
+  # concentric circles at the radius breaks
+  r_grid <- rt[[paste0("panel.grid.major.", r_aes)]]
+  rbreaks <- ctx$r_sc$breaks
+  if (!.is_blank(r_grid) && length(rbreaks)) {
+    gp <- .el_gpar_line(r_grid)
+    for (b in rbreaks) {
+      rr <- ctx$r_map(b)
+      if (rr <= 0) {
+        next
+      }
+      cp <- .circle_pts(rr)
+      scene <- vellum::draw(
+        scene,
+        vellum::lines_grob(
+          vellum::unit(cp$x, "native"),
+          vellum::unit(cp$y, "native"),
+          gp = gp
+        )
+      )
+    }
+  }
+
+  # radial spokes at the theta breaks
+  theta_grid <- rt[[paste0("panel.grid.major.", theta_aes)]]
+  tbreaks <- ctx$theta_sc$breaks
+  if (!.is_blank(theta_grid) && length(tbreaks)) {
+    ang <- ctx$theta_map(tbreaks)
+    k <- length(ang)
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(rep(0, k), "native"),
+        vellum::unit(rep(0, k), "native"),
+        vellum::unit(ctx$rmax * cos(ang), "native"),
+        vellum::unit(ctx$rmax * sin(ang), "native"),
+        gp = .el_gpar_line(theta_grid)
+      )
+    )
+  }
+
+  # angular tick labels just outside the rim
+  tel <- rt[[paste0("axis.text.", theta_aes)]]
+  if (!.is_blank(tel) && length(tbreaks)) {
+    gp <- .el_gpar_text(tel)
+    ang <- ctx$theta_map(tbreaks)
+    rl <- ctx$rmax + 0.12
+    labs <- ctx$theta_sc$labels
+    for (i in seq_along(ang)) {
+      scene <- vellum::draw(
+        scene,
+        vellum::text_grob(
+          labs[i],
+          x = vellum::unit(rl * cos(ang[i]), "native"),
+          y = vellum::unit(rl * sin(ang[i]), "native"),
+          just = c("centre", "centre"),
+          gp = gp
+        )
+      )
+    }
+  }
+
+  # radial tick labels up the top-centre spoke
+  rel <- rt[[paste0("axis.text.", r_aes)]]
+  if (!.is_blank(rel) && length(rbreaks)) {
+    gp <- .el_gpar_text(rel)
+    labs <- ctx$r_sc$labels
+    for (i in seq_along(rbreaks)) {
+      rr <- ctx$r_map(rbreaks[i])
+      scene <- vellum::draw(
+        scene,
+        vellum::text_grob(
+          labs[i],
+          x = vellum::unit(0.02, "native"),
+          y = vellum::unit(rr, "native"),
+          just = c("left", "centre"),
+          gp = gp
+        )
+      )
+    }
+  }
+  scene
+}
+
 # y-axis labels for `y_sc`, right-aligned in the gutter cell and aligned to the
 # gridlines (the gutter viewport shares the panel's y native scale).
 .draw_y_axis <- function(scene, row, col, y_sc, rt) {

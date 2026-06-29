@@ -17,6 +17,7 @@ NULL
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
   co <- .coord_of(spec)
   flip <- identical(co@kind, "flip")
+  polar <- identical(co@kind, "polar")
   hscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$h # horizontal (bottom)
   vscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$v # vertical (left)
   shared_hv <- .hv_roles(built$scales$x, built$scales$y, flip)
@@ -70,7 +71,9 @@ NULL
     )
   )
 
-  # panels: background + gridlines + marks, each in its own native scales
+  # panels: background + gridlines + marks, each in its own native scales. A
+  # polar panel uses a fixed symmetric [-1, 1] square scale (the polar context
+  # maps data to cartesian within it) and its own circular gridlines/labels.
   for (p in built$panels) {
     hsc <- hscale(p)
     vsc <- vscale(p)
@@ -80,19 +83,36 @@ NULL
       color = built$scales$color,
       size = built$scales$size,
       shape = built$scales$shape,
-      flip = flip
+      flip = flip,
+      polar = NULL
     )
-    scene <- vellum::push(
-      scene,
-      vellum::viewport(
-        row = lay$panel_row[p$r],
-        col = lay$panel_col[p$c],
-        xscale = hsc$domain,
-        yscale = vsc$domain,
-        clip = TRUE
+    if (polar) {
+      ctx <- .polar_ctx(co, p$x_sc, p$y_sc)
+      psc$polar <- ctx
+      scene <- vellum::push(
+        scene,
+        vellum::viewport(
+          row = lay$panel_row[p$r],
+          col = lay$panel_col[p$c],
+          xscale = c(-1, 1),
+          yscale = c(-1, 1),
+          clip = TRUE
+        )
       )
-    )
-    scene <- .draw_panel_bg(scene, hsc, vsc, rt)
+      scene <- .draw_panel_polar(scene, ctx, rt)
+    } else {
+      scene <- vellum::push(
+        scene,
+        vellum::viewport(
+          row = lay$panel_row[p$r],
+          col = lay$panel_col[p$c],
+          xscale = hsc$domain,
+          yscale = vsc$domain,
+          clip = TRUE
+        )
+      )
+      scene <- .draw_panel_bg(scene, hsc, vsc, rt)
+    }
     scene <- .compile_marks(scene, p$resolved, psc)
     scene <- vellum::pop(scene)
   }
@@ -100,69 +120,75 @@ NULL
   # axes: per panel when scales are free, otherwise once down the left / along
   # the bottom (drawn per panel row / column for alignment).
   # Left gutter shows the vertical scale; bottom gutter the horizontal scale
-  # (these swap under coord_flip).
-  if (built$free_y) {
-    for (p in built$panels) {
-      scene <- .draw_y_axis(
-        scene,
-        lay$panel_row[p$r],
-        lay$ylabels_col[p$c],
-        vscale(p),
-        rt
-      )
+  # (these swap under coord_flip). Polar panels draw their angular/radial labels
+  # inside the panel itself (no gutters), so the cartesian axis block is skipped.
+  if (!polar) {
+    if (built$free_y) {
+      for (p in built$panels) {
+        scene <- .draw_y_axis(
+          scene,
+          lay$panel_row[p$r],
+          lay$ylabels_col[p$c],
+          vscale(p),
+          rt
+        )
+      }
+    } else {
+      for (r in seq_len(lay$R)) {
+        scene <- .draw_y_axis(
+          scene,
+          lay$panel_row[r],
+          lay$ylabels_col[1],
+          vshared,
+          rt
+        )
+      }
     }
-  } else {
-    for (r in seq_len(lay$R)) {
-      scene <- .draw_y_axis(
-        scene,
-        lay$panel_row[r],
-        lay$ylabels_col[1],
-        vshared,
-        rt
-      )
+    if (built$free_x) {
+      for (p in built$panels) {
+        scene <- .draw_x_axis(
+          scene,
+          lay$xlabels_row[p$r],
+          lay$panel_col[p$c],
+          hscale(p),
+          rt
+        )
+      }
+    } else {
+      for (cc in seq_len(lay$C)) {
+        scene <- .draw_x_axis(
+          scene,
+          lay$xlabels_row[1],
+          lay$panel_col[cc],
+          hshared,
+          rt
+        )
+      }
     }
-  }
-  if (built$free_x) {
-    for (p in built$panels) {
-      scene <- .draw_x_axis(
-        scene,
-        lay$xlabels_row[p$r],
-        lay$panel_col[p$c],
-        hscale(p),
-        rt
-      )
-    }
-  } else {
-    for (cc in seq_len(lay$C)) {
-      scene <- .draw_x_axis(
-        scene,
-        lay$xlabels_row[1],
-        lay$panel_col[cc],
-        hshared,
-        rt
-      )
-    }
-  }
+  } # !polar
 
   scene <- .draw_strips(scene, built, lay, rt)
 
-  # titles span the panel block; legend spans the panel rows
-  scene <- .draw_y_title(
-    scene,
-    lay$panel_row[1],
-    lay$ytitle_col,
-    vshared$name,
-    rt,
-    rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
-  )
-  scene <- .draw_x_title(
-    scene,
-    lay$xtitle_row,
-    lay$panel_col[1],
-    hshared$name,
-    rt,
-    colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
-  )
+  # titles span the panel block; legend spans the panel rows. Polar panels have
+  # no axis-title gutters, so the x/y titles are suppressed.
+  if (!polar) {
+    scene <- .draw_y_title(
+      scene,
+      lay$panel_row[1],
+      lay$ytitle_col,
+      vshared$name,
+      rt,
+      rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
+    )
+    scene <- .draw_x_title(
+      scene,
+      lay$xtitle_row,
+      lay$panel_col[1],
+      hshared$name,
+      rt,
+      colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
+    )
+  }
   if (!is.na(lay$legend_col)) {
     scene <- .draw_legends(
       scene,

@@ -1,10 +1,13 @@
 #' @include classes.R
 NULL
 
-# A coordinate system: `kind` ("cartesian" | "flip" | "fixed") plus optional
-# view-window limits. `flip` swaps the x and y axes at render time; `xlim`/`ylim`
-# zoom the view (clipping marks, never dropping data); `fixed` aspect-locks the
-# panel so `ratio` data units on y occupy the same device length as one on x.
+# A coordinate system: `kind` ("cartesian" | "flip" | "fixed" | "polar") plus
+# optional view-window limits. `flip` swaps the x and y axes at render time;
+# `xlim`/`ylim` zoom the view (clipping marks, never dropping data); `fixed`
+# aspect-locks the panel so `ratio` data units on y occupy the same device length
+# as one on x; `polar` projects one position aesthetic to angle and the other to
+# radius (`theta` picks which is the angle; `start`/`direction` orient it; `rmin`
+# is the inner-hole radius for a donut, as a fraction of the rim radius).
 CoordSpec <- S7::new_class(
   "CoordSpec",
   package = "vellumplot",
@@ -12,12 +15,53 @@ CoordSpec <- S7::new_class(
     kind = S7::new_property(S7::class_character, default = "cartesian"),
     xlim = S7::new_property(S7::class_any, default = NULL),
     ylim = S7::new_property(S7::class_any, default = NULL),
-    ratio = S7::new_property(S7::class_any, default = NULL)
+    ratio = S7::new_property(S7::class_any, default = NULL),
+    theta = S7::new_property(S7::class_character, default = "x"),
+    start = S7::new_property(S7::class_double, default = 0),
+    direction = S7::new_property(S7::class_double, default = 1),
+    rmin = S7::new_property(S7::class_double, default = 0)
   )
 )
 
 # The coord for a spec, or the cartesian default.
 .coord_of <- function(spec) spec@coord %||% CoordSpec(kind = "cartesian")
+
+# Build the per-panel polar context from a coord and the panel's trained x/y
+# scales. The theta aesthetic drives the angle, the other drives the radius.
+# Angles follow ggplot2's familiar convention (zero at twelve o'clock, clockwise
+# for direction = 1) but are emitted in vellum's radians (zero at three o'clock,
+# CCW) via `ang_frac()`. The rim sits at `rmax` (< 1) so labels fit inside the
+# clipped square panel; `rmin` is the donut hole. `theta_map`/`r_map` convert a
+# trained-scale native value to an angle / panel-native radius; emitters and the
+# polar guide drawer use these and never see the convention math.
+.polar_ctx <- function(co, x_sc, y_sc) {
+  theta_aes <- co@theta
+  tsc <- if (theta_aes == "x") x_sc else y_sc
+  rsc <- if (theta_aes == "x") y_sc else x_sc
+  rmax <- 0.8
+  rmin <- (co@rmin %||% 0) * rmax
+  start <- co@start
+  dir <- co@direction
+  tdom <- tsc$domain
+  rdom <- rsc$domain
+  ang_frac <- function(frac) pi / 2 - dir * (start + 2 * pi * frac)
+  list(
+    theta_aes = theta_aes,
+    start = start,
+    direction = dir,
+    theta_dom = tdom,
+    r_dom = rdom,
+    rmin = rmin,
+    rmax = rmax,
+    theta_sc = tsc,
+    r_sc = rsc,
+    ang_frac = ang_frac,
+    theta_map = function(v) ang_frac((v - tdom[1]) / (tdom[2] - tdom[1])),
+    r_map = function(v) {
+      rmin + ((v - rdom[1]) / (rdom[2] - rdom[1])) * (rmax - rmin)
+    }
+  )
+}
 
 # Horizontal / vertical roles of an (x, y) pair under coord_flip: flip swaps the
 # horizontal (bottom) and vertical (left) axes. The single source of truth for
@@ -79,4 +123,42 @@ coord_fixed <- function(plot, ratio = 1, xlim = NULL, ylim = NULL) {
 #' @export
 coord_equal <- function(plot, ratio = 1, xlim = NULL, ylim = NULL) {
   coord_fixed(plot, ratio = ratio, xlim = xlim, ylim = ylim)
+}
+
+#' Polar coordinates
+#'
+#' `coord_polar()` projects the panel into polar space: one position aesthetic
+#' becomes the angle and the other the radius. With `theta = "x"` (the default)
+#' the x aesthetic maps to angle and y to radius — a categorical bar chart
+#' becomes a wind-rose / coxcomb, a line becomes a radar/spider trace, a point
+#' cloud is positioned by `(angle, radius)`. With `theta = "y"` a stacked bar
+#' becomes a pie (see also the [mark_pie()] / [mark_donut()] shortcuts). The
+#' panel is locked to a square. Lines, areas, and ribbons are interpolated into
+#' smooth arcs.
+#'
+#' @param plot A [PlotSpec].
+#' @param theta Which position aesthetic drives the angle: `"x"` (default) or
+#'   `"y"`.
+#' @param start Angular offset of the zero position, in radians (`0` places the
+#'   first value at twelve o'clock).
+#' @param direction Winding direction: `1` for clockwise (default), `-1` for
+#'   counter-clockwise.
+#' @return The modified [PlotSpec].
+#' @seealso [mark_pie()], [mark_donut()]
+#' @examples
+#' vplot(mtcars) |> mark_bar(x = factor(cyl)) |> coord_polar(theta = "x")
+#' @export
+coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
+  .check_plot(plot)
+  theta <- rlang::arg_match0(theta, c("x", "y"))
+  if (!direction %in% c(1, -1)) {
+    cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
+  }
+  plot@coord <- CoordSpec(
+    kind = "polar",
+    theta = theta,
+    start = as.double(start),
+    direction = as.double(direction)
+  )
+  plot
 }

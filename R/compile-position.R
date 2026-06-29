@@ -20,9 +20,14 @@ NULL
 # each x group's total to 1.
 .position_stack <- function(L, fill = FALSE) {
   n <- L$n
-  x <- as.character(L$values$x)
-  y <- as.numeric(L$values$y)
+  # Recycle to n: a constant x (e.g. a pie's `x = factor(1)`) resolves to length
+  # one, but stacking groups by row, so every value must be n long.
+  x <- as.character(rep_len(L$values$x, n))
+  y <- as.numeric(rep_len(L$values$y, n))
   grp <- L$values$color %||% L$values$fill
+  if (!is.null(grp)) {
+    grp <- rep_len(grp, n)
+  }
   ymin <- numeric(n)
   ymax <- numeric(n)
   if (is.null(grp)) {

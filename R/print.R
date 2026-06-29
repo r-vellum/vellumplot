@@ -112,7 +112,14 @@ NULL
         paste0("ylim[", paste(co@ylim, collapse = ", "), "]")
       }
     )
-    cli::cli_text("coord: {paste(c(co@kind, lims), collapse = ' ')}")
+    extra <- if (identical(co@kind, "polar")) {
+      c(
+        paste0("theta=", co@theta),
+        paste0("start=", co@start),
+        paste0("dir=", co@direction)
+      )
+    }
+    cli::cli_text("coord: {paste(c(co@kind, extra, lims), collapse = ' ')}")
   }
   invisible(x)
 }
