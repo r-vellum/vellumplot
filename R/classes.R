@@ -82,6 +82,7 @@ PlotSpec <- S7::new_class(
     layers = S7::new_property(S7::class_list, default = list()), # list<LayerSpec>
     scales = S7::new_property(S7::class_list, default = list()), # list<ScaleSpec>
     facet = S7::new_property(S7::class_any, default = NULL), # FacetSpec | NULL
+    coord = S7::new_property(S7::class_any, default = NULL), # CoordSpec | NULL
     resolve = S7::new_property(S7::class_list, default = list()), # aes -> shared|independent
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),

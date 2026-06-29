@@ -9,6 +9,7 @@ PlotSpec(
   layers = list(),
   scales = list(),
   facet = NULL,
+  coord = NULL,
   resolve = list(),
   width = 6,
   height = 4,

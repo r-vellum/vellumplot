@@ -1,4 +1,4 @@
-#' @include classes.R compile-resolve.R
+#' @include classes.R coord.R compile-resolve.R
 NULL
 
 # Default perceptual ramp for continuous colour and qualitative palette for
@@ -164,7 +164,8 @@ NULL
   values,
   scalespec,
   title,
-  include_zero = FALSE
+  include_zero = FALSE,
+  lim = NULL
 ) {
   name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
     scalespec@name
@@ -173,7 +174,14 @@ NULL
   }
   raw <- do.call(c, values) # combine across layers, preserving class
   if (is.numeric(raw) || inherits(raw, c("Date", "POSIXct"))) {
-    .train_position_continuous(aesthetic, raw, scalespec, name, include_zero)
+    .train_position_continuous(
+      aesthetic,
+      raw,
+      scalespec,
+      name,
+      include_zero,
+      lim
+    )
   } else {
     .train_position_discrete(aesthetic, values, scalespec, name)
   }
@@ -184,13 +192,14 @@ NULL
   raw,
   scalespec,
   name,
-  include_zero
+  include_zero,
+  lim = NULL
 ) {
   is_time <- inherits(raw, c("Date", "POSIXct"))
 
   num <- as.numeric(raw)
   num <- num[is.finite(num)]
-  user_lim <- if (!is.null(scalespec)) scalespec@domain else NULL
+  user_lim <- lim %||% (if (!is.null(scalespec)) scalespec@domain else NULL)
   rng <- if (!is.null(user_lim)) as.numeric(user_lim) else range(num)
   if (include_zero) {
     rng <- range(c(rng, 0))
@@ -483,6 +492,7 @@ NULL
 # the y axis to include the zero baseline.
 .train_scales <- function(spec, resolved) {
   has_bar <- .has_bar(resolved)
+  co <- .coord_of(spec)
   xs <- .axis_pool(resolved, "x", "xintercept")
   ys <- .axis_pool(resolved, "y", "yintercept")
   if (is.null(xs) || is.null(ys)) {
@@ -495,14 +505,16 @@ NULL
       "x",
       xs,
       .scale_for(spec, "x"),
-      .default_title(spec, "x")
+      .default_title(spec, "x"),
+      lim = co@xlim
     ),
     y = .train_position(
       "y",
       ys,
       .scale_for(spec, "y"),
       .y_axis_title(spec, resolved),
-      include_zero = has_bar
+      include_zero = has_bar,
+      lim = co@ylim
     ),
     color = .train_colour(spec, resolved),
     size = .train_size(spec, resolved),

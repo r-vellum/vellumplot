@@ -94,6 +94,18 @@ NULL
     }
     cli::cli_text("facet: {spec}")
   }
+  if (!is.null(x@coord)) {
+    co <- x@coord
+    lims <- c(
+      if (!is.null(co@xlim)) {
+        paste0("xlim[", paste(co@xlim, collapse = ", "), "]")
+      },
+      if (!is.null(co@ylim)) {
+        paste0("ylim[", paste(co@ylim, collapse = ", "), "]")
+      }
+    )
+    cli::cli_text("coord: {paste(c(co@kind, lims), collapse = ' ')}")
+  }
   invisible(x)
 }
 

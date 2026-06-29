@@ -1,4 +1,4 @@
-#' @include classes.R facet.R compile-resolve.R compile-train.R
+#' @include classes.R facet.R coord.R compile-resolve.R compile-train.R
 NULL
 
 # A factor key from one or more faceting quosures, preserving factor level order
@@ -123,19 +123,21 @@ NULL
   group_res <- function(sel) {
     unlist(lapply(panels[sel], function(p) p$resolved), recursive = FALSE)
   }
-  train_free <- function(aes, intercept, title, inc0) {
+  co <- .coord_of(spec)
+  train_free <- function(aes, intercept, title, inc0, lim) {
     function(res) {
       .train_position(
         aes,
         .axis_pool(res, aes, intercept),
         .scale_for(spec, aes),
         title,
-        include_zero = inc0
+        include_zero = inc0,
+        lim = lim
       )
     }
   }
-  tx <- train_free("x", "xintercept", .default_title(spec, "x"), FALSE)
-  ty <- train_free("y", "yintercept", y_title, has_bar)
+  tx <- train_free("x", "xintercept", .default_title(spec, "x"), FALSE, co@xlim)
+  ty <- train_free("y", "yintercept", y_title, has_bar, co@ylim)
 
   for (i in seq_along(panels)) {
     p <- panels[[i]]

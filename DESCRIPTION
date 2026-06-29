@@ -30,6 +30,7 @@ Collate:
     'vellumplot-package.R'
     'classes.R'
     'compile-resolve.R'
+    'coord.R'
     'compile-train.R'
     'facet.R'
     'compile-facet.R'
