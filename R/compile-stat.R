@@ -246,25 +246,50 @@ NULL
   data.frame(x = cx, y = cy, count = as.numeric(tab), width = r)
 }
 
-# A 1-D kernel density of x (per group): a dense (x, density) curve.
+# Split `n` row indices into groups, preserving factor level order (so a custom
+# factor order survives into the trained position/colour scales). Returns a named
+# list keyed by level, or a single "all" group when ungrouped, plus the levels.
+.stat_groups <- function(grp, n) {
+  if (is.null(grp)) {
+    return(list(groups = list(all = seq_len(n)), levels = NULL))
+  }
+  glevs <- .cat_levels(grp)
+  gc <- as.character(grp)
+  groups <- lapply(glevs, function(g) which(gc == g))
+  names(groups) <- glevs
+  list(groups = groups, levels = glevs)
+}
+
+# A 1-D kernel density of x (per group): a dense (x, density) curve. Groups with
+# fewer than 2 finite points are skipped with a warning (a density needs >= 2).
 .stat_density <- function(L) {
   x <- as.numeric(L$values$x)
   grp <- .layer_group(L)
-  groups <- if (is.null(grp)) {
-    list(all = seq_along(x))
-  } else {
-    split(seq_along(x), as.character(grp))
-  }
+  g <- .stat_groups(grp, length(x))
+  glevs <- g$levels
   adjust <- L$stat_params$adjust %||% 1
-  parts <- lapply(names(groups), function(gn) {
-    i <- groups[[gn]]
-    d <- stats::density(x[i], adjust = adjust)
+  parts <- lapply(names(g$groups), function(gn) {
+    xi <- x[g$groups[[gn]]]
+    xi <- xi[is.finite(xi)]
+    if (length(xi) < 2) {
+      if (!is.null(grp)) {
+        cli::cli_warn(
+          "Skipping {.field {gn}}: {.fn mark_density} needs at least 2 points."
+        )
+      }
+      return(NULL)
+    }
+    d <- stats::density(xi, adjust = adjust)
     df <- data.frame(x = d$x, y = d$y, density = d$y)
     if (!is.null(grp)) {
-      df$group <- gn
+      df$group <- factor(gn, levels = glevs)
     }
     df
   })
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (!length(parts)) {
+    cli::cli_abort("{.fn mark_density} needs at least 2 finite points.")
+  }
   do.call(rbind, parts)
 }
 
@@ -308,16 +333,26 @@ NULL
   x <- as.numeric(L$values$x)
   y <- as.numeric(L$values$y)
   grp <- .layer_group(L)
-  groups <- if (is.null(grp)) {
-    list(all = seq_along(x))
-  } else {
-    split(seq_along(x), as.character(grp))
-  }
+  g <- .stat_groups(grp, length(x))
+  glevs <- g$levels
 
-  parts <- lapply(names(groups), function(gn) {
-    i <- groups[[gn]]
-    fit <- stats::lm(y ~ x, data = data.frame(x = x[i], y = y[i]))
-    xg <- seq(min(x[i]), max(x[i]), length.out = 80)
+  parts <- lapply(names(g$groups), function(gn) {
+    i <- g$groups[[gn]]
+    xi <- x[i]
+    yi <- y[i]
+    ok <- is.finite(xi) & is.finite(yi)
+    xi <- xi[ok]
+    yi <- yi[ok]
+    if (length(unique(xi)) < 2) {
+      if (!is.null(grp)) {
+        cli::cli_warn(
+          "Skipping {.field {gn}}: {.fn mark_smooth} needs at least 2 distinct x values."
+        )
+      }
+      return(NULL)
+    }
+    fit <- stats::lm(y ~ x, data = data.frame(x = xi, y = yi))
+    xg <- seq(min(xi), max(xi), length.out = 80)
     pr <- stats::predict(fit, newdata = data.frame(x = xg), se.fit = se)
     fitv <- if (se) pr$fit else pr
     df <- data.frame(x = xg, y = fitv)
@@ -327,9 +362,15 @@ NULL
       df$ymax <- fitv + t * pr$se.fit
     }
     if (!is.null(grp)) {
-      df$group <- gn
+      df$group <- factor(gn, levels = glevs)
     }
     df
   })
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (!length(parts)) {
+    cli::cli_abort(
+      "{.fn mark_smooth} needs at least 2 distinct x values to fit."
+    )
+  }
   do.call(rbind, parts)
 }

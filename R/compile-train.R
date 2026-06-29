@@ -497,7 +497,7 @@ NULL
   ys <- .axis_pool(resolved, "y", "yintercept")
   if (is.null(xs) || is.null(ys)) {
     cli::cli_abort(
-      "Every layer needs an {.field x} and {.field y} encoding (v1)."
+      "Every layer needs an {.field x} and {.field y} encoding."
     )
   }
   list(

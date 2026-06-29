@@ -13,12 +13,12 @@ test_that("scale_size(range=) sets the output mm range", {
   expect_lte(max(sz$map(range(mtcars$hp))), 10 + 1e-9)
 })
 
-test_that("default size range is c(1, 6) via scale_size", {
+test_that("default size range is c(1, 4) via scale_size", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, size = hp) |>
     scale_size()
   rng <- range(train(p)$size$map(range(mtcars$hp)))
-  expect_equal(rng, c(1, 6), tolerance = 1e-6)
+  expect_equal(rng, c(1, 4), tolerance = 1e-6)
 })
 
 test_that("scale_size(limits=) sets the data domain", {

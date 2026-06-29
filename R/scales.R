@@ -235,7 +235,7 @@ scale_fill_gradient <- function(
 #' point-size `range` (in mm). A size legend is drawn automatically.
 #'
 #' @param plot A [PlotSpec].
-#' @param range Numeric length-2 output size range in mm (default `c(1, 6)`).
+#' @param range Numeric length-2 output size range in mm (default `c(1, 4)`).
 #' @param limits Numeric length-2 data domain, or `NULL` to train from the data.
 #' @param breaks Explicit legend breaks, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
@@ -245,7 +245,7 @@ scale_fill_gradient <- function(
 #' @export
 scale_size <- function(
   plot,
-  range = c(1, 6),
+  range = c(1, 4),
   limits = NULL,
   breaks = NULL,
   name = NULL
