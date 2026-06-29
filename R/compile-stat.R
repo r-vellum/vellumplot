@@ -25,6 +25,7 @@ NULL
     count = .stat_count(L),
     bin = .stat_bin(L),
     bin2d = .stat_bin2d(L),
+    hexbin = .stat_hexbin(L),
     density = .stat_density(L),
     aggregate = .stat_aggregate(L),
     smooth = .stat_smooth(L),
@@ -188,6 +189,61 @@ NULL
     width = diff(xb)[1],
     height = diff(yb)[1]
   )
+}
+
+# Round axial hex coordinates (q, r) to the nearest hex centre via cube rounding
+# (Red Blob Games). Vectorised; returns the integer axial coordinates.
+.hex_round <- function(q, rax) {
+  xc <- q
+  zc <- rax
+  yc <- -xc - zc
+  rx <- round(xc)
+  ry <- round(yc)
+  rz <- round(zc)
+  dx <- abs(rx - xc)
+  dy <- abs(ry - yc)
+  dz <- abs(rz - zc)
+  cond_x <- dx > dy & dx > dz
+  cond_z <- !cond_x & (dz > dy)
+  rx[cond_x] <- -ry[cond_x] - rz[cond_x]
+  rz[cond_z] <- -rx[cond_z] - ry[cond_z]
+  list(q = rx, r = rz)
+}
+
+# Hexagonal 2-D binning (flat-top). Bins (x, y) into a hex lattice with ~`bins`
+# columns across x; returns one row per occupied hex with its data-space centre,
+# count, and circumradius `width` (in x-data units) used to size the hexagon.
+# Binning is done in an isotropic space (y scaled to the x range) so hexes are
+# regular there; they render geometrically exact under coord_fixed().
+.stat_hexbin <- function(L) {
+  x <- as.numeric(L$values$x)
+  y <- as.numeric(L$values$y)
+  ok <- is.finite(x) & is.finite(y)
+  x <- x[ok]
+  y <- y[ok]
+  bins <- L$stat_params$bins %||% 30L
+  xr <- range(x)
+  yr <- range(y)
+  if (diff(xr) == 0) {
+    xr <- xr + c(-0.5, 0.5)
+  }
+  if (diff(yr) == 0) {
+    yr <- yr + c(-0.5, 0.5)
+  }
+  r <- diff(xr) / (bins * 1.5) # circumradius in x-units (flat-top columns at 1.5r)
+  asp <- diff(xr) / diff(yr)
+  px <- x - xr[1]
+  py <- (y - yr[1]) * asp # isotropic y in x-units
+  ax <- .hex_round((2 / 3 * px) / r, (-1 / 3 * px + sqrt(3) / 3 * py) / r)
+  key <- paste(ax$q, ax$r, sep = ",")
+  tab <- table(key)
+  qr <- do.call(rbind, lapply(strsplit(names(tab), ","), as.numeric))
+  qi <- qr[, 1]
+  ri <- qr[, 2]
+  cx <- r * 1.5 * qi + xr[1]
+  cy_iso <- r * sqrt(3) * (ri + qi / 2)
+  cy <- cy_iso / asp + yr[1]
+  data.frame(x = cx, y = cy, count = as.numeric(tab), width = r)
 }
 
 # A 1-D kernel density of x (per group): a dense (x, density) curve.

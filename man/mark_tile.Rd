@@ -5,6 +5,7 @@
 \alias{mark_raster}
 \alias{mark_bin2d}
 \alias{mark_density}
+\alias{mark_hex}
 \title{Heatmap marks}
 \usage{
 mark_tile(plot, ..., blend = NULL)
@@ -14,6 +15,8 @@ mark_raster(plot, ..., blend = NULL)
 mark_bin2d(plot, ..., bins = 30, blend = NULL)
 
 mark_density(plot, ..., adjust = 1, blend = NULL)
+
+mark_hex(plot, ..., bins = 30, blend = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -23,7 +26,8 @@ for bin2d; \code{x} (+ \code{fill}/\code{color}) for density.}
 
 \item{blend}{Optional blend mode; see \code{\link[=mark_point]{mark_point()}}.}
 
-\item{bins}{Number of bins per axis for \code{mark_bin2d()}.}
+\item{bins}{Number of bins per axis for \code{mark_bin2d()} / hex columns for
+\code{mark_hex()}.}
 
 \item{adjust}{Bandwidth multiplier for \code{mark_density()}.}
 }

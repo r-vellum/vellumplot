@@ -420,7 +420,8 @@ mark_label <- function(
 #' @param plot A [PlotSpec].
 #' @param ... Encodings (tidy-eval): `x`, `y`, `fill` for tile/raster; `x`, `y`
 #'   for bin2d; `x` (+ `fill`/`color`) for density.
-#' @param bins Number of bins per axis for `mark_bin2d()`.
+#' @param bins Number of bins per axis for `mark_bin2d()` / hex columns for
+#'   `mark_hex()`.
 #' @param adjust Bandwidth multiplier for `mark_density()`.
 #' @param blend Optional blend mode; see [mark_point()].
 #' @return The modified [PlotSpec].
@@ -469,6 +470,24 @@ mark_density <- function(plot, ..., adjust = 1, blend = NULL) {
     rlang::enquos(...),
     stat = "density",
     stat_params = list(adjust = adjust),
+    blend = blend
+  )
+}
+
+#' @rdname mark_tile
+#' @export
+mark_hex <- function(plot, ..., bins = 30, blend = NULL) {
+  .check_plot(plot)
+  dots <- rlang::enquos(...)
+  if (is.null(dots$fill) && is.null(dots$color)) {
+    dots$fill <- rlang::quo(after_stat(count))
+  }
+  .add_layer(
+    plot,
+    "hex",
+    dots,
+    stat = "hexbin",
+    stat_params = list(bins = bins),
     blend = blend
   )
 }

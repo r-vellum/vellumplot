@@ -738,6 +738,28 @@ NULL
   .emit_errorbar(scene, L, scales, caps = FALSE)
 }
 
+# A hexbin heatmap: one device-regular hexagon per occupied bin, filled by count.
+# The radius arrives (in x-data units) from stat_hexbin as `width`; hexes tile
+# exactly under coord_fixed and approximately otherwise.
+.emit_hex <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  r <- (L$values$width %||% 1)[1]
+  xy <- .xy_units(scales, xn, yn)
+  vellum::draw(
+    scene,
+    vellum::hexagon_grob(
+      xy$x,
+      xy$y,
+      size = vellum::unit(r, "native"),
+      fill = fill,
+      orientation = "flat"
+    )
+  )
+}
+
 # Datashade: aggregate the points into a density raster filling the panel. The
 # raster is binned over the panel's native domain so it aligns with the axes.
 .emit_datashade <- function(scene, L, scales) {
@@ -780,6 +802,7 @@ NULL
     boxplot = .emit_boxplot(scene, L, scales),
     errorbar = .emit_errorbar(scene, L, scales),
     linerange = .emit_linerange(scene, L, scales),
+    hex = .emit_hex(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
