@@ -49,6 +49,7 @@ Collate:
     'concat.R'
     'labs.R'
     'print.R'
+    'reexports.R'
     'repeat.R'
     'scales.R'
     'vplot.R'

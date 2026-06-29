@@ -4,6 +4,11 @@ NULL
 # A short text label for a channel's expression, e.g. `wt` or `factor(cyl)`.
 .channel_label <- function(ch) rlang::as_label(rlang::quo_get_expr(ch@expr))
 
+# A printable form of a title/label value. Plain strings print verbatim; a rich
+# `md()` object (a `vellum_md_label`) is shown as a placeholder so `paste0()`
+# does not mangle it in summary output.
+.lab_str <- function(x) if (is.character(x)) x else "<rich text>"
+
 # One line per layer: `mark_point(x = wt, y = mpg, color = hp)  [size = 3]`.
 .format_layer <- function(layer) {
   enc <- vapply(
@@ -49,7 +54,7 @@ NULL
     )
   }
   if (!is.null(s@name)) {
-    bits <- paste0(bits, " name=", s@name)
+    bits <- paste0(bits, " name=", .lab_str(s@name))
   }
   bits
 }
@@ -74,7 +79,7 @@ NULL
     cli::cli_h3("labels")
     cli::cli_ul(vapply(
       names(x@labels),
-      function(nm) paste0(nm, ": ", x@labels[[nm]]),
+      function(nm) paste0(nm, ": ", .lab_str(x@labels[[nm]])),
       character(1)
     ))
   }

@@ -44,26 +44,42 @@ NULL
 # Gutter tracks are absolute (mm) from grobwidth/grobheight measurement; the
 # panel track is `null` so it absorbs the remaining space.
 # Width of the legend column: room for the widest swatch/bar/key needed by any
-# guide, plus the widest label or title across all guides.
+# guide, plus the widest label or title across all guides. Level/break labels are
+# always plain strings; a guide title may be a rich `md()` object, so it is
+# measured directly (never folded into the character vector, which would coerce
+# it to a mangled string).
 .legend_width <- function(guides, rt) {
   strs <- character(0)
+  titles <- list()
   swatch <- .LEGEND_SWATCH_MM
   for (g in guides) {
     sc <- g$sc
+    titles[[length(titles) + 1L]] <- sc$name
     if (g$kind == "color_continuous") {
-      strs <- c(strs, sc$legend_labels, sc$name)
+      strs <- c(strs, sc$legend_labels)
       swatch <- max(swatch, .LEGEND_BAR_MM)
     } else if (g$kind == "color_discrete") {
-      strs <- c(strs, sc$levels, sc$name)
+      strs <- c(strs, sc$levels)
     } else if (g$kind == "size") {
-      strs <- c(strs, sc$legend_labels, sc$name)
+      strs <- c(strs, sc$legend_labels)
       swatch <- max(swatch, 2 * max(sc$legend_sizes))
     } else if (g$kind == "shape") {
-      strs <- c(strs, sc$levels, sc$name)
+      strs <- c(strs, sc$levels)
     }
   }
-  vellum::grobwidth(.txt(.longest(strs), rt[["legend.title"]]@size)) +
-    vellum::unit(swatch + 3 * .PAD_MM, "mm")
+  # `max()` is unreliable on vellum units (returns the first arg), so widen by
+  # explicit comparison instead.
+  fs <- rt[["legend.title"]]@size
+  text_w <- vellum::grobwidth(.txt(.longest(strs), fs))
+  for (nm in titles) {
+    if (!is.null(nm)) {
+      nw <- vellum::grobwidth(.txt(nm, fs))
+      if (nw > text_w) {
+        text_w <- nw
+      }
+    }
+  }
+  text_w + vellum::unit(swatch + 3 * .PAD_MM, "mm")
 }
 
 # A tiny ordered track builder: `add(unit)` appends a track and returns its
