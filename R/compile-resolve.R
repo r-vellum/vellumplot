@@ -41,10 +41,13 @@ NULL
 
 # Resolve every layer of a spec against a given data frame (a facet panel's
 # subset, or the whole data): evaluate channels, apply the stat, then apply the
-# pre-train part of the position adjustment (stack/fill).
+# pre-train part of the position adjustment (stack/fill). A layer with its own
+# `data` resolves against that instead (per-panel subsetting is handled upstream
+# in `.build_panels`; this path is the non-faceted / fallback case).
 .resolve_on <- function(spec, data) {
   lapply(spec@layers, function(layer) {
-    .apply_position(.apply_stat(.resolve_layer(layer, data)))
+    ld <- layer@data %||% data
+    .apply_position(.apply_stat(.resolve_layer(layer, ld)))
   })
 }
 

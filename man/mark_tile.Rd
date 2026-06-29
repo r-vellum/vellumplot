@@ -8,15 +8,15 @@
 \alias{mark_hex}
 \title{Heatmap marks}
 \usage{
-mark_tile(plot, ..., blend = NULL)
+mark_tile(plot, ..., blend = NULL, data = NULL)
 
-mark_raster(plot, ..., blend = NULL)
+mark_raster(plot, ..., blend = NULL, data = NULL)
 
-mark_bin2d(plot, ..., bins = 30, blend = NULL)
+mark_bin2d(plot, ..., bins = 30, blend = NULL, data = NULL)
 
-mark_density(plot, ..., adjust = 1, blend = NULL)
+mark_density(plot, ..., adjust = 1, blend = NULL, data = NULL)
 
-mark_hex(plot, ..., bins = 30, blend = NULL)
+mark_hex(plot, ..., bins = 30, blend = NULL, data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -25,6 +25,8 @@ mark_hex(plot, ..., bins = 30, blend = NULL)
 for bin2d; \code{x} (+ \code{fill}/\code{color}) for density.}
 
 \item{blend}{Optional blend mode; see \code{\link[=mark_point]{mark_point()}}.}
+
+\item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
 \item{bins}{Number of bins per axis for \code{mark_bin2d()} / hex columns for
 \code{mark_hex()}.}

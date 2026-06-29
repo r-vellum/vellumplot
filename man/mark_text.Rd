@@ -14,7 +14,8 @@ mark_text(
   hjust = "centre",
   vjust = "centre",
   angle = NULL,
-  blend = NULL
+  blend = NULL,
+  data = NULL
 )
 
 mark_label(
@@ -27,7 +28,8 @@ mark_label(
   vjust = "centre",
   angle = NULL,
   fill = "white",
-  blend = NULL
+  blend = NULL,
+  data = NULL
 )
 }
 \arguments{
@@ -46,6 +48,8 @@ mark_label(
 \item{angle}{Text rotation in degrees.}
 
 \item{blend}{Optional blend mode; see \code{\link[=mark_point]{mark_point()}}.}
+
+\item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
 \item{fill}{For \code{mark_label()}, the background fill colour.}
 }

@@ -5,9 +5,24 @@
 \alias{mark_smooth}
 \title{Statistical marks}
 \usage{
-mark_histogram(plot, ..., bins = 30, position = "stack", blend = NULL)
+mark_histogram(
+  plot,
+  ...,
+  bins = 30,
+  position = "stack",
+  blend = NULL,
+  data = NULL
+)
 
-mark_smooth(plot, ..., method = "lm", se = TRUE, level = 0.95, blend = NULL)
+mark_smooth(
+  plot,
+  ...,
+  method = "lm",
+  se = TRUE,
+  level = 0.95,
+  blend = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -21,6 +36,8 @@ mark_smooth(plot, ..., method = "lm", se = TRUE, level = 0.95, blend = NULL)
 
 \item{blend}{Optional blend mode (CSS \code{mix-blend-mode}) for compositing the
 layer against the backdrop; see \code{\link[=mark_point]{mark_point()}}.}
+
+\item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
 \item{method}{Smoothing method; \code{"lm"} (linear) for now.}
 

@@ -7,13 +7,13 @@
 \alias{mark_summary}
 \title{Boxplot, error bar, and summary marks}
 \usage{
-mark_boxplot(plot, ..., blend = NULL)
+mark_boxplot(plot, ..., blend = NULL, data = NULL)
 
-mark_errorbar(plot, ..., width = 0.5, blend = NULL)
+mark_errorbar(plot, ..., width = 0.5, blend = NULL, data = NULL)
 
-mark_linerange(plot, ..., blend = NULL)
+mark_linerange(plot, ..., blend = NULL, data = NULL)
 
-mark_summary(plot, ..., fun = mean, blend = NULL)
+mark_summary(plot, ..., fun = mean, blend = NULL, data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -22,6 +22,8 @@ mark_summary(plot, ..., fun = mean, blend = NULL)
 \code{ymax} for errorbar/linerange; plus \code{color}/\code{fill}.}
 
 \item{blend}{Optional blend mode; see \code{\link[=mark_point]{mark_point()}}.}
+
+\item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
 \item{width}{For \code{mark_errorbar()}, the cap width as a fraction of the band.}
 

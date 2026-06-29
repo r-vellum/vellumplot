@@ -15,14 +15,15 @@ mark_point(
   position = "identity",
   auto = FALSE,
   seed = NULL,
-  blend = NULL
+  blend = NULL,
+  data = NULL
 )
 
-mark_line(plot, ..., blend = NULL)
+mark_line(plot, ..., blend = NULL, data = NULL)
 
-mark_rule(plot, ..., blend = NULL)
+mark_rule(plot, ..., blend = NULL, data = NULL)
 
-mark_bar(plot, ..., position = "stack", blend = NULL)
+mark_bar(plot, ..., position = "stack", blend = NULL, data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -48,6 +49,8 @@ making the jitter reproducible. The global RNG stream is restored afterwards.}
 already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
 layer composites as one isolated group (not per element).}
+
+\item{data}{Optional layer data frame; overrides the plot data for this layer.}
 }
 \value{
 The modified \link{PlotSpec}.

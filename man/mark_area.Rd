@@ -6,11 +6,11 @@
 \alias{mark_step}
 \title{Area, ribbon, and step marks}
 \usage{
-mark_area(plot, ..., blend = NULL)
+mark_area(plot, ..., blend = NULL, data = NULL)
 
-mark_ribbon(plot, ..., blend = NULL)
+mark_ribbon(plot, ..., blend = NULL, data = NULL)
 
-mark_step(plot, ..., direction = "hv", blend = NULL)
+mark_step(plot, ..., direction = "hv", blend = NULL, data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -19,6 +19,8 @@ mark_step(plot, ..., direction = "hv", blend = NULL)
 \code{ymax} for ribbon; plus \code{color}/\code{fill}/\code{alpha}.}
 
 \item{blend}{Optional blend mode; see \code{\link[=mark_point]{mark_point()}}.}
+
+\item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
 \item{direction}{For \code{mark_step()}, \code{"hv"} (horizontal then vertical, default)
 or \code{"vh"}.}

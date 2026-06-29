@@ -28,7 +28,8 @@ LayerSpec <- S7::new_class(
     stat = S7::new_property(S7::class_character, default = "identity"),
     stat_params = S7::new_property(S7::class_list, default = list()),
     position = S7::new_property(S7::class_character, default = "identity"),
-    blend = S7::new_property(S7::class_character, default = "normal")
+    blend = S7::new_property(S7::class_character, default = "normal"),
+    data = S7::new_property(S7::class_any, default = NULL) # per-layer data | NULL
   )
 )
 

@@ -83,8 +83,14 @@ after_stat <- function(x) x
   stat = "identity",
   stat_params = list(),
   position = "identity",
-  blend = NULL
+  blend = NULL,
+  data = NULL
 ) {
+  if (!is.null(data) && !is.data.frame(data)) {
+    cli::cli_abort(
+      "Layer {.arg data} must be a data frame, not {.obj_type_friendly {data}}."
+    )
+  }
   quos <- c(dots, extra)
   split <- .split_encodings(quos)
   layer <- LayerSpec(
@@ -94,7 +100,8 @@ after_stat <- function(x) x
     stat = stat,
     stat_params = stat_params,
     position = position,
-    blend = .check_blend(blend)
+    blend = .check_blend(blend),
+    data = data
   )
   plot@layers <- c(plot@layers, list(layer))
   plot
@@ -125,6 +132,7 @@ after_stat <- function(x) x
 #'   already drawn beneath it (the panel and earlier layers), one of the CSS
 #'   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The whole
 #'   layer composites as one isolated group (not per element).
+#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
@@ -137,7 +145,8 @@ mark_point <- function(
   position = "identity",
   auto = FALSE,
   seed = NULL,
-  blend = NULL
+  blend = NULL,
+  data = NULL
 ) {
   .check_plot(plot)
   .add_layer(
@@ -147,22 +156,23 @@ mark_point <- function(
     rlang::enquos(size = size, shape = shape),
     position = position,
     stat_params = list(auto = isTRUE(auto), seed = seed),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
 #' @rdname mark_point
 #' @export
-mark_line <- function(plot, ..., blend = NULL) {
+mark_line <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "line", rlang::enquos(...), blend = blend)
+  .add_layer(plot, "line", rlang::enquos(...), blend = blend, data = data)
 }
 
 #' @rdname mark_point
 #' @export
-mark_rule <- function(plot, ..., blend = NULL) {
+mark_rule <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "rule", rlang::enquos(...), blend = blend)
+  .add_layer(plot, "rule", rlang::enquos(...), blend = blend, data = data)
 }
 
 #' @rdname mark_point
@@ -172,14 +182,15 @@ mark_rule <- function(plot, ..., blend = NULL) {
 #' stat). When `color`/`fill` is mapped, grouped bars are stacked by default; use
 #' `position = "dodge"` for side-by-side bars or `"fill"` to normalise to 1.
 #' @export
-mark_bar <- function(plot, ..., position = "stack", blend = NULL) {
+mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
   .check_plot(plot)
   .add_layer(
     plot,
     "bar",
     rlang::enquos(...),
     position = position,
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
@@ -200,6 +211,7 @@ mark_bar <- function(plot, ..., position = "stack", blend = NULL) {
 #'   `"dodge"`, `"fill"`).
 #' @param blend Optional blend mode (CSS `mix-blend-mode`) for compositing the
 #'   layer against the backdrop; see [mark_point()].
+#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
@@ -210,7 +222,8 @@ mark_histogram <- function(
   ...,
   bins = 30,
   position = "stack",
-  blend = NULL
+  blend = NULL,
+  data = NULL
 ) {
   .check_plot(plot)
   .add_layer(
@@ -220,7 +233,8 @@ mark_histogram <- function(
     stat = "bin",
     stat_params = list(bins = bins),
     position = position,
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
@@ -232,7 +246,8 @@ mark_smooth <- function(
   method = "lm",
   se = TRUE,
   level = 0.95,
-  blend = NULL
+  blend = NULL,
+  data = NULL
 ) {
   .check_plot(plot)
   .add_layer(
@@ -241,7 +256,8 @@ mark_smooth <- function(
     rlang::enquos(...),
     stat = "smooth",
     stat_params = list(method = method, se = se, level = level),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
@@ -260,6 +276,7 @@ mark_smooth <- function(
 #' @param colors Two or more colours forming the low-to-high density ramp.
 #' @param how Density-to-colour mapping: `"eq_hist"` (default), `"log"`,
 #'   `"cbrt"`, or `"linear"`.
+#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' n <- 1e5
@@ -272,7 +289,8 @@ mark_datashade <- function(
   width = 400,
   height = 300,
   colors = NULL,
-  how = "eq_hist"
+  how = "eq_hist",
+  data = NULL
 ) {
   .check_plot(plot)
   .add_layer(
@@ -284,7 +302,8 @@ mark_datashade <- function(
       height = height,
       colors = colors,
       how = how
-    )
+    ),
+    data = data
   )
 }
 
@@ -300,32 +319,34 @@ mark_datashade <- function(
 #' @param direction For `mark_step()`, `"hv"` (horizontal then vertical, default)
 #'   or `"vh"`.
 #' @param blend Optional blend mode; see [mark_point()].
+#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(pressure) |> mark_area(x = temperature, y = pressure)
 #' @export
-mark_area <- function(plot, ..., blend = NULL) {
+mark_area <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "area", rlang::enquos(...), blend = blend)
+  .add_layer(plot, "area", rlang::enquos(...), blend = blend, data = data)
 }
 
 #' @rdname mark_area
 #' @export
-mark_ribbon <- function(plot, ..., blend = NULL) {
+mark_ribbon <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "ribbon", rlang::enquos(...), blend = blend)
+  .add_layer(plot, "ribbon", rlang::enquos(...), blend = blend, data = data)
 }
 
 #' @rdname mark_area
 #' @export
-mark_step <- function(plot, ..., direction = "hv", blend = NULL) {
+mark_step <- function(plot, ..., direction = "hv", blend = NULL, data = NULL) {
   .check_plot(plot)
   .add_layer(
     plot,
     "step",
     rlang::enquos(...),
     stat_params = list(direction = direction),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
@@ -345,6 +366,7 @@ mark_step <- function(plot, ..., direction = "hv", blend = NULL) {
 #' @param angle Text rotation in degrees.
 #' @param fill For `mark_label()`, the background fill colour.
 #' @param blend Optional blend mode; see [mark_point()].
+#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
@@ -358,7 +380,8 @@ mark_text <- function(
   hjust = "centre",
   vjust = "centre",
   angle = NULL,
-  blend = NULL
+  blend = NULL,
+  data = NULL
 ) {
   .check_plot(plot)
   .add_layer(
@@ -373,7 +396,8 @@ mark_text <- function(
       vjust = vjust,
       angle = angle
     ),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
@@ -389,7 +413,8 @@ mark_label <- function(
   vjust = "centre",
   angle = NULL,
   fill = "white",
-  blend = NULL
+  blend = NULL,
+  data = NULL
 ) {
   .check_plot(plot)
   .add_layer(
@@ -405,7 +430,8 @@ mark_label <- function(
       angle = angle,
       fill = fill
     ),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
@@ -424,27 +450,28 @@ mark_label <- function(
 #'   `mark_hex()`.
 #' @param adjust Bandwidth multiplier for `mark_density()`.
 #' @param blend Optional blend mode; see [mark_point()].
+#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' d <- expand.grid(x = 1:5, y = 1:5)
 #' d$z <- d$x * d$y
 #' vplot(d) |> mark_tile(x = x, y = y, fill = z)
 #' @export
-mark_tile <- function(plot, ..., blend = NULL) {
+mark_tile <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "tile", rlang::enquos(...), blend = blend)
+  .add_layer(plot, "tile", rlang::enquos(...), blend = blend, data = data)
 }
 
 #' @rdname mark_tile
 #' @export
-mark_raster <- function(plot, ..., blend = NULL) {
+mark_raster <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "raster", rlang::enquos(...), blend = blend)
+  .add_layer(plot, "raster", rlang::enquos(...), blend = blend, data = data)
 }
 
 #' @rdname mark_tile
 #' @export
-mark_bin2d <- function(plot, ..., bins = 30, blend = NULL) {
+mark_bin2d <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
   if (is.null(dots$fill) && is.null(dots$color)) {
@@ -456,13 +483,14 @@ mark_bin2d <- function(plot, ..., bins = 30, blend = NULL) {
     dots,
     stat = "bin2d",
     stat_params = list(bins = bins),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
 #' @rdname mark_tile
 #' @export
-mark_density <- function(plot, ..., adjust = 1, blend = NULL) {
+mark_density <- function(plot, ..., adjust = 1, blend = NULL, data = NULL) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -470,13 +498,14 @@ mark_density <- function(plot, ..., adjust = 1, blend = NULL) {
     rlang::enquos(...),
     stat = "density",
     stat_params = list(adjust = adjust),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
 #' @rdname mark_tile
 #' @export
-mark_hex <- function(plot, ..., bins = 30, blend = NULL) {
+mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
   if (is.null(dots$fill) && is.null(dots$color)) {
@@ -488,7 +517,8 @@ mark_hex <- function(plot, ..., bins = 30, blend = NULL) {
     dots,
     stat = "hexbin",
     stat_params = list(bins = bins),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
@@ -506,38 +536,40 @@ mark_hex <- function(plot, ..., bins = 30, blend = NULL) {
 #' @param width For `mark_errorbar()`, the cap width as a fraction of the band.
 #' @param fun For `mark_summary()`, the aggregation function (default `mean`).
 #' @param blend Optional blend mode; see [mark_point()].
+#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
 #' @export
-mark_boxplot <- function(plot, ..., blend = NULL) {
+mark_boxplot <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "boxplot", rlang::enquos(...), blend = blend)
+  .add_layer(plot, "boxplot", rlang::enquos(...), blend = blend, data = data)
 }
 
 #' @rdname mark_boxplot
 #' @export
-mark_errorbar <- function(plot, ..., width = 0.5, blend = NULL) {
+mark_errorbar <- function(plot, ..., width = 0.5, blend = NULL, data = NULL) {
   .check_plot(plot)
   .add_layer(
     plot,
     "errorbar",
     rlang::enquos(...),
     rlang::enquos(width = width),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 
 #' @rdname mark_boxplot
 #' @export
-mark_linerange <- function(plot, ..., blend = NULL) {
+mark_linerange <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "linerange", rlang::enquos(...), blend = blend)
+  .add_layer(plot, "linerange", rlang::enquos(...), blend = blend, data = data)
 }
 
 #' @rdname mark_boxplot
 #' @export
-mark_summary <- function(plot, ..., fun = mean, blend = NULL) {
+mark_summary <- function(plot, ..., fun = mean, blend = NULL, data = NULL) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -545,7 +577,8 @@ mark_summary <- function(plot, ..., fun = mean, blend = NULL) {
     rlang::enquos(...),
     stat = "aggregate",
     stat_params = list(fun = fun),
-    blend = blend
+    blend = blend,
+    data = data
   )
 }
 

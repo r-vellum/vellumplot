@@ -23,7 +23,12 @@ NULL
       type = "none",
       R = 1L,
       C = 1L,
-      panels = list(list(r = 1L, c = 1L, idx = seq_len(nrow(data)))),
+      panels = list(list(
+        r = 1L,
+        c = 1L,
+        idx = seq_len(nrow(data)),
+        lvl = NULL
+      )),
       col_labels = NULL,
       row_labels = NULL,
       wrap_labels = NULL
@@ -42,7 +47,8 @@ NULL
       list(
         r = (i - 1L) %/% ncol + 1L,
         c = (i - 1L) %% ncol + 1L,
-        idx = which(key == levs[i])
+        idx = which(key == levs[i]),
+        lvl = list(wrap = levs[i])
       )
     })
     list(
@@ -77,7 +83,8 @@ NULL
           list(list(
             r = r,
             c = cc,
-            idx = which(rkey == rlevs[r] & ckey == clevs[cc])
+            idx = which(rkey == rlevs[r] & ckey == clevs[cc]),
+            lvl = list(r = rlevs[r], c = clevs[cc])
           ))
         )
       }
@@ -94,6 +101,49 @@ NULL
   }
 }
 
+# Row indices of `data` belonging to `panel`, by matching the facet variable(s)
+# evaluated on `data` against the panel's level. When `data` lacks the facet
+# variable(s) (e.g. an annotation layer's own data), every row is returned so the
+# layer draws on every panel.
+.layer_panel_idx <- function(facet, data, panel) {
+  if (is.null(facet) || is.null(panel$lvl)) {
+    return(seq_len(nrow(data)))
+  }
+  tryCatch(
+    if (facet@type == "wrap") {
+      which(as.character(.facet_key(facet@cols, data)) == panel$lvl$wrap)
+    } else {
+      rk <- if (length(facet@rows)) {
+        as.character(.facet_key(facet@rows, data))
+      } else {
+        rep("", nrow(data))
+      }
+      ck <- if (length(facet@cols)) {
+        as.character(.facet_key(facet@cols, data))
+      } else {
+        rep("", nrow(data))
+      }
+      which(rk == panel$lvl$r & ck == panel$lvl$c)
+    },
+    error = function(e) seq_len(nrow(data))
+  )
+}
+
+# Resolve every layer for one panel. Main-data layers use the panel's precomputed
+# row indices; a layer with its own `data` is subset by the facet variable(s)
+# found in that data (or drawn whole when it lacks them).
+.resolve_panel <- function(spec, panel) {
+  lapply(spec@layers, function(layer) {
+    if (is.null(layer@data)) {
+      d <- spec@data[panel$idx, , drop = FALSE]
+    } else {
+      idx <- .layer_panel_idx(spec@facet, layer@data, panel)
+      d <- layer@data[idx, , drop = FALSE]
+    }
+    .apply_position(.apply_stat(.resolve_layer(layer, d)))
+  })
+}
+
 # Build the panels with their resolved layers (per-panel data subset), then
 # train scales honouring the resolve lattice: colour/size always shared;
 # position shared by default, or independent per panel (wrap) / per column-row
@@ -101,7 +151,7 @@ NULL
 .build_panels <- function(spec) {
   fa <- .facet_assign(spec)
   panels <- lapply(fa$panels, function(p) {
-    p$resolved <- .resolve_on(spec, spec@data[p$idx, , drop = FALSE])
+    p$resolved <- .resolve_panel(spec, p)
     p
   })
 

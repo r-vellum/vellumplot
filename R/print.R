@@ -20,6 +20,9 @@ NULL
   if (length(par)) {
     out <- paste0(out, "  [", paste(par, collapse = ", "), "]")
   }
+  if (!is.null(layer@data)) {
+    out <- paste0(out, "  {own data}")
+  }
   out
 }
 

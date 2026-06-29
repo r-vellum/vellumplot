@@ -10,7 +10,8 @@ mark_datashade(
   width = 400,
   height = 300,
   colors = NULL,
-  how = "eq_hist"
+  how = "eq_hist",
+  data = NULL
 )
 }
 \arguments{
@@ -24,6 +25,8 @@ mark_datashade(
 
 \item{how}{Density-to-colour mapping: \code{"eq_hist"} (default), \code{"log"},
 \code{"cbrt"}, or \code{"linear"}.}
+
+\item{data}{Optional layer data frame; overrides the plot data for this layer.}
 }
 \value{
 The modified \link{PlotSpec}.
