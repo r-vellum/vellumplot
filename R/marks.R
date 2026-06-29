@@ -329,6 +329,86 @@ mark_step <- function(plot, ..., direction = "hv", blend = NULL) {
   )
 }
 
+#' Text marks
+#'
+#' `mark_text()` draws the `label` aesthetic as text at each `(x, y)`;
+#' `mark_label()` adds a filled rounded background behind each label. `size` is
+#' the font size in points; `angle` (degrees) may be mapped or constant.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... Encodings (tidy-eval): `x`, `y`, `label` (+ `color`, `angle`).
+#' @param size Font size in points.
+#' @param family,fontface Font family / face (`"plain"`, `"bold"`, `"italic"`,
+#'   `"bold.italic"`).
+#' @param hjust,vjust Horizontal / vertical justification (constant; `"left"`,
+#'   `"centre"`, `"right"`, `"bottom"`, `"top"`, or numeric in `[0, 1]`).
+#' @param angle Text rotation in degrees.
+#' @param fill For `mark_label()`, the background fill colour.
+#' @param blend Optional blend mode; see [mark_point()].
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
+#' @export
+mark_text <- function(
+  plot,
+  ...,
+  size = NULL,
+  family = NULL,
+  fontface = NULL,
+  hjust = "centre",
+  vjust = "centre",
+  angle = NULL,
+  blend = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "text",
+    rlang::enquos(...),
+    rlang::enquos(
+      size = size,
+      family = family,
+      fontface = fontface,
+      hjust = hjust,
+      vjust = vjust,
+      angle = angle
+    ),
+    blend = blend
+  )
+}
+
+#' @rdname mark_text
+#' @export
+mark_label <- function(
+  plot,
+  ...,
+  size = NULL,
+  family = NULL,
+  fontface = NULL,
+  hjust = "centre",
+  vjust = "centre",
+  angle = NULL,
+  fill = "white",
+  blend = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "label",
+    rlang::enquos(...),
+    rlang::enquos(
+      size = size,
+      family = family,
+      fontface = fontface,
+      hjust = hjust,
+      vjust = vjust,
+      angle = angle,
+      fill = fill
+    ),
+    blend = blend
+  )
+}
+
 .check_plot <- function(plot, call = rlang::caller_env()) {
   if (!S7::S7_inherits(plot, PlotSpec)) {
     cli::cli_abort(

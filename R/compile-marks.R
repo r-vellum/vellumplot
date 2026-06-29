@@ -440,6 +440,105 @@ NULL
   scene
 }
 
+# Text colour for text/label marks: a mapped colour channel, a constant param,
+# or the default (without the fill fallback `.aes_colour` uses, since `fill` is
+# the label background here).
+.text_colour <- function(L, scales, default) {
+  if (!is.null(scales$color) && !is.null(L$values$color)) {
+    return(scales$color$map(L$values$color))
+  }
+  L$params$color %||% default
+}
+
+# Per-element text angle: a mapped channel or a constant param (degrees).
+.text_angle <- function(L, n) {
+  if (!is.null(L$values$angle)) {
+    rep_len(L$values$angle, n)
+  } else {
+    rep_len(.aes_param(L, "angle", 0), n)
+  }
+}
+
+.emit_text <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  label <- rep_len(as.character(L$values$label), n)
+  col <- rep_len(.text_colour(L, scales, "black"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  ang <- .text_angle(L, n)
+  fs <- .aes_param(L, "size", 8)
+  just <- c(.aes_param(L, "hjust", "centre"), .aes_param(L, "vjust", "centre"))
+
+  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+    a <- alpha[idx[1]]
+    xy <- .xy_units(scales, xn[idx], yn[idx])
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        label[idx],
+        xy$x,
+        xy$y,
+        just = just,
+        rot = ang[idx],
+        gp = vellum::gpar(
+          fontsize = fs,
+          col = col[idx[1]],
+          fontfamily = .aes_param(L, "family", NULL),
+          fontface = .aes_param(L, "fontface", NULL),
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
+  }
+  scene
+}
+
+# A text mark with a filled rounded background sized to each label.
+.emit_label <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  label <- rep_len(as.character(L$values$label), n)
+  col <- rep_len(.text_colour(L, scales, "black"), n)
+  bg <- L$params$fill %||% "white"
+  fs <- .aes_param(L, "size", 8)
+  pad <- vellum::unit(1.2, "mm")
+  ws <- do.call(
+    c,
+    lapply(label, function(l) vellum::grobwidth(.txt(l, fs)) + pad)
+  )
+  hs <- do.call(
+    c,
+    lapply(label, function(l) vellum::grobheight(.txt(l, fs)) + pad)
+  )
+
+  for (idx in .style_groups(n, list(col = col))) {
+    xy <- .xy_units(scales, xn[idx], yn[idx])
+    scene <- vellum::draw(
+      scene,
+      vellum::roundrect_grob(
+        x = xy$x,
+        y = xy$y,
+        width = ws[idx],
+        height = hs[idx],
+        r = vellum::unit(0.8, "mm"),
+        gp = vellum::gpar(fill = bg, col = NA)
+      )
+    )
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        label[idx],
+        xy$x,
+        xy$y,
+        gp = vellum::gpar(fontsize = fs, col = col[idx[1]])
+      )
+    )
+  }
+  scene
+}
+
 # Datashade: aggregate the points into a density raster filling the panel. The
 # raster is binned over the panel's native domain so it aligns with the axes.
 .emit_datashade <- function(scene, L, scales) {
@@ -475,6 +574,8 @@ NULL
     area = .emit_area(scene, L, scales),
     ribbon = .emit_ribbon(scene, L, scales),
     step = .emit_step(scene, L, scales),
+    text = .emit_text(scene, L, scales),
+    label = .emit_label(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
