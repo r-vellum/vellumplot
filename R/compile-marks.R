@@ -609,6 +609,135 @@ NULL
   )
 }
 
+# A box-and-whisker per x category: box (Q1-Q3), median line, Tukey whiskers
+# (1.5*IQR), and outlier points. Summary is computed here from the raw y values.
+.emit_boxplot <- function(scene, L, scales) {
+  xv <- L$values$x
+  yv <- as.numeric(L$values$y)
+  colv <- rep_len(.aes_colour(L, scales, "white"), length(yv))
+  levs <- .cat_levels(xv)
+  xc_all <- scales$x$map(levs)
+  band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
+  hw <- 0.375 * band
+  xchar <- as.character(xv)
+  my <- function(v) scales$y$map(v)
+
+  for (j in seq_along(levs)) {
+    sel <- which(xchar == levs[j])
+    if (!length(sel)) {
+      next
+    }
+    yy <- yv[sel]
+    qs <- stats::quantile(yy, c(0.25, 0.5, 0.75), names = FALSE)
+    q1 <- qs[1]
+    med <- qs[2]
+    q3 <- qs[3]
+    iqr <- q3 - q1
+    lo <- min(yy[yy >= q1 - 1.5 * iqr])
+    hi <- max(yy[yy <= q3 + 1.5 * iqr])
+    out <- yy[yy < lo | yy > hi]
+    xc <- xc_all[j]
+    fillc <- colv[sel[1]]
+    line_gp <- vellum::gpar(col = "grey20", lwd = 1)
+
+    r <- .rect_units(
+      scales,
+      xc,
+      (my(q1) + my(q3)) / 2,
+      2 * hw,
+      abs(my(q3) - my(q1))
+    )
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = r$x,
+        y = r$y,
+        width = r$width,
+        height = r$height,
+        gp = vellum::gpar(fill = fillc, col = "grey20", lwd = 1)
+      )
+    )
+    for (seg in list(
+      c(xc - hw, my(med), xc + hw, my(med)), # median
+      c(xc, my(q3), xc, my(hi)), # upper whisker
+      c(xc, my(q1), xc, my(lo)) # lower whisker
+    )) {
+      s <- .seg_units(
+        scales,
+        vellum::unit(seg[1], "native"),
+        vellum::unit(seg[2], "native"),
+        vellum::unit(seg[3], "native"),
+        vellum::unit(seg[4], "native")
+      )
+      scene <- vellum::draw(
+        scene,
+        vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = line_gp)
+      )
+    }
+    if (length(out)) {
+      xy <- .xy_units(scales, rep(xc, length(out)), my(out))
+      scene <- vellum::draw(
+        scene,
+        vellum::points_grob(
+          xy$x,
+          xy$y,
+          size = vellum::unit(1.2, "mm"),
+          shape = "circle",
+          gp = vellum::gpar(fill = "grey20", col = "grey20")
+        )
+      )
+    }
+  }
+  scene
+}
+
+# Vertical error bars from ymin to ymax (with optional horizontal caps).
+.emit_errorbar <- function(scene, L, scales, caps = TRUE) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  ymin <- rep_len(scales$y$map(L$values$ymin), n)
+  ymax <- rep_len(scales$y$map(L$values$ymax), n)
+  col <- rep_len(.aes_colour(L, scales, "black"), n)
+  lwd <- .aes_param(L, "linewidth", 1)
+  band <- scales$x$band_width %||% .resolution(xn)
+  half <- (.aes_param(L, "width", 0.5) * band) / 2
+
+  for (idx in .style_groups(n, list(col = col))) {
+    x0 <- xn[idx]
+    y0 <- ymin[idx]
+    x1 <- xn[idx]
+    y1 <- ymax[idx]
+    if (caps) {
+      x0 <- c(x0, xn[idx] - half, xn[idx] - half)
+      x1 <- c(x1, xn[idx] + half, xn[idx] + half)
+      y0 <- c(y0, ymin[idx], ymax[idx])
+      y1 <- c(y1, ymin[idx], ymax[idx])
+    }
+    s <- .seg_units(
+      scales,
+      vellum::unit(x0, "native"),
+      vellum::unit(y0, "native"),
+      vellum::unit(x1, "native"),
+      vellum::unit(y1, "native")
+    )
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        s$x0,
+        s$y0,
+        s$x1,
+        s$y1,
+        gp = vellum::gpar(col = col[idx[1]], lwd = lwd)
+      )
+    )
+  }
+  scene
+}
+
+.emit_linerange <- function(scene, L, scales) {
+  .emit_errorbar(scene, L, scales, caps = FALSE)
+}
+
 # Datashade: aggregate the points into a density raster filling the panel. The
 # raster is binned over the panel's native domain so it aligns with the axes.
 .emit_datashade <- function(scene, L, scales) {
@@ -648,6 +777,9 @@ NULL
     label = .emit_label(scene, L, scales),
     tile = .emit_tile(scene, L, scales),
     raster = .emit_raster(scene, L, scales),
+    boxplot = .emit_boxplot(scene, L, scales),
+    errorbar = .emit_errorbar(scene, L, scales),
+    linerange = .emit_linerange(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )

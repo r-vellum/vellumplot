@@ -26,6 +26,7 @@ NULL
     bin = .stat_bin(L),
     bin2d = .stat_bin2d(L),
     density = .stat_density(L),
+    aggregate = .stat_aggregate(L),
     smooth = .stat_smooth(L),
     cli::cli_abort("Unknown stat {.val {stat}}.")
   )
@@ -209,6 +210,33 @@ NULL
     df
   })
   do.call(rbind, parts)
+}
+
+# Summarise y per x category (per group) with `fun` (default mean).
+.stat_aggregate <- function(L) {
+  x <- L$values$x
+  y <- as.numeric(L$values$y)
+  fun <- match.fun(L$stat_params$fun %||% "mean")
+  xlevs <- .cat_levels(x)
+  xf <- factor(as.character(x), levels = xlevs)
+  grp <- .layer_group(L)
+  if (is.null(grp)) {
+    yv <- tapply(y, xf, fun)
+    keep <- !is.na(yv)
+    data.frame(
+      x = factor(xlevs[keep], levels = xlevs),
+      y = as.numeric(yv[keep])
+    )
+  } else {
+    glevs <- .cat_levels(grp)
+    gf <- factor(as.character(grp), levels = glevs)
+    agg <- stats::aggregate(y ~ xf + gf, FUN = fun)
+    data.frame(
+      x = factor(as.character(agg$xf), levels = xlevs),
+      group = factor(as.character(agg$gf), levels = glevs),
+      y = agg$y
+    )
+  }
 }
 
 # Fit y ~ x (per group) and predict on a dense grid, with a confidence ribbon.

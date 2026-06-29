@@ -473,6 +473,63 @@ mark_density <- function(plot, ..., adjust = 1, blend = NULL) {
   )
 }
 
+#' Boxplot, error bar, and summary marks
+#'
+#' `mark_boxplot()` draws a box-and-whisker per `x` category from the raw `y`
+#' values (box = Q1-Q3, median line, 1.5*IQR whiskers, outlier points).
+#' `mark_errorbar()` draws vertical bars from `ymin` to `ymax` with horizontal
+#' caps; `mark_linerange()` omits the caps. `mark_summary()` aggregates `y` per
+#' `x` with `fun` (default mean) and draws the result as points.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
+#'   `ymax` for errorbar/linerange; plus `color`/`fill`.
+#' @param width For `mark_errorbar()`, the cap width as a fraction of the band.
+#' @param fun For `mark_summary()`, the aggregation function (default `mean`).
+#' @param blend Optional blend mode; see [mark_point()].
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
+#' @export
+mark_boxplot <- function(plot, ..., blend = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "boxplot", rlang::enquos(...), blend = blend)
+}
+
+#' @rdname mark_boxplot
+#' @export
+mark_errorbar <- function(plot, ..., width = 0.5, blend = NULL) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "errorbar",
+    rlang::enquos(...),
+    rlang::enquos(width = width),
+    blend = blend
+  )
+}
+
+#' @rdname mark_boxplot
+#' @export
+mark_linerange <- function(plot, ..., blend = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "linerange", rlang::enquos(...), blend = blend)
+}
+
+#' @rdname mark_boxplot
+#' @export
+mark_summary <- function(plot, ..., fun = mean, blend = NULL) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "point",
+    rlang::enquos(...),
+    stat = "aggregate",
+    stat_params = list(fun = fun),
+    blend = blend
+  )
+}
+
 .check_plot <- function(plot, call = rlang::caller_env()) {
   if (!S7::S7_inherits(plot, PlotSpec)) {
     cli::cli_abort(
