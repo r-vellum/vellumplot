@@ -87,25 +87,34 @@ NULL
   built,
   guides = list(),
   labels = list(),
-  rt = .resolve_theme(.theme_default())
+  rt = .resolve_theme(.theme_default()),
+  flip = FALSE
 ) {
   fa <- built$fa
   R <- fa$R
   C <- fa$C
-  sx <- built$scales$x
-  sy <- built$scales$y
+  # Under coord_flip the bottom (x) axis shows the y-scale and the left (y) axis
+  # shows the x-scale, so gutter sizing follows the horizontal / vertical roles.
+  hsc <- if (flip) built$scales$y else built$scales$x
+  vsc <- if (flip) built$scales$x else built$scales$y
   free_x <- built$free_x
   free_y <- built$free_y
 
   # Gutter sizes (measured from the widest labels across all panels) using the
   # resolved theme's font sizes; blank elements collapse their track.
-  y_labs <- unique(unlist(lapply(built$panels, function(p) p$y_sc$labels)))
-  x_labs <- unique(unlist(lapply(built$panels, function(p) p$x_sc$labels)))
+  v_labs <- unique(unlist(lapply(
+    built$panels,
+    function(p) (if (flip) p$x_sc else p$y_sc)$labels
+  )))
+  h_labs <- unique(unlist(lapply(
+    built$panels,
+    function(p) (if (flip) p$y_sc else p$x_sc)$labels
+  )))
   tick <- rt[["axis.ticks.length"]]
-  yt <- .track_w(rt[["axis.title.y"]], sy$name, .PAD_MM, rot = 90)
-  yl <- .track_w(rt[["axis.text.y"]], .longest(y_labs), tick + .PAD_MM)
-  xl <- .track_h(rt[["axis.text.x"]], .longest(x_labs), tick + .PAD_MM)
-  xt <- .track_h(rt[["axis.title.x"]], sx$name, .PAD_MM)
+  yt <- .track_w(rt[["axis.title.y"]], vsc$name, .PAD_MM, rot = 90)
+  yl <- .track_w(rt[["axis.text.y"]], .longest(v_labs), tick + .PAD_MM)
+  xl <- .track_h(rt[["axis.text.x"]], .longest(h_labs), tick + .PAD_MM)
+  xt <- .track_h(rt[["axis.title.x"]], hsc$name, .PAD_MM)
   strip <- .track_h(rt[["strip.text"]], "Ag", 2 * .PAD_MM)
   gap <- vellum::unit(rt[["panel.spacing"]], "mm")
 

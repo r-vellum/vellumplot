@@ -50,6 +50,47 @@ NULL
   L$params$shape %||% default
 }
 
+# Coordinate placement honouring coord_flip: under flip the horizontal axis
+# carries the data y and the vertical axis the data x. Emitters compute native
+# coordinates in data space, then place them through these helpers so only the
+# final grob arguments swap.
+.flipped <- function(scales) isTRUE(scales$flip)
+
+.xy_units <- function(scales, x, y) {
+  if (.flipped(scales)) {
+    list(x = vellum::unit(y, "native"), y = vellum::unit(x, "native"))
+  } else {
+    list(x = vellum::unit(x, "native"), y = vellum::unit(y, "native"))
+  }
+}
+
+.rect_units <- function(scales, xc, yc, w, h) {
+  if (.flipped(scales)) {
+    list(
+      x = vellum::unit(yc, "native"),
+      y = vellum::unit(xc, "native"),
+      width = vellum::unit(h, "native"),
+      height = vellum::unit(w, "native")
+    )
+  } else {
+    list(
+      x = vellum::unit(xc, "native"),
+      y = vellum::unit(yc, "native"),
+      width = vellum::unit(w, "native"),
+      height = vellum::unit(h, "native")
+    )
+  }
+}
+
+# Swap the two endpoints of a segment under flip (each arg is already a unit).
+.seg_units <- function(scales, x0, y0, x1, y1) {
+  if (.flipped(scales)) {
+    list(x0 = y0, y0 = x0, x1 = y1, y1 = x1)
+  } else {
+    list(x0 = x0, y0 = y0, x1 = x1, y1 = y1)
+  }
+}
+
 # An intercept may arrive as a mapped channel or a constant param.
 .intercept <- function(L, name) L$values[[name]] %||% L$params[[name]]
 
@@ -103,11 +144,12 @@ NULL
 
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
+    xy <- .xy_units(scales, xn[idx], yn[idx])
     scene <- vellum::draw(
       scene,
       vellum::points_grob(
-        vellum::unit(xn[idx], "native"),
-        vellum::unit(yn[idx], "native"),
+        xy$x,
+        xy$y,
         size = vellum::unit(size[idx], "mm"),
         shape = shape[idx],
         gp = vellum::gpar(
@@ -132,11 +174,12 @@ NULL
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
     a <- alpha[idx[1]]
+    xy <- .xy_units(scales, xn[o], yn[o])
     scene <- vellum::draw(
       scene,
       vellum::lines_grob(
-        vellum::unit(xn[o], "native"),
-        vellum::unit(yn[o], "native"),
+        xy$x,
+        xy$y,
         gp = vellum::gpar(
           col = col[idx[1]],
           lwd = lwd,
@@ -156,29 +199,31 @@ NULL
   xi <- .intercept(L, "xintercept")
   if (!is.null(yi)) {
     for (v in scales$y$map(yi)) {
+      s <- .seg_units(
+        scales,
+        vellum::unit(0, "npc"),
+        vellum::unit(v, "native"),
+        vellum::unit(1, "npc"),
+        vellum::unit(v, "native")
+      )
       scene <- vellum::draw(
         scene,
-        vellum::segments_grob(
-          vellum::unit(0, "npc"),
-          vellum::unit(v, "native"),
-          vellum::unit(1, "npc"),
-          vellum::unit(v, "native"),
-          gp = gp
-        )
+        vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = gp)
       )
     }
   }
   if (!is.null(xi)) {
     for (v in scales$x$map(xi)) {
+      s <- .seg_units(
+        scales,
+        vellum::unit(v, "native"),
+        vellum::unit(0, "npc"),
+        vellum::unit(v, "native"),
+        vellum::unit(1, "npc")
+      )
       scene <- vellum::draw(
         scene,
-        vellum::segments_grob(
-          vellum::unit(v, "native"),
-          vellum::unit(0, "npc"),
-          vellum::unit(v, "native"),
-          vellum::unit(1, "npc"),
-          gp = gp
-        )
+        vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = gp)
       )
     }
   }
@@ -225,13 +270,20 @@ NULL
 
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     a <- alpha[idx[1]]
+    r <- .rect_units(
+      scales,
+      xc[idx],
+      (y0[idx] + y1[idx]) / 2,
+      w[idx],
+      abs(y1[idx] - y0[idx])
+    )
     scene <- vellum::draw(
       scene,
       vellum::rect_grob(
-        x = vellum::unit(xc[idx], "native"),
-        y = vellum::unit((y0[idx] + y1[idx]) / 2, "native"),
-        width = vellum::unit(w[idx], "native"),
-        height = vellum::unit(abs(y1[idx] - y0[idx]), "native"),
+        x = r$x,
+        y = r$y,
+        width = r$width,
+        height = r$height,
         gp = vellum::gpar(
           fill = fill[idx[1]],
           col = NA,
@@ -260,20 +312,22 @@ NULL
     if (has_se) {
       px <- c(xn[o], rev(xn[o]))
       py <- c(ymin[o], rev(ymax[o]))
+      poly <- .xy_units(scales, px, py)
       scene <- vellum::draw(
         scene,
         vellum::polygon_grob(
-          vellum::unit(px, "native"),
-          vellum::unit(py, "native"),
+          poly$x,
+          poly$y,
           gp = vellum::gpar(fill = cc, col = NA, alpha = 0.25)
         )
       )
     }
+    ln <- .xy_units(scales, xn[o], yn[o])
     scene <- vellum::draw(
       scene,
       vellum::lines_grob(
-        vellum::unit(xn[o], "native"),
-        vellum::unit(yn[o], "native"),
+        ln$x,
+        ln$y,
         gp = vellum::gpar(col = cc, lwd = 1.5)
       )
     )
@@ -287,13 +341,17 @@ NULL
   xn <- scales$x$map(L$values$x)
   yn <- scales$y$map(L$values$y)
   sp <- L$stat_params
+  w <- as.integer(sp$width %||% 400L)
+  h <- as.integer(sp$height %||% 300L)
+  # Under flip the raster axes swap with the data.
+  flip <- .flipped(scales)
   g <- vellum::datashade(
-    xn,
-    yn,
-    width = as.integer(sp$width %||% 400L),
-    height = as.integer(sp$height %||% 300L),
-    xlim = scales$x$domain,
-    ylim = scales$y$domain,
+    if (flip) yn else xn,
+    if (flip) xn else yn,
+    width = if (flip) h else w,
+    height = if (flip) w else h,
+    xlim = if (flip) scales$y$domain else scales$x$domain,
+    ylim = if (flip) scales$x$domain else scales$y$domain,
     colors = sp$colors %||% c("#deebf7", "#08306b"),
     how = sp$how %||% "eq_hist",
     interpolate = FALSE

@@ -1,4 +1,4 @@
-#' @include classes.R compile-resolve.R compile-train.R compile-facet.R compile-layout.R compile-guides.R compile-marks.R
+#' @include classes.R coord.R compile-resolve.R compile-train.R compile-facet.R compile-layout.R compile-guides.R compile-marks.R
 NULL
 
 # Compile one plot: spec -> build panels (facet split + resolve + train) ->
@@ -14,7 +14,13 @@ NULL
   rt <- .resolve_theme(.theme_of(spec))
   built <- .build_panels(spec)
   guides <- .legend_guides(built$scales)
-  lay <- .build_layout(built, guides, spec@labels, rt)
+  # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
+  flip <- identical(.coord_of(spec)@kind, "flip")
+  hscale <- function(p) if (flip) p$y_sc else p$x_sc # horizontal (bottom)
+  vscale <- function(p) if (flip) p$x_sc else p$y_sc # vertical (left)
+  hshared <- if (flip) built$scales$y else built$scales$x
+  vshared <- if (flip) built$scales$x else built$scales$y
+  lay <- .build_layout(built, guides, spec@labels, rt, flip)
 
   scene <- vellum::push(
     scene,
@@ -39,37 +45,42 @@ NULL
 
   # panels: background + gridlines + marks, each in its own native scales
   for (p in built$panels) {
+    hsc <- hscale(p)
+    vsc <- vscale(p)
     psc <- list(
       x = p$x_sc,
       y = p$y_sc,
       color = built$scales$color,
       size = built$scales$size,
-      shape = built$scales$shape
+      shape = built$scales$shape,
+      flip = flip
     )
     scene <- vellum::push(
       scene,
       vellum::viewport(
         row = lay$panel_row[p$r],
         col = lay$panel_col[p$c],
-        xscale = p$x_sc$domain,
-        yscale = p$y_sc$domain,
+        xscale = hsc$domain,
+        yscale = vsc$domain,
         clip = TRUE
       )
     )
-    scene <- .draw_panel_bg(scene, p$x_sc, p$y_sc, rt)
+    scene <- .draw_panel_bg(scene, hsc, vsc, rt)
     scene <- .compile_marks(scene, p$resolved, psc)
     scene <- vellum::pop(scene)
   }
 
   # axes: per panel when scales are free, otherwise once down the left / along
   # the bottom (drawn per panel row / column for alignment).
+  # Left gutter shows the vertical scale; bottom gutter the horizontal scale
+  # (these swap under coord_flip).
   if (built$free_y) {
     for (p in built$panels) {
       scene <- .draw_y_axis(
         scene,
         lay$panel_row[p$r],
         lay$ylabels_col[p$c],
-        p$y_sc,
+        vscale(p),
         rt
       )
     }
@@ -79,7 +90,7 @@ NULL
         scene,
         lay$panel_row[r],
         lay$ylabels_col[1],
-        built$scales$y,
+        vshared,
         rt
       )
     }
@@ -90,7 +101,7 @@ NULL
         scene,
         lay$xlabels_row[p$r],
         lay$panel_col[p$c],
-        p$x_sc,
+        hscale(p),
         rt
       )
     }
@@ -100,7 +111,7 @@ NULL
         scene,
         lay$xlabels_row[1],
         lay$panel_col[cc],
-        built$scales$x,
+        hshared,
         rt
       )
     }
@@ -113,7 +124,7 @@ NULL
     scene,
     lay$panel_row[1],
     lay$ytitle_col,
-    built$scales$y$name,
+    vshared$name,
     rt,
     rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
   )
@@ -121,7 +132,7 @@ NULL
     scene,
     lay$xtitle_row,
     lay$panel_col[1],
-    built$scales$x$name,
+    hshared$name,
     rt,
     colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
   )
