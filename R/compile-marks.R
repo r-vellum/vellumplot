@@ -41,6 +41,15 @@ NULL
   L$params$size %||% default
 }
 
+# Resolve a layer's point shape: a mapped shape channel (via the trained shape
+# scale), a constant shape param, or the supplied default.
+.aes_shape <- function(L, scales, default) {
+  if (!is.null(scales$shape) && !is.null(L$values$shape)) {
+    return(scales$shape$map(L$values$shape))
+  }
+  L$params$shape %||% default
+}
+
 # An intercept may arrive as a mapped channel or a constant param.
 .intercept <- function(L, name) L$values[[name]] %||% L$params[[name]]
 
@@ -89,7 +98,7 @@ NULL
   }
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   size <- rep_len(.aes_size(L, scales, 1), n)
-  shape <- rep_len(.aes_param(L, "shape", "circle"), n)
+  shape <- rep_len(.aes_shape(L, scales, "circle"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
 
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {

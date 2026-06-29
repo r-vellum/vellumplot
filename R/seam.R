@@ -43,7 +43,8 @@ NULL
       x = p$x_sc,
       y = p$y_sc,
       color = built$scales$color,
-      size = built$scales$size
+      size = built$scales$size,
+      shape = built$scales$shape
     )
     scene <- vellum::push(
       scene,

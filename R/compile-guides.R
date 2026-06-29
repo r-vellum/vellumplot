@@ -316,6 +316,9 @@ NULL
   if (!is.null(scales$size)) {
     out <- c(out, list(list(kind = "size", sc = scales$size)))
   }
+  if (!is.null(scales$shape)) {
+    out <- c(out, list(list(kind = "shape", sc = scales$shape)))
+  }
   out
 }
 
@@ -350,7 +353,8 @@ NULL
       g$kind,
       color_continuous = .guide_color_continuous(scene, g$sc, rt),
       color_discrete = .guide_color_discrete(scene, g$sc, rt),
-      size = .guide_size(scene, g$sc, rt)
+      size = .guide_size(scene, g$sc, rt),
+      shape = .guide_shape(scene, g$sc, rt)
     )
     scene <- vellum::pop(scene)
   }
@@ -435,6 +439,22 @@ NULL
         vellum::unit(yy, "npc"),
         size = vellum::unit(sc$legend_sizes[i], "mm"),
         shape = "circle",
+        gp = vellum::gpar(fill = "grey35", col = "grey35")
+      )
+    )
+  })
+}
+
+.guide_shape <- function(scene, sc, rt) {
+  scene <- .guide_title(scene, sc$name, rt)
+  .draw_key_rows(scene, sc$levels, rt, function(scene, yy, i) {
+    vellum::draw(
+      scene,
+      vellum::points_grob(
+        vellum::unit(0.16, "npc"),
+        vellum::unit(yy, "npc"),
+        size = vellum::unit(3, "mm"),
+        shape = sc$shapes[i],
         gp = vellum::gpar(fill = "grey35", col = "grey35")
       )
     )

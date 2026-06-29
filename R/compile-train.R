@@ -430,6 +430,36 @@ NULL
   )
 }
 
+# Train the shape scale (if any layer maps `shape` to data). Shape is always
+# discrete: levels cycle through `.SHAPE_PALETTE` (or a user `scale_shape(values)`).
+.train_shape <- function(spec, resolved) {
+  values <- .pool_values(resolved, "shape")
+  if (is.null(values)) {
+    return(NULL)
+  }
+  scalespec <- .scale_for(spec, "shape")
+  levels <- .cat_levels(values)
+  pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
+    scalespec@palette
+  } else {
+    .SHAPE_PALETTE
+  }
+  shapes <- rep_len(pal, length(levels))
+  names(shapes) <- levels
+  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
+    scalespec@name
+  } else {
+    .default_title(spec, "shape")
+  }
+  list(
+    kind = "shape",
+    map = function(x) unname(shapes[as.character(x)]),
+    name = name,
+    levels = levels,
+    shapes = unname(shapes)
+  )
+}
+
 # Pool numeric values feeding a position axis: the channel itself plus, for
 # rule layers, the matching intercept (which may be a constant in `params`), and
 # any `<channel>min`/`<channel>max` extent (e.g. a smooth's confidence ribbon).
@@ -475,6 +505,7 @@ NULL
       include_zero = has_bar
     ),
     color = .train_colour(spec, resolved),
-    size = .train_size(spec, resolved)
+    size = .train_size(spec, resolved),
+    shape = .train_shape(spec, resolved)
   )
 }

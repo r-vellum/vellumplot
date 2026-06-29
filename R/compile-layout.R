@@ -58,6 +58,8 @@ NULL
     } else if (g$kind == "size") {
       strs <- c(strs, sc$legend_labels, sc$name)
       swatch <- max(swatch, 2 * max(sc$legend_sizes))
+    } else if (g$kind == "shape") {
+      strs <- c(strs, sc$levels, sc$name)
     }
   }
   vellum::grobwidth(.txt(.longest(strs), rt[["legend.title"]]@size)) +

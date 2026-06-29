@@ -263,3 +263,30 @@ scale_size <- function(
     )
   )
 }
+
+#' Shape scale
+#'
+#' Declare the scale for a mapped (discrete) `shape` aesthetic. Levels cycle
+#' through a default set of marker shapes unless `values` is given. A shape legend
+#' is drawn automatically.
+#'
+#' @param plot A [PlotSpec].
+#' @param values Character vector of shapes (each one of `"circle"`, `"square"`,
+#'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`), or `NULL` for the default.
+#' @param name Legend title, or `NULL` to derive from the encoding.
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = factor(cyl))
+#' @export
+scale_shape <- function(plot, values = NULL, name = NULL) {
+  .check_plot(plot)
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "shape",
+      type = "discrete",
+      palette = values,
+      name = name
+    )
+  )
+}
