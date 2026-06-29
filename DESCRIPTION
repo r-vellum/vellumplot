@@ -48,6 +48,7 @@ Collate:
     'concat.R'
     'labs.R'
     'print.R'
+    'repeat.R'
     'scales.R'
     'vplot.R'
     'zzz.R'
