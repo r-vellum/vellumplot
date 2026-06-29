@@ -15,16 +15,23 @@ NULL
   built <- .build_panels(spec)
   guides <- .legend_guides(built$scales)
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
-  flip <- identical(.coord_of(spec)@kind, "flip")
+  co <- .coord_of(spec)
+  flip <- identical(co@kind, "flip")
   hscale <- function(p) if (flip) p$y_sc else p$x_sc # horizontal (bottom)
   vscale <- function(p) if (flip) p$x_sc else p$y_sc # vertical (left)
   hshared <- if (flip) built$scales$y else built$scales$x
   vshared <- if (flip) built$scales$x else built$scales$y
-  lay <- .build_layout(built, guides, spec@labels, rt, flip)
+  lay <- .build_layout(built, guides, spec@labels, rt, flip, co)
 
   scene <- vellum::push(
     scene,
-    vellum::viewport(layout = vellum::grid_layout(lay$widths, lay$heights))
+    vellum::viewport(
+      layout = vellum::grid_layout(
+        lay$widths,
+        lay$heights,
+        respect = lay$respect
+      )
+    )
   )
 
   # plot background fills the whole page region (behind every panel/gutter)

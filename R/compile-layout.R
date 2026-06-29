@@ -88,7 +88,8 @@ NULL
   guides = list(),
   labels = list(),
   rt = .resolve_theme(.theme_default()),
-  flip = FALSE
+  flip = FALSE,
+  coord = NULL
 ) {
   fa <- built$fa
   R <- fa$R
@@ -99,6 +100,26 @@ NULL
   vsc <- if (flip) built$scales$x else built$scales$y
   free_x <- built$free_x
   free_y <- built$free_y
+
+  # Aspect lock. The panel `null` tracks carry weights that, with the layout's
+  # `respect = TRUE`, force the device cell aspect (vellum makes 1 null-width =
+  # 1 null-height in device units). coord_fixed(ratio) -> width:height of
+  # x-range : (ratio * y-range); a bare theme aspect.ratio -> 1 : aspect.ratio.
+  panel_w <- vellum::unit(1, "null")
+  panel_h <- vellum::unit(1, "null")
+  respect <- FALSE
+  asp <- rt[["aspect.ratio"]]
+  if (!is.null(coord) && identical(coord@kind, "fixed")) {
+    ratio <- coord@ratio %||% 1
+    xr <- abs(diff(range(built$scales$x$domain)))
+    yr <- abs(diff(range(built$scales$y$domain)))
+    panel_w <- vellum::unit(xr, "null")
+    panel_h <- vellum::unit(ratio * yr, "null")
+    respect <- TRUE
+  } else if (!is.null(asp)) {
+    panel_h <- vellum::unit(asp, "null")
+    respect <- TRUE
+  }
 
   # Gutter sizes (measured from the widest labels across all panels) using the
   # resolved theme's font sizes; blank elements collapse their track.
@@ -130,7 +151,7 @@ NULL
   shared_yl <- if (!free_y) .tk_add(W, yl) else NA_integer_
   for (c in seq_len(C)) {
     ylabels_col[c] <- if (free_y) .tk_add(W, yl) else shared_yl
-    panel_col[c] <- .tk_add(W, vellum::unit(1, "null"))
+    panel_col[c] <- .tk_add(W, panel_w)
     if (c < C) .tk_add(W, gap)
   }
   rowstrip_col <- if (has_row_strip) .tk_add(W, strip) else NA_integer_
@@ -175,7 +196,7 @@ NULL
     if (fa$type == "wrap") {
       wrapstrip_row[r] <- .tk_add(H, strip)
     }
-    panel_row[r] <- .tk_add(H, vellum::unit(1, "null"))
+    panel_row[r] <- .tk_add(H, panel_h)
     if (free_x) {
       xlabels_row[r] <- .tk_add(H, xl)
     }
@@ -213,6 +234,7 @@ NULL
     subtitle_row = subtitle_row,
     tag_row = tag_row,
     caption_row = caption_row,
-    ncol_total = length(W$u)
+    ncol_total = length(W$u),
+    respect = respect
   )
 }

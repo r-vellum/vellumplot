@@ -3,17 +3,26 @@
 \name{coord_cartesian}
 \alias{coord_cartesian}
 \alias{coord_flip}
+\alias{coord_fixed}
+\alias{coord_equal}
 \title{Coordinate systems}
 \usage{
 coord_cartesian(plot, xlim = NULL, ylim = NULL)
 
 coord_flip(plot, xlim = NULL, ylim = NULL)
+
+coord_fixed(plot, ratio = 1, xlim = NULL, ylim = NULL)
+
+coord_equal(plot, ratio = 1, xlim = NULL, ylim = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
 \item{xlim, ylim}{Length-2 view-window limits, or \code{NULL} to use the trained
 range.}
+
+\item{ratio}{Aspect ratio for \code{coord_fixed()}: the device length of one y unit
+relative to one x unit (default \code{1}).}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -22,10 +31,14 @@ The modified \link{PlotSpec}.
 \code{coord_cartesian()} is the default Cartesian system; pass \code{xlim}/\code{ylim} to
 \strong{zoom} the view (out-of-range marks are clipped, not dropped — unlike a
 \verb{scale_*(limits=)}, which here behaves the same but is the data-scale's job).
-\code{coord_flip()} swaps the x and y axes, e.g. for horizontal bars. Coordinate
-limits take precedence over scale limits.
+\code{coord_flip()} swaps the x and y axes, e.g. for horizontal bars.
+\code{coord_fixed()} / \code{coord_equal()} lock the aspect ratio so \code{ratio} data units
+on the y axis occupy the same physical length as one unit on x (the panel
+shrinks to fit and is centred). Coordinate limits take precedence over scale
+limits.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> coord_cartesian(xlim = c(2, 4))
 vplot(mtcars) |> mark_bar(x = factor(cyl)) |> coord_flip()
+vplot(mtcars) |> mark_point(x = wt, y = mpg) |> coord_fixed()
 }
