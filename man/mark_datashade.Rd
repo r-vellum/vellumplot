@@ -15,7 +15,7 @@ mark_datashade(
 )
 }
 \arguments{
-\item{plot}{A \link{PlotSpec}.}
+\item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings; \code{x} and \code{y} are required.}
 

@@ -16,12 +16,15 @@ mark_linerange(plot, ..., blend = NULL, data = NULL)
 mark_summary(plot, ..., fun = mean, blend = NULL, data = NULL)
 }
 \arguments{
-\item{plot}{A \link{PlotSpec}.}
+\item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y} for boxplot/summary; \code{x}, \code{ymin},
 \code{ymax} for errorbar/linerange; plus \code{color}/\code{fill}.}
 
-\item{blend}{Optional blend mode; see \code{\link[=mark_point]{mark_point()}}.}
+\item{blend}{Optional blend mode for compositing this layer against what is
+already drawn beneath it (the panel and earlier layers), one of the CSS
+\code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
+layer composites as one isolated group (not per element).}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 

@@ -25,7 +25,7 @@ mark_smooth(
 )
 }
 \arguments{
-\item{plot}{A \link{PlotSpec}.}
+\item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval), e.g. \code{x}, \code{y}, \code{color}/\code{fill}.}
 
@@ -34,8 +34,10 @@ mark_smooth(
 \item{position}{Position adjustment for the histogram bars (\code{"stack"},
 \code{"dodge"}, \code{"fill"}).}
 
-\item{blend}{Optional blend mode (CSS \code{mix-blend-mode}) for compositing the
-layer against the backdrop; see \code{\link[=mark_point]{mark_point()}}.}
+\item{blend}{Optional blend mode for compositing this layer against what is
+already drawn beneath it (the panel and earlier layers), one of the CSS
+\code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
+layer composites as one isolated group (not per element).}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 

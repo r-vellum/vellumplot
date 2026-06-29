@@ -201,7 +201,7 @@ mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
 #' fits a model (`"lm"` for now) of `y` on `x` and draws the fitted line, with a
 #' confidence ribbon when `se = TRUE`.
 #'
-#' @param plot A [PlotSpec].
+#' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval), e.g. `x`, `y`, `color`/`fill`.
 #' @param bins Number of histogram bins.
 #' @param method Smoothing method; `"lm"` (linear) for now.
@@ -209,9 +209,6 @@ mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
 #' @param level Confidence level for the ribbon.
 #' @param position Position adjustment for the histogram bars (`"stack"`,
 #'   `"dodge"`, `"fill"`).
-#' @param blend Optional blend mode (CSS `mix-blend-mode`) for compositing the
-#'   layer against the backdrop; see [mark_point()].
-#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
@@ -270,13 +267,12 @@ mark_smooth <- function(
 #' overplotting. Per-point colour/size aesthetics do not apply; cell colour
 #' encodes density.
 #'
-#' @param plot A [PlotSpec].
+#' @inheritParams mark_point
 #' @param ... Encodings; `x` and `y` are required.
 #' @param width,height Aggregation grid size in cells (output raster pixels).
 #' @param colors Two or more colours forming the low-to-high density ramp.
 #' @param how Density-to-colour mapping: `"eq_hist"` (default), `"log"`,
 #'   `"cbrt"`, or `"linear"`.
-#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' n <- 1e5
@@ -313,13 +309,11 @@ mark_datashade <- function(
 #' `mark_ribbon()` fills between `ymin` and `ymax`; `mark_step()` draws a
 #' staircase line. All connect points in `x` order.
 #'
-#' @param plot A [PlotSpec].
+#' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
 #'   `ymax` for ribbon; plus `color`/`fill`/`alpha`.
 #' @param direction For `mark_step()`, `"hv"` (horizontal then vertical, default)
 #'   or `"vh"`.
-#' @param blend Optional blend mode; see [mark_point()].
-#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(pressure) |> mark_area(x = temperature, y = pressure)
@@ -356,7 +350,7 @@ mark_step <- function(plot, ..., direction = "hv", blend = NULL, data = NULL) {
 #' `mark_label()` adds a filled rounded background behind each label. `size` is
 #' the font size in points; `angle` (degrees) may be mapped or constant.
 #'
-#' @param plot A [PlotSpec].
+#' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `label` (+ `color`, `angle`).
 #' @param size Font size in points.
 #' @param family,fontface Font family / face (`"plain"`, `"bold"`, `"italic"`,
@@ -365,8 +359,6 @@ mark_step <- function(plot, ..., direction = "hv", blend = NULL, data = NULL) {
 #'   `"centre"`, `"right"`, `"bottom"`, `"top"`, or numeric in `[0, 1]`).
 #' @param angle Text rotation in degrees.
 #' @param fill For `mark_label()`, the background fill colour.
-#' @param blend Optional blend mode; see [mark_point()].
-#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
@@ -443,14 +435,12 @@ mark_label <- function(
 #' colours each cell by count. `mark_density()` draws a 1-D kernel density of `x`
 #' as a filled curve.
 #'
-#' @param plot A [PlotSpec].
+#' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `fill` for tile/raster; `x`, `y`
 #'   for bin2d; `x` (+ `fill`/`color`) for density.
 #' @param bins Number of bins per axis for `mark_bin2d()` / hex columns for
 #'   `mark_hex()`.
 #' @param adjust Bandwidth multiplier for `mark_density()`.
-#' @param blend Optional blend mode; see [mark_point()].
-#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' d <- expand.grid(x = 1:5, y = 1:5)
@@ -530,13 +520,11 @@ mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
 #' caps; `mark_linerange()` omits the caps. `mark_summary()` aggregates `y` per
 #' `x` with `fun` (default mean) and draws the result as points.
 #'
-#' @param plot A [PlotSpec].
+#' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
 #'   `ymax` for errorbar/linerange; plus `color`/`fill`.
 #' @param width For `mark_errorbar()`, the cap width as a fraction of the band.
 #' @param fun For `mark_summary()`, the aggregation function (default `mean`).
-#' @param blend Optional blend mode; see [mark_point()].
-#' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
@@ -586,11 +574,9 @@ mark_summary <- function(plot, ..., fun = mean, blend = NULL, data = NULL) {
 #'
 #' `mark_segment()` draws a straight line from `(x, y)` to `(xend, yend)` per row.
 #'
-#' @param plot A [PlotSpec].
+#' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
 #'   `linewidth`, `alpha`).
-#' @param data Optional layer data frame; overrides the plot data for this layer.
-#' @param blend Optional blend mode; see [mark_point()].
 #' @return The modified [PlotSpec].
 #' @examples
 #' d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
