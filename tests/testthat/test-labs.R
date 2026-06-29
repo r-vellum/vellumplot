@@ -139,7 +139,8 @@ test_that("a caption renders ink in the bottom band", {
     mark_point(x = wt, y = mpg) |>
     labs(caption = "a caption")
   img <- render_px(p)
-  expect_true(has_ink(img, rows = c(0.93, 1), cols = c(0.4, 1)))
+  # caption sits in the bottom band, just above the plot.margin
+  expect_true(has_ink(img, rows = c(0.85, 0.92), cols = c(0.4, 1)))
 })
 
 test_that("faceted plots with labs render", {

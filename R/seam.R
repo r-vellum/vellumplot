@@ -17,12 +17,48 @@ NULL
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
   co <- .coord_of(spec)
   flip <- identical(co@kind, "flip")
-  hscale <- function(p) if (flip) p$y_sc else p$x_sc # horizontal (bottom)
-  vscale <- function(p) if (flip) p$x_sc else p$y_sc # vertical (left)
-  hshared <- if (flip) built$scales$y else built$scales$x
-  vshared <- if (flip) built$scales$x else built$scales$y
+  hscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$h # horizontal (bottom)
+  vscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$v # vertical (left)
+  shared_hv <- .hv_roles(built$scales$x, built$scales$y, flip)
+  hshared <- shared_hv$h
+  vshared <- shared_hv$v
   lay <- .build_layout(built, guides, spec@labels, rt, flip, co)
 
+  # Outer margin grid: absolute mm tracks around a single `null` cell holding the
+  # real layout. (Done as a grid rather than an inset viewport because vellum
+  # disallows the mixed npc/mm unit arithmetic an inset would need.)
+  m <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(
+      layout = vellum::grid_layout(
+        c(
+          vellum::unit(m[4], "mm"),
+          vellum::unit(1, "null"),
+          vellum::unit(m[2], "mm")
+        ),
+        c(
+          vellum::unit(m[1], "mm"),
+          vellum::unit(1, "null"),
+          vellum::unit(m[3], "mm")
+        )
+      )
+    )
+  )
+
+  # plot background fills the whole page region (behind the margins too)
+  pbg <- rt[["plot.background"]]
+  if (!.is_blank(pbg)) {
+    scene <- vellum::push(
+      scene,
+      vellum::viewport(row = 1, col = 1, rowspan = 3, colspan = 3)
+    )
+    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pbg)))
+    scene <- vellum::pop(scene)
+  }
+
+  # the real layout lives in the centre cell, inset by the margins
+  scene <- vellum::push(scene, vellum::viewport(row = 2, col = 2))
   scene <- vellum::push(
     scene,
     vellum::viewport(
@@ -33,22 +69,6 @@ NULL
       )
     )
   )
-
-  # plot background fills the whole page region (behind every panel/gutter)
-  pbg <- rt[["plot.background"]]
-  if (!.is_blank(pbg)) {
-    scene <- vellum::push(
-      scene,
-      vellum::viewport(
-        row = 1,
-        col = 1,
-        rowspan = length(lay$heights),
-        colspan = length(lay$widths)
-      )
-    )
-    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pbg)))
-    scene <- vellum::pop(scene)
-  }
 
   # panels: background + gridlines + marks, each in its own native scales
   for (p in built$panels) {
@@ -184,7 +204,9 @@ NULL
     scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, spec@labels$tag, rt)
   }
 
-  vellum::pop(scene)
+  scene <- vellum::pop(scene) # inner layout grid
+  scene <- vellum::pop(scene) # centre cell
+  vellum::pop(scene) # outer margin grid
 }
 
 # The body of the as_vellum_scene() method for a single plot.

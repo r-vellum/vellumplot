@@ -96,8 +96,9 @@ NULL
   C <- fa$C
   # Under coord_flip the bottom (x) axis shows the y-scale and the left (y) axis
   # shows the x-scale, so gutter sizing follows the horizontal / vertical roles.
-  hsc <- if (flip) built$scales$y else built$scales$x
-  vsc <- if (flip) built$scales$x else built$scales$y
+  hv <- .hv_roles(built$scales$x, built$scales$y, flip)
+  hsc <- hv$h
+  vsc <- hv$v
   free_x <- built$free_x
   free_y <- built$free_y
 

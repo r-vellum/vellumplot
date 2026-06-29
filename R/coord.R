@@ -19,6 +19,13 @@ CoordSpec <- S7::new_class(
 # The coord for a spec, or the cartesian default.
 .coord_of <- function(spec) spec@coord %||% CoordSpec(kind = "cartesian")
 
+# Horizontal / vertical roles of an (x, y) pair under coord_flip: flip swaps the
+# horizontal (bottom) and vertical (left) axes. The single source of truth for
+# the swap, shared by the layout builder and the seam.
+.hv_roles <- function(x, y, flip) {
+  if (flip) list(h = y, v = x) else list(h = x, v = y)
+}
+
 #' Coordinate systems
 #'
 #' `coord_cartesian()` is the default Cartesian system; pass `xlim`/`ylim` to

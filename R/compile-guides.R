@@ -463,14 +463,29 @@ NULL
 }
 
 # Shared key-row layout for discrete/size legends: a column of `keys` (drawn by
-# `draw_key(scene, y, i)`) with labels to the right.
+# `draw_key(scene, y, i)`) with labels to the right. Each key sits on an optional
+# `legend.key` background (blank by default, so nothing is drawn).
 .draw_key_rows <- function(scene, labels, rt, draw_key) {
   txt <- .el_gpar_text(rt[["legend.text"]])
+  key_bg <- rt[["legend.key"]]
+  key_side <- .LEGEND_SWATCH_MM + .PAD_MM
   k <- length(labels)
   top <- 0.78
   step <- min(0.14, top / max(k, 1))
   for (i in seq_len(k)) {
     yy <- top - (i - 1) * step
+    if (!.is_blank(key_bg)) {
+      scene <- vellum::draw(
+        scene,
+        vellum::rect_grob(
+          x = vellum::unit(0.16, "npc"),
+          y = vellum::unit(yy, "npc"),
+          width = vellum::unit(key_side, "mm"),
+          height = vellum::unit(key_side, "mm"),
+          gp = .el_gpar_rect(key_bg)
+        )
+      )
+    }
     scene <- draw_key(scene, yy, i)
     scene <- vellum::draw(
       scene,
