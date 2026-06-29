@@ -29,6 +29,8 @@ Config/testthat/edition: 3
 Collate:
     'vellumplot-package.R'
     'classes.R'
+    'marks.R'
+    'annotate.R'
     'compile-resolve.R'
     'coord.R'
     'compile-train.R'
@@ -45,7 +47,6 @@ Collate:
     'seam.R'
     'concat.R'
     'labs.R'
-    'marks.R'
     'print.R'
     'scales.R'
     'vplot.R'

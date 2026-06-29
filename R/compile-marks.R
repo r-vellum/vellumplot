@@ -738,6 +738,44 @@ NULL
   .emit_errorbar(scene, L, scales, caps = FALSE)
 }
 
+# Straight segments from (x, y) to (xend, yend), batched per colour group.
+.emit_segment <- function(scene, L, scales) {
+  n <- L$n
+  x0 <- rep_len(scales$x$map(L$values$x), n)
+  y0 <- rep_len(scales$y$map(L$values$y), n)
+  x1 <- rep_len(scales$x$map(L$values$xend), n)
+  y1 <- rep_len(scales$y$map(L$values$yend), n)
+  col <- rep_len(.aes_colour(L, scales, "black"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  lwd <- .aes_param(L, "linewidth", 1)
+
+  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+    a <- alpha[idx[1]]
+    s <- .seg_units(
+      scales,
+      vellum::unit(x0[idx], "native"),
+      vellum::unit(y0[idx], "native"),
+      vellum::unit(x1[idx], "native"),
+      vellum::unit(y1[idx], "native")
+    )
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        s$x0,
+        s$y0,
+        s$x1,
+        s$y1,
+        gp = vellum::gpar(
+          col = col[idx[1]],
+          lwd = lwd,
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
+  }
+  scene
+}
+
 # A hexbin heatmap: one device-regular hexagon per occupied bin, filled by count.
 # The radius arrives (in x-data units) from stat_hexbin as `width`; hexes tile
 # exactly under coord_fixed and approximately otherwise.
@@ -802,6 +840,7 @@ NULL
     boxplot = .emit_boxplot(scene, L, scales),
     errorbar = .emit_errorbar(scene, L, scales),
     linerange = .emit_linerange(scene, L, scales),
+    segment = .emit_segment(scene, L, scales),
     hex = .emit_hex(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")

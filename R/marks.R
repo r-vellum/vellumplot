@@ -582,6 +582,25 @@ mark_summary <- function(plot, ..., fun = mean, blend = NULL, data = NULL) {
   )
 }
 
+#' Segment mark
+#'
+#' `mark_segment()` draws a straight line from `(x, y)` to `(xend, yend)` per row.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
+#'   `linewidth`, `alpha`).
+#' @param data Optional layer data frame; overrides the plot data for this layer.
+#' @param blend Optional blend mode; see [mark_point()].
+#' @return The modified [PlotSpec].
+#' @examples
+#' d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
+#' vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend)
+#' @export
+mark_segment <- function(plot, ..., blend = NULL, data = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "segment", rlang::enquos(...), blend = blend, data = data)
+}
+
 .check_plot <- function(plot, call = rlang::caller_env()) {
   if (!S7::S7_inherits(plot, PlotSpec)) {
     cli::cli_abort(
