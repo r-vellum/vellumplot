@@ -11,38 +11,41 @@ NULL
   (utils::head(b, -1) + utils::tail(b, -1)) / 2
 }
 
-# Vertical gridlines at `xs` (native), spanning the panel height.
+# Vertical gridlines at `xs` (native), spanning the panel height. Drawn as one
+# batched segments_grob (vellum splits it per element only where gpar differs).
 .vlines <- function(scene, xs, gp) {
-  for (b in xs) {
-    scene <- vellum::draw(
-      scene,
-      vellum::segments_grob(
-        vellum::unit(b, "native"),
-        vellum::unit(0, "npc"),
-        vellum::unit(b, "native"),
-        vellum::unit(1, "npc"),
-        gp = gp
-      )
-    )
+  if (!length(xs)) {
+    return(scene)
   }
-  scene
+  k <- length(xs)
+  vellum::draw(
+    scene,
+    vellum::segments_grob(
+      vellum::unit(xs, "native"),
+      vellum::unit(rep(0, k), "npc"),
+      vellum::unit(xs, "native"),
+      vellum::unit(rep(1, k), "npc"),
+      gp = gp
+    )
+  )
 }
 
 # Horizontal gridlines at `ys` (native), spanning the panel width.
 .hlines <- function(scene, ys, gp) {
-  for (b in ys) {
-    scene <- vellum::draw(
-      scene,
-      vellum::segments_grob(
-        vellum::unit(0, "npc"),
-        vellum::unit(b, "native"),
-        vellum::unit(1, "npc"),
-        vellum::unit(b, "native"),
-        gp = gp
-      )
-    )
+  if (!length(ys)) {
+    return(scene)
   }
-  scene
+  k <- length(ys)
+  vellum::draw(
+    scene,
+    vellum::segments_grob(
+      vellum::unit(rep(0, k), "npc"),
+      vellum::unit(ys, "native"),
+      vellum::unit(rep(1, k), "npc"),
+      vellum::unit(ys, "native"),
+      gp = gp
+    )
+  )
 }
 
 # Panel background + gridlines + axis ticks, drawn while the scene is positioned
@@ -73,36 +76,34 @@ NULL
   }
   tlen <- rt[["axis.ticks.length"]]
   tx <- rt[["axis.ticks.x"]]
-  if (!.is_blank(tx)) {
-    gp <- .el_gpar_line(tx)
-    for (b in x_sc$breaks) {
-      scene <- vellum::draw(
-        scene,
-        vellum::segments_grob(
-          vellum::unit(b, "native"),
-          vellum::unit(0, "npc"),
-          vellum::unit(b, "native"),
-          vellum::unit(tlen, "mm"),
-          gp = gp
-        )
+  if (!.is_blank(tx) && length(x_sc$breaks)) {
+    b <- x_sc$breaks
+    k <- length(b)
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(b, "native"),
+        vellum::unit(rep(0, k), "npc"),
+        vellum::unit(b, "native"),
+        vellum::unit(rep(tlen, k), "mm"),
+        gp = .el_gpar_line(tx)
       )
-    }
+    )
   }
   ty <- rt[["axis.ticks.y"]]
-  if (!.is_blank(ty)) {
-    gp <- .el_gpar_line(ty)
-    for (b in y_sc$breaks) {
-      scene <- vellum::draw(
-        scene,
-        vellum::segments_grob(
-          vellum::unit(0, "npc"),
-          vellum::unit(b, "native"),
-          vellum::unit(tlen, "mm"),
-          vellum::unit(b, "native"),
-          gp = gp
-        )
+  if (!.is_blank(ty) && length(y_sc$breaks)) {
+    b <- y_sc$breaks
+    k <- length(b)
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(rep(0, k), "npc"),
+        vellum::unit(b, "native"),
+        vellum::unit(rep(tlen, k), "mm"),
+        vellum::unit(b, "native"),
+        gp = .el_gpar_line(ty)
       )
-    }
+    )
   }
   scene
 }

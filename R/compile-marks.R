@@ -8,7 +8,13 @@ NULL
 # Continuous colour is already quantized upstream, so the group count is bounded.
 .style_groups <- function(n, fields) {
   fields <- fields[!vapply(fields, is.null, logical(1))]
-  if (!length(fields)) {
+  # Fast path: with no styling fields, or when every field is constant (the
+  # common large-n case of a single colour/alpha), there is exactly one group.
+  # Skip the O(n) rep_len + paste + split entirely.
+  if (
+    !length(fields) ||
+      all(vapply(fields, function(v) length(unique(v)) <= 1L, logical(1)))
+  ) {
     return(list(seq_len(n)))
   }
   codes <- lapply(fields, function(v) {
@@ -198,13 +204,15 @@ NULL
   yi <- .intercept(L, "yintercept")
   xi <- .intercept(L, "xintercept")
   if (!is.null(yi)) {
-    for (v in scales$y$map(yi)) {
+    vy <- scales$y$map(yi)
+    if (length(vy)) {
+      k <- length(vy)
       s <- .seg_units(
         scales,
-        vellum::unit(0, "npc"),
-        vellum::unit(v, "native"),
-        vellum::unit(1, "npc"),
-        vellum::unit(v, "native")
+        vellum::unit(rep(0, k), "npc"),
+        vellum::unit(vy, "native"),
+        vellum::unit(rep(1, k), "npc"),
+        vellum::unit(vy, "native")
       )
       scene <- vellum::draw(
         scene,
@@ -213,13 +221,15 @@ NULL
     }
   }
   if (!is.null(xi)) {
-    for (v in scales$x$map(xi)) {
+    vx <- scales$x$map(xi)
+    if (length(vx)) {
+      k <- length(vx)
       s <- .seg_units(
         scales,
-        vellum::unit(v, "native"),
-        vellum::unit(0, "npc"),
-        vellum::unit(v, "native"),
-        vellum::unit(1, "npc")
+        vellum::unit(vx, "native"),
+        vellum::unit(rep(0, k), "npc"),
+        vellum::unit(vx, "native"),
+        vellum::unit(rep(1, k), "npc")
       )
       scene <- vellum::draw(
         scene,

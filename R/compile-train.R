@@ -92,13 +92,26 @@ NULL
 # Normalise a palette name for case/space/punctuation-insensitive matching
 # against grDevices::hcl.pals().
 .norm_pal <- function(s) tolower(gsub("[ ._-]", "", s))
+
+# grDevices::hcl.pals() and its normalised form, computed once per session
+# (the palette list is constant) so name matching does not re-scan it each call.
+.pal_cache <- new.env(parent = emptyenv())
+.hcl_pal_table <- function() {
+  if (is.null(.pal_cache$full)) {
+    full <- grDevices::hcl.pals()
+    .pal_cache$full <- full
+    .pal_cache$norm <- .norm_pal(full)
+  }
+  .pal_cache
+}
 .is_hcl_pal <- function(x) {
   is.character(x) &&
     length(x) == 1L &&
-    .norm_pal(x) %in% .norm_pal(grDevices::hcl.pals())
+    .norm_pal(x) %in% .hcl_pal_table()$norm
 }
 .hcl_full <- function(x) {
-  grDevices::hcl.pals()[match(.norm_pal(x), .norm_pal(grDevices::hcl.pals()))]
+  tab <- .hcl_pal_table()
+  tab$full[match(.norm_pal(x), tab$norm)]
 }
 .are_colours <- function(x) {
   tryCatch(
