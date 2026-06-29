@@ -25,11 +25,23 @@ NULL
 
 .format_scale <- function(s) {
   bits <- paste0(s@aesthetic, ": ", s@type)
+  if (!is.null(s@trans) && !identical(s@trans, "identity")) {
+    tr <- if (is.character(s@trans)) s@trans else "custom"
+    bits <- paste0(bits, "/", tr)
+  }
   if (!is.null(s@domain)) {
     bits <- paste0(
       bits,
       " domain[",
       paste(format(s@domain), collapse = ", "),
+      "]"
+    )
+  }
+  if (!is.null(s@range)) {
+    bits <- paste0(
+      bits,
+      " range[",
+      paste(format(s@range), collapse = ", "),
       "]"
     )
   }

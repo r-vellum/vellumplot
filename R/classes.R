@@ -38,11 +38,15 @@ ScaleSpec <- S7::new_class(
   "ScaleSpec",
   package = "vellumplot",
   properties = list(
-    aesthetic = S7::class_character, # "x" | "y" | "color" | "fill" | ...
-    type = S7::class_character, # "continuous" | "discrete" | "log10"
-    domain = S7::new_property(S7::class_any, default = NULL),
-    palette = S7::new_property(S7::class_any, default = NULL),
-    name = S7::new_property(S7::class_any, default = NULL)
+    aesthetic = S7::class_character, # "x" | "y" | "color" | "fill" | "size" | "shape"
+    type = S7::class_character, # "continuous" | "discrete"
+    domain = S7::new_property(S7::class_any, default = NULL), # limits
+    palette = S7::new_property(S7::class_any, default = NULL), # colours / shapes
+    name = S7::new_property(S7::class_any, default = NULL),
+    trans = S7::new_property(S7::class_any, default = NULL), # transform name / object
+    range = S7::new_property(S7::class_any, default = NULL), # output range (size)
+    breaks = S7::new_property(S7::class_any, default = NULL), # explicit breaks
+    labels = S7::new_property(S7::class_any, default = NULL) # explicit labels
   )
 )
 

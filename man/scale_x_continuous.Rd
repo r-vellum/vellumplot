@@ -3,19 +3,44 @@
 \name{scale_x_continuous}
 \alias{scale_x_continuous}
 \alias{scale_y_continuous}
+\alias{scale_x_discrete}
+\alias{scale_y_discrete}
 \title{Position scales}
 \usage{
-scale_x_continuous(plot, limits = NULL, trans = "identity", name = NULL)
+scale_x_continuous(
+  plot,
+  limits = NULL,
+  trans = "identity",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+)
 
-scale_y_continuous(plot, limits = NULL, trans = "identity", name = NULL)
+scale_y_continuous(
+  plot,
+  limits = NULL,
+  trans = "identity",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+)
+
+scale_x_discrete(plot, limits = NULL, name = NULL)
+
+scale_y_discrete(plot, limits = NULL, name = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{limits}{Numeric length-2 domain \code{c(min, max)}, or \code{NULL} to train from
-the data.}
+\item{limits}{For continuous scales a numeric length-2 domain \code{c(min, max)};
+for discrete scales a character vector of levels (sets order / subset).
+\code{NULL} trains from the data.}
 
-\item{trans}{Transformation: \code{"identity"} (default) or \code{"log10"}.}
+\item{trans}{Transformation: \code{"identity"} (default), \code{"log10"}, \code{"sqrt"},
+\code{"reverse"}, or a \code{\link[scales:transform_log10]{scales::transform_log10()}}-style transform object.}
+
+\item{breaks, labels}{Explicit break positions (data units) and their labels,
+or \code{NULL} to compute them.}
 
 \item{name}{Axis title, or \code{NULL} to derive from the encoding.}
 }
@@ -23,10 +48,12 @@ the data.}
 The modified \link{PlotSpec}.
 }
 \description{
-Declare a position scale to override the trained default. Without a
-declaration, continuous position scales are trained automatically from the
-data (range across all layers, with a small expansion).
+Declare a position scale to override the trained default. \code{scale_x_continuous()}
+/ \code{scale_y_continuous()} handle numeric (and date/time) axes;
+\code{scale_x_discrete()} / \code{scale_y_discrete()} handle categorical (band) axes and
+let you set the level order via \code{limits}.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_continuous(limits = c(0, 6))
+vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_y_continuous(trans = "sqrt")
 }

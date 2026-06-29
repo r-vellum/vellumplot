@@ -31,6 +31,129 @@ NULL
 # Point-size range (mm) a mapped `size` aesthetic spans.
 .SIZE_RANGE <- c(1, 4)
 
+# Continuous position transforms. Each is `(transform, inverse, breaks, format)`:
+# `transform` maps data -> native (viewport) units; `breaks` generates breaks in
+# DATA units (then transformed to positions); `format` labels them. Kept as a
+# local registry (rather than scales::transform_*) so log10 label formatting
+# stays byte-identical to v1.
+.TRANSFORMS <- list(
+  identity = list(
+    transform = function(x) x,
+    breaks = function(rng) scales::breaks_extended()(rng),
+    format = function(b) scales::label_number()(b)
+  ),
+  log10 = list(
+    transform = function(x) log10(x),
+    breaks = function(rng) scales::breaks_log()(rng),
+    format = function(b) format(b, trim = TRUE, scientific = FALSE)
+  ),
+  sqrt = list(
+    transform = function(x) sqrt(x),
+    breaks = function(rng) scales::breaks_extended()(rng),
+    format = function(b) scales::label_number()(b)
+  ),
+  reverse = list(
+    transform = function(x) -x,
+    breaks = function(rng) scales::breaks_extended()(rng),
+    format = function(b) scales::label_number()(b)
+  )
+)
+
+# Resolve a scalespec's transform to a `(transform, breaks, format)` object. A
+# character name indexes the registry; a `scales::transform_*()` object is
+# adapted directly (its `$transform`/`$breaks`/`$format`). Back-compat: the old
+# `scale_*_continuous(trans = "log10")` stored `type = "log10"`.
+.resolve_trans <- function(scalespec) {
+  tr <- if (!is.null(scalespec)) scalespec@trans else NULL
+  if (
+    is.null(tr) && !is.null(scalespec) && identical(scalespec@type, "log10")
+  ) {
+    tr <- "log10"
+  }
+  tr <- tr %||% "identity"
+  if (is.character(tr)) {
+    out <- .TRANSFORMS[[tr]]
+    if (is.null(out)) {
+      cli::cli_abort(c(
+        "Unknown transform {.val {tr}}.",
+        i = "Use one of {.val {names(.TRANSFORMS)}} or a {.fn scales::transform_*} object."
+      ))
+    }
+    return(out)
+  }
+  # a scales transform object
+  list(
+    transform = tr$transform,
+    breaks = tr$breaks %||% function(rng) scales::breaks_extended()(rng),
+    format = tr$format %||% function(b) scales::label_number()(b)
+  )
+}
+
+# Normalise a palette name for case/space/punctuation-insensitive matching
+# against grDevices::hcl.pals().
+.norm_pal <- function(s) tolower(gsub("[ ._-]", "", s))
+.is_hcl_pal <- function(x) {
+  is.character(x) &&
+    length(x) == 1L &&
+    .norm_pal(x) %in% .norm_pal(grDevices::hcl.pals())
+}
+.hcl_full <- function(x) {
+  grDevices::hcl.pals()[match(.norm_pal(x), .norm_pal(grDevices::hcl.pals()))]
+}
+.are_colours <- function(x) {
+  tryCatch(
+    {
+      grDevices::col2rgb(x)
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+}
+
+# Continuous-colour ramp stops: NULL -> viridis default; an hcl.pals() name ->
+# that palette; else a user colour vector.
+.continuous_stops <- function(palette) {
+  if (is.null(palette)) {
+    return(.viridis())
+  }
+  if (.is_hcl_pal(palette)) {
+    return(grDevices::hcl.colors(256, .hcl_full(palette)))
+  }
+  if (!.are_colours(palette)) {
+    cli::cli_abort(
+      "{.arg palette} is not a known palette name or colour vector."
+    )
+  }
+  palette
+}
+
+# Discrete colours for `levels`: NULL -> vellum qualitative; an hcl.pals() name
+# -> that palette at k colours; a named colour vector -> mapped by name (manual,
+# missing levels grey50); else a colour vector recycled to k.
+.discrete_colours <- function(palette, levels) {
+  k <- length(levels)
+  if (is.null(palette)) {
+    return(.qual_palette(k))
+  }
+  if (.is_hcl_pal(palette)) {
+    return(grDevices::hcl.colors(k, .hcl_full(palette)))
+  }
+  if (!.are_colours(palette)) {
+    cli::cli_abort(
+      "{.arg palette}/{.arg values} are not colours or a palette name."
+    )
+  }
+  if (!is.null(names(palette))) {
+    cols <- unname(palette[levels])
+    cols[is.na(cols)] <- "grey50"
+    return(cols)
+  }
+  rep_len(palette, k)
+}
+
+# Default shapes a mapped `shape` aesthetic cycles through.
+.SHAPE_PALETTE <- c("circle", "square", "triangle", "diamond", "plus", "cross")
+
 # Train a position scale. Dispatches to a continuous (numeric/temporal) or a
 # discrete (factor/character/logical) scale. Returns a trained-scale list: the
 # native domain (for the viewport scale), break positions in native units, their
@@ -52,7 +175,7 @@ NULL
   if (is.numeric(raw) || inherits(raw, c("Date", "POSIXct"))) {
     .train_position_continuous(aesthetic, raw, scalespec, name, include_zero)
   } else {
-    .train_position_discrete(aesthetic, values, name)
+    .train_position_discrete(aesthetic, values, scalespec, name)
   }
 }
 
@@ -63,13 +186,7 @@ NULL
   name,
   include_zero
 ) {
-  is_log <- !is.null(scalespec) && identical(scalespec@type, "log10")
   is_time <- inherits(raw, c("Date", "POSIXct"))
-  tfun <- if (is_log) {
-    function(v) log10(as.numeric(v))
-  } else {
-    function(v) as.numeric(v)
-  }
 
   num <- as.numeric(raw)
   num <- num[is.finite(num)]
@@ -83,29 +200,54 @@ NULL
     rng <- centre + c(-0.5, 0.5)
   }
 
-  trng <- if (is_log) log10(rng) else rng
-  domain <- scales::expand_range(trng, mul = 0.05)
+  user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
+  user_labels <- if (!is.null(scalespec)) scalespec@labels else NULL
 
   if (is_time) {
-    braw <- pretty(raw)
-    braw <- braw[as.numeric(braw) >= rng[1] & as.numeric(braw) <= rng[2]]
+    # Dates/times keep their dedicated pretty()/format() path.
+    tfun <- function(v) as.numeric(v)
+    domain <- scales::expand_range(rng, mul = 0.05)
+    braw <- if (!is.null(user_breaks)) user_breaks else pretty(raw)
+    keep <- as.numeric(braw) >= rng[1] & as.numeric(braw) <= rng[2]
+    braw <- braw[keep]
     breaks <- as.numeric(braw)
-    labels <- format(braw)
-  } else if (is_log) {
-    braw <- scales::breaks_log()(rng)
-    braw <- braw[is.finite(braw) & braw >= rng[1] & braw <= rng[2]]
-    breaks <- log10(braw)
-    labels <- format(braw, trim = TRUE, scientific = FALSE)
+    labels <- if (!is.null(user_labels)) {
+      rep_len(user_labels, length(braw))
+    } else {
+      format(braw)
+    }
+    type <- "continuous"
   } else {
-    braw <- scales::breaks_extended()(rng)
-    braw <- braw[is.finite(braw) & braw >= rng[1] & braw <= rng[2]]
-    breaks <- braw
-    labels <- scales::label_number()(braw)
+    tr <- .resolve_trans(scalespec)
+    tfun <- function(v) tr$transform(as.numeric(v))
+    domain <- scales::expand_range(range(tr$transform(rng)), mul = 0.05)
+    braw <- if (!is.null(user_breaks)) {
+      as.numeric(user_breaks)
+    } else {
+      tr$breaks(rng)
+    }
+    keep <- is.finite(braw) & braw >= min(rng) & braw <= max(rng)
+    lab <- if (!is.null(user_labels)) {
+      rep_len(user_labels, length(braw))
+    } else {
+      NULL
+    }
+    braw <- braw[keep]
+    if (!is.null(lab)) {
+      lab <- lab[keep]
+    }
+    breaks <- tr$transform(braw)
+    labels <- lab %||% tr$format(braw)
+    type <- if (!is.null(scalespec) && identical(scalespec@type, "log10")) {
+      "log10"
+    } else {
+      "continuous"
+    }
   }
 
   list(
     aesthetic = aesthetic,
-    type = if (is_log) "log10" else "continuous",
+    type = type,
     discrete = FALSE,
     band_width = NULL,
     data_range = rng,
@@ -118,9 +260,14 @@ NULL
 }
 
 # A discrete (band) position scale: levels map to integer positions 1..k, each
-# occupying a unit-width band; the domain pads half a band each side.
-.train_position_discrete <- function(aesthetic, values, name) {
-  levs <- .cat_levels(values)
+# occupying a unit-width band; the domain pads half a band each side. A user
+# `limits` (in `scalespec@domain`) sets/reorders/subsets the levels.
+.train_position_discrete <- function(aesthetic, values, scalespec, name) {
+  levs <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
+    as.character(scalespec@domain)
+  } else {
+    .cat_levels(values)
+  }
   k <- length(levs)
   list(
     aesthetic = aesthetic,
@@ -168,18 +315,17 @@ NULL
     .default_title(spec, "color")
   }
 
+  pal <- if (!is.null(scalespec)) scalespec@palette else NULL
+  user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
+  user_labels <- if (!is.null(scalespec)) scalespec@labels else NULL
+
   if (identical(kind, "continuous")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
     rng <- range(v[is.finite(v)])
     if (diff(rng) == 0) {
       rng <- rng + c(-0.5, 0.5)
     }
-    pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
-      scalespec@palette
-    } else {
-      .viridis()
-    }
-    pal256 <- grDevices::colorRampPalette(pal)(256)
+    pal256 <- grDevices::colorRampPalette(.continuous_stops(pal))(256)
     # Quantize to <=256 bins so the mark style-grouping stays bounded.
     bin <- function(x) {
       i <- floor(scales::rescale(x, to = c(0, 255), from = rng)) + 1L
@@ -190,8 +336,21 @@ NULL
       out[!is.finite(x)] <- NA
       out
     }
-    lbrk <- scales::breaks_extended()(rng)
-    lbrk <- lbrk[is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]]
+    lbrk <- if (!is.null(user_breaks)) {
+      as.numeric(user_breaks)
+    } else {
+      scales::breaks_extended()(rng)
+    }
+    keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
+    llab <- if (!is.null(user_labels)) {
+      rep_len(user_labels, length(lbrk))
+    } else {
+      NULL
+    }
+    lbrk <- lbrk[keep]
+    if (!is.null(llab)) {
+      llab <- llab[keep]
+    }
     list(
       kind = "continuous",
       map = map,
@@ -199,15 +358,11 @@ NULL
       range = rng,
       pal256 = pal256,
       legend_breaks = lbrk,
-      legend_labels = scales::label_number()(lbrk)
+      legend_labels = llab %||% scales::label_number()(lbrk)
     )
   } else {
     levels <- .cat_levels(values)
-    cols <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
-      rep_len(scalespec@palette, length(levels))
-    } else {
-      .qual_palette(length(levels))
-    }
+    cols <- .discrete_colours(pal, levels)
     names(cols) <- levels
     map <- function(x) unname(cols[as.character(x)])
     list(
@@ -215,6 +370,7 @@ NULL
       map = map,
       name = title,
       levels = levels,
+      labels = user_labels %||% levels,
       colors = unname(cols)
     )
   }
@@ -227,22 +383,50 @@ NULL
   if (is.null(values)) {
     return(NULL)
   }
+  scalespec <- .scale_for(spec, "size")
   v <- as.numeric(unlist(values, use.names = FALSE))
-  rng <- range(v[is.finite(v)])
+  rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
+    as.numeric(scalespec@domain)
+  } else {
+    range(v[is.finite(v)])
+  }
   if (diff(rng) == 0) {
     rng <- rng + c(-0.5, 0.5)
   }
-  map <- function(x) scales::rescale(x, to = .SIZE_RANGE, from = rng)
-  lbrk <- scales::breaks_extended()(rng)
-  lbrk <- lbrk[is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]]
+  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
+    as.numeric(scalespec@range)
+  } else {
+    .SIZE_RANGE
+  }
+  map <- function(x) scales::rescale(x, to = out_range, from = rng)
+  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
+    scalespec@name
+  } else {
+    .default_title(spec, "size")
+  }
+  lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
+    as.numeric(scalespec@breaks)
+  } else {
+    scales::breaks_extended()(rng)
+  }
+  keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
+  llab <- if (!is.null(scalespec) && !is.null(scalespec@labels)) {
+    rep_len(scalespec@labels, length(lbrk))
+  } else {
+    NULL
+  }
+  lbrk <- lbrk[keep]
+  if (!is.null(llab)) {
+    llab <- llab[keep]
+  }
   list(
     kind = "size",
     map = map,
-    name = .default_title(spec, "size"),
+    name = name,
     range = rng,
     legend_breaks = lbrk,
     legend_sizes = map(lbrk),
-    legend_labels = scales::label_number()(lbrk)
+    legend_labels = llab %||% scales::label_number()(lbrk)
   )
 }
 

@@ -3,29 +3,82 @@
 \name{scale_color_continuous}
 \alias{scale_color_continuous}
 \alias{scale_color_discrete}
+\alias{scale_color_manual}
+\alias{scale_color_gradient}
+\alias{scale_fill_continuous}
+\alias{scale_fill_discrete}
+\alias{scale_fill_manual}
+\alias{scale_fill_gradient}
 \title{Colour scales}
 \usage{
-scale_color_continuous(plot, palette = NULL, name = NULL)
+scale_color_continuous(
+  plot,
+  palette = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+)
 
-scale_color_discrete(plot, palette = NULL, name = NULL)
+scale_color_discrete(
+  plot,
+  palette = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+)
+
+scale_color_manual(plot, values, name = NULL)
+
+scale_color_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+
+scale_fill_continuous(
+  plot,
+  palette = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+)
+
+scale_fill_discrete(
+  plot,
+  palette = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+)
+
+scale_fill_manual(plot, values, name = NULL)
+
+scale_fill_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{palette}{For \code{scale_color_continuous()}, a vector of ramp stop colours;
-for \code{scale_color_discrete()}, a vector of category colours. \code{NULL} uses a
-sensible default.}
+\item{palette}{A vector of colours, or a single palette name passed to
+\code{\link[grDevices:hcl.colors]{grDevices::hcl.colors()}} (e.g. \code{"viridis"}, \code{"Blues"}, \code{"Set 2"}; matched
+case/space-insensitively). \code{NULL} uses a sensible default.}
+
+\item{breaks, labels}{Explicit legend breaks / labels, or \code{NULL}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{values}{For \verb{scale_*_manual()}, a vector of colours; if named, matched to
+data levels by name (unmatched levels draw grey).}
+
+\item{low, high}{For \verb{scale_*_gradient()}, the endpoint colours.}
 }
 \value{
 The modified \link{PlotSpec}.
 }
 \description{
 Declare a colour scale for the \code{color}/\code{fill} channel. Continuous data get a
-perceptual ramp; discrete data get a qualitative palette. A legend is drawn
+perceptual ramp; discrete data get a qualitative palette. \verb{scale_*_manual()}
+sets exact colours, \verb{scale_*_gradient()} a two-point ramp. The \code{fill} variants
+are identical (colour and fill share one scale). A legend is drawn
 automatically when colour is mapped.
 }
 \examples{
-vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp) |> scale_color_continuous()
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  scale_color_continuous(palette = "viridis")
 }
