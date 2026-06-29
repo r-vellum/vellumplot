@@ -409,6 +409,70 @@ mark_label <- function(
   )
 }
 
+#' Heatmap marks
+#'
+#' `mark_tile()` draws a rectangular tile at each `(x, y)` coloured by `fill`;
+#' `mark_raster()` draws the same as one raster image (a fast path requiring a
+#' complete regular grid). `mark_bin2d()` bins continuous `x`/`y` into a grid and
+#' colours each cell by count. `mark_density()` draws a 1-D kernel density of `x`
+#' as a filled curve.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... Encodings (tidy-eval): `x`, `y`, `fill` for tile/raster; `x`, `y`
+#'   for bin2d; `x` (+ `fill`/`color`) for density.
+#' @param bins Number of bins per axis for `mark_bin2d()`.
+#' @param adjust Bandwidth multiplier for `mark_density()`.
+#' @param blend Optional blend mode; see [mark_point()].
+#' @return The modified [PlotSpec].
+#' @examples
+#' d <- expand.grid(x = 1:5, y = 1:5)
+#' d$z <- d$x * d$y
+#' vplot(d) |> mark_tile(x = x, y = y, fill = z)
+#' @export
+mark_tile <- function(plot, ..., blend = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "tile", rlang::enquos(...), blend = blend)
+}
+
+#' @rdname mark_tile
+#' @export
+mark_raster <- function(plot, ..., blend = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "raster", rlang::enquos(...), blend = blend)
+}
+
+#' @rdname mark_tile
+#' @export
+mark_bin2d <- function(plot, ..., bins = 30, blend = NULL) {
+  .check_plot(plot)
+  dots <- rlang::enquos(...)
+  if (is.null(dots$fill) && is.null(dots$color)) {
+    dots$fill <- rlang::quo(after_stat(count))
+  }
+  .add_layer(
+    plot,
+    "tile",
+    dots,
+    stat = "bin2d",
+    stat_params = list(bins = bins),
+    blend = blend
+  )
+}
+
+#' @rdname mark_tile
+#' @export
+mark_density <- function(plot, ..., adjust = 1, blend = NULL) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "area",
+    rlang::enquos(...),
+    stat = "density",
+    stat_params = list(adjust = adjust),
+    blend = blend
+  )
+}
+
 .check_plot <- function(plot, call = rlang::caller_env()) {
   if (!S7::S7_inherits(plot, PlotSpec)) {
     cli::cli_abort(

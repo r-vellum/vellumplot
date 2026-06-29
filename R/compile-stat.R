@@ -24,6 +24,8 @@ NULL
     stat,
     count = .stat_count(L),
     bin = .stat_bin(L),
+    bin2d = .stat_bin2d(L),
+    density = .stat_density(L),
     smooth = .stat_smooth(L),
     cli::cli_abort("Unknown stat {.val {stat}}.")
   )
@@ -58,6 +60,9 @@ NULL
   }
   if (!is.null(sdf$width)) {
     L$values$width <- sdf$width
+  }
+  if (!is.null(sdf$height)) {
+    L$values$height <- sdf$height
   }
   L$n <- nrow(sdf)
   L
@@ -146,6 +151,64 @@ NULL
       density = out$count / (total * width)
     )
   }
+}
+
+# Bin a continuous (x, y) into a `bins x bins` grid; one row per non-empty cell
+# with its centre, count, and cell width/height (for tile rendering).
+.stat_bin2d <- function(L) {
+  x <- as.numeric(L$values$x)
+  y <- as.numeric(L$values$y)
+  ok <- is.finite(x) & is.finite(y)
+  x <- x[ok]
+  y <- y[ok]
+  bins <- L$stat_params$bins %||% 30L
+  edges <- function(v) {
+    rng <- range(v)
+    if (diff(rng) == 0) {
+      rng <- rng + c(-0.5, 0.5)
+    }
+    seq(rng[1], rng[2], length.out = bins + 1L)
+  }
+  xb <- edges(x)
+  yb <- edges(y)
+  xc <- (utils::head(xb, -1L) + xb[-1L]) / 2
+  yc <- (utils::head(yb, -1L) + yb[-1L]) / 2
+  xi <- findInterval(x, xb, rightmost.closed = TRUE, all.inside = TRUE)
+  yi <- findInterval(y, yb, rightmost.closed = TRUE, all.inside = TRUE)
+  tab <- table(
+    factor(xi, levels = seq_len(bins)),
+    factor(yi, levels = seq_len(bins))
+  )
+  cells <- which(tab > 0, arr.ind = TRUE)
+  data.frame(
+    x = xc[cells[, 1]],
+    y = yc[cells[, 2]],
+    count = as.numeric(tab[cells]),
+    width = diff(xb)[1],
+    height = diff(yb)[1]
+  )
+}
+
+# A 1-D kernel density of x (per group): a dense (x, density) curve.
+.stat_density <- function(L) {
+  x <- as.numeric(L$values$x)
+  grp <- .layer_group(L)
+  groups <- if (is.null(grp)) {
+    list(all = seq_along(x))
+  } else {
+    split(seq_along(x), as.character(grp))
+  }
+  adjust <- L$stat_params$adjust %||% 1
+  parts <- lapply(names(groups), function(gn) {
+    i <- groups[[gn]]
+    d <- stats::density(x[i], adjust = adjust)
+    df <- data.frame(x = d$x, y = d$y, density = d$y)
+    if (!is.null(grp)) {
+      df$group <- gn
+    }
+    df
+  })
+  do.call(rbind, parts)
 }
 
 # Fit y ~ x (per group) and predict on a dense grid, with a confidence ribbon.

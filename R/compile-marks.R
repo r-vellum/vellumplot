@@ -539,6 +539,76 @@ NULL
   scene
 }
 
+# A heatmap of rectangular tiles at each (x, y), coloured by fill. Width/height
+# default to the data resolution so tiles abut.
+.emit_tile <- function(scene, L, scales) {
+  n <- L$n
+  xp <- rep_len(scales$x$map(L$values$x), n)
+  yp <- rep_len(scales$y$map(L$values$y), n)
+  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  w <- rep_len(L$values$width %||% .resolution(xp), n)
+  h <- rep_len(L$values$height %||% .resolution(yp), n)
+
+  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+    a <- alpha[idx[1]]
+    r <- .rect_units(scales, xp[idx], yp[idx], w[idx], h[idx])
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = r$x,
+        y = r$y,
+        width = r$width,
+        height = r$height,
+        gp = vellum::gpar(
+          fill = fill[idx[1]],
+          col = NA,
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
+  }
+  scene
+}
+
+# A heatmap drawn as one raster image (fast path for a complete regular grid).
+.emit_raster <- function(scene, L, scales) {
+  if (.flipped(scales)) {
+    cli::cli_abort(
+      "{.fn mark_raster} does not support {.fn coord_flip}; use {.fn mark_tile}."
+    )
+  }
+  xv <- L$values$x
+  yv <- L$values$y
+  ux <- sort(unique(xv))
+  uy <- sort(unique(yv))
+  if (length(ux) * length(uy) != length(xv)) {
+    cli::cli_abort(
+      "{.fn mark_raster} needs a complete regular grid; use {.fn mark_tile}."
+    )
+  }
+  cols <- rep_len(.aes_colour(L, scales, "grey50"), length(xv))
+  ci <- match(xv, ux)
+  ri <- match(yv, uy)
+  m <- matrix("#FFFFFF00", nrow = length(uy), ncol = length(ux))
+  m[cbind(length(uy) - ri + 1L, ci)] <- cols # row 1 = top = max y
+  xw <- if (length(ux) > 1) min(diff(ux)) else 1
+  yw <- if (length(uy) > 1) min(diff(uy)) else 1
+  xn <- scales$x$map(c(min(ux) - xw / 2, max(ux) + xw / 2))
+  yn <- scales$y$map(c(min(uy) - yw / 2, max(uy) + yw / 2))
+  vellum::draw(
+    scene,
+    vellum::raster_grob(
+      grDevices::as.raster(m),
+      x = vellum::unit(mean(xn), "native"),
+      y = vellum::unit(mean(yn), "native"),
+      width = vellum::unit(diff(range(xn)), "native"),
+      height = vellum::unit(diff(range(yn)), "native"),
+      interpolate = FALSE
+    )
+  )
+}
+
 # Datashade: aggregate the points into a density raster filling the panel. The
 # raster is binned over the panel's native domain so it aligns with the axes.
 .emit_datashade <- function(scene, L, scales) {
@@ -576,6 +646,8 @@ NULL
     step = .emit_step(scene, L, scales),
     text = .emit_text(scene, L, scales),
     label = .emit_label(scene, L, scales),
+    tile = .emit_tile(scene, L, scales),
+    raster = .emit_raster(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
