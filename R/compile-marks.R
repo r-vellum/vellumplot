@@ -99,6 +99,49 @@ NULL
   }
 }
 
+# Densify a polyline (trained-native x/y, in draw order) so that, under polar
+# projection, straight data segments bend into smooth arcs: between consecutive
+# vertices insert points until the angular step is <= `max_step`, interpolating
+# x and y linearly. Returns the denser x/y; a < 2-point path is returned as is.
+.polar_munch <- function(scales, x, y, max_step = 4 * pi / 180) {
+  ctx <- scales$polar
+  m <- length(x)
+  if (m < 2L) {
+    return(list(x = x, y = y))
+  }
+  tsrc <- if (identical(ctx$theta_aes, "x")) x else y
+  ang <- ctx$theta_map(tsrc)
+  ox <- vector("list", m - 1L)
+  oy <- vector("list", m - 1L)
+  for (i in seq_len(m - 1L)) {
+    steps <- max(1L, ceiling(abs(ang[i + 1L] - ang[i]) / max_step))
+    t <- seq(0, 1, length.out = steps + 1L)[-(steps + 1L)]
+    ox[[i]] <- x[i] + t * (x[i + 1L] - x[i])
+    oy[[i]] <- y[i] + t * (y[i + 1L] - y[i])
+  }
+  list(x = c(unlist(ox), x[m]), y = c(unlist(oy), y[m]))
+}
+
+# Map an ordered polyline to grob units, densifying first under polar.
+.xy_path <- function(scales, x, y) {
+  if (!is.null(scales$polar)) {
+    d <- .polar_munch(scales, x, y)
+    return(.xy_units(scales, d$x, d$y))
+  }
+  .xy_units(scales, x, y)
+}
+
+# Map a filled outline (forward path a + reversed path b) to polygon units,
+# densifying each side under polar so the band follows the arcs.
+.xy_area <- function(scales, xa, ya, xb, yb) {
+  if (!is.null(scales$polar)) {
+    da <- .polar_munch(scales, xa, ya)
+    db <- .polar_munch(scales, rev(xb), rev(yb))
+    return(.xy_units(scales, c(da$x, db$x), c(da$y, db$y)))
+  }
+  .xy_units(scales, c(xa, rev(xb)), c(ya, rev(yb)))
+}
+
 .rect_units <- function(scales, xc, yc, w, h) {
   if (.flipped(scales)) {
     list(
@@ -209,7 +252,7 @@ NULL
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
     a <- alpha[idx[1]]
-    xy <- .xy_units(scales, xn[o], yn[o])
+    xy <- .xy_path(scales, xn[o], yn[o])
     scene <- vellum::draw(
       scene,
       vellum::lines_grob(
@@ -406,9 +449,7 @@ NULL
     o <- idx[order(xn[idx])]
     cc <- col[idx[1]]
     if (has_se) {
-      px <- c(xn[o], rev(xn[o]))
-      py <- c(ymin[o], rev(ymax[o]))
-      poly <- .xy_units(scales, px, py)
+      poly <- .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
       scene <- vellum::draw(
         scene,
         vellum::polygon_grob(
@@ -418,7 +459,7 @@ NULL
         )
       )
     }
-    ln <- .xy_units(scales, xn[o], yn[o])
+    ln <- .xy_path(scales, xn[o], yn[o])
     scene <- vellum::draw(
       scene,
       vellum::lines_grob(
@@ -519,7 +560,7 @@ NULL
       ey <- sy
     }
     a <- alpha[idx[1]]
-    ln <- .xy_units(scales, ex, ey)
+    ln <- .xy_path(scales, ex, ey)
     scene <- vellum::draw(
       scene,
       vellum::lines_grob(

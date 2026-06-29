@@ -106,6 +106,40 @@ test_that("faceted coord_polar renders to a file", {
   expect_gt(file.info(f)$size, 0)
 })
 
+test_that("a polar line is densified into a smooth arc (curve, not chord)", {
+  # a single segment spanning a quarter turn at constant radius: the arc bulges
+  # out to that radius mid-way, where a straight chord would cut well inside.
+  d <- data.frame(a = c(0, 1), r = c(1, 1))
+  p <- vplot(d) |>
+    mark_line(x = a, y = r) |>
+    scale_x_continuous(limits = c(0, 4)) |>
+    coord_polar(theta = "x")
+  xy <- vellumplot:::.polar_munch(
+    list(
+      polar = vellumplot:::.polar_ctx(
+        p@coord,
+        list(domain = c(0, 4)),
+        list(domain = c(0, 1))
+      )
+    ),
+    c(0, 1),
+    c(1, 1)
+  )
+  # densification inserts intermediate vertices
+  expect_gt(length(xy$x), 2)
+  expect_no_error(render_px(p))
+})
+
+test_that("polar points render (mapped to angle/radius)", {
+  d <- data.frame(a = 0:3, r = c(1, 2, 3, 4))
+  p <- vplot(d) |>
+    mark_point(x = a, y = r, size = 4) |>
+    coord_polar(theta = "x")
+  img <- render_px(p)
+  # default black points -> several near-black pixels somewhere in the panel
+  expect_gt(count_near(img, c(0, 0, 0)), 20)
+})
+
 test_that("a mapped fill still produces a legend column in polar", {
   df <- data.frame(cat = c("a", "b", "c"), n = c(2, 3, 4))
   p <- vplot(df) |>
