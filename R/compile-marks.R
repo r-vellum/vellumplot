@@ -25,15 +25,23 @@ NULL
 }
 
 # Resolve a layer's mark colour: a mapped colour channel (via the trained colour
-# scale), a constant colour param, or the supplied default.
-.aes_colour <- function(L, scales, default) {
+# scale), a constant colour param, or the supplied default. `fill_fallback` lets
+# `fill` stand in for `color` (true for fill-based marks; false for text/label,
+# where `fill` is the label background, not the ink colour).
+.aes_colour <- function(L, scales, default, fill_fallback = TRUE) {
   if (!is.null(scales$color)) {
     if (!is.null(L$values$color)) {
       return(scales$color$map(L$values$color))
     }
-    if (!is.null(L$values$fill)) return(scales$color$map(L$values$fill))
+    if (fill_fallback && !is.null(L$values$fill)) {
+      return(scales$color$map(L$values$fill))
+    }
   }
-  L$params$color %||% L$params$fill %||% default
+  if (fill_fallback) {
+    L$params$color %||% L$params$fill %||% default
+  } else {
+    L$params$color %||% default
+  }
 }
 
 .aes_param <- function(L, name, default) L$params[[name]] %||% default
@@ -450,14 +458,10 @@ NULL
   scene
 }
 
-# Text colour for text/label marks: a mapped colour channel, a constant param,
-# or the default (without the fill fallback `.aes_colour` uses, since `fill` is
-# the label background here).
+# Text colour for text/label marks: `.aes_colour` without the fill fallback,
+# since `fill` is the label background here, not the ink colour.
 .text_colour <- function(L, scales, default) {
-  if (!is.null(scales$color) && !is.null(L$values$color)) {
-    return(scales$color$map(L$values$color))
-  }
-  L$params$color %||% default
+  .aes_colour(L, scales, default, fill_fallback = FALSE)
 }
 
 # Per-element text angle: a mapped channel or a constant param (degrees).
@@ -794,6 +798,7 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  a <- .aes_param(L, "alpha", NA_real_)
   r <- (L$values$width %||% 1)[1]
   xy <- .xy_units(scales, xn, yn)
   vellum::draw(
@@ -803,7 +808,8 @@ NULL
       xy$y,
       size = vellum::unit(r, "native"),
       fill = fill,
-      orientation = "flat"
+      orientation = "flat",
+      gp = vellum::gpar(alpha = if (is.na(a)) NULL else a)
     )
   )
 }
