@@ -87,6 +87,15 @@ NULL
   any(vapply(resolved, function(L) identical(L$mark, "bar"), logical(1)))
 }
 
+# Marks that sit on a zero baseline, forcing the y axis through 0.
+.needs_zero <- function(resolved) {
+  any(vapply(
+    resolved,
+    function(L) L$mark %in% c("bar", "area"),
+    logical(1)
+  ))
+}
+
 # The default y-axis title: "count" when bars count rows (no y encoding on any
 # layer), otherwise the first y encoding's label.
 .y_axis_title <- function(spec, resolved) {

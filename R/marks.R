@@ -288,6 +288,47 @@ mark_datashade <- function(
   )
 }
 
+#' Area, ribbon, and step marks
+#'
+#' `mark_area()` fills the region between a `y` line and the zero baseline;
+#' `mark_ribbon()` fills between `ymin` and `ymax`; `mark_step()` draws a
+#' staircase line. All connect points in `x` order.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
+#'   `ymax` for ribbon; plus `color`/`fill`/`alpha`.
+#' @param direction For `mark_step()`, `"hv"` (horizontal then vertical, default)
+#'   or `"vh"`.
+#' @param blend Optional blend mode; see [mark_point()].
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(pressure) |> mark_area(x = temperature, y = pressure)
+#' @export
+mark_area <- function(plot, ..., blend = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "area", rlang::enquos(...), blend = blend)
+}
+
+#' @rdname mark_area
+#' @export
+mark_ribbon <- function(plot, ..., blend = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "ribbon", rlang::enquos(...), blend = blend)
+}
+
+#' @rdname mark_area
+#' @export
+mark_step <- function(plot, ..., direction = "hv", blend = NULL) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "step",
+    rlang::enquos(...),
+    stat_params = list(direction = direction),
+    blend = blend
+  )
+}
+
 .check_plot <- function(plot, call = rlang::caller_env()) {
   if (!S7::S7_inherits(plot, PlotSpec)) {
     cli::cli_abort(

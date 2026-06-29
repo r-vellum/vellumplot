@@ -335,6 +335,111 @@ NULL
   scene
 }
 
+# A filled ribbon between ymin and ymax, one polygon per style group.
+.emit_ribbon <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  ymin <- rep_len(scales$y$map(L$values$ymin), n)
+  ymax <- rep_len(scales$y$map(L$values$ymax), n)
+  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+
+  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+    o <- idx[order(xn[idx])]
+    a <- alpha[idx[1]]
+    poly <- .xy_units(scales, c(xn[o], rev(xn[o])), c(ymin[o], rev(ymax[o])))
+    scene <- vellum::draw(
+      scene,
+      vellum::polygon_grob(
+        poly$x,
+        poly$y,
+        gp = vellum::gpar(
+          fill = fill[idx[1]],
+          col = NA,
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
+  }
+  scene
+}
+
+# An area mark: the region between `y` and the zero baseline (a ribbon with
+# ymin = 0).
+.emit_area <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  y0 <- rep_len(scales$y$map(0), n)
+  y1 <- rep_len(scales$y$map(L$values$y), n)
+  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+
+  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+    o <- idx[order(xn[idx])]
+    a <- alpha[idx[1]]
+    poly <- .xy_units(scales, c(xn[o], rev(xn[o])), c(y1[o], rev(y0[o])))
+    scene <- vellum::draw(
+      scene,
+      vellum::polygon_grob(
+        poly$x,
+        poly$y,
+        gp = vellum::gpar(
+          fill = fill[idx[1]],
+          col = NA,
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
+  }
+  scene
+}
+
+# A staircase line: each segment is expanded into a horizontal-then-vertical
+# ("hv") or vertical-then-horizontal ("vh") pair before drawing.
+.emit_step <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  col <- rep_len(.aes_colour(L, scales, "black"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  lwd <- .aes_param(L, "linewidth", 1.5)
+  dir <- L$stat_params$direction %||% "hv"
+
+  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+    o <- idx[order(xn[idx])]
+    sx <- xn[o]
+    sy <- yn[o]
+    m <- length(sx)
+    if (m >= 2) {
+      if (identical(dir, "vh")) {
+        ex <- c(rep(sx[-m], each = 2), sx[m])
+        ey <- c(sy[1], rep(sy[-1], each = 2))
+      } else {
+        ex <- c(sx[1], rep(sx[-1], each = 2))
+        ey <- c(rep(sy[-m], each = 2), sy[m])
+      }
+    } else {
+      ex <- sx
+      ey <- sy
+    }
+    a <- alpha[idx[1]]
+    ln <- .xy_units(scales, ex, ey)
+    scene <- vellum::draw(
+      scene,
+      vellum::lines_grob(
+        ln$x,
+        ln$y,
+        gp = vellum::gpar(
+          col = col[idx[1]],
+          lwd = lwd,
+          alpha = if (is.na(a)) NULL else a
+        )
+      )
+    )
+  }
+  scene
+}
+
 # Datashade: aggregate the points into a density raster filling the panel. The
 # raster is binned over the panel's native domain so it aligns with the axes.
 .emit_datashade <- function(scene, L, scales) {
@@ -367,6 +472,9 @@ NULL
     rule = .emit_rule(scene, L, scales),
     bar = .emit_bar(scene, L, scales),
     smooth = .emit_smooth(scene, L, scales),
+    area = .emit_area(scene, L, scales),
+    ribbon = .emit_ribbon(scene, L, scales),
+    step = .emit_step(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )

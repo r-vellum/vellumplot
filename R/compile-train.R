@@ -491,7 +491,7 @@ NULL
 # Train all scales the plot needs: x, y (position), colour, and size. Bars force
 # the y axis to include the zero baseline.
 .train_scales <- function(spec, resolved) {
-  has_bar <- .has_bar(resolved)
+  zero_base <- .needs_zero(resolved)
   co <- .coord_of(spec)
   xs <- .axis_pool(resolved, "x", "xintercept")
   ys <- .axis_pool(resolved, "y", "yintercept")
@@ -513,7 +513,7 @@ NULL
       ys,
       .scale_for(spec, "y"),
       .y_axis_title(spec, resolved),
-      include_zero = has_bar,
+      include_zero = zero_base,
       lim = co@ylim
     ),
     color = .train_colour(spec, resolved),

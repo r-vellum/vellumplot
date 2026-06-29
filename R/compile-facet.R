@@ -106,7 +106,7 @@ NULL
   })
 
   all_res <- unlist(lapply(panels, function(p) p$resolved), recursive = FALSE)
-  has_bar <- .has_bar(all_res)
+  has_bar <- .needs_zero(all_res)
   y_title <- .y_axis_title(spec, all_res)
 
   free_x <- .resolve_for(spec, "x") == "independent"
