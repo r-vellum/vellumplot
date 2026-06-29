@@ -194,6 +194,69 @@ mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
   )
 }
 
+#' Pie and donut charts
+#'
+#' Convenience marks for part-of-whole charts. `mark_pie()` draws a pie: each
+#' `value` becomes a wedge whose angle is its share of the total, coloured by
+#' `fill`. `mark_donut()` is a pie with a hollow centre (`hole`, a fraction of
+#' the radius). Both are shorthand for a stacked bar projected through
+#' [coord_polar()] with `theta = "y"`, which they set on the plot; they error if
+#' the plot already carries a non-polar coordinate.
+#'
+#' @param plot A [PlotSpec].
+#' @param value Encoding (tidy-eval) for each slice's magnitude.
+#' @param fill Encoding (tidy-eval) for the slice colour. Omit for a single
+#'   slice.
+#' @param hole For `mark_donut()`, the inner-hole radius as a fraction of the rim
+#'   (`0` is a pie, the default `0.5` a medium donut).
+#' @param ... Further constant aesthetics (e.g. `alpha`).
+#' @param data Optional per-layer data frame.
+#' @return The modified [PlotSpec].
+#' @seealso [coord_polar()]
+#' @examples
+#' df <- data.frame(part = c("a", "b", "c"), n = c(3, 5, 2))
+#' vplot(df) |> mark_pie(value = n, fill = part)
+#' vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6)
+#' @export
+mark_pie <- function(plot, value, fill = NULL, ..., data = NULL) {
+  .pie_layer(plot, rlang::enquos(value = value, fill = fill, ...), 0, data)
+}
+
+#' @rdname mark_pie
+#' @export
+mark_donut <- function(plot, value, fill = NULL, hole = 0.5, ..., data = NULL) {
+  if (!is.numeric(hole) || hole < 0 || hole >= 1) {
+    cli::cli_abort("{.arg hole} must be a fraction in {.val [0, 1)}.")
+  }
+  .pie_layer(plot, rlang::enquos(value = value, fill = fill, ...), hole, data)
+}
+
+# Shared body of mark_pie/mark_donut: a stacked bar (value -> y, a constant
+# single-band x) forced through polar theta = "y".
+.pie_layer <- function(plot, enc, hole, data) {
+  .check_plot(plot)
+  if (!is.null(plot@coord) && !identical(plot@coord@kind, "polar")) {
+    cli::cli_abort(c(
+      "{.fn mark_pie} / {.fn mark_donut} imply a polar coordinate.",
+      x = "The plot already has a {.val {plot@coord@kind}} coordinate.",
+      i = "Remove the conflicting {.fn coord_*} call."
+    ))
+  }
+  names(enc)[names(enc) == "value"] <- "y"
+  plot <- .add_layer(
+    plot,
+    "bar",
+    enc,
+    extra = rlang::quos(x = factor(1)),
+    position = "stack",
+    data = data
+  )
+  if (is.null(plot@coord)) {
+    plot@coord <- CoordSpec(kind = "polar", theta = "y", rmin = hole)
+  }
+  plot
+}
+
 #' Statistical marks
 #'
 #' Marks that apply a statistical transform before drawing. `mark_histogram()`

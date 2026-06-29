@@ -484,7 +484,7 @@ NULL
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     o <- idx[order(xn[idx])]
     a <- alpha[idx[1]]
-    poly <- .xy_units(scales, c(xn[o], rev(xn[o])), c(ymin[o], rev(ymax[o])))
+    poly <- .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
     scene <- vellum::draw(
       scene,
       vellum::polygon_grob(
@@ -514,7 +514,7 @@ NULL
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     o <- idx[order(xn[idx])]
     a <- alpha[idx[1]]
-    poly <- .xy_units(scales, c(xn[o], rev(xn[o])), c(y1[o], rev(y0[o])))
+    poly <- .xy_area(scales, xn[o], y1[o], xn[o], y0[o])
     scene <- vellum::draw(
       scene,
       vellum::polygon_grob(
