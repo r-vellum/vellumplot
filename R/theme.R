@@ -6,9 +6,8 @@ NULL
 # complete theme; theme() / set_theme() element-merge a partial onto it. The
 # compile pipeline resolves it once (.resolve_theme) before drawing.
 
-# The default (gray) theme. Per-slot colours/sizes reproduce the v1 look exactly:
-# axis/legend titles inherit black from the text root; the new tick/line/minor
-# elements carry their intended values but are only drawn from 2.1b onward.
+# The default (gray) theme. Axis/legend titles inherit black from the text root;
+# the tick/line/minor elements carry their intended values for the drawers.
 .theme_gray_complete <- function() {
   list(
     text = element_text(colour = "black", size = 11),

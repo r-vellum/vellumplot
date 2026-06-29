@@ -35,7 +35,7 @@ NULL
 # `transform` maps data -> native (viewport) units; `breaks` generates breaks in
 # DATA units (then transformed to positions); `format` labels them. Kept as a
 # local registry (rather than scales::transform_*) so log10 label formatting
-# stays byte-identical to v1.
+# stays under our control rather than tracking scales' defaults.
 .TRANSFORMS <- list(
   identity = list(
     transform = function(x) x,

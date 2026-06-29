@@ -70,7 +70,10 @@ ScaleSpec <- S7::new_class(
 #'   or `NULL` for a single panel.
 #' @param resolve A named list mapping an aesthetic to `"shared"` or
 #'   `"independent"` (the scale-resolution lattice; see [resolve_scale()]).
+#' @param coord A coordinate specification (from [coord_cartesian()] /
+#'   [coord_flip()] / [coord_fixed()]), or `NULL` for the default Cartesian system.
 #' @param theme Reserved for future use.
+#' @param labels A named list of plot/axis/legend label overrides (see [labs()]).
 #'
 #' @return A `PlotSpec`.
 #' @seealso [vplot()], [mark_point()], [scale_x_continuous()]

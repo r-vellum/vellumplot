@@ -27,12 +27,17 @@ PlotSpec(
 \item{facet}{A faceting specification (from \code{\link[=facet_wrap]{facet_wrap()}} / \code{\link[=facet_grid]{facet_grid()}}),
 or \code{NULL} for a single panel.}
 
+\item{coord}{A coordinate specification (from \code{\link[=coord_cartesian]{coord_cartesian()}} /
+\code{\link[=coord_flip]{coord_flip()}} / \code{\link[=coord_fixed]{coord_fixed()}}), or \code{NULL} for the default Cartesian system.}
+
 \item{resolve}{A named list mapping an aesthetic to \code{"shared"} or
 \code{"independent"} (the scale-resolution lattice; see \code{\link[=resolve_scale]{resolve_scale()}}).}
 
 \item{width, height}{Page size in inches.}
 
 \item{theme}{Reserved for future use.}
+
+\item{labels}{A named list of plot/axis/legend label overrides (see \code{\link[=labs]{labs()}}).}
 }
 \value{
 A \code{PlotSpec}.

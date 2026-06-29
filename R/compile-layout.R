@@ -82,7 +82,7 @@ NULL
 # Build the panel-grid layout for `built` (panels + scales + free flags). Returns
 # the width/height track vectors plus the grid indices the seam needs to place
 # panels, axes, strips, titles and the legend. The 1x1, no-facet, fixed-scale
-# case reduces to the v1 single-panel layout.
+# case reduces to a single-panel layout.
 .build_layout <- function(
   built,
   guides = list(),
@@ -168,7 +168,7 @@ NULL
   # The tag, title, and subtitle bands stack above the panels (the tag in the
   # top-left corner, like ggplot2's plot.tag.position = "topleft"); the caption
   # band sits below. Each band only occupies a track when its label is present,
-  # so an unlabelled plot is byte-identical to v1.
+  # so an unlabelled plot's layout is unchanged.
   H <- .tracks()
   tag_row <- if (!is.null(labels$tag)) {
     .tk_add(H, .track_h(rt[["plot.tag"]], labels$tag, .PAD_MM))

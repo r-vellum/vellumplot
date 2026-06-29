@@ -80,8 +80,8 @@ NULL
 .SETTINGS_DEFAULTS <- list(
   legend.position = "right",
   panel.spacing = 1.6, # mm
-  plot.margin = c(5.5, 5.5, 5.5, 5.5), # mm (t, r, b, l); applied in 2.1b commit 2
-  aspect.ratio = NULL, # carried for coord_fixed (2.3)
+  plot.margin = c(5.5, 5.5, 5.5, 5.5), # mm (t, r, b, l) padding around the plot
+  aspect.ratio = NULL, # carried for coord_fixed
   axis.ticks.length = 1.5 # mm
 )
 
