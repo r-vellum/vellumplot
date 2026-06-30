@@ -127,7 +127,13 @@ facet_grid <- function(
 resolve_scale <- function(plot, ...) {
   .check_plot(plot)
   args <- list(...)
-  for (nm in names(args)) {
+  nms <- names(args)
+  if (length(args) && (is.null(nms) || any(!nzchar(nms)))) {
+    cli::cli_abort(
+      "All arguments to {.fn resolve_scale} must be named, e.g. {.code resolve_scale(y = \"independent\")}."
+    )
+  }
+  for (nm in nms) {
     plot@resolve[[nm]] <- match.arg(args[[nm]], c("shared", "independent"))
   }
   plot

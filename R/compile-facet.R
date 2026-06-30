@@ -189,27 +189,39 @@ NULL
   tx <- train_free("x", "xintercept", .default_title(spec, "x"), FALSE, co@xlim)
   ty <- train_free("y", "yintercept", y_title, has_bar, co@ylim)
 
+  # A grid free scale is shared down a column (x) / across a row (y), so train it
+  # once per column/row and reuse it rather than retraining for every panel.
+  col_x <- list()
+  row_y <- list()
   for (i in seq_along(panels)) {
     p <- panels[[i]]
     if (!free_x) {
       p$x_sc <- shared_x
     } else if (fa$type == "grid") {
-      p$x_sc <- tx(group_res(vapply(
-        panels,
-        function(q) q$c == p$c,
-        logical(1)
-      )))
+      key <- as.character(p$c)
+      if (is.null(col_x[[key]])) {
+        col_x[[key]] <- tx(group_res(vapply(
+          panels,
+          function(q) q$c == p$c,
+          logical(1)
+        )))
+      }
+      p$x_sc <- col_x[[key]]
     } else {
       p$x_sc <- tx(p$resolved)
     }
     if (!free_y) {
       p$y_sc <- shared_y
     } else if (fa$type == "grid") {
-      p$y_sc <- ty(group_res(vapply(
-        panels,
-        function(q) q$r == p$r,
-        logical(1)
-      )))
+      key <- as.character(p$r)
+      if (is.null(row_y[[key]])) {
+        row_y[[key]] <- ty(group_res(vapply(
+          panels,
+          function(q) q$r == p$r,
+          logical(1)
+        )))
+      }
+      p$y_sc <- row_y[[key]]
     } else {
       p$y_sc <- ty(p$resolved)
     }
