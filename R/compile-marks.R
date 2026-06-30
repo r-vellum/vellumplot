@@ -223,7 +223,7 @@ NULL
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
     xy <- .xy_units(scales, xn[idx], yn[idx])
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::points_grob(
         xy$x,
@@ -253,7 +253,7 @@ NULL
     o <- idx[order(xn[idx])] # a line is drawn in x order
     a <- alpha[idx[1]]
     xy <- .xy_path(scales, xn[o], yn[o])
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::lines_grob(
         xy$x,
@@ -286,7 +286,7 @@ NULL
         vellum::unit(rep(1, k), "npc"),
         vellum::unit(vy, "native")
       )
-      scene <- vellum::draw(
+      scene <- .draw(
         scene,
         vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = gp)
       )
@@ -303,7 +303,7 @@ NULL
         vellum::unit(vx, "native"),
         vellum::unit(rep(1, k), "npc")
       )
-      scene <- vellum::draw(
+      scene <- .draw(
         scene,
         vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = gp)
       )
@@ -359,7 +359,7 @@ NULL
 
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     a <- alpha[idx[1]]
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::sector_grob(
         x = vellum::unit(rep(0, length(idx)), "native"),
@@ -416,7 +416,7 @@ NULL
       w[idx],
       abs(y1[idx] - y0[idx])
     )
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::rect_grob(
         x = r$x,
@@ -450,7 +450,7 @@ NULL
     cc <- col[idx[1]]
     if (has_se) {
       poly <- .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
-      scene <- vellum::draw(
+      scene <- .draw(
         scene,
         vellum::polygon_grob(
           poly$x,
@@ -460,7 +460,7 @@ NULL
       )
     }
     ln <- .xy_path(scales, xn[o], yn[o])
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::lines_grob(
         ln$x,
@@ -485,7 +485,7 @@ NULL
     o <- idx[order(xn[idx])]
     a <- alpha[idx[1]]
     poly <- .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::polygon_grob(
         poly$x,
@@ -515,7 +515,7 @@ NULL
     o <- idx[order(xn[idx])]
     a <- alpha[idx[1]]
     poly <- .xy_area(scales, xn[o], y1[o], xn[o], y0[o])
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::polygon_grob(
         poly$x,
@@ -561,7 +561,7 @@ NULL
     }
     a <- alpha[idx[1]]
     ln <- .xy_path(scales, ex, ey)
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::lines_grob(
         ln$x,
@@ -606,7 +606,7 @@ NULL
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
     xy <- .xy_units(scales, xn[idx], yn[idx])
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::text_grob(
         label[idx],
@@ -648,7 +648,7 @@ NULL
 
   for (idx in .style_groups(n, list(col = col))) {
     xy <- .xy_units(scales, xn[idx], yn[idx])
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::roundrect_grob(
         x = xy$x,
@@ -659,7 +659,7 @@ NULL
         gp = vellum::gpar(fill = bg, col = NA)
       )
     )
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::text_grob(
         label[idx],
@@ -686,7 +686,7 @@ NULL
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     a <- alpha[idx[1]]
     r <- .rect_units(scales, xp[idx], yp[idx], w[idx], h[idx])
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::rect_grob(
         x = r$x,
@@ -729,7 +729,7 @@ NULL
   yw <- if (length(uy) > 1) min(diff(uy)) else 1
   xn <- scales$x$map(c(min(ux) - xw / 2, max(ux) + xw / 2))
   yn <- scales$y$map(c(min(uy) - yw / 2, max(uy) + yw / 2))
-  vellum::draw(
+  .draw(
     scene,
     vellum::raster_grob(
       grDevices::as.raster(m),
@@ -784,7 +784,7 @@ NULL
       2 * hw,
       abs(my(q3) - my(q1))
     )
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::rect_grob(
         x = r$x,
@@ -806,14 +806,14 @@ NULL
         vellum::unit(seg[3], "native"),
         vellum::unit(seg[4], "native")
       )
-      scene <- vellum::draw(
+      scene <- .draw(
         scene,
         vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = line_gp)
       )
     }
     if (length(out)) {
       xy <- .xy_units(scales, rep(xc, length(out)), my(out))
-      scene <- vellum::draw(
+      scene <- .draw(
         scene,
         vellum::points_grob(
           xy$x,
@@ -857,7 +857,7 @@ NULL
       vellum::unit(x1, "native"),
       vellum::unit(y1, "native")
     )
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::segments_grob(
         s$x0,
@@ -895,7 +895,7 @@ NULL
       vellum::unit(x1[idx], "native"),
       vellum::unit(y1[idx], "native")
     )
-    scene <- vellum::draw(
+    scene <- .draw(
       scene,
       vellum::segments_grob(
         s$x0,
@@ -930,7 +930,7 @@ NULL
   h_full <- (L$values$height %||% (r * sqrt(3)))[1] # full y extent
   xy <- .xy_units(scales, xn, yn)
   flip <- .flipped(scales)
-  vellum::draw(
+  .draw(
     scene,
     vellum::hexagon_grob(
       xy$x,
@@ -965,7 +965,7 @@ NULL
     how = sp$how %||% "eq_hist",
     interpolate = FALSE
   )
-  vellum::draw(scene, g)
+  .draw(scene, g)
 }
 
 .emit_layer <- function(scene, L, scales) {
@@ -998,11 +998,31 @@ NULL
 # whole content composites as one isolated group against the backdrop (the panel
 # and earlier layers); the wrapper carries the panel's scales so native
 # coordinates still resolve.
+# Per-layer SVG identity. `.compile_marks` records the layer currently being
+# emitted here; `.draw()` stamps each grob with that `id` before handing it to
+# vellum, so SVG output carries a `data-vellum-id` per layer (e.g. "layer-1-point")
+# -- a stable selector for snapshot tests / accessibility / future interactivity.
+# It is purely additive metadata: raster/PDF output is unchanged. (A small env is
+# used so emitters need not thread the id through every grob call; the `id` is set
+# per layer and is single-threaded with the rest of compilation.)
+.mark_ctx <- new.env(parent = emptyenv())
+
+.draw <- function(scene, grob) {
+  id <- .mark_ctx$id
+  if (!is.null(id)) {
+    grob@id <- id
+  }
+  vellum::draw(scene, grob)
+}
+
 .compile_marks <- function(scene, resolved, scales) {
-  for (L in resolved) {
+  on.exit(.mark_ctx$id <- NULL, add = TRUE)
+  for (i in seq_along(resolved)) {
+    L <- resolved[[i]]
     if (!L$n) {
       next
     } # empty facet panel
+    .mark_ctx$id <- sprintf("layer-%d-%s", i, L$mark)
     blend <- L$blend %||% "normal"
     if (!identical(blend, "normal")) {
       bx <- if (is.null(scales$polar)) scales$x$domain else c(-1, 1)

@@ -33,3 +33,4 @@ data, so nothing beyond vellumplot needs to be installed.
 | `14-annotations.R`        | annotate text / label / point / segment / rect |
 | `15-composition.R`        | concat, wrap_plots, design, spacer, inset, tags, repeat_ |
 | `16-datashade-blend.R`    | datashading millions of points, auto, blend modes |
+| `17-introspection.R`      | layout debug overlay, `why_size()`, per-layer SVG ids |

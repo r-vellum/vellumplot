@@ -28,10 +28,16 @@ NULL
   # Outer margin grid: absolute mm tracks around a single `null` cell holding the
   # real layout. (Done as a grid rather than an inset viewport because vellum
   # disallows the mixed npc/mm unit arithmetic an inset would need.)
+  # Structural viewports carry stable `name`s so vellum's layout-debug tools work
+  # on a compiled plot: `render(scene, debug = TRUE)` outlines and labels them,
+  # and `why_size(scene, "<name>")` explains a region's resolved extent. The
+  # names below ("plot", "panel-area", "panel-<r>-<c>", "axis-*", "strip-*",
+  # "legend", title bands) are the query keys.
   m <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
   scene <- vellum::push(
     scene,
     vellum::viewport(
+      name = "plot",
       layout = vellum::grid_layout(
         c(
           vellum::unit(m[4], "mm"),
@@ -52,7 +58,13 @@ NULL
   if (!.is_blank(pbg)) {
     scene <- vellum::push(
       scene,
-      vellum::viewport(row = 1, col = 1, rowspan = 3, colspan = 3)
+      vellum::viewport(
+        row = 1,
+        col = 1,
+        rowspan = 3,
+        colspan = 3,
+        name = "plot-background"
+      )
     )
     scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pbg)))
     scene <- vellum::pop(scene)
@@ -63,6 +75,7 @@ NULL
   scene <- vellum::push(
     scene,
     vellum::viewport(
+      name = "panel-area",
       layout = vellum::grid_layout(
         lay$widths,
         lay$heights,
@@ -86,6 +99,7 @@ NULL
       flip = flip,
       polar = NULL
     )
+    pname <- sprintf("panel-%d-%d", p$r, p$c)
     if (polar) {
       ctx <- .polar_ctx(co, p$x_sc, p$y_sc)
       psc$polar <- ctx
@@ -96,7 +110,8 @@ NULL
           col = lay$panel_col[p$c],
           xscale = c(-1, 1),
           yscale = c(-1, 1),
-          clip = TRUE
+          clip = TRUE,
+          name = pname
         )
       )
       scene <- .draw_panel_polar(scene, ctx, rt)
@@ -108,7 +123,8 @@ NULL
           col = lay$panel_col[p$c],
           xscale = hsc$domain,
           yscale = vsc$domain,
-          clip = TRUE
+          clip = TRUE,
+          name = pname
         )
       )
       scene <- .draw_panel_bg(scene, hsc, vsc, rt)
@@ -279,7 +295,8 @@ NULL
         lay$wrapstrip_row[p$r],
         lay$panel_col[p$c],
         labs[i],
-        rt
+        rt,
+        name = sprintf("strip-%d-%d", p$r, p$c)
       )
     }
   } else if (fa$type == "grid") {
@@ -290,7 +307,8 @@ NULL
           lay$colstrip_row,
           lay$panel_col[cc],
           fa$col_labels[cc],
-          rt
+          rt,
+          name = sprintf("strip-col-%d", cc)
         )
       }
     }
@@ -302,7 +320,8 @@ NULL
           lay$rowstrip_col,
           fa$row_labels[r],
           rt,
-          rot = 90
+          rot = 90,
+          name = sprintf("strip-row-%d", r)
         )
       }
     }

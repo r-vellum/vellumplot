@@ -239,6 +239,7 @@ NULL
 # y-axis labels for `y_sc`, right-aligned in the gutter cell and aligned to the
 # gridlines (the gutter viewport shares the panel's y native scale).
 .draw_y_axis <- function(scene, row, col, y_sc, rt) {
+  vp_name <- sprintf("axis-y-%d", row)
   el <- rt[["axis.text.y"]]
   aline <- rt[["axis.line.y"]]
   if (.is_blank(el) && .is_blank(aline)) {
@@ -246,7 +247,7 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(row = row, col = col, yscale = y_sc$domain)
+    vellum::viewport(row = row, col = col, yscale = y_sc$domain, name = vp_name)
   )
   # axis line along the panel-adjacent (right) edge of the gutter
   if (!.is_blank(aline)) {
@@ -288,7 +289,12 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(row = row, col = col, xscale = x_sc$domain)
+    vellum::viewport(
+      row = row,
+      col = col,
+      xscale = x_sc$domain,
+      name = sprintf("axis-x-%d", col)
+    )
   )
   # axis line along the panel-adjacent (top) edge of the gutter
   if (!.is_blank(aline)) {
@@ -331,11 +337,18 @@ NULL
   rt,
   rot = 0,
   rowspan = 1,
-  colspan = 1
+  colspan = 1,
+  name = sprintf("strip-%d-%d", row, col)
 ) {
   scene <- vellum::push(
     scene,
-    vellum::viewport(row = row, col = col, rowspan = rowspan, colspan = colspan)
+    vellum::viewport(
+      row = row,
+      col = col,
+      rowspan = rowspan,
+      colspan = colspan,
+      name = name
+    )
   )
   sb <- rt[["strip.background"]]
   if (!.is_blank(sb)) {
@@ -358,7 +371,12 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(row = row, col = col, rowspan = rowspan)
+    vellum::viewport(
+      row = row,
+      col = col,
+      rowspan = rowspan,
+      name = "axis-title-y"
+    )
   )
   scene <- vellum::draw(
     scene,
@@ -374,7 +392,12 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(row = row, col = col, colspan = colspan)
+    vellum::viewport(
+      row = row,
+      col = col,
+      colspan = colspan,
+      name = "axis-title-x"
+    )
   )
   scene <- vellum::draw(scene, vellum::text_grob(name, gp = .el_gpar_text(el)))
   vellum::pop(scene)
@@ -463,7 +486,8 @@ NULL
       row = cell$row,
       col = cell$col,
       rowspan = cell$rowspan %||% 1,
-      colspan = cell$colspan %||% 1
+      colspan = cell$colspan %||% 1,
+      name = "legend"
     )
   )
   lb <- rt[["legend.background"]]
