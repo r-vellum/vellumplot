@@ -10,3 +10,6 @@ src/*.so
 
 # stray render outputs at repo root (man/figures/ is fine)
 /*.png
+
+# regenerable example outputs (re-create with inst/examples/*.R)
+inst/examples/figures/
