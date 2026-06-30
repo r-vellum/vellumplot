@@ -914,11 +914,11 @@ NULL
 }
 
 # A hexbin heatmap: one flat-top hexagon per occupied bin, filled by count. The
-# hex is drawn as an explicit data-space polygon (x circumradius `width`, full
-# y extent `height`, both from stat_hexbin) so the hexes tile the panel cleanly
-# at any aspect -- a device-regular hexagon_grob would only tile under
-# coord_fixed. Hexes are batched into one NA-separated multi-polygon per fill
-# colour (continuous count is quantised upstream, bounding the colour count).
+# hexes are sized in data units (full x extent `2 * width`, full y extent
+# `height`, from stat_hexbin) so they tile the panel cleanly at any aspect; a
+# bare `size` would be device-regular and only tile under coord_fixed. Drawn in
+# one batched, per-hex-filled call via vellum's non-regular hexagon_grob (vellum
+# >= 0.0.0.9001). Under coord_flip the data axes swap, so the extents swap too.
 .emit_hex <- function(scene, L, scales) {
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
@@ -926,38 +926,22 @@ NULL
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
   a <- .aes_param(L, "alpha", NA_real_)
   r <- (L$values$width %||% 1)[1]
-  hh <- (L$values$height %||% (r * sqrt(3)))[1] / 2
-  # Flat-top hexagon vertex offsets in data units (corners at 0, 60, ... 300).
-  hx <- c(r, r / 2, -r / 2, -r, -r / 2, r / 2)
-  hy <- c(0, hh, hh, 0, -hh, -hh)
-  for (idx in .style_groups(n, list(fill = fill))) {
-    cc <- fill[idx[1]]
-    m <- length(idx)
-    # 6 corners + an NA separator per hex; drop the trailing separator.
-    px <- rep(NA_real_, 7L * m)
-    py <- rep(NA_real_, 7L * m)
-    for (j in seq_len(m)) {
-      base <- (j - 1L) * 7L
-      px[base + 1:6] <- xn[idx[j]] + hx
-      py[base + 1:6] <- yn[idx[j]] + hy
-    }
-    px <- px[-length(px)]
-    py <- py[-length(py)]
-    xy <- .xy_units(scales, px, py)
-    scene <- vellum::draw(
-      scene,
-      vellum::polygon_grob(
-        xy$x,
-        xy$y,
-        gp = vellum::gpar(
-          fill = cc,
-          col = NA,
-          alpha = if (is.na(a)) NULL else a
-        )
-      )
+  w_full <- 2 * r # full x extent (width is the x circumradius)
+  h_full <- (L$values$height %||% (r * sqrt(3)))[1] # full y extent
+  xy <- .xy_units(scales, xn, yn)
+  flip <- .flipped(scales)
+  vellum::draw(
+    scene,
+    vellum::hexagon_grob(
+      xy$x,
+      xy$y,
+      width = vellum::unit(if (flip) h_full else w_full, "native"),
+      height = vellum::unit(if (flip) w_full else h_full, "native"),
+      fill = fill,
+      orientation = "flat",
+      gp = vellum::gpar(alpha = if (is.na(a)) NULL else a)
     )
-  }
-  scene
+  )
 }
 
 # Datashade: aggregate the points into a density raster filling the panel. The

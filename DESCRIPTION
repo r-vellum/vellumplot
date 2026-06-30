@@ -23,7 +23,7 @@ Imports:
     scales,
     stats,
     utils,
-    vellum
+    vellum (>= 0.0.0.9001)
 Suggests:
     testthat (>= 3.0.0),
     vctrs,
