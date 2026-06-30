@@ -32,10 +32,10 @@ The modified \link{PlotSpec}.
 \strong{zoom} the view (out-of-range marks are clipped, not dropped — unlike a
 \verb{scale_*(limits=)}, which here behaves the same but is the data-scale's job).
 \code{coord_flip()} swaps the x and y axes, e.g. for horizontal bars.
-\code{coord_fixed()} / \code{coord_equal()} lock the aspect ratio so \code{ratio} data units
-on the y axis occupy the same physical length as one unit on x (the panel
-shrinks to fit and is centred). Coordinate limits take precedence over scale
-limits.
+\code{coord_fixed()} / \code{coord_equal()} lock the aspect ratio so one data unit on
+the y axis occupies \code{ratio} times the physical length of one unit on x (the
+panel shrinks to fit and is centred). Coordinate limits take precedence over
+scale limits.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> coord_cartesian(xlim = c(2, 4))

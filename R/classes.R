@@ -72,7 +72,8 @@ ScaleSpec <- S7::new_class(
 #'   `"independent"` (the scale-resolution lattice; see [resolve_scale()]).
 #' @param coord A coordinate specification (from [coord_cartesian()] /
 #'   [coord_flip()] / [coord_fixed()]), or `NULL` for the default Cartesian system.
-#' @param theme Reserved for future use.
+#' @param theme A theme (a named list of resolved element/setting overrides, from
+#'   [theme()] / a `theme_*()` preset), or `NULL` for the default theme.
 #' @param labels A named list of plot/axis/legend label overrides (see [labs()]).
 #'
 #' @return A `PlotSpec`.

@@ -92,11 +92,16 @@ render_plot(p, "cars.png")
 * Trained axes, a panel with gridlines, and layering on one panel.
 * Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales, via the
   `resolve_scale()` lattice.
-* Statistical marks: `mark_histogram()`, `mark_smooth()` (with `after_stat()`).
+* Statistical marks: `mark_histogram()`, `mark_density()`, `mark_summary()`,
+  `mark_smooth()` (with `after_stat()`).
+* Coordinate systems: `coord_flip()`, `coord_fixed()`, `coord_polar()`
+  (pie / coxcomb / radar).
 * Position adjustments: stack / dodge / fill bars, jittered points.
 * `mark_datashade()` for million-point density rasters.
-* Themes (`theme_minimal()`, `theme_bw()`, `set_theme()`) and multi-plot
-  composition (`hconcat()`, `vconcat()`, `concat()`).
+* Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
+  `theme_classic()`, `theme_void()`, `theme()` / `set_theme()`) and multi-plot
+  composition (`hconcat()`, `vconcat()`, `concat()`, `wrap_plots()`, `inset()`,
+  `repeat_()`).
 
 Spatial (`sf`) and network (`igraph`) layers are on the roadmap — see `NEWS.md`
 and `_docs/DESIGN.md`.

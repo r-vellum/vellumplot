@@ -35,7 +35,8 @@ or \code{NULL} for a single panel.}
 
 \item{width, height}{Page size in inches.}
 
-\item{theme}{Reserved for future use.}
+\item{theme}{A theme (a named list of resolved element/setting overrides, from
+\code{\link[=theme]{theme()}} / a \verb{theme_*()} preset), or \code{NULL} for the default theme.}
 
 \item{labels}{A named list of plot/axis/legend label overrides (see \code{\link[=labs]{labs()}}).}
 }

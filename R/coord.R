@@ -4,8 +4,8 @@ NULL
 # A coordinate system: `kind` ("cartesian" | "flip" | "fixed" | "polar") plus
 # optional view-window limits. `flip` swaps the x and y axes at render time;
 # `xlim`/`ylim` zoom the view (clipping marks, never dropping data); `fixed`
-# aspect-locks the panel so `ratio` data units on y occupy the same device length
-# as one on x; `polar` projects one position aesthetic to angle and the other to
+# aspect-locks the panel so one data unit on y occupies `ratio` times the device
+# length of one unit on x; `polar` projects one position aesthetic to angle and the other to
 # radius (`theta` picks which is the angle; `start`/`direction` orient it; `rmin`
 # is the inner-hole radius for a donut, as a fraction of the rim radius).
 CoordSpec <- S7::new_class(
@@ -76,10 +76,10 @@ CoordSpec <- S7::new_class(
 #' **zoom** the view (out-of-range marks are clipped, not dropped — unlike a
 #' `scale_*(limits=)`, which here behaves the same but is the data-scale's job).
 #' `coord_flip()` swaps the x and y axes, e.g. for horizontal bars.
-#' `coord_fixed()` / `coord_equal()` lock the aspect ratio so `ratio` data units
-#' on the y axis occupy the same physical length as one unit on x (the panel
-#' shrinks to fit and is centred). Coordinate limits take precedence over scale
-#' limits.
+#' `coord_fixed()` / `coord_equal()` lock the aspect ratio so one data unit on
+#' the y axis occupies `ratio` times the physical length of one unit on x (the
+#' panel shrinks to fit and is centred). Coordinate limits take precedence over
+#' scale limits.
 #'
 #' @param plot A [PlotSpec].
 #' @param xlim,ylim Length-2 view-window limits, or `NULL` to use the trained

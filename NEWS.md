@@ -1,7 +1,7 @@
 # vellumplot 0.0.0.9000
 
-A single-panel grammar of graphics that compiles a declarative spec into a
-`vellum` scene.
+A declarative grammar of graphics that compiles an inspectable spec into a
+`vellum` scene, with faceting, coordinate systems, and multi-plot composition.
 
 ## Features
 
@@ -40,11 +40,26 @@ A single-panel grammar of graphics that compiles a declarative spec into a
   density raster (via `vellum::datashade()`) that fills the panel — cost
   independent of point count. `mark_point(auto = TRUE)` switches to this
   automatically above ~50k rows.
-* **Themes**: `theme_gray()` (default), `theme_minimal()`, `theme_bw()`, and
-  `set_theme()` for ad-hoc overrides (panel background, gridlines, text, strip
-  background).
-* **Composition**: `hconcat()`, `vconcat()`, and `concat()` arrange several
-  independent plots (each with its own scales, axes, and legend) on a grid.
+* **More marks**: areas/ribbons (`mark_area()`, `mark_ribbon()`), steps
+  (`mark_step()`), intervals (`mark_errorbar()`, `mark_linerange()`,
+  `mark_segment()`), `mark_boxplot()`, tiles/heatmaps (`mark_tile()`,
+  `mark_raster()`), 2-D binning (`mark_bin2d()`, `mark_hex()`), `mark_text()` /
+  `mark_label()`, and pie/donut shortcuts (`mark_pie()`, `mark_donut()`).
+* **More statistical transforms**: `mark_density()` (kernel density),
+  `mark_summary()` (aggregate `y` per category), in addition to the histogram /
+  binning / smooth stats. Map computed variables with `after_stat()`.
+* **Coordinate systems**: `coord_cartesian()` (view-window zoom),
+  `coord_flip()`, `coord_fixed()` / `coord_equal()` (aspect lock), and
+  `coord_polar()` (pie / coxcomb / radar).
+* **Themes**: `theme_gray()` (default), `theme_minimal()`, `theme_bw()`,
+  `theme_classic()`, `theme_void()`, and `theme()` for ad-hoc overrides (panel
+  background, gridlines, text, strip background, legend position, margins).
+* **Composition**: `hconcat()`, `vconcat()`, `concat()`, and `wrap_plots()`
+  arrange several plots on a grid; the aligned path lines up panel edges and can
+  **collect guides** across sub-plots. `inset()` overlays a plot, and
+  `compose_annotation()` adds figure-level titles and auto-tags (`A`, `B`, ...).
+* **Repeat**: `repeat_()` replicates a plot across a set of fields, zipping one
+  or more encodings to produce a composition.
 * **Blend modes**: marks take a `blend =` argument (the CSS `mix-blend-mode` set
   — `"multiply"`, `"screen"`, `"darken"`, ...). The layer composites as one
   isolated group against the panel and earlier layers, e.g. two overlapping
@@ -55,11 +70,7 @@ A single-panel grammar of graphics that compiles a declarative spec into a
 
 ## Not yet implemented (planned)
 
-`repeat` composition, reactivity, further statistical transforms (aggregation,
-density, 2-D contours), hexagonal binning (`hexbin` — deferred until
-display-aspect locking lands, see `_docs/DESIGN.md` §3.2), non-cartesian
-coordinates, the algebraic `*` / `+` layer combinators, independent
-*non-position* scales across facets, and rich/plotmath axis labels.
+Reactivity, 2-D contour stats, and the algebraic `*` / `+` layer combinators.
 Independent *non-position* (colour/size) scales across facets are not yet
 supported (those legends stay shared). Spatial (`sf`) and network (`igraph`)
 layers are on the roadmap (see `_docs/DESIGN.md`).
