@@ -55,4 +55,56 @@ test_that("legend.position = none drops all guides", {
     vellumplot:::.resolve_theme(p@theme)
   )
   expect_true(is.na(lay$legend_col))
+  expect_true(is.na(lay$legend_row))
+})
+
+# Layout placement of the legend for each side.
+layout_for <- function(pos) {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl), size = disp) |>
+    theme(legend.position = pos)
+  built <- vellumplot:::.build_panels(p)
+  vellumplot:::.build_layout(
+    built,
+    vellumplot:::.legend_guides(built$scales),
+    p@labels,
+    vellumplot:::.resolve_theme(p@theme)
+  )
+}
+
+test_that("right/left take a legend column, not a row", {
+  for (pos in c("right", "left")) {
+    lay <- layout_for(pos)
+    expect_false(is.na(lay$legend_col))
+    expect_true(is.na(lay$legend_row))
+  }
+  # left places the legend before the y-title column; right after the panels.
+  expect_lt(layout_for("left")$legend_col, layout_for("left")$ytitle_col)
+  expect_gt(layout_for("right")$legend_col, layout_for("right")$panel_col[1])
+})
+
+test_that("top/bottom take a legend row, not a column", {
+  for (pos in c("top", "bottom")) {
+    lay <- layout_for(pos)
+    expect_true(is.na(lay$legend_col))
+    expect_false(is.na(lay$legend_row))
+  }
+  expect_lt(layout_for("top")$legend_row, layout_for("top")$panel_row[1])
+  expect_gt(layout_for("bottom")$legend_row, layout_for("bottom")$panel_row[1])
+})
+
+test_that("each legend position renders", {
+  for (pos in c("right", "left", "top", "bottom")) {
+    p <- vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, color = hp, size = disp) |>
+      theme(legend.position = pos)
+    f <- withr::local_tempfile(fileext = ".png")
+    render_plot(p, f)
+    expect_gt(file.info(f)$size, 0)
+  }
+})
+
+test_that("legend.position rejects unknown values", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_error(theme(p, legend.position = "middle"), "legend.position")
 })

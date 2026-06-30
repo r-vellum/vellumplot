@@ -35,7 +35,8 @@ set_theme(
 
 \item{...}{Named theme elements, e.g. \code{plot.title = element_text(size = 16)},
 \code{panel.grid.minor = element_blank()}, or settings like
-\code{legend.position = "none"}.}
+\code{legend.position}, one of \code{"right"} (default), \code{"left"}, \code{"top"},
+\code{"bottom"}, or \code{"none"}.}
 
 \item{panel_bg, grid_col, label_col, strip_bg}{Colours (or \code{NA} to draw nothing)
 for the panel background, gridlines, axis-label/legend text, and facet strip

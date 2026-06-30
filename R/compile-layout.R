@@ -82,6 +82,16 @@ NULL
   text_w + vellum::unit(swatch + 3 * .PAD_MM, "mm")
 }
 
+# Height of a horizontal legend row (top/bottom): a title line above a row of
+# keys/labels, sized from the resolved title and text fonts plus room for the
+# tallest swatch/bar and padding. Independent of the guide count, which spreads
+# across the row's width.
+.legend_height <- function(guides, rt) {
+  th <- vellum::grobheight(.txt("Ag", rt[["legend.title"]]@size))
+  kh <- vellum::grobheight(.txt("Ag", rt[["legend.text"]]@size))
+  th + kh + vellum::unit(.LEGEND_BAR_MM + 4 * .PAD_MM, "mm")
+}
+
 # A tiny ordered track builder: `add(unit)` appends a track and returns its
 # 1-based index; `units()` returns the concatenated unit vector.
 .tracks <- function() {
@@ -169,8 +179,21 @@ NULL
     (fa$type == "grid" && !is.null(fa$col_labels))
   has_row_strip <- fa$type == "grid" && !is.null(fa$row_labels)
 
-  # --- columns: [ ytitle | (ylabels panel gap)xC | row-strip? | legend? ] ---
+  # Legend placement. "right"/"left" take a column beside the panels (vertical
+  # guide stack); "top"/"bottom" take a row spanning the panel columns
+  # (horizontal guide flow); "none" suppresses it.
+  pos <- rt[["legend.position"]]
+  show_legend <- length(guides) && !identical(pos, "none")
+  legend_vert <- show_legend && pos %in% c("left", "right")
+  legend_horiz <- show_legend && pos %in% c("top", "bottom")
+
+  # --- columns: [ legend(left)? | ytitle | (ylabels panel gap)xC |
+  #               row-strip? | legend(right)? ] ---
   W <- .tracks()
+  legend_col <- NA_integer_
+  if (legend_vert && pos == "left") {
+    legend_col <- .tk_add(W, .legend_width(guides, rt))
+  }
   ytitle_col <- .tk_add(W, yt)
   panel_col <- integer(C)
   ylabels_col <- integer(C)
@@ -181,11 +204,8 @@ NULL
     if (c < C) .tk_add(W, gap)
   }
   rowstrip_col <- if (has_row_strip) .tk_add(W, strip) else NA_integer_
-  show_legend <- length(guides) && !identical(rt[["legend.position"]], "none")
-  legend_col <- if (show_legend) {
-    .tk_add(W, .legend_width(guides, rt))
-  } else {
-    NA_integer_
+  if (legend_vert && pos == "right") {
+    legend_col <- .tk_add(W, .legend_width(guides, rt))
   }
 
   # --- rows: [ tag? | title? | subtitle? | col-strip? |
@@ -209,6 +229,10 @@ NULL
     .tk_add(H, .track_h(rt[["plot.subtitle"]], labels$subtitle, .PAD_MM))
   } else {
     NA_integer_
+  }
+  legend_row <- NA_integer_
+  if (legend_horiz && pos == "top") {
+    legend_row <- .tk_add(H, .legend_height(guides, rt))
   }
   colstrip_row <- if (fa$type == "grid" && has_col_strip) {
     .tk_add(H, strip)
@@ -235,6 +259,9 @@ NULL
     }
   }
   xtitle_row <- .tk_add(H, xt)
+  if (legend_horiz && pos == "bottom") {
+    legend_row <- .tk_add(H, .legend_height(guides, rt))
+  }
   caption_row <- if (!is.null(labels$caption)) {
     .tk_add(H, .track_h(rt[["plot.caption"]], labels$caption, .PAD_MM))
   } else {
@@ -256,6 +283,8 @@ NULL
     colstrip_row = colstrip_row,
     rowstrip_col = rowstrip_col,
     legend_col = legend_col,
+    legend_row = legend_row,
+    legend_pos = pos,
     title_row = title_row,
     subtitle_row = subtitle_row,
     tag_row = tag_row,

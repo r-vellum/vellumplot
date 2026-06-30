@@ -189,12 +189,27 @@ NULL
       colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
     )
   }
+  # A left/right legend takes its column spanning every row; a top/bottom legend
+  # takes its row spanning the panel columns (centred under/over the panels).
   if (!is.na(lay$legend_col)) {
     scene <- .draw_legends(
       scene,
       list(row = 1, col = lay$legend_col, rowspan = length(lay$heights)),
       guides,
-      rt
+      rt,
+      orient = "vertical"
+    )
+  } else if (!is.na(lay$legend_row)) {
+    scene <- .draw_legends(
+      scene,
+      list(
+        row = lay$legend_row,
+        col = lay$panel_col[1],
+        colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
+      ),
+      guides,
+      rt,
+      orient = "horizontal"
     )
   }
 

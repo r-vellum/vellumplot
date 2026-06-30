@@ -436,16 +436,19 @@ NULL
   out
 }
 
-# Stack the guides vertically in the legend cell: each gets an equal slot, drawn
-# in its own 0..1 sub-viewport so the per-guide drawers share one coordinate
-# frame.
-.draw_legends <- function(scene, cell, guides, rt) {
+# Lay the guides out in the legend cell, each in its own 0..1 sub-viewport so the
+# per-guide drawers share one coordinate frame. A vertical legend stacks the
+# guides top-to-bottom (each an equal-height slot, vertical key drawers); a
+# horizontal legend spreads them left-to-right (each an equal-width slot,
+# horizontal key drawers).
+.draw_legends <- function(scene, cell, guides, rt, orient = "vertical") {
   scene <- vellum::push(
     scene,
     vellum::viewport(
       row = cell$row,
       col = cell$col,
-      rowspan = cell$rowspan %||% 1
+      rowspan = cell$rowspan %||% 1,
+      colspan = cell$colspan %||% 1
     )
   )
   lb <- rt[["legend.background"]]
@@ -454,22 +457,38 @@ NULL
   }
   n <- length(guides)
   for (i in seq_along(guides)) {
-    yc <- 1 - (i - 0.5) / n
-    scene <- vellum::push(
-      scene,
-      vellum::viewport(
-        y = vellum::unit(yc, "npc"),
-        height = vellum::unit(1 / n, "npc")
-      )
-    )
     g <- guides[[i]]
-    scene <- switch(
-      g$kind,
-      color_continuous = .guide_color_continuous(scene, g$sc, rt),
-      color_discrete = .guide_color_discrete(scene, g$sc, rt),
-      size = .guide_size(scene, g$sc, rt),
-      shape = .guide_shape(scene, g$sc, rt)
-    )
+    if (orient == "horizontal") {
+      scene <- vellum::push(
+        scene,
+        vellum::viewport(
+          x = vellum::unit((i - 0.5) / n, "npc"),
+          width = vellum::unit(1 / n, "npc")
+        )
+      )
+      scene <- switch(
+        g$kind,
+        color_continuous = .guide_color_continuous_h(scene, g$sc, rt),
+        color_discrete = .guide_color_discrete_h(scene, g$sc, rt),
+        size = .guide_size_h(scene, g$sc, rt),
+        shape = .guide_shape_h(scene, g$sc, rt)
+      )
+    } else {
+      scene <- vellum::push(
+        scene,
+        vellum::viewport(
+          y = vellum::unit(1 - (i - 0.5) / n, "npc"),
+          height = vellum::unit(1 / n, "npc")
+        )
+      )
+      scene <- switch(
+        g$kind,
+        color_continuous = .guide_color_continuous(scene, g$sc, rt),
+        color_discrete = .guide_color_discrete(scene, g$sc, rt),
+        size = .guide_size(scene, g$sc, rt),
+        shape = .guide_shape(scene, g$sc, rt)
+      )
+    }
     scene <- vellum::pop(scene)
   }
   vellum::pop(scene)
@@ -573,6 +592,148 @@ NULL
       )
     )
   })
+}
+
+# --- horizontal guide drawers (top/bottom legend) ---------------------------
+# Each draws inside a guide's full-height slot: the title on the upper-left, a
+# single row of keys/labels below it flowing left-to-right.
+
+.guide_title_h <- function(scene, name, rt) {
+  el <- rt[["legend.title"]]
+  if (.is_blank(el)) {
+    return(scene)
+  }
+  vellum::draw(
+    scene,
+    vellum::text_grob(
+      name,
+      x = vellum::unit(0.04, "npc"),
+      y = vellum::unit(0.8, "npc"),
+      just = c("left", "centre"),
+      gp = .el_gpar_text(el)
+    )
+  )
+}
+
+.guide_color_continuous_h <- function(scene, cl, rt) {
+  scene <- .guide_title_h(scene, cl$name, rt)
+  txt <- .el_gpar_text(rt[["legend.text"]])
+  x_lo <- 0.1
+  x_hi <- 0.7
+  bar_y <- 0.42
+  bar_h <- 0.24
+  grad <- vellum::linear_gradient(cl$pal256, x1 = 0, y1 = 0, x2 = 1, y2 = 0)
+  scene <- vellum::draw(
+    scene,
+    vellum::rect_grob(
+      x = vellum::unit((x_lo + x_hi) / 2, "npc"),
+      y = vellum::unit(bar_y, "npc"),
+      width = vellum::unit(x_hi - x_lo, "npc"),
+      height = vellum::unit(bar_h, "npc"),
+      gp = vellum::gpar(fill = grad, col = "grey50", lwd = 0.5)
+    )
+  )
+  for (i in seq_along(cl$legend_breaks)) {
+    frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    xx <- x_lo + frac * (x_hi - x_lo)
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        cl$legend_labels[i],
+        x = vellum::unit(xx, "npc"),
+        y = vellum::unit(bar_y - bar_h / 2 - 0.12, "npc"),
+        just = c("centre", "top"),
+        gp = txt
+      )
+    )
+  }
+  scene
+}
+
+.guide_color_discrete_h <- function(scene, cl, rt) {
+  scene <- .guide_title_h(scene, cl$name, rt)
+  .draw_key_row_h(scene, cl$levels, rt, function(scene, x, y, i) {
+    vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = vellum::unit(x, "npc"),
+        y = vellum::unit(y, "npc"),
+        width = vellum::unit(.LEGEND_SWATCH_MM, "mm"),
+        height = vellum::unit(.LEGEND_SWATCH_MM, "mm"),
+        gp = vellum::gpar(fill = cl$colors[i], col = NA)
+      )
+    )
+  })
+}
+
+.guide_size_h <- function(scene, sc, rt) {
+  scene <- .guide_title_h(scene, sc$name, rt)
+  .draw_key_row_h(scene, sc$legend_labels, rt, function(scene, x, y, i) {
+    vellum::draw(
+      scene,
+      vellum::points_grob(
+        vellum::unit(x, "npc"),
+        vellum::unit(y, "npc"),
+        size = vellum::unit(sc$legend_sizes[i], "mm"),
+        shape = "circle",
+        gp = vellum::gpar(fill = "grey35", col = "grey35")
+      )
+    )
+  })
+}
+
+.guide_shape_h <- function(scene, sc, rt) {
+  scene <- .guide_title_h(scene, sc$name, rt)
+  .draw_key_row_h(scene, sc$levels, rt, function(scene, x, y, i) {
+    vellum::draw(
+      scene,
+      vellum::points_grob(
+        vellum::unit(x, "npc"),
+        vellum::unit(y, "npc"),
+        size = vellum::unit(3, "mm"),
+        shape = sc$shapes[i],
+        gp = vellum::gpar(fill = "grey35", col = "grey35")
+      )
+    )
+  })
+}
+
+# Shared horizontal key layout: `keys` (drawn by `draw_key(scene, x, y, i)`) in a
+# row, each followed by its label, split into equal-width cells across the slot.
+.draw_key_row_h <- function(scene, labels, rt, draw_key) {
+  txt <- .el_gpar_text(rt[["legend.text"]])
+  key_bg <- rt[["legend.key"]]
+  key_side <- .LEGEND_SWATCH_MM + .PAD_MM
+  k <- length(labels)
+  y_key <- 0.32
+  cellw <- 1 / k
+  for (i in seq_len(k)) {
+    xk <- (i - 1) * cellw + 0.06
+    if (!.is_blank(key_bg)) {
+      scene <- vellum::draw(
+        scene,
+        vellum::rect_grob(
+          x = vellum::unit(xk, "npc"),
+          y = vellum::unit(y_key, "npc"),
+          width = vellum::unit(key_side, "mm"),
+          height = vellum::unit(key_side, "mm"),
+          gp = .el_gpar_rect(key_bg)
+        )
+      )
+    }
+    scene <- draw_key(scene, xk, y_key, i)
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        labels[i],
+        x = vellum::unit(xk + 0.08, "npc"),
+        y = vellum::unit(y_key, "npc"),
+        just = c("left", "centre"),
+        gp = txt
+      )
+    )
+  }
+  scene
 }
 
 # Shared key-row layout for discrete/size legends: a column of `keys` (drawn by

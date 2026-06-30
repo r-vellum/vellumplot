@@ -184,6 +184,16 @@ NULL
   known_slots <- names(.ELEMENT_PARENTS)
   for (nm in nms) {
     if (nm %in% .theme_setting_names) {
+      if (nm == "legend.position") {
+        ok <- c("right", "left", "top", "bottom", "none")
+        val <- args[[nm]]
+        if (!is.character(val) || length(val) != 1L || !val %in% ok) {
+          cli::cli_abort(
+            "{.field legend.position} must be one of {.val {ok}}.",
+            call = call
+          )
+        }
+      }
       next
     }
     if (!nm %in% known_slots) {
