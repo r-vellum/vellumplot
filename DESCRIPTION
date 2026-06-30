@@ -21,6 +21,8 @@ Imports:
     rlang,
     S7,
     scales,
+    stats,
+    utils,
     vellum
 Suggests:
     testthat (>= 3.0.0),
