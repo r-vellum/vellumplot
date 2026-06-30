@@ -280,6 +280,16 @@ scale_size <- function(
 #' @export
 scale_shape <- function(plot, values = NULL, name = NULL) {
   .check_plot(plot)
+  if (!is.null(values)) {
+    valid <- .SHAPE_PALETTE
+    bad <- setdiff(as.character(values), valid)
+    if (length(bad)) {
+      cli::cli_abort(c(
+        "Unknown shape{?s} in {.arg values}: {.val {bad}}.",
+        i = "Use {.or {.val {valid}}}."
+      ))
+    }
+  }
   .add_scale(
     plot,
     ScaleSpec(

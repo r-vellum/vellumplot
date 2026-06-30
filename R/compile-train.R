@@ -1,6 +1,28 @@
 #' @include classes.R coord.R compile-resolve.R
 NULL
 
+# Reconcile user-supplied labels against the breaks they annotate. Labels and
+# breaks must correspond one-to-one; silently recycling a short `labels` vector
+# against an auto-computed break count mislabels the axis/legend, so we require
+# matching lengths (ggplot2 semantics). Returns NULL when no labels were given
+# (the caller then formats the breaks itself).
+.match_labels <- function(user_labels, breaks, aes, call = rlang::caller_env()) {
+  if (is.null(user_labels)) {
+    return(NULL)
+  }
+  if (length(user_labels) != length(breaks)) {
+    cli::cli_abort(
+      c(
+        "{.arg labels} for the {.field {aes}} scale must have one entry per break.",
+        i = "Got {length(user_labels)} label{?s} for {length(breaks)} break{?s}.",
+        i = "Supply matching {.arg breaks}, or one label per break."
+      ),
+      call = call
+    )
+  }
+  as.character(user_labels)
+}
+
 # Default perceptual ramp for continuous colour and qualitative palette for
 # discrete colour.
 .viridis <- function(n = 256) grDevices::hcl.colors(n, "viridis")
@@ -213,9 +235,30 @@ NULL
   num <- as.numeric(raw)
   num <- num[is.finite(num)]
   user_lim <- lim %||% (if (!is.null(scalespec)) scalespec@domain else NULL)
-  rng <- if (!is.null(user_lim)) as.numeric(user_lim) else range(num)
-  if (include_zero) {
-    rng <- range(c(rng, 0))
+  tr <- if (is_time) NULL else .resolve_trans(scalespec)
+  # Drop values the transform can't represent (e.g. a bar's 0 baseline, or any
+  # non-positive value, on a log scale); ggplot2 does the same. The mark is still
+  # drawn (clipped at the panel edge); only the trained range excludes them.
+  if (!is_time && length(num)) {
+    num <- num[is.finite(tr$transform(num))]
+  }
+
+  # User limits are taken verbatim (so a descending `c(hi, lo)` reverses the
+  # axis); a data-derived range needs at least one finite value.
+  rng <- if (!is.null(user_lim)) {
+    as.numeric(user_lim)
+  } else if (length(num)) {
+    range(num)
+  } else {
+    c(NA_real_, NA_real_)
+  }
+  # Force a zero baseline for bars/areas, but only when the transform keeps it
+  # finite: a log/sqrt scale cannot include 0, so leave the data range alone.
+  if (include_zero && all(is.finite(rng))) {
+    cand <- range(c(rng, 0))
+    if (is_time || all(is.finite(tr$transform(cand)))) {
+      rng <- cand
+    }
   }
   if (!all(is.finite(rng)) || diff(rng) == 0) {
     centre <- if (all(is.finite(rng))) rng[1] else 0
@@ -230,30 +273,33 @@ NULL
     tfun <- function(v) as.numeric(v)
     domain <- scales::expand_range(rng, mul = 0.05)
     braw <- if (!is.null(user_breaks)) user_breaks else pretty(raw)
-    keep <- as.numeric(braw) >= rng[1] & as.numeric(braw) <= rng[2]
+    lab <- .match_labels(user_labels, braw, aesthetic)
+    keep <- as.numeric(braw) >= min(rng) & as.numeric(braw) <= max(rng)
     braw <- braw[keep]
-    breaks <- as.numeric(braw)
-    labels <- if (!is.null(user_labels)) {
-      rep_len(user_labels, length(braw))
-    } else {
-      format(braw)
+    if (!is.null(lab)) {
+      lab <- lab[keep]
     }
+    breaks <- as.numeric(braw)
+    labels <- lab %||% format(braw)
     type <- "continuous"
   } else {
-    tr <- .resolve_trans(scalespec)
     tfun <- function(v) tr$transform(as.numeric(v))
-    domain <- scales::expand_range(range(tr$transform(rng)), mul = 0.05)
+    tdom <- tr$transform(rng)
+    if (!all(is.finite(tdom))) {
+      cli::cli_abort(c(
+        "The {.field {aesthetic}} data range falls outside the scale transform's domain.",
+        i = "Range {.val {rng}} is not valid for this transform (e.g. a log scale needs positive values)."
+      ))
+    }
+    # Order-preserving so a reversed `rng` keeps the axis reversed.
+    domain <- scales::expand_range(tdom, mul = 0.05)
     braw <- if (!is.null(user_breaks)) {
       as.numeric(user_breaks)
     } else {
       tr$breaks(rng)
     }
+    lab <- .match_labels(user_labels, braw, aesthetic)
     keep <- is.finite(braw) & braw >= min(rng) & braw <= max(rng)
-    lab <- if (!is.null(user_labels)) {
-      rep_len(user_labels, length(braw))
-    } else {
-      NULL
-    }
     braw <- braw[keep]
     if (!is.null(lab)) {
       lab <- lab[keep]
@@ -343,7 +389,8 @@ NULL
 
   if (identical(kind, "continuous")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
-    rng <- range(v[is.finite(v)])
+    v <- v[is.finite(v)]
+    rng <- if (length(v)) range(v) else c(0, 1)
     if (diff(rng) == 0) {
       rng <- rng + c(-0.5, 0.5)
     }
@@ -363,12 +410,8 @@ NULL
     } else {
       scales::breaks_extended()(rng)
     }
+    llab <- .match_labels(user_labels, lbrk, "color")
     keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
-    llab <- if (!is.null(user_labels)) {
-      rep_len(user_labels, length(lbrk))
-    } else {
-      NULL
-    }
     lbrk <- lbrk[keep]
     if (!is.null(llab)) {
       llab <- llab[keep]
@@ -383,17 +426,27 @@ NULL
       legend_labels = llab %||% scales::label_number()(lbrk)
     )
   } else {
-    levels <- .cat_levels(values)
-    cols <- .discrete_colours(pal, levels)
-    names(cols) <- levels
+    all_levels <- .cat_levels(values)
+    cols <- .discrete_colours(pal, all_levels)
+    names(cols) <- all_levels
     map <- function(x) unname(cols[as.character(x)])
+    # `breaks` selects which levels appear in the legend (and their order); the
+    # colour mapping itself always covers every data level. Unknown breaks are
+    # dropped. Labels (if given) must match the shown levels one-to-one.
+    levels <- if (!is.null(user_breaks)) {
+      ub <- as.character(user_breaks)
+      ub[ub %in% all_levels]
+    } else {
+      all_levels
+    }
+    labels <- .match_labels(user_labels, levels, "color") %||% levels
     list(
       kind = "discrete",
       map = map,
       name = title,
       levels = levels,
-      labels = user_labels %||% levels,
-      colors = unname(cols)
+      labels = labels,
+      colors = unname(cols[levels])
     )
   }
 }
@@ -407,10 +460,13 @@ NULL
   }
   scalespec <- .scale_for(spec, "size")
   v <- as.numeric(unlist(values, use.names = FALSE))
+  v <- v[is.finite(v)]
   rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
     as.numeric(scalespec@domain)
+  } else if (length(v)) {
+    range(v)
   } else {
-    range(v[is.finite(v)])
+    c(0, 1)
   }
   if (diff(rng) == 0) {
     rng <- rng + c(-0.5, 0.5)
@@ -431,12 +487,12 @@ NULL
   } else {
     scales::breaks_extended()(rng)
   }
+  llab <- .match_labels(
+    if (!is.null(scalespec)) scalespec@labels else NULL,
+    lbrk,
+    "size"
+  )
   keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
-  llab <- if (!is.null(scalespec) && !is.null(scalespec@labels)) {
-    rep_len(scalespec@labels, length(lbrk))
-  } else {
-    NULL
-  }
   lbrk <- lbrk[keep]
   if (!is.null(llab)) {
     llab <- llab[keep]

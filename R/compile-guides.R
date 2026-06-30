@@ -1,14 +1,18 @@
 #' @include classes.R elements.R theme-tree.R compile-layout.R
 NULL
 
-# Midpoints between sorted finite breaks (minor gridline positions); empty when
-# there are fewer than two breaks.
+# Minor gridline positions: midpoints between sorted finite breaks, plus one
+# extrapolated half-step past each end so minor lines also appear outside the
+# outer majors (the panel viewport clips any that fall beyond the scale). Empty
+# when there are fewer than two breaks.
 .minor_breaks <- function(b) {
   b <- sort(b[is.finite(b)])
   if (length(b) < 2) {
     return(numeric(0))
   }
-  (utils::head(b, -1) + utils::tail(b, -1)) / 2
+  mids <- (utils::head(b, -1) + utils::tail(b, -1)) / 2
+  step <- b[2] - b[1]
+  c(b[1] - step / 2, mids, b[length(b)] + step / 2)
 }
 
 # Vertical gridlines at `xs` (native), spanning the panel height. Drawn as one
@@ -548,7 +552,7 @@ NULL
 
 .guide_color_discrete <- function(scene, cl, rt) {
   scene <- .guide_title(scene, cl$name, rt)
-  .draw_key_rows(scene, cl$levels, rt, function(scene, yy, i) {
+  .draw_key_rows(scene, cl$labels %||% cl$levels, rt, function(scene, yy, i) {
     vellum::draw(
       scene,
       vellum::rect_grob(
@@ -652,7 +656,7 @@ NULL
 
 .guide_color_discrete_h <- function(scene, cl, rt) {
   scene <- .guide_title_h(scene, cl$name, rt)
-  .draw_key_row_h(scene, cl$levels, rt, function(scene, x, y, i) {
+  .draw_key_row_h(scene, cl$labels %||% cl$levels, rt, function(scene, x, y, i) {
     vellum::draw(
       scene,
       vellum::rect_grob(
