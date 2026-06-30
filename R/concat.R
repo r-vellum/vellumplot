@@ -1,15 +1,25 @@
 #' @include classes.R seam.R
 NULL
 
-# A composition of independent plots arranged on a grid. Each sub-plot keeps its
-# own scales, axes, and legend; the composition only arranges them.
+# A composition of plots arranged on a grid. A sub-plot keeps its own scales and
+# axes; the composition aligns their panels (a shared track grid) and, by default,
+# collects identical legends into one. `plots` may hold nested `PlotComposition`s
+# (a recursive view tree), so every node can carry its own annotation.
 PlotComposition <- S7::new_class(
   "PlotComposition",
   package = "vellumplot",
   properties = list(
-    plots = S7::class_list, # list<PlotSpec>
+    plots = S7::class_list, # list<PlotSpec | PlotComposition>
     nrow = S7::new_property(S7::class_double, default = 1),
     ncol = S7::new_property(S7::class_double, default = 1),
+    byrow = S7::new_property(S7::class_logical, default = TRUE),
+    widths = S7::new_property(S7::class_any, default = NULL), # per-col panel weights
+    heights = S7::new_property(S7::class_any, default = NULL), # per-row panel weights
+    guides = S7::new_property(S7::class_character, default = "collect"), # collect|keep
+    design = S7::new_property(S7::class_any, default = NULL), # list<area> | NULL
+    labels = S7::new_property(S7::class_list, default = list()), # figure title/...
+    tag = S7::new_property(S7::class_any, default = NULL), # auto-tag spec | NULL
+    insets = S7::new_property(S7::class_list, default = list()), # list<inset spec>
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4)
   )
@@ -19,11 +29,17 @@ PlotComposition <- S7::new_class(
   if (!length(dots)) {
     cli::cli_abort("Provide at least one plot to arrange.")
   }
-  for (p in dots) {
-    if (!S7::S7_inherits(p, PlotSpec)) {
-      cli::cli_abort(
-        "Composition expects {.cls PlotSpec} objects from {.fn vplot}."
-      )
+  for (i in seq_along(dots)) {
+    p <- dots[[i]]
+    if (
+      !S7::S7_inherits(p, PlotSpec) &&
+        !S7::S7_inherits(p, PlotComposition) &&
+        !S7::S7_inherits(p, Spacer)
+    ) {
+      cli::cli_abort(c(
+        "Composition expects {.cls PlotSpec} or {.cls PlotComposition} objects.",
+        "x" = "Argument {i} is {.obj_type_friendly {p}}."
+      ))
     }
   }
   dots
@@ -36,8 +52,22 @@ PlotComposition <- S7::new_class(
 #' Each sub-plot keeps its own scales, axes, and legend (this is view
 #' composition, not faceting).
 #'
-#' @param ... [PlotSpec]s to arrange.
+#' Sub-plot panels are **aligned** across the grid (a shared track grid lines up
+#' panel edges even when axis labels differ), and identical legends are
+#' **collected** into one shared legend by default (`guides = "collect"`). Pass
+#' `PlotComposition`s in `...` to nest a sub-grid. Annotate the whole figure with
+#' [compose_annotation()].
+#'
+#' @param ... [PlotSpec]s or `PlotComposition`s to arrange.
 #' @param ncol,nrow Grid dimensions for `concat()` (defaults to roughly square).
+#' @param byrow Fill the grid by row (default) or by column.
+#' @param widths,heights Relative panel sizes per column / row (recycled numeric
+#'   vector), or `NULL` for equal panels.
+#' @param guides `"collect"` (default) to dedupe identical legends across
+#'   sub-plots into one, or `"keep"` to leave each sub-plot's legend in place.
+#' @param design An explicit layout: a list of [area()]s (one per plot) or a
+#'   textual layout string (rows split by `\n`, each letter a plot, `#` empty).
+#'   Enables spanning; `NULL` (default) uses the regular `ncol`/`nrow` grid.
 #' @param width,height Output size in inches (defaults scale with the grid).
 #' @return A `PlotComposition` (renders via [render_plot()] / [vellum::render()]).
 #' @examples
@@ -45,9 +75,26 @@ PlotComposition <- S7::new_class(
 #' b <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
 #' hconcat(a, b)
 #' @export
-concat <- function(..., ncol = NULL, nrow = NULL, width = NULL, height = NULL) {
+concat <- function(
+  ...,
+  ncol = NULL,
+  nrow = NULL,
+  byrow = TRUE,
+  widths = NULL,
+  heights = NULL,
+  guides = c("collect", "keep"),
+  design = NULL,
+  width = NULL,
+  height = NULL
+) {
   plots <- .collect_plots(list(...))
+  guides <- match.arg(guides)
   n <- length(plots)
+  design <- .parse_design(design, n)
+  if (!is.null(design)) {
+    nrow <- max(vapply(design, function(a) a$b, numeric(1)))
+    ncol <- max(vapply(design, function(a) a$r, numeric(1)))
+  }
   if (is.null(ncol) && is.null(nrow)) {
     ncol <- ceiling(sqrt(n))
   }
@@ -59,55 +106,337 @@ concat <- function(..., ncol = NULL, nrow = NULL, width = NULL, height = NULL) {
   }
   ncol <- as.double(ncol)
   nrow <- as.double(nrow)
-  w0 <- plots[[1]]@width
-  h0 <- plots[[1]]@height
+  w0 <- .comp_unit_size(plots[[1]], "width")
+  h0 <- .comp_unit_size(plots[[1]], "height")
   PlotComposition(
     plots = plots,
     nrow = nrow,
     ncol = ncol,
+    byrow = byrow,
+    widths = widths,
+    heights = heights,
+    guides = guides,
+    design = design,
     width = width %||% (ncol * w0),
     height = height %||% (nrow * h0)
   )
 }
 
-#' @rdname concat
+# A reserved-but-empty cell.
+Spacer <- S7::new_class("Spacer", package = "vellumplot")
+
+#' Reserve an empty cell in a composition
+#'
+#' Use inside [concat()] / [wrap_plots()] (or a `design`) to leave a gap.
+#' @return A spacer placeholder.
+#' @examples
+#' a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+#' concat(a, plot_spacer(), a, plot_spacer(), ncol = 2)
 #' @export
-hconcat <- function(..., height = NULL) {
-  concat(..., ncol = ...length(), nrow = 1, height = height)
+plot_spacer <- function() Spacer()
+
+#' Define a layout area for `design =`
+#'
+#' An `area()` is a rectangular block of grid cells (1-based, inclusive) that a
+#' sub-plot occupies. Pass a list of `area()`s (one per plot, in order) as
+#' `concat(..., design = )` to place plots on an explicit, possibly spanning,
+#' grid.
+#'
+#' @param t,l,b,r Top, left, bottom, right cell indices (1-based, inclusive).
+#' @return An `area` spec.
+#' @examples
+#' a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+#' b <- vplot(mtcars) |> mark_point(x = hp, y = mpg)
+#' concat(a, b, design = list(area(1, 1, 1, 2), area(2, 1, 2, 1)))
+#' @export
+area <- function(t, l, b = t, r = l) {
+  list(t = as.numeric(t), l = as.numeric(l), b = as.numeric(b), r = as.numeric(r))
 }
 
-#' @rdname concat
-#' @export
-vconcat <- function(..., width = NULL) {
-  concat(..., ncol = 1, nrow = ...length(), width = width)
-}
-
-# Compile a composition: an outer grid of equal null cells, each holding one
-# sub-plot rendered with .draw_plot() (which pushes its own grid_layout inside
-# the cell).
-.compile_composition <- function(comp) {
-  ncol <- comp@ncol
-  nrow <- comp@nrow
-  nulls <- function(k) {
-    do.call(c, replicate(k, vellum::unit(1, "null"), simplify = FALSE))
+# Normalise `design` into a list of area()s (one per plot) or NULL.
+# Accepts a list of area()s, or a textual layout (rows separated by newlines;
+# each distinct letter is one plot in alphabetical order, "#" = empty).
+.parse_design <- function(design, n) {
+  if (is.null(design)) {
+    return(NULL)
   }
+  if (is.list(design)) {
+    return(design)
+  }
+  if (is.character(design)) {
+    rows <- strsplit(trimws(design), "\n")[[1]]
+    rows <- trimws(rows)
+    m <- do.call(rbind, lapply(rows, function(s) strsplit(s, "")[[1]]))
+    letters_used <- sort(setdiff(unique(as.vector(m)), "#"))
+    out <- lapply(letters_used, function(ch) {
+      rc <- which(m == ch, arr.ind = TRUE)
+      area(min(rc[, 1]), min(rc[, 2]), max(rc[, 1]), max(rc[, 2]))
+    })
+    return(out)
+  }
+  cli::cli_abort("{.arg design} must be a list of {.fn area}s or a layout string.")
+}
+
+#' Overlay a plot as an inset
+#'
+#' Place `plot` as an inset over `base`, positioned by fractional coordinates
+#' (0–1) of the chosen reference box. Returns a 1-cell `PlotComposition` carrying
+#' the inset (compose it further or render directly).
+#'
+#' @param base A [PlotSpec] or `PlotComposition` to draw underneath.
+#' @param plot The [PlotSpec] to overlay.
+#' @param left,bottom,right,top Inset position as fractions (0–1).
+#' @param align_to Reference box: `"panel"`, `"plot"`, or `"full"` (currently the
+#'   whole `base` cell).
+#' @param on_top Draw the inset above (`TRUE`) or below the base.
+#' @return A `PlotComposition`.
+#' @examples
+#' a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+#' b <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
+#' inset(a, b, left = 0.55, bottom = 0.55, right = 0.98, top = 0.98)
+#' @export
+inset <- function(
+  base,
+  plot,
+  left = 0.6,
+  bottom = 0.6,
+  right = 0.98,
+  top = 0.98,
+  align_to = c("panel", "plot", "full"),
+  on_top = TRUE
+) {
+  align_to <- match.arg(align_to)
+  if (!S7::S7_inherits(plot, PlotSpec)) {
+    cli::cli_abort("{.arg plot} (the inset) must be a {.cls PlotSpec}.")
+  }
+  comp <- if (S7::S7_inherits(base, PlotComposition)) {
+    base
+  } else {
+    concat(base, ncol = 1, nrow = 1)
+  }
+  comp@insets <- c(
+    comp@insets,
+    list(list(
+      plot = plot,
+      left = left,
+      bottom = bottom,
+      right = right,
+      top = top,
+      align_to = align_to,
+      on_top = on_top
+    ))
+  )
+  comp
+}
+
+# Page size of a sub-plot (PlotSpec or nested PlotComposition) for auto-sizing.
+.comp_unit_size <- function(x, which) {
+  if (S7::S7_inherits(x, PlotComposition)) {
+    if (which == "width") x@width / x@ncol else x@height / x@nrow
+  } else if (S7::S7_inherits(x, Spacer)) {
+    if (which == "width") 6 else 4
+  } else {
+    S7::prop(x, which)
+  }
+}
+
+#' @rdname concat
+#' @param plots A list of [PlotSpec]s / `PlotComposition`s (for `wrap_plots()`).
+#' @export
+wrap_plots <- function(
+  plots,
+  ncol = NULL,
+  nrow = NULL,
+  byrow = TRUE,
+  widths = NULL,
+  heights = NULL,
+  guides = c("collect", "keep"),
+  design = NULL,
+  width = NULL,
+  height = NULL
+) {
+  do.call(
+    concat,
+    c(
+      plots,
+      list(
+        ncol = ncol,
+        nrow = nrow,
+        byrow = byrow,
+        widths = widths,
+        heights = heights,
+        guides = match.arg(guides),
+        design = design,
+        width = width,
+        height = height
+      )
+    )
+  )
+}
+
+#' @rdname concat
+#' @export
+hconcat <- function(..., guides = c("collect", "keep"), height = NULL) {
+  concat(
+    ...,
+    ncol = ...length(),
+    nrow = 1,
+    guides = match.arg(guides),
+    height = height
+  )
+}
+
+#' @rdname concat
+#' @export
+vconcat <- function(..., guides = c("collect", "keep"), width = NULL) {
+  concat(
+    ...,
+    ncol = 1,
+    nrow = ...length(),
+    guides = match.arg(guides),
+    width = width
+  )
+}
+
+#' Annotate a composition
+#'
+#' Add figure-level text (a `title`, `subtitle`, `caption`) spanning the whole
+#' composition, and/or auto-tag the sub-plots (`A`, `B`, `C`, …). Because every
+#' `PlotComposition` carries its own annotation, this works at any nesting level
+#' (unlike patchwork, where annotation is top-level only).
+#'
+#' @param plot A `PlotComposition` (from [concat()] / [hconcat()] / [vconcat()]).
+#' @param title,subtitle,caption Figure-level text (or `NULL`).
+#' @param tag_levels Auto-tag style: `"A"`, `"a"`, `"1"`, `"i"`, or `"I"`
+#'   (`NULL` = no tags).
+#' @param tag_prefix,tag_suffix Strings wrapped around each tag.
+#' @return The modified `PlotComposition`.
+#' @examples
+#' a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+#' b <- vplot(mtcars) |> mark_point(x = hp, y = mpg)
+#' hconcat(a, b) |> compose_annotation(title = "Fuel economy", tag_levels = "A")
+#' @export
+compose_annotation <- function(
+  plot,
+  title = NULL,
+  subtitle = NULL,
+  caption = NULL,
+  tag_levels = NULL,
+  tag_prefix = "",
+  tag_suffix = ""
+) {
+  if (!S7::S7_inherits(plot, PlotComposition)) {
+    cli::cli_abort("{.arg plot} must be a {.cls PlotComposition}.")
+  }
+  over <- list(title = title, subtitle = subtitle, caption = caption)
+  over <- over[!vapply(over, is.null, logical(1))]
+  plot@labels <- utils::modifyList(plot@labels, over)
+  if (!is.null(tag_levels)) {
+    plot@tag <- list(
+      levels = tag_levels,
+      prefix = tag_prefix,
+      suffix = tag_suffix
+    )
+  }
+  plot
+}
+
+# Compile a composition to a vellum scene. The aligned path (.compile_aligned,
+# in compile-composition.R) shares one track grid across sub-plots so panel edges
+# line up and legends collect; it handles the common case (single-panel sub-plots
+# on a regular grid). Anything it can't align yet (faceted/polar sub-plots) falls
+# back to the independent per-cell layout.
+.compile_composition <- function(comp) {
   scene <- vellum::vl_scene(
     width = comp@width,
     height = comp@height,
     bg = "white"
   )
+  if (.comp_alignable(comp)) {
+    scene <- vellum::push(scene, vellum::viewport())
+    scene <- .draw_composition(scene, comp)
+    return(vellum::pop(scene))
+  }
+  .compile_composition_independent(scene, comp)
+}
+
+# Legacy layout: an outer grid of equal null cells, each holding one sub-plot
+# rendered with .draw_plot() (its own grid_layout inside the cell). No alignment
+# or guide collection. Used as a fallback for sub-plots the aligned path can't
+# yet place (facets, polar coords).
+.compile_composition_independent <- function(scene, comp) {
+  ncol <- comp@ncol
+  nrow <- comp@nrow
+  wfun <- function(v, k) {
+    if (is.null(v)) {
+      vellum::unit(rep(1, k), "null")
+    } else {
+      vellum::unit(rep_len(as.numeric(v), k), "null")
+    }
+  }
   scene <- vellum::push(
     scene,
-    vellum::viewport(layout = vellum::grid_layout(nulls(ncol), nulls(nrow)))
+    vellum::viewport(
+      layout = vellum::grid_layout(wfun(comp@widths, ncol), wfun(comp@heights, nrow))
+    )
   )
   for (i in seq_along(comp@plots)) {
-    r <- (i - 1L) %/% ncol + 1L
-    cc <- (i - 1L) %% ncol + 1L
-    scene <- vellum::push(scene, vellum::viewport(row = r, col = cc))
-    scene <- .draw_plot(scene, comp@plots[[i]])
+    p <- comp@plots[[i]]
+    if (S7::S7_inherits(p, Spacer)) {
+      next
+    }
+    vp <- if (!is.null(comp@design)) {
+      a <- comp@design[[i]]
+      vellum::viewport(
+        row = a$t,
+        col = a$l,
+        rowspan = a$b - a$t + 1,
+        colspan = a$r - a$l + 1
+      )
+    } else {
+      pos <- .comp_cell(i, comp)
+      vellum::viewport(row = pos$r, col = pos$c)
+    }
+    scene <- vellum::push(scene, vp)
+    if (S7::S7_inherits(p, PlotComposition)) {
+      scene <- .draw_composition(scene, p)
+    } else {
+      scene <- .draw_plot(scene, p)
+    }
     scene <- vellum::pop(scene)
   }
+  scene <- .draw_insets(scene, comp)
   vellum::pop(scene)
+}
+
+# Draw inset plots overlaid on the (already-drawn) composition cell. Each inset
+# is positioned by fractional coordinates of the current viewport.
+.draw_insets <- function(scene, comp) {
+  for (ins in comp@insets) {
+    w <- ins$right - ins$left
+    h <- ins$top - ins$bottom
+    scene <- vellum::push(
+      scene,
+      vellum::viewport(
+        x = vellum::unit(ins$left + w / 2, "npc"),
+        y = vellum::unit(ins$bottom + h / 2, "npc"),
+        width = vellum::unit(w, "npc"),
+        height = vellum::unit(h, "npc")
+      )
+    )
+    scene <- .draw_plot(scene, ins$plot)
+    scene <- vellum::pop(scene)
+  }
+  scene
+}
+
+# Grid cell (1-based row/col) of the i-th sub-plot, honouring byrow.
+.comp_cell <- function(i, comp) {
+  if (comp@byrow) {
+    list(r = (i - 1L) %/% comp@ncol + 1L, c = (i - 1L) %% comp@ncol + 1L)
+  } else {
+    list(r = (i - 1L) %% comp@nrow + 1L, c = (i - 1L) %/% comp@nrow + 1L)
+  }
 }
 
 S7::method(.as_vellum_scene, PlotComposition) <- function(x, ...) {
@@ -126,8 +455,21 @@ S7::method(plot, PlotComposition) <- function(x, y, ...) {
 }
 
 S7::method(summary, PlotComposition) <- function(object, ...) {
+  nested <- sum(vapply(
+    object@plots,
+    function(p) S7::S7_inherits(p, PlotComposition),
+    logical(1)
+  ))
   cli::cli_text(
     "{.cls PlotComposition} {length(object@plots)} plot{?s} in a {object@nrow}x{object@ncol} grid"
   )
+  cli::cli_text("guides: {object@guides}{if (nested) paste0(', ', nested, ' nested')}")
+  if (length(object@labels) || !is.null(object@tag)) {
+    bits <- c(
+      if (!is.null(object@labels$title)) "title",
+      if (!is.null(object@tag)) paste0("tags (", object@tag$levels[1], ")")
+    )
+    cli::cli_text("annotation: {paste(bits, collapse = ', ')}")
+  }
   invisible(object)
 }

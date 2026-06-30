@@ -2,22 +2,61 @@
 % Please edit documentation in R/concat.R
 \name{concat}
 \alias{concat}
+\alias{wrap_plots}
 \alias{hconcat}
 \alias{vconcat}
 \title{Arrange plots side by side}
 \usage{
-concat(..., ncol = NULL, nrow = NULL, width = NULL, height = NULL)
+concat(
+  ...,
+  ncol = NULL,
+  nrow = NULL,
+  byrow = TRUE,
+  widths = NULL,
+  heights = NULL,
+  guides = c("collect", "keep"),
+  design = NULL,
+  width = NULL,
+  height = NULL
+)
 
-hconcat(..., height = NULL)
+wrap_plots(
+  plots,
+  ncol = NULL,
+  nrow = NULL,
+  byrow = TRUE,
+  widths = NULL,
+  heights = NULL,
+  guides = c("collect", "keep"),
+  design = NULL,
+  width = NULL,
+  height = NULL
+)
 
-vconcat(..., width = NULL)
+hconcat(..., guides = c("collect", "keep"), height = NULL)
+
+vconcat(..., guides = c("collect", "keep"), width = NULL)
 }
 \arguments{
-\item{...}{\link{PlotSpec}s to arrange.}
+\item{...}{\link{PlotSpec}s or \code{PlotComposition}s to arrange.}
 
 \item{ncol, nrow}{Grid dimensions for \code{concat()} (defaults to roughly square).}
 
+\item{byrow}{Fill the grid by row (default) or by column.}
+
+\item{widths, heights}{Relative panel sizes per column / row (recycled numeric
+vector), or \code{NULL} for equal panels.}
+
+\item{guides}{\code{"collect"} (default) to dedupe identical legends across
+sub-plots into one, or \code{"keep"} to leave each sub-plot's legend in place.}
+
+\item{design}{An explicit layout: a list of \code{\link[=area]{area()}}s (one per plot) or a
+textual layout string (rows split by \verb{\\n}, each letter a plot, \verb{#} empty).
+Enables spanning; \code{NULL} (default) uses the regular \code{ncol}/\code{nrow} grid.}
+
 \item{width, height}{Output size in inches (defaults scale with the grid).}
+
+\item{plots}{A list of \link{PlotSpec}s / \code{PlotComposition}s (for \code{wrap_plots()}).}
 }
 \value{
 A \code{PlotComposition} (renders via \code{\link[=render_plot]{render_plot()}} / \code{\link[vellum:render]{vellum::render()}}).
@@ -27,6 +66,13 @@ Compose several independent plots into one image. \code{hconcat()} lays them in 
 row, \code{vconcat()} in a column, and \code{concat()} on a grid of \code{ncol}/\code{nrow} cells.
 Each sub-plot keeps its own scales, axes, and legend (this is view
 composition, not faceting).
+}
+\details{
+Sub-plot panels are \strong{aligned} across the grid (a shared track grid lines up
+panel edges even when axis labels differ), and identical legends are
+\strong{collected} into one shared legend by default (\code{guides = "collect"}). Pass
+\code{PlotComposition}s in \code{...} to nest a sub-grid. Annotate the whole figure with
+\code{\link[=compose_annotation]{compose_annotation()}}.
 }
 \examples{
 a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
