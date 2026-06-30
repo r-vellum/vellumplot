@@ -74,10 +74,14 @@ NULL
     breaks = function(rng) scales::breaks_extended()(rng),
     format = function(b) scales::label_number()(b)
   ),
+  # Reverse keeps the data mapping as identity and instead flips the trained
+  # domain (a decreasing native domain is what vellum reads as a reversed axis).
+  # Negating the data here as well would double-flip and cancel out.
   reverse = list(
-    transform = function(x) -x,
+    transform = function(x) x,
     breaks = function(rng) scales::breaks_extended()(rng),
-    format = function(b) scales::label_number()(b)
+    format = function(b) scales::label_number()(b),
+    flip = TRUE
   )
 )
 
@@ -103,11 +107,17 @@ NULL
     }
     return(out)
   }
-  # a scales transform object
+  # a scales transform object. A reverse transform is handled by our flip path
+  # (identity map + flipped domain), so route it through the registry entry
+  # rather than using its data-negating `$transform` (which would double-flip).
+  if (identical(tr$name, "reverse")) {
+    return(.TRANSFORMS$reverse)
+  }
   list(
     transform = tr$transform,
     breaks = tr$breaks %||% function(rng) scales::breaks_extended()(rng),
-    format = tr$format %||% function(b) scales::label_number()(b)
+    format = tr$format %||% function(b) scales::label_number()(b),
+    flip = FALSE
   )
 }
 
@@ -293,6 +303,10 @@ NULL
     }
     # Order-preserving so a reversed `rng` keeps the axis reversed.
     domain <- scales::expand_range(tdom, mul = 0.05)
+    # A reverse transform flips the axis direction by decreasing the domain.
+    if (isTRUE(tr$flip)) {
+      domain <- rev(domain)
+    }
     braw <- if (!is.null(user_breaks)) {
       as.numeric(user_breaks)
     } else {

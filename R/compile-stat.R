@@ -243,7 +243,16 @@ NULL
   cx <- r * 1.5 * qi + xr[1]
   cy_iso <- r * sqrt(3) * (ri + qi / 2)
   cy <- cy_iso / asp + yr[1]
-  data.frame(x = cx, y = cy, count = as.numeric(tab), width = r)
+  # `width` is the x-data circumradius; `height` the full y-data extent of a hex
+  # (the isotropic r*sqrt(3) un-scaled back to y-data units). The emitter draws
+  # each hex from these so they tile data space at any panel aspect.
+  data.frame(
+    x = cx,
+    y = cy,
+    count = as.numeric(tab),
+    width = r,
+    height = r * sqrt(3) / asp
+  )
 }
 
 # Split `n` row indices into groups, preserving factor level order (so a custom

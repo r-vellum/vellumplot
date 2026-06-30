@@ -128,15 +128,24 @@ NULL
   theta_aes <- ctx$theta_aes
   r_aes <- if (theta_aes == "x") "y" else "x"
 
-  # background disk
+  # background disk (an annulus for a donut, so the hole stays empty rather than
+  # filled with panel colour and crossed by spokes)
   pb <- rt[["panel.background"]]
   if (!.is_blank(pb)) {
-    cp <- .circle_pts(ctx$rmax)
+    co <- .circle_pts(ctx$rmax)
+    if (ctx$rmin > 0) {
+      ci <- .circle_pts(ctx$rmin)
+      bx <- c(co$x, NA, rev(ci$x))
+      by <- c(co$y, NA, rev(ci$y))
+    } else {
+      bx <- co$x
+      by <- co$y
+    }
     scene <- vellum::draw(
       scene,
       vellum::polygon_grob(
-        vellum::unit(cp$x, "native"),
-        vellum::unit(cp$y, "native"),
+        vellum::unit(bx, "native"),
+        vellum::unit(by, "native"),
         gp = .el_gpar_rect(pb)
       )
     )
@@ -170,11 +179,13 @@ NULL
   if (!.is_blank(theta_grid) && length(tbreaks)) {
     ang <- ctx$theta_map(tbreaks)
     k <- length(ang)
+    # Spokes run from the inner radius to the rim, so a donut's hole is not
+    # crossed by lines converging at the centre.
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::unit(rep(0, k), "native"),
-        vellum::unit(rep(0, k), "native"),
+        vellum::unit(ctx$rmin * cos(ang), "native"),
+        vellum::unit(ctx$rmin * sin(ang), "native"),
         vellum::unit(ctx$rmax * cos(ang), "native"),
         vellum::unit(ctx$rmax * sin(ang), "native"),
         gp = .el_gpar_line(theta_grid)

@@ -21,6 +21,8 @@ test_that("stat hexbin bins to occupied hexes with count + radius", {
   expect_true(is.numeric(r$values$fill)) # count
   expect_equal(sum(r$values$fill), nrow(d)) # every point counted once
   expect_true(is.numeric(r$values$width) && r$values$width[1] > 0) # hex radius
+  # `height` (y-data extent) lets the emitter tile hexes at any panel aspect.
+  expect_true(is.numeric(r$values$height) && r$values$height[1] > 0)
 })
 
 test_that(".hex_round preserves the axial constraint and is integer", {

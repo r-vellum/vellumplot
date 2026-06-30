@@ -23,11 +23,15 @@ test_that("trans='sqrt' transforms the map and is continuous", {
   expect_false(y$discrete)
 })
 
-test_that("trans='reverse' negates positions", {
+test_that("trans='reverse' flips the axis via a decreasing domain", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     scale_x_continuous(trans = "reverse")
-  expect_equal(train(p)$x$map(3), -3)
+  x <- train(p)$x
+  # The data mapping stays identity; the domain decreases so the axis reverses
+  # (negating the data too would double-flip and cancel out).
+  expect_equal(x$map(3), 3)
+  expect_gt(x$domain[1], x$domain[2])
 })
 
 test_that("an unknown transform errors", {
