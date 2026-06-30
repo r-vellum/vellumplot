@@ -65,8 +65,11 @@ PlotComposition <- S7::new_class(
 #'   vector), or `NULL` for equal panels.
 #' @param guides `"collect"` (default) to dedupe identical legends across
 #'   sub-plots into one, or `"keep"` to leave each sub-plot's legend in place.
-#' @param design An explicit layout: a list of [area()]s (one per plot) or a
-#'   textual layout string (rows split by `\n`, each letter a plot, `#` empty).
+#' @param design An explicit layout: a list of [area()]s (one per plot, in the
+#'   order plots are passed) or a textual layout string (rows split by `\n`, `#`
+#'   an empty cell). In a string, distinct letters bind to the plots in `...` in
+#'   **alphabetical** order (the first letter to the first plot), so there must
+#'   be exactly one letter per plot and every row must be the same width.
 #'   Enables spanning; `NULL` (default) uses the regular `ncol`/`nrow` grid.
 #' @param width,height Output size in inches (defaults scale with the grid).
 #' @return A `PlotComposition` (renders via [render_plot()] / [vellum::render()]).
@@ -161,13 +164,34 @@ area <- function(t, l, b = t, r = l) {
     return(NULL)
   }
   if (is.list(design)) {
+    if (length(design) != n) {
+      cli::cli_abort(c(
+        "A {.arg design} list must have one {.fn area} per plot.",
+        i = "Got {length(design)} area{?s} for {n} plot{?s}."
+      ))
+    }
     return(design)
   }
   if (is.character(design)) {
-    rows <- strsplit(trimws(design), "\n")[[1]]
-    rows <- trimws(rows)
+    rows <- trimws(strsplit(trimws(design), "\n")[[1]])
+    widths <- nchar(rows)
+    if (length(unique(widths)) != 1L) {
+      cli::cli_abort(c(
+        "Each row of a {.arg design} layout string must be the same width.",
+        i = "Got rows of differing widths: {.val {widths}}."
+      ))
+    }
     m <- do.call(rbind, lapply(rows, function(s) strsplit(s, "")[[1]]))
+    # Distinct letters bind to the plots in `...` in alphabetical order; "#" is
+    # an empty cell.
     letters_used <- sort(setdiff(unique(as.vector(m)), "#"))
+    if (length(letters_used) != n) {
+      cli::cli_abort(c(
+        "A {.arg design} layout must name exactly one area per plot.",
+        i = "Got {length(letters_used)} area{?s} ({.val {letters_used}}) for {n} plot{?s}.",
+        i = "Plots fill the lettered areas in alphabetical order."
+      ))
+    }
     out <- lapply(letters_used, function(ch) {
       rc <- which(m == ch, arr.ind = TRUE)
       area(min(rc[, 1]), min(rc[, 2]), max(rc[, 1]), max(rc[, 2]))
@@ -380,6 +404,9 @@ compose_annotation <- function(
       layout = vellum::grid_layout(wfun(comp@widths, ncol), wfun(comp@heights, nrow))
     )
   )
+  # Insets with `on_top = FALSE` sit behind the base plots (visible only through
+  # gaps); the rest overlay after the cells are drawn.
+  scene <- .draw_insets(scene, comp, on_top = FALSE)
   for (i in seq_along(comp@plots)) {
     p <- comp@plots[[i]]
     if (S7::S7_inherits(p, Spacer)) {
@@ -399,20 +426,32 @@ compose_annotation <- function(
     }
     scene <- vellum::push(scene, vp)
     if (S7::S7_inherits(p, PlotComposition)) {
-      scene <- .draw_composition(scene, p)
+      # A nested composition is only drawn by the aligned path when it is itself
+      # alignable; otherwise it needs the independent layout too (the aligned
+      # path assumes single-panel, non-faceted sub-plots and would silently drop
+      # extra panels/strips).
+      if (.comp_alignable(p)) {
+        scene <- .draw_composition(scene, p)
+      } else {
+        scene <- .compile_composition_independent(scene, p)
+      }
     } else {
       scene <- .draw_plot(scene, p)
     }
     scene <- vellum::pop(scene)
   }
-  scene <- .draw_insets(scene, comp)
+  scene <- .draw_insets(scene, comp, on_top = TRUE)
   vellum::pop(scene)
 }
 
-# Draw inset plots overlaid on the (already-drawn) composition cell. Each inset
-# is positioned by fractional coordinates of the current viewport.
-.draw_insets <- function(scene, comp) {
+# Draw inset plots positioned by fractional coordinates of the current viewport.
+# `on_top` selects which insets to draw: those layered above the base plots
+# (`TRUE`, the default) or behind them (`FALSE`).
+.draw_insets <- function(scene, comp, on_top = TRUE) {
   for (ins in comp@insets) {
+    if (!identical(isTRUE(ins$on_top), on_top)) {
+      next
+    }
     w <- ins$right - ins$left
     h <- ins$top - ins$bottom
     scene <- vellum::push(

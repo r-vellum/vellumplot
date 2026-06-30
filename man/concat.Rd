@@ -50,8 +50,11 @@ vector), or \code{NULL} for equal panels.}
 \item{guides}{\code{"collect"} (default) to dedupe identical legends across
 sub-plots into one, or \code{"keep"} to leave each sub-plot's legend in place.}
 
-\item{design}{An explicit layout: a list of \code{\link[=area]{area()}}s (one per plot) or a
-textual layout string (rows split by \verb{\\n}, each letter a plot, \verb{#} empty).
+\item{design}{An explicit layout: a list of \code{\link[=area]{area()}}s (one per plot, in the
+order plots are passed) or a textual layout string (rows split by \verb{\\n}, \verb{#}
+an empty cell). In a string, distinct letters bind to the plots in \code{...} in
+\strong{alphabetical} order (the first letter to the first plot), so there must
+be exactly one letter per plot and every row must be the same width.
 Enables spanning; \code{NULL} (default) uses the regular \code{ncol}/\code{nrow} grid.}
 
 \item{width, height}{Output size in inches (defaults scale with the grid).}
