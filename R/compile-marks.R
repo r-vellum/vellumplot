@@ -761,6 +761,10 @@ NULL
       next
     }
     yy <- yv[sel]
+    yy <- yy[is.finite(yy)]
+    if (!length(yy)) {
+      next
+    }
     qs <- stats::quantile(yy, c(0.25, 0.5, 0.75), names = FALSE)
     q1 <- qs[1]
     med <- qs[2]
