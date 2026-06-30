@@ -37,12 +37,12 @@ NULL
   vellum::grobwidth(.txt(label, el@size, rot)) + vellum::unit(pad_mm, "mm")
 }
 
-# Build the panel + gutter layout. Columns are
-#   [ y-title | y-labels | panel(null) | legend? ]
-# and rows are
-#   [ panel(null) | x-labels | x-title ].
-# Gutter tracks are absolute (mm) from grobwidth/grobheight measurement; the
-# panel track is `null` so it absorbs the remaining space.
+# Build the panel + gutter layout. In the simplest single-panel case the columns
+# are [ y-title | y-labels | panel(null) ] and the rows [ panel(null) | x-labels
+# | x-title ]; faceting, strips, a legend track, and the title/subtitle/tag/
+# caption bands add further tracks (see the column/row builders below for the
+# full track order). Gutter tracks are absolute (mm) from grobwidth/grobheight
+# measurement; the panel track is `null` so it absorbs the remaining space.
 # Width of the legend column: room for the widest swatch/bar/key needed by any
 # guide, plus the widest label or title across all guides. Level/break labels are
 # always plain strings; a guide title may be a rich `md()` object, so it is
@@ -59,21 +59,25 @@ NULL
       strs <- c(strs, sc$legend_labels)
       swatch <- max(swatch, .LEGEND_BAR_MM)
     } else if (g$kind == "color_discrete") {
-      strs <- c(strs, sc$levels)
+      strs <- c(strs, sc$labels %||% sc$levels)
     } else if (g$kind == "size") {
       strs <- c(strs, sc$legend_labels)
-      swatch <- max(swatch, 2 * max(sc$legend_sizes))
+      if (length(sc$legend_sizes)) {
+        swatch <- max(swatch, 2 * max(sc$legend_sizes))
+      }
     } else if (g$kind == "shape") {
       strs <- c(strs, sc$levels)
     }
   }
   # `max()` is unreliable on vellum units (returns the first arg), so widen by
-  # explicit comparison instead.
-  fs <- rt[["legend.title"]]@size
-  text_w <- vellum::grobwidth(.txt(.longest(strs), fs))
+  # explicit comparison instead. Labels are drawn with `legend.text`; titles with
+  # `legend.title` -- measure each at the font it is actually rendered with.
+  text_fs <- rt[["legend.text"]]@size
+  title_fs <- rt[["legend.title"]]@size
+  text_w <- vellum::grobwidth(.txt(.longest(strs), text_fs))
   for (nm in titles) {
     if (!is.null(nm)) {
-      nw <- vellum::grobwidth(.txt(nm, fs))
+      nw <- vellum::grobwidth(.txt(nm, title_fs))
       if (nw > text_w) {
         text_w <- nw
       }
