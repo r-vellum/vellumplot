@@ -11,6 +11,7 @@ mark_datashade(
   height = 300,
   colors = NULL,
   how = "eq_hist",
+  blend = NULL,
   data = NULL
 )
 }
@@ -21,10 +22,17 @@ mark_datashade(
 
 \item{width, height}{Aggregation grid size in cells (output raster pixels).}
 
-\item{colors}{Two or more colours forming the low-to-high density ramp.}
+\item{colors}{Two or more colours forming the low-to-high density ramp. For
+an additive per-category overlay, ramp from a transparent/black low end to
+the category hue and composite with \code{blend = "screen"} (see details).}
 
 \item{how}{Density-to-colour mapping: \code{"eq_hist"} (default), \code{"log"},
 \code{"cbrt"}, or \code{"linear"}.}
+
+\item{blend}{Optional blend mode for compositing this layer against what is
+already drawn beneath it (the panel and earlier layers), one of the CSS
+\code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
+layer composites as one isolated group (not per element).}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 }
@@ -38,6 +46,12 @@ pass and colours each cell by density (via \code{\link[vellum:datashade]{vellum:
 single raster that fills the panel. Cost is decoupled from point count and
 overplotting. Per-point colour/size aesthetics do not apply; cell colour
 encodes density.
+}
+\details{
+Categorical shading (à la datashader's \code{count_cat}) has no single-call form,
+but is reproduced by stacking one datashade layer per category — each with a
+\code{colors} ramp from black to its hue — composited with \code{blend = "screen"}, so
+overlapping densities mix additively.
 }
 \examples{
 n <- 1e5

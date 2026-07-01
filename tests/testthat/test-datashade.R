@@ -32,3 +32,30 @@ test_that("datashade renders, and auto falls back to markers below the threshold
   render_plot(vplot(mtcars) |> mark_point(x = wt, y = mpg, auto = TRUE), f2)
   expect_gt(file.info(f2)$size, 0)
 })
+
+test_that("mark_datashade(blend=) wires the layer blend (per-category overlay)", {
+  set.seed(1)
+  n <- 5000
+  df <- data.frame(x = rnorm(n), y = rnorm(n), g = sample(c("a", "b"), n, TRUE))
+  p <- vplot(df) |>
+    mark_datashade(
+      x = x,
+      y = y,
+      data = subset(df, g == "a"),
+      colors = c("black", "#e41a1c"),
+      blend = "screen"
+    ) |>
+    mark_datashade(
+      x = x,
+      y = y,
+      data = subset(df, g == "b"),
+      colors = c("black", "#377eb8"),
+      blend = "screen"
+    )
+  expect_identical(
+    vapply(p@layers, function(L) L@blend, ""),
+    c("screen", "screen")
+  )
+  f <- withr::local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, f))
+})

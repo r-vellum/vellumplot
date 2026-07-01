@@ -395,9 +395,16 @@ mark_smooth <- function(
 #' @inheritParams mark_point
 #' @param ... Encodings; `x` and `y` are required.
 #' @param width,height Aggregation grid size in cells (output raster pixels).
-#' @param colors Two or more colours forming the low-to-high density ramp.
+#' @param colors Two or more colours forming the low-to-high density ramp. For
+#'   an additive per-category overlay, ramp from a transparent/black low end to
+#'   the category hue and composite with `blend = "screen"` (see details).
 #' @param how Density-to-colour mapping: `"eq_hist"` (default), `"log"`,
 #'   `"cbrt"`, or `"linear"`.
+#' @details
+#' Categorical shading (à la datashader's `count_cat`) has no single-call form,
+#' but is reproduced by stacking one datashade layer per category — each with a
+#' `colors` ramp from black to its hue — composited with `blend = "screen"`, so
+#' overlapping densities mix additively.
 #' @return The modified [PlotSpec].
 #' @examples
 #' n <- 1e5
@@ -411,6 +418,7 @@ mark_datashade <- function(
   height = 300,
   colors = NULL,
   how = "eq_hist",
+  blend = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -424,6 +432,7 @@ mark_datashade <- function(
       colors = colors,
       how = how
     ),
+    blend = blend,
     data = data
   )
 }
