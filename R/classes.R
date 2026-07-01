@@ -29,7 +29,8 @@ LayerSpec <- S7::new_class(
     stat_params = S7::new_property(S7::class_list, default = list()),
     position = S7::new_property(S7::class_character, default = "identity"),
     blend = S7::new_property(S7::class_character, default = "normal"),
-    data = S7::new_property(S7::class_any, default = NULL) # per-layer data | NULL
+    data = S7::new_property(S7::class_any, default = NULL), # per-layer data | NULL
+    z = S7::new_property(S7::class_integer, default = 0L) # draw-order band
   )
 )
 
@@ -66,6 +67,8 @@ ScaleSpec <- S7::new_class(
 #' [summary()].
 #'
 #' @param data The data frame.
+#' @param edge_data For a graph plot (from [vgraph()]), the edge table; the
+#'   default data for [mark_edges()]. `NULL` for ordinary plots.
 #' @param layers A list of layer specifications (one per `mark_*()`).
 #' @param scales A list of declared scale overrides.
 #' @param width,height Page size in inches.
@@ -89,6 +92,7 @@ PlotSpec <- S7::new_class(
   package = "quill",
   properties = list(
     data = S7::class_any, # a data.frame
+    edge_data = S7::new_property(S7::class_any, default = NULL), # graph edge table | NULL
     layers = S7::new_property(S7::class_list, default = list()), # list<LayerSpec>
     scales = S7::new_property(S7::class_list, default = list()), # list<ScaleSpec>
     facet = S7::new_property(S7::class_any, default = NULL), # FacetSpec | NULL

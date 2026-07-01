@@ -592,6 +592,66 @@ NULL
   )
 }
 
+# Edge-width output range (lwd multiples) a mapped edge `linewidth` spans.
+.EDGE_WIDTH_RANGE <- c(0.3, 3)
+
+# Train the edge-width scale (if any edge layer maps `linewidth` to data). Mirrors
+# the size scale: rescale the data range to an lwd range; emits its own legend.
+.train_edge_width <- function(spec, resolved) {
+  values <- .pool_values(resolved, "linewidth")
+  if (is.null(values)) {
+    return(NULL)
+  }
+  scalespec <- .scale_for(spec, "edge_width")
+  v <- as.numeric(unlist(values, use.names = FALSE))
+  v <- v[is.finite(v)]
+  rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
+    as.numeric(scalespec@domain)
+  } else if (length(v)) {
+    range(v)
+  } else {
+    c(0, 1)
+  }
+  if (diff(rng) == 0) {
+    rng <- rng + c(-0.5, 0.5)
+  }
+  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
+    as.numeric(scalespec@range)
+  } else {
+    .EDGE_WIDTH_RANGE
+  }
+  map <- function(x) scales::rescale(x, to = out_range, from = rng)
+  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
+    scalespec@name
+  } else {
+    .default_title(spec, "linewidth")
+  }
+  lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
+    as.numeric(scalespec@breaks)
+  } else {
+    scales::breaks_extended()(rng)
+  }
+  llab <- .match_labels(
+    if (!is.null(scalespec)) scalespec@labels else NULL,
+    lbrk,
+    "edge_width"
+  )
+  keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
+  lbrk <- lbrk[keep]
+  if (!is.null(llab)) {
+    llab <- llab[keep]
+  }
+  list(
+    kind = "edge_width",
+    map = map,
+    name = name,
+    range = rng,
+    legend_breaks = lbrk,
+    legend_widths = map(lbrk),
+    legend_labels = llab %||% scales::label_number()(lbrk)
+  )
+}
+
 # Train the shape scale (if any layer maps `shape` to data). Shape is always
 # discrete: levels cycle through `.SHAPE_PALETTE` (or a user `scale_shape(values)`).
 .train_shape <- function(spec, resolved) {
@@ -671,6 +731,7 @@ NULL
     ),
     color = .train_colour(spec, resolved),
     size = .train_size(spec, resolved),
-    shape = .train_shape(spec, resolved)
+    shape = .train_shape(spec, resolved),
+    edge_width = .train_edge_width(spec, resolved)
   )
 }

@@ -76,6 +76,21 @@ vplot(nc) |>
   coord_sf()
 ```
 
+Draw a network: `vgraph()` lays out an `igraph` graph (stress majorization by
+default), then `mark_edges()` / `mark_nodes()` draw it — aspect-locked, no axes,
+edges under nodes:
+
+```{r network}
+g <- igraph::make_graph("Zachary")
+g <- igraph::set_vertex_attr(g, "grp",
+  value = as.factor(igraph::cluster_louvain(g)$membership))
+g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
+vgraph(g, layout = "stress") |>
+  mark_edges(alpha = 0.4) |>
+  mark_nodes(size = deg, fill = grp) |>
+  scale_size(range = c(2, 8))
+```
+
 The spec is just data — `summary()` shows its structure without drawing:
 
 ```{r summary}
@@ -100,6 +115,9 @@ render_plot(p, "cars.png")
   `mark_donut()`).
 * Spatial: `mark_sf()` draws an `sf` geometry column as a map layer, with
   `coord_sf()` to reproject and lock the aspect ratio.
+* Network: `vgraph()` starts a node-link diagram from an `igraph` graph
+  (stress layout by default, via `graphlayouts`), with `mark_edges()`,
+  `mark_nodes()`, `mark_node_text()`, and `scale_edge_width()`.
 * Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`, `alpha`.
 * Position scales (`scale_x_continuous()`, `scale_y_continuous()`; linear and
   `log10`) with auto-trained, expanded domains; discrete band scales
@@ -123,6 +141,3 @@ render_plot(p, "cars.png")
   `theme_classic()`, `theme_void()`, `theme()` / `set_theme()`) and multi-plot
   composition (`hconcat()`, `vconcat()`, `concat()`, `wrap_plots()`, `inset()`,
   `repeat_()`).
-
-Network (`igraph`) layers are on the roadmap — see `NEWS.md` and
-`_docs/DESIGN.md`.

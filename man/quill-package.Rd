@@ -6,6 +6,8 @@
 \alias{quill-package}
 \title{quill: A Grammar of Graphics on the 'vellum' Backend}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 A declarative, pipe-first grammar of graphics that compiles an inspectable plot specification into a 'vellum' scene and renders it. A plot is built up as a serializable spec (data, layers, scales) and nothing is drawn until it is compiled: encodings are resolved, scales are trained, a panel layout is measured, and guides and marks are emitted as 'vellum' grobs.
 }
 \author{

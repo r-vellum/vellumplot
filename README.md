@@ -31,27 +31,6 @@ to write a file.
 
 ``` r
 library(quill)
-#> 
-#> Attaching package: 'quill'
-#> The following objects are masked from 'package:vellumplot':
-#> 
-#>     after_stat, annotate, area, compose_annotation, concat,
-#>     coord_cartesian, coord_equal, coord_fixed, coord_flip, coord_polar,
-#>     coord_sf, element_blank, element_line, element_rect, element_text,
-#>     facet_grid, facet_wrap, hconcat, inset, labs, mark_area, mark_bar,
-#>     mark_bin2d, mark_boxplot, mark_datashade, mark_density, mark_donut,
-#>     mark_errorbar, mark_hex, mark_histogram, mark_label, mark_line,
-#>     mark_linerange, mark_pie, mark_point, mark_raster, mark_ribbon,
-#>     mark_rule, mark_segment, mark_sf, mark_smooth, mark_step,
-#>     mark_summary, mark_text, mark_tile, md, plot_spacer, PlotSpec,
-#>     render_plot, repeat_, resolve_scale, scale_color_binned,
-#>     scale_color_continuous, scale_color_discrete, scale_color_gradient,
-#>     scale_color_manual, scale_fill_binned, scale_fill_continuous,
-#>     scale_fill_discrete, scale_fill_gradient, scale_fill_manual,
-#>     scale_shape, scale_size, scale_x_continuous, scale_x_discrete,
-#>     scale_y_continuous, scale_y_discrete, set_theme, theme, theme_bw,
-#>     theme_classic, theme_gray, theme_minimal, theme_void, vconcat, vplot,
-#>     wrap_plots
 
 # a scatter with a continuous colour legend
 vplot(mtcars) |>
@@ -94,6 +73,23 @@ vplot(nc) |>
 
 <img src="man/figures/README-sf-1.png" alt="" width="100%" />
 
+Draw a network: `vgraph()` lays out an `igraph` graph (stress
+majorization by default), then `mark_edges()` / `mark_nodes()` draw it —
+aspect-locked, no axes, edges under nodes:
+
+``` r
+g <- igraph::make_graph("Zachary")
+g <- igraph::set_vertex_attr(g, "grp",
+  value = as.factor(igraph::cluster_louvain(g)$membership))
+g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
+vgraph(g, layout = "stress") |>
+  mark_edges(alpha = 0.4) |>
+  mark_nodes(size = deg, fill = grp) |>
+  scale_size(range = c(2, 8))
+```
+
+<img src="man/figures/README-network-1.png" alt="" width="100%" />
+
 The spec is just data — `summary()` shows its structure without drawing:
 
 ``` r
@@ -122,6 +118,9 @@ render_plot(p, "cars.png")
   and pie/donut shortcuts (`mark_pie()`, `mark_donut()`).
 - Spatial: `mark_sf()` draws an `sf` geometry column as a map layer,
   with `coord_sf()` to reproject and lock the aspect ratio.
+- Network: `vgraph()` starts a node-link diagram from an `igraph` graph
+  (stress layout by default, via `graphlayouts`), with `mark_edges()`,
+  `mark_nodes()`, `mark_node_text()`, and `scale_edge_width()`.
 - Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`,
   `alpha`.
 - Position scales (`scale_x_continuous()`, `scale_y_continuous()`;
@@ -149,6 +148,3 @@ render_plot(p, "cars.png")
   `theme_classic()`, `theme_void()`, `theme()` / `set_theme()`) and
   multi-plot composition (`hconcat()`, `vconcat()`, `concat()`,
   `wrap_plots()`, `inset()`, `repeat_()`).
-
-Network (`igraph`) layers are on the roadmap — see `NEWS.md` and
-`_docs/DESIGN.md`.

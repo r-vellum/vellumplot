@@ -11,6 +11,13 @@ NULL
       "Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}."
     )
   }
+  # Draw-order bands: layers sort by `z` (stable — insertion order within a band).
+  # Ordinary marks all sit at z = 0 (unchanged); graph marks fix edges (1) under
+  # nodes (2) under labels (3) regardless of pipe order.
+  zz <- vapply(spec@layers, function(l) l@z, integer(1))
+  if (any(zz != 0L)) {
+    spec@layers <- spec@layers[order(zz, seq_along(zz))]
+  }
   rt <- .resolve_theme(.theme_of(spec))
 
   # sf layers: an sf mark implies a map coordinate system. If the user did not

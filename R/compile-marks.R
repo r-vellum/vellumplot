@@ -913,6 +913,121 @@ NULL
   scene
 }
 
+# Network edges: straight lines from (x, y) to (xend, yend), batched by style
+# (colour / alpha / width) into one segments_grob per group -- so a graph with a
+# handful of edge styles emits a handful of grobs regardless of edge count.
+# Parallel / reciprocal offsets are baked into the coordinates by vgraph(); a
+# self-loop is an edge whose endpoints coincide, drawn here as a small loop
+# (nested outward when a vertex has several). Edge width maps through the
+# edge-width scale when present. Optional arrowheads mark directed edges.
+.emit_edges <- function(scene, L, scales) {
+  n <- L$n
+  x0 <- rep_len(scales$x$map(L$values$x), n)
+  y0 <- rep_len(scales$y$map(L$values$y), n)
+  x1 <- rep_len(scales$x$map(L$values$xend), n)
+  y1 <- rep_len(scales$y$map(L$values$yend), n)
+  col <- rep_len(.aes_colour(L, scales, "grey40"), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  lwd <- rep_len(.edge_width(L, scales, 0.5), n)
+  arr <- if (isTRUE(L$stat_params$arrow)) {
+    vellum::arrow(type = "closed", length = vellum::unit(2, "mm"))
+  } else {
+    NULL
+  }
+
+  loop <- x0 == x1 & y0 == y1
+  # Straight edges, batched by (col, alpha, rounded lwd).
+  si <- which(!loop)
+  if (length(si)) {
+    grp_lwd <- round(lwd, 2)
+    for (idx in .style_groups(
+      length(si),
+      list(col = col[si], alpha = alpha[si], lwd = grp_lwd[si])
+    )) {
+      g <- si[idx]
+      a <- alpha[g[1]]
+      s <- .seg_units(
+        scales,
+        vellum::unit(x0[g], "native"),
+        vellum::unit(y0[g], "native"),
+        vellum::unit(x1[g], "native"),
+        vellum::unit(y1[g], "native")
+      )
+      scene <- .draw(
+        scene,
+        vellum::segments_grob(
+          s$x0,
+          s$y0,
+          s$x1,
+          s$y1,
+          arrow = arr,
+          gp = vellum::gpar(
+            col = col[g[1]],
+            lwd = lwd[g[1]],
+            alpha = if (is.na(a)) NULL else a
+          )
+        )
+      )
+    }
+  }
+
+  # Self-loops: small loops attached to the vertex, nested outward per vertex.
+  li <- which(loop)
+  if (length(li)) {
+    diag <- sqrt(diff(range(c(x0, x1)))^2 + diff(range(c(y0, y1)))^2)
+    if (!is.finite(diag) || diag == 0) {
+      diag <- 1
+    }
+    rbase <- 0.04 * diag
+    rstep <- 0.03 * diag
+    cx <- mean(c(x0, x1))
+    cy <- mean(c(y0, y1))
+    seen <- integer(0)
+    key <- paste(x0[li], y0[li], sep = "\036")
+    kcount <- list()
+    ang <- seq(0, 2 * pi, length.out = 24)
+    for (j in li) {
+      k <- kcount[[key_j <- paste(x0[j], y0[j], sep = "\036")]] %||% 0L
+      kcount[[key_j]] <- k + 1L
+      r <- rbase + k * rstep
+      dx <- x0[j] - cx
+      dy <- y0[j] - cy
+      dl <- sqrt(dx^2 + dy^2)
+      if (dl == 0) {
+        dx <- 0
+        dy <- 1
+        dl <- 1
+      }
+      ox <- x0[j] + (dx / dl) * r
+      oy <- y0[j] + (dy / dl) * r
+      a <- alpha[j]
+      scene <- .draw(
+        scene,
+        vellum::spline_grob(
+          vellum::unit(ox + r * cos(ang), "native"),
+          vellum::unit(oy + r * sin(ang), "native"),
+          open = FALSE,
+          gp = vellum::gpar(
+            col = col[j],
+            lwd = lwd[j],
+            alpha = if (is.na(a)) NULL else a
+          )
+        )
+      )
+    }
+  }
+  scene
+}
+
+# Resolve an edge's width: a mapped linewidth channel via the trained edge-width
+# scale, a constant linewidth param, or the default.
+.edge_width <- function(L, scales, default) {
+  if (!is.null(scales$edge_width) && !is.null(L$values$linewidth)) {
+    return(scales$edge_width$map(L$values$linewidth))
+  }
+  L$params$linewidth %||% default
+}
+
 # A hexbin heatmap: one flat-top hexagon per occupied bin, filled by count. The
 # hexes are sized in data units (full x extent `2 * width`, full y extent
 # `height`, from stat_hexbin) so they tile the panel cleanly at any aspect; a
@@ -1160,6 +1275,9 @@ NULL
     errorbar = .emit_errorbar(scene, L, scales),
     linerange = .emit_linerange(scene, L, scales),
     segment = .emit_segment(scene, L, scales),
+    edges = .emit_edges(scene, L, scales),
+    nodes = .emit_point(scene, L, scales),
+    node_text = .emit_text(scene, L, scales),
     hex = .emit_hex(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")

@@ -264,6 +264,47 @@ scale_size <- function(
   )
 }
 
+#' Edge-width scale
+#'
+#' Declare the scale for a mapped edge `linewidth` aesthetic (e.g.
+#' `mark_edges(linewidth = weight)` on a [vgraph()] plot). The data range is
+#' rescaled to a line-width range and an edge-width legend is drawn automatically.
+#'
+#' @param plot A [PlotSpec].
+#' @param range Output line-width range `c(min, max)`.
+#' @param limits Data limits `c(min, max)`, or `NULL` to train from the data.
+#' @param breaks Explicit legend breaks, or `NULL`.
+#' @param name Legend title, or `NULL` to derive from the encoding.
+#' @return The modified [PlotSpec].
+#' @seealso [mark_edges()], [vgraph()]
+#' @examples
+#' \dontrun{
+#' g <- igraph::sample_gnp(20, 0.2)
+#' g <- igraph::set_edge_attr(g, "w", value = runif(igraph::ecount(g)))
+#' vgraph(g) |> mark_edges(linewidth = w) |> mark_nodes() |> scale_edge_width(range = c(0.3, 4))
+#' }
+#' @export
+scale_edge_width <- function(
+  plot,
+  range = c(0.3, 3),
+  limits = NULL,
+  breaks = NULL,
+  name = NULL
+) {
+  .check_plot(plot)
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "edge_width",
+      type = "continuous",
+      domain = limits,
+      range = range,
+      breaks = breaks,
+      name = name
+    )
+  )
+}
+
 #' Shape scale
 #'
 #' Declare the scale for a mapped (discrete) `shape` aesthetic. Levels cycle

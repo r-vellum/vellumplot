@@ -84,7 +84,8 @@ after_stat <- function(x) x
   stat_params = list(),
   position = "identity",
   blend = NULL,
-  data = NULL
+  data = NULL,
+  z = 0L
 ) {
   if (!is.null(data) && !is.data.frame(data)) {
     cli::cli_abort(
@@ -101,7 +102,8 @@ after_stat <- function(x) x
     stat_params = stat_params,
     position = position,
     blend = .check_blend(blend),
-    data = data
+    data = data,
+    z = as.integer(z)
   )
   plot@layers <- c(plot@layers, list(layer))
   plot
@@ -719,6 +721,143 @@ mark_summary <- function(plot, ..., fun = mean, blend = NULL, data = NULL) {
 mark_segment <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
   .add_layer(plot, "segment", rlang::enquos(...), blend = blend, data = data)
+}
+
+# Fill in default encoding channels the user did not supply (used by the graph
+# marks, whose x/y/xend/yend/label columns are produced by vgraph()).
+.with_default_aes <- function(dots, defaults) {
+  c(dots, defaults[setdiff(names(defaults), names(dots))])
+}
+
+#' Network (graph) marks
+#'
+#' Draw a node-link diagram on a [PlotSpec] from [vgraph()]. `mark_edges()` draws
+#' the edges (straight lines, batched), `mark_nodes()` the vertices (points), and
+#' `mark_node_text()` the vertex labels. Draw order is fixed regardless of the
+#' order you pipe them: edges under nodes under labels. Edges default to the edge
+#' table (`vgraph()`'s `edge_data`), nodes and labels to the node table; the
+#' `x`/`y`/`xend`/`yend`/`label`/`name` columns those tables carry are mapped
+#' automatically, so bare `mark_edges() |> mark_nodes()` just works.
+#'
+#' These are thin over the point / segment / text marks; `igraph` need not be
+#' installed to use them (only [vgraph()] needs it).
+#'
+#' @param plot A [PlotSpec], normally from [vgraph()].
+#' @param ... Encodings mapping node/edge attributes to aesthetics. Nodes: `size`,
+#'   `color`/`fill`, `shape`, `alpha`. Edges: `color`, `linewidth`, `alpha`. The
+#'   position channels are supplied by `vgraph()` and need not be mapped.
+#' @param size,shape For `mark_nodes()`, the node size (mm) / shape; a constant or
+#'   a mapped expression.
+#' @param fill,color,alpha Convenience aesthetics; a constant or a mapped
+#'   expression. For nodes, `fill` (or `color`) is the marker colour.
+#' @param linewidth For `mark_edges()`, the edge width; a constant or (via
+#'   [scale_edge_width()]) a mapped expression such as `linewidth = weight`.
+#' @param arrow For `mark_edges()`, `TRUE` to draw an arrowhead at each edge's
+#'   target end (directed graphs). Heads are not yet capped to the node boundary,
+#'   so on very large nodes they may sit slightly under the node.
+#' @param label For `mark_node_text()`, the label expression (default the vertex
+#'   `name`).
+#' @param blend Optional blend mode (see [mark_point()]).
+#' @param data Optional layer data; overrides the default table.
+#' @return The modified [PlotSpec].
+#' @seealso [vgraph()], [scale_edge_width()]
+#' @name mark_graph
+#' @examples
+#' \dontrun{
+#' g <- igraph::make_graph("Zachary")
+#' vgraph(g) |>
+#'   mark_edges(alpha = 0.5) |>
+#'   mark_nodes(size = 4, fill = "steelblue")
+#' }
+NULL
+
+#' @rdname mark_graph
+#' @export
+mark_edges <- function(
+  plot,
+  ...,
+  color = NULL,
+  linewidth = NULL,
+  alpha = NULL,
+  arrow = FALSE,
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  dots <- .with_default_aes(
+    rlang::enquos(...),
+    rlang::quos(x = x, y = y, xend = xend, yend = yend)
+  )
+  .add_layer(
+    plot,
+    "edges",
+    dots,
+    rlang::enquos(color = color, linewidth = linewidth, alpha = alpha),
+    stat_params = list(arrow = isTRUE(arrow)),
+    blend = blend,
+    data = data %||% plot@edge_data,
+    z = 1L
+  )
+}
+
+#' @rdname mark_graph
+#' @export
+mark_nodes <- function(
+  plot,
+  ...,
+  size = NULL,
+  shape = NULL,
+  fill = NULL,
+  color = NULL,
+  alpha = NULL,
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  dots <- .with_default_aes(rlang::enquos(...), rlang::quos(x = x, y = y))
+  .add_layer(
+    plot,
+    "nodes",
+    dots,
+    rlang::enquos(
+      size = size,
+      shape = shape,
+      fill = fill,
+      color = color,
+      alpha = alpha
+    ),
+    blend = blend,
+    data = data,
+    z = 2L
+  )
+}
+
+#' @rdname mark_graph
+#' @export
+mark_node_text <- function(
+  plot,
+  ...,
+  label = NULL,
+  color = NULL,
+  size = NULL,
+  alpha = NULL,
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  dots <- .with_default_aes(
+    rlang::enquos(...),
+    rlang::quos(x = x, y = y, label = name)
+  )
+  .add_layer(
+    plot,
+    "node_text",
+    dots,
+    rlang::enquos(label = label, color = color, size = size, alpha = alpha),
+    blend = blend,
+    data = data,
+    z = 3L
+  )
 }
 
 .check_plot <- function(plot, call = rlang::caller_env()) {

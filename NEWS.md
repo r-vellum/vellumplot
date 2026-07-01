@@ -72,6 +72,15 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   layer (polygons / lines / points), with `coord_sf()` to reproject to a target
   CRS and lock the map aspect ratio; `scale_fill_binned()` / `scale_color_binned()`
   bin a continuous fill/colour into discrete classes for choropleths.
+* **Network**: `vgraph()` starts a node-link diagram from an `igraph` graph —
+  it runs a layout (stress majorization by default, via `graphlayouts`;
+  `"sparse_stress"`, `"backbone"`, `"fr"`, `"circle"`, ... or a matrix/function),
+  builds a node and an edge table, and locks the aspect with a void theme.
+  `mark_edges()` draws edges (straight, batched; reciprocal/parallel edges offset
+  off the centre line, self-loops nested, optional `arrow`), `mark_nodes()` the
+  vertices, and `mark_node_text()` the labels — with a fixed edges-under-nodes
+  draw order. `scale_edge_width()` maps a weight to edge width with its own legend.
+  `igraph` / `graphlayouts` are optional (`Suggests`). See `_docs/DESIGN-igraph.md`.
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
@@ -80,5 +89,6 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 
 Reactivity, 2-D contour stats, and the algebraic `*` / `+` layer combinators.
 Independent *non-position* (colour/size) scales across facets are not yet
-supported (those legends stay shared). Network (`igraph`) layers are on the
-roadmap (see `_docs/DESIGN.md`).
+supported (those legends stay shared). On the network side, device-space arrow
+capping, community hulls, and alternative idioms (arc/matrix/hive) are deferred
+(see `_docs/DESIGN-igraph.md`).

@@ -6,6 +6,7 @@
 \usage{
 PlotSpec(
   data = NULL,
+  edge_data = NULL,
   layers = list(),
   scales = list(),
   facet = NULL,
@@ -20,6 +21,9 @@ PlotSpec(
 }
 \arguments{
 \item{data}{The data frame.}
+
+\item{edge_data}{For a graph plot (from \code{\link[=vgraph]{vgraph()}}), the edge table; the
+default data for \code{\link[=mark_edges]{mark_edges()}}. \code{NULL} for ordinary plots.}
 
 \item{layers}{A list of layer specifications (one per \verb{mark_*()}).}
 

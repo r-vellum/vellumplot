@@ -477,6 +477,9 @@ NULL
   if (!is.null(scales$shape)) {
     out <- c(out, list(list(kind = "shape", sc = scales$shape)))
   }
+  if (!is.null(scales$edge_width)) {
+    out <- c(out, list(list(kind = "edge_width", sc = scales$edge_width)))
+  }
   out
 }
 
@@ -516,7 +519,8 @@ NULL
         color_continuous = .guide_color_continuous_h(scene, g$sc, rt),
         color_discrete = .guide_color_discrete_h(scene, g$sc, rt),
         size = .guide_size_h(scene, g$sc, rt),
-        shape = .guide_shape_h(scene, g$sc, rt)
+        shape = .guide_shape_h(scene, g$sc, rt),
+        edge_width = .guide_edge_width_h(scene, g$sc, rt)
       )
     } else {
       scene <- vellum::push(
@@ -531,7 +535,8 @@ NULL
         color_continuous = .guide_color_continuous(scene, g$sc, rt),
         color_discrete = .guide_color_discrete(scene, g$sc, rt),
         size = .guide_size(scene, g$sc, rt),
-        shape = .guide_shape(scene, g$sc, rt)
+        shape = .guide_shape(scene, g$sc, rt),
+        edge_width = .guide_edge_width(scene, g$sc, rt)
       )
     }
     scene <- vellum::pop(scene)
@@ -653,6 +658,22 @@ NULL
   })
 }
 
+.guide_edge_width <- function(scene, sc, rt) {
+  scene <- .guide_title(scene, sc$name, rt)
+  .draw_key_rows(scene, sc$legend_labels, rt, function(scene, yy, i) {
+    vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(0.06, "npc"),
+        vellum::unit(yy, "npc"),
+        vellum::unit(0.26, "npc"),
+        vellum::unit(yy, "npc"),
+        gp = vellum::gpar(col = "grey35", lwd = sc$legend_widths[i])
+      )
+    )
+  })
+}
+
 .guide_shape <- function(scene, sc, rt) {
   scene <- .guide_title(scene, sc$name, rt)
   .draw_key_rows(scene, sc$levels, rt, function(scene, yy, i) {
@@ -758,6 +779,22 @@ NULL
         size = vellum::unit(sc$legend_sizes[i], "mm"),
         shape = "circle",
         gp = vellum::gpar(fill = "grey35", col = "grey35")
+      )
+    )
+  })
+}
+
+.guide_edge_width_h <- function(scene, sc, rt) {
+  scene <- .guide_title_h(scene, sc$name, rt)
+  .draw_key_row_h(scene, sc$legend_labels, rt, function(scene, x, y, i) {
+    vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(x - 0.03, "npc"),
+        vellum::unit(y, "npc"),
+        vellum::unit(x + 0.03, "npc"),
+        vellum::unit(y, "npc"),
+        gp = vellum::gpar(col = "grey35", lwd = sc$legend_widths[i])
       )
     )
   })
