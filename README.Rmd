@@ -66,6 +66,16 @@ vplot(mtcars) |>
   facet_wrap(~cyl)
 ```
 
+Draw spatial data: `mark_sf()` renders an `sf` geometry column and `coord_sf()`
+reprojects and locks the map aspect ratio:
+
+```{r sf}
+nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+vplot(nc) |>
+  mark_sf(fill = BIR74) |>
+  coord_sf()
+```
+
 The spec is just data — `summary()` shows its structure without drawing:
 
 ```{r summary}
@@ -81,27 +91,38 @@ render_plot(p, "cars.png")
 
 ## What's included
 
-* Marks: `mark_point()`, `mark_line()`, `mark_rule()`, `mark_bar()` (explicit
-  heights, or row counts per category).
+* Marks: `mark_point()`, `mark_line()`, `mark_step()`, `mark_rule()`,
+  `mark_bar()` (explicit heights, or row counts per category), `mark_area()` /
+  `mark_ribbon()`, intervals (`mark_errorbar()`, `mark_linerange()`,
+  `mark_segment()`), `mark_boxplot()`, tiles/heatmaps (`mark_tile()`,
+  `mark_raster()`), 2-D binning (`mark_bin2d()`, `mark_hex()`), text
+  (`mark_text()`, `mark_label()`), and pie/donut shortcuts (`mark_pie()`,
+  `mark_donut()`).
+* Spatial: `mark_sf()` draws an `sf` geometry column as a map layer, with
+  `coord_sf()` to reproject and lock the aspect ratio.
 * Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`, `alpha`.
 * Position scales (`scale_x_continuous()`, `scale_y_continuous()`; linear and
-  `log10`) with auto-trained, expanded domains; discrete band scales for
-  categorical axes.
-* Colour scales (`scale_color_continuous()`, `scale_color_discrete()`) and a
-  trained size scale, with stacked legends.
+  `log10`) with auto-trained, expanded domains; discrete band scales
+  (`scale_x_discrete()`, `scale_y_discrete()`) for categorical axes.
+* Colour scales (`scale_color_continuous()` / `scale_fill_continuous()`,
+  `scale_color_discrete()` / `scale_fill_discrete()`, `_gradient()`, `_binned()`,
+  `_manual()`), `scale_shape()`, and a trained `scale_size()`, with stacked
+  legends.
 * Trained axes, a panel with gridlines, and layering on one panel.
 * Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales, via the
   `resolve_scale()` lattice.
 * Statistical marks: `mark_histogram()`, `mark_density()`, `mark_summary()`,
   `mark_smooth()` (with `after_stat()`).
-* Coordinate systems: `coord_flip()`, `coord_fixed()`, `coord_polar()`
-  (pie / coxcomb / radar).
+* Coordinate systems: `coord_cartesian()`, `coord_flip()`, `coord_fixed()` /
+  `coord_equal()`, `coord_polar()` (pie / coxcomb / radar), and `coord_sf()`.
 * Position adjustments: stack / dodge / fill bars, jittered points.
+* Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`, `"screen"`, ...).
 * `mark_datashade()` for million-point density rasters.
+* Annotations: `annotate()`, `labs()`, and `md()` markdown titles.
 * Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
   `theme_classic()`, `theme_void()`, `theme()` / `set_theme()`) and multi-plot
   composition (`hconcat()`, `vconcat()`, `concat()`, `wrap_plots()`, `inset()`,
   `repeat_()`).
 
-Spatial (`sf`) and network (`igraph`) layers are on the roadmap — see `NEWS.md`
-and `_docs/DESIGN.md`.
+Network (`igraph`) layers are on the roadmap — see `NEWS.md` and
+`_docs/DESIGN.md`.

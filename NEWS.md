@@ -64,6 +64,10 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   — `"multiply"`, `"screen"`, `"darken"`, ...). The layer composites as one
   isolated group against the panel and earlier layers, e.g. two overlapping
   translucent layers under `"multiply"`.
+* **Spatial**: `mark_sf()` draws the geometry column of an `sf` object as a map
+  layer (polygons / lines / points), with `coord_sf()` to reproject to a target
+  CRS and lock the map aspect ratio; `scale_fill_binned()` / `scale_color_binned()`
+  bin a continuous fill/colour into discrete classes for choropleths.
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
@@ -72,5 +76,5 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 
 Reactivity, 2-D contour stats, and the algebraic `*` / `+` layer combinators.
 Independent *non-position* (colour/size) scales across facets are not yet
-supported (those legends stay shared). Spatial (`sf`) and network (`igraph`)
-layers are on the roadmap (see `_docs/DESIGN.md`).
+supported (those legends stay shared). Network (`igraph`) layers are on the
+roadmap (see `_docs/DESIGN.md`).

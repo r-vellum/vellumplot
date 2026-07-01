@@ -1,35 +1,33 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-
-
 # quill
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
 quill is a declarative, pipe-first grammar of graphics built on the
-[vellum](https://github.com/schochastics/vellum) graphics backend. You describe
-a plot as an inspectable, serializable *spec*; nothing is drawn until the spec is
-compiled into a vellum scene and rendered.
+[vellum](https://github.com/schochastics/vellum) graphics backend. You
+describe a plot as an inspectable, serializable *spec*; nothing is drawn
+until the spec is compiled into a vellum scene and rendered.
 
-It is a real compiler — spec → resolve encodings → train scales → measure layout
-→ compile guides → compile marks → vellum scene — not a thin wrapper around the
-drawing primitives.
+It is a real compiler — spec → resolve encodings → train scales →
+measure layout → compile guides → compile marks → vellum scene — not a
+thin wrapper around the drawing primitives.
 
 ## Installation
 
-```r
+``` r
 # install vellum first, then:
 # pak::pak("schochastics/quill")
 ```
 
 ## Usage
 
-Building a plot returns a spec; printing it draws into the Plots pane (and
-embeds in a knitr/Quarto chunk), like ggplot2. Use `render_plot()` to write a
-file.
-
+Building a plot returns a spec; printing it draws into the Plots pane
+(and embeds in a knitr/Quarto chunk), like ggplot2. Use `render_plot()`
+to write a file.
 
 ``` r
 library(quill)
@@ -40,13 +38,9 @@ vplot(mtcars) |>
   scale_color_continuous()
 ```
 
-<div class="figure">
-<img src="man/figures/README-example-1.png" alt="plot of chunk example" width="100%" />
-<p class="caption">plot of chunk example</p>
-</div>
+<img src="man/figures/README-example-1.png" alt="" width="100%" />
 
 Layer marks on a single panel; scales train across every layer:
-
 
 ``` r
 vplot(mtcars) |>
@@ -54,14 +48,10 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg)
 ```
 
-<div class="figure">
-<img src="man/figures/README-layers-1.png" alt="plot of chunk layers" width="100%" />
-<p class="caption">plot of chunk layers</p>
-</div>
+<img src="man/figures/README-layers-1.png" alt="" width="100%" />
 
-Facet into a grid of panels (`facet_wrap()` / `facet_grid()`), with shared or
-free scales:
-
+Facet into a grid of panels (`facet_wrap()` / `facet_grid()`), with
+shared or free scales:
 
 ``` r
 vplot(mtcars) |>
@@ -69,13 +59,21 @@ vplot(mtcars) |>
   facet_wrap(~cyl)
 ```
 
-<div class="figure">
-<img src="man/figures/README-facet-1.png" alt="plot of chunk facet" width="100%" />
-<p class="caption">plot of chunk facet</p>
-</div>
+<img src="man/figures/README-facet-1.png" alt="" width="100%" />
+
+Draw spatial data: `mark_sf()` renders an `sf` geometry column and
+`coord_sf()` reprojects and locks the map aspect ratio:
+
+``` r
+nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+vplot(nc) |>
+  mark_sf(fill = BIR74) |>
+  coord_sf()
+```
+
+<img src="man/figures/README-sf-1.png" alt="" width="100%" />
 
 The spec is just data — `summary()` shows its structure without drawing:
-
 
 ``` r
 summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
@@ -87,35 +85,49 @@ summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
 
 Write to a file with `render_plot()` (the format follows the extension):
 
-
 ``` r
 p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 render_plot(p, "cars.png")
 ```
 
-## What's included
+## What’s included
 
-* Marks: `mark_point()`, `mark_line()`, `mark_rule()`, `mark_bar()` (explicit
-  heights, or row counts per category).
-* Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`, `alpha`.
-* Position scales (`scale_x_continuous()`, `scale_y_continuous()`; linear and
-  `log10`) with auto-trained, expanded domains; discrete band scales for
-  categorical axes.
-* Colour scales (`scale_color_continuous()`, `scale_color_discrete()`) and a
-  trained size scale, with stacked legends.
-* Trained axes, a panel with gridlines, and layering on one panel.
-* Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales, via the
-  `resolve_scale()` lattice.
-* Statistical marks: `mark_histogram()`, `mark_density()`, `mark_summary()`,
-  `mark_smooth()` (with `after_stat()`).
-* Coordinate systems: `coord_flip()`, `coord_fixed()`, `coord_polar()`
-  (pie / coxcomb / radar).
-* Position adjustments: stack / dodge / fill bars, jittered points.
-* `mark_datashade()` for million-point density rasters.
-* Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
-  `theme_classic()`, `theme_void()`, `theme()` / `set_theme()`) and multi-plot
-  composition (`hconcat()`, `vconcat()`, `concat()`, `wrap_plots()`, `inset()`,
-  `repeat_()`).
+- Marks: `mark_point()`, `mark_line()`, `mark_step()`, `mark_rule()`,
+  `mark_bar()` (explicit heights, or row counts per category),
+  `mark_area()` / `mark_ribbon()`, intervals (`mark_errorbar()`,
+  `mark_linerange()`, `mark_segment()`), `mark_boxplot()`,
+  tiles/heatmaps (`mark_tile()`, `mark_raster()`), 2-D binning
+  (`mark_bin2d()`, `mark_hex()`), text (`mark_text()`, `mark_label()`),
+  and pie/donut shortcuts (`mark_pie()`, `mark_donut()`).
+- Spatial: `mark_sf()` draws an `sf` geometry column as a map layer,
+  with `coord_sf()` to reproject and lock the aspect ratio.
+- Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`,
+  `alpha`.
+- Position scales (`scale_x_continuous()`, `scale_y_continuous()`;
+  linear and `log10`) with auto-trained, expanded domains; discrete band
+  scales (`scale_x_discrete()`, `scale_y_discrete()`) for categorical
+  axes.
+- Colour scales (`scale_color_continuous()` / `scale_fill_continuous()`,
+  `scale_color_discrete()` / `scale_fill_discrete()`, `_gradient()`,
+  `_binned()`, `_manual()`), `scale_shape()`, and a trained
+  `scale_size()`, with stacked legends.
+- Trained axes, a panel with gridlines, and layering on one panel.
+- Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales,
+  via the `resolve_scale()` lattice.
+- Statistical marks: `mark_histogram()`, `mark_density()`,
+  `mark_summary()`, `mark_smooth()` (with `after_stat()`).
+- Coordinate systems: `coord_cartesian()`, `coord_flip()`,
+  `coord_fixed()` / `coord_equal()`, `coord_polar()` (pie / coxcomb /
+  radar), and `coord_sf()`.
+- Position adjustments: stack / dodge / fill bars, jittered points.
+- Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
+  `"screen"`, …).
+- `mark_datashade()` for million-point density rasters.
+- Annotations: `annotate()`, `labs()`, and `md()` markdown titles.
+- Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
+  `theme_classic()`, `theme_void()`, `theme()` / `set_theme()`) and
+  multi-plot composition (`hconcat()`, `vconcat()`, `concat()`,
+  `wrap_plots()`, `inset()`, `repeat_()`).
 
-Spatial (`sf`) and network (`igraph`) layers are on the roadmap — see `NEWS.md`
-and `_docs/DESIGN.md`.
+Network (`igraph`) layers are on the roadmap — see `NEWS.md` and
+`_docs/DESIGN.md`.
