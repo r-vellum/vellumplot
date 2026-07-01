@@ -24,7 +24,7 @@ test_that("points land where the scales map them (orientation + y-up)", {
 
 test_that("a discrete colour encoding paints each category colour", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
-  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
   img <- render_px(p)
   for (hex in sc$color$colors) {
     rgb <- as.numeric(grDevices::col2rgb(hex)) / 255

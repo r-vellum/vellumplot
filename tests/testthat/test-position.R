@@ -11,7 +11,7 @@ test_that("bars stack by default", {
 
 test_that("stacking assigns non-overlapping [ymin, ymax] spans summing to the group total", {
   p <- vplot(mt) |> mark_bar(x = cyl, fill = am)
-  r <- vellumplot:::.resolve_layers(p)[[1]]
+  r <- quill:::.resolve_layers(p)[[1]]
   expect_false(is.null(r$values$ymin))
   # within each x the spans tile [0, total] with no gaps/overlap
   x <- as.character(r$values$x)
@@ -27,7 +27,7 @@ test_that("stacking assigns non-overlapping [ymin, ymax] spans summing to the gr
 
 test_that("position = 'fill' normalises each x group to 1", {
   p <- vplot(mt) |> mark_bar(x = cyl, fill = am, position = "fill")
-  r <- vellumplot:::.resolve_layers(p)[[1]]
+  r <- quill:::.resolve_layers(p)[[1]]
   x <- as.character(r$values$x)
   tops <- vapply(
     unique(x),
@@ -39,14 +39,14 @@ test_that("position = 'fill' normalises each x group to 1", {
 
 test_that("an ungrouped bar gets a 0..y span", {
   p <- vplot(data.frame(g = factor(c("a", "a", "b")))) |> mark_bar(x = g)
-  r <- vellumplot:::.resolve_layers(p)[[1]]
+  r <- quill:::.resolve_layers(p)[[1]]
   expect_equal(r$values$ymin, c(0, 0))
   expect_equal(r$values$ymax, r$values$y)
 })
 
 test_that("stacked totals drive the y domain", {
   p <- vplot(mt) |> mark_bar(x = cyl, fill = am)
-  sc <- vellumplot:::.build_panels(p)$scales
+  sc <- quill:::.build_panels(p)$scales
   expect_gte(sc$y$domain[2], max(table(mt$cyl)))
 })
 
@@ -93,7 +93,7 @@ test_that("stack/dodge order follow factor levels, not alphabetical", {
     g = factor(c("hi", "lo", "mid"), levels = c("lo", "mid", "hi"))
   )
   p <- vplot(d) |> mark_bar(x = x, fill = g)
-  r <- vellumplot:::.resolve_layers(p)[[1]]
+  r <- quill:::.resolve_layers(p)[[1]]
   # bottom-to-top stacking should follow lo, mid, hi (the factor order)
   ord <- order(r$values$ymin)
   expect_equal(as.character(r$values$fill)[ord], c("lo", "mid", "hi"))

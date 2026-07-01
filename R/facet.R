@@ -6,7 +6,7 @@ NULL
 # `rows` is empty; for grid, both may be set.
 FacetSpec <- S7::new_class(
   "FacetSpec",
-  package = "vellumplot",
+  package = "quill",
   properties = list(
     type = S7::class_character,
     rows = S7::new_property(S7::class_list, default = list()),

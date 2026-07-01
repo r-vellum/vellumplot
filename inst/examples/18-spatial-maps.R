@@ -3,7 +3,7 @@
 # `classInt` for classed breaks) -- both are in Suggests. It skips cleanly if
 # they are absent.
 
-library(vellumplot)
+library(quill)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

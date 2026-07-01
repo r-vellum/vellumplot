@@ -15,15 +15,15 @@ test_that("element_line / element_rect alias color to colour", {
 })
 
 test_that(".is_blank distinguishes element_blank from elements", {
-  expect_true(vellumplot:::.is_blank(element_blank()))
-  expect_false(vellumplot:::.is_blank(element_text()))
-  expect_false(vellumplot:::.is_blank(element_line()))
+  expect_true(quill:::.is_blank(element_blank()))
+  expect_false(quill:::.is_blank(element_text()))
+  expect_false(quill:::.is_blank(element_line()))
 })
 
 test_that(".merge_element fills NULL child props from the parent", {
   parent <- element_text(colour = "black", size = 11, family = "serif")
   child <- element_text(size = 20)
-  m <- vellumplot:::.merge_element(parent, child)
+  m <- quill:::.merge_element(parent, child)
   expect_identical(m@size, 20) # child wins
   expect_identical(m@colour, "black") # inherited
   expect_identical(m@family, "serif") # inherited

@@ -1,6 +1,6 @@
 # Position adjustments: jitter for points; stack / dodge / fill for bars.
 
-library(vellumplot)
+library(quill)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

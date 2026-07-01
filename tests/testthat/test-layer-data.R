@@ -1,7 +1,7 @@
 # Per-layer data: a layer overrides the plot data.
 
-resolve <- function(p) vellumplot:::.resolve_layers(p)
-train <- function(p) vellumplot:::.train_scales(p, resolve(p))
+resolve <- function(p) quill:::.resolve_layers(p)
+train <- function(p) quill:::.train_scales(p, resolve(p))
 
 hi <- mtcars[which.max(mtcars$mpg), , drop = FALSE]
 
@@ -38,7 +38,7 @@ test_that("under faceting, own-data WITH the facet var is subset per panel", {
     mark_point(x = wt, y = mpg) |>
     facet_wrap(~cyl) |>
     mark_point(data = d2, x = wt, y = mpg, color = "red")
-  built <- vellumplot:::.build_panels(p)
+  built <- quill:::.build_panels(p)
   ns <- vapply(built$panels, function(pp) pp$resolved[[2]]$n, integer(1))
   expect_identical(ns, c(1L, 1L, 1L))
 })
@@ -49,7 +49,7 @@ test_that("under faceting, own-data WITHOUT the facet var draws on every panel",
     mark_point(x = wt, y = mpg) |>
     facet_wrap(~cyl) |>
     mark_text(data = d3, x = wt, y = mpg, label = "*")
-  built <- vellumplot:::.build_panels(p)
+  built <- quill:::.build_panels(p)
   ns <- vapply(built$panels, function(pp) pp$resolved[[2]]$n, integer(1))
   expect_true(all(ns == 1L))
 })
@@ -68,7 +68,7 @@ test_that("two layers with different data both render", {
 test_that("the layer print marks an own-data layer", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, data = hi)
   expect_match(
-    vellumplot:::.format_layer(p@layers[[1]]),
+    quill:::.format_layer(p@layers[[1]]),
     "own data",
     fixed = TRUE
   )

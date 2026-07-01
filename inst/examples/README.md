@@ -1,6 +1,6 @@
-# vellumplot examples
+# quill examples
 
-A tour of (nearly) everything vellumplot can draw. Each script is standalone:
+A tour of (nearly) everything quill can draw. Each script is standalone:
 it loads the package, builds a handful of plots, and renders them as PNGs into
 a `figures/` subfolder.
 
@@ -13,7 +13,7 @@ for f in [0-9]*.R; do Rscript "$f"; done   # run them all
 
 Outputs land in `inst/examples/figures/`. The scripts only use base R datasets
 (`mtcars`, `datasets::penguins`, `iris`, `faithful`, …) plus a little simulated
-data, so nothing beyond vellumplot needs to be installed — the exceptions are
+data, so nothing beyond quill needs to be installed — the exceptions are
 `18-spatial-maps.R` (optional `sf` / `classInt`) and `19-datashader-census.R`
 (optional `arrow` / `dplyr` plus a large one-time download); both skip themselves
 if their packages are absent.

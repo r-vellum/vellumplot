@@ -1,7 +1,7 @@
 # One-off annotations: text, label, point, segment, rect drawn from raw values
 # (independent of the plot data, so they repeat on every facet panel).
 
-library(vellumplot)
+library(quill)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

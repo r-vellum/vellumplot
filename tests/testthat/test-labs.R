@@ -41,7 +41,7 @@ test_that("labs() axis/legend overrides reach the trained scales", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>
     labs(x = "Weight", y = "Miles/gal", color = "Power")
-  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
   expect_identical(sc$x$name, "Weight")
   expect_identical(sc$y$name, "Miles/gal")
   expect_identical(sc$color$name, "Power")
@@ -51,7 +51,7 @@ test_that("labs(fill =) titles the colour scale", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>
     labs(fill = "Power")
-  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
   expect_identical(sc$color$name, "Power")
 })
 
@@ -60,19 +60,19 @@ test_that("scale_*(name =) takes precedence over labs()", {
     mark_point(x = wt, y = mpg) |>
     scale_x_continuous(name = "FromScale") |>
     labs(x = "FromLabs")
-  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
   expect_identical(sc$x$name, "FromScale")
 })
 
 test_that("labs(y =) overrides the bar 'count' default title", {
   base <- vplot(mtcars) |> mark_bar(x = factor(cyl))
-  sc0 <- vellumplot:::.train_scales(base, vellumplot:::.resolve_layers(base))
+  sc0 <- quill:::.train_scales(base, quill:::.resolve_layers(base))
   expect_identical(sc0$y$name, "count")
 
   withlab <- base |> labs(y = "Frequency")
-  sc1 <- vellumplot:::.train_scales(
+  sc1 <- quill:::.train_scales(
     withlab,
-    vellumplot:::.resolve_layers(withlab)
+    quill:::.resolve_layers(withlab)
   )
   expect_identical(sc1$y$name, "Frequency")
 })
@@ -81,8 +81,8 @@ test_that("labs(y =) overrides the bar 'count' default title", {
 
 test_that("absent labels add no band tracks", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  lay <- vellumplot:::.build_layout(
-    vellumplot:::.build_panels(p),
+  lay <- quill:::.build_layout(
+    quill:::.build_panels(p),
     list(),
     p@labels
   )
@@ -97,8 +97,8 @@ test_that("present labels add bands that span the full width", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     labs(title = "T", caption = "C")
-  lay <- vellumplot:::.build_layout(
-    vellumplot:::.build_panels(p),
+  lay <- quill:::.build_layout(
+    quill:::.build_panels(p),
     list(),
     p@labels
   )
@@ -114,8 +114,8 @@ test_that("a tag sits in its own row above the title", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     labs(title = "T", tag = "A")
-  lay <- vellumplot:::.build_layout(
-    vellumplot:::.build_panels(p),
+  lay <- quill:::.build_layout(
+    quill:::.build_panels(p),
     list(),
     p@labels
   )

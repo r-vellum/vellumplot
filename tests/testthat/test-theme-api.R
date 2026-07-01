@@ -1,6 +1,6 @@
 # theme() / set_theme() public API + layout honouring.
 
-resolve_of <- function(p) vellumplot:::.resolve_theme(p@theme)
+resolve_of <- function(p) quill:::.resolve_theme(p@theme)
 
 test_that("theme() merges element-wise onto the current theme", {
   p <- vplot(mtcars) |>
@@ -45,13 +45,13 @@ test_that("set_theme() legacy NA maps to element_blank", {
     mark_point(x = wt, y = mpg) |>
     set_theme(panel_bg = NA, grid_col = NA)
   rt <- resolve_of(p)
-  expect_true(vellumplot:::.is_blank(rt[["panel.background"]]))
-  expect_true(vellumplot:::.is_blank(rt[["panel.grid.major.x"]]))
+  expect_true(quill:::.is_blank(rt[["panel.background"]]))
+  expect_true(quill:::.is_blank(rt[["panel.grid.major.x"]]))
 })
 
 test_that("a blank text element collapses its gutter track to zero", {
-  zero <- vellumplot:::.track_w(element_blank(), "a label", 1.4)
-  sized <- vellumplot:::.track_w(element_text(size = 11), "a label", 1.4)
+  zero <- quill:::.track_w(element_blank(), "a label", 1.4)
+  sized <- quill:::.track_w(element_text(size = 11), "a label", 1.4)
   expect_identical(zero, vellum::unit(0, "mm"))
   expect_false(identical(zero, sized))
 })
@@ -60,11 +60,11 @@ test_that("legend.position = none drops the legend column", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>
     theme(legend.position = "none")
-  lay <- vellumplot:::.build_layout(
-    vellumplot:::.build_panels(p),
-    vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales),
+  lay <- quill:::.build_layout(
+    quill:::.build_panels(p),
+    quill:::.legend_guides(quill:::.build_panels(p)$scales),
     p@labels,
-    vellumplot:::.resolve_theme(p@theme)
+    quill:::.resolve_theme(p@theme)
   )
   expect_true(is.na(lay$legend_col))
 })

@@ -3,7 +3,7 @@
 #' A thin wrapper around [vellum::md()] that builds a rich-text label from a
 #' markdown subset: `**bold**`, `*italic*` / `_italic_`, `^superscript^`,
 #' `~subscript~`, and a colour span `[text]{#c00}`. The result can be used
-#' anywhere vellumplot draws a *title*: [labs()] (`title` / `subtitle` /
+#' anywhere quill draws a *title*: [labs()] (`title` / `subtitle` /
 #' `caption` / `tag` / `x` / `y` / `color`) and `scale_*(name = )`. Per-element
 #' rich labels (in `mark_text()`) are not yet supported.
 #'

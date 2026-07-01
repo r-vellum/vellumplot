@@ -1,7 +1,7 @@
 # Colour scale breadth: palettes, manual, gradient, fill mirror.
 
 train <- function(p) {
-  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  quill:::.train_scales(p, quill:::.resolve_layers(p))
 }
 
 test_that("a named palette resolves via hcl.colors and differs from default", {

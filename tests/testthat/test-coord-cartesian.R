@@ -1,7 +1,7 @@
 # coord_cartesian(): view-window zoom (clip, not drop).
 
 train <- function(p) {
-  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  quill:::.train_scales(p, quill:::.resolve_layers(p))
 }
 
 test_that("coord_cartesian(xlim=) zooms the trained x domain", {
@@ -19,7 +19,7 @@ test_that("zoom clips but does not drop data, and renders", {
     mark_point(x = wt, y = mpg) |>
     coord_cartesian(ylim = c(20, 30))
   # all rows still resolve (no filtering)
-  res <- vellumplot:::.resolve_layers(p)
+  res <- quill:::.resolve_layers(p)
   expect_identical(res[[1]]$n, nrow(mtcars))
   f <- withr::local_tempfile(fileext = ".png")
   render_plot(p, f)

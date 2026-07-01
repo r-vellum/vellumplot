@@ -2,9 +2,9 @@
 # nesting, insets, robustness guards).
 
 train <- function(p) {
-  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  quill:::.train_scales(p, quill:::.resolve_layers(p))
 }
-panels <- function(p) vellumplot:::.build_panels(p)
+panels <- function(p) quill:::.build_panels(p)
 
 test_that("a log-scaled bar drops the 0 baseline instead of erroring", {
   d <- data.frame(x = c("a", "b", "c"), y = c(10, 100, 1000))
@@ -68,7 +68,7 @@ test_that("a composition nesting a faceted sub-plot renders all panels", {
   a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   fac <- a |> facet_wrap(~cyl)
   comp <- hconcat(a, vconcat(a, fac))
-  expect_false(vellumplot:::.comp_alignable(comp))
+  expect_false(quill:::.comp_alignable(comp))
   f <- withr::local_tempfile(fileext = ".png")
   expect_no_error(render_plot(comp, f))
 })

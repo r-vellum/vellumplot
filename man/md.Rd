@@ -16,7 +16,7 @@ A \code{vellum_md_label} object accepted by \code{\link[vellum:text_grob]{vellum
 A thin wrapper around \code{\link[vellum:md]{vellum::md()}} that builds a rich-text label from a
 markdown subset: \verb{**bold**}, \verb{*italic*} / \verb{_italic_}, \verb{^superscript^},
 \verb{~subscript~}, and a colour span \verb{[text]\{#c00\}}. The result can be used
-anywhere vellumplot draws a \emph{title}: \code{\link[=labs]{labs()}} (\code{title} / \code{subtitle} /
+anywhere quill draws a \emph{title}: \code{\link[=labs]{labs()}} (\code{title} / \code{subtitle} /
 \code{caption} / \code{tag} / \code{x} / \code{y} / \code{color}) and \verb{scale_*(name = )}. Per-element
 rich labels (in \code{mark_text()}) are not yet supported.
 }

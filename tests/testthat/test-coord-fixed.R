@@ -2,15 +2,15 @@
 # grid_layout(respect=).
 
 lay_of <- function(p) {
-  built <- vellumplot:::.build_panels(p)
-  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
-  vellumplot:::.build_layout(
+  built <- quill:::.build_panels(p)
+  rt <- quill:::.resolve_theme(quill:::.theme_of(p))
+  quill:::.build_layout(
     built,
     list(),
     p@labels,
     rt,
     FALSE,
-    vellumplot:::.coord_of(p)
+    quill:::.coord_of(p)
   )
 }
 
@@ -34,19 +34,19 @@ test_that("coord_equal is coord_fixed(ratio = 1)", {
 })
 
 test_that("the panel null-weight ratio encodes ratio * yrange : xrange", {
-  built <- vellumplot:::.build_panels(
+  built <- quill:::.build_panels(
     vplot(mtcars) |> mark_point(x = wt, y = mpg) |> coord_fixed(ratio = 2)
   )
   sx <- built$scales$x$domain
   sy <- built$scales$y$domain
-  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
-  l <- vellumplot:::.build_layout(
+  rt <- quill:::.resolve_theme(quill:::.theme_default())
+  l <- quill:::.build_layout(
     built,
     list(),
     list(),
     rt,
     FALSE,
-    vellumplot:::.coord_of(
+    quill:::.coord_of(
       vplot(mtcars) |> mark_point(x = wt, y = mpg) |> coord_fixed(ratio = 2)
     )
   )

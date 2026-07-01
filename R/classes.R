@@ -1,4 +1,4 @@
-#' @include vellumplot-package.R
+#' @include quill-package.R
 NULL
 
 # --- spec leaves ------------------------------------------------------------
@@ -7,7 +7,7 @@ NULL
 # inferred) variable type. `type = ""` means "infer from the resolved values".
 channel <- S7::new_class(
   "channel",
-  package = "vellumplot",
+  package = "quill",
   properties = list(
     expr = S7::class_any, # a quosure (rlang)
     type = S7::new_property(S7::class_character, default = ""),
@@ -20,7 +20,7 @@ channel <- S7::new_class(
 # own `stat_params`), and a position adjustment (`position`).
 LayerSpec <- S7::new_class(
   "LayerSpec",
-  package = "vellumplot",
+  package = "quill",
   properties = list(
     mark = S7::class_character, # "point" | "line" | "rule" | "bar" | "smooth" | "hex"
     encoding = S7::new_property(S7::class_list, default = list()),
@@ -37,7 +37,7 @@ LayerSpec <- S7::new_class(
 # while training".
 ScaleSpec <- S7::new_class(
   "ScaleSpec",
-  package = "vellumplot",
+  package = "quill",
   properties = list(
     aesthetic = S7::class_character, # "x" | "y" | "color" | "fill" | "size" | "shape"
     type = S7::class_character, # "continuous" | "discrete" | "binned"
@@ -84,7 +84,7 @@ ScaleSpec <- S7::new_class(
 #' @export
 PlotSpec <- S7::new_class(
   "PlotSpec",
-  package = "vellumplot",
+  package = "quill",
   properties = list(
     data = S7::class_any, # a data.frame
     layers = S7::new_property(S7::class_list, default = list()), # list<LayerSpec>

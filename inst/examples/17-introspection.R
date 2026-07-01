@@ -1,8 +1,8 @@
 # Layout introspection and semantic output (developer-facing).
 # Uses vellum's layout-debug tools on a compiled plot, and shows the per-layer
-# ids vellumplot stamps into SVG. Requires vellum (>= 0.0.0.9001).
+# ids quill stamps into SVG. Requires vellum (>= 0.0.0.9001).
 
-library(vellumplot)
+library(quill)
 library(vellum)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
@@ -23,7 +23,7 @@ scene <- as_vellum_scene(p)
 render(scene, file.path(outdir, "17-debug-overlay.png"), debug = TRUE)
 
 # --- why_size(): why is a region the size it is? ----------------------------
-# vellumplot names its structural viewports, so they are queryable by name:
+# quill names its structural viewports, so they are queryable by name:
 #   plot, panel-area, panel-<r>-<c>, axis-x-<col>, axis-y-<row>,
 #   axis-title-x, axis-title-y, strip-<r>-<c> (wrap) / strip-col|row-<n> (grid),
 #   legend.

@@ -1,4 +1,4 @@
-# vellumplot 0.0.0.9000
+# quill 0.0.0.9000
 
 A declarative grammar of graphics that compiles an inspectable spec into a
 `vellum` scene, with faceting, coordinate systems, and multi-plot composition.

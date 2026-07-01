@@ -1,7 +1,7 @@
 # Big data and compositing: datashading dense clouds, the auto fast-path, and
 # blend modes for overlapping layers.
 
-library(vellumplot)
+library(quill)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

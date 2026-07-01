@@ -1,6 +1,6 @@
 # Polar coordinates and their shortcuts: rose/coxcomb, radar, pie, donut.
 
-library(vellumplot)
+library(quill)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

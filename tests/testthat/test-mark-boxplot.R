@@ -1,9 +1,9 @@
 # Statistical marks: boxplot / errorbar / linerange / summary.
 
 train <- function(p) {
-  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  quill:::.train_scales(p, quill:::.resolve_layers(p))
 }
-resolve1 <- function(p) vellumplot:::.resolve_layers(p)[[1]]
+resolve1 <- function(p) quill:::.resolve_layers(p)[[1]]
 
 eb <- data.frame(
   g = c("a", "b", "c"),

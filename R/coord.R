@@ -10,7 +10,7 @@ NULL
 # is the inner-hole radius for a donut, as a fraction of the rim radius).
 CoordSpec <- S7::new_class(
   "CoordSpec",
-  package = "vellumplot",
+  package = "quill",
   properties = list(
     kind = S7::new_property(S7::class_character, default = "cartesian"),
     xlim = S7::new_property(S7::class_any, default = NULL),

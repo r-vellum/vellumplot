@@ -1,6 +1,6 @@
 # Position scales: limits, transforms, custom breaks/labels, discrete order.
 
-library(vellumplot)
+library(quill)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

@@ -3,12 +3,12 @@
 
 
 
-# vellumplot
+# quill
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-vellumplot is a declarative, pipe-first grammar of graphics built on the
+quill is a declarative, pipe-first grammar of graphics built on the
 [vellum](https://github.com/schochastics/vellum) graphics backend. You describe
 a plot as an inspectable, serializable *spec*; nothing is drawn until the spec is
 compiled into a vellum scene and rendered.
@@ -21,7 +21,7 @@ drawing primitives.
 
 ```r
 # install vellum first, then:
-# pak::pak("schochastics/vellumplot")
+# pak::pak("schochastics/quill")
 ```
 
 ## Usage
@@ -32,7 +32,7 @@ file.
 
 
 ``` r
-library(vellumplot)
+library(quill)
 
 # a scatter with a continuous colour legend
 vplot(mtcars) |>

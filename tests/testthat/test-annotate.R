@@ -55,7 +55,7 @@ test_that("an annotation appears on every facet panel", {
   p <- base() |>
     facet_wrap(~cyl) |>
     annotate("text", x = 4, y = 30, label = "*")
-  built <- vellumplot:::.build_panels(p)
+  built <- quill:::.build_panels(p)
   ns <- vapply(built$panels, function(pp) pp$resolved[[2]]$n, integer(1))
   expect_true(all(ns == 1L))
 })

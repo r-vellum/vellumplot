@@ -1,7 +1,7 @@
 # Size scale: range/limits/breaks overrides.
 
 train <- function(p) {
-  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  quill:::.train_scales(p, quill:::.resolve_layers(p))
 }
 
 test_that("scale_size(range=) sets the output mm range", {

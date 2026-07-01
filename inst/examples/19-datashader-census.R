@@ -1,13 +1,13 @@
 # Reproducing datashader's US Census example (https://examples.holoviz.org/
-# gallery/census/census.html) with vellumplot.
+# gallery/census/census.html) with quill.
 #
 # One point per person from the 2010 US Census (~306 million rows). We datashade
 # them two ways: (1) population density on a single ramp, and (2) coloured by
 # race -- one datashade layer per race with its own hue, composited additively
-# with blend = "screen" (vellumplot has no single-call categorical shading, so
+# with blend = "screen" (quill has no single-call categorical shading, so
 # this reproduces datashader's `count_cat` by hand).
 #
-# REQUIREMENTS (none are vellumplot dependencies -- this is a heavy showcase):
+# REQUIREMENTS (none are quill dependencies -- this is a heavy showcase):
 #   * packages `arrow` and `dplyr` (to read the Parquet dataset)
 #   * a ~1.44 GB one-time download (cached locally after the first run)
 #   * plenty of RAM for the full dataset (~6 GB collected). Set `n_max` below to
@@ -16,7 +16,7 @@
 # Data: easting/northing are Web Mercator metres (EPSG:3857); race is a single
 # char w/b/a/h/o (White/Black/Asian/Hispanic/Other).
 
-library(vellumplot)
+library(quill)
 
 if (
   !requireNamespace("arrow", quietly = TRUE) ||

@@ -1,6 +1,6 @@
 # Faceting: small multiples with facet_wrap / facet_grid, and scale resolution.
 
-library(vellumplot)
+library(quill)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

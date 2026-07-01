@@ -15,7 +15,7 @@ test_that("constructors set the right mark", {
 })
 
 test_that("label is resolved as a mapped channel", {
-  res <- vellumplot:::.resolve_layers(
+  res <- quill:::.resolve_layers(
     vplot(d) |> mark_text(x = wt, y = mpg, label = nm)
   )
   expect_identical(res[[1]]$values$label, d$nm)

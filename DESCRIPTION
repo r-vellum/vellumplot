@@ -1,4 +1,4 @@
-Package: vellumplot
+Package: quill
 Title: A Grammar of Graphics on the 'vellum' Backend
 Version: 0.0.0.9000
 Authors@R:
@@ -32,7 +32,7 @@ Suggests:
     withr
 Config/testthat/edition: 3
 Collate:
-    'vellumplot-package.R'
+    'quill-package.R'
     'classes.R'
     'marks.R'
     'annotate.R'

@@ -2,15 +2,15 @@
 # collapsed gutters, and concentric/radial gridlines + labels drawn in-panel.
 
 lay_polar <- function(p) {
-  built <- vellumplot:::.build_panels(p)
-  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
-  vellumplot:::.build_layout(
+  built <- quill:::.build_panels(p)
+  rt <- quill:::.resolve_theme(quill:::.theme_of(p))
+  quill:::.build_layout(
     built,
     list(),
     p@labels,
     rt,
     FALSE,
-    vellumplot:::.coord_of(p)
+    quill:::.coord_of(p)
   )
 }
 trackval <- function(u, i) vctrs::field(u, "value")[i]
@@ -59,7 +59,7 @@ test_that("a pie (stacked bar, theta = y) renders slices in the matching fills",
     coord_polar(theta = "y")
   img <- render_px(p)
   # two equal slices -> the two default qualitative fills appear in ~equal area
-  pal <- vellumplot:::.qual_palette(2)
+  pal <- quill:::.qual_palette(2)
   hex2rgb <- function(h) grDevices::col2rgb(h)[, 1] / 255
   a <- count_near(img, hex2rgb(pal[1]))
   b <- count_near(img, hex2rgb(pal[2]))
@@ -114,9 +114,9 @@ test_that("a polar line is densified into a smooth arc (curve, not chord)", {
     mark_line(x = a, y = r) |>
     scale_x_continuous(limits = c(0, 4)) |>
     coord_polar(theta = "x")
-  xy <- vellumplot:::.polar_munch(
+  xy <- quill:::.polar_munch(
     list(
-      polar = vellumplot:::.polar_ctx(
+      polar = quill:::.polar_ctx(
         p@coord,
         list(domain = c(0, 4)),
         list(domain = c(0, 1))
@@ -146,7 +146,7 @@ test_that("a mapped fill still produces a legend column in polar", {
     mark_bar(x = factor(1), y = n, fill = cat, position = "stack") |>
     coord_polar(theta = "y")
   l <- lay_polar(p)
-  built <- vellumplot:::.build_panels(p)
-  guides <- vellumplot:::.legend_guides(built$scales)
+  built <- quill:::.build_panels(p)
+  guides <- quill:::.legend_guides(built$scales)
   expect_true(length(guides) > 0)
 })

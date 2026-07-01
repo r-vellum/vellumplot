@@ -1,6 +1,6 @@
 # Labels and rich text: titles, subtitles, captions, tags, and md() markup.
 
-library(vellumplot)
+library(quill)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

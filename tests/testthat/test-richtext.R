@@ -1,5 +1,5 @@
 # Rich-text (md()) labels in titles, axis names, and legend names. The drawing
-# path is vellum's; these tests assert vellumplot threads the md() object through
+# path is vellum's; these tests assert quill threads the md() object through
 # without coercing it to a string and that layout/print stay sound.
 
 test_that("md() is re-exported and yields a rich-text label", {
@@ -12,7 +12,7 @@ test_that("scale_*(name = md()) reaches the trained scale un-coerced", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     scale_x_continuous(name = md("*weight*"))
-  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
   expect_false(is.character(sc$x$name))
   expect_true(inherits(sc$x$name, "vellum::vellum_md_label"))
 })
@@ -44,12 +44,12 @@ test_that("legend width is finite/positive with a rich legend name", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
     labs(color = md("*cylinders*"))
-  built <- vellumplot:::.build_panels(p)
-  guides <- vellumplot:::.legend_guides(built$scales)
-  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
-  w <- vellumplot:::.legend_width(guides, rt)
+  built <- quill:::.build_panels(p)
+  guides <- quill:::.legend_guides(built$scales)
+  rt <- quill:::.resolve_theme(quill:::.theme_default())
+  w <- quill:::.legend_width(guides, rt)
   expect_true(vctrs::field(w, "value") > 0)
-  expect_no_error(vellumplot:::.build_layout(built, guides, p@labels, rt))
+  expect_no_error(quill:::.build_layout(built, guides, p@labels, rt))
 })
 
 test_that("summary()/print() tolerate rich labels", {

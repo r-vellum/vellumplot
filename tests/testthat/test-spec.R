@@ -2,7 +2,7 @@
 
 test_that("vplot() builds an empty PlotSpec carrying the data and page size", {
   p <- vplot(mtcars, width = 5, height = 3)
-  expect_s3_class(p, "vellumplot::PlotSpec")
+  expect_s3_class(p, "quill::PlotSpec")
   expect_identical(p@data, mtcars)
   expect_equal(p@width, 5)
   expect_equal(p@height, 3)
@@ -19,7 +19,7 @@ test_that("mark_point() appends a layer with the right mark and channels", {
   L <- p@layers[[1]]
   expect_identical(L@mark, "point")
   expect_named(L@encoding, c("x", "y", "color"))
-  expect_identical(vellumplot:::.channel_label(L@encoding$x), "wt")
+  expect_identical(quill:::.channel_label(L@encoding$x), "wt")
 })
 
 test_that("scalar aesthetics become params, mapped ones become channels", {
@@ -53,7 +53,7 @@ test_that("scale_*() appends and overrides last-wins per aesthetic", {
 
 test_that("channel type is inferred at resolve time", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
-  r <- vellumplot:::.resolve_layers(p)[[1]]
+  r <- quill:::.resolve_layers(p)[[1]]
   expect_identical(r$types$x, "quantitative")
   expect_identical(r$types$color, "nominal")
 })
@@ -86,7 +86,7 @@ test_that("the spec round-trips through serialize()", {
   p2 <- unserialize(serialize(p, NULL))
   expect_length(p2@layers, 1)
   expect_identical(
-    vellumplot:::.channel_label(p2@layers[[1]]@encoding$y),
+    quill:::.channel_label(p2@layers[[1]]@encoding$y),
     "mpg"
   )
 })

@@ -7,7 +7,7 @@ NULL
 # (a recursive view tree), so every node can carry its own annotation.
 PlotComposition <- S7::new_class(
   "PlotComposition",
-  package = "vellumplot",
+  package = "quill",
   properties = list(
     plots = S7::class_list, # list<PlotSpec | PlotComposition>
     nrow = S7::new_property(S7::class_double, default = 1),
@@ -126,7 +126,7 @@ concat <- function(
 }
 
 # A reserved-but-empty cell.
-Spacer <- S7::new_class("Spacer", package = "vellumplot")
+Spacer <- S7::new_class("Spacer", package = "quill")
 
 #' Reserve an empty cell in a composition
 #'
