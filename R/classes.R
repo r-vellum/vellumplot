@@ -69,6 +69,8 @@ ScaleSpec <- S7::new_class(
 #' @param layers A list of layer specifications (one per `mark_*()`).
 #' @param scales A list of declared scale overrides.
 #' @param width,height Page size in inches.
+#' @param dpi Output resolution in dots per inch (pixels per inch). The exported
+#'   PNG's pixel dimensions are `width * dpi` by `height * dpi`.
 #' @param facet A faceting specification (from [facet_wrap()] / [facet_grid()]),
 #'   or `NULL` for a single panel.
 #' @param resolve A named list mapping an aesthetic to `"shared"` or
@@ -94,6 +96,7 @@ PlotSpec <- S7::new_class(
     resolve = S7::new_property(S7::class_list, default = list()), # aes -> shared|independent
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
+    dpi = S7::new_property(S7::class_double, default = 96),
     theme = S7::new_property(S7::class_any, default = NULL),
     labels = S7::new_property(S7::class_list, default = list()) # plot/axis labels
   )

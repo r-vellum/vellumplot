@@ -17,7 +17,8 @@ concat(
   guides = c("collect", "keep"),
   design = NULL,
   width = NULL,
-  height = NULL
+  height = NULL,
+  dpi = NULL
 )
 
 wrap_plots(
@@ -30,7 +31,8 @@ wrap_plots(
   guides = c("collect", "keep"),
   design = NULL,
   width = NULL,
-  height = NULL
+  height = NULL,
+  dpi = NULL
 )
 
 hconcat(..., guides = c("collect", "keep"), height = NULL)
@@ -58,6 +60,9 @@ be exactly one letter per plot and every row must be the same width.
 Enables spanning; \code{NULL} (default) uses the regular \code{ncol}/\code{nrow} grid.}
 
 \item{width, height}{Output size in inches (defaults scale with the grid).}
+
+\item{dpi}{Output resolution in dots per inch. \code{NULL} (default) inherits the
+first sub-plot's resolution; overridable at render time via \code{\link[=render_plot]{render_plot()}}.}
 
 \item{plots}{A list of \link{PlotSpec}s / \code{PlotComposition}s (for \code{wrap_plots()}).}
 }

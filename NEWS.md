@@ -10,6 +10,10 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   like ggplot2 (via `vellum::display()`). `summary()` shows the inspectable spec
   tree instead; `render_plot()` still writes a file.
 * `vplot()` starts an inspectable, serializable `PlotSpec`.
+* **Output resolution**: `vplot(dpi =)` sets the authored resolution and
+  `render_plot(dpi =)` overrides it per render, so an exported PNG's pixel
+  dimensions are `width * dpi` by `height * dpi`. Compositions inherit the first
+  sub-plot's `dpi` (or take an explicit `concat(dpi =)`).
 * Marks: `mark_point()`, `mark_line()`, `mark_rule()` (reference lines via
   `xintercept` / `yintercept`), and `mark_bar()` (uses explicit `y` heights, or
   counts rows per category when `y` is omitted).

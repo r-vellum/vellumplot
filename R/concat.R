@@ -21,7 +21,8 @@ PlotComposition <- S7::new_class(
     tag = S7::new_property(S7::class_any, default = NULL), # auto-tag spec | NULL
     insets = S7::new_property(S7::class_list, default = list()), # list<inset spec>
     width = S7::new_property(S7::class_double, default = 6),
-    height = S7::new_property(S7::class_double, default = 4)
+    height = S7::new_property(S7::class_double, default = 4),
+    dpi = S7::new_property(S7::class_double, default = 96)
   )
 )
 
@@ -72,6 +73,8 @@ PlotComposition <- S7::new_class(
 #'   be exactly one letter per plot and every row must be the same width.
 #'   Enables spanning; `NULL` (default) uses the regular `ncol`/`nrow` grid.
 #' @param width,height Output size in inches (defaults scale with the grid).
+#' @param dpi Output resolution in dots per inch. `NULL` (default) inherits the
+#'   first sub-plot's resolution; overridable at render time via [render_plot()].
 #' @return A `PlotComposition` (renders via [render_plot()] / [vellum::render()]).
 #' @examples
 #' a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
@@ -88,10 +91,12 @@ concat <- function(
   guides = c("collect", "keep"),
   design = NULL,
   width = NULL,
-  height = NULL
+  height = NULL,
+  dpi = NULL
 ) {
   plots <- .collect_plots(list(...))
   guides <- match.arg(guides)
+  if (!is.null(dpi)) .check_dpi(dpi)
   n <- length(plots)
   design <- .parse_design(design, n)
   if (!is.null(design)) {
@@ -121,7 +126,8 @@ concat <- function(
     guides = guides,
     design = design,
     width = width %||% (ncol * w0),
-    height = height %||% (nrow * h0)
+    height = height %||% (nrow * h0),
+    dpi = as.double(dpi %||% .comp_dpi(plots[[1]]))
   )
 }
 
@@ -264,6 +270,16 @@ inset <- function(
   }
 }
 
+# Resolution to inherit for a composition: the first sub-plot's dpi (a Spacer
+# carries none, so fall back to the scene default).
+.comp_dpi <- function(x) {
+  if (S7::S7_inherits(x, PlotSpec) || S7::S7_inherits(x, PlotComposition)) {
+    x@dpi
+  } else {
+    96
+  }
+}
+
 #' @rdname concat
 #' @param plots A list of [PlotSpec]s / `PlotComposition`s (for `wrap_plots()`).
 #' @export
@@ -277,7 +293,8 @@ wrap_plots <- function(
   guides = c("collect", "keep"),
   design = NULL,
   width = NULL,
-  height = NULL
+  height = NULL,
+  dpi = NULL
 ) {
   do.call(
     concat,
@@ -292,7 +309,8 @@ wrap_plots <- function(
         guides = match.arg(guides),
         design = design,
         width = width,
-        height = height
+        height = height,
+        dpi = dpi
       )
     )
   )
@@ -374,6 +392,7 @@ compose_annotation <- function(
   scene <- vellum::vl_scene(
     width = comp@width,
     height = comp@height,
+    dpi = comp@dpi,
     bg = "white"
   )
   if (.comp_alignable(comp)) {

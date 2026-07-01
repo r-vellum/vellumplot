@@ -12,19 +12,36 @@ NULL
 #' @param data A data frame. Encoding expressions in `mark_*()` are evaluated
 #'   against it with tidy evaluation.
 #' @param width,height Page size in inches.
+#' @param dpi Output resolution in dots per inch. The exported PNG's pixel
+#'   dimensions are `width * dpi` by `height * dpi`; raising `dpi` yields a
+#'   denser image at the same physical size. Overridable at render time via
+#'   [render_plot()]'s `dpi` argument.
 #' @return A [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg)
 #' @export
-vplot <- function(data, width = 6, height = 4) {
+vplot <- function(data, width = 6, height = 4, dpi = 96) {
   if (!is.data.frame(data)) {
     cli::cli_abort(
       "{.arg data} must be a data frame, not {.obj_type_friendly {data}}."
     )
   }
+  .check_dpi(dpi)
   PlotSpec(
     data = data,
     width = as.double(width),
-    height = as.double(height)
+    height = as.double(height),
+    dpi = as.double(dpi)
   )
+}
+
+# A dpi must be a single positive number.
+.check_dpi <- function(dpi, call = rlang::caller_env()) {
+  if (!is.numeric(dpi) || length(dpi) != 1L || is.na(dpi) || dpi <= 0) {
+    cli::cli_abort(
+      "{.arg dpi} must be a single positive number, not {.obj_type_friendly {dpi}}.",
+      call = call
+    )
+  }
+  invisible(dpi)
 }

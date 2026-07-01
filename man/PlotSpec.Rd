@@ -13,6 +13,7 @@ PlotSpec(
   resolve = list(),
   width = 6,
   height = 4,
+  dpi = 96,
   theme = NULL,
   labels = list()
 )
@@ -34,6 +35,9 @@ or \code{NULL} for a single panel.}
 \code{"independent"} (the scale-resolution lattice; see \code{\link[=resolve_scale]{resolve_scale()}}).}
 
 \item{width, height}{Page size in inches.}
+
+\item{dpi}{Output resolution in dots per inch (pixels per inch). The exported
+PNG's pixel dimensions are \code{width * dpi} by \code{height * dpi}.}
 
 \item{theme}{A theme (a named list of resolved element/setting overrides, from
 \code{\link[=theme]{theme()}} / a \verb{theme_*()} preset), or \code{NULL} for the default theme.}

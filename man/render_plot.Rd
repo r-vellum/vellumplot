@@ -4,7 +4,7 @@
 \alias{render_plot}
 \title{Render a plot to a file}
 \usage{
-render_plot(plot, path, text = "native")
+render_plot(plot, path, text = "native", dpi = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -12,6 +12,11 @@ render_plot(plot, path, text = "native")
 \item{path}{Output file path.}
 
 \item{text}{For SVG output, how text is written (see \code{\link[vellum:render]{vellum::render()}}).}
+
+\item{dpi}{Output resolution in dots per inch. \code{NULL} (default) uses the
+plot's authored resolution (set on \code{\link[=vplot]{vplot()}}); a number overrides it for
+this render, so the PNG's pixel dimensions become \code{width * dpi} by
+\code{height * dpi}. Ignored for \code{.svg}/\code{.pdf}, which are resolution-independent.}
 }
 \value{
 \code{path}, invisibly.
@@ -26,4 +31,5 @@ format is taken from the file extension (\code{.png}, \code{.svg}, \code{.pdf}).
 p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 f <- tempfile(fileext = ".png")
 render_plot(p, f)
+render_plot(p, f, dpi = 300) # denser raster, same physical size
 }

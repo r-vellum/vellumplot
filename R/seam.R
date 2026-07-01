@@ -294,6 +294,7 @@ NULL
   scene <- vellum::vl_scene(
     width = spec@width,
     height = spec@height,
+    dpi = spec@dpi,
     bg = "white"
   )
   .draw_plot(scene, spec)
@@ -363,13 +364,18 @@ S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) .compile_plot(x)
 #' @param plot A [PlotSpec].
 #' @param path Output file path.
 #' @param text For SVG output, how text is written (see [vellum::render()]).
+#' @param dpi Output resolution in dots per inch. `NULL` (default) uses the
+#'   plot's authored resolution (set on [vplot()]); a number overrides it for
+#'   this render, so the PNG's pixel dimensions become `width * dpi` by
+#'   `height * dpi`. Ignored for `.svg`/`.pdf`, which are resolution-independent.
 #' @return `path`, invisibly.
 #' @examples
 #' p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 #' f <- tempfile(fileext = ".png")
 #' render_plot(p, f)
+#' render_plot(p, f, dpi = 300) # denser raster, same physical size
 #' @export
-render_plot <- function(plot, path, text = "native") {
+render_plot <- function(plot, path, text = "native", dpi = NULL) {
   if (
     !S7::S7_inherits(plot, PlotSpec) && !S7::S7_inherits(plot, PlotComposition)
   ) {
@@ -377,5 +383,10 @@ render_plot <- function(plot, path, text = "native") {
       "{.arg plot} must be a {.cls PlotSpec} or {.cls PlotComposition}."
     )
   }
-  vellum::render(vellum::as_vellum_scene(plot), path, text = text)
+  scene <- vellum::as_vellum_scene(plot)
+  if (!is.null(dpi)) {
+    .check_dpi(dpi)
+    scene <- S7::set_props(scene, dpi = as.double(dpi))
+  }
+  vellum::render(scene, path, text = text)
 }

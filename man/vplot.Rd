@@ -4,13 +4,18 @@
 \alias{vplot}
 \title{Start a plot specification}
 \usage{
-vplot(data, width = 6, height = 4)
+vplot(data, width = 6, height = 4, dpi = 96)
 }
 \arguments{
 \item{data}{A data frame. Encoding expressions in \verb{mark_*()} are evaluated
 against it with tidy evaluation.}
 
 \item{width, height}{Page size in inches.}
+
+\item{dpi}{Output resolution in dots per inch. The exported PNG's pixel
+dimensions are \code{width * dpi} by \code{height * dpi}; raising \code{dpi} yields a
+denser image at the same physical size. Overridable at render time via
+\code{\link[=render_plot]{render_plot()}}'s \code{dpi} argument.}
 }
 \value{
 A \link{PlotSpec}.
