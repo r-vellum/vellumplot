@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# quill
+# quill <img src="man/figures/logo.png" align="right" height="138" alt="" />
 
 <!-- badges: start -->
 
@@ -31,6 +31,27 @@ to write a file.
 
 ``` r
 library(quill)
+#> 
+#> Attaching package: 'quill'
+#> The following objects are masked from 'package:vellumplot':
+#> 
+#>     after_stat, annotate, area, compose_annotation, concat,
+#>     coord_cartesian, coord_equal, coord_fixed, coord_flip, coord_polar,
+#>     coord_sf, element_blank, element_line, element_rect, element_text,
+#>     facet_grid, facet_wrap, hconcat, inset, labs, mark_area, mark_bar,
+#>     mark_bin2d, mark_boxplot, mark_datashade, mark_density, mark_donut,
+#>     mark_errorbar, mark_hex, mark_histogram, mark_label, mark_line,
+#>     mark_linerange, mark_pie, mark_point, mark_raster, mark_ribbon,
+#>     mark_rule, mark_segment, mark_sf, mark_smooth, mark_step,
+#>     mark_summary, mark_text, mark_tile, md, plot_spacer, PlotSpec,
+#>     render_plot, repeat_, resolve_scale, scale_color_binned,
+#>     scale_color_continuous, scale_color_discrete, scale_color_gradient,
+#>     scale_color_manual, scale_fill_binned, scale_fill_continuous,
+#>     scale_fill_discrete, scale_fill_gradient, scale_fill_manual,
+#>     scale_shape, scale_size, scale_x_continuous, scale_x_discrete,
+#>     scale_y_continuous, scale_y_discrete, set_theme, theme, theme_bw,
+#>     theme_classic, theme_gray, theme_minimal, theme_void, vconcat, vplot,
+#>     wrap_plots
 
 # a scatter with a continuous colour legend
 vplot(mtcars) |>
