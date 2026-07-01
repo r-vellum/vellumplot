@@ -753,8 +753,10 @@ mark_segment <- function(plot, ..., blend = NULL, data = NULL) {
 #' @param linewidth For `mark_edges()`, the edge width; a constant or (via
 #'   [scale_edge_width()]) a mapped expression such as `linewidth = weight`.
 #' @param arrow For `mark_edges()`, `TRUE` to draw an arrowhead at each edge's
-#'   target end (directed graphs). Heads are not yet capped to the node boundary,
-#'   so on very large nodes they may sit slightly under the node.
+#'   target end (directed graphs). Directed edges are shortened to the node
+#'   boundary so the head sits at the node edge, and self-loops are drawn as
+#'   arced arrows. The cap uses a representative node radius, so with widely
+#'   varying node sizes the clearance is approximate.
 #' @param label For `mark_node_text()`, the label expression (default the vertex
 #'   `name`).
 #' @param blend Optional blend mode (see [mark_point()]).

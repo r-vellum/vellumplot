@@ -89,6 +89,7 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 
 Reactivity, 2-D contour stats, and the algebraic `*` / `+` layer combinators.
 Independent *non-position* (colour/size) scales across facets are not yet
-supported (those legends stay shared). On the network side, device-space arrow
-capping, community hulls, and alternative idioms (arc/matrix/hive) are deferred
-(see `_docs/DESIGN-igraph.md`).
+supported (those legends stay shared). On the network side, directed edges are
+capped to the node boundary using a representative node radius (exact per-node
+device-space capping is approximate); community hulls and alternative idioms
+(arc/matrix/hive) are deferred (see `_docs/DESIGN-igraph.md`).

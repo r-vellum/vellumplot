@@ -230,6 +230,39 @@ NULL
   list(x = rx + c(-pad, pad), y = ry + c(-pad, pad))
 }
 
+# Geometry hints the edge emitter needs to relate its native coordinates to the
+# (absolute mm) node markers: an estimate of native units per mm, and a
+# representative node radius in native units. vellum resolves the panel's device
+# size at render (the panel is a `null` track), so it is not available here; we
+# estimate it from the figure size (min dimension, aspect-locked graph panel,
+# with a fraction left for margins/legend). Good enough to cap directed edges at
+# the node boundary and size self-loops relative to the nodes. Returns NULL when
+# the panel has no edge layer (so ordinary plots are untouched).
+.graph_geom <- function(resolved, hsc, vsc, width, height, scales) {
+  has_edges <- any(vapply(
+    resolved,
+    function(L) identical(L$mark, "edges"),
+    logical(1)
+  ))
+  if (!has_edges) {
+    return(NULL)
+  }
+  xspan <- abs(diff(range(hsc$domain)))
+  yspan <- abs(diff(range(vsc$domain)))
+  span <- max(xspan, yspan, .Machine$double.eps)
+  panel_in <- min(width, height) * 0.85
+  native_per_mm <- span / (panel_in * 25.4)
+  szs <- unlist(lapply(resolved, function(L) {
+    if (identical(L$mark, "nodes")) {
+      rep_len(.aes_size(L, scales, 1), L$n)
+    } else {
+      NULL
+    }
+  }))
+  node_mm <- if (length(szs)) stats::median(szs) else 1
+  list(native_per_mm = native_per_mm, node_r = (node_mm / 2) * native_per_mm)
+}
+
 # The void-like default theme for a graph: no axes, ticks, gridlines, or panel
 # background -- arbitrary layout coordinates must not read as meaningful axes.
 .theme_vgraph <- function() {

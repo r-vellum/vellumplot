@@ -120,8 +120,17 @@ NULL
       color = built$scales$color,
       size = built$scales$size,
       shape = built$scales$shape,
+      edge_width = built$scales$edge_width,
       flip = flip,
       polar = NULL
+    )
+    psc$graph <- .graph_geom(
+      p$resolved,
+      hsc,
+      vsc,
+      spec@width,
+      spec@height,
+      psc
     )
     pname <- sprintf("panel-%d-%d", p$r, p$c)
     if (polar) {

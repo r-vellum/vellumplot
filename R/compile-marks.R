@@ -935,10 +935,33 @@ NULL
     NULL
   }
 
+  # Node radius (native): from the graph geometry hint, else a bbox fraction.
+  diag <- sqrt(diff(range(c(x0, x1)))^2 + diff(range(c(y0, y1)))^2)
+  if (!is.finite(diag) || diag == 0) {
+    diag <- 1
+  }
+  node_r <- scales$graph$node_r %||% (0.03 * diag)
+
   loop <- x0 == x1 & y0 == y1
   # Straight edges, batched by (col, alpha, rounded lwd).
   si <- which(!loop)
   if (length(si)) {
+    # Directed edges are shortened to the node boundary at both ends so the
+    # arrowhead sits at the edge of the target node (not buried under it). A gap
+    # past the radius keeps the head clear. Edges too short to cap are left whole.
+    if (!is.null(arr)) {
+      gap <- node_r + 0.4 * node_r
+      dx <- x1 - x0
+      dy <- y1 - y0
+      len <- sqrt(dx^2 + dy^2)
+      ux <- dx / ifelse(len == 0, 1, len)
+      uy <- dy / ifelse(len == 0, 1, len)
+      fits <- len > 2 * gap + node_r
+      x0 <- ifelse(fits, x0 + ux * node_r, x0)
+      y0 <- ifelse(fits, y0 + uy * node_r, y0)
+      x1 <- ifelse(fits, x1 - ux * gap, x1)
+      y1 <- ifelse(fits, y1 - uy * gap, y1)
+    }
     grp_lwd <- round(lwd, 2)
     for (idx in .style_groups(
       length(si),
@@ -971,25 +994,20 @@ NULL
     }
   }
 
-  # Self-loops: small loops attached to the vertex, nested outward per vertex.
+  # Self-loops: an arc anchored at the node, sized relative to the node radius
+  # and nested outward when a vertex carries several. Drawn as an open polyline
+  # (gap facing the node) so a directed loop can carry an arrowhead.
   li <- which(loop)
   if (length(li)) {
-    diag <- sqrt(diff(range(c(x0, x1)))^2 + diff(range(c(y0, y1)))^2)
-    if (!is.finite(diag) || diag == 0) {
-      diag <- 1
-    }
-    rbase <- 0.04 * diag
-    rstep <- 0.03 * diag
     cx <- mean(c(x0, x1))
     cy <- mean(c(y0, y1))
-    seen <- integer(0)
-    key <- paste(x0[li], y0[li], sep = "\036")
     kcount <- list()
-    ang <- seq(0, 2 * pi, length.out = 24)
+    t <- seq(-pi * 0.9, pi * 0.9, length.out = 40)
     for (j in li) {
-      k <- kcount[[key_j <- paste(x0[j], y0[j], sep = "\036")]] %||% 0L
+      key_j <- paste(x0[j], y0[j], sep = "\036")
+      k <- kcount[[key_j]] %||% 0L
       kcount[[key_j]] <- k + 1L
-      r <- rbase + k * rstep
+      r <- node_r * (1.2 + k * 0.9) # loop radius grows per nested loop
       dx <- x0[j] - cx
       dy <- y0[j] - cy
       dl <- sqrt(dx^2 + dy^2)
@@ -998,15 +1016,22 @@ NULL
         dy <- 1
         dl <- 1
       }
-      ox <- x0[j] + (dx / dl) * r
-      oy <- y0[j] + (dy / dl) * r
+      # Loop centre sits just outside the node, along the away-from-centre ray.
+      ux <- dx / dl
+      uy <- dy / dl
+      ox <- x0[j] + ux * (node_r + r)
+      oy <- y0[j] + uy * (node_r + r)
+      base <- atan2(y0[j] - oy, x0[j] - ox) # loop-centre -> node
+      lx <- ox + r * cos(base + t)
+      ly <- oy + r * sin(base + t)
       a <- alpha[j]
+      xy <- .xy_units(scales, lx, ly)
       scene <- .draw(
         scene,
-        vellum::spline_grob(
-          vellum::unit(ox + r * cos(ang), "native"),
-          vellum::unit(oy + r * sin(ang), "native"),
-          open = FALSE,
+        vellum::lines_grob(
+          xy$x,
+          xy$y,
+          arrow = arr,
           gp = vellum::gpar(
             col = col[j],
             lwd = lwd[j],
