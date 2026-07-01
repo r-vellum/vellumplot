@@ -947,8 +947,12 @@ NULL
 # Datashade: aggregate the points into a density raster filling the panel. The
 # raster is binned over the panel's native domain so it aligns with the axes.
 .emit_datashade <- function(scene, L, scales) {
-  xn <- scales$x$map(L$values$x)
-  yn <- scales$y$map(L$values$y)
+  # Full coordinate vectors live in `L$ds` (training only saw their range, see
+  # .resolve_layer); `mark_point(auto=)` falls through here without an `ds` slot,
+  # so fall back to the resolved values in that case.
+  ds <- L$ds %||% list(x = L$values$x, y = L$values$y)
+  xn <- scales$x$map(ds$x)
+  yn <- scales$y$map(ds$y)
   sp <- L$stat_params
   w <- as.integer(sp$width %||% 400L)
   h <- as.integer(sp$height %||% 300L)

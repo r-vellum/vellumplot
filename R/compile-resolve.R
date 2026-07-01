@@ -45,6 +45,22 @@ NULL
     n <- length(sf)
   }
 
+  # A datashade layer aggregates its (potentially hundreds of millions of) points
+  # into a raster in one Rust pass. Keep the full coordinate vectors in `ds` for
+  # the emitter, but hand scale training only their 2-value range via `values`:
+  # this way the position trainer never scans -- let alone copies or concatenates
+  # across layers -- the full point cloud (see `.train_position_continuous`).
+  ds <- NULL
+  if (identical(layer@mark, "datashade")) {
+    ds <- list(x = values$x, y = values$y)
+    if (!is.null(values$x)) {
+      values$x <- suppressWarnings(range(as.numeric(values$x), finite = TRUE))
+    }
+    if (!is.null(values$y)) {
+      values$y <- suppressWarnings(range(as.numeric(values$y), finite = TRUE))
+    }
+  }
+
   list(
     mark = layer@mark,
     values = values,
@@ -53,6 +69,7 @@ NULL
     params = layer@params,
     n = n,
     sf = sf,
+    ds = ds,
     stat = layer@stat,
     stat_params = layer@stat_params,
     position = layer@position,

@@ -59,3 +59,27 @@ test_that("mark_datashade(blend=) wires the layer blend (per-category overlay)",
   f <- withr::local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
 })
+
+test_that("datashade feeds training only a coordinate range, keeps full coords for the emitter", {
+  set.seed(1)
+  n <- 1000
+  df <- data.frame(x = rnorm(n), y = rnorm(n))
+  p <- vplot(df) |> mark_datashade(x = x, y = y)
+  L <- vellumplot:::.resolve_layers(p)[[1]]
+  # training sees a 2-value range, not the full cloud...
+  expect_length(L$values$x, 2L)
+  expect_equal(L$values$x, range(df$x))
+  # ...while the emitter still has every point
+  expect_length(L$ds$x, n)
+})
+
+test_that("user scale limits short-circuit the position scan (no data-derived range)", {
+  df <- data.frame(x = c(0, 100), y = c(0, 100))
+  p <- vplot(df) |>
+    mark_datashade(x = x, y = y) |>
+    scale_x_continuous(limits = c(-10, 200))
+  b <- vellumplot:::.build_panels(p)
+  # domain comes from the user limits (expanded), not the data range
+  expect_lt(b$scales$x$domain[1], 0)
+  expect_gt(b$scales$x$domain[2], 100)
+})

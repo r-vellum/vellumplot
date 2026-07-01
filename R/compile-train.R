@@ -246,26 +246,32 @@ NULL
   lim = NULL
 ) {
   is_time <- inherits(raw, c("Date", "POSIXct"))
-
-  num <- as.numeric(raw)
-  num <- num[is.finite(num)]
   user_lim <- lim %||% (if (!is.null(scalespec)) scalespec@domain else NULL)
   tr <- if (is_time) NULL else .resolve_trans(scalespec)
-  # Drop values the transform can't represent (e.g. a bar's 0 baseline, or any
-  # non-positive value, on a log scale); ggplot2 does the same. The mark is still
-  # drawn (clipped at the panel edge); only the trained range excludes them.
-  if (!is_time && length(num)) {
-    num <- num[is.finite(tr$transform(num))]
-  }
 
-  # User limits are taken verbatim (so a descending `c(hi, lo)` reverses the
-  # axis); a data-derived range needs at least one finite value.
+  # The data range. Explicit user limits are taken verbatim (so a descending
+  # `c(hi, lo)` reverses the axis) and short-circuit the data scan entirely --
+  # important for very large layers (e.g. datashade), where materialising and
+  # filtering the full coordinate vector would cost gigabytes. Otherwise derive
+  # the range with an allocation-free single pass: `range(finite = TRUE)` drops
+  # NA/Inf without building a filtered copy. Only when the transform cannot
+  # represent the endpoints (e.g. non-positive values on a log/sqrt scale) do we
+  # pay for a filtered pass to exclude the values it can't map (ggplot2 does the
+  # same -- the mark is still drawn, clipped; only the trained range excludes them).
   rng <- if (!is.null(user_lim)) {
     as.numeric(user_lim)
-  } else if (length(num)) {
-    range(num)
+  } else if (is_time) {
+    suppressWarnings(range(as.numeric(raw), finite = TRUE))
   } else {
-    c(NA_real_, NA_real_)
+    num <- as.numeric(raw)
+    r <- suppressWarnings(range(num, finite = TRUE))
+    if (all(is.finite(r)) && !all(is.finite(tr$transform(r)))) {
+      r <- suppressWarnings(range(
+        num[is.finite(tr$transform(num))],
+        finite = TRUE
+      ))
+    }
+    r
   }
   # Force a zero baseline for bars/areas, but only when the transform keeps it
   # finite: a log/sqrt scale cannot include 0, so leave the data range alone.
