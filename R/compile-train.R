@@ -6,7 +6,12 @@ NULL
 # against an auto-computed break count mislabels the axis/legend, so we require
 # matching lengths (ggplot2 semantics). Returns NULL when no labels were given
 # (the caller then formats the breaks itself).
-.match_labels <- function(user_labels, breaks, aes, call = rlang::caller_env()) {
+.match_labels <- function(
+  user_labels,
+  breaks,
+  aes,
+  call = rlang::caller_env()
+) {
   if (is.null(user_labels)) {
     return(NULL)
   }
@@ -401,7 +406,43 @@ NULL
   user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
   user_labels <- if (!is.null(scalespec)) scalespec@labels else NULL
 
-  if (identical(kind, "continuous")) {
+  # Colour for NA-valued features (choropleth "no data"), and whether any pooled
+  # value was actually NA (so the guide shows a distinct NA swatch).
+  na_value <- .colour_na_value(spec, scalespec, resolved)
+  has_na <- any(is.na(unlist(values, use.names = FALSE)))
+
+  if (identical(kind, "binned")) {
+    v <- as.numeric(unlist(values, use.names = FALSE))
+    v <- v[is.finite(v)]
+    nclass <- as.integer(scalespec@n %||% 5L)
+    style <- scalespec@style %||% "quantile"
+    brks <- if (!is.null(user_breaks)) {
+      sort(as.numeric(user_breaks))
+    } else {
+      .binned_breaks(v, nclass, style)
+    }
+    k <- length(brks) - 1L
+    cols <- grDevices::colorRampPalette(.continuous_stops(pal))(k)
+    map <- function(x) {
+      i <- findInterval(x, brks, rightmost.closed = TRUE, all.inside = TRUE)
+      out <- cols[i]
+      out[!is.finite(x)] <- na_value
+      out
+    }
+    labels <- .match_labels(user_labels, seq_len(k), "color") %||%
+      .interval_labels(brks)
+    list(
+      kind = "binned",
+      map = map,
+      name = title,
+      breaks = brks,
+      levels = labels,
+      labels = labels,
+      colors = cols,
+      na = has_na,
+      na_value = na_value
+    )
+  } else if (identical(kind, "continuous")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
     v <- v[is.finite(v)]
     rng <- if (length(v)) range(v) else c(0, 1)
@@ -416,7 +457,7 @@ NULL
     }
     map <- function(x) {
       out <- pal256[bin(x)]
-      out[!is.finite(x)] <- NA
+      out[!is.finite(x)] <- na_value
       out
     }
     lbrk <- if (!is.null(user_breaks)) {
@@ -437,13 +478,19 @@ NULL
       range = rng,
       pal256 = pal256,
       legend_breaks = lbrk,
-      legend_labels = llab %||% scales::label_number()(lbrk)
+      legend_labels = llab %||% scales::label_number()(lbrk),
+      na = has_na,
+      na_value = na_value
     )
   } else {
     all_levels <- .cat_levels(values)
     cols <- .discrete_colours(pal, all_levels)
     names(cols) <- all_levels
-    map <- function(x) unname(cols[as.character(x)])
+    map <- function(x) {
+      out <- unname(cols[as.character(x)])
+      out[is.na(x)] <- na_value
+      out
+    }
     # `breaks` selects which levels appear in the legend (and their order); the
     # colour mapping itself always covers every data level. Unknown breaks are
     # dropped. Labels (if given) must match the shown levels one-to-one.
@@ -460,9 +507,26 @@ NULL
       name = title,
       levels = levels,
       labels = labels,
-      colors = unname(cols[levels])
+      colors = unname(cols[levels]),
+      na = has_na,
+      na_value = na_value
     )
   }
+}
+
+# Colour for NA-valued features: a scale's explicit `na_value`, else an sf
+# layer's `na_value` (from mark_sf(na_value=)), else a neutral grey. Only used
+# when the data actually contains NA.
+.colour_na_value <- function(spec, scalespec, resolved) {
+  if (!is.null(scalespec) && !is.null(scalespec@na_value)) {
+    return(scalespec@na_value)
+  }
+  for (L in resolved) {
+    if (identical(L$mark, "sf") && !is.null(L$stat_params$na_value)) {
+      return(L$stat_params$na_value)
+    }
+  }
+  "grey50"
 }
 
 # Train the size scale (if any layer maps `size` to data). Maps values to a

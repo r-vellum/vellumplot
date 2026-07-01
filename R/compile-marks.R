@@ -968,10 +968,179 @@ NULL
   .draw(scene, g)
 }
 
+# Draw an sf layer. Coordinates come from the decomposed geometry (`L$sf`, one
+# entry per feature, each a list of point/line/poly primitives), not from x/y
+# encodings; feature attributes (fill/colour/alpha) recycle over features. Within
+# each geometry kind, features sharing a resolved (colour, alpha) batch into a
+# single grob: polygons -> one `path_grob` (rings as `evenodd` sub-paths, so
+# holes cut and islands stay solid regardless of winding); lines -> one
+# NA-separated `lines_grob`; points -> one `points_grob`.
+.emit_sf <- function(scene, L, scales) {
+  feats <- L$sf
+  n <- L$n
+  # primary colour = mapped fill/colour (choropleth) or a constant param; NA when
+  # nothing is set (then filled per-kind below). Border/alpha/lwd/size are params.
+  primary <- rep_len(.aes_colour(L, scales, NA_character_), n)
+  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  border <- .aes_param(L, "color", "grey40")
+  lwd <- .aes_param(L, "linewidth", 0.5)
+  size <- rep_len(.aes_size(L, scales, 1.5), n)
+
+  # per-kind colour vector, coalescing the primary colour with a kind default.
+  kind_col <- function(default) {
+    v <- primary
+    v[is.na(v)] <- default
+    v
+  }
+  has_kind <- function(k) {
+    vapply(
+      feats,
+      function(prims) any(vapply(prims, function(p) p$kind == k, logical(1))),
+      logical(1)
+    )
+  }
+  prims_of <- function(i, k) Filter(function(p) p$kind == k, feats[[i]])
+  mapnat <- function(m) list(x = scales$x$map(m[, 1]), y = scales$y$map(m[, 2]))
+  gp_alpha <- function(a) if (is.na(a)) NULL else a
+
+  # Iterate style groups of the features that carry kind `k`, calling `draw`.
+  by_style <- function(scene, k, colvec, draw) {
+    sub <- which(has_kind(k))
+    if (!length(sub)) {
+      return(scene)
+    }
+    for (g in .style_groups(
+      length(sub),
+      list(col = colvec[sub], alpha = alpha[sub])
+    )) {
+      idx <- sub[g]
+      scene <- draw(scene, idx, colvec[idx[1]], alpha[idx[1]])
+    }
+    scene
+  }
+
+  # polygons: rings across the group become one path_grob (each ring a sub-path).
+  scene <- by_style(
+    scene,
+    "poly",
+    kind_col("grey80"),
+    function(scene, idx, fill, a) {
+      xs <- ys <- ids <- numeric(0)
+      rid <- 0L
+      for (i in idx) {
+        for (p in prims_of(i, "poly")) {
+          for (ring in p$parts) {
+            if (!nrow(ring)) {
+              next
+            }
+            rid <- rid + 1L
+            nat <- mapnat(ring)
+            xs <- c(xs, nat$x)
+            ys <- c(ys, nat$y)
+            ids <- c(ids, rep(rid, nrow(ring)))
+          }
+        }
+      }
+      if (!length(xs)) {
+        return(scene)
+      }
+      xy <- .xy_units(scales, xs, ys)
+      .draw(
+        scene,
+        vellum::path_grob(
+          xy$x,
+          xy$y,
+          id = as.integer(ids),
+          rule = "evenodd",
+          gp = vellum::gpar(
+            fill = fill,
+            col = border,
+            lwd = lwd,
+            alpha = gp_alpha(a)
+          )
+        )
+      )
+    }
+  )
+
+  # lines: NA-separated sub-paths in one lines_grob.
+  scene <- by_style(
+    scene,
+    "line",
+    kind_col("grey20"),
+    function(scene, idx, col, a) {
+      xs <- ys <- numeric(0)
+      for (i in idx) {
+        for (p in prims_of(i, "line")) {
+          for (seg in p$parts) {
+            if (!nrow(seg)) {
+              next
+            }
+            nat <- mapnat(seg)
+            xs <- c(xs, nat$x, NA_real_)
+            ys <- c(ys, nat$y, NA_real_)
+          }
+        }
+      }
+      if (!length(xs)) {
+        return(scene)
+      }
+      xy <- .xy_units(scales, xs, ys)
+      .draw(
+        scene,
+        vellum::lines_grob(
+          xy$x,
+          xy$y,
+          gp = vellum::gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
+        )
+      )
+    }
+  )
+
+  # points: one points_grob per style group.
+  scene <- by_style(
+    scene,
+    "point",
+    kind_col("black"),
+    function(scene, idx, col, a) {
+      xs <- ys <- szs <- numeric(0)
+      for (i in idx) {
+        for (p in prims_of(i, "point")) {
+          for (m in p$parts) {
+            if (!nrow(m)) {
+              next
+            }
+            nat <- mapnat(m)
+            xs <- c(xs, nat$x)
+            ys <- c(ys, nat$y)
+            szs <- c(szs, rep(size[i], nrow(m)))
+          }
+        }
+      }
+      if (!length(xs)) {
+        return(scene)
+      }
+      xy <- .xy_units(scales, xs, ys)
+      .draw(
+        scene,
+        vellum::points_grob(
+          xy$x,
+          xy$y,
+          size = vellum::unit(szs, "mm"),
+          gp = vellum::gpar(fill = col, col = col, alpha = gp_alpha(a))
+        )
+      )
+    }
+  )
+
+  scene
+}
+
 .emit_layer <- function(scene, L, scales) {
   switch(
     L$mark,
     point = .emit_point(scene, L, scales),
+    sf = .emit_sf(scene, L, scales),
     line = .emit_line(scene, L, scales),
     rule = .emit_rule(scene, L, scales),
     bar = .emit_bar(scene, L, scales),

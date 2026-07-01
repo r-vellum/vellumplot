@@ -1,8 +1,8 @@
 #' @include classes.R
 NULL
 
-# A coordinate system: `kind` ("cartesian" | "flip" | "fixed" | "polar") plus
-# optional view-window limits. `flip` swaps the x and y axes at render time;
+# A coordinate system: `kind` ("cartesian" | "flip" | "fixed" | "polar" | "sf")
+# plus optional view-window limits. `flip` swaps the x and y axes at render time;
 # `xlim`/`ylim` zoom the view (clipping marks, never dropping data); `fixed`
 # aspect-locks the panel so one data unit on y occupies `ratio` times the device
 # length of one unit on x; `polar` projects one position aesthetic to angle and the other to
@@ -19,7 +19,8 @@ CoordSpec <- S7::new_class(
     theta = S7::new_property(S7::class_character, default = "x"),
     start = S7::new_property(S7::class_double, default = 0),
     direction = S7::new_property(S7::class_double, default = 1),
-    rmin = S7::new_property(S7::class_double, default = 0)
+    rmin = S7::new_property(S7::class_double, default = 0),
+    crs = S7::new_property(S7::class_any, default = NULL) # coord_sf target CRS
   )
 )
 
@@ -160,5 +161,38 @@ coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
     start = as.double(start),
     direction = as.double(direction)
   )
+  plot
+}
+
+#' Map coordinate system
+#'
+#' `coord_sf()` is the coordinate system for [mark_sf()] maps. Before scale
+#' training it reprojects every `sf` layer to a common CRS (via
+#' `sf::st_transform()`), so the renderer only ever sees projected Cartesian
+#' coordinates, and it locks the panel aspect ratio so the map is not stretched:
+#' `1` for a projected CRS, and the equirectangular correction
+#' `1/cos(mean_latitude)` for unprojected longitude/latitude data.
+#'
+#' `sf` is an optional dependency (in `Suggests`); `coord_sf()` errors with an
+#' install hint if it is not available at render time.
+#'
+#' @param plot A [PlotSpec].
+#' @param crs Target coordinate reference system to project all layers into
+#'   (anything `sf::st_crs()` accepts, e.g. an EPSG code, `"OGC:CRS84"`, or a
+#'   proj/WKT string). `NULL` (default) uses the CRS of the first `sf` layer. For
+#'   guaranteed longitude/latitude order, use `"OGC:CRS84"` rather than
+#'   `EPSG:4326`. For choropleths, prefer an equal-area CRS.
+#' @param xlim,ylim Length-2 view-window limits in the target CRS, or `NULL`.
+#' @return The modified [PlotSpec].
+#' @seealso [mark_sf()]
+#' @examples
+#' \dontrun{
+#' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+#' vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf(crs = "OGC:CRS84")
+#' }
+#' @export
+coord_sf <- function(plot, crs = NULL, xlim = NULL, ylim = NULL) {
+  .check_plot(plot)
+  plot@coord <- CoordSpec(kind = "sf", crs = crs, xlim = xlim, ylim = ylim)
   plot
 }

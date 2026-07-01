@@ -168,6 +168,68 @@ mark_line <- function(plot, ..., blend = NULL, data = NULL) {
   .add_layer(plot, "line", rlang::enquos(...), blend = blend, data = data)
 }
 
+#' Draw simple-feature (sf) geometries
+#'
+#' `mark_sf()` draws the geometry column of an `sf` object as a map layer:
+#' `POINT`/`MULTIPOINT` render as points, `LINESTRING`/`MULTILINESTRING` as
+#' polylines, and `POLYGON`/`MULTIPOLYGON` as filled paths (holes cut with the
+#' even-odd rule, so ring winding need not be canonical). Coordinates come from
+#' the geometry, so there are no `x`/`y` encodings; other aesthetics map feature
+#' attributes as usual, e.g. `fill = AREA` for a choropleth. Pair with
+#' [coord_sf()] to reproject and lock the map aspect ratio.
+#'
+#' `sf` is an optional dependency (in `Suggests`); `mark_sf()` errors with an
+#' install hint if it is not available.
+#'
+#' @param plot A [PlotSpec] (from [vplot()]).
+#' @param ... Encodings mapping feature attributes to aesthetics: `fill`,
+#'   `color`, `alpha`, `linewidth`, `size`. A geometry column is not encoded —
+#'   it is read from the data.
+#' @param fill,color,alpha,linewidth,size Convenience aesthetic arguments; a
+#'   constant or a mapped expression.
+#' @param na_value Fill colour for features whose mapped `fill`/`color` value is
+#'   `NA` (drawn as a distinct legend swatch). Default `"grey80"`.
+#' @param blend Optional blend mode (see [mark_point()]).
+#' @param data Optional layer data (an `sf` object); overrides the plot data.
+#' @return The modified [PlotSpec].
+#' @seealso [coord_sf()], [scale_fill_binned()]
+#' @examples
+#' \dontrun{
+#' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+#' vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf()
+#' }
+#' @export
+mark_sf <- function(
+  plot,
+  ...,
+  fill = NULL,
+  color = NULL,
+  alpha = NULL,
+  linewidth = NULL,
+  size = NULL,
+  na_value = "grey80",
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .need_pkg("sf", "mark_sf()")
+  .add_layer(
+    plot,
+    "sf",
+    rlang::enquos(...),
+    rlang::enquos(
+      fill = fill,
+      color = color,
+      alpha = alpha,
+      linewidth = linewidth,
+      size = size
+    ),
+    stat_params = list(na_value = na_value),
+    blend = blend,
+    data = data
+  )
+}
+
 #' @rdname mark_point
 #' @export
 mark_rule <- function(plot, ..., blend = NULL, data = NULL) {

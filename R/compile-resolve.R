@@ -25,6 +25,26 @@ NULL
     types[[nm]] <- if (nzchar(ch@type)) ch@type else .infer_type(v)
   }
   n <- if (length(values)) max(lengths(values)) else nrow(data)
+
+  # An sf layer draws from its geometry column, not from x/y encodings. Decompose
+  # each feature's geometry into drawing primitives, and synthesise x/y values
+  # from the bounding box so the existing position-training path derives the
+  # panel domain (unioned across layers) from the projected extent. `n` stays the
+  # feature count -- style vectors recycle over features, geometry reads `sf`.
+  sf <- NULL
+  if (identical(layer@mark, "sf")) {
+    if (!.is_sf(data)) {
+      cli::cli_abort("{.fn mark_sf} requires an {.cls sf} data frame.")
+    }
+    sfc <- data[[.sf_geom_col(data)]]
+    sf <- lapply(sfc, .sf_decompose)
+    bb <- .sf_bbox(sf)
+    values$x <- c(bb[1], bb[2])
+    values$y <- c(bb[3], bb[4])
+    types$x <- types$y <- "quantitative"
+    n <- length(sf)
+  }
+
   list(
     mark = layer@mark,
     values = values,
@@ -32,6 +52,7 @@ NULL
     after = after,
     params = layer@params,
     n = n,
+    sf = sf,
     stat = layer@stat,
     stat_params = layer@stat_params,
     position = layer@position,

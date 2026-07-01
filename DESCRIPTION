@@ -25,6 +25,8 @@ Imports:
     utils,
     vellum (>= 0.0.0.9001)
 Suggests:
+    classInt,
+    sf,
     testthat (>= 3.0.0),
     vctrs,
     withr
@@ -49,11 +51,13 @@ Collate:
     'concat.R'
     'compile-composition.R'
     'compile-position.R'
+    'compile-sf.R'
     'compile-stat.R'
     'labs.R'
     'print.R'
     'reexports.R'
     'repeat.R'
     'scales.R'
+    'scales-binned.R'
     'vplot.R'
     'zzz.R'

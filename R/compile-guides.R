@@ -460,9 +460,15 @@ NULL
 .legend_guides <- function(scales) {
   out <- list()
   if (!is.null(scales$color)) {
+    # A binned (classed) colour scale draws as discrete swatches with interval
+    # labels, so it reuses the discrete guide.
+    gk <- scales$color$kind
+    if (identical(gk, "binned")) {
+      gk <- "discrete"
+    }
     out <- c(
       out,
-      list(list(kind = paste0("color_", scales$color$kind), sc = scales$color))
+      list(list(kind = paste0("color_", gk), sc = scales$color))
     )
   }
   if (!is.null(scales$size)) {
@@ -582,12 +588,42 @@ NULL
       )
     )
   }
+  # A distinct NA swatch below the colour bar when the data has missing values.
+  if (isTRUE(cl$na)) {
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = vellum::unit(bar_x, "npc"),
+        y = vellum::unit(0.04, "npc"),
+        width = vellum::unit(.LEGEND_SWATCH_MM, "mm"),
+        height = vellum::unit(.LEGEND_SWATCH_MM, "mm"),
+        gp = vellum::gpar(fill = cl$na_value, col = NA)
+      )
+    )
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        "NA",
+        x = vellum::unit(bar_x + bar_w / 2 + 0.06, "npc"),
+        y = vellum::unit(0.04, "npc"),
+        just = c("left", "centre"),
+        gp = txt
+      )
+    )
+  }
   scene
 }
 
 .guide_color_discrete <- function(scene, cl, rt) {
   scene <- .guide_title(scene, cl$name, rt)
-  .draw_key_rows(scene, cl$labels %||% cl$levels, rt, function(scene, yy, i) {
+  labels <- cl$labels %||% cl$levels
+  cols <- cl$colors
+  # Append a distinct "NA" swatch when the data has missing values.
+  if (isTRUE(cl$na)) {
+    labels <- c(labels, "NA")
+    cols <- c(cols, cl$na_value)
+  }
+  .draw_key_rows(scene, labels, rt, function(scene, yy, i) {
     vellum::draw(
       scene,
       vellum::rect_grob(
@@ -595,7 +631,7 @@ NULL
         y = vellum::unit(yy, "npc"),
         width = vellum::unit(.LEGEND_SWATCH_MM, "mm"),
         height = vellum::unit(.LEGEND_SWATCH_MM, "mm"),
-        gp = vellum::gpar(fill = cl$colors[i], col = NA)
+        gp = vellum::gpar(fill = cols[i], col = NA)
       )
     )
   })
@@ -691,7 +727,13 @@ NULL
 
 .guide_color_discrete_h <- function(scene, cl, rt) {
   scene <- .guide_title_h(scene, cl$name, rt)
-  .draw_key_row_h(scene, cl$labels %||% cl$levels, rt, function(scene, x, y, i) {
+  labels <- cl$labels %||% cl$levels
+  cols <- cl$colors
+  if (isTRUE(cl$na)) {
+    labels <- c(labels, "NA")
+    cols <- c(cols, cl$na_value)
+  }
+  .draw_key_row_h(scene, labels, rt, function(scene, x, y, i) {
     vellum::draw(
       scene,
       vellum::rect_grob(
@@ -699,7 +741,7 @@ NULL
         y = vellum::unit(y, "npc"),
         width = vellum::unit(.LEGEND_SWATCH_MM, "mm"),
         height = vellum::unit(.LEGEND_SWATCH_MM, "mm"),
-        gp = vellum::gpar(fill = cl$colors[i], col = NA)
+        gp = vellum::gpar(fill = cols[i], col = NA)
       )
     )
   })

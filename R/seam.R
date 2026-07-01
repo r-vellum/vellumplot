@@ -12,10 +12,27 @@ NULL
     )
   }
   rt <- .resolve_theme(.theme_of(spec))
+
+  # sf layers: an sf mark implies a map coordinate system. If the user did not
+  # ask for coord_sf() explicitly, adopt it (matching geom_sf's auto-add) so the
+  # map is aspect-locked. Reproject every sf layer to the target CRS before
+  # training, and record whether that CRS is geographic (for the aspect ratio).
+  co <- .coord_of(spec)
+  sf_geographic <- FALSE
+  if (.has_sf_layer(spec) && identical(co@kind, "cartesian")) {
+    spec@coord <- CoordSpec(kind = "sf", xlim = co@xlim, ylim = co@ylim)
+    co <- spec@coord
+  }
+  if (identical(co@kind, "sf")) {
+    proj <- .project_sf_data(spec)
+    spec <- proj$spec
+    sf_geographic <- proj$geographic
+  }
+
   built <- .build_panels(spec)
+  built$sf_geographic <- sf_geographic
   guides <- .legend_guides(built$scales)
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
-  co <- .coord_of(spec)
   flip <- identical(co@kind, "flip")
   polar <- identical(co@kind, "polar")
   hscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$h # horizontal (bottom)

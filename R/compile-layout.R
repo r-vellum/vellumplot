@@ -151,6 +151,21 @@ NULL
     panel_w <- vellum::unit(xr, "null")
     panel_h <- vellum::unit(ratio * yr, "null")
     respect <- TRUE
+  } else if (!is.null(coord) && identical(coord@kind, "sf")) {
+    # Map aspect: 1 for a projected CRS; the equirectangular correction
+    # 1/cos(mean_latitude) for unprojected lon/lat (one degree N == one degree E
+    # at the map centre). Same null-track mechanism as coord_fixed.
+    xr <- abs(diff(range(built$scales$x$domain)))
+    yr <- abs(diff(range(built$scales$y$domain)))
+    ratio <- if (isTRUE(built$sf_geographic)) {
+      mean_lat <- mean(built$scales$y$domain)
+      1 / cos(mean_lat * pi / 180)
+    } else {
+      1
+    }
+    panel_w <- vellum::unit(xr, "null")
+    panel_h <- vellum::unit(ratio * yr, "null")
+    respect <- TRUE
   } else if (!is.null(asp)) {
     panel_h <- vellum::unit(asp, "null")
     respect <- TRUE
