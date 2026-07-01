@@ -13,9 +13,10 @@ for f in [0-9]*.R; do Rscript "$f"; done   # run them all
 
 Outputs land in `inst/examples/figures/`. The scripts only use base R datasets
 (`mtcars`, `datasets::penguins`, `iris`, `faithful`, …) plus a little simulated
-data, so nothing beyond vellumplot needs to be installed — the one exception is
-`18-spatial-maps.R`, which uses the optional `sf` (and `classInt`) packages and
-skips itself if they are absent.
+data, so nothing beyond vellumplot needs to be installed — the exceptions are
+`18-spatial-maps.R` (optional `sf` / `classInt`) and `19-datashader-census.R`
+(optional `arrow` / `dplyr` plus a large one-time download); both skip themselves
+if their packages are absent.
 
 | Script | Feature group |
 |--------|---------------|
@@ -37,3 +38,4 @@ skips itself if they are absent.
 | `16-datashade-blend.R`    | datashading millions of points, auto, blend modes |
 | `17-introspection.R`      | layout debug overlay, `why_size()`, per-layer SVG ids |
 | `18-spatial-maps.R`       | sf geometries, choropleths, classed breaks, `coord_sf` projection (needs `sf`) |
+| `19-datashader-census.R`  | datashader's 306M-point US Census map: density + additive per-race shading (needs `arrow`/`dplyr` + a 1.44 GB download) |
