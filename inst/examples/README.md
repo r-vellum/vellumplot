@@ -13,7 +13,9 @@ for f in [0-9]*.R; do Rscript "$f"; done   # run them all
 
 Outputs land in `inst/examples/figures/`. The scripts only use base R datasets
 (`mtcars`, `datasets::penguins`, `iris`, `faithful`, …) plus a little simulated
-data, so nothing beyond vellumplot needs to be installed.
+data, so nothing beyond vellumplot needs to be installed — the one exception is
+`18-spatial-maps.R`, which uses the optional `sf` (and `classInt`) packages and
+skips itself if they are absent.
 
 | Script | Feature group |
 |--------|---------------|
@@ -34,3 +36,4 @@ data, so nothing beyond vellumplot needs to be installed.
 | `15-composition.R`        | concat, wrap_plots, design, spacer, inset, tags, repeat_ |
 | `16-datashade-blend.R`    | datashading millions of points, auto, blend modes |
 | `17-introspection.R`      | layout debug overlay, `why_size()`, per-layer SVG ids |
+| `18-spatial-maps.R`       | sf geometries, choropleths, classed breaks, `coord_sf` projection (needs `sf`) |
