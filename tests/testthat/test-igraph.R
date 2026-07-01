@@ -77,6 +77,24 @@ test_that(".edge_table resolves endpoints by vertex index, not row position", {
   expect_equal(et$yend[1], 10)
   # a simple graph has no parallel edges -> no offset applied.
   expect_equal(et$xend[2], 2)
+  # endpoint vertex indices carried for per-node edge capping.
+  expect_identical(et$.from_i, c(1L, 2L))
+  expect_identical(et$.to_i, c(2L, 3L))
+})
+
+test_that(".graph_caps returns exact per-edge node radii (mm)", {
+  # nodes of size 4 and 8 mm -> radii 2 and 4 mm; edge 1->2 caps (2, 4).
+  resolved <- list(
+    list(mark = "edges", values = list(), params = list(), n = 1L),
+    list(mark = "nodes", values = list(), params = list(size = c(4, 8)), n = 2L)
+  )
+  edge_data <- data.frame(.from_i = 1L, .to_i = 2L)
+  caps <- .graph_caps(resolved, edge_data, node_n = 2L, scales = list())
+  expect_equal(caps$node_r, c(2, 4))
+  expect_equal(caps$start_cap, 2) # source vertex 1 radius
+  expect_equal(caps$end_cap, 4) # target vertex 2 radius
+  # no nodes layer -> nothing to cap.
+  expect_null(.graph_caps(resolved[1], edge_data, 2L, list()))
 })
 
 test_that(".edge_table handles an edgeless graph", {

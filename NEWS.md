@@ -79,7 +79,9 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   `mark_edges()` draws edges (straight, batched; reciprocal/parallel edges offset
   off the centre line, self-loops nested, optional `arrow`), `mark_nodes()` the
   vertices, and `mark_node_text()` the labels — with a fixed edges-under-nodes
-  draw order. `scale_edge_width()` maps a weight to edge width with its own legend.
+  draw order. Edges are capped exactly at each endpoint's node boundary (per
+  vertex, at any resolution), so arrowheads land on the node edge. `scale_edge_width()`
+  maps a weight to edge width with its own legend.
   `igraph` / `graphlayouts` are optional (`Suggests`). See `_docs/DESIGN-igraph.md`.
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
@@ -89,7 +91,5 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 
 Reactivity, 2-D contour stats, and the algebraic `*` / `+` layer combinators.
 Independent *non-position* (colour/size) scales across facets are not yet
-supported (those legends stay shared). On the network side, directed edges are
-capped to the node boundary using a representative node radius (exact per-node
-device-space capping is approximate); community hulls and alternative idioms
-(arc/matrix/hive) are deferred (see `_docs/DESIGN-igraph.md`).
+supported (those legends stay shared). On the network side, community hulls and
+alternative idioms (arc/matrix/hive) are deferred (see `_docs/DESIGN-igraph.md`).

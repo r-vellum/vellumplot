@@ -190,8 +190,13 @@ NULL
   m <- nrow(ei)
   if (!m) {
     edf$x <- edf$y <- edf$xend <- edf$yend <- numeric(0)
+    edf$.from_i <- edf$.to_i <- integer(0)
     return(edf)
   }
+  # Endpoint vertex indices (into node-table / vertex order) so the edge emitter
+  # can look up each endpoint's node radius for exact per-node capping.
+  edf$.from_i <- ei[, 1]
+  edf$.to_i <- ei[, 2]
   x0 <- xy[ei[, 1], 1]
   y0 <- xy[ei[, 1], 2]
   x1 <- xy[ei[, 2], 1]
@@ -230,37 +235,28 @@ NULL
   list(x = rx + c(-pad, pad), y = ry + c(-pad, pad))
 }
 
-# Geometry hints the edge emitter needs to relate its native coordinates to the
-# (absolute mm) node markers: an estimate of native units per mm, and a
-# representative node radius in native units. vellum resolves the panel's device
-# size at render (the panel is a `null` track), so it is not available here; we
-# estimate it from the figure size (min dimension, aspect-locked graph panel,
-# with a fraction left for margins/legend). Good enough to cap directed edges at
-# the node boundary and size self-loops relative to the nodes. Returns NULL when
-# the panel has no edge layer (so ordinary plots are untouched).
-.graph_geom <- function(resolved, hsc, vsc, width, height, scales) {
+# Per-vertex node radius (mm) so the edge emitter can cap each edge exactly at its
+# endpoints' node boundaries -- resolution-independently, since vellum resolves
+# the mm caps in device space at render (see `segments_grob(start_cap=/end_cap=)`
+# and `loop_grob()`, added for this; _docs/HANDOVER-response.md). Returns per-edge
+# source/target radii (keyed through the edge endpoint indices) plus the per-vertex
+# radii. NULL when the panel has no edge layer or node layer (nothing to cap).
+.graph_caps <- function(resolved, edge_data, node_n, scales) {
   has_edges <- any(vapply(
     resolved,
     function(L) identical(L$mark, "edges"),
     logical(1)
   ))
-  if (!has_edges) {
+  node_L <- Find(function(L) identical(L$mark, "nodes"), resolved)
+  fi <- edge_data[[".from_i"]]
+  ti <- edge_data[[".to_i"]]
+  if (!has_edges || is.null(node_L) || is.null(fi) || is.null(ti)) {
     return(NULL)
   }
-  xspan <- abs(diff(range(hsc$domain)))
-  yspan <- abs(diff(range(vsc$domain)))
-  span <- max(xspan, yspan, .Machine$double.eps)
-  panel_in <- min(width, height) * 0.85
-  native_per_mm <- span / (panel_in * 25.4)
-  szs <- unlist(lapply(resolved, function(L) {
-    if (identical(L$mark, "nodes")) {
-      rep_len(.aes_size(L, scales, 1), L$n)
-    } else {
-      NULL
-    }
-  }))
-  node_mm <- if (length(szs)) stats::median(szs) else 1
-  list(native_per_mm = native_per_mm, node_r = (node_mm / 2) * native_per_mm)
+  # Node radius = drawn marker size / 2, in vertex order (default matches the
+  # node emitter's `.aes_size(L, scales, 1)`).
+  r_mm <- rep_len(.aes_size(node_L, scales, 1), node_n) / 2
+  list(node_r = r_mm, start_cap = r_mm[fi], end_cap = r_mm[ti])
 }
 
 # The void-like default theme for a graph: no axes, ticks, gridlines, or panel

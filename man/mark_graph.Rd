@@ -52,10 +52,9 @@ position channels are supplied by \code{vgraph()} and need not be mapped.}
 \code{\link[=scale_edge_width]{scale_edge_width()}}) a mapped expression such as \code{linewidth = weight}.}
 
 \item{arrow}{For \code{mark_edges()}, \code{TRUE} to draw an arrowhead at each edge's
-target end (directed graphs). Directed edges are shortened to the node
-boundary so the head sits at the node edge, and self-loops are drawn as
-arced arrows. The cap uses a representative node radius, so with widely
-varying node sizes the clearance is approximate.}
+target end (directed graphs). Edges are capped exactly at each endpoint's
+node boundary (per vertex, at any size/resolution), so the head sits on the
+node edge; self-loops are drawn as arced arrows sized to the node.}
 
 \item{blend}{Optional blend mode (see \code{\link[=mark_point]{mark_point()}}).}
 

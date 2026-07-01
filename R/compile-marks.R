@@ -935,33 +935,18 @@ NULL
     NULL
   }
 
-  # Node radius (native): from the graph geometry hint, else a bbox fraction.
-  diag <- sqrt(diff(range(c(x0, x1)))^2 + diff(range(c(y0, y1)))^2)
-  if (!is.finite(diag) || diag == 0) {
-    diag <- 1
-  }
-  node_r <- scales$graph$node_r %||% (0.03 * diag)
+  # Per-edge endpoint node radii (mm), for exact node-boundary capping. vellum
+  # resolves the mm caps in device space at render, so this is correct at any
+  # size/dpi and for arbitrary per-vertex sizes -- no native-per-mm estimate.
+  gh <- scales$graph
+  # A small gap (mm) past the node radius so the edge/arrowhead clears the marker.
+  gap <- 0.4
 
   loop <- x0 == x1 & y0 == y1
-  # Straight edges, batched by (col, alpha, rounded lwd).
+  # Straight edges, batched by (col, alpha, rounded lwd). Each end is capped at
+  # its node's boundary via vellum's start_cap/end_cap (absolute mm).
   si <- which(!loop)
   if (length(si)) {
-    # Directed edges are shortened to the node boundary at both ends so the
-    # arrowhead sits at the edge of the target node (not buried under it). A gap
-    # past the radius keeps the head clear. Edges too short to cap are left whole.
-    if (!is.null(arr)) {
-      gap <- node_r + 0.4 * node_r
-      dx <- x1 - x0
-      dy <- y1 - y0
-      len <- sqrt(dx^2 + dy^2)
-      ux <- dx / ifelse(len == 0, 1, len)
-      uy <- dy / ifelse(len == 0, 1, len)
-      fits <- len > 2 * gap + node_r
-      x0 <- ifelse(fits, x0 + ux * node_r, x0)
-      y0 <- ifelse(fits, y0 + uy * node_r, y0)
-      x1 <- ifelse(fits, x1 - ux * gap, x1)
-      y1 <- ifelse(fits, y1 - uy * gap, y1)
-    }
     grp_lwd <- round(lwd, 2)
     for (idx in .style_groups(
       length(si),
@@ -976,6 +961,8 @@ NULL
         vellum::unit(x1[g], "native"),
         vellum::unit(y1[g], "native")
       )
+      start_cap <- if (!is.null(gh)) vellum::unit(gh$start_cap[g] + gap, "mm")
+      end_cap <- if (!is.null(gh)) vellum::unit(gh$end_cap[g] + gap, "mm")
       scene <- .draw(
         scene,
         vellum::segments_grob(
@@ -984,6 +971,8 @@ NULL
           s$x1,
           s$y1,
           arrow = arr,
+          start_cap = start_cap,
+          end_cap = end_cap,
           gp = vellum::gpar(
             col = col[g[1]],
             lwd = lwd[g[1]],
@@ -994,43 +983,35 @@ NULL
     }
   }
 
-  # Self-loops: an arc anchored at the node, sized relative to the node radius
-  # and nested outward when a vertex carries several. Drawn as an open polyline
-  # (gap facing the node) so a directed loop can carry an arrowhead.
+  # Self-loops: an mm-radius arc anchored at the vertex (vellum's loop_grob),
+  # sized relative to the node radius and nested outward when a vertex carries
+  # several; a directed loop carries an arrowhead tangent to the arc.
   li <- which(loop)
   if (length(li)) {
     cx <- mean(c(x0, x1))
     cy <- mean(c(y0, y1))
     kcount <- list()
-    t <- seq(-pi * 0.9, pi * 0.9, length.out = 40)
     for (j in li) {
       key_j <- paste(x0[j], y0[j], sep = "\036")
       k <- kcount[[key_j]] %||% 0L
       kcount[[key_j]] <- k + 1L
-      r <- node_r * (1.2 + k * 0.9) # loop radius grows per nested loop
-      dx <- x0[j] - cx
-      dy <- y0[j] - cy
-      dl <- sqrt(dx^2 + dy^2)
-      if (dl == 0) {
-        dx <- 0
-        dy <- 1
-        dl <- 1
+      node_r_mm <- if (!is.null(gh)) gh$end_cap[j] else 2
+      r_mm <- node_r_mm * (2 + k * 1.3) # loop radius grows per nested loop
+      # Bulge the loop away from the graph centre.
+      ang <- atan2(y0[j] - cy, x0[j] - cx)
+      if (!is.finite(ang)) {
+        ang <- pi / 2
       }
-      # Loop centre sits just outside the node, along the away-from-centre ray.
-      ux <- dx / dl
-      uy <- dy / dl
-      ox <- x0[j] + ux * (node_r + r)
-      oy <- y0[j] + uy * (node_r + r)
-      base <- atan2(y0[j] - oy, x0[j] - ox) # loop-centre -> node
-      lx <- ox + r * cos(base + t)
-      ly <- oy + r * sin(base + t)
+      span <- 1.6 * pi
       a <- alpha[j]
-      xy <- .xy_units(scales, lx, ly)
       scene <- .draw(
         scene,
-        vellum::lines_grob(
-          xy$x,
-          xy$y,
+        vellum::loop_grob(
+          vellum::unit(x0[j], "native"),
+          vellum::unit(y0[j], "native"),
+          r = vellum::unit(r_mm, "mm"),
+          theta0 = ang - span / 2,
+          theta1 = ang + span / 2,
           arrow = arr,
           gp = vellum::gpar(
             col = col[j],

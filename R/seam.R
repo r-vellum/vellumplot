@@ -124,12 +124,10 @@ NULL
       flip = flip,
       polar = NULL
     )
-    psc$graph <- .graph_geom(
+    psc$graph <- .graph_caps(
       p$resolved,
-      hsc,
-      vsc,
-      spec@width,
-      spec@height,
+      spec@edge_data,
+      nrow(spec@data),
       psc
     )
     pname <- sprintf("panel-%d-%d", p$r, p$c)
