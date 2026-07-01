@@ -7,3 +7,5 @@
 ^\.Rproj\.user$
 ^[^/]*\.png$
 ^[.]?air[.]toml$
+census2010.parq.zip
+census2010.parq/
