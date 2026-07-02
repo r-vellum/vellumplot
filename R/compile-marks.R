@@ -1007,6 +1007,8 @@ NULL
           ang <- pi / 2
         }
       }
+      # narrow the petal when the incident-edge gap is tight (rigraph factor)
+      narrow <- gh$loop_narrow[j] %||% 1
       xy <- .xy_units(scales, x0[j], y0[j])
       a <- alpha[j]
       scene <- .draw(
@@ -1017,6 +1019,7 @@ NULL
           size = vellum::unit(size_mm, "mm"),
           foot = vellum::unit(node_r_mm, "mm"),
           angle = ang,
+          width = narrow,
           arrow = arr,
           gp = vellum::gpar(
             col = col[j],
