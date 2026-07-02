@@ -988,24 +988,24 @@ NULL
   }
 
   # Self-loops: vellum's teardrop loop_grob (igraph shape) anchored at the vertex,
-  # sized in mm so it tracks the node marker, with its feet on the node boundary
-  # (`foot`) and bulging away from the graph centre; nested outward per vertex.
-  # A directed loop carries an arrowhead tangent at the returning foot.
+  # sized in mm so it tracks the node marker, feet on the node boundary (`foot`).
+  # Each loop points into the largest gap between the vertex's incident edges
+  # (the igraph "flower-petal" placement, precomputed in .loop_geometry), so loops
+  # land in empty space; several on a vertex spread across the gap. A directed
+  # loop carries an arrowhead tangent at the returning foot.
   li <- which(loop)
   if (length(li)) {
     cx <- mean(c(x0, x1))
     cy <- mean(c(y0, y1))
-    kcount <- list()
     for (j in li) {
-      key_j <- paste(x0[j], y0[j], sep = "\036")
-      k <- kcount[[key_j]] %||% 0L
-      kcount[[key_j]] <- k + 1L
       node_r_mm <- if (!is.null(gh)) gh$end_cap[j] else 2
-      # size / 0.3 = device bulge; size grows per nested loop so tips stay clear.
-      size_mm <- node_r_mm * (5 + k * 3.3)
-      ang <- atan2(y0[j] - cy, x0[j] - cx)
+      size_mm <- node_r_mm * 5 # size/0.3 = device bulge; clears the marker
+      ang <- gh$loop_angle[j] %||% NA_real_
       if (!is.finite(ang)) {
-        ang <- pi / 2
+        ang <- atan2(y0[j] - cy, x0[j] - cx) # fallback: away from centre
+        if (!is.finite(ang)) {
+          ang <- pi / 2
+        }
       }
       xy <- .xy_units(scales, x0[j], y0[j])
       a <- alpha[j]

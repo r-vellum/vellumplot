@@ -162,6 +162,50 @@ NULL
   list(s = s, loop = loop)
 }
 
+# Per-loop direction + narrowing, the igraph "flower-petal" placement
+# (rigraph R/plot.R): a self-loop points into the *largest angular gap* between
+# its vertex's non-loop incident edges, so it lands in empty space; several loops
+# on one vertex spread evenly across that gap. `narrow` (1 = wide .. 0.2 = tight)
+# reports how crowded the gap is, for the loop's width (see loop_grob(width=)).
+# Returns per-edge vectors (NA angle for non-loops). `ei` is the N x 2 endpoint
+# index matrix; `xy` the layout.
+.loop_geometry <- function(ei, xy) {
+  m <- nrow(ei)
+  angle <- rep(NA_real_, m)
+  narrow <- rep(1, m)
+  if (!m) {
+    return(list(angle = angle, narrow = narrow))
+  }
+  is_loop <- ei[, 1] == ei[, 2]
+  for (v in unique(ei[is_loop, 1])) {
+    idx <- which(is_loop & ei[, 1] == v)
+    n_loops <- length(idx)
+    inc <- which(!is_loop & (ei[, 1] == v | ei[, 2] == v))
+    if (!length(inc)) {
+      # no other edges: the whole circle is free
+      angs <- utils::head(seq(0, 2 * pi, length.out = n_loops + 1), -1)
+      gap_span <- 2 * pi
+    } else {
+      other <- ifelse(ei[inc, 1] == v, ei[inc, 2], ei[inc, 1])
+      na <- sort(
+        (atan2(xy[other, 2] - xy[v, 2], xy[other, 1] - xy[v, 1]) + 2 * pi) %%
+          (2 * pi)
+      )
+      gaps <- diff(c(na, na[1] + 2 * pi))
+      gi <- which.max(gaps)
+      gap_span <- gaps[gi]
+      # place the loops strictly inside the largest gap (endpoints excluded so a
+      # loop never sits on an incident edge)
+      angs <- seq(na[gi], na[gi] + gap_span, length.out = n_loops + 2)
+      angs <- angs[-c(1, n_loops + 2)] %% (2 * pi)
+    }
+    angle[idx] <- angs
+    per <- gap_span / n_loops
+    narrow[idx] <- pmin(1, pmax(0.2, per / (pi / 4))) # full width if >= 45 deg
+  }
+  list(angle = angle, narrow = narrow)
+}
+
 # Build the node table: vertex attributes + a `name` id + layout x/y, in the
 # graph's canonical vertex order (coords attached before any user reorder).
 .node_table <- function(g, xy) {
@@ -192,7 +236,7 @@ NULL
   if (!m) {
     edf$x <- edf$y <- edf$xend <- edf$yend <- numeric(0)
     edf$.from_i <- edf$.to_i <- integer(0)
-    edf$.offset_s <- numeric(0)
+    edf$.offset_s <- edf$.loop_angle <- edf$.loop_narrow <- numeric(0)
     return(edf)
   }
   # Endpoint vertex indices (into node-table / vertex order) so the edge emitter
@@ -207,6 +251,10 @@ NULL
   edf$xend <- xy[ei[, 2], 1]
   edf$yend <- xy[ei[, 2], 2]
   edf$.offset_s <- .edge_offsets(ei)$s
+  # self-loop direction (into the largest incident-edge gap) + narrowing
+  lg <- .loop_geometry(ei, xy)
+  edf$.loop_angle <- lg$angle
+  edf$.loop_narrow <- lg$narrow
   edf
 }
 
@@ -258,7 +306,9 @@ NULL
     node_r = r_mm,
     start_cap = r_mm[fi],
     end_cap = r_mm[ti],
-    offset = offset_mm
+    offset = offset_mm,
+    loop_angle = edge_data[[".loop_angle"]],
+    loop_narrow = edge_data[[".loop_narrow"]]
   )
 }
 

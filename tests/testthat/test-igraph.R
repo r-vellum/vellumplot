@@ -52,6 +52,24 @@ test_that(".edge_offsets spreads parallel/reciprocal edges and flags loops", {
   expect_equal(.edge_offsets(rbind(c(1, 2)))$s, 0)
 })
 
+test_that(".loop_geometry points a self-loop into the largest incident gap", {
+  # vertex 1 has neighbours at bearing 0 (right) and pi/2 (up); the widest gap is
+  # pi/2 -> 2pi, so a single loop points to its midpoint 5pi/4 (down-left).
+  ei <- rbind(c(1, 2), c(1, 3), c(1, 1))
+  xy <- rbind(c(0, 0), c(1, 0), c(0, 1))
+  lg <- .loop_geometry(ei, xy)
+  expect_equal(lg$angle[3], 5 * pi / 4)
+  expect_true(is.na(lg$angle[1]) && is.na(lg$angle[2])) # non-loops: no angle
+  expect_equal(lg$narrow[3], 1) # wide gap -> full width
+
+  # no other edges -> whole circle free; a lone loop sits at 0.
+  lg2 <- .loop_geometry(rbind(c(1, 1)), rbind(c(0, 0)))
+  expect_equal(lg2$angle[1], 0)
+
+  # narrowing stays within [0.2, 1].
+  expect_true(all(lg$narrow >= 0.2 & lg$narrow <= 1))
+})
+
 # --- two-table construction -------------------------------------------------
 
 test_that(".node_table carries name + layout coords in vertex order", {
