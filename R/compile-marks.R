@@ -996,7 +996,7 @@ NULL
       k <- kcount[[key_j]] %||% 0L
       kcount[[key_j]] <- k + 1L
       node_r_mm <- if (!is.null(gh)) gh$end_cap[j] else 2
-      r_mm <- node_r_mm * (2 + k * 1.3) # loop radius grows per nested loop
+      r_mm <- node_r_mm * (1.5 + k * 0.9) # loop radius grows per nested loop
       # Bulge the loop away from the graph centre.
       ang <- atan2(y0[j] - cy, x0[j] - cx)
       if (!is.finite(ang)) {

@@ -253,9 +253,10 @@ NULL
   if (!has_edges || is.null(node_L) || is.null(fi) || is.null(ti)) {
     return(NULL)
   }
-  # Node radius = drawn marker size / 2, in vertex order (default matches the
-  # node emitter's `.aes_size(L, scales, 1)`).
-  r_mm <- rep_len(.aes_size(node_L, scales, 1), node_n) / 2
+  # Node radius (mm), in vertex order. vellum's points_grob `size` *is* the
+  # radius (size = 20mm renders a 40mm-diameter marker), so the cap == size.
+  # Default matches the node emitter's `.aes_size(L, scales, 1)`.
+  r_mm <- rep_len(.aes_size(node_L, scales, 1), node_n)
   list(node_r = r_mm, start_cap = r_mm[fi], end_cap = r_mm[ti])
 }
 
