@@ -755,7 +755,8 @@ mark_segment <- function(plot, ..., blend = NULL, data = NULL) {
 #' @param arrow For `mark_edges()`, `TRUE` to draw an arrowhead at each edge's
 #'   target end (directed graphs). Edges are capped exactly at each endpoint's
 #'   node boundary (per vertex, at any size/resolution), so the head sits on the
-#'   node edge; self-loops are drawn as arced arrows sized to the node.
+#'   node edge; self-loops are drawn as teardrop loops sized to the node, with the
+#'   head on the node boundary.
 #' @param label For `mark_node_text()`, the label expression (default the vertex
 #'   `name`).
 #' @param blend Optional blend mode (see [mark_point()]).

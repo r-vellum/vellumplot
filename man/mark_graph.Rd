@@ -54,7 +54,8 @@ position channels are supplied by \code{vgraph()} and need not be mapped.}
 \item{arrow}{For \code{mark_edges()}, \code{TRUE} to draw an arrowhead at each edge's
 target end (directed graphs). Edges are capped exactly at each endpoint's
 node boundary (per vertex, at any size/resolution), so the head sits on the
-node edge; self-loops are drawn as arced arrows sized to the node.}
+node edge; self-loops are drawn as teardrop loops sized to the node, with the
+head on the node boundary.}
 
 \item{blend}{Optional blend mode (see \code{\link[=mark_point]{mark_point()}}).}
 

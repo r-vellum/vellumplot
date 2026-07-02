@@ -14,9 +14,10 @@ NULL
 # `igraph` and `graphlayouts` are Suggests: the package installs and runs without
 # them; vgraph() errors clearly if they are absent. See _docs/DESIGN-igraph.md.
 
-# Perpendicular offset between parallel/reciprocal edges, as a fraction of the
-# layout bounding-box diagonal. Kept small so lines stay visually adjacent.
-.EDGE_OFFSET_FRAC <- 0.06
+# Perpendicular spacing between parallel/reciprocal edges, as a fraction of the
+# endpoint node radius (mm). Applied device-side via segments_grob(offset=), so it
+# tracks the mm node markers at any figure size.
+.EDGE_OFFSET_MM_FRAC <- 1.1
 
 # Friendly layout name -> (package, function). graphlayouts names are tried
 # first (its stress layout is the default); igraph supplies the classics.
@@ -191,34 +192,21 @@ NULL
   if (!m) {
     edf$x <- edf$y <- edf$xend <- edf$yend <- numeric(0)
     edf$.from_i <- edf$.to_i <- integer(0)
+    edf$.offset_s <- numeric(0)
     return(edf)
   }
   # Endpoint vertex indices (into node-table / vertex order) so the edge emitter
   # can look up each endpoint's node radius for exact per-node capping.
   edf$.from_i <- ei[, 1]
   edf$.to_i <- ei[, 2]
-  x0 <- xy[ei[, 1], 1]
-  y0 <- xy[ei[, 1], 2]
-  x1 <- xy[ei[, 2], 1]
-  y1 <- xy[ei[, 2], 2]
-
-  off <- .edge_offsets(ei)
-  diag <- sqrt(diff(range(xy[, 1]))^2 + diff(range(xy[, 2]))^2)
-  d <- .EDGE_OFFSET_FRAC * (if (is.finite(diag) && diag > 0) diag else 1)
-  lo <- pmin(ei[, 1], ei[, 2])
-  hi <- pmax(ei[, 1], ei[, 2])
-  ux <- xy[hi, 1] - xy[lo, 1]
-  uy <- xy[hi, 2] - xy[lo, 2]
-  len <- sqrt(ux^2 + uy^2)
-  len[len == 0] <- 1 # loops / coincident nodes -> no meaningful perpendicular
-  nx <- -uy / len
-  ny <- ux / len
-  shift <- off$s * d
-
-  edf$x <- x0 + shift * nx
-  edf$y <- y0 + shift * ny
-  edf$xend <- x1 + shift * nx
-  edf$yend <- y1 + shift * ny
+  # Endpoints are the raw node coordinates (native). Parallel/reciprocal edges are
+  # separated at *render* by vellum's device-space `offset =` (mm), so the spacing
+  # tracks the mm node markers; here we only record the signed offset index `s`.
+  edf$x <- xy[ei[, 1], 1]
+  edf$y <- xy[ei[, 1], 2]
+  edf$xend <- xy[ei[, 2], 1]
+  edf$yend <- xy[ei[, 2], 2]
+  edf$.offset_s <- .edge_offsets(ei)$s
   edf
 }
 
@@ -241,7 +229,7 @@ NULL
 # and `loop_grob()`, added for this; _docs/HANDOVER-response.md). Returns per-edge
 # source/target radii (keyed through the edge endpoint indices) plus the per-vertex
 # radii. NULL when the panel has no edge layer or node layer (nothing to cap).
-.graph_caps <- function(resolved, edge_data, node_n, scales, width, height) {
+.graph_caps <- function(resolved, edge_data, node_n, scales) {
   has_edges <- any(vapply(
     resolved,
     function(L) identical(L$mark, "edges"),
@@ -257,16 +245,21 @@ NULL
   # radius (size = 20mm renders a 40mm-diameter marker), so the cap == size.
   # Default matches the node emitter's `.aes_size(L, scales, 1)`.
   r_mm <- rep_len(.aes_size(node_L, scales, 1), node_n)
-  # native-per-mm estimate: only for sizing the (decorative) self-loops so they
-  # clear the node; edge caps stay exact (vellum resolves their mm in device
-  # space). The panel is a null track, so this is a figure-size estimate
-  # (aspect-locked graph panel, ~0.85 for margins/legend) -- fine for loops.
-  span <- max(
-    abs(diff(range(scales$x$domain))),
-    abs(diff(range(scales$y$domain)))
+  # Per-edge perpendicular offset (mm): the signed parallel-edge index scaled by
+  # the larger endpoint radius, so parallel/reciprocal edges spread across the
+  # node face. Applied device-side by segments_grob(offset=) -> tracks the nodes.
+  # `.offset_s` is in the canonical (low->high vertex) frame, but vellum offsets
+  # each edge along *its own* from->to normal, so reversed edges (from > to) need
+  # a sign flip -- otherwise a reciprocal a->b / b->a pair lands on the same side.
+  s <- edge_data[[".offset_s"]] %||% rep(0, length(fi))
+  dir_sign <- ifelse(fi <= ti, 1, -1)
+  offset_mm <- s * dir_sign * pmax(r_mm[fi], r_mm[ti]) * .EDGE_OFFSET_MM_FRAC
+  list(
+    node_r = r_mm,
+    start_cap = r_mm[fi],
+    end_cap = r_mm[ti],
+    offset = offset_mm
   )
-  npm <- span / (min(width, height) * 0.85 * 25.4)
-  list(node_r = r_mm, start_cap = r_mm[fi], end_cap = r_mm[ti], npm = npm)
 }
 
 # The void-like default theme for a graph: no axes, ticks, gridlines, or panel

@@ -136,9 +136,7 @@ NULL
       p$resolved,
       spec@edge_data,
       nrow(spec@data),
-      psc,
-      spec@width,
-      spec@height
+      psc
     )
     pname <- sprintf("panel-%d-%d", p$r, p$c)
     if (polar) {

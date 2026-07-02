@@ -82,22 +82,38 @@ test_that(".edge_table resolves endpoints by vertex index, not row position", {
   expect_identical(et$.to_i, c(2L, 3L))
 })
 
-test_that(".graph_caps returns exact per-edge node radii (mm)", {
-  # points_grob `size` is the radius, so node radius == size: sizes 4/8 -> caps
-  # (4, 8) on edge 1->2.
+test_that(".graph_caps returns exact per-edge node radii + offsets (mm)", {
+  # points_grob `size` is the radius, so node radius == size (sizes 4/8).
   resolved <- list(
-    list(mark = "edges", values = list(), params = list(), n = 1L),
+    list(mark = "edges", values = list(), params = list(), n = 2L),
     list(mark = "nodes", values = list(), params = list(size = c(4, 8)), n = 2L)
   )
-  edge_data <- data.frame(.from_i = 1L, .to_i = 2L)
-  scales <- list(x = list(domain = c(0, 10)), y = list(domain = c(0, 10)))
-  caps <- .graph_caps(resolved, edge_data, node_n = 2L, scales, width = 6, height = 4)
+  scales <- list()
+  frac <- 1.1 # .EDGE_OFFSET_MM_FRAC
+
+  # two parallel 1->2 edges on opposite canonical sides -> caps by endpoint,
+  # offset spread across the larger (8mm) node.
+  ed <- data.frame(
+    .from_i = c(1L, 1L),
+    .to_i = c(2L, 2L),
+    .offset_s = c(-0.5, 0.5)
+  )
+  caps <- .graph_caps(resolved, ed, node_n = 2L, scales)
   expect_equal(caps$node_r, c(4, 8))
-  expect_equal(caps$start_cap, 4) # source vertex 1 radius
-  expect_equal(caps$end_cap, 8) # target vertex 2 radius
-  expect_true(is.finite(caps$npm) && caps$npm > 0) # loop-sizing estimate
+  expect_equal(caps$start_cap, c(4, 4)) # source = vertex 1
+  expect_equal(caps$end_cap, c(8, 8)) # target = vertex 2
+  expect_equal(caps$offset, c(-0.5, 0.5) * 8 * frac)
+
+  # a reversed edge flips the offset sign (vellum offsets along the edge's own
+  # normal, so a reciprocal pair must be sign-flipped to separate).
+  ed2 <- data.frame(.from_i = 2L, .to_i = 1L, .offset_s = 0.5)
+  expect_equal(
+    .graph_caps(resolved, ed2, 2L, scales)$offset,
+    0.5 * -1 * 8 * frac
+  )
+
   # no nodes layer -> nothing to cap.
-  expect_null(.graph_caps(resolved[1], edge_data, 2L, scales, 6, 4))
+  expect_null(.graph_caps(resolved[1], ed, 2L, scales))
 })
 
 test_that(".edge_table handles an edgeless graph", {

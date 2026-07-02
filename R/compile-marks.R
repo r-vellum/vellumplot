@@ -961,8 +961,11 @@ NULL
         vellum::unit(x1[g], "native"),
         vellum::unit(y1[g], "native")
       )
+      # Node-boundary caps and parallel-edge spacing are both absolute (mm),
+      # resolved by vellum in device space -> they track the mm node markers.
       start_cap <- if (!is.null(gh)) vellum::unit(gh$start_cap[g] + gap, "mm")
       end_cap <- if (!is.null(gh)) vellum::unit(gh$end_cap[g] + gap, "mm")
+      offset <- if (!is.null(gh)) vellum::unit(gh$offset[g], "mm")
       scene <- .draw(
         scene,
         vellum::segments_grob(
@@ -973,6 +976,7 @@ NULL
           arrow = arr,
           start_cap = start_cap,
           end_cap = end_cap,
+          offset = offset,
           gp = vellum::gpar(
             col = col[g[1]],
             lwd = lwd[g[1]],
@@ -983,66 +987,36 @@ NULL
     }
   }
 
-  # Self-loops: a cubic-Bezier teardrop anchored at the vertex (the igraph shape,
-  # not a bare ring) bulging away from the graph centre, nested outward when a
-  # vertex carries several. Both ends sit at the vertex centre, so the node
-  # (drawn on top) hides the base and the loop reads as emanating from its edge.
-  # The bulge scales with the node radius (converted to native via the loop-only
-  # estimate in scales$graph$npm) so the loop always clears the marker.
+  # Self-loops: vellum's teardrop loop_grob (igraph shape) anchored at the vertex,
+  # sized in mm so it tracks the node marker, with its feet on the node boundary
+  # (`foot`) and bulging away from the graph centre; nested outward per vertex.
+  # A directed loop carries an arrowhead tangent at the returning foot.
   li <- which(loop)
   if (length(li)) {
-    xr <- abs(diff(range(scales$x$domain)))
-    yr <- abs(diff(range(scales$y$domain)))
-    diag <- sqrt(xr^2 + yr^2)
-    if (!is.finite(diag) || diag == 0) {
-      diag <- 1
-    }
-    npm <- gh$npm %||% 1
     cx <- mean(c(x0, x1))
     cy <- mean(c(y0, y1))
-    tt <- seq(0, 1, length.out = 48)
-    # Cubic-Bezier basis weights for control points P0..P3.
-    b0 <- (1 - tt)^3
-    b1 <- 3 * (1 - tt)^2 * tt
-    b2 <- 3 * (1 - tt) * tt^2
-    b3 <- tt^3
     kcount <- list()
     for (j in li) {
       key_j <- paste(x0[j], y0[j], sep = "\036")
       k <- kcount[[key_j]] %||% 0L
       kcount[[key_j]] <- k + 1L
-      # Node radius in native units (estimate); bulge/width scale from it so the
-      # teardrop clears the marker, growing per nested loop.
-      nr <- if (!is.null(gh)) gh$end_cap[j] * npm else 0.03 * diag
-      bulge <- nr * (3.2 + k * 1.9)
-      width <- nr * (1.8 + k * 1.1)
-      # Cubic-Bezier control points in a local frame bulging along +x, later
-      # rotated to point away from the graph centre. The two feet (P0, P3) sit on
-      # the node *boundary* (radius nr, straddling +x) rather than the centre, so
-      # the loop reads as leaving and re-entering the node edge and a directed
-      # loop's arrowhead lands on the visible boundary instead of under the node.
-      beta <- pi / 7
-      fx <- nr * cos(beta)
-      fy <- nr * sin(beta)
-      px <- c(fx, bulge, bulge, fx)
-      py <- c(fy, width, -width, -fy)
+      node_r_mm <- if (!is.null(gh)) gh$end_cap[j] else 2
+      # size / 0.3 = device bulge; size grows per nested loop so tips stay clear.
+      size_mm <- node_r_mm * (5 + k * 3.3)
       ang <- atan2(y0[j] - cy, x0[j] - cx)
       if (!is.finite(ang)) {
         ang <- pi / 2
       }
-      ca <- cos(ang)
-      sa <- sin(ang)
-      qx <- px * ca - py * sa + x0[j]
-      qy <- px * sa + py * ca + y0[j]
-      lx <- b0 * qx[1] + b1 * qx[2] + b2 * qx[3] + b3 * qx[4]
-      ly <- b0 * qy[1] + b1 * qy[2] + b2 * qy[3] + b3 * qy[4]
+      xy <- .xy_units(scales, x0[j], y0[j])
       a <- alpha[j]
-      xy <- .xy_units(scales, lx, ly)
       scene <- .draw(
         scene,
-        vellum::lines_grob(
+        vellum::loop_grob(
           xy$x,
           xy$y,
+          size = vellum::unit(size_mm, "mm"),
+          foot = vellum::unit(node_r_mm, "mm"),
+          angle = ang,
           arrow = arr,
           gp = vellum::gpar(
             col = col[j],
