@@ -98,6 +98,47 @@ NULL
   if (aesthetic %in% c("color", "fill")) c("color", "fill") else aesthetic
 }
 
+# The legend key glyph a mark draws with: a filled point, a short line, or a
+# filled square swatch (the fallback for area/bar/tile/polygon-like marks).
+.MARK_KEY_GLYPH <- c(
+  point = "point",
+  nodes = "point",
+  line = "line",
+  smooth = "line",
+  step = "line",
+  rule = "line",
+  segment = "line",
+  density = "line",
+  linerange = "line",
+  errorbar = "line",
+  edges = "line"
+)
+
+.key_glyph_for_mark <- function(mark) {
+  if (mark %in% names(.MARK_KEY_GLYPH)) .MARK_KEY_GLYPH[[mark]] else "square"
+}
+
+# The key glyph for a scale, from the marks of the layers that map `aesthetic`
+# (colour aliases to fill). A point-drawing layer wins (the common scatter case),
+# then a line-drawing layer, else the square swatch -- so a legend key matches
+# what the plot actually draws (e.g. circles for a point layer, not squares).
+.key_glyph_for_aes <- function(resolved, aesthetic) {
+  aliases <- .aes_aliases(aesthetic)
+  glyphs <- character(0)
+  for (L in resolved) {
+    if (any(aliases %in% names(L$values))) {
+      glyphs <- c(glyphs, .key_glyph_for_mark(L$mark))
+    }
+  }
+  if ("point" %in% glyphs) {
+    "point"
+  } else if ("line" %in% glyphs) {
+    "line"
+  } else {
+    "square"
+  }
+}
+
 # The user-declared scale for an aesthetic, or NULL. `color` and `fill` share a
 # colour scale; either declaration applies.
 .scale_for <- function(spec, aesthetic) {

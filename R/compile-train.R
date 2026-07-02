@@ -416,6 +416,7 @@ NULL
   # value was actually NA (so the guide shows a distinct NA swatch).
   na_value <- .colour_na_value(spec, scalespec, resolved)
   has_na <- any(is.na(unlist(values, use.names = FALSE)))
+  key_glyph <- .key_glyph_for_aes(resolved, "color")
 
   if (identical(kind, "binned")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
@@ -446,7 +447,8 @@ NULL
       labels = labels,
       colors = cols,
       na = has_na,
-      na_value = na_value
+      na_value = na_value,
+      key_glyph = key_glyph
     )
   } else if (identical(kind, "continuous")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
@@ -486,7 +488,8 @@ NULL
       legend_breaks = lbrk,
       legend_labels = llab %||% scales::label_number()(lbrk),
       na = has_na,
-      na_value = na_value
+      na_value = na_value,
+      key_glyph = key_glyph
     )
   } else {
     all_levels <- .cat_levels(values)
@@ -515,7 +518,8 @@ NULL
       labels = labels,
       colors = unname(cols[levels]),
       na = has_na,
-      na_value = na_value
+      na_value = na_value,
+      key_glyph = key_glyph
     )
   }
 }

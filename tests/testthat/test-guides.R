@@ -108,3 +108,15 @@ test_that("legend.position rejects unknown values", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   expect_error(theme(p, legend.position = "middle"), "legend.position")
 })
+
+test_that("the colour key glyph matches the mark that maps colour", {
+  pt <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  expect_identical(train(pt)$color$key_glyph, "point")
+
+  ln <- vplot(mtcars) |> mark_line(x = wt, y = mpg, color = factor(cyl))
+  expect_identical(train(ln)$color$key_glyph, "line")
+
+  df <- data.frame(g = c("a", "b"), h = c(1, 2), k = c("x", "y"))
+  br <- vplot(df) |> mark_bar(x = g, y = h, fill = k)
+  expect_identical(train(br)$color$key_glyph, "square")
+})

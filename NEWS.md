@@ -33,6 +33,10 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   centred in the legend track. Titles sit directly above their keys, horizontal
   (top/bottom) legends pack keys tightly instead of spreading them across the
   full width, and a vertical legend uses the full figure height.
+* **Legend keys match the mark**: a colour legend draws the glyph the plot
+  actually uses — a filled circle for point layers, a short line for line-like
+  layers (line/step/smooth/segment/…), and a filled square for bar/area/tile/
+  polygon layers — instead of always a square swatch.
 * Layering: multiple marks on one panel, with scales trained across all layers.
 * **Faceting**: `facet_wrap(~var)` and `facet_grid(rows ~ cols)` split the data
   into a panel grid with facet strips and aligned, shared axes.
