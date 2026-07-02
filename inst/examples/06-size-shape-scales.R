@@ -10,7 +10,7 @@ peng <- na.omit(datasets::penguins)
 # A mapped continuous size; scale_size sets the output range in mm.
 vplot(peng) |>
   mark_point(x = bill_len, y = flipper_len, size = body_mass, alpha = 0.5) |>
-  scale_size(range = c(1, 9), name = "Mass (g)") |>
+  scale_size(range = c(0.5, 4), name = "Mass (g)") |>
   labs(title = "Bubble chart (size = body mass)") |>
   render_plot(file.path(outdir, "06-size.png"))
 
@@ -18,7 +18,7 @@ vplot(peng) |>
 # A discrete shape aesthetic cycles through marker shapes; restrict / reorder
 # them with scale_shape(values = ).
 vplot(peng) |>
-  mark_point(x = bill_len, y = flipper_len, shape = species, size = 3) |>
+  mark_point(x = bill_len, y = flipper_len, shape = species, size = 1.8) |>
   scale_shape(values = c("circle", "triangle", "square")) |>
   labs(title = "Shape encodes species") |>
   render_plot(file.path(outdir, "06-shape.png"))
@@ -35,7 +35,7 @@ vplot(peng, width = 6.5, height = 5.5) |>
     alpha = 0.8
   ) |>
   scale_color_continuous(palette = "plasma") |>
-  scale_size(range = c(1, 7)) |>
+  scale_size(range = c(0.5, 3.5)) |>
   labs(title = "Colour + size + shape") |>
   render_plot(file.path(outdir, "06-combined.png"))
 

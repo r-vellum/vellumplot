@@ -40,7 +40,7 @@ vplot(peng) |>
 # Aggregate y per x with a function (default mean) and draw the result.
 vplot(peng) |>
   mark_point(x = species, y = body_mass, color = species, alpha = 0.25) |>
-  mark_summary(x = species, y = body_mass, fun = median, size = 4) |>
+  mark_summary(x = species, y = body_mass, fun = median, size = 2.5) |>
   labs(title = "Raw points with median summary", y = "Body mass (g)") |>
   render_plot(file.path(outdir, "02-summary.png"))
 
@@ -57,13 +57,13 @@ agg <- do.call(rbind, lapply(split(peng, peng$species), function(d) {
 }))
 vplot(agg) |>
   mark_errorbar(x = species, ymin = ymin, ymax = ymax, width = 0.4) |>
-  mark_point(x = species, y = mean, size = 3) |>
+  mark_point(x = species, y = mean, size = 1.8) |>
   labs(title = "Mean +/- SD error bars", y = "Body mass (g)") |>
   render_plot(file.path(outdir, "02-errorbar.png"))
 
 vplot(agg) |>
   mark_linerange(x = species, ymin = ymin, ymax = ymax) |>
-  mark_point(x = species, y = mean, size = 3, color = "#c0392b") |>
+  mark_point(x = species, y = mean, size = 1.8, color = "#c0392b") |>
   labs(title = "Line ranges (no caps)", y = "Body mass (g)") |>
   render_plot(file.path(outdir, "02-linerange.png"))
 

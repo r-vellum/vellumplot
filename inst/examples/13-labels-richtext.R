@@ -9,7 +9,7 @@ peng <- na.omit(datasets::penguins)
 # --- the full set of plot-level labels --------------------------------------
 # title + subtitle + tag stack above the panel; caption sits below.
 vplot(peng) |>
-  mark_point(x = bill_len, y = flipper_len, color = species, size = 2.5) |>
+  mark_point(x = bill_len, y = flipper_len, color = species, size = 1.4) |>
   labs(
     title = "Palmer penguins",
     subtitle = "Bill length against flipper length, by species",

@@ -8,10 +8,10 @@ dir.create(outdir, showWarnings = FALSE)
 peng <- na.omit(datasets::penguins)
 
 # --- points -----------------------------------------------------------------
-# The canonical scatterplot. A constant aesthetic (size = 2.5) is a number;
+# The canonical scatterplot. A constant aesthetic (size = 1.4) is a number;
 # a mapped aesthetic (color = species) is a bare column name.
 vplot(peng) |>
-  mark_point(x = bill_len, y = flipper_len, color = species, size = 2.5) |>
+  mark_point(x = bill_len, y = flipper_len, color = species, size = 1.4) |>
   labs(title = "Bill length vs flipper length", x = "Bill (mm)", y = "Flipper (mm)") |>
   render_plot(file.path(outdir, "01-points.png"))
 
@@ -43,7 +43,7 @@ mt <- mt[order(mt$mpg), ][1:12, ]
 mt$i <- seq_len(nrow(mt))
 vplot(mt) |>
   mark_segment(x = i, y = 0, xend = i, yend = mpg) |>
-  mark_point(x = i, y = mpg, size = 3, color = "#2b6cb0") |>
+  mark_point(x = i, y = mpg, size = 1.8, color = "#2b6cb0") |>
   labs(title = "Lollipops via segment + point", x = "rank", y = "mpg") |>
   render_plot(file.path(outdir, "01-segments.png"))
 

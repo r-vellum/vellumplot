@@ -29,7 +29,7 @@ sd <- data.frame(x = 1:8, y = c(1, 3, 2, 5, 4, 6, 5, 7))
 vplot(sd) |>
   mark_step(x = x, y = y, direction = "hv", color = "#3182bd") |>
   mark_step(x = x, y = y, direction = "vh", color = "#de2d26") |>
-  mark_point(x = x, y = y, size = 2) |>
+  mark_point(x = x, y = y, size = 1.4) |>
   labs(title = "Step: hv (blue) vs vh (red)") |>
   render_plot(file.path(outdir, "04-step-directions.png"))
 

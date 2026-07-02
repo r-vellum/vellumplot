@@ -13,7 +13,7 @@ vplot(mtcars) |>
   # a guide segment
   annotate("segment", x = 2, y = 30, xend = 3, yend = 22, color = "#c0392b") |>
   # an emphasised point
-  annotate("point", x = 3, y = 22, size = 4, color = "#c0392b") |>
+  annotate("point", x = 3, y = 22, size = 2.5, color = "#c0392b") |>
   # plain text and a boxed label
   annotate("text", x = 2, y = 31, label = "outlier zone", color = "#c0392b") |>
   annotate("label", x = 4.5, y = 30, label = "heavy + thirsty", fill = "#fff3cd") |>

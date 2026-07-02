@@ -23,7 +23,7 @@ radar <- data.frame(
 )
 vplot(radar) |>
   mark_line(x = axis, y = value, color = "#2b8cbe") |>
-  mark_point(x = axis, y = value, size = 3, color = "#2b8cbe") |>
+  mark_point(x = axis, y = value, size = 2, color = "#2b8cbe") |>
   coord_polar(theta = "x") |>
   labs(title = "Radar chart") |>
   render_plot(file.path(outdir, "09-radar.png"))

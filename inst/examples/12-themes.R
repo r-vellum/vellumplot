@@ -8,7 +8,7 @@ peng <- na.omit(datasets::penguins)
 
 base <- function() {
   vplot(peng) |>
-    mark_point(x = bill_len, y = flipper_len, color = species, size = 2.5)
+    mark_point(x = bill_len, y = flipper_len, color = species, size = 1.4)
 }
 
 # --- built-in themes --------------------------------------------------------

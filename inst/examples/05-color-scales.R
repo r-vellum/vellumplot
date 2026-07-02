@@ -10,14 +10,14 @@ peng <- na.omit(datasets::penguins)
 # A mapped continuous variable gets a perceptual ramp + a colour-bar legend.
 # `palette` accepts any grDevices::hcl.colors() name.
 vplot(peng) |>
-  mark_point(x = bill_len, y = bill_dep, color = body_mass, size = 2.5) |>
+  mark_point(x = bill_len, y = bill_dep, color = body_mass, size = 1.4) |>
   scale_color_continuous(palette = "viridis", name = "Mass (g)") |>
   labs(title = "Continuous colour (viridis)") |>
   render_plot(file.path(outdir, "05-continuous.png"))
 
 # --- discrete qualitative palette -------------------------------------------
 vplot(peng) |>
-  mark_point(x = bill_len, y = bill_dep, color = species, size = 2.5) |>
+  mark_point(x = bill_len, y = bill_dep, color = species, size = 1.4) |>
   scale_color_discrete(palette = "Set 2") |>
   labs(title = "Discrete colour (Set 2)") |>
   render_plot(file.path(outdir, "05-discrete.png"))
@@ -25,7 +25,7 @@ vplot(peng) |>
 # --- manual colours ---------------------------------------------------------
 # Named values match data levels by name; unmatched levels fall back to grey.
 vplot(peng) |>
-  mark_point(x = bill_len, y = bill_dep, color = species, size = 2.5) |>
+  mark_point(x = bill_len, y = bill_dep, color = species, size = 1.4) |>
   scale_color_manual(values = c(
     Adelie = "#ff6f00", Chinstrap = "#9c27b0", Gentoo = "#00897b"
   )) |>
@@ -34,7 +34,7 @@ vplot(peng) |>
 
 # --- two-point gradient -----------------------------------------------------
 vplot(peng) |>
-  mark_point(x = bill_len, y = flipper_len, color = body_mass, size = 2.5) |>
+  mark_point(x = bill_len, y = flipper_len, color = body_mass, size = 1.4) |>
   scale_color_gradient(low = "#ffeda0", high = "#bd0026", name = "Mass") |>
   labs(title = "Two-point gradient (low -> high)") |>
   render_plot(file.path(outdir, "05-gradient.png"))
