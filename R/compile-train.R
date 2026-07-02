@@ -29,8 +29,10 @@ NULL
 }
 
 # Default perceptual ramp for continuous colour and qualitative palette for
-# discrete colour.
-.viridis <- function(n = 256) grDevices::hcl.colors(n, "viridis")
+# discrete colour. Batlow (Crameri's scientific colour maps) is perceptually
+# uniform, colour-vision-deficient safe, and grayscale-safe like viridis, but
+# its muted ink-and-sand tones suit vellum's aesthetic and are less ubiquitous.
+.batlow <- function(n = 256) grDevices::hcl.colors(n, "Batlow")
 
 # vellum's signature qualitative palette: muted, dark "ink" tones. More
 # distinctive than hcl's "Dark 3", ordered so that progressively smaller k stay
@@ -160,11 +162,11 @@ NULL
   )
 }
 
-# Continuous-colour ramp stops: NULL -> viridis default; an hcl.pals() name ->
+# Continuous-colour ramp stops: NULL -> batlow default; an hcl.pals() name ->
 # that palette; else a user colour vector.
 .continuous_stops <- function(palette) {
   if (is.null(palette)) {
-    return(.viridis())
+    return(.batlow())
   }
   if (.is_hcl_pal(palette)) {
     return(grDevices::hcl.colors(256, .hcl_full(palette)))

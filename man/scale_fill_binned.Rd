@@ -38,7 +38,7 @@ scale_color_binned(
 \item{breaks}{Explicit class boundaries (length = number of classes + 1),
 overriding \code{style}/\code{n}.}
 
-\item{palette}{A sequential palette: \code{NULL} (viridis), an \code{grDevices::hcl.pals()}
+\item{palette}{A sequential palette: \code{NULL} (batlow), an \code{grDevices::hcl.pals()}
 name, or a vector of colours interpolated across the classes.}
 
 \item{labels}{Optional class labels (one per class); defaults to interval

@@ -76,7 +76,7 @@ NULL
 #' @param n Number of classes (default `5`). Ignored when `breaks` is supplied.
 #' @param breaks Explicit class boundaries (length = number of classes + 1),
 #'   overriding `style`/`n`.
-#' @param palette A sequential palette: `NULL` (viridis), an `grDevices::hcl.pals()`
+#' @param palette A sequential palette: `NULL` (batlow), an `grDevices::hcl.pals()`
 #'   name, or a vector of colours interpolated across the classes.
 #' @param labels Optional class labels (one per class); defaults to interval
 #'   ranges like `"[0, 10)"`.
