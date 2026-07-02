@@ -5,8 +5,14 @@ NULL
 # come from the resolved theme; only the legend geometry and the generic gutter
 # padding remain fixed here.
 .PAD_MM <- 1.4
-.LEGEND_BAR_MM <- 6
-.LEGEND_SWATCH_MM <- 4
+.LEGEND_BAR_MM <- 6 # colour-bar thickness
+.LEGEND_SWATCH_MM <- 4 # default key / swatch side
+.LEGEND_ROW_GAP_MM <- 1.4 # vertical gap between key rows
+.LEGEND_TITLE_GAP_MM <- 1.2 # gap below a guide title
+.LEGEND_SPACING_MM <- 3.5 # gap between stacked guides
+.LEGEND_KEY_LABEL_GAP_MM <- 1.6 # gap between a key and its label
+.LEGEND_INNER_PAD_MM <- 1.4 # legend content inset
+.LEGEND_MIN_BAR_MM <- 22 # minimum colour-bar length
 
 # The longest string in a vector (by character count); "" for an empty vector.
 .longest <- function(x) {
@@ -49,51 +55,42 @@ NULL
 # measured directly (never folded into the character vector, which would coerce
 # it to a mangled string).
 .legend_width <- function(guides, rt) {
-  strs <- character(0)
-  titles <- list()
-  swatch <- .LEGEND_SWATCH_MM
+  m <- .legend_metrics(rt)
+  w <- 0
   for (g in guides) {
-    sc <- g$sc
-    titles[[length(titles) + 1L]] <- sc$name
-    if (g$kind == "color_continuous") {
-      strs <- c(strs, sc$legend_labels)
-      swatch <- max(swatch, .LEGEND_BAR_MM)
-    } else if (g$kind == "color_discrete") {
-      strs <- c(strs, sc$labels %||% sc$levels)
-    } else if (g$kind == "size") {
-      strs <- c(strs, sc$legend_labels)
-      if (length(sc$legend_sizes)) {
-        swatch <- max(swatch, 2 * max(sc$legend_sizes))
-      }
-    } else if (g$kind == "shape") {
-      strs <- c(strs, sc$levels)
+    labs <- .guide_labels(g)
+    lw <- .mm_tw(labs, m$text_fs)
+    body <- if (g$kind == "color_continuous") {
+      m$pad + m$bar_w + m$lab_gap + lw
+    } else {
+      m$pad + .guide_key_d(g, m) + m$lab_gap + lw
     }
-  }
-  # `max()` is unreliable on vellum units (returns the first arg), so widen by
-  # explicit comparison instead. Labels are drawn with `legend.text`; titles with
-  # `legend.title` -- measure each at the font it is actually rendered with.
-  text_fs <- rt[["legend.text"]]@size
-  title_fs <- rt[["legend.title"]]@size
-  text_w <- vellum::grobwidth(.txt(.longest(strs), text_fs))
-  for (nm in titles) {
-    if (!is.null(nm)) {
-      nw <- vellum::grobwidth(.txt(nm, title_fs))
-      if (nw > text_w) {
-        text_w <- nw
-      }
+    tw <- if (m$show_title && !is.null(g$sc$name)) {
+      .mm_tw_any(g$sc$name, m$title_fs)
+    } else {
+      0
     }
+    w <- max(w, body, tw)
   }
-  text_w + vellum::unit(swatch + 3 * .PAD_MM, "mm")
+  vellum::unit(w + 2 * m$pad, "mm")
 }
 
-# Height of a horizontal legend row (top/bottom): a title line above a row of
-# keys/labels, sized from the resolved title and text fonts plus room for the
-# tallest swatch/bar and padding. Independent of the guide count, which spreads
-# across the row's width.
+# Height of a horizontal legend row (top/bottom): the tallest guide, each a title
+# line above its keys (or above bar + labels for a colour bar). Independent of the
+# guide count, which spreads across the row's width.
 .legend_height <- function(guides, rt) {
-  th <- vellum::grobheight(.txt("Ag", rt[["legend.title"]]@size))
-  kh <- vellum::grobheight(.txt("Ag", rt[["legend.text"]]@size))
-  th + kh + vellum::unit(.LEGEND_BAR_MM + 4 * .PAD_MM, "mm")
+  m <- .legend_metrics(rt)
+  th <- if (m$show_title) m$title_h + m$title_gap else 0
+  h <- 0
+  for (g in guides) {
+    gh <- if (g$kind == "color_continuous") {
+      th + m$bar_w + m$text_h + m$lab_gap
+    } else {
+      th + max(.guide_key_d(g, m), m$text_h) + m$row_gap
+    }
+    h <- max(h, gh)
+  }
+  vellum::unit(h + 2 * m$pad, "mm")
 }
 
 # A tiny ordered track builder: `add(unit)` appends a track and returns its
@@ -309,6 +306,7 @@ NULL
     tag_row = tag_row,
     caption_row = caption_row,
     ncol_total = length(W$u),
+    nrow_total = length(H$u),
     respect = respect
   )
 }

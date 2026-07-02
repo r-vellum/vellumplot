@@ -25,8 +25,10 @@ vplot(peng) |>
 
 # --- size + shape + colour together -----------------------------------------
 # Four channels at once: x, y, colour (continuous), size (continuous),
-# shape (discrete) -> three stacked legends.
-vplot(peng) |>
+# shape (discrete) -> three stacked legends. Three guides (one a bubble legend
+# whose keys are sized to the largest point) need vertical room, so the figure
+# is a little taller than the default.
+vplot(peng, width = 6.5, height = 5.5) |>
   mark_point(
     x = bill_len, y = bill_dep,
     color = flipper_len, size = body_mass, shape = species,

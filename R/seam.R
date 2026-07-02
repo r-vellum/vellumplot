@@ -247,14 +247,15 @@ NULL
   # A left/right legend takes its column spanning every row; a top/bottom legend
   # takes its row spanning the panel columns (centred under/over the panels).
   if (!is.na(lay$legend_col)) {
-    # Centre the legend over the panel block (not the whole page), so it lines up
-    # with the panels rather than the title/caption bands.
+    # A vertical legend takes its whole column, spanning every row, and centres its
+    # content block within — so a tall multi-guide legend has the full figure
+    # height to work with instead of only the panel-row span.
     scene <- .draw_legends(
       scene,
       list(
-        row = lay$panel_row[1],
+        row = 1,
         col = lay$legend_col,
-        rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
+        rowspan = lay$nrow_total
       ),
       guides,
       rt,

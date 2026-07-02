@@ -27,6 +27,12 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 * Guides: trained x/y axes (breaks, labels, titles), a grey panel with white
   gridlines, and a legend area that **stacks multiple guides** — a colour legend
   (continuous gradient bar or discrete swatches) and a size legend.
+* **Legend layout** is measured in millimetres: each guide is sized to its
+  content (a title line above one row per key), the row pitch is driven by the
+  key's drawn size so large bubble keys never overlap, and the guide block is
+  centred in the legend track. Titles sit directly above their keys, horizontal
+  (top/bottom) legends pack keys tightly instead of spreading them across the
+  full width, and a vertical legend uses the full figure height.
 * Layering: multiple marks on one panel, with scales trained across all layers.
 * **Faceting**: `facet_wrap(~var)` and `facet_grid(rows ~ cols)` split the data
   into a panel grid with facet strips and aligned, shared axes.
