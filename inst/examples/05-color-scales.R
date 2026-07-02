@@ -11,8 +11,8 @@ peng <- na.omit(datasets::penguins)
 # `palette` accepts any grDevices::hcl.colors() name.
 vplot(peng) |>
   mark_point(x = bill_len, y = bill_dep, color = body_mass, size = 1.4) |>
-  scale_color_continuous(palette = "viridis", name = "Mass (g)") |>
-  labs(title = "Continuous colour (viridis)") |>
+  scale_color_continuous(palette = "Batlow", name = "Mass (g)") |>
+  labs(title = "Continuous colour (Batlow)") |>
   render_plot(file.path(outdir, "05-continuous.png"))
 
 # --- discrete qualitative palette -------------------------------------------

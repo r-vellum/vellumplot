@@ -55,7 +55,7 @@ scale_fill_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 \item{plot}{A \link{PlotSpec}.}
 
 \item{palette}{A vector of colours, or a single palette name passed to
-\code{\link[grDevices:hcl.colors]{grDevices::hcl.colors()}} (e.g. \code{"viridis"}, \code{"Blues"}, \code{"Set 2"}; matched
+\code{\link[grDevices:hcl.colors]{grDevices::hcl.colors()}} (e.g. \code{"Batlow"}, \code{"Blues"}, \code{"Set 2"}; matched
 case/space-insensitively). \code{NULL} uses a sensible default.}
 
 \item{breaks, labels}{Explicit legend breaks / labels, or \code{NULL}.}
@@ -80,5 +80,5 @@ automatically when colour is mapped.
 \examples{
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp) |>
-  scale_color_continuous(palette = "viridis")
+  scale_color_continuous(palette = "Batlow")
 }

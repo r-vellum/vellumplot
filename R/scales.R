@@ -136,7 +136,7 @@ scale_y_discrete <- function(plot, limits = NULL, name = NULL) {
 #'
 #' @param plot A [PlotSpec].
 #' @param palette A vector of colours, or a single palette name passed to
-#'   [grDevices::hcl.colors()] (e.g. `"viridis"`, `"Blues"`, `"Set 2"`; matched
+#'   [grDevices::hcl.colors()] (e.g. `"Batlow"`, `"Blues"`, `"Set 2"`; matched
 #'   case/space-insensitively). `NULL` uses a sensible default.
 #' @param values For `scale_*_manual()`, a vector of colours; if named, matched to
 #'   data levels by name (unmatched levels draw grey).
@@ -147,7 +147,7 @@ scale_y_discrete <- function(plot, limits = NULL, name = NULL) {
 #' @examples
 #' vplot(mtcars) |>
 #'   mark_point(x = wt, y = mpg, color = hp) |>
-#'   scale_color_continuous(palette = "viridis")
+#'   scale_color_continuous(palette = "Batlow")
 #' @export
 scale_color_continuous <- function(
   plot,

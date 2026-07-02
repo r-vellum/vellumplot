@@ -21,7 +21,7 @@ g <- expand.grid(x = seq(-3, 3, length.out = 120), y = seq(-3, 3, length.out = 1
 g$z <- with(g, sin(x * 1.5) * cos(y * 1.5) * exp(-(x^2 + y^2) / 8))
 vplot(g) |>
   mark_raster(x = x, y = y, fill = z) |>
-  scale_fill_continuous(palette = "viridis") |>
+  scale_fill_continuous(palette = "Batlow") |>
   labs(title = "Continuous field (raster)") |>
   render_plot(file.path(outdir, "03-raster.png"))
 
@@ -40,7 +40,7 @@ vplot(df) |>
 # --- hex (hexagonal binning) ------------------------------------------------
 vplot(df) |>
   mark_hex(x = x, y = y, bins = 30) |>
-  scale_fill_continuous(palette = "viridis") |>
+  scale_fill_continuous(palette = "Batlow") |>
   labs(title = "Same cloud, hexagonal bins (hex)") |>
   render_plot(file.path(outdir, "03-hex.png"))
 

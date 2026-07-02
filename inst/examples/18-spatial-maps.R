@@ -25,7 +25,7 @@ if (!requireNamespace("sf", quietly = TRUE)) {
     render_plot(file.path(outdir, "18-polygons.png"))
 
   # --- 2. Continuous choropleth ----------------------------------------------
-  # Map a feature attribute to fill: an unclassed viridis ramp.
+  # Map a feature attribute to fill: an unclassed Batlow ramp (the default).
   vplot(nc) |>
     mark_sf(fill = BIR74) |>
     labs(title = "Births, 1974 (continuous fill)", fill = "BIR74") |>
