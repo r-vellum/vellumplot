@@ -14,6 +14,7 @@ NULL
 .LEGEND_INNER_PAD_MM <- 1.4 # legend content inset
 .LEGEND_MIN_BAR_MM <- 22 # minimum colour-bar length
 .LEGEND_MARGIN_MM <- c(2, 2, 2, 2) # default legend block inset (t, r, b, l)
+.LEGEND_TICK_MM <- 1.6 # colour-bar break tick length
 
 # The longest string in a vector (by character count); "" for an empty vector.
 .longest <- function(x) {

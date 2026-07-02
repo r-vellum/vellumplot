@@ -525,9 +525,9 @@ NULL
   )
 }
 
-# The row labels a guide shows (an appended "NA" row where the data has missing
-# values). Discrete colour appends its NA swatch; size/shape do too (their NA
-# glyph is drawn hollow / as the NA colour).
+# The row labels a guide shows. A discrete/binned colour guide appends an "NA"
+# row where the data has missing values (its swatch is drawn in the NA colour);
+# size/shape NA keys are not yet supported (see DESIGN.md).
 .guide_labels <- function(g) {
   sc <- g$sc
   switch(
@@ -537,14 +537,8 @@ NULL
       l <- sc$labels %||% sc$levels
       if (isTRUE(sc$na)) c(l, "NA") else l
     },
-    size = {
-      l <- sc$legend_labels
-      if (isTRUE(sc$na)) c(l, "NA") else l
-    },
-    shape = {
-      l <- sc$levels
-      if (isTRUE(sc$na)) c(l, "NA") else l
-    },
+    size = sc$legend_labels,
+    shape = sc$levels,
     edge_width = sc$legend_labels
   )
 }
@@ -819,6 +813,17 @@ NULL
   )
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    # A white break tick reaching in from the bar's right (label-side) edge.
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(m$pad + m$bar_w - .LEGEND_TICK_MM, "mm"),
+        vellum::unit(frac, "npc"),
+        vellum::unit(m$pad + m$bar_w, "mm"),
+        vellum::unit(frac, "npc"),
+        gp = vellum::gpar(col = "white", lwd = 0.8)
+      )
+    )
     scene <- vellum::draw(
       scene,
       vellum::text_grob(
@@ -969,6 +974,20 @@ NULL
       gp = vellum::gpar(fill = grad, col = "grey50", lwd = 0.5)
     )
   )
+  # White break ticks reaching up from the bar's bottom (label-side) edge.
+  for (i in seq_along(cl$legend_breaks)) {
+    frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::unit(frac, "npc"),
+        vellum::unit(0, "npc"),
+        vellum::unit(frac, "npc"),
+        vellum::unit(.LEGEND_TICK_MM, "mm"),
+        gp = vellum::gpar(col = "white", lwd = 0.8)
+      )
+    )
+  }
   scene <- vellum::pop(scene)
   scene <- vellum::push(scene, vellum::viewport(row = off + 2L, col = 1))
   for (i in seq_along(cl$legend_breaks)) {

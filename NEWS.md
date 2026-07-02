@@ -40,6 +40,8 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 * **Legend geometry is themeable**: `theme(legend.key.size=, legend.spacing=,
   legend.margin=)` set the key/swatch side, the gap between stacked guides, and
   the inset around the legend block (all in millimetres).
+* Continuous colour bars now carry **white break ticks** aligned to their
+  labels, on both vertical and horizontal (top/bottom) legends.
 * Layering: multiple marks on one panel, with scales trained across all layers.
 * **Faceting**: `facet_wrap(~var)` and `facet_grid(rows ~ cols)` split the data
   into a panel grid with facet strips and aligned, shared axes.
