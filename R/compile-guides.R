@@ -455,32 +455,107 @@ NULL
 
 # --- legend -----------------------------------------------------------------
 
-# The list of guides a plot needs, in draw order: colour first, then size. Each
-# guide is `list(kind, sc)` where `sc` is the trained scale.
+# The list of guides a plot needs, in draw order: colour first, then size, then
+# shape, then edge width. Each guide is `list(kind, sc)` where `sc` is the
+# trained scale (or, for a merged guide, a synthesized pseudo-scale).
+#
+# When one variable drives two aesthetics, the colour guide merges with its
+# partner into a single guide whose keys carry both encodings (ggplot2's rule):
+# a discrete colour scale merges with `shape`; a continuous colour scale merges
+# with `size`. They merge only when the two scales share a title *and* a
+# compatible break/level set -- give one scale a different `name=` to keep them
+# apart. `merged` marks which partner (if any) was folded into the colour guide.
 .legend_guides <- function(scales) {
   out <- list()
+  merged <- NULL
   if (!is.null(scales$color)) {
+    gk <- scales$color$kind
     # A binned (classed) colour scale draws as discrete swatches with interval
     # labels, so it reuses the discrete guide.
-    gk <- scales$color$kind
-    if (identical(gk, "binned")) {
-      gk <- "discrete"
+    discrete <- gk %in% c("discrete", "binned")
+    if (discrete && .can_merge_shape(scales$color, scales$shape)) {
+      out <- c(
+        out,
+        list(list(
+          kind = "merged",
+          sc = .merged_color_shape(scales$color, scales$shape)
+        ))
+      )
+      merged <- "shape"
+    } else if (
+      identical(gk, "continuous") && .can_merge_size(scales$color, scales$size)
+    ) {
+      out <- c(
+        out,
+        list(list(
+          kind = "merged",
+          sc = .merged_color_size(scales$color, scales$size)
+        ))
+      )
+      merged <- "size"
+    } else {
+      k <- if (discrete) "discrete" else gk
+      out <- c(out, list(list(kind = paste0("color_", k), sc = scales$color)))
     }
-    out <- c(
-      out,
-      list(list(kind = paste0("color_", gk), sc = scales$color))
-    )
   }
-  if (!is.null(scales$size)) {
+  if (!is.null(scales$size) && !identical(merged, "size")) {
     out <- c(out, list(list(kind = "size", sc = scales$size)))
   }
-  if (!is.null(scales$shape)) {
+  if (!is.null(scales$shape) && !identical(merged, "shape")) {
     out <- c(out, list(list(kind = "shape", sc = scales$shape)))
   }
   if (!is.null(scales$edge_width)) {
     out <- c(out, list(list(kind = "edge_width", sc = scales$edge_width)))
   }
   out
+}
+
+# A discrete colour scale and a shape scale merge when they carry the same title
+# and the identical set of levels (so the same variable, encoded the same way).
+.can_merge_shape <- function(color, shape) {
+  !is.null(color) &&
+    !is.null(shape) &&
+    identical(color$name, shape$name) &&
+    identical(color$levels, shape$levels)
+}
+
+# A continuous colour scale and a size scale merge when they carry the same
+# title (they then share the variable, hence its data range and breaks).
+.can_merge_size <- function(color, size) {
+  !is.null(color) && !is.null(size) && identical(color$name, size$name)
+}
+
+# Pseudo-scale for a merged colour+shape guide: one row per shared level, each a
+# point drawn in the level's colour with the level's shape. `fill` and `col` are
+# both set so stroke-only shapes (plus/cross) still take the colour.
+.merged_color_shape <- function(color, shape) {
+  cols <- color$colors
+  list(
+    name = color$name,
+    labels = color$labels %||% color$levels,
+    fills = cols,
+    cols = cols,
+    shapes = shape$shapes,
+    sizes_mm = NULL
+  )
+}
+
+# Pseudo-scale for a merged colour+size guide: the size scale drives the rows
+# (breaks -> radii), and each key is coloured by mapping its break through the
+# continuous colour scale. Same variable, so the size breaks lie in the colour
+# scale's data range.
+.merged_color_size <- function(color, size) {
+  cols <- color$map(size$legend_breaks)
+  # Sized keys are drawn as circles (the colour scale's own key glyph may be a
+  # line/square, which are not point shapes).
+  list(
+    name = color$name,
+    labels = size$legend_labels,
+    fills = cols,
+    cols = cols,
+    shapes = rep_len("circle", length(cols)),
+    sizes_mm = size$legend_sizes
+  )
 }
 
 # --- legend geometry --------------------------------------------------------
@@ -539,7 +614,8 @@ NULL
     },
     size = sc$legend_labels,
     shape = sc$levels,
-    edge_width = sc$legend_labels
+    edge_width = sc$legend_labels,
+    merged = sc$labels
   )
 }
 
@@ -547,11 +623,14 @@ NULL
 # column so the largest key never collides with its neighbours. `points_grob`
 # sizes are radii, so a size key of radius r is 2r across.
 .guide_key_d <- function(g, m) {
-  if (g$kind == "size" && length(g$sc$legend_sizes)) {
-    max(2 * max(g$sc$legend_sizes), m$key)
+  sizes <- if (g$kind == "size") {
+    g$sc$legend_sizes
+  } else if (g$kind == "merged") {
+    g$sc$sizes_mm
   } else {
-    m$key
+    NULL
   }
+  if (length(sizes)) max(2 * max(sizes), m$key) else m$key
 }
 
 # The continuous colour-bar length (mm) for a vertical guide: long enough that
@@ -670,6 +749,15 @@ NULL
       vellum::unit(0.88, "npc"),
       vellum::unit(0.5, "npc"),
       gp = vellum::gpar(col = "grey35", lwd = sc$legend_widths[i])
+    ),
+    # A merged guide's key carries both encodings in one point: the shared
+    # variable's colour (fill + stroke) and shape, sized when size is merged in.
+    merged = vellum::points_grob(
+      vellum::unit(0.5, "npc"),
+      vellum::unit(0.5, "npc"),
+      size = vellum::unit(sc$sizes_mm[i] %||% (m$key / 2), "mm"),
+      shape = sc$shapes[i] %||% "circle",
+      gp = vellum::gpar(fill = sc$fills[i], col = sc$cols[i])
     )
   )
 }

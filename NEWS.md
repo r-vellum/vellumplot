@@ -42,6 +42,11 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   the inset around the legend block (all in millimetres).
 * Continuous colour bars now carry **white break ticks** aligned to their
   labels, on both vertical and horizontal (top/bottom) legends.
+* **Merged legends**: mapping one variable to two aesthetics draws a single
+  legend whose keys carry both encodings — discrete `colour` + `shape` become
+  coloured shape keys; continuous `colour` + `size` become colour-graded,
+  size-graduated points. Merging follows ggplot2's rule (same title and
+  breaks/levels); give one scale a different `name=` to keep them separate.
 * Layering: multiple marks on one panel, with scales trained across all layers.
 * **Faceting**: `facet_wrap(~var)` and `facet_grid(rows ~ cols)` split the data
   into a panel grid with facet strips and aligned, shared axes.

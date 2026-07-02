@@ -120,3 +120,46 @@ test_that("the colour key glyph matches the mark that maps colour", {
   br <- vplot(df) |> mark_bar(x = g, y = h, fill = k)
   expect_identical(train(br)$color$key_glyph, "square")
 })
+
+test_that("colour + shape on one variable merge into a single guide", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl), shape = factor(cyl))
+  expect_identical(kinds(p), "merged")
+  # the merged pseudo-scale carries aligned per-key style vectors
+  g <- quill:::.legend_guides(train(p))[[1]]$sc
+  expect_length(g$fills, length(g$labels))
+  expect_length(g$shapes, length(g$labels))
+  expect_null(g$sizes_mm)
+})
+
+test_that("continuous colour + size on one variable merge into a single guide", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp, size = hp)
+  expect_identical(kinds(p), "merged")
+  g <- quill:::.legend_guides(train(p))[[1]]$sc
+  expect_length(g$sizes_mm, length(g$labels))
+  expect_length(g$fills, length(g$labels))
+})
+
+test_that("distinct scale names keep colour and its partner separate", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl), shape = factor(cyl)) |>
+    scale_shape(name = "Cylinders")
+  expect_identical(kinds(p), c("color_discrete", "shape"))
+})
+
+test_that("different variables do not merge", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl), shape = factor(gear))
+  expect_identical(kinds(p), c("color_discrete", "shape"))
+})
+
+test_that("a merged legend still renders in every position", {
+  for (pos in c("right", "left", "top", "bottom")) {
+    p <- vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, color = factor(cyl), shape = factor(cyl)) |>
+      theme(legend.position = pos)
+    f <- withr::local_tempfile(fileext = ".png")
+    render_plot(p, f)
+    expect_gt(file.info(f)$size, 0)
+  }
+})

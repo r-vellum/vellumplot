@@ -39,4 +39,14 @@ vplot(peng, width = 6.5, height = 5.5) |>
   labs(title = "Colour + size + shape") |>
   render_plot(file.path(outdir, "06-combined.png"))
 
-message("06-size-shape-scales: wrote 3 figures to ", outdir)
+# --- merged legend ----------------------------------------------------------
+# Mapping one variable to two aesthetics draws a single legend whose keys carry
+# both encodings: here `species` drives colour and shape, so the guide shows a
+# coloured shape per species instead of two stacked legends. (Give one scale a
+# different name= to keep them separate.)
+vplot(peng) |>
+  mark_point(x = bill_len, y = flipper_len, color = species, shape = species) |>
+  labs(title = "Merged colour + shape legend") |>
+  render_plot(file.path(outdir, "06-merged.png"))
+
+message("06-size-shape-scales: wrote 4 figures to ", outdir)
