@@ -507,19 +507,20 @@ NULL
 # Resolved legend geometry (all mm, except the two font sizes). Phase 3 lets the
 # theme override the key size / spacings; the defaults live in `.SETTINGS_DEFAULTS`.
 .legend_metrics <- function(rt) {
-  key <- rt[["legend.key.size"]] %||% .LEGEND_SWATCH_MM
   list(
     text_fs = rt[["legend.text"]]@size,
     title_fs = rt[["legend.title"]]@size,
     text_h = .mm_th(rt[["legend.text"]]@size),
     title_h = .mm_th(rt[["legend.title"]]@size),
-    key = key,
+    key = rt[["legend.key.size"]] %||% .LEGEND_SWATCH_MM,
     bar_w = .LEGEND_BAR_MM,
     row_gap = .LEGEND_ROW_GAP_MM,
     title_gap = .LEGEND_TITLE_GAP_MM,
     spacing = rt[["legend.spacing"]] %||% .LEGEND_SPACING_MM,
     lab_gap = .LEGEND_KEY_LABEL_GAP_MM,
     pad = .LEGEND_INNER_PAD_MM,
+    # inset (t, r, b, l) around the whole legend block
+    margin = rep_len(rt[["legend.margin"]] %||% .LEGEND_MARGIN_MM, 4L),
     show_title = !.is_blank(rt[["legend.title"]])
   )
 }
@@ -1021,6 +1022,26 @@ NULL
   if (!n) {
     return(vellum::pop(scene))
   }
+  # Inset the content block by `legend.margin` (t, r, b, l) via a margin grid, so
+  # everything below draws inside the middle (2, 2) cell.
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(
+      layout = vellum::grid_layout(
+        widths = c(
+          vellum::unit(m$margin[4], "mm"),
+          vellum::unit(1, "null"),
+          vellum::unit(m$margin[2], "mm")
+        ),
+        heights = c(
+          vellum::unit(m$margin[1], "mm"),
+          vellum::unit(1, "null"),
+          vellum::unit(m$margin[3], "mm")
+        )
+      )
+    )
+  )
+  scene <- vellum::push(scene, vellum::viewport(row = 2, col = 2))
   if (orient == "horizontal") {
     ws <- vapply(guides, .guide_width_mm, 0, m = m)
     total <- sum(ws) + (n - 1) * m$spacing
@@ -1070,5 +1091,7 @@ NULL
     }
     scene <- vellum::pop(scene)
   }
-  vellum::pop(scene)
+  scene <- vellum::pop(scene) # content (2, 2) cell
+  scene <- vellum::pop(scene) # margin grid
+  vellum::pop(scene) # legend cell
 }

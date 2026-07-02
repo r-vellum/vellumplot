@@ -34,9 +34,11 @@ set_theme(
 \item{plot}{A \link{PlotSpec}.}
 
 \item{...}{Named theme elements, e.g. \code{plot.title = element_text(size = 16)},
-\code{panel.grid.minor = element_blank()}, or settings like
-\code{legend.position}, one of \code{"right"} (default), \code{"left"}, \code{"top"},
-\code{"bottom"}, or \code{"none"}.}
+\code{panel.grid.minor = element_blank()}, or settings like \code{legend.position},
+one of \code{"right"} (default), \code{"left"}, \code{"top"}, \code{"bottom"}, or \code{"none"}.
+Legend geometry is tunable via \code{legend.key.size} (key/swatch side, mm),
+\code{legend.spacing} (gap between stacked guides, mm), and \code{legend.margin}
+(inset around the legend block, one or four millimetres, \verb{t, r, b, l}).}
 
 \item{panel_bg, grid_col, label_col, strip_bg}{Colours (or \code{NA} to draw nothing)
 for the panel background, gridlines, axis-label/legend text, and facet strip

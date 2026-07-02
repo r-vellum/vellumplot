@@ -59,9 +59,11 @@ NULL
 #'
 #' @param plot A [PlotSpec].
 #' @param ... Named theme elements, e.g. `plot.title = element_text(size = 16)`,
-#'   `panel.grid.minor = element_blank()`, or settings like
-#'   `legend.position`, one of `"right"` (default), `"left"`, `"top"`,
-#'   `"bottom"`, or `"none"`.
+#'   `panel.grid.minor = element_blank()`, or settings like `legend.position`,
+#'   one of `"right"` (default), `"left"`, `"top"`, `"bottom"`, or `"none"`.
+#'   Legend geometry is tunable via `legend.key.size` (key/swatch side, mm),
+#'   `legend.spacing` (gap between stacked guides, mm), and `legend.margin`
+#'   (inset around the legend block, one or four millimetres, `t, r, b, l`).
 #' @param panel_bg,grid_col,label_col,strip_bg Colours (or `NA` to draw nothing)
 #'   for the panel background, gridlines, axis-label/legend text, and facet strip
 #'   background.

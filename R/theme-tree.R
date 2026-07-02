@@ -79,6 +79,9 @@ NULL
 # Non-element scalar settings + defaults.
 .SETTINGS_DEFAULTS <- list(
   legend.position = "right",
+  legend.key.size = 4, # mm; default legend key / swatch side
+  legend.spacing = 3.5, # mm; gap between stacked guides
+  legend.margin = c(2, 2, 2, 2), # mm (t, r, b, l) inset around the legend block
   panel.spacing = 1.6, # mm
   plot.margin = c(5.5, 5.5, 5.5, 5.5), # mm (t, r, b, l) padding around the plot
   aspect.ratio = NULL, # carried for coord_fixed
@@ -190,6 +193,22 @@ NULL
         if (!is.character(val) || length(val) != 1L || !val %in% ok) {
           cli::cli_abort(
             "{.field legend.position} must be one of {.val {ok}}.",
+            call = call
+          )
+        }
+      } else if (nm %in% c("legend.key.size", "legend.spacing")) {
+        val <- args[[nm]]
+        if (!is.numeric(val) || length(val) != 1L || val < 0) {
+          cli::cli_abort(
+            "{.field {nm}} must be a single non-negative number (mm).",
+            call = call
+          )
+        }
+      } else if (nm == "legend.margin") {
+        val <- args[[nm]]
+        if (!is.numeric(val) || !length(val) %in% c(1L, 4L) || any(val < 0)) {
+          cli::cli_abort(
+            "{.field legend.margin} must be 1 or 4 non-negative numbers (mm).",
             call = call
           )
         }

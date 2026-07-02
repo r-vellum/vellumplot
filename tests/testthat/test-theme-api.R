@@ -68,3 +68,29 @@ test_that("legend.position = none drops the legend column", {
   )
   expect_true(is.na(lay$legend_col))
 })
+
+test_that("legend.key.size / legend.spacing / legend.margin resolve and validate", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  rt <- resolve_of(p)
+  expect_identical(rt[["legend.key.size"]], 4)
+  expect_identical(rt[["legend.spacing"]], 3.5)
+  expect_identical(rt[["legend.margin"]], c(2, 2, 2, 2))
+
+  rt2 <- resolve_of(p |> theme(legend.key.size = 8, legend.margin = 3))
+  expect_identical(rt2[["legend.key.size"]], 8)
+  # a length-1 margin recycles to four sides in the metrics
+  m <- quill:::.legend_metrics(rt2)
+  expect_identical(m$margin, c(3, 3, 3, 3))
+
+  expect_error(theme(p, legend.key.size = -1), "legend.key.size")
+  expect_error(theme(p, legend.spacing = "big"), "legend.spacing")
+  expect_error(theme(p, legend.margin = c(1, 2)), "legend.margin")
+})
+
+test_that("a bigger legend.key.size widens the reserved legend column", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  g <- quill:::.legend_guides(quill:::.build_panels(p)$scales)
+  small <- quill:::.legend_width(g, resolve_of(p))
+  big <- quill:::.legend_width(g, resolve_of(p |> theme(legend.key.size = 12)))
+  expect_true(big > small)
+})

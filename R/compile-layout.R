@@ -13,6 +13,7 @@ NULL
 .LEGEND_KEY_LABEL_GAP_MM <- 1.6 # gap between a key and its label
 .LEGEND_INNER_PAD_MM <- 1.4 # legend content inset
 .LEGEND_MIN_BAR_MM <- 22 # minimum colour-bar length
+.LEGEND_MARGIN_MM <- c(2, 2, 2, 2) # default legend block inset (t, r, b, l)
 
 # The longest string in a vector (by character count); "" for an empty vector.
 .longest <- function(x) {
@@ -72,7 +73,7 @@ NULL
     }
     w <- max(w, body, tw)
   }
-  vellum::unit(w + 2 * m$pad, "mm")
+  vellum::unit(w + m$margin[2] + m$margin[4], "mm")
 }
 
 # Height of a horizontal legend row (top/bottom): the tallest guide, each a title
@@ -90,7 +91,7 @@ NULL
     }
     h <- max(h, gh)
   }
-  vellum::unit(h + 2 * m$pad, "mm")
+  vellum::unit(h + m$margin[1] + m$margin[3], "mm")
 }
 
 # A tiny ordered track builder: `add(unit)` appends a track and returns its
