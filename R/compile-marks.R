@@ -983,35 +983,66 @@ NULL
     }
   }
 
-  # Self-loops: an mm-radius arc anchored at the vertex (vellum's loop_grob),
-  # sized relative to the node radius and nested outward when a vertex carries
-  # several; a directed loop carries an arrowhead tangent to the arc.
+  # Self-loops: a cubic-Bezier teardrop anchored at the vertex (the igraph shape,
+  # not a bare ring) bulging away from the graph centre, nested outward when a
+  # vertex carries several. Both ends sit at the vertex centre, so the node
+  # (drawn on top) hides the base and the loop reads as emanating from its edge.
+  # The bulge scales with the node radius (converted to native via the loop-only
+  # estimate in scales$graph$npm) so the loop always clears the marker.
   li <- which(loop)
   if (length(li)) {
+    xr <- abs(diff(range(scales$x$domain)))
+    yr <- abs(diff(range(scales$y$domain)))
+    diag <- sqrt(xr^2 + yr^2)
+    if (!is.finite(diag) || diag == 0) {
+      diag <- 1
+    }
+    npm <- gh$npm %||% 1
     cx <- mean(c(x0, x1))
     cy <- mean(c(y0, y1))
+    tt <- seq(0, 1, length.out = 48)
+    # Cubic-Bezier basis weights for control points P0..P3.
+    b0 <- (1 - tt)^3
+    b1 <- 3 * (1 - tt)^2 * tt
+    b2 <- 3 * (1 - tt) * tt^2
+    b3 <- tt^3
     kcount <- list()
     for (j in li) {
       key_j <- paste(x0[j], y0[j], sep = "\036")
       k <- kcount[[key_j]] %||% 0L
       kcount[[key_j]] <- k + 1L
-      node_r_mm <- if (!is.null(gh)) gh$end_cap[j] else 2
-      r_mm <- node_r_mm * (1.5 + k * 0.9) # loop radius grows per nested loop
-      # Bulge the loop away from the graph centre.
+      # Node radius in native units (estimate); bulge/width scale from it so the
+      # teardrop clears the marker, growing per nested loop.
+      nr <- if (!is.null(gh)) gh$end_cap[j] * npm else 0.03 * diag
+      bulge <- nr * (3.2 + k * 1.9)
+      width <- nr * (1.8 + k * 1.1)
+      # Cubic-Bezier control points in a local frame bulging along +x, later
+      # rotated to point away from the graph centre. The two feet (P0, P3) sit on
+      # the node *boundary* (radius nr, straddling +x) rather than the centre, so
+      # the loop reads as leaving and re-entering the node edge and a directed
+      # loop's arrowhead lands on the visible boundary instead of under the node.
+      beta <- pi / 7
+      fx <- nr * cos(beta)
+      fy <- nr * sin(beta)
+      px <- c(fx, bulge, bulge, fx)
+      py <- c(fy, width, -width, -fy)
       ang <- atan2(y0[j] - cy, x0[j] - cx)
       if (!is.finite(ang)) {
         ang <- pi / 2
       }
-      span <- 1.6 * pi
+      ca <- cos(ang)
+      sa <- sin(ang)
+      qx <- px * ca - py * sa + x0[j]
+      qy <- px * sa + py * ca + y0[j]
+      lx <- b0 * qx[1] + b1 * qx[2] + b2 * qx[3] + b3 * qx[4]
+      ly <- b0 * qy[1] + b1 * qy[2] + b2 * qy[3] + b3 * qy[4]
       a <- alpha[j]
+      xy <- .xy_units(scales, lx, ly)
       scene <- .draw(
         scene,
-        vellum::loop_grob(
-          vellum::unit(x0[j], "native"),
-          vellum::unit(y0[j], "native"),
-          r = vellum::unit(r_mm, "mm"),
-          theta0 = ang - span / 2,
-          theta1 = ang + span / 2,
+        vellum::lines_grob(
+          xy$x,
+          xy$y,
           arrow = arr,
           gp = vellum::gpar(
             col = col[j],

@@ -18,6 +18,14 @@ NULL
   if (any(zz != 0L)) {
     spec@layers <- spec@layers[order(zz, seq_along(zz))]
   }
+  # A graph has no meaningful domain edges, and its mark decorations (self-loops,
+  # mm node markers) legitimately extend past the layout bbox -- so don't clip the
+  # panel for graph plots (ordinary plots still clip to their axes).
+  panel_clip <- !any(vapply(
+    spec@layers,
+    function(l) l@mark %in% c("edges", "nodes", "node_text"),
+    logical(1)
+  ))
   rt <- .resolve_theme(.theme_of(spec))
 
   # sf layers: an sf mark implies a map coordinate system. If the user did not
@@ -128,7 +136,9 @@ NULL
       p$resolved,
       spec@edge_data,
       nrow(spec@data),
-      psc
+      psc,
+      spec@width,
+      spec@height
     )
     pname <- sprintf("panel-%d-%d", p$r, p$c)
     if (polar) {
@@ -154,7 +164,7 @@ NULL
           col = lay$panel_col[p$c],
           xscale = hsc$domain,
           yscale = vsc$domain,
-          clip = TRUE,
+          clip = panel_clip,
           name = pname
         )
       )

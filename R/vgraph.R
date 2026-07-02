@@ -226,7 +226,7 @@ NULL
 # extends past their centre, and self-loops bulge outward, so the raw layout
 # bbox (+ the trainer's 5%) clips nodes at the extremes -- pad by a fraction of
 # the larger range so typical nodes/loops sit inside the panel.
-.GRAPH_PAD_FRAC <- 0.1
+.GRAPH_PAD_FRAC <- 0.15
 
 .graph_limits <- function(xy) {
   rx <- range(xy[, 1])
@@ -241,7 +241,7 @@ NULL
 # and `loop_grob()`, added for this; _docs/HANDOVER-response.md). Returns per-edge
 # source/target radii (keyed through the edge endpoint indices) plus the per-vertex
 # radii. NULL when the panel has no edge layer or node layer (nothing to cap).
-.graph_caps <- function(resolved, edge_data, node_n, scales) {
+.graph_caps <- function(resolved, edge_data, node_n, scales, width, height) {
   has_edges <- any(vapply(
     resolved,
     function(L) identical(L$mark, "edges"),
@@ -257,7 +257,16 @@ NULL
   # radius (size = 20mm renders a 40mm-diameter marker), so the cap == size.
   # Default matches the node emitter's `.aes_size(L, scales, 1)`.
   r_mm <- rep_len(.aes_size(node_L, scales, 1), node_n)
-  list(node_r = r_mm, start_cap = r_mm[fi], end_cap = r_mm[ti])
+  # native-per-mm estimate: only for sizing the (decorative) self-loops so they
+  # clear the node; edge caps stay exact (vellum resolves their mm in device
+  # space). The panel is a null track, so this is a figure-size estimate
+  # (aspect-locked graph panel, ~0.85 for margins/legend) -- fine for loops.
+  span <- max(
+    abs(diff(range(scales$x$domain))),
+    abs(diff(range(scales$y$domain)))
+  )
+  npm <- span / (min(width, height) * 0.85 * 25.4)
+  list(node_r = r_mm, start_cap = r_mm[fi], end_cap = r_mm[ti], npm = npm)
 }
 
 # The void-like default theme for a graph: no axes, ticks, gridlines, or panel

@@ -90,12 +90,14 @@ test_that(".graph_caps returns exact per-edge node radii (mm)", {
     list(mark = "nodes", values = list(), params = list(size = c(4, 8)), n = 2L)
   )
   edge_data <- data.frame(.from_i = 1L, .to_i = 2L)
-  caps <- .graph_caps(resolved, edge_data, node_n = 2L, scales = list())
+  scales <- list(x = list(domain = c(0, 10)), y = list(domain = c(0, 10)))
+  caps <- .graph_caps(resolved, edge_data, node_n = 2L, scales, width = 6, height = 4)
   expect_equal(caps$node_r, c(4, 8))
   expect_equal(caps$start_cap, 4) # source vertex 1 radius
   expect_equal(caps$end_cap, 8) # target vertex 2 radius
+  expect_true(is.finite(caps$npm) && caps$npm > 0) # loop-sizing estimate
   # no nodes layer -> nothing to cap.
-  expect_null(.graph_caps(resolved[1], edge_data, 2L, list()))
+  expect_null(.graph_caps(resolved[1], edge_data, 2L, scales, 6, 4))
 })
 
 test_that(".edge_table handles an edgeless graph", {
