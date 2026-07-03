@@ -51,6 +51,18 @@ NULL
 # Neon sequential ramp (dark base -> cyan -> magenta) for continuous fills.
 .NEON_RAMP <- c("#0d0f18", "#08F7FE", "#FE53BB")
 
+# The plot-wide sketch default (a `vellum_sketch` from theme_sketch()), or NULL.
+# Rides the theme as a plain key, like `palette`; mark emitters read it as the
+# fallback when a layer sets no `sketch =` of its own (see `.mark_sketch`).
+.theme_sketch_default <- function(spec) {
+  th <- spec@theme
+  if (is.null(th)) {
+    return(NULL)
+  }
+  s <- th[["sketch"]]
+  if (inherits(s, "vellum_sketch")) s else NULL
+}
+
 # A theme-supplied default palette for a colour scale, or NULL: `palette` for a
 # discrete scale, `palette.continuous` for continuous/binned. Read from the raw
 # theme list (these keys ride the theme but are not drawn elements).
@@ -213,6 +225,89 @@ theme_cyberpunk <- function(plot) {
   # palette is set); they are plain keys, not drawn elements.
   th[["palette"]] <- .NEON_QUAL
   th[["palette.continuous"]] <- .NEON_RAMP
+  plot@theme <- th
+  plot
+}
+
+#' Hand-drawn plot theme
+#'
+#' `theme_sketch()` turns a whole plot hand-drawn in one line: it sets a
+#' plot-wide [sketch()] default that every geometry mark and theme element
+#' inherits (wobbly gridlines, axis lines, ticks, and marks), on a warm
+#' paper-toned background. Text is never sketched — pass a handwriting `font` to
+#' complete the look.
+#'
+#' It is a complete theme (like [theme_cyberpunk()]): the sketch it sets is only
+#' a *default*, so any mark's `sketch =` argument, any [element_line()] /
+#' [element_rect()] `sketch =` slot, or a `scale_*` override still wins. Force an
+#' individual element crisp with `sketch = NA`.
+#'
+#' @param plot A [PlotSpec].
+#' @param roughness,bowing,fill_style,seed Passed to [sketch()] to build the
+#'   plot-wide default (see [sketch()] for the full set of knobs).
+#' @param font Font family for all text (text is not sketched; a handwriting font
+#'   such as `"Comic Sans MS"` or `"Chilanka"` sells the hand-drawn look).
+#'   `NULL` (default) keeps the system default family.
+#' @param paper,ink Background and foreground (text/line) colours.
+#' @return The modified [PlotSpec].
+#' @seealso [sketch()], [theme_gray()], [mark_point()]
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+#'   theme_sketch()
+#'
+#' # tune the wobble; a crosshatch-filled bar layer that stays crisp
+#' df <- data.frame(g = c("a", "b", "c"), n = c(3, 5, 2))
+#' vplot(df) |>
+#'   mark_bar(x = g, y = n, fill = g) |>
+#'   theme_sketch(roughness = 1.4, fill_style = "crosshatch", seed = 7)
+#' @export
+theme_sketch <- function(
+  plot,
+  roughness = 1,
+  bowing = 1,
+  fill_style = "hachure",
+  seed = 1L,
+  font = NULL,
+  paper = "#f4ecd8",
+  ink = "#2b2b2b"
+) {
+  .check_plot(plot)
+  sk <- sketch(
+    roughness = roughness,
+    bowing = bowing,
+    fill_style = fill_style,
+    seed = seed
+  )
+  grid <- "#c7b98f" # muted pencil grid on paper
+  th <- .merge_theme(
+    .theme_gray_complete(),
+    list(
+      text = element_text(colour = ink, family = font),
+      plot.title = element_text(colour = ink),
+      plot.background = element_rect(fill = paper, colour = NA),
+      panel.background = element_rect(fill = paper, colour = NA),
+      # the ruled grid, axis lines and ticks go hand-drawn
+      panel.grid.major = element_line(
+        colour = grid,
+        linewidth = 0.6,
+        sketch = sk
+      ),
+      panel.grid.minor = element_line(
+        colour = grid,
+        linewidth = 0.4,
+        sketch = sk
+      ),
+      axis.line = element_line(colour = ink, linewidth = 0.8, sketch = sk),
+      axis.ticks = element_line(colour = ink, sketch = sk),
+      axis.text = element_text(colour = ink),
+      strip.background = element_rect(fill = "#e7dcc0", colour = NA),
+      strip.text = element_text(colour = ink)
+    )
+  )
+  # The plot-wide mark default rides the theme as a plain key (read by mark
+  # emitters + legend keys via `.theme_sketch_default`), like `palette`.
+  th[["sketch"]] <- sk
   plot@theme <- th
   plot
 }

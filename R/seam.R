@@ -47,6 +47,11 @@ NULL
 
   built <- .build_panels(spec)
   built$sf_geographic <- sf_geographic
+  # Plot-wide hand-drawn default (from theme_sketch()); mark emitters fall back
+  # to it when a layer sets no sketch of its own, and legend keys read it from
+  # `rt` so they match a hand-drawn plot.
+  plot_sketch <- .theme_sketch_default(spec)
+  rt[[".sketch"]] <- plot_sketch
   guides <- .legend_guides(built$scales)
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
   flip <- identical(co@kind, "flip")
@@ -131,7 +136,8 @@ NULL
       shape = built$scales$shape,
       edge_width = built$scales$edge_width,
       flip = flip,
-      polar = NULL
+      polar = NULL,
+      sketch = plot_sketch
     )
     psc$graph <- .graph_caps(
       p$resolved,
