@@ -37,6 +37,68 @@ GlowSpec <- S7::new_class(
   )
 )
 
+# An outline / halo effect: one opaque, wider copy of a stroked/point mark drawn
+# beneath the crisp original in a contrasting `color`, so the mark reads clearly
+# over a busy or dark backdrop. `size` is the halo width per side, in mm.
+OutlineSpec <- S7::new_class(
+  "OutlineSpec",
+  package = "quill",
+  parent = Effect,
+  properties = list(
+    size = S7::new_property(S7::class_double, default = 1),
+    color = S7::new_property(S7::class_character, default = "white"),
+    alpha = S7::new_property(S7::class_double, default = 1)
+  )
+)
+
+# A drop / ambient shadow: dark, low-`alpha` copies of a mark drawn beneath the
+# original, offset by (`x`, `y`) as a fraction of the panel (npc; +x right, +y
+# up), and softened by stacking `layers` copies widened up to `spread` mm.
+ShadowSpec <- S7::new_class(
+  "ShadowSpec",
+  package = "quill",
+  parent = Effect,
+  properties = list(
+    x = S7::new_property(S7::class_double, default = 0.006),
+    y = S7::new_property(S7::class_double, default = -0.006),
+    color = S7::new_property(S7::class_character, default = "black"),
+    alpha = S7::new_property(S7::class_double, default = 0.3),
+    spread = S7::new_property(S7::class_double, default = 1.5),
+    layers = S7::new_property(S7::class_integer, default = 3L)
+  )
+)
+
+# A hand-drawn / sketch effect: the mark's path is densified and its vertices are
+# perturbed by smooth low-frequency noise so straight lines wobble like ink.
+# `amount` is the wobble scale (fraction of the panel range); `detail` the number
+# of noise harmonics; `seed` makes it reproducible.
+SketchSpec <- S7::new_class(
+  "SketchSpec",
+  package = "quill",
+  parent = Effect,
+  properties = list(
+    amount = S7::new_property(S7::class_double, default = 0.01),
+    detail = S7::new_property(S7::class_integer, default = 6L),
+    seed = S7::new_property(S7::class_double, default = 1)
+  )
+)
+
+# An inner glow / inner shadow for filled marks: a wide stroke of the fill's
+# boundary, masked to the fill so it shows only *inside* the shape's edge. `dark`
+# distinguishes an inner shadow (dark, "multiply") from an inner glow (bright,
+# "screen"). `size` is the band width in mm.
+InnerSpec <- S7::new_class(
+  "InnerSpec",
+  package = "quill",
+  parent = Effect,
+  properties = list(
+    size = S7::new_property(S7::class_double, default = 3),
+    color = S7::new_property(S7::class_character, default = "white"),
+    alpha = S7::new_property(S7::class_double, default = 0.6),
+    dark = S7::new_property(S7::class_logical, default = FALSE)
+  )
+)
+
 # One drawing layer: a mark, its encodings (named list<channel>), constant
 # aesthetics (`params`), an optional statistical transform (`stat`, with its
 # own `stat_params`), a position adjustment (`position`), and render `effects`.

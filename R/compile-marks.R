@@ -139,6 +139,53 @@ NULL
   .xy_units(scales, x, y)
 }
 
+# Densify a polyline and perturb its vertices with smooth, seeded low-frequency
+# noise (a sum of `detail` harmonics with random amplitude/phase, normalised to
+# unit amplitude and scaled by `amount` * the panel range) so a straight line
+# wobbles like hand-drawn ink. Deterministic given the sketch seed.
+.sketch_native <- function(scales, x, y, sk) {
+  m <- length(x)
+  if (m < 2L) {
+    return(list(x = x, y = y))
+  }
+  k <- 6L # resample points per segment
+  xs <- ys <- numeric(0)
+  for (i in seq_len(m - 1L)) {
+    t <- seq(0, 1, length.out = k + 1L)[-(k + 1L)]
+    xs <- c(xs, x[i] + t * (x[i + 1L] - x[i]))
+    ys <- c(ys, y[i] + t * (y[i + 1L] - y[i]))
+  }
+  xs <- c(xs, x[m])
+  ys <- c(ys, y[m])
+  tt <- seq(0, 1, length.out = length(xs))
+  h <- sk@detail
+  gen <- function() {
+    amps <- stats::runif(h, 0.3, 1) / seq_len(h)
+    ph <- stats::runif(h, 0, 2 * pi)
+    v <- vapply(
+      tt,
+      function(t) sum(amps * sin(2 * pi * seq_len(h) * t + ph)),
+      numeric(1)
+    )
+    mx <- max(abs(v))
+    if (mx > 0) v / mx else v
+  }
+  pert <- .with_seed(sk@seed, list(nx = gen(), ny = gen()))
+  rx <- diff(range(scales$x$domain %||% range(xs)))
+  ry <- diff(range(scales$y$domain %||% range(ys)))
+  list(x = xs + pert$nx * sk@amount * rx, y = ys + pert$ny * sk@amount * ry)
+}
+
+# Map an ordered polyline to grob units, applying a sketch wobble first when the
+# layer carries one, otherwise the polar densification of `.xy_path`.
+.path_units <- function(scales, L, x, y) {
+  if (!is.null(L$sketch)) {
+    s <- .sketch_native(scales, x, y, L$sketch)
+    return(.xy_units(scales, s$x, s$y))
+  }
+  .xy_path(scales, x, y)
+}
+
 # Map a filled outline (forward path a + reversed path b) to polygon units,
 # densifying each side under polar so the band follows the arcs.
 .xy_area <- function(scales, xa, ya, xb, yb) {
@@ -260,7 +307,7 @@ NULL
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
     a <- alpha[idx[1]]
-    xy <- .xy_path(scales, xn[o], yn[o])
+    xy <- .path_units(scales, L, xn[o], yn[o])
     scene <- .draw(
       scene,
       vellum::lines_grob(
@@ -618,7 +665,7 @@ NULL
       ey <- sy
     }
     a <- alpha[idx[1]]
-    ln <- .xy_path(scales, ex, ey)
+    ln <- .path_units(scales, L, ex, ey)
     scene <- .draw(
       scene,
       vellum::lines_grob(
@@ -1402,38 +1449,149 @@ NULL
   }
 }
 
-# Draw a layer's glow halo: `layers` widened, low-alpha copies of the mark
-# composited under `g$blend`, widest first so opacity accumulates toward the
-# crisp core (drawn afterwards by the normal emit path). Each copy re-uses the
-# mark's own emitter with overridden width/alpha (and colour, if `g$color` set),
-# so coordinates/flip/polar all stay correct.
-.emit_glow <- function(scene, L, scales, g) {
+# Generalized underlay copy-emitter for glow / outline / shadow: draw one copy
+# of the mark per entry of `deltas` (width in mm added to the base stroke width /
+# point diameter), at `alpha` and `colour`, composited under `blend`, offset by
+# (`xoff`, `yoff`) in npc. Reuses the mark's own emitter so coords / flip / polar
+# / sketch all stay correct. Widest first, so opacity accumulates toward centre.
+.emit_copies <- function(
+  scene,
+  L,
+  scales,
+  deltas,
+  alpha,
+  colour,
+  blend,
+  xoff = 0,
+  yoff = 0
+) {
   is_point <- L$mark %in% c("point", "nodes")
   base <- .glow_base(L)
   rng <- .panel_scale_range(scales)
   scene <- vellum::push(
     scene,
-    vellum::viewport(xscale = rng$x, yscale = rng$y, blend = g@blend)
+    vellum::viewport(
+      x = 0.5 + xoff,
+      y = 0.5 + yoff,
+      xscale = rng$x,
+      yscale = rng$y,
+      blend = if (identical(blend, "normal")) NULL else blend
+    )
   )
-  for (k in seq.int(g@layers, 1L)) {
-    frac <- k / g@layers
+  for (d in deltas) {
     L2 <- L
-    L2$effects <- list() # copies are plain; no recursion
-    L2$params$alpha <- g@alpha
-    if (!is.null(g@color)) {
+    L2$effects <- list() # copies are plain (their halo followed the same path)
+    L2$params$alpha <- alpha
+    if (!is.null(colour)) {
       L2$values$color <- NULL
       L2$values$fill <- NULL
-      L2$params$color <- g@color
-      L2$params$fill <- g@color
+      L2$params$color <- colour
+      L2$params$fill <- colour
     }
     if (is_point) {
       L2$values$size <- NULL
-      L2$params$size <- base + frac * g@size
+      L2$params$size <- base + d
     } else {
-      L2$params$linewidth <- base + frac * g@size * .MM_TO_LWD
+      L2$params$linewidth <- base + d * .MM_TO_LWD
     }
     scene <- .emit_layer(scene, L2, scales)
   }
+  vellum::pop(scene)
+}
+
+.emit_glow <- function(scene, L, scales, g) {
+  frac <- seq.int(g@layers, 1L) / g@layers
+  .emit_copies(scene, L, scales, frac * g@size, g@alpha, g@color, g@blend)
+}
+
+.emit_outline <- function(scene, L, scales, o) {
+  # one opaque copy, wider by `size` per side, in a contrasting colour
+  .emit_copies(scene, L, scales, 2 * o@size, o@alpha, o@color, "normal")
+}
+
+.emit_shadow <- function(scene, L, scales, s) {
+  frac <- seq.int(s@layers, 1L) / s@layers
+  .emit_copies(
+    scene,
+    L,
+    scales,
+    frac * s@spread,
+    s@alpha,
+    s@color,
+    "multiply",
+    xoff = s@x,
+    yoff = s@y
+  )
+}
+
+.emit_underlay <- function(scene, L, scales, e) {
+  if (S7::S7_inherits(e, GlowSpec)) {
+    .emit_glow(scene, L, scales, e)
+  } else if (S7::S7_inherits(e, OutlineSpec)) {
+    .emit_outline(scene, L, scales, e)
+  } else if (S7::S7_inherits(e, ShadowSpec)) {
+    .emit_shadow(scene, L, scales, e)
+  } else {
+    scene
+  }
+}
+
+# The closed fill outline (grob units) of a filled mark (area / ribbon), used to
+# build the mask + boundary stroke for an inner glow / shadow.
+.fill_outline <- function(L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  o <- order(xn)
+  if (identical(L$mark, "area")) {
+    y0 <- rep_len(scales$y$map(0), n)
+    y1 <- rep_len(scales$y$map(L$values$y), n)
+    .xy_area(scales, xn[o], y1[o], xn[o], y0[o])
+  } else if (identical(L$mark, "ribbon")) {
+    ymin <- rep_len(scales$y$map(L$values$ymin), n)
+    ymax <- rep_len(scales$y$map(L$values$ymax), n)
+    .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
+  } else {
+    NULL
+  }
+}
+
+# Inner glow / shadow: a wide boundary stroke of the fill, masked to the fill so
+# only the half *inside* the edge shows. Drawn over the core fill.
+.emit_inner <- function(scene, L, scales, e) {
+  shp <- .fill_outline(L, scales)
+  if (is.null(shp)) {
+    return(scene)
+  }
+  rng <- .panel_scale_range(scales)
+  mask <- vellum::as_mask(
+    vellum::polygon_grob(
+      shp$x,
+      shp$y,
+      gp = vellum::gpar(fill = "black", col = NA)
+    )
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(
+      xscale = rng$x,
+      yscale = rng$y,
+      mask = mask,
+      blend = if (e@dark) "multiply" else "screen"
+    )
+  )
+  scene <- .draw(
+    scene,
+    vellum::polygon_grob(
+      shp$x,
+      shp$y,
+      gp = vellum::gpar(
+        fill = NA,
+        col = e@color,
+        lwd = 2 * e@size * .MM_TO_LWD,
+        alpha = e@alpha
+      )
+    )
+  )
   vellum::pop(scene)
 }
 
@@ -1445,26 +1603,29 @@ NULL
       next
     } # empty facet panel
     .mark_ctx$id <- sprintf("layer-%d-%s", i, L$mark)
-    # Glow halo (if any) sits beneath the layer's own draw, in its own blend group.
-    g <- .layer_glow(L)
-    if (!is.null(g)) {
-      scene <- .emit_glow(scene, L, scales, g)
+    # A geometry effect (sketch) rides on L so the core -- and any halo copies,
+    # which re-emit the same path -- follow the same wobble.
+    L$sketch <- .first_effect(L, SketchSpec)
+    # Underlay effects (glow / outline / shadow) draw beneath the core, in order.
+    for (e in .underlay_effects(L)) {
+      scene <- .emit_underlay(scene, L, scales, e)
     }
+    # The core layer (isolated in its own blend group if it carries a blend).
     blend <- L$blend %||% "normal"
     if (!identical(blend, "normal")) {
       rng <- .panel_scale_range(scales)
       scene <- vellum::push(
         scene,
-        vellum::viewport(
-          xscale = rng$x,
-          yscale = rng$y,
-          blend = blend
-        )
+        vellum::viewport(xscale = rng$x, yscale = rng$y, blend = blend)
       )
       scene <- .emit_layer(scene, L, scales)
       scene <- vellum::pop(scene)
     } else {
       scene <- .emit_layer(scene, L, scales)
+    }
+    # Overlay effects (inner glow / shadow) draw over the core, in order.
+    for (e in .overlay_effects(L)) {
+      scene <- .emit_inner(scene, L, scales, e)
     }
   }
   scene

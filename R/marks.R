@@ -126,11 +126,12 @@ after_stat <- function(x) x
   quos <- c(dots, extra)
   split <- .split_encodings(quos)
   # `effects` is a reserved argument, not an aesthetic: catch it arriving via `...`
-  # on a mark that does not expose it (only stroked/point marks do).
+  # on a mark that does not expose an `effects` argument.
   if ("effects" %in% c(names(split$encoding), names(split$params))) {
     cli::cli_abort(c(
       "{.arg effects} is not an aesthetic.",
-      i = "Only stroked and point marks take an {.arg effects} argument (e.g. {.fn mark_line}, {.fn mark_point})."
+      i = "This mark does not take an {.arg effects} argument.",
+      i = "Effects are available on line/point/step/rule/segment/edges/nodes and area/ribbon/bar marks."
     ))
   }
   layer <- LayerSpec(
@@ -174,8 +175,10 @@ after_stat <- function(x) x
 #'   already drawn beneath it (the panel and earlier layers), one of the CSS
 #'   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The whole
 #'   layer composites as one isolated group (not per element).
-#' @param effects A list of layer render effects (currently [glow()]), applied to
-#'   the mark's grobs at draw time. Only stroked and point marks accept effects.
+#' @param effects A list of layer render effects applied to the mark at draw
+#'   time — [glow()], [outline()], [shadow()] (stroked / point marks),
+#'   [sketch()] (path marks), and [inner_glow()] / [inner_shadow()] (filled
+#'   marks). Each effect errors if it does not apply to the mark.
 #' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
@@ -304,7 +307,14 @@ mark_rule <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
 #' stat). When `color`/`fill` is mapped, grouped bars are stacked by default; use
 #' `position = "dodge"` for side-by-side bars or `"fill"` to normalise to 1.
 #' @export
-mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
+mark_bar <- function(
+  plot,
+  ...,
+  position = "stack",
+  blend = NULL,
+  effects = list(),
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -312,6 +322,7 @@ mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
     rlang::enquos(...),
     position = position,
     blend = blend,
+    effects = effects,
     data = data
   )
 }
@@ -512,16 +523,36 @@ mark_datashade <- function(
 #' @examples
 #' vplot(pressure) |> mark_area(x = temperature, y = pressure)
 #' @export
-mark_area <- function(plot, ..., blend = NULL, data = NULL) {
+mark_area <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "area", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "area",
+    rlang::enquos(...),
+    blend = blend,
+    effects = effects,
+    data = data
+  )
 }
 
 #' @rdname mark_area
 #' @export
-mark_ribbon <- function(plot, ..., blend = NULL, data = NULL) {
+mark_ribbon <- function(
+  plot,
+  ...,
+  blend = NULL,
+  effects = list(),
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "ribbon", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "ribbon",
+    rlang::enquos(...),
+    blend = blend,
+    effects = effects,
+    data = data
+  )
 }
 
 #' @rdname mark_area

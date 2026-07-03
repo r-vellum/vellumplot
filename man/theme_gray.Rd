@@ -7,6 +7,7 @@
 \alias{theme_classic}
 \alias{theme_void}
 \alias{theme_cyberpunk}
+\alias{theme_sketch}
 \alias{theme}
 \alias{set_theme}
 \title{Plot themes}
@@ -22,6 +23,8 @@ theme_classic(plot)
 theme_void(plot)
 
 theme_cyberpunk(plot)
+
+theme_sketch(plot)
 
 theme(plot, ...)
 
@@ -56,7 +59,7 @@ white gridlines); \code{theme_minimal()} drops the panel fill for light gridline
 the page; \code{theme_bw()} is a white panel with light grey gridlines;
 \code{theme_classic()} has axis lines and no gridlines; \code{theme_void()} strips
 everything but the marks, legend, and titles; \code{theme_cyberpunk()} is a dark
-neon theme (see Details).
+neon theme and \code{theme_sketch()} a hand-drawn paper theme (see Details).
 }
 \details{
 \code{\link[=theme]{theme()}} overrides individual elements on top of the current theme using
@@ -68,6 +71,12 @@ neon default palette (both discrete and continuous), in the spirit of
 \href{https://github.com/dhaitz/mplcyberpunk}{mplcyberpunk}. It pairs with the
 \code{\link[=glow]{glow()}} layer effect and \code{\link[=linear_gradient]{linear_gradient()}} fills for the full neon look;
 the palette is only a \emph{default}, so \verb{scale_*} overrides still win.
+
+\code{theme_sketch()} is a light "paper" theme (warm off-white panel, no minor
+gridlines, soft axis lines) meant to pair with the \code{\link[=sketch]{sketch()}} layer effect on
+the marks — the theme sets the mood, \code{sketch()} does the hand-drawn wobble.
+Set a handwriting font with \code{theme(text = element_text(family = "..."))} if
+one is installed.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_minimal()

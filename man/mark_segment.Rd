@@ -17,8 +17,10 @@ already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
 layer composites as one isolated group (not per element).}
 
-\item{effects}{A list of layer render effects (currently \code{\link[=glow]{glow()}}), applied to
-the mark's grobs at draw time. Only stroked and point marks accept effects.}
+\item{effects}{A list of layer render effects applied to the mark at draw
+time — \code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}}, \code{\link[=shadow]{shadow()}} (stroked / point marks),
+\code{\link[=sketch]{sketch()}} (path marks), and \code{\link[=inner_glow]{inner_glow()}} / \code{\link[=inner_shadow]{inner_shadow()}} (filled
+marks). Each effect errors if it does not apply to the mark.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 }

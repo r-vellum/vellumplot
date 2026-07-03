@@ -44,5 +44,5 @@ vplot(df) |>
   theme_cyberpunk()
 }
 \seealso{
-\code{\link[=theme_cyberpunk]{theme_cyberpunk()}}, \code{\link[=linear_gradient]{linear_gradient()}}
+\code{\link[=outline]{outline()}}, \code{\link[=shadow]{shadow()}}, \code{\link[=sketch]{sketch()}}, \code{\link[=inner_glow]{inner_glow()}}, \code{\link[=theme_cyberpunk]{theme_cyberpunk()}}
 }

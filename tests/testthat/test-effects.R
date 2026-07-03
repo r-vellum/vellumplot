@@ -34,15 +34,19 @@ test_that("effects ride the layer for stroked / point marks", {
 })
 
 test_that("glow on an unsupported mark errors", {
-  # via the reserved-argument guard (mark_bar has no effects arg)
+  # a filled mark takes effects=, but glow does not apply to it
   expect_error(
     vplot(line_df) |> mark_bar(x = x, y = y, effects = list(glow())),
-    "not an aesthetic"
+    "does not apply"
   )
-  # and directly, via the mark validation
   expect_error(
     quill:::.check_effects(list(glow()), "bar"),
-    "stroked and point"
+    "does not apply"
+  )
+  # a mark with no effects= arg catches it via the reserved-argument guard
+  expect_error(
+    vplot(line_df) |> mark_tile(x = x, y = y, effects = list(glow())),
+    "not an aesthetic"
   )
 })
 
@@ -127,4 +131,99 @@ test_that("theme_cyberpunk supplies the default palette, overridable by a scale"
   # without the theme, the default palette is unchanged
   plain <- vplot(bars) |> mark_bar(x = cat, y = n, fill = cat)
   expect_false(identical(train(plain)$color$map("a"), quill:::.NEON_QUAL[[1]]))
+})
+
+# --- outline() --------------------------------------------------------------
+
+test_that("outline() builds an OutlineSpec, attaches, and renders", {
+  o <- outline(size = 2, color = "black")
+  expect_true(S7::S7_inherits(o, quill:::OutlineSpec))
+  expect_error(outline(size = -1), "positive")
+  expect_error(outline(color = c("a", "b")), "single colour")
+
+  p <- vplot(line_df) |>
+    mark_point(x = x, y = y, size = 3, effects = list(outline()))
+  expect_true(S7::S7_inherits(p@layers[[1]]@effects[[1]], quill:::OutlineSpec))
+  expect_no_error(render_px(p))
+})
+
+# --- shadow() ---------------------------------------------------------------
+
+test_that("shadow() builds a ShadowSpec and renders on a line", {
+  s <- shadow(x = 0.01, y = -0.01)
+  expect_true(S7::S7_inherits(s, quill:::ShadowSpec))
+  expect_error(shadow(alpha = 2), "\\[0, 1\\]")
+  expect_error(shadow(spread = -1), "non-negative")
+
+  p <- vplot(line_df) |> mark_line(x = x, y = y, effects = list(shadow()))
+  expect_no_error(render_px(p))
+})
+
+# --- sketch() ---------------------------------------------------------------
+
+test_that("sketch() perturbs and densifies a path deterministically", {
+  sk <- sketch(amount = 0.02, seed = 3)
+  expect_true(S7::S7_inherits(sk, quill:::SketchSpec))
+  scales <- list(x = list(domain = c(0, 10)), y = list(domain = c(0, 10)))
+  a <- quill:::.sketch_native(scales, c(0, 10), c(0, 10), sk)
+  b <- quill:::.sketch_native(scales, c(0, 10), c(0, 10), sk)
+  expect_gt(length(a$x), 2) # densified
+  expect_identical(a, b) # reproducible given the seed
+  # a straight segment is actually bent
+  expect_false(isTRUE(all.equal(a$y, seq(0, 10, length.out = length(a$y)))))
+})
+
+test_that("sketch renders and applies only to path marks", {
+  p <- vplot(line_df) |>
+    mark_line(x = x, y = y, effects = list(sketch())) |>
+    theme_sketch()
+  expect_no_error(render_px(p))
+  expect_error(
+    vplot(line_df) |> mark_point(x = x, y = y, effects = list(sketch())),
+    "does not apply"
+  )
+})
+
+# --- inner glow / shadow ----------------------------------------------------
+
+test_that("inner_glow / inner_shadow build InnerSpec and render on fills", {
+  ig <- inner_glow()
+  is_ <- inner_shadow()
+  expect_true(S7::S7_inherits(ig, quill:::InnerSpec))
+  expect_false(ig@dark)
+  expect_true(is_@dark)
+
+  ar <- data.frame(x = 1:20, y = cumsum(abs(rnorm(20))))
+  rb <- data.frame(x = 1:20, lo = 1:20, hi = (1:20) + 5)
+  expect_no_error(render_px(
+    vplot(ar) |> mark_area(x = x, y = y, fill = "#0a2a43", effects = list(ig))
+  ))
+  expect_no_error(render_px(
+    vplot(rb) |> mark_ribbon(x = x, ymin = lo, ymax = hi, effects = list(is_))
+  ))
+  # inner effects do not apply to stroked marks
+  expect_error(
+    vplot(line_df) |> mark_line(x = x, y = y, effects = list(inner_glow())),
+    "does not apply"
+  )
+})
+
+# --- composition + theme_sketch ---------------------------------------------
+
+test_that("effects compose in one layer", {
+  p <- vplot(line_df) |>
+    mark_line(
+      x = x,
+      y = y,
+      color = "#00e5ff",
+      effects = list(outline(color = "black"), glow())
+    ) |>
+    theme_cyberpunk()
+  expect_no_error(render_px(p))
+})
+
+test_that("theme_sketch sets a paper canvas with no minor grid", {
+  p <- vplot(line_df) |> mark_line(x = x, y = y) |> theme_sketch()
+  expect_identical(p@theme$panel.background@fill, "#fbf7ee")
+  expect_true(quill:::.is_blank(p@theme$panel.grid.minor))
 })
