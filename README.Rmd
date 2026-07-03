@@ -140,6 +140,13 @@ render_plot(p, "cars.png")
 * `mark_datashade()` for million-point density rasters.
 * Annotations: `annotate()`, `labs()`, and `md()` markdown titles.
 * Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
-  `theme_classic()`, `theme_void()`, `theme()` / `set_theme()`) and multi-plot
-  composition (`hconcat()`, `vconcat()`, `concat()`, `wrap_plots()`, `inset()`,
-  `repeat_()`).
+  `theme_classic()`, `theme_void()`, `theme_cyberpunk()`, `theme()` /
+  `set_theme()`) and multi-plot composition (`hconcat()`, `vconcat()`,
+  `concat()`, `wrap_plots()`, `inset()`, `repeat_()`).
+* Layer effects (`glow()`, `outline()`, `shadow()`) and gradient fills
+  (`linear_gradient()`, `radial_gradient()`).
+* Hand-drawn rendering: `sketch()` gives any geometry mark a wobbly, hachure-
+  filled [Rough.js](https://roughjs.com) look (a `sketch =` argument on marks, an
+  `element_line()` / `element_rect()` `sketch =` slot, or the plot-wide
+  `theme_sketch()` one-liner). Generated natively in the engine, so it is exact
+  and works across PNG / SVG / PDF.

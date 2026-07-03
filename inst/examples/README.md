@@ -42,3 +42,4 @@ if their packages are absent.
 | `20-networks.R`           | igraph node-link diagrams: stress/other layouts, node & edge aesthetics, filtered labels, directed arrows, self-loops, edge-width legend, large-graph batching (needs `igraph`/`graphlayouts`) |
 | `21-cyberpunk-effects.R`  | `theme_cyberpunk()`, `glow()` layer effect on lines/points, `linear_gradient()` fills |
 | `22-layer-effects.R`      | `outline()`, `shadow()`, composing effects |
+| `23-sketch.R`             | hand-drawn `sketch()` marks, fill styles, `theme_sketch()`, per-element / per-layer control, cross-backend |

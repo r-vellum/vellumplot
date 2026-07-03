@@ -84,6 +84,15 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   `radial_gradient()` can be used as a `fill` value (area / ribbon / bar), and
   `theme_cyberpunk()` ties glow + gradients + a neon palette into the
   [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk) look.
+* **Hand-drawn ("sketch") rendering**: `sketch()` (re-exported from vellum) gives
+  any geometry mark a wobbly, hachure-filled [Rough.js](https://roughjs.com) look
+  via a `sketch =` argument. Unlike a layer effect it is a *geometry* property,
+  generated natively in the engine, so it is exact, cross-backend, and works in
+  PDF. It rides three levels, most-specific-wins: a mark's `sketch =`, an
+  `element_line()` / `element_rect()` `sketch =` slot, or the plot-wide
+  `theme_sketch()` one-liner (hand-drawn gridlines, axes, ticks, marks and legend
+  keys on a paper background). `sketch = NA` forces an element crisp; text is
+  never sketched (pair a handwriting font).
 * **Composition**: `hconcat()`, `vconcat()`, `concat()`, and `wrap_plots()`
   arrange several plots on a grid; the aligned path lines up panel edges and can
   **collect guides** across sub-plots. `inset()` overlays a plot, and
