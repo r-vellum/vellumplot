@@ -6,6 +6,7 @@
 \alias{theme_bw}
 \alias{theme_classic}
 \alias{theme_void}
+\alias{theme_cyberpunk}
 \alias{theme}
 \alias{set_theme}
 \title{Plot themes}
@@ -19,6 +20,8 @@ theme_bw(plot)
 theme_classic(plot)
 
 theme_void(plot)
+
+theme_cyberpunk(plot)
 
 theme(plot, ...)
 
@@ -52,12 +55,19 @@ Control the non-data look of a plot. \code{theme_gray()} is the default (grey pa
 white gridlines); \code{theme_minimal()} drops the panel fill for light gridlines on
 the page; \code{theme_bw()} is a white panel with light grey gridlines;
 \code{theme_classic()} has axis lines and no gridlines; \code{theme_void()} strips
-everything but the marks, legend, and titles.
+everything but the marks, legend, and titles; \code{theme_cyberpunk()} is a dark
+neon theme (see Details).
 }
 \details{
 \code{\link[=theme]{theme()}} overrides individual elements on top of the current theme using
 \code{\link[=element_text]{element_text()}} / \code{\link[=element_line]{element_line()}} / \code{\link[=element_rect]{element_rect()}} / \code{\link[=element_blank]{element_blank()}}.
 \code{set_theme()} is a small back-compatible shortcut for the most common colours.
+
+\code{theme_cyberpunk()} sets a dark canvas with dim neon gridlines and a bright
+neon default palette (both discrete and continuous), in the spirit of
+\href{https://github.com/dhaitz/mplcyberpunk}{mplcyberpunk}. It pairs with the
+\code{\link[=glow]{glow()}} layer effect and \code{\link[=linear_gradient]{linear_gradient()}} fills for the full neon look;
+the palette is only a \emph{default}, so \verb{scale_*} overrides still win.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_minimal()

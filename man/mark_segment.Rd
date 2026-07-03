@@ -4,7 +4,7 @@
 \alias{mark_segment}
 \title{Segment mark}
 \usage{
-mark_segment(plot, ..., blend = NULL, data = NULL)
+mark_segment(plot, ..., blend = NULL, effects = list(), data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -16,6 +16,9 @@ mark_segment(plot, ..., blend = NULL, data = NULL)
 already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
 layer composites as one isolated group (not per element).}
+
+\item{effects}{A list of layer render effects (currently \code{\link[=glow]{glow()}}), applied to
+the mark's grobs at draw time. Only stroked and point marks accept effects.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 }

@@ -46,6 +46,14 @@ NULL
 
 .aes_param <- function(L, name, default) L$params[[name]] %||% default
 
+# A gradient/paint fill value on a layer (from `fill = linear_gradient(...)`), or
+# NULL. When present, a filled mark paints its whole region with one grob rather
+# than a per-row colour vector (the paint is a single value, not data-mapped).
+.grad_fill <- function(L) {
+  f <- L$params$fill
+  if (inherits(f, "vellum_gradient")) f else NULL
+}
+
 # Resolve a layer's point size (mm): a mapped size channel (via the trained size
 # scale), a constant size param, or the supplied default.
 .aes_size <- function(L, scales, default) {
@@ -377,12 +385,16 @@ NULL
 }
 
 .emit_bar <- function(scene, L, scales) {
+  grad <- .grad_fill(L)
   if (!is.null(scales$polar)) {
+    if (!is.null(grad)) {
+      cli::cli_abort("Gradient fills are not supported for polar bars / pies.")
+    }
     return(.emit_bar_polar(scene, L, scales))
   }
   n <- L$n
   xp <- rep_len(scales$x$map(L$values$x), n)
-  fill <- rep_len(.aes_colour(L, scales, "grey35"), n)
+  fill <- if (is.null(grad)) rep_len(.aes_colour(L, scales, "grey35"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
   band <- scales$x$band_width %||% .resolution(xp)
 
@@ -405,6 +417,21 @@ NULL
       w <- w / G
       xc <- xp + (rank - (G + 1) / 2) / G * band
     }
+  }
+
+  # A gradient fill paints every bar as one rect grob sharing the paint.
+  if (!is.null(grad)) {
+    r <- .rect_units(scales, xc, (y0 + y1) / 2, w, abs(y1 - y0))
+    return(.draw(
+      scene,
+      vellum::rect_grob(
+        x = r$x,
+        y = r$y,
+        width = r$width,
+        height = r$height,
+        gp = vellum::gpar(fill = grad, col = NA)
+      )
+    ))
   }
 
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
@@ -478,6 +505,21 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   ymin <- rep_len(scales$y$map(L$values$ymin), n)
   ymax <- rep_len(scales$y$map(L$values$ymax), n)
+
+  grad <- .grad_fill(L)
+  if (!is.null(grad)) {
+    o <- order(xn)
+    poly <- .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
+    return(.draw(
+      scene,
+      vellum::polygon_grob(
+        poly$x,
+        poly$y,
+        gp = vellum::gpar(fill = grad, col = NA)
+      )
+    ))
+  }
+
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
 
@@ -508,6 +550,22 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   y0 <- rep_len(scales$y$map(0), n)
   y1 <- rep_len(scales$y$map(L$values$y), n)
+
+  # A gradient fill paints the whole area as one polygon (in x order).
+  grad <- .grad_fill(L)
+  if (!is.null(grad)) {
+    o <- order(xn)
+    poly <- .xy_area(scales, xn[o], y1[o], xn[o], y0[o])
+    return(.draw(
+      scene,
+      vellum::polygon_grob(
+        poly$x,
+        poly$y,
+        gp = vellum::gpar(fill = grad, col = NA)
+      )
+    ))
+  }
+
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
 
@@ -1320,6 +1378,65 @@ NULL
   vellum::draw(scene, grob)
 }
 
+# The [xscale, yscale] a blend/effect wrapper viewport carries so native
+# coordinates still resolve inside it (a polar panel uses the fixed [-1, 1] square).
+.panel_scale_range <- function(scales) {
+  if (is.null(scales$polar)) {
+    list(x = scales$x$domain, y = scales$y$domain)
+  } else {
+    list(x = c(-1, 1), y = c(-1, 1))
+  }
+}
+
+# grid `lwd` per millimetre of stroke width (1 lwd = 1/96 inch, as in grid).
+.MM_TO_LWD <- 96 / 25.4
+
+# The glow halo's base width: a stroke's linewidth (lwd) or a point's diameter
+# (mm), read from the same param + default the emitter would use.
+.glow_base <- function(L) {
+  if (L$mark %in% c("point", "nodes")) {
+    L$params$size %||% 1
+  } else {
+    L$params$linewidth %||%
+      switch(L$mark, line = 1.5, step = 1.5, edges = 0.5, 1)
+  }
+}
+
+# Draw a layer's glow halo: `layers` widened, low-alpha copies of the mark
+# composited under `g$blend`, widest first so opacity accumulates toward the
+# crisp core (drawn afterwards by the normal emit path). Each copy re-uses the
+# mark's own emitter with overridden width/alpha (and colour, if `g$color` set),
+# so coordinates/flip/polar all stay correct.
+.emit_glow <- function(scene, L, scales, g) {
+  is_point <- L$mark %in% c("point", "nodes")
+  base <- .glow_base(L)
+  rng <- .panel_scale_range(scales)
+  scene <- vellum::push(
+    scene,
+    vellum::viewport(xscale = rng$x, yscale = rng$y, blend = g@blend)
+  )
+  for (k in seq.int(g@layers, 1L)) {
+    frac <- k / g@layers
+    L2 <- L
+    L2$effects <- list() # copies are plain; no recursion
+    L2$params$alpha <- g@alpha
+    if (!is.null(g@color)) {
+      L2$values$color <- NULL
+      L2$values$fill <- NULL
+      L2$params$color <- g@color
+      L2$params$fill <- g@color
+    }
+    if (is_point) {
+      L2$values$size <- NULL
+      L2$params$size <- base + frac * g@size
+    } else {
+      L2$params$linewidth <- base + frac * g@size * .MM_TO_LWD
+    }
+    scene <- .emit_layer(scene, L2, scales)
+  }
+  vellum::pop(scene)
+}
+
 .compile_marks <- function(scene, resolved, scales) {
   on.exit(.mark_ctx$id <- NULL, add = TRUE)
   for (i in seq_along(resolved)) {
@@ -1328,15 +1445,19 @@ NULL
       next
     } # empty facet panel
     .mark_ctx$id <- sprintf("layer-%d-%s", i, L$mark)
+    # Glow halo (if any) sits beneath the layer's own draw, in its own blend group.
+    g <- .layer_glow(L)
+    if (!is.null(g)) {
+      scene <- .emit_glow(scene, L, scales, g)
+    }
     blend <- L$blend %||% "normal"
     if (!identical(blend, "normal")) {
-      bx <- if (is.null(scales$polar)) scales$x$domain else c(-1, 1)
-      by <- if (is.null(scales$polar)) scales$y$domain else c(-1, 1)
+      rng <- .panel_scale_range(scales)
       scene <- vellum::push(
         scene,
         vellum::viewport(
-          xscale = bx,
-          yscale = by,
+          xscale = rng$x,
+          yscale = rng$y,
           blend = blend
         )
       )

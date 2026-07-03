@@ -1,6 +1,29 @@
 #' @include classes.R
 NULL
 
+# A call to a paint constructor (linear_gradient / radial_gradient), whose result
+# is an unscaled fill *value*, not a data-mapped channel. Namespace-qualified
+# calls (`vellum::linear_gradient(...)`) match too (call_name strips the `::`).
+.is_paint_call <- function(e) {
+  nm <- rlang::call_name(e)
+  !is.null(nm) && nm %in% c("linear_gradient", "radial_gradient")
+}
+
+# If a channel quosure is a bare *symbol* bound (in its own environment) to a
+# paint object, return it; else NULL. Used to treat `fill = g` -- a paint held
+# in a variable -- as a value. Restricted to symbols so arbitrary channel calls
+# (e.g. `y = rnorm(20)`) are never eagerly evaluated here (no double eval / RNG
+# side effects); inline `linear_gradient(...)` calls go through `.is_paint_call`.
+# A data-column symbol resolves only under the data mask, so it errors here and
+# safely falls through to a channel.
+.paint_value <- function(q) {
+  if (!is.symbol(rlang::quo_get_expr(q))) {
+    return(NULL)
+  }
+  val <- tryCatch(rlang::eval_tidy(q), error = function(e) NULL)
+  if (inherits(val, "vellum_gradient")) val else NULL
+}
+
 # Split captured aesthetic quosures into data-mapped channels vs constant
 # params. A quosure whose expression is a bare literal (number, string,
 # logical) is a constant aesthetic (e.g. `size = 3`, `color = "red"`); anything
@@ -19,9 +42,16 @@ NULL
       # after_stat(expr): a stage-2 channel evaluated against the stat output.
       inner <- rlang::new_quosure(e[[2]], rlang::quo_get_env(q))
       encoding[[nm]] <- channel(expr = inner, after = TRUE)
+    } else if (is.call(e) && .is_paint_call(e)) {
+      # fill = linear_gradient(...) -> a paint *value* (constant aesthetic), not a
+      # data channel: evaluate it now and store as a param.
+      params[[nm]] <- rlang::eval_tidy(q)
     } else if (!is.symbol(e) && !is.call(e)) {
       # syntactic literal -> constant aesthetic
       params[[nm]] <- rlang::eval_tidy(q)
+    } else if (!is.null(pv <- .paint_value(q))) {
+      # a pre-built paint bound to a variable (fill = g) is a value, not a channel
+      params[[nm]] <- pv
     } else {
       encoding[[nm]] <- channel(expr = q)
     }
@@ -84,6 +114,7 @@ after_stat <- function(x) x
   stat_params = list(),
   position = "identity",
   blend = NULL,
+  effects = list(),
   data = NULL,
   z = 0L
 ) {
@@ -94,6 +125,14 @@ after_stat <- function(x) x
   }
   quos <- c(dots, extra)
   split <- .split_encodings(quos)
+  # `effects` is a reserved argument, not an aesthetic: catch it arriving via `...`
+  # on a mark that does not expose it (only stroked/point marks do).
+  if ("effects" %in% c(names(split$encoding), names(split$params))) {
+    cli::cli_abort(c(
+      "{.arg effects} is not an aesthetic.",
+      i = "Only stroked and point marks take an {.arg effects} argument (e.g. {.fn mark_line}, {.fn mark_point})."
+    ))
+  }
   layer <- LayerSpec(
     mark = mark,
     encoding = split$encoding,
@@ -102,6 +141,7 @@ after_stat <- function(x) x
     stat_params = stat_params,
     position = position,
     blend = .check_blend(blend),
+    effects = .check_effects(effects, mark),
     data = data,
     z = as.integer(z)
   )
@@ -134,6 +174,8 @@ after_stat <- function(x) x
 #'   already drawn beneath it (the panel and earlier layers), one of the CSS
 #'   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The whole
 #'   layer composites as one isolated group (not per element).
+#' @param effects A list of layer render effects (currently [glow()]), applied to
+#'   the mark's grobs at draw time. Only stroked and point marks accept effects.
 #' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
@@ -148,6 +190,7 @@ mark_point <- function(
   auto = FALSE,
   seed = NULL,
   blend = NULL,
+  effects = list(),
   data = NULL
 ) {
   .check_plot(plot)
@@ -159,15 +202,23 @@ mark_point <- function(
     position = position,
     stat_params = list(auto = isTRUE(auto), seed = seed),
     blend = blend,
+    effects = effects,
     data = data
   )
 }
 
 #' @rdname mark_point
 #' @export
-mark_line <- function(plot, ..., blend = NULL, data = NULL) {
+mark_line <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "line", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "line",
+    rlang::enquos(...),
+    blend = blend,
+    effects = effects,
+    data = data
+  )
 }
 
 #' Draw simple-feature (sf) geometries
@@ -234,9 +285,16 @@ mark_sf <- function(
 
 #' @rdname mark_point
 #' @export
-mark_rule <- function(plot, ..., blend = NULL, data = NULL) {
+mark_rule <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "rule", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "rule",
+    rlang::enquos(...),
+    blend = blend,
+    effects = effects,
+    data = data
+  )
 }
 
 #' @rdname mark_point
@@ -468,7 +526,14 @@ mark_ribbon <- function(plot, ..., blend = NULL, data = NULL) {
 
 #' @rdname mark_area
 #' @export
-mark_step <- function(plot, ..., direction = "hv", blend = NULL, data = NULL) {
+mark_step <- function(
+  plot,
+  ...,
+  direction = "hv",
+  blend = NULL,
+  effects = list(),
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -476,6 +541,7 @@ mark_step <- function(plot, ..., direction = "hv", blend = NULL, data = NULL) {
     rlang::enquos(...),
     stat_params = list(direction = direction),
     blend = blend,
+    effects = effects,
     data = data
   )
 }
@@ -718,9 +784,22 @@ mark_summary <- function(plot, ..., fun = mean, blend = NULL, data = NULL) {
 #' d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
 #' vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend)
 #' @export
-mark_segment <- function(plot, ..., blend = NULL, data = NULL) {
+mark_segment <- function(
+  plot,
+  ...,
+  blend = NULL,
+  effects = list(),
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "segment", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "segment",
+    rlang::enquos(...),
+    blend = blend,
+    effects = effects,
+    data = data
+  )
 }
 
 # Fill in default encoding channels the user did not supply (used by the graph
@@ -783,6 +862,7 @@ mark_edges <- function(
   alpha = NULL,
   arrow = FALSE,
   blend = NULL,
+  effects = list(),
   data = NULL
 ) {
   .check_plot(plot)
@@ -797,6 +877,7 @@ mark_edges <- function(
     rlang::enquos(color = color, linewidth = linewidth, alpha = alpha),
     stat_params = list(arrow = isTRUE(arrow)),
     blend = blend,
+    effects = effects,
     data = data %||% plot@edge_data,
     z = 1L
   )
@@ -813,6 +894,7 @@ mark_nodes <- function(
   color = NULL,
   alpha = NULL,
   blend = NULL,
+  effects = list(),
   data = NULL
 ) {
   .check_plot(plot)
@@ -829,6 +911,7 @@ mark_nodes <- function(
       alpha = alpha
     ),
     blend = blend,
+    effects = effects,
     data = data,
     z = 2L
   )

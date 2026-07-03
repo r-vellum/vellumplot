@@ -16,12 +16,13 @@ mark_point(
   auto = FALSE,
   seed = NULL,
   blend = NULL,
+  effects = list(),
   data = NULL
 )
 
-mark_line(plot, ..., blend = NULL, data = NULL)
+mark_line(plot, ..., blend = NULL, effects = list(), data = NULL)
 
-mark_rule(plot, ..., blend = NULL, data = NULL)
+mark_rule(plot, ..., blend = NULL, effects = list(), data = NULL)
 
 mark_bar(plot, ..., position = "stack", blend = NULL, data = NULL)
 }
@@ -49,6 +50,9 @@ making the jitter reproducible. The global RNG stream is restored afterwards.}
 already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
 layer composites as one isolated group (not per element).}
+
+\item{effects}{A list of layer render effects (currently \code{\link[=glow]{glow()}}), applied to
+the mark's grobs at draw time. Only stroked and point marks accept effects.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 }

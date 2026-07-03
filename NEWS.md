@@ -78,6 +78,11 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 * **Themes**: `theme_gray()` (default), `theme_minimal()`, `theme_bw()`,
   `theme_classic()`, `theme_void()`, and `theme()` for ad-hoc overrides (panel
   background, gridlines, text, strip background, legend position, margins).
+* **Effects & paints**: `glow()` adds a neon halo to stroked / point marks via a
+  layer `effects = list(...)` argument; `linear_gradient()` / `radial_gradient()`
+  can be used as a `fill` value (area / ribbon / bar); and `theme_cyberpunk()`
+  ties them together with a dark canvas and neon default palette
+  (à la [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk)).
 * **Composition**: `hconcat()`, `vconcat()`, `concat()`, and `wrap_plots()`
   arrange several plots on a grid; the aligned path lines up panel edges and can
   **collect guides** across sub-plots. `inset()` overlays a plot, and

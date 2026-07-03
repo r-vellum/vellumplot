@@ -55,6 +55,7 @@ Collate:
     'compile-position.R'
     'compile-sf.R'
     'compile-stat.R'
+    'effects.R'
     'labs.R'
     'print.R'
     'reexports.R'

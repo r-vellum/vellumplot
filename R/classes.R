@@ -15,9 +15,31 @@ channel <- S7::new_class(
   )
 )
 
+# A layer render effect: a serializable directive that transforms a layer's
+# emitted grob(s) at compile time (e.g. glow -> a stack of widened, low-alpha
+# copies). Abstract root so `effects` can grow (shadow/outline) without touching
+# the mark signatures; the compiler dispatches on the concrete subclass.
+Effect <- S7::new_class("Effect", package = "quill", abstract = TRUE)
+
+# A neon-glow effect: `layers` widened, low-`alpha` copies of a stroked/point
+# mark composited under a `blend` mode (the crisp original drawn on top). `size`
+# is the extra visual spread in mm; `color` NULL inherits the mark's own colour.
+GlowSpec <- S7::new_class(
+  "GlowSpec",
+  package = "quill",
+  parent = Effect,
+  properties = list(
+    size = S7::new_property(S7::class_double, default = 6),
+    layers = S7::new_property(S7::class_integer, default = 6L),
+    alpha = S7::new_property(S7::class_double, default = 0.12),
+    blend = S7::new_property(S7::class_character, default = "screen"),
+    color = S7::new_property(S7::class_any, default = NULL)
+  )
+)
+
 # One drawing layer: a mark, its encodings (named list<channel>), constant
 # aesthetics (`params`), an optional statistical transform (`stat`, with its
-# own `stat_params`), and a position adjustment (`position`).
+# own `stat_params`), a position adjustment (`position`), and render `effects`.
 LayerSpec <- S7::new_class(
   "LayerSpec",
   package = "quill",
@@ -29,6 +51,7 @@ LayerSpec <- S7::new_class(
     stat_params = S7::new_property(S7::class_list, default = list()),
     position = S7::new_property(S7::class_character, default = "identity"),
     blend = S7::new_property(S7::class_character, default = "normal"),
+    effects = S7::new_property(S7::class_list, default = list()), # list<Effect>
     data = S7::new_property(S7::class_any, default = NULL), # per-layer data | NULL
     z = S7::new_property(S7::class_integer, default = 0L) # draw-order band
   )

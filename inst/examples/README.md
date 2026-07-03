@@ -40,3 +40,4 @@ if their packages are absent.
 | `18-spatial-maps.R`       | sf geometries, choropleths, classed breaks, `coord_sf` projection (needs `sf`) |
 | `19-datashader-census.R`  | datashader's 306M-point US Census map: density + additive per-race shading (needs `arrow`/`dplyr` + a 1.44 GB download) |
 | `20-networks.R`           | igraph node-link diagrams: stress/other layouts, node & edge aesthetics, filtered labels, directed arrows, self-loops, edge-width legend, large-graph batching (needs `igraph`/`graphlayouts`) |
+| `21-cyberpunk-effects.R`  | `theme_cyberpunk()`, `glow()` layer effect on lines/points, `linear_gradient()` fills |

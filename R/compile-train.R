@@ -411,6 +411,11 @@ NULL
   }
 
   pal <- if (!is.null(scalespec)) scalespec@palette else NULL
+  # No explicit palette? A theme may supply a default (e.g. theme_cyberpunk()'s
+  # neon set): `palette` for discrete, `palette.continuous` for continuous/binned.
+  if (is.null(pal)) {
+    pal <- .theme_palette(spec, kind)
+  }
   user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
   user_labels <- if (!is.null(scalespec)) scalespec@labels else NULL
 

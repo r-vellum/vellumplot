@@ -10,7 +10,14 @@ mark_area(plot, ..., blend = NULL, data = NULL)
 
 mark_ribbon(plot, ..., blend = NULL, data = NULL)
 
-mark_step(plot, ..., direction = "hv", blend = NULL, data = NULL)
+mark_step(
+  plot,
+  ...,
+  direction = "hv",
+  blend = NULL,
+  effects = list(),
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -27,6 +34,9 @@ layer composites as one isolated group (not per element).}
 
 \item{direction}{For \code{mark_step()}, \code{"hv"} (horizontal then vertical, default)
 or \code{"vh"}.}
+
+\item{effects}{A list of layer render effects (currently \code{\link[=glow]{glow()}}), applied to
+the mark's grobs at draw time. Only stroked and point marks accept effects.}
 }
 \value{
 The modified \link{PlotSpec}.

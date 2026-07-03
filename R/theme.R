@@ -37,6 +37,35 @@ NULL
 # The resolved-or-default complete theme for a spec.
 .theme_of <- function(spec) spec@theme %||% .theme_default()
 
+# Neon qualitative palette for theme_cyberpunk (bright saturated hues on a dark
+# canvas). Ordered so the first few series stay maximally distinct.
+.NEON_QUAL <- c(
+  "#08F7FE", # cyan
+  "#FE53BB", # magenta
+  "#F5D300", # yellow
+  "#00FF9F", # green
+  "#9D72FF", # violet
+  "#FF6E27" # orange
+)
+
+# Neon sequential ramp (dark base -> cyan -> magenta) for continuous fills.
+.NEON_RAMP <- c("#0d0f18", "#08F7FE", "#FE53BB")
+
+# A theme-supplied default palette for a colour scale, or NULL: `palette` for a
+# discrete scale, `palette.continuous` for continuous/binned. Read from the raw
+# theme list (these keys ride the theme but are not drawn elements).
+.theme_palette <- function(spec, kind) {
+  th <- spec@theme
+  if (is.null(th)) {
+    return(NULL)
+  }
+  if (identical(kind, "discrete")) {
+    th[["palette"]]
+  } else {
+    th[["palette.continuous"]]
+  }
+}
+
 # Legacy NA-as-"draw nothing" colour -> element (for set_theme back-compat).
 .legacy_rect <- function(col) {
   if (is.na(col)) element_blank() else element_rect(fill = col, colour = NA)
@@ -51,7 +80,8 @@ NULL
 #' white gridlines); `theme_minimal()` drops the panel fill for light gridlines on
 #' the page; `theme_bw()` is a white panel with light grey gridlines;
 #' `theme_classic()` has axis lines and no gridlines; `theme_void()` strips
-#' everything but the marks, legend, and titles.
+#' everything but the marks, legend, and titles; `theme_cyberpunk()` is a dark
+#' neon theme (see Details).
 #'
 #' [theme()] overrides individual elements on top of the current theme using
 #' [element_text()] / [element_line()] / [element_rect()] / [element_blank()].
@@ -145,6 +175,45 @@ theme_void <- function(plot) {
       strip.background = element_blank()
     )
   )
+  plot
+}
+
+#' @rdname theme_gray
+#' @details
+#' `theme_cyberpunk()` sets a dark canvas with dim neon gridlines and a bright
+#' neon default palette (both discrete and continuous), in the spirit of
+#' [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk). It pairs with the
+#' [glow()] layer effect and [linear_gradient()] fills for the full neon look;
+#' the palette is only a *default*, so `scale_*` overrides still win.
+#' @export
+theme_cyberpunk <- function(plot) {
+  .check_plot(plot)
+  ink <- "#0d0f18" # near-black canvas
+  grid <- "#2b3350"
+  fg <- "#c7d0f0"
+  th <- .merge_theme(
+    .theme_gray_complete(),
+    list(
+      text = element_text(colour = fg),
+      plot.title = element_text(colour = "#08F7FE"),
+      plot.subtitle = element_text(colour = "#8fa0c8"),
+      plot.caption = element_text(colour = "#8fa0c8"),
+      plot.background = element_rect(fill = ink, colour = NA),
+      panel.background = element_rect(fill = ink, colour = NA),
+      panel.grid.major = element_line(colour = grid, linewidth = 0.6),
+      panel.grid.minor = element_line(colour = "#1c2136", linewidth = 0.4),
+      axis.text = element_text(colour = "#8fa0c8"),
+      legend.text = element_text(colour = "#8fa0c8"),
+      axis.ticks = element_line(colour = grid),
+      strip.background = element_rect(fill = "#161b2e", colour = NA),
+      strip.text = element_text(colour = fg)
+    )
+  )
+  # Neon palette defaults ride the theme (read by .train_colour when no scale
+  # palette is set); they are plain keys, not drawn elements.
+  th[["palette"]] <- .NEON_QUAL
+  th[["palette.continuous"]] <- .NEON_RAMP
+  plot@theme <- th
   plot
 }
 

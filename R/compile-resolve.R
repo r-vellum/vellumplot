@@ -73,7 +73,8 @@ NULL
     stat = layer@stat,
     stat_params = layer@stat_params,
     position = layer@position,
-    blend = layer@blend
+    blend = layer@blend,
+    effects = layer@effects
   )
 }
 
