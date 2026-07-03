@@ -11,16 +11,10 @@ NULL
   "edges",
   "nodes"
 )
-.INNER_MARKS <- c("area", "ribbon")
-
-# The marks an effect applies to (used for validation + error messages).
+# The marks an effect applies to (used for validation + error messages). All
+# current effects (glow / outline / shadow) decorate stroked and point marks.
 .effect_marks <- function(e) {
-  if (S7::S7_inherits(e, InnerSpec)) {
-    .INNER_MARKS
-  } else {
-    # glow / outline / shadow
-    .STROKE_POINT_MARKS
-  }
+  .STROKE_POINT_MARKS
 }
 
 #' Neon glow layer effect
@@ -46,7 +40,7 @@ NULL
 #' @param color Halo colour, or `NULL` (default) to inherit the mark's own
 #'   resolved colour — the usual neon look.
 #' @return A `GlowSpec` object for a mark's `effects` list.
-#' @seealso [outline()], [shadow()], [inner_glow()], [theme_cyberpunk()]
+#' @seealso [outline()], [shadow()], [theme_cyberpunk()]
 #' @examples
 #' df <- data.frame(x = 1:20, y = cumsum(rnorm(20)))
 #' vplot(df) |>
@@ -145,49 +139,6 @@ shadow <- function(
   )
 }
 
-#' Inner glow / inner shadow layer effect
-#'
-#' For filled marks (`mark_area()`, `mark_ribbon()`, `mark_bar()`), draws a soft
-#' band of light (`inner_glow()`) or dark (`inner_shadow()`) just *inside* the
-#' fill's edge, by masking a wide boundary stroke to the fill shape. Drawn over
-#' the fill.
-#'
-#' @param size Band width, in millimetres.
-#' @param color Band colour.
-#' @param alpha Band opacity.
-#' @return An `InnerSpec` object for a mark's `effects` list.
-#' @seealso [glow()]
-#' @examples
-#' df <- data.frame(x = 1:30, y = cumsum(abs(rnorm(30))))
-#' vplot(df) |>
-#'   mark_area(x = x, y = y, fill = "#0a2a43", effects = list(inner_glow()))
-#' @export
-inner_glow <- function(size = 3, color = "white", alpha = 0.6) {
-  .check_pos_num(size, "size", "mm")
-  .check_req_colour(color, "color")
-  .check_unit_alpha(alpha)
-  InnerSpec(
-    size = as.double(size),
-    color = color,
-    alpha = as.double(alpha),
-    dark = FALSE
-  )
-}
-
-#' @rdname inner_glow
-#' @export
-inner_shadow <- function(size = 3, color = "black", alpha = 0.5) {
-  .check_pos_num(size, "size", "mm")
-  .check_req_colour(color, "color")
-  .check_unit_alpha(alpha)
-  InnerSpec(
-    size = as.double(size),
-    color = color,
-    alpha = as.double(alpha),
-    dark = TRUE
-  )
-}
-
 # --- shared argument checks -------------------------------------------------
 
 .check_pos_num <- function(v, arg, kind) {
@@ -256,20 +207,8 @@ inner_shadow <- function(size = 3, color = "black", alpha = 0.5) {
   effects
 }
 
-# Effects of a resolved layer that draw *beneath* the core (glow/outline/shadow),
-# in list order (first = furthest back).
+# A resolved layer's effects, in list order (first = furthest back). All current
+# effects (glow/outline/shadow) draw beneath the core.
 .underlay_effects <- function(L) {
-  Filter(
-    function(e) {
-      S7::S7_inherits(e, GlowSpec) ||
-        S7::S7_inherits(e, OutlineSpec) ||
-        S7::S7_inherits(e, ShadowSpec)
-    },
-    L$effects %||% list()
-  )
-}
-
-# Effects that draw *over* the core (inner glow/shadow), in list order.
-.overlay_effects <- function(L) {
-  Filter(function(e) S7::S7_inherits(e, InnerSpec), L$effects %||% list())
+  L$effects %||% list()
 }

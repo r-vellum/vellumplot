@@ -78,13 +78,12 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 * **Themes**: `theme_gray()` (default), `theme_minimal()`, `theme_bw()`,
   `theme_classic()`, `theme_void()`, and `theme()` for ad-hoc overrides (panel
   background, gridlines, text, strip background, legend position, margins).
-* **Effects & paints**: marks take a layer `effects = list(...)` argument.
-  `glow()` (neon halo), `outline()` (contrasting halo for legibility), and
-  `shadow()` (drop / ambient) apply to stroked and point marks; `inner_glow()` /
-  `inner_shadow()` add a masked inner band to filled marks (area / ribbon).
-  `linear_gradient()` / `radial_gradient()` can be used as a `fill` value (area /
-  ribbon / bar), and `theme_cyberpunk()` ties glow + gradients + a neon palette
-  into the [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk) look.
+* **Effects & paints**: stroked and point marks take a layer
+  `effects = list(...)` argument — `glow()` (neon halo), `outline()` (contrasting
+  halo for legibility), and `shadow()` (drop / ambient). `linear_gradient()` /
+  `radial_gradient()` can be used as a `fill` value (area / ribbon / bar), and
+  `theme_cyberpunk()` ties glow + gradients + a neon palette into the
+  [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk) look.
 * **Composition**: `hconcat()`, `vconcat()`, `concat()`, and `wrap_plots()`
   arrange several plots on a grid; the aligned path lines up panel edges and can
   **collect guides** across sub-plots. `inset()` overlays a plot, and

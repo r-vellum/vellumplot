@@ -1489,65 +1489,6 @@ NULL
   }
 }
 
-# The closed fill outline (grob units) of a filled mark (area / ribbon), used to
-# build the mask + boundary stroke for an inner glow / shadow.
-.fill_outline <- function(L, scales) {
-  n <- L$n
-  xn <- rep_len(scales$x$map(L$values$x), n)
-  o <- order(xn)
-  if (identical(L$mark, "area")) {
-    y0 <- rep_len(scales$y$map(0), n)
-    y1 <- rep_len(scales$y$map(L$values$y), n)
-    .xy_area(scales, xn[o], y1[o], xn[o], y0[o])
-  } else if (identical(L$mark, "ribbon")) {
-    ymin <- rep_len(scales$y$map(L$values$ymin), n)
-    ymax <- rep_len(scales$y$map(L$values$ymax), n)
-    .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
-  } else {
-    NULL
-  }
-}
-
-# Inner glow / shadow: a wide boundary stroke of the fill, masked to the fill so
-# only the half *inside* the edge shows. Drawn over the core fill.
-.emit_inner <- function(scene, L, scales, e) {
-  shp <- .fill_outline(L, scales)
-  if (is.null(shp)) {
-    return(scene)
-  }
-  rng <- .panel_scale_range(scales)
-  mask <- vellum::as_mask(
-    vellum::polygon_grob(
-      shp$x,
-      shp$y,
-      gp = vellum::gpar(fill = "black", col = NA)
-    )
-  )
-  scene <- vellum::push(
-    scene,
-    vellum::viewport(
-      xscale = rng$x,
-      yscale = rng$y,
-      mask = mask,
-      blend = if (e@dark) "multiply" else "screen"
-    )
-  )
-  scene <- .draw(
-    scene,
-    vellum::polygon_grob(
-      shp$x,
-      shp$y,
-      gp = vellum::gpar(
-        fill = NA,
-        col = e@color,
-        lwd = 2 * e@size * .MM_TO_LWD,
-        alpha = e@alpha
-      )
-    )
-  )
-  vellum::pop(scene)
-}
-
 .compile_marks <- function(scene, resolved, scales) {
   on.exit(.mark_ctx$id <- NULL, add = TRUE)
   for (i in seq_along(resolved)) {
@@ -1556,7 +1497,7 @@ NULL
       next
     } # empty facet panel
     .mark_ctx$id <- sprintf("layer-%d-%s", i, L$mark)
-    # Underlay effects (glow / outline / shadow) draw beneath the core, in order.
+    # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)
     }
@@ -1572,10 +1513,6 @@ NULL
       scene <- vellum::pop(scene)
     } else {
       scene <- .emit_layer(scene, L, scales)
-    }
-    # Overlay effects (inner glow / shadow) draw over the core, in order.
-    for (e in .overlay_effects(L)) {
-      scene <- .emit_inner(scene, L, scales, e)
     }
   }
   scene

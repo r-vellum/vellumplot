@@ -34,16 +34,16 @@ test_that("effects ride the layer for stroked / point marks", {
 })
 
 test_that("glow on an unsupported mark errors", {
-  # a filled mark takes effects=, but glow does not apply to it
-  expect_error(
-    vplot(line_df) |> mark_bar(x = x, y = y, effects = list(glow())),
-    "does not apply"
-  )
+  # .check_effects rejects an effect on a mark it does not apply to
   expect_error(
     quill:::.check_effects(list(glow()), "bar"),
     "does not apply"
   )
-  # a mark with no effects= arg catches it via the reserved-argument guard
+  # marks with no effects= argument catch a stray effects= via the reserved guard
+  expect_error(
+    vplot(line_df) |> mark_bar(x = x, y = y, effects = list(glow())),
+    "not an aesthetic"
+  )
   expect_error(
     vplot(line_df) |> mark_tile(x = x, y = y, effects = list(glow())),
     "not an aesthetic"
@@ -157,30 +157,6 @@ test_that("shadow() builds a ShadowSpec and renders on a line", {
 
   p <- vplot(line_df) |> mark_line(x = x, y = y, effects = list(shadow()))
   expect_no_error(render_px(p))
-})
-
-# --- inner glow / shadow ----------------------------------------------------
-
-test_that("inner_glow / inner_shadow build InnerSpec and render on fills", {
-  ig <- inner_glow()
-  is_ <- inner_shadow()
-  expect_true(S7::S7_inherits(ig, quill:::InnerSpec))
-  expect_false(ig@dark)
-  expect_true(is_@dark)
-
-  ar <- data.frame(x = 1:20, y = cumsum(abs(rnorm(20))))
-  rb <- data.frame(x = 1:20, lo = 1:20, hi = (1:20) + 5)
-  expect_no_error(render_px(
-    vplot(ar) |> mark_area(x = x, y = y, fill = "#0a2a43", effects = list(ig))
-  ))
-  expect_no_error(render_px(
-    vplot(rb) |> mark_ribbon(x = x, ymin = lo, ymax = hi, effects = list(is_))
-  ))
-  # inner effects do not apply to stroked marks
-  expect_error(
-    vplot(line_df) |> mark_line(x = x, y = y, effects = list(inner_glow())),
-    "does not apply"
-  )
 })
 
 # --- composition ------------------------------------------------------------

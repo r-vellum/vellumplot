@@ -68,22 +68,6 @@ ShadowSpec <- S7::new_class(
   )
 )
 
-# An inner glow / inner shadow for filled marks: a wide stroke of the fill's
-# boundary, masked to the fill so it shows only *inside* the shape's edge. `dark`
-# distinguishes an inner shadow (dark, "multiply") from an inner glow (bright,
-# "screen"). `size` is the band width in mm.
-InnerSpec <- S7::new_class(
-  "InnerSpec",
-  package = "quill",
-  parent = Effect,
-  properties = list(
-    size = S7::new_property(S7::class_double, default = 3),
-    color = S7::new_property(S7::class_character, default = "white"),
-    alpha = S7::new_property(S7::class_double, default = 0.6),
-    dark = S7::new_property(S7::class_logical, default = FALSE)
-  )
-)
-
 # One drawing layer: a mark, its encodings (named list<channel>), constant
 # aesthetics (`params`), an optional statistical transform (`stat`, with its
 # own `stat_params`), a position adjustment (`position`), and render `effects`.

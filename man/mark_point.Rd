@@ -24,14 +24,7 @@ mark_line(plot, ..., blend = NULL, effects = list(), data = NULL)
 
 mark_rule(plot, ..., blend = NULL, effects = list(), data = NULL)
 
-mark_bar(
-  plot,
-  ...,
-  position = "stack",
-  blend = NULL,
-  effects = list(),
-  data = NULL
-)
+mark_bar(plot, ..., position = "stack", blend = NULL, data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -59,9 +52,8 @@ already drawn beneath it (the panel and earlier layers), one of the CSS
 layer composites as one isolated group (not per element).}
 
 \item{effects}{A list of layer render effects applied to the mark at draw
-time — \code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}}, \code{\link[=shadow]{shadow()}} (stroked / point marks), and
-\code{\link[=inner_glow]{inner_glow()}} / \code{\link[=inner_shadow]{inner_shadow()}} (filled marks). Each effect errors if it
-does not apply to the mark.}
+time — \code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}}, and \code{\link[=shadow]{shadow()}}. Available on stroked and point
+marks.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 }
