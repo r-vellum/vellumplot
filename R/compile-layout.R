@@ -193,8 +193,9 @@ NULL
   strip <- .track_h(rt[["strip.text"]], "Ag", 2 * .PAD_MM)
   gap <- vellum::unit(rt[["panel.spacing"]], "mm")
 
-  has_col_strip <- fa$type == "wrap" ||
-    (fa$type == "grid" && !is.null(fa$col_labels))
+  # Only grid facets get a dedicated column-strip row here (wrap strips flow
+  # through the per-panel wrapstrip_row instead).
+  has_col_strip <- fa$type == "grid" && !is.null(fa$col_labels)
   has_row_strip <- fa$type == "grid" && !is.null(fa$row_labels)
 
   # Legend placement. "right"/"left" take a column beside the panels (vertical

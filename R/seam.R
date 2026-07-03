@@ -1,4 +1,5 @@
-#' @include classes.R coord.R compile-resolve.R compile-train.R compile-facet.R compile-layout.R compile-guides.R compile-marks.R
+#' @include classes.R coord.R compile-resolve.R compile-train.R
+#' @include compile-facet.R compile-layout.R compile-guides.R compile-marks.R
 NULL
 
 # Compile one plot: spec -> build panels (facet split + resolve + train) ->

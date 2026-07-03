@@ -178,7 +178,6 @@ NULL
   tbreaks <- ctx$theta_sc$breaks
   if (!.is_blank(theta_grid) && length(tbreaks)) {
     ang <- ctx$theta_map(tbreaks)
-    k <- length(ang)
     # Spokes run from the inner radius to the rim, so a donut's hole is not
     # crossed by lines converging at the centre.
     scene <- vellum::draw(
