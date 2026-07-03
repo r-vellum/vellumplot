@@ -26,7 +26,8 @@ element_line(
   color = NULL,
   linewidth = NULL,
   linetype = NULL,
-  lineend = NULL
+  lineend = NULL,
+  sketch = NULL
 )
 
 element_rect(
@@ -34,7 +35,8 @@ element_rect(
   colour = NULL,
   color = NULL,
   linewidth = NULL,
-  linetype = NULL
+  linetype = NULL,
+  sketch = NULL
 )
 
 element_blank()
@@ -44,6 +46,12 @@ element_blank()
 \code{margin} is a numeric vector of millimetres (recycled to length 4).}
 
 \item{linewidth, linetype, lineend}{Line properties.}
+
+\item{sketch}{For \code{\link[=element_line]{element_line()}} / \code{\link[=element_rect]{element_rect()}}, a \code{\link[=sketch]{sketch()}} spec giving
+that theme element (gridlines, axis lines, ticks, panel/strip/legend
+backgrounds) a hand-drawn look, \code{NA} to force it crisp, or \code{NULL} (default)
+to inherit from its parent element / the plot-wide \code{\link[=theme_sketch]{theme_sketch()}} default.
+Text elements are never sketched.}
 
 \item{fill}{Fill colour (rectangles).}
 }

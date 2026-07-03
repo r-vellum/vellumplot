@@ -33,7 +33,9 @@ NULL
     colour = S7::class_any,
     linewidth = S7::class_any,
     linetype = S7::class_any,
-    lineend = S7::class_any
+    lineend = S7::class_any,
+    # A hand-drawn sketch spec, `NA` for forced-crisp, or NULL to inherit.
+    sketch = S7::class_any
   )
 )
 
@@ -44,7 +46,8 @@ NULL
     fill = S7::class_any,
     colour = S7::class_any,
     linewidth = S7::class_any,
-    linetype = S7::class_any
+    linetype = S7::class_any,
+    sketch = S7::class_any
   )
 )
 
@@ -59,6 +62,11 @@ NULL
 #'   `margin` is a numeric vector of millimetres (recycled to length 4).
 #' @param linewidth,linetype,lineend Line properties.
 #' @param fill Fill colour (rectangles).
+#' @param sketch For [element_line()] / [element_rect()], a [sketch()] spec giving
+#'   that theme element (gridlines, axis lines, ticks, panel/strip/legend
+#'   backgrounds) a hand-drawn look, `NA` to force it crisp, or `NULL` (default)
+#'   to inherit from its parent element / the plot-wide [theme_sketch()] default.
+#'   Text elements are never sketched.
 #' @return An element object for use in [theme()].
 #' @examples
 #' vplot(mtcars) |>
@@ -102,13 +110,15 @@ element_line <- function(
   color = NULL,
   linewidth = NULL,
   linetype = NULL,
-  lineend = NULL
+  lineend = NULL,
+  sketch = NULL
 ) {
   .element_line(
     colour = colour %||% color,
     linewidth = linewidth,
     linetype = linetype,
-    lineend = lineend
+    lineend = lineend,
+    sketch = .check_sketch(sketch)
   )
 }
 
@@ -119,13 +129,15 @@ element_rect <- function(
   colour = NULL,
   color = NULL,
   linewidth = NULL,
-  linetype = NULL
+  linetype = NULL,
+  sketch = NULL
 ) {
   .element_rect(
     fill = fill,
     colour = colour %||% color,
     linewidth = linewidth,
-    linetype = linetype
+    linetype = linetype,
+    sketch = .check_sketch(sketch)
   )
 }
 
@@ -182,3 +194,21 @@ element_blank <- S7::new_class(
 
 # Text rotation for a resolved text element (degrees).
 .el_rot <- function(el) el@angle %||% 0
+
+# The resolved sketch for a drawn line/rect element: the `vellum_sketch` it (or,
+# via the theme tree, a parent element) carries, else NULL (crisp). `NA` (forced
+# crisp) and an unset slot both resolve to NULL here. A per-element seed `offset`
+# keeps distinct elements (gridlines vs axis line vs panel border) from sharing
+# an identical wobble. Blank elements draw nothing, so never carry a sketch.
+.el_sketch <- function(el, offset = 0L) {
+  if (.is_blank(el)) {
+    return(NULL)
+  }
+  s <- tryCatch(S7::prop(el, "sketch"), error = function(e) NULL)
+  if (is.null(s) || !inherits(s, "vellum_sketch") || !offset) {
+    if (inherits(s, "vellum_sketch")) s else NULL
+  } else {
+    s$seed <- s$seed + offset
+    s
+  }
+}

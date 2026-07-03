@@ -17,7 +17,7 @@ NULL
 
 # Vertical gridlines at `xs` (native), spanning the panel height. Drawn as one
 # batched segments_grob (vellum splits it per element only where gpar differs).
-.vlines <- function(scene, xs, gp) {
+.vlines <- function(scene, xs, gp, sketch = NULL) {
   if (!length(xs)) {
     return(scene)
   }
@@ -29,13 +29,14 @@ NULL
       vellum::unit(rep(0, k), "npc"),
       vellum::unit(xs, "native"),
       vellum::unit(rep(1, k), "npc"),
+      sketch = sketch,
       gp = gp
     )
   )
 }
 
 # Horizontal gridlines at `ys` (native), spanning the panel width.
-.hlines <- function(scene, ys, gp) {
+.hlines <- function(scene, ys, gp, sketch = NULL) {
   if (!length(ys)) {
     return(scene)
   }
@@ -47,6 +48,7 @@ NULL
       vellum::unit(ys, "native"),
       vellum::unit(rep(1, k), "npc"),
       vellum::unit(ys, "native"),
+      sketch = sketch,
       gp = gp
     )
   )
@@ -60,23 +62,36 @@ NULL
 .draw_panel_bg <- function(scene, x_sc, y_sc, rt) {
   pb <- rt[["panel.background"]]
   if (!.is_blank(pb)) {
-    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pb)))
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(gp = .el_gpar_rect(pb), sketch = .el_sketch(pb, 1L))
+    )
   }
   mnx <- rt[["panel.grid.minor.x"]]
   if (!.is_blank(mnx)) {
-    scene <- .vlines(scene, .minor_breaks(x_sc$breaks), .el_gpar_line(mnx))
+    scene <- .vlines(
+      scene,
+      .minor_breaks(x_sc$breaks),
+      .el_gpar_line(mnx),
+      .el_sketch(mnx, 2L)
+    )
   }
   mny <- rt[["panel.grid.minor.y"]]
   if (!.is_blank(mny)) {
-    scene <- .hlines(scene, .minor_breaks(y_sc$breaks), .el_gpar_line(mny))
+    scene <- .hlines(
+      scene,
+      .minor_breaks(y_sc$breaks),
+      .el_gpar_line(mny),
+      .el_sketch(mny, 3L)
+    )
   }
   gx <- rt[["panel.grid.major.x"]]
   if (!.is_blank(gx)) {
-    scene <- .vlines(scene, x_sc$breaks, .el_gpar_line(gx))
+    scene <- .vlines(scene, x_sc$breaks, .el_gpar_line(gx), .el_sketch(gx, 4L))
   }
   gy <- rt[["panel.grid.major.y"]]
   if (!.is_blank(gy)) {
-    scene <- .hlines(scene, y_sc$breaks, .el_gpar_line(gy))
+    scene <- .hlines(scene, y_sc$breaks, .el_gpar_line(gy), .el_sketch(gy, 5L))
   }
   tlen <- rt[["axis.ticks.length"]]
   tx <- rt[["axis.ticks.x"]]
@@ -90,6 +105,7 @@ NULL
         vellum::unit(rep(0, k), "npc"),
         vellum::unit(b, "native"),
         vellum::unit(rep(tlen, k), "mm"),
+        sketch = .el_sketch(tx, 6L),
         gp = .el_gpar_line(tx)
       )
     )
@@ -105,6 +121,7 @@ NULL
         vellum::unit(b, "native"),
         vellum::unit(rep(tlen, k), "mm"),
         vellum::unit(b, "native"),
+        sketch = .el_sketch(ty, 7L),
         gp = .el_gpar_line(ty)
       )
     )
@@ -146,6 +163,7 @@ NULL
       vellum::polygon_grob(
         vellum::unit(bx, "native"),
         vellum::unit(by, "native"),
+        sketch = .el_sketch(pb, 1L),
         gp = .el_gpar_rect(pb)
       )
     )
@@ -156,6 +174,7 @@ NULL
   rbreaks <- ctx$r_sc$breaks
   if (!.is_blank(r_grid) && length(rbreaks)) {
     gp <- .el_gpar_line(r_grid)
+    rsk <- .el_sketch(r_grid, 5L)
     for (b in rbreaks) {
       rr <- ctx$r_map(b)
       if (rr <= 0) {
@@ -167,6 +186,7 @@ NULL
         vellum::lines_grob(
           vellum::unit(cp$x, "native"),
           vellum::unit(cp$y, "native"),
+          sketch = rsk,
           gp = gp
         )
       )
@@ -187,6 +207,7 @@ NULL
         vellum::unit(ctx$rmin * sin(ang), "native"),
         vellum::unit(ctx$rmax * cos(ang), "native"),
         vellum::unit(ctx$rmax * sin(ang), "native"),
+        sketch = .el_sketch(theta_grid, 4L),
         gp = .el_gpar_line(theta_grid)
       )
     )
@@ -257,6 +278,7 @@ NULL
         vellum::unit(0, "npc"),
         vellum::unit(1, "npc"),
         vellum::unit(1, "npc"),
+        sketch = .el_sketch(aline, 9L),
         gp = .el_gpar_line(aline)
       )
     )
@@ -304,6 +326,7 @@ NULL
         vellum::unit(1, "npc"),
         vellum::unit(1, "npc"),
         vellum::unit(1, "npc"),
+        sketch = .el_sketch(aline, 8L),
         gp = .el_gpar_line(aline)
       )
     )
@@ -351,7 +374,10 @@ NULL
   )
   sb <- rt[["strip.background"]]
   if (!.is_blank(sb)) {
-    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(sb)))
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(gp = .el_gpar_rect(sb), sketch = .el_sketch(sb, 10L))
+    )
   }
   st <- rt[["strip.text"]]
   if (!.is_blank(st)) {
@@ -717,8 +743,12 @@ NULL
 # A single key glyph, drawn centred in the current (cell) viewport. Phase 2
 # swaps the discrete-colour swatch for a mark-matched glyph via `sc$key_glyph`.
 
-.key_grob <- function(g, i, m) {
+# `sketch` is the plot-wide hand-drawn spec (from theme_sketch()), or NULL: it
+# makes the legend keys match a hand-drawn plot. A per-key seed bump keeps
+# stacked keys from sharing an identical wobble.
+.key_grob <- function(g, i, m, sketch = NULL) {
   sc <- g$sc
+  sk <- .sketch_bump(sketch, 200L + i)
   switch(
     g$kind,
     color_discrete = {
@@ -726,13 +756,14 @@ NULL
       if (isTRUE(sc$na)) {
         cols <- c(cols, sc$na_value)
       }
-      .colour_key_grob(sc$key_glyph, cols[i], m)
+      .colour_key_grob(sc$key_glyph, cols[i], m, sk)
     },
     size = vellum::points_grob(
       vellum::unit(0.5, "npc"),
       vellum::unit(0.5, "npc"),
       size = vellum::unit(sc$legend_sizes[i], "mm"),
       shape = sc$key_glyph %||% "circle",
+      sketch = sk,
       gp = vellum::gpar(fill = "grey35", col = "grey35")
     ),
     shape = vellum::points_grob(
@@ -740,6 +771,7 @@ NULL
       vellum::unit(0.5, "npc"),
       size = vellum::unit(m$key / 2, "mm"),
       shape = sc$shapes[i],
+      sketch = sk,
       gp = vellum::gpar(fill = "grey35", col = "grey35")
     ),
     edge_width = vellum::segments_grob(
@@ -747,6 +779,7 @@ NULL
       vellum::unit(0.5, "npc"),
       vellum::unit(0.88, "npc"),
       vellum::unit(0.5, "npc"),
+      sketch = sk,
       gp = vellum::gpar(col = "grey35", lwd = sc$legend_widths[i])
     ),
     # A merged guide's key carries both encodings in one point: the shared
@@ -756,6 +789,7 @@ NULL
       vellum::unit(0.5, "npc"),
       size = vellum::unit(sc$sizes_mm[i] %||% (m$key / 2), "mm"),
       shape = sc$shapes[i] %||% "circle",
+      sketch = sk,
       gp = vellum::gpar(fill = sc$fills[i], col = sc$cols[i])
     )
   )
@@ -763,7 +797,7 @@ NULL
 
 # A discrete-colour key drawn as the mark's glyph: a filled point for point/glyph
 # marks, a short line for line marks, else the default filled square swatch.
-.colour_key_grob <- function(glyph, col, m) {
+.colour_key_grob <- function(glyph, col, m, sketch = NULL) {
   switch(
     glyph %||% "square",
     point = ,
@@ -772,6 +806,7 @@ NULL
       vellum::unit(0.5, "npc"),
       size = vellum::unit(m$key / 2, "mm"),
       shape = "circle",
+      sketch = sketch,
       gp = vellum::gpar(fill = col, col = NA)
     ),
     line = vellum::segments_grob(
@@ -779,11 +814,13 @@ NULL
       vellum::unit(0.5, "npc"),
       vellum::unit(0.88, "npc"),
       vellum::unit(0.5, "npc"),
+      sketch = sketch,
       gp = vellum::gpar(col = col, lwd = 2)
     ),
     vellum::rect_grob(
       width = vellum::unit(m$key, "mm"),
       height = vellum::unit(m$key, "mm"),
+      sketch = sketch,
       gp = vellum::gpar(fill = col, col = NA)
     )
   )
@@ -844,7 +881,7 @@ NULL
   }
   for (i in seq_len(k)) {
     scene <- vellum::push(scene, vellum::viewport(row = off + i, col = 1))
-    scene <- vellum::draw(scene, .key_grob(g, i, m))
+    scene <- vellum::draw(scene, .key_grob(g, i, m, rt[[".sketch"]]))
     scene <- vellum::pop(scene)
     scene <- vellum::push(scene, vellum::viewport(row = off + i, col = 2))
     scene <- vellum::draw(
@@ -1009,7 +1046,7 @@ NULL
         width = vellum::unit(key_d, "mm")
       )
     )
-    scene <- vellum::draw(scene, .key_grob(g, i, m))
+    scene <- vellum::draw(scene, .key_grob(g, i, m, rt[[".sketch"]]))
     scene <- vellum::pop(scene)
     scene <- vellum::draw(
       scene,
@@ -1121,7 +1158,10 @@ NULL
   )
   lb <- rt[["legend.background"]]
   if (!.is_blank(lb)) {
-    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(lb)))
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(gp = .el_gpar_rect(lb), sketch = .el_sketch(lb, 11L))
+    )
   }
   m <- .legend_metrics(rt)
   n <- length(guides)
