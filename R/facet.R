@@ -133,6 +133,14 @@ resolve_scale <- function(plot, ...) {
       "All arguments to {.fn resolve_scale} must be named, e.g. {.code resolve_scale(y = \"independent\")}."
     )
   }
+  valid <- c("x", "y")
+  bad <- setdiff(nms, valid)
+  if (length(bad)) {
+    cli::cli_abort(c(
+      "{.fn resolve_scale} only accepts the {.val {valid}} aesthetic{?s}.",
+      i = "Unknown aesthetic{?s}: {.val {bad}}."
+    ))
+  }
   for (nm in nms) {
     plot@resolve[[nm]] <- match.arg(args[[nm]], c("shared", "independent"))
   }

@@ -171,9 +171,19 @@ scale_color_discrete <- function(
   .colour_scale(plot, "color", "discrete", palette, breaks, labels, name)
 }
 
+# Validate the `values` supplied to a manual colour/fill scale.
+.check_manual_values <- function(values, arg = "values") {
+  if (missing(values) || !is.character(values) || !length(values)) {
+    cli::cli_abort(
+      "{.arg {arg}} must be a non-empty character vector of colours."
+    )
+  }
+}
+
 #' @rdname scale_color_continuous
 #' @export
 scale_color_manual <- function(plot, values, name = NULL) {
+  .check_manual_values(values)
   .colour_scale(plot, "color", "discrete", values, NULL, NULL, name)
 }
 
@@ -215,6 +225,7 @@ scale_fill_discrete <- function(
 #' @rdname scale_color_continuous
 #' @export
 scale_fill_manual <- function(plot, values, name = NULL) {
+  .check_manual_values(values)
   .colour_scale(plot, "fill", "discrete", values, NULL, NULL, name)
 }
 

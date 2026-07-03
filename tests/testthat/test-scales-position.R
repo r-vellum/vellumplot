@@ -14,6 +14,16 @@ test_that("scale_x_discrete(limits=) reorders / subsets levels", {
   expect_identical(x$map("6"), 3L)
 })
 
+test_that("scale_y_discrete(limits=) reorders / subsets levels on the y axis", {
+  p <- vplot(mtcars) |>
+    mark_point(x = mpg, y = factor(cyl)) |>
+    scale_y_discrete(limits = c("8", "4", "6"))
+  y <- train(p)$y
+  expect_identical(y$labels, c("8", "4", "6"))
+  expect_identical(y$map("8"), 1L)
+  expect_identical(y$map("6"), 3L)
+})
+
 test_that("trans='sqrt' transforms the map and is continuous", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>

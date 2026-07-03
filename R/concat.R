@@ -114,8 +114,11 @@ concat <- function(
   }
   ncol <- as.double(ncol)
   nrow <- as.double(nrow)
-  w0 <- .comp_unit_size(plots[[1]], "width")
-  h0 <- .comp_unit_size(plots[[1]], "height")
+  # Inherit size / dpi from the first real sub-plot; a leading spacer must not
+  # dictate the composition's cell size or resolution.
+  ref <- .first_real_plot(plots)
+  w0 <- .comp_unit_size(ref, "width")
+  h0 <- .comp_unit_size(ref, "height")
   PlotComposition(
     plots = plots,
     nrow = nrow,
@@ -127,8 +130,19 @@ concat <- function(
     design = design,
     width = width %||% (ncol * w0),
     height = height %||% (nrow * h0),
-    dpi = as.double(dpi %||% .comp_dpi(plots[[1]]))
+    dpi = as.double(dpi %||% .comp_dpi(ref))
   )
+}
+
+# The first non-Spacer sub-plot, used to inherit size / dpi. Falls back to the
+# first element when every entry is a spacer.
+.first_real_plot <- function(plots) {
+  for (p in plots) {
+    if (!S7::S7_inherits(p, Spacer)) {
+      return(p)
+    }
+  }
+  plots[[1]]
 }
 
 # A reserved-but-empty cell.

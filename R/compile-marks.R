@@ -355,7 +355,11 @@ NULL
     r0 <- ctx$r_map(ymin)
     r1 <- ctx$r_map(ymax)
   } else {
-    total <- stats::ave(ymax, as.character(L$values$x), FUN = max)
+    # Normalize by the sum of the per-slice spans within an x-group. For the
+    # stacked input this path expects (ymin/ymax cumulative from 0) this equals
+    # max(ymax); summing the spans keeps the total correct if the slices are not
+    # pre-stacked.
+    total <- stats::ave(ymax - ymin, as.character(L$values$x), FUN = sum)
     total[total == 0] <- 1
     a0 <- ctx$ang_frac(ymin / total)
     a1 <- ctx$ang_frac(ymax / total)

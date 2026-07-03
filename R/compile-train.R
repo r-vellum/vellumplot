@@ -504,7 +504,9 @@ NULL
     names(cols) <- all_levels
     map <- function(x) {
       out <- unname(cols[as.character(x)])
-      out[is.na(x)] <- na_value
+      # NA inputs *and* values outside the trained levels (lookup misses) both
+      # fall back to na_value rather than rendering an invalid/transparent colour.
+      out[is.na(out)] <- na_value
       out
     }
     # `breaks` selects which levels appear in the legend (and their order); the

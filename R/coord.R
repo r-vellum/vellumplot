@@ -57,9 +57,17 @@ CoordSpec <- S7::new_class(
     theta_sc = tsc,
     r_sc = rsc,
     ang_frac = ang_frac,
-    theta_map = function(v) ang_frac((v - tdom[1]) / (tdom[2] - tdom[1])),
+    # Guard degenerate (single-value / empty) domains: a zero-width span would
+    # otherwise divide by zero and emit non-finite angles/radii. Map everything
+    # to the domain start (fraction 0) in that case.
+    theta_map = function(v) {
+      span <- tdom[2] - tdom[1]
+      ang_frac(if (isTRUE(span > 0)) (v - tdom[1]) / span else 0)
+    },
     r_map = function(v) {
-      rmin + ((v - rdom[1]) / (rdom[2] - rdom[1])) * (rmax - rmin)
+      span <- rdom[2] - rdom[1]
+      frac <- if (isTRUE(span > 0)) (v - rdom[1]) / span else 0
+      rmin + frac * (rmax - rmin)
     }
   )
 }

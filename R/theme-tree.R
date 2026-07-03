@@ -92,6 +92,9 @@ NULL
 
 # The root (text/line/rect) a slot descends from.
 .slot_root <- function(slot) {
+  if (!slot %in% names(.ELEMENT_PARENTS)) {
+    cli::cli_abort("Unknown theme element {.val {slot}}.", .internal = TRUE)
+  }
   while (!is.na(.ELEMENT_PARENTS[[slot]])) {
     slot <- .ELEMENT_PARENTS[[slot]]
   }
@@ -100,11 +103,13 @@ NULL
 
 # An empty element of a slot's class (all properties NULL).
 .empty_element <- function(slot) {
+  root <- .slot_root(slot)
   switch(
-    .slot_root(slot),
+    root,
     text = .element_text(),
     line = .element_line(),
-    rect = .element_rect()
+    rect = .element_rect(),
+    cli::cli_abort("Theme element {.val {slot}} has no element class.", .internal = TRUE)
   )
 }
 
@@ -113,11 +118,13 @@ NULL
   if (.is_blank(value)) {
     return(TRUE)
   }
+  root <- .slot_root(slot)
   cls <- switch(
-    .slot_root(slot),
+    root,
     text = .element_text,
     line = .element_line,
-    rect = .element_rect
+    rect = .element_rect,
+    cli::cli_abort("Theme element {.val {slot}} has no element class.", .internal = TRUE)
   )
   S7::S7_inherits(value, cls)
 }

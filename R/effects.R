@@ -12,8 +12,9 @@ NULL
   "nodes"
 )
 # The marks an effect applies to (used for validation + error messages). All
-# current effects (glow / outline / shadow) decorate stroked and point marks.
-.effect_marks <- function(e) {
+# current effects (glow / outline / shadow) decorate stroked and point marks;
+# if an effect ever needs a different set this becomes a per-class dispatch.
+.effect_marks <- function() {
   .STROKE_POINT_MARKS
 }
 
@@ -125,7 +126,7 @@ shadow <- function(
   .check_num(y, "y")
   .check_req_colour(color, "color")
   .check_unit_alpha(alpha)
-  if (!is.numeric(spread) || length(spread) != 1L || spread < 0) {
+  if (!is.numeric(spread) || length(spread) != 1L || !is.finite(spread) || spread < 0) {
     cli::cli_abort("{.arg spread} must be a single non-negative number (mm).")
   }
   .check_pos_int(layers, "layers")
@@ -142,22 +143,22 @@ shadow <- function(
 # --- shared argument checks -------------------------------------------------
 
 .check_pos_num <- function(v, arg, kind) {
-  if (!is.numeric(v) || length(v) != 1L || v <= 0) {
+  if (!is.numeric(v) || length(v) != 1L || !is.finite(v) || v <= 0) {
     cli::cli_abort("{.arg {arg}} must be a single positive number ({kind}).")
   }
 }
 .check_num <- function(v, arg) {
-  if (!is.numeric(v) || length(v) != 1L) {
-    cli::cli_abort("{.arg {arg}} must be a single number.")
+  if (!is.numeric(v) || length(v) != 1L || !is.finite(v)) {
+    cli::cli_abort("{.arg {arg}} must be a single finite number.")
   }
 }
 .check_pos_int <- function(v, arg) {
-  if (!is.numeric(v) || length(v) != 1L || v < 1) {
+  if (!is.numeric(v) || length(v) != 1L || !is.finite(v) || v < 1 || v %% 1 != 0) {
     cli::cli_abort("{.arg {arg}} must be a single positive integer.")
   }
 }
 .check_unit_alpha <- function(v) {
-  if (!is.numeric(v) || length(v) != 1L || v < 0 || v > 1) {
+  if (!is.numeric(v) || length(v) != 1L || !is.finite(v) || v < 0 || v > 1) {
     cli::cli_abort("{.arg alpha} must be a single number in {.val [0, 1]}.")
   }
 }
@@ -193,7 +194,7 @@ shadow <- function(
         call = call
       )
     }
-    ok <- .effect_marks(e)
+    ok <- .effect_marks()
     if (!mark %in% ok) {
       cli::cli_abort(
         c(

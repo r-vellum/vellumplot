@@ -70,3 +70,34 @@ test_that("explicit colour breaks/labels are honoured", {
   cl <- train(p)$color
   expect_identical(cl$legend_labels, c("lo", "hi"))
 })
+
+test_that("scale_fill_continuous applies a palette to a fill aesthetic", {
+  base <- vplot(mtcars) |> mark_bar(x = factor(cyl), fill = hp)
+  def <- train(base)$color$pal256
+  blues <- train(base |> scale_fill_continuous(palette = "Blues"))$color$pal256
+  expect_length(blues, 256)
+  expect_false(identical(def, blues))
+})
+
+test_that("scale_fill_gradient sets a two-point fill ramp", {
+  base <- vplot(mtcars) |> mark_bar(x = factor(cyl), fill = hp)
+  pal <- train(base |> scale_fill_gradient(low = "white", high = "black"))$color$pal256
+  expect_length(pal, 256)
+  expect_false(identical(pal, train(base)$color$pal256))
+})
+
+test_that("scale_color_binned cuts a continuous colour aesthetic into classes", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned(n = 4)
+  cl <- train(p)$color
+  expect_identical(cl$kind, "binned")
+})
+
+test_that("scale_color_manual / scale_fill_manual reject missing or bad values", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  expect_error(scale_color_manual(base), "character vector")
+  expect_error(scale_color_manual(base, values = 42), "character vector")
+  expect_error(scale_color_manual(base, values = character(0)), "character vector")
+  expect_error(scale_fill_manual(base, values = 1:3), "character vector")
+})

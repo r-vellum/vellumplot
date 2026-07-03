@@ -18,7 +18,9 @@ NULL
   )
   par <- vapply(
     names(layer@params),
-    function(nm) paste0(nm, " = ", format(layer@params[[nm]])),
+    function(nm) {
+      paste0(nm, " = ", paste(format(layer@params[[nm]]), collapse = ", "))
+    },
     character(1)
   )
   out <- paste0("mark_", layer@mark, "(", paste(enc, collapse = ", "), ")")

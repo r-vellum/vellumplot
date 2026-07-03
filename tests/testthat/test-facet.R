@@ -33,6 +33,12 @@ test_that("resolve_scale() sets resolutions and defaults to shared", {
   expect_error(resolve_scale(p, y = "nonsense"))
 })
 
+test_that("resolve_scale() rejects unknown aesthetics", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_error(resolve_scale(p, color = "independent"), "aesthetic")
+  expect_error(resolve_scale(p, Y = "shared"), "aesthetic")
+})
+
 test_that("facet_wrap() builds one panel per level on a wrapped grid", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>

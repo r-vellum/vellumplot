@@ -79,6 +79,25 @@ test_that("linear_gradient() is captured as a fill value, not a data channel", {
   expect_no_error(render_px(p))
 })
 
+test_that("radial_gradient() is captured as a fill value and renders", {
+  g <- radial_gradient(c("#08F7FE", "#08F7FE00"))
+  expect_true(inherits(g, "vellum_gradient"))
+
+  p <- vplot(line_df) |> mark_area(x = x, y = y, fill = g)
+  expect_true(inherits(p@layers[[1]]@params$fill, "vellum_gradient"))
+  expect_null(p@layers[[1]]@encoding$fill)
+  expect_no_error(render_px(p))
+})
+
+test_that("effect validators reject NA, non-finite, and non-integer inputs", {
+  expect_error(glow(size = NA), "positive")
+  expect_error(glow(size = Inf), "positive")
+  expect_error(glow(layers = 6.7), "positive integer")
+  expect_error(shadow(x = NA), "finite")
+  expect_error(shadow(x = Inf), "finite")
+  expect_error(glow(alpha = NA), "\\[0, 1\\]")
+})
+
 test_that("gradient fill works on area, ribbon, and bar", {
   g <- linear_gradient(
     c("#FE53BB00", "#FE53BB"),
