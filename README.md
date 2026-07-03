@@ -6,7 +6,6 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/schochastics/quill/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/schochastics/quill/actions/workflows/R-CMD-check.yaml)
-[![Codecov test coverage](https://codecov.io/gh/schochastics/quill/graph/badge.svg)](https://app.codecov.io/gh/schochastics/quill)
 <!-- badges: end -->
 
 quill is a declarative, pipe-first grammar of graphics built on the
@@ -81,8 +80,11 @@ aspect-locked, no axes, edges under nodes:
 
 ``` r
 g <- igraph::make_graph("Zachary")
-g <- igraph::set_vertex_attr(g, "grp",
-  value = as.factor(igraph::cluster_louvain(g)$membership))
+g <- igraph::set_vertex_attr(
+  g,
+  "grp",
+  value = as.factor(igraph::cluster_louvain(g)$membership)
+)
 g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
 vgraph(g, layout = "stress") |>
   mark_edges(alpha = 0.4) |>
@@ -153,7 +155,7 @@ render_plot(p, "cars.png")
 - Layer effects (`glow()`, `outline()`, `shadow()`) and gradient fills
   (`linear_gradient()`, `radial_gradient()`).
 - Hand-drawn rendering: `sketch()` gives any geometry mark a wobbly,
-  hachure-filled [Rough.js](https://roughjs.com) look (a `sketch =` argument
-  on marks, an `element_line()` / `element_rect()` `sketch =` slot, or the
-  plot-wide `theme_sketch()` one-liner). Generated natively in the engine, so
-  it is exact and works across PNG / SVG / PDF.
+  hachure- filled [Rough.js](https://roughjs.com) look (a `sketch =`
+  argument on marks, an `element_line()` / `element_rect()` `sketch =`
+  slot, or the plot-wide `theme_sketch()` one-liner). Generated natively
+  in the engine, so it is exact and works across PNG / SVG / PDF.

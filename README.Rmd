@@ -17,8 +17,18 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/schochastics/quill/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/schochastics/quill/actions/workflows/R-CMD-check.yaml)
-[![Codecov test coverage](https://codecov.io/gh/schochastics/quill/graph/badge.svg)](https://app.codecov.io/gh/schochastics/quill)
 <!-- badges: end -->
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  dev = "ragg_png",
+  dpi = 200,
+  out.width = "100%"
+)
+```
 
 quill is a declarative, pipe-first grammar of graphics built on the
 [vellum](https://github.com/schochastics/vellum) graphics backend. You describe
@@ -84,8 +94,11 @@ edges under nodes:
 
 ```{r network}
 g <- igraph::make_graph("Zachary")
-g <- igraph::set_vertex_attr(g, "grp",
-  value = as.factor(igraph::cluster_louvain(g)$membership))
+g <- igraph::set_vertex_attr(
+  g,
+  "grp",
+  value = as.factor(igraph::cluster_louvain(g)$membership)
+)
 g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
 vgraph(g, layout = "stress") |>
   mark_edges(alpha = 0.4) |>
