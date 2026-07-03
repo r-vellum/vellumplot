@@ -9,8 +9,10 @@ NULL
 #' vector of column names; all vectors must be the same length `N`, and are
 #' zipped to produce `N` sub-plots.
 #'
-#' @param plot A [PlotSpec]; the repeated aesthetic(s) are set on every layer
-#'   (added if not already mapped).
+#' @param plot A [PlotSpec]; the repeated aesthetic(s) are set on **every** layer
+#'   (added if not already mapped). In a multi-layer plot every layer therefore
+#'   receives the re-pointed field, so any layer carrying its own `data` must
+#'   contain the named field columns.
 #' @param ... Named aesthetics, each a character vector of field names, e.g.
 #'   `x = c("wt", "hp", "disp")`.
 #' @param ncol,nrow Grid dimensions (passed to [concat()]).

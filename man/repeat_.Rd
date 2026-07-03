@@ -7,8 +7,10 @@
 repeat_(plot, ..., ncol = NULL, nrow = NULL)
 }
 \arguments{
-\item{plot}{A \link{PlotSpec}; the repeated aesthetic(s) are set on every layer
-(added if not already mapped).}
+\item{plot}{A \link{PlotSpec}; the repeated aesthetic(s) are set on \strong{every} layer
+(added if not already mapped). In a multi-layer plot every layer therefore
+receives the re-pointed field, so any layer carrying its own \code{data} must
+contain the named field columns.}
 
 \item{...}{Named aesthetics, each a character vector of field names, e.g.
 \code{x = c("wt", "hp", "disp")}.}

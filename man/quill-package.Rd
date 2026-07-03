@@ -10,6 +10,14 @@
 
 A declarative, pipe-first grammar of graphics that compiles an inspectable plot specification into a 'vellum' scene and renders it. A plot is built up as a serializable spec (data, layers, scales) and nothing is drawn until it is compiled: encodings are resolved, scales are trained, a panel layout is measured, and guides and marks are emitted as 'vellum' grobs.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/schochastics/quill}
+  \item Report bugs at \url{https://github.com/schochastics/quill/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: David Schoch \email{david.schoch@cynkra.com}
 
