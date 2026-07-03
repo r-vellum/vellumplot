@@ -68,21 +68,6 @@ ShadowSpec <- S7::new_class(
   )
 )
 
-# A hand-drawn / sketch effect: the mark's path is densified and its vertices are
-# perturbed by smooth low-frequency noise so straight lines wobble like ink.
-# `amount` is the wobble scale (fraction of the panel range); `detail` the number
-# of noise harmonics; `seed` makes it reproducible.
-SketchSpec <- S7::new_class(
-  "SketchSpec",
-  package = "quill",
-  parent = Effect,
-  properties = list(
-    amount = S7::new_property(S7::class_double, default = 0.01),
-    detail = S7::new_property(S7::class_integer, default = 6L),
-    seed = S7::new_property(S7::class_double, default = 1)
-  )
-)
-
 # An inner glow / inner shadow for filled marks: a wide stroke of the fill's
 # boundary, masked to the fill so it shows only *inside* the shape's edge. `dark`
 # distinguishes an inner shadow (dark, "multiply") from an inner glow (bright,

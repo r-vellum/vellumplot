@@ -80,8 +80,7 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   background, gridlines, text, strip background, legend position, margins).
 * **Effects & paints**: marks take a layer `effects = list(...)` argument.
   `glow()` (neon halo), `outline()` (contrasting halo for legibility), and
-  `shadow()` (drop / ambient) apply to stroked and point marks; `sketch()` gives
-  path marks a hand-drawn wobble (pairs with `theme_sketch()`); `inner_glow()` /
+  `shadow()` (drop / ambient) apply to stroked and point marks; `inner_glow()` /
   `inner_shadow()` add a masked inner band to filled marks (area / ribbon).
   `linear_gradient()` / `radial_gradient()` can be used as a `fill` value (area /
   ribbon / bar), and `theme_cyberpunk()` ties glow + gradients + a neon palette

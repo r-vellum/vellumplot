@@ -176,9 +176,9 @@ after_stat <- function(x) x
 #'   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The whole
 #'   layer composites as one isolated group (not per element).
 #' @param effects A list of layer render effects applied to the mark at draw
-#'   time — [glow()], [outline()], [shadow()] (stroked / point marks),
-#'   [sketch()] (path marks), and [inner_glow()] / [inner_shadow()] (filled
-#'   marks). Each effect errors if it does not apply to the mark.
+#'   time — [glow()], [outline()], [shadow()] (stroked / point marks), and
+#'   [inner_glow()] / [inner_shadow()] (filled marks). Each effect errors if it
+#'   does not apply to the mark.
 #' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples

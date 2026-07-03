@@ -11,14 +11,11 @@ NULL
   "edges",
   "nodes"
 )
-.SKETCH_MARKS <- c("line", "step", "segment", "area", "ribbon")
-.INNER_MARKS <- c("area", "ribbon", "bar")
+.INNER_MARKS <- c("area", "ribbon")
 
 # The marks an effect applies to (used for validation + error messages).
 .effect_marks <- function(e) {
-  if (S7::S7_inherits(e, SketchSpec)) {
-    .SKETCH_MARKS
-  } else if (S7::S7_inherits(e, InnerSpec)) {
+  if (S7::S7_inherits(e, InnerSpec)) {
     .INNER_MARKS
   } else {
     # glow / outline / shadow
@@ -49,7 +46,7 @@ NULL
 #' @param color Halo colour, or `NULL` (default) to inherit the mark's own
 #'   resolved colour — the usual neon look.
 #' @return A `GlowSpec` object for a mark's `effects` list.
-#' @seealso [outline()], [shadow()], [sketch()], [inner_glow()], [theme_cyberpunk()]
+#' @seealso [outline()], [shadow()], [inner_glow()], [theme_cyberpunk()]
 #' @examples
 #' df <- data.frame(x = 1:20, y = cumsum(rnorm(20)))
 #' vplot(df) |>
@@ -145,37 +142,6 @@ shadow <- function(
     alpha = as.double(alpha),
     spread = as.double(spread),
     layers = as.integer(layers)
-  )
-}
-
-#' Hand-drawn (sketch) layer effect
-#'
-#' Perturbs a mark's path with smooth low-frequency noise so straight lines
-#' wobble like hand-drawn ink (an XKCD-style look). Applies to path marks:
-#' `mark_line()`, `mark_step()`, `mark_segment()`, `mark_area()`, and
-#' `mark_ribbon()`. Pairs with [theme_sketch()].
-#'
-#' @param amount Wobble scale, as a fraction of the panel's data range.
-#' @param detail Number of noise harmonics (higher = busier wobble).
-#' @param seed Integer seed making the wobble reproducible across renders.
-#' @return A `SketchSpec` object for a mark's `effects` list.
-#' @seealso [theme_sketch()]
-#' @examples
-#' df <- data.frame(x = 1:20, y = cumsum(rnorm(20)))
-#' vplot(df) |>
-#'   mark_line(x = x, y = y, effects = list(sketch())) |>
-#'   theme_sketch()
-#' @export
-sketch <- function(amount = 0.01, detail = 6L, seed = 1) {
-  .check_pos_num(amount, "amount", "fraction")
-  .check_pos_int(detail, "detail")
-  if (!is.numeric(seed) || length(seed) != 1L) {
-    cli::cli_abort("{.arg seed} must be a single number.")
-  }
-  SketchSpec(
-    amount = as.double(amount),
-    detail = as.integer(detail),
-    seed = as.double(seed)
   )
 }
 
@@ -288,16 +254,6 @@ inner_shadow <- function(size = 3, color = "black", alpha = 0.5) {
     }
   }
   effects
-}
-
-# The first effect of a class on a resolved layer, or NULL.
-.first_effect <- function(L, cls) {
-  for (e in L$effects %||% list()) {
-    if (S7::S7_inherits(e, cls)) {
-      return(e)
-    }
-  }
-  NULL
 }
 
 # Effects of a resolved layer that draw *beneath* the core (glow/outline/shadow),

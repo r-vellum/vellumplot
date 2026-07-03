@@ -159,31 +159,6 @@ test_that("shadow() builds a ShadowSpec and renders on a line", {
   expect_no_error(render_px(p))
 })
 
-# --- sketch() ---------------------------------------------------------------
-
-test_that("sketch() perturbs and densifies a path deterministically", {
-  sk <- sketch(amount = 0.02, seed = 3)
-  expect_true(S7::S7_inherits(sk, quill:::SketchSpec))
-  scales <- list(x = list(domain = c(0, 10)), y = list(domain = c(0, 10)))
-  a <- quill:::.sketch_native(scales, c(0, 10), c(0, 10), sk)
-  b <- quill:::.sketch_native(scales, c(0, 10), c(0, 10), sk)
-  expect_gt(length(a$x), 2) # densified
-  expect_identical(a, b) # reproducible given the seed
-  # a straight segment is actually bent
-  expect_false(isTRUE(all.equal(a$y, seq(0, 10, length.out = length(a$y)))))
-})
-
-test_that("sketch renders and applies only to path marks", {
-  p <- vplot(line_df) |>
-    mark_line(x = x, y = y, effects = list(sketch())) |>
-    theme_sketch()
-  expect_no_error(render_px(p))
-  expect_error(
-    vplot(line_df) |> mark_point(x = x, y = y, effects = list(sketch())),
-    "does not apply"
-  )
-})
-
 # --- inner glow / shadow ----------------------------------------------------
 
 test_that("inner_glow / inner_shadow build InnerSpec and render on fills", {
@@ -208,7 +183,7 @@ test_that("inner_glow / inner_shadow build InnerSpec and render on fills", {
   )
 })
 
-# --- composition + theme_sketch ---------------------------------------------
+# --- composition ------------------------------------------------------------
 
 test_that("effects compose in one layer", {
   p <- vplot(line_df) |>
@@ -220,10 +195,4 @@ test_that("effects compose in one layer", {
     ) |>
     theme_cyberpunk()
   expect_no_error(render_px(p))
-})
-
-test_that("theme_sketch sets a paper canvas with no minor grid", {
-  p <- vplot(line_df) |> mark_line(x = x, y = y) |> theme_sketch()
-  expect_identical(p@theme$panel.background@fill, "#fbf7ee")
-  expect_true(quill:::.is_blank(p@theme$panel.grid.minor))
 })

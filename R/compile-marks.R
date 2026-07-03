@@ -139,53 +139,6 @@ NULL
   .xy_units(scales, x, y)
 }
 
-# Densify a polyline and perturb its vertices with smooth, seeded low-frequency
-# noise (a sum of `detail` harmonics with random amplitude/phase, normalised to
-# unit amplitude and scaled by `amount` * the panel range) so a straight line
-# wobbles like hand-drawn ink. Deterministic given the sketch seed.
-.sketch_native <- function(scales, x, y, sk) {
-  m <- length(x)
-  if (m < 2L) {
-    return(list(x = x, y = y))
-  }
-  k <- 6L # resample points per segment
-  xs <- ys <- numeric(0)
-  for (i in seq_len(m - 1L)) {
-    t <- seq(0, 1, length.out = k + 1L)[-(k + 1L)]
-    xs <- c(xs, x[i] + t * (x[i + 1L] - x[i]))
-    ys <- c(ys, y[i] + t * (y[i + 1L] - y[i]))
-  }
-  xs <- c(xs, x[m])
-  ys <- c(ys, y[m])
-  tt <- seq(0, 1, length.out = length(xs))
-  h <- sk@detail
-  gen <- function() {
-    amps <- stats::runif(h, 0.3, 1) / seq_len(h)
-    ph <- stats::runif(h, 0, 2 * pi)
-    v <- vapply(
-      tt,
-      function(t) sum(amps * sin(2 * pi * seq_len(h) * t + ph)),
-      numeric(1)
-    )
-    mx <- max(abs(v))
-    if (mx > 0) v / mx else v
-  }
-  pert <- .with_seed(sk@seed, list(nx = gen(), ny = gen()))
-  rx <- diff(range(scales$x$domain %||% range(xs)))
-  ry <- diff(range(scales$y$domain %||% range(ys)))
-  list(x = xs + pert$nx * sk@amount * rx, y = ys + pert$ny * sk@amount * ry)
-}
-
-# Map an ordered polyline to grob units, applying a sketch wobble first when the
-# layer carries one, otherwise the polar densification of `.xy_path`.
-.path_units <- function(scales, L, x, y) {
-  if (!is.null(L$sketch)) {
-    s <- .sketch_native(scales, x, y, L$sketch)
-    return(.xy_units(scales, s$x, s$y))
-  }
-  .xy_path(scales, x, y)
-}
-
 # Map a filled outline (forward path a + reversed path b) to polygon units,
 # densifying each side under polar so the band follows the arcs.
 .xy_area <- function(scales, xa, ya, xb, yb) {
@@ -307,7 +260,7 @@ NULL
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
     a <- alpha[idx[1]]
-    xy <- .path_units(scales, L, xn[o], yn[o])
+    xy <- .xy_path(scales, xn[o], yn[o])
     scene <- .draw(
       scene,
       vellum::lines_grob(
@@ -665,7 +618,7 @@ NULL
       ey <- sy
     }
     a <- alpha[idx[1]]
-    ln <- .path_units(scales, L, ex, ey)
+    ln <- .xy_path(scales, ex, ey)
     scene <- .draw(
       scene,
       vellum::lines_grob(
@@ -1453,7 +1406,7 @@ NULL
 # of the mark per entry of `deltas` (width in mm added to the base stroke width /
 # point diameter), at `alpha` and `colour`, composited under `blend`, offset by
 # (`xoff`, `yoff`) in npc. Reuses the mark's own emitter so coords / flip / polar
-# / sketch all stay correct. Widest first, so opacity accumulates toward centre.
+# all stay correct. Widest first, so opacity accumulates toward centre.
 .emit_copies <- function(
   scene,
   L,
@@ -1603,9 +1556,6 @@ NULL
       next
     } # empty facet panel
     .mark_ctx$id <- sprintf("layer-%d-%s", i, L$mark)
-    # A geometry effect (sketch) rides on L so the core -- and any halo copies,
-    # which re-emit the same path -- follow the same wobble.
-    L$sketch <- .first_effect(L, SketchSpec)
     # Underlay effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)

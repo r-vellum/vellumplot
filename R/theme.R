@@ -81,7 +81,7 @@ NULL
 #' the page; `theme_bw()` is a white panel with light grey gridlines;
 #' `theme_classic()` has axis lines and no gridlines; `theme_void()` strips
 #' everything but the marks, legend, and titles; `theme_cyberpunk()` is a dark
-#' neon theme and `theme_sketch()` a hand-drawn paper theme (see Details).
+#' neon theme (see Details).
 #'
 #' [theme()] overrides individual elements on top of the current theme using
 #' [element_text()] / [element_line()] / [element_rect()] / [element_blank()].
@@ -214,36 +214,6 @@ theme_cyberpunk <- function(plot) {
   th[["palette"]] <- .NEON_QUAL
   th[["palette.continuous"]] <- .NEON_RAMP
   plot@theme <- th
-  plot
-}
-
-#' @rdname theme_gray
-#' @details
-#' `theme_sketch()` is a light "paper" theme (warm off-white panel, no minor
-#' gridlines, soft axis lines) meant to pair with the [sketch()] layer effect on
-#' the marks — the theme sets the mood, `sketch()` does the hand-drawn wobble.
-#' Set a handwriting font with `theme(text = element_text(family = "..."))` if
-#' one is installed.
-#' @export
-theme_sketch <- function(plot) {
-  .check_plot(plot)
-  paper <- "#fbf7ee"
-  ink <- "#2b2b2b"
-  plot@theme <- .merge_theme(
-    .theme_gray_complete(),
-    list(
-      text = element_text(colour = ink),
-      plot.background = element_rect(fill = paper, colour = NA),
-      panel.background = element_rect(fill = paper, colour = NA),
-      panel.grid.major = element_line(colour = "#e3dccb", linewidth = 0.5),
-      panel.grid.minor = element_blank(),
-      axis.line = element_line(colour = ink, linewidth = 0.8),
-      axis.ticks = element_line(colour = ink),
-      axis.text = element_text(colour = "#5c5c5c"),
-      strip.background = element_rect(fill = "#efe7d6", colour = NA),
-      strip.text = element_text(colour = ink)
-    )
-  )
   plot
 }
 

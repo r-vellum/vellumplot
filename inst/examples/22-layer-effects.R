@@ -29,25 +29,7 @@ vplot(line) |>
   labs(title = "Line with a drop shadow") |>
   render_plot(file.path(outdir, "22-shadow.png"))
 
-# --- 3. sketch: hand-drawn wobble + theme_sketch ----------------------------
-# sketch() densifies and perturbs the path; theme_sketch() sets a paper canvas.
-waves <- do.call(
-  rbind,
-  lapply(1:3, function(k) {
-    data.frame(
-      x = seq(0, 10, 0.5),
-      y = sin(seq(0, 10, 0.5)) + k,
-      g = LETTERS[k]
-    )
-  })
-)
-vplot(waves) |>
-  mark_line(x = x, y = y, color = g, effects = list(sketch())) |>
-  labs(title = "Hand-drawn lines", color = NULL) |>
-  theme_sketch() |>
-  render_plot(file.path(outdir, "22-sketch.png"))
-
-# --- 4. inner glow on a filled area -----------------------------------------
+# --- 3. inner glow on a filled area -----------------------------------------
 area <- data.frame(x = 1:60, y = 20 + cumsum(rnorm(60, 0.1, 1)))
 vplot(area) |>
   mark_area(
@@ -59,7 +41,7 @@ vplot(area) |>
   labs(title = "Inner glow (masked fill)") |>
   render_plot(file.path(outdir, "22-inner-glow.png"))
 
-# --- 5. inner shadow on a ribbon --------------------------------------------
+# --- 4. inner shadow on a ribbon --------------------------------------------
 rib <- data.frame(x = 1:40, lo = (1:40) * 0.3, hi = (1:40) * 0.3 + 10)
 vplot(rib) |>
   mark_ribbon(
@@ -72,7 +54,7 @@ vplot(rib) |>
   labs(title = "Inner shadow (masked fill)") |>
   render_plot(file.path(outdir, "22-inner-shadow.png"))
 
-# --- 6. composing effects: outline under glow -------------------------------
+# --- 5. composing effects: outline under glow -------------------------------
 vplot(line) |>
   mark_line(
     x = x,
@@ -84,4 +66,4 @@ vplot(line) |>
   theme_cyberpunk() |>
   render_plot(file.path(outdir, "22-composed.png"))
 
-message("22-layer-effects: wrote 6 figures to ", outdir)
+message("22-layer-effects: wrote 5 figures to ", outdir)
