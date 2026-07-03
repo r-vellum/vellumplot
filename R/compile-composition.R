@@ -66,7 +66,11 @@ NULL
 
 # Read a measured track size off a per-plot layout by role index (NA -> 0 mm).
 .lay_w <- function(lay, idx) {
-  if (length(idx) && !is.na(idx[1])) lay$widths[idx[1]] else vellum::unit(0, "mm")
+  if (length(idx) && !is.na(idx[1])) {
+    lay$widths[idx[1]]
+  } else {
+    vellum::unit(0, "mm")
+  }
 }
 .lay_h <- function(lay, idx) {
   if (length(idx) && !is.na(idx[1])) {
@@ -246,7 +250,13 @@ NULL
 }
 
 # Draw one sub-plot's panel + axes + titles into the shared grid cells.
-.draw_subplot_aligned <- function(scene, plan, gm, collect) {
+.draw_subplot_aligned <- function(
+  scene,
+  plan,
+  gm,
+  collect,
+  subplot = NA_integer_
+) {
   built <- plan$built
   rt <- plan$rt
   panel <- built$panels[[1]]
@@ -274,7 +284,8 @@ NULL
     )
   )
   scene <- .draw_panel_bg(scene, hsc, vsc, rt)
-  scene <- .compile_marks(scene, panel$resolved, psc)
+  pkey <- if (is.na(subplot)) NA_character_ else sprintf("subplot-%d", subplot)
+  scene <- .compile_marks(scene, panel$resolved, psc, panel = pkey)
   scene <- vellum::pop(scene)
   # axes + axis titles
   scene <- .draw_y_axis(scene, gm$panel_row, gm$ylabels_col, vsc, rt)
@@ -354,7 +365,13 @@ NULL
     )
   }
   for (i in seq_along(plans)) {
-    scene <- .draw_subplot_aligned(scene, plans[[i]], glo$map[[i]], collect)
+    scene <- .draw_subplot_aligned(
+      scene,
+      plans[[i]],
+      glo$map[[i]],
+      collect,
+      subplot = i
+    )
   }
   if (!is.null(comp@tag)) {
     tags <- .format_tags(length(plans), comp@tag)

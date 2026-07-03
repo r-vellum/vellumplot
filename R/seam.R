@@ -169,7 +169,7 @@ NULL
       )
       scene <- .draw_panel_bg(scene, hsc, vsc, rt)
     }
-    scene <- .compile_marks(scene, p$resolved, psc)
+    scene <- .compile_marks(scene, p$resolved, psc, panel = pname)
     scene <- vellum::pop(scene)
   }
 
@@ -315,13 +315,19 @@ NULL
 
 # The body of the as_vellum_scene() method for a single plot.
 .compile_plot <- function(spec) {
+  .provenance_reset()
   scene <- vellum::vl_scene(
     width = spec@width,
     height = spec@height,
     dpi = spec@dpi,
     bg = "white"
   )
-  .draw_plot(scene, spec)
+  scene <- .draw_plot(scene, spec)
+  # Carry the row-key / scale-ref schema on the returned scene (DESIGN §4). Set
+  # last so it survives to the caller; the `id` of each record matches a grob's
+  # `data-vellum-id`. Additive only -- render() ignores it.
+  attr(scene, "quill_provenance") <- .provenance_snapshot()
+  scene
 }
 
 # Facet strips: wrap draws one above each panel; grid draws column strips along

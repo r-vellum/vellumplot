@@ -96,7 +96,9 @@ concat <- function(
 ) {
   plots <- .collect_plots(list(...))
   guides <- match.arg(guides)
-  if (!is.null(dpi)) .check_dpi(dpi)
+  if (!is.null(dpi)) {
+    .check_dpi(dpi)
+  }
   n <- length(plots)
   design <- .parse_design(design, n)
   if (!is.null(design)) {
@@ -173,7 +175,12 @@ plot_spacer <- function() Spacer()
 #' concat(a, b, design = list(area(1, 1, 1, 2), area(2, 1, 2, 1)))
 #' @export
 area <- function(t, l, b = t, r = l) {
-  list(t = as.numeric(t), l = as.numeric(l), b = as.numeric(b), r = as.numeric(r))
+  list(
+    t = as.numeric(t),
+    l = as.numeric(l),
+    b = as.numeric(b),
+    r = as.numeric(r)
+  )
 }
 
 # Normalise `design` into a list of area()s (one per plot) or NULL.
@@ -218,7 +225,9 @@ area <- function(t, l, b = t, r = l) {
     })
     return(out)
   }
-  cli::cli_abort("{.arg design} must be a list of {.fn area}s or a layout string.")
+  cli::cli_abort(
+    "{.arg design} must be a list of {.fn area}s or a layout string."
+  )
 }
 
 #' Overlay a plot as an inset
@@ -403,6 +412,7 @@ compose_annotation <- function(
 # on a regular grid). Anything it can't align yet (faceted/polar sub-plots) falls
 # back to the independent per-cell layout.
 .compile_composition <- function(comp) {
+  .provenance_reset()
   scene <- vellum::vl_scene(
     width = comp@width,
     height = comp@height,
@@ -412,9 +422,13 @@ compose_annotation <- function(
   if (.comp_alignable(comp)) {
     scene <- vellum::push(scene, vellum::viewport())
     scene <- .draw_composition(scene, comp)
-    return(vellum::pop(scene))
+    scene <- vellum::pop(scene)
+  } else {
+    scene <- .compile_composition_independent(scene, comp)
   }
-  .compile_composition_independent(scene, comp)
+  # Provenance accumulates across every sub-plot's marks; carry it out (DESIGN §4).
+  attr(scene, "quill_provenance") <- .provenance_snapshot()
+  scene
 }
 
 # Legacy layout: an outer grid of equal null cells, each holding one sub-plot
@@ -434,7 +448,10 @@ compose_annotation <- function(
   scene <- vellum::push(
     scene,
     vellum::viewport(
-      layout = vellum::grid_layout(wfun(comp@widths, ncol), wfun(comp@heights, nrow))
+      layout = vellum::grid_layout(
+        wfun(comp@widths, ncol),
+        wfun(comp@heights, nrow)
+      )
     )
   )
   # Insets with `on_top = FALSE` sit behind the base plots (visible only through
@@ -535,7 +552,9 @@ S7::method(summary, PlotComposition) <- function(object, ...) {
   cli::cli_text(
     "{.cls PlotComposition} {length(object@plots)} plot{?s} in a {object@nrow}x{object@ncol} grid"
   )
-  cli::cli_text("guides: {object@guides}{if (nested) paste0(', ', nested, ' nested')}")
+  cli::cli_text(
+    "guides: {object@guides}{if (nested) paste0(', ', nested, ' nested')}"
+  )
   if (length(object@labels) || !is.null(object@tag)) {
     bits <- c(
       if (!is.null(object@labels$title)) "title",

@@ -26,6 +26,8 @@ Imports:
     stats,
     utils,
     vellum (>= 0.0.0.9001)
+Remotes:
+    schochastics/vellum
 Suggests:
     classInt,
     graphlayouts,
@@ -60,6 +62,7 @@ Collate:
     'effects.R'
     'labs.R'
     'print.R'
+    'provenance.R'
     'reexports.R'
     'repeat.R'
     'scales.R'

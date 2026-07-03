@@ -231,6 +231,9 @@ NULL
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
     xy <- .xy_units(scales, xn[idx], yn[idx])
+    # PROVENANCE: `idx` are the layer rows in this style group -- the row-key
+    # refinement (DESIGN §4). This is the canonical example; other grouped
+    # emitters below should pass `rows = idx` the same way.
     scene <- .draw(
       scene,
       vellum::points_grob(
@@ -243,7 +246,8 @@ NULL
           col = col[idx[1]],
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      rows = idx
     )
   }
   scene
@@ -1374,8 +1378,14 @@ NULL
 # per layer and is single-threaded with the rest of compilation.)
 .mark_ctx <- new.env(parent = emptyenv())
 
-.draw <- function(scene, grob) {
-  id <- .mark_ctx$id
+# Stamp every emitted grob with its stable, globally-unique node id (surfaced as
+# `data-vellum-id` in SVG) and record its provenance (DESIGN §4, see
+# `R/provenance.R`). `rows` is the row-key refinement: pass the original
+# input-data row indices this grob draws when the emitter groups rows by style;
+# it defaults to the whole layer (`.mark_ctx$rows`) otherwise. Purely additive
+# metadata -- raster/PDF output is unchanged.
+.draw <- function(scene, grob, rows = NULL) {
+  id <- .provenance_record(rows = rows)
   if (!is.null(id)) {
     grob@id <- id
   }
@@ -1482,6 +1492,11 @@ NULL
 }
 
 .emit_underlay <- function(scene, L, scales, e) {
+  # Effect copies are decorative underlays, not the core layer: tag their
+  # provenance entries so a consumer can tell a halo apart from the data mark.
+  old_kind <- .mark_ctx$kind
+  .mark_ctx$kind <- "effect"
+  on.exit(.mark_ctx$kind <- old_kind, add = TRUE)
   if (S7::S7_inherits(e, GlowSpec)) {
     .emit_glow(scene, L, scales, e)
   } else if (S7::S7_inherits(e, OutlineSpec)) {
@@ -1493,14 +1508,23 @@ NULL
   }
 }
 
-.compile_marks <- function(scene, resolved, scales) {
+.compile_marks <- function(scene, resolved, scales, panel = NA_character_) {
   on.exit(.mark_ctx$id <- NULL, add = TRUE)
+  .mark_ctx$panel <- panel
   for (i in seq_along(resolved)) {
     L <- resolved[[i]]
     if (!L$n) {
       next
     } # empty facet panel
     .mark_ctx$id <- sprintf("layer-%d-%s", i, L$mark)
+    # Provenance context for every grob this layer emits (DESIGN §4). Set once
+    # per layer: `.draw()` reads it. `rows` defaults to the whole layer -- an
+    # emitter that groups rows by style refines it per group (see `PROVENANCE:`).
+    .mark_ctx$layer <- i
+    .mark_ctx$mark <- L$mark
+    .mark_ctx$channels <- .layer_channels(L, scales)
+    .mark_ctx$rows <- seq_len(L$n)
+    .mark_ctx$kind <- "mark"
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)

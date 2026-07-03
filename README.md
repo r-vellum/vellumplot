@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/schochastics/quill/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/schochastics/quill/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/schochastics/quill/graph/badge.svg)](https://app.codecov.io/gh/schochastics/quill)
 <!-- badges: end -->
 
 quill is a declarative, pipe-first grammar of graphics built on the

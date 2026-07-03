@@ -113,6 +113,21 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
 
+## Under the hood
+
+* **Compiled-scene provenance** (foundation for interactivity / accessibility /
+  linked views): every emitted mark grob now carries a globally-unique, stable
+  `id` (surfacing as `data-vellum-id` in SVG), and the compiler builds a
+  serializable row-key / scale-ref table — one record per grob tying it back to
+  the data rows and trained scales that produced it — carried on the compiled
+  scene as `attr(scene, "quill_provenance")`. Populated on every compile;
+  additive metadata only (raster/PDF output is byte-for-byte unchanged). See
+  `_docs/DESIGN.md` §4.
+* **Continuous integration**: GitHub Actions now run `R CMD check` (R
+  release/devel/oldrel on Linux + macOS, with the Rust toolchain the `vellum`
+  backend needs) and report test coverage, including a nightly run against
+  `vellum`'s `main` to catch cross-layer breaks early.
+
 ## Not yet implemented (planned)
 
 Reactivity, 2-D contour stats, and the algebraic `*` / `+` layer combinators.
