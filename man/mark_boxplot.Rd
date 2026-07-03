@@ -7,13 +7,13 @@
 \alias{mark_summary}
 \title{Boxplot, error bar, and summary marks}
 \usage{
-mark_boxplot(plot, ..., blend = NULL, data = NULL)
+mark_boxplot(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
-mark_errorbar(plot, ..., width = 0.5, blend = NULL, data = NULL)
+mark_errorbar(plot, ..., width = 0.5, blend = NULL, sketch = NULL, data = NULL)
 
-mark_linerange(plot, ..., blend = NULL, data = NULL)
+mark_linerange(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
-mark_summary(plot, ..., fun = mean, blend = NULL, data = NULL)
+mark_summary(plot, ..., fun = mean, blend = NULL, sketch = NULL, data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -25,6 +25,11 @@ mark_summary(plot, ..., fun = mean, blend = NULL, data = NULL)
 already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
 layer composites as one isolated group (not per element).}
+
+\item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving this layer a hand-drawn look (wobbly
+outlines, hachure fills), \code{NA}/\code{FALSE} to force it crisp (overriding a
+plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default) to inherit. Geometry marks
+accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 

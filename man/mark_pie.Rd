@@ -5,9 +5,17 @@
 \alias{mark_donut}
 \title{Pie and donut charts}
 \usage{
-mark_pie(plot, value, fill = NULL, ..., data = NULL)
+mark_pie(plot, value, fill = NULL, ..., sketch = NULL, data = NULL)
 
-mark_donut(plot, value, fill = NULL, hole = 0.5, ..., data = NULL)
+mark_donut(
+  plot,
+  value,
+  fill = NULL,
+  hole = 0.5,
+  ...,
+  sketch = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}

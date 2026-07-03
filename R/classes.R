@@ -83,6 +83,10 @@ LayerSpec <- S7::new_class(
     position = S7::new_property(S7::class_character, default = "identity"),
     blend = S7::new_property(S7::class_character, default = "normal"),
     effects = S7::new_property(S7::class_list, default = list()), # list<Effect>
+    # A hand-drawn sketch spec (vellum_sketch), `NA`/`FALSE` for forced-crisp, or
+    # NULL to inherit the plot-wide theme_sketch() default. A geometry property,
+    # not an effect (see reexports.R `sketch()`).
+    sketch = S7::new_property(S7::class_any, default = NULL),
     data = S7::new_property(S7::class_any, default = NULL), # per-layer data | NULL
     z = S7::new_property(S7::class_integer, default = 0L) # draw-order band
   )

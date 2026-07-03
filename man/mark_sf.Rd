@@ -14,6 +14,7 @@ mark_sf(
   size = NULL,
   na_value = "grey80",
   blend = NULL,
+  sketch = NULL,
   data = NULL
 )
 }

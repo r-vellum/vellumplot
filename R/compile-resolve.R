@@ -74,7 +74,8 @@ NULL
     stat_params = layer@stat_params,
     position = layer@position,
     blend = layer@blend,
-    effects = layer@effects
+    effects = layer@effects,
+    sketch = layer@sketch
   )
 }
 

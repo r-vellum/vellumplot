@@ -8,13 +8,13 @@
 \alias{mark_hex}
 \title{Heatmap marks}
 \usage{
-mark_tile(plot, ..., blend = NULL, data = NULL)
+mark_tile(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
 mark_raster(plot, ..., blend = NULL, data = NULL)
 
 mark_bin2d(plot, ..., bins = 30, blend = NULL, data = NULL)
 
-mark_density(plot, ..., adjust = 1, blend = NULL, data = NULL)
+mark_density(plot, ..., adjust = 1, blend = NULL, sketch = NULL, data = NULL)
 
 mark_hex(plot, ..., bins = 30, blend = NULL, data = NULL)
 }
@@ -28,6 +28,11 @@ for bin2d; \code{x} (+ \code{fill}/\code{color}) for density.}
 already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
 layer composites as one isolated group (not per element).}
+
+\item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving this layer a hand-drawn look (wobbly
+outlines, hachure fills), \code{NA}/\code{FALSE} to force it crisp (overriding a
+plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default) to inherit. Geometry marks
+accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 

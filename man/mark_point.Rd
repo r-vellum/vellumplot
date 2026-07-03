@@ -17,14 +17,36 @@ mark_point(
   seed = NULL,
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 )
 
-mark_line(plot, ..., blend = NULL, effects = list(), data = NULL)
+mark_line(
+  plot,
+  ...,
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
 
-mark_rule(plot, ..., blend = NULL, effects = list(), data = NULL)
+mark_rule(
+  plot,
+  ...,
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
 
-mark_bar(plot, ..., position = "stack", blend = NULL, data = NULL)
+mark_bar(
+  plot,
+  ...,
+  position = "stack",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -54,6 +76,11 @@ layer composites as one isolated group (not per element).}
 \item{effects}{A list of layer render effects applied to the mark at draw
 time — \code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}}, and \code{\link[=shadow]{shadow()}}. Available on stroked and point
 marks.}
+
+\item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving this layer a hand-drawn look (wobbly
+outlines, hachure fills), \code{NA}/\code{FALSE} to force it crisp (overriding a
+plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default) to inherit. Geometry marks
+accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 }

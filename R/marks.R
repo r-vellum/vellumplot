@@ -104,6 +104,30 @@ after_stat <- function(x) x
   blend
 }
 
+# Normalise a mark's / element's `sketch` argument to what the spec stores:
+# NULL (inherit), NA (forced crisp), or a `vellum_sketch`. `FALSE` is an alias
+# for `NA` (crisp). Anything else is an error.
+.check_sketch <- function(sketch, call = rlang::caller_env()) {
+  if (is.null(sketch)) {
+    return(NULL)
+  }
+  if (inherits(sketch, "vellum_sketch")) {
+    return(sketch)
+  }
+  if (
+    length(sketch) == 1L && is.logical(sketch) && (is.na(sketch) || !sketch)
+  ) {
+    return(NA) # NA / FALSE -> forced crisp
+  }
+  cli::cli_abort(
+    c(
+      "{.arg sketch} must be a {.fn sketch} object, {.code NA} (crisp), or {.code NULL}.",
+      i = "See {.fn sketch} and {.fn theme_sketch}."
+    ),
+    call = call
+  )
+}
+
 # Capture `...` plus the explicit geometry args, append a LayerSpec.
 .add_layer <- function(
   plot,
@@ -115,6 +139,7 @@ after_stat <- function(x) x
   position = "identity",
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL,
   z = 0L
 ) {
@@ -134,6 +159,13 @@ after_stat <- function(x) x
       i = "Effects are available on stroked and point marks (line/point/step/rule/segment/edges/nodes)."
     ))
   }
+  if ("sketch" %in% c(names(split$encoding), names(split$params))) {
+    cli::cli_abort(c(
+      "{.arg sketch} is not an aesthetic.",
+      i = "This mark does not take a {.arg sketch} argument (text, raster, hex and datashade marks are never sketched).",
+      i = "For a plot-wide hand-drawn look, use {.fn theme_sketch}."
+    ))
+  }
   layer <- LayerSpec(
     mark = mark,
     encoding = split$encoding,
@@ -143,6 +175,7 @@ after_stat <- function(x) x
     position = position,
     blend = .check_blend(blend),
     effects = .check_effects(effects, mark),
+    sketch = .check_sketch(sketch),
     data = data,
     z = as.integer(z)
   )
@@ -178,6 +211,10 @@ after_stat <- function(x) x
 #' @param effects A list of layer render effects applied to the mark at draw
 #'   time — [glow()], [outline()], and [shadow()]. Available on stroked and point
 #'   marks.
+#' @param sketch A [sketch()] spec giving this layer a hand-drawn look (wobbly
+#'   outlines, hachure fills), `NA`/`FALSE` to force it crisp (overriding a
+#'   plot-wide [theme_sketch()]), or `NULL` (default) to inherit. Geometry marks
+#'   accept it; text, raster, hex and datashade marks do not.
 #' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @return The modified [PlotSpec].
 #' @examples
@@ -193,6 +230,7 @@ mark_point <- function(
   seed = NULL,
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -205,13 +243,21 @@ mark_point <- function(
     stat_params = list(auto = isTRUE(auto), seed = seed),
     blend = blend,
     effects = effects,
+    sketch = sketch,
     data = data
   )
 }
 
 #' @rdname mark_point
 #' @export
-mark_line <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
+mark_line <- function(
+  plot,
+  ...,
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -219,6 +265,7 @@ mark_line <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
     rlang::enquos(...),
     blend = blend,
     effects = effects,
+    sketch = sketch,
     data = data
   )
 }
@@ -264,6 +311,7 @@ mark_sf <- function(
   size = NULL,
   na_value = "grey80",
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -281,13 +329,21 @@ mark_sf <- function(
     ),
     stat_params = list(na_value = na_value),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
 
 #' @rdname mark_point
 #' @export
-mark_rule <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
+mark_rule <- function(
+  plot,
+  ...,
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -295,6 +351,7 @@ mark_rule <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
     rlang::enquos(...),
     blend = blend,
     effects = effects,
+    sketch = sketch,
     data = data
   )
 }
@@ -306,7 +363,14 @@ mark_rule <- function(plot, ..., blend = NULL, effects = list(), data = NULL) {
 #' stat). When `color`/`fill` is mapped, grouped bars are stacked by default; use
 #' `position = "dodge"` for side-by-side bars or `"fill"` to normalise to 1.
 #' @export
-mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
+mark_bar <- function(
+  plot,
+  ...,
+  position = "stack",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -314,6 +378,7 @@ mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
     rlang::enquos(...),
     position = position,
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -342,22 +407,49 @@ mark_bar <- function(plot, ..., position = "stack", blend = NULL, data = NULL) {
 #' vplot(df) |> mark_pie(value = n, fill = part)
 #' vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6)
 #' @export
-mark_pie <- function(plot, value, fill = NULL, ..., data = NULL) {
-  .pie_layer(plot, rlang::enquos(value = value, fill = fill, ...), 0, data)
+mark_pie <- function(
+  plot,
+  value,
+  fill = NULL,
+  ...,
+  sketch = NULL,
+  data = NULL
+) {
+  .pie_layer(
+    plot,
+    rlang::enquos(value = value, fill = fill, ...),
+    0,
+    sketch,
+    data
+  )
 }
 
 #' @rdname mark_pie
 #' @export
-mark_donut <- function(plot, value, fill = NULL, hole = 0.5, ..., data = NULL) {
+mark_donut <- function(
+  plot,
+  value,
+  fill = NULL,
+  hole = 0.5,
+  ...,
+  sketch = NULL,
+  data = NULL
+) {
   if (!is.numeric(hole) || hole < 0 || hole >= 1) {
     cli::cli_abort("{.arg hole} must be a fraction in {.val [0, 1)}.")
   }
-  .pie_layer(plot, rlang::enquos(value = value, fill = fill, ...), hole, data)
+  .pie_layer(
+    plot,
+    rlang::enquos(value = value, fill = fill, ...),
+    hole,
+    sketch,
+    data
+  )
 }
 
 # Shared body of mark_pie/mark_donut: a stacked bar (value -> y, a constant
 # single-band x) forced through polar theta = "y".
-.pie_layer <- function(plot, enc, hole, data) {
+.pie_layer <- function(plot, enc, hole, sketch, data) {
   .check_plot(plot)
   if (!is.null(plot@coord) && !identical(plot@coord@kind, "polar")) {
     cli::cli_abort(c(
@@ -373,6 +465,7 @@ mark_donut <- function(plot, value, fill = NULL, hole = 0.5, ..., data = NULL) {
     enc,
     extra = rlang::quos(x = factor(1)),
     position = "stack",
+    sketch = sketch,
     data = data
   )
   if (is.null(plot@coord)) {
@@ -407,6 +500,7 @@ mark_histogram <- function(
   bins = 30,
   position = "stack",
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -418,6 +512,7 @@ mark_histogram <- function(
     stat_params = list(bins = bins),
     position = position,
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -431,6 +526,7 @@ mark_smooth <- function(
   se = TRUE,
   level = 0.95,
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -441,6 +537,7 @@ mark_smooth <- function(
     stat = "smooth",
     stat_params = list(method = method, se = se, level = level),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -514,16 +611,30 @@ mark_datashade <- function(
 #' @examples
 #' vplot(pressure) |> mark_area(x = temperature, y = pressure)
 #' @export
-mark_area <- function(plot, ..., blend = NULL, data = NULL) {
+mark_area <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "area", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "area",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
 }
 
 #' @rdname mark_area
 #' @export
-mark_ribbon <- function(plot, ..., blend = NULL, data = NULL) {
+mark_ribbon <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "ribbon", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "ribbon",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
 }
 
 #' @rdname mark_area
@@ -534,6 +645,7 @@ mark_step <- function(
   direction = "hv",
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -544,6 +656,7 @@ mark_step <- function(
     stat_params = list(direction = direction),
     blend = blend,
     effects = effects,
+    sketch = sketch,
     data = data
   )
 }
@@ -610,6 +723,7 @@ mark_label <- function(
   angle = NULL,
   fill = "white",
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -627,6 +741,7 @@ mark_label <- function(
       fill = fill
     ),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -651,9 +766,16 @@ mark_label <- function(
 #' d$z <- d$x * d$y
 #' vplot(d) |> mark_tile(x = x, y = y, fill = z)
 #' @export
-mark_tile <- function(plot, ..., blend = NULL, data = NULL) {
+mark_tile <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "tile", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "tile",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
 }
 
 #' @rdname mark_tile
@@ -684,7 +806,14 @@ mark_bin2d <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
 
 #' @rdname mark_tile
 #' @export
-mark_density <- function(plot, ..., adjust = 1, blend = NULL, data = NULL) {
+mark_density <- function(
+  plot,
+  ...,
+  adjust = 1,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -693,6 +822,7 @@ mark_density <- function(plot, ..., adjust = 1, blend = NULL, data = NULL) {
     stat = "density",
     stat_params = list(adjust = adjust),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -733,14 +863,28 @@ mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
 #' @examples
 #' vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
 #' @export
-mark_boxplot <- function(plot, ..., blend = NULL, data = NULL) {
+mark_boxplot <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "boxplot", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "boxplot",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
 }
 
 #' @rdname mark_boxplot
 #' @export
-mark_errorbar <- function(plot, ..., width = 0.5, blend = NULL, data = NULL) {
+mark_errorbar <- function(
+  plot,
+  ...,
+  width = 0.5,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -748,20 +892,41 @@ mark_errorbar <- function(plot, ..., width = 0.5, blend = NULL, data = NULL) {
     rlang::enquos(...),
     rlang::enquos(width = width),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
 
 #' @rdname mark_boxplot
 #' @export
-mark_linerange <- function(plot, ..., blend = NULL, data = NULL) {
+mark_linerange <- function(
+  plot,
+  ...,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "linerange", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "linerange",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
 }
 
 #' @rdname mark_boxplot
 #' @export
-mark_summary <- function(plot, ..., fun = mean, blend = NULL, data = NULL) {
+mark_summary <- function(
+  plot,
+  ...,
+  fun = mean,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -770,6 +935,7 @@ mark_summary <- function(plot, ..., fun = mean, blend = NULL, data = NULL) {
     stat = "aggregate",
     stat_params = list(fun = fun),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -791,6 +957,7 @@ mark_segment <- function(
   ...,
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -800,6 +967,7 @@ mark_segment <- function(
     rlang::enquos(...),
     blend = blend,
     effects = effects,
+    sketch = sketch,
     data = data
   )
 }
@@ -865,6 +1033,7 @@ mark_edges <- function(
   arrow = FALSE,
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -880,6 +1049,7 @@ mark_edges <- function(
     stat_params = list(arrow = isTRUE(arrow)),
     blend = blend,
     effects = effects,
+    sketch = sketch,
     data = data %||% plot@edge_data,
     z = 1L
   )
@@ -897,6 +1067,7 @@ mark_nodes <- function(
   alpha = NULL,
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -914,6 +1085,7 @@ mark_nodes <- function(
     ),
     blend = blend,
     effects = effects,
+    sketch = sketch,
     data = data,
     z = 2L
   )

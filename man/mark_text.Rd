@@ -29,6 +29,7 @@ mark_label(
   angle = NULL,
   fill = "white",
   blend = NULL,
+  sketch = NULL,
   data = NULL
 )
 }
@@ -55,6 +56,11 @@ layer composites as one isolated group (not per element).}
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
 \item{fill}{For \code{mark_label()}, the background fill colour.}
+
+\item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving this layer a hand-drawn look (wobbly
+outlines, hachure fills), \code{NA}/\code{FALSE} to force it crisp (overriding a
+plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default) to inherit. Geometry marks
+accept it; text, raster, hex and datashade marks do not.}
 }
 \value{
 The modified \link{PlotSpec}.

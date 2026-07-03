@@ -6,9 +6,9 @@
 \alias{mark_step}
 \title{Area, ribbon, and step marks}
 \usage{
-mark_area(plot, ..., blend = NULL, data = NULL)
+mark_area(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
-mark_ribbon(plot, ..., blend = NULL, data = NULL)
+mark_ribbon(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
 mark_step(
   plot,
@@ -16,6 +16,7 @@ mark_step(
   direction = "hv",
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 )
 }
@@ -29,6 +30,11 @@ mark_step(
 already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
 layer composites as one isolated group (not per element).}
+
+\item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving this layer a hand-drawn look (wobbly
+outlines, hachure fills), \code{NA}/\code{FALSE} to force it crisp (overriding a
+plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default) to inherit. Geometry marks
+accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 

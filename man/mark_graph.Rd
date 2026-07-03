@@ -16,6 +16,7 @@ mark_edges(
   arrow = FALSE,
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 )
 
@@ -29,6 +30,7 @@ mark_nodes(
   alpha = NULL,
   blend = NULL,
   effects = list(),
+  sketch = NULL,
   data = NULL
 )
 

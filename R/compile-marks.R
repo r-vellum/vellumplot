@@ -203,11 +203,39 @@ NULL
   expr
 }
 
+# --- sketch (hand-drawn) resolution -----------------------------------------
+
+# The effective sketch spec for the layer currently being emitted: an explicit
+# per-layer sketch wins; `NA`/`FALSE` forces crisp; `NULL` inherits the
+# plot-wide theme_sketch() default carried on `scales$sketch`. A per-layer seed
+# offset keeps different layers from sharing an identical wobble (the engine
+# already varies the seed per element *within* a batched grob).
+.mark_sketch <- function(L, scales) {
+  s <- L$sketch
+  if (is.null(s)) {
+    s <- scales$sketch # inherit plot-wide default (NULL if none)
+  } else if (length(s) == 1L && is.logical(s) && is.na(s)) {
+    return(NULL) # NA / FALSE -> forced crisp
+  }
+  .sketch_bump(s, 100L * (.mark_ctx$layer %||% 0L))
+}
+
+# Return `s` with its seed shifted by `offset` (identity for NULL / non-sketch),
+# so repeated grobs (style groups, categories) don't render the same wobble.
+.sketch_bump <- function(s, offset) {
+  if (is.null(s) || !inherits(s, "vellum_sketch") || !offset) {
+    return(s)
+  }
+  s$seed <- s$seed + offset
+  s
+}
+
 .emit_point <- function(scene, L, scales) {
   n <- L$n
   if (isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO) {
     return(.emit_datashade(scene, L, scales))
   }
+  sk <- .mark_sketch(L, scales)
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   if (identical(L$position, "jitter")) {
@@ -241,6 +269,7 @@ NULL
         xy$y,
         size = vellum::unit(size[idx], "mm"),
         shape = shape[idx],
+        sketch = sk,
         gp = vellum::gpar(
           fill = col[idx[1]],
           col = col[idx[1]],
@@ -260,7 +289,9 @@ NULL
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1.5)
+  sk <- .mark_sketch(L, scales)
 
+  gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
     a <- alpha[idx[1]]
@@ -270,6 +301,7 @@ NULL
       vellum::lines_grob(
         xy$x,
         xy$y,
+        sketch = .sketch_bump(sk, gi),
         gp = vellum::gpar(
           col = col[idx[1]],
           lwd = lwd,
@@ -277,6 +309,7 @@ NULL
         )
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -285,6 +318,7 @@ NULL
   col <- .aes_colour(L, scales, "grey40")[1]
   lwd <- .aes_param(L, "linewidth", 1)
   gp <- vellum::gpar(col = col, lwd = lwd)
+  sk <- .mark_sketch(L, scales)
   yi <- .intercept(L, "yintercept")
   xi <- .intercept(L, "xintercept")
   if (!is.null(yi)) {
@@ -300,7 +334,7 @@ NULL
       )
       scene <- .draw(
         scene,
-        vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = gp)
+        vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, sketch = sk, gp = gp)
       )
     }
   }
@@ -317,7 +351,14 @@ NULL
       )
       scene <- .draw(
         scene,
-        vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = gp)
+        vellum::segments_grob(
+          s$x0,
+          s$y0,
+          s$x1,
+          s$y1,
+          sketch = .sketch_bump(sk, 1L),
+          gp = gp
+        )
       )
     }
   }
@@ -372,6 +413,7 @@ NULL
   }
   theta0 <- pmin(a0, a1)
   theta1 <- pmax(a0, a1)
+  sk <- .mark_sketch(L, scales)
 
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     a <- alpha[idx[1]]
@@ -385,6 +427,7 @@ NULL
         theta0 = theta0[idx],
         theta1 = theta1[idx],
         fill = fill[idx],
+        sketch = sk,
         gp = vellum::gpar(col = NA, alpha = if (is.na(a)) NULL else a)
       )
     )
@@ -401,6 +444,7 @@ NULL
     return(.emit_bar_polar(scene, L, scales))
   }
   n <- L$n
+  sk <- .mark_sketch(L, scales)
   xp <- rep_len(scales$x$map(L$values$x), n)
   fill <- if (is.null(grad)) rep_len(.aes_colour(L, scales, "grey35"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
@@ -437,11 +481,13 @@ NULL
         y = r$y,
         width = r$width,
         height = r$height,
+        sketch = sk,
         gp = vellum::gpar(fill = grad, col = NA)
       )
     ))
   }
 
+  gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     a <- alpha[idx[1]]
     r <- .rect_units(
@@ -458,6 +504,7 @@ NULL
         y = r$y,
         width = r$width,
         height = r$height,
+        sketch = .sketch_bump(sk, gi),
         gp = vellum::gpar(
           fill = fill[idx[1]],
           col = NA,
@@ -465,6 +512,7 @@ NULL
         )
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -476,10 +524,12 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "#3366CC"), n)
+  sk <- .mark_sketch(L, scales)
   has_se <- !is.null(L$values$ymin)
   ymin <- if (has_se) scales$y$map(L$values$ymin)
   ymax <- if (has_se) scales$y$map(L$values$ymax)
 
+  gi <- 0L
   for (idx in .style_groups(n, list(col = col))) {
     o <- idx[order(xn[idx])]
     cc <- col[idx[1]]
@@ -490,6 +540,7 @@ NULL
         vellum::polygon_grob(
           poly$x,
           poly$y,
+          sketch = .sketch_bump(sk, gi),
           gp = vellum::gpar(fill = cc, col = NA, alpha = 0.25)
         )
       )
@@ -500,9 +551,11 @@ NULL
       vellum::lines_grob(
         ln$x,
         ln$y,
+        sketch = .sketch_bump(sk, gi + 50L),
         gp = vellum::gpar(col = cc, lwd = 1.5)
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -513,6 +566,7 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   ymin <- rep_len(scales$y$map(L$values$ymin), n)
   ymax <- rep_len(scales$y$map(L$values$ymax), n)
+  sk <- .mark_sketch(L, scales)
 
   grad <- .grad_fill(L)
   if (!is.null(grad)) {
@@ -523,6 +577,7 @@ NULL
       vellum::polygon_grob(
         poly$x,
         poly$y,
+        sketch = sk,
         gp = vellum::gpar(fill = grad, col = NA)
       )
     ))
@@ -531,6 +586,7 @@ NULL
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
 
+  gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     o <- idx[order(xn[idx])]
     a <- alpha[idx[1]]
@@ -540,6 +596,7 @@ NULL
       vellum::polygon_grob(
         poly$x,
         poly$y,
+        sketch = .sketch_bump(sk, gi),
         gp = vellum::gpar(
           fill = fill[idx[1]],
           col = NA,
@@ -547,6 +604,7 @@ NULL
         )
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -558,6 +616,7 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   y0 <- rep_len(scales$y$map(0), n)
   y1 <- rep_len(scales$y$map(L$values$y), n)
+  sk <- .mark_sketch(L, scales)
 
   # A gradient fill paints the whole area as one polygon (in x order).
   grad <- .grad_fill(L)
@@ -569,6 +628,7 @@ NULL
       vellum::polygon_grob(
         poly$x,
         poly$y,
+        sketch = sk,
         gp = vellum::gpar(fill = grad, col = NA)
       )
     ))
@@ -577,6 +637,7 @@ NULL
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
 
+  gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     o <- idx[order(xn[idx])]
     a <- alpha[idx[1]]
@@ -586,6 +647,7 @@ NULL
       vellum::polygon_grob(
         poly$x,
         poly$y,
+        sketch = .sketch_bump(sk, gi),
         gp = vellum::gpar(
           fill = fill[idx[1]],
           col = NA,
@@ -593,6 +655,7 @@ NULL
         )
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -607,7 +670,9 @@ NULL
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1.5)
   dir <- L$stat_params$direction %||% "hv"
+  sk <- .mark_sketch(L, scales)
 
+  gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])]
     sx <- xn[o]
@@ -632,6 +697,7 @@ NULL
       vellum::lines_grob(
         ln$x,
         ln$y,
+        sketch = .sketch_bump(sk, gi),
         gp = vellum::gpar(
           col = col[idx[1]],
           lwd = lwd,
@@ -639,6 +705,7 @@ NULL
         )
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -701,6 +768,7 @@ NULL
   label <- rep_len(as.character(L$values$label), n)
   col <- rep_len(.text_colour(L, scales, "black"), n)
   bg <- L$params$fill %||% "white"
+  sk <- .mark_sketch(L, scales)
   fs <- .aes_param(L, "size", 8)
   pad <- vellum::unit(1.2, "mm")
   ws <- do.call(
@@ -722,6 +790,7 @@ NULL
         width = ws[idx],
         height = hs[idx],
         r = vellum::unit(0.8, "mm"),
+        sketch = sk,
         gp = vellum::gpar(fill = bg, col = NA)
       )
     )
@@ -748,7 +817,9 @@ NULL
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
   w <- rep_len(L$values$width %||% .resolution(xp), n)
   h <- rep_len(L$values$height %||% .resolution(yp), n)
+  sk <- .mark_sketch(L, scales)
 
+  gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     a <- alpha[idx[1]]
     r <- .rect_units(scales, xp[idx], yp[idx], w[idx], h[idx])
@@ -759,6 +830,7 @@ NULL
         y = r$y,
         width = r$width,
         height = r$height,
+        sketch = .sketch_bump(sk, gi),
         gp = vellum::gpar(
           fill = fill[idx[1]],
           col = NA,
@@ -766,6 +838,7 @@ NULL
         )
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -814,6 +887,7 @@ NULL
   xv <- L$values$x
   yv <- as.numeric(L$values$y)
   colv <- rep_len(.aes_colour(L, scales, "white"), length(yv))
+  sk <- .mark_sketch(L, scales)
   levs <- .cat_levels(xv)
   xc_all <- scales$x$map(levs)
   band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
@@ -842,6 +916,7 @@ NULL
     xc <- xc_all[j]
     fillc <- colv[sel[1]]
     line_gp <- vellum::gpar(col = "grey20", lwd = 1)
+    skj <- .sketch_bump(sk, j)
 
     r <- .rect_units(
       scales,
@@ -857,6 +932,7 @@ NULL
         y = r$y,
         width = r$width,
         height = r$height,
+        sketch = skj,
         gp = vellum::gpar(fill = fillc, col = "grey20", lwd = 1)
       )
     )
@@ -874,7 +950,14 @@ NULL
       )
       scene <- .draw(
         scene,
-        vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, gp = line_gp)
+        vellum::segments_grob(
+          s$x0,
+          s$y0,
+          s$x1,
+          s$y1,
+          sketch = skj,
+          gp = line_gp
+        )
       )
     }
     if (length(out)) {
@@ -886,6 +969,7 @@ NULL
           xy$y,
           size = vellum::unit(1.2, "mm"),
           shape = "circle",
+          sketch = skj,
           gp = vellum::gpar(fill = "grey20", col = "grey20")
         )
       )
@@ -904,7 +988,9 @@ NULL
   lwd <- .aes_param(L, "linewidth", 1)
   band <- scales$x$band_width %||% .resolution(xn)
   half <- (.aes_param(L, "width", 0.5) * band) / 2
+  sk <- .mark_sketch(L, scales)
 
+  gi <- 0L
   for (idx in .style_groups(n, list(col = col))) {
     x0 <- xn[idx]
     y0 <- ymin[idx]
@@ -930,9 +1016,11 @@ NULL
         s$y0,
         s$x1,
         s$y1,
+        sketch = .sketch_bump(sk, gi),
         gp = vellum::gpar(col = col[idx[1]], lwd = lwd)
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -951,7 +1039,9 @@ NULL
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1)
+  sk <- .mark_sketch(L, scales)
 
+  gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
     s <- .seg_units(
@@ -968,6 +1058,7 @@ NULL
         s$y0,
         s$x1,
         s$y1,
+        sketch = .sketch_bump(sk, gi),
         gp = vellum::gpar(
           col = col[idx[1]],
           lwd = lwd,
@@ -975,6 +1066,7 @@ NULL
         )
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -1000,6 +1092,8 @@ NULL
   } else {
     NULL
   }
+  # Straight edges can be sketched; self-loops (loop_grob) are always crisp.
+  sk <- .mark_sketch(L, scales)
 
   # Per-edge endpoint node radii (mm), for exact node-boundary capping. vellum
   # resolves the mm caps in device space at render, so this is correct at any
@@ -1043,6 +1137,7 @@ NULL
           start_cap = start_cap,
           end_cap = end_cap,
           offset = offset,
+          sketch = sk,
           gp = vellum::gpar(
             col = col[g[1]],
             lwd = lwd[g[1]],
@@ -1184,6 +1279,7 @@ NULL
   border <- .aes_param(L, "color", "grey40")
   lwd <- .aes_param(L, "linewidth", 0.5)
   size <- rep_len(.aes_size(L, scales, 1.5), n)
+  sk <- .mark_sketch(L, scales)
 
   # per-kind colour vector, coalescing the primary colour with a kind default.
   kind_col <- function(default) {
@@ -1251,6 +1347,7 @@ NULL
           xy$y,
           id = as.integer(ids),
           rule = "evenodd",
+          sketch = sk,
           gp = vellum::gpar(
             fill = fill,
             col = border,
@@ -1290,6 +1387,7 @@ NULL
         vellum::lines_grob(
           xy$x,
           xy$y,
+          sketch = sk,
           gp = vellum::gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
         )
       )
@@ -1326,6 +1424,7 @@ NULL
           xy$x,
           xy$y,
           size = vellum::unit(szs, "mm"),
+          sketch = sk,
           gp = vellum::gpar(fill = col, col = col, alpha = gp_alpha(a))
         )
       )
