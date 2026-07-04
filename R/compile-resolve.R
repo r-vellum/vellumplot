@@ -107,16 +107,24 @@ NULL
   tooltip <- ev("tooltip")
   data_id <- ev("data_id")
   hover_group <- ev("hover_group")
-  if (is.null(data_id) && (!is.null(tooltip) || !is.null(hover_group))) {
+  hover_color <- ev("hover_color")
+  selected_color <- ev("selected_color")
+  # Any declaration makes the element interactive; an interactive element needs
+  # an addressable key, so default data_id to the row index when it is absent.
+  present <- !is.null(tooltip) || !is.null(hover_group) ||
+    !is.null(hover_color) || !is.null(selected_color)
+  if (is.null(data_id) && present) {
     data_id <- as.character(seq_len(n0))
   }
-  if (is.null(data_id) && is.null(tooltip) && is.null(hover_group)) {
+  if (is.null(data_id) && !present) {
     return(NULL)
   }
   list(
     data_id = if (!is.null(data_id)) as.character(data_id) else NULL,
     tooltip = tooltip,
     hover_group = hover_group,
+    hover_color = hover_color,
+    selected_color = selected_color,
     n = n0
   )
 }

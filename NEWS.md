@@ -14,6 +14,10 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   before. Applies to `stat = "identity"` marks (points, bars, tiles, segments,
   edges, hexbins, polar bars) and to `mark_sf()` — each sf feature
   (polygon/linestring/point) becomes an addressable, keyed element.
+* **Per-element interaction styling**: marks also accept `hover_color` and
+  `selected_color` (constant or column-mapped), carried into the scene so a host
+  (`gloss`) outlines each element in its own colour on hover/select — overriding
+  the widget-wide theme.
 
 * **Auto-display**: printing a plot (or composition) draws it into the active
   graphics device — the RStudio / Positron Plots pane, or a knitr/Quarto chunk —

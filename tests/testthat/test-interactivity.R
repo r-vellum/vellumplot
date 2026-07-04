@@ -97,6 +97,22 @@ test_that("mark_sf carries per-feature keys (polygons) into SVG + scene_model", 
   expect_equal(keyed$meta[[i]]$tooltip, as.character(nc$CNTY_ID[1]))
 })
 
+test_that("per-element hover_color / selected_color resolve into element meta", {
+  df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, cyl = factor(mtcars$cyl))
+  p <- vplot(df) |>
+    mark_point(
+      x = wt, y = mpg, data_id = seq_len(nrow(df)),
+      hover_color = ifelse(mtcars$cyl == 8, "red", "blue"),
+      selected_color = "black"
+    )
+  el <- data_points_of(p)
+  expect_equal(nrow(el), nrow(df))
+  # hover_color is data-driven (per row); selected_color is constant (recycled)
+  hc <- vapply(el$meta, function(m) m$hover_color %||% NA_character_, character(1))
+  expect_setequal(unique(hc), c("red", "blue"))
+  expect_true(all(vapply(el$meta, function(m) identical(m$selected_color, "black"), logical(1))))
+})
+
 test_that("interactivity declarations do not perturb the rendered pixels", {
   base <- vplot(df) |> mark_point(x = wt, y = mpg)
   keyed <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)

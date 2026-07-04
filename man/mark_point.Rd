@@ -102,9 +102,9 @@ stat). When \code{color}/\code{fill} is mapped, grouped bars are stacked by defa
 }
 \section{Interactivity}{
 
-Any mark accepts three reserved, per-row arguments (captured like encodings,
-via tidy evaluation) that make its elements addressable by an interactive host
-without changing what a static render draws:
+Any mark accepts reserved, per-row arguments (captured like encodings, via tidy
+evaluation) that make its elements addressable — and stylable — by an
+interactive host without changing what a static render draws:
 \itemize{
 \item \code{data_id} — a per-element \strong{data key} (e.g. \code{data_id = model}). Emitted by
 the SVG backend as \code{data-key} on each element and returned by
@@ -114,13 +114,17 @@ back to a datum, and to link the same datum across views.
 surfaced in \code{scene_model()} metadata.
 \item \code{hover_group} — a field grouping elements for linked emphasis (consumed by a
 host in a later phase).
+\item \code{hover_color}, \code{selected_color} — per-element outline colours applied by the
+host when the element is hovered / selected (a constant, or mapped from a
+column so different marks highlight differently). They override the widget-wide
+theme set by \code{gloss::as_widget(hover_color=, selected_color=)}.
 }
 
 These are inert for PNG/PDF and for an SVG opened without a JS host: a plot
-with none of them compiles and renders exactly as before. Declaring \code{tooltip}
-(or \code{hover_group}) without \code{data_id} defaults the key to the row index, so the
-element is still addressable. They currently apply to \code{stat = "identity"}
-marks (points, bars, tiles, segments, edges, hexbins, …); aggregating stats
+with none of them compiles and renders exactly as before. Declaring any of them
+without \code{data_id} defaults the key to the row index, so the element is still
+addressable. They currently apply to \code{stat = "identity"} marks (points, bars,
+tiles, segments, edges, hexbins, sf features, …); aggregating stats
 (histogram/count/density) drop them, since rows no longer map 1:1 to elements.
 }
 

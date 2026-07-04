@@ -194,7 +194,7 @@ after_stat <- function(x) x
 # `data_id` = the join key (SVG `data-key`); `tooltip` = per-row tooltip text;
 # `hover_group` = a field that groups elements for linked emphasis (consumed by a
 # host in a later phase). They flow into the vellum scene as element key/metadata.
-.INTERACT_ARGS <- c("tooltip", "data_id", "hover_group")
+.INTERACT_ARGS <- c("tooltip", "data_id", "hover_group", "hover_color", "selected_color")
 
 #' Add marks to a plot
 #'
@@ -230,9 +230,9 @@ after_stat <- function(x) x
 #'   accept it; text, raster, hex and datashade marks do not.
 #' @param data Optional layer data frame; overrides the plot data for this layer.
 #' @section Interactivity:
-#' Any mark accepts three reserved, per-row arguments (captured like encodings,
-#' via tidy evaluation) that make its elements addressable by an interactive host
-#' without changing what a static render draws:
+#' Any mark accepts reserved, per-row arguments (captured like encodings, via tidy
+#' evaluation) that make its elements addressable — and stylable — by an
+#' interactive host without changing what a static render draws:
 #'
 #' * `data_id` — a per-element **data key** (e.g. `data_id = model`). Emitted by
 #'   the SVG backend as `data-key` on each element and returned by
@@ -242,12 +242,16 @@ after_stat <- function(x) x
 #'   surfaced in `scene_model()` metadata.
 #' * `hover_group` — a field grouping elements for linked emphasis (consumed by a
 #'   host in a later phase).
+#' * `hover_color`, `selected_color` — per-element outline colours applied by the
+#'   host when the element is hovered / selected (a constant, or mapped from a
+#'   column so different marks highlight differently). They override the widget-wide
+#'   theme set by `gloss::as_widget(hover_color=, selected_color=)`.
 #'
 #' These are inert for PNG/PDF and for an SVG opened without a JS host: a plot
-#' with none of them compiles and renders exactly as before. Declaring `tooltip`
-#' (or `hover_group`) without `data_id` defaults the key to the row index, so the
-#' element is still addressable. They currently apply to `stat = "identity"`
-#' marks (points, bars, tiles, segments, edges, hexbins, …); aggregating stats
+#' with none of them compiles and renders exactly as before. Declaring any of them
+#' without `data_id` defaults the key to the row index, so the element is still
+#' addressable. They currently apply to `stat = "identity"` marks (points, bars,
+#' tiles, segments, edges, hexbins, sf features, …); aggregating stats
 #' (histogram/count/density) drop them, since rows no longer map 1:1 to elements.
 #' @return The modified [PlotSpec].
 #' @examples

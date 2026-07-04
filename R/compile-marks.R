@@ -1529,13 +1529,17 @@ NULL
 .elem_meta <- function(rows) {
   tt <- .mark_ctx$tooltip
   hg <- .mark_ctx$hover_group
-  if (is.null(tt) && is.null(hg)) {
+  hc <- .mark_ctx$hover_color
+  sc <- .mark_ctx$selected_color
+  if (is.null(tt) && is.null(hg) && is.null(hc) && is.null(sc)) {
     return(NULL)
   }
   lapply(rows, function(i) {
     rec <- list()
     if (!is.null(tt)) rec$tooltip <- as.character(tt[[i]])
     if (!is.null(hg)) rec$hover_group <- as.character(hg[[i]])
+    if (!is.null(hc)) rec$hover_color <- as.character(hc[[i]])
+    if (!is.null(sc)) rec$selected_color <- as.character(sc[[i]])
     rec
   })
 }
@@ -1681,6 +1685,8 @@ NULL
     .mark_ctx$data_id <- if (ok) L$meta$data_id else NULL
     .mark_ctx$tooltip <- if (ok) L$meta$tooltip else NULL
     .mark_ctx$hover_group <- if (ok) L$meta$hover_group else NULL
+    .mark_ctx$hover_color <- if (ok) L$meta$hover_color else NULL
+    .mark_ctx$selected_color <- if (ok) L$meta$selected_color else NULL
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)
