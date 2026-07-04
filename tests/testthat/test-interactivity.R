@@ -9,11 +9,13 @@ points_of <- function(p) {
   el <- model_of(p)$elements
   el[el$mark == "point", ]
 }
-# Data-mark points only (a colour scale also draws NA-keyed legend key glyphs,
-# which are point grobs too — non-interactive geometry).
+# Data-mark points only. A colour scale also draws legend key glyphs (point
+# grobs too): non-interactive by default (NA key), or — when the plot is
+# interactive — tagged with a "legend:<aes>:<level>" key. Exclude both.
 data_points_of <- function(p) {
   pts <- points_of(p)
-  pts[!is.na(pts$key), ]
+  pts <- pts[!is.na(pts$key), , drop = FALSE]
+  pts[!grepl("^legend:", pts$key), , drop = FALSE]
 }
 
 test_that("data_id becomes a per-element data-key in the SVG", {
@@ -117,4 +119,50 @@ test_that("interactivity declarations do not perturb the rendered pixels", {
   base <- vplot(df) |> mark_point(x = wt, y = mpg)
   keyed <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
   expect_identical(vellum::scene_raster(base), vellum::scene_raster(keyed))
+})
+
+# --- Legend interaction: discrete legend swatches drive their data series. -----
+# When a plot is interactive, discrete colour/shape swatches are tagged with a
+# `legend_for = "<aes>:<level>"` key so gloss can project a swatch back onto the
+# whole series, and every data mark carries its series membership in `meta$legend`.
+
+legend_df <- data.frame(
+  wt = mtcars$wt, mpg = mtcars$mpg,
+  model = rownames(mtcars), cyl = factor(mtcars$cyl)
+)
+swatches_of <- function(p) {
+  el <- model_of(p)$elements
+  el[!is.na(el$key) & grepl("^legend:", el$key), ]
+}
+
+test_that("discrete colour legend swatches carry legend_for + tooltip", {
+  p <- vplot(legend_df) |>
+    mark_point(x = wt, y = mpg, color = cyl, data_id = model)
+  sw <- swatches_of(p)
+  expect_equal(nrow(sw), nlevels(legend_df$cyl))
+  lf <- vapply(sw$meta, function(m) m[["legend_for"]] %||% NA_character_, character(1))
+  expect_setequal(lf, paste0("color:", levels(legend_df$cyl)))
+  # tooltip mirrors the level label; swatches must NOT carry series membership
+  tt <- vapply(sw$meta, function(m) m[["tooltip"]] %||% NA_character_, character(1))
+  expect_setequal(tt, levels(legend_df$cyl))
+  expect_true(all(vapply(sw$meta, function(m) is.null(m[["legend"]]), logical(1))))
+})
+
+test_that("data marks carry their colour-series membership in meta$legend", {
+  p <- vplot(legend_df) |>
+    mark_point(x = wt, y = mpg, color = cyl, data_id = model)
+  el <- data_points_of(p)
+  expect_equal(nrow(el), nrow(legend_df))
+  i <- match("Mazda RX4", el$key) # cyl == 6
+  expect_identical(el$meta[[i]][["legend"]], "color:6")
+  j <- match("Cadillac Fleetwood", el$key) # cyl == 8
+  expect_identical(el$meta[[j]][["legend"]], "color:8")
+})
+
+test_that("legend tagging is inert without interactivity declarations", {
+  p <- vplot(legend_df) |> mark_point(x = wt, y = mpg, color = cyl)
+  expect_no_match(svg_of(p), "legend:")
+  expect_equal(nrow(swatches_of(p)), 0L)
+  el <- points_of(p)
+  expect_true(all(vapply(el$meta, function(m) is.null(m[["legend"]]), logical(1))))
 })

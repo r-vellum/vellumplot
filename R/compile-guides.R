@@ -846,6 +846,43 @@ NULL
 }
 
 # Draw a vertical guide into the current viewport (its exact measured mm height).
+# Is any layer of `spec` interactive (declares a `data_id`/`tooltip`/... arg)?
+# When TRUE, discrete legend swatches are tagged so a host can drive series
+# highlight/select from the legend.
+.spec_interactive <- function(spec) {
+  any(vapply(spec@layers, function(l) length(l@interactivity) > 0L, logical(1)))
+}
+
+# The series key a discrete legend key `i` represents, as "<aes>:<level>" — the
+# join value between a legend swatch (`legend_for`) and the marks of that series
+# (their `legend` membership, set in `.compile_marks`). NULL for guide kinds that
+# are not a discrete colour/fill/shape legend (continuous colourbars, size, etc.).
+.legend_series_key <- function(g, i) {
+  aes <- switch(g$kind, color_discrete = "color", shape = "shape", NULL)
+  if (is.null(aes)) {
+    return(NULL)
+  }
+  paste0(aes, ":", as.character(g$sc$levels[i]))
+}
+
+# Tag a legend swatch grob so it becomes a keyed, hoverable element: `data_id` a
+# stable per-series id, `meta$legend_for` the series key (gloss highlights every
+# mark whose `legend` contains it), `meta$tooltip` the level's label. A no-op when
+# the plot is not interactive or the guide is not a discrete colour/shape legend,
+# so a static plot's legend is unchanged.
+.tag_legend_swatch <- function(swatch, g, i, label, interactive) {
+  if (!isTRUE(interactive)) {
+    return(swatch)
+  }
+  key <- .legend_series_key(g, i)
+  if (is.null(key)) {
+    return(swatch)
+  }
+  swatch@keys <- paste0("legend:", key)
+  swatch@meta <- list(list(legend_for = key, tooltip = as.character(label)))
+  swatch
+}
+
 .draw_guide_v <- function(scene, g, m, rt) {
   txt <- .el_gpar_text(rt[["legend.text"]])
   th <- if (m$show_title) m$title_h + m$title_gap else 0
@@ -881,7 +918,7 @@ NULL
   }
   for (i in seq_len(k)) {
     scene <- vellum::push(scene, vellum::viewport(row = off + i, col = 1))
-    scene <- vellum::draw(scene, .key_grob(g, i, m, rt[[".sketch"]]))
+    scene <- vellum::draw(scene, .tag_legend_swatch(.key_grob(g, i, m, rt[[".sketch"]]), g, i, labs[i], rt[[".interactive"]]))
     scene <- vellum::pop(scene)
     scene <- vellum::push(scene, vellum::viewport(row = off + i, col = 2))
     scene <- vellum::draw(
@@ -1046,7 +1083,7 @@ NULL
         width = vellum::unit(key_d, "mm")
       )
     )
-    scene <- vellum::draw(scene, .key_grob(g, i, m, rt[[".sketch"]]))
+    scene <- vellum::draw(scene, .tag_legend_swatch(.key_grob(g, i, m, rt[[".sketch"]]), g, i, labs[i], rt[[".interactive"]]))
     scene <- vellum::pop(scene)
     scene <- vellum::draw(
       scene,

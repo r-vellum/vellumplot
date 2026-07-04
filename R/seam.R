@@ -52,6 +52,10 @@ NULL
   # `rt` so they match a hand-drawn plot.
   plot_sketch <- .theme_sketch_default(spec)
   rt[[".sketch"]] <- plot_sketch
+  # Interactivity: when any layer declares it, discrete legend swatches are tagged
+  # (a keyed, hoverable element per series) so a host can highlight/select a whole
+  # series from the legend. Read by the guide drawers (see `.tag_legend_swatch`).
+  rt[[".interactive"]] <- .spec_interactive(spec)
   guides <- .legend_guides(built$scales)
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
   flip <- identical(co@kind, "flip")

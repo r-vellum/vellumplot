@@ -19,6 +19,12 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   (`gloss`) outlines each element in its own colour on hover/select — overriding
   the widget-wide theme.
 
+* **Interactive discrete legends**: when a plot maps a discrete `color`/`shape`
+  scale and declares interactivity, each legend swatch is tagged with the data
+  series it represents, and every mark carries its series membership. A host
+  (`gloss`) uses this to make swatches highlight/select their whole series. Inert
+  on a static render and when no interactivity is declared.
+
 * **Auto-display**: printing a plot (or composition) draws it into the active
   graphics device — the RStudio / Positron Plots pane, or a knitr/Quarto chunk —
   like ggplot2 (via `vellum::display()`). `summary()` shows the inspectable spec

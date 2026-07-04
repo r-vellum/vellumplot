@@ -1531,7 +1531,8 @@ NULL
   hg <- .mark_ctx$hover_group
   hc <- .mark_ctx$hover_color
   sc <- .mark_ctx$selected_color
-  if (is.null(tt) && is.null(hg) && is.null(hc) && is.null(sc)) {
+  lg <- .mark_ctx$legend
+  if (is.null(tt) && is.null(hg) && is.null(hc) && is.null(sc) && is.null(lg)) {
     return(NULL)
   }
   lapply(rows, function(i) {
@@ -1540,8 +1541,31 @@ NULL
     if (!is.null(hg)) rec$hover_group <- as.character(hg[[i]])
     if (!is.null(hc)) rec$hover_color <- as.character(hc[[i]])
     if (!is.null(sc)) rec$selected_color <- as.character(sc[[i]])
+    # `legend`: the discrete series this element belongs to ("<aes>:<value>"), so a
+    # legend swatch (tagged with `legend_for`) can highlight the whole series.
+    if (!is.null(lg)) rec$legend <- lg[[i]]
     rec
   })
+}
+
+# Per-row legend membership: for each discrete colour/fill/shape scale the layer
+# maps, the element's series key(s) "<aes>:<value>". Returns a list (one entry per
+# row, each a character vector), or NULL when the layer maps no discrete legend
+# aesthetic. Matches the `legend_for` a discrete legend swatch carries.
+.legend_membership <- function(L, scales) {
+  n <- L$n
+  cols <- list()
+  if (!is.null(scales$color) && identical(scales$color$kind, "discrete")) {
+    cv <- L$values$color %||% L$values$fill
+    if (!is.null(cv)) cols[["color"]] <- paste0("color:", as.character(rep_len(cv, n)))
+  }
+  if (!is.null(scales$shape) && !is.null(L$values$shape)) {
+    cols[["shape"]] <- paste0("shape:", as.character(rep_len(L$values$shape, n)))
+  }
+  if (!length(cols)) {
+    return(NULL)
+  }
+  lapply(seq_len(n), function(i) unname(vapply(cols, function(v) v[[i]], character(1))))
 }
 
 # The [xscale, yscale] a blend/effect wrapper viewport carries so native
@@ -1687,6 +1711,9 @@ NULL
     .mark_ctx$hover_group <- if (ok) L$meta$hover_group else NULL
     .mark_ctx$hover_color <- if (ok) L$meta$hover_color else NULL
     .mark_ctx$selected_color <- if (ok) L$meta$selected_color else NULL
+    # Legend membership (for legend-driven series highlight/select) — only when the
+    # layer is interactive (its elements are keyed and thus addressable).
+    .mark_ctx$legend <- if (ok) .legend_membership(L, scales) else NULL
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)
