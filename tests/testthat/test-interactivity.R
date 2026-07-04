@@ -1,0 +1,87 @@
+# Phase 2 interactivity declarations: `tooltip=` / `data_id=` / `hover_group=` on
+# any mark flow per-row into the vellum scene as element keys/metadata (SVG
+# `data-key` + `scene_model()`), and are inert on a static render.
+
+df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, model = rownames(mtcars))
+svg_of <- function(p) vellum::scene_svg(as_vellum_scene(p))
+model_of <- function(p) vellum::scene_model(as_vellum_scene(p))
+points_of <- function(p) {
+  el <- model_of(p)$elements
+  el[el$mark == "point", ]
+}
+# Data-mark points only (a colour scale also draws NA-keyed legend key glyphs,
+# which are point grobs too — non-interactive geometry).
+data_points_of <- function(p) {
+  pts <- points_of(p)
+  pts[!is.na(pts$key), ]
+}
+
+test_that("data_id becomes a per-element data-key in the SVG", {
+  p <- vplot(df) |> mark_point(x = wt, y = mpg, data_id = model)
+  svg <- svg_of(p)
+  expect_match(svg, "data-key=")
+  expect_match(svg, 'data-key="Mazda RX4"', fixed = TRUE)
+  expect_match(svg, 'data-key="Valiant"', fixed = TRUE)
+})
+
+test_that("tooltip + data_id surface per element in scene_model()", {
+  p <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
+  el <- data_points_of(p)
+  expect_equal(nrow(el), nrow(df))
+  expect_setequal(el$key, df$model)
+  # meta carries the tooltip aligned to its element
+  i <- match("Mazda RX4", el$key)
+  expect_equal(el$meta[[i]]$tooltip, "Mazda RX4")
+})
+
+test_that("a plot with no interactivity declarations is unchanged (no data-key)", {
+  p <- vplot(df) |> mark_point(x = wt, y = mpg)
+  expect_no_match(svg_of(p), "data-key")
+  # every element carries an NA key (geometry only)
+  expect_true(all(is.na(points_of(p)$key)))
+})
+
+test_that("tooltip without data_id defaults the key to row identity", {
+  p <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model)
+  el <- data_points_of(p)
+  expect_setequal(el$key, as.character(seq_len(nrow(df))))
+  expect_match(svg_of(p), 'data-key="1"', fixed = TRUE)
+})
+
+test_that("a constant tooltip recycles to every element", {
+  p <- vplot(df) |> mark_point(x = wt, y = mpg, data_id = model, tooltip = "hi")
+  el <- data_points_of(p)
+  expect_true(all(vapply(el$meta, function(m) identical(m$tooltip, "hi"), logical(1))))
+})
+
+test_that("data_id keys survive style grouping (colour splits into groups)", {
+  p <- vplot(df) |>
+    mark_point(x = wt, y = mpg, color = factor(mtcars$cyl), data_id = model)
+  el <- data_points_of(p)
+  # one element per row, each with its own key, despite multiple style groups
+  expect_equal(nrow(el), nrow(df))
+  expect_setequal(el$key, df$model)
+})
+
+test_that("bars carry per-bar keys", {
+  db <- data.frame(cat = c("a", "b", "c"), val = c(3, 1, 2))
+  p <- vplot(db) |> mark_bar(x = cat, y = val, data_id = cat, tooltip = val)
+  el <- model_of(p)$elements
+  bars <- el[el$mark == "rect" & !is.na(el$key), ]
+  expect_setequal(bars$key, c("a", "b", "c"))
+})
+
+test_that("segments carry per-element keys", {
+  ds <- data.frame(x = c(0, 1), y = c(0, 1), xe = c(1, 2), ye = c(1, 0), id = c("s1", "s2"))
+  p <- vplot(ds) |>
+    mark_segment(x = x, y = y, x2 = xe, y2 = ye, data_id = id)
+  el <- model_of(p)$elements
+  segs <- el[el$mark == "segment" & !is.na(el$key), ]
+  expect_setequal(segs$key, c("s1", "s2"))
+})
+
+test_that("interactivity declarations do not perturb the rendered pixels", {
+  base <- vplot(df) |> mark_point(x = wt, y = mpg)
+  keyed <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
+  expect_identical(vellum::scene_raster(base), vellum::scene_raster(keyed))
+})

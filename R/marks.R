@@ -229,9 +229,33 @@ after_stat <- function(x) x
 #'   plot-wide [theme_sketch()]), or `NULL` (default) to inherit. Geometry marks
 #'   accept it; text, raster, hex and datashade marks do not.
 #' @param data Optional layer data frame; overrides the plot data for this layer.
+#' @section Interactivity:
+#' Any mark accepts three reserved, per-row arguments (captured like encodings,
+#' via tidy evaluation) that make its elements addressable by an interactive host
+#' without changing what a static render draws:
+#'
+#' * `data_id` — a per-element **data key** (e.g. `data_id = model`). Emitted by
+#'   the SVG backend as `data-key` on each element and returned by
+#'   `vellum::scene_model()`; it is the join key a host uses to map a hover/click
+#'   back to a datum, and to link the same datum across views.
+#' * `tooltip` — per-element tooltip text (a column expression or a constant),
+#'   surfaced in `scene_model()` metadata.
+#' * `hover_group` — a field grouping elements for linked emphasis (consumed by a
+#'   host in a later phase).
+#'
+#' These are inert for PNG/PDF and for an SVG opened without a JS host: a plot
+#' with none of them compiles and renders exactly as before. Declaring `tooltip`
+#' (or `hover_group`) without `data_id` defaults the key to the row index, so the
+#' element is still addressable. They currently apply to `stat = "identity"`
+#' marks (points, bars, tiles, segments, edges, hexbins, …); aggregating stats
+#' (histogram/count/density) drop them, since rows no longer map 1:1 to elements.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+#'
+#' # Declare interactivity (inert on a static render):
+#' df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, model = rownames(mtcars))
+#' vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
 #' @export
 mark_point <- function(
   plot,

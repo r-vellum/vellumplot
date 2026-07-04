@@ -5,6 +5,15 @@ A declarative grammar of graphics that compiles an inspectable spec into a
 
 ## Features
 
+* **Interactivity declarations** (host-agnostic; inert on a static render). Any
+  `mark_*()` accepts reserved per-row args `data_id`, `tooltip`, and
+  `hover_group` (tidy-eval expressions). They flow into the vellum scene as
+  per-element keys/metadata — `data_id` becomes the SVG `data-key` and both
+  surface in `vellum::scene_model()` — the foundation a companion widget uses for
+  hover/select/linking. A plot without them compiles and renders exactly as
+  before. Applies to `stat = "identity"` marks (points, bars, tiles, segments,
+  edges, hexbins, polar bars).
+
 * **Auto-display**: printing a plot (or composition) draws it into the active
   graphics device — the RStudio / Positron Plots pane, or a knitr/Quarto chunk —
   like ggplot2 (via `vellum::display()`). `summary()` shows the inspectable spec

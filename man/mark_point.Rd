@@ -100,6 +100,34 @@ mappings.
 stat). When \code{color}/\code{fill} is mapped, grouped bars are stacked by default; use
 \code{position = "dodge"} for side-by-side bars or \code{"fill"} to normalise to 1.
 }
+\section{Interactivity}{
+
+Any mark accepts three reserved, per-row arguments (captured like encodings,
+via tidy evaluation) that make its elements addressable by an interactive host
+without changing what a static render draws:
+\itemize{
+\item \code{data_id} — a per-element \strong{data key} (e.g. \code{data_id = model}). Emitted by
+the SVG backend as \code{data-key} on each element and returned by
+\code{vellum::scene_model()}; it is the join key a host uses to map a hover/click
+back to a datum, and to link the same datum across views.
+\item \code{tooltip} — per-element tooltip text (a column expression or a constant),
+surfaced in \code{scene_model()} metadata.
+\item \code{hover_group} — a field grouping elements for linked emphasis (consumed by a
+host in a later phase).
+}
+
+These are inert for PNG/PDF and for an SVG opened without a JS host: a plot
+with none of them compiles and renders exactly as before. Declaring \code{tooltip}
+(or \code{hover_group}) without \code{data_id} defaults the key to the row index, so the
+element is still addressable. They currently apply to \code{stat = "identity"}
+marks (points, bars, tiles, segments, edges, hexbins, …); aggregating stats
+(histogram/count/density) drop them, since rows no longer map 1:1 to elements.
+}
+
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+
+# Declare interactivity (inert on a static render):
+df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, model = rownames(mtcars))
+vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
 }
