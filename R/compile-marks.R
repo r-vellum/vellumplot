@@ -1321,15 +1321,18 @@ NULL
     scene
   }
 
-  # polygons: rings across the group become one path_grob (each ring a sub-path).
+  # polygons: one path_grob PER FEATURE (its rings are sub-paths), so each feature
+  # is an addressable element. `rows = i` lets `.draw()` key it with the feature's
+  # data_id / tooltip (interactivity); the small extra grob count is the price of
+  # per-feature identity.
   scene <- by_style(
     scene,
     "poly",
     kind_col("grey80"),
     function(scene, idx, fill, a) {
-      xs <- ys <- ids <- numeric(0)
-      rid <- 0L
       for (i in idx) {
+        xs <- ys <- ids <- numeric(0)
+        rid <- 0L
         for (p in prims_of(i, "poly")) {
           for (ring in p$parts) {
             if (!nrow(ring)) {
@@ -1342,38 +1345,41 @@ NULL
             ids <- c(ids, rep(rid, nrow(ring)))
           }
         }
-      }
-      if (!length(xs)) {
-        return(scene)
-      }
-      xy <- .xy_units(scales, xs, ys)
-      .draw(
-        scene,
-        vellum::path_grob(
-          xy$x,
-          xy$y,
-          id = as.integer(ids),
-          rule = "evenodd",
-          sketch = sk,
-          gp = vellum::gpar(
-            fill = fill,
-            col = border,
-            lwd = lwd,
-            alpha = gp_alpha(a)
-          )
+        if (!length(xs)) {
+          next
+        }
+        xy <- .xy_units(scales, xs, ys)
+        scene <- .draw(
+          scene,
+          vellum::path_grob(
+            xy$x,
+            xy$y,
+            id = as.integer(ids),
+            rule = "evenodd",
+            sketch = sk,
+            gp = vellum::gpar(
+              fill = fill,
+              col = border,
+              lwd = lwd,
+              alpha = gp_alpha(a)
+            )
+          ),
+          rows = i
         )
-      )
+      }
+      scene
     }
   )
 
-  # lines: NA-separated sub-paths in one lines_grob.
+  # lines: one lines_grob PER FEATURE (its parts NA-separated), so each feature is
+  # addressable. `rows = i` keys it with the feature's data_id / tooltip.
   scene <- by_style(
     scene,
     "line",
     kind_col("grey20"),
     function(scene, idx, col, a) {
-      xs <- ys <- numeric(0)
       for (i in idx) {
+        xs <- ys <- numeric(0)
         for (p in prims_of(i, "line")) {
           for (seg in p$parts) {
             if (!nrow(seg)) {
@@ -1384,20 +1390,22 @@ NULL
             ys <- c(ys, nat$y, NA_real_)
           }
         }
-      }
-      if (!length(xs)) {
-        return(scene)
-      }
-      xy <- .xy_units(scales, xs, ys)
-      .draw(
-        scene,
-        vellum::lines_grob(
-          xy$x,
-          xy$y,
-          sketch = sk,
-          gp = vellum::gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
+        if (!length(xs)) {
+          next
+        }
+        xy <- .xy_units(scales, xs, ys)
+        scene <- .draw(
+          scene,
+          vellum::lines_grob(
+            xy$x,
+            xy$y,
+            sketch = sk,
+            gp = vellum::gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
+          ),
+          rows = i
         )
-      )
+      }
+      scene
     }
   )
 
@@ -1408,6 +1416,7 @@ NULL
     kind_col("black"),
     function(scene, idx, col, a) {
       xs <- ys <- szs <- numeric(0)
+      rows <- integer(0) # feature index per emitted point (for per-point keys)
       for (i in idx) {
         for (p in prims_of(i, "point")) {
           for (m in p$parts) {
@@ -1418,6 +1427,7 @@ NULL
             xs <- c(xs, nat$x)
             ys <- c(ys, nat$y)
             szs <- c(szs, rep(size[i], nrow(m)))
+            rows <- c(rows, rep(i, nrow(m)))
           }
         }
       }
@@ -1433,7 +1443,8 @@ NULL
           size = vellum::unit(szs, "mm"),
           sketch = sk,
           gp = vellum::gpar(fill = col, col = col, alpha = gp_alpha(a))
-        )
+        ),
+        rows = rows
       )
     }
   )

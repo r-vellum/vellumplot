@@ -12,7 +12,8 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   surface in `vellum::scene_model()` — the foundation a companion widget uses for
   hover/select/linking. A plot without them compiles and renders exactly as
   before. Applies to `stat = "identity"` marks (points, bars, tiles, segments,
-  edges, hexbins, polar bars).
+  edges, hexbins, polar bars) and to `mark_sf()` — each sf feature
+  (polygon/linestring/point) becomes an addressable, keyed element.
 
 * **Auto-display**: printing a plot (or composition) draws it into the active
   graphics device — the RStudio / Positron Plots pane, or a knitr/Quarto chunk —

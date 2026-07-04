@@ -80,6 +80,23 @@ test_that("segments carry per-element keys", {
   expect_setequal(segs$key, c("s1", "s2"))
 })
 
+test_that("mark_sf carries per-feature keys (polygons) into SVG + scene_model", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- vplot(nc) |> mark_sf(tooltip = CNTY_ID, data_id = CNTY_ID)
+  sc <- as_vellum_scene(p)
+  expect_match(vellum::scene_svg(sc), "data-key=")
+  el <- vellum::scene_model(sc)$elements
+  keyed <- el[!is.na(el$key), ]
+  # one keyed path element per county
+  expect_equal(nrow(keyed), nrow(nc))
+  expect_true(all(keyed$mark == "path"))
+  expect_setequal(keyed$key, as.character(nc$CNTY_ID))
+  # tooltip aligned to the feature
+  i <- match(as.character(nc$CNTY_ID[1]), keyed$key)
+  expect_equal(keyed$meta[[i]]$tooltip, as.character(nc$CNTY_ID[1]))
+})
+
 test_that("interactivity declarations do not perturb the rendered pixels", {
   base <- vplot(df) |> mark_point(x = wt, y = mpg)
   keyed <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
