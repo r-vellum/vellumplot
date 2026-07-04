@@ -75,7 +75,49 @@ NULL
     position = layer@position,
     blend = layer@blend,
     effects = layer@effects,
-    sketch = layer@sketch
+    sketch = layer@sketch,
+    # Per-row interactivity (NULL when none declared): a data key + optional
+    # tooltip / hover-group, evaluated against the raw layer data. Kept out of
+    # `values` so it is never scale-trained. Aligns to the drawn elements when the
+    # mark is `stat = "identity"` (row-preserving); a length guard at emit time
+    # drops it for aggregating stats where rows no longer map 1:1.
+    meta = .resolve_interactivity(layer@interactivity, data)
+  )
+}
+
+# Evaluate a layer's interactivity quosures (`tooltip`/`data_id`/`hover_group`)
+# per data row. Returns NULL when none are declared (so a non-interactive layer
+# stays exactly as before). Any interactive element needs an addressable key, so
+# `data_id` defaults to the row index when a tooltip/hover-group is given without
+# one. Scalars recycle to the row count.
+.resolve_interactivity <- function(interactivity, data) {
+  if (!length(interactivity)) {
+    return(NULL)
+  }
+  n0 <- nrow(data)
+  ev <- function(nm) {
+    q <- interactivity[[nm]]
+    if (is.null(q)) {
+      return(NULL)
+    }
+    v <- rlang::eval_tidy(q, data = data)
+    if (length(v) == 1L && n0 != 1L) v <- rep(v, n0)
+    v
+  }
+  tooltip <- ev("tooltip")
+  data_id <- ev("data_id")
+  hover_group <- ev("hover_group")
+  if (is.null(data_id) && (!is.null(tooltip) || !is.null(hover_group))) {
+    data_id <- as.character(seq_len(n0))
+  }
+  if (is.null(data_id) && is.null(tooltip) && is.null(hover_group)) {
+    return(NULL)
+  }
+  list(
+    data_id = if (!is.null(data_id)) as.character(data_id) else NULL,
+    tooltip = tooltip,
+    hover_group = hover_group,
+    n = n0
   )
 }
 

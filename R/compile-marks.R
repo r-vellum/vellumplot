@@ -429,7 +429,8 @@ NULL
         fill = fill[idx],
         sketch = sk,
         gp = vellum::gpar(col = NA, alpha = if (is.na(a)) NULL else a)
-      )
+      ),
+      rows = idx
     )
   }
   scene
@@ -483,7 +484,8 @@ NULL
         height = r$height,
         sketch = sk,
         gp = vellum::gpar(fill = grad, col = NA)
-      )
+      ),
+      rows = seq_len(n)
     ))
   }
 
@@ -510,7 +512,8 @@ NULL
           col = NA,
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      rows = idx
     )
     gi <- gi + 1L
   }
@@ -836,7 +839,8 @@ NULL
           col = NA,
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      rows = idx
     )
     gi <- gi + 1L
   }
@@ -1064,7 +1068,8 @@ NULL
           lwd = lwd,
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      rows = idx
     )
     gi <- gi + 1L
   }
@@ -1143,7 +1148,8 @@ NULL
             lwd = lwd[g[1]],
             alpha = if (is.na(a)) NULL else a
           )
-        )
+        ),
+        rows = g
       )
     }
   }
@@ -1230,7 +1236,8 @@ NULL
       fill = fill,
       orientation = "flat",
       gp = vellum::gpar(alpha = if (is.na(a)) NULL else a)
-    )
+    ),
+    rows = seq_len(n)
   )
 }
 
@@ -1488,7 +1495,38 @@ NULL
   if (!is.null(id)) {
     grob@id <- id
   }
+  # Per-element interactivity (DESIGN-INTERACTIVITY.md Phase 2). Attach the data
+  # key + tooltip/hover metadata only when the emitter refined `rows` to *this*
+  # grob's own elements (so `data_id[rows]` aligns 1:1 with what is drawn) and
+  # this is a real mark, not an effect halo. Gated on a declared `data_id` in the
+  # layer context, so a non-interactive plot sets nothing. `keys`/`meta` flow into
+  # vellum's SVG `data-key` and `scene_model()`; a static PNG/SVG render ignores
+  # them.
+  if (!is.null(rows) && identical(.mark_ctx$kind, "mark") && !is.null(.mark_ctx$data_id)) {
+    grob@keys <- .mark_ctx$data_id[rows]
+    m <- .elem_meta(rows)
+    if (!is.null(m)) {
+      grob@meta <- m
+    }
+  }
   vellum::draw(scene, grob)
+}
+
+# Build the per-element `meta` list (one record per drawn element) from the layer
+# context's resolved tooltip / hover-group, indexed by this grob's `rows`. Returns
+# NULL when neither is declared (so grobs carry no `meta`).
+.elem_meta <- function(rows) {
+  tt <- .mark_ctx$tooltip
+  hg <- .mark_ctx$hover_group
+  if (is.null(tt) && is.null(hg)) {
+    return(NULL)
+  }
+  lapply(rows, function(i) {
+    rec <- list()
+    if (!is.null(tt)) rec$tooltip <- as.character(tt[[i]])
+    if (!is.null(hg)) rec$hover_group <- as.character(hg[[i]])
+    rec
+  })
 }
 
 # The [xscale, yscale] a blend/effect wrapper viewport carries so native
@@ -1624,6 +1662,14 @@ NULL
     .mark_ctx$channels <- .layer_channels(L, scales)
     .mark_ctx$rows <- seq_len(L$n)
     .mark_ctx$kind <- "mark"
+    # Per-row interactivity for this layer (NULL when none declared). Used only
+    # when it aligns to the drawn rows: a row-preserving mark keeps `length == n`;
+    # an aggregating stat (bin/count) changes `n`, so we drop it rather than
+    # mis-key (a future phase can re-derive keys from computed columns).
+    ok <- !is.null(L$meta) && !is.null(L$meta$data_id) && length(L$meta$data_id) == L$n
+    .mark_ctx$data_id <- if (ok) L$meta$data_id else NULL
+    .mark_ctx$tooltip <- if (ok) L$meta$tooltip else NULL
+    .mark_ctx$hover_group <- if (ok) L$meta$hover_group else NULL
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)

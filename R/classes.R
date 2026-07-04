@@ -88,7 +88,13 @@ LayerSpec <- S7::new_class(
     # not an effect (see reexports.R `sketch()`).
     sketch = S7::new_property(S7::class_any, default = NULL),
     data = S7::new_property(S7::class_any, default = NULL), # per-layer data | NULL
-    z = S7::new_property(S7::class_integer, default = 0L) # draw-order band
+    z = S7::new_property(S7::class_integer, default = 0L), # draw-order band
+    # Interactivity declarations (host-agnostic; ignored by a static render). A
+    # named list of quosures for the reserved args `tooltip`, `data_id`,
+    # `hover_group` — evaluated per data row at compile and threaded into the
+    # vellum scene as per-element keys/metadata. Empty by default: a plot without
+    # them compiles and renders exactly as before.
+    interactivity = S7::new_property(S7::class_list, default = list())
   )
 )
 

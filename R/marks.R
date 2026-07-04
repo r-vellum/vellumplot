@@ -149,6 +149,12 @@ after_stat <- function(x) x
     )
   }
   quos <- c(dots, extra)
+  # Interactivity args (`tooltip`/`data_id`/`hover_group`) are reserved, not
+  # aesthetics: pull them out before encoding-splitting so they are never
+  # scale-trained. They are captured as quosures and resolved per row at compile.
+  interactivity <- quos[intersect(names(quos), .INTERACT_ARGS)]
+  interactivity <- interactivity[!vapply(interactivity, rlang::quo_is_null, logical(1))]
+  quos <- quos[setdiff(names(quos), .INTERACT_ARGS)]
   split <- .split_encodings(quos)
   # `effects` is a reserved argument, not an aesthetic: catch it arriving via `...`
   # on a mark that does not expose an `effects` argument.
@@ -177,11 +183,18 @@ after_stat <- function(x) x
     effects = .check_effects(effects, mark),
     sketch = .check_sketch(sketch),
     data = data,
-    z = as.integer(z)
+    z = as.integer(z),
+    interactivity = interactivity
   )
   plot@layers <- c(plot@layers, list(layer))
   plot
 }
+
+# Reserved, per-row interactivity arguments (declared on any mark_*() via `...`).
+# `data_id` = the join key (SVG `data-key`); `tooltip` = per-row tooltip text;
+# `hover_group` = a field that groups elements for linked emphasis (consumed by a
+# host in a later phase). They flow into the vellum scene as element key/metadata.
+.INTERACT_ARGS <- c("tooltip", "data_id", "hover_group")
 
 #' Add marks to a plot
 #'
