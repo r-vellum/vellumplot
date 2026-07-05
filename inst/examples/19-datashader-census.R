@@ -66,15 +66,16 @@ if (
   # raster, so a high dpi over a small gw just upsamples (blurry). For a genuine
   # high-res export, raise gw AND give the page enough pixels (width * dpi) that
   # the panel is at least gw wide so the raster is drawn 1:1, not stretched.
-  gw <- 4000L
+  gw <- 5000L
   gh <- as.integer(gw * diff(usa_y) / diff(usa_x))
 
   # --- 2. Population density (single ramp) -----------------------------------
   # Every person, coloured by local density -- the classic "where do people
   # live" map. eq_hist spreads the enormous dynamic range across the ramp.
-  # width * dpi = 8 * 600 = 4800 px page, so the ~4000-wide panel draws the
-  # datashade raster without upscaling. Bump gw + these together for even more.
-  vplot(census, width = 8, height = 6, dpi = 600) |>
+  # width * dpi = 10 * 600 = 6000 px page, comfortably above gw so the panel
+  # (smaller than the page after margins) draws the 5000-wide datashade raster
+  # without upscaling. Bump gw + these together for even more.
+  vplot(census, width = 10, height = 7, dpi = 600) |>
     mark_datashade(
       x = easting,
       y = northing,
@@ -106,7 +107,7 @@ if (
     o = "#ffff00" # Other  - yellow
   )
 
-  p <- vplot(census, width = 8, height = 6, dpi = 600) |>
+  p <- vplot(census, width = 10, height = 7, dpi = 600) |>
     scale_x_continuous(limits = usa_x) |>
     scale_y_continuous(limits = usa_y) |>
     coord_fixed() |>
