@@ -21,11 +21,15 @@ the image takes about the same time to make, and density is shown honestly
 because it is measured rather than implied by overlap.
 
 In quill this is `mark_datashade()`. It bins `x` and `y` into a
-`width`-by-`height` canvas in one pass and colours each cell by density (via
-`vellum::datashade()`), drawing one raster that fills the panel. Because the
-cell colour encodes density, per-point aesthetics like colour and size do not
-apply. The **[statistical marks](statistical-marks.html)** article introduces
-it on a synthetic half-million points; here we push it as far as it goes.
+`width`-by-`height` canvas in one pass and colours each cell by density, drawing
+one raster that fills the panel. The binning itself is done by the backend's
+`vellum::datashade()`, whose
+[datashading article](https://schochastics.github.io/vellum/articles/datashading.html)
+covers the aggregation engine, the reductions, and the equalisation options in
+depth. Because the cell colour encodes density, per-point aesthetics like colour
+and size do not apply. The **[statistical marks](statistical-marks.html)**
+article introduces it on a synthetic half-million points; here we push it as far
+as it goes.
 
 ## The US Census, about 306 million points
 
@@ -92,4 +96,5 @@ logs, particle simulations. `mark_point()` even has an `auto = TRUE` switch that
 falls back to a datashaded raster automatically past a row threshold, so you can
 keep writing `mark_point()` and let quill pick the representation. For the full
 argument list, see the [`mark_datashade()`](../reference/mark_datashade.html)
-reference.
+reference, and for the aggregation engine underneath it, vellum's
+[datashading article](https://schochastics.github.io/vellum/articles/datashading.html).
