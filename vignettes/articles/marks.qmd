@@ -1,0 +1,139 @@
+---
+title: "Marks, layer by layer"
+description: >
+  A tour of the mark families: points, lines and bars, areas and intervals,
+  tiles and bins, text, and pie. How encodings map, and how scales train
+  across every layer on the panel.
+---
+
+```{r}
+#| include: false
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.retina = 2,
+  out.width = "100%",
+  eval = requireNamespace("quill", quietly = TRUE)
+)
+library(quill)
+```
+
+A quill plot is a stack of *marks*. Each `mark_*()` appends one drawing layer
+to the spec, and every mark reads the same grammar: bare column names (or
+expressions) captured with tidy evaluation become *encodings*, while scalar
+values become constant aesthetics. `color = hp` maps the `hp` column through a
+scale; `color = "red"` paints every element red.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp, size = 3)
+```
+
+The rest of this article walks the mark families. The one idea to hold onto:
+you can stack as many marks as you like on a panel, and scales train across
+all of them at once.
+
+## Points, lines, and bars
+
+`mark_point()` draws markers; `mark_line()` and `mark_step()` connect points in
+`x` order; `mark_rule()` draws reference lines. `mark_point()` also takes
+`shape` (one of `"circle"`, `"square"`, `"triangle"`, `"diamond"`, `"plus"`,
+`"cross"`) and a `position = "jitter"` adjustment.
+
+```{r}
+vplot(pressure) |>
+  mark_line(x = temperature, y = pressure) |>
+  mark_point(x = temperature, y = pressure)
+```
+
+`mark_bar()` draws bars from a zero baseline. Give it an explicit `y` for
+heights, or omit `y` and it counts rows per category (the count stat). When
+`fill` is mapped, groups stack by default; switch to side-by-side with
+`position = "dodge"` or normalise to 1 with `position = "fill"`.
+
+```{r}
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl), fill = factor(gear), position = "dodge")
+```
+
+## Areas and intervals
+
+`mark_area()` fills between a `y` line and zero, `mark_ribbon()` fills between
+`ymin` and `ymax`, and the interval marks draw ranges: `mark_errorbar()` (with
+caps), `mark_linerange()` (without), and `mark_segment()` from `(x, y)` to
+`(xend, yend)`.
+
+```{r}
+vplot(pressure) |>
+  mark_area(x = temperature, y = pressure, fill = "steelblue", alpha = 0.4) |>
+  mark_line(x = temperature, y = pressure)
+```
+
+`mark_boxplot()` summarises the raw `y` values per `x` category into a
+box-and-whisker (box from Q1 to Q3, median line, whiskers at 1.5 times the
+IQR, outliers as points).
+
+```{r}
+vplot(mtcars) |>
+  mark_boxplot(x = factor(cyl), y = mpg)
+```
+
+## Tiles and bins
+
+`mark_tile()` draws a rectangle at each `(x, y)` coloured by `fill`;
+`mark_raster()` is the same thing drawn as a single raster image (a fast path
+that needs a complete regular grid). For continuous data, `mark_bin2d()` and
+`mark_hex()` bin `x` and `y` into a grid and colour each cell by count.
+
+```{r}
+grid <- expand.grid(x = 1:8, y = 1:8)
+grid$z <- with(grid, sin(x / 2) + cos(y / 2))
+vplot(grid) |>
+  mark_tile(x = x, y = y, fill = z) |>
+  scale_fill_continuous(palette = "Batlow")
+```
+
+## Text
+
+`mark_text()` draws the `label` aesthetic as text at each `(x, y)`;
+`mark_label()` adds a filled background behind each label so it stays legible
+over busy marks. `size` is in points, and `angle` can be mapped or constant.
+
+```{r}
+top <- mtcars[mtcars$mpg > 30, ]
+vplot(top) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_text(x = wt, y = mpg, label = rownames(top), vjust = "bottom", size = 9)
+```
+
+## Pie and donut
+
+`mark_pie()` and `mark_donut()` are the part-of-whole shortcuts. Each `value`
+becomes a wedge; `fill` colours the slices. Under the hood they are a stacked
+bar projected through `coord_polar()`, which they set for you.
+
+```{r}
+parts <- data.frame(part = c("a", "b", "c", "d"), n = c(3, 5, 2, 4))
+vplot(parts) |>
+  mark_donut(value = n, fill = part, hole = 0.6)
+```
+
+## Layering is the point
+
+Because scales train across every layer, mixing marks on one panel just works.
+Here a point cloud and a fitted line share the same trained `x` and `y` axes.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+  mark_smooth(x = wt, y = mpg, method = "lm")
+```
+
+From here:
+
+- **[Scales and guides](scales-and-guides.html)** for the mapping from data to
+  colour, size, and axes.
+- **[Statistical marks](statistical-marks.html)** for histograms, densities,
+  and smooths in depth.
+- **[Spatial and networks](spatial-and-networks.html)** for `mark_sf()` maps
+  and `vgraph()` node-link diagrams.

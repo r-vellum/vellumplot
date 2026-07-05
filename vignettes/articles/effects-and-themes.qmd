@@ -1,0 +1,136 @@
+---
+title: "Effects and themes"
+description: >
+  The non-data look of a plot: built-in themes, custom theme elements, layer
+  effects like glow and shadow, gradient fills, and the one-line hand-drawn
+  sketch mode.
+---
+
+```{r}
+#| include: false
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.retina = 2,
+  out.width = "100%",
+  eval = requireNamespace("quill", quietly = TRUE)
+)
+library(quill)
+```
+
+Everything so far has been about mapping data. This article is about the rest:
+the panel, the gridlines, the fonts, and a set of render effects that change how
+marks are painted. quill separates these cleanly. A *theme* controls the
+non-data furniture of the whole plot; a *layer effect* changes how one mark is
+drawn; a *gradient* is a fancy fill value; and *sketch* mode turns the whole
+thing hand-drawn.
+
+## Built-in themes
+
+A theme sets the look of everything that is not a mark. quill ships several.
+`theme_gray()` is the default (grey panel, white gridlines); `theme_minimal()`
+drops the panel fill; `theme_bw()` is a white panel with light grey gridlines;
+`theme_classic()` gives axis lines and no gridlines; `theme_void()` strips
+everything but the marks, legend, and titles.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+  theme_minimal()
+```
+
+## Customising with theme elements
+
+`theme()` overrides individual slots, and each slot is described by a typed
+*element*: `element_text()`, `element_line()`, `element_rect()`, or
+`element_blank()` to draw nothing. Slot names follow the familiar dotted scheme
+(`panel.grid.minor`, `axis.title`, `plot.title`, and so on), and any property
+left `NULL` is inherited from its parent in the theme tree.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  theme_bw() |>
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(color = "grey30")
+  ) |>
+  labs(title = "Fuel economy")
+```
+
+## Layer effects
+
+Effects change how a single mark is painted, and they are passed to a mark's
+`effects` argument as a list. They apply to stroked and point marks.
+`glow()` draws widened, low-opacity copies beneath the mark for a neon halo;
+`shadow()` adds an offset drop shadow; `outline()` puts a contrasting halo
+behind the mark so it stays legible over a busy backdrop.
+
+```{r}
+vplot(pressure) |>
+  mark_line(
+    x = temperature, y = pressure,
+    effects = list(shadow(), outline(color = "white", size = 2))
+  )
+```
+
+`glow()` pairs naturally with `theme_cyberpunk()`, a dark neon theme.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl), effects = list(glow())) |>
+  theme_cyberpunk()
+```
+
+## Gradient fills
+
+A gradient is an unscaled *value* for the `fill` aesthetic, not a mapped scale.
+Pass `linear_gradient()` or `radial_gradient()` directly as a fill and the
+region is painted with it as one paint. Using a transparent stop gives the
+"fade out under a line" look.
+
+```{r}
+vplot(pressure) |>
+  mark_area(
+    x = temperature, y = pressure,
+    fill = linear_gradient(c("#00e5ff", "#00e5ff00"))
+  ) |>
+  mark_line(x = temperature, y = pressure, color = "#00e5ff") |>
+  theme_cyberpunk()
+```
+
+Because a gradient is one paint per region, it cannot be mapped to a data
+column; for that you want a colour scale (see
+**[Scales and guides](scales-and-guides.html)**).
+
+## Hand-drawn sketch mode
+
+`theme_sketch()` turns an entire plot hand-drawn in one line: wobbly gridlines,
+axis lines, and marks, on a warm paper background. The look is generated
+natively in the engine, so it is exact and works across PNG, SVG, and PDF.
+
+```{r}
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl), fill = factor(cyl)) |>
+  theme_sketch()
+```
+
+For finer control, `sketch()` is the vocabulary: `roughness`, `bowing`,
+`fill_style` (`"hachure"`, `"crosshatch"`, `"zigzag"`, and more), and so on.
+Pass a `sketch()` value to a single mark's `sketch =` argument to rough up just
+that layer, or to an `element_line()` / `element_rect()` slot inside `theme()`.
+Set `sketch = NA` on a mark to force it crisp even under a plot-wide
+`theme_sketch()`.
+
+```{r}
+vplot(mtcars) |>
+  mark_bar(
+    x = factor(cyl), fill = factor(cyl),
+    sketch = sketch(roughness = 2, fill_style = "crosshatch")
+  )
+```
+
+That is the whole non-data toolkit: pick a theme, adjust slots with elements,
+reach for effects and gradients when a mark needs emphasis, and flip on sketch
+mode when you want the figure to look drawn by hand.

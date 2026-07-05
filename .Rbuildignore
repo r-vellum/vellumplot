@@ -7,5 +7,10 @@
 ^\.Rproj\.user$
 ^[^/]*\.png$
 ^[.]?air[.]toml$
+^_pkgdown\.yml$
+^pkgdown$
+^docs$
+^vignettes/articles$
+^vignettes/\.quarto$
 census2010.parq.zip
 census2010.parq/

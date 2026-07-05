@@ -1,0 +1,128 @@
+---
+title: "Scales and guides"
+description: >
+  How data values become colour, size, shape, and axis positions. Continuous,
+  discrete, binned, manual, and gradient scales, trained domains, and the
+  legends they produce.
+---
+
+```{r}
+#| include: false
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.retina = 2,
+  out.width = "100%",
+  eval = requireNamespace("quill", quietly = TRUE)
+)
+library(quill)
+```
+
+A *scale* is the function that turns a data value into something you can see: a
+colour, a marker size, a shape, or a position along an axis. In quill every
+mapped encoding gets a scale automatically, trained from the data, so most
+plots need no explicit scale at all. You reach for a `scale_*()` call only when
+you want to override the default: change the palette, set a transform, fix the
+limits, or rename the guide.
+
+The key idea is *training*. When you map `color = hp`, quill scans the `hp`
+values across every layer, works out the domain, and builds a continuous colour
+scale with a legend. Add a `scale_*()` and you are declaring an override on top
+of that trained default, not replacing the whole machine.
+
+## Colour, continuous and discrete
+
+Continuous data get a smooth colour ramp; discrete data get a categorical
+palette. The `palette` argument takes a vector of colours or a single palette
+name passed to `grDevices::hcl.colors()` (for example `"Batlow"`, `"Blues"`,
+`"Set 2"`).
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp, size = 3) |>
+  scale_color_continuous(palette = "Viridis", name = "Horsepower")
+```
+
+For a two-colour ramp, `scale_color_gradient()` takes the endpoints directly.
+For categories, `scale_color_manual()` maps levels to colours; naming the
+values pins each level to a specific colour.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl), size = 3) |>
+  scale_color_manual(values = c("4" = "#1b9e77", "6" = "#d95f02", "8" = "#7570b3"))
+```
+
+## Binned colour
+
+`scale_fill_binned()` and `scale_color_binned()` cut a continuous aesthetic
+into classes and give it a discrete legend, which is what you want for a
+choropleth or a heatmap you read by band rather than by exact value. Choose the
+classification `style` (`"quantile"`, `"equal"`, `"pretty"`, or any
+`classInt::classIntervals()` style) and the number of classes `n`.
+
+```{r}
+grid <- expand.grid(x = 1:10, y = 1:10)
+grid$z <- with(grid, x * y)
+vplot(grid) |>
+  mark_tile(x = x, y = y, fill = z) |>
+  scale_fill_binned(style = "quantile", n = 5, palette = "Mako")
+```
+
+## Size, shape, and edge width
+
+Non-colour aesthetics have scales too. `scale_size()` maps values linearly to a
+marker-size `range` (in mm); `scale_shape()` cycles a set of shapes over the
+levels of a discrete aesthetic; `scale_edge_width()` does for network edges
+what `scale_size()` does for points.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = hp, color = factor(cyl)) |>
+  scale_size(range = c(2, 9), name = "hp")
+```
+
+## Position scales
+
+`scale_x_continuous()` and `scale_y_continuous()` control the axes. By default
+they train from the data with a small expansion; override them to set `limits`,
+apply a `trans` (`"log10"`, `"sqrt"`, `"reverse"`), or supply explicit `breaks`
+and `labels`. Categorical axes use `scale_x_discrete()` and
+`scale_y_discrete()`, whose `limits` set the order or subset of levels.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  scale_y_continuous(limits = c(10, 35), breaks = seq(10, 35, 5)) |>
+  scale_x_continuous(trans = "log10", name = "Weight (log scale)")
+```
+
+## Guides come for free
+
+Every scale that needs a legend produces one, and quill stacks multiple
+legends automatically. Map two aesthetics and you get two guides without asking.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp, size = disp) |>
+  scale_color_continuous(palette = "Batlow", name = "Horsepower") |>
+  scale_size(range = c(1, 8), name = "Displacement")
+```
+
+## Rich titles
+
+Any scale `name` (and any `labs()` title) accepts `md()`, a small markdown
+subset for bold, italic, superscript, subscript, and coloured spans. Handy for
+units and formulae.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  scale_color_continuous(name = md("Power (hp m^2^)"))
+```
+
+Faceted plots add one more question: should panels share a scale or train their
+own? That is the `resolve_scale()` lattice, covered in
+**[Facets and composition](facets-and-composition.html)**. For stat-derived
+aesthetics like `after_stat(count)`, see
+**[Statistical marks](statistical-marks.html)**.

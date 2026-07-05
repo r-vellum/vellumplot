@@ -1,0 +1,206 @@
+url: https://schochastics.github.io/quill/
+
+template:
+  bootstrap: 5
+  math-rendering: mathjax
+  bslib:
+    # A parchment / sepia palette echoing the vellum & quill hex logos.
+    bg: "#faf5ea"
+    fg: "#2c2113"
+    primary: "#6b4f2c"
+    secondary: "#8a7350"
+    border-radius: "0.5rem"
+    navbar-bg: "#efe6d2"
+    navbar-light-brand-color: "#4a371f"
+    link-color: "#7a5320"
+    code-bg: "#f2e9d6"
+    base_font: {google: "Spectral"}
+    heading_font: {google: "Spectral SC"}
+    code_font: {google: "JetBrains Mono"}
+  includes:
+    in_header: |
+      <meta name="theme-color" content="#efe6d2">
+  opengraph:
+    twitter:
+      creator: "@schochastics"
+      card: summary_large_image
+
+home:
+  title: A grammar of graphics on the vellum backend
+  description: >
+    quill is a declarative, pipe-first grammar of graphics. You describe a
+    plot as an inspectable, serializable spec; nothing is drawn until the
+    spec is compiled into a vellum scene and rendered.
+  sidebar:
+    structure: [ecosystem, links, license, community, citation, authors, dev]
+    components:
+      ecosystem:
+        title: The ecosystem
+        text: >
+          [vellum](https://schochastics.github.io/vellum/) · the parchment
+          (backend)<br>
+          [quill](https://schochastics.github.io/quill/) · the pen (grammar)<br>
+          [gloss](https://schochastics.github.io/gloss/) · the gloss
+          (interactivity)<br>
+          [scriptorium](https://schochastics.github.io/scriptorium/) · the
+          bundle
+
+navbar:
+  structure:
+    left: [intro, articles, reference, news]
+    right: [search, vellum, gloss, scriptorium, github]
+  components:
+    intro:
+      text: Get started
+      href: articles/quill.html
+    articles:
+      text: Articles
+      menu:
+      - text: Get started
+        href: articles/quill.html
+      - text: Building plots
+      - text: "Marks, layer by layer"
+        href: articles/marks.html
+      - text: Scales and guides
+        href: articles/scales-and-guides.html
+      - text: Facets and composition
+        href: articles/facets-and-composition.html
+      - text: Beyond scatter plots
+      - text: Spatial and networks
+        href: articles/spatial-and-networks.html
+      - text: Statistical marks
+        href: articles/statistical-marks.html
+      - text: Effects and themes
+        href: articles/effects-and-themes.html
+      - text: Background
+      - text: "The compiler: spec to scene"
+        href: articles/the-compiler.html
+      - text: Coming from ggplot2 (scriptorium)
+        href: https://schochastics.github.io/scriptorium/articles/coming-from-ggplot2.html
+    vellum:
+      icon: fa-scroll
+      href: https://schochastics.github.io/vellum/
+      aria-label: vellum
+    gloss:
+      icon: fa-highlighter
+      href: https://schochastics.github.io/gloss/
+      aria-label: gloss
+    scriptorium:
+      icon: fa-book
+      href: https://schochastics.github.io/scriptorium/
+      aria-label: scriptorium
+    github:
+      icon: fa-github
+      href: https://github.com/schochastics/quill
+      aria-label: GitHub
+
+articles:
+- title: Get started
+  navbar: ~
+  contents:
+  - articles/quill
+- title: Building plots
+  navbar: Building plots
+  contents:
+  - articles/marks
+  - articles/scales-and-guides
+  - articles/facets-and-composition
+- title: Beyond scatter plots
+  navbar: Beyond scatter plots
+  contents:
+  - articles/spatial-and-networks
+  - articles/statistical-marks
+  - articles/effects-and-themes
+- title: Background
+  navbar: Background
+  contents:
+  - articles/the-compiler
+
+reference:
+- title: Building a plot
+  desc: >
+    Start a plot from a data frame, an `sf` object, or an `igraph` graph,
+    then render it or write it to a file.
+  contents:
+  - vplot
+  - vgraph
+  - render_plot
+  - PlotSpec
+
+- title: Marks
+  desc: Layers that draw data. Scales train across every mark on the panel.
+- subtitle: Points, lines, and bars
+  contents:
+  - mark_point
+  - mark_area
+  - mark_segment
+- subtitle: Distributions and intervals
+  contents:
+  - mark_boxplot
+  - mark_histogram
+  - mark_tile
+- subtitle: Text, pie, and large data
+  contents:
+  - mark_text
+  - mark_pie
+  - mark_datashade
+- subtitle: Spatial and network
+  contents:
+  - mark_sf
+  - mark_graph
+  - scale_edge_width
+
+- title: Scales
+  desc: Map data values to visual properties, with trained domains and guides.
+  contents:
+  - scale_x_continuous
+  - scale_color_continuous
+  - scale_fill_binned
+  - scale_shape
+  - scale_size
+  - resolve_scale
+  - after_stat
+
+- title: Coordinates and facets
+  contents:
+  - coord_cartesian
+  - coord_polar
+  - coord_sf
+  - facet_wrap
+
+- title: Composition
+  desc: Combine plots into a single figure, or repeat one over a variable.
+  contents:
+  - concat
+  - inset
+  - plot_spacer
+  - area
+  - repeat_
+  - compose_annotation
+
+- title: Themes and annotation
+  contents:
+  - theme_gray
+  - theme_sketch
+  - element
+  - labs
+  - annotate
+  - md
+
+- title: Layer effects
+  desc: Glow, shadow, outline, hand-drawn sketching, and gradient fills.
+  contents:
+  - glow
+  - shadow
+  - outline
+  - sketch
+  - gradients
+
+- title: Package
+  contents:
+  - quill-package
+
+footer:
+  structure:
+    left: developed_by
+    right: built_with

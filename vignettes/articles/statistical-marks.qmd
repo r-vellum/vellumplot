@@ -1,0 +1,109 @@
+---
+title: "Statistical marks"
+description: >
+  Marks that transform data before drawing: histograms, densities, per-group
+  summaries, and linear smooths, plus after_stat for reaching the computed
+  variables and mark_datashade for millions of points.
+---
+
+```{r}
+#| include: false
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.retina = 2,
+  out.width = "100%",
+  eval = requireNamespace("quill", quietly = TRUE)
+)
+library(quill)
+```
+
+Most marks draw the data as given. A statistical mark computes something from
+the data first, then draws the result. quill runs that transform as a stage of
+the compiler (see **[The compiler](the-compiler.html)**), so a histogram is not
+you binning the data by hand; it is a mark that bins as part of being drawn.
+
+## Histograms and densities
+
+`mark_histogram()` bins a continuous `x` and draws the per-bin counts as bars.
+Control the resolution with `bins`.
+
+```{r}
+vplot(faithful) |>
+  mark_histogram(x = waiting, bins = 25)
+```
+
+`mark_density()` draws a smooth kernel-density estimate of `x` as a filled
+curve; `adjust` scales the bandwidth. Densities are on a comparable vertical
+scale, so mapping `fill` to a group and overlaying works well.
+
+```{r}
+vplot(iris) |>
+  mark_density(x = Sepal.Length, fill = Species, alpha = 0.4)
+```
+
+## Per-group summaries
+
+`mark_summary()` aggregates `y` within each `x` category using `fun` (the mean
+by default) and draws the result. It is the quick way to add group means over
+raw data.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = factor(cyl), y = mpg, color = "grey60") |>
+  mark_summary(x = factor(cyl), y = mpg, fun = median)
+```
+
+## Smooths
+
+`mark_smooth()` fits a model of `y` on `x` (`method = "lm"`) and draws the
+fitted line with a confidence ribbon when `se = TRUE`. It layers naturally over
+the raw points.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg, se = TRUE, level = 0.95)
+```
+
+## Reaching computed variables with after_stat
+
+A statistical mark produces new variables that were not in your data: a
+histogram computes a `count` and a `density`, for example. `after_stat()` lets
+an encoding refer to one of those computed variables instead of a data column.
+The classic use is a density-scaled histogram.
+
+```{r}
+vplot(faithful) |>
+  mark_histogram(x = waiting, bins = 25, fill = after_stat(density))
+```
+
+Because the aesthetic is now driven by a computed value, its scale trains on
+that value like any other, and you get the matching legend.
+
+## Millions of points with mark_datashade
+
+When there are too many points to draw one marker each (overplotted, up to
+millions), individual markers stop being informative and start being slow.
+`mark_datashade()` bins the points into a canvas-sized grid in a single pass and
+colours each cell by density, drawing one raster. Its cost is decoupled from
+the number of points.
+
+```{r}
+n <- 5e5
+big <- data.frame(
+  x = rnorm(n),
+  y = rnorm(n) + rep(c(-1, 1), each = n / 2)
+)
+vplot(big) |>
+  mark_datashade(x = y, y = x, how = "eq_hist")
+```
+
+Here `how = "eq_hist"` uses histogram equalisation so both dense and sparse
+regions stay visible; the grid resolution is set by `width` and `height`.
+Per-point aesthetics do not apply, because cell colour encodes density rather
+than any single point.
+
+`mark_point()` also has an `auto = TRUE` switch that falls back to a datashaded
+raster automatically when a layer has very many rows, so you can keep writing
+`mark_point()` and let quill choose the representation.
