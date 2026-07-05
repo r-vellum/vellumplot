@@ -70,6 +70,8 @@ navbar:
         href: articles/spatial-and-networks.html
       - text: Statistical marks
         href: articles/statistical-marks.html
+      - text: Datashading a third of a billion points
+        href: articles/datashading.html
       - text: Effects and themes
         href: articles/effects-and-themes.html
       - text: Background
@@ -110,6 +112,7 @@ articles:
   contents:
   - articles/spatial-and-networks
   - articles/statistical-marks
+  - articles/datashading
   - articles/effects-and-themes
 - title: Background
   navbar: Background
