@@ -60,20 +60,28 @@ if (
   # Contiguous-US window in Web Mercator metres (matches the datashader example).
   usa_x <- c(-13884029, -7453304)
   usa_y <- c(2818291, 6335972)
-  # raster grid sized to the window's aspect so the map is not stretched
-  gw <- 1100L
+  # raster grid sized to the window's aspect so the map is not stretched.
+  # gw is the datashade aggregation resolution: it -- not dpi -- sets how much
+  # detail the shaded map actually contains. dpi only rescales the finished
+  # raster, so a high dpi over a small gw just upsamples (blurry). For a genuine
+  # high-res export, raise gw AND give the page enough pixels (width * dpi) that
+  # the panel is at least gw wide so the raster is drawn 1:1, not stretched.
+  gw <- 4000L
   gh <- as.integer(gw * diff(usa_y) / diff(usa_x))
 
   # --- 2. Population density (single ramp) -----------------------------------
   # Every person, coloured by local density -- the classic "where do people
   # live" map. eq_hist spreads the enormous dynamic range across the ramp.
-  vplot(census) |>
+  # width * dpi = 8 * 600 = 4800 px page, so the ~4000-wide panel draws the
+  # datashade raster without upscaling. Bump gw + these together for even more.
+  vplot(census, width = 8, height = 6, dpi = 600) |>
     mark_datashade(
       x = easting,
       y = northing,
       width = gw,
       height = gh,
-      colors = c("black", "#440154", "#31688e", "#35b779", "#fde725"),
+      colors = c("#111111", "#8E0001", "#F81200", "#FFA50E", "#FFFFFF"),
+      # c("black", "#440154", "#31688e", "#35b779", "#fde725"),
       how = "eq_hist"
     ) |>
     scale_x_continuous(limits = usa_x) |>
@@ -98,7 +106,7 @@ if (
     o = "#ffff00" # Other  - yellow
   )
 
-  p <- vplot(census) |>
+  p <- vplot(census, width = 8, height = 6, dpi = 600) |>
     scale_x_continuous(limits = usa_x) |>
     scale_y_continuous(limits = usa_y) |>
     coord_fixed() |>
