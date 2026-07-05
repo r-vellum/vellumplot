@@ -20,9 +20,13 @@ thin wrapper around the drawing primitives.
 ## Installation
 
 ``` r
-# install vellum first, then:
-# pak::pak("schochastics/quill")
+# install.packages("pak")
+pak::pak("schochastics/quill")
 ```
+
+quill needs the [vellum](https://github.com/schochastics/vellum) backend,
+which compiles a Rust crate, so you also need a Rust toolchain
+(`cargo`/`rustc`); pak pulls vellum in automatically.
 
 ## Usage
 
@@ -159,3 +163,19 @@ render_plot(p, "cars.png")
   argument on marks, an `element_line()` / `element_rect()` `sketch =`
   slot, or the plot-wide `theme_sketch()` one-liner). Generated natively
   in the engine, so it is exact and works across PNG / SVG / PDF.
+
+## The vellum ecosystem
+
+quill is the grammar layer of a small ecosystem of packages that share
+the vellum scene model:
+
+- **[vellum](https://github.com/schochastics/vellum)** — the parchment:
+  the low-level graphics backend (Rust scene graph, PNG/SVG/PDF
+  renderer).
+- **[quill](https://github.com/schochastics/quill)** — the pen: this
+  package.
+- **[gloss](https://github.com/schochastics/gloss)** — the gloss: turns
+  a quill plot (or a raw vellum scene) into a client-side interactive
+  HTML widget via `as_widget()`.
+- **[scriptorium](https://github.com/schochastics/scriptorium)** —
+  installs and loads the whole ecosystem in one step.

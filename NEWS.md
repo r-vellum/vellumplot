@@ -1,7 +1,9 @@
-# quill 0.0.0.9000
+# quill 0.1.0
 
-A declarative grammar of graphics that compiles an inspectable spec into a
-`vellum` scene, with faceting, coordinate systems, and multi-plot composition.
+First release. quill is a declarative, pipe-first grammar of graphics that
+compiles an inspectable spec into a `vellum` scene, with faceting, coordinate
+systems, and multi-plot composition. Everything below ships in this first
+release.
 
 ## Features
 
@@ -152,10 +154,10 @@ A declarative grammar of graphics that compiles an inspectable spec into a
   scene as `attr(scene, "quill_provenance")`. Populated on every compile;
   additive metadata only (raster/PDF output is byte-for-byte unchanged). See
   `_docs/DESIGN.md` §4.
-* **Continuous integration**: GitHub Actions now run `R CMD check` (R
+* **Continuous integration**: GitHub Actions run `R CMD check` (R
   release/devel/oldrel on Linux + macOS, with the Rust toolchain the `vellum`
-  backend needs) and report test coverage, including a nightly run against
-  `vellum`'s `main` to catch cross-layer breaks early.
+  backend needs), including a nightly run against `vellum`'s `main` to catch
+  cross-layer breaks early, plus a pkgdown build.
 
 ## Not yet implemented (planned)
 
