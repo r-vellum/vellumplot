@@ -13,6 +13,7 @@ A declarative, pipe-first grammar of graphics that compiles an inspectable plot 
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://schochastics.github.io/quill/}
   \item \url{https://github.com/schochastics/quill}
   \item Report bugs at \url{https://github.com/schochastics/quill/issues}
 }

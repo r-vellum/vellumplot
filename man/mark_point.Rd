@@ -126,6 +126,11 @@ without \code{data_id} defaults the key to the row index, so the element is stil
 addressable. They currently apply to \code{stat = "identity"} marks (points, bars,
 tiles, segments, edges, hexbins, sf features, …); aggregating stats
 (histogram/count/density) drop them, since rows no longer map 1:1 to elements.
+
+How these flow into the vellum scene (the \code{scene_model()} element table, the
+SVG \code{data-key} / \verb{data-vellum-*} attributes, and the reserved \code{meta} key
+vocabulary) is described in vellum's "The scene contract" vignette
+(\code{vignette("scene-contract", package = "vellum")}).
 }
 
 \examples{

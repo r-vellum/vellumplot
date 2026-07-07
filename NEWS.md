@@ -1,3 +1,16 @@
+# quill 0.1.1
+
+* New exported `plot_provenance()`: returns the compiled-scene provenance table
+  — one record per emitted mark grob, tying each low-level primitive back to the
+  data rows and trained scales that produced it, with an `id` that matches the
+  grob's `data-vellum-id` in SVG and the `id` column of `vellum::scene_model()`.
+  This is the first public consumer of the provenance metadata (previously
+  internal), the substrate for interactivity, linked views, and accessibility.
+* Row-key provenance is now refined per element for the line, area, ribbon,
+  step, text, and boxplot marks (previously only point/bar/tile/segment/sf/
+  edges), so a record's `rows` resolve to the actual data rows an element draws
+  rather than the whole layer. See the scene-contract vignette in `vellum`.
+
 # quill 0.1.0
 
 First release. quill is a declarative, pipe-first grammar of graphics that

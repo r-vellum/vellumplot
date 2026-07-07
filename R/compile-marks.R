@@ -307,7 +307,9 @@ NULL
           lwd = lwd,
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      # PROVENANCE: `o` are the layer rows this polyline draws (x-ordered).
+      rows = o
     )
     gi <- gi + 1L
   }
@@ -582,7 +584,9 @@ NULL
         poly$y,
         sketch = sk,
         gp = vellum::gpar(fill = grad, col = NA)
-      )
+      ),
+      # PROVENANCE: one polygon over the whole layer, in x order.
+      rows = o
     ))
   }
 
@@ -605,7 +609,9 @@ NULL
           col = NA,
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
+      rows = o
     )
     gi <- gi + 1L
   }
@@ -633,7 +639,9 @@ NULL
         poly$y,
         sketch = sk,
         gp = vellum::gpar(fill = grad, col = NA)
-      )
+      ),
+      # PROVENANCE: one polygon over the whole layer, in x order.
+      rows = o
     ))
   }
 
@@ -656,7 +664,9 @@ NULL
           col = NA,
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
+      rows = o
     )
     gi <- gi + 1L
   }
@@ -706,7 +716,9 @@ NULL
           lwd = lwd,
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      # PROVENANCE: `o` are the layer rows this staircase draws (x-ordered).
+      rows = o
     )
     gi <- gi + 1L
   }
@@ -757,7 +769,9 @@ NULL
           fontface = .aes_param(L, "fontface", NULL),
           alpha = if (is.na(a)) NULL else a
         )
-      )
+      ),
+      # PROVENANCE: `idx` are the layer rows in this style group.
+      rows = idx
     )
   }
   scene
@@ -938,7 +952,9 @@ NULL
         height = r$height,
         sketch = skj,
         gp = vellum::gpar(fill = fillc, col = "grey20", lwd = 1)
-      )
+      ),
+      # PROVENANCE: a box summarises all rows of its category.
+      rows = sel
     )
     for (seg in list(
       c(xc - hw, my(med), xc + hw, my(med)), # median
@@ -961,10 +977,15 @@ NULL
           s$y1,
           sketch = skj,
           gp = line_gp
-        )
+        ),
+        # PROVENANCE: median/whisker summarise the category's rows.
+        rows = sel
       )
     }
     if (length(out)) {
+      # The outlier points map 1:1 to their originating rows.
+      sel_fin <- sel[is.finite(yv[sel])]
+      out_rows <- sel_fin[yv[sel_fin] < lo | yv[sel_fin] > hi]
       xy <- .xy_units(scales, rep(xc, length(out)), my(out))
       scene <- .draw(
         scene,
@@ -975,7 +996,8 @@ NULL
           shape = "circle",
           sketch = skj,
           gp = vellum::gpar(fill = "grey20", col = "grey20")
-        )
+        ),
+        rows = out_rows
       )
     }
   }

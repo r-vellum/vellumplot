@@ -39,7 +39,15 @@ NULL
 #   is correct-but-coarse out of the box and never wrong. An emitter that groups
 #   rows by resolved style (the `.style_groups()` pattern) should refine it to the
 #   actual rows of each emitted group by passing `rows=` to `.draw()`. Grep for
-#   `PROVENANCE:` to find the emitters still to refine.
+#   `PROVENANCE:` to see where this is done.
+#
+#   REFINED (rows resolve to the actual data rows an element draws): point, bar,
+#   bar-polar, tile, segment, sf, edges (main segments), line, area, ribbon,
+#   step, text, boxplot.
+#   STILL WHOLE-LAYER (backlog; correct-but-coarse): rule, smooth, errorbar/
+#   linerange, raster, hex, datashade, and the self-loop draw in `.emit_edges`.
+#   These are aggregates or references where a per-row key is ill-defined or of
+#   low value; refine them when a consumer needs finer granularity.
 # ---------------------------------------------------------------------------
 
 # Which trained scale resolves each aesthetic channel (the scale-ref lookup).
@@ -126,21 +134,44 @@ NULL
 
 #' Inspect the compiled-scene provenance of a plot
 #'
-#' Compiles `x` and returns its provenance table: one record per emitted mark
+#' Compiles `x` and returns its *provenance table*: one record per emitted mark
 #' grob, tying each low-level primitive back to the data rows and trained scales
-#' that produced it (see `_docs/DESIGN.md` §4). The `id` of each record matches
-#' the grob's `data-vellum-id` in SVG output, so it is a stable join key between
-#' the rendered scene and the grammar.
+#' that produced it. Each record's `id` matches the grob's `data-vellum-id` in
+#' the SVG output (and the `id` column of [vellum::scene_model()]), so it is a
+#' stable join key between the rendered scene and the grammar — the substrate for
+#' interactivity, linked views, and accessibility.
 #'
-#' This is internal, unexported plumbing: the schema is populated on every
-#' compile but is not yet consumed by any feature. It exists so interactivity /
-#' accessibility / linked-view work can build on it without retrofitting the
-#' emitter.
+#' @details
+#' Each record is a plain, serializable list:
+#' \describe{
+#'   \item{`id`}{stable node id, equal to `grob@id` / SVG `data-vellum-id` (join key).}
+#'   \item{`layer`}{1-based layer index within the (sub-)plot spec.}
+#'   \item{`mark`}{mark type (`"point"`, `"line"`, …).}
+#'   \item{`kind`}{`"mark"` (the core layer) or `"effect"` (a decorative underlay).}
+#'   \item{`panel`}{facet panel key (`"panel-r-c"`), or `NA` for a single panel.}
+#'   \item{`channels`}{aesthetic → trained-scale reference (`scale`, `type`, `domain`).}
+#'   \item{`rows`}{the original input-data row indices this grob draws.}
+#' }
 #'
-#' @param x A [PlotSpec] or `PlotComposition`.
-#' @return A list of provenance records (see the schema in `R/provenance.R`).
-#' @keywords internal
-#' @noRd
-.plot_provenance <- function(x) {
+#' The `rows` field is refined per element for marks that map rows one-to-one to
+#' drawn elements (points, bars, tiles, segments, lines, areas, ribbons, steps,
+#' text, boxplots, sf features, edges); for aggregating marks (histogram,
+#' density, smooth, datashade, …) it is the whole layer, since rows no longer map
+#' to single elements.
+#'
+#' @param x A [PlotSpec] or plot composition.
+#' @return A list of provenance records (see Details). Empty for a plot that
+#'   emits no mark grobs.
+#' @seealso [vellum::scene_model()] and the scene-contract vignette in vellum.
+#' @examples
+#' df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, model = rownames(mtcars))
+#' p <- vplot(df) |> mark_point(x = wt, y = mpg, data_id = model)
+#' prov <- plot_provenance(p)
+#' prov[[1]]$id
+#' @export
+plot_provenance <- function(x) {
   attr(vellum::as_vellum_scene(x), "quill_provenance") %||% list()
 }
+
+# Back-compat internal alias (kept so internal callers/tests keep working).
+.plot_provenance <- plot_provenance

@@ -253,6 +253,11 @@ after_stat <- function(x) x
 #' addressable. They currently apply to `stat = "identity"` marks (points, bars,
 #' tiles, segments, edges, hexbins, sf features, …); aggregating stats
 #' (histogram/count/density) drop them, since rows no longer map 1:1 to elements.
+#'
+#' How these flow into the vellum scene (the `scene_model()` element table, the
+#' SVG `data-key` / `data-vellum-*` attributes, and the reserved `meta` key
+#' vocabulary) is described in vellum's "The scene contract" vignette
+#' (`vignette("scene-contract", package = "vellum")`).
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
