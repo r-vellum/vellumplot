@@ -51,8 +51,7 @@ NULL
   sf = "map",
   edges = "network graph",
   nodes = "network graph",
-  node_text = "node labels",
-  node_label = "node labels"
+  node_text = "node labels"
 )
 
 .mark_phrase <- function(mark) {
@@ -90,6 +89,14 @@ NULL
 # expression. Only plain-string overrides are used (a rich md() title has no
 # reliable plain-text form for a description).
 .alt_axis_title <- function(spec, aes) {
+  # Mirror the compiler's title resolution (scale name -> labs -> mapped
+  # expression) so the description matches the rendered axis/legend title. A
+  # `scale_*(name = )` lives on the spec, so no compile is needed. Preserve the
+  # NULL-when-unmapped contract the sentence logic below relies on.
+  sc <- .scale_for(spec, aes)
+  if (!is.null(sc) && !is.null(sc@name) && is.character(sc@name) && nzchar(sc@name)) {
+    return(sc@name)
+  }
   lab <- spec@labels[[aes]]
   if (!is.null(lab) && is.character(lab) && nzchar(lab)) {
     return(lab)
@@ -115,6 +122,15 @@ NULL
   }
 }
 
+# The "Faceted by ..." sentence, or NULL when the plot is not faceted.
+.alt_facet_sentence <- function(spec) {
+  if (is.null(spec@facet)) {
+    return(NULL)
+  }
+  vars <- tryCatch(.alt_facet_vars(spec@facet), error = function(e) NULL)
+  if (!is.null(vars) && nzchar(vars)) paste0("Faceted by ", vars, ".") else NULL
+}
+
 # Build the automatic alt text from a PlotSpec: chart type, what is mapped to
 # each axis / colour / size, the observation count, and any faceting.
 .plot_alt_auto <- function(spec) {
@@ -129,10 +145,43 @@ NULL
     paste0("A plot combining ", .oxford(phrases), ".")
   }
 
-  x <- .alt_axis_title(spec, "x")
-  y <- .alt_axis_title(spec, "y")
   col <- .alt_axis_title(spec, "color")
   sz <- .alt_axis_title(spec, "size")
+  extras <- c(
+    if (!is.null(col)) paste0("colour shows ", col),
+    if (!is.null(sz)) paste0("size shows ", sz)
+  )
+
+  # A graph (from vgraph()) maps layout coordinates to x/y, so the "plots y
+  # against x" phrasing is noise; report node/edge counts instead. Colour/size
+  # encodings on a graph are still meaningful, so keep them.
+  is_graph <- !is.null(spec@edge_data)
+  if (is_graph) {
+    nn <- tryCatch(nrow(spec@data), error = function(e) NULL)
+    ne <- tryCatch(nrow(spec@edge_data), error = function(e) NULL)
+    counts <- c(
+      if (!is.null(nn)) paste0(nn, " node", if (nn != 1L) "s"),
+      if (!is.null(ne)) paste0(ne, " edge", if (ne != 1L) "s")
+    )
+    s2 <- if (length(counts)) {
+      body <- paste0("It has ", paste(counts, collapse = " and "))
+      if (length(extras)) body <- paste0(body, ", where ", paste(extras, collapse = " and "))
+      paste0(body, ".")
+    }
+    # Node count already stated ("N nodes"); skip the generic observation count.
+    return(paste(c(s1, s2, if (!is.null(spec@facet)) .alt_facet_sentence(spec)), collapse = " "))
+  }
+
+  x <- .alt_axis_title(spec, "x")
+  y <- .alt_axis_title(spec, "y")
+  # An unmapped y on a bar/histogram plot renders as a "count" axis (mirrors the
+  # compiler's .y_axis_title); report it so the description names both axes.
+  if (is.null(y)) {
+    y_mapped <- any(vapply(spec@layers, function(L) "y" %in% names(L@encoding), logical(1)))
+    if (!y_mapped && any(marks %in% c("bar", "histogram"))) {
+      y <- "count"
+    }
+  }
   s2 <- NULL
   axis <- if (!is.null(x) && !is.null(y)) {
     paste0("It plots ", y, " (vertical axis) against ", x, " (horizontal axis)")
@@ -142,10 +191,6 @@ NULL
     paste0("It shows ", y, " on the vertical axis")
   }
   if (!is.null(axis)) {
-    extras <- c(
-      if (!is.null(col)) paste0("colour shows ", col),
-      if (!is.null(sz)) paste0("size shows ", sz)
-    )
     if (length(extras)) {
       axis <- paste0(axis, ", where ", paste(extras, collapse = " and "))
     }
@@ -157,13 +202,7 @@ NULL
     paste0("Based on ", n, " observation", if (n != 1L) "s", ".")
   }
 
-  s4 <- NULL
-  if (!is.null(spec@facet)) {
-    vars <- tryCatch(.alt_facet_vars(spec@facet), error = function(e) NULL)
-    if (!is.null(vars) && nzchar(vars)) {
-      s4 <- paste0("Faceted by ", vars, ".")
-    }
-  }
+  s4 <- .alt_facet_sentence(spec)
 
   paste(c(s1, s2, s3, s4), collapse = " ")
 }

@@ -76,3 +76,29 @@ test_that("plot_alt() summarises a composition", {
 test_that("plot_alt() errors on a non-plot", {
   expect_error(plot_alt(mtcars), "PlotSpec")
 })
+
+test_that("auto-alt reports node/edge counts for a graph, not x/y axes", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_ring(5)
+  p <- vgraph(g) |> mark_edges() |> mark_nodes()
+  alt <- plot_alt(p)
+  expect_match(alt, "network graph", fixed = TRUE)
+  expect_match(alt, "5 nodes and 5 edges", fixed = TRUE)
+  expect_no_match(alt, "vertical axis", fixed = TRUE) # no meaningless x/y prose
+  expect_no_match(alt, "observations", fixed = TRUE) # node count already stated
+})
+
+test_that("auto-alt mirrors scale_*(name=) in the axis title", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    scale_x_continuous(name = "Weight (tons)")
+  expect_match(plot_alt(p), "Weight (tons)", fixed = TRUE)
+})
+
+test_that("auto-alt names the implicit count axis for a count bar", {
+  p <- vplot(mtcars) |> mark_bar(x = factor(cyl))
+  alt <- plot_alt(p)
+  expect_match(alt, "count", fixed = TRUE)
+  expect_match(alt, "factor(cyl)", fixed = TRUE)
+})

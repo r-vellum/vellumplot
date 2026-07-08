@@ -14,6 +14,11 @@
   `color` (previously the mapping was silently dropped and no colour scale was
   trained). Added `scale_colour_*()` aliases for the `scale_color_*()` family.
 
+* **Faithful alt text.** The auto-generated description now matches what the plot
+  actually renders: it honours `scale_*(name = )` axis/legend titles, names the
+  implicit "count" axis of a count bar, and describes a network graph by its node
+  and edge counts instead of its (meaningless) layout x/y axes.
+
 # quill 0.2.1
 
 Consumes `vellum`'s new compound `native + mm` unit (requires vellum >= 0.1.1).
