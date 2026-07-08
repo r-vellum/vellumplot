@@ -77,6 +77,8 @@ navbar:
       - text: Background
       - text: "The compiler: spec to scene"
         href: articles/the-compiler.html
+      - text: Accessibility
+        href: articles/accessibility.html
       - text: Coming from ggplot2 (scriptorium)
         href: https://schochastics.github.io/scriptorium/articles/coming-from-ggplot2.html
     vellum:
@@ -118,6 +120,7 @@ articles:
   navbar: Background
   contents:
   - articles/the-compiler
+  - articles/accessibility
 
 reference:
 - title: Building a plot
