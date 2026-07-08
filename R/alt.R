@@ -232,14 +232,14 @@ NULL
 plot_alt <- function(x) {
   if (S7::S7_inherits(x, PlotSpec)) {
     manual <- x@labels$alt
-    if (!is.null(manual) && is.character(manual) && nzchar(manual)) {
+    if (!is.null(manual) && is.character(manual) && length(manual) == 1L && nzchar(manual)) {
       return(manual)
     }
     return(.plot_alt_auto(x))
   }
   if (S7::S7_inherits(x, PlotComposition)) {
     manual <- x@labels$alt
-    if (!is.null(manual) && is.character(manual) && nzchar(manual)) {
+    if (!is.null(manual) && is.character(manual) && length(manual) == 1L && nzchar(manual)) {
       return(manual)
     }
     n <- length(x@plots)

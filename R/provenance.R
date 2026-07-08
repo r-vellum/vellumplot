@@ -172,6 +172,3 @@ NULL
 plot_provenance <- function(x) {
   attr(vellum::as_vellum_scene(x), "quill_provenance") %||% list()
 }
-
-# Back-compat internal alias (kept so internal callers/tests keep working).
-.plot_provenance <- plot_provenance
