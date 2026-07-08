@@ -273,3 +273,11 @@ NULL
   }
   aesthetic
 }
+
+# The resolved title for a scale: the user's `scale_*(name = )` if set, else
+# `default`. `default` is a lazily-evaluated fallback (only computed when no name
+# is given), so passing e.g. `.default_title(spec, "color")` costs nothing when a
+# name is present. The single choke point every per-kind trainer routes through.
+.scale_title <- function(scalespec, default) {
+  if (!is.null(scalespec) && !is.null(scalespec@name)) scalespec@name else default
+}

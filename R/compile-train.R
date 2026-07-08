@@ -219,11 +219,7 @@ NULL
   include_zero = FALSE,
   lim = NULL
 ) {
-  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
-    scalespec@name
-  } else {
-    title
-  }
+  name <- .scale_title(scalespec, title)
   raw <- do.call(c, values) # combine across layers, preserving class
   is_time_type <- !is.null(scalespec) &&
     scalespec@type %in% c("date", "datetime", "time")
@@ -440,11 +436,7 @@ NULL
   } else {
     "discrete"
   }
-  title <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
-    scalespec@name
-  } else {
-    .default_title(spec, "color")
-  }
+  title <- .scale_title(scalespec, .default_title(spec, "color"))
 
   pal <- if (!is.null(scalespec)) scalespec@palette else NULL
   # No explicit palette? A theme may supply a default (e.g. theme_cyberpunk()'s
@@ -633,11 +625,7 @@ NULL
     .SIZE_RANGE
   }
   map <- function(x) scales::rescale(x, to = out_range, from = rng)
-  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
-    scalespec@name
-  } else {
-    .default_title(spec, "size")
-  }
+  name <- .scale_title(scalespec, .default_title(spec, "size"))
   lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
     as.numeric(scalespec@breaks)
   } else {
@@ -693,11 +681,7 @@ NULL
     .EDGE_WIDTH_RANGE
   }
   map <- function(x) scales::rescale(x, to = out_range, from = rng)
-  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
-    scalespec@name
-  } else {
-    .default_title(spec, "linewidth")
-  }
+  name <- .scale_title(scalespec, .default_title(spec, "linewidth"))
   lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
     as.numeric(scalespec@breaks)
   } else {
@@ -749,11 +733,7 @@ NULL
   }
   shapes <- rep_len(pal, length(levels))
   names(shapes) <- levels
-  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
-    scalespec@name
-  } else {
-    .default_title(spec, "shape")
-  }
+  name <- .scale_title(scalespec, .default_title(spec, "shape"))
   list(
     kind = "shape",
     map = function(x) unname(shapes[as.character(x)]),
@@ -806,11 +786,7 @@ NULL
     .ALPHA_RANGE
   }
   map <- function(x) scales::rescale(x, to = out_range, from = rng)
-  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
-    scalespec@name
-  } else {
-    .default_title(spec, "alpha")
-  }
+  name <- .scale_title(scalespec, .default_title(spec, "alpha"))
   lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
     as.numeric(scalespec@breaks)
   } else {
@@ -853,11 +829,7 @@ NULL
   }
   ltys <- rep_len(pal, length(levels))
   names(ltys) <- levels
-  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
-    scalespec@name
-  } else {
-    .default_title(spec, "linetype")
-  }
+  name <- .scale_title(scalespec, .default_title(spec, "linetype"))
   list(
     kind = "linetype",
     map = function(x) unname(ltys[as.character(x)]),
