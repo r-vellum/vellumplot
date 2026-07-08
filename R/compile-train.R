@@ -225,7 +225,13 @@ NULL
     title
   }
   raw <- do.call(c, values) # combine across layers, preserving class
-  if (is.numeric(raw) || inherits(raw, c("Date", "POSIXct"))) {
+  is_time_type <- !is.null(scalespec) &&
+    scalespec@type %in% c("date", "datetime", "time")
+  if (
+    is.numeric(raw) ||
+      inherits(raw, c("Date", "POSIXct", "difftime")) ||
+      is_time_type
+  ) {
     .train_position_continuous(
       aesthetic,
       raw,
@@ -239,6 +245,18 @@ NULL
   }
 }
 
+# Coerce a numeric vector back to the class of a Date/POSIXct prototype, so
+# scales::breaks_width() (which is class-aware) sees the right type.
+.as_like_time <- function(num, proto) {
+  if (inherits(proto, "Date")) {
+    structure(num, class = "Date")
+  } else if (inherits(proto, "POSIXct")) {
+    .POSIXct(num, tz = attr(proto, "tzone") %||% "")
+  } else {
+    num
+  }
+}
+
 .train_position_continuous <- function(
   aesthetic,
   raw,
@@ -247,7 +265,8 @@ NULL
   include_zero,
   lim = NULL
 ) {
-  is_time <- inherits(raw, c("Date", "POSIXct"))
+  is_time <- inherits(raw, c("Date", "POSIXct")) ||
+    (!is.null(scalespec) && scalespec@type %in% c("date", "datetime", "time"))
   user_lim <- lim %||% (if (!is.null(scalespec)) scalespec@domain else NULL)
   tr <- if (is_time) NULL else .resolve_trans(scalespec)
 
@@ -292,10 +311,20 @@ NULL
   user_labels <- if (!is.null(scalespec)) scalespec@labels else NULL
 
   if (is_time) {
-    # Dates/times keep their dedicated pretty()/format() path.
+    # Dates/times keep their dedicated pretty()/format() path, with optional
+    # `date_breaks` (interval string) and `date_labels` (strftime format).
+    dbreaks <- if (!is.null(scalespec)) scalespec@date_breaks else NULL
+    dlabels <- if (!is.null(scalespec)) scalespec@date_labels else NULL
+    is_classed <- inherits(raw, c("Date", "POSIXct"))
     tfun <- function(v) as.numeric(v)
     domain <- scales::expand_range(rng, mul = 0.05)
-    braw <- if (!is.null(user_breaks)) user_breaks else pretty(raw)
+    braw <- if (!is.null(user_breaks)) {
+      user_breaks
+    } else if (!is.null(dbreaks) && is_classed) {
+      scales::breaks_width(dbreaks)(.as_like_time(rng, raw))
+    } else {
+      pretty(raw)
+    }
     lab <- .match_labels(user_labels, braw, aesthetic)
     keep <- as.numeric(braw) >= min(rng) & as.numeric(braw) <= max(rng)
     braw <- braw[keep]
@@ -303,7 +332,12 @@ NULL
       lab <- lab[keep]
     }
     breaks <- as.numeric(braw)
-    labels <- lab %||% format(braw)
+    labels <- lab %||%
+      (if (!is.null(dlabels) && inherits(braw, c("Date", "POSIXct"))) {
+        format(braw, dlabels)
+      } else {
+        format(braw)
+      })
     type <- "continuous"
   } else {
     tfun <- function(v) tr$transform(as.numeric(v))
@@ -397,7 +431,9 @@ NULL
     chan_type <- L$types[["color"]] %||% L$types[["fill"]]
     if (!is.null(chan_type)) break
   }
-  kind <- if (!is.null(scalespec)) {
+  kind <- if (
+    !is.null(scalespec) && length(scalespec@type) && nzchar(scalespec@type)
+  ) {
     scalespec@type
   } else if (identical(chan_type, "quantitative")) {
     "continuous"
@@ -424,6 +460,20 @@ NULL
   na_value <- .colour_na_value(spec, scalespec, resolved)
   has_na <- any(is.na(unlist(values, use.names = FALSE)))
   key_glyph <- .key_glyph_for_aes(resolved, "color")
+
+  # An identity scale uses the data values verbatim as colours (they must already
+  # be valid R/CSS colours) and draws no legend.
+  if (identical(kind, "identity")) {
+    return(list(
+      kind = "identity",
+      map = function(x) as.character(x),
+      name = title,
+      no_guide = TRUE,
+      na = FALSE,
+      na_value = na_value,
+      key_glyph = key_glyph
+    ))
+  }
 
   if (identical(kind, "binned")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
@@ -556,6 +606,15 @@ NULL
     return(NULL)
   }
   scalespec <- .scale_for(spec, "size")
+  # An identity size scale uses the data values verbatim as point sizes (mm).
+  if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
+    return(list(
+      kind = "size",
+      map = function(x) as.numeric(x),
+      name = .default_title(spec, "size"),
+      no_guide = TRUE
+    ))
+  }
   v <- as.numeric(unlist(values, use.names = FALSE))
   v <- v[is.finite(v)]
   rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
@@ -673,6 +732,15 @@ NULL
     return(NULL)
   }
   scalespec <- .scale_for(spec, "shape")
+  # An identity shape scale uses the data values verbatim as shape names.
+  if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
+    return(list(
+      kind = "shape",
+      map = function(x) as.character(x),
+      name = .default_title(spec, "shape"),
+      no_guide = TRUE
+    ))
+  }
   levels <- .cat_levels(values)
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
     scalespec@palette
@@ -692,6 +760,110 @@ NULL
     name = name,
     levels = levels,
     shapes = unname(shapes)
+  )
+}
+
+# Output opacity range a mapped `alpha` aesthetic spans (kept off 0 so the
+# faintest mark is still visible).
+.ALPHA_RANGE <- c(0.1, 1)
+
+# Line types a mapped (discrete) `linetype` aesthetic cycles through.
+.LINETYPE_PALETTE <- c(
+  "solid", "dashed", "dotted", "dotdash", "longdash", "twodash"
+)
+
+# Train the alpha scale (if any layer maps `alpha` to data). Continuous: rescale
+# the data range to an opacity range; carries breaks for an alpha legend.
+.train_alpha <- function(spec, resolved) {
+  values <- .pool_values(resolved, "alpha")
+  if (is.null(values)) {
+    return(NULL)
+  }
+  scalespec <- .scale_for(spec, "alpha")
+  if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
+    return(list(
+      kind = "alpha",
+      map = function(x) as.numeric(x),
+      name = .default_title(spec, "alpha"),
+      no_guide = TRUE
+    ))
+  }
+  v <- as.numeric(unlist(values, use.names = FALSE))
+  v <- v[is.finite(v)]
+  rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
+    as.numeric(scalespec@domain)
+  } else if (length(v)) {
+    range(v)
+  } else {
+    c(0, 1)
+  }
+  if (diff(rng) == 0) {
+    rng <- rng + c(-0.5, 0.5)
+  }
+  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
+    as.numeric(scalespec@range)
+  } else {
+    .ALPHA_RANGE
+  }
+  map <- function(x) scales::rescale(x, to = out_range, from = rng)
+  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
+    scalespec@name
+  } else {
+    .default_title(spec, "alpha")
+  }
+  lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
+    as.numeric(scalespec@breaks)
+  } else {
+    scales::breaks_extended()(rng)
+  }
+  keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
+  lbrk <- lbrk[keep]
+  list(
+    kind = "alpha",
+    map = map,
+    name = name,
+    range = rng,
+    legend_breaks = lbrk,
+    legend_alphas = map(lbrk),
+    legend_labels = scales::label_number()(lbrk)
+  )
+}
+
+# Train the linetype scale (if any layer maps `linetype` to data). Always
+# discrete: levels cycle through `.LINETYPE_PALETTE` (or a user palette).
+.train_linetype <- function(spec, resolved) {
+  values <- .pool_values(resolved, "linetype")
+  if (is.null(values)) {
+    return(NULL)
+  }
+  scalespec <- .scale_for(spec, "linetype")
+  if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
+    return(list(
+      kind = "linetype",
+      map = function(x) as.character(x),
+      name = .default_title(spec, "linetype"),
+      no_guide = TRUE
+    ))
+  }
+  levels <- .cat_levels(values)
+  pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
+    scalespec@palette
+  } else {
+    .LINETYPE_PALETTE
+  }
+  ltys <- rep_len(pal, length(levels))
+  names(ltys) <- levels
+  name <- if (!is.null(scalespec) && !is.null(scalespec@name)) {
+    scalespec@name
+  } else {
+    .default_title(spec, "linetype")
+  }
+  list(
+    kind = "linetype",
+    map = function(x) unname(ltys[as.character(x)]),
+    name = name,
+    levels = levels,
+    linetypes = unname(ltys)
   )
 }
 
@@ -726,7 +898,7 @@ NULL
       "Every layer needs an {.field x} and {.field y} encoding."
     )
   }
-  list(
+  scales <- list(
     x = .train_position(
       "x",
       xs,
@@ -745,6 +917,17 @@ NULL
     color = .train_colour(spec, resolved),
     size = .train_size(spec, resolved),
     shape = .train_shape(spec, resolved),
-    edge_width = .train_edge_width(spec, resolved)
+    edge_width = .train_edge_width(spec, resolved),
+    alpha = .train_alpha(spec, resolved),
+    linetype = .train_linetype(spec, resolved)
   )
+  # Apply per-scale guide overrides (guides(): guide = "none" / guide_legend()).
+  for (aes in c("color", "size", "shape", "edge_width", "alpha", "linetype")) {
+    ss <- .scale_for(spec, aes)
+    g <- if (!is.null(ss)) ss@guide else NULL
+    if (!is.null(scales[[aes]]) && !is.null(g)) {
+      scales[[aes]] <- .apply_guide(scales[[aes]], g)
+    }
+  }
+  scales
 }

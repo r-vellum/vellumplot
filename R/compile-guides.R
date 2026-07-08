@@ -493,6 +493,15 @@ NULL
 .legend_guides <- function(scales) {
   out <- list()
   merged <- NULL
+  # A scale can opt out of its legend (an identity scale, or `guide = "none"`):
+  # the mapping still applies to the marks, but no guide is drawn. Drop it here
+  # so neither the standalone nor the merge path picks it up. This is a local
+  # copy, so the emitters' own scales are unaffected.
+  for (k in c("color", "size", "shape", "edge_width", "alpha", "linetype")) {
+    if (!is.null(scales[[k]]) && isTRUE(scales[[k]]$no_guide)) {
+      scales[[k]] <- NULL
+    }
+  }
   if (!is.null(scales$color)) {
     gk <- scales$color$kind
     # A binned (classed) colour scale draws as discrete swatches with interval
@@ -531,6 +540,12 @@ NULL
   }
   if (!is.null(scales$edge_width)) {
     out <- c(out, list(list(kind = "edge_width", sc = scales$edge_width)))
+  }
+  if (!is.null(scales$alpha)) {
+    out <- c(out, list(list(kind = "alpha", sc = scales$alpha)))
+  }
+  if (!is.null(scales$linetype)) {
+    out <- c(out, list(list(kind = "linetype", sc = scales$linetype)))
   }
   out
 }
@@ -640,6 +655,8 @@ NULL
     size = sc$legend_labels,
     shape = sc$levels,
     edge_width = sc$legend_labels,
+    alpha = sc$legend_labels,
+    linetype = sc$levels,
     merged = sc$labels
   )
 }
@@ -781,6 +798,22 @@ NULL
       vellum::unit(0.5, "npc"),
       sketch = sk,
       gp = vellum::gpar(col = "grey35", lwd = sc$legend_widths[i])
+    ),
+    alpha = vellum::points_grob(
+      vellum::unit(0.5, "npc"),
+      vellum::unit(0.5, "npc"),
+      size = vellum::unit(m$key / 2, "mm"),
+      shape = "circle",
+      sketch = sk,
+      gp = vellum::gpar(fill = "grey20", col = NA, alpha = sc$legend_alphas[i])
+    ),
+    linetype = vellum::segments_grob(
+      vellum::unit(0.12, "npc"),
+      vellum::unit(0.5, "npc"),
+      vellum::unit(0.88, "npc"),
+      vellum::unit(0.5, "npc"),
+      sketch = sk,
+      gp = vellum::gpar(col = "grey35", lwd = 1.5, lty = sc$linetypes[i])
     ),
     # A merged guide's key carries both encodings in one point: the shared
     # variable's colour (fill + stroke) and shape, sized when size is merged in.

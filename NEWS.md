@@ -1,3 +1,40 @@
+# quill 0.2.0
+
+Grammar-breadth release: new scales, mapped aesthetics, legend control, and
+distribution marks, closing the most conspicuous gaps versus ggplot2.
+
+## Scales & axes
+
+* **Date/time scales**: `scale_x_date()` / `scale_x_datetime()` /
+  `scale_x_time()` (and `y` twins) with `date_breaks` (interval strings like
+  `"3 months"`) and `date_labels` (strftime formats). `Date`/`POSIXct` columns
+  still get a sensible date axis automatically.
+* **New mapped aesthetics**: `scale_alpha()` (continuous opacity) and
+  `scale_linetype()` (discrete line types), each drawn per element with its own
+  legend. `alpha` mapped to data now varies opacity (previously constant-only);
+  `linetype` applies to `mark_line()` / `mark_step()`.
+* **Identity scales**: `scale_color_identity()`, `scale_fill_identity()`,
+  `scale_size_identity()`, `scale_shape_identity()`, `scale_alpha_identity()`,
+  `scale_linetype_identity()` — use data values verbatim, no legend.
+* **Limit shortcuts**: `xlim()`, `ylim()`, and `lims()`.
+* **Legend control**: `guides()` with `guide = "none"` (hide a legend),
+  `guide_legend(reverse = TRUE)` (reverse key order), and `guide_legend(title=)`.
+
+## Marks & stats
+
+* **Distribution marks**: `mark_ecdf()` (empirical CDF step), `mark_rug()`
+  (marginal ticks), `mark_qq()` + `mark_qq_line()` (quantile-quantile plot).
+* **Density-shape marks**: `mark_violin()` (mirrored density per category),
+  `mark_ridgeline()` (overlapping per-category densities), and `mark_dotplot()`
+  (binned, stacked dots). Violin and ridgeline carry per-category provenance.
+
+## Not yet implemented (still planned)
+
+Secondary axes (`sec_axis`/`dup_axis`); 2-D density / contour
+(`mark_contour`/`stat_density_2d`); position-binned scales (`scale_x_binned`);
+`coord_trans()` and free non-position scales across facets; triple-merge legends
+(colour+shape+size) and NA keys for size/shape.
+
 # quill 0.1.1
 
 * New exported `plot_provenance()`: returns the compiled-scene provenance table

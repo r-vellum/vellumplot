@@ -1,6 +1,6 @@
 Package: quill
 Title: A Grammar of Graphics on the 'vellum' Backend
-Version: 0.1.1
+Version: 0.2.0
 Authors@R:
     person("David", "Schoch", , "david.schoch@cynkra.com", role = c("aut", "cre"))
 Description: A declarative, pipe-first grammar of graphics that compiles an
@@ -61,6 +61,7 @@ Collate:
     'compile-sf.R'
     'compile-stat.R'
     'effects.R'
+    'guides.R'
     'labs.R'
     'print.R'
     'provenance.R'

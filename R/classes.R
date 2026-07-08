@@ -115,7 +115,10 @@ ScaleSpec <- S7::new_class(
     labels = S7::new_property(S7::class_any, default = NULL), # explicit labels
     style = S7::new_property(S7::class_any, default = NULL), # binned: classInt style
     n = S7::new_property(S7::class_any, default = NULL), # binned: class count
-    na_value = S7::new_property(S7::class_any, default = NULL) # colour for NA values
+    na_value = S7::new_property(S7::class_any, default = NULL), # colour for NA values
+    date_breaks = S7::new_property(S7::class_any, default = NULL), # date/time: interval string
+    date_labels = S7::new_property(S7::class_any, default = NULL), # date/time: format string
+    guide = S7::new_property(S7::class_any, default = NULL) # "none"/guide spec (legend control)
   )
 )
 

@@ -72,6 +72,24 @@ NULL
   L$params$shape %||% default
 }
 
+# Resolve a layer's opacity: a mapped alpha channel (via the trained alpha
+# scale), a constant alpha param, or the supplied default. Vectorised when mapped.
+.aes_alpha <- function(L, scales, default = NA_real_) {
+  if (!is.null(scales$alpha) && !is.null(L$values$alpha)) {
+    return(scales$alpha$map(L$values$alpha))
+  }
+  L$params$alpha %||% default
+}
+
+# Resolve a layer's line type: a mapped linetype channel (via the trained
+# linetype scale), a constant linetype param, or the supplied default.
+.aes_linetype <- function(L, scales, default = NULL) {
+  if (!is.null(scales$linetype) && !is.null(L$values$linetype)) {
+    return(scales$linetype$map(L$values$linetype))
+  }
+  L$params$linetype %||% default
+}
+
 # Coordinate placement honouring coord_flip: under flip the horizontal axis
 # carries the data y and the vertical axis the data x. Emitters compute native
 # coordinates in data space, then place them through these helpers so only the
@@ -254,7 +272,7 @@ NULL
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   size <- rep_len(.aes_size(L, scales, 1), n)
   shape <- rep_len(.aes_shape(L, scales, "circle"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
 
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
@@ -287,12 +305,14 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  lty <- .aes_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
   lwd <- .aes_param(L, "linewidth", 1.5)
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+  for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
     a <- alpha[idx[1]]
     xy <- .xy_path(scales, xn[o], yn[o])
@@ -305,6 +325,7 @@ NULL
         gp = vellum::gpar(
           col = col[idx[1]],
           lwd = lwd,
+          lty = lty[idx[1]],
           alpha = if (is.na(a)) NULL else a
         )
       ),
@@ -387,7 +408,7 @@ NULL
   n <- L$n
   xp <- rep_len(scales$x$map(L$values$x), n)
   fill <- rep_len(.aes_colour(L, scales, "grey35"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   band <- scales$x$band_width %||% .resolution(xp)
   w <- rep_len(L$values$width %||% band, n)
 
@@ -450,7 +471,7 @@ NULL
   sk <- .mark_sketch(L, scales)
   xp <- rep_len(scales$x$map(L$values$x), n)
   fill <- if (is.null(grad)) rep_len(.aes_colour(L, scales, "grey35"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   band <- scales$x$band_width %||% .resolution(xp)
 
   # vertical span: a stacked [ymin, ymax], else 0 -> y
@@ -591,7 +612,7 @@ NULL
   }
 
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
 
   gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
@@ -646,7 +667,7 @@ NULL
   }
 
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
 
   gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
@@ -680,13 +701,15 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  lty <- .aes_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
   lwd <- .aes_param(L, "linewidth", 1.5)
   dir <- L$stat_params$direction %||% "hv"
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+  for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
     o <- idx[order(xn[idx])]
     sx <- xn[o]
     sy <- yn[o]
@@ -714,6 +737,7 @@ NULL
         gp = vellum::gpar(
           col = col[idx[1]],
           lwd = lwd,
+          lty = lty[idx[1]],
           alpha = if (is.na(a)) NULL else a
         )
       ),
@@ -746,7 +770,7 @@ NULL
   yn <- rep_len(scales$y$map(L$values$y), n)
   label <- rep_len(as.character(L$values$label), n)
   col <- rep_len(.text_colour(L, scales, "black"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   ang <- .text_angle(L, n)
   fs <- .aes_param(L, "size", 8)
   just <- c(.aes_param(L, "hjust", "centre"), .aes_param(L, "vjust", "centre"))
@@ -831,7 +855,7 @@ NULL
   xp <- rep_len(scales$x$map(L$values$x), n)
   yp <- rep_len(scales$y$map(L$values$y), n)
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   w <- rep_len(L$values$width %||% .resolution(xp), n)
   h <- rep_len(L$values$height %||% .resolution(yp), n)
   sk <- .mark_sketch(L, scales)
@@ -1004,6 +1028,98 @@ NULL
   scene
 }
 
+# A violin: a mirrored kernel-density of `y` per `x` category, drawn as a filled
+# polygon whose half-width is the density scaled to the category band. Mirrors
+# the boxplot layout (categorical x, value y).
+.emit_violin <- function(scene, L, scales) {
+  xv <- L$values$x
+  yv <- as.numeric(L$values$y)
+  colv <- rep_len(.aes_colour(L, scales, "grey70"), length(yv))
+  adjust <- L$stat_params$adjust %||% 1
+  levs <- .cat_levels(xv)
+  xc_all <- scales$x$map(levs)
+  band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
+  hw <- 0.4 * band
+  xchar <- as.character(xv)
+  sk <- .mark_sketch(L, scales)
+  for (j in seq_along(levs)) {
+    sel <- which(xchar == levs[j])
+    yy <- yv[sel]
+    yy <- yy[is.finite(yy)]
+    if (length(yy) < 2) {
+      next
+    }
+    d <- stats::density(yy, adjust = adjust)
+    dn <- (d$y / max(d$y)) * hw
+    xc <- xc_all[j]
+    # up the right side, then down the mirrored left side
+    px <- c(xc + dn, rev(xc - dn))
+    py <- scales$y$map(c(d$x, rev(d$x)))
+    xy <- .xy_units(scales, px, py)
+    scene <- .draw(
+      scene,
+      vellum::polygon_grob(
+        xy$x,
+        xy$y,
+        sketch = .sketch_bump(sk, j),
+        gp = vellum::gpar(fill = colv[sel[1]], col = "grey30", lwd = 1)
+      ),
+      # PROVENANCE: a violin summarises all rows of its category.
+      rows = sel
+    )
+  }
+  scene
+}
+
+# A ridgeline plot: a kernel-density of `x` per `y` category, each drawn as a
+# filled ridge whose baseline sits at the category's position and whose height
+# is the density scaled to (a multiple of) the band. Drawn back-to-front so
+# nearer ridges overlap farther ones.
+.emit_ridgeline <- function(scene, L, scales) {
+  xv <- as.numeric(L$values$x)
+  yv <- L$values$y
+  colv <- rep_len(.aes_colour(L, scales, "grey70"), length(xv))
+  adjust <- L$stat_params$adjust %||% 1
+  levs <- .cat_levels(yv)
+  ypos <- scales$y$map(levs)
+  band <- scales$y$band_width %||% 1
+  scale_h <- (L$stat_params$scale %||% 1.4) * band
+  ychar <- as.character(yv)
+  a <- .aes_alpha(L, scales, NA_real_)[1]
+  sk <- .mark_sketch(L, scales)
+  for (j in rev(seq_along(levs))) {
+    sel <- which(ychar == levs[j])
+    xi <- xv[sel]
+    xi <- xi[is.finite(xi)]
+    if (length(xi) < 2) {
+      next
+    }
+    d <- stats::density(xi, adjust = adjust)
+    h <- (d$y / max(d$y)) * scale_h
+    base <- ypos[j]
+    px <- scales$x$map(c(d$x, rev(d$x)))
+    py <- c(base + h, rep(base, length(h)))
+    xy <- .xy_units(scales, px, py)
+    scene <- .draw(
+      scene,
+      vellum::polygon_grob(
+        xy$x,
+        xy$y,
+        sketch = .sketch_bump(sk, j),
+        gp = vellum::gpar(
+          fill = colv[sel[1]],
+          col = "grey30",
+          lwd = 1,
+          alpha = if (is.na(a)) NULL else a
+        )
+      ),
+      # PROVENANCE: a ridge summarises all rows of its category.
+      rows = sel
+    )
+  }
+  scene
+}
+
 # Vertical error bars from ymin to ymax (with optional horizontal caps).
 .emit_errorbar <- function(scene, L, scales, caps = TRUE) {
   n <- L$n
@@ -1063,7 +1179,7 @@ NULL
   x1 <- rep_len(scales$x$map(L$values$xend), n)
   y1 <- rep_len(scales$y$map(L$values$yend), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1)
   sk <- .mark_sketch(L, scales)
 
@@ -1112,7 +1228,7 @@ NULL
   x1 <- rep_len(scales$x$map(L$values$xend), n)
   y1 <- rep_len(scales$y$map(L$values$yend), n)
   col <- rep_len(.aes_colour(L, scales, "grey40"), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- rep_len(.edge_width(L, scales, 0.5), n)
   arr <- if (isTRUE(L$stat_params$arrow)) {
     vellum::arrow(type = "closed", length = vellum::unit(2, "mm"))
@@ -1304,7 +1420,7 @@ NULL
   # primary colour = mapped fill/colour (choropleth) or a constant param; NA when
   # nothing is set (then filled per-kind below). Border/alpha/lwd/size are params.
   primary <- rep_len(.aes_colour(L, scales, NA_character_), n)
-  alpha <- rep_len(.aes_param(L, "alpha", NA_real_), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   border <- .aes_param(L, "color", "grey40")
   lwd <- .aes_param(L, "linewidth", 0.5)
   size <- rep_len(.aes_size(L, scales, 1.5), n)
@@ -1499,8 +1615,56 @@ NULL
     node_text = .emit_text(scene, L, scales),
     hex = .emit_hex(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
+    rug = .emit_rug(scene, L, scales),
+    violin = .emit_violin(scene, L, scales),
+    ridgeline = .emit_ridgeline(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
+}
+
+# A rug: short marginal ticks at each datum's x (bottom/top) and/or y (left/
+# right) position. Ticks are drawn at the panel edge in npc units, so `sides`
+# selects the edges. Cartesian only (no flip/polar). `length` is the tick length
+# as a fraction of the panel (npc).
+.emit_rug <- function(scene, L, scales) {
+  sides <- L$stat_params$sides %||% "bl"
+  len <- L$stat_params$length %||% 0.03
+  col <- .aes_colour(L, scales, "black")[1]
+  a <- .aes_alpha(L, scales, NA_real_)[1]
+  gp <- vellum::gpar(
+    col = col,
+    lwd = .aes_param(L, "linewidth", 0.5),
+    alpha = if (is.na(a)) NULL else a
+  )
+  tick <- function(scene, u_along, y0, y1, rows, vertical) {
+    if (vertical) {
+      grob <- vellum::segments_grob(
+        u_along, vellum::unit(y0, "npc"), u_along, vellum::unit(y1, "npc"),
+        gp = gp
+      )
+    } else {
+      grob <- vellum::segments_grob(
+        vellum::unit(y0, "npc"), u_along, vellum::unit(y1, "npc"), u_along,
+        gp = gp
+      )
+    }
+    .draw(scene, grob, rows = rows)
+  }
+  if (!is.null(L$values$x) && (grepl("b", sides) || grepl("t", sides))) {
+    nx <- scales$x$map(L$values$x)
+    ux <- vellum::unit(nx, "native")
+    r <- seq_along(nx)
+    if (grepl("b", sides)) scene <- tick(scene, ux, 0, len, r, TRUE)
+    if (grepl("t", sides)) scene <- tick(scene, ux, 1, 1 - len, r, TRUE)
+  }
+  if (!is.null(L$values$y) && (grepl("l", sides) || grepl("r", sides))) {
+    ny <- scales$y$map(L$values$y)
+    uy <- vellum::unit(ny, "native")
+    r <- seq_along(ny)
+    if (grepl("l", sides)) scene <- tick(scene, uy, 0, len, r, FALSE)
+    if (grepl("r", sides)) scene <- tick(scene, uy, 1, 1 - len, r, FALSE)
+  }
+  scene
 }
 
 # Compile every layer's marks into the (already panel-positioned) scene. A layer

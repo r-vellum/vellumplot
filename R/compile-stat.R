@@ -29,6 +29,10 @@ NULL
     density = .stat_density(L),
     aggregate = .stat_aggregate(L),
     smooth = .stat_smooth(L),
+    ecdf = .stat_ecdf(L),
+    qq = .stat_qq(L),
+    qq_line = .stat_qq_line(L),
+    dotplot = .stat_dotplot(L),
     cli::cli_abort("Unknown stat {.val {stat}}.")
   )
   .merge_stat(L, sdf)
@@ -382,4 +386,119 @@ NULL
     )
   }
   do.call(rbind, parts)
+}
+
+# The empirical cumulative distribution of x (per group): sorted x against the
+# cumulative proportion, drawn as a right-continuous step.
+.stat_ecdf <- function(L) {
+  x <- as.numeric(L$values$x)
+  grp <- .layer_group(L)
+  g <- .stat_groups(grp, length(x))
+  glevs <- g$levels
+  parts <- lapply(names(g$groups), function(gn) {
+    xi <- sort(x[g$groups[[gn]]])
+    xi <- xi[is.finite(xi)]
+    if (!length(xi)) {
+      return(NULL)
+    }
+    n <- length(xi)
+    y <- seq_len(n) / n
+    df <- data.frame(x = xi, y = y, ecdf = y)
+    if (!is.null(grp)) {
+      df$group <- factor(gn, levels = glevs)
+    }
+    df
+  })
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (!length(parts)) {
+    cli::cli_abort("{.fn mark_ecdf} needs at least one finite value.")
+  }
+  do.call(rbind, parts)
+}
+
+# Sorted sample values against the theoretical quantiles of a reference
+# distribution (per group): x = theoretical, y = sample.
+.stat_qq <- function(L) {
+  s0 <- L$values$sample %||% L$values$y %||% L$values$x
+  s0 <- as.numeric(s0)
+  dist <- match.fun(L$stat_params$distribution %||% "qnorm")
+  grp <- .layer_group(L)
+  g <- .stat_groups(grp, length(s0))
+  glevs <- g$levels
+  parts <- lapply(names(g$groups), function(gn) {
+    s <- sort(s0[g$groups[[gn]]])
+    s <- s[is.finite(s)]
+    if (!length(s)) {
+      return(NULL)
+    }
+    theo <- dist(stats::ppoints(length(s)))
+    df <- data.frame(x = theo, y = s, sample = s, theoretical = theo)
+    if (!is.null(grp)) {
+      df$group <- factor(gn, levels = glevs)
+    }
+    df
+  })
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (!length(parts)) {
+    cli::cli_abort("{.fn mark_qq} needs at least one finite sample value.")
+  }
+  do.call(rbind, parts)
+}
+
+# The Q-Q reference line (per group): the line through the 1st and 3rd sample
+# quartiles vs the matching theoretical quartiles, drawn across the theoretical
+# range.
+.stat_qq_line <- function(L) {
+  s0 <- L$values$sample %||% L$values$y %||% L$values$x
+  s0 <- as.numeric(s0)
+  dist <- match.fun(L$stat_params$distribution %||% "qnorm")
+  grp <- .layer_group(L)
+  g <- .stat_groups(grp, length(s0))
+  glevs <- g$levels
+  parts <- lapply(names(g$groups), function(gn) {
+    s <- sort(s0[g$groups[[gn]]])
+    s <- s[is.finite(s)]
+    if (length(s) < 2) {
+      return(NULL)
+    }
+    theo <- dist(stats::ppoints(length(s)))
+    sq <- stats::quantile(s, c(0.25, 0.75), names = FALSE)
+    tq <- dist(c(0.25, 0.75))
+    slope <- diff(sq) / diff(tq)
+    intercept <- sq[1] - slope * tq[1]
+    xr <- range(theo)
+    df <- data.frame(x = xr, y = intercept + slope * xr)
+    if (!is.null(grp)) {
+      df$group <- factor(gn, levels = glevs)
+    }
+    df
+  })
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (!length(parts)) {
+    cli::cli_abort("{.fn mark_qq_line} needs at least 2 finite sample values.")
+  }
+  do.call(rbind, parts)
+}
+
+# A dot plot: bin x into equal-width bins and stack one dot per observation
+# within its bin. Returns one row per observation with x = bin centre and
+# y = stack height (0.5, 1.5, ...), for the point emitter.
+.stat_dotplot <- function(L) {
+  x <- as.numeric(L$values$x)
+  x <- sort(x[is.finite(x)])
+  if (!length(x)) {
+    cli::cli_abort("{.fn mark_dotplot} needs at least one finite value.")
+  }
+  span <- diff(range(x))
+  bw <- L$stat_params$binwidth %||% (if (span > 0) span / 30 else 1)
+  if (!is.finite(bw) || bw <= 0) {
+    bw <- 1
+  }
+  bin <- floor((x - min(x)) / bw)
+  stack <- stats::ave(seq_along(bin), bin, FUN = seq_along)
+  data.frame(
+    x = min(x) + (bin + 0.5) * bw,
+    y = stack - 0.5,
+    count = 1
+  )
 }

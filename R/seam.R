@@ -139,6 +139,8 @@ NULL
       size = built$scales$size,
       shape = built$scales$shape,
       edge_width = built$scales$edge_width,
+      alpha = built$scales$alpha,
+      linetype = built$scales$linetype,
       flip = flip,
       polar = NULL,
       sketch = plot_sketch

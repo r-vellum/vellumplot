@@ -873,6 +873,117 @@ mark_density <- function(
   )
 }
 
+#' Distribution marks
+#'
+#' Marks that summarise the distribution of a variable.
+#' `mark_ecdf()` draws the empirical cumulative distribution of `x` as a step;
+#' `mark_rug()` draws marginal ticks at each datum; `mark_qq()` draws a
+#' quantile-quantile plot of a `sample` against a theoretical distribution, with
+#' `mark_qq_line()` adding the reference line. All respect a mapped `color`/`fill`
+#' grouping.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... Encodings. `mark_ecdf()` needs `x`; `mark_qq()`/`mark_qq_line()`
+#'   need `sample`; `mark_rug()` takes `x` and/or `y`.
+#' @param sides Which edges `mark_rug()` draws ticks on: any of `"b"` (bottom),
+#'   `"l"` (left), `"t"` (top), `"r"` (right); default `"bl"`.
+#' @param length Rug tick length as a fraction of the panel (default `0.03`).
+#' @param distribution Quantile function of the reference distribution for
+#'   `mark_qq()` / `mark_qq_line()` (default [stats::qnorm]).
+#' @param blend,data Standard layer arguments (see [mark_point()]).
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(mtcars) |> mark_ecdf(x = mpg)
+#' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_rug()
+#' vplot(mtcars) |> mark_qq(sample = mpg) |> mark_qq_line(sample = mpg)
+#' @export
+mark_ecdf <- function(plot, ..., blend = NULL, data = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "step", rlang::enquos(...), stat = "ecdf",
+             blend = blend, data = data)
+}
+
+#' @rdname mark_ecdf
+#' @export
+mark_rug <- function(plot, ..., sides = "bl", length = 0.03, blend = NULL,
+                     data = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "rug", rlang::enquos(...), stat = "identity",
+             stat_params = list(sides = sides, length = length),
+             blend = blend, data = data)
+}
+
+#' @rdname mark_ecdf
+#' @export
+mark_qq <- function(plot, ..., distribution = "qnorm", blend = NULL,
+                    data = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "point", rlang::enquos(...), stat = "qq",
+             stat_params = list(distribution = distribution),
+             blend = blend, data = data)
+}
+
+#' @rdname mark_ecdf
+#' @export
+mark_qq_line <- function(plot, ..., distribution = "qnorm", blend = NULL,
+                         data = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "line", rlang::enquos(...), stat = "qq_line",
+             stat_params = list(distribution = distribution),
+             blend = blend, data = data)
+}
+
+#' Density-shape marks
+#'
+#' Marks that draw a variable's distribution as a filled shape.
+#' `mark_violin()` draws a mirrored kernel density of `y` per categorical `x`
+#' (like a boxplot's footprint); `mark_ridgeline()` draws a kernel density of `x`
+#' per categorical `y` as overlapping ridges. `mark_dotplot()` bins `x` and
+#' stacks one dot per observation.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... Encodings. `mark_violin()` needs categorical `x` and numeric `y`;
+#'   `mark_ridgeline()` needs numeric `x` and categorical `y`; `mark_dotplot()`
+#'   needs `x`. A mapped `color`/`fill` sets the shape fill.
+#' @param adjust Kernel-density bandwidth multiplier (violin/ridgeline).
+#' @param scale Ridge height as a multiple of the row band (ridgeline; default
+#'   `1.4`, so adjacent ridges overlap slightly).
+#' @param binwidth Dot-plot bin width, or `NULL` to use ~1/30 of the data range.
+#' @param blend,sketch,data Standard layer arguments (see [mark_point()]).
+#' @return The modified [PlotSpec].
+#' @examples
+#' df <- data.frame(g = rep(letters[1:3], each = 50), v = rnorm(150))
+#' vplot(df) |> mark_violin(x = g, y = v)
+#' vplot(df) |> mark_ridgeline(x = v, y = g)
+#' vplot(df) |> mark_dotplot(x = v)
+#' @export
+mark_violin <- function(plot, ..., adjust = 1, blend = NULL, sketch = NULL,
+                        data = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "violin", rlang::enquos(...), stat = "identity",
+             stat_params = list(adjust = adjust),
+             blend = blend, sketch = sketch, data = data)
+}
+
+#' @rdname mark_violin
+#' @export
+mark_ridgeline <- function(plot, ..., adjust = 1, scale = 1.4, blend = NULL,
+                           sketch = NULL, data = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "ridgeline", rlang::enquos(...), stat = "identity",
+             stat_params = list(adjust = adjust, scale = scale),
+             blend = blend, sketch = sketch, data = data)
+}
+
+#' @rdname mark_violin
+#' @export
+mark_dotplot <- function(plot, ..., binwidth = NULL, blend = NULL, data = NULL) {
+  .check_plot(plot)
+  .add_layer(plot, "point", rlang::enquos(...), stat = "dotplot",
+             stat_params = list(binwidth = binwidth),
+             blend = blend, data = data)
+}
+
 #' @rdname mark_tile
 #' @export
 mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
