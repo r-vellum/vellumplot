@@ -221,6 +221,12 @@ NULL
 ) {
   name <- .scale_title(scalespec, title)
   raw <- do.call(c, values) # combine across layers, preserving class
+  # A binned position scale bins the continuous variable (ticks at boundaries,
+  # data drawn at bin centres). Checked before the numeric branch since the data
+  # is numeric.
+  if (!is.null(scalespec) && identical(scalespec@type, "binned")) {
+    return(.train_position_binned(aesthetic, raw, scalespec, name))
+  }
   is_time_type <- !is.null(scalespec) &&
     scalespec@type %in% c("date", "datetime", "time")
   if (
@@ -404,6 +410,49 @@ NULL
     breaks = seq_len(k),
     labels = levs,
     map = function(x) match(as.character(x), levs),
+    name = name
+  )
+}
+
+# A binned position scale: bin the continuous data, tick at bin boundaries, and
+# map each datum to its bin centre. `band_width` (the bin width) lets mark_bar
+# size bars to a bin; unequal bins use the median width.
+.train_position_binned <- function(aesthetic, raw, scalespec, name) {
+  v <- as.numeric(raw)
+  v <- v[is.finite(v)]
+  if (!length(v)) {
+    cli::cli_abort("A binned {.field {aesthetic}} scale needs at least one finite value.")
+  }
+  brks <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
+    sort(unique(as.numeric(scalespec@breaks)))
+  } else {
+    n <- if (!is.null(scalespec@n)) as.integer(scalespec@n) else 10L
+    style <- if (!is.null(scalespec@style)) scalespec@style else "pretty"
+    .binned_breaks(v, n, style)
+  }
+  if (length(brks) < 2L) {
+    brks <- range(v) + c(-0.5, 0.5)
+  }
+  lo <- min(brks)
+  hi <- max(brks)
+  centers <- (brks[-length(brks)] + brks[-1L]) / 2
+  widths <- diff(brks)
+  bw <- if (isTRUE(all.equal(max(widths), min(widths)))) widths[1] else stats::median(widths)
+  ulab <- if (!is.null(scalespec)) scalespec@labels else NULL
+  labs <- .match_labels(ulab, brks, aesthetic) %||% format(brks, trim = TRUE)
+  list(
+    aesthetic = aesthetic,
+    type = "binned",
+    discrete = FALSE,
+    band_width = bw,
+    data_range = c(lo, hi),
+    domain = scales::expand_range(c(lo, hi), mul = 0.05),
+    breaks = brks,
+    labels = labs,
+    map = function(x) {
+      i <- findInterval(as.numeric(x), brks, rightmost.closed = TRUE, all.inside = TRUE)
+      centers[i]
+    },
     name = name
   )
 }

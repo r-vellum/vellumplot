@@ -1,5 +1,10 @@
 # quill (development version)
 
+* **Binned position scales.** `scale_x_binned()` / `scale_y_binned()` cut a
+  continuous axis into bins — ticks at the bin boundaries, each datum drawn at its
+  bin centre — reusing the binned-colour classification (`style`/`n`, or explicit
+  `breaks`). `mark_bar()` sizes to the bin width.
+
 * **Rich and multi-line text labels.** `mark_text()` now carries rich labels
   through to the renderer instead of flattening them: map `label = md(<expr>)` for
   a per-datum styled label (bold/italic/super-/subscript/colour), and plain labels

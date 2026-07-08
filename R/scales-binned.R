@@ -132,6 +132,51 @@ scale_color_binned <- function(
   )
 }
 
+#' Binned position scales
+#'
+#' `scale_x_binned()` / `scale_y_binned()` cut a continuous position variable into
+#' bins: axis ticks fall at the bin **boundaries** and each datum is drawn at its
+#' bin **centre**. Breaks use the same classification as the binned colour scales
+#' (`style`/`n`; `classInt` for jenks/fisher/… — a Suggest). Handy to summarise a
+#' dense continuous axis, or to place `mark_bar()` on a binned continuous `x`.
+#'
+#' @param plot A [PlotSpec].
+#' @param style Binning style: `"pretty"` (default), `"equal"`, `"quantile"`, or a
+#'   `classInt` style.
+#' @param n Target number of bins.
+#' @param breaks Explicit bin boundaries (overrides `style`/`n`), or `NULL`.
+#' @param labels Explicit boundary labels, or `NULL` to format the boundaries.
+#' @param name Axis title, or `NULL` to derive from the encoding.
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_binned(n = 6)
+#' @export
+scale_x_binned <- function(plot, style = "pretty", n = 10, breaks = NULL, labels = NULL, name = NULL) {
+  .binned_position_scale(plot, "x", style, n, breaks, labels, name)
+}
+
+#' @rdname scale_x_binned
+#' @export
+scale_y_binned <- function(plot, style = "pretty", n = 10, breaks = NULL, labels = NULL, name = NULL) {
+  .binned_position_scale(plot, "y", style, n, breaks, labels, name)
+}
+
+.binned_position_scale <- function(plot, aesthetic, style, n, breaks, labels, name) {
+  .check_plot(plot)
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = aesthetic,
+      type = "binned",
+      breaks = breaks,
+      labels = labels,
+      style = style,
+      n = n,
+      name = name
+    )
+  )
+}
+
 .binned_scale <- function(
   plot,
   aesthetic,
