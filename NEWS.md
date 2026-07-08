@@ -1,3 +1,21 @@
+# quill 0.2.1
+
+Consumes `vellum`'s new compound `native + mm` unit (requires vellum >= 0.1.1).
+
+* **Label nudges**: `mark_text()` / `mark_label()` gain `nudge_x` / `nudge_y`
+  (in millimetres, `+x` right / `+y` up) that shift a label by an exact absolute
+  distance, device-resolved so the nudge is constant regardless of scale or panel
+  aspect.
+* **Device-exact drop shadows**: `shadow()`'s `x` / `y` offset is now an absolute
+  distance in **millimetres** (was a panel-relative npc fraction), so a drop
+  shadow stays the same physical distance and is isotropic on non-square panels.
+  Defaults changed accordingly (a small down-right drop). Replaces the previous
+  npc-fraction workaround.
+
+Device-space dodge (`mark_bar`) and jitter (`mark_point`) remain data-space for
+now; converting them to the compound unit is deferred (it changes existing
+rendered output and needs snapshot review).
+
 # quill 0.2.0
 
 Grammar-breadth release: new scales, mapped aesthetics, legend control, and

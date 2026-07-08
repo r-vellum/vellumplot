@@ -5,8 +5,8 @@
 \title{Shadow layer effect}
 \usage{
 shadow(
-  x = 0.006,
-  y = -0.006,
+  x = 0.5,
+  y = -0.5,
   color = "black",
   alpha = 0.3,
   spread = 1.5,
@@ -14,8 +14,8 @@ shadow(
 )
 }
 \arguments{
-\item{x, y}{Shadow offset as a fraction of the panel width / height
-(\code{+x} right, \code{+y} up). Defaults to a small down-right drop.}
+\item{x, y}{Shadow offset in millimetres (\code{+x} right, \code{+y} up). Defaults to a
+small down-right drop.}
 
 \item{color}{Shadow colour.}
 
@@ -35,9 +35,10 @@ a drop shadow (with an offset) or an ambient shadow (offset \code{0}). Applies t
 the same marks as \code{\link[=glow]{glow()}}.
 }
 \details{
-The offset is a \strong{fraction of the panel} (npc; \code{+x} right, \code{+y} up), not an
-absolute distance, so it scales with the panel and is slightly anisotropic on
-a non-square panel. (A device-exact offset would need backend support.)
+The offset is an \strong{absolute distance in millimetres} (\code{+x} right, \code{+y} up),
+resolved device-side, so a drop shadow stays the same physical distance and is
+isotropic regardless of the panel's size or aspect (via \code{vellum}'s compound
+\code{npc + mm} unit).
 }
 \examples{
 df <- data.frame(x = 1:20, y = cumsum(rnorm(20)))

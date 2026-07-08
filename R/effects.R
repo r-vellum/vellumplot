@@ -98,12 +98,13 @@ outline <- function(size = 1, color = "white", alpha = 1) {
 #' a drop shadow (with an offset) or an ambient shadow (offset `0`). Applies to
 #' the same marks as [glow()].
 #'
-#' The offset is a **fraction of the panel** (npc; `+x` right, `+y` up), not an
-#' absolute distance, so it scales with the panel and is slightly anisotropic on
-#' a non-square panel. (A device-exact offset would need backend support.)
+#' The offset is an **absolute distance in millimetres** (`+x` right, `+y` up),
+#' resolved device-side, so a drop shadow stays the same physical distance and is
+#' isotropic regardless of the panel's size or aspect (via `vellum`'s compound
+#' `npc + mm` unit).
 #'
-#' @param x,y Shadow offset as a fraction of the panel width / height
-#'   (`+x` right, `+y` up). Defaults to a small down-right drop.
+#' @param x,y Shadow offset in millimetres (`+x` right, `+y` up). Defaults to a
+#'   small down-right drop.
 #' @param color Shadow colour.
 #' @param alpha Opacity of each copy.
 #' @param spread Softening spread, in millimetres, over which the copies widen.
@@ -115,8 +116,8 @@ outline <- function(size = 1, color = "white", alpha = 1) {
 #' vplot(df) |> mark_line(x = x, y = y, effects = list(shadow()))
 #' @export
 shadow <- function(
-  x = 0.006,
-  y = -0.006,
+  x = 0.5,
+  y = -0.5,
   color = "black",
   alpha = 0.3,
   spread = 1.5,

@@ -14,6 +14,8 @@ mark_text(
   hjust = "centre",
   vjust = "centre",
   angle = NULL,
+  nudge_x = 0,
+  nudge_y = 0,
   blend = NULL,
   data = NULL
 )
@@ -27,6 +29,8 @@ mark_label(
   hjust = "centre",
   vjust = "centre",
   angle = NULL,
+  nudge_x = 0,
+  nudge_y = 0,
   fill = "white",
   blend = NULL,
   sketch = NULL,
@@ -47,6 +51,10 @@ mark_label(
 \code{"centre"}, \code{"right"}, \code{"bottom"}, \code{"top"}, or numeric in \verb{[0, 1]}).}
 
 \item{angle}{Text rotation in degrees.}
+
+\item{nudge_x, nudge_y}{Shift each label by an exact absolute distance in
+millimetres (\code{+x} right, \code{+y} up), device-resolved so the nudge is constant
+regardless of scale or panel aspect. Default \code{0}.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
@@ -72,4 +80,6 @@ the font size in points; \code{angle} (degrees) may be mapped or constant.
 }
 \examples{
 vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
+vplot(mtcars) |> mark_point(x = wt, y = mpg) |>
+  mark_text(x = wt, y = mpg, label = rownames(mtcars), nudge_y = 2)
 }

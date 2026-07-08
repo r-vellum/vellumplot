@@ -134,6 +134,7 @@ after_stat <- function(x) x
   mark,
   dots,
   extra = list(),
+  const_params = list(),
   stat = "identity",
   stat_params = list(),
   position = "identity",
@@ -156,6 +157,12 @@ after_stat <- function(x) x
   interactivity <- interactivity[!vapply(interactivity, rlang::quo_is_null, logical(1))]
   quos <- quos[setdiff(names(quos), .INTERACT_ARGS)]
   split <- .split_encodings(quos)
+  # Pre-evaluated always-constant params (e.g. mm nudges) bypass encoding
+  # splitting, so a negative literal like `nudge_y = -3` is not mistaken for a
+  # data channel.
+  if (length(const_params)) {
+    split$params <- utils::modifyList(split$params, const_params)
+  }
   # `effects` is a reserved argument, not an aesthetic: catch it arriving via `...`
   # on a mark that does not expose an `effects` argument.
   if ("effects" %in% c(names(split$encoding), names(split$params))) {
@@ -721,10 +728,15 @@ mark_step <- function(
 #' @param hjust,vjust Horizontal / vertical justification (constant; `"left"`,
 #'   `"centre"`, `"right"`, `"bottom"`, `"top"`, or numeric in `[0, 1]`).
 #' @param angle Text rotation in degrees.
+#' @param nudge_x,nudge_y Shift each label by an exact absolute distance in
+#'   millimetres (`+x` right, `+y` up), device-resolved so the nudge is constant
+#'   regardless of scale or panel aspect. Default `0`.
 #' @param fill For `mark_label()`, the background fill colour.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
+#' vplot(mtcars) |> mark_point(x = wt, y = mpg) |>
+#'   mark_text(x = wt, y = mpg, label = rownames(mtcars), nudge_y = 2)
 #' @export
 mark_text <- function(
   plot,
@@ -735,6 +747,8 @@ mark_text <- function(
   hjust = "centre",
   vjust = "centre",
   angle = NULL,
+  nudge_x = 0,
+  nudge_y = 0,
   blend = NULL,
   data = NULL
 ) {
@@ -751,6 +765,7 @@ mark_text <- function(
       vjust = vjust,
       angle = angle
     ),
+    const_params = list(nudge_x = as.numeric(nudge_x), nudge_y = as.numeric(nudge_y)),
     blend = blend,
     data = data
   )
@@ -767,6 +782,8 @@ mark_label <- function(
   hjust = "centre",
   vjust = "centre",
   angle = NULL,
+  nudge_x = 0,
+  nudge_y = 0,
   fill = "white",
   blend = NULL,
   sketch = NULL,
@@ -786,6 +803,7 @@ mark_label <- function(
       angle = angle,
       fill = fill
     ),
+    const_params = list(nudge_x = as.numeric(nudge_x), nudge_y = as.numeric(nudge_y)),
     blend = blend,
     sketch = sketch,
     data = data

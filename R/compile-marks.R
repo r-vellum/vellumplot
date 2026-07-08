@@ -90,6 +90,17 @@ NULL
   L$params$linetype %||% default
 }
 
+# Apply a layer's `nudge_x`/`nudge_y` (millimetres) to a resolved `.xy_units()`
+# pair, as a device-exact compound offset (vellum's `native + mm` unit). A zero
+# nudge is left untouched, so an un-nudged mark is byte-identical.
+.nudge_xy <- function(xy, L) {
+  nx <- .aes_param(L, "nudge_x", 0)
+  ny <- .aes_param(L, "nudge_y", 0)
+  if (!is.null(nx) && nx != 0) xy$x <- xy$x + vellum::unit(nx, "mm")
+  if (!is.null(ny) && ny != 0) xy$y <- xy$y + vellum::unit(ny, "mm")
+  xy
+}
+
 # Coordinate placement honouring coord_flip: under flip the horizontal axis
 # carries the data y and the vertical axis the data x. Emitters compute native
 # coordinates in data space, then place them through these helpers so only the
@@ -777,7 +788,7 @@ NULL
 
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
-    xy <- .xy_units(scales, xn[idx], yn[idx])
+    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L)
     scene <- .draw(
       scene,
       vellum::text_grob(
@@ -822,7 +833,7 @@ NULL
   )
 
   for (idx in .style_groups(n, list(col = col))) {
-    xy <- .xy_units(scales, xn[idx], yn[idx])
+    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L)
     scene <- .draw(
       scene,
       vellum::roundrect_grob(
@@ -1781,8 +1792,9 @@ NULL
 # Generalized underlay copy-emitter for glow / outline / shadow: draw one copy
 # of the mark per entry of `deltas` (width in mm added to the base stroke width /
 # point diameter), at `alpha` and `colour`, composited under `blend`, offset by
-# (`xoff`, `yoff`) in npc. Reuses the mark's own emitter so coords / flip / polar
-# all stay correct. Widest first, so opacity accumulates toward centre.
+# (`xoff`, `yoff`) in **millimetres** (device-exact, via vellum's compound
+# `npc + mm` unit). Reuses the mark's own emitter so coords / flip / polar all
+# stay correct. Widest first, so opacity accumulates toward centre.
 .emit_copies <- function(
   scene,
   L,
@@ -1800,8 +1812,8 @@ NULL
   scene <- vellum::push(
     scene,
     vellum::viewport(
-      x = 0.5 + xoff,
-      y = 0.5 + yoff,
+      x = vellum::unit(0.5, "npc") + vellum::unit(xoff, "mm"),
+      y = vellum::unit(0.5, "npc") + vellum::unit(yoff, "mm"),
       xscale = rng$x,
       yscale = rng$y,
       blend = if (identical(blend, "normal")) NULL else blend
