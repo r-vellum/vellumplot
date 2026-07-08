@@ -417,7 +417,11 @@ compose_annotation <- function(
     width = comp@width,
     height = comp@height,
     dpi = comp@dpi,
-    bg = "white"
+    bg = "white",
+    # Accessibility: the figure title (if any) names the composition and the
+    # generated summary describes it. Additive; see R/alt.R.
+    title = .alt_name(comp@labels),
+    desc = .alt_desc_safe(comp)
   )
   if (.comp_alignable(comp)) {
     scene <- vellum::push(scene, vellum::viewport())

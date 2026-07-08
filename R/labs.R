@@ -17,6 +17,10 @@ NULL
 #' @param x,y,size Axis / legend title overrides for those aesthetics.
 #' @param color,colour,fill Colour-scale title override; `colour` and `fill` are
 #'   aliases for `color`.
+#' @param alt A text alternative (alt text) describing the plot for screen
+#'   readers and other assistive technology. Overrides the description quill
+#'   generates automatically; see [plot_alt()]. Emitted into the accessible SVG
+#'   (`<desc>`) and tagged PDF (Figure `Alt`) by [render_plot()].
 #' @param ... Reserved; passing anything here is an error.
 #' @return The modified [PlotSpec].
 #' @examples
@@ -36,6 +40,7 @@ labs <- function(
   colour = NULL,
   fill = NULL,
   size = NULL,
+  alt = NULL,
   ...
 ) {
   .check_plot(plot)
@@ -49,7 +54,8 @@ labs <- function(
     x = x,
     y = y,
     color = color,
-    size = size
+    size = size,
+    alt = alt
   )
   over <- over[!vapply(over, is.null, logical(1))]
   plot@labels <- utils::modifyList(plot@labels, over)

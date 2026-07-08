@@ -332,7 +332,12 @@ NULL
     width = spec@width,
     height = spec@height,
     dpi = spec@dpi,
-    bg = "white"
+    bg = "white",
+    # Accessibility (WCAG 1.1.1): the plot title is the accessible name and the
+    # alt text is the description. vellum emits these as an accessible SVG /
+    # tagged PDF. Additive — geometry is unchanged. See R/alt.R.
+    title = .alt_name(spec@labels),
+    desc = .alt_desc_safe(spec)
   )
   scene <- .draw_plot(scene, spec)
   # Carry the row-key / scale-ref schema on the returned scene (DESIGN §4). Set

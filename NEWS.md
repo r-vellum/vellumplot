@@ -1,3 +1,14 @@
+# quill (development version)
+
+* **Accessibility (alt text).** Every compiled plot is now an accessible image
+  by default. `plot_alt()` returns a plot's text alternative — an author-written
+  string from the new `labs(alt = )`, or a prose summary quill generates from the
+  spec (chart type, x/y/colour/size mappings, observation count, faceting). At the
+  compile seam the plot **title** becomes the scene's accessible name and this alt
+  text becomes its description, so `render_plot()` output carries `role="img"` +
+  `<title>`/`<desc>` in SVG and a tagged `Figure` with `Alt` in PDF (via vellum).
+  See the new *Accessibility* article.
+
 # quill 0.2.1
 
 Consumes `vellum`'s new compound `native + mm` unit (requires vellum >= 0.1.1).

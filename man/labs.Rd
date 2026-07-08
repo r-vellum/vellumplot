@@ -16,6 +16,7 @@ labs(
   colour = NULL,
   fill = NULL,
   size = NULL,
+  alt = NULL,
   ...
 )
 }
@@ -28,6 +29,11 @@ labs(
 
 \item{color, colour, fill}{Colour-scale title override; \code{colour} and \code{fill} are
 aliases for \code{color}.}
+
+\item{alt}{A text alternative (alt text) describing the plot for screen
+readers and other assistive technology. Overrides the description quill
+generates automatically; see \code{\link[=plot_alt]{plot_alt()}}. Emitted into the accessible SVG
+(\verb{<desc>}) and tagged PDF (Figure \code{Alt}) by \code{\link[=render_plot]{render_plot()}}.}
 
 \item{...}{Reserved; passing anything here is an error.}
 }

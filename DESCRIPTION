@@ -41,6 +41,8 @@ Config/testthat/edition: 3
 Collate:
     'quill-package.R'
     'classes.R'
+    'print.R'
+    'alt.R'
     'marks.R'
     'annotate.R'
     'compile-marks.R'
@@ -63,7 +65,6 @@ Collate:
     'effects.R'
     'guides.R'
     'labs.R'
-    'print.R'
     'provenance.R'
     'reexports.R'
     'repeat.R'
