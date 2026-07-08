@@ -2,8 +2,9 @@
 title: "Statistical marks"
 description: >
   Marks that transform data before drawing: histograms, densities, per-group
-  summaries, and linear smooths, plus after_stat for reaching the computed
-  variables and mark_datashade for millions of points.
+  summaries, linear smooths, ECDFs, Q-Q plots, rugs, violins, ridgelines, and
+  dot plots, plus after_stat for reaching the computed variables and
+  mark_datashade for millions of points.
 ---
 
 ```{r}
@@ -64,6 +65,63 @@ the raw points.
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   mark_smooth(x = wt, y = mpg, se = TRUE, level = 0.95)
+```
+
+## Distributions
+
+Several marks summarise how a single variable is distributed. `mark_ecdf()`
+draws the empirical cumulative distribution of `x` as a step, which is a
+scale-free way to compare groups without choosing a bandwidth.
+
+```{r}
+vplot(iris) |>
+  mark_ecdf(x = Sepal.Length, color = Species)
+```
+
+`mark_qq()` plots the sorted `sample` against the quantiles of a reference
+distribution (normal by default); `mark_qq_line()` adds the reference line
+through the quartiles. Points on the line mean the sample matches the reference.
+
+```{r}
+vplot(mtcars) |>
+  mark_qq(sample = mpg) |>
+  mark_qq_line(sample = mpg)
+```
+
+`mark_rug()` adds marginal ticks at each observation, a compact companion to a
+scatter or density. `sides` picks the edges (`"b"`, `"l"`, `"t"`, `"r"`).
+
+```{r}
+vplot(faithful) |>
+  mark_point(x = waiting, y = eruptions) |>
+  mark_rug()
+```
+
+## Density shapes
+
+`mark_violin()` draws a mirrored kernel density of `y` for each categorical
+`x` — a boxplot's silhouette, showing the full shape of each group.
+
+```{r}
+vplot(iris) |>
+  mark_violin(x = Species, y = Sepal.Length, fill = Species)
+```
+
+`mark_ridgeline()` turns that on its side: a density of `x` per categorical `y`,
+with the ridges overlapping so many groups fit in little vertical space. Use the
+`scale` argument to tune how much they overlap.
+
+```{r}
+vplot(iris) |>
+  mark_ridgeline(x = Sepal.Length, y = Species, fill = Species)
+```
+
+`mark_dotplot()` bins `x` and stacks one dot per observation, so the height of
+each stack is a count you can read dot by dot.
+
+```{r}
+vplot(faithful) |>
+  mark_dotplot(x = waiting)
 ```
 
 ## Reaching computed variables with after_stat

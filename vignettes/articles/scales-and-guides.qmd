@@ -1,9 +1,10 @@
 ---
 title: "Scales and guides"
 description: >
-  How data values become colour, size, shape, and axis positions. Continuous,
-  discrete, binned, manual, and gradient scales, trained domains, and the
-  legends they produce.
+  How data values become colour, size, shape, opacity, line type, and axis
+  positions. Continuous, discrete, binned, manual, gradient, date/time, and
+  identity scales, limit shortcuts, trained domains, and controlling the legends
+  they produce.
 ---
 
 ```{r}
@@ -82,6 +83,50 @@ vplot(mtcars) |>
   scale_size(range = c(2, 9), name = "hp")
 ```
 
+## Opacity and line type
+
+`alpha` and `linetype` are mapped aesthetics too. `scale_alpha()` maps a
+continuous variable to opacity (its `range` defaults to `c(0.1, 1)`), a good way
+to let density show through an overplotted cloud.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, alpha = hp, size = 3) |>
+  scale_alpha(range = c(0.2, 1))
+```
+
+`scale_linetype()` maps a discrete variable to line types, cycling `"solid"`,
+`"dashed"`, `"dotted"`, and so on. It applies to line-like marks
+(`mark_line()`, `mark_step()`).
+
+```{r}
+series <- data.frame(
+  x = rep(1:20, 3),
+  y = c(cumsum(rnorm(20)), cumsum(rnorm(20)), cumsum(rnorm(20))),
+  series = rep(c("a", "b", "c"), each = 20)
+)
+vplot(series) |>
+  mark_line(x = x, y = y, linetype = series)
+```
+
+## Identity scales
+
+Sometimes a column *already* holds the exact aesthetic values you want — actual
+colour names, sizes in millimetres, shape names. An identity scale uses them
+verbatim and draws no legend. There is a variant for each aesthetic:
+`scale_color_identity()`, `scale_fill_identity()`, `scale_size_identity()`,
+`scale_shape_identity()`, `scale_alpha_identity()`, `scale_linetype_identity()`.
+
+```{r}
+df <- data.frame(
+  x = 1:5, y = 1:5,
+  col = c("firebrick", "goldenrod", "forestgreen", "steelblue", "purple")
+)
+vplot(df) |>
+  mark_point(x = x, y = y, color = col, size = 6) |>
+  scale_color_identity()
+```
+
 ## Position scales
 
 `scale_x_continuous()` and `scale_y_continuous()` control the axes. By default
@@ -97,6 +142,32 @@ vplot(mtcars) |>
   scale_x_continuous(trans = "log10", name = "Weight (log scale)")
 ```
 
+To set limits without spelling out a whole scale, use the shortcuts `xlim()`,
+`ylim()`, and `lims()` (the last takes one named argument per aesthetic):
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  lims(x = c(0, 6), y = c(0, 40))
+```
+
+## Date and time axes
+
+A `Date` or `POSIXct` column gets a date axis automatically. To control the
+break interval or the label format, declare `scale_x_date()` (or
+`scale_x_datetime()` / `scale_x_time()`): `date_breaks` takes an interval string
+like `"6 months"`, and `date_labels` a `strftime()` format.
+
+```{r}
+econ <- data.frame(
+  day = as.Date("2020-01-01") + 0:729,
+  value = cumsum(rnorm(730))
+)
+vplot(econ) |>
+  mark_line(x = day, y = value) |>
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %Y")
+```
+
 ## Guides come for free
 
 Every scale that needs a legend produces one, and quill stacks multiple
@@ -107,6 +178,27 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp, size = disp) |>
   scale_color_continuous(palette = "Batlow", name = "Horsepower") |>
   scale_size(range = c(1, 8), name = "Displacement")
+```
+
+## Controlling a legend
+
+`guides()` overrides a single legend without respelling its scale. Pass
+`"none"` to hide it, or `guide_legend()` to reverse the key order or override
+the title.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+  guides(color = guide_legend(title = "Cylinders", reverse = TRUE))
+```
+
+Hiding a legend keeps the mapping — the marks stay coloured, only the guide
+disappears:
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+  guides(color = "none")
 ```
 
 ## Rich titles
