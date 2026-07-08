@@ -727,6 +727,11 @@ mark_step <- function(
 #' `mark_label()` adds a filled rounded background behind each label. `size` is
 #' the font size in points; `angle` (degrees) may be mapped or constant.
 #'
+#' The `label` for `mark_text()` may be plain text (embedded newlines `\n` wrap
+#' onto stacked lines) or rich [vellum::md()] labels — map `label = md(<expr>)`
+#' for a per-datum styled label (bold/italic/super-/subscript/colour). (Rich
+#' labels are not yet supported by `mark_label()`'s background box.)
+#'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `label` (+ `color`, `angle`).
 #' @param size Font size in points.

@@ -779,7 +779,21 @@ NULL
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
-  label <- rep_len(as.character(L$values$label), n)
+  # Labels may be plain character (multi-line "\n" supported by vellum), a single
+  # rich md() label (drawn at every position), or a per-datum list of md() labels.
+  # Only plain labels are flattened with as.character(); rich labels pass through.
+  raw <- L$values$label
+  rich_single <- inherits(raw, "vellum::vellum_label")
+  rich_list <- !rich_single && is.list(raw) && length(raw) > 0L &&
+    all(vapply(raw, function(x) inherits(x, "vellum::vellum_label"), logical(1)))
+  if (rich_list) {
+    labs <- raw[rep_len(seq_along(raw), n)]
+  } else if (!rich_single) {
+    label <- rep_len(as.character(raw), n)
+  }
+  .label_of <- function(idx) {
+    if (rich_single) raw else if (rich_list) labs[idx] else label[idx]
+  }
   col <- rep_len(.text_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   ang <- .text_angle(L, n)
@@ -792,7 +806,7 @@ NULL
     scene <- .draw(
       scene,
       vellum::text_grob(
-        label[idx],
+        .label_of(idx),
         xy$x,
         xy$y,
         just = just,

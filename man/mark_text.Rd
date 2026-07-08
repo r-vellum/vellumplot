@@ -78,6 +78,12 @@ The modified \link{PlotSpec}.
 \code{mark_label()} adds a filled rounded background behind each label. \code{size} is
 the font size in points; \code{angle} (degrees) may be mapped or constant.
 }
+\details{
+The \code{label} for \code{mark_text()} may be plain text (embedded newlines \verb{\\n} wrap
+onto stacked lines) or rich \code{\link[vellum:md]{vellum::md()}} labels — map \verb{label = md(<expr>)}
+for a per-datum styled label (bold/italic/super-/subscript/colour). (Rich
+labels are not yet supported by \code{mark_label()}'s background box.)
+}
 \examples{
 vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |>

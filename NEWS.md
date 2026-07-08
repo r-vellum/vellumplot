@@ -1,5 +1,12 @@
 # quill (development version)
 
+* **Rich and multi-line text labels.** `mark_text()` now carries rich labels
+  through to the renderer instead of flattening them: map `label = md(<expr>)` for
+  a per-datum styled label (bold/italic/super-/subscript/colour), and plain labels
+  may contain newlines (`\n`) to wrap onto stacked lines. Requires vellum's
+  development version. (`mark_label()`'s background box does not yet support rich
+  labels.)
+
 * **Accessibility (alt text).** Every compiled plot is now an accessible image
   by default. `plot_alt()` returns a plot's text alternative — an author-written
   string from the new `labs(alt = )`, or a prose summary quill generates from the
