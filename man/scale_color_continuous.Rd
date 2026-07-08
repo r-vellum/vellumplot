@@ -9,6 +9,10 @@
 \alias{scale_fill_discrete}
 \alias{scale_fill_manual}
 \alias{scale_fill_gradient}
+\alias{scale_colour_continuous}
+\alias{scale_colour_discrete}
+\alias{scale_colour_manual}
+\alias{scale_colour_gradient}
 \title{Colour scales}
 \usage{
 scale_color_continuous(
@@ -50,6 +54,26 @@ scale_fill_discrete(
 scale_fill_manual(plot, values, name = NULL)
 
 scale_fill_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+
+scale_colour_continuous(
+  plot,
+  palette = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+)
+
+scale_colour_discrete(
+  plot,
+  palette = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+)
+
+scale_colour_manual(plot, values, name = NULL)
+
+scale_colour_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}

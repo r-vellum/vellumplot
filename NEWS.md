@@ -7,7 +7,12 @@
   compile seam the plot **title** becomes the scene's accessible name and this alt
   text becomes its description, so `render_plot()` output carries `role="img"` +
   `<title>`/`<desc>` in SVG and a tagged `Figure` with `Alt` in PDF (via vellum).
-  See the new *Accessibility* article.
+  See the new *Accessibility* article. Requires vellum's development version
+  (>= 0.1.1.9000) for the accessible SVG/PDF backend.
+
+* **British spelling.** `mark_*(colour = )` is now honoured as an alias for
+  `color` (previously the mapping was silently dropped and no colour scale was
+  trained). Added `scale_colour_*()` aliases for the `scale_color_*()` family.
 
 # quill 0.2.1
 

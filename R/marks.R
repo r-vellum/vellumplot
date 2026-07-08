@@ -30,6 +30,13 @@ NULL
 # referring to data (a symbol like `wt`, or a call like `factor(cyl)`) is a
 # channel evaluated against the data at compile time.
 .split_encodings <- function(quos) {
+  # British spelling: accept `colour` (and compounds like `hover_colour`) as an
+  # alias for the American `color` the compiler reads. Normalise once here so
+  # every downstream path -- scale training, provenance, alt text -- sees a
+  # single spelling; otherwise `mark_*(colour = ...)` is silently dropped.
+  if (length(quos)) {
+    names(quos) <- sub("colour", "color", names(quos), fixed = TRUE)
+  }
   encoding <- list()
   params <- list()
   for (nm in names(quos)) {

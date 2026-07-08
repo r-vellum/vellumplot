@@ -413,6 +413,25 @@ scale_fill_gradient <- function(
   .colour_scale(plot, "fill", "continuous", c(low, high), NULL, NULL, name)
 }
 
+# British-spelling aliases: `colour` is honoured everywhere `color` is (the
+# `mark_*()` encodings, `labs()`, `element_*()`), so the scale constructors take
+# the alias too.
+#' @rdname scale_color_continuous
+#' @export
+scale_colour_continuous <- scale_color_continuous
+
+#' @rdname scale_color_continuous
+#' @export
+scale_colour_discrete <- scale_color_discrete
+
+#' @rdname scale_color_continuous
+#' @export
+scale_colour_manual <- scale_color_manual
+
+#' @rdname scale_color_continuous
+#' @export
+scale_colour_gradient <- scale_color_gradient
+
 #' Size scale
 #'
 #' Declare the scale for a mapped `size` aesthetic: data values map linearly to a
@@ -551,6 +570,10 @@ scale_fill_identity <- function(plot) {
   .check_plot(plot)
   .add_scale(plot, ScaleSpec(aesthetic = "color", type = "identity"))
 }
+
+#' @rdname scale_color_identity
+#' @export
+scale_colour_identity <- scale_color_identity
 
 #' @rdname scale_color_identity
 #' @export
