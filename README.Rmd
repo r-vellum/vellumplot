@@ -129,9 +129,9 @@ render_plot(p, "cars.png")
   `mark_bar()` (explicit heights, or row counts per category), `mark_area()` /
   `mark_ribbon()`, intervals (`mark_errorbar()`, `mark_linerange()`,
   `mark_segment()`), `mark_boxplot()`, tiles/heatmaps (`mark_tile()`,
-  `mark_raster()`), 2-D binning (`mark_bin2d()`, `mark_hex()`), text
-  (`mark_text()`, `mark_label()`), and pie/donut shortcuts (`mark_pie()`,
-  `mark_donut()`).
+  `mark_raster()`), 2-D binning (`mark_bin2d()`, `mark_hex()`), 2-D density
+  contours (`mark_contour()`, `mark_contour_filled()`), text (`mark_text()`,
+  `mark_label()`), and pie/donut shortcuts (`mark_pie()`, `mark_donut()`).
 * Spatial: `mark_sf()` draws an `sf` geometry column as a map layer, with
   `coord_sf()` to reproject and lock the aspect ratio.
 * Network: `vgraph()` starts a node-link diagram from an `igraph` graph

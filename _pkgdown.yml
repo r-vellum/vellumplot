@@ -145,6 +145,7 @@ reference:
   - mark_boxplot
   - mark_histogram
   - mark_tile
+  - mark_contour
 - subtitle: Text, pie, and large data
   contents:
   - mark_text

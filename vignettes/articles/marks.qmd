@@ -93,6 +93,16 @@ vplot(grid) |>
   scale_fill_continuous(palette = "Batlow")
 ```
 
+`mark_contour()` draws iso-density contour lines of a 2-D point cloud (and
+`mark_contour_filled()` fills the bands), coloured by level — see the
+[statistical marks](statistical-marks.html) article for the details.
+
+```{r}
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting, color = "grey70") |>
+  mark_contour(x = eruptions, y = waiting)
+```
+
 ## Text
 
 `mark_text()` draws the `label` aesthetic as text at each `(x, y)`;
