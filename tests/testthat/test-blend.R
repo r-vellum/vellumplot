@@ -1,4 +1,4 @@
-# Per-layer blend modes (vellum viewport(blend=)): a layer composites as one
+# Per-layer blend modes (vellum vl_viewport(blend=)): a layer composites as one
 # isolated group against the backdrop.
 
 test_that("blend defaults to normal and is recorded", {

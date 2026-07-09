@@ -165,7 +165,7 @@ element_blank <- S7::new_class(
 
 # Build a vellum gpar from a resolved element (NULL fields stay NULL = inherit).
 .el_gpar_text <- function(el) {
-  vellum::gpar(
+  vellum::vl_gpar(
     fontsize = el@size,
     col = el@colour,
     fontfamily = el@family,
@@ -175,7 +175,7 @@ element_blank <- S7::new_class(
 }
 
 .el_gpar_line <- function(el) {
-  vellum::gpar(
+  vellum::vl_gpar(
     col = el@colour,
     lwd = el@linewidth,
     lty = el@linetype,
@@ -184,7 +184,7 @@ element_blank <- S7::new_class(
 }
 
 .el_gpar_rect <- function(el) {
-  vellum::gpar(
+  vellum::vl_gpar(
     fill = el@fill,
     col = el@colour,
     lwd = el@linewidth,

@@ -25,10 +25,10 @@ NULL
   vellum::draw(
     scene,
     vellum::segments_grob(
-      vellum::unit(xs, "native"),
-      vellum::unit(rep(0, k), "npc"),
-      vellum::unit(xs, "native"),
-      vellum::unit(rep(1, k), "npc"),
+      vellum::vl_unit(xs, "native"),
+      vellum::vl_unit(rep(0, k), "npc"),
+      vellum::vl_unit(xs, "native"),
+      vellum::vl_unit(rep(1, k), "npc"),
       sketch = sketch,
       gp = gp
     )
@@ -44,10 +44,10 @@ NULL
   vellum::draw(
     scene,
     vellum::segments_grob(
-      vellum::unit(rep(0, k), "npc"),
-      vellum::unit(ys, "native"),
-      vellum::unit(rep(1, k), "npc"),
-      vellum::unit(ys, "native"),
+      vellum::vl_unit(rep(0, k), "npc"),
+      vellum::vl_unit(ys, "native"),
+      vellum::vl_unit(rep(1, k), "npc"),
+      vellum::vl_unit(ys, "native"),
       sketch = sketch,
       gp = gp
     )
@@ -101,10 +101,10 @@ NULL
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::unit(b, "native"),
-        vellum::unit(rep(0, k), "npc"),
-        vellum::unit(b, "native"),
-        vellum::unit(rep(tlen, k), "mm"),
+        vellum::vl_unit(b, "native"),
+        vellum::vl_unit(rep(0, k), "npc"),
+        vellum::vl_unit(b, "native"),
+        vellum::vl_unit(rep(tlen, k), "mm"),
         sketch = .el_sketch(tx, 6L),
         gp = .el_gpar_line(tx)
       )
@@ -117,10 +117,10 @@ NULL
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::unit(rep(0, k), "npc"),
-        vellum::unit(b, "native"),
-        vellum::unit(rep(tlen, k), "mm"),
-        vellum::unit(b, "native"),
+        vellum::vl_unit(rep(0, k), "npc"),
+        vellum::vl_unit(b, "native"),
+        vellum::vl_unit(rep(tlen, k), "mm"),
+        vellum::vl_unit(b, "native"),
         sketch = .el_sketch(ty, 7L),
         gp = .el_gpar_line(ty)
       )
@@ -161,8 +161,8 @@ NULL
     scene <- vellum::draw(
       scene,
       vellum::polygon_grob(
-        vellum::unit(bx, "native"),
-        vellum::unit(by, "native"),
+        vellum::vl_unit(bx, "native"),
+        vellum::vl_unit(by, "native"),
         sketch = .el_sketch(pb, 1L),
         gp = .el_gpar_rect(pb)
       )
@@ -184,8 +184,8 @@ NULL
       scene <- vellum::draw(
         scene,
         vellum::lines_grob(
-          vellum::unit(cp$x, "native"),
-          vellum::unit(cp$y, "native"),
+          vellum::vl_unit(cp$x, "native"),
+          vellum::vl_unit(cp$y, "native"),
           sketch = rsk,
           gp = gp
         )
@@ -203,10 +203,10 @@ NULL
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::unit(ctx$rmin * cos(ang), "native"),
-        vellum::unit(ctx$rmin * sin(ang), "native"),
-        vellum::unit(ctx$rmax * cos(ang), "native"),
-        vellum::unit(ctx$rmax * sin(ang), "native"),
+        vellum::vl_unit(ctx$rmin * cos(ang), "native"),
+        vellum::vl_unit(ctx$rmin * sin(ang), "native"),
+        vellum::vl_unit(ctx$rmax * cos(ang), "native"),
+        vellum::vl_unit(ctx$rmax * sin(ang), "native"),
         sketch = .el_sketch(theta_grid, 4L),
         gp = .el_gpar_line(theta_grid)
       )
@@ -225,8 +225,8 @@ NULL
         scene,
         vellum::text_grob(
           labs[i],
-          x = vellum::unit(rl * cos(ang[i]), "native"),
-          y = vellum::unit(rl * sin(ang[i]), "native"),
+          x = vellum::vl_unit(rl * cos(ang[i]), "native"),
+          y = vellum::vl_unit(rl * sin(ang[i]), "native"),
           just = c("centre", "centre"),
           gp = gp
         )
@@ -245,8 +245,8 @@ NULL
         scene,
         vellum::text_grob(
           labs[i],
-          x = vellum::unit(0.02, "native"),
-          y = vellum::unit(rr, "native"),
+          x = vellum::vl_unit(0.02, "native"),
+          y = vellum::vl_unit(rr, "native"),
           just = c("left", "centre"),
           gp = gp
         )
@@ -267,17 +267,17 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(row = row, col = col, yscale = y_sc$domain, name = vp_name)
+    vellum::vl_viewport(row = row, col = col, yscale = y_sc$domain, name = vp_name)
   )
   # axis line along the panel-adjacent (right) edge of the gutter
   if (!.is_blank(aline)) {
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::unit(1, "npc"),
-        vellum::unit(0, "npc"),
-        vellum::unit(1, "npc"),
-        vellum::unit(1, "npc"),
+        vellum::vl_unit(1, "npc"),
+        vellum::vl_unit(0, "npc"),
+        vellum::vl_unit(1, "npc"),
+        vellum::vl_unit(1, "npc"),
         sketch = .el_sketch(aline, 9L),
         gp = .el_gpar_line(aline)
       )
@@ -290,8 +290,8 @@ NULL
         scene,
         vellum::text_grob(
           y_sc$labels[i],
-          x = vellum::unit(0.96, "npc"),
-          y = vellum::unit(y_sc$breaks[i], "native"),
+          x = vellum::vl_unit(0.96, "npc"),
+          y = vellum::vl_unit(y_sc$breaks[i], "native"),
           just = c("right", "centre"),
           gp = gp
         )
@@ -310,7 +310,7 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       row = row,
       col = col,
       xscale = x_sc$domain,
@@ -322,10 +322,10 @@ NULL
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::unit(0, "npc"),
-        vellum::unit(1, "npc"),
-        vellum::unit(1, "npc"),
-        vellum::unit(1, "npc"),
+        vellum::vl_unit(0, "npc"),
+        vellum::vl_unit(1, "npc"),
+        vellum::vl_unit(1, "npc"),
+        vellum::vl_unit(1, "npc"),
         sketch = .el_sketch(aline, 8L),
         gp = .el_gpar_line(aline)
       )
@@ -338,8 +338,8 @@ NULL
         scene,
         vellum::text_grob(
           x_sc$labels[i],
-          x = vellum::unit(x_sc$breaks[i], "native"),
-          y = vellum::unit(0.82, "npc"),
+          x = vellum::vl_unit(x_sc$breaks[i], "native"),
+          y = vellum::vl_unit(0.82, "npc"),
           just = c("centre", "top"),
           gp = gp
         )
@@ -364,7 +364,7 @@ NULL
 ) {
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       row = row,
       col = col,
       rowspan = rowspan,
@@ -396,7 +396,7 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       row = row,
       col = col,
       rowspan = rowspan,
@@ -417,7 +417,7 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       row = row,
       col = col,
       colspan = colspan,
@@ -447,13 +447,13 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(row = row, col = 1, colspan = ncol)
+    vellum::vl_viewport(row = row, col = 1, colspan = ncol)
   )
   scene <- vellum::draw(
     scene,
     vellum::text_grob(
       text,
-      x = vellum::unit(x_npc, "npc"),
+      x = vellum::vl_unit(x_npc, "npc"),
       just = c(just_h, "centre"),
       rot = .el_rot(el),
       gp = .el_gpar_text(el)
@@ -745,13 +745,13 @@ NULL
 .interleave_mm <- function(sizes, gap) {
   n <- length(sizes)
   if (!n) {
-    return(vellum::unit(numeric(0), "mm"))
+    return(vellum::vl_unit(numeric(0), "mm"))
   }
   parts <- vector("list", 2L * n - 1L)
   for (i in seq_len(n)) {
-    parts[[2L * i - 1L]] <- vellum::unit(sizes[i], "mm")
+    parts[[2L * i - 1L]] <- vellum::vl_unit(sizes[i], "mm")
     if (i < n) {
-      parts[[2L * i]] <- vellum::unit(gap, "mm")
+      parts[[2L * i]] <- vellum::vl_unit(gap, "mm")
     }
   }
   do.call(c, parts)
@@ -773,12 +773,12 @@ NULL
 # grey NA swatch a colour guide draws), signalling "missing" without a value.
 .na_key_grob <- function(m, sketch = NULL) {
   vellum::points_grob(
-    vellum::unit(0.5, "npc"),
-    vellum::unit(0.5, "npc"),
-    size = vellum::unit(m$key / 2, "mm"),
+    vellum::vl_unit(0.5, "npc"),
+    vellum::vl_unit(0.5, "npc"),
+    size = vellum::vl_unit(m$key / 2, "mm"),
     shape = "circle",
     sketch = sketch,
-    gp = vellum::gpar(fill = "grey70", col = "grey50")
+    gp = vellum::vl_gpar(fill = "grey70", col = "grey50")
   )
 }
 
@@ -798,59 +798,59 @@ NULL
       .na_key_grob(m, sk)
     } else {
       vellum::points_grob(
-        vellum::unit(0.5, "npc"),
-        vellum::unit(0.5, "npc"),
-        size = vellum::unit(sc$legend_sizes[i], "mm"),
+        vellum::vl_unit(0.5, "npc"),
+        vellum::vl_unit(0.5, "npc"),
+        size = vellum::vl_unit(sc$legend_sizes[i], "mm"),
         shape = sc$key_glyph %||% "circle",
         sketch = sk,
-        gp = vellum::gpar(fill = "grey35", col = "grey35")
+        gp = vellum::vl_gpar(fill = "grey35", col = "grey35")
       )
     },
     shape = if (isTRUE(sc$na) && i > length(sc$shapes)) {
       .na_key_grob(m, sk)
     } else {
       vellum::points_grob(
-        vellum::unit(0.5, "npc"),
-        vellum::unit(0.5, "npc"),
-        size = vellum::unit(m$key / 2, "mm"),
+        vellum::vl_unit(0.5, "npc"),
+        vellum::vl_unit(0.5, "npc"),
+        size = vellum::vl_unit(m$key / 2, "mm"),
         shape = sc$shapes[i],
         sketch = sk,
-        gp = vellum::gpar(fill = "grey35", col = "grey35")
+        gp = vellum::vl_gpar(fill = "grey35", col = "grey35")
       )
     },
     edge_width = vellum::segments_grob(
-      vellum::unit(0.12, "npc"),
-      vellum::unit(0.5, "npc"),
-      vellum::unit(0.88, "npc"),
-      vellum::unit(0.5, "npc"),
+      vellum::vl_unit(0.12, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.88, "npc"),
+      vellum::vl_unit(0.5, "npc"),
       sketch = sk,
-      gp = vellum::gpar(col = "grey35", lwd = sc$legend_widths[i])
+      gp = vellum::vl_gpar(col = "grey35", lwd = sc$legend_widths[i])
     ),
     alpha = vellum::points_grob(
-      vellum::unit(0.5, "npc"),
-      vellum::unit(0.5, "npc"),
-      size = vellum::unit(m$key / 2, "mm"),
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      size = vellum::vl_unit(m$key / 2, "mm"),
       shape = "circle",
       sketch = sk,
-      gp = vellum::gpar(fill = "grey20", col = NA, alpha = sc$legend_alphas[i])
+      gp = vellum::vl_gpar(fill = "grey20", col = NA, alpha = sc$legend_alphas[i])
     ),
     linetype = vellum::segments_grob(
-      vellum::unit(0.12, "npc"),
-      vellum::unit(0.5, "npc"),
-      vellum::unit(0.88, "npc"),
-      vellum::unit(0.5, "npc"),
+      vellum::vl_unit(0.12, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.88, "npc"),
+      vellum::vl_unit(0.5, "npc"),
       sketch = sk,
-      gp = vellum::gpar(col = "grey35", lwd = 1.5, lty = sc$linetypes[i])
+      gp = vellum::vl_gpar(col = "grey35", lwd = 1.5, lty = sc$linetypes[i])
     ),
     # A merged guide's key carries both encodings in one point: the shared
     # variable's colour (fill + stroke) and shape, sized when size is merged in.
     merged = vellum::points_grob(
-      vellum::unit(0.5, "npc"),
-      vellum::unit(0.5, "npc"),
-      size = vellum::unit(sc$sizes_mm[i] %||% (m$key / 2), "mm"),
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      size = vellum::vl_unit(sc$sizes_mm[i] %||% (m$key / 2), "mm"),
       shape = sc$shapes[i] %||% "circle",
       sketch = sk,
-      gp = vellum::gpar(fill = sc$fills[i], col = sc$cols[i])
+      gp = vellum::vl_gpar(fill = sc$fills[i], col = sc$cols[i])
     )
   )
 }
@@ -862,26 +862,26 @@ NULL
     glyph %||% "square",
     point = ,
     circle = vellum::points_grob(
-      vellum::unit(0.5, "npc"),
-      vellum::unit(0.5, "npc"),
-      size = vellum::unit(m$key / 2, "mm"),
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      size = vellum::vl_unit(m$key / 2, "mm"),
       shape = "circle",
       sketch = sketch,
-      gp = vellum::gpar(fill = col, col = NA)
+      gp = vellum::vl_gpar(fill = col, col = NA)
     ),
     line = vellum::segments_grob(
-      vellum::unit(0.12, "npc"),
-      vellum::unit(0.5, "npc"),
-      vellum::unit(0.88, "npc"),
-      vellum::unit(0.5, "npc"),
+      vellum::vl_unit(0.12, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.88, "npc"),
+      vellum::vl_unit(0.5, "npc"),
       sketch = sketch,
-      gp = vellum::gpar(col = col, lwd = 2)
+      gp = vellum::vl_gpar(col = col, lwd = 2)
     ),
     vellum::rect_grob(
-      width = vellum::unit(m$key, "mm"),
-      height = vellum::unit(m$key, "mm"),
+      width = vellum::vl_unit(m$key, "mm"),
+      height = vellum::vl_unit(m$key, "mm"),
       sketch = sketch,
-      gp = vellum::gpar(fill = col, col = NA)
+      gp = vellum::vl_gpar(fill = col, col = NA)
     )
   )
 }
@@ -897,8 +897,8 @@ NULL
     scene,
     vellum::text_grob(
       name,
-      x = vellum::unit(0, "npc"),
-      y = vellum::unit(0.4, "npc"),
+      x = vellum::vl_unit(0, "npc"),
+      y = vellum::vl_unit(0.4, "npc"),
       just = c("left", "centre"),
       gp = .el_gpar_text(el)
     )
@@ -955,15 +955,15 @@ NULL
   pitch <- max(key_d, m$text_h) + m$row_gap
   key_w <- m$pad + key_d + m$lab_gap
   heights <- .c_units(
-    if (m$show_title) vellum::unit(th, "mm"),
-    vellum::unit(rep(pitch, k), "mm")
+    if (m$show_title) vellum::vl_unit(th, "mm"),
+    vellum::vl_unit(rep(pitch, k), "mm")
   )
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       layout = vellum::grid_layout(
         heights = heights,
-        widths = c(vellum::unit(key_w, "mm"), vellum::unit(1, "null"))
+        widths = c(vellum::vl_unit(key_w, "mm"), vellum::vl_unit(1, "null"))
       )
     )
   )
@@ -971,22 +971,22 @@ NULL
   if (m$show_title) {
     scene <- vellum::push(
       scene,
-      vellum::viewport(row = 1, col = 1, colspan = 2)
+      vellum::vl_viewport(row = 1, col = 1, colspan = 2)
     )
     scene <- .draw_guide_title(scene, g$sc$name, rt)
     scene <- vellum::pop(scene)
   }
   for (i in seq_len(k)) {
-    scene <- vellum::push(scene, vellum::viewport(row = off + i, col = 1))
+    scene <- vellum::push(scene, vellum::vl_viewport(row = off + i, col = 1))
     scene <- vellum::draw(scene, .tag_legend_swatch(.key_grob(g, i, m, rt[[".sketch"]]), g, i, labs[i], rt[[".interactive"]]))
     scene <- vellum::pop(scene)
-    scene <- vellum::push(scene, vellum::viewport(row = off + i, col = 2))
+    scene <- vellum::push(scene, vellum::vl_viewport(row = off + i, col = 2))
     scene <- vellum::draw(
       scene,
       vellum::text_grob(
         labs[i],
-        x = vellum::unit(0, "npc"),
-        y = vellum::unit(0.5, "npc"),
+        x = vellum::vl_unit(0, "npc"),
+        y = vellum::vl_unit(0.5, "npc"),
         just = c("left", "centre"),
         gp = txt
       )
@@ -1001,35 +1001,35 @@ NULL
   has_na <- isTRUE(cl$na)
   na_h <- max(m$key, m$text_h) + m$row_gap
   heights <- .c_units(
-    if (m$show_title) vellum::unit(th, "mm"),
-    vellum::unit(1, "null"),
-    if (has_na) vellum::unit(na_h, "mm")
+    if (m$show_title) vellum::vl_unit(th, "mm"),
+    vellum::vl_unit(1, "null"),
+    if (has_na) vellum::vl_unit(na_h, "mm")
   )
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       layout = vellum::grid_layout(
         heights = heights,
-        widths = vellum::unit(1, "null")
+        widths = vellum::vl_unit(1, "null")
       )
     )
   )
   row_bar <- if (m$show_title) 2L else 1L
   if (m$show_title) {
-    scene <- vellum::push(scene, vellum::viewport(row = 1, col = 1))
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
     scene <- .draw_guide_title(scene, cl$name, rt)
     scene <- vellum::pop(scene)
   }
-  scene <- vellum::push(scene, vellum::viewport(row = row_bar, col = 1))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = row_bar, col = 1))
   grad <- vellum::linear_gradient(cl$pal256, x1 = 0, y1 = 0, x2 = 0, y2 = 1)
   scene <- vellum::draw(
     scene,
     vellum::rect_grob(
-      x = vellum::unit(m$pad + m$bar_w / 2, "mm"),
-      y = vellum::unit(0.5, "npc"),
-      width = vellum::unit(m$bar_w, "mm"),
-      height = vellum::unit(1, "npc"),
-      gp = vellum::gpar(fill = grad, col = "grey50", lwd = 0.5)
+      x = vellum::vl_unit(m$pad + m$bar_w / 2, "mm"),
+      y = vellum::vl_unit(0.5, "npc"),
+      width = vellum::vl_unit(m$bar_w, "mm"),
+      height = vellum::vl_unit(1, "npc"),
+      gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
     )
   )
   for (i in seq_along(cl$legend_breaks)) {
@@ -1038,19 +1038,19 @@ NULL
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::unit(m$pad + m$bar_w - .LEGEND_TICK_MM, "mm"),
-        vellum::unit(frac, "npc"),
-        vellum::unit(m$pad + m$bar_w, "mm"),
-        vellum::unit(frac, "npc"),
-        gp = vellum::gpar(col = "white", lwd = 0.8)
+        vellum::vl_unit(m$pad + m$bar_w - .LEGEND_TICK_MM, "mm"),
+        vellum::vl_unit(frac, "npc"),
+        vellum::vl_unit(m$pad + m$bar_w, "mm"),
+        vellum::vl_unit(frac, "npc"),
+        gp = vellum::vl_gpar(col = "white", lwd = 0.8)
       )
     )
     scene <- vellum::draw(
       scene,
       vellum::text_grob(
         cl$legend_labels[i],
-        x = vellum::unit(m$pad + m$bar_w + m$lab_gap, "mm"),
-        y = vellum::unit(frac, "npc"),
+        x = vellum::vl_unit(m$pad + m$bar_w + m$lab_gap, "mm"),
+        y = vellum::vl_unit(frac, "npc"),
         just = c("left", "centre"),
         gp = txt
       )
@@ -1060,24 +1060,24 @@ NULL
   if (has_na) {
     scene <- vellum::push(
       scene,
-      vellum::viewport(row = row_bar + 1L, col = 1)
+      vellum::vl_viewport(row = row_bar + 1L, col = 1)
     )
     scene <- vellum::draw(
       scene,
       vellum::rect_grob(
-        x = vellum::unit(m$pad + m$bar_w / 2, "mm"),
-        y = vellum::unit(0.5, "npc"),
-        width = vellum::unit(m$key, "mm"),
-        height = vellum::unit(m$key, "mm"),
-        gp = vellum::gpar(fill = cl$na_value, col = NA)
+        x = vellum::vl_unit(m$pad + m$bar_w / 2, "mm"),
+        y = vellum::vl_unit(0.5, "npc"),
+        width = vellum::vl_unit(m$key, "mm"),
+        height = vellum::vl_unit(m$key, "mm"),
+        gp = vellum::vl_gpar(fill = cl$na_value, col = NA)
       )
     )
     scene <- vellum::draw(
       scene,
       vellum::text_grob(
         "NA",
-        x = vellum::unit(m$pad + m$bar_w + m$lab_gap, "mm"),
-        y = vellum::unit(0.5, "npc"),
+        x = vellum::vl_unit(m$pad + m$bar_w + m$lab_gap, "mm"),
+        y = vellum::vl_unit(0.5, "npc"),
         just = c("left", "centre"),
         gp = txt
       )
@@ -1105,42 +1105,42 @@ NULL
     vapply(labs, .mm_tw, 0, fs = m$text_fs) +
     m$spacing
   heights <- .c_units(
-    if (m$show_title) vellum::unit(th, "mm"),
-    vellum::unit(1, "null")
+    if (m$show_title) vellum::vl_unit(th, "mm"),
+    vellum::vl_unit(1, "null")
   )
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       layout = vellum::grid_layout(
         heights = heights,
-        widths = vellum::unit(1, "null")
+        widths = vellum::vl_unit(1, "null")
       )
     )
   )
   key_row <- if (m$show_title) 2L else 1L
   if (m$show_title) {
-    scene <- vellum::push(scene, vellum::viewport(row = 1, col = 1))
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
     scene <- .draw_guide_title(scene, g$sc$name, rt)
     scene <- vellum::pop(scene)
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       row = key_row,
       col = 1,
       layout = vellum::grid_layout(
-        widths = vellum::unit(cellw, "mm"),
-        heights = vellum::unit(1, "null")
+        widths = vellum::vl_unit(cellw, "mm"),
+        heights = vellum::vl_unit(1, "null")
       )
     )
   )
   for (i in seq_len(k)) {
-    scene <- vellum::push(scene, vellum::viewport(row = 1, col = i))
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = i))
     scene <- vellum::push(
       scene,
-      vellum::viewport(
-        x = vellum::unit(key_d / 2, "mm"),
-        width = vellum::unit(key_d, "mm")
+      vellum::vl_viewport(
+        x = vellum::vl_unit(key_d / 2, "mm"),
+        width = vellum::vl_unit(key_d, "mm")
       )
     )
     scene <- vellum::draw(scene, .tag_legend_swatch(.key_grob(g, i, m, rt[[".sketch"]]), g, i, labs[i], rt[[".interactive"]]))
@@ -1149,8 +1149,8 @@ NULL
       scene,
       vellum::text_grob(
         labs[i],
-        x = vellum::unit(key_d + m$lab_gap, "mm"),
-        y = vellum::unit(0.5, "npc"),
+        x = vellum::vl_unit(key_d + m$lab_gap, "mm"),
+        y = vellum::vl_unit(0.5, "npc"),
         just = c("left", "centre"),
         gp = txt
       )
@@ -1164,35 +1164,35 @@ NULL
 .draw_guide_continuous_h <- function(scene, g, m, rt, txt, th) {
   cl <- g$sc
   heights <- .c_units(
-    if (m$show_title) vellum::unit(th, "mm"),
-    vellum::unit(m$bar_w, "mm"),
-    vellum::unit(m$text_h + m$lab_gap, "mm")
+    if (m$show_title) vellum::vl_unit(th, "mm"),
+    vellum::vl_unit(m$bar_w, "mm"),
+    vellum::vl_unit(m$text_h + m$lab_gap, "mm")
   )
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       layout = vellum::grid_layout(
         heights = heights,
-        widths = vellum::unit(1, "null")
+        widths = vellum::vl_unit(1, "null")
       )
     )
   )
   off <- if (m$show_title) 1L else 0L
   if (m$show_title) {
-    scene <- vellum::push(scene, vellum::viewport(row = 1, col = 1))
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
     scene <- .draw_guide_title(scene, cl$name, rt)
     scene <- vellum::pop(scene)
   }
-  scene <- vellum::push(scene, vellum::viewport(row = off + 1L, col = 1))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 1))
   grad <- vellum::linear_gradient(cl$pal256, x1 = 0, y1 = 0, x2 = 1, y2 = 0)
   scene <- vellum::draw(
     scene,
     vellum::rect_grob(
-      x = vellum::unit(0.5, "npc"),
-      y = vellum::unit(0.5, "npc"),
-      width = vellum::unit(1, "npc"),
-      height = vellum::unit(1, "npc"),
-      gp = vellum::gpar(fill = grad, col = "grey50", lwd = 0.5)
+      x = vellum::vl_unit(0.5, "npc"),
+      y = vellum::vl_unit(0.5, "npc"),
+      width = vellum::vl_unit(1, "npc"),
+      height = vellum::vl_unit(1, "npc"),
+      gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
     )
   )
   # White break ticks reaching up from the bar's bottom (label-side) edge.
@@ -1201,16 +1201,16 @@ NULL
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::unit(frac, "npc"),
-        vellum::unit(0, "npc"),
-        vellum::unit(frac, "npc"),
-        vellum::unit(.LEGEND_TICK_MM, "mm"),
-        gp = vellum::gpar(col = "white", lwd = 0.8)
+        vellum::vl_unit(frac, "npc"),
+        vellum::vl_unit(0, "npc"),
+        vellum::vl_unit(frac, "npc"),
+        vellum::vl_unit(.LEGEND_TICK_MM, "mm"),
+        gp = vellum::vl_gpar(col = "white", lwd = 0.8)
       )
     )
   }
   scene <- vellum::pop(scene)
-  scene <- vellum::push(scene, vellum::viewport(row = off + 2L, col = 1))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 1))
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
     # Justify the end labels inward so they never spill past the bar ends.
@@ -1225,8 +1225,8 @@ NULL
       scene,
       vellum::text_grob(
         cl$legend_labels[i],
-        x = vellum::unit(frac, "npc"),
-        y = vellum::unit(0.5, "npc"),
+        x = vellum::vl_unit(frac, "npc"),
+        y = vellum::vl_unit(0.5, "npc"),
         just = c(hjust, "centre"),
         gp = txt
       )
@@ -1245,7 +1245,7 @@ NULL
 .draw_legends <- function(scene, cell, guides, rt, orient = "vertical") {
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       row = cell$row,
       col = cell$col,
       rowspan = cell$rowspan %||% 1,
@@ -1269,41 +1269,41 @@ NULL
   # everything below draws inside the middle (2, 2) cell.
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       layout = vellum::grid_layout(
         widths = c(
-          vellum::unit(m$margin[4], "mm"),
-          vellum::unit(1, "null"),
-          vellum::unit(m$margin[2], "mm")
+          vellum::vl_unit(m$margin[4], "mm"),
+          vellum::vl_unit(1, "null"),
+          vellum::vl_unit(m$margin[2], "mm")
         ),
         heights = c(
-          vellum::unit(m$margin[1], "mm"),
-          vellum::unit(1, "null"),
-          vellum::unit(m$margin[3], "mm")
+          vellum::vl_unit(m$margin[1], "mm"),
+          vellum::vl_unit(1, "null"),
+          vellum::vl_unit(m$margin[3], "mm")
         )
       )
     )
   )
-  scene <- vellum::push(scene, vellum::viewport(row = 2, col = 2))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 2, col = 2))
   if (orient == "horizontal") {
     ws <- vapply(guides, .guide_width_mm, 0, m = m)
     total <- sum(ws) + (n - 1) * m$spacing
     scene <- vellum::push(
       scene,
-      vellum::viewport(
-        x = vellum::unit(0.5, "npc"),
-        width = vellum::unit(total, "mm"),
-        height = vellum::unit(1, "npc"),
+      vellum::vl_viewport(
+        x = vellum::vl_unit(0.5, "npc"),
+        width = vellum::vl_unit(total, "mm"),
+        height = vellum::vl_unit(1, "npc"),
         layout = vellum::grid_layout(
           widths = .interleave_mm(ws, m$spacing),
-          heights = vellum::unit(1, "null")
+          heights = vellum::vl_unit(1, "null")
         )
       )
     )
     for (i in seq_len(n)) {
       scene <- vellum::push(
         scene,
-        vellum::viewport(row = 1, col = 2L * i - 1L)
+        vellum::vl_viewport(row = 1, col = 2L * i - 1L)
       )
       scene <- .draw_guide_h(scene, guides[[i]], m, rt)
       scene <- vellum::pop(scene)
@@ -1314,20 +1314,20 @@ NULL
     total <- sum(hs) + (n - 1) * m$spacing
     scene <- vellum::push(
       scene,
-      vellum::viewport(
-        y = vellum::unit(0.5, "npc"),
-        width = vellum::unit(1, "npc"),
-        height = vellum::unit(total, "mm"),
+      vellum::vl_viewport(
+        y = vellum::vl_unit(0.5, "npc"),
+        width = vellum::vl_unit(1, "npc"),
+        height = vellum::vl_unit(total, "mm"),
         layout = vellum::grid_layout(
           heights = .interleave_mm(hs, m$spacing),
-          widths = vellum::unit(1, "null")
+          widths = vellum::vl_unit(1, "null")
         )
       )
     )
     for (i in seq_len(n)) {
       scene <- vellum::push(
         scene,
-        vellum::viewport(row = 2L * i - 1L, col = 1)
+        vellum::vl_viewport(row = 2L * i - 1L, col = 1)
       )
       scene <- .draw_guide_v(scene, guides[[i]], m, rt)
       scene <- vellum::pop(scene)

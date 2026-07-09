@@ -424,7 +424,7 @@ compose_annotation <- function(
     desc = .alt_desc_safe(comp)
   )
   if (.comp_alignable(comp)) {
-    scene <- vellum::push(scene, vellum::viewport())
+    scene <- vellum::push(scene, vellum::vl_viewport())
     scene <- .draw_composition(scene, comp)
     scene <- vellum::pop(scene)
   } else {
@@ -444,14 +444,14 @@ compose_annotation <- function(
   nrow <- comp@nrow
   wfun <- function(v, k) {
     if (is.null(v)) {
-      vellum::unit(rep(1, k), "null")
+      vellum::vl_unit(rep(1, k), "null")
     } else {
-      vellum::unit(rep_len(as.numeric(v), k), "null")
+      vellum::vl_unit(rep_len(as.numeric(v), k), "null")
     }
   }
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       layout = vellum::grid_layout(
         wfun(comp@widths, ncol),
         wfun(comp@heights, nrow)
@@ -468,7 +468,7 @@ compose_annotation <- function(
     }
     vp <- if (!is.null(comp@design)) {
       a <- comp@design[[i]]
-      vellum::viewport(
+      vellum::vl_viewport(
         row = a$t,
         col = a$l,
         rowspan = a$b - a$t + 1,
@@ -476,7 +476,7 @@ compose_annotation <- function(
       )
     } else {
       pos <- .comp_cell(i, comp)
-      vellum::viewport(row = pos$r, col = pos$c)
+      vellum::vl_viewport(row = pos$r, col = pos$c)
     }
     scene <- vellum::push(scene, vp)
     if (S7::S7_inherits(p, PlotComposition)) {
@@ -510,11 +510,11 @@ compose_annotation <- function(
     h <- ins$top - ins$bottom
     scene <- vellum::push(
       scene,
-      vellum::viewport(
-        x = vellum::unit(ins$left + w / 2, "npc"),
-        y = vellum::unit(ins$bottom + h / 2, "npc"),
-        width = vellum::unit(w, "npc"),
-        height = vellum::unit(h, "npc")
+      vellum::vl_viewport(
+        x = vellum::vl_unit(ins$left + w / 2, "npc"),
+        y = vellum::vl_unit(ins$bottom + h / 2, "npc"),
+        width = vellum::vl_unit(w, "npc"),
+        height = vellum::vl_unit(h, "npc")
       )
     )
     scene <- .draw_plot(scene, ins$plot)

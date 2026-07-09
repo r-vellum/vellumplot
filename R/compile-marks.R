@@ -96,8 +96,8 @@ NULL
 .nudge_xy <- function(xy, L) {
   nx <- .aes_param(L, "nudge_x", 0)
   ny <- .aes_param(L, "nudge_y", 0)
-  if (!is.null(nx) && nx != 0) xy$x <- xy$x + vellum::unit(nx, "mm")
-  if (!is.null(ny) && ny != 0) xy$y <- xy$y + vellum::unit(ny, "mm")
+  if (!is.null(nx) && nx != 0) xy$x <- xy$x + vellum::vl_unit(nx, "mm")
+  if (!is.null(ny) && ny != 0) xy$y <- xy$y + vellum::vl_unit(ny, "mm")
   xy
 }
 
@@ -120,8 +120,8 @@ NULL
     rad <- ctx$r_map(x)
   }
   list(
-    x = vellum::unit(rad * cos(ang), "native"),
-    y = vellum::unit(rad * sin(ang), "native")
+    x = vellum::vl_unit(rad * cos(ang), "native"),
+    y = vellum::vl_unit(rad * sin(ang), "native")
   )
 }
 
@@ -130,9 +130,9 @@ NULL
     return(.polar_xy(scales, x, y))
   }
   if (.flipped(scales)) {
-    list(x = vellum::unit(y, "native"), y = vellum::unit(x, "native"))
+    list(x = vellum::vl_unit(y, "native"), y = vellum::vl_unit(x, "native"))
   } else {
-    list(x = vellum::unit(x, "native"), y = vellum::unit(y, "native"))
+    list(x = vellum::vl_unit(x, "native"), y = vellum::vl_unit(y, "native"))
   }
 }
 
@@ -182,17 +182,17 @@ NULL
 .rect_units <- function(scales, xc, yc, w, h) {
   if (.flipped(scales)) {
     list(
-      x = vellum::unit(yc, "native"),
-      y = vellum::unit(xc, "native"),
-      width = vellum::unit(h, "native"),
-      height = vellum::unit(w, "native")
+      x = vellum::vl_unit(yc, "native"),
+      y = vellum::vl_unit(xc, "native"),
+      width = vellum::vl_unit(h, "native"),
+      height = vellum::vl_unit(w, "native")
     )
   } else {
     list(
-      x = vellum::unit(xc, "native"),
-      y = vellum::unit(yc, "native"),
-      width = vellum::unit(w, "native"),
-      height = vellum::unit(h, "native")
+      x = vellum::vl_unit(xc, "native"),
+      y = vellum::vl_unit(yc, "native"),
+      width = vellum::vl_unit(w, "native"),
+      height = vellum::vl_unit(h, "native")
     )
   }
 }
@@ -296,10 +296,10 @@ NULL
       vellum::points_grob(
         xy$x,
         xy$y,
-        size = vellum::unit(size[idx], "mm"),
+        size = vellum::vl_unit(size[idx], "mm"),
         shape = shape[idx],
         sketch = sk,
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           fill = col[idx[1]],
           col = col[idx[1]],
           alpha = if (is.na(a)) NULL else a
@@ -333,7 +333,7 @@ NULL
         xy$x,
         xy$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           col = col[idx[1]],
           lwd = lwd,
           lty = lty[idx[1]],
@@ -371,7 +371,7 @@ NULL
       vellum::lines_grob(
         xy$x, xy$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(col = col[idx[1]], lwd = lwd, alpha = if (is.na(a)) NULL else a)
+        gp = vellum::vl_gpar(col = col[idx[1]], lwd = lwd, alpha = if (is.na(a)) NULL else a)
       ),
       rows = idx
     )
@@ -404,7 +404,7 @@ NULL
         xy$x, xy$y,
         id = ring[idx], rule = "evenodd",
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(fill = fill[idx[1]], col = NA, alpha = if (is.na(a)) NULL else a)
+        gp = vellum::vl_gpar(fill = fill[idx[1]], col = NA, alpha = if (is.na(a)) NULL else a)
       ),
       rows = idx
     )
@@ -416,7 +416,7 @@ NULL
 .emit_rule <- function(scene, L, scales) {
   col <- .aes_colour(L, scales, "grey40")[1]
   lwd <- .aes_param(L, "linewidth", 1)
-  gp <- vellum::gpar(col = col, lwd = lwd)
+  gp <- vellum::vl_gpar(col = col, lwd = lwd)
   sk <- .mark_sketch(L, scales)
   yi <- .intercept(L, "yintercept")
   xi <- .intercept(L, "xintercept")
@@ -426,10 +426,10 @@ NULL
       k <- length(vy)
       s <- .seg_units(
         scales,
-        vellum::unit(rep(0, k), "npc"),
-        vellum::unit(vy, "native"),
-        vellum::unit(rep(1, k), "npc"),
-        vellum::unit(vy, "native")
+        vellum::vl_unit(rep(0, k), "npc"),
+        vellum::vl_unit(vy, "native"),
+        vellum::vl_unit(rep(1, k), "npc"),
+        vellum::vl_unit(vy, "native")
       )
       scene <- .draw(
         scene,
@@ -443,10 +443,10 @@ NULL
       k <- length(vx)
       s <- .seg_units(
         scales,
-        vellum::unit(vx, "native"),
-        vellum::unit(rep(0, k), "npc"),
-        vellum::unit(vx, "native"),
-        vellum::unit(rep(1, k), "npc")
+        vellum::vl_unit(vx, "native"),
+        vellum::vl_unit(rep(0, k), "npc"),
+        vellum::vl_unit(vx, "native"),
+        vellum::vl_unit(rep(1, k), "npc")
       )
       scene <- .draw(
         scene,
@@ -519,15 +519,15 @@ NULL
     scene <- .draw(
       scene,
       vellum::sector_grob(
-        x = vellum::unit(rep(0, length(idx)), "native"),
-        y = vellum::unit(rep(0, length(idx)), "native"),
-        r0 = vellum::unit(r0[idx], "native"),
-        r1 = vellum::unit(r1[idx], "native"),
+        x = vellum::vl_unit(rep(0, length(idx)), "native"),
+        y = vellum::vl_unit(rep(0, length(idx)), "native"),
+        r0 = vellum::vl_unit(r0[idx], "native"),
+        r1 = vellum::vl_unit(r1[idx], "native"),
         theta0 = theta0[idx],
         theta1 = theta1[idx],
         fill = fill[idx],
         sketch = sk,
-        gp = vellum::gpar(col = NA, alpha = if (is.na(a)) NULL else a)
+        gp = vellum::vl_gpar(col = NA, alpha = if (is.na(a)) NULL else a)
       ),
       rows = idx
     )
@@ -582,7 +582,7 @@ NULL
         width = r$width,
         height = r$height,
         sketch = sk,
-        gp = vellum::gpar(fill = grad, col = NA)
+        gp = vellum::vl_gpar(fill = grad, col = NA)
       ),
       rows = seq_len(n)
     ))
@@ -606,7 +606,7 @@ NULL
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
           alpha = if (is.na(a)) NULL else a
@@ -643,7 +643,7 @@ NULL
           poly$x,
           poly$y,
           sketch = .sketch_bump(sk, gi),
-          gp = vellum::gpar(fill = cc, col = NA, alpha = 0.25)
+          gp = vellum::vl_gpar(fill = cc, col = NA, alpha = 0.25)
         )
       )
     }
@@ -654,7 +654,7 @@ NULL
         ln$x,
         ln$y,
         sketch = .sketch_bump(sk, gi + 50L),
-        gp = vellum::gpar(col = cc, lwd = 1.5)
+        gp = vellum::vl_gpar(col = cc, lwd = 1.5)
       )
     )
     gi <- gi + 1L
@@ -680,7 +680,7 @@ NULL
         poly$x,
         poly$y,
         sketch = sk,
-        gp = vellum::gpar(fill = grad, col = NA)
+        gp = vellum::vl_gpar(fill = grad, col = NA)
       ),
       # PROVENANCE: one polygon over the whole layer, in x order.
       rows = o
@@ -701,7 +701,7 @@ NULL
         poly$x,
         poly$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
           alpha = if (is.na(a)) NULL else a
@@ -735,7 +735,7 @@ NULL
         poly$x,
         poly$y,
         sketch = sk,
-        gp = vellum::gpar(fill = grad, col = NA)
+        gp = vellum::vl_gpar(fill = grad, col = NA)
       ),
       # PROVENANCE: one polygon over the whole layer, in x order.
       rows = o
@@ -756,7 +756,7 @@ NULL
         poly$x,
         poly$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
           alpha = if (is.na(a)) NULL else a
@@ -810,7 +810,7 @@ NULL
         ln$x,
         ln$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           col = col[idx[1]],
           lwd = lwd,
           lty = lty[idx[1]],
@@ -876,7 +876,7 @@ NULL
         xy$y,
         just = just,
         rot = ang[idx],
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           fontsize = fs,
           col = col[idx[1]],
           fontfamily = .aes_param(L, "family", NULL),
@@ -901,7 +901,7 @@ NULL
   bg <- L$params$fill %||% "white"
   sk <- .mark_sketch(L, scales)
   fs <- .aes_param(L, "size", 8)
-  pad <- vellum::unit(1.2, "mm")
+  pad <- vellum::vl_unit(1.2, "mm")
   ws <- do.call(
     c,
     lapply(label, function(l) vellum::grobwidth(.txt(l, fs)) + pad)
@@ -920,9 +920,9 @@ NULL
         y = xy$y,
         width = ws[idx],
         height = hs[idx],
-        r = vellum::unit(0.8, "mm"),
+        r = vellum::vl_unit(0.8, "mm"),
         sketch = sk,
-        gp = vellum::gpar(fill = bg, col = NA)
+        gp = vellum::vl_gpar(fill = bg, col = NA)
       )
     )
     scene <- .draw(
@@ -931,7 +931,7 @@ NULL
         label[idx],
         xy$x,
         xy$y,
-        gp = vellum::gpar(fontsize = fs, col = col[idx[1]])
+        gp = vellum::vl_gpar(fontsize = fs, col = col[idx[1]])
       )
     )
   }
@@ -962,7 +962,7 @@ NULL
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
           alpha = if (is.na(a)) NULL else a
@@ -1004,10 +1004,10 @@ NULL
     scene,
     vellum::raster_grob(
       grDevices::as.raster(m),
-      x = vellum::unit(mean(xn), "native"),
-      y = vellum::unit(mean(yn), "native"),
-      width = vellum::unit(diff(range(xn)), "native"),
-      height = vellum::unit(diff(range(yn)), "native"),
+      x = vellum::vl_unit(mean(xn), "native"),
+      y = vellum::vl_unit(mean(yn), "native"),
+      width = vellum::vl_unit(diff(range(xn)), "native"),
+      height = vellum::vl_unit(diff(range(yn)), "native"),
       interpolate = FALSE
     )
   )
@@ -1047,7 +1047,7 @@ NULL
     out <- yy[yy < lo | yy > hi]
     xc <- xc_all[j]
     fillc <- colv[sel[1]]
-    line_gp <- vellum::gpar(col = "grey20", lwd = 1)
+    line_gp <- vellum::vl_gpar(col = "grey20", lwd = 1)
     skj <- .sketch_bump(sk, j)
 
     r <- .rect_units(
@@ -1065,7 +1065,7 @@ NULL
         width = r$width,
         height = r$height,
         sketch = skj,
-        gp = vellum::gpar(fill = fillc, col = "grey20", lwd = 1)
+        gp = vellum::vl_gpar(fill = fillc, col = "grey20", lwd = 1)
       ),
       # PROVENANCE: a box summarises all rows of its category.
       rows = sel
@@ -1077,10 +1077,10 @@ NULL
     )) {
       s <- .seg_units(
         scales,
-        vellum::unit(seg[1], "native"),
-        vellum::unit(seg[2], "native"),
-        vellum::unit(seg[3], "native"),
-        vellum::unit(seg[4], "native")
+        vellum::vl_unit(seg[1], "native"),
+        vellum::vl_unit(seg[2], "native"),
+        vellum::vl_unit(seg[3], "native"),
+        vellum::vl_unit(seg[4], "native")
       )
       scene <- .draw(
         scene,
@@ -1106,10 +1106,10 @@ NULL
         vellum::points_grob(
           xy$x,
           xy$y,
-          size = vellum::unit(1.2, "mm"),
+          size = vellum::vl_unit(1.2, "mm"),
           shape = "circle",
           sketch = skj,
-          gp = vellum::gpar(fill = "grey20", col = "grey20")
+          gp = vellum::vl_gpar(fill = "grey20", col = "grey20")
         ),
         rows = out_rows
       )
@@ -1152,7 +1152,7 @@ NULL
         xy$x,
         xy$y,
         sketch = .sketch_bump(sk, j),
-        gp = vellum::gpar(fill = colv[sel[1]], col = "grey30", lwd = 1)
+        gp = vellum::vl_gpar(fill = colv[sel[1]], col = "grey30", lwd = 1)
       ),
       # PROVENANCE: a violin summarises all rows of its category.
       rows = sel
@@ -1196,7 +1196,7 @@ NULL
         xy$x,
         xy$y,
         sketch = .sketch_bump(sk, j),
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           fill = colv[sel[1]],
           col = "grey30",
           lwd = 1,
@@ -1236,10 +1236,10 @@ NULL
     }
     s <- .seg_units(
       scales,
-      vellum::unit(x0, "native"),
-      vellum::unit(y0, "native"),
-      vellum::unit(x1, "native"),
-      vellum::unit(y1, "native")
+      vellum::vl_unit(x0, "native"),
+      vellum::vl_unit(y0, "native"),
+      vellum::vl_unit(x1, "native"),
+      vellum::vl_unit(y1, "native")
     )
     scene <- .draw(
       scene,
@@ -1249,7 +1249,7 @@ NULL
         s$x1,
         s$y1,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(col = col[idx[1]], lwd = lwd)
+        gp = vellum::vl_gpar(col = col[idx[1]], lwd = lwd)
       )
     )
     gi <- gi + 1L
@@ -1278,10 +1278,10 @@ NULL
     a <- alpha[idx[1]]
     s <- .seg_units(
       scales,
-      vellum::unit(x0[idx], "native"),
-      vellum::unit(y0[idx], "native"),
-      vellum::unit(x1[idx], "native"),
-      vellum::unit(y1[idx], "native")
+      vellum::vl_unit(x0[idx], "native"),
+      vellum::vl_unit(y0[idx], "native"),
+      vellum::vl_unit(x1[idx], "native"),
+      vellum::vl_unit(y1[idx], "native")
     )
     scene <- .draw(
       scene,
@@ -1291,7 +1291,7 @@ NULL
         s$x1,
         s$y1,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::gpar(
+        gp = vellum::vl_gpar(
           col = col[idx[1]],
           lwd = lwd,
           alpha = if (is.na(a)) NULL else a
@@ -1321,7 +1321,7 @@ NULL
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- rep_len(.edge_width(L, scales, 0.5), n)
   arr <- if (isTRUE(L$stat_params$arrow)) {
-    vellum::arrow(type = "closed", length = vellum::unit(2, "mm"))
+    vellum::vl_arrow(type = "closed", length = vellum::vl_unit(2, "mm"))
   } else {
     NULL
   }
@@ -1349,16 +1349,16 @@ NULL
       a <- alpha[g[1]]
       s <- .seg_units(
         scales,
-        vellum::unit(x0[g], "native"),
-        vellum::unit(y0[g], "native"),
-        vellum::unit(x1[g], "native"),
-        vellum::unit(y1[g], "native")
+        vellum::vl_unit(x0[g], "native"),
+        vellum::vl_unit(y0[g], "native"),
+        vellum::vl_unit(x1[g], "native"),
+        vellum::vl_unit(y1[g], "native")
       )
       # Node-boundary caps and parallel-edge spacing are both absolute (mm),
       # resolved by vellum in device space -> they track the mm node markers.
-      start_cap <- if (!is.null(gh)) vellum::unit(gh$start_cap[g] + gap, "mm")
-      end_cap <- if (!is.null(gh)) vellum::unit(gh$end_cap[g] + gap, "mm")
-      offset <- if (!is.null(gh)) vellum::unit(gh$offset[g], "mm")
+      start_cap <- if (!is.null(gh)) vellum::vl_unit(gh$start_cap[g] + gap, "mm")
+      end_cap <- if (!is.null(gh)) vellum::vl_unit(gh$end_cap[g] + gap, "mm")
+      offset <- if (!is.null(gh)) vellum::vl_unit(gh$offset[g], "mm")
       scene <- .draw(
         scene,
         vellum::segments_grob(
@@ -1371,7 +1371,7 @@ NULL
           end_cap = end_cap,
           offset = offset,
           sketch = sk,
-          gp = vellum::gpar(
+          gp = vellum::vl_gpar(
             col = col[g[1]],
             lwd = lwd[g[1]],
             alpha = if (is.na(a)) NULL else a
@@ -1411,12 +1411,12 @@ NULL
         vellum::loop_grob(
           xy$x,
           xy$y,
-          size = vellum::unit(size_mm, "mm"),
-          foot = vellum::unit(node_r_mm, "mm"),
+          size = vellum::vl_unit(size_mm, "mm"),
+          foot = vellum::vl_unit(node_r_mm, "mm"),
           angle = ang,
           width = narrow,
           arrow = arr,
-          gp = vellum::gpar(
+          gp = vellum::vl_gpar(
             col = col[j],
             lwd = lwd[j],
             alpha = if (is.na(a)) NULL else a
@@ -1459,11 +1459,11 @@ NULL
     vellum::hexagon_grob(
       xy$x,
       xy$y,
-      width = vellum::unit(if (flip) h_full else w_full, "native"),
-      height = vellum::unit(if (flip) w_full else h_full, "native"),
+      width = vellum::vl_unit(if (flip) h_full else w_full, "native"),
+      height = vellum::vl_unit(if (flip) w_full else h_full, "native"),
       fill = fill,
       orientation = "flat",
-      gp = vellum::gpar(alpha = if (is.na(a)) NULL else a)
+      gp = vellum::vl_gpar(alpha = if (is.na(a)) NULL else a)
     ),
     rows = seq_len(n)
   )
@@ -1585,7 +1585,7 @@ NULL
             id = as.integer(ids),
             rule = "evenodd",
             sketch = sk,
-            gp = vellum::gpar(
+            gp = vellum::vl_gpar(
               fill = fill,
               col = border,
               lwd = lwd,
@@ -1628,7 +1628,7 @@ NULL
             xy$x,
             xy$y,
             sketch = sk,
-            gp = vellum::gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
+            gp = vellum::vl_gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
           ),
           rows = i
         )
@@ -1668,9 +1668,9 @@ NULL
         vellum::points_grob(
           xy$x,
           xy$y,
-          size = vellum::unit(szs, "mm"),
+          size = vellum::vl_unit(szs, "mm"),
           sketch = sk,
-          gp = vellum::gpar(fill = col, col = col, alpha = gp_alpha(a))
+          gp = vellum::vl_gpar(fill = col, col = col, alpha = gp_alpha(a))
         ),
         rows = rows
       )
@@ -1723,7 +1723,7 @@ NULL
   len <- L$stat_params$length %||% 0.03
   col <- .aes_colour(L, scales, "black")[1]
   a <- .aes_alpha(L, scales, NA_real_)[1]
-  gp <- vellum::gpar(
+  gp <- vellum::vl_gpar(
     col = col,
     lwd = .aes_param(L, "linewidth", 0.5),
     alpha = if (is.na(a)) NULL else a
@@ -1731,12 +1731,12 @@ NULL
   tick <- function(scene, u_along, y0, y1, rows, vertical) {
     if (vertical) {
       grob <- vellum::segments_grob(
-        u_along, vellum::unit(y0, "npc"), u_along, vellum::unit(y1, "npc"),
+        u_along, vellum::vl_unit(y0, "npc"), u_along, vellum::vl_unit(y1, "npc"),
         gp = gp
       )
     } else {
       grob <- vellum::segments_grob(
-        vellum::unit(y0, "npc"), u_along, vellum::unit(y1, "npc"), u_along,
+        vellum::vl_unit(y0, "npc"), u_along, vellum::vl_unit(y1, "npc"), u_along,
         gp = gp
       )
     }
@@ -1744,14 +1744,14 @@ NULL
   }
   if (!is.null(L$values$x) && (grepl("b", sides) || grepl("t", sides))) {
     nx <- scales$x$map(L$values$x)
-    ux <- vellum::unit(nx, "native")
+    ux <- vellum::vl_unit(nx, "native")
     r <- seq_along(nx)
     if (grepl("b", sides)) scene <- tick(scene, ux, 0, len, r, TRUE)
     if (grepl("t", sides)) scene <- tick(scene, ux, 1, 1 - len, r, TRUE)
   }
   if (!is.null(L$values$y) && (grepl("l", sides) || grepl("r", sides))) {
     ny <- scales$y$map(L$values$y)
-    uy <- vellum::unit(ny, "native")
+    uy <- vellum::vl_unit(ny, "native")
     r <- seq_along(ny)
     if (grepl("l", sides)) scene <- tick(scene, uy, 0, len, r, FALSE)
     if (grepl("r", sides)) scene <- tick(scene, uy, 1, 1 - len, r, FALSE)
@@ -1760,7 +1760,7 @@ NULL
 }
 
 # Compile every layer's marks into the (already panel-positioned) scene. A layer
-# with a non-normal blend mode is wrapped in its own viewport(blend=) so its
+# with a non-normal blend mode is wrapped in its own vl_viewport(blend=) so its
 # whole content composites as one isolated group against the backdrop (the panel
 # and earlier layers); the wrapper carries the panel's scales so native
 # coordinates still resolve.
@@ -1892,9 +1892,9 @@ NULL
   rng <- .panel_scale_range(scales)
   scene <- vellum::push(
     scene,
-    vellum::viewport(
-      x = vellum::unit(0.5, "npc") + vellum::unit(xoff, "mm"),
-      y = vellum::unit(0.5, "npc") + vellum::unit(yoff, "mm"),
+    vellum::vl_viewport(
+      x = vellum::vl_unit(0.5, "npc") + vellum::vl_unit(xoff, "mm"),
+      y = vellum::vl_unit(0.5, "npc") + vellum::vl_unit(yoff, "mm"),
       xscale = rng$x,
       yscale = rng$y,
       blend = if (identical(blend, "normal")) NULL else blend
@@ -2003,7 +2003,7 @@ NULL
       rng <- .panel_scale_range(scales)
       scene <- vellum::push(
         scene,
-        vellum::viewport(xscale = rng$x, yscale = rng$y, blend = blend)
+        vellum::vl_viewport(xscale = rng$x, yscale = rng$y, blend = blend)
       )
       scene <- .emit_layer(scene, L, scales)
       scene <- vellum::pop(scene)

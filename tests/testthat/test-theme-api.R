@@ -52,7 +52,7 @@ test_that("set_theme() legacy NA maps to element_blank", {
 test_that("a blank text element collapses its gutter track to zero", {
   zero <- vellumplot:::.track_w(element_blank(), "a label", 1.4)
   sized <- vellumplot:::.track_w(element_text(size = 11), "a label", 1.4)
-  expect_identical(zero, vellum::unit(0, "mm"))
+  expect_identical(zero, vellum::vl_unit(0, "mm"))
   expect_false(identical(zero, sized))
 })
 

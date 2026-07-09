@@ -78,18 +78,18 @@ NULL
   m <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       name = "plot",
       layout = vellum::grid_layout(
         c(
-          vellum::unit(m[4], "mm"),
-          vellum::unit(1, "null"),
-          vellum::unit(m[2], "mm")
+          vellum::vl_unit(m[4], "mm"),
+          vellum::vl_unit(1, "null"),
+          vellum::vl_unit(m[2], "mm")
         ),
         c(
-          vellum::unit(m[1], "mm"),
-          vellum::unit(1, "null"),
-          vellum::unit(m[3], "mm")
+          vellum::vl_unit(m[1], "mm"),
+          vellum::vl_unit(1, "null"),
+          vellum::vl_unit(m[3], "mm")
         )
       )
     )
@@ -100,7 +100,7 @@ NULL
   if (!.is_blank(pbg)) {
     scene <- vellum::push(
       scene,
-      vellum::viewport(
+      vellum::vl_viewport(
         row = 1,
         col = 1,
         rowspan = 3,
@@ -113,10 +113,10 @@ NULL
   }
 
   # the real layout lives in the centre cell, inset by the margins
-  scene <- vellum::push(scene, vellum::viewport(row = 2, col = 2))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 2, col = 2))
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       name = "panel-area",
       layout = vellum::grid_layout(
         lay$widths,
@@ -157,7 +157,7 @@ NULL
       psc$polar <- ctx
       scene <- vellum::push(
         scene,
-        vellum::viewport(
+        vellum::vl_viewport(
           row = lay$panel_row[p$r],
           col = lay$panel_col[p$c],
           xscale = c(-1, 1),
@@ -170,7 +170,7 @@ NULL
     } else {
       scene <- vellum::push(
         scene,
-        vellum::viewport(
+        vellum::vl_viewport(
           row = lay$panel_row[p$r],
           col = lay$panel_col[p$c],
           xscale = hsc$domain,

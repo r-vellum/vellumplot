@@ -59,7 +59,7 @@ NULL
 .umax <- function(units) {
   units <- Filter(Negate(is.null), units)
   if (!length(units)) {
-    return(vellum::unit(0, "mm"))
+    return(vellum::vl_unit(0, "mm"))
   }
   Reduce(function(a, b) if (b > a) b else a, units)
 }
@@ -69,14 +69,14 @@ NULL
   if (length(idx) && !is.na(idx[1])) {
     lay$widths[idx[1]]
   } else {
-    vellum::unit(0, "mm")
+    vellum::vl_unit(0, "mm")
   }
 }
 .lay_h <- function(lay, idx) {
   if (length(idx) && !is.na(idx[1])) {
     lay$heights[idx[1]]
   } else {
-    vellum::unit(0, "mm")
+    vellum::vl_unit(0, "mm")
   }
 }
 
@@ -85,7 +85,7 @@ NULL
 # zero when guides are collected at the figure level).
 .plot_bands <- function(plan, collect) {
   lay <- plan$lay
-  z <- vellum::unit(0, "mm")
+  z <- vellum::vl_unit(0, "mm")
   legw <- if (length(plan$guides) && !collect) {
     .legend_width(plan$guides, plan$rt)
   } else {
@@ -142,7 +142,7 @@ NULL
     Bcap[[r]] <- .umax(lapply(bands[ix], `[[`, "B_caption"))
   }
 
-  gap <- vellum::unit(rt0[["panel.spacing"]] %||% 5, "mm")
+  gap <- vellum::vl_unit(rt0[["panel.spacing"]] %||% 5, "mm")
   wts_w <- .size_weights(comp@widths, nc)
   wts_h <- .size_weights(comp@heights, nr)
 
@@ -152,7 +152,7 @@ NULL
   for (c in seq_len(nc)) {
     ytitle_col[c] <- .tk_add(W, Lyt[[c]])
     ylabels_col[c] <- .tk_add(W, Lyl[[c]])
-    panel_col[c] <- .tk_add(W, vellum::unit(wts_w[c], "null"))
+    panel_col[c] <- .tk_add(W, vellum::vl_unit(wts_w[c], "null"))
     rleg_col[c] <- .tk_add(W, Rleg[[c]])
     if (c < nc) .tk_add(W, gap)
   }
@@ -181,7 +181,7 @@ NULL
     tag_row[r] <- .tk_add(H, Ttag[[r]])
     title_row[r] <- .tk_add(H, Ttit[[r]])
     subtitle_row[r] <- .tk_add(H, Tsub[[r]])
-    panel_row[r] <- .tk_add(H, vellum::unit(wts_h[r], "null"))
+    panel_row[r] <- .tk_add(H, vellum::vl_unit(wts_h[r], "null"))
     xlabels_row[r] <- .tk_add(H, Bxl[[r]])
     xtitle_row[r] <- .tk_add(H, Bxt[[r]])
     caption_row[r] <- .tk_add(H, Bcap[[r]])
@@ -278,7 +278,7 @@ NULL
   # panel: background + marks
   scene <- vellum::push(
     scene,
-    vellum::viewport(
+    vellum::vl_viewport(
       row = gm$panel_row,
       col = gm$panel_col,
       xscale = hsc$domain,
@@ -350,7 +350,7 @@ NULL
 
   scene <- vellum::push(
     scene,
-    vellum::viewport(layout = vellum::grid_layout(glo$widths, glo$heights))
+    vellum::vl_viewport(layout = vellum::grid_layout(glo$widths, glo$heights))
   )
   scene <- .draw_figure_bands(scene, comp, glo, rt0)
   if (collect && length(glo$figguides) && !is.na(glo$figlegend_col)) {
@@ -407,13 +407,13 @@ NULL
   if (.is_blank(el)) {
     return(scene)
   }
-  scene <- vellum::push(scene, vellum::viewport(row = row, col = col))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = row, col = col))
   scene <- vellum::draw(
     scene,
     vellum::text_grob(
       text,
-      x = vellum::unit(0.04, "npc"),
-      y = vellum::unit(0.96, "npc"),
+      x = vellum::vl_unit(0.04, "npc"),
+      y = vellum::vl_unit(0.96, "npc"),
       just = c("left", "top"),
       gp = .el_gpar_text(el)
     )

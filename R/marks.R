@@ -77,7 +77,7 @@ NULL
 #' @export
 after_stat <- function(x) x
 
-# The CSS mix-blend-mode set vellum's viewport(blend=) accepts.
+# The CSS mix-blend-mode set vellum's vl_viewport(blend=) accepts.
 .BLEND_MODES <- c(
   "normal",
   "multiply",

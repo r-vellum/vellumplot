@@ -26,7 +26,7 @@ NULL
 }
 
 .txt <- function(label, fontsize, rot = 0) {
-  vellum::text_grob(label, rot = rot, gp = vellum::gpar(fontsize = fontsize))
+  vellum::text_grob(label, rot = rot, gp = vellum::vl_gpar(fontsize = fontsize))
 }
 
 # Size of a text gutter/band track from a resolved theme element: the measured
@@ -34,15 +34,15 @@ NULL
 # is blank (so the track collapses).
 .track_h <- function(el, label, pad_mm, rot = 0) {
   if (.is_blank(el)) {
-    return(vellum::unit(0, "mm"))
+    return(vellum::vl_unit(0, "mm"))
   }
-  vellum::grobheight(.txt(label, el@size, rot)) + vellum::unit(pad_mm, "mm")
+  vellum::grobheight(.txt(label, el@size, rot)) + vellum::vl_unit(pad_mm, "mm")
 }
 .track_w <- function(el, label, pad_mm, rot = 0) {
   if (.is_blank(el)) {
-    return(vellum::unit(0, "mm"))
+    return(vellum::vl_unit(0, "mm"))
   }
-  vellum::grobwidth(.txt(label, el@size, rot)) + vellum::unit(pad_mm, "mm")
+  vellum::grobwidth(.txt(label, el@size, rot)) + vellum::vl_unit(pad_mm, "mm")
 }
 
 # Build the panel + gutter layout. In the simplest single-panel case the columns
@@ -74,7 +74,7 @@ NULL
     }
     w <- max(w, body, tw)
   }
-  vellum::unit(w + m$margin[2] + m$margin[4], "mm")
+  vellum::vl_unit(w + m$margin[2] + m$margin[4], "mm")
 }
 
 # Height of a horizontal legend row (top/bottom): the tallest guide, each a title
@@ -92,7 +92,7 @@ NULL
     }
     h <- max(h, gh)
   }
-  vellum::unit(h + m$margin[1] + m$margin[3], "mm")
+  vellum::vl_unit(h + m$margin[1] + m$margin[3], "mm")
 }
 
 # A tiny ordered track builder: `add(unit)` appends a track and returns its
@@ -135,8 +135,8 @@ NULL
   # `respect = TRUE`, force the device cell aspect (vellum makes 1 null-width =
   # 1 null-height in device units). coord_fixed(ratio) -> width:height of
   # x-range : (ratio * y-range); a bare theme aspect.ratio -> 1 : aspect.ratio.
-  panel_w <- vellum::unit(1, "null")
-  panel_h <- vellum::unit(1, "null")
+  panel_w <- vellum::vl_unit(1, "null")
+  panel_h <- vellum::vl_unit(1, "null")
   respect <- FALSE
   asp <- rt[["aspect.ratio"]]
   polar <- !is.null(coord) && identical(coord@kind, "polar")
@@ -147,8 +147,8 @@ NULL
     ratio <- coord@ratio %||% 1
     xr <- abs(diff(range(built$scales$x$domain)))
     yr <- abs(diff(range(built$scales$y$domain)))
-    panel_w <- vellum::unit(xr, "null")
-    panel_h <- vellum::unit(ratio * yr, "null")
+    panel_w <- vellum::vl_unit(xr, "null")
+    panel_h <- vellum::vl_unit(ratio * yr, "null")
     respect <- TRUE
   } else if (!is.null(coord) && identical(coord@kind, "sf")) {
     # Map aspect: 1 for a projected CRS; the equirectangular correction
@@ -162,11 +162,11 @@ NULL
     } else {
       1
     }
-    panel_w <- vellum::unit(xr, "null")
-    panel_h <- vellum::unit(ratio * yr, "null")
+    panel_w <- vellum::vl_unit(xr, "null")
+    panel_h <- vellum::vl_unit(ratio * yr, "null")
     respect <- TRUE
   } else if (!is.null(asp)) {
-    panel_h <- vellum::unit(asp, "null")
+    panel_h <- vellum::vl_unit(asp, "null")
     respect <- TRUE
   }
 
@@ -188,10 +188,10 @@ NULL
   # Polar panels carry their axis labels/titles inside the square panel, so the
   # four cartesian gutter tracks collapse to zero.
   if (polar) {
-    yt <- yl <- xl <- xt <- vellum::unit(0, "mm")
+    yt <- yl <- xl <- xt <- vellum::vl_unit(0, "mm")
   }
   strip <- .track_h(rt[["strip.text"]], "Ag", 2 * .PAD_MM)
-  gap <- vellum::unit(rt[["panel.spacing"]], "mm")
+  gap <- vellum::vl_unit(rt[["panel.spacing"]], "mm")
 
   # Only grid facets get a dedicated column-strip row here (wrap strips flow
   # through the per-panel wrapstrip_row instead).

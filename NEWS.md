@@ -1,5 +1,8 @@
 # vellumplot (development version)
 
+* Adopted vellum's renamed `vl_*` graphics primitives (`vl_gpar()`, `vl_unit()`,
+  `vl_viewport()`), which no longer mask grid.
+
 * **NA legend keys for `size` / `shape`.** A mapped `size` or `shape` aesthetic
   whose data contains missing values now shows an "NA" key (as the colour scales
   already did). Also fixes a crash: NA in a `shape` mapping previously errored
