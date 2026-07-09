@@ -23,7 +23,7 @@ A chart that a screen-reader user cannot perceive, or that a keyboard user
 cannot operate, excludes people. The vellum ecosystem treats accessibility as
 part of the output contract, not an afterthought: **every plot you compile is an
 accessible image by default**, and the interactive widget is operable without a
-mouse. This article is the cross-package guide — where the pieces live, what
+mouse. This article is the cross-package guide: where the pieces live, what
 they emit, and how to author them well.
 
 The work is split across the three packages along the same seam as everything
@@ -38,7 +38,7 @@ else:
 
 ## Alt text: the text alternative
 
-The single most important thing a chart needs is a **text alternative** — a
+The single most important thing a chart needs is a **text alternative**, a
 prose sentence or two describing what it shows (WCAG 1.1.1). vellumplot writes one
 for every plot automatically, from the spec it already has:
 
@@ -51,8 +51,8 @@ plot_alt(p)
 
 The generated description names the chart type, what is mapped to each axis and
 to colour/size, the number of observations, and any faceting. It is a *sensible
-default*, not a substitute for editorial judgement — the auto text can say
-*what* is plotted but not *what it means*. When you know the takeaway, write it:
+default*, not a substitute for editorial judgement. The auto text says *what* is
+plotted, not *what it means*. When you know the takeaway, write it:
 
 ```{r}
 p <- p |>
@@ -75,7 +75,7 @@ applies, so you can inspect exactly what assistive technology will receive.
 
 At the compile seam the plot **title** becomes the scene's accessible *name* and
 `plot_alt()` becomes its *description*. vellum emits these as the reliable
-screen-reader pattern — `role="img"` with `<title>` and `<desc>` referenced by
+screen-reader pattern: `role="img"` with `<title>` and `<desc>` referenced by
 `aria-labelledby`:
 
 ```{r}
@@ -103,7 +103,7 @@ carrying the description as its `Alt` text, so a PDF reader can announce it:
 render_plot(p, "fuel.pdf") # a tagged PDF: /StructTreeRoot + a Figure with Alt
 ```
 
-Tagging is automatic and additive — a plot with no title/description exports as
+Tagging is automatic and additive. A plot with no title/description exports as
 an ordinary, untagged PDF exactly as before. (Strict PDF/UA-1 *validation* is a
 planned follow-up; the tag tree and `Alt` ship today.)
 
@@ -144,8 +144,8 @@ rarely a reason to.
 ## Authoring checklist
 
 - **Give plots a `title`.** It becomes the accessible name.
-- **Write a real `alt`** when the automatic one misses the point — say what the
-  chart *shows*, not just what it plots. Inspect it with `plot_alt()`.
+- **Write a real `alt`** when the automatic one misses the point: say what the
+  chart *shows*, not only what it plots. Inspect it with `plot_alt()`.
 - **Set `tooltip` / `data_id`** on interactive marks: the tooltip is what a
   screen-reader user hears when focusing a mark, and appears in the data table.
 - **Don't rely on colour alone.** Pair a colour encoding with shape, or label
@@ -153,7 +153,7 @@ rarely a reason to.
 
 ## See also
 
-- vellum's *The scene contract* vignette — the SVG/PDF a11y attributes and the
+- vellum's *The scene contract* vignette: the SVG/PDF a11y attributes and the
   additivity invariant, from the emitter's side.
-- vellumwidget's interactivity article — the widget's full keyboard and screen-reader
+- vellumwidget's interactivity article: the widget's full keyboard and screen-reader
   model.

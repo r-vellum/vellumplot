@@ -24,7 +24,7 @@ Most of vellumplot maps columns of a data frame to `x` and `y`. Two important da
 shapes do not fit that mould: spatial geometries, where the coordinates live in
 a geometry column and the aspect ratio matters, and graphs, where the positions
 have to be computed by a layout algorithm first. vellumplot handles both with the
-same grammar, just with entry points that understand the data type.
+same grammar, through entry points suited to each data type.
 
 ## Maps from sf
 

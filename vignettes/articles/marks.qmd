@@ -29,8 +29,7 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp, size = 3)
 ```
 
-The rest of this article walks the mark families. The one idea to hold onto:
-you can stack as many marks as you like on a panel, and scales train across
+You can stack as many marks as you like on a panel, and scales train across
 all of them at once.
 
 ## Points, lines, and bars
@@ -94,7 +93,7 @@ vplot(grid) |>
 ```
 
 `mark_contour()` draws iso-density contour lines of a 2-D point cloud (and
-`mark_contour_filled()` fills the bands), coloured by level — see the
+`mark_contour_filled()` fills the bands), coloured by level. See the
 [statistical marks](statistical-marks.html) article for the details.
 
 ```{r}
@@ -130,7 +129,7 @@ vplot(parts) |>
 
 ## Layering is the point
 
-Because scales train across every layer, mixing marks on one panel just works.
+Because scales train across every layer, mixing marks on one panel works.
 Here a point cloud and a fitted line share the same trained `x` and `y` axes.
 
 ```{r}

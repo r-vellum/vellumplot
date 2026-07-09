@@ -90,11 +90,11 @@ render_plot(p, "cars.png")
 
 ## Where to next
 
-- **[Reference](../reference/index.html)** — every mark, scale, coord, facet,
+- **[Reference](../reference/index.html)**: every mark, scale, coord, facet,
   theme, and effect.
-- **[vellum](https://r-vellum.github.io/vellum/)** — the graphics backend
+- **[vellum](https://r-vellum.github.io/vellum/)**: the graphics backend
   vellumplot compiles into.
-- **[vellumwidget](https://r-vellum.github.io/vellumwidget/)** — turn a scene into an
+- **[vellumwidget](https://r-vellum.github.io/vellumwidget/)**: turn a scene into an
   interactive HTML widget.
-- **[vellumverse](https://r-vellum.github.io/vellumverse/)** — install and
+- **[vellumverse](https://r-vellum.github.io/vellumverse/)**: install and
   attach the whole ecosystem in one step.

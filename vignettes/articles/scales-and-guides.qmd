@@ -111,7 +111,7 @@ vplot(series) |>
 
 ## Identity scales
 
-Sometimes a column *already* holds the exact aesthetic values you want — actual
+Sometimes a column *already* holds the exact aesthetic values you want: actual
 colour names, sizes in millimetres, shape names. An identity scale uses them
 verbatim and draws no legend. There is a variant for each aesthetic:
 `scale_color_identity()`, `scale_fill_identity()`, `scale_size_identity()`,
@@ -192,7 +192,7 @@ vplot(mtcars) |>
   guides(color = guide_legend(title = "Cylinders", reverse = TRUE))
 ```
 
-Hiding a legend keeps the mapping — the marks stay coloured, only the guide
+Hiding a legend keeps the mapping; the marks stay coloured, only the guide
 disappears:
 
 ```{r}

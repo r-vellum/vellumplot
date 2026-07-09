@@ -21,8 +21,9 @@ library(vellumplot)
 
 Most marks draw the data as given. A statistical mark computes something from
 the data first, then draws the result. vellumplot runs that transform as a stage of
-the compiler (see **[The compiler](the-compiler.html)**), so a histogram is not
-you binning the data by hand; it is a mark that bins as part of being drawn.
+the compiler (see **[The compiler](the-compiler.html)**), so a histogram is a
+mark that bins the data as part of being drawn, rather than something you bin by
+hand.
 
 ## Histograms and densities
 
@@ -100,7 +101,7 @@ vplot(faithful) |>
 ## Density shapes
 
 `mark_violin()` draws a mirrored kernel density of `y` for each categorical
-`x` — a boxplot's silhouette, showing the full shape of each group.
+`x`, a boxplot's silhouette that shows the full shape of each group.
 
 ```{r}
 vplot(iris) |>
@@ -172,7 +173,7 @@ that value like any other, and you get the matching legend.
 ## Millions of points with mark_datashade
 
 When there are too many points to draw one marker each (overplotted, up to
-millions), individual markers stop being informative and start being slow.
+millions), individual markers become uninformative and slow to draw.
 `mark_datashade()` bins the points into a canvas-sized grid in a single pass and
 colours each cell by density, drawing one raster. Its cost is decoupled from
 the number of points.

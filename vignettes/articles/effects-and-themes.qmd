@@ -20,7 +20,7 @@ library(vellumplot)
 
 Everything so far has been about mapping data. This article is about the rest:
 the panel, the gridlines, the fonts, and a set of render effects that change how
-marks are painted. vellumplot separates these cleanly. A *theme* controls the
+marks are painted. vellumplot keeps these separate. A *theme* controls the
 non-data furniture of the whole plot; a *layer effect* changes how one mark is
 drawn; a *gradient* is a fancy fill value; and *sketch* mode turns the whole
 thing hand-drawn.
@@ -130,7 +130,3 @@ vplot(mtcars) |>
     sketch = sketch(roughness = 2, fill_style = "crosshatch")
   )
 ```
-
-That is the whole non-data toolkit: pick a theme, adjust slots with elements,
-reach for effects and gradients when a mark needs emphasis, and flip on sketch
-mode when you want the figure to look drawn by hand.
