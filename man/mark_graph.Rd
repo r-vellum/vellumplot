@@ -63,6 +63,12 @@ head on the node boundary.}
 
 \item{blend}{Optional blend mode (see \code{\link[=mark_point]{mark_point()}}).}
 
+\item{effects}{A list of layer render effects (\code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}},
+\code{\link[=shadow]{shadow()}}) applied to the mark at draw time.}
+
+\item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving the layer a hand-drawn look,
+\code{NA}/\code{FALSE} to force it crisp, or \code{NULL} (default) to inherit.}
+
 \item{data}{Optional layer data; overrides the default table.}
 
 \item{size, shape}{For \code{mark_nodes()}, the node size (mm) / shape; a constant or

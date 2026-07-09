@@ -33,6 +33,9 @@ constant or a mapped expression.}
 
 \item{blend}{Optional blend mode (see \code{\link[=mark_point]{mark_point()}}).}
 
+\item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving the layer a hand-drawn look, or \code{NULL}
+(default) to inherit.}
+
 \item{data}{Optional layer data (an \code{sf} object); overrides the plot data.}
 }
 \value{

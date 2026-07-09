@@ -354,6 +354,8 @@ mark_line <- function(
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data (an `sf` object); overrides the plot data.
 #' @return The modified [PlotSpec].
+#' @param sketch A [sketch()] spec giving the layer a hand-drawn look, or `NULL`
+#'   (default) to inherit.
 #' @seealso [coord_sf()], [scale_fill_binned()]
 #' @examples
 #' \dontrun{
@@ -460,6 +462,8 @@ mark_bar <- function(
 #'   (`0` is a pie, the default `0.5` a medium donut).
 #' @param ... Further constant aesthetics (e.g. `alpha`).
 #' @param data Optional per-layer data frame.
+#' @param sketch A [sketch()] spec giving the layer a hand-drawn look, or `NULL`
+#'   (default) to inherit.
 #' @return The modified [PlotSpec].
 #' @seealso [coord_polar()]
 #' @examples
@@ -1261,6 +1265,10 @@ mark_segment <- function(
 #'   `name`).
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data; overrides the default table.
+#' @param effects A list of layer render effects ([glow()], [outline()],
+#'   [shadow()]) applied to the mark at draw time.
+#' @param sketch A [sketch()] spec giving the layer a hand-drawn look,
+#'   `NA`/`FALSE` to force it crisp, or `NULL` (default) to inherit.
 #' @return The modified [PlotSpec].
 #' @seealso [vgraph()], [scale_edge_width()]
 #' @name mark_graph

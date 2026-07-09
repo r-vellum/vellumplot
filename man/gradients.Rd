@@ -11,10 +11,12 @@ linear_gradient(colours, stops = NULL, ...)
 radial_gradient(colours, stops = NULL, ...)
 }
 \arguments{
-\item{colours, stops, x1, y1, x2, y2, r, units, extend}{See \code{\link[vellum:linear_gradient]{vellum::linear_gradient()}}
-/ \code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}.}
+\item{colours, stops}{See \code{\link[vellum:linear_gradient]{vellum::linear_gradient()}} /
+\code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}.}
 
-\item{...}{Passed through to the vellum constructor.}
+\item{...}{Further gradient arguments passed to the vellum constructor:
+\code{x1}/\code{y1}/\code{x2}/\code{y2} (linear), \code{cx}/\code{cy}/\code{r} (radial), \code{units}, and \code{extend}.
+See \code{\link[vellum:linear_gradient]{vellum::linear_gradient()}} / \code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}.}
 }
 \value{
 A \code{vellum_gradient} object usable as a \code{fill} value.

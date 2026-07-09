@@ -10,4 +10,8 @@ NULL
 # Names that appear only inside data-masked / after_stat() expressions
 # (mark_bin2d/mark_hex default `fill = after_stat(count)`, annotate()'s inline
 # `width`/`height`), so R CMD check cannot see them bound.
-utils::globalVariables(c("count", "width", "height"))
+utils::globalVariables(c(
+  "count", "width", "height",
+  # network marks read igraph node/edge columns via NSE
+  "x", "y", "xend", "yend", "name", "level"
+))

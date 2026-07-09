@@ -27,6 +27,9 @@ slice.}
 
 \item{...}{Further constant aesthetics (e.g. \code{alpha}).}
 
+\item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving the layer a hand-drawn look, or \code{NULL}
+(default) to inherit.}
+
 \item{data}{Optional per-layer data frame.}
 
 \item{hole}{For \code{mark_donut()}, the inner-hole radius as a fraction of the rim

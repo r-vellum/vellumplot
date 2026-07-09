@@ -29,9 +29,11 @@ md <- function(text) {
 #' (in `units`, `"npc"` by default) set its direction. A gradient cannot be
 #' *mapped* to a data column (it is one paint per region).
 #'
-#' @param colours,stops,x1,y1,x2,y2,r,units,extend See [vellum::linear_gradient()]
-#'   / [vellum::radial_gradient()].
-#' @param ... Passed through to the vellum constructor.
+#' @param colours,stops See [vellum::linear_gradient()] /
+#'   [vellum::radial_gradient()].
+#' @param ... Further gradient arguments passed to the vellum constructor:
+#'   `x1`/`y1`/`x2`/`y2` (linear), `cx`/`cy`/`r` (radial), `units`, and `extend`.
+#'   See [vellum::linear_gradient()] / [vellum::radial_gradient()].
 #' @return A `vellum_gradient` object usable as a `fill` value.
 #' @seealso [glow()], [theme_cyberpunk()]
 #' @examples
