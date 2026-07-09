@@ -3,12 +3,12 @@
 Compiles a
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
 into a
-[`vellum::vl_scene()`](https://rdrr.io/pkg/vellum/man/vl_scene.html) and
-writes it. The output format is taken from the file extension (`.png`,
-`.svg`, `.pdf`).
-[`vellum::render()`](https://rdrr.io/pkg/vellum/man/vl_scene.html) also
-works on a plot directly, dispatching through the `as_vellum_scene()`
-seam.
+[`vellum::vl_scene()`](https://r-vellum.github.io/vellum/reference/vl_scene.html)
+and writes it. The output format is taken from the file extension
+(`.png`, `.svg`, `.pdf`).
+[`vellum::render()`](https://r-vellum.github.io/vellum/reference/vl_scene.html)
+also works on a plot directly, dispatching through the
+`as_vellum_scene()` seam.
 
 ## Usage
 
@@ -30,7 +30,7 @@ render_plot(plot, path, text = "native", dpi = NULL)
 - text:
 
   For SVG output, how text is written (see
-  [`vellum::render()`](https://rdrr.io/pkg/vellum/man/vl_scene.html)).
+  [`vellum::render()`](https://r-vellum.github.io/vellum/reference/vl_scene.html)).
 
 - dpi:
 

@@ -1,9 +1,9 @@
 # Gradient fill paints
 
 Thin re-exports of
-[`vellum::linear_gradient()`](https://rdrr.io/pkg/vellum/man/gradients.html)
+[`vellum::linear_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html)
 and
-[`vellum::radial_gradient()`](https://rdrr.io/pkg/vellum/man/gradients.html).
+[`vellum::radial_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html).
 A gradient is an unscaled *value* for the `fill` aesthetic: pass it
 directly, e.g.
 `mark_area(x = t, y = y, fill = linear_gradient(c("#00e5ff", "#00e5ff00")))`,
@@ -27,9 +27,9 @@ radial_gradient(colours, stops = NULL, ...)
 - colours, stops, x1, y1, x2, y2, r, units, extend:
 
   See
-  [`vellum::linear_gradient()`](https://rdrr.io/pkg/vellum/man/gradients.html)
+  [`vellum::linear_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html)
   /
-  [`vellum::radial_gradient()`](https://rdrr.io/pkg/vellum/man/gradients.html).
+  [`vellum::radial_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html).
 
 - ...:
 

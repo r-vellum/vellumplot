@@ -197,7 +197,7 @@ stat). When <code>color</code>/<code>fill</code> is mapped, grouped bars are sta
 evaluation) that make its elements addressable — and stylable — by an
 interactive host without changing what a static render draws:</p><ul><li><p><code>data_id</code> — a per-element <strong>data key</strong> (e.g. <code>data_id = model</code>). Emitted by
 the SVG backend as <code>data-key</code> on each element and returned by
-<code><a href="https://rdrr.io/pkg/vellum/man/scene_model.html" class="external-link">vellum::scene_model()</a></code>; it is the join key a host uses to map a hover/click
+<code><a href="https://r-vellum.github.io/vellum/reference/scene_model.html" class="external-link">vellum::scene_model()</a></code>; it is the join key a host uses to map a hover/click
 back to a datum, and to link the same datum across views.</p></li>
 <li><p><code>tooltip</code> — per-element tooltip text (a column expression or a constant),
 surfaced in <code>scene_model()</code> metadata.</p></li>
@@ -216,7 +216,7 @@ tiles, segments, edges, hexbins, sf features, …); aggregating stats
 <p>How these flow into the vellum scene (the <code>scene_model()</code> element table, the
 SVG <code>data-key</code> / <code>data-vellum-*</code> attributes, and the reserved <code>meta</code> key
 vocabulary) is described in vellum's "The scene contract" vignette
-(<code>vignette("scene-contract", package = "vellum")</code>).</p>
+(<code><a href="https://r-vellum.github.io/vellum/articles/scene-contract.html" class="external-link">vignette("scene-contract", package = "vellum")</a></code>).</p>
     </div>
 
     <div class="section level2">

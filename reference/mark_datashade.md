@@ -3,7 +3,7 @@
 For data too dense to draw one marker each (overplotted, up to millions
 of points), `mark_datashade()` bins the points into a canvas-sized grid
 in one pass and colours each cell by density (via
-[`vellum::datashade()`](https://rdrr.io/pkg/vellum/man/datashade.html)),
+[`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html)),
 drawing a single raster that fills the panel. Cost is decoupled from
 point count and overplotting. Per-point colour/size aesthetics do not
 apply; cell colour encodes density.

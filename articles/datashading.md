@@ -20,7 +20,7 @@ In vellumplot this is
 It bins `x` and `y` into a `width`-by-`height` canvas in one pass and
 colours each cell by density, drawing one raster that fills the panel.
 The binning itself is done by the backend’s
-[`vellum::datashade()`](https://rdrr.io/pkg/vellum/man/datashade.html),
+[`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html),
 whose [datashading
 article](https://r-vellum.github.io/vellum/articles/datashading.html)
 covers the aggregation engine, the reductions, and the equalisation

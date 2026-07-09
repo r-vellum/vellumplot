@@ -2,6 +2,9 @@
 
 ## vellumplot (development version)
 
+- Adopted vellum’s renamed `vl_*` graphics primitives (`vl_gpar()`,
+  `vl_unit()`, `vl_viewport()`), which no longer mask grid.
+
 - **NA legend keys for `size` / `shape`.** A mapped `size` or `shape`
   aesthetic whose data contains missing values now shows an “NA” key (as
   the colour scales already did). Also fixes a crash: NA in a `shape`
@@ -168,7 +171,7 @@ size/shape.
   mark grob, tying each low-level primitive back to the data rows and
   trained scales that produced it, with an `id` that matches the grob’s
   `data-vellum-id` in SVG and the `id` column of
-  [`vellum::scene_model()`](https://rdrr.io/pkg/vellum/man/scene_model.html).
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html).
   This is the first public consumer of the provenance metadata
   (previously internal), the substrate for interactivity, linked views,
   and accessibility.
@@ -192,7 +195,7 @@ below ships in this first release.
   `tooltip`, and `hover_group` (tidy-eval expressions). They flow into
   the vellum scene as per-element keys/metadata — `data_id` becomes the
   SVG `data-key` and both surface in
-  [`vellum::scene_model()`](https://rdrr.io/pkg/vellum/man/scene_model.html)
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)
   — the foundation a companion widget uses for hover/select/linking. A
   plot without them compiles and renders exactly as before. Applies to
   `stat = "identity"` marks (points, bars, tiles, segments, edges,
@@ -216,7 +219,7 @@ below ships in this first release.
 - **Auto-display**: printing a plot (or composition) draws it into the
   active graphics device — the RStudio / Positron Plots pane, or a
   knitr/Quarto chunk — like ggplot2 (via
-  [`vellum::display()`](https://rdrr.io/pkg/vellum/man/display.html)).
+  [`vellum::display()`](https://r-vellum.github.io/vellum/reference/display.html)).
   [`summary()`](https://rdrr.io/r/base/summary.html) shows the
   inspectable spec tree instead;
   [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
@@ -319,7 +322,7 @@ below ships in this first release.
 - **Datashading**:
   [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
   aggregates a large point cloud into a density raster (via
-  [`vellum::datashade()`](https://rdrr.io/pkg/vellum/man/datashade.html))
+  [`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html))
   that fills the panel — cost independent of point count.
   `mark_point(auto = TRUE)` switches to this automatically above ~50k
   rows.

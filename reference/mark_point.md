@@ -141,7 +141,7 @@ by an interactive host without changing what a static render draws:
 - `data_id` — a per-element **data key** (e.g. `data_id = model`).
   Emitted by the SVG backend as `data-key` on each element and returned
   by
-  [`vellum::scene_model()`](https://rdrr.io/pkg/vellum/man/scene_model.html);
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html);
   it is the join key a host uses to map a hover/click back to a datum,
   and to link the same datum across views.
 
@@ -168,7 +168,7 @@ drop them, since rows no longer map 1:1 to elements.
 How these flow into the vellum scene (the `scene_model()` element table,
 the SVG `data-key` / `data-vellum-*` attributes, and the reserved `meta`
 key vocabulary) is described in vellum's "The scene contract" vignette
-(`vignette("scene-contract", package = "vellum")`).
+([`vignette("scene-contract", package = "vellum")`](https://r-vellum.github.io/vellum/articles/scene-contract.html)).
 
 ## Examples
 

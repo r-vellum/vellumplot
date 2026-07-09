@@ -6,7 +6,7 @@ and page size and returns an inspectable
 nothing is drawn until the spec is compiled (via
 [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
 or
-[`vellum::as_vellum_scene()`](https://rdrr.io/pkg/vellum/man/as_vellum_scene.html)).
+[`vellum::as_vellum_scene()`](https://r-vellum.github.io/vellum/reference/as_vellum_scene.html)).
 Build the plot up with
 [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
 /

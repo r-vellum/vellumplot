@@ -111,8 +111,8 @@ The modified
 
 The `label` for `mark_text()` may be plain text (embedded newlines `\n`
 wrap onto stacked lines) or rich
-[`vellum::md()`](https://rdrr.io/pkg/vellum/man/md.html) labels — map
-`label = md(<expr>)` for a per-datum styled label
+[`vellum::md()`](https://r-vellum.github.io/vellum/reference/md.html)
+labels — map `label = md(<expr>)` for a per-datum styled label
 (bold/italic/super-/subscript/colour). (Rich labels are not yet
 supported by `mark_label()`'s background box.)
 
