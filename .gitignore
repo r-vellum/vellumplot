@@ -17,3 +17,5 @@ inst/examples/figures/
 # downloaded example data (e.g. datashader census, ~1.4 GB) -- never committed
 census2010.parq/
 census2010.parq.zip
+
+docs/
