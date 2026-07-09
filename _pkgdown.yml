@@ -1,10 +1,10 @@
-url: https://schochastics.github.io/quill/
+url: https://r-vellum.github.io/vellumplot/
 
 template:
   bootstrap: 5
   math-rendering: mathjax
   bslib:
-    # A parchment / sepia palette echoing the vellum & quill hex logos.
+    # A parchment / sepia palette echoing the vellum & vellumplot hex logos.
     bg: "#faf5ea"
     fg: "#2c2113"
     primary: "#6b4f2c"
@@ -28,7 +28,7 @@ template:
 home:
   title: A grammar of graphics on the vellum backend
   description: >
-    quill is a declarative, pipe-first grammar of graphics. You describe a
+    vellumplot is a declarative, pipe-first grammar of graphics. You describe a
     plot as an inspectable, serializable spec; nothing is drawn until the
     spec is compiled into a vellum scene and rendered.
   sidebar:
@@ -37,27 +37,27 @@ home:
       ecosystem:
         title: The ecosystem
         text: >
-          [vellum](https://schochastics.github.io/vellum/) · the parchment
+          [vellum](https://r-vellum.github.io/vellum/) · the parchment
           (backend)<br>
-          [quill](https://schochastics.github.io/quill/) · the pen (grammar)<br>
-          [gloss](https://schochastics.github.io/gloss/) · the gloss
+          [vellumplot](https://r-vellum.github.io/vellumplot/) · the pen (grammar)<br>
+          [vellumwidget](https://r-vellum.github.io/vellumwidget/) · the vellumwidget
           (interactivity)<br>
-          [scriptorium](https://schochastics.github.io/scriptorium/) · the
+          [vellumverse](https://r-vellum.github.io/vellumverse/) · the
           bundle
 
 navbar:
   structure:
     left: [intro, articles, reference, news]
-    right: [search, vellum, gloss, scriptorium, github]
+    right: [search, vellum, vellumwidget, vellumverse, github]
   components:
     intro:
       text: Get started
-      href: articles/quill.html
+      href: articles/vellumplot.html
     articles:
       text: Articles
       menu:
       - text: Get started
-        href: articles/quill.html
+        href: articles/vellumplot.html
       - text: Building plots
       - text: "Marks, layer by layer"
         href: articles/marks.html
@@ -79,30 +79,30 @@ navbar:
         href: articles/the-compiler.html
       - text: Accessibility
         href: articles/accessibility.html
-      - text: Coming from ggplot2 (scriptorium)
-        href: https://schochastics.github.io/scriptorium/articles/coming-from-ggplot2.html
+      - text: Coming from ggplot2 (vellumverse)
+        href: https://r-vellum.github.io/vellumverse/articles/coming-from-ggplot2.html
     vellum:
       icon: fa-scroll
-      href: https://schochastics.github.io/vellum/
+      href: https://r-vellum.github.io/vellum/
       aria-label: vellum
-    gloss:
+    vellumwidget:
       icon: fa-highlighter
-      href: https://schochastics.github.io/gloss/
-      aria-label: gloss
-    scriptorium:
+      href: https://r-vellum.github.io/vellumwidget/
+      aria-label: vellumwidget
+    vellumverse:
       icon: fa-book
-      href: https://schochastics.github.io/scriptorium/
-      aria-label: scriptorium
+      href: https://r-vellum.github.io/vellumverse/
+      aria-label: vellumverse
     github:
       icon: fa-github
-      href: https://github.com/schochastics/quill
+      href: https://github.com/r-vellum/vellumplot
       aria-label: GitHub
 
 articles:
 - title: Get started
   navbar: ~
   contents:
-  - articles/quill
+  - articles/vellumplot
 - title: Building plots
   navbar: Building plots
   contents:
@@ -222,7 +222,7 @@ reference:
 
 - title: Package
   contents:
-  - quill-package
+  - vellumplot-package
 
 footer:
   structure:

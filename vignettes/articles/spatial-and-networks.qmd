@@ -14,16 +14,16 @@ knitr::opts_chunk$set(
   fig.retina = 2,
   out.width = "100%"
 )
-library(quill)
+library(vellumplot)
 have_sf <- requireNamespace("sf", quietly = TRUE)
 have_net <- requireNamespace("igraph", quietly = TRUE) &&
   requireNamespace("graphlayouts", quietly = TRUE)
 ```
 
-Most of quill maps columns of a data frame to `x` and `y`. Two important data
+Most of vellumplot maps columns of a data frame to `x` and `y`. Two important data
 shapes do not fit that mould: spatial geometries, where the coordinates live in
 a geometry column and the aspect ratio matters, and graphs, where the positions
-have to be computed by a layout algorithm first. quill handles both with the
+have to be computed by a layout algorithm first. vellumplot handles both with the
 same grammar, just with entry points that understand the data type.
 
 ## Maps from sf

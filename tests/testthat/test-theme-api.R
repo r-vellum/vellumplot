@@ -1,6 +1,6 @@
 # theme() / set_theme() public API + layout honouring.
 
-resolve_of <- function(p) quill:::.resolve_theme(p@theme)
+resolve_of <- function(p) vellumplot:::.resolve_theme(p@theme)
 
 test_that("theme() merges element-wise onto the current theme", {
   p <- vplot(mtcars) |>
@@ -45,13 +45,13 @@ test_that("set_theme() legacy NA maps to element_blank", {
     mark_point(x = wt, y = mpg) |>
     set_theme(panel_bg = NA, grid_col = NA)
   rt <- resolve_of(p)
-  expect_true(quill:::.is_blank(rt[["panel.background"]]))
-  expect_true(quill:::.is_blank(rt[["panel.grid.major.x"]]))
+  expect_true(vellumplot:::.is_blank(rt[["panel.background"]]))
+  expect_true(vellumplot:::.is_blank(rt[["panel.grid.major.x"]]))
 })
 
 test_that("a blank text element collapses its gutter track to zero", {
-  zero <- quill:::.track_w(element_blank(), "a label", 1.4)
-  sized <- quill:::.track_w(element_text(size = 11), "a label", 1.4)
+  zero <- vellumplot:::.track_w(element_blank(), "a label", 1.4)
+  sized <- vellumplot:::.track_w(element_text(size = 11), "a label", 1.4)
   expect_identical(zero, vellum::unit(0, "mm"))
   expect_false(identical(zero, sized))
 })
@@ -60,11 +60,11 @@ test_that("legend.position = none drops the legend column", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>
     theme(legend.position = "none")
-  lay <- quill:::.build_layout(
-    quill:::.build_panels(p),
-    quill:::.legend_guides(quill:::.build_panels(p)$scales),
+  lay <- vellumplot:::.build_layout(
+    vellumplot:::.build_panels(p),
+    vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales),
     p@labels,
-    quill:::.resolve_theme(p@theme)
+    vellumplot:::.resolve_theme(p@theme)
   )
   expect_true(is.na(lay$legend_col))
 })
@@ -79,7 +79,7 @@ test_that("legend.key.size / legend.spacing / legend.margin resolve and validate
   rt2 <- resolve_of(p |> theme(legend.key.size = 8, legend.margin = 3))
   expect_identical(rt2[["legend.key.size"]], 8)
   # a length-1 margin recycles to four sides in the metrics
-  m <- quill:::.legend_metrics(rt2)
+  m <- vellumplot:::.legend_metrics(rt2)
   expect_identical(m$margin, c(3, 3, 3, 3))
 
   expect_error(theme(p, legend.key.size = -1), "legend.key.size")
@@ -89,8 +89,8 @@ test_that("legend.key.size / legend.spacing / legend.margin resolve and validate
 
 test_that("a bigger legend.key.size widens the reserved legend column", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
-  g <- quill:::.legend_guides(quill:::.build_panels(p)$scales)
-  small <- quill:::.legend_width(g, resolve_of(p))
-  big <- quill:::.legend_width(g, resolve_of(p |> theme(legend.key.size = 12)))
+  g <- vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales)
+  small <- vellumplot:::.legend_width(g, resolve_of(p))
+  big <- vellumplot:::.legend_width(g, resolve_of(p |> theme(legend.key.size = 12)))
   expect_true(big > small)
 })

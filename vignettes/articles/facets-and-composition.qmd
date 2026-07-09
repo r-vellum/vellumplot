@@ -13,12 +13,12 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.retina = 2,
   out.width = "100%",
-  eval = requireNamespace("quill", quietly = TRUE)
+  eval = requireNamespace("vellumplot", quietly = TRUE)
 )
-library(quill)
+library(vellumplot)
 ```
 
-There are two different reasons to end up with a grid of panels, and quill
+There are two different reasons to end up with a grid of panels, and vellumplot
 keeps them separate. *Faceting* takes one plot and splits it by a variable, so
 every panel shares the same encodings and (by default) the same scales.
 *Composition* takes several independent plots, each its own spec, and arranges
@@ -114,4 +114,4 @@ panel to be a fully independent plot rather than a shared-scale small multiple.
 Faceting and composition also compose with each other: a faceted plot is still
 a spec, so it can go straight into a `concat()`. Once your figure looks right,
 send it to a file the same way as any plot, with `render_plot()` (see
-**[Get started](quill.html)**).
+**[Get started](vellumplot.html)**).

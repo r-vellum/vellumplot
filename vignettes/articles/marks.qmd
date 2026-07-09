@@ -13,12 +13,12 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.retina = 2,
   out.width = "100%",
-  eval = requireNamespace("quill", quietly = TRUE)
+  eval = requireNamespace("vellumplot", quietly = TRUE)
 )
-library(quill)
+library(vellumplot)
 ```
 
-A quill plot is a stack of *marks*. Each `mark_*()` appends one drawing layer
+A vellumplot plot is a stack of *marks*. Each `mark_*()` appends one drawing layer
 to the spec, and every mark reads the same grammar: bare column names (or
 expressions) captured with tidy evaluation become *encodings*, while scalar
 values become constant aesthetics. `color = hp` maps the `hp` column through a

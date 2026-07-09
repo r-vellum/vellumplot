@@ -1,7 +1,7 @@
 # Composing several plots into one figure: concat / hconcat / vconcat,
 # wrap_plots, design layouts, spacers, insets, figure annotation, and repeat_.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 
@@ -60,7 +60,7 @@ inset(overview, mini, left = 0.62, bottom = 0.08, right = 0.98, top = 0.45) |>
 concat(p_scatter, p_hist, p_box, ncol = 3, width = 9, height = 3) |>
   compose_annotation(
     title = "Palmer penguins at a glance",
-    caption = "Composed with quill",
+    caption = "Composed with vellumplot",
     tag_levels = "A"
   ) |>
   render_plot(file.path(outdir, "15-annotation-tags.png"))

@@ -1,4 +1,4 @@
-# Alt text: quill authors an accessible name (plot title) + text alternative
+# Alt text: vellumplot authors an accessible name (plot title) + text alternative
 # (plot_alt) and wires them into the compiled scene's title/desc, so every
 # compiled plot is an accessible SVG. See R/alt.R.
 

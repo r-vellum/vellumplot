@@ -1,11 +1,11 @@
 # Generalized guide list: colour, size, shape.
 
 train <- function(p) {
-  quill:::.train_scales(p, quill:::.resolve_layers(p))
+  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
 }
 kinds <- function(p) {
   vapply(
-    quill:::.legend_guides(train(p)),
+    vellumplot:::.legend_guides(train(p)),
     function(g) g$kind,
     character(1)
   )
@@ -33,26 +33,26 @@ test_that("a plot with three guides renders", {
 })
 
 test_that(".legend_width handles a shape guide without error", {
-  built <- quill:::.build_panels(
+  built <- vellumplot:::.build_panels(
     vplot(mtcars) |>
       mark_point(x = wt, y = mpg, color = hp, shape = factor(carb))
   )
-  rt <- quill:::.resolve_theme(quill:::.theme_default())
-  guides <- quill:::.legend_guides(built$scales)
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
+  guides <- vellumplot:::.legend_guides(built$scales)
   expect_length(guides, 2)
-  expect_silent(quill:::.legend_width(guides, rt))
+  expect_silent(vellumplot:::.legend_width(guides, rt))
 })
 
 test_that("legend.position = none drops all guides", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp, shape = factor(cyl)) |>
     theme(legend.position = "none")
-  built <- quill:::.build_panels(p)
-  lay <- quill:::.build_layout(
+  built <- vellumplot:::.build_panels(p)
+  lay <- vellumplot:::.build_layout(
     built,
-    quill:::.legend_guides(built$scales),
+    vellumplot:::.legend_guides(built$scales),
     p@labels,
-    quill:::.resolve_theme(p@theme)
+    vellumplot:::.resolve_theme(p@theme)
   )
   expect_true(is.na(lay$legend_col))
   expect_true(is.na(lay$legend_row))
@@ -63,12 +63,12 @@ layout_for <- function(pos) {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl), size = disp) |>
     theme(legend.position = pos)
-  built <- quill:::.build_panels(p)
-  quill:::.build_layout(
+  built <- vellumplot:::.build_panels(p)
+  vellumplot:::.build_layout(
     built,
-    quill:::.legend_guides(built$scales),
+    vellumplot:::.legend_guides(built$scales),
     p@labels,
-    quill:::.resolve_theme(p@theme)
+    vellumplot:::.resolve_theme(p@theme)
   )
 }
 
@@ -126,7 +126,7 @@ test_that("colour + shape on one variable merge into a single guide", {
     mark_point(x = wt, y = mpg, color = factor(cyl), shape = factor(cyl))
   expect_identical(kinds(p), "merged")
   # the merged pseudo-scale carries aligned per-key style vectors
-  g <- quill:::.legend_guides(train(p))[[1]]$sc
+  g <- vellumplot:::.legend_guides(train(p))[[1]]$sc
   expect_length(g$fills, length(g$labels))
   expect_length(g$shapes, length(g$labels))
   expect_null(g$sizes_mm)
@@ -135,7 +135,7 @@ test_that("colour + shape on one variable merge into a single guide", {
 test_that("continuous colour + size on one variable merge into a single guide", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp, size = hp)
   expect_identical(kinds(p), "merged")
-  g <- quill:::.legend_guides(train(p))[[1]]$sc
+  g <- vellumplot:::.legend_guides(train(p))[[1]]$sc
   expect_length(g$sizes_mm, length(g$labels))
   expect_length(g$fills, length(g$labels))
 })

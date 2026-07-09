@@ -20,11 +20,11 @@ grid resolution, not the number of points. Ten thousand points or ten million,
 the image takes about the same time to make, and density is shown honestly
 because it is measured rather than implied by overlap.
 
-In quill this is `mark_datashade()`. It bins `x` and `y` into a
+In vellumplot this is `mark_datashade()`. It bins `x` and `y` into a
 `width`-by-`height` canvas in one pass and colours each cell by density, drawing
 one raster that fills the panel. The binning itself is done by the backend's
 `vellum::datashade()`, whose
-[datashading article](https://schochastics.github.io/vellum/articles/datashading.html)
+[datashading article](https://r-vellum.github.io/vellum/articles/datashading.html)
 covers the aggregation engine, the reductions, and the equalisation options in
 depth. Because the cell colour encodes density, per-point aesthetics like colour
 and size do not apply. The **[statistical marks](statistical-marks.html)**
@@ -41,7 +41,7 @@ markers, and it is a good showcase precisely because the interesting structure
 lives across an enormous dynamic range, from empty desert to dense city cores.
 
 The figures below are produced by
-[`inst/examples/19-datashader-census.R`](https://github.com/schochastics/quill/blob/main/inst/examples/19-datashader-census.R).
+[`inst/examples/19-datashader-census.R`](https://github.com/r-vellum/vellumplot/blob/main/inst/examples/19-datashader-census.R).
 That script is a heavy showcase, not a quick example: it downloads a 1.44 GB
 Parquet dataset once and needs several gigabytes of RAM for the full run (you
 can set an `n_max` in the script to smoke-test on a spatial subset first). The
@@ -59,7 +59,7 @@ emerges from a third of a billion anonymous points.
 
 ### Coloured by race
 
-The second map colours the same points by race. quill has no single-call
+The second map colours the same points by race. vellumplot has no single-call
 categorical shading, so this reproduces datashader's `count_cat` by hand: one
 `mark_datashade()` layer per race, each ramping from black to its own hue, all
 composited with `blend = "screen"`. On a black panel, screen blending shows
@@ -94,7 +94,7 @@ Datashading is the answer whenever a layer has so many rows that individual
 markers are neither informative nor fast: dense scatter plots, GPS traces, event
 logs, particle simulations. `mark_point()` even has an `auto = TRUE` switch that
 falls back to a datashaded raster automatically past a row threshold, so you can
-keep writing `mark_point()` and let quill pick the representation. For the full
+keep writing `mark_point()` and let vellumplot pick the representation. For the full
 argument list, see the [`mark_datashade()`](../reference/mark_datashade.html)
 reference, and for the aggregation engine underneath it, vellum's
-[datashading article](https://schochastics.github.io/vellum/articles/datashading.html).
+[datashading article](https://r-vellum.github.io/vellum/articles/datashading.html).

@@ -12,7 +12,7 @@ NULL
 # feature would have to recompute the entire grammar per frame.
 #
 # The schema is deliberately implemented *before* it has a consumer. Nothing in
-# quill reads it yet; it exists so the metadata never has to be retrofitted onto
+# vellumplot reads it yet; it exists so the metadata never has to be retrofitted onto
 # the emitter after the fact. The eventual consumers are SVG interactivity, a11y
 # annotations, and linked/brushed views -- see the plug points in DESIGN §4.
 #
@@ -21,9 +21,9 @@ NULL
 #     which vellum surfaces as `data-vellum-id` in SVG). This is the JOIN KEY.
 #   * A parallel provenance table -- one plain, serializable record per emitted
 #     grob, keyed by that id -- is accumulated during compile and attached to the
-#     returned scene as attr(scene, "quill_provenance"). vellum grobs expose only
+#     returned scene as attr(scene, "vellumplot_provenance"). vellum grobs expose only
 #     `id` + `role` (no arbitrary metadata slot, and invariant §8 forbids touching
-#     vellum internals), so the rich record is carried quill-side.
+#     vellum internals), so the rich record is carried vellumplot-side.
 #
 # SCHEMA (one entry per emitted grob; all fields plain / serializable):
 #   id       chr   stable node id == grob@id == SVG data-vellum-id (join key)
@@ -170,5 +170,5 @@ NULL
 #' prov[[1]]$id
 #' @export
 plot_provenance <- function(x) {
-  attr(vellum::as_vellum_scene(x), "quill_provenance") %||% list()
+  attr(vellum::as_vellum_scene(x), "vellumplot_provenance") %||% list()
 }

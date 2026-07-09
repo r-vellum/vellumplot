@@ -9,30 +9,30 @@ df <- data.frame(
 
 test_that("scale_color_identity() maps colours verbatim and draws no legend", {
   p <- vplot(df) |> mark_point(x = x, y = y, color = col) |> scale_color_identity()
-  b <- quill:::.build_panels(p)
+  b <- vellumplot:::.build_panels(p)
   expect_identical(b$scales$color$kind, "identity")
   expect_identical(b$scales$color$map(c("red", "blue")), c("red", "blue"))
-  expect_length(quill:::.legend_guides(b$scales), 0L)
+  expect_length(vellumplot:::.legend_guides(b$scales), 0L)
 })
 
 test_that("scale_fill_identity() behaves like the colour identity", {
   p <- vplot(df) |> mark_point(x = x, y = y, fill = col) |> scale_fill_identity()
-  b <- quill:::.build_panels(p)
+  b <- vellumplot:::.build_panels(p)
   expect_identical(b$scales$color$kind, "identity")
 })
 
 test_that("scale_size_identity() uses raw sizes and draws no legend", {
   p <- vplot(df) |> mark_point(x = x, y = y, size = sz) |> scale_size_identity()
-  b <- quill:::.build_panels(p)
+  b <- vellumplot:::.build_panels(p)
   expect_identical(b$scales$size$map(c(2, 9)), c(2, 9))
-  expect_length(quill:::.legend_guides(b$scales), 0L)
+  expect_length(vellumplot:::.legend_guides(b$scales), 0L)
 })
 
 test_that("scale_shape_identity() uses shape names verbatim and draws no legend", {
   p <- vplot(df) |> mark_point(x = x, y = y, shape = shp) |> scale_shape_identity()
-  b <- quill:::.build_panels(p)
+  b <- vellumplot:::.build_panels(p)
   expect_identical(b$scales$shape$map(c("circle", "diamond")), c("circle", "diamond"))
-  expect_length(quill:::.legend_guides(b$scales), 0L)
+  expect_length(vellumplot:::.legend_guides(b$scales), 0L)
 })
 
 test_that("identity-scaled plots render", {

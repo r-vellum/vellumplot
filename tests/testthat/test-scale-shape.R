@@ -1,7 +1,7 @@
 # Shape as a mapped aesthetic.
 
 train <- function(p) {
-  quill:::.train_scales(p, quill:::.resolve_layers(p))
+  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
 }
 
 test_that("a mapped shape trains a discrete shape scale", {

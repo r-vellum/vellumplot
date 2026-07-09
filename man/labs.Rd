@@ -31,7 +31,7 @@ labs(
 aliases for \code{color}.}
 
 \item{alt}{A text alternative (alt text) describing the plot for screen
-readers and other assistive technology. Overrides the description quill
+readers and other assistive technology. Overrides the description vellumplot
 generates automatically; see \code{\link[=plot_alt]{plot_alt()}}. Emitted into the accessible SVG
 (\verb{<desc>}) and tagged PDF (Figure \code{Alt}) by \code{\link[=render_plot]{render_plot()}}.}
 

@@ -343,7 +343,7 @@ NULL
   # Carry the row-key / scale-ref schema on the returned scene (DESIGN §4). Set
   # last so it survives to the caller; the `id` of each record matches a grob's
   # `data-vellum-id`. Additive only -- render() ignores it.
-  attr(scene, "quill_provenance") <- .provenance_snapshot()
+  attr(scene, "vellumplot_provenance") <- .provenance_snapshot()
   scene
 }
 

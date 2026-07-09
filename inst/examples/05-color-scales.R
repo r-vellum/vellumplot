@@ -1,6 +1,6 @@
 # Colour and fill scales: continuous ramps, discrete palettes, manual, gradient.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

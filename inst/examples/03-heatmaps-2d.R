@@ -1,6 +1,6 @@
 # 2-D density and heatmaps: tile, raster, bin2d, hex.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

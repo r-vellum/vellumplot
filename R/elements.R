@@ -1,4 +1,4 @@
-#' @include quill-package.R
+#' @include vellumplot-package.R
 NULL
 
 # Theme elements --------------------------------------------------------------
@@ -12,7 +12,7 @@ NULL
 
 .element_text <- S7::new_class(
   ".element_text",
-  package = "quill",
+  package = "vellumplot",
   properties = list(
     family = S7::class_any,
     face = S7::class_any,
@@ -28,7 +28,7 @@ NULL
 
 .element_line <- S7::new_class(
   ".element_line",
-  package = "quill",
+  package = "vellumplot",
   properties = list(
     colour = S7::class_any,
     linewidth = S7::class_any,
@@ -41,7 +41,7 @@ NULL
 
 .element_rect <- S7::new_class(
   ".element_rect",
-  package = "quill",
+  package = "vellumplot",
   properties = list(
     fill = S7::class_any,
     colour = S7::class_any,
@@ -145,7 +145,7 @@ element_rect <- function(
 #' @export
 element_blank <- S7::new_class(
   "element_blank",
-  package = "quill"
+  package = "vellumplot"
 )
 
 # --- helpers ----------------------------------------------------------------

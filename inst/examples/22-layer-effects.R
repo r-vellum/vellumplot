@@ -1,7 +1,7 @@
 # Layer effects beyond glow: outline and shadow for stroked / point marks.
 # Effects are passed per layer via `effects = list(...)` and compose in order.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

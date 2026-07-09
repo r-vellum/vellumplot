@@ -3,8 +3,8 @@
 test_that("mark_ecdf() computes a cumulative step", {
   df <- data.frame(v = c(3, 1, 2, 4))
   p <- vplot(df) |> mark_ecdf(x = v)
-  L <- quill:::.resolve_layer(p@layers[[1]], df)
-  sdf <- quill:::.apply_stat(L)
+  L <- vellumplot:::.resolve_layer(p@layers[[1]], df)
+  sdf <- vellumplot:::.apply_stat(L)
   # x is sorted; y is the cumulative proportion 1/n..1
   expect_equal(sdf$values$x, c(1, 2, 3, 4))
   expect_equal(sdf$values$y, c(0.25, 0.5, 0.75, 1))
@@ -29,8 +29,8 @@ test_that("mark_rug() draws alongside another layer", {
 
 test_that("mark_qq() maps sample to theoretical vs observed quantiles", {
   df <- data.frame(s = qnorm(ppoints(50)) * 2 + 1) # linear in normal quantiles
-  L <- quill:::.resolve_layer((vplot(df) |> mark_qq(sample = s))@layers[[1]], df)
-  sdf <- quill:::.apply_stat(L)
+  L <- vellumplot:::.resolve_layer((vplot(df) |> mark_qq(sample = s))@layers[[1]], df)
+  sdf <- vellumplot:::.apply_stat(L)
   # x = theoretical quantiles (roughly symmetric about 0), y = sorted sample
   expect_equal(mean(sdf$values$x), 0, tolerance = 0.01)
   expect_equal(sdf$values$y, sort(df$s))

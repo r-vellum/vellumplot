@@ -3,7 +3,7 @@
 # glow() fans a stroked/point mark into a soft halo; linear_gradient() fills an
 # area/bar with a paint that fades to transparent.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

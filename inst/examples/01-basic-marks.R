@@ -1,7 +1,7 @@
 # Basic marks: the building-block geometries.
 # point, line, rule, segment, bar, step.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

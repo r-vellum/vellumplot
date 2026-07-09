@@ -117,7 +117,7 @@ host in a later phase).
 \item \code{hover_color}, \code{selected_color} — per-element outline colours applied by the
 host when the element is hovered / selected (a constant, or mapped from a
 column so different marks highlight differently). They override the widget-wide
-theme set by \code{gloss::as_widget(hover_color=, selected_color=)}.
+theme set by \code{vellumwidget::as_widget(hover_color=, selected_color=)}.
 }
 
 These are inert for PNG/PDF and for an SVG opened without a JS host: a plot

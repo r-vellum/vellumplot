@@ -1,6 +1,6 @@
 # Hexbin: stat hexbin + mark_hex (uses vellum's hexagon_grob).
 
-resolve1 <- function(p) quill:::.resolve_layers(p)[[1]]
+resolve1 <- function(p) vellumplot:::.resolve_layers(p)[[1]]
 
 set.seed(1)
 d <- data.frame(x = rnorm(2000), y = rnorm(2000))
@@ -28,7 +28,7 @@ test_that("stat hexbin bins to occupied hexes with count + radius", {
 test_that(".hex_round preserves the axial constraint and is integer", {
   q <- c(0.2, 1.7, -0.6)
   r <- c(-0.1, 0.4, 2.2)
-  out <- quill:::.hex_round(q, r)
+  out <- vellumplot:::.hex_round(q, r)
   expect_true(all(out$q == round(out$q)))
   expect_true(all(out$r == round(out$r)))
 })

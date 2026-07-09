@@ -7,7 +7,7 @@
 #   plot-wide theme_sketch()     (the headline one-liner)
 # `sketch = NA` forces an element crisp; text is never sketched.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

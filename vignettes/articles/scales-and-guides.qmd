@@ -14,19 +14,19 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.retina = 2,
   out.width = "100%",
-  eval = requireNamespace("quill", quietly = TRUE)
+  eval = requireNamespace("vellumplot", quietly = TRUE)
 )
-library(quill)
+library(vellumplot)
 ```
 
 A *scale* is the function that turns a data value into something you can see: a
-colour, a marker size, a shape, or a position along an axis. In quill every
+colour, a marker size, a shape, or a position along an axis. In vellumplot every
 mapped encoding gets a scale automatically, trained from the data, so most
 plots need no explicit scale at all. You reach for a `scale_*()` call only when
 you want to override the default: change the palette, set a transform, fix the
 limits, or rename the guide.
 
-The key idea is *training*. When you map `color = hp`, quill scans the `hp`
+The key idea is *training*. When you map `color = hp`, vellumplot scans the `hp`
 values across every layer, works out the domain, and builds a continuous colour
 scale with a legend. Add a `scale_*()` and you are declaring an override on top
 of that trained default, not replacing the whole machine.
@@ -170,7 +170,7 @@ vplot(econ) |>
 
 ## Guides come for free
 
-Every scale that needs a legend produces one, and quill stacks multiple
+Every scale that needs a legend produces one, and vellumplot stacks multiple
 legends automatically. Map two aesthetics and you get two guides without asking.
 
 ```{r}

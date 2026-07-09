@@ -3,7 +3,7 @@
 #' A thin wrapper around [vellum::md()] that builds a rich-text label from a
 #' markdown subset: `**bold**`, `*italic*` / `_italic_`, `^superscript^`,
 #' `~subscript~`, and a colour span `[text]{#c00}`. The result can be used
-#' anywhere quill draws a *title*: [labs()] (`title` / `subtitle` /
+#' anywhere vellumplot draws a *title*: [labs()] (`title` / `subtitle` /
 #' `caption` / `tag` / `x` / `y` / `color`) and `scale_*(name = )`. Per-element
 #' rich labels (in `mark_text()`) are not yet supported.
 #'
@@ -53,7 +53,7 @@ radial_gradient <- function(colours, stops = NULL, ...) {
 
 #' Hand-drawn ("sketch") rendering
 #'
-#' A re-export of [vellum::sketch()] — the one vocabulary quill speaks for the
+#' A re-export of [vellum::sketch()] — the one vocabulary vellumplot speaks for the
 #' hand-drawn look (wobbly outlines, hachure fills, à la
 #' [Rough.js](https://roughjs.com)). Pass a `sketch()` value to any mark's
 #' `sketch =` argument, to an [element_line()] / [element_rect()] `sketch =`

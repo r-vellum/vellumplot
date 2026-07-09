@@ -42,7 +42,7 @@ test_that("mark_pie keeps an existing polar coord (e.g. start/direction)", {
 test_that("mark_pie renders slices in the matching fills", {
   p <- vplot(df) |> mark_pie(value = n, fill = part)
   img <- render_px(p)
-  pal <- quill:::.qual_palette(4)
+  pal <- vellumplot:::.qual_palette(4)
   hex2rgb <- function(h) grDevices::col2rgb(h)[, 1] / 255
   for (i in seq_len(4)) {
     expect_gt(count_near(img, hex2rgb(pal[i])), 300)
@@ -64,7 +64,7 @@ test_that("mark_donut leaves an un-filled hole at the centre", {
       drop = FALSE
     ]
   }
-  pal <- quill:::.qual_palette(4)
+  pal <- vellumplot:::.qual_palette(4)
   hex2rgb <- function(h) grDevices::col2rgb(h)[, 1] / 255
   fillpx <- function(sub) {
     sum(vapply(

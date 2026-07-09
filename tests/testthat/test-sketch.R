@@ -12,13 +12,13 @@ test_that("sketch() re-exports a vellum_sketch with tunable knobs", {
 })
 
 test_that(".check_sketch normalises NULL / NA / FALSE / object", {
-  expect_null(quill:::.check_sketch(NULL))
-  expect_true(is.na(quill:::.check_sketch(NA)))
-  expect_true(is.na(quill:::.check_sketch(FALSE)))
+  expect_null(vellumplot:::.check_sketch(NULL))
+  expect_true(is.na(vellumplot:::.check_sketch(NA)))
+  expect_true(is.na(vellumplot:::.check_sketch(FALSE)))
   s <- sketch()
-  expect_identical(quill:::.check_sketch(s), s)
-  expect_error(quill:::.check_sketch("nope"), "sketch")
-  expect_error(quill:::.check_sketch(1), "sketch")
+  expect_identical(vellumplot:::.check_sketch(s), s)
+  expect_error(vellumplot:::.check_sketch("nope"), "sketch")
+  expect_error(vellumplot:::.check_sketch(1), "sketch")
 })
 
 # --- per-mark attachment -----------------------------------------------------
@@ -56,10 +56,10 @@ test_that("element_line / element_rect carry a validated sketch slot", {
 })
 
 test_that(".el_sketch resolves an element to a sketch-or-NULL", {
-  expect_null(quill:::.el_sketch(element_line()))
-  expect_null(quill:::.el_sketch(element_line(sketch = NA)))
-  expect_null(quill:::.el_sketch(element_blank()))
-  s <- quill:::.el_sketch(element_line(sketch = sketch(seed = 3)), offset = 5L)
+  expect_null(vellumplot:::.el_sketch(element_line()))
+  expect_null(vellumplot:::.el_sketch(element_line(sketch = NA)))
+  expect_null(vellumplot:::.el_sketch(element_blank()))
+  s <- vellumplot:::.el_sketch(element_line(sketch = sketch(seed = 3)), offset = 5L)
   expect_s3_class(s, "vellum_sketch")
   expect_equal(s$seed, 8) # 3 + offset 5
 })
@@ -70,8 +70,8 @@ test_that("theme_sketch() sets a plot-wide default + hand-drawn elements", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     theme_sketch(roughness = 1.2, seed = 4)
-  expect_s3_class(quill:::.theme_sketch_default(p), "vellum_sketch")
-  expect_equal(quill:::.theme_sketch_default(p)$roughness, 1.2)
+  expect_s3_class(vellumplot:::.theme_sketch_default(p), "vellum_sketch")
+  expect_equal(vellumplot:::.theme_sketch_default(p)$roughness, 1.2)
   # gridlines / axis lines carry the sketch element slot
   expect_s3_class(p@theme[["panel.grid.major"]]@sketch, "vellum_sketch")
   expect_s3_class(p@theme[["axis.line"]]@sketch, "vellum_sketch")
@@ -79,7 +79,7 @@ test_that("theme_sketch() sets a plot-wide default + hand-drawn elements", {
 
 test_that("a plot without theme_sketch has no plot-wide sketch", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  expect_null(quill:::.theme_sketch_default(p))
+  expect_null(vellumplot:::.theme_sketch_default(p))
 })
 
 # --- rendering ---------------------------------------------------------------

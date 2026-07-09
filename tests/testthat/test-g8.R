@@ -1,14 +1,14 @@
 # G8: themes + concat composition.
 
 test_that("themes set the visual settings", {
-  rt0 <- quill:::.resolve_theme(quill:::.theme_of(vplot(mtcars)))
+  rt0 <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(vplot(mtcars)))
   expect_identical(rt0[["panel.background"]]@fill, "grey92")
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_minimal()
-  rt <- quill:::.resolve_theme(p@theme)
-  expect_true(quill:::.is_blank(rt[["panel.background"]]))
+  rt <- vellumplot:::.resolve_theme(p@theme)
+  expect_true(vellumplot:::.is_blank(rt[["panel.background"]]))
   expect_identical(rt[["panel.grid.major.x"]]@colour, "grey92")
   p2 <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_bw()
-  rt2 <- quill:::.resolve_theme(p2@theme)
+  rt2 <- vellumplot:::.resolve_theme(p2@theme)
   expect_identical(rt2[["panel.background"]]@fill, "white")
 })
 
@@ -17,7 +17,7 @@ test_that("set_theme() overrides on top of the current theme", {
     mark_point(x = wt, y = mpg) |>
     theme_bw() |>
     set_theme(panel_bg = "ivory")
-  rt <- quill:::.resolve_theme(p@theme)
+  rt <- vellumplot:::.resolve_theme(p@theme)
   expect_identical(rt[["panel.background"]]@fill, "ivory")
   # untouched theme_bw gridline value
   expect_identical(rt[["panel.grid.major.x"]]@colour, "grey90")
@@ -35,7 +35,7 @@ test_that("hconcat/vconcat/concat build a composition grid", {
   a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   b <- vplot(mtcars) |> mark_point(x = hp, y = mpg)
   h <- hconcat(a, b)
-  expect_true(S7::S7_inherits(h, quill:::PlotComposition))
+  expect_true(S7::S7_inherits(h, vellumplot:::PlotComposition))
   expect_equal(c(h@nrow, h@ncol), c(1, 2))
   expect_equal(c(vconcat(a, b)@nrow, vconcat(a, b)@ncol), c(2, 1))
   g <- concat(a, b, a, ncol = 2)

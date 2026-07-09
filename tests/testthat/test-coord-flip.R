@@ -1,7 +1,7 @@
 # coord_flip(): swap the x and y axes at render time.
 
 train <- function(p) {
-  quill:::.train_scales(p, quill:::.resolve_layers(p))
+  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
 }
 
 # Near-black ink count in a fractional region of a rendered image.

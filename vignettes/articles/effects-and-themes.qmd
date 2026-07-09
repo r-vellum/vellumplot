@@ -13,21 +13,21 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.retina = 2,
   out.width = "100%",
-  eval = requireNamespace("quill", quietly = TRUE)
+  eval = requireNamespace("vellumplot", quietly = TRUE)
 )
-library(quill)
+library(vellumplot)
 ```
 
 Everything so far has been about mapping data. This article is about the rest:
 the panel, the gridlines, the fonts, and a set of render effects that change how
-marks are painted. quill separates these cleanly. A *theme* controls the
+marks are painted. vellumplot separates these cleanly. A *theme* controls the
 non-data furniture of the whole plot; a *layer effect* changes how one mark is
 drawn; a *gradient* is a fancy fill value; and *sketch* mode turns the whole
 thing hand-drawn.
 
 ## Built-in themes
 
-A theme sets the look of everything that is not a mark. quill ships several.
+A theme sets the look of everything that is not a mark. vellumplot ships several.
 `theme_gray()` is the default (grey panel, white gridlines); `theme_minimal()`
 drops the panel fill; `theme_bw()` is a white panel with light grey gridlines;
 `theme_classic()` gives axis lines and no gridlines; `theme_void()` strips

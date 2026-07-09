@@ -1,7 +1,7 @@
 # Position scale breadth: discrete limits, transforms, explicit breaks.
 
 train <- function(p) {
-  quill:::.train_scales(p, quill:::.resolve_layers(p))
+  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
 }
 
 test_that("scale_x_discrete(limits=) reorders / subsets levels", {

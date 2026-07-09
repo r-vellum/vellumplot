@@ -3,7 +3,7 @@
 # populated and correct, and pin the row-key refinement of the emitters.
 
 test_that("plot_provenance() is exported and returns the record schema", {
-  expect_true("plot_provenance" %in% getNamespaceExports("quill"))
+  expect_true("plot_provenance" %in% getNamespaceExports("vellumplot"))
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   prov <- plot_provenance(p)
   expect_type(prov, "list")

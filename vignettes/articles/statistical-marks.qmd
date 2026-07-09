@@ -14,13 +14,13 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.retina = 2,
   out.width = "100%",
-  eval = requireNamespace("quill", quietly = TRUE)
+  eval = requireNamespace("vellumplot", quietly = TRUE)
 )
-library(quill)
+library(vellumplot)
 ```
 
 Most marks draw the data as given. A statistical mark computes something from
-the data first, then draws the result. quill runs that transform as a stage of
+the data first, then draws the result. vellumplot runs that transform as a stage of
 the compiler (see **[The compiler](the-compiler.html)**), so a histogram is not
 you binning the data by hand; it is a mark that bins as part of being drawn.
 
@@ -194,4 +194,4 @@ than any single point.
 
 `mark_point()` also has an `auto = TRUE` switch that falls back to a datashaded
 raster automatically when a layer has very many rows, so you can keep writing
-`mark_point()` and let quill choose the representation.
+`mark_point()` and let vellumplot choose the representation.

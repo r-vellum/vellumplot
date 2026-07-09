@@ -1,7 +1,7 @@
 # Layer effects (glow), gradient fill paints, and theme_cyberpunk.
 
 train <- function(p) {
-  quill:::.train_scales(p, quill:::.resolve_layers(p))
+  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
 }
 
 line_df <- data.frame(x = 1:20, y = cumsum(c(0, rep(1, 19))))
@@ -10,7 +10,7 @@ line_df <- data.frame(x = 1:20, y = cumsum(c(0, rep(1, 19))))
 
 test_that("glow() builds a GlowSpec with defaults and validates arguments", {
   g <- glow()
-  expect_true(S7::S7_inherits(g, quill:::GlowSpec))
+  expect_true(S7::S7_inherits(g, vellumplot:::GlowSpec))
   expect_identical(g@layers, 6L)
   expect_identical(g@blend, "screen")
   expect_null(g@color)
@@ -29,14 +29,14 @@ test_that("effects ride the layer for stroked / point marks", {
   p <- vplot(line_df) |>
     mark_line(x = x, y = y, effects = list(glow(size = 5, layers = 8)))
   e <- p@layers[[1]]@effects[[1]]
-  expect_true(S7::S7_inherits(e, quill:::GlowSpec))
+  expect_true(S7::S7_inherits(e, vellumplot:::GlowSpec))
   expect_identical(e@layers, 8L)
 })
 
 test_that("glow on an unsupported mark errors", {
   # .check_effects rejects an effect on a mark it does not apply to
   expect_error(
-    quill:::.check_effects(list(glow()), "bar"),
+    vellumplot:::.check_effects(list(glow()), "bar"),
     "does not apply"
   )
   # marks with no effects= argument catch a stray effects= via the reserved guard
@@ -130,7 +130,7 @@ test_that("gradient fill on a polar bar errors clearly", {
 test_that("theme_cyberpunk sets a dark canvas and neon palette defaults", {
   p <- vplot(line_df) |> mark_line(x = x, y = y) |> theme_cyberpunk()
   expect_identical(p@theme$panel.background@fill, "#0d0f18")
-  expect_identical(p@theme[["palette"]], quill:::.NEON_QUAL)
+  expect_identical(p@theme[["palette"]], vellumplot:::.NEON_QUAL)
 })
 
 test_that("theme_cyberpunk supplies the default palette, overridable by a scale", {
@@ -138,31 +138,31 @@ test_that("theme_cyberpunk supplies the default palette, overridable by a scale"
   neon <- vplot(bars) |>
     mark_bar(x = cat, y = n, fill = cat) |>
     theme_cyberpunk()
-  expect_identical(train(neon)$color$map("a"), quill:::.NEON_QUAL[[1]])
+  expect_identical(train(neon)$color$map("a"), vellumplot:::.NEON_QUAL[[1]])
 
   # an explicit scale palette still wins over the theme default
   overridden <- neon |> scale_fill_discrete(palette = "Blues")
   expect_false(identical(
     train(overridden)$color$map("a"),
-    quill:::.NEON_QUAL[[1]]
+    vellumplot:::.NEON_QUAL[[1]]
   ))
 
   # without the theme, the default palette is unchanged
   plain <- vplot(bars) |> mark_bar(x = cat, y = n, fill = cat)
-  expect_false(identical(train(plain)$color$map("a"), quill:::.NEON_QUAL[[1]]))
+  expect_false(identical(train(plain)$color$map("a"), vellumplot:::.NEON_QUAL[[1]]))
 })
 
 # --- outline() --------------------------------------------------------------
 
 test_that("outline() builds an OutlineSpec, attaches, and renders", {
   o <- outline(size = 2, color = "black")
-  expect_true(S7::S7_inherits(o, quill:::OutlineSpec))
+  expect_true(S7::S7_inherits(o, vellumplot:::OutlineSpec))
   expect_error(outline(size = -1), "positive")
   expect_error(outline(color = c("a", "b")), "single colour")
 
   p <- vplot(line_df) |>
     mark_point(x = x, y = y, size = 3, effects = list(outline()))
-  expect_true(S7::S7_inherits(p@layers[[1]]@effects[[1]], quill:::OutlineSpec))
+  expect_true(S7::S7_inherits(p@layers[[1]]@effects[[1]], vellumplot:::OutlineSpec))
   expect_no_error(render_px(p))
 })
 
@@ -170,7 +170,7 @@ test_that("outline() builds an OutlineSpec, attaches, and renders", {
 
 test_that("shadow() builds a ShadowSpec and renders on a line", {
   s <- shadow(x = 0.01, y = -0.01)
-  expect_true(S7::S7_inherits(s, quill:::ShadowSpec))
+  expect_true(S7::S7_inherits(s, vellumplot:::ShadowSpec))
   expect_error(shadow(alpha = 2), "\\[0, 1\\]")
   expect_error(shadow(spread = -1), "non-negative")
 

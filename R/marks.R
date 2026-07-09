@@ -259,7 +259,7 @@ after_stat <- function(x) x
 #' * `hover_color`, `selected_color` — per-element outline colours applied by the
 #'   host when the element is hovered / selected (a constant, or mapped from a
 #'   column so different marks highlight differently). They override the widget-wide
-#'   theme set by `gloss::as_widget(hover_color=, selected_color=)`.
+#'   theme set by `vellumwidget::as_widget(hover_color=, selected_color=)`.
 #'
 #' These are inert for PNG/PDF and for an SVG opened without a JS host: a plot
 #' with none of them compiles and renders exactly as before. Declaring any of them

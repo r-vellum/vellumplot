@@ -147,7 +147,7 @@ test_that("a choropleth compiles and renders without error", {
 test_that("mark_sf() errors on non-sf data", {
   skip_if_not_installed("sf")
   expect_error(
-    quill:::.resolve_layer(
+    vellumplot:::.resolve_layer(
       (vplot(data.frame(a = 1)) |> mark_sf())@layers[[1]],
       data.frame(a = 1)
     ),

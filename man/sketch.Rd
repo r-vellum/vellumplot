@@ -32,7 +32,7 @@ higher is wilder).}
 A \code{vellum_sketch} object.
 }
 \description{
-A re-export of \code{\link[vellum:sketch]{vellum::sketch()}} — the one vocabulary quill speaks for the
+A re-export of \code{\link[vellum:sketch]{vellum::sketch()}} — the one vocabulary vellumplot speaks for the
 hand-drawn look (wobbly outlines, hachure fills, à la
 \href{https://roughjs.com}{Rough.js}). Pass a \code{sketch()} value to any mark's
 \verb{sketch =} argument, to an \code{\link[=element_line]{element_line()}} / \code{\link[=element_rect]{element_rect()}} \verb{sketch =}

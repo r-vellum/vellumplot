@@ -123,7 +123,7 @@ test_that("interactivity declarations do not perturb the rendered pixels", {
 
 # --- Legend interaction: discrete legend swatches drive their data series. -----
 # When a plot is interactive, discrete colour/shape swatches are tagged with a
-# `legend_for = "<aes>:<level>"` key so gloss can project a swatch back onto the
+# `legend_for = "<aes>:<level>"` key so vellumwidget can project a swatch back onto the
 # whole series, and every data mark carries its series membership in `meta$legend`.
 
 legend_df <- data.frame(

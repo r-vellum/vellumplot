@@ -2,7 +2,7 @@
 # Needs the optional `igraph` and `graphlayouts` packages (both in Suggests) --
 # graphlayouts supplies the default stress layout. Skips cleanly if absent.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 
@@ -11,7 +11,7 @@ if (!requireNamespace("igraph", quietly = TRUE) ||
   message("20-networks: skipped (install 'igraph' and 'graphlayouts' to run it)")
 } else {
   # Zachary's karate club -- the canonical small social network. Precompute the
-  # analytical attributes we want to map (quill does not compute centralities).
+  # analytical attributes we want to map (vellumplot does not compute centralities).
   g <- igraph::make_graph("Zachary")
   g <- igraph::set_vertex_attr(
     g, "community",

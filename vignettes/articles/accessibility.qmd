@@ -14,9 +14,9 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.retina = 2,
   out.width = "100%",
-  eval = requireNamespace("quill", quietly = TRUE)
+  eval = requireNamespace("vellumplot", quietly = TRUE)
 )
-library(quill)
+library(vellumplot)
 ```
 
 A chart that a screen-reader user cannot perceive, or that a keyboard user
@@ -29,17 +29,17 @@ they emit, and how to author them well.
 The work is split across the three packages along the same seam as everything
 else:
 
-- **quill** (this package) is the *author*. It generates the plot's text
+- **vellumplot** (this package) is the *author*. It generates the plot's text
   alternative and hands it, with the title, to the scene.
 - **vellum** is the *emitter*. It turns that title/description into an accessible
   SVG and a tagged PDF.
-- **gloss** is the *interactive layer*. It makes the widget keyboard- and
+- **vellumwidget** is the *interactive layer*. It makes the widget keyboard- and
   screen-reader-navigable.
 
 ## Alt text: the text alternative
 
 The single most important thing a chart needs is a **text alternative** — a
-prose sentence or two describing what it shows (WCAG 1.1.1). quill writes one
+prose sentence or two describing what it shows (WCAG 1.1.1). vellumplot writes one
 for every plot automatically, from the spec it already has:
 
 ```{r}
@@ -110,13 +110,13 @@ planned follow-up; the tag tree and `Alt` ship today.)
 ## The interactive widget
 
 A static image with alt text is enough for a picture, but an *interactive* chart
-must also be operable and explorable without a mouse. `gloss::as_widget()`
+must also be operable and explorable without a mouse. `vellumwidget::as_widget()`
 (accessibility on by default, `a11y = TRUE`) makes the widget a first-class
 interactive chart:
 
 ```{r}
 #| eval: false
-library(gloss)
+library(vellumwidget)
 
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, tooltip = rownames(mtcars), data_id = rownames(mtcars)) |>
@@ -127,7 +127,7 @@ vplot(mtcars) |>
 That widget:
 
 - announces itself as an **interactive chart**
-  (`role="graphics-document"`), labelled from the title/description quill
+  (`role="graphics-document"`), labelled from the title/description vellumplot
   already emitted (or an explicit `as_widget(alt =)`);
 - makes **every mark focusable**. Tab into the chart, then use the **arrow
   keys** to move between marks; each is a `graphics-symbol` labelled with its
@@ -155,5 +155,5 @@ rarely a reason to.
 
 - vellum's *The scene contract* vignette — the SVG/PDF a11y attributes and the
   additivity invariant, from the emitter's side.
-- gloss's interactivity article — the widget's full keyboard and screen-reader
+- vellumwidget's interactivity article — the widget's full keyboard and screen-reader
   model.

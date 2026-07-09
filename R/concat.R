@@ -7,7 +7,7 @@ NULL
 # (a recursive view tree), so every node can carry its own annotation.
 PlotComposition <- S7::new_class(
   "PlotComposition",
-  package = "quill",
+  package = "vellumplot",
   properties = list(
     plots = S7::class_list, # list<PlotSpec | PlotComposition>
     nrow = S7::new_property(S7::class_double, default = 1),
@@ -148,7 +148,7 @@ concat <- function(
 }
 
 # A reserved-but-empty cell.
-Spacer <- S7::new_class("Spacer", package = "quill")
+Spacer <- S7::new_class("Spacer", package = "vellumplot")
 
 #' Reserve an empty cell in a composition
 #'
@@ -431,7 +431,7 @@ compose_annotation <- function(
     scene <- .compile_composition_independent(scene, comp)
   }
   # Provenance accumulates across every sub-plot's marks; carry it out (DESIGN §4).
-  attr(scene, "quill_provenance") <- .provenance_snapshot()
+  attr(scene, "vellumplot_provenance") <- .provenance_snapshot()
   scene
 }
 

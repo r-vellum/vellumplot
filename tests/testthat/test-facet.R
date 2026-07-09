@@ -8,7 +8,7 @@ test_that("facet_wrap()/facet_grid() require a formula", {
 
 test_that("facet_wrap() records a wrap FacetSpec", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
-  expect_true(S7::S7_inherits(p@facet, quill:::FacetSpec))
+  expect_true(S7::S7_inherits(p@facet, vellumplot:::FacetSpec))
   expect_identical(p@facet@type, "wrap")
 })
 
@@ -16,20 +16,20 @@ test_that("scales='free' sets the resolve lattice to independent", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     facet_wrap(~cyl, scales = "free")
-  expect_identical(quill:::.resolve_for(p, "x"), "independent")
-  expect_identical(quill:::.resolve_for(p, "y"), "independent")
+  expect_identical(vellumplot:::.resolve_for(p, "x"), "independent")
+  expect_identical(vellumplot:::.resolve_for(p, "y"), "independent")
   p2 <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     facet_wrap(~cyl, scales = "free_x")
-  expect_identical(quill:::.resolve_for(p2, "x"), "independent")
-  expect_identical(quill:::.resolve_for(p2, "y"), "shared")
+  expect_identical(vellumplot:::.resolve_for(p2, "x"), "independent")
+  expect_identical(vellumplot:::.resolve_for(p2, "y"), "shared")
 })
 
 test_that("resolve_scale() sets resolutions and defaults to shared", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  expect_identical(quill:::.resolve_for(p, "y"), "shared")
+  expect_identical(vellumplot:::.resolve_for(p, "y"), "shared")
   p <- resolve_scale(p, y = "independent")
-  expect_identical(quill:::.resolve_for(p, "y"), "independent")
+  expect_identical(vellumplot:::.resolve_for(p, "y"), "independent")
   expect_error(resolve_scale(p, y = "nonsense"))
 })
 
@@ -43,7 +43,7 @@ test_that("facet_wrap() builds one panel per level on a wrapped grid", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     facet_wrap(~cyl, ncol = 2)
-  built <- quill:::.build_panels(p)
+  built <- vellumplot:::.build_panels(p)
   expect_length(built$panels, 3) # cyl in {4,6,8}
   expect_equal(built$fa$C, 2)
   expect_equal(built$fa$R, 2)
@@ -56,14 +56,14 @@ test_that("facet_wrap() builds one panel per level on a wrapped grid", {
 
 test_that("facet_grid() builds an R x C panel grid", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_grid(am ~ cyl)
-  built <- quill:::.build_panels(p)
+  built <- vellumplot:::.build_panels(p)
   expect_equal(built$fa$R, 2) # am in {0,1}
   expect_equal(built$fa$C, 3) # cyl in {4,6,8}
   expect_length(built$panels, 6)
 })
 
 test_that("shared scales give every panel the same domain; free gives different", {
-  shared <- quill:::.build_panels(
+  shared <- vellumplot:::.build_panels(
     vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
   )
   dom <- lapply(shared$panels, function(p) p$x_sc$domain)
@@ -73,7 +73,7 @@ test_that("shared scales give every panel the same domain; free gives different"
     logical(1)
   )))
 
-  free <- quill:::.build_panels(
+  free <- vellumplot:::.build_panels(
     vplot(mtcars) |>
       mark_point(x = wt, y = mpg) |>
       facet_wrap(~cyl, scales = "free_x")
@@ -99,7 +99,7 @@ test_that("faceted plots render to a PNG", {
 })
 
 test_that("a single-panel plot is a 1x1 grid", {
-  built <- quill:::.build_panels(
+  built <- vellumplot:::.build_panels(
     vplot(mtcars) |> mark_point(x = wt, y = mpg)
   )
   expect_equal(built$fa$R, 1)

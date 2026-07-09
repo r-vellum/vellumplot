@@ -14,7 +14,7 @@ test_that("mark_bar() appends a bar layer", {
 
 test_that("a discrete position scale maps levels to bands", {
   p <- vplot(bar_df) |> mark_bar(x = cat, y = val)
-  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
+  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
   expect_true(sc$x$discrete)
   expect_equal(sc$x$domain, c(0.5, 3.5))
   expect_identical(sc$x$labels, c("a", "b", "c"))
@@ -23,40 +23,40 @@ test_that("a discrete position scale maps levels to bands", {
 
 test_that("bars force the y axis to include zero", {
   p <- vplot(bar_df) |> mark_bar(x = cat, y = val)
-  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
+  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
   expect_lte(sc$y$domain[1], 0)
 })
 
 test_that("a bar with no y counts rows per category", {
   d <- data.frame(g = factor(c("a", "a", "a", "b", "c", "c")))
   p <- vplot(d) |> mark_bar(x = g)
-  r <- quill:::.resolve_layers(p)[[1]]
+  r <- vellumplot:::.resolve_layers(p)[[1]]
   # count keeps x as a factor so a custom level order survives downstream
   expect_equal(as.character(r$values$x), c("a", "b", "c"))
   expect_equal(r$values$y, c(3, 1, 2))
-  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
+  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
   expect_identical(sc$y$name, "count")
 })
 
 test_that("a bar with no y counts per unique x value (stat = count)", {
   p <- vplot(data.frame(x = c(1, 1, 2, 3))) |> mark_bar(x = x)
-  r <- quill:::.resolve_layers(p)[[1]]
+  r <- vellumplot:::.resolve_layers(p)[[1]]
   expect_setequal(as.numeric(r$values$x), c(1, 2, 3))
   expect_equal(r$values$y[match("1", as.character(r$values$x))], 2)
 })
 
 test_that("a mapped size trains a size scale and is used by points", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp)
-  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
+  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
   expect_false(is.null(sc$size))
   rng <- range(mtcars$hp)
-  expect_equal(sc$size$map(rng), quill:::.SIZE_RANGE)
+  expect_equal(sc$size$map(rng), vellumplot:::.SIZE_RANGE)
 })
 
 test_that("colour + size produce two stacked legend guides", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = qsec, size = hp)
-  sc <- quill:::.train_scales(p, quill:::.resolve_layers(p))
-  guides <- quill:::.legend_guides(sc)
+  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  guides <- vellumplot:::.legend_guides(sc)
   expect_length(guides, 2)
   expect_identical(
     vapply(guides, function(g) g$kind, character(1)),

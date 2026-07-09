@@ -15,7 +15,7 @@ A single string.
 \description{
 Returns the description used as the plot's text alternative for assistive
 technology. If \code{\link[=labs]{labs()}} set an explicit \code{alt}, that string is returned
-verbatim; otherwise quill generates a prose summary from the specification —
+verbatim; otherwise vellumplot generates a prose summary from the specification —
 the chart type, what each axis / colour / size encodes, the number of
 observations, and any faceting.
 }

@@ -1,7 +1,7 @@
 ---
 title: "The compiler: spec to scene"
 description: >
-  quill is not a wrapper around drawing calls. A plot is an inspectable,
+  vellumplot is not a wrapper around drawing calls. A plot is an inspectable,
   serializable spec, and a real compiler turns it into a vellum scene. This is
   what that means and why it is useful.
 ---
@@ -13,13 +13,13 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.retina = 2,
   out.width = "100%",
-  eval = requireNamespace("quill", quietly = TRUE)
+  eval = requireNamespace("vellumplot", quietly = TRUE)
 )
-library(quill)
+library(vellumplot)
 ```
 
 Most plotting libraries draw as you call them: each function pushes graphics
-onto a device. quill does not. When you build a plot, nothing is drawn. You are
+onto a device. vellumplot does not. When you build a plot, nothing is drawn. You are
 assembling a *spec*, a plain S7 object that records the data, the layers, the
 scales, the facet, the coord, and the theme. Drawing happens later, in one
 pass, when a compiler turns that spec into a `vellum` scene. This article is
@@ -72,7 +72,7 @@ pipeline of distinct stages, each consuming the output of the last:
    panel.
 
 The result is a `vellum` scene: a resolution-independent description of the
-drawing that the backend can render to PNG, SVG, or PDF. quill never touches a
+drawing that the backend can render to PNG, SVG, or PDF. vellumplot never touches a
 graphics device itself; it produces a scene and hands it to `vellum`.
 
 ## Why this design pays off
@@ -94,7 +94,7 @@ assert on the spec.
 
 **One scene, many outputs.** The compiler targets a `vellum` scene, not a
 device. The same spec renders to a raster or a vector file, and the same scene
-model is what the `gloss` package turns into an interactive widget. Write the
+model is what the `vellumwidget` package turns into an interactive widget. Write the
 plot once; choose the output later.
 
 ## Rendering
@@ -118,6 +118,6 @@ render_plot(p, "cars.pdf")
 ```
 
 To go deeper into the backend the compiler targets, see the
-[vellum](https://schochastics.github.io/vellum/) documentation. To turn a
+[vellum](https://r-vellum.github.io/vellum/) documentation. To turn a
 compiled scene into an interactive widget, see
-[gloss](https://schochastics.github.io/gloss/).
+[vellumwidget](https://r-vellum.github.io/vellumwidget/).

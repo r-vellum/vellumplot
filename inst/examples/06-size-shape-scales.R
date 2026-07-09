@@ -1,6 +1,6 @@
 # The size and shape aesthetics, and their scales.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

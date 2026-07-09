@@ -13,10 +13,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-# quill <img src="man/figures/logo.png" align="right" height="138" alt="" />
+# vellumplot <img src="man/figures/logo.png" align="right" height="138" alt="" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/schochastics/quill/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/schochastics/quill/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/r-vellum/vellumplot/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-vellum/vellumplot/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
@@ -30,8 +30,8 @@ knitr::opts_chunk$set(
 )
 ```
 
-quill is a declarative, pipe-first grammar of graphics built on the
-[vellum](https://github.com/schochastics/vellum) graphics backend. You describe
+vellumplot is a declarative, pipe-first grammar of graphics built on the
+[vellum](https://github.com/r-vellum/vellum) graphics backend. You describe
 a plot as an inspectable, serializable *spec*; nothing is drawn until the spec is
 compiled into a vellum scene and rendered.
 
@@ -43,10 +43,10 @@ drawing primitives.
 
 ```r
 # install.packages("pak")
-pak::pak("schochastics/quill")
+pak::pak("r-vellum/vellumplot")
 ```
 
-quill needs the [vellum](https://github.com/schochastics/vellum) backend, which
+vellumplot needs the [vellum](https://github.com/r-vellum/vellum) backend, which
 compiles a Rust crate, so you also need a Rust toolchain (`cargo`/`rustc`); pak
 pulls vellum in automatically.
 
@@ -57,7 +57,7 @@ embeds in a knitr/Quarto chunk), like ggplot2. Use `render_plot()` to write a
 file.
 
 ```{r example}
-library(quill)
+library(vellumplot)
 
 # a scatter with a continuous colour legend
 vplot(mtcars) |>
@@ -170,14 +170,14 @@ render_plot(p, "cars.png")
 
 ## The vellum ecosystem
 
-quill is the grammar layer of a small ecosystem of packages that share the
+vellumplot is the grammar layer of a small ecosystem of packages that share the
 vellum scene model:
 
-- **[vellum](https://github.com/schochastics/vellum)** — the parchment: the
+- **[vellum](https://github.com/r-vellum/vellum)** — the parchment: the
   low-level graphics backend (Rust scene graph, PNG/SVG/PDF renderer).
-- **[quill](https://github.com/schochastics/quill)** — the pen: this package.
-- **[gloss](https://github.com/schochastics/gloss)** — the gloss: turns a quill
+- **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen: this package.
+- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the vellumwidget: turns a vellumplot
   plot (or a raw vellum scene) into a client-side interactive HTML widget via
   `as_widget()`.
-- **[scriptorium](https://github.com/schochastics/scriptorium)** — installs and
+- **[vellumverse](https://github.com/r-vellum/vellumverse)** — installs and
   loads the whole ecosystem in one step.

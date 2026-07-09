@@ -4,7 +4,7 @@ NULL
 # ---------------------------------------------------------------------------
 # Alt text: a screen-reader-usable prose description of a plot (WCAG 1.1.1).
 #
-# quill is the *author* of the ecosystem's accessibility story: it turns the
+# vellumplot is the *author* of the ecosystem's accessibility story: it turns the
 # inspectable PlotSpec into an accessible name (the plot title) and a text
 # alternative (this alt text), then hands both to vellum's scene title/desc at
 # the compile seam (see .compile_plot / .compile_composition). vellum emits them
@@ -211,7 +211,7 @@ NULL
 #'
 #' Returns the description used as the plot's text alternative for assistive
 #' technology. If [labs()] set an explicit `alt`, that string is returned
-#' verbatim; otherwise quill generates a prose summary from the specification —
+#' verbatim; otherwise vellumplot generates a prose summary from the specification —
 #' the chart type, what each axis / colour / size encodes, the number of
 #' observations, and any faceting.
 #'

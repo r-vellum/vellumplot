@@ -1,7 +1,7 @@
 # Statistical marks: geometries that transform the data before drawing.
 # histogram, density, smooth, boxplot, summary, errorbar, linerange.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

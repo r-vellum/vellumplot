@@ -1,9 +1,9 @@
 # Heatmaps + 2-D bin / 1-D density.
 
 train <- function(p) {
-  quill:::.train_scales(p, quill:::.resolve_layers(p))
+  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
 }
-resolve1 <- function(p) quill:::.resolve_layers(p)[[1]]
+resolve1 <- function(p) vellumplot:::.resolve_layers(p)[[1]]
 
 d <- expand.grid(x = 1:6, y = 1:6)
 d$z <- d$x * d$y

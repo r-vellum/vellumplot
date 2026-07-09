@@ -26,8 +26,8 @@ test_that("mark_ridgeline() records its mark and renders", {
 
 test_that("mark_dotplot() bins and stacks one dot per observation", {
   d <- data.frame(v = c(1, 1, 1, 2, 5))
-  L <- quill:::.resolve_layer((vplot(d) |> mark_dotplot(x = v, binwidth = 0.5))@layers[[1]], d)
-  sdf <- quill:::.apply_stat(L)
+  L <- vellumplot:::.resolve_layer((vplot(d) |> mark_dotplot(x = v, binwidth = 0.5))@layers[[1]], d)
+  sdf <- vellumplot:::.apply_stat(L)
   # one row per observation, y = stack height within the bin
   expect_equal(nrow(sdf$values$x |> as.data.frame()), 5L)
   expect_equal(max(sdf$values$y), 2.5) # three 1's stacked -> heights 0.5,1.5,2.5

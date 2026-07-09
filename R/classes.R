@@ -1,4 +1,4 @@
-#' @include quill-package.R
+#' @include vellumplot-package.R
 NULL
 
 # --- spec leaves ------------------------------------------------------------
@@ -7,7 +7,7 @@ NULL
 # inferred) variable type. `type = ""` means "infer from the resolved values".
 channel <- S7::new_class(
   "channel",
-  package = "quill",
+  package = "vellumplot",
   properties = list(
     expr = S7::class_any, # a quosure (rlang)
     type = S7::new_property(S7::class_character, default = ""),
@@ -19,14 +19,14 @@ channel <- S7::new_class(
 # emitted grob(s) at compile time (e.g. glow -> a stack of widened, low-alpha
 # copies). Abstract root so `effects` can grow (shadow/outline) without touching
 # the mark signatures; the compiler dispatches on the concrete subclass.
-Effect <- S7::new_class("Effect", package = "quill", abstract = TRUE)
+Effect <- S7::new_class("Effect", package = "vellumplot", abstract = TRUE)
 
 # A neon-glow effect: `layers` widened, low-`alpha` copies of a stroked/point
 # mark composited under a `blend` mode (the crisp original drawn on top). `size`
 # is the extra visual spread in mm; `color` NULL inherits the mark's own colour.
 GlowSpec <- S7::new_class(
   "GlowSpec",
-  package = "quill",
+  package = "vellumplot",
   parent = Effect,
   properties = list(
     size = S7::new_property(S7::class_double, default = 6),
@@ -42,7 +42,7 @@ GlowSpec <- S7::new_class(
 # over a busy or dark backdrop. `size` is the halo width per side, in mm.
 OutlineSpec <- S7::new_class(
   "OutlineSpec",
-  package = "quill",
+  package = "vellumplot",
   parent = Effect,
   properties = list(
     size = S7::new_property(S7::class_double, default = 1),
@@ -56,7 +56,7 @@ OutlineSpec <- S7::new_class(
 # up), and softened by stacking `layers` copies widened up to `spread` mm.
 ShadowSpec <- S7::new_class(
   "ShadowSpec",
-  package = "quill",
+  package = "vellumplot",
   parent = Effect,
   properties = list(
     x = S7::new_property(S7::class_double, default = 0.006),
@@ -73,7 +73,7 @@ ShadowSpec <- S7::new_class(
 # own `stat_params`), a position adjustment (`position`), and render `effects`.
 LayerSpec <- S7::new_class(
   "LayerSpec",
-  package = "quill",
+  package = "vellumplot",
   properties = list(
     mark = S7::class_character, # "point" | "line" | "rule" | "bar" | "smooth" | "hex"
     encoding = S7::new_property(S7::class_list, default = list()),
@@ -102,7 +102,7 @@ LayerSpec <- S7::new_class(
 # while training".
 ScaleSpec <- S7::new_class(
   "ScaleSpec",
-  package = "quill",
+  package = "vellumplot",
   properties = list(
     aesthetic = S7::class_character, # "x" | "y" | "color" | "fill" | "size" | "shape"
     type = S7::class_character, # "continuous" | "discrete" | "binned"
@@ -156,7 +156,7 @@ ScaleSpec <- S7::new_class(
 #' @export
 PlotSpec <- S7::new_class(
   "PlotSpec",
-  package = "quill",
+  package = "vellumplot",
   properties = list(
     data = S7::class_any, # a data.frame
     edge_data = S7::new_property(S7::class_any, default = NULL), # graph edge table | NULL

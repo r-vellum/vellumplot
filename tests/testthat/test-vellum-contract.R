@@ -1,4 +1,4 @@
-# Cross-layer contract: quill compiles to vellum's scene, and depends on the
+# Cross-layer contract: vellumplot compiles to vellum's scene, and depends on the
 # shape of `scene_model()` and the SVG `data-vellum-id` attribute. These tests
 # assert that dependency explicitly, so a schema change in vellum (caught by the
 # nightly run against vellum's `main`) fails loudly here rather than as an
@@ -7,7 +7,7 @@
 
 df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, model = rownames(mtcars))
 
-test_that("scene_model() exposes the element columns quill reads", {
+test_that("scene_model() exposes the element columns vellumplot reads", {
   p <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
   m <- vellum::scene_model(vellum::as_vellum_scene(p))
 
@@ -16,12 +16,12 @@ test_that("scene_model() exposes the element columns quill reads", {
     c("key", "mark", "id", "name", "panel",
       "x0", "y0", "x1", "y1", "x", "y", "w", "h", "meta")
   )
-  # the specific columns quill's interactivity path reads
+  # the specific columns vellumplot's interactivity path reads
   expect_true(all(c("mark", "key", "meta") %in% names(m$elements)))
   expect_type(m$elements$meta, "list")
 })
 
-test_that("quill emits marks in vellum's documented `mark` vocabulary", {
+test_that("vellumplot emits marks in vellum's documented `mark` vocabulary", {
   vocab <- c("rect", "point", "circle", "hexagon", "sector",
              "segment", "path", "line", "polygon")
 
@@ -45,7 +45,7 @@ test_that("provenance id joins to the SVG data-vellum-id (the documented join ke
   p <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
   sc <- vellum::as_vellum_scene(p)
 
-  prov <- attr(sc, "quill_provenance")
+  prov <- attr(sc, "vellumplot_provenance")
   expect_gt(length(prov), 0L)
   ids <- vapply(prov, function(r) r$id, character(1))
 

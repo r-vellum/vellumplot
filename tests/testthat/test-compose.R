@@ -8,13 +8,13 @@ p_xy <- function(x = wt, y = mpg, ...) {
 test_that("a simple grid of single-panel plots is alignable", {
   a <- p_xy(wt, mpg)
   b <- p_xy(hp, mpg)
-  expect_true(quill:::.comp_alignable(hconcat(a, b)))
+  expect_true(vellumplot:::.comp_alignable(hconcat(a, b)))
   # faceted / polar / nested fall back to the independent path
   fac <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     facet_wrap(~cyl)
-  expect_false(quill:::.comp_alignable(hconcat(a, fac)))
-  expect_false(quill:::.comp_alignable(hconcat(a, vconcat(a, b))))
+  expect_false(vellumplot:::.comp_alignable(hconcat(a, fac)))
+  expect_false(vellumplot:::.comp_alignable(hconcat(a, vconcat(a, b))))
 })
 
 test_that("panels sit on shared null tracks (so they align)", {
@@ -23,9 +23,9 @@ test_that("panels sit on shared null tracks (so they align)", {
   a <- vplot(big) |> mark_point(x = wt, y = mpg)
   b <- p_xy(hp, drat)
   comp <- hconcat(a, b)
-  plans <- lapply(comp@plots, quill:::.plan_plot)
-  rt0 <- quill:::.resolve_theme(quill:::.theme_default())
-  glo <- quill:::.composition_grid(plans, comp, TRUE, rt0)
+  plans <- lapply(comp@plots, vellumplot:::.plan_plot)
+  rt0 <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
+  glo <- vellumplot:::.composition_grid(plans, comp, TRUE, rt0)
   rows <- vapply(glo$map, function(m) m$panel_row, integer(1))
   expect_equal(length(unique(rows)), 1L) # both panels in one row
   cols <- vapply(glo$map, function(m) m$panel_col, integer(1))
@@ -35,9 +35,9 @@ test_that("panels sit on shared null tracks (so they align)", {
 test_that("identical legends collapse to one; keep leaves them per-plot", {
   a <- p_xy(wt, mpg, color = cyl)
   b <- p_xy(hp, mpg, color = cyl)
-  rt0 <- quill:::.resolve_theme(quill:::.theme_default())
-  gc <- quill:::.composition_grid(
-    lapply(list(a, b), quill:::.plan_plot),
+  rt0 <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
+  gc <- vellumplot:::.composition_grid(
+    lapply(list(a, b), vellumplot:::.plan_plot),
     hconcat(a, b),
     TRUE,
     rt0
@@ -45,8 +45,8 @@ test_that("identical legends collapse to one; keep leaves them per-plot", {
   expect_length(gc$figguides, 1L)
   expect_false(is.na(gc$figlegend_col))
 
-  gk <- quill:::.composition_grid(
-    lapply(list(a, b), quill:::.plan_plot),
+  gk <- vellumplot:::.composition_grid(
+    lapply(list(a, b), vellumplot:::.plan_plot),
     hconcat(a, b, guides = "keep"),
     FALSE,
     rt0
@@ -57,9 +57,9 @@ test_that("identical legends collapse to one; keep leaves them per-plot", {
 test_that("distinct legends are not collapsed", {
   a <- p_xy(wt, mpg, color = cyl)
   b <- p_xy(hp, mpg, color = gear)
-  rt0 <- quill:::.resolve_theme(quill:::.theme_default())
-  g <- quill:::.composition_grid(
-    lapply(list(a, b), quill:::.plan_plot),
+  rt0 <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
+  g <- vellumplot:::.composition_grid(
+    lapply(list(a, b), vellumplot:::.plan_plot),
     hconcat(a, b),
     TRUE,
     rt0
@@ -85,7 +85,7 @@ test_that("compose_annotation sets figure labels and tag spec", {
 
 test_that("auto-tag formatting covers the styles", {
   fmt <- function(n, lvl, ...) {
-    quill:::.format_tags(n, list(levels = lvl, ...))
+    vellumplot:::.format_tags(n, list(levels = lvl, ...))
   }
   expect_equal(fmt(3, "A"), c("A", "B", "C"))
   expect_equal(fmt(3, "a"), c("a", "b", "c"))
@@ -99,20 +99,20 @@ test_that("widths/heights and byrow are stored and recycled", {
   comp <- concat(a, a, a, a, ncol = 2, widths = c(2, 1), byrow = FALSE)
   expect_equal(comp@widths, c(2, 1))
   expect_false(comp@byrow)
-  expect_equal(quill:::.size_weights(c(2, 1), 2), c(2, 1))
-  expect_equal(quill:::.size_weights(NULL, 3), c(1, 1, 1))
+  expect_equal(vellumplot:::.size_weights(c(2, 1), 2), c(2, 1))
+  expect_equal(vellumplot:::.size_weights(NULL, 3), c(1, 1, 1))
 })
 
 test_that("byrow controls cell order", {
   comp <- concat(p_xy(), p_xy(), p_xy(), p_xy(), ncol = 2, byrow = FALSE)
   # plot 2 should be row 2 col 1 when filling by column
-  expect_equal(quill:::.comp_cell(2, comp), list(r = 2L, c = 1L))
+  expect_equal(vellumplot:::.comp_cell(2, comp), list(r = 2L, c = 1L))
   comp2 <- concat(p_xy(), p_xy(), p_xy(), p_xy(), ncol = 2, byrow = TRUE)
-  expect_equal(quill:::.comp_cell(2, comp2), list(r = 1L, c = 2L))
+  expect_equal(vellumplot:::.comp_cell(2, comp2), list(r = 1L, c = 2L))
 })
 
 test_that("design strings and area() lists parse to spanning areas", {
-  d <- quill:::.parse_design("AA\nBC", 3)
+  d <- vellumplot:::.parse_design("AA\nBC", 3)
   expect_length(d, 3L)
   expect_equal(d[[1]], area(1, 1, 1, 2)) # A spans top row
   expect_equal(d[[2]], area(2, 1, 2, 1)) # B bottom-left
@@ -122,11 +122,11 @@ test_that("design strings and area() lists parse to spanning areas", {
 })
 
 test_that("plot_spacer and inset build the right objects", {
-  expect_true(S7::S7_inherits(plot_spacer(), quill:::Spacer))
+  expect_true(S7::S7_inherits(plot_spacer(), vellumplot:::Spacer))
   a <- p_xy()
   b <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
   ins <- inset(a, b, left = 0.5, bottom = 0.5)
-  expect_true(S7::S7_inherits(ins, quill:::PlotComposition))
+  expect_true(S7::S7_inherits(ins, vellumplot:::PlotComposition))
   expect_length(ins@insets, 1L)
   expect_equal(ins@insets[[1]]$left, 0.5)
   expect_error(inset(a, b), NA) # default inset position is fine

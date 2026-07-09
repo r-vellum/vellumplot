@@ -1,7 +1,7 @@
 # Geometry marks: area / ribbon / step.
 
 train <- function(p) {
-  quill:::.train_scales(p, quill:::.resolve_layers(p))
+  vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
 }
 
 d <- data.frame(

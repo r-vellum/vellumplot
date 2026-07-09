@@ -1,4 +1,4 @@
 library(testthat)
-library(quill)
+library(vellumplot)
 
-test_check("quill")
+test_check("vellumplot")

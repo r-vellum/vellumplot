@@ -12,24 +12,24 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.retina = 2,
   out.width = "100%",
-  eval = requireNamespace("quill", quietly = TRUE)
+  eval = requireNamespace("vellumplot", quietly = TRUE)
 )
 ```
 
-quill is a declarative, pipe-first grammar of graphics built on the
-[vellum](https://schochastics.github.io/vellum/) backend. You describe a plot
+vellumplot is a declarative, pipe-first grammar of graphics built on the
+[vellum](https://r-vellum.github.io/vellum/) backend. You describe a plot
 as an inspectable, serializable *spec*; nothing is drawn until the spec is
 compiled into a vellum scene and rendered.
 
 ## Install
 
-quill compiles a Rust crate (inside `vellum`), so you need a Rust toolchain
+vellumplot compiles a Rust crate (inside `vellum`), so you need a Rust toolchain
 (`cargo`/`rustc`) on your machine alongside R. With that in place:
 
 ```{r}
 #| eval: false
 # install.packages("pak")
-pak::pak("schochastics/quill")
+pak::pak("r-vellum/vellumplot")
 ```
 
 ## A first plot
@@ -38,7 +38,7 @@ Start with `vplot()` on a data frame, then add a mark. Encodings (`x`, `y`,
 `color`, …) are tidy-eval expressions evaluated against the data.
 
 ```{r}
-library(quill)
+library(vellumplot)
 
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp) |>
@@ -92,9 +92,9 @@ render_plot(p, "cars.png")
 
 - **[Reference](../reference/index.html)** — every mark, scale, coord, facet,
   theme, and effect.
-- **[vellum](https://schochastics.github.io/vellum/)** — the graphics backend
-  quill compiles into.
-- **[gloss](https://schochastics.github.io/gloss/)** — turn a scene into an
+- **[vellum](https://r-vellum.github.io/vellum/)** — the graphics backend
+  vellumplot compiles into.
+- **[vellumwidget](https://r-vellum.github.io/vellumwidget/)** — turn a scene into an
   interactive HTML widget.
-- **[scriptorium](https://schochastics.github.io/scriptorium/)** — install and
+- **[vellumverse](https://r-vellum.github.io/vellumverse/)** — install and
   attach the whole ecosystem in one step.

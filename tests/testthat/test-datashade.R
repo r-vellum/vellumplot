@@ -15,7 +15,7 @@ test_that("mark_point(auto = TRUE) records the auto flag", {
 test_that("a datashade layer still trains position scales from the data", {
   d <- data.frame(x = c(0, 10), y = c(-5, 5))
   p <- vplot(d) |> mark_datashade(x = x, y = y)
-  sc <- quill:::.build_panels(p)$scales
+  sc <- vellumplot:::.build_panels(p)$scales
   expect_lt(sc$x$domain[1], 0)
   expect_gt(sc$x$domain[2], 10)
 })
@@ -65,7 +65,7 @@ test_that("datashade feeds training only a coordinate range, keeps full coords f
   n <- 1000
   df <- data.frame(x = rnorm(n), y = rnorm(n))
   p <- vplot(df) |> mark_datashade(x = x, y = y)
-  L <- quill:::.resolve_layers(p)[[1]]
+  L <- vellumplot:::.resolve_layers(p)[[1]]
   # training sees a 2-value range, not the full cloud...
   expect_length(L$values$x, 2L)
   expect_equal(L$values$x, range(df$x))
@@ -78,7 +78,7 @@ test_that("user scale limits short-circuit the position scan (no data-derived ra
   p <- vplot(df) |>
     mark_datashade(x = x, y = y) |>
     scale_x_continuous(limits = c(-10, 200))
-  b <- quill:::.build_panels(p)
+  b <- vellumplot:::.build_panels(p)
   # domain comes from the user limits (expanded), not the data range
   expect_lt(b$scales$x$domain[1], 0)
   expect_gt(b$scales$x$domain[2], 100)

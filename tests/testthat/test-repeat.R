@@ -9,7 +9,7 @@ test_that("repeat_ returns a composition of N re-pointed specs", {
     vplot(mtcars) |> mark_point(y = mpg),
     x = c("wt", "hp", "disp")
   )
-  expect_true(S7::S7_inherits(comp, quill:::PlotComposition))
+  expect_true(S7::S7_inherits(comp, vellumplot:::PlotComposition))
   expect_length(comp@plots, 3)
   expect_identical(
     vapply(comp@plots, xfield, character(1)),

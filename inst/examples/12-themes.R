@@ -1,6 +1,6 @@
 # Themes: built-in looks, legend positioning, and custom element overrides.
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

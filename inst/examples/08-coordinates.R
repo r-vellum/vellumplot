@@ -1,7 +1,7 @@
 # Coordinate systems: cartesian zoom, flipped axes, fixed aspect ratio.
 # (Polar / pie / donut have their own script, 09.)
 
-library(quill)
+library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 

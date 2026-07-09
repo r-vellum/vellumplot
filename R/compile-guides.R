@@ -926,7 +926,7 @@ NULL
 }
 
 # Tag a legend swatch grob so it becomes a keyed, hoverable element: `data_id` a
-# stable per-series id, `meta$legend_for` the series key (gloss highlights every
+# stable per-series id, `meta$legend_for` the series key (vellumwidget highlights every
 # mark whose `legend` contains it), `meta$tooltip` the level's label. A no-op when
 # the plot is not interactive or the guide is not a discrete colour/shape legend,
 # so a static plot's legend is unchanged.

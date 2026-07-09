@@ -1,4 +1,4 @@
-# quill (development version)
+# vellumplot (development version)
 
 * **NA legend keys for `size` / `shape`.** A mapped `size` or `shape` aesthetic
   whose data contains missing values now shows an "NA" key (as the colour scales
@@ -26,7 +26,7 @@
 
 * **Accessibility (alt text).** Every compiled plot is now an accessible image
   by default. `plot_alt()` returns a plot's text alternative — an author-written
-  string from the new `labs(alt = )`, or a prose summary quill generates from the
+  string from the new `labs(alt = )`, or a prose summary vellumplot generates from the
   spec (chart type, x/y/colour/size mappings, observation count, faceting). At the
   compile seam the plot **title** becomes the scene's accessible name and this alt
   text becomes its description, so `render_plot()` output carries `role="img"` +
@@ -43,7 +43,7 @@
   implicit "count" axis of a count bar, and describes a network graph by its node
   and edge counts instead of its (meaningless) layout x/y axes.
 
-# quill 0.2.1
+# vellumplot 0.2.1
 
 Consumes `vellum`'s new compound `native + mm` unit (requires vellum >= 0.1.1).
 
@@ -61,7 +61,7 @@ Device-space dodge (`mark_bar`) and jitter (`mark_point`) remain data-space for
 now; converting them to the compound unit is deferred (it changes existing
 rendered output and needs snapshot review).
 
-# quill 0.2.0
+# vellumplot 0.2.0
 
 Grammar-breadth release: new scales, mapped aesthetics, legend control, and
 distribution marks, closing the most conspicuous gaps versus ggplot2.
@@ -98,7 +98,7 @@ Secondary axes (`sec_axis`/`dup_axis`); 2-D density / contour
 `coord_trans()` and free non-position scales across facets; triple-merge legends
 (colour+shape+size) and NA keys for size/shape.
 
-# quill 0.1.1
+# vellumplot 0.1.1
 
 * New exported `plot_provenance()`: returns the compiled-scene provenance table
   — one record per emitted mark grob, tying each low-level primitive back to the
@@ -111,9 +111,9 @@ Secondary axes (`sec_axis`/`dup_axis`); 2-D density / contour
   edges), so a record's `rows` resolve to the actual data rows an element draws
   rather than the whole layer. See the scene-contract vignette in `vellum`.
 
-# quill 0.1.0
+# vellumplot 0.1.0
 
-First release. quill is a declarative, pipe-first grammar of graphics that
+First release. vellumplot is a declarative, pipe-first grammar of graphics that
 compiles an inspectable spec into a `vellum` scene, with faceting, coordinate
 systems, and multi-plot composition. Everything below ships in this first
 release.
@@ -131,13 +131,13 @@ release.
   (polygon/linestring/point) becomes an addressable, keyed element.
 * **Per-element interaction styling**: marks also accept `hover_color` and
   `selected_color` (constant or column-mapped), carried into the scene so a host
-  (`gloss`) outlines each element in its own colour on hover/select — overriding
+  (`vellumwidget`) outlines each element in its own colour on hover/select — overriding
   the widget-wide theme.
 
 * **Interactive discrete legends**: when a plot maps a discrete `color`/`shape`
   scale and declares interactivity, each legend swatch is tagged with the data
   series it represents, and every mark carries its series membership. A host
-  (`gloss`) uses this to make swatches highlight/select their whole series. Inert
+  (`vellumwidget`) uses this to make swatches highlight/select their whole series. Inert
   on a static render and when no interactivity is declared.
 
 * **Auto-display**: printing a plot (or composition) draws it into the active
@@ -264,7 +264,7 @@ release.
   `id` (surfacing as `data-vellum-id` in SVG), and the compiler builds a
   serializable row-key / scale-ref table — one record per grob tying it back to
   the data rows and trained scales that produced it — carried on the compiled
-  scene as `attr(scene, "quill_provenance")`. Populated on every compile;
+  scene as `attr(scene, "vellumplot_provenance")`. Populated on every compile;
   additive metadata only (raster/PDF output is byte-for-byte unchanged). See
   `_docs/DESIGN.md` §4.
 * **Continuous integration**: GitHub Actions run `R CMD check` (R
