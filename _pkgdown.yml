@@ -143,7 +143,9 @@ reference:
 - subtitle: Distributions and intervals
   contents:
   - mark_boxplot
+  - mark_violin
   - mark_histogram
+  - mark_ecdf
   - mark_tile
   - mark_contour
 - subtitle: Text, pie, and large data
@@ -161,10 +163,17 @@ reference:
   desc: Map data values to visual properties, with trained domains and guides.
   contents:
   - scale_x_continuous
+  - scale_x_binned
+  - scale_x_date
   - scale_color_continuous
   - scale_fill_binned
   - scale_shape
   - scale_size
+  - scale_alpha
+  - scale_linetype
+  - scale_color_identity
+  - lims
+  - guides
   - resolve_scale
   - after_stat
 
@@ -202,6 +211,14 @@ reference:
   - outline
   - sketch
   - gradients
+
+- title: Accessibility and provenance
+  desc: >
+    Attach a text alternative for screen readers, or inspect how a spec
+    compiled into a scene.
+  contents:
+  - plot_alt
+  - plot_provenance
 
 - title: Package
   contents:
