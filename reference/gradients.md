@@ -24,7 +24,7 @@ radial_gradient(colours, stops = NULL, ...)
 
 ## Arguments
 
-- colours, stops, x1, y1, x2, y2, r, units, extend:
+- colours, stops:
 
   See
   [`vellum::linear_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html)
@@ -33,7 +33,12 @@ radial_gradient(colours, stops = NULL, ...)
 
 - ...:
 
-  Passed through to the vellum constructor.
+  Further gradient arguments passed to the vellum constructor:
+  `x1`/`y1`/`x2`/`y2` (linear), `cx`/`cy`/`r` (radial), `units`, and
+  `extend`. See
+  [`vellum::linear_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html)
+  /
+  [`vellum::radial_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html).
 
 ## Value
 

@@ -91,6 +91,21 @@ mark_node_text(
   Optional blend mode (see
   [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)).
 
+- effects:
+
+  A list of layer render effects
+  ([`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md),
+  [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md),
+  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md))
+  applied to the mark at draw time.
+
+- sketch:
+
+  A
+  [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
+  spec giving the layer a hand-drawn look, `NA`/`FALSE` to force it
+  crisp, or `NULL` (default) to inherit.
+
 - data:
 
   Optional layer data; overrides the default table.

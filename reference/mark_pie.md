@@ -44,6 +44,13 @@ mark_donut(
 
   Further constant aesthetics (e.g. `alpha`).
 
+- sketch:
+
+  A
+  [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
+  spec giving the layer a hand-drawn look, or `NULL` (default) to
+  inherit.
+
 - data:
 
   Optional per-layer data frame.

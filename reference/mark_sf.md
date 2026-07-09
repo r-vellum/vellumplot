@@ -57,6 +57,13 @@ mark_sf(
   Optional blend mode (see
   [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)).
 
+- sketch:
+
+  A
+  [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
+  spec giving the layer a hand-drawn look, or `NULL` (default) to
+  inherit.
+
 - data:
 
   Optional layer data (an `sf` object); overrides the plot data.
