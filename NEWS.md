@@ -1,5 +1,10 @@
 # quill (development version)
 
+* **NA legend keys for `size` / `shape`.** A mapped `size` or `shape` aesthetic
+  whose data contains missing values now shows an "NA" key (as the colour scales
+  already did). Also fixes a crash: NA in a `shape` mapping previously errored
+  (`Unknown point shape: NA`) — it now draws as a neutral circle.
+
 * **2-D density contours.** `mark_contour()` draws iso-density contour lines of a
   2-D point cloud and `mark_contour_filled()` fills the bands between them
   (coloured by level automatically). By default the field is a kernel density

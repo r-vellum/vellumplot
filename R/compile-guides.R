@@ -652,8 +652,14 @@ NULL
       l <- sc$labels %||% sc$levels
       if (isTRUE(sc$na)) c(l, "NA") else l
     },
-    size = sc$legend_labels,
-    shape = sc$levels,
+    size = {
+      l <- sc$legend_labels
+      if (isTRUE(sc$na)) c(l, "NA") else l
+    },
+    shape = {
+      l <- sc$levels
+      if (isTRUE(sc$na)) c(l, "NA") else l
+    },
     edge_width = sc$legend_labels,
     alpha = sc$legend_labels,
     linetype = sc$levels,
@@ -763,6 +769,19 @@ NULL
 # `sketch` is the plot-wide hand-drawn spec (from theme_sketch()), or NULL: it
 # makes the legend keys match a hand-drawn plot. A per-key seed bump keeps
 # stacked keys from sharing an identical wobble.
+# The key for an NA row of a size/shape guide: a neutral grey circle (mirrors the
+# grey NA swatch a colour guide draws), signalling "missing" without a value.
+.na_key_grob <- function(m, sketch = NULL) {
+  vellum::points_grob(
+    vellum::unit(0.5, "npc"),
+    vellum::unit(0.5, "npc"),
+    size = vellum::unit(m$key / 2, "mm"),
+    shape = "circle",
+    sketch = sketch,
+    gp = vellum::gpar(fill = "grey70", col = "grey50")
+  )
+}
+
 .key_grob <- function(g, i, m, sketch = NULL) {
   sc <- g$sc
   sk <- .sketch_bump(sketch, 200L + i)
@@ -775,22 +794,30 @@ NULL
       }
       .colour_key_grob(sc$key_glyph, cols[i], m, sk)
     },
-    size = vellum::points_grob(
-      vellum::unit(0.5, "npc"),
-      vellum::unit(0.5, "npc"),
-      size = vellum::unit(sc$legend_sizes[i], "mm"),
-      shape = sc$key_glyph %||% "circle",
-      sketch = sk,
-      gp = vellum::gpar(fill = "grey35", col = "grey35")
-    ),
-    shape = vellum::points_grob(
-      vellum::unit(0.5, "npc"),
-      vellum::unit(0.5, "npc"),
-      size = vellum::unit(m$key / 2, "mm"),
-      shape = sc$shapes[i],
-      sketch = sk,
-      gp = vellum::gpar(fill = "grey35", col = "grey35")
-    ),
+    size = if (isTRUE(sc$na) && i > length(sc$legend_sizes)) {
+      .na_key_grob(m, sk)
+    } else {
+      vellum::points_grob(
+        vellum::unit(0.5, "npc"),
+        vellum::unit(0.5, "npc"),
+        size = vellum::unit(sc$legend_sizes[i], "mm"),
+        shape = sc$key_glyph %||% "circle",
+        sketch = sk,
+        gp = vellum::gpar(fill = "grey35", col = "grey35")
+      )
+    },
+    shape = if (isTRUE(sc$na) && i > length(sc$shapes)) {
+      .na_key_grob(m, sk)
+    } else {
+      vellum::points_grob(
+        vellum::unit(0.5, "npc"),
+        vellum::unit(0.5, "npc"),
+        size = vellum::unit(m$key / 2, "mm"),
+        shape = sc$shapes[i],
+        sketch = sk,
+        gp = vellum::gpar(fill = "grey35", col = "grey35")
+      )
+    },
     edge_width = vellum::segments_grob(
       vellum::unit(0.12, "npc"),
       vellum::unit(0.5, "npc"),

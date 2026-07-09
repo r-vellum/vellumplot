@@ -205,6 +205,8 @@ NULL
 
 # Default shapes a mapped `shape` aesthetic cycles through.
 .SHAPE_PALETTE <- c("circle", "square", "triangle", "diamond", "plus", "cross")
+# Shape drawn for NA-valued data (and the NA legend key): a neutral circle.
+.SHAPE_NA <- "circle"
 
 # Train a position scale. Dispatches to a continuous (numeric/temporal) or a
 # discrete (factor/character/logical) scale. Returns a trained-scale list: the
@@ -657,6 +659,7 @@ NULL
     ))
   }
   v <- as.numeric(unlist(values, use.names = FALSE))
+  has_na <- anyNA(v) # detect before dropping non-finite, for the NA legend key
   v <- v[is.finite(v)]
   rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
     as.numeric(scalespec@domain)
@@ -695,6 +698,7 @@ NULL
     map = map,
     name = name,
     range = rng,
+    na = has_na,
     legend_breaks = lbrk,
     legend_sizes = map(lbrk),
     legend_labels = llab %||% scales::label_number()(lbrk)
@@ -775,6 +779,7 @@ NULL
     ))
   }
   levels <- .cat_levels(values)
+  has_na <- anyNA(unlist(values, use.names = FALSE))
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
     scalespec@palette
   } else {
@@ -785,9 +790,16 @@ NULL
   name <- .scale_title(scalespec, .default_title(spec, "shape"))
   list(
     kind = "shape",
-    map = function(x) unname(shapes[as.character(x)]),
+    # NA values map to the NA shape (a neutral circle) rather than to NA, which
+    # would otherwise reach points_grob and error; the legend shows an NA key.
+    map = function(x) {
+      s <- unname(shapes[as.character(x)])
+      s[is.na(s)] <- .SHAPE_NA
+      s
+    },
     name = name,
     levels = levels,
+    na = has_na,
     shapes = unname(shapes)
   )
 }
