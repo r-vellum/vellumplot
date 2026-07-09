@@ -24,3 +24,15 @@ has_ink <- function(img, rows, cols, thresh = 0.3) {
   sub <- img[rr, cc, 1:3, drop = FALSE]
   any(rowSums(sub <= thresh, dims = 2) == 3)
 }
+
+# How many near-black ink pixels a rectangular region (fractional bounds) holds.
+# Use relative counts (a solid mark vs a stray label/anti-aliased pixel) rather
+# than exact emptiness, which is fragile across platforms' font/AA rendering.
+count_ink <- function(img, rows, cols, thresh = 0.3) {
+  H <- dim(img)[1]
+  W <- dim(img)[2]
+  rr <- seq(max(1, floor(rows[1] * H)), min(H, ceiling(rows[2] * H)))
+  cc <- seq(max(1, floor(cols[1] * W)), min(W, ceiling(cols[2] * W)))
+  sub <- img[rr, cc, 1:3, drop = FALSE]
+  sum(rowSums(sub <= thresh, dims = 2) == 3)
+}

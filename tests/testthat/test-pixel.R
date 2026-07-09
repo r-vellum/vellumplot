@@ -13,13 +13,18 @@ test_that("points land where the scales map them (orientation + y-up)", {
   df <- data.frame(x = c(0, 10), y = c(0, 10))
   p <- vplot(df, width = 4, height = 3) |> mark_point(x = x, y = y, size = 6)
   img <- render_px(p)
-  # (10,10) -> top-right of the panel; (0,0) -> bottom-left. Probe regions stay
-  # inside the panel interior, away from the axis-label gutters.
-  expect_true(has_ink(img, rows = c(0.02, 0.18), cols = c(0.86, 0.98)))
-  expect_true(has_ink(img, rows = c(0.70, 0.84), cols = c(0.16, 0.30)))
-  # the empty interior corners stay clear of ink
-  expect_false(has_ink(img, rows = c(0.08, 0.25), cols = c(0.20, 0.36)))
-  expect_false(has_ink(img, rows = c(0.55, 0.72), cols = c(0.80, 0.96)))
+  # (10,10) -> top-right of the panel; (0,0) -> bottom-left. Probe panel-interior
+  # regions, clear of the axis-label gutters.
+  pt_tr <- count_ink(img, rows = c(0.02, 0.18), cols = c(0.86, 0.98))
+  pt_bl <- count_ink(img, rows = c(0.70, 0.84), cols = c(0.16, 0.30))
+  # each point lands in its corner (a y-flip would put (10,10) bottom-right)
+  expect_gt(pt_tr, 0)
+  expect_gt(pt_bl, 0)
+  # the opposite interior corners carry only stray ink, far below a solid point.
+  # Relative (not exact-empty): robust to platform font-metric / anti-aliasing
+  # differences that nudge a label or gridline pixel into the region.
+  expect_lt(count_ink(img, rows = c(0.08, 0.25), cols = c(0.20, 0.36)), pt_tr / 2)
+  expect_lt(count_ink(img, rows = c(0.55, 0.72), cols = c(0.80, 0.96)), pt_bl / 2)
 })
 
 test_that("a discrete colour encoding paints each category colour", {
