@@ -1,0 +1,200 @@
+# Marks, layer by layer
+
+A vellumplot plot is a stack of *marks*. Each `mark_*()` appends one
+drawing layer to the spec, and every mark reads the same grammar: bare
+column names (or expressions) captured with tidy evaluation become
+*encodings*, while scalar values become constant aesthetics.
+`color = hp` maps the `hp` column through a scale; `color = "red"`
+paints every element red.
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp, size = 3)
+```
+
+![](marks_files/figure-html/unnamed-chunk-2-1.png)
+
+You can stack as many marks as you like on a panel, and scales train
+across all of them at once.
+
+## Points, lines, and bars
+
+[`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+draws markers;
+[`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+and
+[`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+connect points in `x` order;
+[`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+draws reference lines.
+[`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+also takes `shape` (one of `"circle"`, `"square"`, `"triangle"`,
+`"diamond"`, `"plus"`, `"cross"`) and a `position = "jitter"`
+adjustment.
+
+``` r
+
+vplot(pressure) |>
+  mark_line(x = temperature, y = pressure) |>
+  mark_point(x = temperature, y = pressure)
+```
+
+![](marks_files/figure-html/unnamed-chunk-3-1.png)
+
+[`mark_bar()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+draws bars from a zero baseline. Give it an explicit `y` for heights, or
+omit `y` and it counts rows per category (the count stat). When `fill`
+is mapped, groups stack by default; switch to side-by-side with
+`position = "dodge"` or normalise to 1 with `position = "fill"`.
+
+``` r
+
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl), fill = factor(gear), position = "dodge")
+```
+
+![](marks_files/figure-html/unnamed-chunk-4-1.png)
+
+## Areas and intervals
+
+[`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+fills between a `y` line and zero,
+[`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+fills between `ymin` and `ymax`, and the interval marks draw ranges:
+[`mark_errorbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+(with caps),
+[`mark_linerange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+(without), and
+[`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
+from `(x, y)` to `(xend, yend)`.
+
+``` r
+
+vplot(pressure) |>
+  mark_area(x = temperature, y = pressure, fill = "steelblue", alpha = 0.4) |>
+  mark_line(x = temperature, y = pressure)
+```
+
+![](marks_files/figure-html/unnamed-chunk-5-1.png)
+
+[`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+summarises the raw `y` values per `x` category into a box-and-whisker
+(box from Q1 to Q3, median line, whiskers at 1.5 times the IQR, outliers
+as points).
+
+``` r
+
+vplot(mtcars) |>
+  mark_boxplot(x = factor(cyl), y = mpg)
+```
+
+![](marks_files/figure-html/unnamed-chunk-6-1.png)
+
+## Tiles and bins
+
+[`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+draws a rectangle at each `(x, y)` coloured by `fill`;
+[`mark_raster()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+is the same thing drawn as a single raster image (a fast path that needs
+a complete regular grid). For continuous data,
+[`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+and
+[`mark_hex()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+bin `x` and `y` into a grid and colour each cell by count.
+
+``` r
+
+grid <- expand.grid(x = 1:8, y = 1:8)
+grid$z <- with(grid, sin(x / 2) + cos(y / 2))
+vplot(grid) |>
+  mark_tile(x = x, y = y, fill = z) |>
+  scale_fill_continuous(palette = "Batlow")
+```
+
+![](marks_files/figure-html/unnamed-chunk-7-1.png)
+
+[`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+draws iso-density contour lines of a 2-D point cloud (and
+[`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+fills the bands), coloured by level. See the [statistical
+marks](https://r-vellum.github.io/vellumplot/articles/statistical-marks.md)
+article for the details.
+
+``` r
+
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting, color = "grey70") |>
+  mark_contour(x = eruptions, y = waiting)
+```
+
+![](marks_files/figure-html/unnamed-chunk-8-1.png)
+
+## Text
+
+[`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+draws the `label` aesthetic as text at each `(x, y)`;
+[`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+adds a filled background behind each label so it stays legible over busy
+marks. `size` is in points, and `angle` can be mapped or constant.
+
+``` r
+
+top <- mtcars[mtcars$mpg > 30, ]
+vplot(top) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_text(x = wt, y = mpg, label = rownames(top), vjust = "bottom", size = 9)
+```
+
+![](marks_files/figure-html/unnamed-chunk-9-1.png)
+
+## Pie and donut
+
+[`mark_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
+and
+[`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
+are the part-of-whole shortcuts. Each `value` becomes a wedge; `fill`
+colours the slices. Under the hood they are a stacked bar projected
+through
+[`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md),
+which they set for you.
+
+``` r
+
+parts <- data.frame(part = c("a", "b", "c", "d"), n = c(3, 5, 2, 4))
+vplot(parts) |>
+  mark_donut(value = n, fill = part, hole = 0.6)
+```
+
+![](marks_files/figure-html/unnamed-chunk-10-1.png)
+
+## Layering is the point
+
+Because scales train across every layer, mixing marks on one panel
+works. Here a point cloud and a fitted line share the same trained `x`
+and `y` axes.
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+  mark_smooth(x = wt, y = mpg, method = "lm")
+```
+
+![](marks_files/figure-html/unnamed-chunk-11-1.png)
+
+From here:
+
+- **[Scales and
+  guides](https://r-vellum.github.io/vellumplot/articles/scales-and-guides.md)**
+  for the mapping from data to colour, size, and axes.
+- **[Statistical
+  marks](https://r-vellum.github.io/vellumplot/articles/statistical-marks.md)**
+  for histograms, densities, and smooths in depth.
+- **[Spatial and
+  networks](https://r-vellum.github.io/vellumplot/articles/spatial-and-networks.md)**
+  for
+  [`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
+  maps and
+  [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  node-link diagrams.

@@ -1,0 +1,616 @@
+# vellumplot
+
+vellumplot is a declarative, pipe-first grammar of graphics built on the
+[vellum](https://github.com/r-vellum/vellum) graphics backend. You
+describe a plot as an inspectable, serializable *spec*; nothing is drawn
+until the spec is compiled into a vellum scene and rendered.
+
+It is a real compiler — spec → resolve encodings → train scales →
+measure layout → compile guides → compile marks → vellum scene — not a
+thin wrapper around the drawing primitives.
+
+## Installation
+
+``` r
+
+# install.packages("pak")
+pak::pak("r-vellum/vellumplot")
+```
+
+vellumplot needs the [vellum](https://github.com/r-vellum/vellum)
+backend, which compiles a Rust crate, so you also need a Rust toolchain
+(`cargo`/`rustc`); pak pulls vellum in automatically.
+
+## Usage
+
+Building a plot returns a spec; printing it draws into the Plots pane
+(and embeds in a knitr/Quarto chunk), like ggplot2. Use
+[`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+to write a file.
+
+``` r
+
+library(vellumplot)
+
+# a scatter with a continuous colour legend
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  scale_color_continuous()
+```
+
+![](reference/figures/README-example-1.png)
+
+Layer marks on a single panel; scales train across every layer:
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg)
+```
+
+![](reference/figures/README-layers-1.png)
+
+Facet into a grid of panels
+([`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+/
+[`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)),
+with shared or free scales:
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  facet_wrap(~cyl)
+```
+
+![](reference/figures/README-facet-1.png)
+
+Draw spatial data:
+[`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
+renders an `sf` geometry column and
+[`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md)
+reprojects and locks the map aspect ratio:
+
+``` r
+
+nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+vplot(nc) |>
+  mark_sf(fill = BIR74) |>
+  coord_sf()
+```
+
+![](reference/figures/README-sf-1.png)
+
+Draw a network:
+[`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+lays out an `igraph` graph (stress majorization by default), then
+[`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+/
+[`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+draw it — aspect-locked, no axes, edges under nodes:
+
+``` r
+
+g <- igraph::make_graph("Zachary")
+g <- igraph::set_vertex_attr(
+  g,
+  "grp",
+  value = as.factor(igraph::cluster_louvain(g)$membership)
+)
+g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
+vgraph(g, layout = "stress") |>
+  mark_edges(alpha = 0.4) |>
+  mark_nodes(size = deg, fill = grp) |>
+  scale_size(range = c(2, 8))
+```
+
+![](reference/figures/README-network-1.png)
+
+The spec is just data —
+[`summary()`](https://rdrr.io/r/base/summary.html) shows its structure
+without drawing:
+
+``` r
+
+summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
+#> <PlotSpec> 32x11 (11 columns), page 6x4 in
+#> 
+#> ── layers
+#> • mark_point(x = wt, y = mpg, color = hp)
+```
+
+Write to a file with
+[`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+(the format follows the extension):
+
+``` r
+
+p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+render_plot(p, "cars.png")
+```
+
+## What’s included
+
+- Marks:
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
+  [`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_bar()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  (explicit heights, or row counts per category),
+  [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  /
+  [`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
+  intervals
+  ([`mark_errorbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  [`mark_linerange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)),
+  [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  tiles/heatmaps
+  ([`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md),
+  [`mark_raster()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)),
+  2-D binning
+  ([`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md),
+  [`mark_hex()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)),
+  2-D density contours
+  ([`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md),
+  [`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)),
+  text
+  ([`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)),
+  and pie/donut shortcuts
+  ([`mark_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md),
+  [`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)).
+- Spatial:
+  [`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
+  draws an `sf` geometry column as a map layer, with
+  [`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md)
+  to reproject and lock the aspect ratio.
+- Network:
+  [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  starts a node-link diagram from an `igraph` graph (stress layout by
+  default, via `graphlayouts`), with
+  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
+  [`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
+  [`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
+  and
+  [`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md).
+- Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`,
+  `alpha`.
+- Position scales
+  ([`scale_x_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_y_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md);
+  linear and `log10`) with auto-trained, expanded domains; discrete band
+  scales
+  ([`scale_x_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_y_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md))
+  for categorical axes.
+- Colour scales
+  ([`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  /
+  [`scale_fill_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
+  [`scale_color_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  /
+  [`scale_fill_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
+  `_gradient()`, `_binned()`, `_manual()`),
+  [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md),
+  and a trained
+  [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+  with stacked legends.
+- Trained axes, a panel with gridlines, and layering on one panel.
+- Faceting
+  ([`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md),
+  [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md))
+  with shared or free scales, via the
+  [`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md)
+  lattice.
+- Statistical marks:
+  [`mark_histogram()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md),
+  [`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md),
+  [`mark_summary()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  (with
+  [`after_stat()`](https://r-vellum.github.io/vellumplot/reference/after_stat.md)).
+- Coordinate systems:
+  [`coord_cartesian()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),
+  [`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),
+  [`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+  /
+  [`coord_equal()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),
+  [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  (pie / coxcomb / radar), and
+  [`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md).
+- Position adjustments: stack / dodge / fill bars, jittered points.
+- Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
+  `"screen"`, …).
+- [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
+  for million-point density rasters.
+- Annotations:
+  [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md),
+  [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md),
+  and [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md)
+  markdown titles.
+- Themes
+  ([`theme_gray()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  default,
+  [`theme_minimal()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+  [`theme_bw()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+  [`theme_classic()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+  [`theme_void()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+  [`theme_cyberpunk()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+  [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  /
+  [`set_theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md))
+  and multi-plot composition
+  ([`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`wrap_plots()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`inset()`](https://r-vellum.github.io/vellumplot/reference/inset.md),
+  [`repeat_()`](https://r-vellum.github.io/vellumplot/reference/repeat_.md)).
+- Layer effects
+  ([`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md),
+  [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md),
+  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md))
+  and gradient fills
+  ([`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md),
+  [`radial_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)).
+- Hand-drawn rendering:
+  [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
+  gives any geometry mark a wobbly, hachure- filled
+  [Rough.js](https://roughjs.com) look (a `sketch =` argument on marks,
+  an
+  [`element_line()`](https://r-vellum.github.io/vellumplot/reference/element.md)
+  /
+  [`element_rect()`](https://r-vellum.github.io/vellumplot/reference/element.md)
+  `sketch =` slot, or the plot-wide
+  [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
+  one-liner). Generated natively in the engine, so it is exact and works
+  across PNG / SVG / PDF.
+
+## The vellum ecosystem
+
+vellumplot is the grammar layer of a small ecosystem of packages that
+share the vellum scene model:
+
+- **[vellum](https://github.com/r-vellum/vellum)** — the parchment: the
+  low-level graphics backend (Rust scene graph, PNG/SVG/PDF renderer).
+- **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen:
+  this package.
+- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the
+  vellumwidget: turns a vellumplot plot (or a raw vellum scene) into a
+  client-side interactive HTML widget via `as_widget()`.
+- **[vellumverse](https://github.com/r-vellum/vellumverse)** — installs
+  and loads the whole ecosystem in one step.
+
+# Package index
+
+## Building a plot
+
+Start a plot from a data frame, an `sf` object, or an `igraph` graph,
+then render it or write it to a file.
+
+- [`vplot()`](https://r-vellum.github.io/vellumplot/reference/vplot.md)
+  : Start a plot specification
+- [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  : Start a graph (network) plot
+- [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+  : Render a plot to a file
+- [`PlotSpec()`](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
+  : The plot specification
+
+## Marks
+
+Layers that draw data. Scales train across every mark on the panel.
+
+### Points, lines, and bars
+
+- [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  [`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  [`mark_bar()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  : Add marks to a plot
+- [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  [`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  : Area, ribbon, and step marks
+- [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
+  : Segment mark
+
+### Distributions and intervals
+
+- [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  [`mark_errorbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  [`mark_linerange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  [`mark_summary()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  : Boxplot, error bar, and summary marks
+- [`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
+  [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
+  [`mark_dotplot()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
+  : Density-shape marks
+- [`mark_histogram()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  : Statistical marks
+- [`mark_ecdf()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
+  [`mark_rug()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
+  [`mark_qq()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
+  [`mark_qq_line()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
+  : Distribution marks
+- [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  [`mark_raster()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  [`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  [`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  [`mark_hex()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  : Heatmap marks
+- [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+  [`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+  : 2-D density contours
+
+### Text, pie, and large data
+
+- [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  : Text marks
+- [`mark_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
+  [`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
+  : Pie and donut charts
+- [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
+  : Datashade a large point cloud
+
+### Spatial and network
+
+- [`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
+  : Draw simple-feature (sf) geometries
+- [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  [`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  [`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  : Network (graph) marks
+- [`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md)
+  : Edge-width scale
+
+## Scales
+
+Map data values to visual properties, with trained domains and guides.
+
+- [`scale_x_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_y_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_x_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_y_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  : Position scales
+- [`scale_x_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_x_binned.md)
+  [`scale_y_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_x_binned.md)
+  : Binned position scales
+- [`scale_x_date()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md)
+  [`scale_y_date()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md)
+  [`scale_x_datetime()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md)
+  [`scale_y_datetime()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md)
+  [`scale_x_time()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md)
+  [`scale_y_time()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md)
+  : Date and time position scales
+- [`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_color_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_color_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_color_gradient()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_fill_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_fill_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_fill_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_fill_gradient()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_colour_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_colour_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_colour_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  [`scale_colour_gradient()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  : Colour scales
+- [`scale_fill_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_color_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  : Binned (classed) colour scales
+- [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
+  : Shape scale
+- [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  : Size scale
+- [`scale_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  [`scale_alpha_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  : Alpha (opacity) scale
+- [`scale_linetype()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md)
+  [`scale_linetype_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md)
+  : Line-type scale
+- [`scale_color_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  [`scale_fill_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  [`scale_colour_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  [`scale_size_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  [`scale_shape_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  [`scale_alpha_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  [`scale_linetype_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  : Identity scales
+- [`lims()`](https://r-vellum.github.io/vellumplot/reference/lims.md)
+  [`xlim()`](https://r-vellum.github.io/vellumplot/reference/lims.md)
+  [`ylim()`](https://r-vellum.github.io/vellumplot/reference/lims.md) :
+  Set scale limits with a shortcut
+- [`guides()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  [`guide_none()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  [`guide_legend()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  : Control a scale's legend
+- [`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md)
+  : Resolve scales as shared or independent across panels
+- [`after_stat()`](https://r-vellum.github.io/vellumplot/reference/after_stat.md)
+  : Map an aesthetic to a statistic computed by a stat
+
+## Coordinates and facets
+
+- [`coord_cartesian()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+  [`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+  [`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+  [`coord_equal()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+  : Coordinate systems
+- [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  : Polar coordinates
+- [`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md)
+  : Map coordinate system
+- [`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+  [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+  : Facet a plot into a grid of panels
+
+## Composition
+
+Combine plots into a single figure, or repeat one over a variable.
+
+- [`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  [`wrap_plots()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  [`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  [`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  : Arrange plots side by side
+
+- [`inset()`](https://r-vellum.github.io/vellumplot/reference/inset.md)
+  : Overlay a plot as an inset
+
+- [`plot_spacer()`](https://r-vellum.github.io/vellumplot/reference/plot_spacer.md)
+  : Reserve an empty cell in a composition
+
+- [`area()`](https://r-vellum.github.io/vellumplot/reference/area.md) :
+
+  Define a layout area for `design =`
+
+- [`repeat_()`](https://r-vellum.github.io/vellumplot/reference/repeat_.md)
+  : Repeat a view across fields
+
+- [`compose_annotation()`](https://r-vellum.github.io/vellumplot/reference/compose_annotation.md)
+  : Annotate a composition
+
+## Themes and annotation
+
+- [`theme_gray()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  [`theme_minimal()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  [`theme_bw()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  [`theme_classic()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  [`theme_void()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  [`theme_cyberpunk()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  [`set_theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  : Plot themes
+- [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
+  : Hand-drawn plot theme
+- [`element_text()`](https://r-vellum.github.io/vellumplot/reference/element.md)
+  [`element_line()`](https://r-vellum.github.io/vellumplot/reference/element.md)
+  [`element_rect()`](https://r-vellum.github.io/vellumplot/reference/element.md)
+  [`element_blank()`](https://r-vellum.github.io/vellumplot/reference/element.md)
+  : Theme elements
+- [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md) :
+  Set plot titles and axis/legend labels
+- [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md)
+  : Add a one-off annotation
+- [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) :
+  Rich-text labels
+
+## Layer effects
+
+Glow, shadow, outline, hand-drawn sketching, and gradient fills.
+
+- [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md) :
+  Neon glow layer effect
+- [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
+  : Shadow layer effect
+- [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md)
+  : Outline (halo) layer effect
+- [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
+  : Hand-drawn ("sketch") rendering
+- [`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
+  [`radial_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
+  : Gradient fill paints
+
+## Accessibility and provenance
+
+Attach a text alternative for screen readers, or inspect how a spec
+compiled into a scene.
+
+- [`plot_alt()`](https://r-vellum.github.io/vellumplot/reference/plot_alt.md)
+  : Text alternative (alt text) for a plot
+- [`plot_provenance()`](https://r-vellum.github.io/vellumplot/reference/plot_provenance.md)
+  : Inspect the compiled-scene provenance of a plot
+
+## Package
+
+- [`vellumplot`](https://r-vellum.github.io/vellumplot/reference/vellumplot-package.md)
+  [`vellumplot-package`](https://r-vellum.github.io/vellumplot/reference/vellumplot-package.md)
+  : vellumplot: A Grammar of Graphics on the 'vellum' Backend
+
+# Articles
+
+### Get started
+
+- [Get
+  started](https://r-vellum.github.io/vellumplot/articles/vellumplot.md):
+
+  From a data frame to a rendered plot: build a spec, layer marks, train
+  scales, and render it into a vellum scene.
+
+### Building plots
+
+- [Marks, layer by
+  layer](https://r-vellum.github.io/vellumplot/articles/marks.md):
+
+  A tour of the mark families: points, lines and bars, areas and
+  intervals, tiles and bins, text, and pie. How encodings map, and how
+  scales train across every layer on the panel.
+
+- [Scales and
+  guides](https://r-vellum.github.io/vellumplot/articles/scales-and-guides.md):
+
+  How data values become colour, size, shape, opacity, line type, and
+  axis positions. Continuous, discrete, binned, manual, gradient,
+  date/time, and identity scales, limit shortcuts, trained domains, and
+  controlling the legends they produce.
+
+- [Facets and
+  composition](https://r-vellum.github.io/vellumplot/articles/facets-and-composition.md):
+
+  Two ways to make many panels: facet one plot across a variable with
+  shared or free scales, and combine separate plots into one figure with
+  concat, insets, and repeats.
+
+### Beyond scatter plots
+
+- [Spatial and
+  networks](https://r-vellum.github.io/vellumplot/articles/spatial-and-networks.md):
+
+  Two data shapes that are not tidy rows of x and y: sf geometries drawn
+  as maps with coord_sf, and igraph graphs laid out and drawn as
+  node-link diagrams with vgraph.
+
+- [Statistical
+  marks](https://r-vellum.github.io/vellumplot/articles/statistical-marks.md):
+
+  Marks that transform data before drawing: histograms, densities,
+  per-group summaries, linear smooths, ECDFs, Q-Q plots, rugs, violins,
+  ridgelines, and dot plots, plus after_stat for reaching the computed
+  variables and mark_datashade for millions of points.
+
+- [Datashading a third of a billion
+  points](https://r-vellum.github.io/vellumplot/articles/datashading.md):
+
+  When there are too many points to draw one marker each, datashading
+  bins them into a raster and colours by density. A tour of
+  mark_datashade, ending with the full US Census (about 306 million
+  points) shaded two ways.
+
+- [Effects and
+  themes](https://r-vellum.github.io/vellumplot/articles/effects-and-themes.md):
+
+  The non-data look of a plot: built-in themes, custom theme elements,
+  layer effects like glow and shadow, gradient fills, and the one-line
+  hand-drawn sketch mode.
+
+### Background
+
+- [The compiler: spec to
+  scene](https://r-vellum.github.io/vellumplot/articles/the-compiler.md):
+
+  vellumplot is not a wrapper around drawing calls. A plot is an
+  inspectable, serializable spec, and a real compiler turns it into a
+  vellum scene. This is what that means and why it is useful.
+
+- [Accessibility](https://r-vellum.github.io/vellumplot/articles/accessibility.md):
+
+  Every plot the vellum ecosystem produces is accessible by default: a
+  labelled, described SVG, a tagged PDF, an auto-generated text
+  alternative, and a keyboard- and screen-reader-navigable interactive
+  widget. This is how it works and how to author it well.
