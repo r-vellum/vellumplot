@@ -348,6 +348,71 @@ NULL
   scene
 }
 
+# Contour lines: one polyline per traced piece, vertices kept in trace order (not
+# x-sorted — a contour is not a function of x), coloured by the mapped level.
+.emit_contour <- function(scene, L, scales) {
+  n <- L$n
+  if (!n) {
+    return(scene)
+  }
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  col <- rep_len(.aes_colour(L, scales, "#3366bb"), n)
+  a <- .aes_alpha(L, scales, NA_real_)[1]
+  lwd <- .aes_param(L, "linewidth", 0.6)
+  piece <- L$values$.piece
+  sk <- .mark_sketch(L, scales)
+  gi <- 0L
+  for (pid in unique(piece)) {
+    idx <- which(piece == pid)
+    xy <- .xy_path(scales, xn[idx], yn[idx])
+    scene <- .draw(
+      scene,
+      vellum::lines_grob(
+        xy$x, xy$y,
+        sketch = .sketch_bump(sk, gi),
+        gp = vellum::gpar(col = col[idx[1]], lwd = lwd, alpha = if (is.na(a)) NULL else a)
+      ),
+      rows = idx
+    )
+    gi <- gi + 1L
+  }
+  scene
+}
+
+# Filled contour bands: one even-odd path per band (rings via `id`, so holes are
+# cut out), filled by the band's level.
+.emit_contour_filled <- function(scene, L, scales) {
+  n <- L$n
+  if (!n) {
+    return(scene)
+  }
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  fill <- rep_len(.aes_colour(L, scales, "#3366bb"), n)
+  a <- .aes_alpha(L, scales, NA_real_)[1]
+  piece <- L$values$.piece
+  ring <- L$values$.ring
+  sk <- .mark_sketch(L, scales)
+  gi <- 0L
+  for (pid in unique(piece)) {
+    idx <- which(piece == pid)
+    xy <- .xy_path(scales, xn[idx], yn[idx])
+    scene <- .draw(
+      scene,
+      vellum::path_grob(
+        xy$x, xy$y,
+        id = ring[idx], rule = "evenodd",
+        sketch = .sketch_bump(sk, gi),
+        gp = vellum::gpar(fill = fill[idx[1]], col = NA, alpha = if (is.na(a)) NULL else a)
+      ),
+      rows = idx
+    )
+    gi <- gi + 1L
+  }
+  scene
+}
+
 .emit_rule <- function(scene, L, scales) {
   col <- .aes_colour(L, scales, "grey40")[1]
   lwd <- .aes_param(L, "linewidth", 1)
@@ -1643,6 +1708,8 @@ NULL
     rug = .emit_rug(scene, L, scales),
     violin = .emit_violin(scene, L, scales),
     ridgeline = .emit_ridgeline(scene, L, scales),
+    contour = .emit_contour(scene, L, scales),
+    contour_filled = .emit_contour_filled(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
 }

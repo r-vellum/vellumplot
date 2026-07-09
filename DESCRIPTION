@@ -33,6 +33,8 @@ Suggests:
     classInt,
     graphlayouts,
     igraph,
+    isoband,
+    MASS,
     sf,
     testthat (>= 3.0.0),
     vctrs,

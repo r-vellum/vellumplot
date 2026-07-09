@@ -124,6 +124,36 @@ vplot(faithful) |>
   mark_dotplot(x = waiting)
 ```
 
+## 2-D density contours
+
+`mark_contour()` estimates the 2-D density of a point cloud and draws its
+iso-density contour lines; `mark_contour_filled()` fills the bands between them.
+Both are coloured by level automatically. They read best over the points they
+summarise:
+
+```{r}
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting, color = "grey70") |>
+  mark_contour(x = eruptions, y = waiting)
+```
+
+```{r}
+vplot(faithful) |>
+  mark_contour_filled(x = eruptions, y = waiting)
+```
+
+The density estimate uses `MASS::kde2d()`; tune the levels with `bins`,
+`binwidth`, or explicit `breaks`. To contour a *surface* you already have (a `z`
+value on a regular `x`/`y` grid) rather than a point density, map `z`:
+
+```{r}
+grid <- expand.grid(x = seq(-3, 3, 0.1), y = seq(-3, 3, 0.1))
+grid$z <- with(grid, dnorm(x) * dnorm(y))
+vplot(grid) |> mark_contour(x = x, y = y, z = z)
+```
+
+Contour tracing needs the `isoband` package (and `MASS` for the density estimate).
+
 ## Reaching computed variables with after_stat
 
 A statistical mark produces new variables that were not in your data: a

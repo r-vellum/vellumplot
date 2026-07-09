@@ -903,6 +903,70 @@ mark_density <- function(
   )
 }
 
+#' 2-D density contours
+#'
+#' `mark_contour()` draws iso-density contour **lines** of a 2-D point cloud
+#' (`x`, `y`); `mark_contour_filled()` fills the bands between them. By default the
+#' field is a kernel density estimate (needs the \pkg{MASS} package); map a `z`
+#' aesthetic to instead contour a supplied surface over a regular `x`/`y` grid.
+#' Contours are coloured by level automatically — `mark_contour()` maps
+#' `color = after_stat(level)`, `mark_contour_filled()` maps `fill`. Requires the
+#' \pkg{isoband} package.
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): `x`, `y` (+ optional `z` surface, `color` /
+#'   `fill`, `linewidth`).
+#' @param bins Target number of contour levels (when neither `breaks` nor
+#'   `binwidth` is given).
+#' @param binwidth Spacing between contour levels, or `NULL`.
+#' @param breaks Explicit contour levels, or `NULL` to derive from `bins` /
+#'   `binwidth`.
+#' @param n Density-estimate grid resolution per axis (KDE mode only).
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(faithful) |>
+#'   mark_point(x = eruptions, y = waiting) |>
+#'   mark_contour(x = eruptions, y = waiting)
+#' vplot(faithful) |> mark_contour_filled(x = eruptions, y = waiting)
+#' @export
+mark_contour <- function(plot, ..., bins = 10, binwidth = NULL, breaks = NULL,
+                         n = 100, blend = NULL, data = NULL) {
+  .check_plot(plot)
+  dots <- rlang::enquos(...)
+  if (is.null(dots$color) && is.null(dots$colour)) {
+    dots$color <- rlang::quo(after_stat(level))
+  }
+  .add_layer(
+    plot,
+    "contour",
+    dots,
+    stat = "density_2d",
+    stat_params = list(bins = bins, binwidth = binwidth, breaks = breaks, n = n),
+    blend = blend,
+    data = data
+  )
+}
+
+#' @rdname mark_contour
+#' @export
+mark_contour_filled <- function(plot, ..., bins = 10, binwidth = NULL, breaks = NULL,
+                                n = 100, blend = NULL, data = NULL) {
+  .check_plot(plot)
+  dots <- rlang::enquos(...)
+  if (is.null(dots$fill)) {
+    dots$fill <- rlang::quo(after_stat(level))
+  }
+  .add_layer(
+    plot,
+    "contour_filled",
+    dots,
+    stat = "density_2d",
+    stat_params = list(bins = bins, binwidth = binwidth, breaks = breaks, n = n, filled = TRUE),
+    blend = blend,
+    data = data
+  )
+}
+
 #' Distribution marks
 #'
 #' Marks that summarise the distribution of a variable.

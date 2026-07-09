@@ -1,5 +1,12 @@
 # quill (development version)
 
+* **2-D density contours.** `mark_contour()` draws iso-density contour lines of a
+  2-D point cloud and `mark_contour_filled()` fills the bands between them
+  (coloured by level automatically). By default the field is a kernel density
+  estimate (via `MASS::kde2d()`); map a `z` aesthetic to contour a supplied
+  surface over a regular `x`/`y` grid instead. Contour tracing uses the `isoband`
+  package (both `isoband` and `MASS` are Suggests).
+
 * **Binned position scales.** `scale_x_binned()` / `scale_y_binned()` cut a
   continuous axis into bins — ticks at the bin boundaries, each datum drawn at its
   bin centre — reusing the binned-colour classification (`style`/`n`, or explicit

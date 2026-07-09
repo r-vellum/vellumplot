@@ -25,6 +25,7 @@ NULL
     count = .stat_count(L),
     bin = .stat_bin(L),
     bin2d = .stat_bin2d(L),
+    density_2d = .stat_density_2d(L),
     hexbin = .stat_hexbin(L),
     density = .stat_density(L),
     aggregate = .stat_aggregate(L),
@@ -69,6 +70,12 @@ NULL
   }
   if (!is.null(sdf$height)) {
     L$values$height <- sdf$height
+  }
+  # Contour stats emit ordered vertices grouped into pieces (one polyline/band per
+  # piece) and, for filled bands, sub-path rings; the contour emitters read these.
+  if (!is.null(sdf$.piece)) {
+    L$values$.piece <- sdf$.piece
+    L$values$.ring <- sdf$.ring
   }
   L$n <- nrow(sdf)
   L
@@ -193,6 +200,122 @@ NULL
     width = diff(xb)[1],
     height = diff(yb)[1]
   )
+}
+
+# The 2-D scalar field to contour: a kernel density estimate of (x, y) (the
+# default), or a supplied `z` surface reshaped from a regular (x, y) grid.
+# Returns the grid coords `gx`/`gy` and a matrix `gz` with rows = y, cols = x
+# (the layout isoband expects).
+.contour_field <- function(L) {
+  x <- as.numeric(L$values$x)
+  y <- as.numeric(L$values$y)
+  z <- L$values$z
+  if (!is.null(z)) {
+    ux <- sort(unique(x))
+    uy <- sort(unique(y))
+    if (length(ux) * length(uy) != length(z)) {
+      cli::cli_abort(c(
+        "Contouring a {.arg z} surface needs {.arg x}/{.arg y} on a complete regular grid.",
+        i = "Got {length(x)} rows, but a {length(ux)} x {length(uy)} grid needs {length(ux) * length(uy)}."
+      ))
+    }
+    m <- matrix(NA_real_, nrow = length(uy), ncol = length(ux))
+    m[cbind(match(y, uy), match(x, ux))] <- as.numeric(z)
+    list(gx = ux, gy = uy, gz = m)
+  } else {
+    .need_pkg("MASS", "2-D density contours (mark_contour())")
+    ok <- is.finite(x) & is.finite(y)
+    x <- x[ok]
+    y <- y[ok]
+    if (length(x) < 3L) {
+      cli::cli_abort("A 2-D density contour needs at least 3 finite points.")
+    }
+    ng <- L$stat_params$n %||% 100L
+    kd <- MASS::kde2d(x, y, n = ng)
+    # kde2d's z is [x, y]; isoband wants [y, x], so transpose.
+    list(gx = kd$x, gy = kd$y, gz = t(kd$z))
+  }
+}
+
+# Contour break levels: explicit `breaks`, else a `binwidth` grid, else ~`bins`
+# pretty cuts. Only levels strictly inside the field range are kept.
+.contour_breaks <- function(gz, sp) {
+  rng <- range(gz, na.rm = TRUE)
+  br <- if (!is.null(sp$breaks)) {
+    sort(unique(as.numeric(sp$breaks)))
+  } else if (!is.null(sp$binwidth)) {
+    seq(floor(rng[1] / sp$binwidth) * sp$binwidth, rng[2], by = sp$binwidth)
+  } else {
+    pretty(rng, n = sp$bins %||% 10L)
+  }
+  br[br > rng[1] & br < rng[2]]
+}
+
+# Flatten isoband::isolines() output (a per-level list of list(x, y, id)) into an
+# ordered vertex table x/y/level/.piece, one global piece per traced line.
+.isoline_df <- function(lines) {
+  parts <- list()
+  base <- 0L
+  for (lv in names(lines)) {
+    e <- lines[[lv]]
+    if (!length(e$x)) next
+    pid <- base + match(e$id, unique(e$id))
+    base <- max(pid)
+    parts[[length(parts) + 1L]] <- data.frame(
+      x = e$x, y = e$y, level = as.numeric(lv), .piece = pid, .ring = NA_integer_
+    )
+  }
+  if (!length(parts)) {
+    return(data.frame(x = numeric(), y = numeric(), level = numeric(), .piece = integer(), .ring = integer()))
+  }
+  do.call(rbind, parts)
+}
+
+# Flatten isoband::isobands() output into x/y/level/.piece/.ring: one piece per
+# band (drawn as a single evenodd path so holes are cut), `.ring` the sub-path id
+# within the band, `level` the band's representative value (for the fill scale).
+.isoband_df <- function(bands, levels) {
+  parts <- list()
+  for (i in seq_along(bands)) {
+    e <- bands[[i]]
+    if (!length(e$x)) next
+    parts[[length(parts) + 1L]] <- data.frame(
+      x = e$x, y = e$y, level = levels[i], .piece = i, .ring = as.integer(e$id)
+    )
+  }
+  if (!length(parts)) {
+    return(data.frame(x = numeric(), y = numeric(), level = numeric(), .piece = integer(), .ring = integer()))
+  }
+  do.call(rbind, parts)
+}
+
+# stat_density_2d / stat_contour: trace iso-lines (or, when `filled`, iso-bands)
+# of the 2-D field with isoband. Output is an ordered vertex table (see the
+# flatteners) consumed by .emit_contour / .emit_contour_filled.
+.stat_density_2d <- function(L) {
+  .need_pkg("isoband", "2-D contours (mark_contour())")
+  fld <- .contour_field(L)
+  brks <- .contour_breaks(fld$gz, L$stat_params)
+  if (!length(brks)) {
+    cli::cli_abort(c(
+      "No contour levels fall inside the data range.",
+      i = "Set {.arg breaks} or {.arg binwidth} explicitly."
+    ))
+  }
+  if (isTRUE(L$stat_params$filled)) {
+    lo <- c(-Inf, brks)
+    hi <- c(brks, Inf)
+    # Representative numeric level per band, increasing, for the fill scale.
+    step <- if (length(brks) > 1L) stats::median(diff(brks)) else 1
+    levels <- vapply(seq_along(lo), function(i) {
+      if (is.finite(lo[i]) && is.finite(hi[i])) (lo[i] + hi[i]) / 2 else if (!is.finite(lo[i])) hi[i] - step / 2 else lo[i] + step / 2
+    }, numeric(1))
+    bands <- isoband::isobands(fld$gx, fld$gy, fld$gz, levels_low = lo, levels_high = hi)
+    .isoband_df(bands, levels)
+  } else {
+    lines <- isoband::isolines(fld$gx, fld$gy, fld$gz, levels = brks)
+    .isoline_df(lines)
+  }
 }
 
 # Round axial hex coordinates (q, r) to the nearest hex centre via cube rounding
