@@ -93,23 +93,39 @@ NULL
 }
 
 # Bounding box (c(xmin, xmax, ymin, ymax)) over a list of decomposed features
-# (each a list of primitives). Ignores non-finite coords / empty features.
+# (each a list of primitives). Ignores non-finite coords / empty features. A
+# single linear pass over the coordinates, accumulating running scalar min/max
+# per part -- never growing (and reallocating) coordinate vectors -- so it stays
+# O(total coords) on huge geometry sets rather than the quadratic `c()` growth of
+# the naive gather.
 .sf_bbox <- function(features) {
-  xs <- ys <- numeric(0)
+  xmin <- ymin <- Inf
+  xmax <- ymax <- -Inf
   for (prims in features) {
     for (p in prims) {
       for (m in p$parts) {
-        xs <- c(xs, m[, 1])
-        ys <- c(ys, m[, 2])
+        if (!length(m) || !nrow(m)) {
+          next
+        }
+        xc <- m[, 1L]
+        xc <- xc[is.finite(xc)]
+        yc <- m[, 2L]
+        yc <- yc[is.finite(yc)]
+        if (length(xc)) {
+          xmin <- min(xmin, xc)
+          xmax <- max(xmax, xc)
+        }
+        if (length(yc)) {
+          ymin <- min(ymin, yc)
+          ymax <- max(ymax, yc)
+        }
       }
     }
   }
-  xs <- xs[is.finite(xs)]
-  ys <- ys[is.finite(ys)]
-  if (!length(xs) || !length(ys)) {
+  if (!all(is.finite(c(xmin, xmax, ymin, ymax)))) {
     cli::cli_abort("The sf layer has no finite coordinates to plot.")
   }
-  c(min(xs), max(xs), min(ys), max(ys))
+  c(xmin, xmax, ymin, ymax)
 }
 
 # The target CRS for a plot's sf layers: the coord's explicit `crs`, else the
