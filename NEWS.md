@@ -1,5 +1,16 @@
 # vellumplot (development version)
 
+* **Positional constants now render.** A bare literal on a coordinate channel
+  (e.g. `mark_segment(x = i, y = 0, xend = i, yend = value)` for a lollipop
+  baseline) is now treated as a constant-valued *coordinate* rather than a style
+  param, so it populates the layer's values and trains the position scale.
+  Previously `y = 0` was dropped from scale training, collapsing each segment's
+  start onto its end (zero-length, invisible), and a segment-only plot errored
+  with "Every layer needs an x and y encoding". Segment/edge endpoints (`xend` /
+  `yend`) now also extend the axis domain, so a segment-only plot derives its
+  range from both ends. Affects the positional channels `x`, `y`, `xend`,
+  `yend`, `xmin`, `xmax`, `ymin`, `ymax`.
+
 * **Faster `mark_sf()` on large maps.** Non-interactive sf layers now batch all
   features that share a resolved fill/colour into a single grob per style group
   (polygons into one `evenodd` `path_grob`, lines into one NA-separated

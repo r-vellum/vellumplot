@@ -29,6 +29,14 @@ NULL
 # logical) is a constant aesthetic (e.g. `size = 3`, `color = "red"`); anything
 # referring to data (a symbol like `wt`, or a call like `factor(cyl)`) is a
 # channel evaluated against the data at compile time.
+# Positional (coordinate) aesthetics. A bare literal on one of these is a
+# constant-valued coordinate that must train the position scale (e.g. a segment
+# baseline `y = 0`), so it is kept as a channel rather than a style param.
+.POSITION_AES <- c(
+  "x", "y", "xend", "yend",
+  "xmin", "xmax", "ymin", "ymax"
+)
+
 .split_encodings <- function(quos) {
   # British spelling: accept `colour` (and compounds like `hover_colour`) as an
   # alias for the American `color` the compiler reads. Normalise once here so
@@ -54,8 +62,16 @@ NULL
       # data channel: evaluate it now and store as a param.
       params[[nm]] <- rlang::eval_tidy(q)
     } else if (!is.symbol(e) && !is.call(e)) {
-      # syntactic literal -> constant aesthetic
-      params[[nm]] <- rlang::eval_tidy(q)
+      # syntactic literal. A positional literal (e.g. `y = 0` on a segment
+      # baseline) is a constant-valued *coordinate*, not a style param: keep it
+      # as a channel so it populates `values`, recycles per row, and trains the
+      # position scale. Every other literal (e.g. `size = 3`) is a constant
+      # aesthetic.
+      if (nm %in% .POSITION_AES) {
+        encoding[[nm]] <- channel(expr = q)
+      } else {
+        params[[nm]] <- rlang::eval_tidy(q)
+      }
     } else if (!is.null(pv <- .paint_value(q))) {
       # a pre-built paint bound to a variable (fill = g) is a value, not a channel
       params[[nm]] <- pv
