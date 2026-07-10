@@ -901,8 +901,9 @@ NULL
 }
 
 # Pool numeric values feeding a position axis: the channel itself plus, for
-# rule layers, the matching intercept (which may be a constant in `params`), and
-# any `<channel>min`/`<channel>max` extent (e.g. a smooth's confidence ribbon).
+# rule layers, the matching intercept (which may be a constant in `params`), the
+# segment endpoint (`<channel>end`), and any `<channel>min`/`<channel>max`
+# extent (e.g. a smooth's confidence ribbon).
 .axis_pool <- function(resolved, channel, intercept) {
   vs <- list()
   for (L in resolved) {
@@ -912,6 +913,10 @@ NULL
     if (!is.null(v)) {
       vs <- c(vs, list(v))
     }
+    # Segment/edge endpoints extend the axis just like the start coordinate, so
+    # a segment-only plot derives its domain from both ends (not just `x`/`y`).
+    end <- L$values[[paste0(channel, "end")]]
+    if (!is.null(end)) vs <- c(vs, list(end))
     lo <- L$values[[paste0(channel, "min")]]
     hi <- L$values[[paste0(channel, "max")]]
     if (!is.null(lo)) vs <- c(vs, list(lo, hi))

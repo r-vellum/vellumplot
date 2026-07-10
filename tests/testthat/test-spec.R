@@ -30,6 +30,23 @@ test_that("scalar aesthetics become params, mapped ones become channels", {
   expect_equal(L@params$color, "red")
 })
 
+test_that("a positional literal is a constant coordinate channel, not a param", {
+  # `y = 0` (a segment baseline) must train the position scale, so it stays a
+  # channel; a style literal like `color` remains a param.
+  d <- data.frame(i = 1:3, v = c(2, 5, 9))
+  p <- vplot(d) |>
+    mark_segment(x = i, y = 0, xend = i, yend = v, color = "red")
+  L <- p@layers[[1]]
+  expect_named(L@encoding, c("x", "xend", "yend", "y"), ignore.order = TRUE)
+  expect_null(L@params$y)
+  expect_equal(L@params$color, "red")
+
+  # It resolves to a constant vector recycled over the layer's rows.
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_equal(r$values$y, 0)
+  expect_identical(r$types$y, "quantitative")
+})
+
 test_that("multiple marks stack into multiple layers", {
   p <- vplot(mtcars) |>
     mark_line(x = wt, y = mpg) |>

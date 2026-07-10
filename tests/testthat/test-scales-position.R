@@ -44,6 +44,17 @@ test_that("trans='reverse' flips the axis via a decreasing domain", {
   expect_gt(x$domain[1], x$domain[2])
 })
 
+test_that("segment endpoints (yend) and a literal baseline both train the axis", {
+  # A segment-only plot must derive its y-domain from both the baseline (`y = 0`,
+  # a positional literal) and the endpoint (`yend`); otherwise the domain
+  # collapses onto 0 and the sticks render off-panel.
+  d <- data.frame(i = 1:4, v = c(2, 5, 9, 12))
+  p <- vplot(d) |> mark_segment(x = i, y = 0, xend = i, yend = v)
+  y <- train(p)$y
+  expect_lte(y$domain[1], 0)
+  expect_gte(y$domain[2], 12)
+})
+
 test_that("an unknown transform errors", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
