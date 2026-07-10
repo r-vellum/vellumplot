@@ -279,7 +279,7 @@ share the vellum scene model:
 - **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen:
   this package.
 - **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the
-  vellumwidget: turns a vellumplot plot (or a raw vellum scene) into a
+  annotation: turns a vellumplot plot (or a raw vellum scene) into a
   client-side interactive HTML widget via `as_widget()`.
 - **[vellumverse](https://github.com/r-vellum/vellumverse)** — installs
   and loads the whole ecosystem in one step.
