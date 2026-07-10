@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.3.0" id="vellumplot-030">vellumplot 0.3.0<a class="anchor" aria-label="anchor" href="#vellumplot-030"></a></h2>
 <ul><li><p>Adopted vellum’s renamed <code>vl_*</code> graphics primitives (<code>vl_gpar()</code>, <code>vl_unit()</code>, <code>vl_viewport()</code>), which no longer mask grid.</p></li>
 <li><p><strong>NA legend keys for <code>size</code> / <code>shape</code>.</strong> A mapped <code>size</code> or <code>shape</code> aesthetic whose data contains missing values now shows an “NA” key (as the colour scales already did). Also fixes a crash: NA in a <code>shape</code> mapping previously errored (<code>Unknown point shape: NA</code>) — it now draws as a neutral circle.</p></li>
 <li><p><strong>2-D density contours.</strong> <code><a href="../reference/mark_contour.html">mark_contour()</a></code> draws iso-density contour lines of a 2-D point cloud and <code><a href="../reference/mark_contour.html">mark_contour_filled()</a></code> fills the bands between them (coloured by level automatically). By default the field is a kernel density estimate (via <code><a href="https://rdrr.io/pkg/MASS/man/kde2d.html" class="external-link">MASS::kde2d()</a></code>); map a <code>z</code> aesthetic to contour a supplied surface over a regular <code>x</code>/<code>y</code> grid instead. Contour tracing uses the <code>isoband</code> package (both <code>isoband</code> and <code>MASS</code> are Suggests).</p></li>
