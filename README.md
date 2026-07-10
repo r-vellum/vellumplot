@@ -175,7 +175,7 @@ the vellum scene model:
   renderer).
 - **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen: this
   package.
-- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the vellumwidget: turns
+- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the annotation: turns
   a vellumplot plot (or a raw vellum scene) into a client-side interactive
   HTML widget via `as_widget()`.
 - **[vellumverse](https://github.com/r-vellum/vellumverse)** —
