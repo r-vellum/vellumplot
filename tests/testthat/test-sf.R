@@ -154,3 +154,144 @@ test_that("mark_sf() errors on non-sf data", {
     "sf"
   )
 })
+
+# --- bounding box (linear, no vector growth) --------------------------------
+
+test_that(".sf_bbox spans all parts and skips empty / non-finite coords", {
+  # two features: a triangle and a segment, plus an empty part that must be
+  # ignored -- the bbox is the union extent.
+  f1 <- list(list(
+    kind = "poly",
+    parts = list(
+      matrix(c(0, 0, 4, 0, 2, 3, 0, 0), ncol = 2, byrow = TRUE)
+    )
+  ))
+  f2 <- list(list(
+    kind = "line",
+    parts = list(
+      matrix(c(-1, 1, 5, 6), ncol = 2, byrow = TRUE),
+      matrix(numeric(0), ncol = 2) # empty part -> skipped
+    )
+  ))
+  expect_identical(.sf_bbox(list(f1, f2)), c(-1, 5, 0, 6))
+
+  # non-finite coordinates are dropped, finite ones still counted
+  fna <- list(list(
+    kind = "point",
+    parts = list(
+      matrix(c(NA, 2, 3, Inf, 1, 4), ncol = 2, byrow = TRUE)
+    )
+  ))
+  expect_identical(.sf_bbox(list(fna)), c(1, 3, 2, 4))
+})
+
+test_that(".sf_bbox aborts when no finite coordinates remain", {
+  empty <- list(list(list(
+    kind = "poly",
+    parts = list(
+      matrix(c(NA, NA), ncol = 2)
+    )
+  )))
+  expect_error(.sf_bbox(empty), "no finite coordinates")
+  expect_error(.sf_bbox(list()), "no finite coordinates")
+})
+
+# --- feature batching (non-interactive) vs per-feature (interactive) --------
+
+# All sf grobs a layer emits, as provenance records (one record per emitted
+# grob). `element_table()`/`scene_model()` skip *unkeyed* paths/lines, so
+# non-interactive grob counts must be read from provenance, not the element table.
+sf_records <- function(p) {
+  Filter(function(e) e$mark == "sf" && e$kind == "mark", plot_provenance(p))
+}
+
+test_that("non-interactive polygons batch into one grob per style group", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  n <- nrow(nc)
+
+  # a single constant fill -> one style group -> ONE grob for the whole map
+  recs <- sf_records(vplot(nc) |> mark_sf())
+  expect_length(recs, 1L)
+  expect_identical(sort(recs[[1]]$rows), seq_len(n))
+
+  # a choropleth -> several groups (one per quantized fill), far fewer than n,
+  # and every feature is drawn exactly once across the groups
+  crecs <- sf_records(vplot(nc) |> mark_sf(fill = BIR74))
+  expect_gt(length(crecs), 1L)
+  expect_lt(length(crecs), n)
+  rows <- sort(unlist(lapply(crecs, `[[`, "rows")))
+  expect_identical(rows, seq_len(n))
+})
+
+test_that("interactive polygons stay one grob per feature (keys preserved)", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  n <- nrow(nc)
+
+  # per-feature provenance: n grobs, each covering exactly one feature
+  recs <- sf_records(vplot(nc) |> mark_sf(data_id = CNTY_ID))
+  expect_length(recs, n)
+  expect_true(all(vapply(recs, function(e) length(e$rows) == 1L, logical(1))))
+
+  # and one keyed `path` element per feature in the scene model
+  sc <- vellum::as_vellum_scene(vplot(nc) |> mark_sf(data_id = CNTY_ID))
+  el <- vellum::scene_model(sc)$elements
+  keyed <- el[!is.na(el$key), ]
+  expect_equal(nrow(keyed), n)
+  expect_true(all(keyed$mark == "path"))
+  expect_setequal(keyed$key, as.character(nc$CNTY_ID))
+})
+
+test_that("batched polygons render identically to per-feature (disjoint)", {
+  skip_if_not_installed("sf")
+  # three separate, non-adjacent squares sharing one fill -> batched into one
+  # grob; with a data_id they fall back to one grob per feature. For genuinely
+  # disjoint geometry the two paths are pixel-identical (the batched evenodd path
+  # only differs from per-feature drawing where features share an edge).
+  sq <- function(x0, y0) {
+    sf::st_polygon(list(matrix(
+      c(x0, y0, x0 + 1, y0, x0 + 1, y0 + 1, x0, y0 + 1, x0, y0),
+      ncol = 2,
+      byrow = TRUE
+    )))
+  }
+  d <- sf::st_sf(
+    id = c("a", "b", "c"),
+    geometry = sf::st_sfc(sq(0, 0), sq(3, 0), sq(0, 3))
+  )
+  batched <- vellum::scene_raster(vplot(d) |> mark_sf(fill = "steelblue"))
+  perfeat <- vellum::scene_raster(
+    vplot(d) |> mark_sf(fill = "steelblue", data_id = id)
+  )
+  expect_identical(batched, perfeat)
+})
+
+test_that("lines batch when non-interactive, split per feature when keyed", {
+  skip_if_not_installed("sf")
+  ln <- function(x0) {
+    sf::st_linestring(matrix(
+      c(x0, 0, x0 + 1, 2, x0 + 2, 0),
+      ncol = 2,
+      byrow = TRUE
+    ))
+  }
+  d <- sf::st_sf(
+    id = c("l1", "l2", "l3"),
+    geometry = sf::st_sfc(ln(0), ln(4), ln(8))
+  )
+
+  # one style group (default colour) -> one batched lines_grob
+  expect_length(sf_records(vplot(d) |> mark_sf()), 1L)
+
+  # keyed -> one line grob per feature, each a keyed `line` element
+  recs <- sf_records(vplot(d) |> mark_sf(data_id = id))
+  expect_length(recs, 3L)
+  el <- vellum::scene_model(vellum::as_vellum_scene(
+    vplot(d) |> mark_sf(data_id = id)
+  ))$elements
+  keyed <- el[!is.na(el$key), ]
+  expect_equal(nrow(keyed), 3L)
+  expect_true(all(keyed$mark == "line"))
+  expect_setequal(keyed$key, c("l1", "l2", "l3"))
+})

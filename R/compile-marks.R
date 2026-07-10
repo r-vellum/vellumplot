@@ -96,8 +96,12 @@ NULL
 .nudge_xy <- function(xy, L) {
   nx <- .aes_param(L, "nudge_x", 0)
   ny <- .aes_param(L, "nudge_y", 0)
-  if (!is.null(nx) && nx != 0) xy$x <- xy$x + vellum::vl_unit(nx, "mm")
-  if (!is.null(ny) && ny != 0) xy$y <- xy$y + vellum::vl_unit(ny, "mm")
+  if (!is.null(nx) && nx != 0) {
+    xy$x <- xy$x + vellum::vl_unit(nx, "mm")
+  }
+  if (!is.null(ny) && ny != 0) {
+    xy$y <- xy$y + vellum::vl_unit(ny, "mm")
+  }
   xy
 }
 
@@ -369,9 +373,14 @@ NULL
     scene <- .draw(
       scene,
       vellum::lines_grob(
-        xy$x, xy$y,
+        xy$x,
+        xy$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(col = col[idx[1]], lwd = lwd, alpha = if (is.na(a)) NULL else a)
+        gp = vellum::vl_gpar(
+          col = col[idx[1]],
+          lwd = lwd,
+          alpha = if (is.na(a)) NULL else a
+        )
       ),
       rows = idx
     )
@@ -401,10 +410,16 @@ NULL
     scene <- .draw(
       scene,
       vellum::path_grob(
-        xy$x, xy$y,
-        id = ring[idx], rule = "evenodd",
+        xy$x,
+        xy$y,
+        id = ring[idx],
+        rule = "evenodd",
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(fill = fill[idx[1]], col = NA, alpha = if (is.na(a)) NULL else a)
+        gp = vellum::vl_gpar(
+          fill = fill[idx[1]],
+          col = NA,
+          alpha = if (is.na(a)) NULL else a
+        )
       ),
       rows = idx
     )
@@ -849,15 +864,27 @@ NULL
   # Only plain labels are flattened with as.character(); rich labels pass through.
   raw <- L$values$label
   rich_single <- inherits(raw, "vellum::vellum_label")
-  rich_list <- !rich_single && is.list(raw) && length(raw) > 0L &&
-    all(vapply(raw, function(x) inherits(x, "vellum::vellum_label"), logical(1)))
+  rich_list <- !rich_single &&
+    is.list(raw) &&
+    length(raw) > 0L &&
+    all(vapply(
+      raw,
+      function(x) inherits(x, "vellum::vellum_label"),
+      logical(1)
+    ))
   if (rich_list) {
     labs <- raw[rep_len(seq_along(raw), n)]
   } else if (!rich_single) {
     label <- rep_len(as.character(raw), n)
   }
   .label_of <- function(idx) {
-    if (rich_single) raw else if (rich_list) labs[idx] else label[idx]
+    if (rich_single) {
+      raw
+    } else if (rich_list) {
+      labs[idx]
+    } else {
+      label[idx]
+    }
   }
   col <- rep_len(.text_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
@@ -1356,7 +1383,9 @@ NULL
       )
       # Node-boundary caps and parallel-edge spacing are both absolute (mm),
       # resolved by vellum in device space -> they track the mm node markers.
-      start_cap <- if (!is.null(gh)) vellum::vl_unit(gh$start_cap[g] + gap, "mm")
+      start_cap <- if (!is.null(gh)) {
+        vellum::vl_unit(gh$start_cap[g] + gap, "mm")
+      }
       end_cap <- if (!is.null(gh)) vellum::vl_unit(gh$end_cap[g] + gap, "mm")
       offset <- if (!is.null(gh)) vellum::vl_unit(gh$offset[g], "mm")
       scene <- .draw(
@@ -1501,12 +1530,29 @@ NULL
 # entry per feature, each a list of point/line/poly primitives), not from x/y
 # encodings; feature attributes (fill/colour/alpha) recycle over features. Within
 # each geometry kind, features sharing a resolved (colour, alpha) batch into a
-# single grob: polygons -> one `path_grob` (rings as `evenodd` sub-paths, so
-# holes cut and islands stay solid regardless of winding); lines -> one
-# NA-separated `lines_grob`; points -> one `points_grob`.
+# single grob -- polygons into one `path_grob` (every ring an `evenodd` sub-path,
+# so holes cut and islands stay solid regardless of winding), lines into one
+# NA-separated `lines_grob`, points into one `points_grob`. This batching is the
+# fast path for huge maps (a whole choropleth of one fill becomes a single grob).
+#
+# EXCEPTION -- interactivity: a `path_grob`/`lines_grob` is a single-shape mark
+# carrying one data key for the whole grob (there is no per-sub-path key), so when
+# the layer declares interactivity (`.mark_ctx$data_id` is set) poly/line features
+# are emitted ONE grob PER FEATURE, keyed by that feature's `data_id`. `.draw()`
+# gates key attachment on the same `.mark_ctx$data_id`, so the batched path loses
+# no identity: it only runs when there are no keys to attach.
+#
+# CAVEAT -- the batched polygon path fills the whole style group with one
+# `evenodd` rule. For disjoint features (every real choropleth / coverage map)
+# this is identical to per-feature drawing; two same-fill features that *overlap*
+# would XOR-cancel in the overlap (the same property a self-overlapping
+# MULTIPOLYGON already has today). Interactive maps are unaffected (per feature).
 .emit_sf <- function(scene, L, scales) {
   feats <- L$sf
   n <- L$n
+  # Interactivity gate: batch only when no per-feature key will be attached (see
+  # the EXCEPTION note above). Mirrors the predicate `.draw()` uses at emit time.
+  interactive <- !is.null(.mark_ctx$data_id)
   # primary colour = mapped fill/colour (choropleth) or a constant param; NA when
   # nothing is set (then filled per-kind below). Border/alpha/lwd/size are params.
   primary <- rep_len(.aes_colour(L, scales, NA_character_), n)
@@ -1533,6 +1579,66 @@ NULL
   mapnat <- function(m) list(x = scales$x$map(m[, 1]), y = scales$y$map(m[, 2]))
   gp_alpha <- function(a) if (is.na(a)) NULL else a
 
+  # Gather the polygon rings of features `fi` into one path payload: raw x/y and a
+  # ring id that is unique across the whole call (so several features batch into
+  # one `evenodd` path -- holes cut, islands solid, disjoint features independent).
+  # Ids are contiguous and in draw order, so `path_grob`'s internal id reordering
+  # is a no-op. Raw coordinates are collected here and mapped once by the caller
+  # (one `scales$*$map` call per grob instead of one per ring). NULL if no rings.
+  gather_poly <- function(fi) {
+    px <- py <- pid <- list()
+    k <- 0L
+    rid <- 0L
+    for (i in fi) {
+      for (p in prims_of(i, "poly")) {
+        for (ring in p$parts) {
+          nr <- nrow(ring)
+          if (!nr) {
+            next
+          }
+          rid <- rid + 1L
+          k <- k + 1L
+          px[[k]] <- ring[, 1L]
+          py[[k]] <- ring[, 2L]
+          pid[[k]] <- rep.int(rid, nr)
+        }
+      }
+    }
+    if (!k) {
+      return(NULL)
+    }
+    list(
+      x = unlist(px, use.names = FALSE),
+      y = unlist(py, use.names = FALSE),
+      id = unlist(pid, use.names = FALSE)
+    )
+  }
+
+  # Gather the line parts of features `fi` into one payload, NA-separated across
+  # both parts and features (so one `lines_grob` draws them all as broken
+  # polylines). Raw coordinates; mapped once by the caller. NULL if no segments.
+  gather_line <- function(fi) {
+    px <- py <- list()
+    k <- 0L
+    for (i in fi) {
+      for (p in prims_of(i, "line")) {
+        for (seg in p$parts) {
+          nr <- nrow(seg)
+          if (!nr) {
+            next
+          }
+          k <- k + 1L
+          px[[k]] <- c(seg[, 1L], NA_real_)
+          py[[k]] <- c(seg[, 2L], NA_real_)
+        }
+      }
+    }
+    if (!k) {
+      return(NULL)
+    }
+    list(x = unlist(px, use.names = FALSE), y = unlist(py, use.names = FALSE))
+  }
+
   # Iterate style groups of the features that carry kind `k`, calling `draw`.
   by_style <- function(scene, k, colvec, draw) {
     sub <- which(has_kind(k))
@@ -1549,91 +1655,78 @@ NULL
     scene
   }
 
-  # polygons: one path_grob PER FEATURE (its rings are sub-paths), so each feature
-  # is an addressable element. `rows = i` lets `.draw()` key it with the feature's
-  # data_id / tooltip (interactivity); the small extra grob count is the price of
-  # per-feature identity.
+  # polygons: batched into one path_grob per style group (its features' rings are
+  # `evenodd` sub-paths) -- unless the layer is interactive, when each feature is
+  # its own grob so `.draw()` can key it (`rows = i`) with the feature's data_id /
+  # tooltip. See the EXCEPTION / CAVEAT notes on `.emit_sf`.
   scene <- by_style(
     scene,
     "poly",
     kind_col("grey80"),
     function(scene, idx, fill, a) {
-      for (i in idx) {
-        xs <- ys <- ids <- numeric(0)
-        rid <- 0L
-        for (p in prims_of(i, "poly")) {
-          for (ring in p$parts) {
-            if (!nrow(ring)) {
-              next
-            }
-            rid <- rid + 1L
-            nat <- mapnat(ring)
-            xs <- c(xs, nat$x)
-            ys <- c(ys, nat$y)
-            ids <- c(ids, rep(rid, nrow(ring)))
-          }
+      gpp <- vellum::vl_gpar(
+        fill = fill,
+        col = border,
+        lwd = lwd,
+        alpha = gp_alpha(a)
+      )
+      emit1 <- function(scene, g, rows) {
+        if (is.null(g)) {
+          return(scene)
         }
-        if (!length(xs)) {
-          next
-        }
-        xy <- .xy_units(scales, xs, ys)
-        scene <- .draw(
+        xy <- .xy_units(scales, scales$x$map(g$x), scales$y$map(g$y))
+        .draw(
           scene,
           vellum::path_grob(
             xy$x,
             xy$y,
-            id = as.integer(ids),
+            id = as.integer(g$id),
             rule = "evenodd",
             sketch = sk,
-            gp = vellum::vl_gpar(
-              fill = fill,
-              col = border,
-              lwd = lwd,
-              alpha = gp_alpha(a)
-            )
+            gp = gpp
           ),
-          rows = i
+          rows = rows
         )
       }
-      scene
+      if (interactive) {
+        for (i in idx) {
+          scene <- emit1(scene, gather_poly(i), rows = i)
+        }
+        scene
+      } else {
+        emit1(scene, gather_poly(idx), rows = idx)
+      }
     }
   )
 
-  # lines: one lines_grob PER FEATURE (its parts NA-separated), so each feature is
-  # addressable. `rows = i` keys it with the feature's data_id / tooltip.
+  # lines: batched into one NA-separated lines_grob per style group -- unless the
+  # layer is interactive, when each feature is its own grob (`rows = i`) so it
+  # stays addressable. See the EXCEPTION note on `.emit_sf`.
   scene <- by_style(
     scene,
     "line",
     kind_col("grey20"),
     function(scene, idx, col, a) {
-      for (i in idx) {
-        xs <- ys <- numeric(0)
-        for (p in prims_of(i, "line")) {
-          for (seg in p$parts) {
-            if (!nrow(seg)) {
-              next
-            }
-            nat <- mapnat(seg)
-            xs <- c(xs, nat$x, NA_real_)
-            ys <- c(ys, nat$y, NA_real_)
-          }
+      gpp <- vellum::vl_gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
+      emit1 <- function(scene, g, rows) {
+        if (is.null(g)) {
+          return(scene)
         }
-        if (!length(xs)) {
-          next
-        }
-        xy <- .xy_units(scales, xs, ys)
-        scene <- .draw(
+        xy <- .xy_units(scales, scales$x$map(g$x), scales$y$map(g$y))
+        .draw(
           scene,
-          vellum::lines_grob(
-            xy$x,
-            xy$y,
-            sketch = sk,
-            gp = vellum::vl_gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
-          ),
-          rows = i
+          vellum::lines_grob(xy$x, xy$y, sketch = sk, gp = gpp),
+          rows = rows
         )
       }
-      scene
+      if (interactive) {
+        for (i in idx) {
+          scene <- emit1(scene, gather_line(i), rows = i)
+        }
+        scene
+      } else {
+        emit1(scene, gather_line(idx), rows = idx)
+      }
     }
   )
 
@@ -1731,12 +1824,18 @@ NULL
   tick <- function(scene, u_along, y0, y1, rows, vertical) {
     if (vertical) {
       grob <- vellum::segments_grob(
-        u_along, vellum::vl_unit(y0, "npc"), u_along, vellum::vl_unit(y1, "npc"),
+        u_along,
+        vellum::vl_unit(y0, "npc"),
+        u_along,
+        vellum::vl_unit(y1, "npc"),
         gp = gp
       )
     } else {
       grob <- vellum::segments_grob(
-        vellum::vl_unit(y0, "npc"), u_along, vellum::vl_unit(y1, "npc"), u_along,
+        vellum::vl_unit(y0, "npc"),
+        u_along,
+        vellum::vl_unit(y1, "npc"),
+        u_along,
         gp = gp
       )
     }
@@ -1746,14 +1845,18 @@ NULL
     nx <- scales$x$map(L$values$x)
     ux <- vellum::vl_unit(nx, "native")
     r <- seq_along(nx)
-    if (grepl("b", sides)) scene <- tick(scene, ux, 0, len, r, TRUE)
+    if (grepl("b", sides)) {
+      scene <- tick(scene, ux, 0, len, r, TRUE)
+    }
     if (grepl("t", sides)) scene <- tick(scene, ux, 1, 1 - len, r, TRUE)
   }
   if (!is.null(L$values$y) && (grepl("l", sides) || grepl("r", sides))) {
     ny <- scales$y$map(L$values$y)
     uy <- vellum::vl_unit(ny, "native")
     r <- seq_along(ny)
-    if (grepl("l", sides)) scene <- tick(scene, uy, 0, len, r, FALSE)
+    if (grepl("l", sides)) {
+      scene <- tick(scene, uy, 0, len, r, FALSE)
+    }
     if (grepl("r", sides)) scene <- tick(scene, uy, 1, 1 - len, r, FALSE)
   }
   scene
@@ -1791,7 +1894,11 @@ NULL
   # layer context, so a non-interactive plot sets nothing. `keys`/`meta` flow into
   # vellum's SVG `data-key` and `scene_model()`; a static PNG/SVG render ignores
   # them.
-  if (!is.null(rows) && identical(.mark_ctx$kind, "mark") && !is.null(.mark_ctx$data_id)) {
+  if (
+    !is.null(rows) &&
+      identical(.mark_ctx$kind, "mark") &&
+      !is.null(.mark_ctx$data_id)
+  ) {
     grob@keys <- .mark_ctx$data_id[rows]
     m <- .elem_meta(rows)
     if (!is.null(m)) {
@@ -1815,13 +1922,23 @@ NULL
   }
   lapply(rows, function(i) {
     rec <- list()
-    if (!is.null(tt)) rec$tooltip <- as.character(tt[[i]])
-    if (!is.null(hg)) rec$hover_group <- as.character(hg[[i]])
-    if (!is.null(hc)) rec$hover_color <- as.character(hc[[i]])
-    if (!is.null(sc)) rec$selected_color <- as.character(sc[[i]])
+    if (!is.null(tt)) {
+      rec$tooltip <- as.character(tt[[i]])
+    }
+    if (!is.null(hg)) {
+      rec$hover_group <- as.character(hg[[i]])
+    }
+    if (!is.null(hc)) {
+      rec$hover_color <- as.character(hc[[i]])
+    }
+    if (!is.null(sc)) {
+      rec$selected_color <- as.character(sc[[i]])
+    }
     # `legend`: the discrete series this element belongs to ("<aes>:<value>"), so a
     # legend swatch (tagged with `legend_for`) can highlight the whole series.
-    if (!is.null(lg)) rec$legend <- lg[[i]]
+    if (!is.null(lg)) {
+      rec$legend <- lg[[i]]
+    }
     rec
   })
 }
@@ -1835,15 +1952,22 @@ NULL
   cols <- list()
   if (!is.null(scales$color) && identical(scales$color$kind, "discrete")) {
     cv <- L$values$color %||% L$values$fill
-    if (!is.null(cv)) cols[["color"]] <- paste0("color:", as.character(rep_len(cv, n)))
+    if (!is.null(cv)) {
+      cols[["color"]] <- paste0("color:", as.character(rep_len(cv, n)))
+    }
   }
   if (!is.null(scales$shape) && !is.null(L$values$shape)) {
-    cols[["shape"]] <- paste0("shape:", as.character(rep_len(L$values$shape, n)))
+    cols[["shape"]] <- paste0(
+      "shape:",
+      as.character(rep_len(L$values$shape, n))
+    )
   }
   if (!length(cols)) {
     return(NULL)
   }
-  lapply(seq_len(n), function(i) unname(vapply(cols, function(v) v[[i]], character(1))))
+  lapply(seq_len(n), function(i) {
+    unname(vapply(cols, function(v) v[[i]], character(1)))
+  })
 }
 
 # The [xscale, yscale] a blend/effect wrapper viewport carries so native
@@ -1984,7 +2108,9 @@ NULL
     # when it aligns to the drawn rows: a row-preserving mark keeps `length == n`;
     # an aggregating stat (bin/count) changes `n`, so we drop it rather than
     # mis-key (a future phase can re-derive keys from computed columns).
-    ok <- !is.null(L$meta) && !is.null(L$meta$data_id) && length(L$meta$data_id) == L$n
+    ok <- !is.null(L$meta) &&
+      !is.null(L$meta$data_id) &&
+      length(L$meta$data_id) == L$n
     .mark_ctx$data_id <- if (ok) L$meta$data_id else NULL
     .mark_ctx$tooltip <- if (ok) L$meta$tooltip else NULL
     .mark_ctx$hover_group <- if (ok) L$meta$hover_group else NULL
