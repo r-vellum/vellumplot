@@ -1145,6 +1145,20 @@ NULL
   scene
 }
 
+# Per-level `stats::density()` of `vals`, grouped by category `cats` over the
+# ordered levels `levs`. Shared by the violin/ridgeline emitters and by scale
+# training (`.expand_position_for_marks`) so the trained domain and the drawn
+# geometry are computed from identical values. A level with fewer than two finite
+# observations yields `NULL` (no density is drawn for it).
+.density_by_cat <- function(vals, cats, levs, adjust) {
+  ch <- as.character(cats)
+  lapply(levs, function(l) {
+    v <- vals[ch == l]
+    v <- v[is.finite(v)]
+    if (length(v) < 2) NULL else stats::density(v, adjust = adjust)
+  })
+}
+
 # A violin: a mirrored kernel-density of `y` per `x` category, drawn as a filled
 # polygon whose half-width is the density scaled to the category band. Mirrors
 # the boxplot layout (categorical x, value y).
@@ -1158,15 +1172,14 @@ NULL
   band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
   hw <- 0.4 * band
   xchar <- as.character(xv)
+  dens <- .density_by_cat(yv, xv, levs, adjust)
   sk <- .mark_sketch(L, scales)
   for (j in seq_along(levs)) {
-    sel <- which(xchar == levs[j])
-    yy <- yv[sel]
-    yy <- yy[is.finite(yy)]
-    if (length(yy) < 2) {
+    d <- dens[[j]]
+    if (is.null(d)) {
       next
     }
-    d <- stats::density(yy, adjust = adjust)
+    sel <- which(xchar == levs[j])
     dn <- (d$y / max(d$y)) * hw
     xc <- xc_all[j]
     # up the right side, then down the mirrored left side
@@ -1202,16 +1215,15 @@ NULL
   band <- scales$y$band_width %||% 1
   scale_h <- (L$stat_params$scale %||% 1.4) * band
   ychar <- as.character(yv)
+  dens <- .density_by_cat(xv, yv, levs, adjust)
   a <- .aes_alpha(L, scales, NA_real_)[1]
   sk <- .mark_sketch(L, scales)
   for (j in rev(seq_along(levs))) {
-    sel <- which(ychar == levs[j])
-    xi <- xv[sel]
-    xi <- xi[is.finite(xi)]
-    if (length(xi) < 2) {
+    d <- dens[[j]]
+    if (is.null(d)) {
       next
     }
-    d <- stats::density(xi, adjust = adjust)
+    sel <- which(ychar == levs[j])
     h <- (d$y / max(d$y)) * scale_h
     base <- ypos[j]
     px <- scales$x$map(c(d$x, rev(d$x)))

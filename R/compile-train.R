@@ -423,7 +423,9 @@ NULL
   v <- as.numeric(raw)
   v <- v[is.finite(v)]
   if (!length(v)) {
-    cli::cli_abort("A binned {.field {aesthetic}} scale needs at least one finite value.")
+    cli::cli_abort(
+      "A binned {.field {aesthetic}} scale needs at least one finite value."
+    )
   }
   brks <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
     sort(unique(as.numeric(scalespec@breaks)))
@@ -439,7 +441,11 @@ NULL
   hi <- max(brks)
   centers <- (brks[-length(brks)] + brks[-1L]) / 2
   widths <- diff(brks)
-  bw <- if (isTRUE(all.equal(max(widths), min(widths)))) widths[1] else stats::median(widths)
+  bw <- if (isTRUE(all.equal(max(widths), min(widths)))) {
+    widths[1]
+  } else {
+    stats::median(widths)
+  }
   ulab <- if (!is.null(scalespec)) scalespec@labels else NULL
   labs <- .match_labels(ulab, brks, aesthetic) %||% format(brks, trim = TRUE)
   list(
@@ -452,7 +458,12 @@ NULL
     breaks = brks,
     labels = labs,
     map = function(x) {
-      i <- findInterval(as.numeric(x), brks, rightmost.closed = TRUE, all.inside = TRUE)
+      i <- findInterval(
+        as.numeric(x),
+        brks,
+        rightmost.closed = TRUE,
+        all.inside = TRUE
+      )
       centers[i]
     },
     name = name
@@ -810,7 +821,12 @@ NULL
 
 # Line types a mapped (discrete) `linetype` aesthetic cycles through.
 .LINETYPE_PALETTE <- c(
-  "solid", "dashed", "dotted", "dotdash", "longdash", "twodash"
+  "solid",
+  "dashed",
+  "dotted",
+  "dotdash",
+  "longdash",
+  "twodash"
 )
 
 # Train the alpha scale (if any layer maps `alpha` to data). Continuous: rescale
@@ -916,12 +932,75 @@ NULL
     # Segment/edge endpoints extend the axis just like the start coordinate, so
     # a segment-only plot derives its domain from both ends (not just `x`/`y`).
     end <- L$values[[paste0(channel, "end")]]
-    if (!is.null(end)) vs <- c(vs, list(end))
+    if (!is.null(end)) {
+      vs <- c(vs, list(end))
+    }
     lo <- L$values[[paste0(channel, "min")]]
     hi <- L$values[[paste0(channel, "max")]]
     if (!is.null(lo)) vs <- c(vs, list(lo, hi))
   }
   if (length(vs)) vs else NULL
+}
+
+# Native-coordinate bounding box a density-shape mark (violin/ridgeline) will
+# draw, so scale training can widen the panel to fit it. These marks generate
+# their geometry at emit time from `stats::density()`, which extends past the raw
+# data (the density support is padded ~3 bandwidths), and a ridge additionally
+# rises `scale * band` above its category baseline -- none of which the raw-data
+# axis pool sees. Returns `list(x = c(lo, hi), y = c(lo, hi))`, with `NULL` for an
+# axis it does not extend. The density math mirrors the emitters exactly (shared
+# `.density_by_cat`), so the trained domain matches what is drawn.
+.mark_footprint <- function(L, scales) {
+  adjust <- L$stat_params$adjust %||% 1
+  if (identical(L$mark, "violin")) {
+    xv <- L$values$x
+    yv <- as.numeric(L$values$y)
+    levs <- .cat_levels(xv)
+    xc <- scales$x$map(levs)
+    band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
+    hw <- 0.4 * band
+    dens <- .density_by_cat(yv, xv, levs, adjust)
+    supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
+    list(
+      x = c(min(xc) - hw, max(xc) + hw),
+      y = if (length(supp)) range(supp) else NULL
+    )
+  } else if (identical(L$mark, "ridgeline")) {
+    xv <- as.numeric(L$values$x)
+    yv <- L$values$y
+    levs <- .cat_levels(yv)
+    ypos <- scales$y$map(levs)
+    band <- scales$y$band_width %||% 1
+    scale_h <- (L$stat_params$scale %||% 1.4) * band
+    dens <- .density_by_cat(xv, yv, levs, adjust)
+    supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
+    list(
+      x = if (length(supp)) range(supp) else NULL,
+      y = c(min(ypos), max(ypos) + scale_h)
+    )
+  } else {
+    list(x = NULL, y = NULL)
+  }
+}
+
+# Widen the position domains so a violin/ridgeline layer's drawn footprint is not
+# clipped by the panel. Only ever grows a domain (union), and skips an axis whose
+# limits the user set explicitly (`coord_*(xlim=/ylim=)` or a scale `limits=`),
+# since explicit limits are intentional cropping that must win.
+.expand_position_for_marks <- function(resolved, scales, expand_x, expand_y) {
+  for (L in resolved) {
+    if (!L$mark %in% c("violin", "ridgeline")) {
+      next
+    }
+    fp <- .mark_footprint(L, scales)
+    if (expand_x && !is.null(fp$x) && all(is.finite(fp$x))) {
+      scales$x$domain <- range(c(scales$x$domain, fp$x))
+    }
+    if (expand_y && !is.null(fp$y) && all(is.finite(fp$y))) {
+      scales$y$domain <- range(c(scales$y$domain, fp$y))
+    }
+  }
+  scales
 }
 
 # Train all scales the plot needs: x, y (position), colour, and size. Bars force
@@ -967,5 +1046,17 @@ NULL
       scales[[aes]] <- .apply_guide(scales[[aes]], g)
     }
   }
+  # Grow the panel to fit any density-shape mark's drawn footprint, unless the
+  # user pinned that axis's limits.
+  sx <- .scale_for(spec, "x")
+  sy <- .scale_for(spec, "y")
+  x_explicit <- !is.null(co@xlim) || (!is.null(sx) && !is.null(sx@domain))
+  y_explicit <- !is.null(co@ylim) || (!is.null(sy) && !is.null(sy@domain))
+  scales <- .expand_position_for_marks(
+    resolved,
+    scales,
+    expand_x = !x_explicit,
+    expand_y = !y_explicit
+  )
   scales
 }
