@@ -40,8 +40,8 @@ curve; `adjust` scales the bandwidth. Densities are on a comparable vertical
 scale, so mapping `fill` to a group and overlaying works well.
 
 ```{r}
-vplot(iris) |>
-  mark_density(x = Sepal.Length, fill = Species, alpha = 0.4)
+vplot(penguins) |>
+  mark_density(x = bill_len, fill = species, alpha = 0.4)
 ```
 
 ## Marginal distributions
@@ -75,8 +75,8 @@ margin the same way, so a per-group density sits above its points in the matchin
 colour. The scatter's legend already names the groups, so none is added.
 
 ```{r}
-vplot(iris) |>
-  mark_point(x = Sepal.Length, y = Sepal.Width, color = Species) |>
+vplot(penguins) |>
+  mark_point(x = bill_len, y = bill_dep, color = species) |>
   add_marginal(group = TRUE)
 ```
 
@@ -115,8 +115,8 @@ draws the empirical cumulative distribution of `x` as a step, which is a
 scale-free way to compare groups without choosing a bandwidth.
 
 ```{r}
-vplot(iris) |>
-  mark_ecdf(x = Sepal.Length, color = Species)
+vplot(penguins) |>
+  mark_ecdf(x = bill_len, color = species)
 ```
 
 `mark_qq()` plots the sorted `sample` against the quantiles of a reference
@@ -144,8 +144,8 @@ vplot(faithful) |>
 `x`, a boxplot's silhouette that shows the full shape of each group.
 
 ```{r}
-vplot(iris) |>
-  mark_violin(x = Species, y = Sepal.Length, fill = Species)
+vplot(penguins) |>
+  mark_violin(x = species, y = bill_len, fill = species)
 ```
 
 `mark_ridgeline()` turns that on its side: a density of `x` per categorical `y`,
@@ -153,8 +153,8 @@ with the ridges overlapping so many groups fit in little vertical space. Use the
 `scale` argument to tune how much they overlap.
 
 ```{r}
-vplot(iris) |>
-  mark_ridgeline(x = Sepal.Length, y = Species, fill = Species)
+vplot(penguins) |>
+  mark_ridgeline(x = bill_len, y = species, fill = species)
 ```
 
 `mark_dotplot()` bins `x` and stacks one dot per observation, so the height of
