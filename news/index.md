@@ -2,6 +2,16 @@
 
 ## vellumplot (development version)
 
+- **[`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
+  and
+  [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
+  no longer clip at the edges.** The position scales are now trained to
+  include each mark’s drawn footprint – the full kernel-density support
+  for a violin, and the ridge height (`scale`) above the top category
+  for a ridgeline – so the tallest ridge and the density tails are no
+  longer cropped by the panel. Explicit axis limits still take
+  precedence.
+
 - **Marginal distributions with
   [`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md).**
   A new plot modifier draws a density or histogram of the panel’s `x`
