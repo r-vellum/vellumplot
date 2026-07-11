@@ -82,6 +82,24 @@ test_that(".node_table carries name + layout coords in vertex order", {
   expect_identical(nt$y, c(0, 10, 20))
 })
 
+test_that(".node_table warns when a vertex attribute collides with x/y and layout wins (H15)", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_graph(~ a - b - c)
+  igraph::V(g)$x <- c(99, 98, 97) # user attr shadows a reserved layout column
+  xy <- cbind(c(0, 1, 2), c(0, 10, 20))
+  expect_warning(nt <- .node_table(g, xy), "overwritten by the graph layout")
+  expect_identical(nt$x, c(0, 1, 2)) # layout coordinates, not 99/98/97
+})
+
+test_that(".edge_table warns when an edge attribute collides with x/y/xend/yend (H15)", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_graph(~ a - b - c)
+  igraph::E(g)$y <- c(5, 6) # user edge attr shadows a reserved layout column
+  xy <- cbind(c(0, 1, 2), c(0, 10, 20))
+  expect_warning(et <- .edge_table(g, xy), "overwritten by the graph layout")
+  expect_equal(et$y, c(0, 10)) # source-endpoint coords, not 5/6
+})
+
 test_that(".edge_table resolves endpoints by vertex index, not row position", {
   skip_if_not_installed("igraph")
   g <- igraph::make_graph(~ a - b - c) # edges a-b, b-c
