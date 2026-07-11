@@ -20,7 +20,10 @@ CoordSpec <- S7::new_class(
     start = S7::new_property(S7::class_double, default = 0),
     direction = S7::new_property(S7::class_double, default = 1),
     rmin = S7::new_property(S7::class_double, default = 0),
-    crs = S7::new_property(S7::class_any, default = NULL) # coord_sf target CRS
+    crs = S7::new_property(S7::class_any, default = NULL), # coord_sf target CRS
+    # coord_trans per-axis display transform (name or scales::transform_* object).
+    xtrans = S7::new_property(S7::class_any, default = "identity"),
+    ytrans = S7::new_property(S7::class_any, default = "identity")
   )
 )
 
@@ -70,6 +73,79 @@ CoordSpec <- S7::new_class(
       rmin + frac * (rmax - rmin)
     }
   )
+}
+
+# --- coord_trans (nonlinear display remap) ---------------------------------
+# Unlike scale_*(trans=), which transforms the scale (breaks chosen in
+# transformed space, data rescaled), coord_trans leaves the trained scale alone
+# and warps only the final data->position mapping: gridlines/ticks relocate but
+# their labels keep the original data values, and straight lines curve.
+
+# Resolve a coord_trans axis argument to a forward transform function `f(x)`.
+# Reuses the position-transform registry (`.TRANSFORMS`, compile-train.R); also
+# accepts a `scales::transform_*()` object (its `$transform`). NULL -> identity.
+.resolve_coord_trans <- function(t, arg) {
+  if (is.null(t)) {
+    return(function(x) x)
+  }
+  if (is.character(t)) {
+    tr <- .TRANSFORMS[[t]]
+    if (is.null(tr)) {
+      cli::cli_abort(c(
+        "Unknown {.arg {arg}} transform {.val {t}}.",
+        i = "Use one of {.or {.val {names(.TRANSFORMS)}}} or a {.fn scales::transform_*} object."
+      ))
+    }
+    return(tr$transform)
+  }
+  if (is.list(t) && is.function(t$transform)) {
+    return(t$transform)
+  }
+  cli::cli_abort(
+    "{.arg {arg}} must be a transform name or a {.fn scales::transform_*} object."
+  )
+}
+
+# Is an axis transform linear (identity/reverse)? Linear axes need no polyline
+# densification (a straight data segment stays straight); nonlinear ones curve.
+.is_linear_trans <- function(t) {
+  is.null(t) || (is.character(t) && t %in% c("identity", "reverse"))
+}
+
+# Per-panel coord_trans context: the forward maps and the warped native domain
+# (which the panel viewport uses). `x_lin`/`y_lin` gate densification.
+.trans_ctx <- function(co, x_sc, y_sc) {
+  fx <- .resolve_coord_trans(co@xtrans, "x")
+  fy <- .resolve_coord_trans(co@ytrans, "y")
+  # An out-of-domain transform (e.g. log of a non-positive value) yields NaN with
+  # a warning; suppress it here and report the real problem via the finite check.
+  xdom <- suppressWarnings(fx(x_sc$domain))
+  ydom <- suppressWarnings(fy(y_sc$domain))
+  if (!all(is.finite(xdom))) {
+    cli::cli_abort(c(
+      "The x range is outside the {.fn coord_trans} x transform's domain.",
+      i = "A log transform, for example, needs strictly positive values."
+    ))
+  }
+  if (!all(is.finite(ydom))) {
+    cli::cli_abort(c(
+      "The y range is outside the {.fn coord_trans} y transform's domain.",
+      i = "A log transform, for example, needs strictly positive values."
+    ))
+  }
+  list(
+    x_map = fx, y_map = fy, x_dom = xdom, y_dom = ydom,
+    x_lin = .is_linear_trans(co@xtrans), y_lin = .is_linear_trans(co@ytrans)
+  )
+}
+
+# A display copy of a trained scale with its break/domain positions warped by `f`
+# but its labels kept — the panel background, gridlines, and axis drawers read
+# this so ticks relocate while their text stays at the original data values.
+.warp_scale <- function(sc, f) {
+  sc$domain <- f(sc$domain)
+  sc$breaks <- f(sc$breaks)
+  sc
 }
 
 # Horizontal / vertical roles of an (x, y) pair under coord_flip: flip swaps the
@@ -169,6 +245,37 @@ coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
     start = as.double(start),
     direction = as.double(direction)
   )
+  plot
+}
+
+#' Transformed coordinate system
+#'
+#' `coord_trans()` applies a nonlinear transform to the **display** of one or both
+#' position axes, *after* the scale has trained. This differs from a
+#' `scale_*(trans=)`: a scale transform rescales the data and picks its breaks in
+#' the transformed space (so a log scale is labelled `1, 10, 100`), whereas
+#' `coord_trans()` keeps the trained breaks at their original data values and only
+#' warps *where* they are drawn — so the axis is still labelled with the raw
+#' values, the gridlines bunch up, and straight lines curve. Use it to show data
+#' on, say, a log display without relabelling the axis in powers of ten.
+#'
+#' The transform is separable per axis. Each of `x`/`y` is a transform name
+#' (`"identity"`, `"log10"`, `"sqrt"`) or a `scales::transform_*()` object. It is
+#' intended for continuous position axes; `"reverse"` is better expressed as
+#' `scale_*(trans = "reverse")`.
+#'
+#' @param plot A [PlotSpec].
+#' @param x,y Display transform for that axis (default `"identity"`).
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> coord_trans(y = "log10")
+#' @export
+coord_trans <- function(plot, x = "identity", y = "identity") {
+  .check_plot(plot)
+  # Fail fast on an unknown transform name (rather than at render time).
+  .resolve_coord_trans(x, "x")
+  .resolve_coord_trans(y, "y")
+  plot@coord <- CoordSpec(kind = "trans", xtrans = x, ytrans = y)
   plot
 }
 

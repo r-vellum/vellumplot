@@ -1,5 +1,15 @@
 # vellumplot (development version)
 
+* **`coord_trans()` — nonlinear display transforms.** Warps the *display* of one
+  or both position axes after the scale has trained, so gridlines bunch up and
+  straight lines curve while the axis keeps its original data-value labels (unlike
+  `scale_*(trans=)`, which rescales the data and relabels in transformed space).
+  Each of `x`/`y` takes a transform name (`"log10"`, `"sqrt"`, `"identity"`) or a
+  `scales::transform_*()` object, e.g. `coord_trans(y = "log10")`. Supports the
+  common marks (points, lines, areas/ribbons, bars, tiles, smooths, text, …);
+  segment/interval, boxplot, edges, and raster/datashade marks are not warped yet
+  and raise a clear error under `coord_trans()`.
+
 * **`mark_violin()` and `mark_ridgeline()` no longer clip at the edges.** The
   position scales are now trained to include each mark's drawn footprint -- the
   full kernel-density support for a violin, and the ridge height (`scale`) above

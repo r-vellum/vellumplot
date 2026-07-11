@@ -129,9 +129,51 @@ NULL
   )
 }
 
+# Map trained-native (x, y) through a coord_trans display warp (separable per
+# axis). No flip under coord_trans, so x stays horizontal.
+.trans_xy <- function(scales, x, y) {
+  ctx <- scales$trans
+  list(
+    x = vellum::vl_unit(ctx$x_map(x), "native"),
+    y = vellum::vl_unit(ctx$y_map(y), "native")
+  )
+}
+
+# Densify a polyline (trained-native x/y, draw order) so a straight data segment
+# bends smoothly under a nonlinear coord_trans warp: split each segment into
+# sub-steps proportional to how far it spans the warped range (short segments —
+# already-dense data — get none). Linear axes (identity/reverse) return as is, so
+# an identity coord_trans leaves output unchanged.
+.trans_munch <- function(scales, x, y, k = 200L, cap = 500L) {
+  ctx <- scales$trans
+  m <- length(x)
+  if (m < 2L || (isTRUE(ctx$x_lin) && isTRUE(ctx$y_lin))) {
+    return(list(x = x, y = y))
+  }
+  xw <- ctx$x_map(x)
+  yw <- ctx$y_map(y)
+  xr <- diff(range(xw[is.finite(xw)]))
+  yr <- diff(range(yw[is.finite(yw)]))
+  xr <- if (isTRUE(xr > 0)) xr else 1
+  yr <- if (isTRUE(yr > 0)) yr else 1
+  ox <- vector("list", m - 1L)
+  oy <- vector("list", m - 1L)
+  for (i in seq_len(m - 1L)) {
+    frac <- max(abs(xw[i + 1L] - xw[i]) / xr, abs(yw[i + 1L] - yw[i]) / yr)
+    steps <- max(1L, min(cap, ceiling(frac * k)))
+    t <- seq(0, 1, length.out = steps + 1L)[-(steps + 1L)]
+    ox[[i]] <- x[i] + t * (x[i + 1L] - x[i])
+    oy[[i]] <- y[i] + t * (y[i + 1L] - y[i])
+  }
+  list(x = c(unlist(ox), x[m]), y = c(unlist(oy), y[m]))
+}
+
 .xy_units <- function(scales, x, y) {
   if (!is.null(scales$polar)) {
     return(.polar_xy(scales, x, y))
+  }
+  if (!is.null(scales$trans)) {
+    return(.trans_xy(scales, x, y))
   }
   if (.flipped(scales)) {
     list(x = vellum::vl_unit(y, "native"), y = vellum::vl_unit(x, "native"))
@@ -163,10 +205,14 @@ NULL
   list(x = c(unlist(ox), x[m]), y = c(unlist(oy), y[m]))
 }
 
-# Map an ordered polyline to grob units, densifying first under polar.
+# Map an ordered polyline to grob units, densifying first under polar/trans.
 .xy_path <- function(scales, x, y) {
   if (!is.null(scales$polar)) {
     d <- .polar_munch(scales, x, y)
+    return(.xy_units(scales, d$x, d$y))
+  }
+  if (!is.null(scales$trans)) {
+    d <- .trans_munch(scales, x, y)
     return(.xy_units(scales, d$x, d$y))
   }
   .xy_units(scales, x, y)
@@ -180,10 +226,30 @@ NULL
     db <- .polar_munch(scales, rev(xb), rev(yb))
     return(.xy_units(scales, c(da$x, db$x), c(da$y, db$y)))
   }
+  if (!is.null(scales$trans)) {
+    da <- .trans_munch(scales, xa, ya)
+    db <- .trans_munch(scales, rev(xb), rev(yb))
+    return(.xy_units(scales, c(da$x, db$x), c(da$y, db$y)))
+  }
   .xy_units(scales, c(xa, rev(xb)), c(ya, rev(yb)))
 }
 
 .rect_units <- function(scales, xc, yc, w, h) {
+  if (!is.null(scales$trans)) {
+    # A separable warp keeps an axis-aligned rect axis-aligned, but its centre and
+    # extent move nonlinearly, so map the corners and rebuild centre/size.
+    ctx <- scales$trans
+    x0 <- ctx$x_map(xc - w / 2)
+    x1 <- ctx$x_map(xc + w / 2)
+    y0 <- ctx$y_map(yc - h / 2)
+    y1 <- ctx$y_map(yc + h / 2)
+    return(list(
+      x = vellum::vl_unit((x0 + x1) / 2, "native"),
+      y = vellum::vl_unit((y0 + y1) / 2, "native"),
+      width = vellum::vl_unit(abs(x1 - x0), "native"),
+      height = vellum::vl_unit(abs(y1 - y0), "native")
+    ))
+  }
   if (.flipped(scales)) {
     list(
       x = vellum::vl_unit(yc, "native"),

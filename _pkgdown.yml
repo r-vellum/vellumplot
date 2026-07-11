@@ -182,6 +182,7 @@ reference:
 - title: Coordinates and facets
   contents:
   - coord_cartesian
+  - coord_trans
   - coord_polar
   - coord_sf
   - facet_wrap
