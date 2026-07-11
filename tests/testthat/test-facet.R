@@ -6,6 +6,28 @@ test_that("facet_wrap()/facet_grid() require a formula", {
   expect_error(facet_grid(p, "x"), "formula")
 })
 
+test_that("numeric facets order numerically, not lexicographically (H20)", {
+  d <- data.frame(x = 1:6, y = 1:6, f = c(2, 10, 1, 2, 10, 1))
+  p <- vplot(d) |> mark_point(x = x, y = y) |> facet_wrap(~f)
+  fa <- vellumplot:::.facet_assign(p)
+  expect_identical(fa$wrap_labels, c("1", "2", "10")) # not "1","10","2"
+})
+
+test_that("multi-variable grid facets order by each variable's type (H20)", {
+  d <- data.frame(
+    x = 1:4,
+    y = 1:4,
+    r = c(2, 10, 2, 10),
+    cc = factor(c("b", "a", "b", "a"), levels = c("b", "a"))
+  )
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    facet_grid(r ~ cc)
+  fa <- vellumplot:::.facet_assign(p)
+  expect_identical(fa$row_labels, c("2", "10")) # numeric rows numerically
+  expect_identical(fa$col_labels, c("b", "a")) # cols follow factor level order
+})
+
 test_that("facet_wrap() records a wrap FacetSpec", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
   expect_true(S7::S7_inherits(p@facet, vellumplot:::FacetSpec))

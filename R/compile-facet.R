@@ -2,7 +2,9 @@
 NULL
 
 # A factor key from one or more faceting quosures, preserving factor level order
-# for a single factor and using sorted levels otherwise.
+# for a single factor and ordering by each variable's natural type otherwise
+# (numeric numerically, factor by level, character lexicographically) -- so a
+# numeric facet reads 1, 2, 10 rather than the lexicographic 1, 10, 2.
 .facet_key <- function(quos, data) {
   vals <- lapply(quos, function(q) rlang::eval_tidy(q, data))
   if (length(vals) == 1 && is.factor(vals[[1]])) {
@@ -10,7 +12,10 @@ NULL
   }
   parts <- lapply(vals, as.character)
   combined <- do.call(paste, c(parts, sep = ", "))
-  factor(combined, levels = sort(unique(combined)))
+  # Order rows by each variable in turn (factors by level code, everything else
+  # by its own type), then take the level order from that ordering.
+  ord <- do.call(order, lapply(vals, function(v) if (is.factor(v)) as.integer(v) else v))
+  factor(combined, levels = unique(combined[ord]))
 }
 
 # Assign every data row to a panel and lay panels out on a grid. Returns the grid
