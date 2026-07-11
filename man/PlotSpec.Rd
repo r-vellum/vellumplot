@@ -16,7 +16,8 @@ PlotSpec(
   height = 4,
   dpi = 96,
   theme = NULL,
-  labels = list()
+  labels = list(),
+  marginal = NULL
 )
 }
 \arguments{
@@ -47,6 +48,9 @@ PNG's pixel dimensions are \code{width * dpi} by \code{height * dpi}.}
 \code{\link[=theme]{theme()}} / a \verb{theme_*()} preset), or \code{NULL} for the default theme.}
 
 \item{labels}{A named list of plot/axis/legend label overrides (see \code{\link[=labs]{labs()}}).}
+
+\item{marginal}{A marginal-distribution specification (from \code{\link[=add_marginal]{add_marginal()}}),
+or \code{NULL} for no marginals.}
 }
 \value{
 A \code{PlotSpec}.

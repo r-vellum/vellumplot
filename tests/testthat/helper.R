@@ -36,3 +36,17 @@ count_ink <- function(img, rows, cols, thresh = 0.3) {
   sub <- img[rr, cc, 1:3, drop = FALSE]
   sum(rowSums(sub <= thresh, dims = 2) == 3)
 }
+
+# How many pixels in a rectangular region are a near-uniform grey of value `rgb`
+# (each channel within `tol`). Used to detect a grey area fill (e.g. grey35
+# marginal densities) that `count_ink`'s near-black test would miss.
+count_ink_grey <- function(img, rows, cols, rgb = 0.349, tol = 0.06) {
+  H <- dim(img)[1]
+  W <- dim(img)[2]
+  rr <- seq(max(1, floor(rows[1] * H)), min(H, ceiling(rows[2] * H)))
+  cc <- seq(max(1, floor(cols[1] * W)), min(W, ceiling(cols[2] * W)))
+  r <- img[rr, cc, 1]
+  g <- img[rr, cc, 2]
+  b <- img[rr, cc, 3]
+  sum(abs(r - rgb) < tol & abs(g - rgb) < tol & abs(b - rgb) < tol)
+}

@@ -1,5 +1,6 @@
 #' @include classes.R coord.R compile-resolve.R compile-train.R
 #' @include compile-facet.R compile-layout.R compile-guides.R compile-marks.R
+#' @include marginal.R
 NULL
 
 # Compile one plot: spec -> build panels (facet split + resolve + train) ->
@@ -47,6 +48,27 @@ NULL
 
   built <- .build_panels(spec)
   built$sf_geographic <- sf_geographic
+
+  # Marginal plots (add_marginal()) reserve tracks around a single panel and reuse
+  # its scales; they are incompatible with facets, non-Cartesian coords, and a
+  # locked aspect (which would distort the panel under `respect = TRUE`).
+  if (!is.null(spec@marginal)) {
+    if (built$fa$R != 1L || built$fa$C != 1L) {
+      cli::cli_abort(
+        "{.fn add_marginal} is not supported with facets (single panel only)."
+      )
+    }
+    if (!identical(co@kind, "cartesian")) {
+      cli::cli_abort(
+        "{.fn add_marginal} requires the default Cartesian coordinate system (no flip/polar/fixed/sf)."
+      )
+    }
+    if (!is.null(rt[["aspect.ratio"]])) {
+      cli::cli_abort(
+        "{.fn add_marginal} is incompatible with a locked aspect ratio."
+      )
+    }
+  }
   # Plot-wide hand-drawn default (from theme_sketch()); mark emitters fall back
   # to it when a layer sets no sketch of its own, and legend keys read it from
   # `rt` so they match a hand-drawn plot.
@@ -65,7 +87,7 @@ NULL
   shared_hv <- .hv_roles(built$scales$x, built$scales$y, flip)
   hshared <- shared_hv$h
   vshared <- shared_hv$v
-  lay <- .build_layout(built, guides, spec@labels, rt, flip, co)
+  lay <- .build_layout(built, guides, spec@labels, rt, flip, co, spec@marginal)
 
   # Outer margin grid: absolute mm tracks around a single `null` cell holding the
   # real layout. (Done as a grid rather than an inset viewport because vellum
@@ -183,6 +205,25 @@ NULL
     }
     scene <- .compile_marks(scene, p$resolved, psc, panel = pname)
     scene <- vellum::pop(scene)
+  }
+
+  # marginal distributions (add_marginal()): drawn into the reserved top/right
+  # tracks, sharing the single panel's scales. Single panel, Cartesian only
+  # (guarded above), so `built$panels[[1]]` is the panel.
+  if (!is.null(spec@marginal) && !polar) {
+    p1 <- built$panels[[1]]
+    src <- .marginal_source(p1$resolved)
+    scene <- .draw_marginals(
+      scene,
+      spec@marginal,
+      src,
+      lay,
+      hscale(p1),
+      vscale(p1),
+      built$scales$color,
+      rt,
+      plot_sketch
+    )
   }
 
   # axes: per panel when scales are free, otherwise once down the left / along

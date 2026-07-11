@@ -47,6 +47,7 @@ Collate:
     'alt.R'
     'marks.R'
     'annotate.R'
+    'marginal.R'
     'compile-marks.R'
     'elements.R'
     'theme-tree.R'
