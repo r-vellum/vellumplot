@@ -56,3 +56,21 @@ test_that("mark_label draws a light background behind text", {
   # white label boxes sit over the grey panel -> many near-white pixels inside
   expect_gt(count_near(img, c(1, 1, 1), 0.04), 200)
 })
+
+test_that("a mapped fill colours the label background per group (H11)", {
+  d2 <- d
+  d2$grp <- factor(rep(c("a", "b"), length.out = nrow(d2)))
+  # fill is a mapped channel, not a constant param
+  L <- (vplot(d2) |>
+    mark_label(x = wt, y = mpg, label = nm, fill = grp))@layers[[1]]
+  expect_true("fill" %in% names(L@encoding))
+  expect_null(L@params$fill)
+  # ...and the two groups render as two distinct, saturated backgrounds.
+  img <- render_px(
+    vplot(d2) |>
+      mark_label(x = wt, y = mpg, label = nm, fill = grp) |>
+      scale_fill_manual(values = c(a = "red", b = "blue"))
+  )
+  expect_gt(count_near(img, c(1, 0, 0), 0.15), 50) # red boxes
+  expect_gt(count_near(img, c(0, 0, 1), 0.15), 50) # blue boxes
+})

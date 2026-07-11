@@ -991,7 +991,16 @@ NULL
   yn <- rep_len(scales$y$map(L$values$y), n)
   label <- rep_len(as.character(L$values$label), n)
   col <- rep_len(.text_colour(L, scales, "black"), n)
-  bg <- L$params$fill %||% "white"
+  # Label background: a mapped `fill` channel (through the colour scale), else a
+  # constant `fill` param, else white. `.text_colour` deliberately keeps `fill`
+  # out of the ink colour, so the background is resolved here on its own.
+  bg <- if (!is.null(scales$color) && !is.null(L$values$fill)) {
+    scales$color$map(L$values$fill)
+  } else {
+    L$params$fill %||% "white"
+  }
+  bg <- rep_len(bg, n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   sk <- .mark_sketch(L, scales)
   fs <- .aes_param(L, "size", 8)
   pad <- vellum::vl_unit(1.2, "mm")
@@ -1004,7 +1013,8 @@ NULL
     lapply(label, function(l) vellum::grobheight(.txt(l, fs)) + pad)
   )
 
-  for (idx in .style_groups(n, list(col = col))) {
+  for (idx in .style_groups(n, list(col = col, fill = bg, alpha = alpha))) {
+    a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L)
     scene <- .draw(
       scene,
@@ -1015,7 +1025,11 @@ NULL
         height = hs[idx],
         r = vellum::vl_unit(0.8, "mm"),
         sketch = sk,
-        gp = vellum::vl_gpar(fill = bg, col = NA)
+        gp = vellum::vl_gpar(
+          fill = bg[idx[1]],
+          col = NA,
+          alpha = if (is.na(a)) NULL else a
+        )
       )
     )
     scene <- .draw(
@@ -1024,7 +1038,11 @@ NULL
         label[idx],
         xy$x,
         xy$y,
-        gp = vellum::vl_gpar(fontsize = fs, col = col[idx[1]])
+        gp = vellum::vl_gpar(
+          fontsize = fs,
+          col = col[idx[1]],
+          alpha = if (is.na(a)) NULL else a
+        )
       )
     )
   }

@@ -784,7 +784,8 @@ mark_step <- function(
 #' @param nudge_x,nudge_y Shift each label by an exact absolute distance in
 #'   millimetres (`+x` right, `+y` up), device-resolved so the nudge is constant
 #'   regardless of scale or panel aspect. Default `0`.
-#' @param fill For `mark_label()`, the background fill colour.
+#' @param fill For `mark_label()`, the label background: a constant colour, or a
+#'   mapped encoding (e.g. `fill = group`) coloured through the fill/colour scale.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
