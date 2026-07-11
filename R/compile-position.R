@@ -2,11 +2,11 @@
 NULL
 
 # Apply a layer's position adjustment that must run *before* training (because
-# it changes the data extent). `stack`/`fill` give each bar a `ymin`/`ymax`
+# it changes the data extent). `stack`/`fill` give each bar/area a `ymin`/`ymax`
 # span; `dodge` and `jitter` are deferred to draw time (they only shift native
 # geometry within the trained scales). Identity is a no-op.
 .apply_position <- function(L) {
-  if (!identical(L$mark, "bar")) {
+  if (!L$mark %in% c("bar", "area")) {
     return(L)
   }
   if (L$position %in% c("stack", "fill") && !is.null(L$values$y)) {

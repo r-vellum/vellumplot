@@ -706,18 +706,30 @@ mark_datashade <- function(
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
 #'   `ymax` for ribbon; plus `color`/`fill`/`alpha`.
+#' @param position For `mark_area()`, how areas sharing an `x` combine when
+#'   `fill`/`color` is mapped: `"stack"` (default) stacks them into a band,
+#'   `"fill"` normalises each `x` to 1, `"identity"` overlays them from the zero
+#'   baseline. With no fill mapping all three are equivalent (a single area).
 #' @param direction For `mark_step()`, `"hv"` (horizontal then vertical, default)
 #'   or `"vh"`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(pressure) |> mark_area(x = temperature, y = pressure)
 #' @export
-mark_area <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+mark_area <- function(
+  plot,
+  ...,
+  position = "stack",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
     "area",
     rlang::enquos(...),
+    position = position,
     blend = blend,
     sketch = sketch,
     data = data

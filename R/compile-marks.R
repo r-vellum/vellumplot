@@ -798,13 +798,16 @@ NULL
   scene
 }
 
-# An area mark: the region between `y` and the zero baseline (a ribbon with
-# ymin = 0).
+# An area mark: the region between `y` and the zero baseline, or between a
+# stacked `[ymin, ymax]` span when `position = "stack"`/`"fill"` set one (see
+# `.position_stack`). Baseline resolution mirrors `.emit_bar`.
 .emit_area <- function(scene, L, scales) {
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
-  y0 <- rep_len(scales$y$map(0), n)
-  y1 <- rep_len(scales$y$map(L$values$y), n)
+  ymin_d <- if (!is.null(L$values$ymin)) L$values$ymin else rep(0, n)
+  ymax_d <- if (!is.null(L$values$ymax)) L$values$ymax else L$values$y
+  y0 <- rep_len(scales$y$map(ymin_d), n)
+  y1 <- rep_len(scales$y$map(ymax_d), n)
   sk <- .mark_sketch(L, scales)
 
   # A gradient fill paints the whole area as one polygon (in x order).
