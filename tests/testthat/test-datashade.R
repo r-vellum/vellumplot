@@ -24,11 +24,11 @@ test_that("datashade renders, and auto falls back to markers below the threshold
   set.seed(1)
   n <- 20000
   df <- data.frame(x = rnorm(n), y = rnorm(n))
-  f1 <- withr::local_tempfile(fileext = ".png")
+  f1 <- local_tempfile(fileext = ".png")
   render_plot(vplot(df) |> mark_datashade(x = x, y = y), f1)
   expect_gt(file.info(f1)$size, 0)
   # small data with auto = TRUE just draws normal points (no error)
-  f2 <- withr::local_tempfile(fileext = ".png")
+  f2 <- local_tempfile(fileext = ".png")
   render_plot(vplot(mtcars) |> mark_point(x = wt, y = mpg, auto = TRUE), f2)
   expect_gt(file.info(f2)$size, 0)
 })
@@ -56,7 +56,7 @@ test_that("mark_datashade(blend=) wires the layer blend (per-category overlay)",
     vapply(p@layers, function(L) L@blend, ""),
     c("screen", "screen")
   )
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
 })
 

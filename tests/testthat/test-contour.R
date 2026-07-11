@@ -41,14 +41,14 @@ test_that(".stat_density_2d yields grouped ordered vertices (lines and bands)", 
 test_that("contour marks render and are coloured by level", {
   skip_if_no_contour()
   distinct_strokes <- function(p) {
-    f <- withr::local_tempfile(fileext = ".svg")
+    f <- local_tempfile(fileext = ".svg")
     render_plot(p, f)
     s <- paste(readLines(f), collapse = "")
     length(unique(unlist(regmatches(s, gregexpr('stroke="#[0-9a-fA-F]{6}"', s)))))
   }
   expect_gt(distinct_strokes(vplot(faithful) |> mark_contour(x = eruptions, y = waiting, bins = 8)), 1L)
 
-  f <- withr::local_tempfile(fileext = ".svg")
+  f <- local_tempfile(fileext = ".svg")
   expect_no_error(render_plot(vplot(faithful) |> mark_contour_filled(x = eruptions, y = waiting), f))
 })
 
@@ -56,13 +56,13 @@ test_that("a z surface is contoured when x/y form a regular grid", {
   skip_if_no_contour()
   g <- expand.grid(x = 1:15, y = 1:15)
   g$z <- with(g, sin(x / 3) + cos(y / 3))
-  f <- withr::local_tempfile(fileext = ".svg")
+  f <- local_tempfile(fileext = ".svg")
   expect_no_error(render_plot(vplot(g) |> mark_contour(x = x, y = y, z = z), f))
   # a non-grid z is a clear error, not a silent misdraw
   expect_error(
     render_plot(
       vplot(data.frame(x = 1:5, y = 1:5, z = 1:5)) |> mark_contour(x = x, y = y, z = z),
-      withr::local_tempfile(fileext = ".svg")
+      local_tempfile(fileext = ".svg")
     ),
     "regular grid"
   )

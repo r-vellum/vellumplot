@@ -3,7 +3,7 @@
 # labels at their original data values. Distinct from scale_*(trans=). Phase 5.
 
 svg_of <- function(p) {
-  f <- withr::local_tempfile(fileext = ".svg")
+  f <- local_tempfile(fileext = ".svg")
   render_plot(p, f)
   gsub("vl[0-9]+", "vlID", paste(readLines(f), collapse = "\n")) # drop a11y id counter
 }

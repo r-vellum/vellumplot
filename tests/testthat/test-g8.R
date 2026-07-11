@@ -25,7 +25,7 @@ test_that("set_theme() overrides on top of the current theme", {
 
 test_that("themed plots render", {
   for (thm in list(theme_minimal, theme_bw, theme_gray)) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(thm(vplot(mtcars) |> mark_point(x = wt, y = mpg)), f)
     expect_gt(file.info(f)$size, 0)
   }
@@ -52,7 +52,7 @@ test_that("composition page size scales with the grid", {
 test_that("a composition renders and render_plot rejects non-plots", {
   a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   b <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(hconcat(a, b), f)
   expect_gt(file.info(f)$size, 0)
   expect_error(render_plot(mtcars, f), "PlotSpec")

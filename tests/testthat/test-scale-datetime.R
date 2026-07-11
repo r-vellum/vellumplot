@@ -32,7 +32,7 @@ test_that("scale_x_datetime() formats POSIXct labels", {
 
 test_that("date scales render", {
   df <- data.frame(day = as.Date("2020-01-01") + 0:364, y = seq_len(365))
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(
     render_plot(
       vplot(df) |> mark_line(x = day, y = y) |> scale_x_date(date_breaks = "2 months"),

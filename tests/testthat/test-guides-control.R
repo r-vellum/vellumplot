@@ -42,7 +42,7 @@ test_that("guides() applies to size/shape/alpha/linetype and requires named args
 })
 
 test_that("guided plots render", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   p <- vplot(df) |>
     mark_point(x = wt, y = mpg, color = cyl) |>
     guides(color = guide_legend(reverse = TRUE))

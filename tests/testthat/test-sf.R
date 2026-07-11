@@ -139,7 +139,7 @@ test_that("a choropleth compiles and renders without error", {
   p <- vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf(crs = 32119)
   scene <- vellum::as_vellum_scene(p)
   expect_true(inherits(scene, "vellum::vellum_scene"))
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
   expect_true(file.exists(f))
 })

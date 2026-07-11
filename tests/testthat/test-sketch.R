@@ -115,7 +115,7 @@ test_that("theme_sketch renders across PNG / SVG / PDF without error", {
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
     theme_sketch()
   for (ext in c(".png", ".svg", ".pdf")) {
-    f <- withr::local_tempfile(fileext = ext)
+    f <- local_tempfile(fileext = ext)
     expect_no_error(render_plot(p, f))
     expect_true(file.exists(f))
   }

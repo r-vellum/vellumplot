@@ -51,7 +51,7 @@ test_that("the grob id matches the SVG data-vellum-id (the join key holds)", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   prov <- plot_provenance(p)
   id <- prov[[1]]$id
-  f <- withr::local_tempfile(fileext = ".svg")
+  f <- local_tempfile(fileext = ".svg")
   render_plot(p, f)
   svg <- paste(readLines(f), collapse = "")
   expect_match(svg, id, fixed = TRUE)

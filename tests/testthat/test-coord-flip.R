@@ -44,7 +44,7 @@ test_that("flip swaps which scale drives each axis title", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     labs(x = "WEIGHT", y = "MILES")
-  f <- withr::local_tempfile(fileext = ".svg")
+  f <- local_tempfile(fileext = ".svg")
   render_plot(p |> coord_flip(), f)
   svg <- paste(readLines(f), collapse = "\n")
   expect_true(grepl("WEIGHT", svg))
@@ -60,14 +60,14 @@ test_that("flipped point/line/smooth/rule render", {
     },
     function(x) x |> mark_point(x = wt, y = mpg) |> mark_rule(xintercept = 3)
   )) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(build(vplot(mtcars)) |> coord_flip(), f)
     expect_gt(file.info(f)$size, 0)
   }
 })
 
 test_that("faceted flip with shared scales renders", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |>
       mark_point(x = wt, y = mpg) |>

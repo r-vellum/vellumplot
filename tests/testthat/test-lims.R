@@ -37,7 +37,7 @@ test_that("continuous limits must be length 2, and lims args must be named", {
 })
 
 test_that("a plot with limits still renders", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(
     render_plot(vplot(mtcars) |> mark_point(x = wt, y = mpg) |> xlim(0, 6), f)
   )

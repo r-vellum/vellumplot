@@ -36,7 +36,7 @@ test_that("scale_shape_identity() uses shape names verbatim and draws no legend"
 })
 
 test_that("identity-scaled plots render", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   p <- vplot(df) |>
     mark_point(x = x, y = y, color = col, size = sz) |>
     scale_color_identity() |>

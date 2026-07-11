@@ -97,10 +97,10 @@ test_that("after_stat without a stat is an error; only lm smoothing", {
 })
 
 test_that("statistical marks render", {
-  f1 <- withr::local_tempfile(fileext = ".png")
+  f1 <- local_tempfile(fileext = ".png")
   render_plot(vplot(mtcars) |> mark_histogram(x = mpg, bins = 10), f1)
   expect_gt(file.info(f1)$size, 0)
-  f2 <- withr::local_tempfile(fileext = ".png")
+  f2 <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |>
       mark_point(x = wt, y = mpg) |>

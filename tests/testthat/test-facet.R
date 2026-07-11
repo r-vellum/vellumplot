@@ -83,14 +83,14 @@ test_that("shared scales give every panel the same domain; free gives different"
 })
 
 test_that("faceted plots render to a PNG", {
-  f1 <- withr::local_tempfile(fileext = ".png")
+  f1 <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl),
     f1
   )
   expect_gt(file.info(f1)$size, 0)
 
-  f2 <- withr::local_tempfile(fileext = ".png")
+  f2 <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_grid(am ~ cyl),
     f2

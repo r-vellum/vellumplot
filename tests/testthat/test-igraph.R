@@ -189,7 +189,7 @@ test_that("z-order draws edges under nodes under labels regardless of pipe order
     mark_node_text(label = name) |>
     mark_nodes() |>
     mark_edges()
-  svg <- withr::local_tempfile(fileext = ".svg")
+  svg <- local_tempfile(fileext = ".svg")
   render_plot(p, svg)
   txt <- paste(readLines(svg), collapse = "\n")
   pe <- regexpr("edges", txt)
@@ -229,7 +229,7 @@ test_that("a weighted directed graph compiles and renders", {
     mark_node_text(label = name) |>
     scale_edge_width(range = c(0.5, 3))
   expect_no_error(vellum::as_vellum_scene(p))
-  png <- withr::local_tempfile(fileext = ".png")
+  png <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, png))
   expect_true(file.exists(png))
 })

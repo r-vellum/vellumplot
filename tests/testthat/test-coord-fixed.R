@@ -15,7 +15,7 @@ lay_of <- function(p) {
 }
 
 # Numeric value of the i-th track in a vellum unit vector.
-trackval <- function(u, i) vctrs::field(u, "value")[i]
+trackval <- function(u, i) vctrs_field(u, "value")[i]
 
 test_that("coord_fixed sets respect and weights the panel by the data ranges", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> coord_fixed()
@@ -76,7 +76,7 @@ test_that("coord_fixed renders (incl. a custom ratio and faceting)", {
       facet_wrap(~cyl) |>
       coord_fixed()
   )) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(p, f)
     expect_gt(file.info(f)$size, 0)
   }

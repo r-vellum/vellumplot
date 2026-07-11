@@ -9,7 +9,7 @@ panels <- function(p) vellumplot:::.build_panels(p)
 test_that("a log-scaled bar drops the 0 baseline instead of erroring", {
   d <- data.frame(x = c("a", "b", "c"), y = c(10, 100, 1000))
   p <- vplot(d) |> mark_bar(x = x, y = y) |> scale_y_continuous(trans = "log10")
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
   ysc <- panels(p)$scales$y
   expect_true(all(is.finite(ysc$domain)))
@@ -18,7 +18,7 @@ test_that("a log-scaled bar drops the 0 baseline instead of erroring", {
 test_that("a sqrt-scaled area renders", {
   d <- data.frame(x = 1:5, y = c(1, 4, 9, 16, 25))
   p <- vplot(d) |> mark_area(x = x, y = y) |> scale_y_continuous(trans = "sqrt")
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
 })
 
@@ -69,21 +69,21 @@ test_that("a composition nesting a faceted sub-plot renders all panels", {
   fac <- a |> facet_wrap(~cyl)
   comp <- hconcat(a, vconcat(a, fac))
   expect_false(vellumplot:::.comp_alignable(comp))
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(comp, f))
 })
 
 test_that("an inset drawn below the base still renders", {
   a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   b <- vplot(mtcars) |> mark_point(x = hp, y = mpg)
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(inset(a, b, on_top = FALSE), f))
 })
 
 test_that("a boxplot tolerates NA in y", {
   d <- data.frame(g = rep(c("a", "b"), each = 5), y = c(1, 2, NA, 4, 5, 2, 3, 4, NA, 6))
   p <- vplot(d) |> mark_boxplot(x = g, y = y)
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
 })
 

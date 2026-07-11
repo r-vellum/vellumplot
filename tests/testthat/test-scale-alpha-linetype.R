@@ -49,12 +49,12 @@ test_that("identity alpha/linetype use values verbatim and draw no legend", {
 })
 
 test_that("a constant alpha param still works (mapping is opt-in)", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(vplot(df) |> mark_point(x = x, y = y, alpha = 0.3), f))
 })
 
 test_that("alpha- and linetype-mapped plots render", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(vplot(df) |> mark_point(x = x, y = y, alpha = w), f))
   expect_no_error(render_plot(vplot(df) |> mark_line(x = x, y = y, linetype = grp), f))
 })

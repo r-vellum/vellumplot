@@ -13,7 +13,7 @@ lay_polar <- function(p) {
     vellumplot:::.coord_of(p)
   )
 }
-trackval <- function(u, i) vctrs::field(u, "value")[i]
+trackval <- function(u, i) vctrs_field(u, "value")[i]
 
 # ---- spec-level ------------------------------------------------------------
 
@@ -95,7 +95,7 @@ test_that("polar gridlines draw circles (ink off the cardinal axes)", {
 })
 
 test_that("faceted coord_polar renders to a file", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |>
       mark_bar(x = factor(cyl)) |>

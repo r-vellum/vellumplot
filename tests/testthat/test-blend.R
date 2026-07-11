@@ -34,7 +34,7 @@ test_that("multiply compositing of two overlapping layers darkens the overlap", 
 })
 
 test_that("a normal-blend layer renders like an unwrapped layer (no error)", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(vplot(mtcars) |> mark_point(x = wt, y = mpg, blend = "normal"), f)
   expect_gt(file.info(f)$size, 0)
 })

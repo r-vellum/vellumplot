@@ -34,10 +34,10 @@ test_that(".hex_round preserves the axial constraint and is integer", {
 })
 
 test_that("mark_hex renders (default and coord_fixed)", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(vplot(d) |> mark_hex(x = x, y = y, bins = 20), f)
   expect_gt(file.info(f)$size, 0)
-  f2 <- withr::local_tempfile(fileext = ".png")
+  f2 <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(d) |> mark_hex(x = x, y = y, bins = 20) |> coord_fixed(),
     f2

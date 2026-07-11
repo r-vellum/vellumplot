@@ -21,7 +21,7 @@ test_that("zoom clips but does not drop data, and renders", {
   # all rows still resolve (no filtering)
   res <- vellumplot:::.resolve_layers(p)
   expect_identical(res[[1]]$n, nrow(mtcars))
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(p, f)
   expect_gt(file.info(f)$size, 0)
 })
@@ -41,7 +41,7 @@ test_that("coord_cartesian without limits is a no-op vs default", {
 })
 
 test_that("coord zoom works under faceting", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |>
       mark_point(x = wt, y = mpg) |>

@@ -57,7 +57,7 @@ test_that("tile / raster / bin2d / density render (tile/bin2d also flipped)", {
     }
   )
   for (mk in renders) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(mk(), f)
     expect_gt(file.info(f)$size, 0)
   }
@@ -66,13 +66,13 @@ test_that("tile / raster / bin2d / density render (tile/bin2d also flipped)", {
 test_that("mark_raster errors on an irregular grid and under coord_flip", {
   irreg <- vplot(mtcars) |> mark_raster(x = wt, y = mpg, fill = hp)
   expect_error(
-    render_plot(irreg, withr::local_tempfile(fileext = ".png")),
+    render_plot(irreg, local_tempfile(fileext = ".png")),
     "regular grid"
   )
   expect_error(
     render_plot(
       vplot(d) |> mark_raster(x = x, y = y, fill = z) |> coord_flip(),
-      withr::local_tempfile(fileext = ".png")
+      local_tempfile(fileext = ".png")
     ),
     "coord_flip"
   )

@@ -9,11 +9,11 @@ test_that("as_vellum_scene() returns a vellum scene", {
 
 test_that("render_plot() writes a PNG; render() dispatches through the seam", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  f1 <- withr::local_tempfile(fileext = ".png")
+  f1 <- local_tempfile(fileext = ".png")
   render_plot(p, f1)
   expect_true(file.exists(f1) && file.info(f1)$size > 0)
 
-  f2 <- withr::local_tempfile(fileext = ".png")
+  f2 <- local_tempfile(fileext = ".png")
   vellum::render(p, f2)
   expect_true(file.exists(f2) && file.info(f2)$size > 0)
 })

@@ -138,7 +138,7 @@ test_that("the full feature set renders without error", {
   c <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
   d <- p_xy(drat, qsec)
   render_ok <- function(x) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(x, f)
     expect_gt(file.info(f)$size, 0)
   }

@@ -8,7 +8,7 @@ test_that("mark_violin() records its mark and renders (plain and filled)", {
     (vplot(df) |> mark_violin(x = g, y = v))@layers[[1]]@mark,
     "violin"
   )
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(vplot(df) |> mark_violin(x = g, y = v), f))
   expect_no_error(render_plot(
     vplot(df) |> mark_violin(x = g, y = v, fill = g),
@@ -28,7 +28,7 @@ test_that("mark_ridgeline() records its mark and renders", {
     (vplot(df) |> mark_ridgeline(x = v, y = g))@layers[[1]]@mark,
     "ridgeline"
   )
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(vplot(df) |> mark_ridgeline(x = v, y = g), f))
   expect_no_error(render_plot(
     vplot(df) |> mark_ridgeline(x = v, y = g, fill = g),
@@ -49,7 +49,7 @@ test_that("mark_dotplot() bins and stacks one dot per observation", {
 })
 
 test_that("mark_dotplot() renders", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(vplot(df) |> mark_dotplot(x = v), f))
 })
 
