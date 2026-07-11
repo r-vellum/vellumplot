@@ -179,6 +179,13 @@ after_stat <- function(x) x
     )
   }
   quos <- c(dots, extra)
+  # Normalise British spelling up front (`colour` -> `color`, incl. compounds
+  # like `hover_colour`) so the interactivity split below -- keyed on the
+  # American `.INTERACT_ARGS` -- catches `hover_colour`/`selected_colour` too.
+  # `.split_encodings` repeats this normalisation harmlessly (it is idempotent).
+  if (length(quos)) {
+    names(quos) <- sub("colour", "color", names(quos), fixed = TRUE)
+  }
   # Interactivity args (`tooltip`/`data_id`/`hover_group`) are reserved, not
   # aesthetics: pull them out before encoding-splitting so they are never
   # scale-trained. They are captured as quosures and resolved per row at compile.

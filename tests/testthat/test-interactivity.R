@@ -136,6 +136,30 @@ test_that("per-element hover_color / selected_color resolve into element meta", 
   )))
 })
 
+test_that("British-spelled hover_colour / selected_colour are reserved, not aesthetics", {
+  df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, cyl = factor(mtcars$cyl))
+  p <- vplot(df) |>
+    mark_point(
+      x = wt,
+      y = mpg,
+      data_id = seq_len(nrow(df)),
+      hover_colour = ifelse(mtcars$cyl == 8, "red", "blue"),
+      selected_colour = "black"
+    )
+  # The British spellings are pulled into the layer's interactivity slot (under
+  # the normalised American names), not leaked into encoding/params as bogus aes.
+  layer <- p@layers[[1]]
+  expect_true(all(c("hover_color", "selected_color") %in% names(layer@interactivity)))
+  expect_false(any(c("hover_color", "hover_colour", "selected_color", "selected_colour") %in%
+    names(layer@encoding)))
+  expect_false(any(c("hover_color", "hover_colour", "selected_color", "selected_colour") %in%
+    names(layer@params)))
+  # ...and they resolve into element meta exactly like the American spelling.
+  el <- data_points_of(p)
+  hc <- vapply(el$meta, function(m) m$hover_color %||% NA_character_, character(1))
+  expect_setequal(unique(hc), c("red", "blue"))
+})
+
 test_that("interactivity declarations do not perturb the rendered pixels", {
   base <- vplot(df) |> mark_point(x = wt, y = mpg)
   keyed <- vplot(df) |>
