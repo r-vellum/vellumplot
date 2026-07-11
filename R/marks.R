@@ -913,7 +913,7 @@ mark_raster <- function(plot, ..., blend = NULL, data = NULL) {
 mark_bin2d <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
-  if (is.null(dots$fill) && is.null(dots$color)) {
+  if (is.null(dots$fill) && is.null(dots$color) && is.null(dots$colour)) {
     dots$fill <- rlang::quo(after_stat(count))
   }
   .add_layer(
@@ -1236,7 +1236,7 @@ mark_dotplot <- function(
 mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
-  if (is.null(dots$fill) && is.null(dots$color)) {
+  if (is.null(dots$fill) && is.null(dots$color) && is.null(dots$colour)) {
     dots$fill <- rlang::quo(after_stat(count))
   }
   .add_layer(
