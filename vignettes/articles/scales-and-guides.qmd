@@ -151,6 +151,27 @@ vplot(mtcars) |>
   lims(x = c(0, 6), y = c(0, 40))
 ```
 
+### Scale transform vs display transform
+
+A `scale_*(trans=)` (above) transforms the *data*: it picks its breaks in the
+transformed space, so a `"log10"` axis is labelled `1, 10, 100`. `coord_trans()`
+instead warps only the *display*, after the scale has trained — the breaks stay at
+their original data values, so the axis keeps those labels but they sit at warped
+positions (gridlines bunch up, and straight lines curve). Use it to show data on a
+log display without relabelling the axis in powers of ten:
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_line(x = wt, y = mpg) |>
+  coord_trans(y = "log10")
+```
+
+Each of `x` / `y` takes a transform name (`"log10"`, `"sqrt"`, `"identity"`) or a
+`scales::transform_*()` object. It applies to the common marks (points, lines,
+areas, bars, tiles, smooths, text); interval/segment, boxplot, and raster marks
+are not warped yet.
+
 ## Date and time axes
 
 A `Date` or `POSIXct` column gets a date axis automatically. To control the

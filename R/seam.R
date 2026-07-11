@@ -82,11 +82,39 @@ NULL
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
   flip <- identical(co@kind, "flip")
   polar <- identical(co@kind, "polar")
+  trans <- identical(co@kind, "trans")
   hscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$h # horizontal (bottom)
   vscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$v # vertical (left)
   shared_hv <- .hv_roles(built$scales$x, built$scales$y, flip)
   hshared <- shared_hv$h
   vshared <- shared_hv$v
+  # coord_trans warps the display of the horizontal/vertical axes (no flip under
+  # trans, so h = x, v = y). The axis drawers get break/domain-warped scale copies
+  # (labels kept); marks warp via the per-panel context built in the panel loop.
+  tfx <- if (trans) .resolve_coord_trans(co@xtrans, "x") else NULL
+  tfy <- if (trans) .resolve_coord_trans(co@ytrans, "y") else NULL
+  warp_h <- function(sc) if (trans) .warp_scale(sc, tfx) else sc
+  warp_v <- function(sc) if (trans) .warp_scale(sc, tfy) else sc
+  # coord_trans warps only the marks that route through the value-based position
+  # seam (.xy_units / .xy_path / .xy_area / .rect_units). Marks built from
+  # pre-made unit segments (rule/segment/interval/edges/boxplot) or rasters
+  # (datashade/raster) would misplace in the warped viewport, so refuse them
+  # rather than silently clip.
+  if (trans) {
+    ok_marks <- c(
+      "point", "nodes", "line", "smooth", "ribbon", "area", "step", "text",
+      "label", "node_text", "tile", "bar", "violin", "ridgeline", "hex", "sf",
+      "contour", "contour_filled"
+    )
+    bad <- setdiff(unique(vapply(spec@layers, function(L) L@mark, character(1))), ok_marks)
+    if (length(bad)) {
+      cli::cli_abort(c(
+        "{.fn coord_trans} does not yet support the {.val {bad}} mark{?s}.",
+        i = "Supported: points, lines, areas/ribbons, bars, tiles, smooths, text, and similar.",
+        i = "Segment/rule/interval, boxplot, edges, and raster/datashade marks are not warped yet."
+      ))
+    }
+  }
   lay <- .build_layout(built, guides, spec@labels, rt, flip, co, spec@marginal)
 
   # Outer margin grid: absolute mm tracks around a single `null` cell holding the
@@ -165,6 +193,7 @@ NULL
       linetype = built$scales$linetype,
       flip = flip,
       polar = NULL,
+      trans = NULL,
       sketch = plot_sketch
     )
     psc$graph <- .graph_caps(
@@ -189,6 +218,23 @@ NULL
         )
       )
       scene <- .draw_panel_polar(scene, ctx, rt)
+    } else if (trans) {
+      # Nonlinear display remap: the panel viewport spans the warped domain; marks
+      # warp via `psc$trans`, gridlines/ticks via break/domain-warped scale copies.
+      ctx <- .trans_ctx(co, p$x_sc, p$y_sc)
+      psc$trans <- ctx
+      scene <- vellum::push(
+        scene,
+        vellum::vl_viewport(
+          row = lay$panel_row[p$r],
+          col = lay$panel_col[p$c],
+          xscale = ctx$x_dom,
+          yscale = ctx$y_dom,
+          clip = panel_clip,
+          name = pname
+        )
+      )
+      scene <- .draw_panel_bg(scene, .warp_scale(hsc, ctx$x_map), .warp_scale(vsc, ctx$y_map), rt)
     } else {
       scene <- vellum::push(
         scene,
@@ -238,7 +284,7 @@ NULL
           scene,
           lay$panel_row[p$r],
           lay$ylabels_col[p$c],
-          vscale(p),
+          warp_v(vscale(p)),
           rt
         )
       }
@@ -248,7 +294,7 @@ NULL
           scene,
           lay$panel_row[r],
           lay$ylabels_col[1],
-          vshared,
+          warp_v(vshared),
           rt
         )
       }
@@ -259,7 +305,7 @@ NULL
           scene,
           lay$xlabels_row[p$r],
           lay$panel_col[p$c],
-          hscale(p),
+          warp_h(hscale(p)),
           rt
         )
       }
@@ -269,7 +315,7 @@ NULL
           scene,
           lay$xlabels_row[1],
           lay$panel_col[cc],
-          hshared,
+          warp_h(hshared),
           rt
         )
       }

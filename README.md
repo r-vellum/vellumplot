@@ -146,8 +146,8 @@ render_plot(p, "cars.png")
 - Statistical marks: `mark_histogram()`, `mark_density()`,
   `mark_summary()`, `mark_smooth()` (with `after_stat()`).
 - Coordinate systems: `coord_cartesian()`, `coord_flip()`,
-  `coord_fixed()` / `coord_equal()`, `coord_polar()` (pie / coxcomb /
-  radar), and `coord_sf()`.
+  `coord_fixed()` / `coord_equal()`, `coord_trans()` (nonlinear display
+  remap), `coord_polar()` (pie / coxcomb / radar), and `coord_sf()`.
 - Position adjustments: stack / dodge / fill bars, jittered points.
 - Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
   `"screen"`, …).
