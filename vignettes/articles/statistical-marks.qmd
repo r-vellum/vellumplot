@@ -44,6 +44,46 @@ vplot(iris) |>
   mark_density(x = Sepal.Length, fill = Species, alpha = 0.4)
 ```
 
+## Marginal distributions
+
+A scatter shows the joint distribution of two variables but hides each one on its
+own. `add_marginal()` puts them back: it draws a distribution of `x` along the top
+edge and of `y` along the right edge, each on the same scale as the panel so it
+lines up with the points. This is the vellumplot counterpart of
+`ggExtra::ggMarginal()`.
+
+```{r}
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting) |>
+  add_marginal()
+```
+
+Unlike the other marks in this article, `add_marginal()` is a plot modifier rather
+than a layer, closer to `facet_wrap()` than to `mark_density()`. It takes no
+encoding of its own; it reads `x` and `y` from the first plain layer (here the
+`mark_point()`) and computes the margins from those. `type = "histogram"` bins the
+values instead of smoothing them, and `sides` picks which edges to draw.
+
+```{r}
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting) |>
+  add_marginal(type = "histogram", sides = "t", bins = 20)
+```
+
+When the scatter maps a discrete `color` or `fill`, `group = TRUE` splits each
+margin the same way, so a per-group density sits above its points in the matching
+colour. The scatter's legend already names the groups, so none is added.
+
+```{r}
+vplot(iris) |>
+  mark_point(x = Sepal.Length, y = Sepal.Width, color = Species) |>
+  add_marginal(group = TRUE)
+```
+
+Margins share the panel's scales and reserve space around a single panel, so this
+version does not combine with facets, a flipped or polar coordinate system, or a
+fixed aspect ratio.
+
 ## Per-group summaries
 
 `mark_summary()` aggregates `y` within each `x` category using `fun` (the mean

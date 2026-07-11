@@ -150,6 +150,8 @@ ScaleSpec <- S7::new_class(
 #' @param theme A theme (a named list of resolved element/setting overrides, from
 #'   [theme()] / a `theme_*()` preset), or `NULL` for the default theme.
 #' @param labels A named list of plot/axis/legend label overrides (see [labs()]).
+#' @param marginal A marginal-distribution specification (from [add_marginal()]),
+#'   or `NULL` for no marginals.
 #'
 #' @return A `PlotSpec`.
 #' @seealso [vplot()], [mark_point()], [scale_x_continuous()]
@@ -169,6 +171,7 @@ PlotSpec <- S7::new_class(
     height = S7::new_property(S7::class_double, default = 4),
     dpi = S7::new_property(S7::class_double, default = 96),
     theme = S7::new_property(S7::class_any, default = NULL),
-    labels = S7::new_property(S7::class_list, default = list()) # plot/axis labels
+    labels = S7::new_property(S7::class_list, default = list()), # plot/axis labels
+    marginal = S7::new_property(S7::class_any, default = NULL) # MarginalSpec | NULL
   )
 )

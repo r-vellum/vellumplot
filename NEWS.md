@@ -1,5 +1,17 @@
 # vellumplot (development version)
 
+* **Marginal distributions with `add_marginal()`.** A new plot modifier draws a
+  density or histogram of the panel's `x` variable along the top edge and of its
+  `y` variable along the right edge, each sharing the scatter's axis so they line
+  up (the vellumplot analogue of `ggExtra::ggMarginal()`). Pick the distribution
+  with `type = "density"` / `"histogram"`, the edges with `sides` (`"t"`, `"r"`,
+  `"tr"`), and the extent with `size`; `group = TRUE` splits each marginal by a
+  discrete `color`/`fill` mapping in the matching palette. It reads `x`/`y` from
+  the first plain (identity-stat) layer and reuses the existing density/bin
+  stats, so no axes or legends are duplicated. This version supports a single
+  panel only (an error is raised with facets, a non-Cartesian coordinate system,
+  or a locked aspect ratio).
+
 * **Positional constants now render.** A bare literal on a coordinate channel
   (e.g. `mark_segment(x = i, y = 0, xend = i, yend = value)` for a lollipop
   baseline) is now treated as a constant-valued *coordinate* rather than a style

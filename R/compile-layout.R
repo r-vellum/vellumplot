@@ -118,11 +118,25 @@ NULL
   labels = list(),
   rt = .resolve_theme(.theme_default()),
   flip = FALSE,
-  coord = NULL
+  coord = NULL,
+  marginal = NULL
 ) {
   fa <- built$fa
   R <- fa$R
   C <- fa$C
+
+  # Marginal-plot tracks (single panel only; guarded in the seam). A top row and/
+  # or a right column, each a `null` track weighted to `size` relative to the
+  # panel's `1`, so the marginal takes `size/(1+size)` of the combined extent.
+  has_top <- !is.null(marginal) && grepl("t", marginal@sides, fixed = TRUE)
+  has_right <- !is.null(marginal) && grepl("r", marginal@sides, fixed = TRUE)
+  marg <- if (is.null(marginal)) {
+    NULL
+  } else {
+    vellum::vl_unit(marginal@size, "null")
+  }
+  marg_top_row <- NA_integer_
+  marg_right_col <- NA_integer_
   # Under coord_flip the bottom (x) axis shows the y-scale and the left (y) axis
   # shows the x-scale, so gutter sizing follows the horizontal / vertical roles.
   hv <- .hv_roles(built$scales$x, built$scales$y, flip)
@@ -222,6 +236,10 @@ NULL
     panel_col[c] <- .tk_add(W, panel_w)
     if (c < C) .tk_add(W, gap)
   }
+  if (has_right) {
+    .tk_add(W, gap)
+    marg_right_col <- .tk_add(W, marg)
+  }
   rowstrip_col <- if (has_row_strip) .tk_add(W, strip) else NA_integer_
   if (legend_vert && pos == "right") {
     legend_col <- .tk_add(W, .legend_width(guides, rt))
@@ -265,6 +283,10 @@ NULL
     if (fa$type == "wrap") {
       wrapstrip_row[r] <- .tk_add(H, strip)
     }
+    if (r == 1L && has_top) {
+      marg_top_row <- .tk_add(H, marg)
+      .tk_add(H, gap)
+    }
     panel_row[r] <- .tk_add(H, panel_h)
     if (free_x) {
       xlabels_row[r] <- .tk_add(H, xl)
@@ -301,6 +323,8 @@ NULL
     wrapstrip_row = wrapstrip_row,
     colstrip_row = colstrip_row,
     rowstrip_col = rowstrip_col,
+    marg_top_row = marg_top_row,
+    marg_right_col = marg_right_col,
     legend_col = legend_col,
     legend_row = legend_row,
     legend_pos = pos,

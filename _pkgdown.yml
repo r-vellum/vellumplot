@@ -185,6 +185,7 @@ reference:
   - coord_polar
   - coord_sf
   - facet_wrap
+  - add_marginal
 
 - title: Composition
   desc: Combine plots into a single figure, or repeat one over a variable.
