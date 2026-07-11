@@ -12,7 +12,9 @@ test_that("xlim()/ylim() set a continuous position window", {
 })
 
 test_that("lims() dispatches per named aesthetic", {
-  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> lims(x = c(0, 6), y = c(10, 35))
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    lims(x = c(0, 6), y = c(10, 35))
   b <- vellumplot:::.build_panels(p)
   expect_equal(b$scales$x$domain, scales::expand_range(c(0, 6), mul = 0.05))
   expect_equal(b$scales$y$domain, scales::expand_range(c(10, 35), mul = 0.05))
@@ -32,12 +34,18 @@ test_that("a descending continuous limit reverses the axis", {
 })
 
 test_that("continuous limits must be length 2, and lims args must be named", {
-  expect_error(vplot(mtcars) |> mark_point(x = wt, y = mpg) |> xlim(1, 2, 3), "length-2")
-  expect_error(vplot(mtcars) |> mark_point(x = wt, y = mpg) |> lims(c(0, 1)), "named")
+  expect_error(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg) |> xlim(1, 2, 3),
+    "length-2"
+  )
+  expect_error(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg) |> lims(c(0, 1)),
+    "named"
+  )
 })
 
 test_that("a plot with limits still renders", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(
     render_plot(vplot(mtcars) |> mark_point(x = wt, y = mpg) |> xlim(0, 6), f)
   )

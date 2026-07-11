@@ -48,7 +48,10 @@ test_that("faceting is reported", {
 test_that("a compiled plot carries title (name) and alt (desc) in its SVG", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
-    labs(title = "Fuel economy", alt = "Weight versus fuel economy for 32 cars.")
+    labs(
+      title = "Fuel economy",
+      alt = "Weight versus fuel economy for 32 cars."
+    )
   svg <- vellum::scene_svg(as_vellum_scene(p))
   expect_match(svg, 'role="img"', fixed = TRUE)
   expect_match(svg, "<title", fixed = TRUE)

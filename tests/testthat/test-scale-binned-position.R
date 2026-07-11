@@ -11,8 +11,10 @@ test_that("scale_x/y_binned() declare a binned position scale", {
 
 test_that("a binned position scale ticks at boundaries and maps to bin centres", {
   sc <- .train_position_binned(
-    "x", mtcars$wt,
-    ScaleSpec(aesthetic = "x", type = "binned", style = "equal", n = 5), "wt"
+    "x",
+    mtcars$wt,
+    ScaleSpec(aesthetic = "x", type = "binned", style = "equal", n = 5),
+    "wt"
   )
   expect_identical(sc$type, "binned")
   expect_false(sc$discrete)
@@ -27,8 +29,10 @@ test_that("a binned position scale ticks at boundaries and maps to bin centres",
 
 test_that("explicit breaks override style/n", {
   sc <- .train_position_binned(
-    "x", 1:100,
-    ScaleSpec(aesthetic = "x", type = "binned", breaks = c(0, 25, 50, 100)), "x"
+    "x",
+    1:100,
+    ScaleSpec(aesthetic = "x", type = "binned", breaks = c(0, 25, 50, 100)),
+    "x"
   )
   expect_equal(sc$breaks, c(0, 25, 50, 100))
 })
@@ -37,9 +41,11 @@ test_that("binned position renders (points and bars)", {
   f <- tempfile(fileext = ".svg")
   on.exit(unlink(f), add = TRUE)
   expect_no_error(render_plot(
-    vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_binned(n = 6), f
+    vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_binned(n = 6),
+    f
   ))
   expect_no_error(render_plot(
-    vplot(mtcars) |> mark_bar(x = wt) |> scale_x_binned(n = 6), f
+    vplot(mtcars) |> mark_bar(x = wt) |> scale_x_binned(n = 6),
+    f
   ))
 })

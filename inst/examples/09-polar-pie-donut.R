@@ -17,8 +17,10 @@ vplot(mtcars) |>
 # --- radar / spider ---------------------------------------------------------
 # A closed line traced around the angular axis.
 radar <- data.frame(
-  axis = factor(c("speed", "power", "range", "comfort", "price"),
-                levels = c("speed", "power", "range", "comfort", "price")),
+  axis = factor(
+    c("speed", "power", "range", "comfort", "price"),
+    levels = c("speed", "power", "range", "comfort", "price")
+  ),
   value = c(8, 6, 7, 5, 9)
 )
 vplot(radar) |>

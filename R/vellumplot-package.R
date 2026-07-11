@@ -11,7 +11,14 @@ NULL
 # (mark_bin2d/mark_hex default `fill = after_stat(count)`, annotate()'s inline
 # `width`/`height`), so R CMD check cannot see them bound.
 utils::globalVariables(c(
-  "count", "width", "height",
+  "count",
+  "width",
+  "height",
   # network marks read igraph node/edge columns via NSE
-  "x", "y", "xend", "yend", "name", "level"
+  "x",
+  "y",
+  "xend",
+  "yend",
+  "name",
+  "level"
 ))

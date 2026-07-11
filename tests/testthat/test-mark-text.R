@@ -35,10 +35,10 @@ test_that("mark_text / mark_label render (incl. flipped)", {
     function(p) mark_text(p, x = wt, y = mpg, label = nm),
     function(p) mark_label(p, x = wt, y = mpg, label = nm)
   )) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(b(vplot(d)), f)
     expect_gt(file.info(f)$size, 0)
-    f2 <- withr::local_tempfile(fileext = ".png")
+    f2 <- local_tempfile(fileext = ".png")
     render_plot(b(vplot(d)) |> coord_flip(), f2)
     expect_gt(file.info(f2)$size, 0)
   }

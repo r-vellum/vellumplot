@@ -55,7 +55,7 @@ test_that("under faceting, own-data WITHOUT the facet var draws on every panel",
 })
 
 test_that("two layers with different data both render", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |>
       mark_point(x = wt, y = mpg) |>

@@ -41,7 +41,7 @@ test_that("add_marginal() validates its arguments", {
 })
 
 test_that("add_marginal() errors on unsupported layouts (facet / coord / aspect)", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   base <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   expect_error(
     render_plot(base |> facet_wrap(~cyl) |> add_marginal(), f),
@@ -66,7 +66,7 @@ test_that("add_marginal() errors on unsupported layouts (facet / coord / aspect)
 })
 
 test_that("add_marginal() errors when it has no numeric x/y layer to read from", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_error(
     render_plot(vplot(mtcars) |> mark_histogram(x = mpg) |> add_marginal(), f),
     "numeric"
@@ -74,7 +74,7 @@ test_that("add_marginal() errors when it has no numeric x/y layer to read from",
 })
 
 test_that("group = TRUE requires a discrete colour mapping", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   # continuous colour -> error
   expect_error(
     render_plot(
@@ -198,7 +198,7 @@ test_that("marginal renders draw the density fill in the top and right margins",
 })
 
 test_that("marginal render smoke: density / histogram / single sides / grouped", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   base <- vplot(faithful) |> mark_point(x = eruptions, y = waiting)
   expect_no_error(render_plot(base |> add_marginal(), f))
   expect_no_error(render_plot(base |> add_marginal(type = "histogram"), f))

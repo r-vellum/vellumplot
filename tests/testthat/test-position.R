@@ -58,11 +58,11 @@ test_that("dodge and jitter are recorded and render", {
     "dodge"
   )
   for (pos in c("dodge", "fill", "stack")) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(vplot(mt) |> mark_bar(x = cyl, fill = am, position = pos), f)
     expect_gt(file.info(f)$size, 0)
   }
-  fj <- withr::local_tempfile(fileext = ".png")
+  fj <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mt) |> mark_point(x = cyl, y = mpg, position = "jitter"),
     fj

@@ -101,7 +101,9 @@ NULL
       return(NULL)
     }
     v <- rlang::eval_tidy(q, data = data)
-    if (length(v) == 1L && n0 != 1L) v <- rep(v, n0)
+    if (length(v) == 1L && n0 != 1L) {
+      v <- rep(v, n0)
+    }
     v
   }
   tooltip <- ev("tooltip")
@@ -111,8 +113,10 @@ NULL
   selected_color <- ev("selected_color")
   # Any declaration makes the element interactive; an interactive element needs
   # an addressable key, so default data_id to the row index when it is absent.
-  present <- !is.null(tooltip) || !is.null(hover_group) ||
-    !is.null(hover_color) || !is.null(selected_color)
+  present <- !is.null(tooltip) ||
+    !is.null(hover_group) ||
+    !is.null(hover_color) ||
+    !is.null(selected_color)
   if (is.null(data_id) && present) {
     data_id <- as.character(seq_len(n0))
   }
@@ -279,5 +283,9 @@ NULL
 # is given), so passing e.g. `.default_title(spec, "color")` costs nothing when a
 # name is present. The single choke point every per-kind trainer routes through.
 .scale_title <- function(scalespec, default) {
-  if (!is.null(scalespec) && !is.null(scalespec@name)) scalespec@name else default
+  if (!is.null(scalespec) && !is.null(scalespec@name)) {
+    scalespec@name
+  } else {
+    default
+  }
 }

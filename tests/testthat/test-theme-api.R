@@ -91,6 +91,9 @@ test_that("a bigger legend.key.size widens the reserved legend column", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
   g <- vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales)
   small <- vellumplot:::.legend_width(g, resolve_of(p))
-  big <- vellumplot:::.legend_width(g, resolve_of(p |> theme(legend.key.size = 12)))
+  big <- vellumplot:::.legend_width(
+    g,
+    resolve_of(p |> theme(legend.key.size = 12))
+  )
   expect_true(big > small)
 })

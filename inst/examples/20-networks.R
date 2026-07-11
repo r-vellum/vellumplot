@@ -6,15 +6,20 @@ library(vellumplot)
 outdir <- "figures"
 dir.create(outdir, showWarnings = FALSE)
 
-if (!requireNamespace("igraph", quietly = TRUE) ||
-  !requireNamespace("graphlayouts", quietly = TRUE)) {
-  message("20-networks: skipped (install 'igraph' and 'graphlayouts' to run it)")
+if (
+  !requireNamespace("igraph", quietly = TRUE) ||
+    !requireNamespace("graphlayouts", quietly = TRUE)
+) {
+  message(
+    "20-networks: skipped (install 'igraph' and 'graphlayouts' to run it)"
+  )
 } else {
   # Zachary's karate club -- the canonical small social network. Precompute the
   # analytical attributes we want to map (vellumplot does not compute centralities).
   g <- igraph::make_graph("Zachary")
   g <- igraph::set_vertex_attr(
-    g, "community",
+    g,
+    "community",
     value = as.factor(igraph::cluster_louvain(g)$membership)
   )
   g <- igraph::set_vertex_attr(g, "degree", value = igraph::degree(g))
@@ -58,7 +63,8 @@ if (!requireNamespace("igraph", quietly = TRUE) ||
   # target end.
   el <- matrix(
     c(1, 2, 2, 1, 2, 3, 3, 2, 3, 3, 1, 4, 4, 1, 1, 1),
-    ncol = 2, byrow = TRUE
+    ncol = 2,
+    byrow = TRUE
   )
   d <- igraph::graph_from_edgelist(el, directed = TRUE)
   vgraph(d, layout = "stress") |>
@@ -71,7 +77,11 @@ if (!requireNamespace("igraph", quietly = TRUE) ||
   # --- 5. Weighted edges: width + colour legends -----------------------------
   set.seed(1)
   w <- igraph::sample_gnp(30, 0.12)
-  w <- igraph::set_edge_attr(w, "weight", value = runif(igraph::ecount(w), 0.2, 1))
+  w <- igraph::set_edge_attr(
+    w,
+    "weight",
+    value = runif(igraph::ecount(w), 0.2, 1)
+  )
   w <- igraph::set_vertex_attr(w, "degree", value = igraph::degree(w))
   vgraph(w, layout = "stress") |>
     mark_edges(linewidth = weight, color = weight, alpha = 0.9) |>

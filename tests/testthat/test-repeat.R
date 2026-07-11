@@ -56,7 +56,7 @@ test_that("repeat_ validates its inputs", {
 })
 
 test_that("a repeated composition renders", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     repeat_(vplot(mtcars) |> mark_point(y = mpg), x = c("wt", "hp", "disp")),
     f

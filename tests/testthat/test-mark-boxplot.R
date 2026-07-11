@@ -72,7 +72,7 @@ test_that("boxplot / errorbar / linerange / summary render (incl. flipped)", {
     }
   )
   for (mk in builds) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(mk(), f)
     expect_gt(file.info(f)$size, 0)
   }
@@ -84,7 +84,7 @@ test_that("boxplot draws ink across the panel (boxes + whiskers)", {
 })
 
 test_that("a boxplot + jittered points overlay renders", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |>
       mark_boxplot(x = factor(cyl), y = mpg) |>

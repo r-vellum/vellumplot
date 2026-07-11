@@ -42,10 +42,10 @@ test_that("annotate geoms render (and flipped)", {
     }
   )
   for (b in builds) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(b(base()), f)
     expect_gt(file.info(f)$size, 0)
-    f2 <- withr::local_tempfile(fileext = ".png")
+    f2 <- local_tempfile(fileext = ".png")
     render_plot(b(base()) |> coord_flip(), f2)
     expect_gt(file.info(f2)$size, 0)
   }
@@ -70,7 +70,7 @@ test_that("mark_segment draws x/y -> xend/yend", {
     ]]@mark,
     "segment"
   )
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend),
     f

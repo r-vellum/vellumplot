@@ -36,7 +36,7 @@ test_that("facet_grid strips are named by row/col", {
 
 test_that("render(debug = TRUE) draws the layout overlay", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(vellum::render(vellum::as_vellum_scene(p), f, debug = TRUE))
   expect_gt(file.info(f)$size, 0)
 })
@@ -45,7 +45,7 @@ test_that("each geom layer carries a per-layer data-vellum-id in SVG", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
     mark_smooth(x = wt, y = mpg)
-  f <- withr::local_tempfile(fileext = ".svg")
+  f <- local_tempfile(fileext = ".svg")
   render_plot(p, f)
   svg <- paste(readLines(f), collapse = "")
   expect_match(svg, "layer-1-point")
@@ -55,7 +55,7 @@ test_that("each geom layer carries a per-layer data-vellum-id in SVG", {
 test_that("the layer id is stamped without disturbing raster output", {
   # A plain render still works; id/role is additive metadata only.
   p <- vplot(mtcars) |> mark_bar(x = factor(cyl), fill = factor(cyl))
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
   expect_gt(file.info(f)$size, 0)
 })

@@ -97,14 +97,21 @@ guide_legend <- function(title = NULL, reverse = FALSE) {
     }
     tr
   }
-  switch(tr$kind,
+  switch(
+    tr$kind,
     discrete = rev_fields(tr, c("levels", "labels", "colors")),
     binned = rev_fields(tr, c("levels", "labels", "colors", "breaks")),
     shape = rev_fields(tr, c("levels", "shapes")),
     linetype = rev_fields(tr, c("levels", "linetypes")),
-    rev_fields(tr, c(
-      "legend_breaks", "legend_labels", "legend_sizes",
-      "legend_alphas", "legend_widths"
-    ))
+    rev_fields(
+      tr,
+      c(
+        "legend_breaks",
+        "legend_labels",
+        "legend_sizes",
+        "legend_alphas",
+        "legend_widths"
+      )
+    )
   )
 }

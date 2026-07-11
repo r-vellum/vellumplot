@@ -24,7 +24,11 @@ test_that("refined emitters carry per-row keys, not the whole layer", {
   prov <- plot_provenance(vplot(df) |> mark_line(x = x, y = y, color = g))
   lines <- Filter(function(e) e$mark == "line" && e$kind == "mark", prov)
   expect_length(lines, 2L)
-  expect_false(any(vapply(lines, function(e) length(e$rows) == nrow(df), logical(1))))
+  expect_false(any(vapply(
+    lines,
+    function(e) length(e$rows) == nrow(df),
+    logical(1)
+  )))
   expect_setequal(sort(unlist(lapply(lines, `[[`, "rows"))), seq_len(nrow(df)))
 
   # an area mark refines the same way
@@ -51,7 +55,7 @@ test_that("the grob id matches the SVG data-vellum-id (the join key holds)", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   prov <- plot_provenance(p)
   id <- prov[[1]]$id
-  f <- withr::local_tempfile(fileext = ".svg")
+  f <- local_tempfile(fileext = ".svg")
   render_plot(p, f)
   svg <- paste(readLines(f), collapse = "")
   expect_match(svg, id, fixed = TRUE)

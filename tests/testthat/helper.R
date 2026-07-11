@@ -1,3 +1,21 @@
+# `withr` and `vctrs` are Suggests, so the two of their functions the suite uses
+# are wrapped here behind `skip_if_not_installed()`. Without this a test errors
+# (rather than skips) under `R CMD check --as-cran` with
+# `_R_CHECK_DEPENDS_ONLY_=true`, where Suggests are not installed.
+#
+# `local_tempfile()` forwards `.local_envir` so cleanup still defers to the
+# calling test frame (its default `parent.frame()` is the caller), matching a
+# direct `withr::local_tempfile()` call.
+local_tempfile <- function(..., .local_envir = parent.frame()) {
+  skip_if_not_installed("withr")
+  withr::local_tempfile(..., .local_envir = .local_envir)
+}
+
+vctrs_field <- function(x, i) {
+  skip_if_not_installed("vctrs")
+  vctrs::field(x, i)
+}
+
 # Compile a plot and read its pixels back via vellum's public raster accessor
 # (no temp file). `scene_raster()` returns an integer array [channel, x, y] in
 # 0:255 with a top-left origin; reshape to the [y, x, channel] 0..1 layout the

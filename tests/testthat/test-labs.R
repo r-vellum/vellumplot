@@ -144,7 +144,7 @@ test_that("a caption renders ink in the bottom band", {
 })
 
 test_that("faceted plots with labs render", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(mtcars) |>
       mark_point(x = wt, y = mpg, color = hp) |>
@@ -158,7 +158,7 @@ test_that("faceted plots with labs render", {
 test_that("concat carries per-plot labs", {
   a <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> labs(title = "A")
   b <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8) |> labs(title = "B")
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(hconcat(a, b), f)
   expect_gt(file.info(f)$size, 0)
 })

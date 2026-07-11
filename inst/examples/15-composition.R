@@ -33,7 +33,9 @@ wrap_plots(list(p_scatter, p_hist, p_box, p_scatter), ncol = 2) |>
 # Distinct letters bind to the plots in alphabetical order; "#" is an empty
 # cell. Here A spans the top row, B and C share the bottom.
 concat(
-  p_scatter, p_hist, p_box,
+  p_scatter,
+  p_hist,
+  p_box,
   design = "
     AA
     BC

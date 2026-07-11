@@ -48,7 +48,7 @@ test_that("legend width is finite/positive with a rich legend name", {
   guides <- vellumplot:::.legend_guides(built$scales)
   rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
   w <- vellumplot:::.legend_width(guides, rt)
-  expect_true(vctrs::field(w, "value") > 0)
+  expect_true(vctrs_field(w, "value") > 0)
   expect_no_error(vellumplot:::.build_layout(built, guides, p@labels, rt))
 })
 

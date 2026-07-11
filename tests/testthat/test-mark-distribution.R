@@ -12,24 +12,38 @@ test_that("mark_ecdf() computes a cumulative step", {
 
 test_that("mark_ecdf() records its mark/stat and renders (incl. grouped)", {
   df <- data.frame(v = rnorm(60), g = rep(c("a", "b"), 30))
-  expect_identical(vplot(df) |> mark_ecdf(x = v) |> (\(p) p@layers[[1]]@stat)(), "ecdf")
-  f <- withr::local_tempfile(fileext = ".png")
+  expect_identical(
+    vplot(df) |> mark_ecdf(x = v) |> (\(p) p@layers[[1]]@stat)(),
+    "ecdf"
+  )
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(vplot(df) |> mark_ecdf(x = v, color = g), f))
 })
 
 test_that("mark_rug() draws alongside another layer", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(
-    render_plot(vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_rug(x = wt, y = mpg), f)
+    render_plot(
+      vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_rug(x = wt, y = mpg),
+      f
+    )
   )
   expect_no_error(
-    render_plot(vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_rug(x = wt, sides = "b"), f)
+    render_plot(
+      vplot(mtcars) |>
+        mark_point(x = wt, y = mpg) |>
+        mark_rug(x = wt, sides = "b"),
+      f
+    )
   )
 })
 
 test_that("mark_qq() maps sample to theoretical vs observed quantiles", {
   df <- data.frame(s = qnorm(ppoints(50)) * 2 + 1) # linear in normal quantiles
-  L <- vellumplot:::.resolve_layer((vplot(df) |> mark_qq(sample = s))@layers[[1]], df)
+  L <- vellumplot:::.resolve_layer(
+    (vplot(df) |> mark_qq(sample = s))@layers[[1]],
+    df
+  )
   sdf <- vellumplot:::.apply_stat(L)
   # x = theoretical quantiles (roughly symmetric about 0), y = sorted sample
   expect_equal(mean(sdf$values$x), 0, tolerance = 0.01)
@@ -37,8 +51,11 @@ test_that("mark_qq() maps sample to theoretical vs observed quantiles", {
 })
 
 test_that("mark_qq() + mark_qq_line() render", {
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_no_error(
-    render_plot(vplot(mtcars) |> mark_qq(sample = mpg) |> mark_qq_line(sample = mpg), f)
+    render_plot(
+      vplot(mtcars) |> mark_qq(sample = mpg) |> mark_qq_line(sample = mpg),
+      f
+    )
   )
 })

@@ -27,7 +27,7 @@ test_that("only mapped channels produce guides", {
 test_that("a plot with three guides renders", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp, size = disp, shape = factor(cyl))
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(p, f)
   expect_gt(file.info(f)$size, 0)
 })
@@ -98,7 +98,7 @@ test_that("each legend position renders", {
     p <- vplot(mtcars) |>
       mark_point(x = wt, y = mpg, color = hp, size = disp) |>
       theme(legend.position = pos)
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(p, f)
     expect_gt(file.info(f)$size, 0)
   }
@@ -158,7 +158,7 @@ test_that("a merged legend still renders in every position", {
     p <- vplot(mtcars) |>
       mark_point(x = wt, y = mpg, color = factor(cyl), shape = factor(cyl)) |>
       theme(legend.position = pos)
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(p, f)
     expect_gt(file.info(f)$size, 0)
   }

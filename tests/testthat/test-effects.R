@@ -149,7 +149,10 @@ test_that("theme_cyberpunk supplies the default palette, overridable by a scale"
 
   # without the theme, the default palette is unchanged
   plain <- vplot(bars) |> mark_bar(x = cat, y = n, fill = cat)
-  expect_false(identical(train(plain)$color$map("a"), vellumplot:::.NEON_QUAL[[1]]))
+  expect_false(identical(
+    train(plain)$color$map("a"),
+    vellumplot:::.NEON_QUAL[[1]]
+  ))
 })
 
 # --- outline() --------------------------------------------------------------
@@ -162,7 +165,10 @@ test_that("outline() builds an OutlineSpec, attaches, and renders", {
 
   p <- vplot(line_df) |>
     mark_point(x = x, y = y, size = 3, effects = list(outline()))
-  expect_true(S7::S7_inherits(p@layers[[1]]@effects[[1]], vellumplot:::OutlineSpec))
+  expect_true(S7::S7_inherits(
+    p@layers[[1]]@effects[[1]],
+    vellumplot:::OutlineSpec
+  ))
   expect_no_error(render_px(p))
 })
 

@@ -23,8 +23,14 @@ test_that("points land where the scales map them (orientation + y-up)", {
   # the opposite interior corners carry only stray ink, far below a solid point.
   # Relative (not exact-empty): robust to platform font-metric / anti-aliasing
   # differences that nudge a label or gridline pixel into the region.
-  expect_lt(count_ink(img, rows = c(0.08, 0.25), cols = c(0.20, 0.36)), pt_tr / 2)
-  expect_lt(count_ink(img, rows = c(0.55, 0.72), cols = c(0.80, 0.96)), pt_bl / 2)
+  expect_lt(
+    count_ink(img, rows = c(0.08, 0.25), cols = c(0.20, 0.36)),
+    pt_tr / 2
+  )
+  expect_lt(
+    count_ink(img, rows = c(0.55, 0.72), cols = c(0.80, 0.96)),
+    pt_bl / 2
+  )
 })
 
 test_that("a discrete colour encoding paints each category colour", {

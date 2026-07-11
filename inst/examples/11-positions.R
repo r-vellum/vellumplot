@@ -10,8 +10,12 @@ peng <- na.omit(datasets::penguins)
 # Scatter discrete x so overlapping points separate; seed makes it repeatable.
 vplot(peng) |>
   mark_point(
-    x = species, y = body_mass, color = species,
-    position = "jitter", seed = 42, alpha = 0.6
+    x = species,
+    y = body_mass,
+    color = species,
+    position = "jitter",
+    seed = 42,
+    alpha = 0.6
   ) |>
   labs(title = "Jittered points over a discrete axis", y = "Body mass (g)") |>
   render_plot(file.path(outdir, "11-jitter.png"))

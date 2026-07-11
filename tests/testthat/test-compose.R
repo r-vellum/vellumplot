@@ -138,13 +138,15 @@ test_that("the full feature set renders without error", {
   c <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
   d <- p_xy(drat, qsec)
   render_ok <- function(x) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(x, f)
     expect_gt(file.info(f)$size, 0)
   }
   render_ok(hconcat(a, b)) # collected legend + alignment
-  render_ok(concat(a, b, c, d, ncol = 2) |>
-    compose_annotation(title = "fig", tag_levels = "A"))
+  render_ok(
+    concat(a, b, c, d, ncol = 2) |>
+      compose_annotation(title = "fig", tag_levels = "A")
+  )
   render_ok(concat(a, b, c, design = "AA\nBC")) # spanning
   render_ok(concat(a, plot_spacer(), plot_spacer(), b, ncol = 2)) # spacers
   render_ok(inset(a, c)) # inset

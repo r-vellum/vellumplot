@@ -109,7 +109,10 @@ NULL
     text = .element_text(),
     line = .element_line(),
     rect = .element_rect(),
-    cli::cli_abort("Theme element {.val {slot}} has no element class.", .internal = TRUE)
+    cli::cli_abort(
+      "Theme element {.val {slot}} has no element class.",
+      .internal = TRUE
+    )
   )
 }
 
@@ -124,7 +127,10 @@ NULL
     text = .element_text,
     line = .element_line,
     rect = .element_rect,
-    cli::cli_abort("Theme element {.val {slot}} has no element class.", .internal = TRUE)
+    cli::cli_abort(
+      "Theme element {.val {slot}} has no element class.",
+      .internal = TRUE
+    )
   )
   S7::S7_inherits(value, cls)
 }

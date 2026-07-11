@@ -45,10 +45,10 @@ test_that("area / ribbon / step render (incl. flipped)", {
     function(p) mark_step(p, x = x, y = y, direction = "vh")
   )
   for (b in builds) {
-    f <- withr::local_tempfile(fileext = ".png")
+    f <- local_tempfile(fileext = ".png")
     render_plot(b(vplot(d)), f)
     expect_gt(file.info(f)$size, 0)
-    f2 <- withr::local_tempfile(fileext = ".png")
+    f2 <- local_tempfile(fileext = ".png")
     render_plot(b(vplot(d)) |> coord_flip(), f2)
     expect_gt(file.info(f2)$size, 0)
   }
@@ -65,7 +65,7 @@ test_that("grouped ribbon (per colour) renders", {
     cbind(d, grp = "a"),
     cbind(transform(d, lo = lo + 2, hi = hi + 2), grp = "b")
   )
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(
     vplot(g) |> mark_ribbon(x = x, ymin = lo, ymax = hi, fill = grp),
     f

@@ -55,7 +55,11 @@ NULL
 )
 
 .mark_phrase <- function(mark) {
-  if (mark %in% names(.MARK_PHRASE)) .MARK_PHRASE[[mark]] else paste0(mark, " plot")
+  if (mark %in% names(.MARK_PHRASE)) {
+    .MARK_PHRASE[[mark]]
+  } else {
+    paste0(mark, " plot")
+  }
 }
 
 # "a", "a and b", "a, b, and c".
@@ -94,7 +98,12 @@ NULL
   # `scale_*(name = )` lives on the spec, so no compile is needed. Preserve the
   # NULL-when-unmapped contract the sentence logic below relies on.
   sc <- .scale_for(spec, aes)
-  if (!is.null(sc) && !is.null(sc@name) && is.character(sc@name) && nzchar(sc@name)) {
+  if (
+    !is.null(sc) &&
+      !is.null(sc@name) &&
+      is.character(sc@name) &&
+      nzchar(sc@name)
+  ) {
     return(sc@name)
   }
   lab <- spec@labels[[aes]]
@@ -111,7 +120,11 @@ NULL
       return(NULL)
     }
     paste(
-      vapply(qs, function(q) rlang::as_label(rlang::quo_get_expr(q)), character(1)),
+      vapply(
+        qs,
+        function(q) rlang::as_label(rlang::quo_get_expr(q)),
+        character(1)
+      ),
       collapse = " and "
     )
   }
@@ -165,11 +178,16 @@ NULL
     )
     s2 <- if (length(counts)) {
       body <- paste0("It has ", paste(counts, collapse = " and "))
-      if (length(extras)) body <- paste0(body, ", where ", paste(extras, collapse = " and "))
+      if (length(extras)) {
+        body <- paste0(body, ", where ", paste(extras, collapse = " and "))
+      }
       paste0(body, ".")
     }
     # Node count already stated ("N nodes"); skip the generic observation count.
-    return(paste(c(s1, s2, if (!is.null(spec@facet)) .alt_facet_sentence(spec)), collapse = " "))
+    return(paste(
+      c(s1, s2, if (!is.null(spec@facet)) .alt_facet_sentence(spec)),
+      collapse = " "
+    ))
   }
 
   x <- .alt_axis_title(spec, "x")
@@ -177,7 +195,11 @@ NULL
   # An unmapped y on a bar/histogram plot renders as a "count" axis (mirrors the
   # compiler's .y_axis_title); report it so the description names both axes.
   if (is.null(y)) {
-    y_mapped <- any(vapply(spec@layers, function(L) "y" %in% names(L@encoding), logical(1)))
+    y_mapped <- any(vapply(
+      spec@layers,
+      function(L) "y" %in% names(L@encoding),
+      logical(1)
+    ))
     if (!y_mapped && any(marks %in% c("bar", "histogram"))) {
       y <- "count"
     }
@@ -232,20 +254,37 @@ NULL
 plot_alt <- function(x) {
   if (S7::S7_inherits(x, PlotSpec)) {
     manual <- x@labels$alt
-    if (!is.null(manual) && is.character(manual) && length(manual) == 1L && nzchar(manual)) {
+    if (
+      !is.null(manual) &&
+        is.character(manual) &&
+        length(manual) == 1L &&
+        nzchar(manual)
+    ) {
       return(manual)
     }
     return(.plot_alt_auto(x))
   }
   if (S7::S7_inherits(x, PlotComposition)) {
     manual <- x@labels$alt
-    if (!is.null(manual) && is.character(manual) && length(manual) == 1L && nzchar(manual)) {
+    if (
+      !is.null(manual) &&
+        is.character(manual) &&
+        length(manual) == 1L &&
+        nzchar(manual)
+    ) {
       return(manual)
     }
     n <- length(x@plots)
     return(paste0(
-      "A composition of ", n, " plot", if (n != 1L) "s",
-      " arranged in a ", x@nrow, " by ", x@ncol, " grid."
+      "A composition of ",
+      n,
+      " plot",
+      if (n != 1L) "s",
+      " arranged in a ",
+      x@nrow,
+      " by ",
+      x@ncol,
+      " grid."
     ))
   }
   cli::cli_abort("{.arg x} must be a {.cls PlotSpec} or plot composition.")

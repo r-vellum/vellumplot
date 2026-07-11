@@ -87,7 +87,7 @@ test_that("summary() shows a readable spec tree", {
 
 test_that("print() draws the plot and returns the spec invisibly", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   grDevices::png(f, width = 400, height = 300)
   on.exit(grDevices::dev.off(), add = TRUE)
   out <- withVisible(print(p))

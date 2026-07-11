@@ -12,16 +12,26 @@ base <- function() {
 }
 
 # --- built-in themes --------------------------------------------------------
-render_plot(base() |> theme_gray()    |> labs(title = "theme_gray (default)"),
-            file.path(outdir, "12-gray.png"))
-render_plot(base() |> theme_bw()      |> labs(title = "theme_bw"),
-            file.path(outdir, "12-bw.png"))
-render_plot(base() |> theme_minimal() |> labs(title = "theme_minimal"),
-            file.path(outdir, "12-minimal.png"))
-render_plot(base() |> theme_classic() |> labs(title = "theme_classic"),
-            file.path(outdir, "12-classic.png"))
-render_plot(base() |> theme_void()    |> labs(title = "theme_void"),
-            file.path(outdir, "12-void.png"))
+render_plot(
+  base() |> theme_gray() |> labs(title = "theme_gray (default)"),
+  file.path(outdir, "12-gray.png")
+)
+render_plot(
+  base() |> theme_bw() |> labs(title = "theme_bw"),
+  file.path(outdir, "12-bw.png")
+)
+render_plot(
+  base() |> theme_minimal() |> labs(title = "theme_minimal"),
+  file.path(outdir, "12-minimal.png")
+)
+render_plot(
+  base() |> theme_classic() |> labs(title = "theme_classic"),
+  file.path(outdir, "12-classic.png")
+)
+render_plot(
+  base() |> theme_void() |> labs(title = "theme_void"),
+  file.path(outdir, "12-void.png")
+)
 
 # --- legend positions -------------------------------------------------------
 # legend.position is one of "right" (default), "left", "top", "bottom", "none".
@@ -35,7 +45,11 @@ for (pos in c("left", "top", "bottom", "none")) {
 # --- set_theme shortcut -----------------------------------------------------
 # The common colour knobs in one call.
 base() |>
-  set_theme(panel_bg = "#fdf6e3", grid_col = "#eee8d5", label_col = "#586e75") |>
+  set_theme(
+    panel_bg = "#fdf6e3",
+    grid_col = "#eee8d5",
+    label_col = "#586e75"
+  ) |>
   labs(title = "set_theme() colour shortcut") |>
   render_plot(file.path(outdir, "12-set-theme.png"))
 

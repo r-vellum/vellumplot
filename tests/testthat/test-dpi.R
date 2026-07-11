@@ -19,8 +19,8 @@ test_that("vplot() stores dpi on the spec", {
 
 test_that("render_plot(dpi =) overrides the authored resolution", {
   p <- vplot(mtcars, width = 4, height = 3) |> mark_point(x = wt, y = mpg)
-  lo <- withr::local_tempfile(fileext = ".png")
-  hi <- withr::local_tempfile(fileext = ".png")
+  lo <- local_tempfile(fileext = ".png")
+  hi <- local_tempfile(fileext = ".png")
   expect_equal(render_plot(p, lo, dpi = 72), lo)
   render_plot(p, hi, dpi = 300)
   # A denser raster is a larger file; a weak but robust smoke check that dpi
@@ -30,7 +30,7 @@ test_that("render_plot(dpi =) overrides the authored resolution", {
 
 test_that("render_plot() returns the path invisibly", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_invisible(render_plot(p, f))
 })
 
@@ -47,7 +47,7 @@ test_that("an invalid dpi is rejected", {
   expect_error(vplot(mtcars, dpi = -10), "positive number")
   expect_error(vplot(mtcars, dpi = c(96, 150)), "single positive number")
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   expect_error(render_plot(p, f, dpi = "hi"), "positive number")
   expect_error(concat(p, p, dpi = 0), "positive number")
 })

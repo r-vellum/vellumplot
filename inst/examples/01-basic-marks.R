@@ -12,7 +12,11 @@ peng <- na.omit(datasets::penguins)
 # a mapped aesthetic (color = species) is a bare column name.
 vplot(peng) |>
   mark_point(x = bill_len, y = flipper_len, color = species, size = 1.4) |>
-  labs(title = "Bill length vs flipper length", x = "Bill (mm)", y = "Flipper (mm)") |>
+  labs(
+    title = "Bill length vs flipper length",
+    x = "Bill (mm)",
+    y = "Flipper (mm)"
+  ) |>
   render_plot(file.path(outdir, "01-points.png"))
 
 # --- lines ------------------------------------------------------------------

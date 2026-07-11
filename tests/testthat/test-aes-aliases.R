@@ -39,5 +39,9 @@ test_that("scale_colour_continuous() declares a colour scale", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, colour = hp) |>
     scale_colour_continuous(palette = "Blues")
-  expect_true(any(vapply(p@scales, function(s) s@aesthetic == "color", logical(1))))
+  expect_true(any(vapply(
+    p@scales,
+    function(s) s@aesthetic == "color",
+    logical(1)
+  )))
 })

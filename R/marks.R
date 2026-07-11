@@ -33,8 +33,14 @@ NULL
 # constant-valued coordinate that must train the position scale (e.g. a segment
 # baseline `y = 0`), so it is kept as a channel rather than a style param.
 .POSITION_AES <- c(
-  "x", "y", "xend", "yend",
-  "xmin", "xmax", "ymin", "ymax"
+  "x",
+  "y",
+  "xend",
+  "yend",
+  "xmin",
+  "xmax",
+  "ymin",
+  "ymax"
 )
 
 .split_encodings <- function(quos) {
@@ -177,7 +183,9 @@ after_stat <- function(x) x
   # aesthetics: pull them out before encoding-splitting so they are never
   # scale-trained. They are captured as quosures and resolved per row at compile.
   interactivity <- quos[intersect(names(quos), .INTERACT_ARGS)]
-  interactivity <- interactivity[!vapply(interactivity, rlang::quo_is_null, logical(1))]
+  interactivity <- interactivity[
+    !vapply(interactivity, rlang::quo_is_null, logical(1))
+  ]
   quos <- quos[setdiff(names(quos), .INTERACT_ARGS)]
   split <- .split_encodings(quos)
   # Pre-evaluated always-constant params (e.g. mm nudges) bypass encoding
@@ -224,7 +232,13 @@ after_stat <- function(x) x
 # `data_id` = the join key (SVG `data-key`); `tooltip` = per-row tooltip text;
 # `hover_group` = a field that groups elements for linked emphasis (consumed by a
 # host in a later phase). They flow into the vellum scene as element key/metadata.
-.INTERACT_ARGS <- c("tooltip", "data_id", "hover_group", "hover_color", "selected_color")
+.INTERACT_ARGS <- c(
+  "tooltip",
+  "data_id",
+  "hover_group",
+  "hover_color",
+  "selected_color"
+)
 
 #' Add marks to a plot
 #'
@@ -797,7 +811,10 @@ mark_text <- function(
       vjust = vjust,
       angle = angle
     ),
-    const_params = list(nudge_x = as.numeric(nudge_x), nudge_y = as.numeric(nudge_y)),
+    const_params = list(
+      nudge_x = as.numeric(nudge_x),
+      nudge_y = as.numeric(nudge_y)
+    ),
     blend = blend,
     data = data
   )
@@ -835,7 +852,10 @@ mark_label <- function(
       angle = angle,
       fill = fill
     ),
-    const_params = list(nudge_x = as.numeric(nudge_x), nudge_y = as.numeric(nudge_y)),
+    const_params = list(
+      nudge_x = as.numeric(nudge_x),
+      nudge_y = as.numeric(nudge_y)
+    ),
     blend = blend,
     sketch = sketch,
     data = data
@@ -949,8 +969,16 @@ mark_density <- function(
 #'   mark_contour(x = eruptions, y = waiting)
 #' vplot(faithful) |> mark_contour_filled(x = eruptions, y = waiting)
 #' @export
-mark_contour <- function(plot, ..., bins = 10, binwidth = NULL, breaks = NULL,
-                         n = 100, blend = NULL, data = NULL) {
+mark_contour <- function(
+  plot,
+  ...,
+  bins = 10,
+  binwidth = NULL,
+  breaks = NULL,
+  n = 100,
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
   if (is.null(dots$color) && is.null(dots$colour)) {
@@ -961,7 +989,12 @@ mark_contour <- function(plot, ..., bins = 10, binwidth = NULL, breaks = NULL,
     "contour",
     dots,
     stat = "density_2d",
-    stat_params = list(bins = bins, binwidth = binwidth, breaks = breaks, n = n),
+    stat_params = list(
+      bins = bins,
+      binwidth = binwidth,
+      breaks = breaks,
+      n = n
+    ),
     blend = blend,
     data = data
   )
@@ -969,8 +1002,16 @@ mark_contour <- function(plot, ..., bins = 10, binwidth = NULL, breaks = NULL,
 
 #' @rdname mark_contour
 #' @export
-mark_contour_filled <- function(plot, ..., bins = 10, binwidth = NULL, breaks = NULL,
-                                n = 100, blend = NULL, data = NULL) {
+mark_contour_filled <- function(
+  plot,
+  ...,
+  bins = 10,
+  binwidth = NULL,
+  breaks = NULL,
+  n = 100,
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
   if (is.null(dots$fill)) {
@@ -981,7 +1022,13 @@ mark_contour_filled <- function(plot, ..., bins = 10, binwidth = NULL, breaks = 
     "contour_filled",
     dots,
     stat = "density_2d",
-    stat_params = list(bins = bins, binwidth = binwidth, breaks = breaks, n = n, filled = TRUE),
+    stat_params = list(
+      bins = bins,
+      binwidth = binwidth,
+      breaks = breaks,
+      n = n,
+      filled = TRUE
+    ),
     blend = blend,
     data = data
   )
@@ -1013,38 +1060,78 @@ mark_contour_filled <- function(plot, ..., bins = 10, binwidth = NULL, breaks = 
 #' @export
 mark_ecdf <- function(plot, ..., blend = NULL, data = NULL) {
   .check_plot(plot)
-  .add_layer(plot, "step", rlang::enquos(...), stat = "ecdf",
-             blend = blend, data = data)
+  .add_layer(
+    plot,
+    "step",
+    rlang::enquos(...),
+    stat = "ecdf",
+    blend = blend,
+    data = data
+  )
 }
 
 #' @rdname mark_ecdf
 #' @export
-mark_rug <- function(plot, ..., sides = "bl", length = 0.03, blend = NULL,
-                     data = NULL) {
+mark_rug <- function(
+  plot,
+  ...,
+  sides = "bl",
+  length = 0.03,
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "rug", rlang::enquos(...), stat = "identity",
-             stat_params = list(sides = sides, length = length),
-             blend = blend, data = data)
+  .add_layer(
+    plot,
+    "rug",
+    rlang::enquos(...),
+    stat = "identity",
+    stat_params = list(sides = sides, length = length),
+    blend = blend,
+    data = data
+  )
 }
 
 #' @rdname mark_ecdf
 #' @export
-mark_qq <- function(plot, ..., distribution = "qnorm", blend = NULL,
-                    data = NULL) {
+mark_qq <- function(
+  plot,
+  ...,
+  distribution = "qnorm",
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "point", rlang::enquos(...), stat = "qq",
-             stat_params = list(distribution = distribution),
-             blend = blend, data = data)
+  .add_layer(
+    plot,
+    "point",
+    rlang::enquos(...),
+    stat = "qq",
+    stat_params = list(distribution = distribution),
+    blend = blend,
+    data = data
+  )
 }
 
 #' @rdname mark_ecdf
 #' @export
-mark_qq_line <- function(plot, ..., distribution = "qnorm", blend = NULL,
-                         data = NULL) {
+mark_qq_line <- function(
+  plot,
+  ...,
+  distribution = "qnorm",
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "line", rlang::enquos(...), stat = "qq_line",
-             stat_params = list(distribution = distribution),
-             blend = blend, data = data)
+  .add_layer(
+    plot,
+    "line",
+    rlang::enquos(...),
+    stat = "qq_line",
+    stat_params = list(distribution = distribution),
+    blend = blend,
+    data = data
+  )
 }
 
 #' Density-shape marks
@@ -1071,31 +1158,70 @@ mark_qq_line <- function(plot, ..., distribution = "qnorm", blend = NULL,
 #' vplot(df) |> mark_ridgeline(x = v, y = g)
 #' vplot(df) |> mark_dotplot(x = v)
 #' @export
-mark_violin <- function(plot, ..., adjust = 1, blend = NULL, sketch = NULL,
-                        data = NULL) {
+mark_violin <- function(
+  plot,
+  ...,
+  adjust = 1,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "violin", rlang::enquos(...), stat = "identity",
-             stat_params = list(adjust = adjust),
-             blend = blend, sketch = sketch, data = data)
+  .add_layer(
+    plot,
+    "violin",
+    rlang::enquos(...),
+    stat = "identity",
+    stat_params = list(adjust = adjust),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
 }
 
 #' @rdname mark_violin
 #' @export
-mark_ridgeline <- function(plot, ..., adjust = 1, scale = 1.4, blend = NULL,
-                           sketch = NULL, data = NULL) {
+mark_ridgeline <- function(
+  plot,
+  ...,
+  adjust = 1,
+  scale = 1.4,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "ridgeline", rlang::enquos(...), stat = "identity",
-             stat_params = list(adjust = adjust, scale = scale),
-             blend = blend, sketch = sketch, data = data)
+  .add_layer(
+    plot,
+    "ridgeline",
+    rlang::enquos(...),
+    stat = "identity",
+    stat_params = list(adjust = adjust, scale = scale),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
 }
 
 #' @rdname mark_violin
 #' @export
-mark_dotplot <- function(plot, ..., binwidth = NULL, blend = NULL, data = NULL) {
+mark_dotplot <- function(
+  plot,
+  ...,
+  binwidth = NULL,
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "point", rlang::enquos(...), stat = "dotplot",
-             stat_params = list(binwidth = binwidth),
-             blend = blend, data = data)
+  .add_layer(
+    plot,
+    "point",
+    rlang::enquos(...),
+    stat = "dotplot",
+    stat_params = list(binwidth = binwidth),
+    blend = blend,
+    data = data
+  )
 }
 
 #' @rdname mark_tile

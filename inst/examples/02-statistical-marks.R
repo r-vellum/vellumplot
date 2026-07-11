@@ -47,14 +47,17 @@ vplot(peng) |>
 # --- error bars / line ranges ----------------------------------------------
 # Pre-compute mean +/- sd, then draw a ranged interval. errorbar adds caps;
 # linerange omits them.
-agg <- do.call(rbind, lapply(split(peng, peng$species), function(d) {
-  data.frame(
-    species = d$species[1],
-    mean = mean(d$body_mass),
-    ymin = mean(d$body_mass) - sd(d$body_mass),
-    ymax = mean(d$body_mass) + sd(d$body_mass)
-  )
-}))
+agg <- do.call(
+  rbind,
+  lapply(split(peng, peng$species), function(d) {
+    data.frame(
+      species = d$species[1],
+      mean = mean(d$body_mass),
+      ymin = mean(d$body_mass) - sd(d$body_mass),
+      ymax = mean(d$body_mass) + sd(d$body_mass)
+    )
+  })
+)
 vplot(agg) |>
   mark_errorbar(x = species, ymin = ymin, ymax = ymax, width = 0.4) |>
   mark_point(x = species, y = mean, size = 1.8) |>

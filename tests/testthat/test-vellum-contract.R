@@ -8,13 +8,28 @@
 df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, model = rownames(mtcars))
 
 test_that("scene_model() exposes the element columns vellumplot reads", {
-  p <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
+  p <- vplot(df) |>
+    mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
   m <- vellum::scene_model(vellum::as_vellum_scene(p))
 
   expect_named(
     m$elements,
-    c("key", "mark", "id", "name", "panel",
-      "x0", "y0", "x1", "y1", "x", "y", "w", "h", "meta")
+    c(
+      "key",
+      "mark",
+      "id",
+      "name",
+      "panel",
+      "x0",
+      "y0",
+      "x1",
+      "y1",
+      "x",
+      "y",
+      "w",
+      "h",
+      "meta"
+    )
   )
   # the specific columns vellumplot's interactivity path reads
   expect_true(all(c("mark", "key", "meta") %in% names(m$elements)))
@@ -22,8 +37,17 @@ test_that("scene_model() exposes the element columns vellumplot reads", {
 })
 
 test_that("vellumplot emits marks in vellum's documented `mark` vocabulary", {
-  vocab <- c("rect", "point", "circle", "hexagon", "sector",
-             "segment", "path", "line", "polygon")
+  vocab <- c(
+    "rect",
+    "point",
+    "circle",
+    "hexagon",
+    "sector",
+    "segment",
+    "path",
+    "line",
+    "polygon"
+  )
 
   # a scatter -> point elements
   mp <- vellum::scene_model(vellum::as_vellum_scene(
@@ -42,7 +66,8 @@ test_that("vellumplot emits marks in vellum's documented `mark` vocabulary", {
 })
 
 test_that("provenance id joins to the SVG data-vellum-id (the documented join key)", {
-  p <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
+  p <- vplot(df) |>
+    mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
   sc <- vellum::as_vellum_scene(p)
 
   prov <- attr(sc, "vellumplot_provenance")

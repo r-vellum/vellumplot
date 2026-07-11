@@ -16,7 +16,13 @@ vplot(mtcars) |>
   annotate("point", x = 3, y = 22, size = 2.5, color = "#c0392b") |>
   # plain text and a boxed label
   annotate("text", x = 2, y = 31, label = "outlier zone", color = "#c0392b") |>
-  annotate("label", x = 4.5, y = 30, label = "heavy + thirsty", fill = "#fff3cd") |>
+  annotate(
+    "label",
+    x = 4.5,
+    y = 30,
+    label = "heavy + thirsty",
+    fill = "#fff3cd"
+  ) |>
   labs(title = "annotate(): rect, segment, point, text, label") |>
   render_plot(file.path(outdir, "14-annotations.png"))
 
@@ -25,7 +31,14 @@ vplot(mtcars) |>
 # panel -- handy for a shared reference line or marker.
 vplot(mtcars, width = 8, height = 3) |>
   mark_point(x = wt, y = mpg) |>
-  annotate("segment", x = 1, y = 20, xend = 5.5, yend = 20, color = "#2980b9") |>
+  annotate(
+    "segment",
+    x = 1,
+    y = 20,
+    xend = 5.5,
+    yend = 20,
+    color = "#2980b9"
+  ) |>
   annotate("text", x = 4.5, y = 22, label = "20 mpg", color = "#2980b9") |>
   facet_wrap(~cyl, ncol = 3) |>
   labs(title = "Annotations repeat on every panel") |>

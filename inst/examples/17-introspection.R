@@ -32,7 +32,10 @@ for (nm in c("panel-1-1", "panel-1-3", "legend", "axis-title-x")) {
   # The print method may not auto-dispatch; read fields directly.
   message(sprintf(
     "%-13s %5.1f x %5.1f mm  <- %s",
-    nm, w$width_mm, w$height_mm, w$determined_by
+    nm,
+    w$width_mm,
+    w$height_mm,
+    w$determined_by
   ))
 }
 

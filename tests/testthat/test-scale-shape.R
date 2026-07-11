@@ -29,7 +29,7 @@ test_that("scale_shape(values=) overrides the default shapes", {
 test_that("a constant shape param still works (no scale)", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = "square")
   expect_null(train(p)$shape)
-  f <- withr::local_tempfile(fileext = ".png")
+  f <- local_tempfile(fileext = ".png")
   render_plot(p, f)
   expect_gt(file.info(f)$size, 0)
 })
