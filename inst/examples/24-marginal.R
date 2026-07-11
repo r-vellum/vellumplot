@@ -27,5 +27,9 @@ vplot(faithful) |>
 vplot(peng) |>
   mark_point(x = bill_len, y = bill_dep, color = species) |>
   add_marginal(group = TRUE) |>
-  labs(title = "Penguin bills", x = "Bill length (mm)", y = "Bill depth (mm)") |>
+  labs(
+    title = "Penguin bills",
+    x = "Bill length (mm)",
+    y = "Bill depth (mm)"
+  ) |>
   render_plot(file.path(outdir, "24-marginal-grouped.png"))

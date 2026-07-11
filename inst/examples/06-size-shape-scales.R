@@ -30,8 +30,11 @@ vplot(peng) |>
 # is a little taller than the default.
 vplot(peng, width = 6.5, height = 5.5) |>
   mark_point(
-    x = bill_len, y = bill_dep,
-    color = flipper_len, size = body_mass, shape = species,
+    x = bill_len,
+    y = bill_dep,
+    color = flipper_len,
+    size = body_mass,
+    shape = species,
     alpha = 0.8
   ) |>
   scale_color_continuous(palette = "plasma") |>

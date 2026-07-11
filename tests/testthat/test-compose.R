@@ -143,8 +143,10 @@ test_that("the full feature set renders without error", {
     expect_gt(file.info(f)$size, 0)
   }
   render_ok(hconcat(a, b)) # collected legend + alignment
-  render_ok(concat(a, b, c, d, ncol = 2) |>
-    compose_annotation(title = "fig", tag_levels = "A"))
+  render_ok(
+    concat(a, b, c, d, ncol = 2) |>
+      compose_annotation(title = "fig", tag_levels = "A")
+  )
   render_ok(concat(a, b, c, design = "AA\nBC")) # spanning
   render_ok(concat(a, plot_spacer(), plot_spacer(), b, ncol = 2)) # spacers
   render_ok(inset(a, c)) # inset

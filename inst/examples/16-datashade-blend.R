@@ -23,7 +23,8 @@ vplot(big) |>
 # A custom density ramp + a different density-to-colour mapping.
 vplot(big) |>
   mark_datashade(
-    x = x, y = y,
+    x = x,
+    y = y,
     colors = c("#0d0887", "#cc4778", "#f0f921"),
     how = "log"
   ) |>
@@ -47,8 +48,12 @@ two <- function(cx, cy) data.frame(x = rnorm(m, cx, 0.8), y = rnorm(m, cy, 0.8))
 vplot(two(-0.6, 0)) |>
   mark_point(x = x, y = y, color = "#e41a1c", alpha = 0.4) |>
   mark_point(
-    x = x, y = y, color = "#377eb8", alpha = 0.4,
-    blend = "multiply", data = two(0.6, 0)
+    x = x,
+    y = y,
+    color = "#377eb8",
+    alpha = 0.4,
+    blend = "multiply",
+    data = two(0.6, 0)
   ) |>
   labs(title = "Two clouds, blend = \"multiply\"") |>
   render_plot(file.path(outdir, "16-blend.png"))

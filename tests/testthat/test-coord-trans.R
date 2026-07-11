@@ -17,7 +17,11 @@ test_that("coord_trans() renders point + line under a log-y display", {
 })
 
 test_that(".warp_scale warps break/domain positions but keeps labels", {
-  sc <- list(domain = c(1, 100), breaks = c(1, 10, 100), labels = c("1", "10", "100"))
+  sc <- list(
+    domain = c(1, 100),
+    breaks = c(1, 10, 100),
+    labels = c("1", "10", "100")
+  )
   w <- .warp_scale(sc, log10)
   expect_equal(w$breaks, log10(c(1, 10, 100))) # positions warped
   expect_equal(w$domain, log10(c(1, 100)))
@@ -25,27 +29,41 @@ test_that(".warp_scale warps break/domain positions but keeps labels", {
 })
 
 test_that("nonlinear axes densify straight polylines; linear axes do not", {
-  nonlin <- list(trans = list(x_map = identity, y_map = log10, x_lin = TRUE, y_lin = FALSE))
+  nonlin <- list(
+    trans = list(x_map = identity, y_map = log10, x_lin = TRUE, y_lin = FALSE)
+  )
   d <- .trans_munch(nonlin, c(1, 100), c(1, 100))
   expect_gt(length(d$x), 2L) # a straight data segment becomes a curve
-  lin <- list(trans = list(x_map = identity, y_map = identity, x_lin = TRUE, y_lin = TRUE))
+  lin <- list(
+    trans = list(x_map = identity, y_map = identity, x_lin = TRUE, y_lin = TRUE)
+  )
   d0 <- .trans_munch(lin, c(1, 100), c(1, 100))
   expect_equal(d0$x, c(1, 100)) # identity: no spurious densification
 })
 
 test_that("an identity coord_trans is byte-for-byte the plain plot (additive)", {
   plain <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  ident <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> coord_trans(x = "identity", y = "identity")
+  ident <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    coord_trans(x = "identity", y = "identity")
   expect_identical(svg_of(ident), svg_of(plain))
 })
 
 test_that("coord_trans errors clearly on unsupported marks and out-of-domain data", {
   expect_error(
-    svg_of(vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg) |> coord_trans(y = "log10")),
+    svg_of(
+      vplot(mtcars) |>
+        mark_boxplot(x = factor(cyl), y = mpg) |>
+        coord_trans(y = "log10")
+    ),
     "does not yet support"
   )
   expect_error(
-    svg_of(vplot(data.frame(x = 1:3, y = c(-1, 0, 1))) |> mark_point(x = x, y = y) |> coord_trans(y = "log10")),
+    svg_of(
+      vplot(data.frame(x = 1:3, y = c(-1, 0, 1))) |>
+        mark_point(x = x, y = y) |>
+        coord_trans(y = "log10")
+    ),
     "transform"
   )
   expect_error(

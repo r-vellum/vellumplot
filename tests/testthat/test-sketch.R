@@ -59,7 +59,10 @@ test_that(".el_sketch resolves an element to a sketch-or-NULL", {
   expect_null(vellumplot:::.el_sketch(element_line()))
   expect_null(vellumplot:::.el_sketch(element_line(sketch = NA)))
   expect_null(vellumplot:::.el_sketch(element_blank()))
-  s <- vellumplot:::.el_sketch(element_line(sketch = sketch(seed = 3)), offset = 5L)
+  s <- vellumplot:::.el_sketch(
+    element_line(sketch = sketch(seed = 3)),
+    offset = 5L
+  )
   expect_s3_class(s, "vellum_sketch")
   expect_equal(s$seed, 8) # 3 + offset 5
 })
@@ -88,7 +91,8 @@ test_that("a sketched plot renders and differs from the crisp one", {
   base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, size = 5)
   crisp <- render_px(base)
   drawn <- render_px(
-    vplot(mtcars) |> mark_point(x = wt, y = mpg, size = 5, sketch = sketch(roughness = 2))
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, size = 5, sketch = sketch(roughness = 2))
   )
   expect_identical(dim(crisp), dim(drawn))
   # the wobble redistributes ink, so the frames are not identical
@@ -105,7 +109,8 @@ test_that("sketch = NA renders identically to no sketch (forced crisp)", {
 
 test_that("sketch output is deterministic given a seed", {
   p <- function() {
-    vplot(mtcars) |> mark_point(x = wt, y = mpg, size = 4, sketch = sketch(seed = 11))
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, size = 4, sketch = sketch(seed = 11))
   }
   expect_equal(render_px(p()), render_px(p()))
 })

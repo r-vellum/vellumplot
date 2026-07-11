@@ -258,15 +258,27 @@ NULL
   base <- 0L
   for (lv in names(lines)) {
     e <- lines[[lv]]
-    if (!length(e$x)) next
+    if (!length(e$x)) {
+      next
+    }
     pid <- base + match(e$id, unique(e$id))
     base <- max(pid)
     parts[[length(parts) + 1L]] <- data.frame(
-      x = e$x, y = e$y, level = as.numeric(lv), .piece = pid, .ring = NA_integer_
+      x = e$x,
+      y = e$y,
+      level = as.numeric(lv),
+      .piece = pid,
+      .ring = NA_integer_
     )
   }
   if (!length(parts)) {
-    return(data.frame(x = numeric(), y = numeric(), level = numeric(), .piece = integer(), .ring = integer()))
+    return(data.frame(
+      x = numeric(),
+      y = numeric(),
+      level = numeric(),
+      .piece = integer(),
+      .ring = integer()
+    ))
   }
   do.call(rbind, parts)
 }
@@ -278,13 +290,25 @@ NULL
   parts <- list()
   for (i in seq_along(bands)) {
     e <- bands[[i]]
-    if (!length(e$x)) next
+    if (!length(e$x)) {
+      next
+    }
     parts[[length(parts) + 1L]] <- data.frame(
-      x = e$x, y = e$y, level = levels[i], .piece = i, .ring = as.integer(e$id)
+      x = e$x,
+      y = e$y,
+      level = levels[i],
+      .piece = i,
+      .ring = as.integer(e$id)
     )
   }
   if (!length(parts)) {
-    return(data.frame(x = numeric(), y = numeric(), level = numeric(), .piece = integer(), .ring = integer()))
+    return(data.frame(
+      x = numeric(),
+      y = numeric(),
+      level = numeric(),
+      .piece = integer(),
+      .ring = integer()
+    ))
   }
   do.call(rbind, parts)
 }
@@ -307,10 +331,26 @@ NULL
     hi <- c(brks, Inf)
     # Representative numeric level per band, increasing, for the fill scale.
     step <- if (length(brks) > 1L) stats::median(diff(brks)) else 1
-    levels <- vapply(seq_along(lo), function(i) {
-      if (is.finite(lo[i]) && is.finite(hi[i])) (lo[i] + hi[i]) / 2 else if (!is.finite(lo[i])) hi[i] - step / 2 else lo[i] + step / 2
-    }, numeric(1))
-    bands <- isoband::isobands(fld$gx, fld$gy, fld$gz, levels_low = lo, levels_high = hi)
+    levels <- vapply(
+      seq_along(lo),
+      function(i) {
+        if (is.finite(lo[i]) && is.finite(hi[i])) {
+          (lo[i] + hi[i]) / 2
+        } else if (!is.finite(lo[i])) {
+          hi[i] - step / 2
+        } else {
+          lo[i] + step / 2
+        }
+      },
+      numeric(1)
+    )
+    bands <- isoband::isobands(
+      fld$gx,
+      fld$gy,
+      fld$gz,
+      levels_low = lo,
+      levels_high = hi
+    )
     .isoband_df(bands, levels)
   } else {
     lines <- isoband::isolines(fld$gx, fld$gy, fld$gz, levels = brks)

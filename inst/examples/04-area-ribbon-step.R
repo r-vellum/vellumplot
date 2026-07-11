@@ -8,7 +8,11 @@ dir.create(outdir, showWarnings = FALSE)
 vplot(pressure) |>
   mark_area(x = temperature, y = pressure, fill = "#2c7fb8", alpha = 0.7) |>
   mark_line(x = temperature, y = pressure) |>
-  labs(title = "Vapour pressure (area to baseline)", x = "Temp (C)", y = "Pressure") |>
+  labs(
+    title = "Vapour pressure (area to baseline)",
+    x = "Temp (C)",
+    y = "Pressure"
+  ) |>
   render_plot(file.path(outdir, "04-area.png"))
 
 # --- ribbon (fill between ymin and ymax) ------------------------------------

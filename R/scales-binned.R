@@ -151,17 +151,39 @@ scale_color_binned <- function(
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_binned(n = 6)
 #' @export
-scale_x_binned <- function(plot, style = "pretty", n = 10, breaks = NULL, labels = NULL, name = NULL) {
+scale_x_binned <- function(
+  plot,
+  style = "pretty",
+  n = 10,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
   .binned_position_scale(plot, "x", style, n, breaks, labels, name)
 }
 
 #' @rdname scale_x_binned
 #' @export
-scale_y_binned <- function(plot, style = "pretty", n = 10, breaks = NULL, labels = NULL, name = NULL) {
+scale_y_binned <- function(
+  plot,
+  style = "pretty",
+  n = 10,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
   .binned_position_scale(plot, "y", style, n, breaks, labels, name)
 }
 
-.binned_position_scale <- function(plot, aesthetic, style, n, breaks, labels, name) {
+.binned_position_scale <- function(
+  plot,
+  aesthetic,
+  style,
+  n,
+  breaks,
+  labels,
+  name
+) {
   .check_plot(plot)
   .add_scale(
     plot,

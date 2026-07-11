@@ -26,9 +26,13 @@ vplot(peng) |>
 # Named values match data levels by name; unmatched levels fall back to grey.
 vplot(peng) |>
   mark_point(x = bill_len, y = bill_dep, color = species, size = 1.4) |>
-  scale_color_manual(values = c(
-    Adelie = "#ff6f00", Chinstrap = "#9c27b0", Gentoo = "#00897b"
-  )) |>
+  scale_color_manual(
+    values = c(
+      Adelie = "#ff6f00",
+      Chinstrap = "#9c27b0",
+      Gentoo = "#00897b"
+    )
+  ) |>
   labs(title = "Manual colours by name") |>
   render_plot(file.path(outdir, "05-manual.png"))
 

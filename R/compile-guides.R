@@ -267,7 +267,12 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::vl_viewport(row = row, col = col, yscale = y_sc$domain, name = vp_name)
+    vellum::vl_viewport(
+      row = row,
+      col = col,
+      yscale = y_sc$domain,
+      name = vp_name
+    )
   )
   # axis line along the panel-adjacent (right) edge of the gutter
   if (!.is_blank(aline)) {
@@ -832,7 +837,11 @@ NULL
       size = vellum::vl_unit(m$key / 2, "mm"),
       shape = "circle",
       sketch = sk,
-      gp = vellum::vl_gpar(fill = "grey20", col = NA, alpha = sc$legend_alphas[i])
+      gp = vellum::vl_gpar(
+        fill = "grey20",
+        col = NA,
+        alpha = sc$legend_alphas[i]
+      )
     ),
     linetype = vellum::segments_grob(
       vellum::vl_unit(0.12, "npc"),
@@ -978,7 +987,16 @@ NULL
   }
   for (i in seq_len(k)) {
     scene <- vellum::push(scene, vellum::vl_viewport(row = off + i, col = 1))
-    scene <- vellum::draw(scene, .tag_legend_swatch(.key_grob(g, i, m, rt[[".sketch"]]), g, i, labs[i], rt[[".interactive"]]))
+    scene <- vellum::draw(
+      scene,
+      .tag_legend_swatch(
+        .key_grob(g, i, m, rt[[".sketch"]]),
+        g,
+        i,
+        labs[i],
+        rt[[".interactive"]]
+      )
+    )
     scene <- vellum::pop(scene)
     scene <- vellum::push(scene, vellum::vl_viewport(row = off + i, col = 2))
     scene <- vellum::draw(
@@ -1143,7 +1161,16 @@ NULL
         width = vellum::vl_unit(key_d, "mm")
       )
     )
-    scene <- vellum::draw(scene, .tag_legend_swatch(.key_grob(g, i, m, rt[[".sketch"]]), g, i, labs[i], rt[[".interactive"]]))
+    scene <- vellum::draw(
+      scene,
+      .tag_legend_swatch(
+        .key_grob(g, i, m, rt[[".sketch"]]),
+        g,
+        i,
+        labs[i],
+        rt[[".interactive"]]
+      )
+    )
     scene <- vellum::pop(scene)
     scene <- vellum::draw(
       scene,

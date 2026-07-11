@@ -151,54 +151,159 @@ scale_y_discrete <- function(plot, limits = NULL, name = NULL) {
 #'   mark_line(x = day, y = y) |>
 #'   scale_x_date(date_breaks = "3 months", date_labels = "%b %Y")
 #' @export
-scale_x_date <- function(plot, limits = NULL, date_breaks = NULL,
-                         date_labels = NULL, breaks = NULL, labels = NULL,
-                         name = NULL) {
-  .date_scale(plot, "x", "date", limits, date_breaks, date_labels, breaks, labels, name)
+scale_x_date <- function(
+  plot,
+  limits = NULL,
+  date_breaks = NULL,
+  date_labels = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .date_scale(
+    plot,
+    "x",
+    "date",
+    limits,
+    date_breaks,
+    date_labels,
+    breaks,
+    labels,
+    name
+  )
 }
 
 #' @rdname scale_x_date
 #' @export
-scale_y_date <- function(plot, limits = NULL, date_breaks = NULL,
-                         date_labels = NULL, breaks = NULL, labels = NULL,
-                         name = NULL) {
-  .date_scale(plot, "y", "date", limits, date_breaks, date_labels, breaks, labels, name)
+scale_y_date <- function(
+  plot,
+  limits = NULL,
+  date_breaks = NULL,
+  date_labels = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .date_scale(
+    plot,
+    "y",
+    "date",
+    limits,
+    date_breaks,
+    date_labels,
+    breaks,
+    labels,
+    name
+  )
 }
 
 #' @rdname scale_x_date
 #' @export
-scale_x_datetime <- function(plot, limits = NULL, date_breaks = NULL,
-                             date_labels = NULL, breaks = NULL, labels = NULL,
-                             name = NULL) {
-  .date_scale(plot, "x", "datetime", limits, date_breaks, date_labels, breaks, labels, name)
+scale_x_datetime <- function(
+  plot,
+  limits = NULL,
+  date_breaks = NULL,
+  date_labels = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .date_scale(
+    plot,
+    "x",
+    "datetime",
+    limits,
+    date_breaks,
+    date_labels,
+    breaks,
+    labels,
+    name
+  )
 }
 
 #' @rdname scale_x_date
 #' @export
-scale_y_datetime <- function(plot, limits = NULL, date_breaks = NULL,
-                             date_labels = NULL, breaks = NULL, labels = NULL,
-                             name = NULL) {
-  .date_scale(plot, "y", "datetime", limits, date_breaks, date_labels, breaks, labels, name)
+scale_y_datetime <- function(
+  plot,
+  limits = NULL,
+  date_breaks = NULL,
+  date_labels = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .date_scale(
+    plot,
+    "y",
+    "datetime",
+    limits,
+    date_breaks,
+    date_labels,
+    breaks,
+    labels,
+    name
+  )
 }
 
 #' @rdname scale_x_date
 #' @export
-scale_x_time <- function(plot, limits = NULL, date_breaks = NULL,
-                         date_labels = NULL, breaks = NULL, labels = NULL,
-                         name = NULL) {
-  .date_scale(plot, "x", "time", limits, date_breaks, date_labels, breaks, labels, name)
+scale_x_time <- function(
+  plot,
+  limits = NULL,
+  date_breaks = NULL,
+  date_labels = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .date_scale(
+    plot,
+    "x",
+    "time",
+    limits,
+    date_breaks,
+    date_labels,
+    breaks,
+    labels,
+    name
+  )
 }
 
 #' @rdname scale_x_date
 #' @export
-scale_y_time <- function(plot, limits = NULL, date_breaks = NULL,
-                         date_labels = NULL, breaks = NULL, labels = NULL,
-                         name = NULL) {
-  .date_scale(plot, "y", "time", limits, date_breaks, date_labels, breaks, labels, name)
+scale_y_time <- function(
+  plot,
+  limits = NULL,
+  date_breaks = NULL,
+  date_labels = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .date_scale(
+    plot,
+    "y",
+    "time",
+    limits,
+    date_breaks,
+    date_labels,
+    breaks,
+    labels,
+    name
+  )
 }
 
-.date_scale <- function(plot, aesthetic, type, limits, date_breaks,
-                        date_labels, breaks, labels, name) {
+.date_scale <- function(
+  plot,
+  aesthetic,
+  type,
+  limits,
+  date_breaks,
+  date_labels,
+  breaks,
+  labels,
+  name
+) {
   .check_plot(plot)
   .add_scale(
     plot,
@@ -218,7 +323,8 @@ scale_y_time <- function(plot, limits = NULL, date_breaks = NULL,
 # Canonicalise an aesthetic name for a limits shortcut (British spelling, `fill`
 # shares the colour scale).
 .canonical_lim_aes <- function(aesthetic) {
-  switch(aesthetic,
+  switch(
+    aesthetic,
     colour = "color",
     fill = "color",
     linewidth = "edge_width",
@@ -617,8 +723,13 @@ scale_linetype_identity <- function(plot) {
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, alpha = hp) |> scale_alpha(range = c(0.2, 1))
 #' @export
-scale_alpha <- function(plot, range = c(0.1, 1), limits = NULL,
-                        breaks = NULL, name = NULL) {
+scale_alpha <- function(
+  plot,
+  range = c(0.1, 1),
+  limits = NULL,
+  breaks = NULL,
+  name = NULL
+) {
   .check_plot(plot)
   .add_scale(
     plot,

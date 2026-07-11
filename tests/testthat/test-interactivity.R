@@ -27,7 +27,8 @@ test_that("data_id becomes a per-element data-key in the SVG", {
 })
 
 test_that("tooltip + data_id surface per element in scene_model()", {
-  p <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
+  p <- vplot(df) |>
+    mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
   el <- data_points_of(p)
   expect_equal(nrow(el), nrow(df))
   expect_setequal(el$key, df$model)
@@ -53,7 +54,11 @@ test_that("tooltip without data_id defaults the key to row identity", {
 test_that("a constant tooltip recycles to every element", {
   p <- vplot(df) |> mark_point(x = wt, y = mpg, data_id = model, tooltip = "hi")
   el <- data_points_of(p)
-  expect_true(all(vapply(el$meta, function(m) identical(m$tooltip, "hi"), logical(1))))
+  expect_true(all(vapply(
+    el$meta,
+    function(m) identical(m$tooltip, "hi"),
+    logical(1)
+  )))
 })
 
 test_that("data_id keys survive style grouping (colour splits into groups)", {
@@ -74,7 +79,13 @@ test_that("bars carry per-bar keys", {
 })
 
 test_that("segments carry per-element keys", {
-  ds <- data.frame(x = c(0, 1), y = c(0, 1), xe = c(1, 2), ye = c(1, 0), id = c("s1", "s2"))
+  ds <- data.frame(
+    x = c(0, 1),
+    y = c(0, 1),
+    xe = c(1, 2),
+    ye = c(1, 0),
+    id = c("s1", "s2")
+  )
   p <- vplot(ds) |>
     mark_segment(x = x, y = y, x2 = xe, y2 = ye, data_id = id)
   el <- model_of(p)$elements
@@ -103,21 +114,32 @@ test_that("per-element hover_color / selected_color resolve into element meta", 
   df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, cyl = factor(mtcars$cyl))
   p <- vplot(df) |>
     mark_point(
-      x = wt, y = mpg, data_id = seq_len(nrow(df)),
+      x = wt,
+      y = mpg,
+      data_id = seq_len(nrow(df)),
       hover_color = ifelse(mtcars$cyl == 8, "red", "blue"),
       selected_color = "black"
     )
   el <- data_points_of(p)
   expect_equal(nrow(el), nrow(df))
   # hover_color is data-driven (per row); selected_color is constant (recycled)
-  hc <- vapply(el$meta, function(m) m$hover_color %||% NA_character_, character(1))
+  hc <- vapply(
+    el$meta,
+    function(m) m$hover_color %||% NA_character_,
+    character(1)
+  )
   expect_setequal(unique(hc), c("red", "blue"))
-  expect_true(all(vapply(el$meta, function(m) identical(m$selected_color, "black"), logical(1))))
+  expect_true(all(vapply(
+    el$meta,
+    function(m) identical(m$selected_color, "black"),
+    logical(1)
+  )))
 })
 
 test_that("interactivity declarations do not perturb the rendered pixels", {
   base <- vplot(df) |> mark_point(x = wt, y = mpg)
-  keyed <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
+  keyed <- vplot(df) |>
+    mark_point(x = wt, y = mpg, tooltip = model, data_id = model)
   expect_identical(vellum::scene_raster(base), vellum::scene_raster(keyed))
 })
 
@@ -127,8 +149,10 @@ test_that("interactivity declarations do not perturb the rendered pixels", {
 # whole series, and every data mark carries its series membership in `meta$legend`.
 
 legend_df <- data.frame(
-  wt = mtcars$wt, mpg = mtcars$mpg,
-  model = rownames(mtcars), cyl = factor(mtcars$cyl)
+  wt = mtcars$wt,
+  mpg = mtcars$mpg,
+  model = rownames(mtcars),
+  cyl = factor(mtcars$cyl)
 )
 swatches_of <- function(p) {
   el <- model_of(p)$elements
@@ -140,12 +164,24 @@ test_that("discrete colour legend swatches carry legend_for + tooltip", {
     mark_point(x = wt, y = mpg, color = cyl, data_id = model)
   sw <- swatches_of(p)
   expect_equal(nrow(sw), nlevels(legend_df$cyl))
-  lf <- vapply(sw$meta, function(m) m[["legend_for"]] %||% NA_character_, character(1))
+  lf <- vapply(
+    sw$meta,
+    function(m) m[["legend_for"]] %||% NA_character_,
+    character(1)
+  )
   expect_setequal(lf, paste0("color:", levels(legend_df$cyl)))
   # tooltip mirrors the level label; swatches must NOT carry series membership
-  tt <- vapply(sw$meta, function(m) m[["tooltip"]] %||% NA_character_, character(1))
+  tt <- vapply(
+    sw$meta,
+    function(m) m[["tooltip"]] %||% NA_character_,
+    character(1)
+  )
   expect_setequal(tt, levels(legend_df$cyl))
-  expect_true(all(vapply(sw$meta, function(m) is.null(m[["legend"]]), logical(1))))
+  expect_true(all(vapply(
+    sw$meta,
+    function(m) is.null(m[["legend"]]),
+    logical(1)
+  )))
 })
 
 test_that("data marks carry their colour-series membership in meta$legend", {
@@ -164,5 +200,9 @@ test_that("legend tagging is inert without interactivity declarations", {
   expect_no_match(svg_of(p), "legend:")
   expect_equal(nrow(swatches_of(p)), 0L)
   el <- points_of(p)
-  expect_true(all(vapply(el$meta, function(m) is.null(m[["legend"]]), logical(1))))
+  expect_true(all(vapply(
+    el$meta,
+    function(m) is.null(m[["legend"]]),
+    logical(1)
+  )))
 })

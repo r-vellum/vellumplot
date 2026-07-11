@@ -134,8 +134,12 @@ CoordSpec <- S7::new_class(
     ))
   }
   list(
-    x_map = fx, y_map = fy, x_dom = xdom, y_dom = ydom,
-    x_lin = .is_linear_trans(co@xtrans), y_lin = .is_linear_trans(co@ytrans)
+    x_map = fx,
+    y_map = fy,
+    x_dom = xdom,
+    y_dom = ydom,
+    x_lin = .is_linear_trans(co@xtrans),
+    y_lin = .is_linear_trans(co@ytrans)
   )
 }
 

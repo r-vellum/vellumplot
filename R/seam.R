@@ -102,11 +102,29 @@ NULL
   # rather than silently clip.
   if (trans) {
     ok_marks <- c(
-      "point", "nodes", "line", "smooth", "ribbon", "area", "step", "text",
-      "label", "node_text", "tile", "bar", "violin", "ridgeline", "hex", "sf",
-      "contour", "contour_filled"
+      "point",
+      "nodes",
+      "line",
+      "smooth",
+      "ribbon",
+      "area",
+      "step",
+      "text",
+      "label",
+      "node_text",
+      "tile",
+      "bar",
+      "violin",
+      "ridgeline",
+      "hex",
+      "sf",
+      "contour",
+      "contour_filled"
     )
-    bad <- setdiff(unique(vapply(spec@layers, function(L) L@mark, character(1))), ok_marks)
+    bad <- setdiff(
+      unique(vapply(spec@layers, function(L) L@mark, character(1))),
+      ok_marks
+    )
     if (length(bad)) {
       cli::cli_abort(c(
         "{.fn coord_trans} does not yet support the {.val {bad}} mark{?s}.",
@@ -234,7 +252,12 @@ NULL
           name = pname
         )
       )
-      scene <- .draw_panel_bg(scene, .warp_scale(hsc, ctx$x_map), .warp_scale(vsc, ctx$y_map), rt)
+      scene <- .draw_panel_bg(
+        scene,
+        .warp_scale(hsc, ctx$x_map),
+        .warp_scale(vsc, ctx$y_map),
+        rt
+      )
     } else {
       scene <- vellum::push(
         scene,

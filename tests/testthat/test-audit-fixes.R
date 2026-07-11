@@ -81,7 +81,10 @@ test_that("an inset drawn below the base still renders", {
 })
 
 test_that("a boxplot tolerates NA in y", {
-  d <- data.frame(g = rep(c("a", "b"), each = 5), y = c(1, 2, NA, 4, 5, 2, 3, 4, NA, 6))
+  d <- data.frame(
+    g = rep(c("a", "b"), each = 5),
+    y = c(1, 2, NA, 4, 5, 2, 3, 4, NA, 6)
+  )
   p <- vplot(d) |> mark_boxplot(x = g, y = y)
   f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))

@@ -17,7 +17,10 @@ vplot(hm) |>
 
 # --- raster (fast path for a complete regular grid) -------------------------
 # A smooth field rendered as a single raster image.
-g <- expand.grid(x = seq(-3, 3, length.out = 120), y = seq(-3, 3, length.out = 120))
+g <- expand.grid(
+  x = seq(-3, 3, length.out = 120),
+  y = seq(-3, 3, length.out = 120)
+)
 g$z <- with(g, sin(x * 1.5) * cos(y * 1.5) * exp(-(x^2 + y^2) / 8))
 vplot(g) |>
   mark_raster(x = x, y = y, fill = z) |>
