@@ -2,6 +2,19 @@
 
 ## vellumplot (development version)
 
+- **[`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
+  — nonlinear display transforms.** Warps the *display* of one or both
+  position axes after the scale has trained, so gridlines bunch up and
+  straight lines curve while the axis keeps its original data-value
+  labels (unlike `scale_*(trans=)`, which rescales the data and relabels
+  in transformed space). Each of `x`/`y` takes a transform name
+  (`"log10"`, `"sqrt"`, `"identity"`) or a `scales::transform_*()`
+  object, e.g. `coord_trans(y = "log10")`. Supports the common marks
+  (points, lines, areas/ribbons, bars, tiles, smooths, text, …);
+  segment/interval, boxplot, edges, and raster/datashade marks are not
+  warped yet and raise a clear error under
+  [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md).
+
 - **[`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
   and
   [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
@@ -214,9 +227,10 @@ ggplot2.
 
 Secondary axes (`sec_axis`/`dup_axis`); 2-D density / contour
 (`mark_contour`/`stat_density_2d`); position-binned scales
-(`scale_x_binned`); `coord_trans()` and free non-position scales across
-facets; triple-merge legends (colour+shape+size) and NA keys for
-size/shape.
+(`scale_x_binned`);
+[`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
+and free non-position scales across facets; triple-merge legends
+(colour+shape+size) and NA keys for size/shape.
 
 ## vellumplot 0.1.1
 

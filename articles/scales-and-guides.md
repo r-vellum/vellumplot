@@ -192,6 +192,32 @@ vplot(mtcars) |>
 
 ![](scales-and-guides_files/figure-html/unnamed-chunk-10-1.png)
 
+### Scale transform vs display transform
+
+A `scale_*(trans=)` (above) transforms the *data*: it picks its breaks
+in the transformed space, so a `"log10"` axis is labelled `1, 10, 100`.
+[`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
+instead warps only the *display*, after the scale has trained — the
+breaks stay at their original data values, so the axis keeps those
+labels but they sit at warped positions (gridlines bunch up, and
+straight lines curve). Use it to show data on a log display without
+relabelling the axis in powers of ten:
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_line(x = wt, y = mpg) |>
+  coord_trans(y = "log10")
+```
+
+![](scales-and-guides_files/figure-html/unnamed-chunk-11-1.png)
+
+Each of `x` / `y` takes a transform name (`"log10"`, `"sqrt"`,
+`"identity"`) or a `scales::transform_*()` object. It applies to the
+common marks (points, lines, areas, bars, tiles, smooths, text);
+interval/segment, boxplot, and raster marks are not warped yet.
+
 ## Date and time axes
 
 A `Date` or `POSIXct` column gets a date axis automatically. To control
@@ -216,7 +242,7 @@ vplot(econ) |>
   scale_x_date(date_breaks = "6 months", date_labels = "%b %Y")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-11-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-12-1.png)
 
 ## Guides come for free
 
@@ -232,7 +258,7 @@ vplot(mtcars) |>
   scale_size(range = c(1, 8), name = "Displacement")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-12-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-13-1.png)
 
 ## Controlling a legend
 
@@ -249,7 +275,7 @@ vplot(mtcars) |>
   guides(color = guide_legend(title = "Cylinders", reverse = TRUE))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-13-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-14-1.png)
 
 Hiding a legend keeps the mapping; the marks stay coloured, only the
 guide disappears:
@@ -261,7 +287,7 @@ vplot(mtcars) |>
   guides(color = "none")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-14-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-15-1.png)
 
 ## Rich titles
 
@@ -279,7 +305,7 @@ vplot(mtcars) |>
   scale_color_continuous(name = md("Power (hp m^2^)"))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-15-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-16-1.png)
 
 Faceted plots add one more question: should panels share a scale or
 train their own? That is the

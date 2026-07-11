@@ -218,6 +218,8 @@ render_plot(p, "cars.png")
   [`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
   /
   [`coord_equal()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),
+  [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
+  (nonlinear display remap),
   [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
   (pie / coxcomb / radar), and
   [`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md).

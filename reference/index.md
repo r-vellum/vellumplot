@@ -156,6 +156,8 @@ Map data values to visual properties, with trained domains and guides.
   [`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
   [`coord_equal()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
   : Coordinate systems
+- [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
+  : Transformed coordinate system
 - [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
   : Polar coordinates
 - [`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md)
