@@ -179,6 +179,13 @@ after_stat <- function(x) x
     )
   }
   quos <- c(dots, extra)
+  # Normalise British spelling up front (`colour` -> `color`, incl. compounds
+  # like `hover_colour`) so the interactivity split below -- keyed on the
+  # American `.INTERACT_ARGS` -- catches `hover_colour`/`selected_colour` too.
+  # `.split_encodings` repeats this normalisation harmlessly (it is idempotent).
+  if (length(quos)) {
+    names(quos) <- sub("colour", "color", names(quos), fixed = TRUE)
+  }
   # Interactivity args (`tooltip`/`data_id`/`hover_group`) are reserved, not
   # aesthetics: pull them out before encoding-splitting so they are never
   # scale-trained. They are captured as quosures and resolved per row at compile.
@@ -699,18 +706,30 @@ mark_datashade <- function(
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
 #'   `ymax` for ribbon; plus `color`/`fill`/`alpha`.
+#' @param position For `mark_area()`, how areas sharing an `x` combine when
+#'   `fill`/`color` is mapped: `"stack"` (default) stacks them into a band,
+#'   `"fill"` normalises each `x` to 1, `"identity"` overlays them from the zero
+#'   baseline. With no fill mapping all three are equivalent (a single area).
 #' @param direction For `mark_step()`, `"hv"` (horizontal then vertical, default)
 #'   or `"vh"`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(pressure) |> mark_area(x = temperature, y = pressure)
 #' @export
-mark_area <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+mark_area <- function(
+  plot,
+  ...,
+  position = "stack",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
     "area",
     rlang::enquos(...),
+    position = position,
     blend = blend,
     sketch = sketch,
     data = data
@@ -777,7 +796,8 @@ mark_step <- function(
 #' @param nudge_x,nudge_y Shift each label by an exact absolute distance in
 #'   millimetres (`+x` right, `+y` up), device-resolved so the nudge is constant
 #'   regardless of scale or panel aspect. Default `0`.
-#' @param fill For `mark_label()`, the background fill colour.
+#' @param fill For `mark_label()`, the label background: a constant colour, or a
+#'   mapped encoding (e.g. `fill = group`) coloured through the fill/colour scale.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
@@ -906,7 +926,7 @@ mark_raster <- function(plot, ..., blend = NULL, data = NULL) {
 mark_bin2d <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
-  if (is.null(dots$fill) && is.null(dots$color)) {
+  if (is.null(dots$fill) && is.null(dots$color) && is.null(dots$colour)) {
     dots$fill <- rlang::quo(after_stat(count))
   }
   .add_layer(
@@ -1229,7 +1249,7 @@ mark_dotplot <- function(
 mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
-  if (is.null(dots$fill) && is.null(dots$color)) {
+  if (is.null(dots$fill) && is.null(dots$color) && is.null(dots$colour)) {
     dots$fill <- rlang::quo(after_stat(count))
   }
   .add_layer(

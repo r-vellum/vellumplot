@@ -6,7 +6,14 @@
 \alias{mark_step}
 \title{Area, ribbon, and step marks}
 \usage{
-mark_area(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_area(
+  plot,
+  ...,
+  position = "stack",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
 mark_ribbon(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
@@ -25,6 +32,11 @@ mark_step(
 
 \item{...}{Encodings (tidy-eval): \code{x} and \code{y} for area/step; \code{x}, \code{ymin},
 \code{ymax} for ribbon; plus \code{color}/\code{fill}/\code{alpha}.}
+
+\item{position}{For \code{mark_area()}, how areas sharing an \code{x} combine when
+\code{fill}/\code{color} is mapped: \code{"stack"} (default) stacks them into a band,
+\code{"fill"} normalises each \code{x} to 1, \code{"identity"} overlays them from the zero
+baseline. With no fill mapping all three are equivalent (a single area).}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS

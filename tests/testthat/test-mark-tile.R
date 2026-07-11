@@ -25,6 +25,17 @@ test_that("constructors set mark/stat", {
   expect_identical(dl@stat, "density")
 })
 
+test_that("a British `colour =` suppresses the default count fill on bin2d (H12)", {
+  fg <- data.frame(
+    waiting = faithful$waiting,
+    eruptions = faithful$eruptions,
+    g = rep(letters[1:2], length.out = nrow(faithful))
+  )
+  L <- (vplot(fg) |> mark_bin2d(x = waiting, y = eruptions, colour = g))@layers[[1]]
+  expect_false("fill" %in% names(L@encoding))
+  expect_true("color" %in% names(L@encoding))
+})
+
 test_that("stat bin2d produces non-empty cells with count + width/height", {
   r <- resolve1(
     vplot(faithful) |> mark_bin2d(x = waiting, y = eruptions, bins = 10)

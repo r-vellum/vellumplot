@@ -206,6 +206,20 @@ NULL
   list(angle = angle, narrow = narrow)
 }
 
+# Warn when user vertex/edge attributes collide with the reserved layout columns
+# (x/y/xend/yend). The layout coordinates are the geometry, so they win and
+# overwrite the attribute -- but that clobber would otherwise be silent.
+.warn_layout_clash <- function(nms, reserved, what) {
+  clash <- intersect(nms, reserved)
+  if (length(clash)) {
+    cli::cli_warn(c(
+      "{what} attribute{?s} {.val {clash}} overwritten by the graph layout coordinates.",
+      i = "Rename on the graph to keep the original values."
+    ))
+  }
+  invisible()
+}
+
 # Build the node table: vertex attributes + a `name` id + layout x/y, in the
 # graph's canonical vertex order (coords attached before any user reorder).
 .node_table <- function(g, xy) {
@@ -217,6 +231,7 @@ NULL
     as.character(seq_len(n))
   }
   extra <- vdf[, setdiff(names(vdf), "name"), drop = FALSE]
+  .warn_layout_clash(names(extra), c("x", "y"), "Vertex")
   node <- data.frame(name = nm, stringsAsFactors = FALSE)
   if (ncol(extra)) {
     node <- cbind(node, extra)
@@ -231,6 +246,7 @@ NULL
 # index* (never by row position), with parallel/reciprocal offsets baked in.
 .edge_table <- function(g, xy) {
   edf <- igraph::as_data_frame(g, what = "edges")
+  .warn_layout_clash(names(edf), c("x", "y", "xend", "yend"), "Edge")
   ei <- igraph::ends(g, igraph::E(g), names = FALSE)
   m <- nrow(ei)
   if (!m) {

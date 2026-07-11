@@ -1,5 +1,31 @@
 # vellumplot (development version)
 
+## Bug fixes
+
+* **`mark_area()` now stacks.** `mark_area(position = ...)` was silently ignored;
+  it gains a `position` argument (`"stack"` default, plus `"fill"` and
+  `"identity"`), so areas sharing an `x` with a mapped `fill`/`color` combine into
+  a band instead of overlapping from the zero baseline. An area with no fill
+  mapping is unchanged.
+
+* **Mapped aesthetics that were silently dropped now take effect.** A mapped
+  `fill` on `mark_label()` colours the label background (previously it always fell
+  back to white); a mapped or constant `alpha` is honoured per category/tick by
+  `mark_violin()`, `mark_ridgeline()`, `mark_contour()`, `mark_contour_filled()`
+  and `mark_rug()` (previously collapsed to one value or ignored), and `mark_rug()`
+  also honours a mapped `color`.
+
+* **British spelling works everywhere.** `hover_colour`/`selected_colour` are now
+  recognised as interactivity arguments (previously only the American spelling
+  was), and `mark_bin2d()`/`mark_hex()` no longer add a default count fill when a
+  British `colour =` is supplied.
+
+* **`vgraph()` warns on a layout-column clash.** A vertex/edge attribute named
+  `x`/`y` (or `xend`/`yend`) is overwritten by the layout coordinates; that used
+  to happen silently and now emits a warning naming the attribute.
+
+## New features
+
 * **`coord_trans()` — nonlinear display transforms.** Warps the *display* of one
   or both position axes after the scale has trained, so gridlines bunch up and
   straight lines curve while the axis keeps its original data-value labels (unlike

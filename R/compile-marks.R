@@ -428,13 +428,14 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "#3366bb"), n)
-  a <- .aes_alpha(L, scales, NA_real_)[1]
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 0.6)
   piece <- L$values$.piece
   sk <- .mark_sketch(L, scales)
   gi <- 0L
   for (pid in unique(piece)) {
     idx <- which(piece == pid)
+    a <- alpha[idx[1]]
     xy <- .xy_path(scales, xn[idx], yn[idx])
     scene <- .draw(
       scene,
@@ -465,13 +466,14 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   fill <- rep_len(.aes_colour(L, scales, "#3366bb"), n)
-  a <- .aes_alpha(L, scales, NA_real_)[1]
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   piece <- L$values$.piece
   ring <- L$values$.ring
   sk <- .mark_sketch(L, scales)
   gi <- 0L
   for (pid in unique(piece)) {
     idx <- which(piece == pid)
+    a <- alpha[idx[1]]
     xy <- .xy_path(scales, xn[idx], yn[idx])
     scene <- .draw(
       scene,
@@ -796,13 +798,16 @@ NULL
   scene
 }
 
-# An area mark: the region between `y` and the zero baseline (a ribbon with
-# ymin = 0).
+# An area mark: the region between `y` and the zero baseline, or between a
+# stacked `[ymin, ymax]` span when `position = "stack"`/`"fill"` set one (see
+# `.position_stack`). Baseline resolution mirrors `.emit_bar`.
 .emit_area <- function(scene, L, scales) {
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
-  y0 <- rep_len(scales$y$map(0), n)
-  y1 <- rep_len(scales$y$map(L$values$y), n)
+  ymin_d <- if (!is.null(L$values$ymin)) L$values$ymin else rep(0, n)
+  ymax_d <- if (!is.null(L$values$ymax)) L$values$ymax else L$values$y
+  y0 <- rep_len(scales$y$map(ymin_d), n)
+  y1 <- rep_len(scales$y$map(ymax_d), n)
   sk <- .mark_sketch(L, scales)
 
   # A gradient fill paints the whole area as one polygon (in x order).
@@ -991,7 +996,16 @@ NULL
   yn <- rep_len(scales$y$map(L$values$y), n)
   label <- rep_len(as.character(L$values$label), n)
   col <- rep_len(.text_colour(L, scales, "black"), n)
-  bg <- L$params$fill %||% "white"
+  # Label background: a mapped `fill` channel (through the colour scale), else a
+  # constant `fill` param, else white. `.text_colour` deliberately keeps `fill`
+  # out of the ink colour, so the background is resolved here on its own.
+  bg <- if (!is.null(scales$color) && !is.null(L$values$fill)) {
+    scales$color$map(L$values$fill)
+  } else {
+    L$params$fill %||% "white"
+  }
+  bg <- rep_len(bg, n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   sk <- .mark_sketch(L, scales)
   fs <- .aes_param(L, "size", 8)
   pad <- vellum::vl_unit(1.2, "mm")
@@ -1004,7 +1018,8 @@ NULL
     lapply(label, function(l) vellum::grobheight(.txt(l, fs)) + pad)
   )
 
-  for (idx in .style_groups(n, list(col = col))) {
+  for (idx in .style_groups(n, list(col = col, fill = bg, alpha = alpha))) {
+    a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L)
     scene <- .draw(
       scene,
@@ -1015,7 +1030,11 @@ NULL
         height = hs[idx],
         r = vellum::vl_unit(0.8, "mm"),
         sketch = sk,
-        gp = vellum::vl_gpar(fill = bg, col = NA)
+        gp = vellum::vl_gpar(
+          fill = bg[idx[1]],
+          col = NA,
+          alpha = if (is.na(a)) NULL else a
+        )
       )
     )
     scene <- .draw(
@@ -1024,7 +1043,11 @@ NULL
         label[idx],
         xy$x,
         xy$y,
-        gp = vellum::vl_gpar(fontsize = fs, col = col[idx[1]])
+        gp = vellum::vl_gpar(
+          fontsize = fs,
+          col = col[idx[1]],
+          alpha = if (is.na(a)) NULL else a
+        )
       )
     )
   }
@@ -1232,6 +1255,7 @@ NULL
   xv <- L$values$x
   yv <- as.numeric(L$values$y)
   colv <- rep_len(.aes_colour(L, scales, "grey70"), length(yv))
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(yv))
   adjust <- L$stat_params$adjust %||% 1
   levs <- .cat_levels(xv)
   xc_all <- scales$x$map(levs)
@@ -1246,6 +1270,7 @@ NULL
       next
     }
     sel <- which(xchar == levs[j])
+    a <- alpha[sel[1]]
     dn <- (d$y / max(d$y)) * hw
     xc <- xc_all[j]
     # up the right side, then down the mirrored left side
@@ -1258,7 +1283,12 @@ NULL
         xy$x,
         xy$y,
         sketch = .sketch_bump(sk, j),
-        gp = vellum::vl_gpar(fill = colv[sel[1]], col = "grey30", lwd = 1)
+        gp = vellum::vl_gpar(
+          fill = colv[sel[1]],
+          col = "grey30",
+          lwd = 1,
+          alpha = if (is.na(a)) NULL else a
+        )
       ),
       # PROVENANCE: a violin summarises all rows of its category.
       rows = sel
@@ -1282,7 +1312,7 @@ NULL
   scale_h <- (L$stat_params$scale %||% 1.4) * band
   ychar <- as.character(yv)
   dens <- .density_by_cat(xv, yv, levs, adjust)
-  a <- .aes_alpha(L, scales, NA_real_)[1]
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(xv))
   sk <- .mark_sketch(L, scales)
   for (j in rev(seq_along(levs))) {
     d <- dens[[j]]
@@ -1290,6 +1320,7 @@ NULL
       next
     }
     sel <- which(ychar == levs[j])
+    a <- alpha[sel[1]]
     h <- (d$y / max(d$y)) * scale_h
     base <- ypos[j]
     px <- scales$x$map(c(d$x, rev(d$x)))
@@ -1890,52 +1921,59 @@ NULL
 # selects the edges. Cartesian only (no flip/polar). `length` is the tick length
 # as a fraction of the panel (npc).
 .emit_rug <- function(scene, L, scales) {
+  n <- L$n
   sides <- L$stat_params$sides %||% "bl"
   len <- L$stat_params$length %||% 0.03
-  col <- .aes_colour(L, scales, "black")[1]
-  a <- .aes_alpha(L, scales, NA_real_)[1]
-  gp <- vellum::vl_gpar(
-    col = col,
-    lwd = .aes_param(L, "linewidth", 0.5),
-    alpha = if (is.na(a)) NULL else a
-  )
-  tick <- function(scene, u_along, y0, y1, rows, vertical) {
-    if (vertical) {
-      grob <- vellum::segments_grob(
-        u_along,
-        vellum::vl_unit(y0, "npc"),
-        u_along,
-        vellum::vl_unit(y1, "npc"),
-        gp = gp
+  col <- rep_len(.aes_colour(L, scales, "black"), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  lwd <- .aes_param(L, "linewidth", 0.5)
+  # One segments grob per distinct (colour, alpha) so a mapped colour/alpha is
+  # honoured per tick rather than collapsed to the first row's style.
+  groups <- .style_groups(n, list(col = col, alpha = alpha))
+  # `pos` are native positions over all rows; draw each style group's subset.
+  tick <- function(scene, pos, y0, y1, vertical) {
+    for (idx in groups) {
+      a <- alpha[idx[1]]
+      gp <- vellum::vl_gpar(
+        col = col[idx[1]],
+        lwd = lwd,
+        alpha = if (is.na(a)) NULL else a
       )
-    } else {
-      grob <- vellum::segments_grob(
-        vellum::vl_unit(y0, "npc"),
-        u_along,
-        vellum::vl_unit(y1, "npc"),
-        u_along,
-        gp = gp
-      )
+      u <- vellum::vl_unit(pos[idx], "native")
+      if (vertical) {
+        grob <- vellum::segments_grob(
+          u,
+          vellum::vl_unit(y0, "npc"),
+          u,
+          vellum::vl_unit(y1, "npc"),
+          gp = gp
+        )
+      } else {
+        grob <- vellum::segments_grob(
+          vellum::vl_unit(y0, "npc"),
+          u,
+          vellum::vl_unit(y1, "npc"),
+          u,
+          gp = gp
+        )
+      }
+      scene <- .draw(scene, grob, rows = idx)
     }
-    .draw(scene, grob, rows = rows)
+    scene
   }
   if (!is.null(L$values$x) && (grepl("b", sides) || grepl("t", sides))) {
-    nx <- scales$x$map(L$values$x)
-    ux <- vellum::vl_unit(nx, "native")
-    r <- seq_along(nx)
+    nx <- rep_len(scales$x$map(L$values$x), n)
     if (grepl("b", sides)) {
-      scene <- tick(scene, ux, 0, len, r, TRUE)
+      scene <- tick(scene, nx, 0, len, TRUE)
     }
-    if (grepl("t", sides)) scene <- tick(scene, ux, 1, 1 - len, r, TRUE)
+    if (grepl("t", sides)) scene <- tick(scene, nx, 1, 1 - len, TRUE)
   }
   if (!is.null(L$values$y) && (grepl("l", sides) || grepl("r", sides))) {
-    ny <- scales$y$map(L$values$y)
-    uy <- vellum::vl_unit(ny, "native")
-    r <- seq_along(ny)
+    ny <- rep_len(scales$y$map(L$values$y), n)
     if (grepl("l", sides)) {
-      scene <- tick(scene, uy, 0, len, r, FALSE)
+      scene <- tick(scene, ny, 0, len, FALSE)
     }
-    if (grepl("r", sides)) scene <- tick(scene, uy, 1, 1 - len, r, FALSE)
+    if (grepl("r", sides)) scene <- tick(scene, ny, 1, 1 - len, FALSE)
   }
   scene
 }

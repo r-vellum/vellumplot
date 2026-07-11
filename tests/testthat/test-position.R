@@ -70,6 +70,61 @@ test_that("dodge and jitter are recorded and render", {
   expect_gt(file.info(fj)$size, 0)
 })
 
+# --- Area stacking (H14) --------------------------------------------------
+# mark_area() with a mapped fill stacks into a band by default, mirroring bars.
+
+area_df <- data.frame(
+  x = rep(1:4, times = 2),
+  y = c(1, 2, 3, 4, 2, 1, 2, 1),
+  g = factor(rep(c("a", "b"), each = 4))
+)
+
+test_that("mark_area() stacks by default", {
+  expect_identical(
+    (vplot(area_df) |> mark_area(x = x, y = y, fill = g))@layers[[1]]@position,
+    "stack"
+  )
+})
+
+test_that("stacked areas get non-overlapping [ymin, ymax] spans summing to the group total (H14)", {
+  p <- vplot(area_df) |> mark_area(x = x, y = y, fill = g)
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_false(is.null(r$values$ymin))
+  x <- as.character(r$values$x)
+  for (xi in unique(x)) {
+    rows <- which(x == xi)
+    lo <- sort(r$values$ymin[rows])
+    hi <- sort(r$values$ymax[rows])
+    expect_equal(lo[1], 0)
+    expect_equal(hi, c(lo[-1], max(hi))) # spans tile with no gap/overlap
+    expect_equal(max(hi), sum(area_df$y[area_df$x == as.numeric(xi)]))
+  }
+})
+
+test_that("area position = 'fill' normalises each x to 1 (H14)", {
+  p <- vplot(area_df) |> mark_area(x = x, y = y, fill = g, position = "fill")
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  x <- as.character(r$values$x)
+  tops <- vapply(unique(x), function(xi) max(r$values$ymax[x == xi]), numeric(1))
+  expect_equal(unname(tops), rep(1, length(tops)))
+})
+
+test_that("an area with no fill mapping is unaffected by the stack default (H14)", {
+  # grp = NULL -> ymin = 0, ymax = y, identical to the historical behaviour.
+  p <- vplot(area_df) |> mark_area(x = x, y = y)
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_equal(r$values$ymin, rep(0, r$n))
+  expect_equal(r$values$ymax, r$values$y)
+})
+
+test_that("stacked / filled / identity areas render", {
+  for (pos in c("stack", "fill", "identity")) {
+    f <- local_tempfile(fileext = ".png")
+    render_plot(vplot(area_df) |> mark_area(x = x, y = y, fill = g, position = pos), f)
+    expect_gt(file.info(f)$size, 0)
+  }
+})
+
 test_that("a jitter seed makes the rendering reproducible", {
   p <- vplot(mt) |> mark_point(x = cyl, y = mpg, position = "jitter", seed = 42)
   a <- render_px(p)

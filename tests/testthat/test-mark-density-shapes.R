@@ -36,6 +36,40 @@ test_that("mark_ridgeline() records its mark and renders", {
   ))
 })
 
+# Regression (H13): a per-category alpha must reach each shape, not collapse to
+# the first category's value. Comparing a mapped alpha (distinct per category)
+# against a flat constant alpha proves the mapping is threaded per category: if
+# alpha were collapsed to `[1]`, the two renders would be identical.
+alpha_df <- data.frame(
+  g = rep(c("a", "b"), each = 50),
+  v = rnorm(100),
+  al = rep(c(0.15, 1), each = 50)
+)
+
+test_that("mark_violin() honours a per-category alpha (H13)", {
+  mapped <- vplot(alpha_df) |>
+    mark_violin(x = g, y = v, fill = g, alpha = al) |>
+    scale_alpha_identity()
+  flat <- vplot(alpha_df) |>
+    mark_violin(x = g, y = v, fill = g, alpha = 0.15)
+  expect_false(identical(
+    vellum::scene_raster(mapped),
+    vellum::scene_raster(flat)
+  ))
+})
+
+test_that("mark_ridgeline() honours a per-category alpha (H13)", {
+  mapped <- vplot(alpha_df) |>
+    mark_ridgeline(x = v, y = g, fill = g, alpha = al) |>
+    scale_alpha_identity()
+  flat <- vplot(alpha_df) |>
+    mark_ridgeline(x = v, y = g, fill = g, alpha = 0.15)
+  expect_false(identical(
+    vellum::scene_raster(mapped),
+    vellum::scene_raster(flat)
+  ))
+})
+
 test_that("mark_dotplot() bins and stacks one dot per observation", {
   d <- data.frame(v = c(1, 1, 1, 2, 5))
   L <- vellumplot:::.resolve_layer(

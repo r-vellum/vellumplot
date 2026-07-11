@@ -63,7 +63,8 @@ layer composites as one isolated group (not per element).}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
-\item{fill}{For \code{mark_label()}, the background fill colour.}
+\item{fill}{For \code{mark_label()}, the label background: a constant colour, or a
+mapped encoding (e.g. \code{fill = group}) coloured through the fill/colour scale.}
 
 \item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving this layer a hand-drawn look (wobbly
 outlines, hachure fills), \code{NA}/\code{FALSE} to force it crisp (overriding a
