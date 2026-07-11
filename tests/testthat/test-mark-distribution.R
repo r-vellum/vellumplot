@@ -38,6 +38,22 @@ test_that("mark_rug() draws alongside another layer", {
   )
 })
 
+test_that("mark_rug() honours a mapped colour per tick (H13)", {
+  # A mapped colour must produce distinct ticks, not one collapsed colour.
+  dg <- data.frame(
+    wt = mtcars$wt,
+    mpg = mtcars$mpg,
+    grp = factor(ifelse(mtcars$cyl == 8, "hi", "lo"))
+  )
+  img <- render_px(
+    vplot(dg) |>
+      mark_rug(x = wt, y = mpg, color = grp, sides = "b") |>
+      scale_color_manual(values = c(hi = "red", lo = "blue"))
+  )
+  expect_gt(count_near(img, c(1, 0, 0), 0.15), 3) # red ticks
+  expect_gt(count_near(img, c(0, 0, 1), 0.15), 3) # blue ticks
+})
+
 test_that("mark_qq() maps sample to theoretical vs observed quantiles", {
   df <- data.frame(s = qnorm(ppoints(50)) * 2 + 1) # linear in normal quantiles
   L <- vellumplot:::.resolve_layer(
