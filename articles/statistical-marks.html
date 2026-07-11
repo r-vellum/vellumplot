@@ -123,8 +123,8 @@
 <p><code><a href="../reference/mark_tile.html">mark_density()</a></code> draws a smooth kernel-density estimate of <code>x</code> as a filled curve; <code>adjust</code> scales the bandwidth. Densities are on a comparable vertical scale, so mapping <code>fill</code> to a group and overlaying works well.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_tile.html">mark_density</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, fill <span class="op">=</span> <span class="va">Species</span>, alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">penguins</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_tile.html">mark_density</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">bill_len</span>, fill <span class="op">=</span> <span class="va">species</span>, alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-3-1.png" style="width:100.0%"></p>
@@ -163,8 +163,8 @@
 <p>When the scatter maps a discrete <code>color</code> or <code>fill</code>, <code>group = TRUE</code> splits each margin the same way, so a per-group density sits above its points in the matching colour. The scatter’s legend already names the groups, so none is added.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, y <span class="op">=</span> <span class="va">Sepal.Width</span>, color <span class="op">=</span> <span class="va">Species</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">penguins</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">bill_len</span>, y <span class="op">=</span> <span class="va">bill_dep</span>, color <span class="op">=</span> <span class="va">species</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/add_marginal.html">add_marginal</a></span><span class="op">(</span>group <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
@@ -209,8 +209,8 @@
 <p>Several marks summarise how a single variable is distributed. <code><a href="../reference/mark_ecdf.html">mark_ecdf()</a></code> draws the empirical cumulative distribution of <code>x</code> as a step, which is a scale-free way to compare groups without choosing a bandwidth.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_ecdf.html">mark_ecdf</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, color <span class="op">=</span> <span class="va">Species</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">penguins</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_ecdf.html">mark_ecdf</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">bill_len</span>, color <span class="op">=</span> <span class="va">species</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
@@ -249,8 +249,8 @@
 <p><code><a href="../reference/mark_violin.html">mark_violin()</a></code> draws a mirrored kernel density of <code>y</code> for each categorical <code>x</code>, a boxplot’s silhouette that shows the full shape of each group.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_violin.html">mark_violin</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">penguins</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_violin.html">mark_violin</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">species</span>, y <span class="op">=</span> <span class="va">bill_len</span>, fill <span class="op">=</span> <span class="va">species</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
@@ -261,8 +261,8 @@
 <p><code><a href="../reference/mark_violin.html">mark_ridgeline()</a></code> turns that on its side: a density of <code>x</code> per categorical <code>y</code>, with the ridges overlapping so many groups fit in little vertical space. Use the <code>scale</code> argument to tune how much they overlap.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_violin.html">mark_ridgeline</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, y <span class="op">=</span> <span class="va">Species</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">penguins</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_violin.html">mark_ridgeline</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">bill_len</span>, y <span class="op">=</span> <span class="va">species</span>, fill <span class="op">=</span> <span class="va">species</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>

@@ -28,8 +28,8 @@ scale, so mapping `fill` to a group and overlaying works well.
 
 ``` r
 
-vplot(iris) |>
-  mark_density(x = Sepal.Length, fill = Species, alpha = 0.4)
+vplot(penguins) |>
+  mark_density(x = bill_len, fill = species, alpha = 0.4)
 ```
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-3-1.png)
@@ -81,8 +81,8 @@ groups, so none is added.
 
 ``` r
 
-vplot(iris) |>
-  mark_point(x = Sepal.Length, y = Sepal.Width, color = Species) |>
+vplot(penguins) |>
+  mark_point(x = bill_len, y = bill_dep, color = species) |>
   add_marginal(group = TRUE)
 ```
 
@@ -133,8 +133,8 @@ scale-free way to compare groups without choosing a bandwidth.
 
 ``` r
 
-vplot(iris) |>
-  mark_ecdf(x = Sepal.Length, color = Species)
+vplot(penguins) |>
+  mark_ecdf(x = bill_len, color = species)
 ```
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-9-1.png)
@@ -177,8 +177,8 @@ boxplot’s silhouette that shows the full shape of each group.
 
 ``` r
 
-vplot(iris) |>
-  mark_violin(x = Species, y = Sepal.Length, fill = Species)
+vplot(penguins) |>
+  mark_violin(x = species, y = bill_len, fill = species)
 ```
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-12-1.png)
@@ -190,8 +190,8 @@ ridges overlapping so many groups fit in little vertical space. Use the
 
 ``` r
 
-vplot(iris) |>
-  mark_ridgeline(x = Sepal.Length, y = Species, fill = Species)
+vplot(penguins) |>
+  mark_ridgeline(x = bill_len, y = species, fill = species)
 ```
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-13-1.png)
