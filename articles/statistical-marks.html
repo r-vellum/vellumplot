@@ -132,17 +132,59 @@
 </div>
 </div>
 </div>
+</section><section class="level2"><h2 id="marginal-distributions">Marginal distributions<a class="anchor" aria-label="anchor" href="#marginal-distributions"></a>
+</h2>
+<p>A scatter shows the joint distribution of two variables but hides each one on its own. <code><a href="../reference/add_marginal.html">add_marginal()</a></code> puts them back: it draws a distribution of <code>x</code> along the top edge and of <code>y</code> along the right edge, each on the same scale as the panel so it lines up with the points. This is the vellumplot counterpart of <code>ggExtra::ggMarginal()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span>, y <span class="op">=</span> <span class="va">waiting</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/add_marginal.html">add_marginal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-4-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Unlike the other marks in this article, <code><a href="../reference/add_marginal.html">add_marginal()</a></code> is a plot modifier rather than a layer, closer to <code><a href="../reference/facet_wrap.html">facet_wrap()</a></code> than to <code><a href="../reference/mark_tile.html">mark_density()</a></code>. It takes no encoding of its own; it reads <code>x</code> and <code>y</code> from the first plain layer (here the <code><a href="../reference/mark_point.html">mark_point()</a></code>) and computes the margins from those. <code>type = "histogram"</code> bins the values instead of smoothing them, and <code>sides</code> picks which edges to draw.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span>, y <span class="op">=</span> <span class="va">waiting</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/add_marginal.html">add_marginal</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"histogram"</span>, sides <span class="op">=</span> <span class="st">"t"</span>, bins <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-5-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>When the scatter maps a discrete <code>color</code> or <code>fill</code>, <code>group = TRUE</code> splits each margin the same way, so a per-group density sits above its points in the matching colour. The scatter’s legend already names the groups, so none is added.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, y <span class="op">=</span> <span class="va">Sepal.Width</span>, color <span class="op">=</span> <span class="va">Species</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/add_marginal.html">add_marginal</a></span><span class="op">(</span>group <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Margins share the panel’s scales and reserve space around a single panel, so this version does not combine with facets, a flipped or polar coordinate system, or a fixed aspect ratio.</p>
 </section><section class="level2"><h2 id="per-group-summaries">Per-group summaries<a class="anchor" aria-label="anchor" href="#per-group-summaries"></a>
 </h2>
 <p><code><a href="../reference/mark_boxplot.html">mark_summary()</a></code> aggregates <code>y</code> within each <code>x</code> category using <code>fun</code> (the mean by default) and draws the result. It is the quick way to add group means over raw data.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="st">"grey60"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_boxplot.html">mark_summary</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">mpg</span>, fun <span class="op">=</span> <span class="va">median</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-4-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -151,13 +193,13 @@
 </h2>
 <p><code><a href="../reference/mark_histogram.html">mark_smooth()</a></code> fits a model of <code>y</code> on <code>x</code> (<code>method = "lm"</code>) and draws the fitted line with a confidence ribbon when <code>se = TRUE</code>. It layers naturally over the raw points.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_histogram.html">mark_smooth</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, se <span class="op">=</span> <span class="cn">TRUE</span>, level <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-5-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -166,38 +208,38 @@
 </h2>
 <p>Several marks summarise how a single variable is distributed. <code><a href="../reference/mark_ecdf.html">mark_ecdf()</a></code> draws the empirical cumulative distribution of <code>x</code> as a step, which is a scale-free way to compare groups without choosing a bandwidth.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_ecdf.html">mark_ecdf</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, color <span class="op">=</span> <span class="va">Species</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code><a href="../reference/mark_ecdf.html">mark_qq()</a></code> plots the sorted <code>sample</code> against the quantiles of a reference distribution (normal by default); <code><a href="../reference/mark_ecdf.html">mark_qq_line()</a></code> adds the reference line through the quartiles. Points on the line mean the sample matches the reference.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_ecdf.html">mark_qq</a></span><span class="op">(</span>sample <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_ecdf.html">mark_qq_line</a></span><span class="op">(</span>sample <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code><a href="../reference/mark_ecdf.html">mark_rug()</a></code> adds marginal ticks at each observation, a compact companion to a scatter or density. <code>sides</code> picks the edges (<code>"b"</code>, <code>"l"</code>, <code>"t"</code>, <code>"r"</code>).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">waiting</span>, y <span class="op">=</span> <span class="va">eruptions</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_ecdf.html">mark_rug</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -206,36 +248,36 @@
 </h2>
 <p><code><a href="../reference/mark_violin.html">mark_violin()</a></code> draws a mirrored kernel density of <code>y</code> for each categorical <code>x</code>, a boxplot’s silhouette that shows the full shape of each group.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_violin.html">mark_violin</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code><a href="../reference/mark_violin.html">mark_ridgeline()</a></code> turns that on its side: a density of <code>x</code> per categorical <code>y</code>, with the ridges overlapping so many groups fit in little vertical space. Use the <code>scale</code> argument to tune how much they overlap.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_violin.html">mark_ridgeline</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, y <span class="op">=</span> <span class="va">Species</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code><a href="../reference/mark_violin.html">mark_dotplot()</a></code> bins <code>x</code> and stacks one dot per observation, so the height of each stack is a count you can read dot by dot.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_violin.html">mark_dotplot</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">waiting</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -244,37 +286,37 @@
 </h2>
 <p><code><a href="../reference/mark_contour.html">mark_contour()</a></code> estimates the 2-D density of a point cloud and draws its iso-density contour lines; <code><a href="../reference/mark_contour.html">mark_contour_filled()</a></code> fills the bands between them. Both are coloured by level automatically. They read best over the points they summarise:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span>, y <span class="op">=</span> <span class="va">waiting</span>, color <span class="op">=</span> <span class="st">"grey70"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_contour.html">mark_contour</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span>, y <span class="op">=</span> <span class="va">waiting</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-15-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_contour.html">mark_contour_filled</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span>, y <span class="op">=</span> <span class="va">waiting</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-16-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>The density estimate uses <code><a href="https://rdrr.io/pkg/MASS/man/kde2d.html" class="external-link">MASS::kde2d()</a></code>; tune the levels with <code>bins</code>, <code>binwidth</code>, or explicit <code>breaks</code>. To contour a <em>surface</em> you already have (a <code>z</code> value on a regular <code>x</code>/<code>y</code> grid) rather than a point density, map <code>z</code>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">0.1</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">grid</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">grid</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/mark_contour.html">mark_contour</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-17-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -284,12 +326,12 @@
 </h2>
 <p>A statistical mark produces new variables that were not in your data: a histogram computes a <code>count</code> and a <code>density</code>, for example. <code><a href="../reference/after_stat.html">after_stat()</a></code> lets an encoding refer to one of those computed variables instead of a data column. The classic use is a density-scaled histogram.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_histogram.html">mark_histogram</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">waiting</span>, bins <span class="op">=</span> <span class="fl">25</span>, fill <span class="op">=</span> <span class="fu"><a href="../reference/after_stat.html">after_stat</a></span><span class="op">(</span><span class="va">density</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-15-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-18-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -299,7 +341,7 @@
 </h2>
 <p>When there are too many points to draw one marker each (overplotted, up to millions), individual markers become uninformative and slow to draw. <code><a href="../reference/mark_datashade.html">mark_datashade()</a></code> bins the points into a canvas-sized grid in a single pass and colours each cell by density, drawing one raster. Its cost is decoupled from the number of points.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">5e5</span></span>
 <span><span class="va">big</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>,</span>
@@ -309,7 +351,7 @@
 <span>  <span class="fu"><a href="../reference/mark_datashade.html">mark_datashade</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">y</span>, y <span class="op">=</span> <span class="va">x</span>, how <span class="op">=</span> <span class="st">"eq_hist"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-16-1.png" style="width:100.0%"></p>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-19-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>

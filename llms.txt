@@ -449,6 +449,8 @@ Map data values to visual properties, with trained domains and guides.
 - [`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
   [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
   : Facet a plot into a grid of panels
+- [`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
+  : Add marginal distributions to a plot
 
 ## Composition
 

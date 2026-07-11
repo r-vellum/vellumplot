@@ -34,6 +34,64 @@ vplot(iris) |>
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-3-1.png)
 
+## Marginal distributions
+
+A scatter shows the joint distribution of two variables but hides each
+one on its own.
+[`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
+puts them back: it draws a distribution of `x` along the top edge and of
+`y` along the right edge, each on the same scale as the panel so it
+lines up with the points. This is the vellumplot counterpart of
+`ggExtra::ggMarginal()`.
+
+``` r
+
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting) |>
+  add_marginal()
+```
+
+![](statistical-marks_files/figure-html/unnamed-chunk-4-1.png)
+
+Unlike the other marks in this article,
+[`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
+is a plot modifier rather than a layer, closer to
+[`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+than to
+[`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md).
+It takes no encoding of its own; it reads `x` and `y` from the first
+plain layer (here the
+[`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md))
+and computes the margins from those. `type = "histogram"` bins the
+values instead of smoothing them, and `sides` picks which edges to draw.
+
+``` r
+
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting) |>
+  add_marginal(type = "histogram", sides = "t", bins = 20)
+```
+
+![](statistical-marks_files/figure-html/unnamed-chunk-5-1.png)
+
+When the scatter maps a discrete `color` or `fill`, `group = TRUE`
+splits each margin the same way, so a per-group density sits above its
+points in the matching colour. The scatter’s legend already names the
+groups, so none is added.
+
+``` r
+
+vplot(iris) |>
+  mark_point(x = Sepal.Length, y = Sepal.Width, color = Species) |>
+  add_marginal(group = TRUE)
+```
+
+![](statistical-marks_files/figure-html/unnamed-chunk-6-1.png)
+
+Margins share the panel’s scales and reserve space around a single
+panel, so this version does not combine with facets, a flipped or polar
+coordinate system, or a fixed aspect ratio.
+
 ## Per-group summaries
 
 [`mark_summary()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
@@ -48,7 +106,7 @@ vplot(mtcars) |>
   mark_summary(x = factor(cyl), y = mpg, fun = median)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-4-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-7-1.png)
 
 ## Smooths
 
@@ -64,7 +122,7 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, se = TRUE, level = 0.95)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-5-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-8-1.png)
 
 ## Distributions
 
@@ -79,7 +137,7 @@ vplot(iris) |>
   mark_ecdf(x = Sepal.Length, color = Species)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-6-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-9-1.png)
 
 [`mark_qq()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
 plots the sorted `sample` against the quantiles of a reference
@@ -95,7 +153,7 @@ vplot(mtcars) |>
   mark_qq_line(sample = mpg)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-7-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-10-1.png)
 
 [`mark_rug()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
 adds marginal ticks at each observation, a compact companion to a
@@ -109,7 +167,7 @@ vplot(faithful) |>
   mark_rug()
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-8-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-11-1.png)
 
 ## Density shapes
 
@@ -123,7 +181,7 @@ vplot(iris) |>
   mark_violin(x = Species, y = Sepal.Length, fill = Species)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-9-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-12-1.png)
 
 [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
 turns that on its side: a density of `x` per categorical `y`, with the
@@ -136,7 +194,7 @@ vplot(iris) |>
   mark_ridgeline(x = Sepal.Length, y = Species, fill = Species)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-10-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-13-1.png)
 
 [`mark_dotplot()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
 bins `x` and stacks one dot per observation, so the height of each stack
@@ -148,7 +206,7 @@ vplot(faithful) |>
   mark_dotplot(x = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-11-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-14-1.png)
 
 ## 2-D density contours
 
@@ -166,7 +224,7 @@ vplot(faithful) |>
   mark_contour(x = eruptions, y = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-12-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-15-1.png)
 
 ``` r
 
@@ -174,7 +232,7 @@ vplot(faithful) |>
   mark_contour_filled(x = eruptions, y = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-13-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-16-1.png)
 
 The density estimate uses
 [`MASS::kde2d()`](https://rdrr.io/pkg/MASS/man/kde2d.html); tune the
@@ -189,7 +247,7 @@ grid$z <- with(grid, dnorm(x) * dnorm(y))
 vplot(grid) |> mark_contour(x = x, y = y, z = z)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-14-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-17-1.png)
 
 Contour tracing needs the `isoband` package (and `MASS` for the density
 estimate).
@@ -208,7 +266,7 @@ vplot(faithful) |>
   mark_histogram(x = waiting, bins = 25, fill = after_stat(density))
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-15-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-18-1.png)
 
 Because the aesthetic is now driven by a computed value, its scale
 trains on that value like any other, and you get the matching legend.
@@ -233,7 +291,7 @@ vplot(big) |>
   mark_datashade(x = y, y = x, how = "eq_hist")
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-16-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-19-1.png)
 
 Here `how = "eq_hist"` uses histogram equalisation so both dense and
 sparse regions stay visible; the grid resolution is set by `width` and

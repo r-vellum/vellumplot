@@ -27,7 +27,8 @@ PlotSpec(
   height = 4,
   dpi = 96,
   theme = NULL,
-  labels = list()
+  labels = list(),
+  marginal = NULL
 )
 ```
 
@@ -96,6 +97,12 @@ PlotSpec(
 
   A named list of plot/axis/legend label overrides (see
   [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md)).
+
+- marginal:
+
+  A marginal-distribution specification (from
+  [`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)),
+  or `NULL` for no marginals.
 
 ## Value
 

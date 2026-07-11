@@ -93,7 +93,8 @@ via <code><a href="render_plot.html">render_plot()</a></code>). Printing it draw
 <span>  height <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  dpi <span class="op">=</span> <span class="fl">96</span>,</span>
 <span>  theme <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  marginal <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -149,6 +150,11 @@ PNG's pixel dimensions are <code>width * dpi</code> by <code>height * dpi</code>
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
 <dd><p>A named list of plot/axis/legend label overrides (see <code><a href="labs.html">labs()</a></code>).</p></dd>
+
+
+<dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
+<dd><p>A marginal-distribution specification (from <code><a href="add_marginal.html">add_marginal()</a></code>),
+or <code>NULL</code> for no marginals.</p></dd>
 
 </dl></div>
     <div class="section level2">
