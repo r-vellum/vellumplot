@@ -7,7 +7,14 @@ staircase line. All connect points in `x` order.
 ## Usage
 
 ``` r
-mark_area(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_area(
+  plot,
+  ...,
+  position = "stack",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
 mark_ribbon(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
@@ -35,6 +42,14 @@ mark_step(
 
   Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`, `ymax`
   for ribbon; plus `color`/`fill`/`alpha`.
+
+- position:
+
+  For `mark_area()`, how areas sharing an `x` combine when
+  `fill`/`color` is mapped: `"stack"` (default) stacks them into a band,
+  `"fill"` normalises each `x` to 1, `"identity"` overlays them from the
+  zero baseline. With no fill mapping all three are equivalent (a single
+  area).
 
 - blend:
 

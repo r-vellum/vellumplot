@@ -90,7 +90,9 @@ mark_label(
 
 - fill:
 
-  For `mark_label()`, the background fill colour.
+  For `mark_label()`, the label background: a constant colour, or a
+  mapped encoding (e.g. `fill = group`) coloured through the fill/colour
+  scale.
 
 - sketch:
 

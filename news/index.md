@@ -2,6 +2,45 @@
 
 ## vellumplot (development version)
 
+### Bug fixes
+
+- **[`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  now stacks.** `mark_area(position = ...)` was silently ignored; it
+  gains a `position` argument (`"stack"` default, plus `"fill"` and
+  `"identity"`), so areas sharing an `x` with a mapped `fill`/`color`
+  combine into a band instead of overlapping from the zero baseline. An
+  area with no fill mapping is unchanged.
+
+- **Mapped aesthetics that were silently dropped now take effect.** A
+  mapped `fill` on
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  colours the label background (previously it always fell back to
+  white); a mapped or constant `alpha` is honoured per category/tick by
+  [`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md),
+  [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md),
+  [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md),
+  [`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+  and
+  [`mark_rug()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
+  (previously collapsed to one value or ignored), and
+  [`mark_rug()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
+  also honours a mapped `color`.
+
+- **British spelling works everywhere.**
+  `hover_colour`/`selected_colour` are now recognised as interactivity
+  arguments (previously only the American spelling was), and
+  [`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)/[`mark_hex()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  no longer add a default count fill when a British `colour =` is
+  supplied.
+
+- **[`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  warns on a layout-column clash.** A vertex/edge attribute named
+  `x`/`y` (or `xend`/`yend`) is overwritten by the layout coordinates;
+  that used to happen silently and now emits a warning naming the
+  attribute.
+
+### New features
+
 - **[`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
   — nonlinear display transforms.** Warps the *display* of one or both
   position axes after the scale has trained, so gridlines bunch up and
