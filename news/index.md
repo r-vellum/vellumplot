@@ -4,6 +4,15 @@
 
 ### Bug fixes
 
+- **Legends read consistently.** A horizontal (top/bottom) continuous
+  colour legend now draws the `NA` key that the vertical one always did.
+  `guide_legend(reverse = TRUE)` now actually flips a continuous
+  colourbar (previously a silent no-op) and no longer desyncs a binned
+  colour scale’s boundaries from its swatches. A merged colour+shape
+  legend’s swatches are now tagged for interactive highlight/select.
+  Minor gridlines past the outermost breaks use the local break spacing
+  at each end, so they sit correctly when breaks are unevenly spaced.
+
 - **Numeric facets order numerically.** Faceting on a numeric variable
   now orders panels `1, 2, 10` rather than the lexicographic `1, 10, 2`;
   multi-variable facets order by each variable’s own type.
