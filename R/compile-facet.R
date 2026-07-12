@@ -14,7 +14,10 @@ NULL
   combined <- do.call(paste, c(parts, sep = ", "))
   # Order rows by each variable in turn (factors by level code, everything else
   # by its own type), then take the level order from that ordering.
-  ord <- do.call(order, lapply(vals, function(v) if (is.factor(v)) as.integer(v) else v))
+  ord <- do.call(
+    order,
+    lapply(vals, function(v) if (is.factor(v)) as.integer(v) else v)
+  )
   factor(combined, levels = unique(combined[ord]))
 }
 

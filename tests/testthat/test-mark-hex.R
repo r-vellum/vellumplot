@@ -17,7 +17,11 @@ test_that("mark_hex sets mark/stat and a default count fill", {
 test_that("a British `colour =` suppresses the default count fill (H12)", {
   # A user-supplied colour (either spelling) must switch off the auto-injected
   # `fill = after_stat(count)` so the two do not conflict.
-  dg <- data.frame(x = d$x, y = d$y, g = rep(letters[1:2], length.out = nrow(d)))
+  dg <- data.frame(
+    x = d$x,
+    y = d$y,
+    g = rep(letters[1:2], length.out = nrow(d))
+  )
   L <- (vplot(dg) |> mark_hex(x = x, y = y, colour = g))@layers[[1]]
   expect_false("fill" %in% names(L@encoding))
   expect_true("color" %in% names(L@encoding)) # normalised from `colour`
