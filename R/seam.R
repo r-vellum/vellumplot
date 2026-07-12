@@ -69,6 +69,14 @@ NULL
       )
     }
   }
+  # Reserved resolved-theme keys: `.sketch` / `.interactive` are injected into the
+  # resolved theme `rt` as a per-plot transport, but they are NOT theme members --
+  # they come from the spec, not from theme(), so they bypass the theme tree
+  # (absent from .DRAWN_LEAVES / .SETTINGS_DEFAULTS). The contract: reserved keys
+  # carry a leading dot and are documented here + in _docs/DESIGN.md 3.10, so a
+  # drawer reading one is never confused with a real theme leaf. Read by the guide
+  # drawers in compile-guides.R.
+  #
   # Plot-wide hand-drawn default (from theme_sketch()); mark emitters fall back
   # to it when a layer sets no sketch of its own, and legend keys read it from
   # `rt` so they match a hand-drawn plot.

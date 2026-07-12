@@ -5,11 +5,11 @@
 \alias{scale_alpha_continuous}
 \title{Alpha (opacity) scale}
 \usage{
-scale_alpha(plot, range = c(0.1, 1), limits = NULL, breaks = NULL, name = NULL)
+scale_alpha(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
 
 scale_alpha_continuous(
   plot,
-  range = c(0.1, 1),
+  range = NULL,
   limits = NULL,
   breaks = NULL,
   name = NULL
@@ -18,7 +18,8 @@ scale_alpha_continuous(
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{range}{Numeric length-2 output opacity range (default \code{c(0.1, 1)}).}
+\item{range}{Numeric length-2 output opacity range, or \code{NULL} for the
+default \code{c(0.1, 1)}.}
 
 \item{limits}{Numeric length-2 data domain, or \code{NULL} to train from the data.}
 
