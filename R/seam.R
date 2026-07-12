@@ -295,7 +295,7 @@ NULL
   # marginal distributions (add_marginal()): drawn into the reserved top/right
   # tracks, sharing the single panel's scales. Single panel, Cartesian only
   # (guarded above), so `built$panels[[1]]` is the panel.
-  if (!is.null(spec@marginal) && !polar) {
+  if (!is.null(spec@marginal)) {
     p1 <- built$panels[[1]]
     src <- .marginal_source(p1$resolved)
     scene <- .draw_marginals(

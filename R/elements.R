@@ -204,7 +204,14 @@ element_blank <- S7::new_class(
   if (.is_blank(el)) {
     return(NULL)
   }
-  s <- tryCatch(S7::prop(el, "sketch"), error = function(e) NULL)
+  # Only line/rect elements carry a `sketch` property; a text element has none.
+  s <- if (
+    S7::S7_inherits(el, .element_line) || S7::S7_inherits(el, .element_rect)
+  ) {
+    S7::prop(el, "sketch")
+  } else {
+    NULL
+  }
   if (is.null(s) || !inherits(s, "vellum_sketch") || !offset) {
     if (inherits(s, "vellum_sketch")) s else NULL
   } else {

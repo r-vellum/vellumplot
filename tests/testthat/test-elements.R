@@ -20,6 +20,19 @@ test_that(".is_blank distinguishes element_blank from elements", {
   expect_false(vellumplot:::.is_blank(element_line()))
 })
 
+test_that(".el_sketch handles all element classes (text has no sketch prop)", {
+  # a text element carries no `sketch` property -> NULL, not an error
+  expect_null(vellumplot:::.el_sketch(element_text(colour = "black")))
+  # a line/rect element with no sketch set also resolves to NULL
+  expect_null(vellumplot:::.el_sketch(element_line(colour = "black")))
+  expect_null(vellumplot:::.el_sketch(element_rect(fill = "grey")))
+  # a line element carrying a sketch resolves to it, with the seed offset applied
+  ls <- element_line(colour = "black", sketch = sketch(seed = 1))
+  res <- vellumplot:::.el_sketch(ls, offset = 2L)
+  expect_true(inherits(res, "vellum_sketch"))
+  expect_equal(res$seed, ls@sketch$seed + 2)
+})
+
 test_that(".merge_element fills NULL child props from the parent", {
   parent <- element_text(colour = "black", size = 11, family = "serif")
   child <- element_text(size = 20)

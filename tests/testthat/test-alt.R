@@ -45,6 +45,13 @@ test_that("faceting is reported", {
   expect_match(plot_alt(p), "Faceted by cyl", fixed = TRUE)
 })
 
+test_that("grid faceting keeps rows and columns distinct in the alt text", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    facet_grid(cyl ~ am)
+  expect_match(plot_alt(p), "Faceted by rows cyl, columns am", fixed = TRUE)
+})
+
 test_that("a compiled plot carries title (name) and alt (desc) in its SVG", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
