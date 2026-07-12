@@ -24,6 +24,16 @@ test_that("scale_y_discrete(limits=) reorders / subsets levels on the y axis", {
   expect_identical(y$map("6"), 3L)
 })
 
+test_that("default continuous labels don't group thousands (#27)", {
+  # A 4-digit continuous variable (years, IDs) must render as "2010", not the
+  # grouped "2 010" scales inserts by default.
+  df <- data.frame(year = 2007:2025, n = seq_along(2007:2025))
+  p <- vplot(df) |> mark_line(x = year, y = n)
+  x <- train(p)$x
+  expect_true("2010" %in% x$labels)
+  expect_false(any(grepl("[[:space:],]", x$labels)))
+})
+
 test_that("trans='sqrt' transforms the map and is continuous", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>

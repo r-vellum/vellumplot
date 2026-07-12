@@ -60,6 +60,11 @@ NULL
 # Point-size range (mm) a mapped `size` aesthetic spans.
 .SIZE_RANGE <- c(1, 4)
 
+# Default continuous label formatter: no thousands grouping, so 4-digit values
+# such as years or IDs stay "2010" rather than "2 010" (scales' default inserts
+# a grouping separator). See #27.
+.label_number_default <- function(b) scales::label_number(big.mark = "")(b)
+
 # Continuous position transforms. Each is `(transform, inverse, breaks, format)`:
 # `transform` maps data -> native (viewport) units; `breaks` generates breaks in
 # DATA units (then transformed to positions); `format` labels them. Kept as a
@@ -69,7 +74,7 @@ NULL
   identity = list(
     transform = function(x) x,
     breaks = function(rng) scales::breaks_extended()(rng),
-    format = function(b) scales::label_number()(b)
+    format = function(b) .label_number_default(b)
   ),
   log10 = list(
     transform = function(x) log10(x),
@@ -79,7 +84,7 @@ NULL
   sqrt = list(
     transform = function(x) sqrt(x),
     breaks = function(rng) scales::breaks_extended()(rng),
-    format = function(b) scales::label_number()(b)
+    format = function(b) .label_number_default(b)
   ),
   # Reverse keeps the data mapping as identity and instead flips the trained
   # domain (a decreasing native domain is what vellum reads as a reversed axis).
@@ -87,7 +92,7 @@ NULL
   reverse = list(
     transform = function(x) x,
     breaks = function(rng) scales::breaks_extended()(rng),
-    format = function(b) scales::label_number()(b),
+    format = function(b) .label_number_default(b),
     flip = TRUE
   )
 )
@@ -123,7 +128,7 @@ NULL
   list(
     transform = tr$transform,
     breaks = tr$breaks %||% function(rng) scales::breaks_extended()(rng),
-    format = tr$format %||% function(b) scales::label_number()(b),
+    format = tr$format %||% function(b) .label_number_default(b),
     flip = FALSE
   )
 }
@@ -610,7 +615,7 @@ NULL
       range = rng,
       pal256 = pal256,
       legend_breaks = lbrk,
-      legend_labels = llab %||% scales::label_number()(lbrk),
+      legend_labels = llab %||% .label_number_default(lbrk),
       na = has_na,
       na_value = na_value,
       key_glyph = key_glyph
@@ -742,7 +747,7 @@ NULL
     range = rng,
     na = has_na,
     legend_breaks = lbrk,
-    legend_labels = llab %||% scales::label_number()(lbrk)
+    legend_labels = llab %||% .label_number_default(lbrk)
   )
   out[[legend_field]] <- map(lbrk)
   out
