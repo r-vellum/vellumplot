@@ -219,7 +219,9 @@ NULL
           )
       ) {
         val <- args[[nm]]
-        if (!is.numeric(val) || length(val) != 1L || !is.finite(val) || val < 0) {
+        if (
+          !is.numeric(val) || length(val) != 1L || !is.finite(val) || val < 0
+        ) {
           cli::cli_abort(
             "{.field {nm}} must be a single non-negative number (mm).",
             call = call
@@ -242,7 +244,10 @@ NULL
         val <- args[[nm]]
         if (
           !is.null(val) &&
-            (!is.numeric(val) || length(val) != 1L || !is.finite(val) || val <= 0)
+            (!is.numeric(val) ||
+              length(val) != 1L ||
+              !is.finite(val) ||
+              val <= 0)
         ) {
           cli::cli_abort(
             "{.field aspect.ratio} must be {.code NULL} or a single positive number.",
