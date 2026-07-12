@@ -2,6 +2,10 @@
 
 ## Bug fixes
 
+* **Clearer alt text for grid facets.** A `facet_grid()` plot's automatic alt text
+  now distinguishes the row and column variables (e.g. "Faceted by rows cyl,
+  columns am") instead of running them together.
+
 * **Compositions can be themed.** `theme()` now accepts a composition (from
   [concat()] / [hconcat()] / [vconcat()]) and styles its figure-level chrome —
   the title/subtitle/caption bands, the collected legend, panel spacing, and

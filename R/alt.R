@@ -131,7 +131,15 @@ NULL
   if (identical(f@type, "wrap")) {
     lab(f@cols)
   } else {
-    paste(c(lab(f@rows), lab(f@cols)), collapse = " and ")
+    # A grid keeps rows and columns distinct so the alt text is unambiguous,
+    # e.g. "rows a and c, columns b" rather than "a and c and b".
+    rr <- lab(f@rows)
+    cc <- lab(f@cols)
+    parts <- c(
+      if (!is.null(rr)) paste0("rows ", rr),
+      if (!is.null(cc)) paste0("columns ", cc)
+    )
+    if (length(parts)) paste(parts, collapse = ", ") else NULL
   }
 }
 
