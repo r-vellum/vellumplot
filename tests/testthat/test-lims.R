@@ -33,6 +33,15 @@ test_that("a descending continuous limit reverses the axis", {
   expect_gt(b$scales$x$domain[1], b$scales$x$domain[2])
 })
 
+test_that("a bar's zero baseline does not un-reverse a descending user limit (H24)", {
+  # mark_bar forces include_zero; range(c(rng, 0)) used to sort ascending and
+  # cancel the reverse. Explicit limits must win, order preserved.
+  df <- data.frame(g = c("a", "b", "c"), y = c(3, 1, 2))
+  p <- vplot(df) |> mark_bar(x = g, y = y) |> ylim(10, 0)
+  b <- vellumplot:::.build_panels(p)
+  expect_gt(b$scales$y$domain[1], b$scales$y$domain[2]) # stays descending
+})
+
 test_that("continuous limits must be length 2, and lims args must be named", {
   expect_error(
     vplot(mtcars) |> mark_point(x = wt, y = mpg) |> xlim(1, 2, 3),

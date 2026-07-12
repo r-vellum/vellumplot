@@ -16,6 +16,24 @@ test_that("coord_trans() renders point + line under a log-y display", {
   expect_no_error(svg_of(p))
 })
 
+test_that("a bar/area is rejected under a nonlinear coord_trans y (H22)", {
+  # A zero-baseline mark has no defined baseline on a log axis; refuse it with a
+  # clear message rather than aborting deep in the domain guard.
+  db <- data.frame(g = c("a", "b", "c"), n = c(100, 200, 300))
+  expect_error(
+    svg_of(vplot(db) |> mark_bar(x = g, y = n) |> coord_trans(y = "log10")),
+    "zero baseline"
+  )
+  expect_error(
+    svg_of(vplot(db) |> mark_area(x = seq_along(g), y = n) |> coord_trans(y = "log10")),
+    "zero baseline"
+  )
+  # an x-only warp leaves the y baseline linear, so bars are still allowed
+  expect_no_error(
+    svg_of(vplot(db) |> mark_bar(x = seq_along(g), y = n) |> coord_trans(x = "sqrt"))
+  )
+})
+
 test_that(".warp_scale warps break/domain positions but keeps labels", {
   sc <- list(
     domain = c(1, 100),

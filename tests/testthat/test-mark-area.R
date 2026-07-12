@@ -31,6 +31,27 @@ test_that("area forces the y axis through zero", {
   expect_lte(sc$y$domain[1], 0)
 })
 
+test_that(".clamp_baseline pins a non-finite baseline to the domain floor (H21)", {
+  expect_equal(vellumplot:::.clamp_baseline(c(-Inf, 1, 2), c(0, 3)), c(0, 1, 2))
+  expect_equal(vellumplot:::.clamp_baseline(c(NaN, 1), c(1, 5)), c(1, 1))
+  # a reversed (decreasing) domain clamps to its numeric min, not domain[1]
+  expect_equal(vellumplot:::.clamp_baseline(c(-Inf, 2), c(4, 1)), c(1, 2))
+})
+
+test_that("a log-y area draws finite geometry from the axis floor (H21)", {
+  dp <- data.frame(x = 1:5, y = c(1, 10, 100, 1000, 10000))
+  # the baseline 0 maps to -Inf on log10; without the clamp the polygon is degenerate
+  expect_no_error(render_px(
+    vplot(dp) |> mark_area(x = x, y = y) |> scale_y_continuous(trans = "log10")
+  ))
+  img <- render_px(
+    vplot(dp) |>
+      mark_area(x = x, y = y, fill = "black") |>
+      scale_y_continuous(trans = "log10")
+  )
+  expect_true(has_ink(img, rows = c(0.3, 0.9), cols = c(0.55, 0.9)))
+})
+
 test_that("ribbon pools ymin/ymax into the y domain", {
   sc <- train(vplot(d) |> mark_ribbon(x = x, ymin = lo, ymax = hi))
   expect_lte(sc$y$domain[1], min(d$lo))

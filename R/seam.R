@@ -121,15 +121,23 @@ NULL
       "contour",
       "contour_filled"
     )
-    bad <- setdiff(
-      unique(vapply(spec@layers, function(L) L@mark, character(1))),
-      ok_marks
-    )
+    marks <- unique(vapply(spec@layers, function(L) L@mark, character(1)))
+    bad <- setdiff(marks, ok_marks)
     if (length(bad)) {
       cli::cli_abort(c(
         "{.fn coord_trans} does not yet support the {.val {bad}} mark{?s}.",
         i = "Supported: points, lines, areas/ribbons, bars, tiles, smooths, text, and similar.",
         i = "Segment/rule/interval, boxplot, edges, and raster/datashade marks are not warped yet."
+      ))
+    }
+    # bar/area draw from a zero baseline, which a nonlinear value-axis transform
+    # cannot place (0 -> -Inf under log). Refuse rather than draw a meaningless
+    # log-baseline bar. (An x-only warp leaves the y baseline linear, so allow it.)
+    zero_marks <- intersect(marks, c("bar", "area"))
+    if (length(zero_marks) && !.is_linear_trans(co@ytrans)) {
+      cli::cli_abort(c(
+        "{.fn coord_trans} cannot place the zero baseline of the {.val {zero_marks}} mark{?s} on a nonlinear {.field y} axis.",
+        i = "Transform the scale instead: {.code scale_y_continuous(trans = ...)}."
       ))
     }
   }
