@@ -4,6 +4,15 @@
 
 ### Bug fixes
 
+- **Gradient fills fail clearly on marks that don’t support them.** A
+  `fill = linear_gradient(...)` is painted by
+  [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
+  [`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
+  and
+  [`mark_bar()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md);
+  on any other mark it now raises a clear error instead of leaking an
+  undefined paint into the renderer.
+
 - **Inputs are validated up front.**
   [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
   now checks `panel.spacing`, `plot.margin`, `aspect.ratio`, and
