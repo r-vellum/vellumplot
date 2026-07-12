@@ -581,6 +581,9 @@ NULL
   cols <- color$colors
   list(
     name = color$name,
+    # `levels` is the shared discrete key; it lets `.legend_series_key` tag the
+    # merged swatches for interactive highlight (marks carry `color:<level>`).
+    levels = color$levels,
     labels = color$labels %||% color$levels,
     fills = cols,
     cols = cols,
@@ -937,7 +940,16 @@ NULL
 # (their `legend` membership, set in `.compile_marks`). NULL for guide kinds that
 # are not a discrete colour/fill/shape legend (continuous colourbars, size, etc.).
 .legend_series_key <- function(g, i) {
-  aes <- switch(g$kind, color_discrete = "color", shape = "shape", NULL)
+  aes <- switch(
+    g$kind,
+    color_discrete = "color",
+    shape = "shape",
+    # A merged colour+shape guide shares one discrete variable, so its swatches
+    # join the colour series (marks carry `color:<value>`). A merged colour+size
+    # guide has no discrete series (`levels` is NULL) and stays untagged.
+    merged = if (!is.null(g$sc$levels)) "color" else NULL,
+    NULL
+  )
   if (is.null(aes)) {
     return(NULL)
   }

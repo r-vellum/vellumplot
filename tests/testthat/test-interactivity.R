@@ -240,3 +240,25 @@ test_that("legend tagging is inert without interactivity declarations", {
     logical(1)
   )))
 })
+
+test_that("merged colour+shape legend swatches carry the colour series key (H32)", {
+  # colour and shape mapped to the same discrete variable -> one merged guide.
+  p <- vplot(legend_df) |>
+    mark_point(x = wt, y = mpg, color = cyl, shape = cyl, data_id = model)
+  guides <- vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales)
+  expect_identical(guides[[1]]$kind, "merged")
+  sw <- swatches_of(p)
+  expect_equal(nrow(sw), nlevels(legend_df$cyl))
+  lf <- vapply(
+    sw$meta,
+    function(m) m[["legend_for"]] %||% NA_character_,
+    character(1)
+  )
+  expect_setequal(lf, paste0("color:", levels(legend_df$cyl)))
+  # the reciprocal membership on the data marks joins on the same key (a merged
+  # mark carries both its colour and shape series, so the swatch's color: key
+  # matches)
+  el <- data_points_of(p)
+  i <- match("Mazda RX4", el$key) # cyl == 6
+  expect_true("color:6" %in% el$meta[[i]][["legend"]])
+})
