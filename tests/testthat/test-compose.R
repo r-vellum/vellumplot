@@ -141,6 +141,20 @@ test_that("plot_spacer and inset build the right objects", {
   expect_error(inset(a, b), NA) # default inset position is fine
 })
 
+test_that("theme() sets a composition's figure-level theme (H57)", {
+  a <- p_xy(wt, mpg)
+  b <- p_xy(hp, mpg)
+  base <- hconcat(a, b) |> compose_annotation(title = "Fig")
+  themed <- base |>
+    theme(plot.title = element_text(size = 28, colour = "red"))
+  # stored as the composition's own theme; the default (base) is untouched
+  expect_false(is.null(themed@theme))
+  expect_null(base@theme)
+  # and the figure title band actually renders differently
+  raster <- function(x) vellum::scene_raster(as_vellum_scene(x))
+  expect_false(identical(raster(base), raster(themed)))
+})
+
 test_that("the full feature set renders without error", {
   a <- p_xy(wt, mpg, color = cyl)
   b <- p_xy(hp, mpg, color = cyl)

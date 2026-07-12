@@ -34,7 +34,8 @@ set_theme(
 )
 }
 \arguments{
-\item{plot}{A \link{PlotSpec}.}
+\item{plot}{A \link{PlotSpec}. \code{\link[=theme]{theme()}} also accepts a \code{PlotComposition}, setting
+the figure-level chrome (title bands, collected legend, panel spacing, tags).}
 
 \item{...}{Named theme elements, e.g. \code{plot.title = element_text(size = 16)},
 \code{panel.grid.minor = element_blank()}, or settings like \code{legend.position},

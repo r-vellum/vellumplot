@@ -99,7 +99,8 @@ NULL
 #' [element_text()] / [element_line()] / [element_rect()] / [element_blank()].
 #' `set_theme()` is a small back-compatible shortcut for the most common colours.
 #'
-#' @param plot A [PlotSpec].
+#' @param plot A [PlotSpec]. [theme()] also accepts a `PlotComposition`, setting
+#'   the figure-level chrome (title bands, collected legend, panel spacing, tags).
 #' @param ... Named theme elements, e.g. `plot.title = element_text(size = 16)`,
 #'   `panel.grid.minor = element_blank()`, or settings like `legend.position`,
 #'   one of `"right"` (default), `"left"`, `"top"`, `"bottom"`, or `"none"`.
@@ -315,9 +316,15 @@ theme_sketch <- function(
 #' @rdname theme_gray
 #' @export
 theme <- function(plot, ...) {
-  .check_plot(plot)
   args <- rlang::list2(...)
   .validate_theme_args(args)
+  # A composition carries its own figure-level theme (title bands, collected
+  # legend, panel spacing, tags); merge onto its base like a plot's.
+  if (S7::S7_inherits(plot, PlotComposition)) {
+    plot@theme <- .merge_theme(plot@theme %||% .theme_default(), args)
+    return(plot)
+  }
+  .check_plot(plot)
   plot@theme <- .merge_theme(.theme_of(plot), args)
   plot
 }

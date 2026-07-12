@@ -19,6 +19,7 @@ PlotComposition <- S7::new_class(
     design = S7::new_property(S7::class_any, default = NULL), # list<area> | NULL
     labels = S7::new_property(S7::class_list, default = list()), # figure title/...
     tag = S7::new_property(S7::class_any, default = NULL), # auto-tag spec | NULL
+    theme = S7::new_property(S7::class_any, default = NULL), # figure-level theme | NULL
     insets = S7::new_property(S7::class_list, default = list()), # list<inset spec>
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
@@ -376,6 +377,8 @@ vconcat <- function(..., guides = c("collect", "keep"), width = NULL) {
 #'   (`NULL` = no tags).
 #' @param tag_prefix,tag_suffix Strings wrapped around each tag.
 #' @return The modified `PlotComposition`.
+#' @seealso [theme()], which also accepts a composition to set the figure-level
+#'   chrome (title bands, collected legend, panel spacing, tags).
 #' @examples
 #' a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 #' b <- vplot(mtcars) |> mark_point(x = hp, y = mpg)

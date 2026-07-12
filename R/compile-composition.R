@@ -345,7 +345,10 @@ NULL
 .draw_composition <- function(scene, comp) {
   collect <- identical(comp@guides, "collect")
   plans <- lapply(comp@plots, .plan_plot)
-  rt0 <- .resolve_theme(.theme_default())
+  # Figure-level chrome (title/subtitle/caption bands, the collected legend, panel
+  # gap, tags) honours a theme set on the composition (compose_annotation(theme=)),
+  # falling back to the default. Sub-plots resolve their own theme in `.plan_plot`.
+  rt0 <- .resolve_theme(comp@theme %||% .theme_default())
   glo <- .composition_grid(plans, comp, collect, rt0)
 
   scene <- vellum::push(
