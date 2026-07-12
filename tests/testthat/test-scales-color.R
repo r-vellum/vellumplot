@@ -96,6 +96,24 @@ test_that("scale_color_binned cuts a continuous colour aesthetic into classes", 
   expect_identical(cl$kind, "binned")
 })
 
+test_that("a binned colour scale with too-few breaks errors clearly (H43)", {
+  # user breaks skip .binned_breaks; a length-1 (or empty) breaks used to crash
+  # in colorRampPalette(...)(0).
+  p1 <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned(breaks = 100)
+  expect_error(train(p1), "at least 2 breaks")
+  p0 <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned(breaks = numeric(0))
+  expect_error(train(p0), "at least 2 breaks")
+  # two breaks (one class) is the minimum and still trains
+  p2 <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned(breaks = c(100, 200))
+  expect_identical(train(p2)$color$kind, "binned")
+})
+
 test_that("scale_color_manual / scale_fill_manual reject missing or bad values", {
   base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
   expect_error(scale_color_manual(base), "character vector")

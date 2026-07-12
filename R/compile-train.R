@@ -543,6 +543,16 @@ NULL
       .binned_breaks(v, nclass, style)
     }
     k <- length(brks) - 1L
+    # A binned scale needs >= 1 class, i.e. >= 2 breaks. User breaks skip
+    # `.binned_breaks` (which self-guards), so a length-1 breaks would reach
+    # colorRampPalette(...)(0) and abort cryptically. (Position-binned scales
+    # recover by widening; a colour scale has no sensible one-class recovery.)
+    if (k < 1L) {
+      cli::cli_abort(c(
+        "A binned {.field color} scale needs at least 2 breaks (1 class).",
+        i = "{.arg breaks} has {length(brks)} value{?s}."
+      ))
+    }
     cols <- grDevices::colorRampPalette(.continuous_stops(pal))(k)
     map <- function(x) {
       i <- findInterval(x, brks, rightmost.closed = TRUE, all.inside = TRUE)
@@ -799,6 +809,12 @@ NULL
   } else {
     .SHAPE_PALETTE
   }
+  if (length(levels) > length(pal)) {
+    cli::cli_abort(c(
+      "Not enough shapes for {length(levels)} {.field shape} level{?s} ({length(pal)} available).",
+      i = "Supply at least {length(levels)} shapes via {.arg scale_shape(values=)}."
+    ))
+  }
   shapes <- rep_len(pal, length(levels))
   names(shapes) <- levels
   name <- .scale_title(scalespec, .default_title(spec, "shape"))
@@ -906,6 +922,12 @@ NULL
     scalespec@palette
   } else {
     .LINETYPE_PALETTE
+  }
+  if (length(levels) > length(pal)) {
+    cli::cli_abort(c(
+      "Not enough line types for {length(levels)} {.field linetype} level{?s} ({length(pal)} available).",
+      i = "Supply at least {length(levels)} line types via {.arg scale_linetype(values=)}."
+    ))
   }
   ltys <- rep_len(pal, length(levels))
   names(ltys) <- levels
