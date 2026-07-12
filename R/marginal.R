@@ -116,7 +116,11 @@ add_marginal <- function(
     }
     nx <- suppressWarnings(as.numeric(vx))
     ny <- suppressWarnings(as.numeric(vy))
-    if (all(is.na(nx)) || all(is.na(ny))) {
+    # Require cleanly numeric x and y: a partly-coercible column (e.g.
+    # c("1","2","a")) would introduce silent NAs that skew the marginal. A value
+    # that was present but became NA under coercion means the column isn't numeric.
+    clean <- function(orig, num) !any(is.na(num) & !is.na(orig))
+    if (!clean(vx, nx) || !clean(vy, ny)) {
       next
     }
     return(list(x = nx, y = ny, color = L$values$color %||% L$values$fill))

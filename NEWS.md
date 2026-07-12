@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* **More inputs fail fast.** A `design` layout area must be a solid rectangle (and
+  `area()` requires `t <= b`, `l <= r`); a per-row interactivity value
+  (`tooltip`/`data_id`/…) must be length 1 or the data's row count; and
+  `add_marginal()` requires a cleanly numeric column. Each now errors clearly
+  instead of silently mis-rendering.
 * **Clearer alt text for grid facets.** A `facet_grid()` plot's automatic alt text
   now distinguishes the row and column variables (e.g. "Faceted by rows cyl,
   columns am") instead of running them together.

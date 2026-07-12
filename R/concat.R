@@ -176,12 +176,17 @@ plot_spacer <- function() Spacer()
 #' concat(a, b, design = list(area(1, 1, 1, 2), area(2, 1, 2, 1)))
 #' @export
 area <- function(t, l, b = t, r = l) {
-  list(
-    t = as.numeric(t),
-    l = as.numeric(l),
-    b = as.numeric(b),
-    r = as.numeric(r)
-  )
+  t <- as.numeric(t)
+  l <- as.numeric(l)
+  b <- as.numeric(b)
+  r <- as.numeric(r)
+  if (t > b || l > r) {
+    cli::cli_abort(c(
+      "An {.fn area} must have {.code t <= b} and {.code l <= r}.",
+      i = "Got t={t}, l={l}, b={b}, r={r}."
+    ))
+  }
+  list(t = t, l = l, b = b, r = r)
 }
 
 # Normalise `design` into a list of area()s (one per plot) or NULL.
@@ -222,7 +227,19 @@ area <- function(t, l, b = t, r = l) {
     }
     out <- lapply(letters_used, function(ch) {
       rc <- which(m == ch, arr.ind = TRUE)
-      area(min(rc[, 1]), min(rc[, 2]), max(rc[, 1]), max(rc[, 2]))
+      tt <- min(rc[, 1])
+      bb <- max(rc[, 1])
+      ll <- min(rc[, 2])
+      rr <- max(rc[, 2])
+      # A letter must tile a solid rectangle; an L-shaped or scattered region
+      # would silently expand to a filled bounding box and overlap a neighbour.
+      if (nrow(rc) != (bb - tt + 1L) * (rr - ll + 1L)) {
+        cli::cli_abort(c(
+          "Area {.val {ch}} in the {.arg design} layout must be a solid rectangle.",
+          i = "Its cells don't fill their {bb - tt + 1L} x {rr - ll + 1L} bounding box."
+        ))
+      }
+      area(tt, ll, bb, rr)
     })
     return(out)
   }
