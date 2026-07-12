@@ -6,6 +6,25 @@ test_that("facet_wrap()/facet_grid() require a formula", {
   expect_error(facet_grid(p, "x"), "formula")
 })
 
+test_that(".layer_panel_idx matches a layer's own data and falls back when the facet var is absent", {
+  d <- data.frame(x = 1:4, y = 1:4, g = factor(c("a", "b", "a", "b")))
+  p <- vplot(d) |> mark_point(x = x, y = y) |> facet_wrap(~g)
+  fa <- vellumplot:::.facet_assign(p)
+  panel_a <- Filter(function(pn) identical(pn$lvl$wrap, "a"), fa$panels)[[1]]
+  # a layer whose own data carries the facet var -> only its matching rows
+  ld <- data.frame(x = 10:12, y = 1:3, g = factor(c("a", "b", "a")))
+  expect_identical(
+    vellumplot:::.layer_panel_idx(p@facet, ld, panel_a),
+    c(1L, 3L)
+  )
+  # data lacking the facet var -> every row (the layer draws on every panel)
+  nod <- data.frame(x = 1:3, y = 1:3)
+  expect_identical(
+    vellumplot:::.layer_panel_idx(p@facet, nod, panel_a),
+    1:3
+  )
+})
+
 test_that("numeric facets order numerically, not lexicographically (H20)", {
   d <- data.frame(x = 1:6, y = 1:6, f = c(2, 10, 1, 2, 10, 1))
   p <- vplot(d) |> mark_point(x = x, y = y) |> facet_wrap(~f)
