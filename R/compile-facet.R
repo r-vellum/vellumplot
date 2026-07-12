@@ -21,6 +21,23 @@ NULL
   factor(combined, levels = unique(combined[ord]))
 }
 
+# Facet key(s) for `data`: the single wrap key, or the row and column keys for a
+# grid (an empty-string factor for an unfaceted dimension). The one place that
+# builds panel-membership keys from a facet + data, shared by `.facet_assign`
+# (enumerate levels, slice each panel) and `.layer_panel_idx` (match a panel's
+# stored level). Returns factors; `.layer_panel_idx` compares them as characters.
+.facet_keys <- function(facet, data) {
+  empty <- factor(rep("", nrow(data)))
+  if (facet@type == "wrap") {
+    list(wrap = .facet_key(facet@cols, data))
+  } else {
+    list(
+      r = if (length(facet@rows)) .facet_key(facet@rows, data) else empty,
+      c = if (length(facet@cols)) .facet_key(facet@cols, data) else empty
+    )
+  }
+}
+
 # Assign every data row to a panel and lay panels out on a grid. Returns the grid
 # dimensions, the per-panel row indices and grid position, and strip labels.
 .facet_assign <- function(spec) {
@@ -44,7 +61,7 @@ NULL
   }
 
   if (facet@type == "wrap") {
-    key <- .facet_key(facet@cols, data)
+    key <- .facet_keys(facet, data)$wrap
     levs <- levels(key)
     n <- length(levs)
     ncol <- facet@ncol %||%
@@ -69,16 +86,9 @@ NULL
       wrap_labels = levs
     )
   } else {
-    rkey <- if (length(facet@rows)) {
-      .facet_key(facet@rows, data)
-    } else {
-      factor(rep("", nrow(data)))
-    }
-    ckey <- if (length(facet@cols)) {
-      .facet_key(facet@cols, data)
-    } else {
-      factor(rep("", nrow(data)))
-    }
+    keys <- .facet_keys(facet, data)
+    rkey <- keys$r
+    ckey <- keys$c
     rlevs <- levels(rkey)
     clevs <- levels(ckey)
     R <- length(rlevs)
@@ -118,20 +128,16 @@ NULL
     return(seq_len(nrow(data)))
   }
   tryCatch(
-    if (facet@type == "wrap") {
-      which(as.character(.facet_key(facet@cols, data)) == panel$lvl$wrap)
-    } else {
-      rk <- if (length(facet@rows)) {
-        as.character(.facet_key(facet@rows, data))
+    {
+      keys <- .facet_keys(facet, data)
+      if (facet@type == "wrap") {
+        which(as.character(keys$wrap) == panel$lvl$wrap)
       } else {
-        rep("", nrow(data))
+        which(
+          as.character(keys$r) == panel$lvl$r &
+            as.character(keys$c) == panel$lvl$c
+        )
       }
-      ck <- if (length(facet@cols)) {
-        as.character(.facet_key(facet@cols, data))
-      } else {
-        rep("", nrow(data))
-      }
-      which(rk == panel$lvl$r & ck == panel$lvl$c)
     },
     error = function(e) seq_len(nrow(data))
   )
