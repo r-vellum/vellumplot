@@ -38,3 +38,7 @@ a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 b <- vplot(mtcars) |> mark_point(x = hp, y = mpg)
 hconcat(a, b) |> compose_annotation(title = "Fuel economy", tag_levels = "A")
 }
+\seealso{
+\code{\link[=theme]{theme()}}, which also accepts a composition to set the figure-level
+chrome (title bands, collected legend, panel spacing, tags).
+}
