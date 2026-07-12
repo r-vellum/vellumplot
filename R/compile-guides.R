@@ -489,8 +489,8 @@ NULL
 
 # --- legend -----------------------------------------------------------------
 
-# The list of guides a plot needs, in draw order: colour first, then size, then
-# shape, then edge width. Each guide is `list(kind, sc)` where `sc` is the
+# The list of guides a plot needs, in draw order: colour, size, shape, edge
+# width, alpha, then linetype. Each guide is `list(kind, sc)` where `sc` is the
 # trained scale (or, for a merged guide, a synthesized pseudo-scale).
 #
 # When one variable drives two aesthetics, the colour guide merges with its
@@ -639,22 +639,22 @@ NULL
     title_fs = rt[["legend.title"]]@size,
     text_h = .mm_th(rt[["legend.text"]]@size),
     title_h = .mm_th(rt[["legend.title"]]@size),
-    key = rt[["legend.key.size"]] %||% .LEGEND_SWATCH_MM,
+    key = rt[["legend.key.size"]],
     bar_w = .LEGEND_BAR_MM,
     row_gap = .LEGEND_ROW_GAP_MM,
     title_gap = .LEGEND_TITLE_GAP_MM,
-    spacing = rt[["legend.spacing"]] %||% .LEGEND_SPACING_MM,
+    spacing = rt[["legend.spacing"]],
     lab_gap = .LEGEND_KEY_LABEL_GAP_MM,
     pad = .LEGEND_INNER_PAD_MM,
     # inset (t, r, b, l) around the whole legend block
-    margin = rep_len(rt[["legend.margin"]] %||% .LEGEND_MARGIN_MM, 4L),
+    margin = rep_len(rt[["legend.margin"]], 4L),
     show_title = !.is_blank(rt[["legend.title"]])
   )
 }
 
-# The row labels a guide shows. A discrete/binned colour guide appends an "NA"
-# row where the data has missing values (its swatch is drawn in the NA colour);
-# size/shape NA keys are not yet supported (see DESIGN.md).
+# The row labels a guide shows. A discrete/binned colour, size, or shape guide
+# appends an "NA" row where the data has missing values (its key is drawn in the
+# NA colour / neutral glyph).
 .guide_labels <- function(g) {
   sc <- g$sc
   switch(

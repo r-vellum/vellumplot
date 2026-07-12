@@ -6,17 +6,16 @@ NULL
 # padding remain fixed here.
 .PAD_MM <- 1.4
 .LEGEND_BAR_MM <- 6 # colour-bar thickness
-.LEGEND_SWATCH_MM <- 4 # default key / swatch side
 .LEGEND_ROW_GAP_MM <- 1.4 # vertical gap between key rows
 .LEGEND_TITLE_GAP_MM <- 1.2 # gap below a guide title
-.LEGEND_SPACING_MM <- 3.5 # gap between stacked guides
 .LEGEND_KEY_LABEL_GAP_MM <- 1.6 # gap between a key and its label
 .LEGEND_INNER_PAD_MM <- 1.4 # legend content inset
 .LEGEND_MIN_BAR_MM <- 22 # minimum colour-bar length
-.LEGEND_MARGIN_MM <- c(2, 2, 2, 2) # default legend block inset (t, r, b, l)
 .LEGEND_TICK_MM <- 1.6 # colour-bar break tick length
 
-# The longest string in a vector (by character count); "" for an empty vector.
+# The longest string in a vector (by character count). For an empty vector it
+# returns "0" -- a one-character width floor so an axis with no labels still
+# reserves a sane gutter.
 .longest <- function(x) {
   x <- x[nzchar(x)]
   if (!length(x)) {

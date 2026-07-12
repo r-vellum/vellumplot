@@ -186,9 +186,10 @@ after_stat <- function(x) x
   if (length(quos)) {
     names(quos) <- sub("colour", "color", names(quos), fixed = TRUE)
   }
-  # Interactivity args (`tooltip`/`data_id`/`hover_group`) are reserved, not
-  # aesthetics: pull them out before encoding-splitting so they are never
-  # scale-trained. They are captured as quosures and resolved per row at compile.
+  # Interactivity args (`tooltip`/`data_id`/`hover_group`/`hover_color`/
+  # `selected_color`, see `.INTERACT_ARGS`) are reserved, not aesthetics: pull
+  # them out before encoding-splitting so they are never scale-trained. They are
+  # captured as quosures and resolved per row at compile.
   interactivity <- quos[intersect(names(quos), .INTERACT_ARGS)]
   interactivity <- interactivity[
     !vapply(interactivity, rlang::quo_is_null, logical(1))
