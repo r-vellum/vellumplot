@@ -47,6 +47,12 @@ test_that("scale_linetype(values=) sets the line types and rejects unknown ones"
   )
 })
 
+test_that("more linetype levels than the palette errors, not silent recycling (H42)", {
+  d <- data.frame(x = 1:7, y = 1:7, g = factor(letters[1:7]))
+  p <- vplot(d) |> mark_line(x = x, y = y, linetype = g)
+  expect_error(vellumplot:::.build_panels(p), "Not enough line types")
+})
+
 test_that("identity alpha/linetype use values verbatim and draw no legend", {
   d <- data.frame(
     x = 1:3,

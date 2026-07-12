@@ -46,8 +46,20 @@ test_that("an invalid dpi is rejected", {
   expect_error(vplot(mtcars, dpi = 0), "positive number")
   expect_error(vplot(mtcars, dpi = -10), "positive number")
   expect_error(vplot(mtcars, dpi = c(96, 150)), "single positive number")
+  expect_error(vplot(mtcars, dpi = Inf), "positive number") # now rejected too
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   f <- local_tempfile(fileext = ".png")
   expect_error(render_plot(p, f, dpi = "hi"), "positive number")
   expect_error(concat(p, p, dpi = 0), "positive number")
+})
+
+test_that("an invalid width/height is rejected (H41)", {
+  expect_error(vplot(mtcars, width = 0), "width")
+  expect_error(vplot(mtcars, width = -1), "width")
+  expect_error(vplot(mtcars, height = NA), "height")
+  expect_error(vplot(mtcars, height = Inf), "height")
+  expect_error(vplot(mtcars, width = c(5, 6)), "single positive number")
+  # valid dims still construct
+  p <- vplot(mtcars, width = 5, height = 3)
+  expect_identical(c(p@width, p@height), c(5, 3))
 })

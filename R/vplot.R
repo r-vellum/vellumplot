@@ -26,6 +26,8 @@ vplot <- function(data, width = 6, height = 4, dpi = 96) {
       "{.arg data} must be a data frame, not {.obj_type_friendly {data}}."
     )
   }
+  .check_dim(width, "width")
+  .check_dim(height, "height")
   .check_dpi(dpi)
   PlotSpec(
     data = data,
@@ -35,13 +37,19 @@ vplot <- function(data, width = 6, height = 4, dpi = 96) {
   )
 }
 
-# A dpi must be a single positive number.
-.check_dpi <- function(dpi, call = rlang::caller_env()) {
-  if (!is.numeric(dpi) || length(dpi) != 1L || is.na(dpi) || dpi <= 0) {
+# A page dimension / resolution must be a single positive finite number.
+# `!is.finite()` rejects NA and Inf (only reached once length == 1, so it never
+# sees a vector).
+.check_dim <- function(x, arg, call = rlang::caller_env()) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x <= 0) {
     cli::cli_abort(
-      "{.arg dpi} must be a single positive number, not {.obj_type_friendly {dpi}}.",
+      "{.arg {arg}} must be a single positive number, not {.obj_type_friendly {x}}.",
       call = call
     )
   }
-  invisible(dpi)
+  invisible(x)
+}
+
+.check_dpi <- function(dpi, call = rlang::caller_env()) {
+  .check_dim(dpi, "dpi", call = call)
 }

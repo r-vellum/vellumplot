@@ -26,6 +26,12 @@ test_that("scale_shape(values=) overrides the default shapes", {
   expect_identical(train(p)$shape$shapes, c("plus", "cross", "diamond"))
 })
 
+test_that("more shape levels than the palette errors, not silent recycling (H42)", {
+  d <- data.frame(x = 1:7, y = 1:7, g = factor(letters[1:7]))
+  p <- vplot(d) |> mark_point(x = x, y = y, shape = g)
+  expect_error(train(p), "Not enough shapes")
+})
+
 test_that("a constant shape param still works (no scale)", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = "square")
   expect_null(train(p)$shape)
