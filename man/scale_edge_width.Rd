@@ -4,18 +4,13 @@
 \alias{scale_edge_width}
 \title{Edge-width scale}
 \usage{
-scale_edge_width(
-  plot,
-  range = c(0.3, 3),
-  limits = NULL,
-  breaks = NULL,
-  name = NULL
-)
+scale_edge_width(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{range}{Output line-width range \code{c(min, max)}.}
+\item{range}{Output line-width range \code{c(min, max)}, or \code{NULL} for the
+default \code{c(0.3, 3)}.}
 
 \item{limits}{Data limits \code{c(min, max)}, or \code{NULL} to train from the data.}
 

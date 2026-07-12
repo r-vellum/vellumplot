@@ -544,7 +544,8 @@ scale_colour_gradient <- scale_color_gradient
 #' point-size `range` (in mm). A size legend is drawn automatically.
 #'
 #' @param plot A [PlotSpec].
-#' @param range Numeric length-2 output size range in mm (default `c(1, 4)`).
+#' @param range Numeric length-2 output size range in mm, or `NULL` for the
+#'   default `c(1, 4)`.
 #' @param limits Numeric length-2 data domain, or `NULL` to train from the data.
 #' @param breaks Explicit legend breaks, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
@@ -554,7 +555,7 @@ scale_colour_gradient <- scale_color_gradient
 #' @export
 scale_size <- function(
   plot,
-  range = c(1, 4),
+  range = NULL,
   limits = NULL,
   breaks = NULL,
   name = NULL
@@ -580,7 +581,8 @@ scale_size <- function(
 #' rescaled to a line-width range and an edge-width legend is drawn automatically.
 #'
 #' @param plot A [PlotSpec].
-#' @param range Output line-width range `c(min, max)`.
+#' @param range Output line-width range `c(min, max)`, or `NULL` for the
+#'   default `c(0.3, 3)`.
 #' @param limits Data limits `c(min, max)`, or `NULL` to train from the data.
 #' @param breaks Explicit legend breaks, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
@@ -595,7 +597,7 @@ scale_size <- function(
 #' @export
 scale_edge_width <- function(
   plot,
-  range = c(0.3, 3),
+  range = NULL,
   limits = NULL,
   breaks = NULL,
   name = NULL
@@ -715,7 +717,8 @@ scale_linetype_identity <- function(plot) {
 #' opacity `range` in `[0, 1]`. An alpha legend is drawn automatically.
 #'
 #' @param plot A [PlotSpec].
-#' @param range Numeric length-2 output opacity range (default `c(0.1, 1)`).
+#' @param range Numeric length-2 output opacity range, or `NULL` for the
+#'   default `c(0.1, 1)`.
 #' @param limits Numeric length-2 data domain, or `NULL` to train from the data.
 #' @param breaks Explicit legend breaks, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
@@ -725,7 +728,7 @@ scale_linetype_identity <- function(plot) {
 #' @export
 scale_alpha <- function(
   plot,
-  range = c(0.1, 1),
+  range = NULL,
   limits = NULL,
   breaks = NULL,
   name = NULL

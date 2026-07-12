@@ -4,12 +4,13 @@
 \alias{scale_size}
 \title{Size scale}
 \usage{
-scale_size(plot, range = c(1, 4), limits = NULL, breaks = NULL, name = NULL)
+scale_size(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{range}{Numeric length-2 output size range in mm (default \code{c(1, 4)}).}
+\item{range}{Numeric length-2 output size range in mm, or \code{NULL} for the
+default \code{c(1, 4)}.}
 
 \item{limits}{Numeric length-2 data domain, or \code{NULL} to train from the data.}
 
