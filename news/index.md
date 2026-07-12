@@ -4,6 +4,12 @@
 
 ### Bug fixes
 
+- **Clearer alt text for grid facets.** A
+  [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+  plot’s automatic alt text now distinguishes the row and column
+  variables (e.g. “Faceted by rows cyl, columns am”) instead of running
+  them together.
+
 - **Compositions can be themed.**
   [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
   now accepts a composition (from \[concat()\] / \[hconcat()\] /
