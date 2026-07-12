@@ -11,6 +11,16 @@ kinds <- function(p) {
   )
 }
 
+test_that("minor breaks extrapolate the local gap at each end (H33)", {
+  mb <- vellumplot:::.minor_breaks(c(0, 1, 10))
+  # low end uses the first gap (1), high end uses the last gap (9)
+  expect_equal(mb[1], 0 - 1 / 2)
+  expect_equal(mb[length(mb)], 10 + 9 / 2) # not 10 + 1/2
+  expect_equal(mb[2:3], c(0.5, 5.5)) # interior midpoints unchanged
+  # evenly spaced breaks are unaffected (below, midpoint, above)
+  expect_equal(vellumplot:::.minor_breaks(c(2, 4)), c(1, 3, 5))
+})
+
 test_that("guides are built per mapped channel in colour/size/shape order", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp, size = disp, shape = factor(cyl))

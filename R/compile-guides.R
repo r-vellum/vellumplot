@@ -11,8 +11,12 @@ NULL
     return(numeric(0))
   }
   mids <- (utils::head(b, -1) + utils::tail(b, -1)) / 2
-  step <- b[2] - b[1]
-  c(b[1] - step / 2, mids, b[length(b)] + step / 2)
+  n <- length(b)
+  # Extrapolate half of the *local* gap at each end; using the first gap for both
+  # misplaces the top minor line when breaks are unevenly spaced.
+  lo_gap <- b[2] - b[1]
+  hi_gap <- b[n] - b[n - 1]
+  c(b[1] - lo_gap / 2, mids, b[n] + hi_gap / 2)
 }
 
 # Vertical gridlines at `xs` (native), spanning the panel height. Drawn as one
