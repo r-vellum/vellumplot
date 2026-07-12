@@ -11,7 +11,8 @@ Description: A declarative, pipe-first grammar of graphics that compiles an
     grobs.
 License: MIT + file LICENSE
 URL: https://r-vellum.github.io/vellumplot/,
-    https://github.com/r-vellum/vellumplot
+    https://github.com/r-vellum/vellumplot,
+    https://schochastics.r-universe.dev/vellumplot
 BugReports: https://github.com/r-vellum/vellumplot/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
