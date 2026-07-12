@@ -17,6 +17,22 @@ test_that("a mapped alpha trains a continuous opacity scale with a legend", {
   expect_true(any(vapply(guides, function(g) g$kind == "alpha", logical(1))))
 })
 
+test_that("size / edge_width / alpha trainers are unified and consistent (H50)", {
+  # All three now flow through .train_continuous_aes and carry the `na` flag
+  # (alpha and edge_width previously omitted it). Guards against re-drift.
+  dna <- data.frame(x = 1:5, y = 1:5, w = c(1, 2, NA, 4, 5))
+  a <- vellumplot:::.build_panels(
+    vplot(dna) |> mark_point(x = x, y = y, alpha = w)
+  )$scales$alpha
+  s <- vellumplot:::.build_panels(
+    vplot(dna) |> mark_point(x = x, y = y, size = w)
+  )$scales$size
+  expect_true(isTRUE(a$na))
+  expect_true(isTRUE(s$na))
+  # the continuous rescale still works after unification
+  expect_equal(a$map(range(dna$w, na.rm = TRUE)), c(0.1, 1))
+})
+
 test_that("scale_alpha(range=) sets the opacity output range", {
   p <- vplot(df) |>
     mark_point(x = x, y = y, alpha = w) |>

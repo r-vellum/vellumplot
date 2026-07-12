@@ -665,20 +665,38 @@ NULL
   "grey50"
 }
 
-# Train the size scale (if any layer maps `size` to data). Maps values to a
-# point-size range in mm and carries representative breaks for a size legend.
-.train_size <- function(spec, resolved) {
-  values <- .pool_values(resolved, "size")
+# Train a continuous, rescaled-to-a-range aesthetic (size / edge width / alpha):
+# rescale the data range to an output range and carry representative breaks for a
+# legend. The three differ only in constants, so they share this body:
+#   channel      -- pool key + default-title key ("size"/"linewidth"/"alpha")
+#   aes          -- scale_for key ("size"/"edge_width"/"alpha")
+#   out_default  -- the output range when the user sets none
+#   legend_field -- the mapped-break field a guide reads ("legend_sizes"/...)
+# `na`, the identity short-circuit, and `.match_labels` are applied uniformly.
+# (An identity edge-width scale is not currently constructible, and neither
+# alpha nor edge width exposes `labels`, so those two paths are dormant for them
+# -- they exist so the three trainers stay consistent, not to change behaviour.)
+.train_continuous_aes <- function(
+  spec,
+  resolved,
+  kind,
+  channel,
+  aes,
+  out_default,
+  legend_field
+) {
+  values <- .pool_values(resolved, channel)
   if (is.null(values)) {
     return(NULL)
   }
-  scalespec <- .scale_for(spec, "size")
-  # An identity size scale uses the data values verbatim as point sizes (mm).
+  scalespec <- .scale_for(spec, aes)
+  # An identity scale uses the data values verbatim (mm for size, opacity for
+  # alpha), with no guide.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
     return(list(
-      kind = "size",
+      kind = kind,
       map = function(x) as.numeric(x),
-      name = .default_title(spec, "size"),
+      name = .default_title(spec, channel),
       no_guide = TRUE
     ))
   }
@@ -698,10 +716,10 @@ NULL
   out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
     as.numeric(scalespec@range)
   } else {
-    .SIZE_RANGE
+    out_default
   }
   map <- function(x) scales::rescale(x, to = out_range, from = rng)
-  name <- .scale_title(scalespec, .default_title(spec, "size"))
+  name <- .scale_title(scalespec, .default_title(spec, channel))
   lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
     as.numeric(scalespec@breaks)
   } else {
@@ -710,22 +728,37 @@ NULL
   llab <- .match_labels(
     if (!is.null(scalespec)) scalespec@labels else NULL,
     lbrk,
-    "size"
+    aes
   )
   keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
   lbrk <- lbrk[keep]
   if (!is.null(llab)) {
     llab <- llab[keep]
   }
-  list(
-    kind = "size",
+  out <- list(
+    kind = kind,
     map = map,
     name = name,
     range = rng,
     na = has_na,
     legend_breaks = lbrk,
-    legend_sizes = map(lbrk),
     legend_labels = llab %||% scales::label_number()(lbrk)
+  )
+  out[[legend_field]] <- map(lbrk)
+  out
+}
+
+# Train the size scale (if any layer maps `size` to data). Maps values to a
+# point-size range in mm and carries representative breaks for a size legend.
+.train_size <- function(spec, resolved) {
+  .train_continuous_aes(
+    spec,
+    resolved,
+    kind = "size",
+    channel = "size",
+    aes = "size",
+    out_default = .SIZE_RANGE,
+    legend_field = "legend_sizes"
   )
 }
 
@@ -735,53 +768,14 @@ NULL
 # Train the edge-width scale (if any edge layer maps `linewidth` to data). Mirrors
 # the size scale: rescale the data range to an lwd range; emits its own legend.
 .train_edge_width <- function(spec, resolved) {
-  values <- .pool_values(resolved, "linewidth")
-  if (is.null(values)) {
-    return(NULL)
-  }
-  scalespec <- .scale_for(spec, "edge_width")
-  v <- as.numeric(unlist(values, use.names = FALSE))
-  v <- v[is.finite(v)]
-  rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
-    as.numeric(scalespec@domain)
-  } else if (length(v)) {
-    range(v)
-  } else {
-    c(0, 1)
-  }
-  if (diff(rng) == 0) {
-    rng <- rng + c(-0.5, 0.5)
-  }
-  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
-    as.numeric(scalespec@range)
-  } else {
-    .EDGE_WIDTH_RANGE
-  }
-  map <- function(x) scales::rescale(x, to = out_range, from = rng)
-  name <- .scale_title(scalespec, .default_title(spec, "linewidth"))
-  lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
-    as.numeric(scalespec@breaks)
-  } else {
-    scales::breaks_extended()(rng)
-  }
-  llab <- .match_labels(
-    if (!is.null(scalespec)) scalespec@labels else NULL,
-    lbrk,
-    "edge_width"
-  )
-  keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
-  lbrk <- lbrk[keep]
-  if (!is.null(llab)) {
-    llab <- llab[keep]
-  }
-  list(
+  .train_continuous_aes(
+    spec,
+    resolved,
     kind = "edge_width",
-    map = map,
-    name = name,
-    range = rng,
-    legend_breaks = lbrk,
-    legend_widths = map(lbrk),
-    legend_labels = llab %||% scales::label_number()(lbrk)
+    channel = "linewidth",
+    aes = "edge_width",
+    out_default = .EDGE_WIDTH_RANGE,
+    legend_field = "legend_widths"
   )
 }
 
@@ -851,53 +845,14 @@ NULL
 # Train the alpha scale (if any layer maps `alpha` to data). Continuous: rescale
 # the data range to an opacity range; carries breaks for an alpha legend.
 .train_alpha <- function(spec, resolved) {
-  values <- .pool_values(resolved, "alpha")
-  if (is.null(values)) {
-    return(NULL)
-  }
-  scalespec <- .scale_for(spec, "alpha")
-  if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(list(
-      kind = "alpha",
-      map = function(x) as.numeric(x),
-      name = .default_title(spec, "alpha"),
-      no_guide = TRUE
-    ))
-  }
-  v <- as.numeric(unlist(values, use.names = FALSE))
-  v <- v[is.finite(v)]
-  rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
-    as.numeric(scalespec@domain)
-  } else if (length(v)) {
-    range(v)
-  } else {
-    c(0, 1)
-  }
-  if (diff(rng) == 0) {
-    rng <- rng + c(-0.5, 0.5)
-  }
-  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
-    as.numeric(scalespec@range)
-  } else {
-    .ALPHA_RANGE
-  }
-  map <- function(x) scales::rescale(x, to = out_range, from = rng)
-  name <- .scale_title(scalespec, .default_title(spec, "alpha"))
-  lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
-    as.numeric(scalespec@breaks)
-  } else {
-    scales::breaks_extended()(rng)
-  }
-  keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
-  lbrk <- lbrk[keep]
-  list(
+  .train_continuous_aes(
+    spec,
+    resolved,
     kind = "alpha",
-    map = map,
-    name = name,
-    range = rng,
-    legend_breaks = lbrk,
-    legend_alphas = map(lbrk),
-    legend_labels = scales::label_number()(lbrk)
+    channel = "alpha",
+    aes = "alpha",
+    out_default = .ALPHA_RANGE,
+    legend_field = "legend_alphas"
   )
 }
 
