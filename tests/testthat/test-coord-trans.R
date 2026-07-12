@@ -34,6 +34,14 @@ test_that("a bar/area is rejected under a nonlinear coord_trans y (H22)", {
   )
 })
 
+test_that("coord_trans() rejects a 'reverse' transform (H23)", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_error(coord_trans(p, y = "reverse"), "reverse")
+  expect_error(coord_trans(p, x = "reverse"), "reverse")
+  # a scales::transform object named "reverse" is caught too
+  expect_error(coord_trans(p, y = scales::transform_reverse()), "reverse")
+})
+
 test_that(".warp_scale warps break/domain positions but keeps labels", {
   sc <- list(
     domain = c(1, 100),
