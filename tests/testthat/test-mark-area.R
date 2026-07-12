@@ -93,3 +93,25 @@ test_that("grouped ribbon (per colour) renders", {
   )
   expect_gt(file.info(f)$size, 0)
 })
+
+test_that("area and ribbon share .emit_band and honour a per-group fill", {
+  g <- rbind(
+    cbind(d, grp = "a"),
+    cbind(transform(d, y = y + 3, lo = lo + 3, hi = hi + 3), grp = "b")
+  )
+  # both marks draw one band per group -> two distinct fills in the render
+  rib <- render_px(
+    vplot(g) |>
+      mark_ribbon(x = x, ymin = lo, ymax = hi, fill = grp) |>
+      scale_fill_manual(values = c(a = "red", b = "blue"))
+  )
+  expect_gt(count_near(rib, c(1, 0, 0), 0.15), 50)
+  expect_gt(count_near(rib, c(0, 0, 1), 0.15), 50)
+  ar <- render_px(
+    vplot(g) |>
+      mark_area(x = x, y = y, fill = grp, position = "identity") |>
+      scale_fill_manual(values = c(a = "red", b = "blue"))
+  )
+  expect_gt(count_near(ar, c(1, 0, 0), 0.15), 50)
+  expect_gt(count_near(ar, c(0, 0, 1), 0.15), 50)
+})

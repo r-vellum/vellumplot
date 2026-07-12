@@ -50,6 +50,12 @@ NULL
 # native opacity), which vellum expects as `NULL` rather than `NA`.
 gp_alpha <- function(a) if (is.na(a)) NULL else a
 
+# The gpar for a filled mark's style group `i` (fill from the group's colour, no
+# stroke, per-group alpha). Shared by the filled marks (band/bar/tile).
+.gp_fill <- function(fill, alpha, i) {
+  vellum::vl_gpar(fill = fill[i], col = NA, alpha = gp_alpha(alpha[i]))
+}
+
 # Clamp a mapped baseline into the finite trained span. On a log/sqrt y scale the
 # zero baseline maps to -Inf/NaN (`map(0)`), which yields degenerate bars/areas;
 # pin any non-finite (or out-of-range) baseline to the nearest edge of the
@@ -693,7 +699,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
-    a <- alpha[idx[1]]
     r <- .rect_units(
       scales,
       xc[idx],
@@ -709,11 +714,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          fill = fill[idx[1]],
-          col = NA,
-          alpha = gp_alpha(a)
-        )
+        gp = .gp_fill(fill, alpha, idx[1])
       ),
       rows = idx
     )
@@ -765,18 +766,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
-# A filled ribbon between ymin and ymax, one polygon per style group.
-.emit_ribbon <- function(scene, L, scales) {
+# A filled band between two y boundaries `ya`/`yb` (already mapped to native y),
+# drawn as one x-ordered polygon per style group -- the shared body of the ribbon
+# and area marks. A gradient fill paints the whole band as one polygon.
+.emit_band <- function(scene, L, scales, ya, yb) {
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
-  ymin <- rep_len(scales$y$map(L$values$ymin), n)
-  ymax <- rep_len(scales$y$map(L$values$ymax), n)
   sk <- .mark_sketch(L, scales)
 
   grad <- .grad_fill(L)
   if (!is.null(grad)) {
     o <- order(xn)
-    poly <- .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
+    poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
     return(.draw(
       scene,
       vellum::polygon_grob(
@@ -796,19 +797,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
     o <- idx[order(xn[idx])]
-    a <- alpha[idx[1]]
-    poly <- .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
+    poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
     scene <- .draw(
       scene,
       vellum::polygon_grob(
         poly$x,
         poly$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          fill = fill[idx[1]],
-          col = NA,
-          alpha = gp_alpha(a)
-        )
+        gp = .gp_fill(fill, alpha, idx[1])
       ),
       # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
       rows = o
@@ -818,62 +814,28 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# A filled ribbon between ymin and ymax, one polygon per style group.
+.emit_ribbon <- function(scene, L, scales) {
+  n <- L$n
+  ymin <- rep_len(scales$y$map(L$values$ymin), n)
+  ymax <- rep_len(scales$y$map(L$values$ymax), n)
+  .emit_band(scene, L, scales, ymin, ymax)
+}
+
 # An area mark: the region between `y` and the zero baseline, or between a
 # stacked `[ymin, ymax]` span when `position = "stack"`/`"fill"` set one (see
 # `.position_stack`). Baseline resolution mirrors `.emit_bar`.
 .emit_area <- function(scene, L, scales) {
   n <- L$n
-  xn <- rep_len(scales$x$map(L$values$x), n)
+  # vertical span: a stacked [ymin, ymax], else 0 -> y. The baseline is clamped
+  # into the finite domain so a log/sqrt y scale (map(0) = -Inf) still draws from
+  # the axis floor. `.emit_band` takes (near, far) = (y1, y0) to match the
+  # historical polygon winding.
   ymin_d <- if (!is.null(L$values$ymin)) L$values$ymin else rep(0, n)
   ymax_d <- if (!is.null(L$values$ymax)) L$values$ymax else L$values$y
   y0 <- rep_len(.clamp_baseline(scales$y$map(ymin_d), scales$y$domain), n)
   y1 <- rep_len(scales$y$map(ymax_d), n)
-  sk <- .mark_sketch(L, scales)
-
-  # A gradient fill paints the whole area as one polygon (in x order).
-  grad <- .grad_fill(L)
-  if (!is.null(grad)) {
-    o <- order(xn)
-    poly <- .xy_area(scales, xn[o], y1[o], xn[o], y0[o])
-    return(.draw(
-      scene,
-      vellum::polygon_grob(
-        poly$x,
-        poly$y,
-        sketch = sk,
-        gp = vellum::vl_gpar(fill = grad, col = NA)
-      ),
-      # PROVENANCE: one polygon over the whole layer, in x order.
-      rows = o
-    ))
-  }
-
-  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
-  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
-
-  gi <- 0L
-  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
-    o <- idx[order(xn[idx])]
-    a <- alpha[idx[1]]
-    poly <- .xy_area(scales, xn[o], y1[o], xn[o], y0[o])
-    scene <- .draw(
-      scene,
-      vellum::polygon_grob(
-        poly$x,
-        poly$y,
-        sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          fill = fill[idx[1]],
-          col = NA,
-          alpha = gp_alpha(a)
-        )
-      ),
-      # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
-      rows = o
-    )
-    gi <- gi + 1L
-  }
-  scene
+  .emit_band(scene, L, scales, y1, y0)
 }
 
 # A staircase line: each segment is expanded into a horizontal-then-vertical
@@ -1088,7 +1050,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   gi <- 0L
   for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
-    a <- alpha[idx[1]]
     r <- .rect_units(scales, xp[idx], yp[idx], w[idx], h[idx])
     scene <- .draw(
       scene,
@@ -1098,11 +1059,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          fill = fill[idx[1]],
-          col = NA,
-          alpha = gp_alpha(a)
-        )
+        gp = .gp_fill(fill, alpha, idx[1])
       ),
       rows = idx
     )
