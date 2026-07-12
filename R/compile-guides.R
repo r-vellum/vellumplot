@@ -11,8 +11,12 @@ NULL
     return(numeric(0))
   }
   mids <- (utils::head(b, -1) + utils::tail(b, -1)) / 2
-  step <- b[2] - b[1]
-  c(b[1] - step / 2, mids, b[length(b)] + step / 2)
+  n <- length(b)
+  # Extrapolate half of the *local* gap at each end; using the first gap for both
+  # misplaces the top minor line when breaks are unevenly spaced.
+  lo_gap <- b[2] - b[1]
+  hi_gap <- b[n] - b[n - 1]
+  c(b[1] - lo_gap / 2, mids, b[n] + hi_gap / 2)
 }
 
 # Vertical gridlines at `xs` (native), spanning the panel height. Drawn as one
@@ -577,6 +581,9 @@ NULL
   cols <- color$colors
   list(
     name = color$name,
+    # `levels` is the shared discrete key; it lets `.legend_series_key` tag the
+    # merged swatches for interactive highlight (marks carry `color:<level>`).
+    levels = color$levels,
     labels = color$labels %||% color$levels,
     fills = cols,
     cols = cols,
@@ -717,10 +724,16 @@ NULL
     0
   }
   if (g$kind == "color_continuous") {
+    na <- if (isTRUE(g$sc$na)) {
+      m$spacing + max(m$key, .mm_tw("NA", fs = m$text_fs))
+    } else {
+      0
+    }
     body <- max(
       .LEGEND_MIN_BAR_MM,
       sum(vapply(labs, .mm_tw, 0, fs = m$text_fs) + m$lab_gap)
-    )
+    ) +
+      na
   } else {
     key_d <- .guide_key_d(g, m)
     body <- sum(
@@ -927,7 +940,16 @@ NULL
 # (their `legend` membership, set in `.compile_marks`). NULL for guide kinds that
 # are not a discrete colour/fill/shape legend (continuous colourbars, size, etc.).
 .legend_series_key <- function(g, i) {
-  aes <- switch(g$kind, color_discrete = "color", shape = "shape", NULL)
+  aes <- switch(
+    g$kind,
+    color_discrete = "color",
+    shape = "shape",
+    # A merged colour+shape guide shares one discrete variable, so its swatches
+    # join the colour series (marks carry `color:<value>`). A merged colour+size
+    # guide has no discrete series (`levels` is NULL) and stays untagged.
+    merged = if (!is.null(g$sc$levels)) "color" else NULL,
+    NULL
+  )
   if (is.null(aes)) {
     return(NULL)
   }
@@ -1039,7 +1061,11 @@ NULL
     scene <- vellum::pop(scene)
   }
   scene <- vellum::push(scene, vellum::vl_viewport(row = row_bar, col = 1))
-  grad <- vellum::linear_gradient(cl$pal256, x1 = 0, y1 = 0, x2 = 0, y2 = 1)
+  # guide_legend(reverse = TRUE) flips a continuous bar by reversing the gradient
+  # and mirroring every value position, keeping each value paired with its label.
+  revb <- isTRUE(cl$reverse_bar)
+  pal <- if (revb) rev(cl$pal256) else cl$pal256
+  grad <- vellum::linear_gradient(pal, x1 = 0, y1 = 0, x2 = 0, y2 = 1)
   scene <- vellum::draw(
     scene,
     vellum::rect_grob(
@@ -1052,6 +1078,9 @@ NULL
   )
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    if (revb) {
+      frac <- 1 - frac
+    }
     # A white break tick reaching in from the bar's right (label-side) edge.
     scene <- vellum::draw(
       scene,
@@ -1190,18 +1219,27 @@ NULL
 
 .draw_guide_continuous_h <- function(scene, g, m, rt, txt, th) {
   cl <- g$sc
+  # Reserve a column at the right end for the NA key (mirrors the vertical guide,
+  # which reserves a row); the gradient bar takes the remaining `null` width.
+  has_na <- isTRUE(cl$na)
+  na_w <- if (has_na) max(m$key, .mm_tw("NA", fs = m$text_fs)) else 0
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
     vellum::vl_unit(m$bar_w, "mm"),
     vellum::vl_unit(m$text_h + m$lab_gap, "mm")
   )
+  widths <- if (has_na) {
+    .c_units(
+      vellum::vl_unit(1, "null"),
+      vellum::vl_unit(m$spacing + na_w, "mm")
+    )
+  } else {
+    vellum::vl_unit(1, "null")
+  }
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(
-      layout = vellum::grid_layout(
-        heights = heights,
-        widths = vellum::vl_unit(1, "null")
-      )
+      layout = vellum::grid_layout(heights = heights, widths = widths)
     )
   )
   off <- if (m$show_title) 1L else 0L
@@ -1210,8 +1248,10 @@ NULL
     scene <- .draw_guide_title(scene, cl$name, rt)
     scene <- vellum::pop(scene)
   }
+  revb <- isTRUE(cl$reverse_bar)
+  pal <- if (revb) rev(cl$pal256) else cl$pal256
   scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 1))
-  grad <- vellum::linear_gradient(cl$pal256, x1 = 0, y1 = 0, x2 = 1, y2 = 0)
+  grad <- vellum::linear_gradient(pal, x1 = 0, y1 = 0, x2 = 1, y2 = 0)
   scene <- vellum::draw(
     scene,
     vellum::rect_grob(
@@ -1225,6 +1265,9 @@ NULL
   # White break ticks reaching up from the bar's bottom (label-side) edge.
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    if (revb) {
+      frac <- 1 - frac
+    }
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
@@ -1240,6 +1283,9 @@ NULL
   scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 1))
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    if (revb) {
+      frac <- 1 - frac
+    }
     # Justify the end labels inward so they never spill past the bar ends.
     hjust <- if (frac <= 0.01) {
       "left"
@@ -1260,6 +1306,34 @@ NULL
     )
   }
   scene <- vellum::pop(scene)
+  if (has_na) {
+    # NA swatch in the reserved column, on the bar row; "NA" label below it.
+    cx <- vellum::vl_unit(m$spacing + m$key / 2, "mm")
+    scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 2))
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = cx,
+        y = vellum::vl_unit(0.5, "npc"),
+        width = vellum::vl_unit(m$key, "mm"),
+        height = vellum::vl_unit(m$key, "mm"),
+        gp = vellum::vl_gpar(fill = cl$na_value, col = NA)
+      )
+    )
+    scene <- vellum::pop(scene)
+    scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 2))
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        "NA",
+        x = cx,
+        y = vellum::vl_unit(0.5, "npc"),
+        just = c("centre", "centre"),
+        gp = txt
+      )
+    )
+    scene <- vellum::pop(scene)
+  }
   vellum::pop(scene)
 }
 

@@ -38,6 +38,39 @@ test_that("guide_legend(reverse=) reverses the key order only", {
   expect_identical(b$scales$color$map("4"), base$scales$color$map("4"))
 })
 
+test_that("guide_legend(reverse=) flips a continuous colourbar (H31)", {
+  dc <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, hp = mtcars$hp)
+  p <- vplot(dc) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    guides(color = guide_legend(reverse = TRUE))
+  b <- vellumplot:::.build_panels(p)
+  # the drawer flag is set; value<->label pairing is untouched (no array reverse)
+  expect_true(isTRUE(b$scales$color$reverse_bar))
+  # and the bar actually renders reversed (previously an invisible no-op)
+  base <- vplot(dc) |> mark_point(x = wt, y = mpg, color = hp)
+  expect_false(identical(
+    vellum::scene_raster(p),
+    vellum::scene_raster(base)
+  ))
+})
+
+test_that("guide_legend(reverse=) on a binned colour scale keeps breaks aligned (H31)", {
+  dc <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, hp = mtcars$hp)
+  p <- vplot(dc) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned() |>
+    guides(color = guide_legend(reverse = TRUE))
+  sc <- vellumplot:::.build_panels(p)$scales$color
+  # n colours/labels, n+1 boundaries: breaks are NOT reversed into a desync
+  expect_equal(length(sc$breaks), length(sc$colors) + 1L)
+  base <- vplot(dc) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned()
+  bc <- vellumplot:::.build_panels(base)$scales$color
+  expect_identical(sc$colors, rev(bc$colors)) # swatches reversed
+  expect_identical(sc$breaks, bc$breaks) # boundaries unchanged
+})
+
 test_that("guide_legend(title=) overrides the legend title", {
   p <- vplot(df) |>
     mark_point(x = wt, y = mpg, color = cyl) |>
