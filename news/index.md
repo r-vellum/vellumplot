@@ -4,6 +4,12 @@
 
 ### Bug fixes
 
+- **Continuous labels no longer group thousands by default.** A default
+  continuous axis or legend now renders 4-digit-plus values without a
+  grouping separator, so years and IDs read `2010` instead of `2 010`
+  ([\#27](https://github.com/r-vellum/vellumplot/issues/27)). Pass
+  explicit `labels` to restore grouping.
+
 - **More inputs fail fast.** A `design` layout area must be a solid
   rectangle (and
   [`area()`](https://r-vellum.github.io/vellumplot/reference/area.md)
