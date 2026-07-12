@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* **Gradient fills fail clearly on marks that don't support them.** A
+  `fill = linear_gradient(...)` is painted by `mark_area()`, `mark_ribbon()`, and
+  `mark_bar()`; on any other mark it now raises a clear error instead of leaking
+  an undefined paint into the renderer.
+
 * **Inputs are validated up front.** `theme()` now checks `panel.spacing`,
   `plot.margin`, `aspect.ratio`, and `axis.ticks.length` (and rejects `NA`/`Inf`
   in any numeric setting); `vplot()` checks `width`/`height` the way it already

@@ -78,6 +78,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   if (inherits(f, "vellum_gradient")) f else NULL
 }
 
+# The marks whose emitters implement a gradient `fill` (paint the whole region
+# with one grob). Every other mark would pass the paint straight into a per-row
+# `vl_gpar(fill = ...)` undefined, so `.emit_layer` rejects it up front.
+.GRADIENT_MARKS <- c("bar", "area", "ribbon")
+
 # Resolve a layer's point size (mm): a mapped size channel (via the trained size
 # scale), a constant size param, or the supplied default.
 .aes_size <- function(L, scales, default) {
@@ -1865,6 +1870,15 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 }
 
 .emit_layer <- function(scene, L, scales) {
+  # A gradient `fill` is only implemented by the filled-region marks; anywhere
+  # else it would leak into a per-row `vl_gpar(fill = ...)` undefined, so reject
+  # it with a clear message (cf. the polar-bar gradient abort in `.emit_bar`).
+  if (!is.null(.grad_fill(L)) && !L$mark %in% .GRADIENT_MARKS) {
+    cli::cli_abort(c(
+      "Gradient fills are not supported for the {.val {L$mark}} mark.",
+      i = "A gradient {.arg fill} works on {.fn mark_area}, {.fn mark_ribbon}, and {.fn mark_bar}."
+    ))
+  }
   switch(
     L$mark,
     point = .emit_point(scene, L, scales),
