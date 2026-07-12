@@ -46,6 +46,10 @@ NULL
 
 .aes_param <- function(L, name, default) L$params[[name]] %||% default
 
+# Resolve a per-group alpha for a `vl_gpar`: `NA` means "no alpha set" (the mark's
+# native opacity), which vellum expects as `NULL` rather than `NA`.
+gp_alpha <- function(a) if (is.na(a)) NULL else a
+
 # Clamp a mapped baseline into the finite trained span. On a log/sqrt y scale the
 # zero baseline maps to -Inf/NaN (`map(0)`), which yields degenerate bars/areas;
 # pin any non-finite (or out-of-range) baseline to the nearest edge of the
@@ -386,7 +390,7 @@ NULL
         gp = vellum::vl_gpar(
           fill = col[idx[1]],
           col = col[idx[1]],
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       rows = idx
@@ -421,7 +425,7 @@ NULL
           col = col[idx[1]],
           lwd = lwd,
           lty = lty[idx[1]],
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       # PROVENANCE: `o` are the layer rows this polyline draws (x-ordered).
@@ -460,7 +464,7 @@ NULL
         gp = vellum::vl_gpar(
           col = col[idx[1]],
           lwd = lwd,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       rows = idx
@@ -500,7 +504,7 @@ NULL
         gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       rows = idx
@@ -624,7 +628,7 @@ NULL
         theta1 = theta1[idx],
         fill = fill[idx],
         sketch = sk,
-        gp = vellum::vl_gpar(col = NA, alpha = if (is.na(a)) NULL else a)
+        gp = vellum::vl_gpar(col = NA, alpha = gp_alpha(a))
       ),
       rows = idx
     )
@@ -708,7 +712,7 @@ NULL
         gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       rows = idx
@@ -803,7 +807,7 @@ NULL
         gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
@@ -861,7 +865,7 @@ NULL
         gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
@@ -916,7 +920,7 @@ NULL
           col = col[idx[1]],
           lwd = lwd,
           lty = lty[idx[1]],
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       # PROVENANCE: `o` are the layer rows this staircase draws (x-ordered).
@@ -995,7 +999,7 @@ NULL
           col = col[idx[1]],
           fontfamily = .aes_param(L, "family", NULL),
           fontface = .aes_param(L, "fontface", NULL),
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       # PROVENANCE: `idx` are the layer rows in this style group.
@@ -1049,7 +1053,7 @@ NULL
         gp = vellum::vl_gpar(
           fill = bg[idx[1]],
           col = NA,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       )
     )
@@ -1062,7 +1066,7 @@ NULL
         gp = vellum::vl_gpar(
           fontsize = fs,
           col = col[idx[1]],
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       )
     )
@@ -1097,7 +1101,7 @@ NULL
         gp = vellum::vl_gpar(
           fill = fill[idx[1]],
           col = NA,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       rows = idx
@@ -1309,7 +1313,7 @@ NULL
           fill = colv[sel[1]],
           col = "grey30",
           lwd = 1,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       # PROVENANCE: a violin summarises all rows of its category.
@@ -1358,7 +1362,7 @@ NULL
           fill = colv[sel[1]],
           col = "grey30",
           lwd = 1,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       # PROVENANCE: a ridge summarises all rows of its category.
@@ -1452,7 +1456,7 @@ NULL
         gp = vellum::vl_gpar(
           col = col[idx[1]],
           lwd = lwd,
-          alpha = if (is.na(a)) NULL else a
+          alpha = gp_alpha(a)
         )
       ),
       rows = idx
@@ -1534,7 +1538,7 @@ NULL
           gp = vellum::vl_gpar(
             col = col[g[1]],
             lwd = lwd[g[1]],
-            alpha = if (is.na(a)) NULL else a
+            alpha = gp_alpha(a)
           )
         ),
         rows = g
@@ -1579,7 +1583,7 @@ NULL
           gp = vellum::vl_gpar(
             col = col[j],
             lwd = lwd[j],
-            alpha = if (is.na(a)) NULL else a
+            alpha = gp_alpha(a)
           )
         )
       )
@@ -1623,7 +1627,7 @@ NULL
       height = vellum::vl_unit(if (flip) w_full else h_full, "native"),
       fill = fill,
       orientation = "flat",
-      gp = vellum::vl_gpar(alpha = if (is.na(a)) NULL else a)
+      gp = vellum::vl_gpar(alpha = gp_alpha(a))
     ),
     rows = seq_len(n)
   )
@@ -1708,7 +1712,6 @@ NULL
   }
   prims_of <- function(i, k) Filter(function(p) p$kind == k, feats[[i]])
   mapnat <- function(m) list(x = scales$x$map(m[, 1]), y = scales$y$map(m[, 2]))
-  gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   # Gather the polygon rings of features `fi` into one path payload: raw x/y and a
   # ring id that is unique across the whole call (so several features batch into
@@ -1959,7 +1962,7 @@ NULL
       gp <- vellum::vl_gpar(
         col = col[idx[1]],
         lwd = lwd,
-        alpha = if (is.na(a)) NULL else a
+        alpha = gp_alpha(a)
       )
       u <- vellum::vl_unit(pos[idx], "native")
       if (vertical) {
