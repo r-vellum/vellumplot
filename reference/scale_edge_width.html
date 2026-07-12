@@ -72,13 +72,7 @@ rescaled to a line-width range and an edge-width legend is drawn automatically.<
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">scale_edge_width</span><span class="op">(</span></span>
-<span>  <span class="va">plot</span>,</span>
-<span>  range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">scale_edge_width</span><span class="op">(</span><span class="va">plot</span>, range <span class="op">=</span> <span class="cn">NULL</span>, limits <span class="op">=</span> <span class="cn">NULL</span>, breaks <span class="op">=</span> <span class="cn">NULL</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -90,7 +84,8 @@ rescaled to a line-width range and an edge-width legend is drawn automatically.<
 
 
 <dt id="arg-range">range<a class="anchor" aria-label="anchor" href="#arg-range"></a></dt>
-<dd><p>Output line-width range <code>c(min, max)</code>.</p></dd>
+<dd><p>Output line-width range <code>c(min, max)</code>, or <code>NULL</code> for the
+default <code>c(0.3, 3)</code>.</p></dd>
 
 
 <dt id="arg-limits">limits<a class="anchor" aria-label="anchor" href="#arg-limits"></a></dt>

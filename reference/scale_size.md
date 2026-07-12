@@ -7,7 +7,7 @@ automatically.
 ## Usage
 
 ``` r
-scale_size(plot, range = c(1, 4), limits = NULL, breaks = NULL, name = NULL)
+scale_size(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
 ```
 
 ## Arguments
@@ -19,7 +19,8 @@ scale_size(plot, range = c(1, 4), limits = NULL, breaks = NULL, name = NULL)
 
 - range:
 
-  Numeric length-2 output size range in mm (default `c(1, 4)`).
+  Numeric length-2 output size range in mm, or `NULL` for the default
+  `c(1, 4)`.
 
 - limits:
 

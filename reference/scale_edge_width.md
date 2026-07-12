@@ -9,13 +9,7 @@ edge-width legend is drawn automatically.
 ## Usage
 
 ``` r
-scale_edge_width(
-  plot,
-  range = c(0.3, 3),
-  limits = NULL,
-  breaks = NULL,
-  name = NULL
-)
+scale_edge_width(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
 ```
 
 ## Arguments
@@ -27,7 +21,8 @@ scale_edge_width(
 
 - range:
 
-  Output line-width range `c(min, max)`.
+  Output line-width range `c(min, max)`, or `NULL` for the default
+  `c(0.3, 3)`.
 
 - limits:
 

@@ -6,11 +6,11 @@ opacity `range` in `[0, 1]`. An alpha legend is drawn automatically.
 ## Usage
 
 ``` r
-scale_alpha(plot, range = c(0.1, 1), limits = NULL, breaks = NULL, name = NULL)
+scale_alpha(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
 
 scale_alpha_continuous(
   plot,
-  range = c(0.1, 1),
+  range = NULL,
   limits = NULL,
   breaks = NULL,
   name = NULL
@@ -26,7 +26,8 @@ scale_alpha_continuous(
 
 - range:
 
-  Numeric length-2 output opacity range (default `c(0.1, 1)`).
+  Numeric length-2 output opacity range, or `NULL` for the default
+  `c(0.1, 1)`.
 
 - limits:
 

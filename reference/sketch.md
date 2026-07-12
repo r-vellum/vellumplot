@@ -14,40 +14,18 @@ outlines, hachure fills, à la [Rough.js](https://roughjs.com)). Pass a
 ## Usage
 
 ``` r
-sketch(
-  roughness = 1,
-  bowing = 1,
-  fill_style = c("hachure", "solid", "crosshatch", "zigzag", "dots"),
-  fill_weight = NULL,
-  hachure_angle = -41,
-  hachure_gap = NULL,
-  curve_tightness = 0,
-  disable_multi_stroke = FALSE,
-  preserve_vertices = FALSE,
-  seed = 1L
-)
+sketch(...)
 ```
 
 ## Arguments
 
-- roughness:
+- ...:
 
-  Wobble amount (`>= 0`; `0` is nearly crisp, `1` the default, higher is
-  wilder).
-
-- bowing:
-
-  How much straight edges bow.
-
-- fill_style:
-
-  One of `"hachure"`, `"solid"`, `"crosshatch"`, `"zigzag"`, `"dots"`.
-
-- fill_weight, hachure_angle, hachure_gap, curve_tightness,
-  disable_multi_stroke, preserve_vertices, seed:
-
-  Further tuning; see
-  [`vellum::sketch()`](https://r-vellum.github.io/vellum/reference/sketch.html).
+  Sketch parameters passed straight to
+  [`vellum::sketch()`](https://r-vellum.github.io/vellum/reference/sketch.html)
+  — `roughness`, `bowing`, `fill_style`, `fill_weight`, `hachure_angle`,
+  `hachure_gap`, `curve_tightness`, `disable_multi_stroke`,
+  `preserve_vertices`, `seed`. See there for defaults.
 
 ## Value
 
