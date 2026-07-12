@@ -721,10 +721,16 @@ NULL
     0
   }
   if (g$kind == "color_continuous") {
+    na <- if (isTRUE(g$sc$na)) {
+      m$spacing + max(m$key, .mm_tw("NA", fs = m$text_fs))
+    } else {
+      0
+    }
     body <- max(
       .LEGEND_MIN_BAR_MM,
       sum(vapply(labs, .mm_tw, 0, fs = m$text_fs) + m$lab_gap)
-    )
+    ) +
+      na
   } else {
     key_d <- .guide_key_d(g, m)
     body <- sum(
@@ -1194,18 +1200,27 @@ NULL
 
 .draw_guide_continuous_h <- function(scene, g, m, rt, txt, th) {
   cl <- g$sc
+  # Reserve a column at the right end for the NA key (mirrors the vertical guide,
+  # which reserves a row); the gradient bar takes the remaining `null` width.
+  has_na <- isTRUE(cl$na)
+  na_w <- if (has_na) max(m$key, .mm_tw("NA", fs = m$text_fs)) else 0
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
     vellum::vl_unit(m$bar_w, "mm"),
     vellum::vl_unit(m$text_h + m$lab_gap, "mm")
   )
+  widths <- if (has_na) {
+    .c_units(
+      vellum::vl_unit(1, "null"),
+      vellum::vl_unit(m$spacing + na_w, "mm")
+    )
+  } else {
+    vellum::vl_unit(1, "null")
+  }
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(
-      layout = vellum::grid_layout(
-        heights = heights,
-        widths = vellum::vl_unit(1, "null")
-      )
+      layout = vellum::grid_layout(heights = heights, widths = widths)
     )
   )
   off <- if (m$show_title) 1L else 0L
@@ -1264,6 +1279,34 @@ NULL
     )
   }
   scene <- vellum::pop(scene)
+  if (has_na) {
+    # NA swatch in the reserved column, on the bar row; "NA" label below it.
+    cx <- vellum::vl_unit(m$spacing + m$key / 2, "mm")
+    scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 2))
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = cx,
+        y = vellum::vl_unit(0.5, "npc"),
+        width = vellum::vl_unit(m$key, "mm"),
+        height = vellum::vl_unit(m$key, "mm"),
+        gp = vellum::vl_gpar(fill = cl$na_value, col = NA)
+      )
+    )
+    scene <- vellum::pop(scene)
+    scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 2))
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        "NA",
+        x = cx,
+        y = vellum::vl_unit(0.5, "npc"),
+        just = c("centre", "centre"),
+        gp = txt
+      )
+    )
+    scene <- vellum::pop(scene)
+  }
   vellum::pop(scene)
 }
 

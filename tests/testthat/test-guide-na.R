@@ -30,6 +30,27 @@ test_that("NA in a size aesthetic adds an NA key", {
   expect_identical(tail(.guide_labels(list(kind = "size", sc = sc)), 1L), "NA")
 })
 
+test_that("a horizontal continuous colour legend draws the NA key (H30)", {
+  df <- data.frame(x = 1:6, y = 1:6, z = c(1, 2, 3, 4, NA, NA))
+  svg_of <- function(p) {
+    f <- local_tempfile(fileext = ".svg")
+    render_plot(p, f)
+    paste(readLines(f), collapse = "\n")
+  }
+  # bottom (horizontal) legend previously dropped the NA key that the vertical
+  # legend always drew.
+  bottom <- vplot(df) |>
+    mark_point(x = x, y = y, color = z) |>
+    theme(legend.position = "bottom")
+  expect_match(svg_of(bottom), ">NA<")
+  # control: no missing data -> no NA key
+  df2 <- data.frame(x = 1:4, y = 1:4, z = 1:4)
+  clean <- vplot(df2) |>
+    mark_point(x = x, y = y, color = z) |>
+    theme(legend.position = "bottom")
+  expect_no_match(svg_of(clean), ">NA<")
+})
+
 test_that("no NA key when the aesthetic has no missing values (additive)", {
   df <- data.frame(
     x = 1:4,
