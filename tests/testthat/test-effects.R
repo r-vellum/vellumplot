@@ -89,6 +89,27 @@ test_that("radial_gradient() is captured as a fill value and renders", {
   expect_no_error(render_px(p))
 })
 
+test_that("a gradient fill on a mark that can't paint one is rejected", {
+  g <- linear_gradient(c("#08F7FE", "#08F7FE00"))
+  # supported filled-region marks paint it
+  expect_no_error(render_px(
+    vplot(line_df) |> mark_area(x = x, y = y, fill = g)
+  ))
+  expect_no_error(render_px(
+    vplot(line_df) |> mark_ribbon(x = x, ymin = y - 1, ymax = y + 1, fill = g)
+  ))
+  # other fillable marks reject it up front instead of leaking an undefined paint
+  td <- data.frame(x = c(1, 2, 1, 2), y = c(1, 1, 2, 2))
+  expect_error(
+    render_px(vplot(td) |> mark_tile(x = x, y = y, fill = g)),
+    "Gradient fills are not supported"
+  )
+  expect_error(
+    render_px(vplot(mtcars) |> mark_point(x = wt, y = mpg, fill = g)),
+    "Gradient fills are not supported"
+  )
+})
+
 test_that("effect validators reject NA, non-finite, and non-integer inputs", {
   expect_error(glow(size = NA), "positive")
   expect_error(glow(size = Inf), "positive")
