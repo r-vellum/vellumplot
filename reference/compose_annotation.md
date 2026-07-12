@@ -48,6 +48,12 @@ compose_annotation(
 
 The modified `PlotComposition`.
 
+## See also
+
+[`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+which also accepts a composition to set the figure-level chrome (title
+bands, collected legend, panel spacing, tags).
+
 ## Examples
 
 ``` r

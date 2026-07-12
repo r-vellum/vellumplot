@@ -39,6 +39,8 @@ set_theme(
 
   A
   [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+  `theme()` also accepts a `PlotComposition`, setting the figure-level
+  chrome (title bands, collected legend, panel spacing, tags).
 
 - ...:
 

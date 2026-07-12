@@ -4,6 +4,14 @@
 
 ### Bug fixes
 
+- **Compositions can be themed.**
+  [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  now accepts a composition (from \[concat()\] / \[hconcat()\] /
+  \[vconcat()\]) and styles its figure-level chrome — the
+  title/subtitle/caption bands, the collected legend, panel spacing, and
+  tags. Previously a composition’s figure chrome always used the default
+  theme. Each sub-plot still carries its own theme.
+
 - **Gradient fills fail clearly on marks that don’t support them.** A
   `fill = linear_gradient(...)` is painted by
   [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
