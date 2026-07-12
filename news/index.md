@@ -4,6 +4,18 @@
 
 ### Bug fixes
 
+- **Inputs are validated up front.**
+  [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  now checks `panel.spacing`, `plot.margin`, `aspect.ratio`, and
+  `axis.ticks.length` (and rejects `NA`/`Inf` in any numeric setting);
+  [`vplot()`](https://r-vellum.github.io/vellumplot/reference/vplot.md)
+  checks `width`/`height` the way it already checked `dpi`; a discrete
+  `shape`/`linetype` scale with more categories than its palette errors
+  instead of silently reusing a glyph; and a binned colour scale given
+  fewer than two breaks errors instead of crashing in
+  [`colorRampPalette()`](https://rdrr.io/r/grDevices/colorRamp.html).
+  Valid input is unaffected.
+
 - **Legends read consistently.** A horizontal (top/bottom) continuous
   colour legend now draws the `NA` key that the vertical one always did.
   `guide_legend(reverse = TRUE)` now actually flips a continuous
