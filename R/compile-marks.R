@@ -56,6 +56,19 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   vellum::vl_gpar(fill = fill[i], col = NA, alpha = gp_alpha(alpha[i]))
 }
 
+# The gpar for a stroked mark's style group `i`: per-group colour + alpha, a
+# shared line width, and an optional per-group line type (`lty = NULL` omits it,
+# matching an unset linetype). Shared by the stroked marks
+# (line/step/contour/segment/rug).
+.gp_stroke <- function(col, alpha, i, lwd, lty = NULL) {
+  vellum::vl_gpar(
+    col = col[i],
+    lwd = lwd,
+    lty = if (is.null(lty)) NULL else lty[i],
+    alpha = gp_alpha(alpha[i])
+  )
+}
+
 # Clamp a mapped baseline into the finite trained span. On a log/sqrt y scale the
 # zero baseline maps to -Inf/NaN (`map(0)`), which yields degenerate bars/areas;
 # pin any non-finite (or out-of-range) baseline to the nearest edge of the
@@ -424,7 +437,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
-    a <- alpha[idx[1]]
     xy <- .xy_path(scales, xn[o], yn[o])
     scene <- .draw(
       scene,
@@ -432,12 +444,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$x,
         xy$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          col = col[idx[1]],
-          lwd = lwd,
-          lty = lty[idx[1]],
-          alpha = gp_alpha(a)
-        )
+        gp = .gp_stroke(col, alpha, idx[1], lwd, lty)
       ),
       # PROVENANCE: `o` are the layer rows this polyline draws (x-ordered).
       rows = o
@@ -464,7 +471,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   gi <- 0L
   for (pid in unique(piece)) {
     idx <- which(piece == pid)
-    a <- alpha[idx[1]]
     xy <- .xy_path(scales, xn[idx], yn[idx])
     scene <- .draw(
       scene,
@@ -472,11 +478,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$x,
         xy$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          col = col[idx[1]],
-          lwd = lwd,
-          alpha = gp_alpha(a)
-        )
+        gp = .gp_stroke(col, alpha, idx[1], lwd)
       ),
       rows = idx
     )
@@ -875,7 +877,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       ex <- sx
       ey <- sy
     }
-    a <- alpha[idx[1]]
     ln <- .xy_path(scales, ex, ey)
     scene <- .draw(
       scene,
@@ -883,12 +884,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         ln$x,
         ln$y,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          col = col[idx[1]],
-          lwd = lwd,
-          lty = lty[idx[1]],
-          alpha = gp_alpha(a)
-        )
+        gp = .gp_stroke(col, alpha, idx[1], lwd, lty)
       ),
       # PROVENANCE: `o` are the layer rows this staircase draws (x-ordered).
       rows = o
@@ -1399,7 +1395,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
-    a <- alpha[idx[1]]
     s <- .seg_units(
       scales,
       vellum::vl_unit(x0[idx], "native"),
@@ -1415,11 +1410,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         s$x1,
         s$y1,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          col = col[idx[1]],
-          lwd = lwd,
-          alpha = gp_alpha(a)
-        )
+        gp = .gp_stroke(col, alpha, idx[1], lwd)
       ),
       rows = idx
     )
@@ -1929,12 +1920,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # `pos` are native positions over all rows; draw each style group's subset.
   tick <- function(scene, pos, y0, y1, vertical) {
     for (idx in groups) {
-      a <- alpha[idx[1]]
-      gp <- vellum::vl_gpar(
-        col = col[idx[1]],
-        lwd = lwd,
-        alpha = gp_alpha(a)
-      )
+      gp <- .gp_stroke(col, alpha, idx[1], lwd)
       u <- vellum::vl_unit(pos[idx], "native")
       if (vertical) {
         grob <- vellum::segments_grob(
