@@ -4,29 +4,13 @@
 \alias{sketch}
 \title{Hand-drawn ("sketch") rendering}
 \usage{
-sketch(
-  roughness = 1,
-  bowing = 1,
-  fill_style = c("hachure", "solid", "crosshatch", "zigzag", "dots"),
-  fill_weight = NULL,
-  hachure_angle = -41,
-  hachure_gap = NULL,
-  curve_tightness = 0,
-  disable_multi_stroke = FALSE,
-  preserve_vertices = FALSE,
-  seed = 1L
-)
+sketch(...)
 }
 \arguments{
-\item{roughness}{Wobble amount (\verb{>= 0}; \code{0} is nearly crisp, \code{1} the default,
-higher is wilder).}
-
-\item{bowing}{How much straight edges bow.}
-
-\item{fill_style}{One of \code{"hachure"}, \code{"solid"}, \code{"crosshatch"}, \code{"zigzag"},
-\code{"dots"}.}
-
-\item{fill_weight, hachure_angle, hachure_gap, curve_tightness, disable_multi_stroke, preserve_vertices, seed}{Further tuning; see \code{\link[vellum:sketch]{vellum::sketch()}}.}
+\item{...}{Sketch parameters passed straight to \code{\link[vellum:sketch]{vellum::sketch()}} —
+\code{roughness}, \code{bowing}, \code{fill_style}, \code{fill_weight}, \code{hachure_angle},
+\code{hachure_gap}, \code{curve_tightness}, \code{disable_multi_stroke},
+\code{preserve_vertices}, \code{seed}. See there for defaults.}
 }
 \value{
 A \code{vellum_sketch} object.
