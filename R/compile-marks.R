@@ -1118,14 +1118,20 @@ NULL
   yv <- L$values$y
   ux <- sort(unique(xv))
   uy <- sort(unique(yv))
-  if (length(ux) * length(uy) != length(xv)) {
+  ci <- match(xv, ux)
+  ri <- match(yv, uy)
+  # A complete regular grid: the right row count AND one datum per cell. The
+  # count alone would pass a duplicated cell paired with a missing one, leaving a
+  # transparent hole where the missing cell should be.
+  if (
+    length(ux) * length(uy) != length(xv) ||
+      anyDuplicated(cbind(ri, ci))
+  ) {
     cli::cli_abort(
       "{.fn mark_raster} needs a complete regular grid; use {.fn mark_tile}."
     )
   }
   cols <- rep_len(.aes_colour(L, scales, "grey50"), length(xv))
-  ci <- match(xv, ux)
-  ri <- match(yv, uy)
   m <- matrix("#FFFFFF00", nrow = length(uy), ncol = length(ux))
   m[cbind(length(uy) - ri + 1L, ci)] <- cols # row 1 = top = max y
   xw <- if (length(ux) > 1) min(diff(ux)) else 1

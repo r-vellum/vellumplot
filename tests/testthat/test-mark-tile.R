@@ -89,6 +89,20 @@ test_that("mark_raster errors on an irregular grid and under coord_flip", {
   )
 })
 
+test_that("mark_raster rejects a duplicated cell with a compensating gap (H27)", {
+  # Right row count (36) but cell (1,1) duplicated and (2,1) missing: the
+  # count-only check would pass and leave a transparent hole.
+  dd <- d
+  dd$x[dd$x == 2 & dd$y == 1] <- 1 # (2,1) -> a second (1,1)
+  expect_error(
+    render_plot(
+      vplot(dd) |> mark_raster(x = x, y = y, fill = z),
+      local_tempfile(fileext = ".png")
+    ),
+    "regular grid"
+  )
+})
+
 test_that("tile heatmap fills the panel with coloured cells", {
   img <- render_px(vplot(d) |> mark_tile(x = x, y = y, fill = z))
   # very little grey panel remains (tiles cover it)

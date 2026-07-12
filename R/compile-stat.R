@@ -222,10 +222,16 @@ NULL
   if (!is.null(z)) {
     ux <- sort(unique(x))
     uy <- sort(unique(y))
-    if (length(ux) * length(uy) != length(z)) {
+    # A complete regular grid needs the right row count AND one z per cell; a
+    # count-only check passes a duplicated cell paired with a missing one, which
+    # would leave a silent NA hole in the surface.
+    if (
+      length(ux) * length(uy) != length(z) ||
+        anyDuplicated(cbind(match(y, uy), match(x, ux)))
+    ) {
       cli::cli_abort(c(
         "Contouring a {.arg z} surface needs {.arg x}/{.arg y} on a complete regular grid.",
-        i = "Got {length(x)} rows, but a {length(ux)} x {length(uy)} grid needs {length(ux) * length(uy)}."
+        i = "Got {length(x)} rows for a {length(ux)} x {length(uy)} grid; every (x, y) cell must appear exactly once."
       ))
     }
     m <- matrix(NA_real_, nrow = length(uy), ncol = length(ux))

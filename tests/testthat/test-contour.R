@@ -80,4 +80,16 @@ test_that("a z surface is contoured when x/y form a regular grid", {
     ),
     "regular grid"
   )
+  # right row count but a duplicated (x,y) cell + a compensating gap (H27)
+  skip_if_no_contour()
+  g2 <- expand.grid(x = 1:5, y = 1:5)
+  g2$z <- with(g2, x + y)
+  g2$x[g2$x == 2 & g2$y == 1] <- 1 # (2,1) -> a second (1,1)
+  expect_error(
+    render_plot(
+      vplot(g2) |> mark_contour(x = x, y = y, z = z),
+      local_tempfile(fileext = ".svg")
+    ),
+    "regular grid"
+  )
 })
