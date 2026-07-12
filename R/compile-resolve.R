@@ -104,6 +104,14 @@ NULL
     if (length(v) == 1L && n0 != 1L) {
       v <- rep(v, n0)
     }
+    # A per-row interactive value must align 1:1 with the data; a wrong-length
+    # vector would silently misalign the element keys/metadata.
+    if (length(v) != n0) {
+      cli::cli_abort(c(
+        "Interactive {.arg {nm}} must be length 1 or {n0} (the row count).",
+        i = "Got length {length(v)}."
+      ))
+    }
     v
   }
   tooltip <- ev("tooltip")

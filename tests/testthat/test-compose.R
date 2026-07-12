@@ -130,6 +130,16 @@ test_that("design strings and area() lists parse to spanning areas", {
   expect_equal(c(comp@nrow, comp@ncol), c(2, 2))
 })
 
+test_that("malformed design geometry is rejected", {
+  # area() requires t <= b and l <= r
+  expect_error(area(2, 1, 1, 1), "t <= b")
+  expect_error(area(1, 3, 1, 2), "l <= r")
+  # a non-rectangular (L-shaped) letter can't be a spanning area
+  expect_error(vellumplot:::.parse_design("AA\nA#", 1), "solid rectangle")
+  # a valid solid rectangle still parses
+  expect_length(vellumplot:::.parse_design("AA\nAA", 1), 1L)
+})
+
 test_that("plot_spacer and inset build the right objects", {
   expect_true(S7::S7_inherits(plot_spacer(), vellumplot:::Spacer))
   a <- p_xy()

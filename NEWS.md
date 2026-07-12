@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+* **More inputs fail fast.** A `design` layout area must be a solid rectangle (and
+  `area()` requires `t <= b`, `l <= r`); a per-row interactivity value
+  (`tooltip`/`data_id`/…) must be length 1 or the data's row count; and
+  `add_marginal()` requires a cleanly numeric column. Each now errors clearly
+  instead of silently mis-rendering.
+
 * **Compositions can be themed.** `theme()` now accepts a composition (from
   [concat()] / [hconcat()] / [vconcat()]) and styles its figure-level chrome —
   the title/subtitle/caption bands, the collected legend, panel spacing, and

@@ -170,6 +170,19 @@ test_that("British-spelled hover_colour / selected_colour are reserved, not aest
   expect_setequal(unique(hc), c("red", "blue"))
 })
 
+test_that("a wrong-length interactivity vector is rejected", {
+  # length 1 (recycled) and length n (per row) are fine; anything else misaligns.
+  expect_no_error(
+    as_vellum_scene(vplot(df) |> mark_point(x = wt, y = mpg, tooltip = "hi"))
+  )
+  expect_error(
+    as_vellum_scene(
+      vplot(df) |> mark_point(x = wt, y = mpg, tooltip = c("a", "b", "c"))
+    ),
+    "length 1 or"
+  )
+})
+
 test_that("interactivity declarations do not perturb the rendered pixels", {
   base <- vplot(df) |> mark_point(x = wt, y = mpg)
   keyed <- vplot(df) |>

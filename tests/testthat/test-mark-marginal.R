@@ -197,6 +197,18 @@ test_that("marginal renders draw the density fill in the top and right margins",
   expect_lt(grey35(c(0, 0.15), c(0.88, 1.0)), 50)
 })
 
+test_that("a partly-numeric column is rejected rather than skewing the marginal", {
+  # x is only partly coercible -> silent NAs would skew the marginal; error out.
+  d <- data.frame(x = c("1", "2", "a", "4"), y = c(1, 2, 3, 4))
+  expect_error(
+    render_plot(
+      vplot(d) |> mark_point(x = x, y = y) |> add_marginal(),
+      local_tempfile(fileext = ".png")
+    ),
+    "numeric"
+  )
+})
+
 test_that("marginal render smoke: density / histogram / single sides / grouped", {
   f <- local_tempfile(fileext = ".png")
   base <- vplot(faithful) |> mark_point(x = eruptions, y = waiting)
