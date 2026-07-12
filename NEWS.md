@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* **Continuous labels no longer group thousands by default.** A default
+  continuous axis or legend now renders 4-digit-plus values without a grouping
+  separator, so years and IDs read `2010` instead of `2 010` (#27). Pass
+  explicit `labels` to restore grouping.
+
 * **More inputs fail fast.** A `design` layout area must be a solid rectangle (and
   `area()` requires `t <= b`, `l <= r`); a per-row interactivity value
   (`tooltip`/`data_id`/…) must be length 1 or the data's row count; and
