@@ -209,19 +209,43 @@ NULL
             call = call
           )
         }
-      } else if (nm %in% c("legend.key.size", "legend.spacing")) {
+      } else if (
+        nm %in%
+          c(
+            "legend.key.size",
+            "legend.spacing",
+            "panel.spacing",
+            "axis.ticks.length"
+          )
+      ) {
         val <- args[[nm]]
-        if (!is.numeric(val) || length(val) != 1L || val < 0) {
+        if (!is.numeric(val) || length(val) != 1L || !is.finite(val) || val < 0) {
           cli::cli_abort(
             "{.field {nm}} must be a single non-negative number (mm).",
             call = call
           )
         }
-      } else if (nm == "legend.margin") {
+      } else if (nm %in% c("legend.margin", "plot.margin")) {
         val <- args[[nm]]
-        if (!is.numeric(val) || !length(val) %in% c(1L, 4L) || any(val < 0)) {
+        if (
+          !is.numeric(val) ||
+            !length(val) %in% c(1L, 4L) ||
+            any(!is.finite(val)) ||
+            any(val < 0)
+        ) {
           cli::cli_abort(
-            "{.field legend.margin} must be 1 or 4 non-negative numbers (mm).",
+            "{.field {nm}} must be 1 or 4 non-negative numbers (mm).",
+            call = call
+          )
+        }
+      } else if (nm == "aspect.ratio") {
+        val <- args[[nm]]
+        if (
+          !is.null(val) &&
+            (!is.numeric(val) || length(val) != 1L || !is.finite(val) || val <= 0)
+        ) {
+          cli::cli_abort(
+            "{.field aspect.ratio} must be {.code NULL} or a single positive number.",
             call = call
           )
         }

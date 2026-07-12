@@ -87,6 +87,29 @@ test_that("legend.key.size / legend.spacing / legend.margin resolve and validate
   expect_error(theme(p, legend.margin = c(1, 2)), "legend.margin")
 })
 
+test_that("layout settings are validated at theme() construction (H40)", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  # panel.spacing / axis.ticks.length: single non-negative finite number
+  expect_error(theme(p, panel.spacing = c(1, 2)), "panel.spacing")
+  expect_error(theme(p, axis.ticks.length = NA), "axis.ticks.length")
+  expect_error(theme(p, panel.spacing = Inf), "panel.spacing")
+  # plot.margin: 1 or 4 non-negative numbers
+  expect_error(theme(p, plot.margin = c(1, 2, 3)), "plot.margin")
+  expect_error(theme(p, plot.margin = -1), "plot.margin")
+  # aspect.ratio: NULL or a single positive number
+  expect_error(theme(p, aspect.ratio = -2), "aspect.ratio")
+  expect_error(theme(p, aspect.ratio = c(1, 2)), "aspect.ratio")
+  # valid values still construct (and NULL aspect.ratio is allowed)
+  expect_no_error(theme(
+    p,
+    panel.spacing = 2,
+    plot.margin = c(1, 2, 3, 4),
+    axis.ticks.length = 0,
+    aspect.ratio = 1.5
+  ))
+  expect_no_error(theme(p, aspect.ratio = NULL))
+})
+
 test_that("a bigger legend.key.size widens the reserved legend column", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
   g <- vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales)
