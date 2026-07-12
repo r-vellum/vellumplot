@@ -1049,7 +1049,11 @@ NULL
     scene <- vellum::pop(scene)
   }
   scene <- vellum::push(scene, vellum::vl_viewport(row = row_bar, col = 1))
-  grad <- vellum::linear_gradient(cl$pal256, x1 = 0, y1 = 0, x2 = 0, y2 = 1)
+  # guide_legend(reverse = TRUE) flips a continuous bar by reversing the gradient
+  # and mirroring every value position, keeping each value paired with its label.
+  revb <- isTRUE(cl$reverse_bar)
+  pal <- if (revb) rev(cl$pal256) else cl$pal256
+  grad <- vellum::linear_gradient(pal, x1 = 0, y1 = 0, x2 = 0, y2 = 1)
   scene <- vellum::draw(
     scene,
     vellum::rect_grob(
@@ -1062,6 +1066,9 @@ NULL
   )
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    if (revb) {
+      frac <- 1 - frac
+    }
     # A white break tick reaching in from the bar's right (label-side) edge.
     scene <- vellum::draw(
       scene,
@@ -1229,8 +1236,10 @@ NULL
     scene <- .draw_guide_title(scene, cl$name, rt)
     scene <- vellum::pop(scene)
   }
+  revb <- isTRUE(cl$reverse_bar)
+  pal <- if (revb) rev(cl$pal256) else cl$pal256
   scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 1))
-  grad <- vellum::linear_gradient(cl$pal256, x1 = 0, y1 = 0, x2 = 1, y2 = 0)
+  grad <- vellum::linear_gradient(pal, x1 = 0, y1 = 0, x2 = 1, y2 = 0)
   scene <- vellum::draw(
     scene,
     vellum::rect_grob(
@@ -1244,6 +1253,9 @@ NULL
   # White break ticks reaching up from the bar's bottom (label-side) edge.
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    if (revb) {
+      frac <- 1 - frac
+    }
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
@@ -1259,6 +1271,9 @@ NULL
   scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 1))
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
+    if (revb) {
+      frac <- 1 - frac
+    }
     # Justify the end labels inward so they never spill past the bar ends.
     hjust <- if (frac <= 0.01) {
       "left"

@@ -100,9 +100,19 @@ guide_legend <- function(title = NULL, reverse = FALSE) {
   switch(
     tr$kind,
     discrete = rev_fields(tr, c("levels", "labels", "colors")),
-    binned = rev_fields(tr, c("levels", "labels", "colors", "breaks")),
+    # Not `breaks`: they are bin boundaries (length n+1) paired index-wise with
+    # the length-n colours/labels; reversing them here would desync boundaries
+    # from swatches. Reverse only the n-length display vectors.
+    binned = rev_fields(tr, c("levels", "labels", "colors")),
     shape = rev_fields(tr, c("levels", "shapes")),
     linetype = rev_fields(tr, c("levels", "linetypes")),
+    # A continuous colourbar positions each label by its value, so reversing the
+    # value/label arrays is a visible no-op. Flag the drawer to flip the gradient
+    # and mirror each position (1 - frac) instead, keeping value<->label pairing.
+    continuous = {
+      tr$reverse_bar <- TRUE
+      tr
+    },
     rev_fields(
       tr,
       c(
