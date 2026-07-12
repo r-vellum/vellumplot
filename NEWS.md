@@ -2,6 +2,29 @@
 
 ## Bug fixes
 
+* **Numeric facets order numerically.** Faceting on a numeric variable now orders
+  panels `1, 2, 10` rather than the lexicographic `1, 10, 2`; multi-variable
+  facets order by each variable's own type.
+
+* **Log/reversed axes.** Bars and areas on a `scale_*(trans = "log10")` (or
+  `"sqrt"`) axis draw from the axis floor instead of a degenerate shape (the zero
+  baseline that maps to `-Inf` is clamped into the trained range). A descending
+  limit such as `ylim(hi, lo)` on a bar/area is no longer silently un-reversed by
+  the zero baseline.
+
+* **Grouped histogram density.** `after_stat(density)` / `after_stat(prop)` on a
+  grouped histogram or bar now normalizes per group (each group integrates/sums
+  to 1), matching ggplot2, rather than dividing by the grand total.
+
+* **Clearer errors instead of silent surprises or crashes.** `coord_trans()`
+  rejects a `"reverse"` transform (a no-op there — use
+  `scale_*(trans = "reverse")`) and rejects bar/area marks on a nonlinearly
+  transformed axis (a zero baseline has no place on a log display). Histogram /
+  2-D bin / hexbin stats abort cleanly on all-`NA` input instead of a cryptic
+  `seq()` error. `mark_raster()` and z-surface contours reject a grid with a
+  duplicated cell (previously a silent transparent/`NA` hole). Composition
+  auto-tags continue past 26 sub-plots (`Z`, `AA`, `AB`, …) instead of `NA`.
+
 * **`mark_area()` now stacks.** `mark_area(position = ...)` was silently ignored;
   it gains a `position` argument (`"stack"` default, plus `"fill"` and
   `"identity"`), so areas sharing an `x` with a mapped `fill`/`color` combine into

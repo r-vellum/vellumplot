@@ -149,14 +149,24 @@ test_that("British-spelled hover_colour / selected_colour are reserved, not aest
   # The British spellings are pulled into the layer's interactivity slot (under
   # the normalised American names), not leaked into encoding/params as bogus aes.
   layer <- p@layers[[1]]
-  expect_true(all(c("hover_color", "selected_color") %in% names(layer@interactivity)))
-  expect_false(any(c("hover_color", "hover_colour", "selected_color", "selected_colour") %in%
-    names(layer@encoding)))
-  expect_false(any(c("hover_color", "hover_colour", "selected_color", "selected_colour") %in%
-    names(layer@params)))
+  expect_true(all(
+    c("hover_color", "selected_color") %in% names(layer@interactivity)
+  ))
+  expect_false(any(
+    c("hover_color", "hover_colour", "selected_color", "selected_colour") %in%
+      names(layer@encoding)
+  ))
+  expect_false(any(
+    c("hover_color", "hover_colour", "selected_color", "selected_colour") %in%
+      names(layer@params)
+  ))
   # ...and they resolve into element meta exactly like the American spelling.
   el <- data_points_of(p)
-  hc <- vapply(el$meta, function(m) m$hover_color %||% NA_character_, character(1))
+  hc <- vapply(
+    el$meta,
+    function(m) m$hover_color %||% NA_character_,
+    character(1)
+  )
   expect_setequal(unique(hc), c("red", "blue"))
 })
 

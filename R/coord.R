@@ -279,8 +279,26 @@ coord_trans <- function(plot, x = "identity", y = "identity") {
   # Fail fast on an unknown transform name (rather than at render time).
   .resolve_coord_trans(x, "x")
   .resolve_coord_trans(y, "y")
+  # `reverse` is only a display flip; coord_trans warps by a forward map and has
+  # nowhere to apply the flag, so it would be a silent no-op. Reject it and point
+  # to the scale, which does support it.
+  .reject_coord_reverse(x, "x")
+  .reject_coord_reverse(y, "y")
   plot@coord <- CoordSpec(kind = "trans", xtrans = x, ytrans = y)
   plot
+}
+
+# Refuse a `reverse` transform (name or a transform object) for coord_trans.
+.reject_coord_reverse <- function(t, arg) {
+  is_rev <- (is.character(t) && identical(t, "reverse")) ||
+    (is.list(t) && identical(t$name, "reverse"))
+  if (is_rev) {
+    scale_fn <- paste0("scale_", arg, "_continuous(trans = \"reverse\")")
+    cli::cli_abort(c(
+      "{.fn coord_trans} does not support a {.val reverse} {.arg {arg}} transform.",
+      i = "It would be a silent no-op; reverse the axis with {.code {scale_fn}} instead."
+    ))
+  }
 }
 
 #' Map coordinate system

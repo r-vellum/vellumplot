@@ -94,6 +94,15 @@ test_that("auto-tag formatting covers the styles", {
   expect_equal(fmt(2, "A", prefix = "(", suffix = ")"), c("(A)", "(B)"))
 })
 
+test_that("alphabetic auto-tags continue past 26 sub-plots (H28)", {
+  fmt <- function(n, lvl) vellumplot:::.format_tags(n, list(levels = lvl))
+  up <- fmt(28, "A")
+  expect_identical(up[26:28], c("Z", "AA", "AB")) # no NA past 26
+  expect_false(anyNA(up))
+  lo <- fmt(27, "a")
+  expect_identical(lo[26:27], c("z", "aa"))
+})
+
 test_that("widths/heights and byrow are stored and recycled", {
   a <- p_xy()
   comp <- concat(a, a, a, a, ncol = 2, widths = c(2, 1), byrow = FALSE)

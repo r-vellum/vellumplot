@@ -31,7 +31,8 @@ test_that("a British `colour =` suppresses the default count fill on bin2d (H12)
     eruptions = faithful$eruptions,
     g = rep(letters[1:2], length.out = nrow(faithful))
   )
-  L <- (vplot(fg) |> mark_bin2d(x = waiting, y = eruptions, colour = g))@layers[[1]]
+  L <- (vplot(fg) |>
+    mark_bin2d(x = waiting, y = eruptions, colour = g))@layers[[1]]
   expect_false("fill" %in% names(L@encoding))
   expect_true("color" %in% names(L@encoding))
 })
@@ -86,6 +87,20 @@ test_that("mark_raster errors on an irregular grid and under coord_flip", {
       local_tempfile(fileext = ".png")
     ),
     "coord_flip"
+  )
+})
+
+test_that("mark_raster rejects a duplicated cell with a compensating gap (H27)", {
+  # Right row count (36) but cell (1,1) duplicated and (2,1) missing: the
+  # count-only check would pass and leave a transparent hole.
+  dd <- d
+  dd$x[dd$x == 2 & dd$y == 1] <- 1 # (2,1) -> a second (1,1)
+  expect_error(
+    render_plot(
+      vplot(dd) |> mark_raster(x = x, y = y, fill = z),
+      local_tempfile(fileext = ".png")
+    ),
+    "regular grid"
   )
 })
 

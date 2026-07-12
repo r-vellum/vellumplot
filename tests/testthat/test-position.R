@@ -105,7 +105,11 @@ test_that("area position = 'fill' normalises each x to 1 (H14)", {
   p <- vplot(area_df) |> mark_area(x = x, y = y, fill = g, position = "fill")
   r <- vellumplot:::.resolve_layers(p)[[1]]
   x <- as.character(r$values$x)
-  tops <- vapply(unique(x), function(xi) max(r$values$ymax[x == xi]), numeric(1))
+  tops <- vapply(
+    unique(x),
+    function(xi) max(r$values$ymax[x == xi]),
+    numeric(1)
+  )
   expect_equal(unname(tops), rep(1, length(tops)))
 })
 
@@ -120,7 +124,10 @@ test_that("an area with no fill mapping is unaffected by the stack default (H14)
 test_that("stacked / filled / identity areas render", {
   for (pos in c("stack", "fill", "identity")) {
     f <- local_tempfile(fileext = ".png")
-    render_plot(vplot(area_df) |> mark_area(x = x, y = y, fill = g, position = pos), f)
+    render_plot(
+      vplot(area_df) |> mark_area(x = x, y = y, fill = g, position = pos),
+      f
+    )
     expect_gt(file.info(f)$size, 0)
   }
 })

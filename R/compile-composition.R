@@ -386,13 +386,33 @@ NULL
   vellum::pop(scene)
 }
 
+# Spreadsheet-style alphabetic labels: A..Z, AA, AB, ... (bijective base-26), so
+# a composition of more than 26 sub-plots keeps labelling instead of hitting the
+# NA that `LETTERS[seq_len(n)]` returns past 26.
+.alpha_labels <- function(n, upper = TRUE) {
+  alph <- if (upper) LETTERS else letters
+  vapply(
+    seq_len(n),
+    function(i) {
+      out <- character(0)
+      while (i > 0) {
+        i <- i - 1L
+        out <- c(alph[i %% 26L + 1L], out)
+        i <- i %/% 26L
+      }
+      paste(out, collapse = "")
+    },
+    character(1)
+  )
+}
+
 # Auto-tag labels for n sub-plots, e.g. "A","B",… / "1","2",… / "i","ii",…
 .format_tags <- function(n, tag) {
   level <- tag$levels[1]
   body <- switch(
     level,
-    "A" = LETTERS[seq_len(n)],
-    "a" = letters[seq_len(n)],
+    "A" = .alpha_labels(n, upper = TRUE),
+    "a" = .alpha_labels(n, upper = FALSE),
     "1" = as.character(seq_len(n)),
     "i" = tolower(utils::as.roman(seq_len(n))),
     "I" = as.character(utils::as.roman(seq_len(n))),

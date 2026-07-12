@@ -46,6 +46,20 @@ NULL
 
 .aes_param <- function(L, name, default) L$params[[name]] %||% default
 
+# Clamp a mapped baseline into the finite trained span. On a log/sqrt y scale the
+# zero baseline maps to -Inf/NaN (`map(0)`), which yields degenerate bars/areas;
+# pin any non-finite (or out-of-range) baseline to the nearest edge of the
+# domain. `min`/`max` (not `domain[1]`) so a reversed, decreasing domain works.
+.clamp_baseline <- function(v, domain) {
+  if (is.null(domain)) {
+    return(v)
+  }
+  lo <- min(domain)
+  hi <- max(domain)
+  v[!is.finite(v)] <- lo
+  pmin(pmax(v, lo), hi)
+}
+
 # A gradient/paint fill value on a layer (from `fill = linear_gradient(...)`), or
 # NULL. When present, a filled mark paints its whole region with one grob rather
 # than a per-row colour vector (the paint is a single value, not data-mapped).
@@ -633,10 +647,12 @@ NULL
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   band <- scales$x$band_width %||% .resolution(xp)
 
-  # vertical span: a stacked [ymin, ymax], else 0 -> y
+  # vertical span: a stacked [ymin, ymax], else 0 -> y. The baseline is clamped
+  # into the finite domain so a log/sqrt y scale (where map(0) = -Inf) still
+  # draws bars from the axis floor rather than a degenerate rect.
   ymin_d <- if (!is.null(L$values$ymin)) L$values$ymin else rep(0, n)
   ymax_d <- if (!is.null(L$values$ymax)) L$values$ymax else L$values$y
-  y0 <- rep_len(scales$y$map(ymin_d), n)
+  y0 <- rep_len(.clamp_baseline(scales$y$map(ymin_d), scales$y$domain), n)
   y1 <- rep_len(scales$y$map(ymax_d), n)
 
   # Bar width: a stat-provided `width` (histogram bins) fills the bin so bars
@@ -806,7 +822,7 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   ymin_d <- if (!is.null(L$values$ymin)) L$values$ymin else rep(0, n)
   ymax_d <- if (!is.null(L$values$ymax)) L$values$ymax else L$values$y
-  y0 <- rep_len(scales$y$map(ymin_d), n)
+  y0 <- rep_len(.clamp_baseline(scales$y$map(ymin_d), scales$y$domain), n)
   y1 <- rep_len(scales$y$map(ymax_d), n)
   sk <- .mark_sketch(L, scales)
 
@@ -1102,14 +1118,20 @@ NULL
   yv <- L$values$y
   ux <- sort(unique(xv))
   uy <- sort(unique(yv))
-  if (length(ux) * length(uy) != length(xv)) {
+  ci <- match(xv, ux)
+  ri <- match(yv, uy)
+  # A complete regular grid: the right row count AND one datum per cell. The
+  # count alone would pass a duplicated cell paired with a missing one, leaving a
+  # transparent hole where the missing cell should be.
+  if (
+    length(ux) * length(uy) != length(xv) ||
+      anyDuplicated(cbind(ri, ci))
+  ) {
     cli::cli_abort(
       "{.fn mark_raster} needs a complete regular grid; use {.fn mark_tile}."
     )
   }
   cols <- rep_len(.aes_colour(L, scales, "grey50"), length(xv))
-  ci <- match(xv, ux)
-  ri <- match(yv, uy)
   m <- matrix("#FFFFFF00", nrow = length(uy), ncol = length(ux))
   m[cbind(length(uy) - ri + 1L, ci)] <- cols # row 1 = top = max y
   xw <- if (length(ux) > 1) min(diff(ux)) else 1

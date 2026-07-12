@@ -299,8 +299,11 @@ NULL
     r
   }
   # Force a zero baseline for bars/areas, but only when the transform keeps it
-  # finite: a log/sqrt scale cannot include 0, so leave the data range alone.
-  if (include_zero && all(is.finite(rng))) {
+  # finite (a log/sqrt scale cannot include 0) and the user has not set explicit
+  # limits: `range(c(rng, 0))` sorts ascending, so zero-forcing an explicit
+  # descending `c(hi, lo)` would silently un-reverse the axis and override the
+  # user's chosen bound. Explicit limits are taken verbatim.
+  if (include_zero && is.null(user_lim) && all(is.finite(rng))) {
     cand <- range(c(rng, 0))
     if (is_time || all(is.finite(tr$transform(cand)))) {
       rng <- cand

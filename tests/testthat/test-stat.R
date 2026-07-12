@@ -39,6 +39,49 @@ test_that("the bin stat carries the bin width into the layer (bars touch)", {
   expect_equal(r$values$width[1], diff(sort(r$values$x))[1], tolerance = 1e-8)
 })
 
+test_that("grouped histogram density integrates to 1 per group (H26)", {
+  set.seed(1)
+  df <- data.frame(
+    v = c(rnorm(200), rnorm(80) + 5), # unequal group sizes
+    g = factor(rep(c("a", "b"), c(200, 80)))
+  )
+  # position = "identity" so y stays the per-group density (stacking would sum
+  # the groups' densities per bin and hide the normalisation).
+  r <- vellumplot:::.resolve_layers(
+    vplot(df) |>
+      mark_histogram(
+        x = v,
+        fill = g,
+        y = after_stat(density),
+        bins = 12,
+        position = "identity"
+      )
+  )[[1]]
+  grp <- as.character(r$values$fill)
+  dens <- r$values$y
+  w <- r$values$width
+  for (gi in unique(grp)) {
+    sel <- grp == gi
+    expect_equal(sum(dens[sel]) * w[sel][1], 1, tolerance = 0.02)
+  }
+})
+
+test_that("binning stats abort cleanly on all-NA / empty input (H25)", {
+  na_df <- data.frame(v = rep(NA_real_, 5), w = rep(NA_real_, 5))
+  expect_error(
+    vellumplot:::.resolve_layers(vplot(na_df) |> mark_histogram(x = v)),
+    "finite"
+  )
+  expect_error(
+    vellumplot:::.resolve_layers(vplot(na_df) |> mark_bin2d(x = v, y = w)),
+    "finite"
+  )
+  expect_error(
+    vellumplot:::.resolve_layers(vplot(na_df) |> mark_hex(x = v, y = w)),
+    "finite"
+  )
+})
+
 test_that("the count stat preserves a custom factor level order on x", {
   d <- data.frame(
     g = factor(c("hi", "lo", "mid"), levels = c("lo", "mid", "hi"))

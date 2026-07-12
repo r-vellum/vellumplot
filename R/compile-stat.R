@@ -109,7 +109,8 @@ NULL
       group = factor(agg$group, levels = glevs),
       count = agg$Freq,
       y = agg$Freq,
-      density = agg$Freq / sum(agg$Freq),
+      # proportion within each group (each group sums to 1), matching ggplot2
+      density = agg$Freq / stats::ave(agg$Freq, agg$group, FUN = sum),
       stringsAsFactors = FALSE
     )
   }
@@ -120,6 +121,9 @@ NULL
   x <- as.numeric(L$values$x)
   ok <- is.finite(x)
   x <- x[ok]
+  if (!length(x)) {
+    cli::cli_abort("{.fn mark_histogram} needs at least one finite value.")
+  }
   bins <- L$stat_params$bins %||% 30L
   rng <- range(x)
   if (diff(rng) == 0) {
@@ -154,14 +158,16 @@ NULL
       out$bin,
       match(out$group, colnames(tab))
     )])
-    total <- sum(out$count)
+    # Normalise density per group (each group integrates to 1), matching
+    # ggplot2 -- not by the grand total across all groups.
+    gtot <- stats::ave(out$count, out$group, FUN = sum)
     data.frame(
       x = centers[out$bin],
       group = factor(out$group, levels = glevs),
       count = out$count,
       y = out$count,
       width = width,
-      density = out$count / (total * width)
+      density = out$count / (gtot * width)
     )
   }
 }
@@ -174,6 +180,9 @@ NULL
   ok <- is.finite(x) & is.finite(y)
   x <- x[ok]
   y <- y[ok]
+  if (!length(x)) {
+    cli::cli_abort("{.fn mark_bin2d} needs at least one finite (x, y) pair.")
+  }
   bins <- L$stat_params$bins %||% 30L
   edges <- function(v) {
     rng <- range(v)
@@ -213,10 +222,16 @@ NULL
   if (!is.null(z)) {
     ux <- sort(unique(x))
     uy <- sort(unique(y))
-    if (length(ux) * length(uy) != length(z)) {
+    # A complete regular grid needs the right row count AND one z per cell; a
+    # count-only check passes a duplicated cell paired with a missing one, which
+    # would leave a silent NA hole in the surface.
+    if (
+      length(ux) * length(uy) != length(z) ||
+        anyDuplicated(cbind(match(y, uy), match(x, ux)))
+    ) {
       cli::cli_abort(c(
         "Contouring a {.arg z} surface needs {.arg x}/{.arg y} on a complete regular grid.",
-        i = "Got {length(x)} rows, but a {length(ux)} x {length(uy)} grid needs {length(ux) * length(uy)}."
+        i = "Got {length(x)} rows for a {length(ux)} x {length(uy)} grid; every (x, y) cell must appear exactly once."
       ))
     }
     m <- matrix(NA_real_, nrow = length(uy), ncol = length(ux))
@@ -388,6 +403,9 @@ NULL
   ok <- is.finite(x) & is.finite(y)
   x <- x[ok]
   y <- y[ok]
+  if (!length(x)) {
+    cli::cli_abort("{.fn mark_hex} needs at least one finite (x, y) pair.")
+  }
   bins <- L$stat_params$bins %||% 30L
   xr <- range(x)
   yr <- range(y)
