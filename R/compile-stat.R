@@ -109,7 +109,8 @@ NULL
       group = factor(agg$group, levels = glevs),
       count = agg$Freq,
       y = agg$Freq,
-      density = agg$Freq / sum(agg$Freq),
+      # proportion within each group (each group sums to 1), matching ggplot2
+      density = agg$Freq / stats::ave(agg$Freq, agg$group, FUN = sum),
       stringsAsFactors = FALSE
     )
   }
@@ -120,6 +121,9 @@ NULL
   x <- as.numeric(L$values$x)
   ok <- is.finite(x)
   x <- x[ok]
+  if (!length(x)) {
+    cli::cli_abort("{.fn mark_histogram} needs at least one finite value.")
+  }
   bins <- L$stat_params$bins %||% 30L
   rng <- range(x)
   if (diff(rng) == 0) {
@@ -154,14 +158,16 @@ NULL
       out$bin,
       match(out$group, colnames(tab))
     )])
-    total <- sum(out$count)
+    # Normalise density per group (each group integrates to 1), matching
+    # ggplot2 -- not by the grand total across all groups.
+    gtot <- stats::ave(out$count, out$group, FUN = sum)
     data.frame(
       x = centers[out$bin],
       group = factor(out$group, levels = glevs),
       count = out$count,
       y = out$count,
       width = width,
-      density = out$count / (total * width)
+      density = out$count / (gtot * width)
     )
   }
 }
@@ -174,6 +180,9 @@ NULL
   ok <- is.finite(x) & is.finite(y)
   x <- x[ok]
   y <- y[ok]
+  if (!length(x)) {
+    cli::cli_abort("{.fn mark_bin2d} needs at least one finite (x, y) pair.")
+  }
   bins <- L$stat_params$bins %||% 30L
   edges <- function(v) {
     rng <- range(v)
@@ -388,6 +397,9 @@ NULL
   ok <- is.finite(x) & is.finite(y)
   x <- x[ok]
   y <- y[ok]
+  if (!length(x)) {
+    cli::cli_abort("{.fn mark_hex} needs at least one finite (x, y) pair.")
+  }
   bins <- L$stat_params$bins %||% 30L
   xr <- range(x)
   yr <- range(y)
