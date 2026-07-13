@@ -22,7 +22,7 @@ test_that("each geom builds an own-data layer with the right mark", {
     lastlayer(
       base() |> annotate("rect", xmin = 1, xmax = 2, ymin = 1, ymax = 2)
     )@mark,
-    "tile"
+    "rect"
   )
 })
 
@@ -48,6 +48,38 @@ test_that("annotate geoms render (and flipped)", {
     f2 <- local_tempfile(fileext = ".png")
     render_plot(b(base()) |> coord_flip(), f2)
     expect_gt(file.info(f2)$size, 0)
+  }
+})
+
+test_that(".bound_native resolves infinite bounds to the panel edge (#29)", {
+  sc <- list(domain = c(0, 10), map = function(v) v * 2)
+  # -Inf/Inf -> low/high domain edge; finite bounds map normally (never NaN/Inf).
+  expect_identical(
+    vellumplot:::.bound_native(c(-Inf, 3, Inf), sc),
+    c(0, 6, 10)
+  )
+  # A reversed (decreasing) domain still edges to min()/max(), not domain[1].
+  scr <- list(domain = c(10, 0), map = function(v) v)
+  b <- vellumplot:::.bound_native(c(-Inf, Inf), scr)
+  expect_true(all(is.finite(b)))
+  expect_identical(b, c(0, 10))
+})
+
+test_that("annotate('rect') with infinite bounds renders a full-panel band (#29)", {
+  # Previously the -Inf/Inf rect collapsed to x = NaN, width = Inf and was
+  # dropped silently. Both a fully-infinite and a single-sided rect must render.
+  builds <- list(
+    function(p) {
+      annotate(p, "rect", xmin = -Inf, xmax = Inf, ymin = 25, ymax = 30, alpha = 0.4)
+    },
+    function(p) {
+      annotate(p, "rect", xmin = -Inf, xmax = 5, ymin = 10, ymax = 20, alpha = 0.4)
+    }
+  )
+  for (b in builds) {
+    f <- local_tempfile(fileext = ".png")
+    render_plot(b(base()), f)
+    expect_gt(file.info(f)$size, 0)
   }
 })
 

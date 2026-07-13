@@ -83,6 +83,28 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   pmin(pmax(v, lo), hi)
 }
 
+# Map a rectangle bound to native coords, resolving `-Inf`/`Inf` to the panel
+# edge (mirrors ggplot2's `annotate("rect", xmin = -Inf, ...)` full-panel band).
+# Infinities are substituted *before* mapping so a log/sqrt scale, where
+# `map(-Inf)` would be `NaN`, still lands on the edge. Finite bounds keep their
+# usual behaviour -- drawn full-size and clipped by the panel viewport, not
+# clamped. `-Inf`/`Inf` map to the low/high native edge positionally; on a
+# reversed axis this mirrors the band, an accepted edge case.
+.bound_native <- function(v, scale) {
+  lo <- min(scale$domain)
+  hi <- max(scale$domain)
+  out <- rep(NA_real_, length(v))
+  neg <- v == -Inf
+  pos <- v == Inf
+  fin <- is.finite(v)
+  out[neg] <- lo
+  out[pos] <- hi
+  if (any(fin)) {
+    out[fin] <- scale$map(v[fin])
+  }
+  out
+}
+
 # A gradient/paint fill value on a layer (from `fill = linear_gradient(...)`), or
 # NULL. When present, a filled mark paints its whole region with one grob rather
 # than a per-row colour vector (the paint is a single value, not data-mapped).
@@ -1069,6 +1091,44 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# A filled rectangle spanning [xmin, xmax] x [ymin, ymax] (from annotate("rect")).
+# Unlike a tile, the corner bounds are kept so an infinite bound resolves to the
+# panel edge via `.bound_native`. Bounds are mapped to native, then rebuilt into
+# a centre + size for `.rect_units` (which handles flip / coord_trans).
+.emit_rect <- function(scene, L, scales) {
+  n <- L$n
+  x0 <- rep_len(.bound_native(L$values$xmin, scales$x), n)
+  x1 <- rep_len(.bound_native(L$values$xmax, scales$x), n)
+  y0 <- rep_len(.bound_native(L$values$ymin, scales$y), n)
+  y1 <- rep_len(.bound_native(L$values$ymax, scales$y), n)
+  xc <- (x0 + x1) / 2
+  yc <- (y0 + y1) / 2
+  w <- abs(x1 - x0)
+  h <- abs(y1 - y0)
+  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  sk <- .mark_sketch(L, scales)
+
+  gi <- 0L
+  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+    r <- .rect_units(scales, xc[idx], yc[idx], w[idx], h[idx])
+    scene <- .draw(
+      scene,
+      vellum::rect_grob(
+        x = r$x,
+        y = r$y,
+        width = r$width,
+        height = r$height,
+        sketch = .sketch_bump(sk, gi),
+        gp = .gp_fill(fill, alpha, idx[1])
+      ),
+      rows = idx
+    )
+    gi <- gi + 1L
+  }
+  scene
+}
+
 # A heatmap drawn as one raster image (fast path for a complete regular grid).
 .emit_raster <- function(scene, L, scales) {
   if (.flipped(scales)) {
@@ -1884,6 +1944,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     text = .emit_text(scene, L, scales),
     label = .emit_label(scene, L, scales),
     tile = .emit_tile(scene, L, scales),
+    rect = .emit_rect(scene, L, scales),
     raster = .emit_raster(scene, L, scales),
     boxplot = .emit_boxplot(scene, L, scales),
     errorbar = .emit_errorbar(scene, L, scales),

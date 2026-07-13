@@ -32,7 +32,7 @@ NULL
   violin = "violin plot",
   tile = "heatmap",
   raster = "heatmap",
-  rect = "rectangle plot",
+  rect = "shaded rectangle",
   hex = "hex-bin plot",
   bin2d = "binned heatmap",
   smooth = "smoothed-trend plot",

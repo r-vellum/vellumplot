@@ -121,6 +121,7 @@ NULL
       "label",
       "node_text",
       "tile",
+      "rect",
       "bar",
       "violin",
       "ridgeline",

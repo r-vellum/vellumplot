@@ -65,22 +65,38 @@ annotate <- function(
     },
     rect = {
       .req(geom, xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax)
-      d <- data.frame(
-        x = (xmin + xmax) / 2,
-        y = (ymin + ymax) / 2,
-        width = xmax - xmin,
-        height = ymax - ymin
-      )
-      mark_tile(
+      # Carry the bounds through unchanged rather than converting to centre +
+      # size here: `xmin = -Inf, xmax = Inf` would collapse to `x = NaN,
+      # width = Inf` and the row would be dropped at draw time. The `rect`
+      # emitter clamps infinite bounds to the panel edge, where the range is
+      # known (see `.emit_rect`).
+      d <- data.frame(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax)
+      mark_rect(
         plot,
-        x = x,
-        y = y,
-        width = width,
-        height = height,
+        xmin = xmin,
+        xmax = xmax,
+        ymin = ymin,
+        ymax = ymax,
         ...,
         data = d
       )
     }
+  )
+}
+
+# A filled rectangle spanning [xmin, xmax] x [ymin, ymax]. Internal: the only
+# entry point is `annotate("rect", ...)`. Unlike `mark_tile()` (centre + size),
+# this keeps the corner bounds so a `-Inf`/`Inf` bound can be resolved to the
+# panel edge at emit time.
+mark_rect <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "rect",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data
   )
 }
 

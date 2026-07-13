@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* **`annotate("rect", ...)` honours infinite bounds.** A bound of `-Inf`/`Inf`
+  (e.g. `xmin = -Inf, xmax = Inf` for a full-width band) now extends the
+  rectangle to the panel edge, matching ggplot2, instead of silently rendering
+  nothing (#29).
+
 * **Continuous labels no longer group thousands by default.** A default
   continuous axis or legend now renders 4-digit-plus values without a grouping
   separator, so years and IDs read `2010` instead of `2 010` (#27). Pass
