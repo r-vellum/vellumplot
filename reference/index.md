@@ -69,6 +69,8 @@ Layers that draw data. Scales train across every mark on the panel.
 - [`mark_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
   [`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
   : Pie and donut charts
+- [`mark_image()`](https://r-vellum.github.io/vellumplot/reference/mark_image.md)
+  : Draw images at data points
 - [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
   : Datashade a large point cloud
 

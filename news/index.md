@@ -2,6 +2,17 @@
 
 ## vellumplot (development version)
 
+### New features
+
+- **[`mark_image()`](https://r-vellum.github.io/vellumplot/reference/mark_image.md)
+  draws images at data points.** A new mark places a bitmap image
+  (e.g. a country flag or company logo) at each `(x, y)`, replacing the
+  usual point marker. `src` is a column of local file paths or one
+  constant path, and `size` sets the height in millimetres (the width
+  follows each image’s native aspect ratio). Requires the suggested
+  `magick` package
+  ([\#33](https://github.com/r-vellum/vellumplot/issues/33)).
+
 ### Bug fixes
 
 - **`linetype` now works on stroked marks.**
