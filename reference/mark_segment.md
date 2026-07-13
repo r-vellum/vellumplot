@@ -28,7 +28,7 @@ mark_segment(
 - ...:
 
   Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
-  `linewidth`, `alpha`).
+  `linewidth`, `linetype`, `alpha`).
 
 - blend:
 

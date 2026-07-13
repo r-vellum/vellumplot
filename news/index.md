@@ -4,6 +4,20 @@
 
 ### Bug fixes
 
+- **`linetype` now works on stroked marks.**
+  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md),
+  [`mark_linerange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  [`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_errorbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  [`mark_rug()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md),
+  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
+  and
+  [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+  (and `annotate("segment", ...)`) previously ignored `linetype` and
+  always drew solid lines; they now honour it, consistent with
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  ([\#30](https://github.com/r-vellum/vellumplot/issues/30)).
+
 - **`annotate("rect", ...)` honours infinite bounds.** A bound of
   `-Inf`/`Inf` (e.g. `xmin = -Inf, xmax = Inf` for a full-width band)
   now extends the rectangle to the panel edge, matching ggplot2, instead

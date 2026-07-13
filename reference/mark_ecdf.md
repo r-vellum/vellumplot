@@ -29,7 +29,8 @@ mark_qq_line(plot, ..., distribution = "qnorm", blend = NULL, data = NULL)
 - ...:
 
   Encodings. `mark_ecdf()` needs `x`; `mark_qq()`/`mark_qq_line()` need
-  `sample`; `mark_rug()` takes `x` and/or `y`.
+  `sample`; `mark_rug()` takes `x` and/or `y` (+ `color`, `alpha`,
+  `linewidth`, `linetype`).
 
 - blend, data:
 

@@ -31,7 +31,8 @@ mark_summary(plot, ..., fun = mean, blend = NULL, sketch = NULL, data = NULL)
 - ...:
 
   Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
-  `ymax` for errorbar/linerange; plus `color`/`fill`.
+  `ymax` for errorbar/linerange; plus `color`/`fill` (and `linetype` for
+  errorbar/linerange).
 
 - blend:
 

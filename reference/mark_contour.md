@@ -46,7 +46,7 @@ mark_contour_filled(
 - ...:
 
   Encodings (tidy-eval): `x`, `y` (+ optional `z` surface, `color` /
-  `fill`, `linewidth`).
+  `fill`, `linewidth`, `linetype`).
 
 - bins:
 

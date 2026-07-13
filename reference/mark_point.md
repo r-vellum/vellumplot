@@ -64,7 +64,8 @@ mark_bar(
 - ...:
 
   Encodings: named channel expressions such as `x`, `y`, `color`,
-  `fill`, `size`, `shape`, `alpha`.
+  `fill`, `size`, `shape`, `alpha`. Stroked marks (line, step, segment,
+  rule, linerange) also take `linewidth` and `linetype`.
 
 - size, shape:
 

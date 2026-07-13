@@ -68,7 +68,7 @@ mark_node_text(
 
   Encodings mapping node/edge attributes to aesthetics. Nodes: `size`,
   `color`/`fill`, `shape`, `alpha`. Edges: `color`, `linewidth`,
-  `alpha`. The position channels are supplied by
+  `linetype`, `alpha`. The position channels are supplied by
   [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
   and need not be mapped.
 
