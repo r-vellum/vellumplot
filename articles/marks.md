@@ -148,6 +148,39 @@ vplot(top) |>
 
 ![](marks_files/figure-html/unnamed-chunk-9-1.png)
 
+## Images
+
+[`mark_image()`](https://r-vellum.github.io/vellumplot/reference/mark_image.md)
+puts a bitmap at each `(x, y)` in place of a marker: a flag or a company
+logo. `src` is a column of file paths (one image per datum) or a single
+path reused at every point. `size` sets the height in millimetres, and
+the width follows each image’s own aspect ratio, so nothing stretches.
+
+``` r
+
+badge <- function(text, fill) {
+  path <- tempfile(fileext = ".png")
+  magick::image_blank(120, 120, color = fill) |>
+    magick::image_annotate(text, size = 64, gravity = "center", color = "white") |>
+    magick::image_write(path)
+  path
+}
+d <- data.frame(
+  x = 1:3,
+  y = c(2, 3, 1),
+  logo = c(badge("A", "tomato"), badge("B", "steelblue"), badge("C", "seagreen"))
+)
+vplot(d) |>
+  mark_image(x = x, y = y, src = logo, size = 14)
+```
+
+![](marks_files/figure-html/unnamed-chunk-10-1.png)
+
+Reading images needs the magick package (a suggested dependency), which
+decodes PNG, JPEG, SVG, and more. Because `size` is in millimetres
+rather than data units, images keep their physical size as the panel
+resizes.
+
 ## Pie and donut
 
 [`mark_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
@@ -166,7 +199,7 @@ vplot(parts) |>
   mark_donut(value = n, fill = part, hole = 0.6)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-10-1.png)
+![](marks_files/figure-html/unnamed-chunk-11-1.png)
 
 ## Layering is the point
 
@@ -181,7 +214,7 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, method = "lm")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-11-1.png)
+![](marks_files/figure-html/unnamed-chunk-12-1.png)
 
 From here:
 

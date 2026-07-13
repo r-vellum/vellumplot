@@ -14,8 +14,8 @@
   layer](https://r-vellum.github.io/vellumplot/articles/marks.md):
 
   A tour of the mark families: points, lines and bars, areas and
-  intervals, tiles and bins, text, and pie. How encodings map, and how
-  scales train across every layer on the panel.
+  intervals, tiles and bins, text, images, and pie. How encodings map,
+  and how scales train across every layer on the panel.
 
 - [Scales and
   guides](https://r-vellum.github.io/vellumplot/articles/scales-and-guides.md):

@@ -218,17 +218,44 @@
 </div>
 </div>
 </div>
+</section><section class="level2"><h2 id="images">Images<a class="anchor" aria-label="anchor" href="#images"></a>
+</h2>
+<p><code><a href="../reference/mark_image.html">mark_image()</a></code> puts a bitmap at each <code>(x, y)</code> in place of a marker: a flag or a company logo. <code>src</code> is a column of file paths (one image per datum) or a single path reused at every point. <code>size</code> sets the height in millimetres, and the width follows each image’s own aspect ratio, so nothing stretches.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">badge</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">text</span>, <span class="va">fill</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".png"</span><span class="op">)</span></span>
+<span>  <span class="fu">magick</span><span class="fu">::</span><span class="fu"><a href="https://docs.ropensci.org/magick/reference/editing.html" class="external-link">image_blank</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">120</span>, color <span class="op">=</span> <span class="va">fill</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu">magick</span><span class="fu">::</span><span class="fu"><a href="https://docs.ropensci.org/magick/reference/painting.html" class="external-link">image_annotate</a></span><span class="op">(</span><span class="va">text</span>, size <span class="op">=</span> <span class="fl">64</span>, gravity <span class="op">=</span> <span class="st">"center"</span>, color <span class="op">=</span> <span class="st">"white"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu">magick</span><span class="fu">::</span><span class="fu"><a href="https://docs.ropensci.org/magick/reference/editing.html" class="external-link">image_write</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span>
+<span>  <span class="va">path</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,</span>
+<span>  y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  logo <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu">badge</span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"tomato"</span><span class="op">)</span>, <span class="fu">badge</span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"steelblue"</span><span class="op">)</span>, <span class="fu">badge</span><span class="op">(</span><span class="st">"C"</span>, <span class="st">"seagreen"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_image.html">mark_image</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span>, src <span class="op">=</span> <span class="va">logo</span>, size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="marks_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Reading images needs the magick package (a suggested dependency), which decodes PNG, JPEG, SVG, and more. Because <code>size</code> is in millimetres rather than data units, images keep their physical size as the panel resizes.</p>
 </section><section class="level2"><h2 id="pie-and-donut">Pie and donut<a class="anchor" aria-label="anchor" href="#pie-and-donut"></a>
 </h2>
 <p><code><a href="../reference/mark_pie.html">mark_pie()</a></code> and <code><a href="../reference/mark_pie.html">mark_donut()</a></code> are the part-of-whole shortcuts. Each <code>value</code> becomes a wedge; <code>fill</code> colours the slices. Under the hood they are a stacked bar projected through <code><a href="../reference/coord_polar.html">coord_polar()</a></code>, which they set for you.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">parts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>part <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"d"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">5</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">parts</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_pie.html">mark_donut</a></span><span class="op">(</span>value <span class="op">=</span> <span class="va">n</span>, fill <span class="op">=</span> <span class="va">part</span>, hole <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="marks_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+<figure><p><img src="marks_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -237,13 +264,13 @@
 </h2>
 <p>Because scales train across every layer, mixing marks on one panel works. Here a point cloud and a fitted line share the same trained <code>x</code> and <code>y</code> axes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_histogram.html">mark_smooth</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, method <span class="op">=</span> <span class="st">"lm"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="marks_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
+<figure><p><img src="marks_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
