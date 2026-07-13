@@ -31,7 +31,7 @@ mark_contour_filled(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y} (+ optional \code{z} surface, \code{color} /
-\code{fill}, \code{linewidth}).}
+\code{fill}, \code{linewidth}, \code{linetype}).}
 
 \item{bins}{Target number of contour levels (when neither \code{breaks} nor
 \code{binwidth} is given).}

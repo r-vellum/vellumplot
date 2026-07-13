@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+* **`linetype` now works on stroked marks.** `mark_segment()`, `mark_linerange()`,
+  `mark_rule()`, `mark_errorbar()`, `mark_rug()`, `mark_edges()`, and
+  `mark_contour()` (and `annotate("segment", ...)`) previously ignored
+  `linetype` and always drew solid lines; they now honour it, consistent with
+  `mark_line()` (#30).
+
 * **`annotate("rect", ...)` honours infinite bounds.** A bound of `-Inf`/`Inf`
   (e.g. `xmin = -Inf, xmax = Inf` for a full-width band) now extends the
   rectangle to the panel edge, matching ggplot2, instead of silently rendering

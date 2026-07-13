@@ -258,7 +258,8 @@ after_stat <- function(x) x
 #'
 #' @param plot A [PlotSpec] (from [vplot()]).
 #' @param ... Encodings: named channel expressions such as `x`, `y`, `color`,
-#'   `fill`, `size`, `shape`, `alpha`.
+#'   `fill`, `size`, `shape`, `alpha`. Stroked marks (line, step, segment, rule,
+#'   linerange) also take `linewidth` and `linetype`.
 #' @param size,shape Convenience arguments for the point size (in mm) / shape;
 #'   may be a constant or a mapped expression. One of `"circle"`, `"square"`,
 #'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`.
@@ -976,7 +977,7 @@ mark_density <- function(
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y` (+ optional `z` surface, `color` /
-#'   `fill`, `linewidth`).
+#'   `fill`, `linewidth`, `linetype`).
 #' @param bins Target number of contour levels (when neither `breaks` nor
 #'   `binwidth` is given).
 #' @param binwidth Spacing between contour levels, or `NULL`.
@@ -1066,7 +1067,8 @@ mark_contour_filled <- function(
 #'
 #' @param plot A [PlotSpec].
 #' @param ... Encodings. `mark_ecdf()` needs `x`; `mark_qq()`/`mark_qq_line()`
-#'   need `sample`; `mark_rug()` takes `x` and/or `y`.
+#'   need `sample`; `mark_rug()` takes `x` and/or `y` (+ `color`, `alpha`,
+#'   `linewidth`, `linetype`).
 #' @param sides Which edges `mark_rug()` draws ticks on: any of `"b"` (bottom),
 #'   `"l"` (left), `"t"` (top), `"r"` (right); default `"bl"`.
 #' @param length Rug tick length as a fraction of the panel (default `0.03`).
@@ -1274,7 +1276,8 @@ mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
-#'   `ymax` for errorbar/linerange; plus `color`/`fill`.
+#'   `ymax` for errorbar/linerange; plus `color`/`fill` (and `linetype` for
+#'   errorbar/linerange).
 #' @param width For `mark_errorbar()`, the cap width as a fraction of the band.
 #' @param fun For `mark_summary()`, the aggregation function (default `mean`).
 #' @return The modified [PlotSpec].
@@ -1364,7 +1367,7 @@ mark_summary <- function(
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
-#'   `linewidth`, `alpha`).
+#'   `linewidth`, `linetype`, `alpha`).
 #' @return The modified [PlotSpec].
 #' @examples
 #' d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
@@ -1411,7 +1414,8 @@ mark_segment <- function(
 #'
 #' @param plot A [PlotSpec], normally from [vgraph()].
 #' @param ... Encodings mapping node/edge attributes to aesthetics. Nodes: `size`,
-#'   `color`/`fill`, `shape`, `alpha`. Edges: `color`, `linewidth`, `alpha`. The
+#'   `color`/`fill`, `shape`, `alpha`. Edges: `color`, `linewidth`, `linetype`,
+#'   `alpha`. The
 #'   position channels are supplied by `vgraph()` and need not be mapped.
 #' @param size,shape For `mark_nodes()`, the node size (mm) / shape; a constant or
 #'   a mapped expression.

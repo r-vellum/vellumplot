@@ -49,7 +49,8 @@ mark_node_text(
 \item{plot}{A \link{PlotSpec}, normally from \code{\link[=vgraph]{vgraph()}}.}
 
 \item{...}{Encodings mapping node/edge attributes to aesthetics. Nodes: \code{size},
-\code{color}/\code{fill}, \code{shape}, \code{alpha}. Edges: \code{color}, \code{linewidth}, \code{alpha}. The
+\code{color}/\code{fill}, \code{shape}, \code{alpha}. Edges: \code{color}, \code{linewidth}, \code{linetype},
+\code{alpha}. The
 position channels are supplied by \code{vgraph()} and need not be mapped.}
 
 \item{linewidth}{For \code{mark_edges()}, the edge width; a constant or (via

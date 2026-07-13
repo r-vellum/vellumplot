@@ -19,7 +19,8 @@ mark_qq_line(plot, ..., distribution = "qnorm", blend = NULL, data = NULL)
 \item{plot}{A \link{PlotSpec}.}
 
 \item{...}{Encodings. \code{mark_ecdf()} needs \code{x}; \code{mark_qq()}/\code{mark_qq_line()}
-need \code{sample}; \code{mark_rug()} takes \code{x} and/or \code{y}.}
+need \code{sample}; \code{mark_rug()} takes \code{x} and/or \code{y} (+ \code{color}, \code{alpha},
+\code{linewidth}, \code{linetype}).}
 
 \item{blend, data}{Standard layer arguments (see \code{\link[=mark_point]{mark_point()}}).}
 

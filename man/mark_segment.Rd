@@ -17,7 +17,7 @@ mark_segment(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, \code{xend}, \code{yend} (+ \code{color},
-\code{linewidth}, \code{alpha}).}
+\code{linewidth}, \code{linetype}, \code{alpha}).}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS

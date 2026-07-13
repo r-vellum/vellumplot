@@ -19,7 +19,8 @@ mark_summary(plot, ..., fun = mean, blend = NULL, sketch = NULL, data = NULL)
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y} for boxplot/summary; \code{x}, \code{ymin},
-\code{ymax} for errorbar/linerange; plus \code{color}/\code{fill}.}
+\code{ymax} for errorbar/linerange; plus \code{color}/\code{fill} (and \code{linetype} for
+errorbar/linerange).}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
