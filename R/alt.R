@@ -48,6 +48,7 @@ NULL
   crossbar = "crossbar plot",
   text = "text-label plot",
   label = "text-label plot",
+  image = "pictograph",
   sf = "map",
   edges = "network graph",
   nodes = "network graph",

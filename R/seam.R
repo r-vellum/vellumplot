@@ -119,6 +119,7 @@ NULL
       "step",
       "text",
       "label",
+      "image",
       "node_text",
       "tile",
       "rect",
