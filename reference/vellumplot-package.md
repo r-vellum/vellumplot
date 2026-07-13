@@ -15,6 +15,8 @@ Useful links:
 
 - <https://github.com/r-vellum/vellumplot>
 
+- <https://schochastics.r-universe.dev/vellumplot>
+
 - Report bugs at <https://github.com/r-vellum/vellumplot/issues>
 
 ## Author
