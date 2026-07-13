@@ -1176,6 +1176,76 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   )
 }
 
+# One image drawn per row at (x, y): a raster_grob sized in mm, aspect preserved
+# from the image's own pixel dimensions. `src` is a per-row column (values) or a
+# constant path (params); images are decoded lazily and cached by path (logos
+# repeat across rows). Positions warp through the value-based seam like text, so
+# coord_flip/coord_trans place the fixed-mm image box correctly.
+.emit_image <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  src <- L$values$src %||% L$params$src
+  if (is.null(src) || !length(src)) {
+    cli::cli_abort(
+      "{.fn mark_image} needs an image source; map or set {.arg src}."
+    )
+  }
+  src <- rep_len(as.character(src), n)
+  size <- rep_len(
+    if (!is.null(L$values$size)) L$values$size else .aes_param(L, "size", 5),
+    n
+  )
+  interpolate <- isTRUE(L$params$interpolate %||% TRUE)
+  cache <- new.env(parent = emptyenv())
+  for (i in seq_len(n)) {
+    img <- .read_image(src[i], cache)
+    h_mm <- size[i]
+    w_mm <- size[i] * (img$iw / img$ih)
+    xy <- .nudge_xy(.xy_units(scales, xn[i], yn[i]), L)
+    scene <- .draw(
+      scene,
+      vellum::raster_grob(
+        img$raster,
+        x = xy$x,
+        y = xy$y,
+        width = vellum::vl_unit(w_mm, "mm"),
+        height = vellum::vl_unit(h_mm, "mm"),
+        interpolate = interpolate
+      ),
+      # PROVENANCE + interactivity: this grob draws layer row i.
+      rows = i
+    )
+  }
+  scene
+}
+
+# Decode a local image file to an object `raster_grob` accepts, plus its pixel
+# dims. magick reads most formats (PNG, JPEG, SVG, GIF, ...); memoised per path
+# in `cache` so a repeated logo is decoded once.
+.read_image <- function(path, cache = NULL) {
+  if (!is.null(cache) && !is.null(cache[[path]])) {
+    return(cache[[path]])
+  }
+  if (
+    !is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)
+  ) {
+    cli::cli_abort("Each {.arg src} must be a non-empty file path.")
+  }
+  if (!file.exists(path)) {
+    cli::cli_abort("Image file not found: {.path {path}}.")
+  }
+  .need_pkg("magick", "mark_image()")
+  r <- grDevices::as.raster(magick::image_read(path))
+  # dim(<raster>) is c(height, width) in pixels.
+  d <- dim(r)
+  out <- list(raster = r, ih = d[1], iw = d[2])
+  if (!is.null(cache)) {
+    cache[[path]] <- out
+  }
+  out
+}
+
 # A box-and-whisker per x category: box (Q1-Q3), median line, Tukey whiskers
 # (1.5*IQR), and outlier points. Summary is computed here from the raw y values.
 .emit_boxplot <- function(scene, L, scales) {
@@ -1966,6 +2036,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     tile = .emit_tile(scene, L, scales),
     rect = .emit_rect(scene, L, scales),
     raster = .emit_raster(scene, L, scales),
+    image = .emit_image(scene, L, scales),
     boxplot = .emit_boxplot(scene, L, scales),
     errorbar = .emit_errorbar(scene, L, scales),
     linerange = .emit_linerange(scene, L, scales),

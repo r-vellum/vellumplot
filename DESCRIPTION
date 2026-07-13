@@ -35,6 +35,7 @@ Suggests:
     graphlayouts,
     igraph,
     isoband,
+    magick,
     MASS,
     sf,
     testthat (>= 3.0.0),

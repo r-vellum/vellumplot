@@ -154,6 +154,7 @@ reference:
   contents:
   - mark_text
   - mark_pie
+  - mark_image
   - mark_datashade
 - subtitle: Spatial and network
   contents:
