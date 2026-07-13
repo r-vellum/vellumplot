@@ -488,6 +488,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   col <- rep_len(.aes_colour(L, scales, "#3366bb"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 0.6)
+  lty <- .aes_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
   piece <- L$values$.piece
   sk <- .mark_sketch(L, scales)
   gi <- 0L
@@ -500,7 +502,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$x,
         xy$y,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_stroke(col, alpha, idx[1], lwd)
+        gp = .gp_stroke(col, alpha, idx[1], lwd, lty)
       ),
       rows = idx
     )
@@ -552,7 +554,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 .emit_rule <- function(scene, L, scales) {
   col <- .aes_colour(L, scales, "grey40")[1]
   lwd <- .aes_param(L, "linewidth", 1)
-  gp <- vellum::vl_gpar(col = col, lwd = lwd)
+  lty <- .aes_linetype(L, scales, NULL)
+  gp <- vellum::vl_gpar(col = col, lwd = lwd, lty = lty)
   sk <- .mark_sketch(L, scales)
   yi <- .intercept(L, "yintercept")
   xi <- .intercept(L, "xintercept")
@@ -1398,12 +1401,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   ymax <- rep_len(scales$y$map(L$values$ymax), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   lwd <- .aes_param(L, "linewidth", 1)
+  lty <- .aes_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
   band <- scales$x$band_width %||% .resolution(xn)
   half <- (.aes_param(L, "width", 0.5) * band) / 2
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col))) {
+  for (idx in .style_groups(n, list(col = col, lty = lty))) {
     x0 <- xn[idx]
     y0 <- ymin[idx]
     x1 <- xn[idx]
@@ -1429,7 +1434,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         s$x1,
         s$y1,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(col = col[idx[1]], lwd = lwd)
+        gp = vellum::vl_gpar(
+          col = col[idx[1]],
+          lwd = lwd,
+          lty = if (is.null(lty)) NULL else lty[idx[1]]
+        )
       )
     )
     gi <- gi + 1L
@@ -1451,10 +1460,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1)
+  lty <- .aes_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+  for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
     s <- .seg_units(
       scales,
       vellum::vl_unit(x0[idx], "native"),
@@ -1470,7 +1481,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         s$x1,
         s$y1,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_stroke(col, alpha, idx[1], lwd)
+        gp = .gp_stroke(col, alpha, idx[1], lwd, lty)
       ),
       rows = idx
     )
@@ -1495,6 +1506,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   col <- rep_len(.aes_colour(L, scales, "grey40"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- rep_len(.edge_width(L, scales, 0.5), n)
+  lty <- .aes_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
   arr <- if (isTRUE(L$stat_params$arrow)) {
     vellum::vl_arrow(type = "closed", length = vellum::vl_unit(2, "mm"))
   } else {
@@ -1518,7 +1531,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     grp_lwd <- round(lwd, 2)
     for (idx in .style_groups(
       length(si),
-      list(col = col[si], alpha = alpha[si], lwd = grp_lwd[si])
+      list(
+        col = col[si],
+        alpha = alpha[si],
+        lwd = grp_lwd[si],
+        lty = if (is.null(lty)) NULL else lty[si]
+      )
     )) {
       g <- si[idx]
       a <- alpha[g[1]]
@@ -1551,6 +1569,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           gp = vellum::vl_gpar(
             col = col[g[1]],
             lwd = lwd[g[1]],
+            lty = if (is.null(lty)) NULL else lty[g[1]],
             alpha = gp_alpha(a)
           )
         ),
@@ -1596,6 +1615,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           gp = vellum::vl_gpar(
             col = col[j],
             lwd = lwd[j],
+            lty = if (is.null(lty)) NULL else lty[j],
             alpha = gp_alpha(a)
           )
         )
@@ -1975,13 +1995,16 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 0.5)
-  # One segments grob per distinct (colour, alpha) so a mapped colour/alpha is
-  # honoured per tick rather than collapsed to the first row's style.
-  groups <- .style_groups(n, list(col = col, alpha = alpha))
+  lty <- .aes_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  # One segments grob per distinct (colour, alpha, linetype) so a mapped
+  # colour/alpha/linetype is honoured per tick rather than collapsed to the
+  # first row's style.
+  groups <- .style_groups(n, list(col = col, alpha = alpha, lty = lty))
   # `pos` are native positions over all rows; draw each style group's subset.
   tick <- function(scene, pos, y0, y1, vertical) {
     for (idx in groups) {
-      gp <- .gp_stroke(col, alpha, idx[1], lwd)
+      gp <- .gp_stroke(col, alpha, idx[1], lwd, lty)
       u <- vellum::vl_unit(pos[idx], "native")
       if (vertical) {
         grob <- vellum::segments_grob(

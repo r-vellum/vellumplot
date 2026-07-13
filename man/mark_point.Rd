@@ -52,7 +52,8 @@ mark_bar(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings: named channel expressions such as \code{x}, \code{y}, \code{color},
-\code{fill}, \code{size}, \code{shape}, \code{alpha}.}
+\code{fill}, \code{size}, \code{shape}, \code{alpha}. Stroked marks (line, step, segment, rule,
+linerange) also take \code{linewidth} and \code{linetype}.}
 
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
 may be a constant or a mapped expression. One of \code{"circle"}, \code{"square"},
