@@ -205,6 +205,47 @@ test_that("shadow() builds a ShadowSpec and renders on a line", {
   expect_no_error(render_px(p))
 })
 
+# --- motion() / echo() ------------------------------------------------------
+
+test_that("motion() and echo() build a MotionSpec with defaults and validate", {
+  m <- motion()
+  expect_true(S7::S7_inherits(m, vellumplot:::MotionSpec))
+  expect_identical(m@n, 8L)
+  expect_identical(m@blend, "normal")
+  expect_null(m@color)
+
+  e <- echo()
+  expect_true(S7::S7_inherits(e, vellumplot:::MotionSpec))
+  expect_identical(e@n, 3L)
+
+  expect_error(motion(x = "a"), "finite")
+  expect_error(motion(n = 0), "positive integer")
+  expect_error(motion(alpha = 2), "\\[0, 1\\]")
+  expect_error(motion(decay = -1), "non-negative")
+  expect_error(motion(spread = -1), "non-negative")
+  expect_error(motion(color = c("a", "b")), "single colour")
+  expect_error(motion(blend = "nope"), "blend")
+})
+
+test_that("motion() rides the layer and renders on a line", {
+  p <- vplot(line_df) |>
+    mark_line(x = x, y = y, effects = list(motion(n = 5L)))
+  e <- p@layers[[1]]@effects[[1]]
+  expect_true(S7::S7_inherits(e, vellumplot:::MotionSpec))
+  expect_identical(e@n, 5L)
+  expect_no_error(render_px(p))
+})
+
+test_that("a motion trail lights more pixels than the plain line", {
+  mk <- function(fx) {
+    vplot(line_df) |>
+      mark_line(x = x, y = y, color = "#08F7FE", effects = fx) |>
+      theme_cyberpunk()
+  }
+  lit <- function(p) sum(render_px(p)[,, 2] > 0.25) # green channel = cyan trail
+  expect_gt(lit(mk(list(motion(x = 5)))), lit(mk(list())))
+})
+
 # --- composition ------------------------------------------------------------
 
 test_that("effects compose in one layer", {
@@ -213,7 +254,7 @@ test_that("effects compose in one layer", {
       x = x,
       y = y,
       color = "#00e5ff",
-      effects = list(outline(color = "black"), glow())
+      effects = list(motion(x = 3), outline(color = "black"), glow())
     ) |>
     theme_cyberpunk()
   expect_no_error(render_px(p))
