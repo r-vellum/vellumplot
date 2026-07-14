@@ -2323,6 +2323,29 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   )
 }
 
+.emit_motion <- function(scene, L, scales, m) {
+  # A fading trail: copy `i` sits at fraction `f` of the (x, y) offset and widens
+  # by `spread * f`; opacity ramps from `alpha` at the nearest copy toward the
+  # tail (shaped by `decay`). Draw furthest/faintest first so nearer, stronger
+  # ghosts overpaint, all beneath the crisp original.
+  for (i in seq.int(m@n, 1L)) {
+    f <- i / m@n
+    a <- m@alpha * ((m@n - i + 1L) / m@n)^m@decay
+    scene <- .emit_copies(
+      scene,
+      L,
+      scales,
+      m@spread * f,
+      a,
+      m@color,
+      m@blend,
+      xoff = m@x * f,
+      yoff = m@y * f
+    )
+  }
+  scene
+}
+
 .emit_underlay <- function(scene, L, scales, e) {
   # Effect copies are decorative underlays, not the core layer: tag their
   # provenance entries so a consumer can tell a halo apart from the data mark.
@@ -2335,6 +2358,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     .emit_outline(scene, L, scales, e)
   } else if (S7::S7_inherits(e, ShadowSpec)) {
     .emit_shadow(scene, L, scales, e)
+  } else if (S7::S7_inherits(e, MotionSpec)) {
+    .emit_motion(scene, L, scales, e)
   } else {
     scene
   }

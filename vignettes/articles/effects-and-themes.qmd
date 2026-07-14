@@ -65,7 +65,9 @@ Effects change how a single mark is painted, and they are passed to a mark's
 `effects` argument as a list. They apply to stroked and point marks.
 `glow()` draws widened, low-opacity copies beneath the mark for a neon halo;
 `shadow()` adds an offset drop shadow; `outline()` puts a contrasting halo
-behind the mark so it stays legible over a busy backdrop.
+behind the mark so it stays legible over a busy backdrop. `motion()` and
+`echo()` draw a fading trail of copies marching off along a direction — a
+speed-blur (`motion()`, many close copies) or discrete ghost repeats (`echo()`).
 
 ```{r}
 vplot(pressure) |>
@@ -73,6 +75,11 @@ vplot(pressure) |>
     x = temperature, y = pressure,
     effects = list(shadow(), outline(color = "white", size = 2))
   )
+```
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = 4, effects = list(motion(x = 4)))
 ```
 
 `glow()` pairs naturally with `theme_cyberpunk()`, a dark neon theme.

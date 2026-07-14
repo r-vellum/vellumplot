@@ -209,11 +209,12 @@ reference:
   - md
 
 - title: Layer effects
-  desc: Glow, shadow, outline, hand-drawn sketching, and gradient fills.
+  desc: Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient fills.
   contents:
   - glow
   - shadow
   - outline
+  - motion
   - sketch
   - gradients
 

@@ -146,6 +146,92 @@ shadow <- function(
   )
 }
 
+#' Motion-trail layer effects
+#'
+#' Draw a fading trail of a stroked or point mark: `n` copies marching off along
+#' a direction (`x`, `y`), each further out and fainter than the last, composited
+#' beneath the crisp original — a speed-blur or animation-still look. `motion()`
+#' defaults to many close, low-opacity copies (a smooth blur streak); `echo()`
+#' defaults to a few wider-spaced, more-opaque copies (discrete ghost repeats).
+#' Both build the same effect, differing only in defaults, and apply to the same
+#' marks as [glow()].
+#'
+#' The direction is an **absolute distance in millimetres** (`+x` right, `+y`
+#' up), resolved device-side via `vellum`'s compound `npc + mm` unit, so the
+#' trail keeps the same physical length and stays isotropic regardless of the
+#' panel's size or aspect (as [shadow()]'s offset does).
+#'
+#' @param x,y Trail direction and length in millimetres (`+x` right, `+y` up):
+#'   the offset of the furthest copy. Defaults to a rightward streak.
+#' @param n Number of trail copies.
+#' @param alpha Opacity of the nearest (strongest) copy; copies fade toward the
+#'   tail.
+#' @param decay Fade exponent shaping the opacity ramp along the trail (higher =
+#'   faster fade toward the tail; `0` = no fade).
+#' @param spread Optional widening, in millimetres, applied progressively toward
+#'   the tail (`0` keeps a constant width).
+#' @param blend Blend mode compositing the trail copies (any CSS
+#'   `mix-blend-mode` name); `"normal"` for opaque ghosts.
+#' @param color Trail colour, or `NULL` (default) to inherit the mark's own
+#'   resolved colour.
+#' @return A `MotionSpec` object for a mark's `effects` list.
+#' @seealso [glow()], [shadow()], [outline()]
+#' @examples
+#' df <- data.frame(x = 1:20, y = cumsum(rnorm(20)))
+#' vplot(df) |> mark_line(x = x, y = y, effects = list(motion(x = 4)))
+#'
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, size = 4, effects = list(echo(x = 5)))
+#' @export
+motion <- function(
+  x = 3,
+  y = 0,
+  n = 8L,
+  alpha = 0.15,
+  decay = 1,
+  spread = 0,
+  blend = "normal",
+  color = NULL
+) {
+  .motion_spec(x, y, n, alpha, decay, spread, blend, color)
+}
+
+#' @rdname motion
+#' @export
+echo <- function(
+  x = 4,
+  y = 0,
+  n = 3L,
+  alpha = 0.45,
+  decay = 1,
+  spread = 0,
+  blend = "normal",
+  color = NULL
+) {
+  .motion_spec(x, y, n, alpha, decay, spread, blend, color)
+}
+
+# Shared builder for motion() / echo(): validate and construct a MotionSpec.
+.motion_spec <- function(x, y, n, alpha, decay, spread, blend, color) {
+  .check_num(x, "x")
+  .check_num(y, "y")
+  .check_pos_int(n, "n")
+  .check_unit_alpha(alpha)
+  .check_nonneg_num(decay, "decay")
+  .check_nonneg_num(spread, "spread")
+  .check_opt_colour(color, "color")
+  MotionSpec(
+    x = as.double(x),
+    y = as.double(y),
+    n = as.integer(n),
+    alpha = as.double(alpha),
+    decay = as.double(decay),
+    spread = as.double(spread),
+    blend = .check_blend(blend),
+    color = color
+  )
+}
+
 # --- shared argument checks -------------------------------------------------
 
 .check_pos_num <- function(v, arg, kind) {
@@ -156,6 +242,11 @@ shadow <- function(
 .check_num <- function(v, arg) {
   if (!is.numeric(v) || length(v) != 1L || !is.finite(v)) {
     cli::cli_abort("{.arg {arg}} must be a single finite number.")
+  }
+}
+.check_nonneg_num <- function(v, arg) {
+  if (!is.numeric(v) || length(v) != 1L || !is.finite(v) || v < 0) {
+    cli::cli_abort("{.arg {arg}} must be a single non-negative number.")
   }
 }
 .check_pos_int <- function(v, arg) {

@@ -68,6 +68,28 @@ ShadowSpec <- S7::new_class(
   )
 )
 
+# A motion trail: `n` copies of a mark drawn beneath the original, marching off
+# along direction (`x`, `y`) in mm (+x right, +y up) with each successive copy
+# further out and fainter (opacity ramps from `alpha` at the nearest copy toward
+# the tail, shaped by `decay`), optionally widening by `spread` mm. `motion()`
+# uses many close low-alpha copies (a blur streak); `echo()` uses a few wider,
+# more-opaque ghosts. `color` NULL inherits the mark's own colour.
+MotionSpec <- S7::new_class(
+  "MotionSpec",
+  package = "vellumplot",
+  parent = Effect,
+  properties = list(
+    x = S7::new_property(S7::class_double, default = 3),
+    y = S7::new_property(S7::class_double, default = 0),
+    n = S7::new_property(S7::class_integer, default = 8L),
+    alpha = S7::new_property(S7::class_double, default = 0.15),
+    decay = S7::new_property(S7::class_double, default = 1),
+    spread = S7::new_property(S7::class_double, default = 0),
+    blend = S7::new_property(S7::class_character, default = "normal"),
+    color = S7::new_property(S7::class_any, default = NULL)
+  )
+)
+
 # One drawing layer: a mark, its encodings (named list<channel>), constant
 # aesthetics (`params`), an optional statistical transform (`stat`, with its
 # own `stat_params`), a position adjustment (`position`), and render `effects`.
