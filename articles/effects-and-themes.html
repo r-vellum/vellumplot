@@ -144,7 +144,7 @@
 </div>
 </section><section class="level2"><h2 id="layer-effects">Layer effects<a class="anchor" aria-label="anchor" href="#layer-effects"></a>
 </h2>
-<p>Effects change how a single mark is painted, and they are passed to a mark’s <code>effects</code> argument as a list. They apply to stroked and point marks. <code><a href="../reference/glow.html">glow()</a></code> draws widened, low-opacity copies beneath the mark for a neon halo; <code><a href="../reference/shadow.html">shadow()</a></code> adds an offset drop shadow; <code><a href="../reference/outline.html">outline()</a></code> puts a contrasting halo behind the mark so it stays legible over a busy backdrop.</p>
+<p>Effects change how a single mark is painted, and they are passed to a mark’s <code>effects</code> argument as a list. They apply to stroked and point marks. <code><a href="../reference/glow.html">glow()</a></code> draws widened, low-opacity copies beneath the mark for a neon halo; <code><a href="../reference/shadow.html">shadow()</a></code> adds an offset drop shadow; <code><a href="../reference/outline.html">outline()</a></code> puts a contrasting halo behind the mark so it stays legible over a busy backdrop. <code><a href="../reference/motion.html">motion()</a></code> and <code><a href="../reference/motion.html">echo()</a></code> draw a fading trail of copies marching off along a direction — a speed-blur (<code><a href="../reference/motion.html">motion()</a></code>, many close copies) or discrete ghost repeats (<code><a href="../reference/motion.html">echo()</a></code>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">pressure</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -159,15 +159,26 @@
 </div>
 </div>
 </div>
-<p><code><a href="../reference/glow.html">glow()</a></code> pairs naturally with <code><a href="../reference/theme_gray.html">theme_cyberpunk()</a></code>, a dark neon theme.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, size <span class="op">=</span> <span class="fl">4</span>, effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/motion.html">motion</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-5-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><code><a href="../reference/glow.html">glow()</a></code> pairs naturally with <code><a href="../reference/theme_gray.html">theme_cyberpunk()</a></code>, a dark neon theme.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/glow.html">glow</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/theme_gray.html">theme_cyberpunk</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-5-1.png" style="width:100.0%"></p>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -176,7 +187,7 @@
 </h2>
 <p>A gradient is an unscaled <em>value</em> for the <code>fill</code> aesthetic, not a mapped scale. Pass <code><a href="../reference/gradients.html">linear_gradient()</a></code> or <code><a href="../reference/gradients.html">radial_gradient()</a></code> directly as a fill and the region is painted with it as one paint. Using a transparent stop gives the “fade out under a line” look.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">pressure</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_area.html">mark_area</a></span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="va">temperature</span>, y <span class="op">=</span> <span class="va">pressure</span>,</span>
@@ -186,7 +197,7 @@
 <span>  <span class="fu"><a href="../reference/theme_gray.html">theme_cyberpunk</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -196,20 +207,20 @@
 </h2>
 <p><code><a href="../reference/theme_sketch.html">theme_sketch()</a></code> turns an entire plot hand-drawn in one line: wobbly gridlines, axis lines, and marks, on a warm paper background. The look is generated natively in the engine, so it is exact and works across PNG, SVG, and PDF.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/theme_sketch.html">theme_sketch</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>For finer control, <code><a href="../reference/sketch.html">sketch()</a></code> is the vocabulary: <code>roughness</code>, <code>bowing</code>, <code>fill_style</code> (<code>"hachure"</code>, <code>"crosshatch"</code>, <code>"zigzag"</code>, and more), and so on. Pass a <code><a href="../reference/sketch.html">sketch()</a></code> value to a single mark’s <code>sketch =</code> argument to rough up just that layer, or to an <code><a href="../reference/element.html">element_line()</a></code> / <code><a href="../reference/element.html">element_rect()</a></code> slot inside <code><a href="../reference/theme_gray.html">theme()</a></code>. Set <code>sketch = NA</code> on a mark to force it crisp even under a plot-wide <code><a href="../reference/theme_sketch.html">theme_sketch()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>,</span>
@@ -217,7 +228,7 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>

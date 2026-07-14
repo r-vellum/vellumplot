@@ -72,6 +72,14 @@ adds an offset drop shadow;
 [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md)
 puts a contrasting halo behind the mark so it stays legible over a busy
 backdrop.
+[`motion()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
+and
+[`echo()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
+draw a fading trail of copies marching off along a direction — a
+speed-blur
+([`motion()`](https://r-vellum.github.io/vellumplot/reference/motion.md),
+many close copies) or discrete ghost repeats
+([`echo()`](https://r-vellum.github.io/vellumplot/reference/motion.md)).
 
 ``` r
 
@@ -83,6 +91,14 @@ vplot(pressure) |>
 ```
 
 ![](effects-and-themes_files/figure-html/unnamed-chunk-4-1.png)
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = 4, effects = list(motion(x = 4)))
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-5-1.png)
 
 [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)
 pairs naturally with
@@ -96,7 +112,7 @@ vplot(mtcars) |>
   theme_cyberpunk()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-5-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-6-1.png)
 
 ## Gradient fills
 
@@ -119,7 +135,7 @@ vplot(pressure) |>
   theme_cyberpunk()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-6-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-7-1.png)
 
 Because a gradient is one paint per region, it cannot be mapped to a
 data column; for that you want a colour scale (see **[Scales and
@@ -140,7 +156,7 @@ vplot(mtcars) |>
   theme_sketch()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-7-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-8-1.png)
 
 For finer control,
 [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
@@ -166,4 +182,4 @@ vplot(mtcars) |>
   )
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-8-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)

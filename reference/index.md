@@ -223,7 +223,8 @@ Combine plots into a single figure, or repeat one over a variable.
 
 ## Layer effects
 
-Glow, shadow, outline, hand-drawn sketching, and gradient fills.
+Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient
+fills.
 
 - [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md) :
   Neon glow layer effect
@@ -231,6 +232,9 @@ Glow, shadow, outline, hand-drawn sketching, and gradient fills.
   : Shadow layer effect
 - [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md)
   : Outline (halo) layer effect
+- [`motion()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
+  [`echo()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
+  : Motion-trail layer effects
 - [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
   : Hand-drawn ("sketch") rendering
 - [`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
