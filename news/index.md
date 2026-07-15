@@ -2,6 +2,20 @@
 
 ## vellumplot (development version)
 
+- **Error bars and line ranges are now interactive.**
+  [`mark_errorbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  and
+  [`mark_linerange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  thread a declared `data_id`/`tooltip`/`hover_group` through to their
+  drawn segments, so each bar is keyed to its datum — it appears in
+  `scene_model()` and
+  [`plot_provenance()`](https://r-vellum.github.io/vellumplot/reference/plot_provenance.md)
+  and carries a `data-key` in the SVG, ready for hover/click/select in a
+  widget (a bar’s cap segments share the bar’s key).
+  [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  already keyed each box by its category; this completes the statistical
+  marks. A mark with no interactivity declared is unchanged.
+
 - **Two more shapes in
   [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md).**
   The `shape` aesthetic’s default palette now extends to

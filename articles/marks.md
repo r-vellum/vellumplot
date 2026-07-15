@@ -91,6 +91,12 @@ vplot(mtcars) |>
 
 ![](marks_files/figure-html/unnamed-chunk-6-1.png)
 
+Like points and bars, these summary marks are *addressable*: an error
+bar or line range keyed with `data_id`/`tooltip` carries that identity
+on every segment it draws, and a boxplot keys each box by its category —
+so they hover, tooltip, and select as units once rendered as an
+interactive widget.
+
 ## Tiles and bins
 
 [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
