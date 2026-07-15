@@ -83,3 +83,55 @@ test_that("user scale limits short-circuit the position scan (no data-derived ra
   expect_lt(b$scales$x$domain[1], 0)
   expect_gt(b$scales$x$domain[2], 100)
 })
+
+# --- categorical (count_cat) shading via a mapped colour aesthetic --------------
+
+test_that("mark_datashade(color=) keeps the full category vector for the emitter, trains only levels", {
+  set.seed(1)
+  n <- 1000
+  df <- data.frame(x = rnorm(n), y = rnorm(n), g = sample(c("a", "b", "c"), n, TRUE))
+  L <- vellumplot:::.resolve_layers(vplot(df) |> mark_datashade(x = x, y = y, color = g))[[1]]
+  # full-length category kept for aggregation...
+  expect_length(L$ds$cat, n)
+  # ...but colour training sees only the unique levels, never the full cloud
+  expect_setequal(L$values$color, c("a", "b", "c"))
+  expect_length(L$values$color, 3L)
+})
+
+test_that("mark_datashade(color=) trains a discrete colour scale with a square-key legend", {
+  set.seed(1)
+  n <- 2000
+  df <- data.frame(x = rnorm(n), y = rnorm(n), g = sample(c("a", "b"), n, TRUE))
+  b <- vellumplot:::.build_panels(vplot(df) |> mark_datashade(x = x, y = y, color = g))
+  expect_identical(b$scales$color$kind, "discrete")
+  expect_setequal(b$scales$color$levels, c("a", "b"))
+  expect_identical(b$scales$color$key_glyph, "square")
+})
+
+test_that("categorical datashade renders (one raster + legend), fill= also works", {
+  set.seed(1)
+  n <- 5000
+  df <- data.frame(
+    x = c(rnorm(n, -2, 0.3), rnorm(n, 2, 0.3)),
+    y = c(rnorm(n, -2, 0.3), rnorm(n, 2, 0.3)),
+    g = rep(c("a", "b"), each = n)
+  )
+  f1 <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(vplot(df) |> mark_datashade(x = x, y = y, color = g), f1))
+  expect_gt(file.info(f1)$size, 0)
+  # fill maps to the same colour scale
+  f2 <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(vplot(df) |> mark_datashade(x = x, y = y, fill = g), f2))
+  expect_gt(file.info(f2)$size, 0)
+})
+
+test_that("span / clip are recorded and passed through without error", {
+  set.seed(1)
+  n <- 5000
+  df <- data.frame(x = rnorm(n), y = rnorm(n))
+  p <- vplot(df) |> mark_datashade(x = x, y = y, clip = c(0.02, 0.98))
+  expect_equal(p@layers[[1]]@stat_params$clip, c(0.02, 0.98))
+  f <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, f))
+  expect_no_error(render_plot(vplot(df) |> mark_datashade(x = x, y = y, span = c(1, 20)), f))
+})

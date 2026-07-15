@@ -651,27 +651,34 @@ mark_smooth <- function(
 #' points), `mark_datashade()` bins the points into a canvas-sized grid in one
 #' pass and colours each cell by density (via [vellum::datashade()]), drawing a
 #' single raster that fills the panel. Cost is decoupled from point count and
-#' overplotting. Per-point colour/size aesthetics do not apply; cell colour
-#' encodes density.
+#' overplotting.
+#'
+#' Map a discrete `color` (or `fill`) aesthetic to shade **categorically**
+#' (datashader's `count_cat`): each category is aggregated separately and every
+#' cell is coloured by the count-weighted average of the category hues it holds,
+#' with opacity from its total density — so you see which category dominates
+#' where, and where they mix, with a colour legend. The category hues come from
+#' the usual discrete colour scale (so [scale_color_manual()] etc. apply). Without
+#' a mapped colour, cell colour encodes plain density via the `colors` ramp.
 #'
 #' @inheritParams mark_point
-#' @param ... Encodings; `x` and `y` are required.
+#' @param ... Encodings; `x` and `y` are required. Map `color`/`fill` to a
+#'   discrete variable for categorical (`count_cat`) shading.
 #' @param width,height Aggregation grid size in cells (output raster pixels).
-#' @param colors Two or more colours forming the low-to-high density ramp. For
-#'   an additive per-category overlay, ramp from a transparent/black low end to
-#'   the category hue and composite with `blend = "screen"` (see details).
-#' @param how Density-to-colour mapping: `"eq_hist"` (default), `"log"`,
-#'   `"cbrt"`, or `"linear"`.
-#' @details
-#' Categorical shading (à la datashader's `count_cat`) has no single-call form,
-#' but is reproduced by stacking one datashade layer per category — each with a
-#' `colors` ramp from black to its hue — composited with `blend = "screen"`, so
-#' overlapping densities mix additively.
+#' @param colors Two or more colours forming the low-to-high density ramp (plain
+#'   density shading only; ignored when a `color`/`fill` aesthetic is mapped).
+#' @param how Density-to-colour mapping (and, categorically, per-cell opacity):
+#'   `"eq_hist"` (default), `"log"`, `"cbrt"`, or `"linear"`.
+#' @param span,clip Optional density-range clamping passed to [vellum::datashade()]:
+#'   `span = c(lo, hi)` absolute limits, or `clip = c(0.01, 0.99)` percentiles, so
+#'   a few extreme cells don't flatten the rest. Both default `NULL`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' n <- 1e5
-#' d <- data.frame(x = rnorm(n), y = rnorm(n))
+#' d <- data.frame(x = rnorm(n), y = rnorm(n), g = sample(c("a", "b"), n, TRUE))
 #' vplot(d) |> mark_datashade(x = x, y = y)
+#' # categorical: colour by group
+#' vplot(d) |> mark_datashade(x = x, y = y, color = g)
 #' @export
 mark_datashade <- function(
   plot,
@@ -680,6 +687,8 @@ mark_datashade <- function(
   height = 300,
   colors = NULL,
   how = "eq_hist",
+  span = NULL,
+  clip = NULL,
   blend = NULL,
   data = NULL
 ) {
@@ -692,7 +701,9 @@ mark_datashade <- function(
       width = width,
       height = height,
       colors = colors,
-      how = how
+      how = how,
+      span = span,
+      clip = clip
     ),
     blend = blend,
     data = data

@@ -11,6 +11,8 @@ mark_datashade(
   height = 300,
   colors = NULL,
   how = "eq_hist",
+  span = NULL,
+  clip = NULL,
   blend = NULL,
   data = NULL
 )
@@ -18,16 +20,20 @@ mark_datashade(
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
-\item{...}{Encodings; \code{x} and \code{y} are required.}
+\item{...}{Encodings; \code{x} and \code{y} are required. Map \code{color}/\code{fill} to a
+discrete variable for categorical (\code{count_cat}) shading.}
 
 \item{width, height}{Aggregation grid size in cells (output raster pixels).}
 
-\item{colors}{Two or more colours forming the low-to-high density ramp. For
-an additive per-category overlay, ramp from a transparent/black low end to
-the category hue and composite with \code{blend = "screen"} (see details).}
+\item{colors}{Two or more colours forming the low-to-high density ramp (plain
+density shading only; ignored when a \code{color}/\code{fill} aesthetic is mapped).}
 
-\item{how}{Density-to-colour mapping: \code{"eq_hist"} (default), \code{"log"},
-\code{"cbrt"}, or \code{"linear"}.}
+\item{how}{Density-to-colour mapping (and, categorically, per-cell opacity):
+\code{"eq_hist"} (default), \code{"log"}, \code{"cbrt"}, or \code{"linear"}.}
+
+\item{span, clip}{Optional density-range clamping passed to \code{\link[vellum:datashade]{vellum::datashade()}}:
+\code{span = c(lo, hi)} absolute limits, or \code{clip = c(0.01, 0.99)} percentiles, so
+a few extreme cells don't flatten the rest. Both default \code{NULL}.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
@@ -44,17 +50,21 @@ For data too dense to draw one marker each (overplotted, up to millions of
 points), \code{mark_datashade()} bins the points into a canvas-sized grid in one
 pass and colours each cell by density (via \code{\link[vellum:datashade]{vellum::datashade()}}), drawing a
 single raster that fills the panel. Cost is decoupled from point count and
-overplotting. Per-point colour/size aesthetics do not apply; cell colour
-encodes density.
+overplotting.
 }
 \details{
-Categorical shading (à la datashader's \code{count_cat}) has no single-call form,
-but is reproduced by stacking one datashade layer per category — each with a
-\code{colors} ramp from black to its hue — composited with \code{blend = "screen"}, so
-overlapping densities mix additively.
+Map a discrete \code{color} (or \code{fill}) aesthetic to shade \strong{categorically}
+(datashader's \code{count_cat}): each category is aggregated separately and every
+cell is coloured by the count-weighted average of the category hues it holds,
+with opacity from its total density — so you see which category dominates
+where, and where they mix, with a colour legend. The category hues come from
+the usual discrete colour scale (so \code{\link[=scale_color_manual]{scale_color_manual()}} etc. apply). Without
+a mapped colour, cell colour encodes plain density via the \code{colors} ramp.
 }
 \examples{
 n <- 1e5
-d <- data.frame(x = rnorm(n), y = rnorm(n))
+d <- data.frame(x = rnorm(n), y = rnorm(n), g = sample(c("a", "b"), n, TRUE))
 vplot(d) |> mark_datashade(x = x, y = y)
+# categorical: colour by group
+vplot(d) |> mark_datashade(x = x, y = y, color = g)
 }

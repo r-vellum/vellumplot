@@ -59,6 +59,16 @@ NULL
     if (!is.null(values$y)) {
       values$y <- suppressWarnings(range(as.numeric(values$y), finite = TRUE))
     }
+    # Categorical (count_cat) shading: a mapped colour/fill is the aggregation
+    # category. Keep the full-length vector in `ds$cat` for the emitter, but hand
+    # colour training only its unique levels -- the discrete colour scale (and its
+    # legend) trains from the levels, never the full cloud.
+    cat <- values$color %||% values$fill
+    if (!is.null(cat)) {
+      ds$cat <- cat
+      values$color <- unique(cat)
+      values$fill <- NULL
+    }
   }
 
   list(

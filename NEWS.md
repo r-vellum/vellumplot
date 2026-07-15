@@ -2,6 +2,17 @@
 
 ## New features
 
+* **Categorical datashading in one call.** `mark_datashade()` now accepts a mapped
+  discrete `color`/`fill` aesthetic and shades **categorically** (datashader's
+  `count_cat`): each category is aggregated separately and every cell is coloured by
+  the count-weighted average of the category hues it holds, opacity by density — so
+  you see which category dominates where, and where they mix, **with a colour
+  legend**. Category hues come from the usual discrete colour scale
+  (`scale_color_*()` apply). This replaces the old idiom of stacking one datashade
+  layer per category with `blend = "screen"`. New `span`/`clip` arguments clamp the
+  density range (absolute limits or percentiles) so a few extreme cells don't
+  flatten the rest. Requires the accompanying `vellum` dev version.
+
 * **`mark_image()` draws images at data points.** A new mark places a bitmap
   image (e.g. a country flag or company logo) at each `(x, y)`, replacing the
   usual point marker. `src` is a column of local file paths or one constant
