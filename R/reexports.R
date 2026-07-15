@@ -32,8 +32,9 @@ md <- function(text) {
 #' @param colours,stops See [vellum::linear_gradient()] /
 #'   [vellum::radial_gradient()].
 #' @param ... Further gradient arguments passed to the vellum constructor:
-#'   `x1`/`y1`/`x2`/`y2` (linear), `cx`/`cy`/`r` (radial), `units`, and `extend`.
-#'   See [vellum::linear_gradient()] / [vellum::radial_gradient()].
+#'   `x1`/`y1`/`x2`/`y2` (linear), `cx`/`cy`/`r` (radial), `units`, `extend`, and
+#'   `interpolation` (`"srgb"` default, or `"oklab"` to blend the stops
+#'   perceptually). See [vellum::linear_gradient()] / [vellum::radial_gradient()].
 #' @return A `vellum_gradient` object usable as a `fill` value.
 #' @seealso [glow()], [theme_cyberpunk()]
 #' @examples

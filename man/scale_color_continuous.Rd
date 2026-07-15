@@ -101,6 +101,14 @@ sets exact colours, \verb{scale_*_gradient()} a two-point ramp. The \code{fill} 
 are identical (colour and fill share one scale). A legend is drawn
 automatically when colour is mapped.
 }
+\details{
+Continuous and binned ramps built from a plain colour vector are interpolated
+in the perceptually-uniform \strong{Oklab} space, so they avoid the muddy, over-dark
+midtones and hue drift of sRGB blending. Designed perceptual palettes (the
+default, and \code{hcl.colors()} names) are already uniform and unaffected. Set
+\code{options(vellumplot.color.interpolation = "srgb")} (or \code{"lab"}) to change the
+blend space globally.
+}
 \examples{
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp) |>

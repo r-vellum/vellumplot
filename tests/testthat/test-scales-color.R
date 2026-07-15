@@ -124,3 +124,43 @@ test_that("scale_color_manual / scale_fill_manual reject missing or bad values",
   )
   expect_error(scale_fill_manual(base, values = 1:3), "character vector")
 })
+
+# Perceptual (Oklab) interpolation is the default for continuous/binned ramps.
+
+test_that("a two-point continuous ramp blends perceptually (Oklab) by default", {
+  withr::local_options(vellumplot.color.interpolation = NULL) # default
+  df <- data.frame(x = 1:3, y = 1:3, z = c(0, 0.5, 1))
+  cl <- train(vplot(df) |> mark_point(x = x, y = y, color = z) |>
+    scale_color_gradient(low = "black", high = "white"))$color
+  midR <- as.integer(grDevices::col2rgb(cl$pal256[128]))[1]
+  # Oklab midpoint (~99, 50% perceived lightness) is clearly darker than the
+  # sRGB code midpoint (~127).
+  expect_lt(midR, 112L)
+  expect_gt(midR, 85L)
+})
+
+test_that("options(vellumplot.color.interpolation='srgb') restores sRGB blending", {
+  df <- data.frame(x = 1:3, y = 1:3, z = c(0, 0.5, 1))
+  p <- vplot(df) |> mark_point(x = x, y = y, color = z) |>
+    scale_color_gradient(low = "black", high = "white")
+  withr::local_options(vellumplot.color.interpolation = "srgb")
+  midR <- as.integer(grDevices::col2rgb(train(p)$color$pal256[128]))[1]
+  expect_true(abs(midR - 127L) < 6L)
+})
+
+test_that("a designed perceptual palette (batlow default) is unchanged by the space", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+  ok <- withr::with_options(list(vellumplot.color.interpolation = "oklab"), train(base)$color$pal256)
+  sr <- withr::with_options(list(vellumplot.color.interpolation = "srgb"), train(base)$color$pal256)
+  expect_identical(ok, sr) # already 256 dense perceptual stops -> resample is a no-op
+})
+
+test_that("binned colour scales also use the perceptual ramp", {
+  df <- data.frame(x = 1:20, y = 1:20, z = 1:20)
+  cl <- train(vplot(df) |> mark_point(x = x, y = y, color = z) |>
+    scale_color_binned(palette = c("black", "white"), n = 4))$color
+  expect_identical(cl$kind, "binned")
+  # the middle class colour is perceptual, not the sRGB code-midpoint grey
+  mids <- as.integer(grDevices::col2rgb(cl$colors[2]))[1]
+  expect_lt(mids, 130L)
+})

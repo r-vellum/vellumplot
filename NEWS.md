@@ -1,5 +1,16 @@
 # vellumplot (development version)
 
+* **Continuous and binned colour scales now interpolate perceptually (Oklab) by
+  default.** A colour ramp built from a plain colour vector (e.g.
+  `scale_color_gradient(low, high)` or `scale_color_continuous(palette = c(...))`)
+  is blended in the perceptually-uniform Oklab space instead of sRGB, so it no
+  longer passes through muddy, over-dark midtones or drifts in hue — the ramp and
+  its legend colourbar read evenly. Designed perceptual palettes (the `batlow`
+  default, `hcl.colors()` names) are already uniform and are unchanged. Set
+  `options(vellumplot.color.interpolation = "srgb")` (or `"lab"`) to restore the
+  old behaviour. Gradient *fills* opt in per gradient with
+  `linear_gradient(..., interpolation = "oklab")` (passed through to vellum).
+
 * **Error bars and line ranges are now interactive.** `mark_errorbar()` and
   `mark_linerange()` thread a declared `data_id`/`tooltip`/`hover_group` through to
   their drawn segments, so each bar is keyed to its datum — it appears in
