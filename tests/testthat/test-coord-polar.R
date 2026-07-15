@@ -44,8 +44,10 @@ test_that("print shows the polar coord parameters", {
   p <- vplot(mtcars) |>
     mark_bar(x = factor(cyl)) |>
     coord_polar(theta = "x", direction = -1)
-  # cli writes the spec tree to the message stream
-  out <- paste(capture.output(summary(p), type = "message"), collapse = " ")
+  # Capture the cli spec tree stream-agnostically: cli routes cli_*() output to
+  # stdout unless stdout is sunk, so a fixed capture.output(type="message") only
+  # catches it in some run modes. cli_fmt() captures it regardless (as test-spec.R).
+  out <- paste(cli::cli_fmt(summary(p)), collapse = " ")
   expect_match(out, "polar")
   expect_match(out, "theta=x")
 })
