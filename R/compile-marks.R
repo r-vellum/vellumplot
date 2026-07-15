@@ -1509,7 +1509,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           lwd = lwd,
           lty = if (is.null(lty)) NULL else lty[idx[1]]
         )
-      )
+      ),
+      # PROVENANCE: each error bar is one datum (row-preserving). The segments are
+      # emitted as [bars, lower caps, upper caps] (each `idx`-ordered), so a bar's
+      # up-to-three segments all resolve to — and are keyed by — the same row.
+      rows = if (caps) c(idx, idx, idx) else idx
     )
     gi <- gi + 1L
   }

@@ -275,3 +275,48 @@ test_that("merged colour+shape legend swatches carry the colour series key (H32)
   i <- match("Mazda RX4", el$key) # cyl == 6
   expect_true("color:6" %in% el$meta[[i]][["legend"]])
 })
+
+# ---- keyed statistical marks (errorbar / linerange / boxplot) ---------------
+
+ebar <- data.frame(g = c("a", "b", "c"), y = c(2, 3, 4), lo = c(1, 2, 3), hi = c(3, 4, 5))
+
+test_that("mark_errorbar keys each bar's segments to its datum", {
+  p <- vplot(ebar) |> mark_errorbar(x = g, ymin = lo, ymax = hi, data_id = g)
+  el <- model_of(p)$elements
+  seg <- el[el$mark == "segment" & !is.na(el$key), , drop = FALSE]
+  # each error bar draws three keyed segments (the bar + two caps), all sharing
+  # the datum's key
+  expect_setequal(unique(seg$key), c("a", "b", "c"))
+  expect_equal(as.integer(table(seg$key)), c(3L, 3L, 3L))
+  expect_match(svg_of(p), 'data-key="b"', fixed = TRUE)
+})
+
+test_that("mark_linerange keys one segment per datum (no caps)", {
+  p <- vplot(ebar) |> mark_linerange(x = g, ymin = lo, ymax = hi, data_id = g)
+  el <- model_of(p)$elements
+  seg <- el[el$mark == "segment" & !is.na(el$key), , drop = FALSE]
+  expect_setequal(seg$key, c("a", "b", "c"))
+})
+
+test_that("errorbar tooltip surfaces per bar in scene_model()", {
+  p <- vplot(ebar) |>
+    mark_errorbar(x = g, ymin = lo, ymax = hi, data_id = g, tooltip = g)
+  el <- model_of(p)$elements
+  seg <- el[el$mark == "segment" & !is.na(el$key), , drop = FALSE]
+  i <- match("b", seg$key)
+  expect_equal(seg$meta[[i]]$tooltip, "b")
+})
+
+test_that("a non-interactive errorbar is unchanged (no data-key)", {
+  p <- vplot(ebar) |> mark_errorbar(x = g, ymin = lo, ymax = hi)
+  expect_no_match(svg_of(p), "data-key")
+})
+
+test_that("mark_boxplot keys each box by its category", {
+  p <- vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg, data_id = cyl)
+  el <- model_of(p)$elements
+  # the box rects carry their category as key (data_id is constant per category)
+  rects <- el[el$mark == "rect" & !is.na(el$key), , drop = FALSE]
+  expect_setequal(rects$key, c("4", "6", "8"))
+  expect_match(svg_of(p), "data-key=")
+})
