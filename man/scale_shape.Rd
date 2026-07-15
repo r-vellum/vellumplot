@@ -10,7 +10,8 @@ scale_shape(plot, values = NULL, name = NULL)
 \item{plot}{A \link{PlotSpec}.}
 
 \item{values}{Character vector of shapes (each one of \code{"circle"}, \code{"square"},
-\code{"triangle"}, \code{"diamond"}, \code{"plus"}, \code{"cross"}), or \code{NULL} for the default.}
+\code{"triangle"}, \code{"diamond"}, \code{"plus"}, \code{"cross"}, \code{"triangle_down"}, or
+\code{"star"}), or \code{NULL} for the default.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
 }

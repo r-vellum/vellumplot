@@ -1,5 +1,12 @@
 # vellumplot (development version)
 
+* **Two more shapes in `scale_shape()`.** The `shape` aesthetic's default palette
+  now extends to `"triangle_down"` (a downward triangle) and `"star"` (a
+  five-pointed star) after the original six, so a mapped `shape` covers up to eight
+  levels without an explicit scale, and both are accepted as `scale_shape(values=)`.
+  Requires the accompanying `vellum` dev version. (A constant `shape = "star"` on a
+  mark already worked once vellum gained the shape.)
+
 # vellumplot 0.4.0
 
 ## New features
