@@ -104,8 +104,9 @@ out — the "glow fade under a line" look. The gradient's <code>x1</code>/<code>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Further gradient arguments passed to the vellum constructor:
 <code>x1</code>/<code>y1</code>/<code>x2</code>/<code>y2</code> (linear), <code>cx</code>/<code>cy</code>/<code>r</code> (radial), <code>units</code>, <code>extend</code>, and
-<code>interpolation</code> (<code>"srgb"</code> default, or <code>"oklab"</code> to blend the stops
-perceptually). See <code><a href="https://r-vellum.github.io/vellum/reference/gradients.html" class="external-link">vellum::linear_gradient()</a></code> / <code><a href="https://r-vellum.github.io/vellum/reference/gradients.html" class="external-link">vellum::radial_gradient()</a></code>.</p></dd>
+<code>interpolation</code> (<code>"srgb"</code> default, or <code>"oklab"</code> / <code>"oklch"</code> to blend the
+stops perceptually — <code>"oklch"</code> additionally preserves chroma by rotating
+hue). See <code><a href="https://r-vellum.github.io/vellum/reference/gradients.html" class="external-link">vellum::linear_gradient()</a></code> / <code><a href="https://r-vellum.github.io/vellum/reference/gradients.html" class="external-link">vellum::radial_gradient()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

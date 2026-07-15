@@ -35,8 +35,9 @@ radial_gradient(colours, stops = NULL, ...)
 
   Further gradient arguments passed to the vellum constructor:
   `x1`/`y1`/`x2`/`y2` (linear), `cx`/`cy`/`r` (radial), `units`,
-  `extend`, and `interpolation` (`"srgb"` default, or `"oklab"` to blend
-  the stops perceptually). See
+  `extend`, and `interpolation` (`"srgb"` default, or `"oklab"` /
+  `"oklch"` to blend the stops perceptually — `"oklch"` additionally
+  preserves chroma by rotating hue). See
   [`vellum::linear_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html)
   /
   [`vellum::radial_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html).
