@@ -43,9 +43,9 @@ NULL
 #
 #   REFINED (rows resolve to the actual data rows an element draws): point, bar,
 #   bar-polar, tile, segment, sf, edges (main segments), line, area, ribbon,
-#   step, text, boxplot.
-#   STILL WHOLE-LAYER (backlog; correct-but-coarse): rule, smooth, errorbar/
-#   linerange, raster, hex, datashade, and the self-loop draw in `.emit_edges`.
+#   step, text, boxplot, errorbar/linerange.
+#   STILL WHOLE-LAYER (backlog; correct-but-coarse): rule, smooth, raster, hex,
+#   datashade, and the self-loop draw in `.emit_edges`.
 #   These are aggregates or references where a per-row key is ill-defined or of
 #   low value; refine them when a consumer needs finer granularity.
 # ---------------------------------------------------------------------------
