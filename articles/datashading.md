@@ -63,20 +63,39 @@ shaded by local density on a single ramp with histogram equalisation.
 
 ### Coloured by race
 
-The second map colours the same points by race. vellumplot has no
-single-call categorical shading, so this reproduces datashader’s
-`count_cat` by hand: one
+The second map colours the same points by race. Map a discrete `color`
+aesthetic and
 [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
-layer per race, each ramping from black to its own hue, all composited
-with `blend = "screen"`. On a black panel, screen blending shows each
-hue at full strength where a group dominates and mixes hues where groups
-overlap, so the segregation and mixing patterns of American cities read
-directly off the colour.
+shades **categorically** — datashader’s `count_cat` — in one call:
+
+``` r
+
+vplot(census) |>
+  mark_datashade(x = easting, y = northing, color = race)
+```
+
+Each race is aggregated into its own count grid in the same single pass,
+and every cell is coloured by the count-weighted average of the hues it
+holds, with opacity from its total density. Where one group dominates a
+cell you get that group’s hue; where groups overlap the hues mix — so
+the segregation and mixing patterns of American cities read directly off
+the colour, and you get a colour legend for free. The hues come from the
+ordinary discrete colour scale, so
+[`scale_color_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+(or any `scale_color_*()`) sets them.
+
+(Before this was a single call, the same map was built by hand — one
+[`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
+layer per race, each ramping from black to its hue, composited with
+`blend = "screen"` on a black panel. The `blend` route still works and
+remains useful for bespoke compositing, but `color = race` is the direct
+way.)
 
 ![](datashading-census-race.png)
 
-US population by race from the 2010 Census: one additive datashade layer
-per race, composited with a screen blend so overlapping groups mix.
+US population by race from the 2010 Census: categorical (`count_cat`)
+datashading, each cell coloured by the count-weighted mix of the races
+present and shaded by density.
 
 ## Resolution: aggregation, not dpi
 

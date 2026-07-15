@@ -9,13 +9,11 @@
 points), mark_datashade() bins the points into a canvas-sized grid in one
 pass and colours each cell by density (via vellum::datashade()), drawing a
 single raster that fills the panel. Cost is decoupled from point count and
-overplotting. Per-point colour/size aesthetics do not apply; cell colour
-encodes density."><meta property="og:description" content="For data too dense to draw one marker each (overplotted, up to millions of
+overplotting."><meta property="og:description" content="For data too dense to draw one marker each (overplotted, up to millions of
 points), mark_datashade() bins the points into a canvas-sized grid in one
 pass and colours each cell by density (via vellum::datashade()), drawing a
 single raster that fills the panel. Cost is decoupled from point count and
-overplotting. Per-point colour/size aesthetics do not apply; cell colour
-encodes density."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+overplotting."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -75,8 +73,7 @@ encodes density."><meta property="og:image" content="https://r-vellum.github.io/
 points), <code>mark_datashade()</code> bins the points into a canvas-sized grid in one
 pass and colours each cell by density (via <code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>), drawing a
 single raster that fills the panel. Cost is decoupled from point count and
-overplotting. Per-point colour/size aesthetics do not apply; cell colour
-encodes density.</p>
+overplotting.</p>
     </div>
 
     <div class="section level2">
@@ -88,6 +85,8 @@ encodes density.</p>
 <span>  height <span class="op">=</span> <span class="fl">300</span>,</span>
 <span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  how <span class="op">=</span> <span class="st">"eq_hist"</span>,</span>
+<span>  span <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -102,7 +101,8 @@ encodes density.</p>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Encodings; <code>x</code> and <code>y</code> are required.</p></dd>
+<dd><p>Encodings; <code>x</code> and <code>y</code> are required. Map <code>color</code>/<code>fill</code> to a
+discrete variable for categorical (<code>count_cat</code>) shading.</p></dd>
 
 
 <dt id="arg-width-height">width, height<a class="anchor" aria-label="anchor" href="#arg-width-height"></a></dt>
@@ -110,14 +110,19 @@ encodes density.</p>
 
 
 <dt id="arg-colors">colors<a class="anchor" aria-label="anchor" href="#arg-colors"></a></dt>
-<dd><p>Two or more colours forming the low-to-high density ramp. For
-an additive per-category overlay, ramp from a transparent/black low end to
-the category hue and composite with <code>blend = "screen"</code> (see details).</p></dd>
+<dd><p>Two or more colours forming the low-to-high density ramp (plain
+density shading only; ignored when a <code>color</code>/<code>fill</code> aesthetic is mapped).</p></dd>
 
 
 <dt id="arg-how">how<a class="anchor" aria-label="anchor" href="#arg-how"></a></dt>
-<dd><p>Density-to-colour mapping: <code>"eq_hist"</code> (default), <code>"log"</code>,
-<code>"cbrt"</code>, or <code>"linear"</code>.</p></dd>
+<dd><p>Density-to-colour mapping (and, categorically, per-cell opacity):
+<code>"eq_hist"</code> (default), <code>"log"</code>, <code>"cbrt"</code>, or <code>"linear"</code>.</p></dd>
+
+
+<dt id="arg-span-clip">span, clip<a class="anchor" aria-label="anchor" href="#arg-span-clip"></a></dt>
+<dd><p>Optional density-range clamping passed to <code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>:
+<code>span = c(lo, hi)</code> absolute limits, or <code>clip = c(0.01, 0.99)</code> percentiles, so
+a few extreme cells don't flatten the rest. Both default <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>
@@ -137,18 +142,24 @@ layer composites as one isolated group (not per element).</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Categorical shading (à la datashader's <code>count_cat</code>) has no single-call form,
-but is reproduced by stacking one datashade layer per category — each with a
-<code>colors</code> ramp from black to its hue — composited with <code>blend = "screen"</code>, so
-overlapping densities mix additively.</p>
+    <p>Map a discrete <code>color</code> (or <code>fill</code>) aesthetic to shade <strong>categorically</strong>
+(datashader's <code>count_cat</code>): each category is aggregated separately and every
+cell is coloured by the count-weighted average of the category hues it holds,
+with opacity from its total density — so you see which category dominates
+where, and where they mix, with a colour legend. The category hues come from
+the usual discrete colour scale (so <code><a href="scale_color_continuous.html">scale_color_manual()</a></code> etc. apply). Without
+a mapped colour, cell colour encodes plain density via the <code>colors</code> ramp.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1e5</span></span></span>
-<span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="va">n</span>, <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_datashade</span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_datashade-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="co"># categorical: colour by group</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_datashade</span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span>, color <span class="op">=</span> <span class="va">g</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="mark_datashade-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

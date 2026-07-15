@@ -121,10 +121,15 @@
 </div>
 </section><section class="level3"><h3 id="coloured-by-race">Coloured by race<a class="anchor" aria-label="anchor" href="#coloured-by-race"></a>
 </h3>
-<p>The second map colours the same points by race. vellumplot has no single-call categorical shading, so this reproduces datashader’s <code>count_cat</code> by hand: one <code><a href="../reference/mark_datashade.html">mark_datashade()</a></code> layer per race, each ramping from black to its own hue, all composited with <code>blend = "screen"</code>. On a black panel, screen blending shows each hue at full strength where a group dominates and mixes hues where groups overlap, so the segregation and mixing patterns of American cities read directly off the colour.</p>
+<p>The second map colours the same points by race. Map a discrete <code>color</code> aesthetic and <code><a href="../reference/mark_datashade.html">mark_datashade()</a></code> shades <strong>categorically</strong> — datashader’s <code>count_cat</code> — in one call:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">census</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_datashade.html">mark_datashade</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">easting</span>, y <span class="op">=</span> <span class="va">northing</span>, color <span class="op">=</span> <span class="va">race</span><span class="op">)</span></span></code></pre></div>
+<p>Each race is aggregated into its own count grid in the same single pass, and every cell is coloured by the count-weighted average of the hues it holds, with opacity from its total density. Where one group dominates a cell you get that group’s hue; where groups overlap the hues mix — so the segregation and mixing patterns of American cities read directly off the colour, and you get a colour legend for free. The hues come from the ordinary discrete colour scale, so <code><a href="../reference/scale_color_continuous.html">scale_color_manual()</a></code> (or any <code>scale_color_*()</code>) sets them.</p>
+<p>(Before this was a single call, the same map was built by hand — one <code><a href="../reference/mark_datashade.html">mark_datashade()</a></code> layer per race, each ramping from black to its hue, composited with <code>blend = "screen"</code> on a black panel. The <code>blend</code> route still works and remains useful for bespoke compositing, but <code>color = race</code> is the direct way.)</p>
 <div class="quarto-figure quarto-figure-center">
 <figure><p><img src="datashading-census-race.png"></p>
-<figcaption>US population by race from the 2010 Census: one additive datashade layer per race, composited with a screen blend so overlapping groups mix.</figcaption></figure>
+<figcaption>US population by race from the 2010 Census: categorical (<code>count_cat</code>) datashading, each cell coloured by the count-weighted mix of the races present and shaded by density.</figcaption></figure>
 </div>
 </section></section><section class="level2"><h2 id="resolution-aggregation-not-dpi">Resolution: aggregation, not dpi<a class="anchor" aria-label="anchor" href="#resolution-aggregation-not-dpi"></a>
 </h2>

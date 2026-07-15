@@ -356,7 +356,20 @@
 </div>
 </div>
 </div>
-<p>Here <code>how = "eq_hist"</code> uses histogram equalisation so both dense and sparse regions stay visible; the grid resolution is set by <code>width</code> and <code>height</code>. Per-point aesthetics do not apply, because cell colour encodes density rather than any single point.</p>
+<p>Here <code>how = "eq_hist"</code> uses histogram equalisation so both dense and sparse regions stay visible; the grid resolution is set by <code>width</code> and <code>height</code>.</p>
+<p>Map a discrete <code>color</code> (or <code>fill</code>) aesthetic to shade <strong>categorically</strong> (datashader’s <code>count_cat</code>): each category is aggregated separately and every cell is coloured by the count-weighted mix of the categories it holds, opacity by density — with a colour legend.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">big</span><span class="op">$</span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">big</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_datashade.html">mark_datashade</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">y</span>, y <span class="op">=</span> <span class="va">x</span>, color <span class="op">=</span> <span class="va">g</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="statistical-marks_files/figure-html/unnamed-chunk-20-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
 <p><code><a href="../reference/mark_point.html">mark_point()</a></code> also has an <code>auto = TRUE</code> switch that falls back to a datashaded raster automatically when a layer has very many rows, so you can keep writing <code><a href="../reference/mark_point.html">mark_point()</a></code> and let vellumplot choose the representation.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
