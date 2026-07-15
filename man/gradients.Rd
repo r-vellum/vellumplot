@@ -15,7 +15,8 @@ radial_gradient(colours, stops = NULL, ...)
 \code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}.}
 
 \item{...}{Further gradient arguments passed to the vellum constructor:
-\code{x1}/\code{y1}/\code{x2}/\code{y2} (linear), \code{cx}/\code{cy}/\code{r} (radial), \code{units}, \code{extend}, and
+\code{x1}/\code{y1}/\code{x2}/\code{y2} (linear), \code{cx}/\code{cy}/\code{r} plus the optional focal circle
+\code{fx}/\code{fy}/\code{fr} (radial), \code{units}, \code{extend}, and
 \code{interpolation} (\code{"srgb"} default, or \code{"oklab"} / \code{"oklch"} to blend the
 stops perceptually — \code{"oklch"} additionally preserves chroma by rotating
 hue). See \code{\link[vellum:linear_gradient]{vellum::linear_gradient()}} / \code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}.}
