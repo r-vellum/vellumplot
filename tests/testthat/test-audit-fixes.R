@@ -59,7 +59,7 @@ test_that("scale_shape rejects unknown shape names at declaration", {
   expect_error(
     vplot(mtcars) |>
       mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
-      scale_shape(values = "star"),
+      scale_shape(values = "pentagon"),
     "Unknown shape"
   )
 })

@@ -624,7 +624,8 @@ scale_edge_width <- function(
 #'
 #' @param plot A [PlotSpec].
 #' @param values Character vector of shapes (each one of `"circle"`, `"square"`,
-#'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`), or `NULL` for the default.
+#'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`, `"triangle_down"`, or
+#'   `"star"`), or `NULL` for the default.
 #' @param name Legend title, or `NULL` to derive from the encoding.
 #' @return The modified [PlotSpec].
 #' @examples

@@ -77,6 +77,12 @@ marker-size `range` (in mm); `scale_shape()` cycles a set of shapes over the
 levels of a discrete aesthetic; `scale_edge_width()` does for network edges
 what `scale_size()` does for points.
 
+The shape palette is `"circle"`, `"square"`, `"triangle"`, `"diamond"`, `"plus"`,
+`"cross"`, `"triangle_down"`, and `"star"` — eight in all, so a mapped `shape`
+covers up to eight levels automatically. Pass a subset (or a reordering) with
+`scale_shape(values = ...)`. Filled shapes take the mark's `fill`/`color`, so an
+open marker is `fill = NA` with a `color`.
+
 ```{r}
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, size = hp, color = factor(cyl)) |>

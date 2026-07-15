@@ -208,8 +208,10 @@ NULL
   rep_len(palette, k)
 }
 
-# Default shapes a mapped `shape` aesthetic cycles through.
-.SHAPE_PALETTE <- c("circle", "square", "triangle", "diamond", "plus", "cross")
+# Default shapes a mapped `shape` aesthetic cycles through (the vellum marker
+# vocabulary). The first six are stable; triangle_down/star extend the cycle.
+.SHAPE_PALETTE <- c("circle", "square", "triangle", "diamond", "plus", "cross",
+                    "triangle_down", "star")
 # Shape drawn for NA-valued data (and the NA legend key): a neutral circle.
 .SHAPE_NA <- "circle"
 
