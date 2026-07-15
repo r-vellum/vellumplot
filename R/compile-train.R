@@ -184,6 +184,34 @@ NULL
   palette
 }
 
+# Interpolate evenly-spaced colour `stops` into `n` colours, blending in `space`.
+# The default is the perceptually-uniform Oklab, which removes the muddy,
+# over-dark midtones and hue drift of sRGB interpolation (e.g. a blue->yellow
+# ramp no longer dips through grey) -- so a continuous or binned colour scale
+# reads evenly. `grDevices::colorRampPalette()` only offers "rgb"/"Lab", so Oklab
+# is done via farver (a `scales` dependency, always present). Set
+# `options(vellumplot.color.interpolation = "srgb")` for the pre-0.4 behaviour.
+.ramp_pal <- function(stops, n,
+                      space = getOption("vellumplot.color.interpolation", "oklab")) {
+  space <- match.arg(as.character(space), c("oklab", "srgb", "lab"))
+  if (identical(space, "srgb")) {
+    return(grDevices::colorRampPalette(stops)(n))
+  }
+  if (identical(space, "lab")) {
+    return(grDevices::colorRampPalette(stops, space = "Lab")(n))
+  }
+  m <- length(stops)
+  if (m == 1L || n == 1L) {
+    return(grDevices::colorRampPalette(stops)(n))
+  }
+  lab <- farver::convert_colour(t(grDevices::col2rgb(stops)), from = "rgb", to = "oklab")
+  pos <- seq(0, 1, length.out = m)
+  at <- seq(0, 1, length.out = n)
+  interp <- vapply(1:3, function(ch) stats::approx(pos, lab[, ch], xout = at)$y, numeric(n))
+  rgb <- pmin(pmax(round(farver::convert_colour(interp, from = "oklab", to = "rgb")), 0), 255)
+  grDevices::rgb(rgb[, 1], rgb[, 2], rgb[, 3], maxColorValue = 255)
+}
+
 # Discrete colours for `levels`: NULL -> vellum qualitative; an hcl.pals() name
 # -> that palette at k colours; a named colour vector -> mapped by name (manual,
 # missing levels grey50); else a colour vector recycled to k.
@@ -560,7 +588,7 @@ NULL
         i = "{.arg breaks} has {length(brks)} value{?s}."
       ))
     }
-    cols <- grDevices::colorRampPalette(.continuous_stops(pal))(k)
+    cols <- .ramp_pal(.continuous_stops(pal), k)
     map <- function(x) {
       i <- findInterval(x, brks, rightmost.closed = TRUE, all.inside = TRUE)
       out <- cols[i]
@@ -588,7 +616,7 @@ NULL
     if (diff(rng) == 0) {
       rng <- rng + c(-0.5, 0.5)
     }
-    pal256 <- grDevices::colorRampPalette(.continuous_stops(pal))(256)
+    pal256 <- .ramp_pal(.continuous_stops(pal), 256)
     # Quantize to <=256 bins so the mark style-grouping stays bounded.
     bin <- function(x) {
       i <- floor(scales::rescale(x, to = c(0, 255), from = rng)) + 1L

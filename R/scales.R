@@ -413,6 +413,13 @@ ylim <- function(plot, ...) {
 #' are identical (colour and fill share one scale). A legend is drawn
 #' automatically when colour is mapped.
 #'
+#' Continuous and binned ramps built from a plain colour vector are interpolated
+#' in the perceptually-uniform **Oklab** space, so they avoid the muddy, over-dark
+#' midtones and hue drift of sRGB blending. Designed perceptual palettes (the
+#' default, and `hcl.colors()` names) are already uniform and unaffected. Set
+#' `options(vellumplot.color.interpolation = "srgb")` (or `"lab"`) to change the
+#' blend space globally.
+#'
 #' @param plot A [PlotSpec].
 #' @param palette A vector of colours, or a single palette name passed to
 #'   [grDevices::hcl.colors()] (e.g. `"Batlow"`, `"Blues"`, `"Set 2"`; matched
