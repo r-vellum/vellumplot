@@ -47,6 +47,18 @@ vplot(mtcars) |>
 
 ![](scales-and-guides_files/figure-html/unnamed-chunk-3-1.png)
 
+Ramps built from a plain colour vector — a
+`scale_color_gradient(low, high)`, or a `palette` given as colours — are
+interpolated in the perceptually-uniform **Oklab** space, not sRGB, so
+the ramp and its colourbar read evenly instead of dipping through a
+muddy, over-dark middle (a blue→yellow ramp no longer passes through
+grey). Designed perceptual palettes such as the default `Batlow` or any
+[`hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html) name are
+already uniform and unchanged. To blend in sRGB (or CIE Lab) instead,
+set `options(vellumplot.color.interpolation = "srgb")` (or `"lab"`). A
+gradient *fill* opts in per gradient with
+`linear_gradient(..., interpolation = "oklab")`.
+
 ## Binned colour
 
 [`scale_fill_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)

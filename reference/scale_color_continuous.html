@@ -174,6 +174,15 @@ data levels by name (unmatched levels draw grey).</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Continuous and binned ramps built from a plain colour vector are interpolated
+in the perceptually-uniform <strong>Oklab</strong> space, so they avoid the muddy, over-dark
+midtones and hue drift of sRGB blending. Designed perceptual palettes (the
+default, and <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">hcl.colors()</a></code> names) are already uniform and unaffected. Set
+<code>options(vellumplot.color.interpolation = "srgb")</code> (or <code>"lab"</code>) to change the
+blend space globally.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
