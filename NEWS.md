@@ -1,4 +1,4 @@
-# vellumplot (development version)
+# vellumplot 0.4.0
 
 ## New features
 
@@ -18,6 +18,58 @@
   usual point marker. `src` is a column of local file paths or one constant
   path, and `size` sets the height in millimetres (the width follows each
   image's native aspect ratio). Requires the suggested `magick` package (#33).
+
+* **`coord_trans()` — nonlinear display transforms.** Warps the *display* of one
+  or both position axes after the scale has trained, so gridlines bunch up and
+  straight lines curve while the axis keeps its original data-value labels (unlike
+  `scale_*(trans=)`, which rescales the data and relabels in transformed space).
+  Each of `x`/`y` takes a transform name (`"log10"`, `"sqrt"`, `"identity"`) or a
+  `scales::transform_*()` object, e.g. `coord_trans(y = "log10")`. Supports the
+  common marks (points, lines, areas/ribbons, bars, tiles, smooths, text, …);
+  segment/interval, boxplot, edges, and raster/datashade marks are not warped yet
+  and raise a clear error under `coord_trans()`.
+
+* **`mark_violin()` and `mark_ridgeline()` no longer clip at the edges.** The
+  position scales are now trained to include each mark's drawn footprint -- the
+  full kernel-density support for a violin, and the ridge height (`scale`) above
+  the top category for a ridgeline -- so the tallest ridge and the density tails
+  are no longer cropped by the panel. Explicit axis limits still take precedence.
+
+* **Marginal distributions with `add_marginal()`.** A new plot modifier draws a
+  density or histogram of the panel's `x` variable along the top edge and of its
+  `y` variable along the right edge, each sharing the scatter's axis so they line
+  up (the vellumplot analogue of `ggExtra::ggMarginal()`). Pick the distribution
+  with `type = "density"` / `"histogram"`, the edges with `sides` (`"t"`, `"r"`,
+  `"tr"`), and the extent with `size`; `group = TRUE` splits each marginal by a
+  discrete `color`/`fill` mapping in the matching palette. It reads `x`/`y` from
+  the first plain (identity-stat) layer and reuses the existing density/bin
+  stats, so no axes or legends are duplicated. This version supports a single
+  panel only (an error is raised with facets, a non-Cartesian coordinate system,
+  or a locked aspect ratio).
+
+* **Positional constants now render.** A bare literal on a coordinate channel
+  (e.g. `mark_segment(x = i, y = 0, xend = i, yend = value)` for a lollipop
+  baseline) is now treated as a constant-valued *coordinate* rather than a style
+  param, so it populates the layer's values and trains the position scale.
+  Previously `y = 0` was dropped from scale training, collapsing each segment's
+  start onto its end (zero-length, invisible), and a segment-only plot errored
+  with "Every layer needs an x and y encoding". Segment/edge endpoints (`xend` /
+  `yend`) now also extend the axis domain, so a segment-only plot derives its
+  range from both ends. Affects the positional channels `x`, `y`, `xend`,
+  `yend`, `xmin`, `xmax`, `ymin`, `ymax`.
+
+* **Faster `mark_sf()` on large maps.** Non-interactive sf layers now batch all
+  features that share a resolved fill/colour into a single grob per style group
+  (polygons into one `evenodd` `path_grob`, lines into one NA-separated
+  `lines_grob`), instead of one grob per feature, and the layer's bounding box is
+  computed in a single linear pass rather than by growing coordinate vectors. On
+  a 40k-polygon grid this cut scene compilation from ~24s to ~0.8s. Interactive
+  layers (those declaring `data_id` / `tooltip` / `hover_group`) are unchanged —
+  they still emit one keyed grob per feature so every feature stays addressable.
+  Note: because a batched polygon group is filled with one `evenodd` rule, two
+  same-fill features that *overlap* would cancel in the overlap region (the same
+  property a self-overlapping `MULTIPOLYGON` already has); disjoint features —
+  every real choropleth and coverage map — are unaffected.
 
 ## Bug fixes
 
@@ -118,60 +170,6 @@
 * **`vgraph()` warns on a layout-column clash.** A vertex/edge attribute named
   `x`/`y` (or `xend`/`yend`) is overwritten by the layout coordinates; that used
   to happen silently and now emits a warning naming the attribute.
-
-## New features
-
-* **`coord_trans()` — nonlinear display transforms.** Warps the *display* of one
-  or both position axes after the scale has trained, so gridlines bunch up and
-  straight lines curve while the axis keeps its original data-value labels (unlike
-  `scale_*(trans=)`, which rescales the data and relabels in transformed space).
-  Each of `x`/`y` takes a transform name (`"log10"`, `"sqrt"`, `"identity"`) or a
-  `scales::transform_*()` object, e.g. `coord_trans(y = "log10")`. Supports the
-  common marks (points, lines, areas/ribbons, bars, tiles, smooths, text, …);
-  segment/interval, boxplot, edges, and raster/datashade marks are not warped yet
-  and raise a clear error under `coord_trans()`.
-
-* **`mark_violin()` and `mark_ridgeline()` no longer clip at the edges.** The
-  position scales are now trained to include each mark's drawn footprint -- the
-  full kernel-density support for a violin, and the ridge height (`scale`) above
-  the top category for a ridgeline -- so the tallest ridge and the density tails
-  are no longer cropped by the panel. Explicit axis limits still take precedence.
-
-* **Marginal distributions with `add_marginal()`.** A new plot modifier draws a
-  density or histogram of the panel's `x` variable along the top edge and of its
-  `y` variable along the right edge, each sharing the scatter's axis so they line
-  up (the vellumplot analogue of `ggExtra::ggMarginal()`). Pick the distribution
-  with `type = "density"` / `"histogram"`, the edges with `sides` (`"t"`, `"r"`,
-  `"tr"`), and the extent with `size`; `group = TRUE` splits each marginal by a
-  discrete `color`/`fill` mapping in the matching palette. It reads `x`/`y` from
-  the first plain (identity-stat) layer and reuses the existing density/bin
-  stats, so no axes or legends are duplicated. This version supports a single
-  panel only (an error is raised with facets, a non-Cartesian coordinate system,
-  or a locked aspect ratio).
-
-* **Positional constants now render.** A bare literal on a coordinate channel
-  (e.g. `mark_segment(x = i, y = 0, xend = i, yend = value)` for a lollipop
-  baseline) is now treated as a constant-valued *coordinate* rather than a style
-  param, so it populates the layer's values and trains the position scale.
-  Previously `y = 0` was dropped from scale training, collapsing each segment's
-  start onto its end (zero-length, invisible), and a segment-only plot errored
-  with "Every layer needs an x and y encoding". Segment/edge endpoints (`xend` /
-  `yend`) now also extend the axis domain, so a segment-only plot derives its
-  range from both ends. Affects the positional channels `x`, `y`, `xend`,
-  `yend`, `xmin`, `xmax`, `ymin`, `ymax`.
-
-* **Faster `mark_sf()` on large maps.** Non-interactive sf layers now batch all
-  features that share a resolved fill/colour into a single grob per style group
-  (polygons into one `evenodd` `path_grob`, lines into one NA-separated
-  `lines_grob`), instead of one grob per feature, and the layer's bounding box is
-  computed in a single linear pass rather than by growing coordinate vectors. On
-  a 40k-polygon grid this cut scene compilation from ~24s to ~0.8s. Interactive
-  layers (those declaring `data_id` / `tooltip` / `hover_group`) are unchanged —
-  they still emit one keyed grob per feature so every feature stays addressable.
-  Note: because a batched polygon group is filled with one `evenodd` rule, two
-  same-fill features that *overlap* would cancel in the overlap region (the same
-  property a self-overlapping `MULTIPOLYGON` already has); disjoint features —
-  every real choropleth and coverage map — are unaffected.
 
 # vellumplot 0.3.0
 
