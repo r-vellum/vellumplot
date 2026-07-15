@@ -82,6 +82,13 @@ does for network edges what
 [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
 does for points.
 
+The shape palette is `"circle"`, `"square"`, `"triangle"`, `"diamond"`,
+`"plus"`, `"cross"`, `"triangle_down"`, and `"star"` — eight in all, so
+a mapped `shape` covers up to eight levels automatically. Pass a subset
+(or a reordering) with `scale_shape(values = ...)`. Filled shapes take
+the mark’s `fill`/`color`, so an open marker is `fill = NA` with a
+`color`.
+
 ``` r
 
 vplot(mtcars) |>

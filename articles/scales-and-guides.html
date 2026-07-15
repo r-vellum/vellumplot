@@ -155,6 +155,7 @@
 </section><section class="level2"><h2 id="size-shape-and-edge-width">Size, shape, and edge width<a class="anchor" aria-label="anchor" href="#size-shape-and-edge-width"></a>
 </h2>
 <p>Non-colour aesthetics have scales too. <code><a href="../reference/scale_size.html">scale_size()</a></code> maps values linearly to a marker-size <code>range</code> (in mm); <code><a href="../reference/scale_shape.html">scale_shape()</a></code> cycles a set of shapes over the levels of a discrete aesthetic; <code><a href="../reference/scale_edge_width.html">scale_edge_width()</a></code> does for network edges what <code><a href="../reference/scale_size.html">scale_size()</a></code> does for points.</p>
+<p>The shape palette is <code>"circle"</code>, <code>"square"</code>, <code>"triangle"</code>, <code>"diamond"</code>, <code>"plus"</code>, <code>"cross"</code>, <code>"triangle_down"</code>, and <code>"star"</code> — eight in all, so a mapped <code>shape</code> covers up to eight levels automatically. Pass a subset (or a reordering) with <code>scale_shape(values = ...)</code>. Filled shapes take the mark’s <code>fill</code>/<code>color</code>, so an open marker is <code>fill = NA</code> with a <code>color</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>

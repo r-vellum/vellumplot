@@ -20,8 +20,8 @@ scale_shape(plot, values = NULL, name = NULL)
 - values:
 
   Character vector of shapes (each one of `"circle"`, `"square"`,
-  `"triangle"`, `"diamond"`, `"plus"`, `"cross"`), or `NULL` for the
-  default.
+  `"triangle"`, `"diamond"`, `"plus"`, `"cross"`, `"triangle_down"`, or
+  `"star"`), or `NULL` for the default.
 
 - name:
 
