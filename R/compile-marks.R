@@ -1748,7 +1748,20 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   sp <- L$stat_params
   w <- as.integer(sp$width %||% 400L)
   h <- as.integer(sp$height %||% 300L)
-  # Under flip the raster axes swap with the data.
+
+  # Categorical (count_cat): a mapped colour/fill trained the discrete colour
+  # scale (see .resolve_layer). Feed the full-length category vector plus the
+  # per-level hues from that scale's map, so a legend comes for free. A
+  # non-discrete colour mapping (or none) falls back to plain density shading.
+  category <- NULL
+  colors <- sp$colors %||% c("#deebf7", "#08306b")
+  if (!is.null(ds$cat) && !is.null(scales$color) && identical(scales$color$kind, "discrete")) {
+    category <- as.character(ds$cat)
+    levels <- unique(category)
+    colors <- stats::setNames(scales$color$map(levels), levels)
+  }
+
+  # Under flip the raster axes swap with the data (the per-point category does not).
   flip <- .flipped(scales)
   g <- vellum::datashade(
     if (flip) yn else xn,
@@ -1757,8 +1770,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     height = if (flip) w else h,
     xlim = if (flip) scales$y$domain else scales$x$domain,
     ylim = if (flip) scales$x$domain else scales$y$domain,
-    colors = sp$colors %||% c("#deebf7", "#08306b"),
+    category = category,
+    colors = colors,
     how = sp$how %||% "eq_hist",
+    span = sp$span,
+    clip = sp$clip,
     interpolate = FALSE
   )
   .draw(scene, g)

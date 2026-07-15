@@ -93,12 +93,13 @@ if (
     labs(title = "US population density (2010 Census, ~306M points)") |>
     render_plot(file.path(outdir, "19-census-density.png"))
 
-  # --- 3. Coloured by race (additive per-category shading) -------------------
-  # One datashade layer per race, each ramping black -> its hue, all composited
-  # with blend = "screen" so overlapping populations mix additively -- the same
-  # result as datashader's count_cat aggregation. Hues follow the datashader
-  # census palette. On a black panel, screen blending shows each hue at full
-  # strength and blends them where groups overlap.
+  # --- 3. Coloured by race (categorical count_cat shading) -------------------
+  # A single mark_datashade() with a mapped `color` aesthetic: each race is
+  # aggregated separately and every cell is coloured by the count-weighted mix of
+  # the races present, opacity by density -- datashader's count_cat, in one call
+  # (and with a colour legend). Hues follow the datashader census palette, set via
+  # scale_color_manual(). On a black panel the mixed hues read like the old
+  # screen-blended overlay, without hand-stacking one layer per race.
   race_hue <- c(
     w = "#00ffff", # White  - aqua
     b = "#00ff00", # Black  - lime
@@ -108,26 +109,21 @@ if (
   )
 
   p <- vplot(census, width = 10, height = 7, dpi = 600) |>
+    mark_datashade(
+      x = easting,
+      y = northing,
+      color = race,
+      width = gw,
+      height = gh,
+      how = "eq_hist"
+    ) |>
+    scale_color_manual(values = race_hue) |>
     scale_x_continuous(limits = usa_x) |>
     scale_y_continuous(limits = usa_y) |>
     coord_fixed() |>
     theme_void() |>
     set_theme(panel_bg = "black") |>
     labs(title = "US population by race (2010 Census)")
-
-  for (code in names(race_hue)) {
-    p <- mark_datashade(
-      p,
-      x = easting,
-      y = northing,
-      data = census[census$race == code, , drop = FALSE],
-      width = gw,
-      height = gh,
-      colors = c("black", race_hue[[code]]),
-      how = "eq_hist",
-      blend = "screen"
-    )
-  }
   render_plot(p, file.path(outdir, "19-census-race.png"))
 
   message("19-datashader-census: wrote 2 figures to ", outdir)

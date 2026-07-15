@@ -230,8 +230,17 @@ vplot(big) |>
 
 Here `how = "eq_hist"` uses histogram equalisation so both dense and sparse
 regions stay visible; the grid resolution is set by `width` and `height`.
-Per-point aesthetics do not apply, because cell colour encodes density rather
-than any single point.
+
+Map a discrete `color` (or `fill`) aesthetic to shade **categorically**
+(datashader's `count_cat`): each category is aggregated separately and every cell
+is coloured by the count-weighted mix of the categories it holds, opacity by
+density — with a colour legend.
+
+```{r}
+big$g <- sample(c("a", "b"), n, replace = TRUE)
+vplot(big) |>
+  mark_datashade(x = y, y = x, color = g)
+```
 
 `mark_point()` also has an `auto = TRUE` switch that falls back to a datashaded
 raster automatically when a layer has very many rows, so you can keep writing
