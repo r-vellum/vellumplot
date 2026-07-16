@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,11 +56,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/v0.5.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.5.0" id="vellumplot-050">vellumplot 0.5.0<a class="anchor" aria-label="anchor" href="#vellumplot-050"></a></h2>
 <ul><li><p><strong>Rich <code><a href="../reference/md.html">md()</a></code> legend titles no longer clip.</strong> A legend built from a rich title (<code>scale_color_continuous(name = md("Power (hp m^2^)"))</code>, <code>labs(color = md(...))</code>) measured the title as zero width, so the legend reserved no room for it and the drawn title spilled off the page. Titles are now measured through vellum’s rich text path (<code>vl_strwidth()</code>), reserving the space they actually occupy.</p></li>
 <li><p><strong>Secondary axes.</strong> Continuous position scales gain a <code>sec.axis</code> argument fed by the new <code><a href="../reference/sec_axis.html">sec_axis()</a></code> / <code><a href="../reference/sec_axis.html">dup_axis()</a></code>: a second set of ticks and labels on the opposite edge (top for <code>x</code>, right for <code>y</code>), computed as a 1:1 monotonic transform of the primary axis — e.g. <code>scale_x_continuous(sec.axis = sec_axis(~ . * 1.8 + 32, name = "°F"))</code> for a unit conversion, or <code><a href="../reference/sec_axis.html">dup_axis()</a></code> to duplicate an axis on a wide plot. The transform is a formula, function, or <code>scales::transform_*()</code> object. Scoped to the default Cartesian system with shared facet scales; combining it with <code><a href="../reference/coord_cartesian.html">coord_flip()</a></code> / <code><a href="../reference/coord_polar.html">coord_polar()</a></code> / <code><a href="../reference/coord_trans.html">coord_trans()</a></code>, free facet scales, or <code><a href="../reference/add_marginal.html">add_marginal()</a></code> raises a clear error, and it is not drawn inside a plot composition. A plot without a <code>sec.axis</code> is byte-for-byte unchanged.</p></li>
 <li><p><strong>Datashading now covers dense lines and large-graph edges.</strong> <code><a href="../reference/mark_point.html">mark_line()</a></code>, <code><a href="../reference/mark_area.html">mark_step()</a></code>, <code><a href="../reference/mark_segment.html">mark_segment()</a></code>, and <code><a href="../reference/mark_graph.html">mark_edges()</a></code> gain an <code>auto = TRUE</code> switch (parallel to <code>mark_point(auto = TRUE)</code>): past a row threshold the layer rasterises into a line- / segment-density field via <code><a href="https://r-vellum.github.io/vellum/reference/datashade_lines.html" class="external-link">vellum::datashade_lines()</a></code> / <code><a href="https://r-vellum.github.io/vellum/reference/datashade_lines.html" class="external-link">vellum::datashade_segments()</a></code> instead of emitting one vector per element, so overplotted timeseries stacks and graph “hairballs” render fast and honestly. The fallback is skipped under a warped coordinate system (<code><a href="../reference/coord_polar.html">coord_polar()</a></code> / <code><a href="../reference/coord_trans.html">coord_trans()</a></code>), which keeps the vector path. (Area / ribbon datashading is not yet available, pending area-fill support in vellum.)</p></li>

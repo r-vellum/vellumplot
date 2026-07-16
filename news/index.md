@@ -1,6 +1,6 @@
 # Changelog
 
-## vellumplot (development version)
+## vellumplot 0.5.0
 
 - **Rich [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md)
   legend titles no longer clip.** A legend built from a rich title
