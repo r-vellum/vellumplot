@@ -22,6 +22,7 @@ mark_step(
   plot,
   ...,
   direction = "hv",
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -76,6 +77,33 @@ mark_step(
 
   For `mark_step()`, `"hv"` (horizontal then vertical, default) or
   `"vh"`.
+
+- auto:
+
+  For
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  `mark_step()`,
+  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md),
+  and
+  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
+  when `TRUE` and the layer has very many rows, automatically render it
+  as a datashaded density raster (see
+  [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md))
+  instead of individual vector marks: points bin into a density grid
+  ([`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html)),
+  dense lines/steps rasterise as connected polylines
+  ([`vellum::datashade_lines()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)),
+  and segments/edges as independent segments
+  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)).
+  The datashaded line/segment output is `dynspread`-ed so thin marks
+  stay visible (see the `spread` argument of
+  [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)).
+  The fallback is skipped under a warped coordinate system
+  ([`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  /
+  [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)),
+  which draws the vector marks instead.
 
 - effects:
 

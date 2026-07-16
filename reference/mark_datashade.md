@@ -19,6 +19,7 @@ mark_datashade(
   how = "eq_hist",
   span = NULL,
   clip = NULL,
+  spread = NULL,
   blend = NULL,
   data = NULL
 )
@@ -60,6 +61,22 @@ mark_datashade(
   `span = c(lo, hi)` absolute limits, or `clip = c(0.01, 0.99)`
   percentiles, so a few extreme cells don't flatten the rest. Both
   default `NULL`.
+
+- spread:
+
+  Optional post-aggregation spreading to keep sparse output visible
+  (passed to
+  [`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html)):
+  `NULL` (default) none — the raw one-pass aggregation; a positive
+  integer dilates each shaded pixel by that radius
+  ([`vellum::spread()`](https://r-vellum.github.io/vellum/reference/spread.html));
+  `"auto"` picks the radius from the image density
+  ([`vellum::dynspread()`](https://r-vellum.github.io/vellum/reference/dynspread.html)).
+  Datashaded lines/segments (`auto = TRUE` on
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  /
+  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
+  etc.) default to `"auto"` since single-pixel lines otherwise vanish.
 
 - blend:
 

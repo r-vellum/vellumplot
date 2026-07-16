@@ -23,6 +23,7 @@ mark_edges(
   linewidth = NULL,
   alpha = NULL,
   arrow = FALSE,
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -85,6 +86,17 @@ mark_node_text(
   node boundary (per vertex, at any size/resolution), so the head sits
   on the node edge; self-loops are drawn as teardrop loops sized to the
   node, with the head on the node boundary.
+
+- auto:
+
+  For `mark_edges()`, `TRUE` to datashade a large graph's edges as a
+  density raster
+  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html))
+  once the edge count exceeds the datashade threshold, instead of
+  drawing each edge as a vector segment — the fast, overplotting-honest
+  path for hairballs. The device-space refinements of the vector path
+  (parallel-edge offsets, node-boundary caps, arrowheads, teardrop
+  self-loops) do not apply to the rasterised edges.
 
 - blend:
 

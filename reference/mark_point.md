@@ -27,6 +27,7 @@ mark_point(
 mark_line(
   plot,
   ...,
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -80,10 +81,28 @@ mark_bar(
 
 - auto:
 
-  For `mark_point()`, when `TRUE` and the layer has very many rows,
-  automatically render it as a datashaded density raster (see
+  For `mark_point()`, `mark_line()`,
+  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
+  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md),
+  and
+  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
+  when `TRUE` and the layer has very many rows, automatically render it
+  as a datashaded density raster (see
   [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md))
-  instead of individual markers.
+  instead of individual vector marks: points bin into a density grid
+  ([`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html)),
+  dense lines/steps rasterise as connected polylines
+  ([`vellum::datashade_lines()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)),
+  and segments/edges as independent segments
+  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)).
+  The datashaded line/segment output is `dynspread`-ed so thin marks
+  stay visible (see the `spread` argument of
+  [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)).
+  The fallback is skipped under a warped coordinate system
+  ([`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  /
+  [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)),
+  which draws the vector marks instead.
 
 - seed:
 

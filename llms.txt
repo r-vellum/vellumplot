@@ -227,7 +227,18 @@ render_plot(p, "cars.png")
 - Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
   `"screen"`, …).
 - [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
-  for million-point density rasters.
+  for million-point density rasters; `auto = TRUE` on
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  /
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  /
+  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  /
+  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
+  /
+  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  falls back to datashading (dense scatter, timeseries, and large-graph
+  edges) past a row threshold.
 - Annotations:
   [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md),
   [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md),

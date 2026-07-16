@@ -95,6 +95,7 @@ mappings.</p>
 <span><span class="fu">mark_line</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  auto <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -146,9 +147,16 @@ may be a constant or a mapped expression. One of <code>"circle"</code>, <code>"s
 
 
 <dt id="arg-auto">auto<a class="anchor" aria-label="anchor" href="#arg-auto"></a></dt>
-<dd><p>For <code>mark_point()</code>, when <code>TRUE</code> and the layer has very many rows,
-automatically render it as a datashaded density raster (see
-<code><a href="mark_datashade.html">mark_datashade()</a></code>) instead of individual markers.</p></dd>
+<dd><p>For <code>mark_point()</code>, <code>mark_line()</code>, <code><a href="mark_area.html">mark_step()</a></code>,
+<code><a href="mark_segment.html">mark_segment()</a></code>, and <code><a href="mark_graph.html">mark_edges()</a></code>, when <code>TRUE</code> and the layer has very many
+rows, automatically render it as a datashaded density raster (see
+<code><a href="mark_datashade.html">mark_datashade()</a></code>) instead of individual vector marks: points bin into a
+density grid (<code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>), dense lines/steps rasterise as connected
+polylines (<code><a href="https://r-vellum.github.io/vellum/reference/datashade_lines.html" class="external-link">vellum::datashade_lines()</a></code>), and segments/edges as independent
+segments (<code><a href="https://r-vellum.github.io/vellum/reference/datashade_lines.html" class="external-link">vellum::datashade_segments()</a></code>). The datashaded line/segment output
+is <code>dynspread</code>-ed so thin marks stay visible (see the <code>spread</code> argument of
+<code><a href="mark_datashade.html">mark_datashade()</a></code>). The fallback is skipped under a warped coordinate system
+(<code><a href="coord_polar.html">coord_polar()</a></code> / <code><a href="coord_trans.html">coord_trans()</a></code>), which draws the vector marks instead.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

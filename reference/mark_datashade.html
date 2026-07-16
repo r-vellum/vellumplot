@@ -87,6 +87,7 @@ overplotting.</p>
 <span>  how <span class="op">=</span> <span class="st">"eq_hist"</span>,</span>
 <span>  span <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  spread <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -123,6 +124,16 @@ density shading only; ignored when a <code>color</code>/<code>fill</code> aesthe
 <dd><p>Optional density-range clamping passed to <code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>:
 <code>span = c(lo, hi)</code> absolute limits, or <code>clip = c(0.01, 0.99)</code> percentiles, so
 a few extreme cells don't flatten the rest. Both default <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-spread">spread<a class="anchor" aria-label="anchor" href="#arg-spread"></a></dt>
+<dd><p>Optional post-aggregation spreading to keep sparse output
+visible (passed to <code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>): <code>NULL</code> (default) none — the raw
+one-pass aggregation; a positive integer dilates each shaded pixel by that
+radius (<code><a href="https://r-vellum.github.io/vellum/reference/spread.html" class="external-link">vellum::spread()</a></code>); <code>"auto"</code> picks the radius from the image density
+(<code><a href="https://r-vellum.github.io/vellum/reference/dynspread.html" class="external-link">vellum::dynspread()</a></code>). Datashaded lines/segments (<code>auto = TRUE</code> on
+<code><a href="mark_point.html">mark_line()</a></code> / <code><a href="mark_segment.html">mark_segment()</a></code> etc.) default to <code>"auto"</code> since single-pixel
+lines otherwise vanish.</p></dd>
 
 
 <dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>
