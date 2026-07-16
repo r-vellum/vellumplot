@@ -1,4 +1,4 @@
-# vellumplot (development version)
+# vellumplot 0.5.0
 
 * **Rich `md()` legend titles no longer clip.** A legend built from a rich title
   (`scale_color_continuous(name = md("Power (hp m^2^)"))`, `labs(color = md(...))`)
