@@ -1,3 +1,5 @@
+# vellumplot (development version)
+
 # vellumplot 0.5.0
 
 * **Rich `md()` legend titles no longer clip.** A legend built from a rich title
