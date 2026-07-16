@@ -81,7 +81,8 @@ let you set the level order via <code>limits</code>.</p>
 <span>  trans <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_y_continuous</span><span class="op">(</span></span>
@@ -90,7 +91,8 @@ let you set the level order via <code>limits</code>.</p>
 <span>  trans <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_x_discrete</span><span class="op">(</span><span class="va">plot</span>, limits <span class="op">=</span> <span class="cn">NULL</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
@@ -124,6 +126,12 @@ or <code>NULL</code> to compute them.</p></dd>
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Axis title, or <code>NULL</code> to derive from the encoding.</p></dd>
+
+
+<dt id="arg-sec-axis">sec.axis<a class="anchor" aria-label="anchor" href="#arg-sec-axis"></a></dt>
+<dd><p>A secondary axis from <code><a href="sec_axis.html">sec_axis()</a></code> / <code><a href="sec_axis.html">dup_axis()</a></code>, drawn on
+the opposite edge, or <code>NULL</code> for none. Continuous Cartesian plots only (see
+<code><a href="sec_axis.html">sec_axis()</a></code> for the current limitations).</p></dd>
 
 </dl></div>
     <div class="section level2">

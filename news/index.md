@@ -2,6 +2,30 @@
 
 ## vellumplot (development version)
 
+- **Secondary axes.** Continuous position scales gain a `sec.axis`
+  argument fed by the new
+  [`sec_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
+  /
+  [`dup_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md):
+  a second set of ticks and labels on the opposite edge (top for `x`,
+  right for `y`), computed as a 1:1 monotonic transform of the primary
+  axis — e.g.
+  `scale_x_continuous(sec.axis = sec_axis(~ . * 1.8 + 32, name = "°F"))`
+  for a unit conversion, or
+  [`dup_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
+  to duplicate an axis on a wide plot. The transform is a formula,
+  function, or `scales::transform_*()` object. Scoped to the default
+  Cartesian system with shared facet scales; combining it with
+  [`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+  /
+  [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  /
+  [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md),
+  free facet scales, or
+  [`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
+  raises a clear error, and it is not drawn inside a plot composition. A
+  plot without a `sec.axis` is byte-for-byte unchanged.
+
 - **Datashading now covers dense lines and large-graph edges.**
   [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
   [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
@@ -465,9 +489,8 @@ ggplot2.
 
 ### Not yet implemented (still planned)
 
-Secondary axes (`sec_axis`/`dup_axis`); 2-D density / contour
-(`mark_contour`/`stat_density_2d`); position-binned scales
-(`scale_x_binned`);
+2-D density / contour (`mark_contour`/`stat_density_2d`);
+position-binned scales (`scale_x_binned`);
 [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
 and free non-position scales across facets; triple-merge legends
 (colour+shape+size) and NA keys for size/shape.

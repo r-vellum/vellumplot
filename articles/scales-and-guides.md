@@ -237,6 +237,53 @@ Each of `x` / `y` takes a transform name (`"log10"`, `"sqrt"`,
 common marks (points, lines, areas, bars, tiles, smooths, text);
 interval/segment, boxplot, and raster marks are not warped yet.
 
+### Secondary axes
+
+A secondary axis adds a second set of ticks and labels on the opposite
+edge (top for `x`, right for `y`), computed as a 1:1 monotonic transform
+of the primary axis. Pass
+[`sec_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
+to the `sec.axis` argument of a continuous position scale. The classic
+use is a unit conversion — plot in Celsius, label the top in Fahrenheit:
+
+``` r
+
+vplot(data.frame(celsius = 0:100, y = (0:100)^2)) |>
+  mark_line(x = celsius, y = y) |>
+  scale_x_continuous(name = "°C", sec.axis = sec_axis(~ . * 1.8 + 32, name = "°F"))
+```
+
+![](scales-and-guides_files/figure-html/unnamed-chunk-12-1.png)
+
+[`dup_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
+is the identity special case — it simply duplicates the axis on the far
+edge, handy for reading a wide plot from either side:
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  scale_y_continuous(sec.axis = dup_axis())
+```
+
+![](scales-and-guides_files/figure-html/unnamed-chunk-13-1.png)
+
+The transform can be a formula (`~ . * 2`), a function, or a
+`scales::transform_*()` object, and must be monotonic. This is a
+labelling convenience, *not* an independent second axis with its own
+data. It is currently supported on continuous position scales under the
+default Cartesian coordinate system, with shared scales across facets;
+combining it with
+[`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+/
+[`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+/
+[`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md),
+with free facet scales, or with
+[`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
+raises an error, and in a plot composition the secondary axis is not
+drawn.
+
 ## Date and time axes
 
 A `Date` or `POSIXct` column gets a date axis automatically. To control
@@ -261,7 +308,7 @@ vplot(econ) |>
   scale_x_date(date_breaks = "6 months", date_labels = "%b %Y")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-12-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-14-1.png)
 
 ## Guides come for free
 
@@ -277,7 +324,7 @@ vplot(mtcars) |>
   scale_size(range = c(1, 8), name = "Displacement")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-13-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-15-1.png)
 
 ## Controlling a legend
 
@@ -294,7 +341,7 @@ vplot(mtcars) |>
   guides(color = guide_legend(title = "Cylinders", reverse = TRUE))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-14-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-16-1.png)
 
 Hiding a legend keeps the mapping; the marks stay coloured, only the
 guide disappears:
@@ -306,7 +353,7 @@ vplot(mtcars) |>
   guides(color = "none")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-15-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-17-1.png)
 
 ## Rich titles
 
@@ -324,7 +371,7 @@ vplot(mtcars) |>
   scale_color_continuous(name = md("Power (hp m^2^)"))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-16-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-18-1.png)
 
 Faceted plots add one more question: should panels share a scale or
 train their own? That is the

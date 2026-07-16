@@ -14,7 +14,8 @@ scale_x_continuous(
   trans = "identity",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  sec.axis = NULL
 )
 
 scale_y_continuous(
@@ -23,7 +24,8 @@ scale_y_continuous(
   trans = "identity",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  sec.axis = NULL
 )
 
 scale_x_discrete(plot, limits = NULL, name = NULL)
@@ -59,6 +61,17 @@ scale_y_discrete(plot, limits = NULL, name = NULL)
 - name:
 
   Axis title, or `NULL` to derive from the encoding.
+
+- sec.axis:
+
+  A secondary axis from
+  [`sec_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
+  /
+  [`dup_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md),
+  drawn on the opposite edge, or `NULL` for none. Continuous Cartesian
+  plots only (see
+  [`sec_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
+  for the current limitations).
 
 ## Value
 

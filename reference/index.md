@@ -142,6 +142,9 @@ Map data values to visual properties, with trained domains and guides.
   [`xlim()`](https://r-vellum.github.io/vellumplot/reference/lims.md)
   [`ylim()`](https://r-vellum.github.io/vellumplot/reference/lims.md) :
   Set scale limits with a shortcut
+- [`sec_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
+  [`dup_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
+  : Secondary axes
 - [`guides()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   [`guide_none()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   [`guide_legend()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
