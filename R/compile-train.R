@@ -65,6 +65,90 @@ NULL
 # a grouping separator). See #27.
 .label_number_default <- function(b) scales::label_number(big.mark = "")(b)
 
+# Derive a secondary-axis companion for a continuous position scale. A secondary
+# axis places secondary-space breaks at the primary's NATIVE coordinates, with
+# its own labels and title. `tfun` is the primary data->native map, `rng` the
+# primary data range, `domain` the primary native domain (shared by both axes),
+# and `primary_breaks`/`primary_labels` the trained primary axis (for `dup_axis`).
+# Returns a list `{domain, breaks, labels, name}` (the shape the axis drawers
+# read) or NULL when the range is degenerate.
+.train_sec_axis <- function(
+  sec,
+  tfun,
+  rng,
+  primary_breaks,
+  primary_labels,
+  domain,
+  aesthetic
+) {
+  # A plain duplicate with no overrides reuses the primary breaks/labels exactly.
+  if (isTRUE(sec@dup) && is.null(sec@breaks) && is.null(sec@labels)) {
+    return(list(
+      domain = domain,
+      breaks = primary_breaks,
+      labels = primary_labels,
+      name = sec@name
+    ))
+  }
+  lo <- min(rng)
+  hi <- max(rng)
+  if (!is.finite(lo) || !is.finite(hi) || lo == hi) {
+    return(NULL)
+  }
+  pg <- seq(lo, hi, length.out = 1000L)
+  native_g <- tfun(pg)
+  sec_g <- suppressWarnings(as.numeric(sec@transform(pg)))
+  ok <- is.finite(native_g) & is.finite(sec_g)
+  native_g <- native_g[ok]
+  sec_g <- sec_g[ok]
+  if (length(sec_g) < 2L) {
+    return(NULL)
+  }
+  dsec <- diff(sec_g)
+  if (!(all(dsec > 0) || all(dsec < 0))) {
+    cli::cli_abort(c(
+      "The {.field {aesthetic}} secondary axis {.arg transform} must be monotonic.",
+      i = "It is not strictly increasing or decreasing over the range {.val {c(lo, hi)}}."
+    ))
+  }
+  srng <- range(sec_g)
+  sbreaks <- if (!is.null(sec@breaks)) {
+    as.numeric(sec@breaks)
+  } else {
+    scales::breaks_extended()(srng)
+  }
+  # A vector of labels aligns to the unfiltered breaks and is filtered alongside;
+  # a labelling function is applied to the surviving breaks (mirrors the primary).
+  lab_vec <- if (is.function(sec@labels)) {
+    NULL
+  } else {
+    .match_labels(sec@labels, sbreaks, aesthetic)
+  }
+  keep <- is.finite(sbreaks) & sbreaks >= srng[1] & sbreaks <= srng[2]
+  sbreaks <- sbreaks[keep]
+  if (!is.null(lab_vec)) {
+    lab_vec <- lab_vec[keep]
+  }
+  # `approx` needs an increasing x; flip both together for a decreasing transform.
+  if (dsec[1] < 0) {
+    sec_g <- rev(sec_g)
+    native_g <- rev(native_g)
+  }
+  pos <- stats::approx(x = sec_g, y = native_g, xout = sbreaks)$y
+  labels <- if (is.function(sec@labels)) {
+    as.character(sec@labels(sbreaks))
+  } else {
+    lab_vec %||% .label_number_default(sbreaks)
+  }
+  fin <- is.finite(pos)
+  list(
+    domain = domain,
+    breaks = pos[fin],
+    labels = labels[fin],
+    name = sec@name
+  )
+}
+
 # Continuous position transforms. Each is `(transform, inverse, breaks, format)`:
 # `transform` maps data -> native (viewport) units; `breaks` generates breaks in
 # DATA units (then transformed to positions); `format` labels them. Kept as a
@@ -191,8 +275,11 @@ NULL
 # reads evenly. `grDevices::colorRampPalette()` only offers "rgb"/"Lab", so Oklab
 # is done via farver (a `scales` dependency, always present). Set
 # `options(vellumplot.color.interpolation = "srgb")` for the pre-0.4 behaviour.
-.ramp_pal <- function(stops, n,
-                      space = getOption("vellumplot.color.interpolation", "oklab")) {
+.ramp_pal <- function(
+  stops,
+  n,
+  space = getOption("vellumplot.color.interpolation", "oklab")
+) {
   space <- match.arg(as.character(space), c("oklab", "srgb", "lab"))
   if (identical(space, "srgb")) {
     return(grDevices::colorRampPalette(stops)(n))
@@ -204,11 +291,22 @@ NULL
   if (m == 1L || n == 1L) {
     return(grDevices::colorRampPalette(stops)(n))
   }
-  lab <- farver::convert_colour(t(grDevices::col2rgb(stops)), from = "rgb", to = "oklab")
+  lab <- farver::convert_colour(
+    t(grDevices::col2rgb(stops)),
+    from = "rgb",
+    to = "oklab"
+  )
   pos <- seq(0, 1, length.out = m)
   at <- seq(0, 1, length.out = n)
-  interp <- vapply(1:3, function(ch) stats::approx(pos, lab[, ch], xout = at)$y, numeric(n))
-  rgb <- pmin(pmax(round(farver::convert_colour(interp, from = "oklab", to = "rgb")), 0), 255)
+  interp <- vapply(
+    1:3,
+    function(ch) stats::approx(pos, lab[, ch], xout = at)$y,
+    numeric(n)
+  )
+  rgb <- pmin(
+    pmax(round(farver::convert_colour(interp, from = "oklab", to = "rgb")), 0),
+    255
+  )
   grDevices::rgb(rgb[, 1], rgb[, 2], rgb[, 3], maxColorValue = 255)
 }
 
@@ -238,8 +336,16 @@ NULL
 
 # Default shapes a mapped `shape` aesthetic cycles through (the vellum marker
 # vocabulary). The first six are stable; triangle_down/star extend the cycle.
-.SHAPE_PALETTE <- c("circle", "square", "triangle", "diamond", "plus", "cross",
-                    "triangle_down", "star")
+.SHAPE_PALETTE <- c(
+  "circle",
+  "square",
+  "triangle",
+  "diamond",
+  "plus",
+  "cross",
+  "triangle_down",
+  "star"
+)
 # Shape drawn for NA-valued data (and the NA legend key): a neutral circle.
 .SHAPE_NA <- "circle"
 
@@ -351,6 +457,8 @@ NULL
 
   user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
   user_labels <- if (!is.null(scalespec)) scalespec@labels else NULL
+  sec_spec <- if (!is.null(scalespec)) scalespec@sec_axis else NULL
+  sec_list <- NULL
 
   if (is_time) {
     # Dates/times keep their dedicated pretty()/format() path, with optional
@@ -414,6 +522,17 @@ NULL
     } else {
       "continuous"
     }
+    if (!is.null(sec_spec)) {
+      sec_list <- .train_sec_axis(
+        sec_spec,
+        tfun,
+        rng,
+        breaks,
+        labels,
+        domain,
+        aesthetic
+      )
+    }
   }
 
   list(
@@ -426,7 +545,8 @@ NULL
     breaks = breaks,
     labels = labels,
     map = tfun,
-    name = name
+    name = name,
+    sec = sec_list
   )
 }
 

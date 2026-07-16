@@ -1,5 +1,16 @@
 # vellumplot (development version)
 
+* **Secondary axes.** Continuous position scales gain a `sec.axis` argument fed by
+  the new `sec_axis()` / `dup_axis()`: a second set of ticks and labels on the
+  opposite edge (top for `x`, right for `y`), computed as a 1:1 monotonic
+  transform of the primary axis — e.g.
+  `scale_x_continuous(sec.axis = sec_axis(~ . * 1.8 + 32, name = "°F"))` for a
+  unit conversion, or `dup_axis()` to duplicate an axis on a wide plot. The
+  transform is a formula, function, or `scales::transform_*()` object. Scoped to
+  the default Cartesian system with shared facet scales; combining it with
+  `coord_flip()` / `coord_polar()` / `coord_trans()`, free facet scales, or
+  `add_marginal()` raises a clear error, and it is not drawn inside a plot
+  composition. A plot without a `sec.axis` is byte-for-byte unchanged.
 * **Datashading now covers dense lines and large-graph edges.** `mark_line()`,
   `mark_step()`, `mark_segment()`, and `mark_edges()` gain an `auto = TRUE`
   switch (parallel to `mark_point(auto = TRUE)`): past a row threshold the layer
@@ -311,7 +322,7 @@ distribution marks, closing the most conspicuous gaps versus ggplot2.
 
 ## Not yet implemented (still planned)
 
-Secondary axes (`sec_axis`/`dup_axis`); 2-D density / contour
+2-D density / contour
 (`mark_contour`/`stat_density_2d`); position-binned scales (`scale_x_binned`);
 `coord_trans()` and free non-position scales across facets; triple-merge legends
 (colour+shape+size) and NA keys for size/shape.

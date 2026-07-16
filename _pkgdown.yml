@@ -176,6 +176,7 @@ reference:
   - scale_linetype
   - scale_color_identity
   - lims
+  - sec_axis
   - guides
   - resolve_scale
   - after_stat

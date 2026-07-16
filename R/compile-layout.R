@@ -198,10 +198,28 @@ NULL
   yl <- .track_w(rt[["axis.text.y"]], .longest(v_labs), tick + .PAD_MM)
   xl <- .track_h(rt[["axis.text.x"]], .longest(h_labs), tick + .PAD_MM)
   xt <- .track_h(rt[["axis.title.x"]], hsc$name, .PAD_MM)
+  # Secondary axes (opposite edge): a right-column pair for the vertical scale's
+  # sec axis, a top-row pair for the horizontal scale's. Only sized when present,
+  # so a plot without a secondary axis keeps its original track layout.
+  y_sec <- vsc$sec
+  x_sec <- hsc$sec
+  has_y_sec <- !is.null(y_sec)
+  has_x_sec <- !is.null(x_sec)
+  y2l <- if (has_y_sec) {
+    .track_w(rt[["axis.text.y"]], .longest(y_sec$labels), tick + .PAD_MM)
+  }
+  y2t <- if (has_y_sec) {
+    .track_w(rt[["axis.title.y"]], y_sec$name, .PAD_MM, rot = 90)
+  }
+  x2l <- if (has_x_sec) {
+    .track_h(rt[["axis.text.x"]], .longest(x_sec$labels), tick + .PAD_MM)
+  }
+  x2t <- if (has_x_sec) .track_h(rt[["axis.title.x"]], x_sec$name, .PAD_MM)
   # Polar panels carry their axis labels/titles inside the square panel, so the
   # four cartesian gutter tracks collapse to zero.
   if (polar) {
     yt <- yl <- xl <- xt <- vellum::vl_unit(0, "mm")
+    has_y_sec <- has_x_sec <- FALSE
   }
   strip <- .track_h(rt[["strip.text"]], "Ag", 2 * .PAD_MM)
   gap <- vellum::vl_unit(rt[["panel.spacing"]], "mm")
@@ -239,6 +257,14 @@ NULL
     .tk_add(W, gap)
     marg_right_col <- .tk_add(W, marg)
   }
+  # A secondary y-axis sits just right of the panels (labels then title),
+  # inside any row-strip / right legend.
+  y2labels_col <- NA_integer_
+  y2title_col <- NA_integer_
+  if (has_y_sec) {
+    y2labels_col <- .tk_add(W, y2l)
+    y2title_col <- .tk_add(W, y2t)
+  }
   rowstrip_col <- if (has_row_strip) .tk_add(W, strip) else NA_integer_
   if (legend_vert && pos == "right") {
     legend_col <- .tk_add(W, .legend_width(guides, rt))
@@ -274,6 +300,14 @@ NULL
     .tk_add(H, strip)
   } else {
     NA_integer_
+  }
+  # A secondary x-axis sits just above the panels (title outermost, then labels),
+  # inside any column-strip / top legend.
+  x2title_row <- NA_integer_
+  x2labels_row <- NA_integer_
+  if (has_x_sec) {
+    x2title_row <- .tk_add(H, x2t)
+    x2labels_row <- .tk_add(H, x2l)
   }
   panel_row <- integer(R)
   xlabels_row <- integer(R)
@@ -322,6 +356,10 @@ NULL
     wrapstrip_row = wrapstrip_row,
     colstrip_row = colstrip_row,
     rowstrip_col = rowstrip_col,
+    y2labels_col = y2labels_col,
+    y2title_col = y2title_col,
+    x2labels_row = x2labels_row,
+    x2title_row = x2title_row,
     marg_top_row = marg_top_row,
     marg_right_col = marg_right_col,
     legend_col = legend_col,
