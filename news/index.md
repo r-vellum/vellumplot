@@ -2,6 +2,14 @@
 
 ## vellumplot (development version)
 
+- **Rich [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md)
+  legend titles no longer clip.** A legend built from a rich title
+  (`scale_color_continuous(name = md("Power (hp m^2^)"))`,
+  `labs(color = md(...))`) measured the title as zero width, so the
+  legend reserved no room for it and the drawn title spilled off the
+  page. Titles are now measured through vellum’s rich text path
+  (`vl_strwidth()`), reserving the space they actually occupy.
+
 - **Secondary axes.** Continuous position scales gain a `sec.axis`
   argument fed by the new
   [`sec_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
