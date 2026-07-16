@@ -7,6 +7,7 @@
 mark_segment(
   plot,
   ...,
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -18,6 +19,17 @@ mark_segment(
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, \code{xend}, \code{yend} (+ \code{color},
 \code{linewidth}, \code{linetype}, \code{alpha}).}
+
+\item{auto}{For \code{mark_point()}, \code{mark_line()}, \code{mark_step()},
+\code{mark_segment()}, and \code{mark_edges()}, when \code{TRUE} and the layer has very many
+rows, automatically render it as a datashaded density raster (see
+\code{\link[=mark_datashade]{mark_datashade()}}) instead of individual vector marks: points bin into a
+density grid (\code{vellum::datashade()}), dense lines/steps rasterise as connected
+polylines (\code{vellum::datashade_lines()}), and segments/edges as independent
+segments (\code{vellum::datashade_segments()}). The datashaded line/segment output
+is \code{dynspread}-ed so thin marks stay visible (see the \code{spread} argument of
+\code{\link[=mark_datashade]{mark_datashade()}}). The fallback is skipped under a warped coordinate system
+(\code{coord_polar()} / \code{coord_trans()}), which draws the vector marks instead.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS

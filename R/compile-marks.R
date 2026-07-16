@@ -175,6 +175,15 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # final grob arguments swap.
 .flipped <- function(scales) isTRUE(scales$flip)
 
+# Whether the `auto` datashade fallback may fire. A datashade raster bins in
+# uniform data space and fills its viewport linearly, so it misplaces under a
+# warped coordinate system (polar / coord_trans) -- the same reason `seam.R`
+# refuses raster/datashade marks under `coord_trans`. When warped, the `auto`
+# switch is skipped and the mark's ordinary vector path draws instead.
+.can_datashade <- function(scales) {
+  is.null(scales$polar) && is.null(scales$trans)
+}
+
 # Map a pair of trained-scale native values to cartesian panel-native coordinates
 # under polar projection: the theta aesthetic drives the angle, the other the
 # radius, and the result lands in the [-1, 1] square panel. Vectorised.
@@ -447,6 +456,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
 .emit_line <- function(scene, L, scales) {
   n <- L$n
+  if (
+    isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO && .can_datashade(scales)
+  ) {
+    return(.emit_line_datashade(scene, L, scales))
+  }
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
@@ -874,6 +888,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # ("hv") or vertical-then-horizontal ("vh") pair before drawing.
 .emit_step <- function(scene, L, scales) {
   n <- L$n
+  if (
+    isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO && .can_datashade(scales)
+  ) {
+    return(.emit_line_datashade(scene, L, scales, step = TRUE))
+  }
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
@@ -1527,6 +1546,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # Straight segments from (x, y) to (xend, yend), batched per colour group.
 .emit_segment <- function(scene, L, scales) {
   n <- L$n
+  if (
+    isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO && .can_datashade(scales)
+  ) {
+    return(.emit_segment_datashade(scene, L, scales))
+  }
   x0 <- rep_len(scales$x$map(L$values$x), n)
   y0 <- rep_len(scales$y$map(L$values$y), n)
   x1 <- rep_len(scales$x$map(L$values$xend), n)
@@ -1573,6 +1597,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # edge-width scale when present. Optional arrowheads mark directed edges.
 .emit_edges <- function(scene, L, scales) {
   n <- L$n
+  if (
+    isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO && .can_datashade(scales)
+  ) {
+    return(.emit_segment_datashade(scene, L, scales))
+  }
   x0 <- rep_len(scales$x$map(L$values$x), n)
   y0 <- rep_len(scales$y$map(L$values$y), n)
   x1 <- rep_len(scales$x$map(L$values$xend), n)
@@ -1759,7 +1788,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # non-discrete colour mapping (or none) falls back to plain density shading.
   category <- NULL
   colors <- sp$colors %||% c("#deebf7", "#08306b")
-  if (!is.null(ds$cat) && !is.null(scales$color) && identical(scales$color$kind, "discrete")) {
+  if (
+    !is.null(ds$cat) &&
+      !is.null(scales$color) &&
+      identical(scales$color$kind, "discrete")
+  ) {
     category <- as.character(ds$cat)
     levels <- unique(category)
     colors <- stats::setNames(scales$color$map(levels), levels)
@@ -1779,6 +1812,111 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     how = sp$how %||% "eq_hist",
     span = sp$span,
     clip = sp$clip,
+    spread = sp$spread,
+    interpolate = FALSE
+  )
+  .draw(scene, g)
+}
+
+# Datashade fallback for a dense line/step layer (`mark_line(auto=)` /
+# `mark_step(auto=)`): rasterise the vertices into a line-density grid via
+# vellum::datashade_lines() instead of one lines_grob per style group. Series are
+# split exactly as the vector path splits style groups (colour / alpha / linetype),
+# so datashade_lines() breaks the polyline between series and never draws a
+# spurious segment joining two series; shading is by line density, so those style
+# fields only define breaks here, not hue. `step = TRUE` expands each series into
+# its hv/vh staircase (as `.emit_step`) before aggregating.
+.emit_line_datashade <- function(scene, L, scales, step = FALSE) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  col <- rep_len(.aes_colour(L, scales, "black"), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  lty <- .aes_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  dir <- L$stat_params$direction %||% "hv"
+
+  gx <- gy <- grp <- list()
+  gi <- 0L
+  for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
+    gi <- gi + 1L
+    o <- idx[order(xn[idx])] # each series drawn in x order, as the vector path
+    sx <- xn[o]
+    sy <- yn[o]
+    if (step && length(sx) >= 2L) {
+      m <- length(sx)
+      if (identical(dir, "vh")) {
+        sx <- c(rep(sx[-m], each = 2), sx[m])
+        sy <- c(sy[1], rep(sy[-1], each = 2))
+      } else {
+        sx <- c(sx[1], rep(sx[-1], each = 2))
+        sy <- c(rep(sy[-m], each = 2), sy[m])
+      }
+    }
+    gx[[gi]] <- sx
+    gy[[gi]] <- sy
+    grp[[gi]] <- rep.int(gi, length(sx))
+  }
+  x <- unlist(gx, use.names = FALSE)
+  y <- unlist(gy, use.names = FALSE)
+  group <- unlist(grp, use.names = FALSE)
+
+  sp <- L$stat_params
+  w <- as.integer(sp$width %||% 400L)
+  h <- as.integer(sp$height %||% 300L)
+  flip <- .flipped(scales)
+  g <- vellum::datashade_lines(
+    if (flip) y else x,
+    if (flip) x else y,
+    group = group,
+    width = if (flip) h else w,
+    height = if (flip) w else h,
+    xlim = if (flip) scales$y$domain else scales$x$domain,
+    ylim = if (flip) scales$x$domain else scales$y$domain,
+    colors = sp$colors %||% c("#deebf7", "#08306b"),
+    how = sp$how %||% "eq_hist",
+    span = sp$span,
+    clip = sp$clip,
+    # Thin single-pixel lines vanish, so datashaded lines default to dynspread.
+    spread = sp$spread %||% "auto",
+    interpolate = FALSE
+  )
+  .draw(scene, g)
+}
+
+# Datashade fallback for a dense segment / edge layer (`mark_segment(auto=)` /
+# `mark_edges(auto=)`): rasterise the segments into an edge-density grid via
+# vellum::datashade_segments() instead of a vector segment each. This is the
+# hairball path -- it rasterises in data space, so the device-space refinements of
+# `.emit_edges` (parallel-edge offsets, node-boundary caps, arrowheads, and the
+# per-loop teardrop self-loops) do not apply; coincident-endpoint self-loops
+# collapse to a point, negligible against a dense edge field. Use the vector path
+# for graphs small enough to want that detail.
+.emit_segment_datashade <- function(scene, L, scales) {
+  n <- L$n
+  x0 <- rep_len(scales$x$map(L$values$x), n)
+  y0 <- rep_len(scales$y$map(L$values$y), n)
+  x1 <- rep_len(scales$x$map(L$values$xend), n)
+  y1 <- rep_len(scales$y$map(L$values$yend), n)
+
+  sp <- L$stat_params
+  w <- as.integer(sp$width %||% 400L)
+  h <- as.integer(sp$height %||% 300L)
+  flip <- .flipped(scales)
+  g <- vellum::datashade_segments(
+    if (flip) y0 else x0,
+    if (flip) x0 else y0,
+    if (flip) y1 else x1,
+    if (flip) x1 else y1,
+    width = if (flip) h else w,
+    height = if (flip) w else h,
+    xlim = if (flip) scales$y$domain else scales$x$domain,
+    ylim = if (flip) scales$x$domain else scales$y$domain,
+    colors = sp$colors %||% c("#deebf7", "#08306b"),
+    how = sp$how %||% "eq_hist",
+    span = sp$span,
+    clip = sp$clip,
+    spread = sp$spread %||% "auto",
     interpolate = FALSE
   )
   .draw(scene, g)

@@ -1,5 +1,19 @@
 # vellumplot (development version)
 
+* **Datashading now covers dense lines and large-graph edges.** `mark_line()`,
+  `mark_step()`, `mark_segment()`, and `mark_edges()` gain an `auto = TRUE`
+  switch (parallel to `mark_point(auto = TRUE)`): past a row threshold the layer
+  rasterises into a line- / segment-density field via `vellum::datashade_lines()`
+  / `vellum::datashade_segments()` instead of emitting one vector per element, so
+  overplotted timeseries stacks and graph "hairballs" render fast and honestly.
+  The fallback is skipped under a warped coordinate system (`coord_polar()` /
+  `coord_trans()`), which keeps the vector path. (Area / ribbon datashading is not
+  yet available, pending area-fill support in vellum.)
+* **`mark_datashade(spread = )`** exposes vellum's post-aggregation spreading:
+  `NULL` (default, raw output), a positive integer for a fixed pixel radius
+  (`vellum::spread()`), or `"auto"` for density-adaptive dilation
+  (`vellum::dynspread()`). Datashaded lines and segments default to `"auto"` so
+  single-pixel marks stay visible.
 * **Continuous and binned colour scales now interpolate perceptually (Oklab) by
   default.** A colour ramp built from a plain colour vector (e.g.
   `scale_color_gradient(low, high)` or `scale_color_continuous(palette = c(...))`)

@@ -265,9 +265,16 @@ after_stat <- function(x) x
 #'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`.
 #' @param position Position adjustment: `"identity"` (default), `"jitter"`
 #'   (points), or `"stack"` / `"dodge"` / `"fill"` (bars).
-#' @param auto For `mark_point()`, when `TRUE` and the layer has very many rows,
-#'   automatically render it as a datashaded density raster (see
-#'   [mark_datashade()]) instead of individual markers.
+#' @param auto For `mark_point()`, `mark_line()`, `mark_step()`,
+#'   `mark_segment()`, and `mark_edges()`, when `TRUE` and the layer has very many
+#'   rows, automatically render it as a datashaded density raster (see
+#'   [mark_datashade()]) instead of individual vector marks: points bin into a
+#'   density grid (`vellum::datashade()`), dense lines/steps rasterise as connected
+#'   polylines (`vellum::datashade_lines()`), and segments/edges as independent
+#'   segments (`vellum::datashade_segments()`). The datashaded line/segment output
+#'   is `dynspread`-ed so thin marks stay visible (see the `spread` argument of
+#'   [mark_datashade()]). The fallback is skipped under a warped coordinate system
+#'   (`coord_polar()` / `coord_trans()`), which draws the vector marks instead.
 #' @param seed For `mark_point(position = "jitter")`, an optional integer seed
 #'   making the jitter reproducible. The global RNG stream is restored afterwards.
 #' @param blend Optional blend mode for compositing this layer against what is
@@ -352,6 +359,7 @@ mark_point <- function(
 mark_line <- function(
   plot,
   ...,
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -362,6 +370,7 @@ mark_line <- function(
     plot,
     "line",
     rlang::enquos(...),
+    stat_params = list(auto = isTRUE(auto)),
     blend = blend,
     effects = effects,
     sketch = sketch,
@@ -672,6 +681,13 @@ mark_smooth <- function(
 #' @param span,clip Optional density-range clamping passed to [vellum::datashade()]:
 #'   `span = c(lo, hi)` absolute limits, or `clip = c(0.01, 0.99)` percentiles, so
 #'   a few extreme cells don't flatten the rest. Both default `NULL`.
+#' @param spread Optional post-aggregation spreading to keep sparse output
+#'   visible (passed to [vellum::datashade()]): `NULL` (default) none — the raw
+#'   one-pass aggregation; a positive integer dilates each shaded pixel by that
+#'   radius ([vellum::spread()]); `"auto"` picks the radius from the image density
+#'   ([vellum::dynspread()]). Datashaded lines/segments (`auto = TRUE` on
+#'   `mark_line()` / `mark_segment()` etc.) default to `"auto"` since single-pixel
+#'   lines otherwise vanish.
 #' @return The modified [PlotSpec].
 #' @examples
 #' n <- 1e5
@@ -689,6 +705,7 @@ mark_datashade <- function(
   how = "eq_hist",
   span = NULL,
   clip = NULL,
+  spread = NULL,
   blend = NULL,
   data = NULL
 ) {
@@ -703,7 +720,8 @@ mark_datashade <- function(
       colors = colors,
       how = how,
       span = span,
-      clip = clip
+      clip = clip,
+      spread = spread
     ),
     blend = blend,
     data = data
@@ -769,6 +787,7 @@ mark_step <- function(
   plot,
   ...,
   direction = "hv",
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -779,7 +798,7 @@ mark_step <- function(
     plot,
     "step",
     rlang::enquos(...),
-    stat_params = list(direction = direction),
+    stat_params = list(direction = direction, auto = isTRUE(auto)),
     blend = blend,
     effects = effects,
     sketch = sketch,
@@ -1446,6 +1465,7 @@ mark_summary <- function(
 mark_segment <- function(
   plot,
   ...,
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -1456,6 +1476,7 @@ mark_segment <- function(
     plot,
     "segment",
     rlang::enquos(...),
+    stat_params = list(auto = isTRUE(auto)),
     blend = blend,
     effects = effects,
     sketch = sketch,
@@ -1498,6 +1519,12 @@ mark_segment <- function(
 #'   node boundary (per vertex, at any size/resolution), so the head sits on the
 #'   node edge; self-loops are drawn as teardrop loops sized to the node, with the
 #'   head on the node boundary.
+#' @param auto For `mark_edges()`, `TRUE` to datashade a large graph's edges as a
+#'   density raster ([vellum::datashade_segments()]) once the edge count exceeds
+#'   the datashade threshold, instead of drawing each edge as a vector segment —
+#'   the fast, overplotting-honest path for hairballs. The device-space refinements
+#'   of the vector path (parallel-edge offsets, node-boundary caps, arrowheads,
+#'   teardrop self-loops) do not apply to the rasterised edges.
 #' @param label For `mark_node_text()`, the label expression (default the vertex
 #'   `name`).
 #' @param blend Optional blend mode (see [mark_point()]).
@@ -1527,6 +1554,7 @@ mark_edges <- function(
   linewidth = NULL,
   alpha = NULL,
   arrow = FALSE,
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -1542,7 +1570,7 @@ mark_edges <- function(
     "edges",
     dots,
     rlang::enquos(color = color, linewidth = linewidth, alpha = alpha),
-    stat_params = list(arrow = isTRUE(arrow)),
+    stat_params = list(arrow = isTRUE(arrow), auto = isTRUE(auto)),
     blend = blend,
     effects = effects,
     sketch = sketch,

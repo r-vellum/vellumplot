@@ -21,6 +21,7 @@ mark_step(
   plot,
   ...,
   direction = "hv",
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -52,6 +53,17 @@ accept it; text, raster, hex and datashade marks do not.}
 
 \item{direction}{For \code{mark_step()}, \code{"hv"} (horizontal then vertical, default)
 or \code{"vh"}.}
+
+\item{auto}{For \code{mark_point()}, \code{mark_line()}, \code{mark_step()},
+\code{mark_segment()}, and \code{mark_edges()}, when \code{TRUE} and the layer has very many
+rows, automatically render it as a datashaded density raster (see
+\code{\link[=mark_datashade]{mark_datashade()}}) instead of individual vector marks: points bin into a
+density grid (\code{vellum::datashade()}), dense lines/steps rasterise as connected
+polylines (\code{vellum::datashade_lines()}), and segments/edges as independent
+segments (\code{vellum::datashade_segments()}). The datashaded line/segment output
+is \code{dynspread}-ed so thin marks stay visible (see the \code{spread} argument of
+\code{\link[=mark_datashade]{mark_datashade()}}). The fallback is skipped under a warped coordinate system
+(\code{coord_polar()} / \code{coord_trans()}), which draws the vector marks instead.}
 
 \item{effects}{A list of layer render effects applied to the mark at draw
 time — \code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}}, and \code{\link[=shadow]{shadow()}}. Available on stroked and point

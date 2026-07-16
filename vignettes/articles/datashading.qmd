@@ -84,6 +84,66 @@ direct way.)
 
 ![US population by race from the 2010 Census: categorical (`count_cat`) datashading, each cell coloured by the count-weighted mix of the races present and shaded by density.](datashading-census-race.png)
 
+## Beyond points: dense lines and network hairballs
+
+Overplotting is not unique to scatter plots. A few hundred thousand line
+vertices — a stack of many timeseries — collapse into a solid band, and the
+edges of a large graph collapse into an unreadable "hairball". The same
+aggregate-then-shade idea works there: rasterise the *lines* into a
+canvas-sized grid where each cell records how many lines cross it, and shade by
+that coverage. The backend does this with `vellum::datashade_lines()` (connected
+polylines) and `vellum::datashade_segments()` (independent segments).
+
+You reach it the same way `mark_point()` reaches datashading: an `auto = TRUE`
+switch. Below the threshold the mark draws ordinary vectors; above it, it
+rasterises. `mark_line()` and `mark_step()` fall back to a line-density raster,
+`mark_segment()` and `mark_edges()` to a segment-density one.
+
+```r
+# A dense stack of timeseries: many series, packed into one raster.
+vplot(walks) |>
+  mark_line(x = t, y = value, color = series, auto = TRUE)
+```
+
+For a line layer, the `color` (and `alpha` / `linetype`) mapping still defines
+where one series ends and the next begins — the raster never joins two series
+with a spurious segment — but because the cells encode line *density*, colour no
+longer sets a per-series hue; the whole field ramps from low to high coverage.
+
+For a graph, drop `auto = TRUE` on the edge layer and the hairball becomes an
+honest edge-density field:
+
+```r
+vgraph(g) |>
+  mark_edges(auto = TRUE) |>
+  mark_nodes(size = 2)
+```
+
+The rasterised edges are drawn in data space, so the device-space niceties of
+the vector edge path — parallel-edge offsets, node-boundary caps, arrowheads,
+teardrop self-loops — do not apply. That detail is exactly what you do not want
+on a graph too dense to read edge-by-edge; keep the vector path for graphs small
+enough to benefit from it.
+
+### Keeping thin marks visible: `spread`
+
+A rasterised line or segment is often a single pixel wide, and single-pixel
+marks disappear when the image is shown small or on a busy background. datashader
+solves this with *spreading*: dilate each shaded pixel over a small
+neighbourhood. Datashaded lines and segments therefore default to
+`spread = "auto"`, which uses `vellum::dynspread()` to choose a radius from the
+image's own density — sparse regions spread more, dense ones less, so everything
+stays legible.
+
+Point datashading keeps its raw, unspread output by default, but you can opt in
+on `mark_datashade()`: pass a positive integer for a fixed radius
+(`vellum::spread()`) or `"auto"` for dynamic spreading.
+
+```r
+vplot(d) |>
+  mark_datashade(x = x, y = y, spread = 2)     # fixed 2-pixel dilation
+```
+
 ## Resolution: aggregation, not dpi
 
 One practical lesson from the census script is worth stating on its own,
@@ -107,9 +167,11 @@ page for exactly this reason.
 
 Datashading is the answer whenever a layer has so many rows that individual
 markers are neither informative nor fast: dense scatter plots, GPS traces, event
-logs, particle simulations. `mark_point()` even has an `auto = TRUE` switch that
-falls back to a datashaded raster automatically past a row threshold, so you can
-keep writing `mark_point()` and let vellumplot pick the representation. For the full
+logs, particle simulations, dense timeseries, large graphs. `mark_point()`,
+`mark_line()`, `mark_step()`, `mark_segment()`, and `mark_edges()` all take an
+`auto = TRUE` switch that falls back to the appropriate datashaded raster
+automatically past a row threshold, so you can keep writing the ordinary mark and
+let vellumplot pick the representation. For the full
 argument list, see the [`mark_datashade()`](../reference/mark_datashade.html)
 reference, and for the aggregation engine underneath it, vellum's
 [datashading article](https://r-vellum.github.io/vellum/articles/datashading.html).

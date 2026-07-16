@@ -22,6 +22,7 @@ Depends:
 Imports:
     cli,
     grDevices,
+    farver,
     rlang,
     S7,
     scales,

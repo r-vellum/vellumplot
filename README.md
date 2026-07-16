@@ -151,7 +151,10 @@ render_plot(p, "cars.png")
 - Position adjustments: stack / dodge / fill bars, jittered points.
 - Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
   `"screen"`, …).
-- `mark_datashade()` for million-point density rasters.
+- `mark_datashade()` for million-point density rasters; `auto = TRUE` on
+  `mark_point()` / `mark_line()` / `mark_step()` / `mark_segment()` /
+  `mark_edges()` falls back to datashading (dense scatter, timeseries, and
+  large-graph edges) past a row threshold.
 - Annotations: `annotate()`, `labs()`, and `md()` markdown titles.
 - Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
   `theme_classic()`, `theme_void()`, `theme_cyberpunk()`, `theme()` /
