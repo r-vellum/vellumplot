@@ -52,6 +52,34 @@ test_that("legend width is finite/positive with a rich legend name", {
   expect_no_error(vellumplot:::.build_layout(built, guides, p@labels, rt))
 })
 
+test_that(".mm_tw_any() measures a rich md() title (not zero)", {
+  # Regression: a rich md() title used to measure as 0mm (as.character() on the
+  # md object threw and was swallowed), so the legend reserved no room for it and
+  # the drawn title clipped. It now measures via vl_strwidth()'s rich path.
+  fs <- 11
+  w <- vellumplot:::.mm_tw_any(md("Power (hp m^2^)"), fs)
+  expect_gt(w, 0)
+  # Close to the plain-text width (superscript is the only markup); certainly not
+  # the near-zero the old bug produced.
+  expect_gt(w, vellumplot:::.mm_tw("Power", fs))
+})
+
+test_that("a wide rich legend title widens the legend column", {
+  narrow <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    labs(color = md("*c*"))
+  wide <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    labs(color = md("Power (hp m^2^) per unit **mass**"))
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
+  lw <- function(p) {
+    built <- vellumplot:::.build_panels(p)
+    guides <- vellumplot:::.legend_guides(built$scales)
+    vctrs_field(vellumplot:::.legend_width(guides, rt), "value")
+  }
+  expect_gt(lw(wide), lw(narrow))
+})
+
 test_that("summary()/print() tolerate rich labels", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>

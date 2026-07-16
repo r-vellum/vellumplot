@@ -881,15 +881,15 @@ NULL
   max(tw, body)
 }
 
-# Title width in mm; a rich md() title is measured via grobwidth (falling back to
-# a generous estimate) since vl_strwidth needs a plain string.
+# Title width in mm. A rich md() title is measured through vl_strwidth()'s rich
+# path (the same run composition the renderer draws), so super/subscripts and
+# bold runs reserve the space they actually occupy — otherwise the legend column
+# is sized as if the title were empty and the drawn title clips.
 .mm_tw_any <- function(name, fs) {
   if (is.character(name)) {
     return(.mm_tw(name, fs))
   }
-  # md()/expression title: estimate from its label text if available, else 0.
-  txt <- tryCatch(as.character(name), error = function(e) "")
-  .mm_tw(txt, fs)
+  vellum::vl_strwidth(name, "", "plain", fs, unit = "mm")
 }
 
 # A unit vector of `sizes` (mm) separated by `gap` (mm) spacers, for a stacking
