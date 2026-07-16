@@ -120,6 +120,22 @@ LayerSpec <- S7::new_class(
   )
 )
 
+# A secondary-axis declaration (from `sec_axis()` / `dup_axis()`), attached to a
+# continuous position `ScaleSpec` via its `sec_axis` slot. `transform` is a
+# normalised forward function mapping primary data values to secondary data
+# values (monotonic); `dup = TRUE` marks a plain duplicate (`dup_axis()`).
+SecAxisSpec <- S7::new_class(
+  "SecAxisSpec",
+  package = "vellumplot",
+  properties = list(
+    transform = S7::class_function, # primary data -> secondary data (monotonic)
+    name = S7::new_property(S7::class_any, default = NULL), # secondary axis title
+    breaks = S7::new_property(S7::class_any, default = NULL), # secondary-unit breaks
+    labels = S7::new_property(S7::class_any, default = NULL), # explicit labels / fn
+    dup = S7::new_property(S7::class_logical, default = FALSE) # a plain duplicate
+  )
+)
+
 # A user-declared scale override. `domain`/`palette`/`name` = NULL mean "derive
 # while training".
 ScaleSpec <- S7::new_class(
@@ -140,7 +156,8 @@ ScaleSpec <- S7::new_class(
     na_value = S7::new_property(S7::class_any, default = NULL), # colour for NA values
     date_breaks = S7::new_property(S7::class_any, default = NULL), # date/time: interval string
     date_labels = S7::new_property(S7::class_any, default = NULL), # date/time: format string
-    guide = S7::new_property(S7::class_any, default = NULL) # "none"/guide spec (legend control)
+    guide = S7::new_property(S7::class_any, default = NULL), # "none"/guide spec (legend control)
+    sec_axis = S7::new_property(S7::class_any, default = NULL) # SecAxisSpec | NULL (secondary axis)
   )
 )
 

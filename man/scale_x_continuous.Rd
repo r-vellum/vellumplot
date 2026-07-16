@@ -13,7 +13,8 @@ scale_x_continuous(
   trans = "identity",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  sec.axis = NULL
 )
 
 scale_y_continuous(
@@ -22,7 +23,8 @@ scale_y_continuous(
   trans = "identity",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  sec.axis = NULL
 )
 
 scale_x_discrete(plot, limits = NULL, name = NULL)
@@ -43,6 +45,10 @@ for discrete scales a character vector of levels (sets order / subset).
 or \code{NULL} to compute them.}
 
 \item{name}{Axis title, or \code{NULL} to derive from the encoding.}
+
+\item{sec.axis}{A secondary axis from \code{\link[=sec_axis]{sec_axis()}} / \code{\link[=dup_axis]{dup_axis()}}, drawn on
+the opposite edge, or \code{NULL} for none. Continuous Cartesian plots only (see
+\code{\link[=sec_axis]{sec_axis()}} for the current limitations).}
 }
 \value{
 The modified \link{PlotSpec}.

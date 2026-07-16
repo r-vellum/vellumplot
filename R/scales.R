@@ -13,6 +13,35 @@ NULL
   plot
 }
 
+# Normalise a `sec_axis()`/`dup_axis()` `transform` to a plain forward function
+# mapping primary data values to secondary data values. Accepts a formula
+# (`~ . * 2`), a function, or a `scales::transform_*()` object.
+.as_sec_fun <- function(transform) {
+  if (rlang::is_formula(transform) || is.function(transform)) {
+    return(rlang::as_function(transform))
+  }
+  if (is.list(transform) && is.function(transform$transform)) {
+    return(transform$transform)
+  }
+  cli::cli_abort(c(
+    "{.arg transform} must be a formula, a function, or a {.fn scales::transform_*} object.",
+    i = "For example {.code sec_axis(~ . * 1.8 + 32)} or {.code sec_axis(scales::transform_log10())}."
+  ))
+}
+
+# Validate the `sec.axis =` argument of a position scale.
+.check_sec_axis <- function(sec) {
+  if (is.null(sec)) {
+    return(NULL)
+  }
+  if (!S7::S7_inherits(sec, SecAxisSpec)) {
+    cli::cli_abort(
+      "{.arg sec.axis} must be created with {.fn sec_axis} or {.fn dup_axis}, or be {.code NULL}."
+    )
+  }
+  sec
+}
+
 # Shared builder for colour/fill scales.
 .colour_scale <- function(
   plot,
@@ -53,6 +82,9 @@ NULL
 #' @param breaks,labels Explicit break positions (data units) and their labels,
 #'   or `NULL` to compute them.
 #' @param name Axis title, or `NULL` to derive from the encoding.
+#' @param sec.axis A secondary axis from [sec_axis()] / [dup_axis()], drawn on
+#'   the opposite edge, or `NULL` for none. Continuous Cartesian plots only (see
+#'   [sec_axis()] for the current limitations).
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_continuous(limits = c(0, 6))
@@ -64,7 +96,8 @@ scale_x_continuous <- function(
   trans = "identity",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  sec.axis = NULL
 ) {
   .check_plot(plot)
   .add_scale(
@@ -76,7 +109,8 @@ scale_x_continuous <- function(
       trans = trans,
       breaks = breaks,
       labels = labels,
-      name = name
+      name = name,
+      sec_axis = .check_sec_axis(sec.axis)
     )
   )
 }
@@ -89,7 +123,8 @@ scale_y_continuous <- function(
   trans = "identity",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  sec.axis = NULL
 ) {
   .check_plot(plot)
   .add_scale(
@@ -101,8 +136,83 @@ scale_y_continuous <- function(
       trans = trans,
       breaks = breaks,
       labels = labels,
-      name = name
+      name = name,
+      sec_axis = .check_sec_axis(sec.axis)
     )
+  )
+}
+
+#' Secondary axes
+#'
+#' Add a secondary axis to a continuous position scale: a second set of ticks and
+#' labels on the opposite edge (top for `x`, right for `y`), computed as a 1:1
+#' monotonic transform of the primary axis. Pass the result to the `sec.axis`
+#' argument of [scale_x_continuous()] / [scale_y_continuous()]. This is a
+#' labelling convenience (unit conversions, count/proportion dual readouts,
+#' duplicating an axis on a wide plot) --- **not** an independent second axis with
+#' its own data.
+#'
+#' `sec_axis()` maps the primary axis through `transform`; `dup_axis()` is the
+#' identity special case (a plain duplicate) with tidy defaults.
+#'
+#' @section Limitations (current version):
+#' Secondary axes are supported only on continuous position scales under the
+#' default Cartesian coordinate system, with **shared** scales across facets.
+#' Combining `sec.axis` with [coord_flip()] / [coord_polar()] / [coord_trans()],
+#' with free facet scales, or with [add_marginal()] raises an error. In a plot
+#' composition (`|` / `/`) the secondary axis is not drawn.
+#'
+#' @param transform The primary-to-secondary mapping: a formula using `.`
+#'   (e.g. `~ . * 1.8 + 32`), a function, or a [scales::transform_log10()]-style
+#'   transform object. Must be monotonic over the axis range. Defaults to the
+#'   identity, `~ .`.
+#' @param name Secondary axis title, or `NULL` for none.
+#' @param breaks Break positions in **secondary** units, or `NULL` to compute
+#'   them.
+#' @param labels A character vector of labels (one per break) or a labelling
+#'   function, or `NULL` for the default number format.
+#' @return A `SecAxisSpec` to pass to `sec.axis`.
+#' @seealso [scale_x_continuous()]
+#' @examples
+#' # Celsius with a Fahrenheit axis on top
+#' vplot(data.frame(t = 0:100, y = (0:100)^2)) |>
+#'   mark_line(x = t, y = y) |>
+#'   scale_x_continuous(name = "°C", sec.axis = sec_axis(~ . * 1.8 + 32, name = "°F"))
+#'
+#' # Duplicate the y axis on the right
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg) |>
+#'   scale_y_continuous(sec.axis = dup_axis())
+#' @export
+sec_axis <- function(
+  transform = ~.,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL
+) {
+  SecAxisSpec(
+    transform = .as_sec_fun(transform),
+    name = name,
+    breaks = breaks,
+    labels = labels,
+    dup = FALSE
+  )
+}
+
+#' @rdname sec_axis
+#' @export
+dup_axis <- function(
+  transform = ~.,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL
+) {
+  SecAxisSpec(
+    transform = .as_sec_fun(transform),
+    name = name,
+    breaks = breaks,
+    labels = labels,
+    dup = TRUE
   )
 }
 

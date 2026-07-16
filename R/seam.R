@@ -151,6 +151,37 @@ NULL
       ))
     }
   }
+  # Secondary axes (sec_axis()/dup_axis()) are v1-scoped to the default Cartesian
+  # system with shared position scales; reject the unsupported combinations up
+  # front with a clear message rather than mis-drawing.
+  sec_aes <- unique(vapply(
+    Filter(function(s) !is.null(s@sec_axis), spec@scales),
+    function(s) s@aesthetic,
+    character(1)
+  ))
+  if (length(sec_aes)) {
+    if (flip || polar || trans) {
+      cli::cli_abort(c(
+        "A secondary axis is only supported with the default Cartesian coordinate system.",
+        i = "Remove {.fn coord_flip} / {.fn coord_polar} / {.fn coord_trans}, or drop the {.arg sec.axis}."
+      ))
+    }
+    if (!is.null(spec@marginal)) {
+      cli::cli_abort(
+        "A secondary axis is not supported together with {.fn add_marginal}."
+      )
+    }
+    if (built$free_x && "x" %in% sec_aes) {
+      cli::cli_abort(
+        "A secondary {.field x} axis requires a shared {.field x} scale (not {.code scales = \"free_x\"})."
+      )
+    }
+    if (built$free_y && "y" %in% sec_aes) {
+      cli::cli_abort(
+        "A secondary {.field y} axis requires a shared {.field y} scale (not {.code scales = \"free_y\"})."
+      )
+    }
+  }
   lay <- .build_layout(built, guides, spec@labels, rt, flip, co, spec@marginal)
 
   # Outer margin grid: absolute mm tracks around a single `null` cell holding the
@@ -361,6 +392,31 @@ NULL
         )
       }
     }
+    # Secondary axes on the opposite edge. Only the shared-scale path can reach
+    # here (free + sec is rejected above), so flip/polar/trans are already ruled
+    # out and h == x, v == y.
+    if (!is.null(vshared$sec)) {
+      for (r in seq_len(lay$R)) {
+        scene <- .draw_y_axis_sec(
+          scene,
+          lay$panel_row[r],
+          lay$y2labels_col,
+          vshared$sec,
+          rt
+        )
+      }
+    }
+    if (!is.null(hshared$sec)) {
+      for (cc in seq_len(lay$C)) {
+        scene <- .draw_x_axis_sec(
+          scene,
+          lay$x2labels_row,
+          lay$panel_col[cc],
+          hshared$sec,
+          rt
+        )
+      }
+    }
   } # !polar
 
   scene <- .draw_strips(scene, built, lay, rt)
@@ -384,6 +440,26 @@ NULL
       rt,
       colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
     )
+    if (!is.null(vshared$sec) && !is.na(lay$y2title_col)) {
+      scene <- .draw_y_title_sec(
+        scene,
+        lay$panel_row[1],
+        lay$y2title_col,
+        vshared$sec$name,
+        rt,
+        rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
+      )
+    }
+    if (!is.null(hshared$sec) && !is.na(lay$x2title_row)) {
+      scene <- .draw_x_title_sec(
+        scene,
+        lay$x2title_row,
+        lay$panel_col[1],
+        hshared$sec$name,
+        rt,
+        colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
+      )
+    }
   }
   # A left/right legend takes its column spanning every row; a top/bottom legend
   # takes its row spanning the panel columns (centred under/over the panels).
