@@ -14,6 +14,7 @@ mark_edges(
   linewidth = NULL,
   alpha = NULL,
   arrow = FALSE,
+  auto = FALSE,
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -61,6 +62,13 @@ target end (directed graphs). Edges are capped exactly at each endpoint's
 node boundary (per vertex, at any size/resolution), so the head sits on the
 node edge; self-loops are drawn as teardrop loops sized to the node, with the
 head on the node boundary.}
+
+\item{auto}{For \code{mark_edges()}, \code{TRUE} to datashade a large graph's edges as a
+density raster (\code{\link[vellum:datashade_segments]{vellum::datashade_segments()}}) once the edge count exceeds
+the datashade threshold, instead of drawing each edge as a vector segment —
+the fast, overplotting-honest path for hairballs. The device-space refinements
+of the vector path (parallel-edge offsets, node-boundary caps, arrowheads,
+teardrop self-loops) do not apply to the rasterised edges.}
 
 \item{blend}{Optional blend mode (see \code{\link[=mark_point]{mark_point()}}).}
 

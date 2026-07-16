@@ -13,6 +13,7 @@ mark_datashade(
   how = "eq_hist",
   span = NULL,
   clip = NULL,
+  spread = NULL,
   blend = NULL,
   data = NULL
 )
@@ -34,6 +35,14 @@ density shading only; ignored when a \code{color}/\code{fill} aesthetic is mappe
 \item{span, clip}{Optional density-range clamping passed to \code{\link[vellum:datashade]{vellum::datashade()}}:
 \code{span = c(lo, hi)} absolute limits, or \code{clip = c(0.01, 0.99)} percentiles, so
 a few extreme cells don't flatten the rest. Both default \code{NULL}.}
+
+\item{spread}{Optional post-aggregation spreading to keep sparse output
+visible (passed to \code{\link[vellum:datashade]{vellum::datashade()}}): \code{NULL} (default) none — the raw
+one-pass aggregation; a positive integer dilates each shaded pixel by that
+radius (\code{\link[vellum:spread]{vellum::spread()}}); \code{"auto"} picks the radius from the image density
+(\code{\link[vellum:dynspread]{vellum::dynspread()}}). Datashaded lines/segments (\code{auto = TRUE} on
+\code{mark_line()} / \code{mark_segment()} etc.) default to \code{"auto"} since single-pixel
+lines otherwise vanish.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
