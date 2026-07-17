@@ -28,7 +28,7 @@ Imports:
     scales,
     stats,
     utils,
-    vellum (>= 0.4.0)
+    vellum (>= 0.4.0.9000)
 Remotes:
     r-vellum/vellum
 Suggests:

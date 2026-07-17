@@ -3,6 +3,60 @@
 #' @include marginal.R
 NULL
 
+# --- panel-level scale metadata (the `scales` meta convention) --------------
+# A per-axis descriptor of a trained position scale, attached to a cartesian
+# panel viewport's `meta` (surfaced by vellum as `scene_model()$panels$meta`) and
+# read by a host (vellumwidget) to map device px <-> native <-> data. All values
+# are in data/native space; the host pairs them with the panel's device-px rect
+# (which vellum resolves) to build the affine. The carrier (panel `meta`) is
+# vellum's `vignette("scene-contract")`; the fields below are this package's convention.
+#
+# Per-axis fields: `type` ("continuous" | "log10" | "discrete" | "binned" | "date"
+# | "datetime"), `transform` (identity | log10 | sqrt | reverse — how native maps
+# back to data), `data_lo`/`data_hi` (data-space extent), `native_lo`/`native_hi`
+# (the expanded native domain == the panel viewport's xscale/yscale), `breaks` +
+# `labels` (native tick positions and their formatted strings), `discrete`,
+# `band_width`, and `time_unit` (NULL | "day" | "second" — the epoch unit for a
+# date/datetime axis, so a host round-trips `as.numeric()` values back to R dates).
+.axis_scale_desc <- function(sc) {
+  if (is.null(sc)) {
+    return(NULL)
+  }
+  # Report date/datetime as the axis type (vellumplot keeps the internal `type`
+  # as "continuous"); `time_unit` disambiguates and gives the numeric epoch unit.
+  rtype <- if (identical(sc$time_unit, "second")) {
+    "datetime"
+  } else if (identical(sc$time_unit, "day")) {
+    "date"
+  } else {
+    sc$type
+  }
+  list(
+    type = rtype,
+    transform = sc$transform %||% "identity",
+    data_lo = sc$data_range[1], data_hi = sc$data_range[2],
+    native_lo = sc$domain[1], native_hi = sc$domain[2],
+    breaks = as.numeric(sc$breaks),
+    labels = as.character(sc$labels),
+    discrete = isTRUE(sc$discrete),
+    band_width = sc$band_width,
+    time_unit = sc$time_unit
+  )
+}
+
+# The `meta` list for a cartesian panel viewport: per-axis scale descriptors plus
+# a `cartesian = TRUE` marker. NULL when neither axis has a descriptor (so the
+# viewport carries no meta). Non-cartesian panels (polar / coord_trans / sf) get
+# no `scales` meta at all, which the host reads as "decline data-space mapping".
+.panel_scales_meta <- function(hsc, vsc) {
+  x <- .axis_scale_desc(hsc)
+  y <- .axis_scale_desc(vsc)
+  if (is.null(x) && is.null(y)) {
+    return(NULL)
+  }
+  list(scales = list(cartesian = TRUE, x = x, y = y))
+}
+
 # Compile one plot: spec -> build panels (facet split + resolve + train) ->
 # layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
 # grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
@@ -316,7 +370,8 @@ NULL
           xscale = hsc$domain,
           yscale = vsc$domain,
           clip = panel_clip,
-          name = pname
+          name = pname,
+          meta = .panel_scales_meta(hsc, vsc)
         )
       )
       scene <- .draw_panel_bg(scene, hsc, vsc, rt)

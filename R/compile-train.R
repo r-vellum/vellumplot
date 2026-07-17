@@ -217,6 +217,23 @@ NULL
   )
 }
 
+# The transform's name (identity/log10/sqrt/reverse, or a scales object's name),
+# mirroring `.resolve_trans`'s resolution. Recorded on the trained scale so a host
+# knows how to invert native -> data (e.g. `10^native` for log10). `reverse` maps
+# data identically and flips the (native) domain, so a host treats it as identity.
+.trans_name <- function(scalespec) {
+  tr <- if (!is.null(scalespec)) scalespec@trans else NULL
+  if (is.null(tr) && !is.null(scalespec) && identical(scalespec@type, "log10")) {
+    return("log10")
+  }
+  tr <- tr %||% "identity"
+  if (is.character(tr)) {
+    return(if (tr %in% names(.TRANSFORMS)) tr else "identity")
+  }
+  if (identical(tr$name, "reverse")) return("reverse")
+  tr$name %||% "identity"
+}
+
 # Normalise a palette name for case/space/punctuation-insensitive matching
 # against grDevices::hcl.pals().
 .norm_pal <- function(s) tolower(gsub("[ ._-]", "", s))
@@ -488,8 +505,21 @@ NULL
       } else {
         format(braw)
       })
+    # `type` stays "continuous" so downstream (guides/coord) is unchanged; the
+    # date/datetime nature is reported separately via `time_unit` (below), which a
+    # host uses to interpret the numeric values (Date -> days, POSIXct -> seconds
+    # since 1970). `transform` is identity (values are `as.numeric()` epochs).
     type <- "continuous"
+    trans_name <- "identity"
+    time_unit <- if (inherits(raw, "POSIXct") ||
+                     (!is.null(scalespec) && scalespec@type %in% c("datetime", "time"))) {
+      "second"
+    } else {
+      "day"
+    }
   } else {
+    trans_name <- .trans_name(scalespec)
+    time_unit <- NULL
     tfun <- function(v) tr$transform(as.numeric(v))
     tdom <- tr$transform(rng)
     if (!all(is.finite(tdom))) {
@@ -546,7 +576,9 @@ NULL
     labels = labels,
     map = tfun,
     name = name,
-    sec = sec_list
+    sec = sec_list,
+    transform = trans_name,
+    time_unit = time_unit
   )
 }
 
@@ -570,7 +602,9 @@ NULL
     breaks = seq_len(k),
     labels = levs,
     map = function(x) match(as.character(x), levs),
-    name = name
+    name = name,
+    transform = "identity",
+    time_unit = NULL
   )
 }
 
@@ -624,7 +658,9 @@ NULL
       )
       centers[i]
     },
-    name = name
+    name = name,
+    transform = "identity",
+    time_unit = NULL
   )
 }
 
