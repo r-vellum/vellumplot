@@ -2,6 +2,19 @@
 
 ## vellumplot (development version)
 
+- **Panels now carry a `scales` descriptor for interactive hosts.** Each
+  cartesian data panel’s viewport gains a `meta$scales` record — per
+  axis: `type` (continuous / log10 / discrete / binned / date /
+  datetime), `transform`, the data and native domains, tick breaks +
+  labels, and `time_unit` for date/datetime axes. It surfaces via
+  `vellum::scene_model()$panels$meta` and lets a host (e.g.
+  `vellumwidget`) map device pixels back to data values — so a brush or
+  a reported view can be expressed in data coordinates, not just pixels.
+  Requires `vellum` (\>= 0.4.0.9000). Internal: trained position scales
+  now also record their `transform` name and, for date/time axes, a
+  `time_unit` (previously the date/datetime nature was lost after
+  training). No change to rendered output.
+
 ## vellumplot 0.5.0
 
 - **Rich [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md)
