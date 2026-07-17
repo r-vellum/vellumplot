@@ -1,5 +1,12 @@
 # vellumplot (development version)
 
+* **Continuous colorbar filter metadata.** A continuous `color` scale now attaches
+  each mark's colour value as `filter_value` in its element `meta`, and a `colorbar`
+  descriptor (value domain + orientation) to the gradient-bar grob. Together (via
+  `vellum::scene_model()`) these let a host such as `vellumwidget` overlay an
+  interactive value-range filter on the colorbar. Discrete/binned colour scales are
+  unaffected. No change to rendered output.
+
 * **Panels now carry a `scales` descriptor for interactive hosts.** Each cartesian
   data panel's viewport gains a `meta$scales` record — per axis: `type`
   (continuous / log10 / discrete / binned / date / datetime), `transform`, the
