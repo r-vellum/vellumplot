@@ -26,17 +26,16 @@ NULL
     return(scene)
   }
   k <- length(xs)
-  vellum::draw(
-    scene,
-    vellum::segments_grob(
-      vellum::vl_unit(xs, "native"),
-      vellum::vl_unit(rep(0, k), "npc"),
-      vellum::vl_unit(xs, "native"),
-      vellum::vl_unit(rep(1, k), "npc"),
-      sketch = sketch,
-      gp = gp
-    )
+  g <- vellum::segments_grob(
+    vellum::vl_unit(xs, "native"),
+    vellum::vl_unit(rep(0, k), "npc"),
+    vellum::vl_unit(xs, "native"),
+    vellum::vl_unit(rep(1, k), "npc"),
+    sketch = sketch,
+    gp = gp
   )
+  g@role <- "grid" # so an interactive host can hide + re-draw gridlines on zoom
+  vellum::draw(scene, g)
 }
 
 # Horizontal gridlines at `ys` (native), spanning the panel width.
@@ -45,17 +44,16 @@ NULL
     return(scene)
   }
   k <- length(ys)
-  vellum::draw(
-    scene,
-    vellum::segments_grob(
-      vellum::vl_unit(rep(0, k), "npc"),
-      vellum::vl_unit(ys, "native"),
-      vellum::vl_unit(rep(1, k), "npc"),
-      vellum::vl_unit(ys, "native"),
-      sketch = sketch,
-      gp = gp
-    )
+  g <- vellum::segments_grob(
+    vellum::vl_unit(rep(0, k), "npc"),
+    vellum::vl_unit(ys, "native"),
+    vellum::vl_unit(rep(1, k), "npc"),
+    vellum::vl_unit(ys, "native"),
+    sketch = sketch,
+    gp = gp
   )
+  g@role <- "grid" # so an interactive host can hide + re-draw gridlines on zoom
+  vellum::draw(scene, g)
 }
 
 # Panel background + gridlines + axis ticks, drawn while the scene is positioned

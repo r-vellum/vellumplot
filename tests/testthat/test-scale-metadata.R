@@ -98,3 +98,21 @@ test_that("a discrete colour scale attaches no colorbar descriptor / filter_valu
   expect_false(has_cb)
   expect_false(has_fv)
 })
+
+# --- pannable data panels + gridline role tags (axis-aware zoom groundwork) ---
+
+test_that("a cartesian data panel is emitted pannable, with gridlines tagged role=grid", {
+  df <- data.frame(x = 1:5, y = 1:5)
+  svg <- vellum::scene_svg(vellum::as_vellum_scene(vplot(df) |> mark_point(x = x, y = y)))
+  expect_match(svg, 'data-vellum-pan="panel-1-1"', fixed = TRUE)          # inner pan group
+  expect_match(svg, 'data-vellum-panel="panel-1-1"[^>]*clip-path=')       # clip on outer group
+  expect_match(svg, 'role="grid"', fixed = TRUE)                          # gridlines taggable/hideable
+})
+
+test_that("a polar panel is not pannable (linear pan/zoom wouldn't be axis-aware)", {
+  df <- data.frame(g = factor(c("a", "b", "c")), n = c(3, 5, 2))
+  svg <- vellum::scene_svg(vellum::as_vellum_scene(
+    vplot(df) |> mark_bar(x = g, y = n) |> coord_polar()
+  ))
+  expect_no_match(svg, 'data-vellum-pan="', fixed = TRUE)
+})

@@ -352,7 +352,11 @@ NULL
           xscale = ctx$x_dom,
           yscale = ctx$y_dom,
           clip = panel_clip,
-          name = pname
+          name = pname,
+          # A linear (e.g. identity) coord_trans is effectively cartesian, so it
+          # stays pannable and byte-identical to the plain plot; a nonlinear warp is
+          # not (a linear pan/zoom wouldn't be axis-aware there).
+          pannable = .is_linear_trans(co@xtrans) && .is_linear_trans(co@ytrans)
         )
       )
       scene <- .draw_panel_bg(
@@ -371,7 +375,12 @@ NULL
           yscale = vsc$domain,
           clip = panel_clip,
           name = pname,
-          meta = .panel_scales_meta(hsc, vsc)
+          meta = .panel_scales_meta(hsc, vsc),
+          # Clip-stable pan group so a host (vellumwidget) can pan/zoom this panel's
+          # marks while its clip + the axes stay fixed (axis-aware zoom). Inert for
+          # static rendering. This cartesian branch (incl. coord_flip) is pannable;
+          # a linear coord_trans matches it (above); polar / nonlinear trans are not.
+          pannable = TRUE
         )
       )
       scene <- .draw_panel_bg(scene, hsc, vsc, rt)
