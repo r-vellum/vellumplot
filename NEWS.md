@@ -1,5 +1,13 @@
 # vellumplot (development version)
 
+* **Data panels are emitted as pannable, gridlines tagged.** Cartesian data panels
+  (including `coord_flip` and a linear `coord_trans`) now push a `pannable` vellum
+  viewport, and gridlines carry `role = "grid"`. This is inert for static rendering
+  but lets an interactive host (`vellumwidget`) pan/zoom a panel's marks while its
+  clip + axes stay fixed and hide/redraw gridlines — the groundwork for axis-aware
+  zoom. Polar / nonlinear-`coord_trans` panels stay non-pannable. Requires the
+  current development `vellum`.
+
 * **Continuous colorbar filter metadata.** A continuous `color` scale now attaches
   each mark's colour value as `filter_value` in its element `meta`, and a `colorbar`
   descriptor (value domain + orientation) to the gradient-bar grob. Together (via
