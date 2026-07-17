@@ -2328,7 +2328,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   hc <- .mark_ctx$hover_color
   sc <- .mark_ctx$selected_color
   lg <- .mark_ctx$legend
-  if (is.null(tt) && is.null(hg) && is.null(hc) && is.null(sc) && is.null(lg)) {
+  fv <- .mark_ctx$filter_value
+  if (is.null(tt) && is.null(hg) && is.null(hc) && is.null(sc) && is.null(lg) && is.null(fv)) {
     return(NULL)
   }
   lapply(rows, function(i) {
@@ -2349,6 +2350,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     # legend swatch (tagged with `legend_for`) can highlight the whole series.
     if (!is.null(lg)) {
       rec$legend <- lg[[i]]
+    }
+    # `filter_value`: this element's value on the continuous colour scale, for the
+    # interactive colorbar filter.
+    if (!is.null(fv)) {
+      rec$filter_value <- fv[[i]]
     }
     rec
   })
@@ -2555,6 +2561,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     # Legend membership (for legend-driven series highlight/select) — only when the
     # layer is interactive (its elements are keyed and thus addressable).
     .mark_ctx$legend <- if (ok) .legend_membership(L, scales) else NULL
+    # Per-mark value on a continuous colour scale, for the interactive colorbar
+    # filter (a host hides marks whose value is outside the dragged range). Only
+    # for keyed marks (addressable) with a continuous colour scale; the raw data
+    # value is `L$values$color` (fallback `fill`), recycled to the row count.
+    .mark_ctx$filter_value <- local({
+      cc <- scales$color
+      if (!ok || is.null(cc) || !identical(cc$kind, "continuous")) {
+        return(NULL)
+      }
+      v <- L$values$color %||% L$values$fill
+      if (is.null(v)) NULL else as.numeric(rep_len(v, L$n))
+    })
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)

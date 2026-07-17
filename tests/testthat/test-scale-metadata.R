@@ -65,3 +65,36 @@ test_that("a discrete axis reports type='discrete' with band width and level lab
   expect_equal(s$x$band_width, 1)
   expect_equal(s$x$labels, c("a", "b", "c"))
 })
+
+# --- continuous colorbar filter metadata (interactive visualMap) ---
+
+test_that("a continuous colour scale attaches per-mark filter_value + a colorbar descriptor", {
+  df <- data.frame(x = 1:5, y = 1:5, z = c(10, 20, 30, 40, 50), id = letters[1:5])
+  m <- vellum::scene_model(vellum::as_vellum_scene(
+    vplot(df) |> mark_point(x = x, y = y, color = z, data_id = id)
+  ))
+  e <- m$elements
+  # per-mark value on the continuous colour scale
+  i <- which(e$key == "c")
+  expect_equal(e$meta[[i]]$filter_value, 30)
+  # a colorbar descriptor rides on the gradient-bar rect (unkeyed), with its bbox
+  cb_i <- which(vapply(e$meta, function(md) !is.null(md$colorbar), logical(1)))
+  expect_length(cb_i, 1L)
+  cb <- e$meta[[cb_i]]$colorbar
+  expect_equal(cb$aesthetic, "color")
+  expect_equal(c(cb$lo, cb$hi), range(df$z))
+  expect_true(cb$orientation %in% c("v", "h"))
+  expect_true(e$x1[cb_i] > e$x0[cb_i] && e$y1[cb_i] > e$y0[cb_i]) # a real rect
+})
+
+test_that("a discrete colour scale attaches no colorbar descriptor / filter_value", {
+  df <- data.frame(x = 1:3, y = 1:3, g = factor(c("a", "b", "c")), id = letters[1:3])
+  m <- vellum::scene_model(vellum::as_vellum_scene(
+    vplot(df) |> mark_point(x = x, y = y, color = g, data_id = id)
+  ))
+  e <- m$elements
+  has_cb <- any(vapply(e$meta, function(md) !is.null(md$colorbar), logical(1)))
+  has_fv <- any(vapply(e$meta, function(md) !is.null(md$filter_value), logical(1)))
+  expect_false(has_cb)
+  expect_false(has_fv)
+})

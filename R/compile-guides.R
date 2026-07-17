@@ -1171,6 +1171,20 @@ NULL
   vellum::pop(scene)
 }
 
+# The per-element `meta` for a continuous colorbar's gradient-bar rect: a
+# `colorbar` descriptor a host reads (with the rect's device-px bbox from
+# `scene_model()`) to overlay an interactive value-range filter. `orientation` is
+# "v"/"h"; `reverse` flags a reversed bar (high value at the low-position end).
+.colorbar_meta <- function(cl, revb, orientation) {
+  list(list(colorbar = list(
+    aesthetic = "color",
+    lo = as.numeric(cl$range[1]),
+    hi = as.numeric(cl$range[2]),
+    orientation = orientation,
+    reverse = isTRUE(revb)
+  )))
+}
+
 .draw_guide_continuous_v <- function(scene, g, m, rt, txt, th) {
   cl <- g$sc
   has_na <- isTRUE(cl$na)
@@ -1201,16 +1215,17 @@ NULL
   revb <- isTRUE(cl$reverse_bar)
   pal <- if (revb) rev(cl$pal256) else cl$pal256
   grad <- vellum::linear_gradient(pal, x1 = 0, y1 = 0, x2 = 0, y2 = 1)
-  scene <- vellum::draw(
-    scene,
-    vellum::rect_grob(
-      x = vellum::vl_unit(m$pad + m$bar_w / 2, "mm"),
-      y = vellum::vl_unit(0.5, "npc"),
-      width = vellum::vl_unit(m$bar_w, "mm"),
-      height = vellum::vl_unit(1, "npc"),
-      gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
-    )
+  bar <- vellum::rect_grob(
+    x = vellum::vl_unit(m$pad + m$bar_w / 2, "mm"),
+    y = vellum::vl_unit(0.5, "npc"),
+    width = vellum::vl_unit(m$bar_w, "mm"),
+    height = vellum::vl_unit(1, "npc"),
+    gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
   )
+  # Carry the colorbar descriptor so a host can overlay an interactive value
+  # filter; it surfaces (with the bar's device-px bbox) via scene_model().
+  bar@meta <- .colorbar_meta(cl, revb, "v")
+  scene <- vellum::draw(scene, bar)
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
     if (revb) {
@@ -1387,16 +1402,15 @@ NULL
   pal <- if (revb) rev(cl$pal256) else cl$pal256
   scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 1))
   grad <- vellum::linear_gradient(pal, x1 = 0, y1 = 0, x2 = 1, y2 = 0)
-  scene <- vellum::draw(
-    scene,
-    vellum::rect_grob(
-      x = vellum::vl_unit(0.5, "npc"),
-      y = vellum::vl_unit(0.5, "npc"),
-      width = vellum::vl_unit(1, "npc"),
-      height = vellum::vl_unit(1, "npc"),
-      gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
-    )
+  bar <- vellum::rect_grob(
+    x = vellum::vl_unit(0.5, "npc"),
+    y = vellum::vl_unit(0.5, "npc"),
+    width = vellum::vl_unit(1, "npc"),
+    height = vellum::vl_unit(1, "npc"),
+    gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
   )
+  bar@meta <- .colorbar_meta(cl, revb, "h")
+  scene <- vellum::draw(scene, bar)
   # White break ticks reaching up from the bar's bottom (label-side) edge.
   for (i in seq_along(cl$legend_breaks)) {
     frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
