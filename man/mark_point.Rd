@@ -24,6 +24,7 @@ mark_point(
 mark_line(
   plot,
   ...,
+  window = NULL,
   auto = FALSE,
   blend = NULL,
   effects = list(),
@@ -92,6 +93,16 @@ plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default)
 accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
+
+\item{window}{For \code{mark_line()}, an optional window (rolling / cumulative /
+offset) transform of \code{y} computed per group over rows ordered by \code{x}, before
+the line is drawn. Either an op name (\code{"mean"}, \code{"sum"}, \code{"median"}, \code{"min"},
+\code{"max"}, \code{"cumsum"}, \code{"cummean"}, \code{"cummax"}, \code{"cummin"}, \code{"lag"}, \code{"lead"},
+\code{"rank"}) or a list \code{list(op=, k=, align=, partial=)}: \code{k} is the window size
+(rolling; default 7) or shift (\code{lag}/\code{lead}; default 1), \code{align} is
+\code{"right"} (trailing, default), \code{"left"}, or \code{"center"}, and \code{partial}
+(default \code{TRUE}) computes at the edges from the shorter available window. For
+example \code{window = list(op = "mean", k = 7)} is a 7-point trailing average.}
 }
 \value{
 The modified \link{PlotSpec}.

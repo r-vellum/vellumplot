@@ -157,6 +157,48 @@ after_stat <- function(x) x
   )
 }
 
+# Normalise a `mark_line(window=)` argument into window stat params, or NULL for
+# no window. Accepts a bare op string (`"mean"`) or a list `(op, k, align,
+# partial)`. Validates the op and alignment; leaves `k` defaulting per-op to the
+# stat.
+.check_window <- function(window, call = rlang::caller_env()) {
+  if (is.null(window)) {
+    return(NULL)
+  }
+  if (is.character(window) && length(window) == 1L) {
+    window <- list(op = window)
+  }
+  if (!is.list(window) || is.null(window$op)) {
+    cli::cli_abort(
+      c(
+        "{.arg window} must be a window op string or a list with an {.field op}.",
+        i = 'For example {.code window = "mean"} or {.code window = list(op = "mean", k = 7)}.'
+      ),
+      call = call
+    )
+  }
+  ok_ops <- .WINDOW_OPS
+  if (!window$op %in% ok_ops) {
+    cli::cli_abort(
+      "{.arg window} {.field op} must be one of {.or {.val {ok_ops}}}.",
+      call = call
+    )
+  }
+  align <- window$align %||% "right"
+  if (!align %in% c("right", "left", "center")) {
+    cli::cli_abort(
+      '{.arg window} {.field align} must be {.val right}, {.val left}, or {.val center}.',
+      call = call
+    )
+  }
+  list(
+    op = window$op,
+    k = window$k,
+    align = align,
+    partial = window$partial %||% TRUE
+  )
+}
+
 # Capture `...` plus the explicit geometry args, append a LayerSpec.
 .add_layer <- function(
   plot,
@@ -277,6 +319,15 @@ after_stat <- function(x) x
 #'   (`coord_polar()` / `coord_trans()`), which draws the vector marks instead.
 #' @param seed For `mark_point(position = "jitter")`, an optional integer seed
 #'   making the jitter reproducible. The global RNG stream is restored afterwards.
+#' @param window For `mark_line()`, an optional window (rolling / cumulative /
+#'   offset) transform of `y` computed per group over rows ordered by `x`, before
+#'   the line is drawn. Either an op name (`"mean"`, `"sum"`, `"median"`, `"min"`,
+#'   `"max"`, `"cumsum"`, `"cummean"`, `"cummax"`, `"cummin"`, `"lag"`, `"lead"`,
+#'   `"rank"`) or a list `list(op=, k=, align=, partial=)`: `k` is the window size
+#'   (rolling; default 7) or shift (`lag`/`lead`; default 1), `align` is
+#'   `"right"` (trailing, default), `"left"`, or `"center"`, and `partial`
+#'   (default `TRUE`) computes at the edges from the shorter available window. For
+#'   example `window = list(op = "mean", k = 7)` is a 7-point trailing average.
 #' @param blend Optional blend mode for compositing this layer against what is
 #'   already drawn beneath it (the panel and earlier layers), one of the CSS
 #'   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The whole
@@ -359,6 +410,7 @@ mark_point <- function(
 mark_line <- function(
   plot,
   ...,
+  window = NULL,
   auto = FALSE,
   blend = NULL,
   effects = list(),
@@ -366,11 +418,13 @@ mark_line <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  win <- .check_window(window)
   .add_layer(
     plot,
     "line",
     rlang::enquos(...),
-    stat_params = list(auto = isTRUE(auto)),
+    stat = if (is.null(win)) "identity" else "window",
+    stat_params = c(list(auto = isTRUE(auto)), win),
     blend = blend,
     effects = effects,
     sketch = sketch,

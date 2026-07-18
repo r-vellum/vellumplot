@@ -144,6 +144,25 @@ vplot(iris) |>
   mark_hull(x = Sepal.Length, y = Sepal.Width, fill = Species, alpha = 0.2)
 ```
 
+## Rolling and cumulative windows
+
+`mark_line(window = )` transforms a line's `y` before drawing it — a rolling
+statistic, a running total, or a lag/lead — computed per group over rows ordered
+by `x`. Pass an op name or a `list(op, k, ...)`. Here a 7-point trailing mean
+rides over the raw series:
+
+```{r}
+set.seed(1)
+ts <- data.frame(day = 1:120, value = cumsum(rnorm(120)))
+vplot(ts) |>
+  mark_line(x = day, y = value, color = "grey70") |>
+  mark_line(x = day, y = value, window = list(op = "mean", k = 7))
+```
+
+The ops cover rolling `mean`/`sum`/`median`/`min`/`max` (with `k`, `align`, and
+`partial`), running `cumsum`/`cummean`/`cummax`/`cummin`, `lag`/`lead`, and
+`rank`.
+
 ## Distributions
 
 Several marks summarise how a single variable is distributed. `mark_ecdf()`
