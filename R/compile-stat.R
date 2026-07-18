@@ -36,6 +36,7 @@ NULL
     dotplot = .stat_dotplot(L),
     ellipse = .stat_ellipse(L),
     hull = .stat_hull(L),
+    window = .stat_window(L),
     cli::cli_abort("Unknown stat {.val {stat}}.")
   )
   .merge_stat(L, sdf)
@@ -805,6 +806,110 @@ NULL
     y = stack - 0.5,
     count = 1
   )
+}
+
+# Window (rolling / cumulative / offset) operations on an x-ordered y series.
+.WINDOW_OPS <- c(
+  "mean",
+  "sum",
+  "median",
+  "min",
+  "max",
+  "cumsum",
+  "cummean",
+  "cummax",
+  "cummin",
+  "lag",
+  "lead",
+  "rank"
+)
+
+# A sliding-window reduction of `y` with window size `k` and alignment
+# ("right" = trailing, "left" = leading, "center"). `partial = TRUE` computes at
+# the edges from the available (shorter) window; `FALSE` leaves them NA.
+.roll <- function(y, k, fun, align, partial) {
+  n <- length(y)
+  out <- rep(NA_real_, n)
+  lead_n <- switch(
+    align,
+    right = 0L,
+    left = k - 1L,
+    center = ceiling((k - 1) / 2)
+  )
+  lag_n <- k - 1L - lead_n
+  for (i in seq_len(n)) {
+    lo <- max(i - lag_n, 1L)
+    hi <- min(i + lead_n, n)
+    if (!partial && (hi - lo + 1L) < k) {
+      next
+    }
+    out[i] <- fun(y[lo:hi])
+  }
+  out
+}
+
+# Apply one window op to an x-ordered `y`.
+.window_apply <- function(y, op, k, align, partial) {
+  n <- length(y)
+  switch(
+    op,
+    cumsum = cumsum(y),
+    cummean = cumsum(y) / seq_len(n),
+    cummax = cummax(y),
+    cummin = cummin(y),
+    rank = as.numeric(rank(y, ties.method = "average")),
+    lag = c(rep(NA_real_, min(k, n)), utils::head(y, -k)),
+    lead = c(utils::tail(y, -k), rep(NA_real_, min(k, n))),
+    mean = .roll(y, k, mean, align, partial),
+    sum = .roll(y, k, sum, align, partial),
+    median = .roll(y, k, stats::median, align, partial),
+    min = .roll(y, k, min, align, partial),
+    max = .roll(y, k, max, align, partial)
+  )
+}
+
+# Window transform: a rolling / cumulative / offset statistic of `y` computed
+# per group, over rows ordered by `x`. Output is the standard `(x, y[, group])`
+# stat shape, so any line/point emitter draws it unchanged. Rows where the
+# statistic is undefined (non-partial edges, lag/lead shifts) are dropped, so a
+# line does not dip to a gap.
+.stat_window <- function(L) {
+  op <- L$stat_params$op
+  ok_ops <- .WINDOW_OPS
+  if (is.null(op) || !op %in% ok_ops) {
+    cli::cli_abort(c(
+      "{.fn mark_line} {.arg window} needs an {.field op}.",
+      i = "Use one of {.or {.val {ok_ops}}}."
+    ))
+  }
+  # Rolling windows default to 7; lag/lead shift by 1 unless told otherwise.
+  k <- L$stat_params$k %||% (if (op %in% c("lag", "lead")) 1L else 7L)
+  k <- as.integer(k)
+  align <- L$stat_params$align %||% "right"
+  partial <- L$stat_params$partial %||% TRUE
+  x <- as.numeric(L$values$x)
+  y <- as.numeric(L$values$y)
+  grp <- .layer_group(L)
+  g <- .stat_groups(grp, length(x))
+  glevs <- g$levels
+  gnames <- names(g$groups)
+  parts <- lapply(gnames, function(gn) {
+    i <- g$groups[[gn]]
+    o <- order(x[i])
+    xi <- x[i][o]
+    yi <- y[i][o]
+    yo <- .window_apply(yi, op, k, align, partial)
+    df <- data.frame(x = xi, y = yo)
+    if (!is.null(grp)) {
+      df$group <- factor(gn, levels = glevs)
+    }
+    df[is.finite(df$y), , drop = FALSE]
+  })
+  parts <- parts[vapply(parts, nrow, integer(1)) > 0]
+  if (!length(parts)) {
+    cli::cli_abort("{.fn mark_line} {.arg window} produced no finite values.")
+  }
+  do.call(rbind, parts)
 }
 
 # Require x and y for the region stats (ellipse/hull), with a clear message.
