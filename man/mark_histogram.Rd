@@ -18,9 +18,12 @@ mark_histogram(
 mark_smooth(
   plot,
   ...,
-  method = "lm",
+  method = "auto",
+  formula = NULL,
+  span = 0.75,
   se = TRUE,
   level = 0.95,
+  method.args = list(),
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -48,11 +51,20 @@ accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
-\item{method}{Smoothing method; \code{"lm"} (linear) for now.}
+\item{method}{Smoothing method: one of \code{"auto"}, \code{"lm"}, \code{"loess"}, \code{"glm"},
+\code{"gam"}, \code{"rq"}.}
 
-\item{se}{Draw a confidence ribbon around the smooth?}
+\item{formula}{Model formula in terms of \code{x} and \code{y} (e.g. \code{y ~ poly(x, 2)},
+\code{y ~ s(x)} for \code{gam}). Defaults to \code{y ~ x} (\code{y ~ s(x)} for \code{gam}).}
+
+\item{span}{\code{loess} neighbourhood size (larger = smoother).}
+
+\item{se}{Draw a confidence ribbon around the smooth? Ignored for \code{"rq"}.}
 
 \item{level}{Confidence level for the ribbon.}
+
+\item{method.args}{Extra arguments to the fitting function, e.g.
+\code{list(family = binomial())} for \code{glm}, or \code{list(tau = 0.9)} for \code{rq}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -60,10 +72,29 @@ The modified \link{PlotSpec}.
 \description{
 Marks that apply a statistical transform before drawing. \code{mark_histogram()}
 bins a continuous \code{x} and draws the per-bin counts as bars. \code{mark_smooth()}
-fits a model (\code{"lm"} for now) of \code{y} on \code{x} and draws the fitted line, with a
+fits a model of \code{y} on \code{x} (per group) and draws the fitted line, with a
 confidence ribbon when \code{se = TRUE}.
+}
+\details{
+\code{mark_smooth()} supports several \code{method}s:
+\itemize{
+\item \code{"auto"} (default) picks \code{"loess"} for small groups (< 1000 points) and
+\code{"gam"} for large ones.
+\item \code{"lm"} / \code{"glm"} — linear and generalised linear fits (\code{glm} takes a
+\code{family} via \code{method.args}, e.g. \code{binomial()} for logistic).
+\item \code{"loess"} — local regression, controlled by \code{span}.
+\item \code{"gam"} — a generalised additive model with a smooth term (default
+\code{y ~ s(x)}); needs the \pkg{mgcv} package.
+\item \code{"rq"} — quantile regression at a single \code{method.args$tau} (default the
+median); needs the \pkg{quantreg} package and draws the fitted line only
+(no confidence ribbon). For several quantiles, add one layer per \code{tau}.
+}
 }
 \examples{
 vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg)
+# local regression with a wider neighbourhood
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg, method = "loess", span = 0.9)
 }

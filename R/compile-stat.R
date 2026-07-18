@@ -514,16 +514,144 @@ NULL
   }
 }
 
-# Fit y ~ x (per group) and predict on a dense grid, with a confidence ribbon.
-.stat_smooth <- function(L) {
-  method <- L$stat_params$method %||% "lm"
-  if (!identical(method, "lm")) {
-    cli::cli_abort(
-      "Only {.val lm} smoothing is available; got {.val {method}}."
+# Supported smoothing methods. "auto" resolves per group by point count
+# (loess for small n, gam for large) -- ggplot2's rule.
+.SMOOTH_METHODS <- c("auto", "lm", "loess", "glm", "gam", "rq")
+
+# Resolve "auto" to a concrete method given a group's finite-point count.
+.smooth_auto <- function(n) {
+  if (n < 1000) "loess" else "gam"
+}
+
+# Fit one group with `method` and predict on the dense grid `xg`, returning a
+# data frame of `(x, y[, ymin, ymax])`. The confidence band is a t-interval for
+# lm/loess (residual df) and a normal interval for glm/gam (on the link scale,
+# back-transformed); quantile regression (`rq`) draws the fitted line only.
+.smooth_fit <- function(
+  method,
+  xi,
+  yi,
+  xg,
+  se,
+  level,
+  span,
+  formula,
+  method.args
+) {
+  d <- data.frame(x = xi, y = yi)
+  nd <- data.frame(x = xg)
+  z <- stats::qnorm(1 - (1 - level) / 2)
+
+  if (method == "lm") {
+    fo <- formula %||% (y ~ x)
+    fit <- do.call(stats::lm, c(list(formula = fo, data = d), method.args))
+    pr <- stats::predict(fit, newdata = nd, se.fit = se)
+    fitv <- if (se) pr$fit else pr
+    out <- data.frame(x = xg, y = fitv)
+    if (se) {
+      t <- stats::qt(1 - (1 - level) / 2, fit$df.residual)
+      out$ymin <- fitv - t * pr$se.fit
+      out$ymax <- fitv + t * pr$se.fit
+    }
+    return(out)
+  }
+
+  if (method == "loess") {
+    fo <- formula %||% (y ~ x)
+    fit <- do.call(
+      stats::loess,
+      c(list(formula = fo, data = d, span = span), method.args)
     )
+    pr <- stats::predict(fit, newdata = nd, se = se)
+    fitv <- if (se) pr$fit else pr
+    out <- data.frame(x = xg, y = fitv)
+    if (se) {
+      t <- stats::qt(1 - (1 - level) / 2, pr$df)
+      out$ymin <- fitv - t * pr$se.fit
+      out$ymax <- fitv + t * pr$se.fit
+    }
+    return(out)
+  }
+
+  if (method == "glm") {
+    fo <- formula %||% (y ~ x)
+    args <- method.args
+    if (is.null(args$family)) {
+      args$family <- stats::gaussian()
+    }
+    fit <- do.call(stats::glm, c(list(formula = fo, data = d), args))
+    pr <- stats::predict(fit, newdata = nd, se.fit = se, type = "link")
+    linkinv <- fit$family$linkinv
+    fitv <- if (se) pr$fit else pr
+    out <- data.frame(x = xg, y = linkinv(fitv))
+    if (se) {
+      out$ymin <- linkinv(fitv - z * pr$se.fit)
+      out$ymax <- linkinv(fitv + z * pr$se.fit)
+    }
+    return(out)
+  }
+
+  if (method == "gam") {
+    .need_pkg("mgcv", "{.code mark_smooth(method = \"gam\")}")
+    fo <- formula %||% (y ~ s(x))
+    # gam looks up smooth constructors (`s`, `te`, ...) in the formula's
+    # environment; point it at mgcv's namespace so the default (and a bare
+    # `y ~ s(x)` from the caller) resolves without mgcv being attached.
+    environment(fo) <- asNamespace("mgcv")
+    args <- method.args
+    if (is.null(args$family)) {
+      args$family <- stats::gaussian()
+    }
+    fit <- do.call(mgcv::gam, c(list(formula = fo, data = d), args))
+    pr <- mgcv::predict.gam(fit, newdata = nd, se.fit = se, type = "link")
+    linkinv <- fit$family$linkinv
+    fitv <- if (se) pr$fit else pr
+    out <- data.frame(x = xg, y = linkinv(fitv))
+    if (se) {
+      out$ymin <- linkinv(fitv - z * pr$se.fit)
+      out$ymax <- linkinv(fitv + z * pr$se.fit)
+    }
+    return(out)
+  }
+
+  if (method == "rq") {
+    .need_pkg("quantreg", "{.code mark_smooth(method = \"rq\")}")
+    tau <- method.args$tau %||% 0.5
+    if (length(tau) != 1) {
+      cli::cli_abort(c(
+        "{.fn mark_smooth} with {.val rq} takes a single {.arg tau}.",
+        i = "For several quantiles, add one {.fn mark_smooth} layer per {.arg tau}."
+      ))
+    }
+    fo <- formula %||% (y ~ x)
+    fit <- quantreg::rq(fo, tau = tau, data = d)
+    fitv <- as.numeric(stats::predict(fit, newdata = nd))
+    return(data.frame(x = xg, y = fitv))
+  }
+
+  cli::cli_abort("Unknown smoothing method {.val {method}}.")
+}
+
+# Fit y ~ x (per group) with the requested method and predict on a dense grid,
+# with a confidence ribbon where the method supports one.
+.stat_smooth <- function(L) {
+  method <- L$stat_params$method %||% "auto"
+  ok_methods <- .SMOOTH_METHODS
+  if (!method %in% ok_methods) {
+    cli::cli_abort(c(
+      "Unknown {.arg method} {.val {method}} for {.fn mark_smooth}.",
+      i = "Use one of {.or {.val {ok_methods}}}."
+    ))
   }
   se <- isTRUE(L$stat_params$se %||% TRUE)
+  # Quantile regression has no symmetric confidence band; never draw a ribbon.
+  if (identical(method, "rq")) {
+    se <- FALSE
+  }
   level <- L$stat_params$level %||% 0.95
+  span <- L$stat_params$span %||% 0.75
+  formula <- L$stat_params$formula
+  method.args <- L$stat_params$method.args %||% list()
   x <- as.numeric(L$values$x)
   y <- as.numeric(L$values$y)
   grp <- .layer_group(L)
@@ -545,16 +673,9 @@ NULL
       }
       return(NULL)
     }
-    fit <- stats::lm(y ~ x, data = data.frame(x = xi, y = yi))
+    m <- if (identical(method, "auto")) .smooth_auto(length(xi)) else method
     xg <- seq(min(xi), max(xi), length.out = 80)
-    pr <- stats::predict(fit, newdata = data.frame(x = xg), se.fit = se)
-    fitv <- if (se) pr$fit else pr
-    df <- data.frame(x = xg, y = fitv)
-    if (se) {
-      t <- stats::qt(1 - (1 - level) / 2, fit$df.residual)
-      df$ymin <- fitv - t * pr$se.fit
-      df$ymax <- fitv + t * pr$se.fit
-    }
+    df <- .smooth_fit(m, xi, yi, xg, se, level, span, formula, method.args)
     if (!is.null(grp)) {
       df$group <- factor(gn, levels = glevs)
     }
