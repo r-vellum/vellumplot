@@ -1208,6 +1208,21 @@ NULL
       x = if (length(supp)) range(supp) else NULL,
       y = c(min(ypos), max(ypos) + scale_h)
     )
+  } else if (identical(L$mark, "halfeye")) {
+    # one-sided density slab: extends x to the right of each tick by the slab
+    # width, and y over the density support (tails past the sample range).
+    xv <- L$values$x
+    yv <- as.numeric(L$values$y)
+    levs <- .cat_levels(xv)
+    xc <- scales$x$map(levs)
+    band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
+    hw <- (L$stat_params$scale %||% 0.9) * band
+    dens <- .density_by_cat(yv, xv, levs, adjust)
+    supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
+    list(
+      x = c(min(xc), max(xc) + hw),
+      y = if (length(supp)) range(supp) else NULL
+    )
   } else {
     list(x = NULL, y = NULL)
   }
@@ -1219,7 +1234,7 @@ NULL
 # since explicit limits are intentional cropping that must win.
 .expand_position_for_marks <- function(resolved, scales, expand_x, expand_y) {
   for (L in resolved) {
-    if (!L$mark %in% c("violin", "ridgeline")) {
+    if (!L$mark %in% c("violin", "ridgeline", "halfeye")) {
       next
     }
     fp <- .mark_footprint(L, scales)

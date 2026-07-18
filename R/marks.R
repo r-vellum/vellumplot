@@ -1551,6 +1551,88 @@ mark_dotplot <- function(
   )
 }
 
+#' Uncertainty marks (slab + interval)
+#'
+#' Marks for visualising a distribution's shape *and* its summary intervals
+#' together, in the style of the \pkg{ggdist} package — a natural fit for
+#' posterior draws or bootstrap samples (one row per draw, grouped by a
+#' categorical `x`).
+#'
+#' * `mark_halfeye()` draws, per `x` category, a one-sided density "slab" (a half
+#'   violin) with a **point-interval** at its base: the median (or mean) as a
+#'   point, a thick bar for the inner interval and a thin bar for the outer one.
+#' * `mark_interval()` draws the point-interval alone (no slab).
+#'
+#' Intervals are equal-tailed quantile intervals at the `.width` probabilities
+#' (widest drawn thinnest). Supply many draws per `x` (e.g. posterior samples).
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): a categorical `x` and the sample `y`
+#'   (+ `color`/`fill`).
+#' @param .width Interval probabilities, widest last (default
+#'   `c(0.66, 0.95)`).
+#' @param point Central summary: `"median"` (default) or `"mean"`.
+#' @param adjust `mark_halfeye()` density bandwidth multiplier.
+#' @param scale Slab width as a fraction of the category band (`mark_halfeye()`).
+#' @return The modified [PlotSpec].
+#' @examples
+#' set.seed(1)
+#' draws <- data.frame(
+#'   grp = rep(c("a", "b", "c"), each = 400),
+#'   val = rnorm(1200, rep(c(0, 1, 2), each = 400))
+#' )
+#' vplot(draws) |> mark_halfeye(x = grp, y = val)
+#' vplot(draws) |> mark_interval(x = grp, y = val)
+#' @export
+mark_halfeye <- function(
+  plot,
+  ...,
+  .width = c(0.66, 0.95),
+  point = "median",
+  adjust = 1,
+  scale = 0.9,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "halfeye",
+    rlang::enquos(...),
+    stat_params = list(
+      width = .width,
+      point = point,
+      adjust = adjust,
+      scale = scale
+    ),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+#' @rdname mark_halfeye
+#' @export
+mark_interval <- function(
+  plot,
+  ...,
+  .width = c(0.66, 0.95),
+  point = "median",
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "interval",
+    rlang::enquos(...),
+    stat_params = list(width = .width, point = point),
+    blend = blend,
+    data = data
+  )
+}
+
 #' @rdname mark_tile
 #' @export
 mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {

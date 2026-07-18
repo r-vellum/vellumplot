@@ -1551,6 +1551,108 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# Equal-tailed quantile point-interval of a sample: the centre (median or mean)
+# and the (lower, upper) bounds at each probability in `widths`.
+.point_interval <- function(v, widths, point) {
+  v <- v[is.finite(v)]
+  ctr <- if (identical(point, "mean")) mean(v) else stats::median(v)
+  ints <- lapply(widths, function(w) {
+    a <- (1 - w) / 2
+    unname(stats::quantile(v, c(a, 1 - a)))
+  })
+  list(point = ctr, ints = ints)
+}
+
+# ggdist-style slab + interval, per `x` category. Always draws a point-interval
+# (median/mean point, thick inner + thin outer quantile bars); with `slab = TRUE`
+# also draws a one-sided density "slab" (half violin) to the right of the tick.
+# Aimed at sample/posterior input: many `y` rows per category.
+.emit_slabinterval <- function(scene, L, scales, slab) {
+  xv <- L$values$x
+  yv <- as.numeric(L$values$y)
+  levs <- .cat_levels(xv)
+  xc_all <- scales$x$map(levs)
+  band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
+  widths <- sort(L$stat_params$width %||% c(0.66, 0.95))
+  point <- L$stat_params$point %||% "median"
+  colv <- rep_len(.aes_colour(L, scales, "grey30"), length(yv))
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(yv))
+  adjust <- L$stat_params$adjust %||% 1
+  hw <- (L$stat_params$scale %||% 0.9) * band
+  xchar <- as.character(xv)
+  dens <- if (slab) .density_by_cat(yv, xv, levs, adjust) else NULL
+  sk <- .mark_sketch(L, scales)
+  # inner intervals thick, outer thin; drawn widest-first so the thick bar is on top
+  lwd_by_width <- seq(4, 1.5, length.out = length(widths))
+
+  for (j in seq_along(levs)) {
+    sel <- which(xchar == levs[j])
+    if (!length(sel)) {
+      next
+    }
+    xc <- xc_all[j]
+    ccol <- colv[sel[1]]
+    a <- alpha[sel[1]]
+
+    if (slab && !is.null(dens[[j]])) {
+      d <- dens[[j]]
+      dn <- (d$y / max(d$y)) * hw
+      m <- length(d$x)
+      px <- c(rep(xc, m), xc + rev(dn)) # up the flat left edge, down the bulge
+      py <- scales$y$map(c(d$x, rev(d$x)))
+      xy <- .xy_units(scales, px, py)
+      scene <- .draw(
+        scene,
+        vellum::polygon_grob(
+          xy$x,
+          xy$y,
+          sketch = .sketch_bump(sk, j),
+          gp = vellum::vl_gpar(fill = ccol, col = NA, alpha = gp_alpha(0.5))
+        ),
+        rows = sel
+      )
+    }
+
+    pit <- .point_interval(yv[sel], widths, point)
+    for (wi in order(widths, decreasing = TRUE)) {
+      lo <- scales$y$map(pit$ints[[wi]][1])
+      hi <- scales$y$map(pit$ints[[wi]][2])
+      ab <- .xy_units(scales, c(xc, xc), c(lo, hi))
+      scene <- .draw(
+        scene,
+        vellum::segments_grob(
+          ab$x[1],
+          ab$y[1],
+          ab$x[2],
+          ab$y[2],
+          gp = vellum::vl_gpar(col = ccol, lwd = lwd_by_width[wi])
+        )
+      )
+    }
+    pt <- .xy_units(scales, xc, scales$y$map(pit$point))
+    scene <- .draw(
+      scene,
+      vellum::points_grob(
+        pt$x,
+        pt$y,
+        size = vellum::vl_unit(2, "mm"),
+        shape = "circle",
+        gp = vellum::vl_gpar(fill = ccol, col = ccol)
+      ),
+      rows = sel
+    )
+  }
+  scene
+}
+
+.emit_halfeye <- function(scene, L, scales) {
+  .emit_slabinterval(scene, L, scales, slab = TRUE)
+}
+
+.emit_interval <- function(scene, L, scales) {
+  .emit_slabinterval(scene, L, scales, slab = FALSE)
+}
+
 # A group summary region (ellipse / convex hull): one closed polygon per group
 # `.piece`. Stroked by the `color` aesthetic; filled only when a `fill` is
 # mapped or set (so the ggplot2 default -- an unfilled boundary -- holds). The
@@ -2335,6 +2437,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     rug = .emit_rug(scene, L, scales),
     violin = .emit_violin(scene, L, scales),
     ridgeline = .emit_ridgeline(scene, L, scales),
+    halfeye = .emit_halfeye(scene, L, scales),
+    interval = .emit_interval(scene, L, scales),
     contour = .emit_contour(scene, L, scales),
     contour_filled = .emit_contour_filled(scene, L, scales),
     ellipse = .emit_region(scene, L, scales),
