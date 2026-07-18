@@ -55,6 +55,17 @@ vplot(mtcars) |>
   mark_bar(x = factor(cyl), fill = factor(gear), position = "dodge")
 ```
 
+For finer control, the `position` argument also takes a parameterised
+`position_*()` object. `position_dodge2()` fills each category's band by the
+groups actually *present* (so a ragged grouping stays centred); `position_nudge()`
+offsets by a constant; `position_jitter(width=, seed=)` and
+`position_jitterdodge()` control scatter for overplotted categorical points.
+
+```{r}
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl), fill = factor(gear), position = position_dodge2(padding = 0.15))
+```
+
 ## Areas and intervals
 
 `mark_area()` fills between a `y` line and zero, `mark_ribbon()` fills between

@@ -73,6 +73,7 @@ Collate:
     'effects.R'
     'guides.R'
     'labs.R'
+    'positions.R'
     'provenance.R'
     'reexports.R'
     'repeat.R'
