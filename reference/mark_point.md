@@ -77,8 +77,19 @@ mark_bar(
 
 - position:
 
-  Position adjustment: `"identity"` (default), `"jitter"` (points), or
-  `"stack"` / `"dodge"` / `"fill"` (bars).
+  Position adjustment: a string — `"identity"` (default), `"jitter"` /
+  `"jitterdodge"` (points), `"stack"` / `"fill"` / `"dodge"` /
+  `"dodge2"` (bars), `"nudge"` — or a parameterised
+  [`position_jitter()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  /
+  [`position_dodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  /
+  [`position_dodge2()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  /
+  [`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  /
+  [`position_nudge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  object.
 
 - auto:
 

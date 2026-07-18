@@ -2,6 +2,23 @@
 
 ## vellumplot (development version)
 
+- **Parameterised position adjustments.** New
+  [`position_nudge()`](https://r-vellum.github.io/vellumplot/reference/position.md),
+  [`position_jitter()`](https://r-vellum.github.io/vellumplot/reference/position.md),
+  [`position_dodge()`](https://r-vellum.github.io/vellumplot/reference/position.md),
+  [`position_dodge2()`](https://r-vellum.github.io/vellumplot/reference/position.md),
+  and
+  [`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  give a mark’s `position` tunable parameters (a bare string like
+  `"dodge"` still works with the defaults). Adds three adjustments:
+  `nudge` (shift every element by a constant in data units), `dodge2`
+  (dodge by the groups actually present at each x, filling the band with
+  a `padding` gap — so ragged groupings stay centred), and `jitterdodge`
+  (jitter points within their dodged slot).
+  `position_jitter(width=, height=, seed=)` and `position_dodge(width=)`
+  expose the previously-fixed jitter/dodge extents. A plot using the old
+  string positions is unchanged.
+
 - **Label repulsion: `mark_text(repel = TRUE)` /
   `mark_label(repel = TRUE)`.** Overlapping text labels are moved apart
   with a force-directed layout (ggrepel-style), each keeping a thin

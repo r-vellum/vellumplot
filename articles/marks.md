@@ -56,6 +56,24 @@ vplot(mtcars) |>
 
 ![](marks_files/figure-html/unnamed-chunk-4-1.png)
 
+For finer control, the `position` argument also takes a parameterised
+`position_*()` object.
+[`position_dodge2()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+fills each category’s band by the groups actually *present* (so a ragged
+grouping stays centred);
+[`position_nudge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+offsets by a constant; `position_jitter(width=, seed=)` and
+[`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+control scatter for overplotted categorical points.
+
+``` r
+
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl), fill = factor(gear), position = position_dodge2(padding = 0.15))
+```
+
+![](marks_files/figure-html/unnamed-chunk-5-1.png)
+
 ## Areas and intervals
 
 [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
@@ -76,7 +94,7 @@ vplot(pressure) |>
   mark_line(x = temperature, y = pressure)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-5-1.png)
+![](marks_files/figure-html/unnamed-chunk-6-1.png)
 
 [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
 summarises the raw `y` values per `x` category into a box-and-whisker
@@ -89,7 +107,7 @@ vplot(mtcars) |>
   mark_boxplot(x = factor(cyl), y = mpg)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-6-1.png)
+![](marks_files/figure-html/unnamed-chunk-7-1.png)
 
 Like points and bars, these summary marks are *addressable*: an error
 bar or line range keyed with `data_id`/`tooltip` carries that identity
@@ -118,7 +136,7 @@ vplot(grid) |>
   scale_fill_continuous(palette = "Batlow")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-7-1.png)
+![](marks_files/figure-html/unnamed-chunk-8-1.png)
 
 [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
 draws iso-density contour lines of a 2-D point cloud (and
@@ -134,7 +152,7 @@ vplot(faithful) |>
   mark_contour(x = eruptions, y = waiting)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-8-1.png)
+![](marks_files/figure-html/unnamed-chunk-9-1.png)
 
 ## Text
 
@@ -152,7 +170,7 @@ vplot(top) |>
   mark_text(x = wt, y = mpg, label = rownames(top), vjust = "bottom", size = 9)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-9-1.png)
+![](marks_files/figure-html/unnamed-chunk-10-1.png)
 
 On a crowded scatter, labels collide. `repel = TRUE` moves them apart
 with a force-directed layout and draws a thin leader back to each point.
@@ -169,7 +187,7 @@ vplot(mtcars) |>
   )
 ```
 
-![](marks_files/figure-html/unnamed-chunk-10-1.png)
+![](marks_files/figure-html/unnamed-chunk-11-1.png)
 
 ## Images
 
@@ -197,7 +215,7 @@ vplot(d) |>
   mark_image(x = x, y = y, src = logo, size = 14)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-11-1.png)
+![](marks_files/figure-html/unnamed-chunk-12-1.png)
 
 Reading images needs the magick package (a suggested dependency), which
 decodes PNG, JPEG, SVG, and more. Because `size` is in millimetres
@@ -222,7 +240,7 @@ vplot(parts) |>
   mark_donut(value = n, fill = part, hole = 0.6)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-12-1.png)
+![](marks_files/figure-html/unnamed-chunk-13-1.png)
 
 ## Layering is the point
 
@@ -237,7 +255,7 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, method = "lm")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-13-1.png)
+![](marks_files/figure-html/unnamed-chunk-14-1.png)
 
 From here:
 

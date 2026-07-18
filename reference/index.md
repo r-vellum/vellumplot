@@ -178,6 +178,12 @@ Map data values to visual properties, with trained domains and guides.
   : Facet a plot into a grid of panels
 - [`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
   : Add marginal distributions to a plot
+- [`position_nudge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  [`position_jitter()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  [`position_dodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  [`position_dodge2()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  [`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  : Position adjustments
 
 ## Composition
 
