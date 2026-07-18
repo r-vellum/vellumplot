@@ -2,6 +2,21 @@
 
 ## vellumplot (development version)
 
+- **Uncertainty marks:
+  [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  and
+  [`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md).**
+  ggdist-style slab + interval marks for sample/posterior input (many
+  `y` rows per categorical `x`).
+  [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  draws a one-sided density slab with a point-interval at its base — the
+  median (or `point = "mean"`), a thick inner and thin outer
+  equal-tailed quantile interval at the `.width` probabilities (default
+  `c(0.66, 0.95)`);
+  [`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  is the point-interval alone. A natural fit for visualising posterior
+  draws (e.g. from ).
+
 - **[`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
   and
   [`scale_size_area()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md).**

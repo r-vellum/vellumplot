@@ -280,6 +280,31 @@ vplot(faithful) |>
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-18-1.png)
 
+## Uncertainty: half-eyes and intervals
+
+When each `x` category has *many* draws — posterior samples, a bootstrap
+— the -style marks show the distribution’s shape and its summary
+intervals together.
+[`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+draws a one-sided density slab with a point-interval at its base (the
+median, a thick inner interval, a thin outer one);
+[`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+is the point-interval alone. Set the interval probabilities with
+`.width`.
+
+``` r
+
+set.seed(1)
+draws <- data.frame(
+  model = rep(c("prior", "posterior", "pooled"), each = 800),
+  estimate = rnorm(2400, rep(c(0, 1.5, 1), each = 800), rep(c(1, 0.5, 0.7), each = 800))
+)
+vplot(draws) |>
+  mark_halfeye(x = model, y = estimate, .width = c(0.66, 0.95))
+```
+
+![](statistical-marks_files/figure-html/unnamed-chunk-19-1.png)
+
 ## 2-D density contours
 
 [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
@@ -296,7 +321,7 @@ vplot(faithful) |>
   mark_contour(x = eruptions, y = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-19-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-20-1.png)
 
 ``` r
 
@@ -304,7 +329,7 @@ vplot(faithful) |>
   mark_contour_filled(x = eruptions, y = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-20-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-21-1.png)
 
 The density estimate uses
 [`MASS::kde2d()`](https://rdrr.io/pkg/MASS/man/kde2d.html); tune the
@@ -319,7 +344,7 @@ grid$z <- with(grid, dnorm(x) * dnorm(y))
 vplot(grid) |> mark_contour(x = x, y = y, z = z)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-21-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-22-1.png)
 
 Contour tracing needs the `isoband` package (and `MASS` for the density
 estimate).
@@ -338,7 +363,7 @@ vplot(faithful) |>
   mark_histogram(x = waiting, bins = 25, fill = after_stat(density))
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-22-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-23-1.png)
 
 Because the aesthetic is now driven by a computed value, its scale
 trains on that value like any other, and you get the matching legend.
@@ -363,7 +388,7 @@ vplot(big) |>
   mark_datashade(x = y, y = x, how = "eq_hist")
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-23-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-24-1.png)
 
 Here `how = "eq_hist"` uses histogram equalisation so both dense and
 sparse regions stay visible; the grid resolution is set by `width` and
@@ -381,7 +406,7 @@ vplot(big) |>
   mark_datashade(x = y, y = x, color = g)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-24-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-25-1.png)
 
 [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
 also has an `auto = TRUE` switch that falls back to a datashaded raster

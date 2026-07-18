@@ -353,6 +353,9 @@ Layers that draw data. Scales train across every mark on the panel.
 - [`mark_ellipse()`](https://r-vellum.github.io/vellumplot/reference/mark_ellipse.md)
   [`mark_hull()`](https://r-vellum.github.io/vellumplot/reference/mark_ellipse.md)
   : Group summary regions
+- [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  [`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  : Uncertainty marks (slab + interval)
 - [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   [`mark_raster()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   [`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
