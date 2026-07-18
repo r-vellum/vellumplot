@@ -961,8 +961,7 @@ below ships in this first release.
   resolution), so arrowheads land on the node edge.
   [`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md)
   maps a weight to edge width with its own legend. `igraph` /
-  `graphlayouts` are optional (`Suggests`). See
-  `_docs/DESIGN-igraph.md`.
+  `graphlayouts` are optional (`Suggests`).
 
 - Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum’s
@@ -978,7 +977,6 @@ below ships in this first release.
   produced it — carried on the compiled scene as
   `attr(scene, "vellumplot_provenance")`. Populated on every compile;
   additive metadata only (raster/PDF output is byte-for-byte unchanged).
-  See `_docs/DESIGN.md` §4.
 - **Continuous integration**: GitHub Actions run `R CMD check` (R
   release/devel/oldrel on Linux + macOS, with the Rust toolchain the
   `vellum` backend needs), including a nightly run against `vellum`’s
@@ -990,4 +988,4 @@ Reactivity, 2-D contour stats, and the algebraic `*` / `+` layer
 combinators. Independent *non-position* (colour/size) scales across
 facets are not yet supported (those legends stay shared). On the network
 side, community hulls and alternative idioms (arc/matrix/hive) are
-deferred (see `_docs/DESIGN-igraph.md`).
+deferred.
