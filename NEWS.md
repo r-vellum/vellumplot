@@ -1,5 +1,14 @@
 # vellumplot (development version)
 
+* **New group-region marks: `mark_ellipse()` and `mark_hull()`.** Both enclose a
+  set of `(x, y)` points in a single region drawn over a scatter — one region per
+  group when a `color`/`fill` is mapped. `mark_ellipse()` draws a covariance
+  ellipse (`type = "t"` robust default via \pkg{MASS}, or `"norm"`/`"euclid"`),
+  following ggplot2's `stat_ellipse()`; `mark_hull()` draws the convex hull. Both
+  are unfilled boundaries by default (map/set a `fill` to shade them) and need at
+  least 3 points per group. The region's boundary trains the position scales, so
+  an ellipse that bulges past the data is not clipped.
+
 * **`mark_smooth()` gains real smoothing methods.** Beyond `"lm"`, the smooth
   mark now fits `"loess"` (local regression, `span =`), `"glm"` (with a `family`
   via `method.args`, e.g. logistic — the fit and its ribbon are back-transformed

@@ -34,6 +34,8 @@ NULL
     qq = .stat_qq(L),
     qq_line = .stat_qq_line(L),
     dotplot = .stat_dotplot(L),
+    ellipse = .stat_ellipse(L),
+    hull = .stat_hull(L),
     cli::cli_abort("Unknown stat {.val {stat}}.")
   )
   .merge_stat(L, sdf)
@@ -803,4 +805,127 @@ NULL
     y = stack - 0.5,
     count = 1
   )
+}
+
+# Require x and y for the region stats (ellipse/hull), with a clear message.
+.need_xy <- function(L, what) {
+  if (is.null(L$values$x) || is.null(L$values$y)) {
+    cli::cli_abort("{what} needs both {.arg x} and {.arg y}.")
+  }
+}
+
+# Boundary vertices of a data-space confidence ellipse for one group, following
+# ggplot2's `stat_ellipse`: a unit circle transformed by the Cholesky factor of
+# the (robust `t`, normal, or Euclidean) covariance, scaled by an F-quantile
+# radius, and translated to the centre. Returns a `segments+1 x 2` matrix.
+.ellipse_points <- function(x, y, type, level, segments) {
+  n <- length(x)
+  dfn <- 2
+  dfd <- n - 1
+  angles <- (0:segments) * 2 * pi / segments
+  unit <- cbind(cos(angles), sin(angles))
+  if (type == "euclid") {
+    # A circle of radius `level` (data units) about the mean -- no covariance.
+    centre <- c(mean(x), mean(y))
+    pts <- sweep(level * unit, 2, centre, "+")
+    return(pts)
+  }
+  if (type == "t") {
+    .need_pkg("MASS", "{.code mark_ellipse(type = \"t\")}")
+    fit <- MASS::cov.trob(cbind(x, y))
+    cov <- fit$cov
+    centre <- fit$center
+  } else {
+    cov <- stats::cov(cbind(x, y))
+    centre <- c(mean(x), mean(y))
+  }
+  radius <- sqrt(dfn * stats::qf(level, dfn, dfd))
+  chol_decomp <- chol(cov)
+  t(centre + radius * t(unit %*% chol_decomp))
+}
+
+# Per-group confidence/data ellipse. Emits ordered boundary vertices with a
+# per-group `.piece` (so each ellipse is a distinct closed polygon) and the
+# `group` column so colour/fill flows back through `.merge_stat`.
+.stat_ellipse <- function(L) {
+  .need_xy(L, "{.fn mark_ellipse}")
+  type <- L$stat_params$type %||% "t"
+  if (!type %in% c("t", "norm", "euclid")) {
+    cli::cli_abort(c(
+      "Unknown ellipse {.arg type} {.val {type}}.",
+      i = "Use one of {.or {.val {c('t', 'norm', 'euclid')}}}."
+    ))
+  }
+  level <- L$stat_params$level %||% 0.95
+  segments <- L$stat_params$segments %||% 51L
+  x <- as.numeric(L$values$x)
+  y <- as.numeric(L$values$y)
+  grp <- .layer_group(L)
+  g <- .stat_groups(grp, length(x))
+  glevs <- g$levels
+  gnames <- names(g$groups)
+  parts <- lapply(seq_along(gnames), function(k) {
+    gn <- gnames[[k]]
+    i <- g$groups[[gn]]
+    xi <- x[i]
+    yi <- y[i]
+    ok <- is.finite(xi) & is.finite(yi)
+    xi <- xi[ok]
+    yi <- yi[ok]
+    if (length(xi) < 3) {
+      cli::cli_warn(
+        "Skipping {.field {gn}}: {.fn mark_ellipse} needs at least 3 points."
+      )
+      return(NULL)
+    }
+    pts <- .ellipse_points(xi, yi, type, level, segments)
+    df <- data.frame(x = pts[, 1], y = pts[, 2], .piece = k)
+    if (!is.null(grp)) {
+      df$group <- factor(gn, levels = glevs)
+    }
+    df
+  })
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (!length(parts)) {
+    cli::cli_abort("{.fn mark_ellipse} needs at least 3 points to fit.")
+  }
+  do.call(rbind, parts)
+}
+
+# Per-group convex hull. Emits the hull vertices (counter-clockwise) with a
+# per-group `.piece`; `polygon_grob` closes the ring.
+.stat_hull <- function(L) {
+  .need_xy(L, "{.fn mark_hull}")
+  x <- as.numeric(L$values$x)
+  y <- as.numeric(L$values$y)
+  grp <- .layer_group(L)
+  g <- .stat_groups(grp, length(x))
+  glevs <- g$levels
+  gnames <- names(g$groups)
+  parts <- lapply(seq_along(gnames), function(k) {
+    gn <- gnames[[k]]
+    i <- g$groups[[gn]]
+    xi <- x[i]
+    yi <- y[i]
+    ok <- is.finite(xi) & is.finite(yi)
+    xi <- xi[ok]
+    yi <- yi[ok]
+    if (length(xi) < 3) {
+      cli::cli_warn(
+        "Skipping {.field {gn}}: {.fn mark_hull} needs at least 3 points."
+      )
+      return(NULL)
+    }
+    h <- grDevices::chull(xi, yi)
+    df <- data.frame(x = xi[h], y = yi[h], .piece = k)
+    if (!is.null(grp)) {
+      df$group <- factor(gn, levels = glevs)
+    }
+    df
+  })
+  parts <- parts[!vapply(parts, is.null, logical(1))]
+  if (!length(parts)) {
+    cli::cli_abort("{.fn mark_hull} needs at least 3 points.")
+  }
+  do.call(rbind, parts)
 }
