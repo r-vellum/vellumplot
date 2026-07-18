@@ -955,8 +955,15 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
 .emit_text <- function(scene, L, scales) {
   n <- L$n
-  xn <- rep_len(scales$x$map(L$values$x), n)
-  yn <- rep_len(scales$y$map(L$values$y), n)
+  sol <- L$stat_params$repel$solution
+  if (!is.null(sol)) {
+    scene <- .emit_repel_leaders(scene, L, scales)
+    xn <- rep_len(sol$x, n)
+    yn <- rep_len(sol$y, n)
+  } else {
+    xn <- rep_len(scales$x$map(L$values$x), n)
+    yn <- rep_len(scales$y$map(L$values$y), n)
+  }
   # Labels may be plain character (multi-line "\n" supported by vellum), a single
   # rich md() label (drawn at every position), or a per-datum list of md() labels.
   # Only plain labels are flattened with as.character(); rich labels pass through.
@@ -1019,8 +1026,15 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # A text mark with a filled rounded background sized to each label.
 .emit_label <- function(scene, L, scales) {
   n <- L$n
-  xn <- rep_len(scales$x$map(L$values$x), n)
-  yn <- rep_len(scales$y$map(L$values$y), n)
+  sol <- L$stat_params$repel$solution
+  if (!is.null(sol)) {
+    scene <- .emit_repel_leaders(scene, L, scales)
+    xn <- rep_len(sol$x, n)
+    yn <- rep_len(sol$y, n)
+  } else {
+    xn <- rep_len(scales$x$map(L$values$x), n)
+    yn <- rep_len(scales$y$map(L$values$y), n)
+  }
   label <- rep_len(as.character(L$values$label), n)
   col <- rep_len(.text_colour(L, scales, "black"), n)
   # Label background: a mapped `fill` channel (through the colour scale), else a

@@ -34,8 +34,10 @@ NULL
   list(
     type = rtype,
     transform = sc$transform %||% "identity",
-    data_lo = sc$data_range[1], data_hi = sc$data_range[2],
-    native_lo = sc$domain[1], native_hi = sc$domain[2],
+    data_lo = sc$data_range[1],
+    data_hi = sc$data_range[2],
+    native_lo = sc$domain[1],
+    native_hi = sc$domain[2],
     breaks = as.numeric(sc$breaks),
     labels = as.character(sc$labels),
     discrete = isTRUE(sc$discrete),
@@ -667,7 +669,16 @@ NULL
 # assign back into the `vellum` namespace. Mutating via the local binding still
 # registers on the shared generic, so `vellum::render(plot, path)` dispatches here.
 .as_vellum_scene <- vellum::as_vellum_scene
-S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) .compile_plot(x)
+S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
+  # Label repulsion is an exact two-pass compile: compile once to recover the
+  # panel's device-px geometry (via scene_model()), solve label placement in that
+  # pixel space, then recompile with the labels moved. See R/repel.R.
+  if (.any_repel(x)) {
+    provisional <- .compile_plot(x)
+    x <- .attach_repel_solutions(x, vellum::scene_model(provisional))
+  }
+  .compile_plot(x)
+}
 
 #' Render a plot to a file
 #'

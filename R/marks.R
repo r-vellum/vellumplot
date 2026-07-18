@@ -978,6 +978,12 @@ mark_step <- function(
 #' for a per-datum styled label (bold/italic/super-/subscript/colour). (Rich
 #' labels are not yet supported by `mark_label()`'s background box.)
 #'
+#' Set `repel = TRUE` to move overlapping labels apart with a force-directed
+#' layout (like ggrepel), drawing a thin leader line back to each label's point.
+#' Repulsion is resolved exactly against the true rendered panel size, so it does
+#' not depend on the data scale. It is currently limited to a single cartesian
+#' panel (no facets / composition / polar).
+#'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `label` (+ `color`, `angle`).
 #' @param size Font size in points.
@@ -991,6 +997,15 @@ mark_step <- function(
 #'   regardless of scale or panel aspect. Default `0`.
 #' @param fill For `mark_label()`, the label background: a constant colour, or a
 #'   mapped encoding (e.g. `fill = group`) coloured through the fill/colour scale.
+#' @param repel Move overlapping labels apart (force-directed, ggrepel-style),
+#'   with leader lines to the points? Single cartesian panel only.
+#' @param box_padding,point_padding Extra space (mm) kept around each label box
+#'   and around each anchor point during repulsion.
+#' @param min_segment_length Shortest leader line (mm) worth drawing; a label
+#'   that barely moved gets none.
+#' @param max_overlaps Reserved for a future overlap cap (currently unused).
+#' @param seed Integer seed making the repel layout reproducible (the global RNG
+#'   stream is restored afterwards).
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
@@ -1008,6 +1023,12 @@ mark_text <- function(
   angle = NULL,
   nudge_x = 0,
   nudge_y = 0,
+  repel = FALSE,
+  box_padding = 1,
+  point_padding = 1,
+  min_segment_length = 2,
+  max_overlaps = 10,
+  seed = NULL,
   blend = NULL,
   data = NULL
 ) {
@@ -1028,6 +1049,16 @@ mark_text <- function(
       nudge_x = as.numeric(nudge_x),
       nudge_y = as.numeric(nudge_y)
     ),
+    stat_params = list(
+      repel = .repel_params(
+        repel,
+        box_padding,
+        point_padding,
+        min_segment_length,
+        max_overlaps,
+        seed
+      )
+    ),
     blend = blend,
     data = data
   )
@@ -1047,6 +1078,12 @@ mark_label <- function(
   nudge_x = 0,
   nudge_y = 0,
   fill = "white",
+  repel = FALSE,
+  box_padding = 1,
+  point_padding = 1,
+  min_segment_length = 2,
+  max_overlaps = 10,
+  seed = NULL,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -1068,6 +1105,16 @@ mark_label <- function(
     const_params = list(
       nudge_x = as.numeric(nudge_x),
       nudge_y = as.numeric(nudge_y)
+    ),
+    stat_params = list(
+      repel = .repel_params(
+        repel,
+        box_padding,
+        point_padding,
+        min_segment_length,
+        max_overlaps,
+        seed
+      )
     ),
     blend = blend,
     sketch = sketch,
