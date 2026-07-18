@@ -124,18 +124,88 @@ test_that("the y axis covers the smooth ribbon extent", {
   expect_gte(sc$y$domain[2], max(r$values$ymax))
 })
 
-test_that("after_stat without a stat is an error; only lm smoothing", {
+test_that("after_stat without a stat is an error", {
   expect_error(
     vellum::as_vellum_scene(
       vplot(mtcars) |> mark_point(x = wt, y = after_stat(count))
     ),
     "after_stat"
   )
+})
+
+test_that("an unknown smoothing method errors", {
   expect_error(
     vellum::as_vellum_scene(
-      vplot(mtcars) |> mark_smooth(x = wt, y = mpg, method = "loess")
+      vplot(mtcars) |> mark_smooth(x = wt, y = mpg, method = "bogus")
     ),
-    "lm"
+    "method"
+  )
+})
+
+test_that("loess smoothing fits a dense line with a ribbon", {
+  p <- vplot(mtcars) |> mark_smooth(x = wt, y = mpg, method = "loess")
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_equal(r$n, 80)
+  expect_false(is.null(r$values$ymin))
+  expect_true(all(r$values$ymin <= r$values$y & r$values$y <= r$values$ymax))
+})
+
+test_that("auto smoothing resolves to loess for a small group", {
+  # auto (< 1000 points) == loess: same fitted line as an explicit loess.
+  auto <- vellumplot:::.resolve_layers(
+    vplot(mtcars) |> mark_smooth(x = wt, y = mpg)
+  )[[1]]
+  loess <- vellumplot:::.resolve_layers(
+    vplot(mtcars) |> mark_smooth(x = wt, y = mpg, method = "loess")
+  )[[1]]
+  expect_equal(auto$values$y, loess$values$y)
+})
+
+test_that("glm smoothing back-transforms a logistic fit into (0, 1)", {
+  skip_if_not_installed("MASS")
+  withr::with_seed(1, {
+    d <- data.frame(x = runif(120, 0, 10))
+    d$y <- rbinom(120, 1, stats::plogis(d$x - 5))
+  })
+  p <- vplot(d) |>
+    mark_smooth(
+      x = x,
+      y = y,
+      method = "glm",
+      method.args = list(family = binomial())
+    )
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_true(all(r$values$y > 0 & r$values$y < 1))
+  expect_true(all(r$values$ymin >= 0 & r$values$ymax <= 1))
+  expect_lt(r$values$y[1], r$values$y[80]) # increasing
+})
+
+test_that("gam smoothing needs mgcv and fits a smooth", {
+  skip_if_not_installed("mgcv")
+  p <- vplot(mtcars) |> mark_smooth(x = wt, y = mpg, method = "gam")
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_equal(r$n, 80)
+  expect_false(is.null(r$values$ymin))
+})
+
+test_that("quantile regression draws a line only, one tau per layer", {
+  skip_if_not_installed("quantreg")
+  p <- vplot(mtcars) |>
+    mark_smooth(x = wt, y = mpg, method = "rq", method.args = list(tau = 0.9))
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_equal(r$n, 80)
+  expect_null(r$values$ymin) # no confidence ribbon for rq
+  expect_error(
+    vellum::as_vellum_scene(
+      vplot(mtcars) |>
+        mark_smooth(
+          x = wt,
+          y = mpg,
+          method = "rq",
+          method.args = list(tau = c(0.1, 0.9))
+        )
+    ),
+    "single"
   )
 })
 

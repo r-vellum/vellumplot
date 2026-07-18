@@ -1,5 +1,17 @@
 # vellumplot (development version)
 
+* **`mark_smooth()` gains real smoothing methods.** Beyond `"lm"`, the smooth
+  mark now fits `"loess"` (local regression, `span =`), `"glm"` (with a `family`
+  via `method.args`, e.g. logistic — the fit and its ribbon are back-transformed
+  from the link scale), `"gam"` (a penalised smooth, default `y ~ s(x)`; needs
+  \pkg{mgcv}), and `"rq"` (quantile regression at a single `method.args$tau`;
+  needs \pkg{quantreg}, line only, no ribbon). The default `method = "auto"`
+  picks `loess` for small groups (< 1000 points) and `gam` for large ones, as in
+  ggplot2. New `formula`, `span`, and `method.args` arguments; `glm`/`gam` bands
+  use a normal interval, `lm`/`loess` a t-interval. Previously `mark_smooth()`
+  errored on any method other than `"lm"`. \pkg{mgcv} and \pkg{quantreg} are
+  Suggests — a gated method errors clearly if its package is absent.
+
 * **Data panels are emitted as pannable, gridlines tagged.** Cartesian data panels
   (including `coord_flip` and a linear `coord_trans`) now push a `pannable` vellum
   viewport, and gridlines carry `role = "grid"`. This is inert for static rendering

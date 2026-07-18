@@ -38,6 +38,8 @@ Suggests:
     isoband,
     magick,
     MASS,
+    mgcv,
+    quantreg,
     sf,
     testthat (>= 3.0.0),
     vctrs,

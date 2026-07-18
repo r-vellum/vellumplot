@@ -98,14 +98,26 @@ vplot(mtcars) |>
 
 ## Smooths
 
-`mark_smooth()` fits a model of `y` on `x` (`method = "lm"`) and draws the
-fitted line with a confidence ribbon when `se = TRUE`. It layers naturally over
-the raw points.
+`mark_smooth()` fits a model of `y` on `x` (per group) and draws the fitted line
+with a confidence ribbon when `se = TRUE`. It layers naturally over the raw
+points.
 
 ```{r}
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   mark_smooth(x = wt, y = mpg, se = TRUE, level = 0.95)
+```
+
+The `method` chooses the fit: `"lm"` (linear), `"loess"` (local regression, with
+`span` controlling the neighbourhood), `"glm"` (a `family` via `method.args`,
+e.g. logistic), `"gam"` (a penalised smooth, needs \pkg{mgcv}), and `"rq"`
+(quantile regression, needs \pkg{quantreg}). The default `"auto"` picks `loess`
+for small groups and `gam` for large ones.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg, method = "loess", span = 0.9)
 ```
 
 ## Distributions
