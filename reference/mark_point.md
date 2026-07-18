@@ -27,6 +27,7 @@ mark_point(
 mark_line(
   plot,
   ...,
+  window = NULL,
   auto = FALSE,
   blend = NULL,
   effects = list(),
@@ -138,6 +139,20 @@ mark_bar(
 - data:
 
   Optional layer data frame; overrides the plot data for this layer.
+
+- window:
+
+  For `mark_line()`, an optional window (rolling / cumulative / offset)
+  transform of `y` computed per group over rows ordered by `x`, before
+  the line is drawn. Either an op name (`"mean"`, `"sum"`, `"median"`,
+  `"min"`, `"max"`, `"cumsum"`, `"cummean"`, `"cummax"`, `"cummin"`,
+  `"lag"`, `"lead"`, `"rank"`) or a list
+  `list(op=, k=, align=, partial=)`: `k` is the window size (rolling;
+  default 7) or shift (`lag`/`lead`; default 1), `align` is `"right"`
+  (trailing, default), `"left"`, or `"center"`, and `partial` (default
+  `TRUE`) computes at the edges from the shorter available window. For
+  example `window = list(op = "mean", k = 7)` is a 7-point trailing
+  average.
 
 ## Value
 

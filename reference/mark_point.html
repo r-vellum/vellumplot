@@ -95,6 +95,7 @@ mappings.</p>
 <span><span class="fu">mark_line</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  window <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  auto <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -186,6 +187,18 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>Optional layer data frame; overrides the plot data for this layer.</p></dd>
+
+
+<dt id="arg-window">window<a class="anchor" aria-label="anchor" href="#arg-window"></a></dt>
+<dd><p>For <code>mark_line()</code>, an optional window (rolling / cumulative /
+offset) transform of <code>y</code> computed per group over rows ordered by <code>x</code>, before
+the line is drawn. Either an op name (<code>"mean"</code>, <code>"sum"</code>, <code>"median"</code>, <code>"min"</code>,
+<code>"max"</code>, <code>"cumsum"</code>, <code>"cummean"</code>, <code>"cummax"</code>, <code>"cummin"</code>, <code>"lag"</code>, <code>"lead"</code>,
+<code>"rank"</code>) or a list <code>list(op=, k=, align=, partial=)</code>: <code>k</code> is the window size
+(rolling; default 7) or shift (<code>lag</code>/<code>lead</code>; default 1), <code>align</code> is
+<code>"right"</code> (trailing, default), <code>"left"</code>, or <code>"center"</code>, and <code>partial</code>
+(default <code>TRUE</code>) computes at the edges from the shorter available window. For
+example <code>window = list(op = "mean", k = 7)</code> is a 7-point trailing average.</p></dd>
 
 </dl></div>
     <div class="section level2">

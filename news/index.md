@@ -2,6 +2,17 @@
 
 ## vellumplot (development version)
 
+- **`mark_line(window = )`: rolling / cumulative / offset transforms.**
+  A line can now transform its `y` per group (over rows ordered by `x`)
+  before drawing — moving `mean`/`sum`/`median`/`min`/`max` over a
+  window of `k`, running `cumsum`/`cummean`/`cummax`/`cummin`,
+  `lag`/`lead` shifts, or `rank`. Pass an op name (`window = "mean"`) or
+  a list
+  (`window = list(op = "mean", k = 7, align = "right", partial = TRUE)`);
+  `align` is trailing/leading/centred and `partial` fills the edges from
+  the shorter window so the line stays continuous. A plot without
+  `window` is unchanged.
+
 - **Diverging colour scales:
   [`scale_color_gradient2()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
   /
