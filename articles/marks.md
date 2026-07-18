@@ -154,6 +154,23 @@ vplot(top) |>
 
 ![](marks_files/figure-html/unnamed-chunk-9-1.png)
 
+On a crowded scatter, labels collide. `repel = TRUE` moves them apart
+with a force-directed layout and draws a thin leader back to each point.
+The layout is resolved against the true rendered panel size (so it
+doesn’t drift with the data scale) and is reproducible via `seed`.
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_text(
+    x = wt, y = mpg, label = rownames(mtcars),
+    repel = TRUE, size = 7, seed = 1
+  )
+```
+
+![](marks_files/figure-html/unnamed-chunk-10-1.png)
+
 ## Images
 
 [`mark_image()`](https://r-vellum.github.io/vellumplot/reference/mark_image.md)
@@ -180,7 +197,7 @@ vplot(d) |>
   mark_image(x = x, y = y, src = logo, size = 14)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-10-1.png)
+![](marks_files/figure-html/unnamed-chunk-11-1.png)
 
 Reading images needs the magick package (a suggested dependency), which
 decodes PNG, JPEG, SVG, and more. Because `size` is in millimetres
@@ -205,7 +222,7 @@ vplot(parts) |>
   mark_donut(value = n, fill = part, hole = 0.6)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-11-1.png)
+![](marks_files/figure-html/unnamed-chunk-12-1.png)
 
 ## Layering is the point
 
@@ -220,7 +237,7 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, method = "lm")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-12-1.png)
+![](marks_files/figure-html/unnamed-chunk-13-1.png)
 
 From here:
 
