@@ -749,6 +749,42 @@ scale_size <- function(
   )
 }
 
+#' @rdname scale_size
+#'
+#' @description
+#' `scale_size_area()` maps the data value to the marker's **area** rather than
+#' its radius, with value `0` at size `0` — the perceptually honest default for
+#' bubble charts (a value twice as large looks twice as big in ink). `max_size`
+#' is the size (mm) of the largest value.
+#'
+#' @param max_size For `scale_size_area()`, the point size (mm) of the largest
+#'   value.
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, size = hp) |>
+#'   scale_size_area(max_size = 10)
+#' @export
+scale_size_area <- function(
+  plot,
+  max_size = 6,
+  limits = NULL,
+  breaks = NULL,
+  name = NULL
+) {
+  .check_plot(plot)
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "size",
+      type = "area",
+      domain = limits,
+      range = c(0, as.numeric(max_size)),
+      breaks = breaks,
+      name = name
+    )
+  )
+}
+
 #' Edge-width scale
 #'
 #' Declare the scale for a mapped edge `linewidth` aesthetic (e.g.

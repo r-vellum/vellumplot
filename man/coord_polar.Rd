@@ -2,9 +2,19 @@
 % Please edit documentation in R/coord.R
 \name{coord_polar}
 \alias{coord_polar}
+\alias{coord_radial}
 \title{Polar coordinates}
 \usage{
 coord_polar(plot, theta = "x", start = 0, direction = 1)
+
+coord_radial(
+  plot,
+  theta = "x",
+  start = 0,
+  end = NULL,
+  direction = 1,
+  inner.radius = 0
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -17,6 +27,13 @@ first value at twelve o'clock).}
 
 \item{direction}{Winding direction: \code{1} for clockwise (default), \code{-1} for
 counter-clockwise.}
+
+\item{end}{Arc end angle in radians; \code{NULL} (default) sweeps a full turn from
+\code{start}. Set it for a partial arc — e.g. \verb{start = -pi/2, end = pi/2} for a
+semicircular gauge.}
+
+\item{inner.radius}{Radius of the central hole as a fraction of the outer
+radius (\code{0}–\code{1}); \code{0} (default) is a filled disc, \verb{> 0} a donut/ring.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -30,9 +47,17 @@ cloud is positioned by \verb{(angle, radius)}. With \code{theta = "y"} a stacked
 becomes a pie (see also the \code{\link[=mark_pie]{mark_pie()}} / \code{\link[=mark_donut]{mark_donut()}} shortcuts). The
 panel is locked to a square. Lines, areas, and ribbons are interpolated into
 smooth arcs.
+
+\code{coord_radial()} is a fuller polar system (ggplot2 3.5's name): besides
+\code{theta}/\code{start}/\code{direction} it takes \code{end} to sweep only a \strong{partial arc}
+(e.g. a half-circle gauge) and \code{inner.radius} to open a \strong{donut hole}. With
+\code{end = NULL} and \code{inner.radius = 0} it is identical to \code{coord_polar()}.
 }
 \examples{
 vplot(mtcars) |> mark_bar(x = factor(cyl)) |> coord_polar(theta = "x")
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl)) |>
+  coord_radial(theta = "x", inner.radius = 0.3)
 }
 \seealso{
 \code{\link[=mark_pie]{mark_pie()}}, \code{\link[=mark_donut]{mark_donut()}}

@@ -2,9 +2,12 @@
 % Please edit documentation in R/scales.R
 \name{scale_size}
 \alias{scale_size}
+\alias{scale_size_area}
 \title{Size scale}
 \usage{
 scale_size(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
+
+scale_size_area(plot, max_size = 6, limits = NULL, breaks = NULL, name = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -17,6 +20,9 @@ default \code{c(1, 4)}.}
 \item{breaks}{Explicit legend breaks, or \code{NULL}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{max_size}{For \code{scale_size_area()}, the point size (mm) of the largest
+value.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -24,7 +30,15 @@ The modified \link{PlotSpec}.
 \description{
 Declare the scale for a mapped \code{size} aesthetic: data values map linearly to a
 point-size \code{range} (in mm). A size legend is drawn automatically.
+
+\code{scale_size_area()} maps the data value to the marker's \strong{area} rather than
+its radius, with value \code{0} at size \code{0} — the perceptually honest default for
+bubble charts (a value twice as large looks twice as big in ink). \code{max_size}
+is the size (mm) of the largest value.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp) |> scale_size(range = c(1, 8))
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = hp) |>
+  scale_size_area(max_size = 10)
 }

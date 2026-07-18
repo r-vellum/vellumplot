@@ -1,5 +1,13 @@
 # vellumplot (development version)
 
+* **`coord_radial()` and `scale_size_area()`.** `coord_radial()` is a fuller
+  polar system (ggplot2 3.5's name): besides `theta`/`start`/`direction` it takes
+  `end` to sweep only a **partial arc** (e.g. `start = -pi/2, end = pi/2` for a
+  semicircular gauge) and `inner.radius` for a **donut hole**; with the defaults
+  it matches `coord_polar()`. `scale_size_area()` maps a value to the marker's
+  **area** (value `0` → size `0`), the perceptually honest default for bubble
+  charts, with `max_size` the size of the largest value.
+
 * **Parameterised position adjustments.** New `position_nudge()`,
   `position_jitter()`, `position_dodge()`, `position_dodge2()`, and
   `position_jitterdodge()` give a mark's `position` tunable parameters (a bare
