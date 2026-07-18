@@ -61,8 +61,11 @@ linerange) also take \code{linewidth} and \code{linetype}.}
 may be a constant or a mapped expression. One of \code{"circle"}, \code{"square"},
 \code{"triangle"}, \code{"diamond"}, \code{"plus"}, \code{"cross"}.}
 
-\item{position}{Position adjustment: \code{"identity"} (default), \code{"jitter"}
-(points), or \code{"stack"} / \code{"dodge"} / \code{"fill"} (bars).}
+\item{position}{Position adjustment: a string — \code{"identity"} (default),
+\code{"jitter"} / \code{"jitterdodge"} (points), \code{"stack"} / \code{"fill"} / \code{"dodge"} /
+\code{"dodge2"} (bars), \code{"nudge"} — or a parameterised \code{\link[=position_jitter]{position_jitter()}} /
+\code{\link[=position_dodge]{position_dodge()}} / \code{\link[=position_dodge2]{position_dodge2()}} / \code{\link[=position_jitterdodge]{position_jitterdodge()}} /
+\code{\link[=position_nudge]{position_nudge()}} object.}
 
 \item{auto}{For \code{mark_point()}, \code{mark_line()}, \code{mark_step()},
 \code{mark_segment()}, and \code{mark_edges()}, when \code{TRUE} and the layer has very many

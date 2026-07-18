@@ -410,9 +410,25 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   sk <- .mark_sketch(L, scales)
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
-  if (identical(L$position, "jitter")) {
-    ax <- 0.4 * (scales$x$band_width %||% .resolution(xn))
-    ay <- 0.4 * .resolution(yn)
+  band_x <- scales$x$band_width %||% .resolution(xn)
+  # jitterdodge first offsets each element into its group's dodged slot, then
+  # jitters within the (narrower) slot.
+  slot <- band_x
+  if (identical(L$position, "jitterdodge")) {
+    grp <- L$values$color %||% L$values$fill
+    dw <- L$stat_params$dodge_width %||% 0.75
+    if (!is.null(grp)) {
+      levs <- .cat_levels(grp)
+      G <- length(levs)
+      rank <- match(as.character(rep_len(grp, n)), levs)
+      xn <- xn + (rank - (G + 1) / 2) / G * dw * band_x
+      slot <- dw * band_x / G
+    }
+  }
+  if (L$position %in% c("jitter", "jitterdodge")) {
+    ax <- L$stat_params$jitter_width %||%
+      (0.4 * if (identical(L$position, "jitterdodge")) slot else band_x)
+    ay <- L$stat_params$jitter_height %||% (0.4 * .resolution(yn))
     jit <- .with_seed(
       L$stat_params$seed,
       list(
@@ -688,6 +704,33 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# dodge2: at each x, place only the groups actually present, filling the total
+# width `tw` with equal slots separated by `padding` (a fraction of the slot). So
+# a category with fewer groups gets wider bars centred on the tick, rather than
+# leaving gaps for absent groups (plain dodge). Returns per-element centre `xc`
+# and width `w` (native px), aligned to the input row order.
+.dodge2_bars <- function(xp, grp, n, tw, padding) {
+  xc <- rep_len(xp, n)
+  w <- rep_len(tw, n)
+  if (is.null(grp)) {
+    return(list(xc = xc, w = w))
+  }
+  levs <- .cat_levels(grp)
+  g <- as.character(rep_len(grp, n))
+  for (xi in unique(xc)) {
+    rows <- which(xc == xi)
+    rows <- rows[order(match(g[rows], levs))]
+    k <- length(rows)
+    slot <- tw[rows][1] / k
+    for (j in seq_len(k)) {
+      i <- rows[j]
+      w[i] <- slot * (1 - padding)
+      xc[i] <- xi + (j - (k + 1) / 2) * slot
+    }
+  }
+  list(xc = xc, w = w)
+}
+
 .emit_bar <- function(scene, L, scales) {
   grad <- .grad_fill(L)
   if (!is.null(scales$polar)) {
@@ -721,9 +764,21 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       levs <- .cat_levels(grp)
       G <- length(levs)
       rank <- match(as.character(rep_len(grp, n)), levs)
+      # `dodge_width` (data units) overrides the band as the group's total span.
+      span <- L$stat_params$dodge_width %||% band
       w <- w / G
-      xc <- xp + (rank - (G + 1) / 2) / G * band
+      xc <- xp + (rank - (G + 1) / 2) / G * span
     }
+  } else if (identical(L$position, "dodge2")) {
+    d2 <- .dodge2_bars(
+      xp,
+      L$values$color %||% L$values$fill,
+      n,
+      L$values$width %||% (0.9 * band),
+      L$stat_params$dodge2_padding %||% 0.1
+    )
+    xc <- d2$xc
+    w <- d2$w
   }
 
   # A gradient fill paints every bar as one rect grob sharing the paint.

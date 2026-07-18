@@ -260,13 +260,17 @@ after_stat <- function(x) x
       i = "For a plot-wide hand-drawn look, use {.fn theme_sketch}."
     ))
   }
+  # A `position_*()` object splits into the type string (stored on the layer)
+  # plus parameters merged into `stat_params`, where the emitters read them.
+  pos <- .normalize_position(position)
+  stat_params <- utils::modifyList(stat_params, pos$args)
   layer <- LayerSpec(
     mark = mark,
     encoding = split$encoding,
     params = split$params,
     stat = stat,
     stat_params = stat_params,
-    position = position,
+    position = pos$type,
     blend = .check_blend(blend),
     effects = .check_effects(effects, mark),
     sketch = .check_sketch(sketch),
@@ -305,8 +309,11 @@ after_stat <- function(x) x
 #' @param size,shape Convenience arguments for the point size (in mm) / shape;
 #'   may be a constant or a mapped expression. One of `"circle"`, `"square"`,
 #'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`.
-#' @param position Position adjustment: `"identity"` (default), `"jitter"`
-#'   (points), or `"stack"` / `"dodge"` / `"fill"` (bars).
+#' @param position Position adjustment: a string — `"identity"` (default),
+#'   `"jitter"` / `"jitterdodge"` (points), `"stack"` / `"fill"` / `"dodge"` /
+#'   `"dodge2"` (bars), `"nudge"` — or a parameterised [position_jitter()] /
+#'   [position_dodge()] / [position_dodge2()] / [position_jitterdodge()] /
+#'   [position_nudge()] object.
 #' @param auto For `mark_point()`, `mark_line()`, `mark_step()`,
 #'   `mark_segment()`, and `mark_edges()`, when `TRUE` and the layer has very many
 #'   rows, automatically render it as a datashaded density raster (see

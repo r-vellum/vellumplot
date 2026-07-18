@@ -6,11 +6,30 @@ NULL
 # span; `dodge` and `jitter` are deferred to draw time (they only shift native
 # geometry within the trained scales). Identity is a no-op.
 .apply_position <- function(L) {
+  # Nudge shifts every element by a constant in data units (continuous axes),
+  # before training so the shifted positions stay in view. Any mark.
+  if (identical(L$position, "nudge")) {
+    return(.position_nudge(L))
+  }
   if (!L$mark %in% c("bar", "area")) {
     return(L)
   }
   if (L$position %in% c("stack", "fill") && !is.null(L$values$y)) {
     return(.position_stack(L, fill = identical(L$position, "fill")))
+  }
+  L
+}
+
+# Shift numeric x / y by the nudge amount (data units). A non-numeric (discrete)
+# axis is left untouched, since a data-unit shift has no meaning there.
+.position_nudge <- function(L) {
+  nx <- L$stat_params$nudge_x %||% 0
+  ny <- L$stat_params$nudge_y %||% 0
+  if (nx != 0 && is.numeric(L$values$x)) {
+    L$values$x <- L$values$x + nx
+  }
+  if (ny != 0 && is.numeric(L$values$y)) {
+    L$values$y <- L$values$y + ny
   }
   L
 }
