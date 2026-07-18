@@ -598,7 +598,7 @@ release.
   draw order. Edges are capped exactly at each endpoint's node boundary (per
   vertex, at any resolution), so arrowheads land on the node edge. `scale_edge_width()`
   maps a weight to edge width with its own legend.
-  `igraph` / `graphlayouts` are optional (`Suggests`). See `_docs/DESIGN-igraph.md`.
+  `igraph` / `graphlayouts` are optional (`Suggests`).
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
@@ -611,8 +611,7 @@ release.
   serializable row-key / scale-ref table — one record per grob tying it back to
   the data rows and trained scales that produced it — carried on the compiled
   scene as `attr(scene, "vellumplot_provenance")`. Populated on every compile;
-  additive metadata only (raster/PDF output is byte-for-byte unchanged). See
-  `_docs/DESIGN.md` §4.
+  additive metadata only (raster/PDF output is byte-for-byte unchanged).
 * **Continuous integration**: GitHub Actions run `R CMD check` (R
   release/devel/oldrel on Linux + macOS, with the Rust toolchain the `vellum`
   backend needs), including a nightly run against `vellum`'s `main` to catch
@@ -623,4 +622,4 @@ release.
 Reactivity, 2-D contour stats, and the algebraic `*` / `+` layer combinators.
 Independent *non-position* (colour/size) scales across facets are not yet
 supported (those legends stay shared). On the network side, community hulls and
-alternative idioms (arc/matrix/hive) are deferred (see `_docs/DESIGN-igraph.md`).
+alternative idioms (arc/matrix/hive) are deferred.
