@@ -43,6 +43,39 @@ test_that("trans='sqrt' transforms the map and is continuous", {
   expect_false(y$discrete)
 })
 
+test_that("trans='symlog' is symmetric, linear through zero, log in the tails", {
+  p <- vplot(data.frame(x = c(-100, -1, 0, 1, 100), y = 1:5)) |>
+    mark_point(x = x, y = y) |>
+    scale_x_continuous(trans = "symlog")
+  x <- train(p)$x
+  # sign(x) * log10(1 + |x|): zero stays put, and it is odd-symmetric
+  expect_equal(x$map(0), 0)
+  expect_equal(x$map(9), -x$map(-9))
+  # compresses the tails: 100 is far less than 100x the position of 1
+  expect_lt(x$map(100) / x$map(1), 10)
+  expect_false(x$discrete)
+})
+
+test_that("symlog breaks sit at zero and signed powers of ten within range", {
+  expect_equal(
+    vellumplot:::.symlog_breaks(c(-100, 100)),
+    c(-100, -10, -1, 0, 1, 10, 100)
+  )
+  expect_equal(vellumplot:::.symlog_breaks(c(0, 500)), c(0, 1, 10, 100))
+})
+
+test_that("a symlog axis reports its transform in the panel scales descriptor", {
+  s <- vellum::scene_model(
+    vellum::as_vellum_scene(
+      vplot(data.frame(x = c(-10, 0, 10), y = 1:3)) |>
+        mark_point(x = x, y = y) |>
+        scale_x_continuous(trans = "symlog")
+    )
+  )$panels
+  i <- match("panel-1-1", s$name)
+  expect_equal(s$meta[[i]]$scales$x$transform, "symlog")
+})
+
 test_that("trans='reverse' flips the axis via a decreasing domain", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>

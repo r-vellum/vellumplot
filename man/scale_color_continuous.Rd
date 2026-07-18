@@ -5,14 +5,17 @@
 \alias{scale_color_discrete}
 \alias{scale_color_manual}
 \alias{scale_color_gradient}
+\alias{scale_color_gradient2}
 \alias{scale_fill_continuous}
 \alias{scale_fill_discrete}
 \alias{scale_fill_manual}
 \alias{scale_fill_gradient}
+\alias{scale_fill_gradient2}
 \alias{scale_colour_continuous}
 \alias{scale_colour_discrete}
 \alias{scale_colour_manual}
 \alias{scale_colour_gradient}
+\alias{scale_colour_gradient2}
 \title{Colour scales}
 \usage{
 scale_color_continuous(
@@ -35,6 +38,15 @@ scale_color_manual(plot, values, name = NULL)
 
 scale_color_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 
+scale_color_gradient2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL
+)
+
 scale_fill_continuous(
   plot,
   palette = NULL,
@@ -55,6 +67,15 @@ scale_fill_manual(plot, values, name = NULL)
 
 scale_fill_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 
+scale_fill_gradient2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL
+)
+
 scale_colour_continuous(
   plot,
   palette = NULL,
@@ -74,6 +95,15 @@ scale_colour_discrete(
 scale_colour_manual(plot, values, name = NULL)
 
 scale_colour_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+
+scale_colour_gradient2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -89,7 +119,13 @@ case/space-insensitively). \code{NULL} uses a sensible default.}
 \item{values}{For \verb{scale_*_manual()}, a vector of colours; if named, matched to
 data levels by name (unmatched levels draw grey).}
 
-\item{low, high}{For \verb{scale_*_gradient()}, the endpoint colours.}
+\item{low, high}{For \verb{scale_*_gradient()}/\verb{scale_*_gradient2()}, the endpoint
+colours.}
+
+\item{mid}{For \verb{scale_*_gradient2()}, the midpoint colour.}
+
+\item{midpoint}{For \verb{scale_*_gradient2()}, the data value placed at \code{mid}
+(default \code{0}); values above and below diverge to \code{high} and \code{low}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -97,9 +133,11 @@ The modified \link{PlotSpec}.
 \description{
 Declare a colour scale for the \code{color}/\code{fill} channel. Continuous data get a
 perceptual ramp; discrete data get a qualitative palette. \verb{scale_*_manual()}
-sets exact colours, \verb{scale_*_gradient()} a two-point ramp. The \code{fill} variants
-are identical (colour and fill share one scale). A legend is drawn
-automatically when colour is mapped.
+sets exact colours, \verb{scale_*_gradient()} a two-point ramp, and
+\verb{scale_*_gradient2()} a diverging three-point ramp (\code{low}--\code{mid}--\code{high})
+centred on \code{midpoint} --- for signed or anomaly data where a meaningful zero
+should sit at the neutral colour. The \code{fill} variants are identical (colour and
+fill share one scale). A legend is drawn automatically when colour is mapped.
 }
 \details{
 Continuous and binned ramps built from a plain colour vector are interpolated

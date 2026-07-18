@@ -54,6 +54,18 @@ vplot(mtcars) |>
   scale_color_manual(values = c("4" = "#1b9e77", "6" = "#d95f02", "8" = "#7570b3"))
 ```
 
+For signed or anomaly data — where a value like zero is meaningfully neutral —
+`scale_color_gradient2()` (and `scale_fill_gradient2()`) draw a diverging ramp
+around a `midpoint`. It rescales *about* the midpoint, so the neutral `mid`
+colour always lands on that value even when the data range is lopsided:
+
+```{r}
+anom <- data.frame(x = 1:20, y = 1:20, resid = seq(-3, 6, length.out = 20))
+vplot(anom) |>
+  mark_point(x = x, y = y, color = resid, size = 3) |>
+  scale_color_gradient2(low = "#2166ac", mid = "grey90", high = "#b2182b", midpoint = 0)
+```
+
 Ramps built from a plain colour vector — a `scale_color_gradient(low, high)`, or a
 `palette` given as colours — are interpolated in the perceptually-uniform **Oklab**
 space, not sRGB, so the ramp and its colourbar read evenly instead of dipping
@@ -147,8 +159,8 @@ vplot(df) |>
 
 `scale_x_continuous()` and `scale_y_continuous()` control the axes. By default
 they train from the data with a small expansion; override them to set `limits`,
-apply a `trans` (`"log10"`, `"sqrt"`, `"reverse"`), or supply explicit `breaks`
-and `labels`. Categorical axes use `scale_x_discrete()` and
+apply a `trans` (`"log10"`, `"sqrt"`, `"symlog"`, `"reverse"`), or supply
+explicit `breaks` and `labels`. Categorical axes use `scale_x_discrete()` and
 `scale_y_discrete()`, whose `limits` set the order or subset of levels.
 
 ```{r}
@@ -156,6 +168,18 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   scale_y_continuous(limits = c(10, 35), breaks = seq(10, 35, 5)) |>
   scale_x_continuous(trans = "log10", name = "Weight (log scale)")
+```
+
+Where `"log10"` cannot go — data that crosses zero or spans positive and negative
+values over several orders of magnitude — `"symlog"` gives a symmetric-log axis:
+linear through zero, logarithmic in each tail, with ticks at zero and signed
+powers of ten.
+
+```{r}
+signed <- data.frame(v = c(-1000, -100, -10, 0, 10, 100, 1000), y = 1:7)
+vplot(signed) |>
+  mark_point(x = v, y = y) |>
+  scale_x_continuous(trans = "symlog")
 ```
 
 To set limits without spelling out a whole scale, use the shortcuts `xlim()`,

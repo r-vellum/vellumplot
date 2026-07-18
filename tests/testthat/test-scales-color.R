@@ -130,8 +130,11 @@ test_that("scale_color_manual / scale_fill_manual reject missing or bad values",
 test_that("a two-point continuous ramp blends perceptually (Oklab) by default", {
   withr::local_options(vellumplot.color.interpolation = NULL) # default
   df <- data.frame(x = 1:3, y = 1:3, z = c(0, 0.5, 1))
-  cl <- train(vplot(df) |> mark_point(x = x, y = y, color = z) |>
-    scale_color_gradient(low = "black", high = "white"))$color
+  cl <- train(
+    vplot(df) |>
+      mark_point(x = x, y = y, color = z) |>
+      scale_color_gradient(low = "black", high = "white")
+  )$color
   midR <- as.integer(grDevices::col2rgb(cl$pal256[128]))[1]
   # Oklab midpoint (~99, 50% perceived lightness) is clearly darker than the
   # sRGB code midpoint (~127).
@@ -141,7 +144,8 @@ test_that("a two-point continuous ramp blends perceptually (Oklab) by default", 
 
 test_that("options(vellumplot.color.interpolation='srgb') restores sRGB blending", {
   df <- data.frame(x = 1:3, y = 1:3, z = c(0, 0.5, 1))
-  p <- vplot(df) |> mark_point(x = x, y = y, color = z) |>
+  p <- vplot(df) |>
+    mark_point(x = x, y = y, color = z) |>
     scale_color_gradient(low = "black", high = "white")
   withr::local_options(vellumplot.color.interpolation = "srgb")
   midR <- as.integer(grDevices::col2rgb(train(p)$color$pal256[128]))[1]
@@ -150,17 +154,87 @@ test_that("options(vellumplot.color.interpolation='srgb') restores sRGB blending
 
 test_that("a designed perceptual palette (batlow default) is unchanged by the space", {
   base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
-  ok <- withr::with_options(list(vellumplot.color.interpolation = "oklab"), train(base)$color$pal256)
-  sr <- withr::with_options(list(vellumplot.color.interpolation = "srgb"), train(base)$color$pal256)
+  ok <- withr::with_options(
+    list(vellumplot.color.interpolation = "oklab"),
+    train(base)$color$pal256
+  )
+  sr <- withr::with_options(
+    list(vellumplot.color.interpolation = "srgb"),
+    train(base)$color$pal256
+  )
   expect_identical(ok, sr) # already 256 dense perceptual stops -> resample is a no-op
 })
 
 test_that("binned colour scales also use the perceptual ramp", {
   df <- data.frame(x = 1:20, y = 1:20, z = 1:20)
-  cl <- train(vplot(df) |> mark_point(x = x, y = y, color = z) |>
-    scale_color_binned(palette = c("black", "white"), n = 4))$color
+  cl <- train(
+    vplot(df) |>
+      mark_point(x = x, y = y, color = z) |>
+      scale_color_binned(palette = c("black", "white"), n = 4)
+  )$color
   expect_identical(cl$kind, "binned")
   # the middle class colour is perceptual, not the sRGB code-midpoint grey
   mids <- as.integer(grDevices::col2rgb(cl$colors[2]))[1]
   expect_lt(mids, 130L)
+})
+
+test_that("scale_color_gradient2 centres the mid colour on the midpoint", {
+  df <- data.frame(x = 1:5, y = 1:5, z = c(-2, -1, 0, 1, 2))
+  cl <- train(
+    vplot(df) |>
+      mark_point(x = x, y = y, color = z) |>
+      scale_color_gradient2(
+        low = "blue",
+        mid = "white",
+        high = "red",
+        midpoint = 0
+      )
+  )$color
+  expect_equal(cl$midpoint, 0)
+  # the midpoint value maps to ~white; the extremes to ~blue / ~red
+  mid_rgb <- as.integer(grDevices::col2rgb(cl$map(0)))
+  expect_true(all(mid_rgb > 240L))
+  lo <- as.integer(grDevices::col2rgb(cl$map(-2)))
+  hi <- as.integer(grDevices::col2rgb(cl$map(2)))
+  expect_gt(lo[3], lo[1]) # blue dominates the low end
+  expect_gt(hi[1], hi[3]) # red dominates the high end
+})
+
+test_that("gradient2 rescales about the midpoint, not the data centre", {
+  # asymmetric range about 0: the midpoint colour must still land on value 0,
+  # not on the data mean (which is positive here).
+  df <- data.frame(x = 1:4, y = 1:4, z = c(-1, 2, 4, 8))
+  cl <- train(
+    vplot(df) |>
+      mark_point(x = x, y = y, color = z) |>
+      scale_color_gradient2(low = "blue", mid = "white", high = "red")
+  )$color
+  mid_rgb <- as.integer(grDevices::col2rgb(cl$map(0)))
+  expect_true(all(mid_rgb > 240L)) # value 0 is still ~white
+})
+
+test_that("scale_fill_gradient2 mirrors the colour version", {
+  df <- data.frame(x = 1:3, y = 1:3, z = c(-1, 0, 1))
+  cl <- train(
+    vplot(df) |>
+      mark_tile(x = x, y = y, fill = z) |>
+      scale_fill_gradient2(midpoint = 0)
+  )$color
+  expect_equal(cl$midpoint, 0)
+})
+
+test_that("a diverging colorbar reports midpoint in its descriptor", {
+  df <- data.frame(x = 1:5, y = 1:5, z = c(-2, -1, 0, 1, 2))
+  bars <- vellum::scene_model(
+    vellum::as_vellum_scene(
+      vplot(df) |>
+        mark_point(x = x, y = y, color = z) |>
+        scale_color_gradient2(midpoint = 0)
+    )
+  )$elements
+  metas <- bars$meta[!vapply(bars$meta, is.null, logical(1))]
+  cbars <- Filter(function(m) !is.null(m$colorbar), metas)
+  expect_gt(length(cbars), 0)
+  expect_true(isTRUE(cbars[[1]]$colorbar$diverging))
+  expect_equal(cbars[[1]]$colorbar$midpoint, 0)
 })

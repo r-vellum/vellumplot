@@ -149,6 +149,21 @@ NULL
   )
 }
 
+# Breaks for a symlog axis: zero plus signed powers of ten (1, 10, 100, ...) that
+# fall inside the data range. Falls back to a small symmetric set for a degenerate
+# range. Breaks are in DATA units (the registry transforms them to positions).
+.symlog_breaks <- function(rng) {
+  hi <- max(abs(rng))
+  if (!is.finite(hi) || hi <= 0) {
+    brks <- c(-1, 0, 1)
+  } else {
+    p <- floor(log10(hi))
+    pos <- 10^(0:max(p, 0))
+    brks <- sort(unique(c(0, pos, -pos)))
+  }
+  brks[brks >= rng[1] & brks <= rng[2]]
+}
+
 # Continuous position transforms. Each is `(transform, inverse, breaks, format)`:
 # `transform` maps data -> native (viewport) units; `breaks` generates breaks in
 # DATA units (then transformed to positions); `format` labels them. Kept as a
@@ -168,6 +183,16 @@ NULL
   sqrt = list(
     transform = function(x) sqrt(x),
     breaks = function(rng) scales::breaks_extended()(rng),
+    format = function(b) .label_number_default(b)
+  ),
+  # Symmetric log ("symlog"): linear through zero, logarithmic in the tails, so
+  # signed data spanning several orders of magnitude (and zero/negatives, which
+  # log10 cannot show) reads on one axis. `sign(x) * log10(1 + |x|)` -- near zero
+  # this is ~ x/ln(10) (linear), and for large |x| it is ~ sign(x)*log10(|x|).
+  # Breaks sit at 0 and signed powers of ten within range.
+  symlog = list(
+    transform = function(x) sign(x) * log10(1 + abs(x)),
+    breaks = function(rng) .symlog_breaks(rng),
     format = function(b) .label_number_default(b)
   ),
   # Reverse keeps the data mapping as identity and instead flips the trained
@@ -223,14 +248,18 @@ NULL
 # data identically and flips the (native) domain, so a host treats it as identity.
 .trans_name <- function(scalespec) {
   tr <- if (!is.null(scalespec)) scalespec@trans else NULL
-  if (is.null(tr) && !is.null(scalespec) && identical(scalespec@type, "log10")) {
+  if (
+    is.null(tr) && !is.null(scalespec) && identical(scalespec@type, "log10")
+  ) {
     return("log10")
   }
   tr <- tr %||% "identity"
   if (is.character(tr)) {
     return(if (tr %in% names(.TRANSFORMS)) tr else "identity")
   }
-  if (identical(tr$name, "reverse")) return("reverse")
+  if (identical(tr$name, "reverse")) {
+    return("reverse")
+  }
   tr$name %||% "identity"
 }
 
@@ -511,8 +540,10 @@ NULL
     # since 1970). `transform` is identity (values are `as.numeric()` epochs).
     type <- "continuous"
     trans_name <- "identity"
-    time_unit <- if (inherits(raw, "POSIXct") ||
-                     (!is.null(scalespec) && scalespec@type %in% c("datetime", "time"))) {
+    time_unit <- if (
+      inherits(raw, "POSIXct") ||
+        (!is.null(scalespec) && scalespec@type %in% c("datetime", "time"))
+    ) {
       "second"
     } else {
       "day"
@@ -702,6 +733,9 @@ NULL
   }
   user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
   user_labels <- if (!is.null(scalespec)) scalespec@labels else NULL
+  # Diverging continuous scale: the data value that sits at the ramp's midpoint
+  # colour (scale_*_gradient2()). NULL for an ordinary single-ended ramp.
+  midpoint <- if (!is.null(scalespec)) scalespec@midpoint else NULL
 
   # Colour for NA-valued features (choropleth "no data"), and whether any pooled
   # value was actually NA (so the guide shows a distinct NA swatch).
@@ -773,10 +807,24 @@ NULL
       rng <- rng + c(-0.5, 0.5)
     }
     pal256 <- .ramp_pal(.continuous_stops(pal), 256)
-    # Quantize to <=256 bins so the mark style-grouping stays bounded.
-    bin <- function(x) {
-      i <- floor(scales::rescale(x, to = c(0, 255), from = rng)) + 1L
-      pmin(pmax(i, 1L), 256L)
+    # Quantize to <=256 bins so the mark style-grouping stays bounded. A diverging
+    # scale (midpoint set) rescales *about the midpoint* so the neutral `mid`
+    # colour (bin ~128) lands on `midpoint`, and each side spans as far as the
+    # data reaches on that side -- `scales::rescale_mid`, matching ggplot2's
+    # scale_*_gradient2().
+    bin <- if (is.null(midpoint)) {
+      function(x) {
+        i <- floor(scales::rescale(x, to = c(0, 255), from = rng)) + 1L
+        pmin(pmax(i, 1L), 256L)
+      }
+    } else {
+      function(x) {
+        i <- floor(
+          scales::rescale_mid(x, to = c(0, 255), from = rng, mid = midpoint)
+        ) +
+          1L
+        pmin(pmax(i, 1L), 256L)
+      }
     }
     map <- function(x) {
       out <- pal256[bin(x)]
@@ -800,6 +848,7 @@ NULL
       name = title,
       range = rng,
       pal256 = pal256,
+      midpoint = midpoint,
       legend_breaks = lbrk,
       legend_labels = llab %||% .label_number_default(lbrk),
       na = has_na,

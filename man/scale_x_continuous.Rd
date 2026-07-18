@@ -39,7 +39,9 @@ for discrete scales a character vector of levels (sets order / subset).
 \code{NULL} trains from the data.}
 
 \item{trans}{Transformation: \code{"identity"} (default), \code{"log10"}, \code{"sqrt"},
-\code{"reverse"}, or a \code{\link[scales:transform_log10]{scales::transform_log10()}}-style transform object.}
+\code{"symlog"} (symmetric log --- linear through zero, logarithmic in the tails,
+so signed data and zero/negatives read on one axis), \code{"reverse"}, or a
+\code{\link[scales:transform_log10]{scales::transform_log10()}}-style transform object.}
 
 \item{breaks, labels}{Explicit break positions (data units) and their labels,
 or \code{NULL} to compute them.}

@@ -154,6 +154,7 @@ ScaleSpec <- S7::new_class(
     style = S7::new_property(S7::class_any, default = NULL), # binned: classInt style
     n = S7::new_property(S7::class_any, default = NULL), # binned: class count
     na_value = S7::new_property(S7::class_any, default = NULL), # colour for NA values
+    midpoint = S7::new_property(S7::class_any, default = NULL), # diverging colour: value at the ramp's midpoint
     date_breaks = S7::new_property(S7::class_any, default = NULL), # date/time: interval string
     date_labels = S7::new_property(S7::class_any, default = NULL), # date/time: format string
     guide = S7::new_property(S7::class_any, default = NULL), # "none"/guide spec (legend control)
