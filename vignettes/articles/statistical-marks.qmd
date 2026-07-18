@@ -220,6 +220,25 @@ vplot(faithful) |>
   mark_dotplot(x = waiting)
 ```
 
+## Uncertainty: half-eyes and intervals
+
+When each `x` category has *many* draws — posterior samples, a bootstrap — the
+\pkg{ggdist}-style marks show the distribution's shape and its summary intervals
+together. `mark_halfeye()` draws a one-sided density slab with a point-interval
+at its base (the median, a thick inner interval, a thin outer one);
+`mark_interval()` is the point-interval alone. Set the interval probabilities
+with `.width`.
+
+```{r}
+set.seed(1)
+draws <- data.frame(
+  model = rep(c("prior", "posterior", "pooled"), each = 800),
+  estimate = rnorm(2400, rep(c(0, 1.5, 1), each = 800), rep(c(1, 0.5, 0.7), each = 800))
+)
+vplot(draws) |>
+  mark_halfeye(x = model, y = estimate, .width = c(0.66, 0.95))
+```
+
 ## 2-D density contours
 
 `mark_contour()` estimates the 2-D density of a point cloud and draws its
