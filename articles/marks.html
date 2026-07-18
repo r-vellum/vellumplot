@@ -289,17 +289,30 @@
 </div>
 </div>
 </div>
+<p>For polar plots generally, <code><a href="../reference/coord_polar.html">coord_radial()</a></code> extends <code><a href="../reference/coord_polar.html">coord_polar()</a></code> with a central hole (<code>inner.radius</code>) and a partial <code>start</code>–<code>end</code> arc — e.g. a semicircular coxcomb:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/coord_polar.html">coord_radial</a></span><span class="op">(</span>theta <span class="op">=</span> <span class="st">"x"</span>, start <span class="op">=</span> <span class="op">-</span><span class="va">pi</span> <span class="op">/</span> <span class="fl">2</span>, end <span class="op">=</span> <span class="va">pi</span> <span class="op">/</span> <span class="fl">2</span>, inner.radius <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="marks_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
 </section><section class="level2"><h2 id="layering-is-the-point">Layering is the point<a class="anchor" aria-label="anchor" href="#layering-is-the-point"></a>
 </h2>
 <p>Because scales train across every layer, mixing marks on one panel works. Here a point cloud and a fitted line share the same trained <code>x</code> and <code>y</code> axes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_histogram.html">mark_smooth</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, method <span class="op">=</span> <span class="st">"lm"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="marks_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
+<figure><p><img src="marks_files/figure-html/unnamed-chunk-15-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>

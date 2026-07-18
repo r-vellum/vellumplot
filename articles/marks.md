@@ -242,6 +242,22 @@ vplot(parts) |>
 
 ![](marks_files/figure-html/unnamed-chunk-13-1.png)
 
+For polar plots generally,
+[`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+extends
+[`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+with a central hole (`inner.radius`) and a partial `start`–`end` arc —
+e.g. a semicircular coxcomb:
+
+``` r
+
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl), fill = factor(cyl)) |>
+  coord_radial(theta = "x", start = -pi / 2, end = pi / 2, inner.radius = 0.2)
+```
+
+![](marks_files/figure-html/unnamed-chunk-14-1.png)
+
 ## Layering is the point
 
 Because scales train across every layer, mixing marks on one panel
@@ -255,7 +271,7 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, method = "lm")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-14-1.png)
+![](marks_files/figure-html/unnamed-chunk-15-1.png)
 
 From here:
 

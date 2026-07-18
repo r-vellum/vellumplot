@@ -12,10 +12,25 @@ With `theta = "y"` a stacked bar becomes a pie (see also the
 shortcuts). The panel is locked to a square. Lines, areas, and ribbons
 are interpolated into smooth arcs.
 
+`coord_radial()` is a fuller polar system (ggplot2 3.5's name): besides
+`theta`/`start`/`direction` it takes `end` to sweep only a **partial
+arc** (e.g. a half-circle gauge) and `inner.radius` to open a **donut
+hole**. With `end = NULL` and `inner.radius = 0` it is identical to
+`coord_polar()`.
+
 ## Usage
 
 ``` r
 coord_polar(plot, theta = "x", start = 0, direction = 1)
+
+coord_radial(
+  plot,
+  theta = "x",
+  start = 0,
+  end = NULL,
+  direction = 1,
+  inner.radius = 0
+)
 ```
 
 ## Arguments
@@ -39,6 +54,17 @@ coord_polar(plot, theta = "x", start = 0, direction = 1)
   Winding direction: `1` for clockwise (default), `-1` for
   counter-clockwise.
 
+- end:
+
+  Arc end angle in radians; `NULL` (default) sweeps a full turn from
+  `start`. Set it for a partial arc — e.g. `start = -pi/2, end = pi/2`
+  for a semicircular gauge.
+
+- inner.radius:
+
+  Radius of the central hole as a fraction of the outer radius
+  (`0`–`1`); `0` (default) is a filled disc, `> 0` a donut/ring.
+
 ## Value
 
 The modified
@@ -53,4 +79,8 @@ The modified
 
 ``` r
 vplot(mtcars) |> mark_bar(x = factor(cyl)) |> coord_polar(theta = "x")
+
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl)) |>
+  coord_radial(theta = "x", inner.radius = 0.3)
 ```

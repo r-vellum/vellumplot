@@ -129,6 +129,7 @@ Map data values to visual properties, with trained domains and guides.
 - [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
   : Shape scale
 - [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  [`scale_size_area()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
   : Size scale
 - [`scale_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
   [`scale_alpha_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
@@ -170,6 +171,7 @@ Map data values to visual properties, with trained domains and guides.
 - [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
   : Transformed coordinate system
 - [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
   : Polar coordinates
 - [`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md)
   : Map coordinate system
