@@ -76,6 +76,7 @@ Collate:
     'provenance.R'
     'reexports.R'
     'repeat.R'
+    'repel.R'
     'scales.R'
     'scales-binned.R'
     'vgraph.R'

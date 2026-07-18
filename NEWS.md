@@ -1,5 +1,16 @@
 # vellumplot (development version)
 
+* **Label repulsion: `mark_text(repel = TRUE)` / `mark_label(repel = TRUE)`.**
+  Overlapping text labels are moved apart with a force-directed layout
+  (ggrepel-style), each keeping a thin leader line back to its point. Because the
+  plot size is fixed on the spec, the repulsion is resolved *exactly* against the
+  true rendered panel — a two-pass compile that reads the panel's device geometry
+  from `vellum::scene_model()`, relaxes the label boxes in pixel space, and maps
+  the result back — so it needs no approximation and no `vellum` change, and is
+  deterministic under `seed`. Tunable via `box_padding`, `point_padding`,
+  `min_segment_length`, and `seed`. Limited to a single cartesian panel for now
+  (facets / composition / polar error clearly).
+
 * **`mark_line(window = )`: rolling / cumulative / offset transforms.** A line can
   now transform its `y` per group (over rows ordered by `x`) before drawing —
   moving `mean`/`sum`/`median`/`min`/`max` over a window of `k`, running

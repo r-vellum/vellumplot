@@ -16,6 +16,12 @@ mark_text(
   angle = NULL,
   nudge_x = 0,
   nudge_y = 0,
+  repel = FALSE,
+  box_padding = 1,
+  point_padding = 1,
+  min_segment_length = 2,
+  max_overlaps = 10,
+  seed = NULL,
   blend = NULL,
   data = NULL
 )
@@ -32,6 +38,12 @@ mark_label(
   nudge_x = 0,
   nudge_y = 0,
   fill = "white",
+  repel = FALSE,
+  box_padding = 1,
+  point_padding = 1,
+  min_segment_length = 2,
+  max_overlaps = 10,
+  seed = NULL,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -55,6 +67,20 @@ mark_label(
 \item{nudge_x, nudge_y}{Shift each label by an exact absolute distance in
 millimetres (\code{+x} right, \code{+y} up), device-resolved so the nudge is constant
 regardless of scale or panel aspect. Default \code{0}.}
+
+\item{repel}{Move overlapping labels apart (force-directed, ggrepel-style),
+with leader lines to the points? Single cartesian panel only.}
+
+\item{box_padding, point_padding}{Extra space (mm) kept around each label box
+and around each anchor point during repulsion.}
+
+\item{min_segment_length}{Shortest leader line (mm) worth drawing; a label
+that barely moved gets none.}
+
+\item{max_overlaps}{Reserved for a future overlap cap (currently unused).}
+
+\item{seed}{Integer seed making the repel layout reproducible (the global RNG
+stream is restored afterwards).}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
@@ -84,6 +110,12 @@ The \code{label} for \code{mark_text()} may be plain text (embedded newlines \ve
 onto stacked lines) or rich \code{\link[vellum:md]{vellum::md()}} labels — map \verb{label = md(<expr>)}
 for a per-datum styled label (bold/italic/super-/subscript/colour). (Rich
 labels are not yet supported by \code{mark_label()}'s background box.)
+
+Set \code{repel = TRUE} to move overlapping labels apart with a force-directed
+layout (like ggrepel), drawing a thin leader line back to each label's point.
+Repulsion is resolved exactly against the true rendered panel size, so it does
+not depend on the data scale. It is currently limited to a single cartesian
+panel (no facets / composition / polar).
 }
 \examples{
 vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
