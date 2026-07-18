@@ -111,9 +111,9 @@ vplot(mtcars) |>
 ## Smooths
 
 [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
-fits a model of `y` on `x` (`method = "lm"`) and draws the fitted line
-with a confidence ribbon when `se = TRUE`. It layers naturally over the
-raw points.
+fits a model of `y` on `x` (per group) and draws the fitted line with a
+confidence ribbon when `se = TRUE`. It layers naturally over the raw
+points.
 
 ``` r
 
@@ -123,6 +123,21 @@ vplot(mtcars) |>
 ```
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-8-1.png)
+
+The `method` chooses the fit: `"lm"` (linear), `"loess"` (local
+regression, with `span` controlling the neighbourhood), `"glm"` (a
+`family` via `method.args`, e.g. logistic), `"gam"` (a penalised smooth,
+needs ), and `"rq"` (quantile regression, needs ). The default `"auto"`
+picks `loess` for small groups and `gam` for large ones.
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg, method = "loess", span = 0.9)
+```
+
+![](statistical-marks_files/figure-html/unnamed-chunk-9-1.png)
 
 ## Distributions
 
@@ -137,7 +152,7 @@ vplot(penguins) |>
   mark_ecdf(x = bill_len, color = species)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-9-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-10-1.png)
 
 [`mark_qq()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
 plots the sorted `sample` against the quantiles of a reference
@@ -153,7 +168,7 @@ vplot(mtcars) |>
   mark_qq_line(sample = mpg)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-10-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-11-1.png)
 
 [`mark_rug()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
 adds marginal ticks at each observation, a compact companion to a
@@ -167,7 +182,7 @@ vplot(faithful) |>
   mark_rug()
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-11-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-12-1.png)
 
 ## Density shapes
 
@@ -181,7 +196,7 @@ vplot(penguins) |>
   mark_violin(x = species, y = bill_len, fill = species)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-12-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-13-1.png)
 
 [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
 turns that on its side: a density of `x` per categorical `y`, with the
@@ -194,7 +209,7 @@ vplot(penguins) |>
   mark_ridgeline(x = bill_len, y = species, fill = species)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-13-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-14-1.png)
 
 [`mark_dotplot()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
 bins `x` and stacks one dot per observation, so the height of each stack
@@ -206,7 +221,7 @@ vplot(faithful) |>
   mark_dotplot(x = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-14-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-15-1.png)
 
 ## 2-D density contours
 
@@ -224,7 +239,7 @@ vplot(faithful) |>
   mark_contour(x = eruptions, y = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-15-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-16-1.png)
 
 ``` r
 
@@ -232,7 +247,7 @@ vplot(faithful) |>
   mark_contour_filled(x = eruptions, y = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-16-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-17-1.png)
 
 The density estimate uses
 [`MASS::kde2d()`](https://rdrr.io/pkg/MASS/man/kde2d.html); tune the
@@ -247,7 +262,7 @@ grid$z <- with(grid, dnorm(x) * dnorm(y))
 vplot(grid) |> mark_contour(x = x, y = y, z = z)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-17-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-18-1.png)
 
 Contour tracing needs the `isoband` package (and `MASS` for the density
 estimate).
@@ -266,7 +281,7 @@ vplot(faithful) |>
   mark_histogram(x = waiting, bins = 25, fill = after_stat(density))
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-18-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-19-1.png)
 
 Because the aesthetic is now driven by a computed value, its scale
 trains on that value like any other, and you get the matching legend.
@@ -291,7 +306,7 @@ vplot(big) |>
   mark_datashade(x = y, y = x, how = "eq_hist")
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-19-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-20-1.png)
 
 Here `how = "eq_hist"` uses histogram equalisation so both dense and
 sparse regions stay visible; the grid resolution is set by `width` and
@@ -309,7 +324,7 @@ vplot(big) |>
   mark_datashade(x = y, y = x, color = g)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-20-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-21-1.png)
 
 [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
 also has an `auto = TRUE` switch that falls back to a datashaded raster

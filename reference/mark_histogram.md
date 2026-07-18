@@ -2,8 +2,8 @@
 
 Marks that apply a statistical transform before drawing.
 `mark_histogram()` bins a continuous `x` and draws the per-bin counts as
-bars. `mark_smooth()` fits a model (`"lm"` for now) of `y` on `x` and
-draws the fitted line, with a confidence ribbon when `se = TRUE`.
+bars. `mark_smooth()` fits a model of `y` on `x` (per group) and draws
+the fitted line, with a confidence ribbon when `se = TRUE`.
 
 ## Usage
 
@@ -21,9 +21,12 @@ mark_histogram(
 mark_smooth(
   plot,
   ...,
-  method = "lm",
+  method = "auto",
+  formula = NULL,
+  span = 0.75,
   se = TRUE,
   level = 0.95,
+  method.args = list(),
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -75,20 +78,56 @@ mark_smooth(
 
 - method:
 
-  Smoothing method; `"lm"` (linear) for now.
+  Smoothing method: one of `"auto"`, `"lm"`, `"loess"`, `"glm"`,
+  `"gam"`, `"rq"`.
+
+- formula:
+
+  Model formula in terms of `x` and `y` (e.g. `y ~ poly(x, 2)`,
+  `y ~ s(x)` for `gam`). Defaults to `y ~ x` (`y ~ s(x)` for `gam`).
+
+- span:
+
+  `loess` neighbourhood size (larger = smoother).
 
 - se:
 
-  Draw a confidence ribbon around the smooth?
+  Draw a confidence ribbon around the smooth? Ignored for `"rq"`.
 
 - level:
 
   Confidence level for the ribbon.
 
+- method.args:
+
+  Extra arguments to the fitting function, e.g.
+  `list(family = binomial())` for `glm`, or `list(tau = 0.9)` for `rq`.
+
 ## Value
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## Details
+
+`mark_smooth()` supports several `method`s:
+
+- `"auto"` (default) picks `"loess"` for small groups (\< 1000 points)
+  and `"gam"` for large ones.
+
+- `"lm"` / `"glm"` — linear and generalised linear fits (`glm` takes a
+  `family` via `method.args`, e.g.
+  [`binomial()`](https://rdrr.io/r/stats/family.html) for logistic).
+
+- `"loess"` — local regression, controlled by `span`.
+
+- `"gam"` — a generalised additive model with a smooth term (default
+  `y ~ s(x)`); needs the mgcv package.
+
+- `"rq"` — quantile regression at a single `method.args$tau` (default
+  the median); needs the quantreg package and draws the fitted line only
+  (no confidence ribbon). For several quantiles, add one layer per
+  `tau`.
 
 ## Examples
 
@@ -96,4 +135,9 @@ The modified
 vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
 
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg)
+
+# local regression with a wider neighbourhood
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg, method = "loess", span = 0.9)
 ```
