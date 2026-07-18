@@ -1,5 +1,20 @@
 # vellumplot (development version)
 
+* **Diverging colour scales: `scale_color_gradient2()` / `scale_fill_gradient2()`.**
+  A three-point ramp (`low`--`mid`--`high`) centred on `midpoint` (default `0`),
+  rescaled *about the midpoint* (`scales::rescale_mid`) so the neutral colour sits
+  on the chosen value and each side spans as far as the data reaches — the correct
+  scale for signed / anomaly data. A diverging continuous colorbar also reports
+  `midpoint` + `diverging` in its `colorbar` descriptor, so an interactive host can
+  centre a value-range filter on the neutral value.
+
+* **`symlog` position transform.** `scale_x_continuous(trans = "symlog")` (and
+  `y`) adds a symmetric-log axis: linear through zero, logarithmic in the tails
+  (`sign(x) · log10(1 + |x|)`), so signed data spanning several orders of magnitude
+  — including zero and negatives, which `log10` cannot show — reads on one axis.
+  Breaks sit at zero and signed powers of ten. The transform name flows into the
+  panel `scales` descriptor like the other transforms.
+
 * **New group-region marks: `mark_ellipse()` and `mark_hull()`.** Both enclose a
   set of `(x, y)` points in a single region drawn over a scatter — one region per
   group when a `color`/`fill` is mapped. `mark_ellipse()` draws a covariance

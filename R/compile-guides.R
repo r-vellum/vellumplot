@@ -1173,14 +1173,21 @@ NULL
 # `colorbar` descriptor a host reads (with the rect's device-px bbox from
 # `scene_model()`) to overlay an interactive value-range filter. `orientation` is
 # "v"/"h"; `reverse` flags a reversed bar (high value at the low-position end).
+# A diverging scale (scale_*_gradient2()) also reports `midpoint` + `diverging`,
+# so a host can centre a value-range filter (visualMap) on the neutral value.
 .colorbar_meta <- function(cl, revb, orientation) {
-  list(list(colorbar = list(
+  desc <- list(
     aesthetic = "color",
     lo = as.numeric(cl$range[1]),
     hi = as.numeric(cl$range[2]),
     orientation = orientation,
     reverse = isTRUE(revb)
-  )))
+  )
+  if (!is.null(cl$midpoint)) {
+    desc$diverging <- TRUE
+    desc$midpoint <- as.numeric(cl$midpoint)
+  }
+  list(list(colorbar = desc))
 }
 
 .draw_guide_continuous_v <- function(scene, g, m, rt, txt, th) {

@@ -50,7 +50,8 @@ NULL
   palette,
   breaks,
   labels,
-  name
+  name,
+  midpoint = NULL
 ) {
   .check_plot(plot)
   .add_scale(
@@ -61,7 +62,8 @@ NULL
       palette = palette,
       breaks = breaks,
       labels = labels,
-      name = name
+      name = name,
+      midpoint = midpoint
     )
   )
 }
@@ -78,7 +80,9 @@ NULL
 #'   for discrete scales a character vector of levels (sets order / subset).
 #'   `NULL` trains from the data.
 #' @param trans Transformation: `"identity"` (default), `"log10"`, `"sqrt"`,
-#'   `"reverse"`, or a [scales::transform_log10()]-style transform object.
+#'   `"symlog"` (symmetric log --- linear through zero, logarithmic in the tails,
+#'   so signed data and zero/negatives read on one axis), `"reverse"`, or a
+#'   [scales::transform_log10()]-style transform object.
 #' @param breaks,labels Explicit break positions (data units) and their labels,
 #'   or `NULL` to compute them.
 #' @param name Axis title, or `NULL` to derive from the encoding.
@@ -519,9 +523,11 @@ ylim <- function(plot, ...) {
 #'
 #' Declare a colour scale for the `color`/`fill` channel. Continuous data get a
 #' perceptual ramp; discrete data get a qualitative palette. `scale_*_manual()`
-#' sets exact colours, `scale_*_gradient()` a two-point ramp. The `fill` variants
-#' are identical (colour and fill share one scale). A legend is drawn
-#' automatically when colour is mapped.
+#' sets exact colours, `scale_*_gradient()` a two-point ramp, and
+#' `scale_*_gradient2()` a diverging three-point ramp (`low`--`mid`--`high`)
+#' centred on `midpoint` --- for signed or anomaly data where a meaningful zero
+#' should sit at the neutral colour. The `fill` variants are identical (colour and
+#' fill share one scale). A legend is drawn automatically when colour is mapped.
 #'
 #' Continuous and binned ramps built from a plain colour vector are interpolated
 #' in the perceptually-uniform **Oklab** space, so they avoid the muddy, over-dark
@@ -536,7 +542,11 @@ ylim <- function(plot, ...) {
 #'   case/space-insensitively). `NULL` uses a sensible default.
 #' @param values For `scale_*_manual()`, a vector of colours; if named, matched to
 #'   data levels by name (unmatched levels draw grey).
-#' @param low,high For `scale_*_gradient()`, the endpoint colours.
+#' @param low,high For `scale_*_gradient()`/`scale_*_gradient2()`, the endpoint
+#'   colours.
+#' @param mid For `scale_*_gradient2()`, the midpoint colour.
+#' @param midpoint For `scale_*_gradient2()`, the data value placed at `mid`
+#'   (default `0`); values above and below diverge to `high` and `low`.
 #' @param breaks,labels Explicit legend breaks / labels, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
 #' @return The modified [PlotSpec].
@@ -596,6 +606,28 @@ scale_color_gradient <- function(
 
 #' @rdname scale_color_continuous
 #' @export
+scale_color_gradient2 <- function(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL
+) {
+  .colour_scale(
+    plot,
+    "color",
+    "continuous",
+    c(low, mid, high),
+    NULL,
+    NULL,
+    name,
+    midpoint = midpoint
+  )
+}
+
+#' @rdname scale_color_continuous
+#' @export
 scale_fill_continuous <- function(
   plot,
   palette = NULL,
@@ -636,6 +668,28 @@ scale_fill_gradient <- function(
   .colour_scale(plot, "fill", "continuous", c(low, high), NULL, NULL, name)
 }
 
+#' @rdname scale_color_continuous
+#' @export
+scale_fill_gradient2 <- function(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL
+) {
+  .colour_scale(
+    plot,
+    "fill",
+    "continuous",
+    c(low, mid, high),
+    NULL,
+    NULL,
+    name,
+    midpoint = midpoint
+  )
+}
+
 # British-spelling aliases: `colour` is honoured everywhere `color` is (the
 # `mark_*()` encodings, `labs()`, `element_*()`), so the scale constructors take
 # the alias too.
@@ -654,6 +708,10 @@ scale_colour_manual <- scale_color_manual
 #' @rdname scale_color_continuous
 #' @export
 scale_colour_gradient <- scale_color_gradient
+
+#' @rdname scale_color_continuous
+#' @export
+scale_colour_gradient2 <- scale_color_gradient2
 
 #' Size scale
 #'
