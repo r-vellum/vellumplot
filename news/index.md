@@ -2,6 +2,21 @@
 
 ## vellumplot (development version)
 
+- **New group-region marks:
+  [`mark_ellipse()`](https://r-vellum.github.io/vellumplot/reference/mark_ellipse.md)
+  and
+  [`mark_hull()`](https://r-vellum.github.io/vellumplot/reference/mark_ellipse.md).**
+  Both enclose a set of `(x, y)` points in a single region drawn over a
+  scatter — one region per group when a `color`/`fill` is mapped.
+  [`mark_ellipse()`](https://r-vellum.github.io/vellumplot/reference/mark_ellipse.md)
+  draws a covariance ellipse (`type = "t"` robust default via , or
+  `"norm"`/`"euclid"`), following ggplot2’s `stat_ellipse()`;
+  [`mark_hull()`](https://r-vellum.github.io/vellumplot/reference/mark_ellipse.md)
+  draws the convex hull. Both are unfilled boundaries by default
+  (map/set a `fill` to shade them) and need at least 3 points per group.
+  The region’s boundary trains the position scales, so an ellipse that
+  bulges past the data is not clipped.
+
 - **[`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
   gains real smoothing methods.** Beyond `"lm"`, the smooth mark now
   fits `"loess"` (local regression, `span =`), `"glm"` (with a `family`

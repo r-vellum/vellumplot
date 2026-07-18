@@ -350,6 +350,9 @@ Layers that draw data. Scales train across every mark on the panel.
   [`mark_qq()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
   [`mark_qq_line()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
   : Distribution marks
+- [`mark_ellipse()`](https://r-vellum.github.io/vellumplot/reference/mark_ellipse.md)
+  [`mark_hull()`](https://r-vellum.github.io/vellumplot/reference/mark_ellipse.md)
+  : Group summary regions
 - [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   [`mark_raster()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   [`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
