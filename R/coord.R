@@ -18,6 +18,7 @@ CoordSpec <- S7::new_class(
     ratio = S7::new_property(S7::class_any, default = NULL),
     theta = S7::new_property(S7::class_character, default = "x"),
     start = S7::new_property(S7::class_double, default = 0),
+    end = S7::new_property(S7::class_any, default = NULL), # polar/radial arc end angle (rad); NULL = full circle
     direction = S7::new_property(S7::class_double, default = 1),
     rmin = S7::new_property(S7::class_double, default = 0),
     crs = S7::new_property(S7::class_any, default = NULL), # coord_sf target CRS
@@ -48,7 +49,10 @@ CoordSpec <- S7::new_class(
   dir <- co@direction
   tdom <- tsc$domain
   rdom <- rsc$domain
-  ang_frac <- function(frac) pi / 2 - dir * (start + 2 * pi * frac)
+  # Angular sweep: a full turn (coord_polar), or `end - start` for a partial arc
+  # (coord_radial(end=), e.g. a half-circle gauge).
+  sweep <- if (is.null(co@end)) 2 * pi else (co@end - start)
+  ang_frac <- function(frac) pi / 2 - dir * (start + sweep * frac)
   list(
     theta_aes = theta_aes,
     start = start,
@@ -248,6 +252,51 @@ coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
     theta = theta,
     start = as.double(start),
     direction = as.double(direction)
+  )
+  plot
+}
+
+#' @rdname coord_polar
+#'
+#' @description
+#' `coord_radial()` is a fuller polar system (ggplot2 3.5's name): besides
+#' `theta`/`start`/`direction` it takes `end` to sweep only a **partial arc**
+#' (e.g. a half-circle gauge) and `inner.radius` to open a **donut hole**. With
+#' `end = NULL` and `inner.radius = 0` it is identical to `coord_polar()`.
+#'
+#' @param end Arc end angle in radians; `NULL` (default) sweeps a full turn from
+#'   `start`. Set it for a partial arc — e.g. `start = -pi/2, end = pi/2` for a
+#'   semicircular gauge.
+#' @param inner.radius Radius of the central hole as a fraction of the outer
+#'   radius (`0`–`1`); `0` (default) is a filled disc, `> 0` a donut/ring.
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_bar(x = factor(cyl)) |>
+#'   coord_radial(theta = "x", inner.radius = 0.3)
+#' @export
+coord_radial <- function(
+  plot,
+  theta = "x",
+  start = 0,
+  end = NULL,
+  direction = 1,
+  inner.radius = 0
+) {
+  .check_plot(plot)
+  theta <- rlang::arg_match0(theta, c("x", "y"))
+  if (!direction %in% c(1, -1)) {
+    cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
+  }
+  if (inner.radius < 0 || inner.radius >= 1) {
+    cli::cli_abort("{.arg inner.radius} must be in {.code [0, 1)}.")
+  }
+  plot@coord <- CoordSpec(
+    kind = "polar",
+    theta = theta,
+    start = as.double(start),
+    end = if (is.null(end)) NULL else as.double(end),
+    direction = as.double(direction),
+    rmin = as.double(inner.radius)
   )
   plot
 }

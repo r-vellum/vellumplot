@@ -958,7 +958,17 @@ NULL
   } else {
     out_default
   }
-  map <- function(x) scales::rescale(x, to = out_range, from = rng)
+  # `scale_size_area()` (type "area") maps value -> marker *area*: size 0 at
+  # value 0, and size = max_size * sqrt(value / data_max), so area is
+  # proportional to the value. Otherwise the aesthetic rescales linearly.
+  area_mode <- !is.null(scalespec) && identical(scalespec@type, "area")
+  map <- if (area_mode) {
+    max_size <- out_range[2]
+    denom <- max(rng[2], .Machine$double.eps)
+    function(x) max_size * sqrt(pmax(as.numeric(x), 0) / denom)
+  } else {
+    function(x) scales::rescale(x, to = out_range, from = rng)
+  }
   name <- .scale_title(scalespec, .default_title(spec, channel))
   lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
     as.numeric(scalespec@breaks)
