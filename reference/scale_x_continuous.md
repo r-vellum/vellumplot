@@ -49,6 +49,8 @@ scale_y_discrete(plot, limits = NULL, name = NULL)
 - trans:
 
   Transformation: `"identity"` (default), `"log10"`, `"sqrt"`,
+  `"symlog"` (symmetric log — linear through zero, logarithmic in the
+  tails, so signed data and zero/negatives read on one axis),
   `"reverse"`, or a
   [`scales::transform_log10()`](https://scales.r-lib.org/reference/transform_log.html)-style
   transform object.

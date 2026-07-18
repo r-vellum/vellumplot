@@ -3,8 +3,11 @@
 Declare a colour scale for the `color`/`fill` channel. Continuous data
 get a perceptual ramp; discrete data get a qualitative palette.
 `scale_*_manual()` sets exact colours, `scale_*_gradient()` a two-point
-ramp. The `fill` variants are identical (colour and fill share one
-scale). A legend is drawn automatically when colour is mapped.
+ramp, and `scale_*_gradient2()` a diverging three-point ramp
+(`low`–`mid`–`high`) centred on `midpoint` — for signed or anomaly data
+where a meaningful zero should sit at the neutral colour. The `fill`
+variants are identical (colour and fill share one scale). A legend is
+drawn automatically when colour is mapped.
 
 ## Usage
 
@@ -29,6 +32,15 @@ scale_color_manual(plot, values, name = NULL)
 
 scale_color_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 
+scale_color_gradient2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL
+)
+
 scale_fill_continuous(
   plot,
   palette = NULL,
@@ -49,6 +61,15 @@ scale_fill_manual(plot, values, name = NULL)
 
 scale_fill_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 
+scale_fill_gradient2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL
+)
+
 scale_colour_continuous(
   plot,
   palette = NULL,
@@ -68,6 +89,15 @@ scale_colour_discrete(
 scale_colour_manual(plot, values, name = NULL)
 
 scale_colour_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+
+scale_colour_gradient2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL
+)
 ```
 
 ## Arguments
@@ -99,7 +129,16 @@ scale_colour_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 
 - low, high:
 
-  For `scale_*_gradient()`, the endpoint colours.
+  For `scale_*_gradient()`/`scale_*_gradient2()`, the endpoint colours.
+
+- mid:
+
+  For `scale_*_gradient2()`, the midpoint colour.
+
+- midpoint:
+
+  For `scale_*_gradient2()`, the data value placed at `mid` (default
+  `0`); values above and below diverge to `high` and `low`.
 
 ## Value
 

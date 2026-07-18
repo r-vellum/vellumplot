@@ -47,6 +47,25 @@ vplot(mtcars) |>
 
 ![](scales-and-guides_files/figure-html/unnamed-chunk-3-1.png)
 
+For signed or anomaly data — where a value like zero is meaningfully
+neutral —
+[`scale_color_gradient2()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+(and
+[`scale_fill_gradient2()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md))
+draw a diverging ramp around a `midpoint`. It rescales *about* the
+midpoint, so the neutral `mid` colour always lands on that value even
+when the data range is lopsided:
+
+``` r
+
+anom <- data.frame(x = 1:20, y = 1:20, resid = seq(-3, 6, length.out = 20))
+vplot(anom) |>
+  mark_point(x = x, y = y, color = resid, size = 3) |>
+  scale_color_gradient2(low = "#2166ac", mid = "grey90", high = "#b2182b", midpoint = 0)
+```
+
+![](scales-and-guides_files/figure-html/unnamed-chunk-4-1.png)
+
 Ramps built from a plain colour vector — a
 `scale_color_gradient(low, high)`, or a `palette` given as colours — are
 interpolated in the perceptually-uniform **Oklab** space, not sRGB, so
@@ -80,7 +99,7 @@ vplot(grid) |>
   scale_fill_binned(style = "quantile", n = 5, palette = "Mako")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-4-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-5-1.png)
 
 ## Size, shape, and edge width
 
@@ -108,7 +127,7 @@ vplot(mtcars) |>
   scale_size(range = c(2, 9), name = "hp")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-5-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-6-1.png)
 
 ## Opacity and line type
 
@@ -125,7 +144,7 @@ vplot(mtcars) |>
   scale_alpha(range = c(0.2, 1))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-6-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-7-1.png)
 
 [`scale_linetype()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md)
 maps a discrete variable to line types, cycling `"solid"`, `"dashed"`,
@@ -144,7 +163,7 @@ vplot(series) |>
   mark_line(x = x, y = y, linetype = series)
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-7-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-8-1.png)
 
 ## Identity scales
 
@@ -170,7 +189,7 @@ vplot(df) |>
   scale_color_identity()
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-8-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-9-1.png)
 
 ## Position scales
 
@@ -179,8 +198,8 @@ and
 [`scale_y_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
 control the axes. By default they train from the data with a small
 expansion; override them to set `limits`, apply a `trans` (`"log10"`,
-`"sqrt"`, `"reverse"`), or supply explicit `breaks` and `labels`.
-Categorical axes use
+`"sqrt"`, `"symlog"`, `"reverse"`), or supply explicit `breaks` and
+`labels`. Categorical axes use
 [`scale_x_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
 and
 [`scale_y_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
@@ -194,7 +213,22 @@ vplot(mtcars) |>
   scale_x_continuous(trans = "log10", name = "Weight (log scale)")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-9-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-10-1.png)
+
+Where `"log10"` cannot go — data that crosses zero or spans positive and
+negative values over several orders of magnitude — `"symlog"` gives a
+symmetric-log axis: linear through zero, logarithmic in each tail, with
+ticks at zero and signed powers of ten.
+
+``` r
+
+signed <- data.frame(v = c(-1000, -100, -10, 0, 10, 100, 1000), y = 1:7)
+vplot(signed) |>
+  mark_point(x = v, y = y) |>
+  scale_x_continuous(trans = "symlog")
+```
+
+![](scales-and-guides_files/figure-html/unnamed-chunk-11-1.png)
 
 To set limits without spelling out a whole scale, use the shortcuts
 [`xlim()`](https://r-vellum.github.io/vellumplot/reference/lims.md),
@@ -209,7 +243,7 @@ vplot(mtcars) |>
   lims(x = c(0, 6), y = c(0, 40))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-10-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-12-1.png)
 
 ### Scale transform vs display transform
 
@@ -230,7 +264,7 @@ vplot(mtcars) |>
   coord_trans(y = "log10")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-11-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-13-1.png)
 
 Each of `x` / `y` takes a transform name (`"log10"`, `"sqrt"`,
 `"identity"`) or a `scales::transform_*()` object. It applies to the
@@ -253,7 +287,7 @@ vplot(data.frame(celsius = 0:100, y = (0:100)^2)) |>
   scale_x_continuous(name = "°C", sec.axis = sec_axis(~ . * 1.8 + 32, name = "°F"))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-12-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-14-1.png)
 
 [`dup_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
 is the identity special case — it simply duplicates the axis on the far
@@ -266,7 +300,7 @@ vplot(mtcars) |>
   scale_y_continuous(sec.axis = dup_axis())
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-13-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-15-1.png)
 
 The transform can be a formula (`~ . * 2`), a function, or a
 `scales::transform_*()` object, and must be monotonic. This is a
@@ -308,7 +342,7 @@ vplot(econ) |>
   scale_x_date(date_breaks = "6 months", date_labels = "%b %Y")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-14-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-16-1.png)
 
 ## Guides come for free
 
@@ -324,7 +358,7 @@ vplot(mtcars) |>
   scale_size(range = c(1, 8), name = "Displacement")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-15-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-17-1.png)
 
 ## Controlling a legend
 
@@ -341,7 +375,7 @@ vplot(mtcars) |>
   guides(color = guide_legend(title = "Cylinders", reverse = TRUE))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-16-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-18-1.png)
 
 Hiding a legend keeps the mapping; the marks stay coloured, only the
 guide disappears:
@@ -353,7 +387,7 @@ vplot(mtcars) |>
   guides(color = "none")
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-17-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-19-1.png)
 
 ## Rich titles
 
@@ -371,7 +405,7 @@ vplot(mtcars) |>
   scale_color_continuous(name = md("Power (hp m^2^)"))
 ```
 
-![](scales-and-guides_files/figure-html/unnamed-chunk-18-1.png)
+![](scales-and-guides_files/figure-html/unnamed-chunk-20-1.png)
 
 Faceted plots add one more question: should panels share a scale or
 train their own? That is the

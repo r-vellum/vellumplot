@@ -116,7 +116,9 @@ for discrete scales a character vector of levels (sets order / subset).
 
 <dt id="arg-trans">trans<a class="anchor" aria-label="anchor" href="#arg-trans"></a></dt>
 <dd><p>Transformation: <code>"identity"</code> (default), <code>"log10"</code>, <code>"sqrt"</code>,
-<code>"reverse"</code>, or a <code><a href="https://scales.r-lib.org/reference/transform_log.html" class="external-link">scales::transform_log10()</a></code>-style transform object.</p></dd>
+<code>"symlog"</code> (symmetric log — linear through zero, logarithmic in the tails,
+so signed data and zero/negatives read on one axis), <code>"reverse"</code>, or a
+<code><a href="https://scales.r-lib.org/reference/transform_log.html" class="external-link">scales::transform_log10()</a></code>-style transform object.</p></dd>
 
 
 <dt id="arg-breaks-labels">breaks, labels<a class="anchor" aria-label="anchor" href="#arg-breaks-labels"></a></dt>

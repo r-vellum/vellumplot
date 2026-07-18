@@ -135,12 +135,26 @@
 </div>
 </div>
 </div>
+<p>For signed or anomaly data — where a value like zero is meaningfully neutral — <code><a href="../reference/scale_color_continuous.html">scale_color_gradient2()</a></code> (and <code><a href="../reference/scale_color_continuous.html">scale_fill_gradient2()</a></code>) draw a diverging ramp around a <code>midpoint</code>. It rescales <em>about</em> the midpoint, so the neutral <code>mid</code> colour always lands on that value even when the data range is lopsided:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">anom</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, resid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">6</span>, length.out <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">anom</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span>, color <span class="op">=</span> <span class="va">resid</span>, size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/scale_color_continuous.html">scale_color_gradient2</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"#2166ac"</span>, mid <span class="op">=</span> <span class="st">"grey90"</span>, high <span class="op">=</span> <span class="st">"#b2182b"</span>, midpoint <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-4-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
 <p>Ramps built from a plain colour vector — a <code>scale_color_gradient(low, high)</code>, or a <code>palette</code> given as colours — are interpolated in the perceptually-uniform <strong>Oklab</strong> space, not sRGB, so the ramp and its colourbar read evenly instead of dipping through a muddy, over-dark middle (a blue→yellow ramp no longer passes through grey). Designed perceptual palettes such as the default <code>Batlow</code> or any <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">hcl.colors()</a></code> name are already uniform and unchanged. To blend in sRGB (or CIE Lab) instead, set <code>options(vellumplot.color.interpolation = "srgb")</code> (or <code>"lab"</code>). A gradient <em>fill</em> opts in per gradient with <code>linear_gradient(..., interpolation = "oklab")</code>.</p>
 </section><section class="level2"><h2 id="binned-colour">Binned colour<a class="anchor" aria-label="anchor" href="#binned-colour"></a>
 </h2>
 <p><code><a href="../reference/scale_fill_binned.html">scale_fill_binned()</a></code> and <code><a href="../reference/scale_fill_binned.html">scale_color_binned()</a></code> cut a continuous aesthetic into classes and give it a discrete legend, which is what you want for a choropleth or a heatmap you read by band rather than by exact value. Choose the classification <code>style</code> (<code>"quantile"</code>, <code>"equal"</code>, <code>"pretty"</code>, or any <code><a href="https://r-spatial.github.io/classInt/reference/classIntervals.html" class="external-link">classInt::classIntervals()</a></code> style) and the number of classes <code>n</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span>
 <span><span class="va">grid</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">grid</span>, <span class="va">x</span> <span class="op">*</span> <span class="va">y</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -148,7 +162,7 @@
 <span>  <span class="fu"><a href="../reference/scale_fill_binned.html">scale_fill_binned</a></span><span class="op">(</span>style <span class="op">=</span> <span class="st">"quantile"</span>, n <span class="op">=</span> <span class="fl">5</span>, palette <span class="op">=</span> <span class="st">"Mako"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-4-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-5-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -158,13 +172,13 @@
 <p>Non-colour aesthetics have scales too. <code><a href="../reference/scale_size.html">scale_size()</a></code> maps values linearly to a marker-size <code>range</code> (in mm); <code><a href="../reference/scale_shape.html">scale_shape()</a></code> cycles a set of shapes over the levels of a discrete aesthetic; <code><a href="../reference/scale_edge_width.html">scale_edge_width()</a></code> does for network edges what <code><a href="../reference/scale_size.html">scale_size()</a></code> does for points.</p>
 <p>The shape palette is <code>"circle"</code>, <code>"square"</code>, <code>"triangle"</code>, <code>"diamond"</code>, <code>"plus"</code>, <code>"cross"</code>, <code>"triangle_down"</code>, and <code>"star"</code> — eight in all, so a mapped <code>shape</code> covers up to eight levels automatically. Pass a subset (or a reordering) with <code>scale_shape(values = ...)</code>. Filled shapes take the mark’s <code>fill</code>/<code>color</code>, so an open marker is <code>fill = NA</code> with a <code>color</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, size <span class="op">=</span> <span class="va">hp</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">9</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"hp"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-5-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -173,20 +187,20 @@
 </h2>
 <p><code>alpha</code> and <code>linetype</code> are mapped aesthetics too. <code><a href="../reference/scale_alpha.html">scale_alpha()</a></code> maps a continuous variable to opacity (its <code>range</code> defaults to <code>c(0.1, 1)</code>), a good way to let density show through an overplotted cloud.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, alpha <span class="op">=</span> <span class="va">hp</span>, size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_alpha.html">scale_alpha</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code><a href="../reference/scale_linetype.html">scale_linetype()</a></code> maps a discrete variable to line types, cycling <code>"solid"</code>, <code>"dashed"</code>, <code>"dotted"</code>, and so on. It applies to line-like marks (<code><a href="../reference/mark_point.html">mark_line()</a></code>, <code><a href="../reference/mark_area.html">mark_step()</a></code>).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">series</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -196,7 +210,7 @@
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_line</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span>, linetype <span class="op">=</span> <span class="va">series</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -205,7 +219,7 @@
 </h2>
 <p>Sometimes a column <em>already</em> holds the exact aesthetic values you want: actual colour names, sizes in millimetres, shape names. An identity scale uses them verbatim and draws no legend. There is a variant for each aesthetic: <code><a href="../reference/scale_color_identity.html">scale_color_identity()</a></code>, <code><a href="../reference/scale_color_identity.html">scale_fill_identity()</a></code>, <code><a href="../reference/scale_color_identity.html">scale_size_identity()</a></code>, <code><a href="../reference/scale_color_identity.html">scale_shape_identity()</a></code>, <code><a href="../reference/scale_color_identity.html">scale_alpha_identity()</a></code>, <code><a href="../reference/scale_color_identity.html">scale_linetype_identity()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,</span>
 <span>  col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"firebrick"</span>, <span class="st">"goldenrod"</span>, <span class="st">"forestgreen"</span>, <span class="st">"steelblue"</span>, <span class="st">"purple"</span><span class="op">)</span></span>
@@ -215,36 +229,50 @@
 <span>  <span class="fu"><a href="../reference/scale_color_identity.html">scale_color_identity</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 </section><section class="level2"><h2 id="position-scales">Position scales<a class="anchor" aria-label="anchor" href="#position-scales"></a>
 </h2>
-<p><code><a href="../reference/scale_x_continuous.html">scale_x_continuous()</a></code> and <code><a href="../reference/scale_x_continuous.html">scale_y_continuous()</a></code> control the axes. By default they train from the data with a small expansion; override them to set <code>limits</code>, apply a <code>trans</code> (<code>"log10"</code>, <code>"sqrt"</code>, <code>"reverse"</code>), or supply explicit <code>breaks</code> and <code>labels</code>. Categorical axes use <code><a href="../reference/scale_x_continuous.html">scale_x_discrete()</a></code> and <code><a href="../reference/scale_x_continuous.html">scale_y_discrete()</a></code>, whose <code>limits</code> set the order or subset of levels.</p>
+<p><code><a href="../reference/scale_x_continuous.html">scale_x_continuous()</a></code> and <code><a href="../reference/scale_x_continuous.html">scale_y_continuous()</a></code> control the axes. By default they train from the data with a small expansion; override them to set <code>limits</code>, apply a <code>trans</code> (<code>"log10"</code>, <code>"sqrt"</code>, <code>"symlog"</code>, <code>"reverse"</code>), or supply explicit <code>breaks</code> and <code>labels</code>. Categorical axes use <code><a href="../reference/scale_x_continuous.html">scale_x_discrete()</a></code> and <code><a href="../reference/scale_x_continuous.html">scale_y_discrete()</a></code>, whose <code>limits</code> set the order or subset of levels.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_x_continuous.html">scale_y_continuous</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_x_continuous.html">scale_x_continuous</a></span><span class="op">(</span>trans <span class="op">=</span> <span class="st">"log10"</span>, name <span class="op">=</span> <span class="st">"Weight (log scale)"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Where <code>"log10"</code> cannot go — data that crosses zero or spans positive and negative values over several orders of magnitude — <code>"symlog"</code> gives a symmetric-log axis: linear through zero, logarithmic in each tail, with ticks at zero and signed powers of ten.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">signed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>v <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1000</span>, <span class="op">-</span><span class="fl">100</span>, <span class="op">-</span><span class="fl">10</span>, <span class="fl">0</span>, <span class="fl">10</span>, <span class="fl">100</span>, <span class="fl">1000</span><span class="op">)</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">signed</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">v</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/scale_x_continuous.html">scale_x_continuous</a></span><span class="op">(</span>trans <span class="op">=</span> <span class="st">"symlog"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>To set limits without spelling out a whole scale, use the shortcuts <code><a href="../reference/lims.html">xlim()</a></code>, <code><a href="../reference/lims.html">ylim()</a></code>, and <code><a href="../reference/lims.html">lims()</a></code> (the last takes one named argument per aesthetic):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/lims.html">lims</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -253,14 +281,14 @@
 </h3>
 <p>A <code>scale_*(trans=)</code> (above) transforms the <em>data</em>: it picks its breaks in the transformed space, so a <code>"log10"</code> axis is labelled <code>1, 10, 100</code>. <code><a href="../reference/coord_trans.html">coord_trans()</a></code> instead warps only the <em>display</em>, after the scale has trained — the breaks stay at their original data values, so the axis keeps those labels but they sit at warped positions (gridlines bunch up, and straight lines curve). Use it to show data on a log display without relabelling the axis in powers of ten:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_line</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/coord_trans.html">coord_trans</a></span><span class="op">(</span>y <span class="op">=</span> <span class="st">"log10"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -270,26 +298,26 @@
 </h3>
 <p>A secondary axis adds a second set of ticks and labels on the opposite edge (top for <code>x</code>, right for <code>y</code>), computed as a 1:1 monotonic transform of the primary axis. Pass <code><a href="../reference/sec_axis.html">sec_axis()</a></code> to the <code>sec.axis</code> argument of a continuous position scale. The classic use is a unit conversion — plot in Celsius, label the top in Fahrenheit:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>celsius <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">100</span>, y <span class="op">=</span> <span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">100</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_line</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">celsius</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_x_continuous.html">scale_x_continuous</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"°C"</span>, sec.axis <span class="op">=</span> <span class="fu"><a href="../reference/sec_axis.html">sec_axis</a></span><span class="op">(</span><span class="op">~</span> <span class="va">.</span> <span class="op">*</span> <span class="fl">1.8</span> <span class="op">+</span> <span class="fl">32</span>, name <span class="op">=</span> <span class="st">"°F"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code><a href="../reference/sec_axis.html">dup_axis()</a></code> is the identity special case — it simply duplicates the axis on the far edge, handy for reading a wide plot from either side:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_x_continuous.html">scale_y_continuous</a></span><span class="op">(</span>sec.axis <span class="op">=</span> <span class="fu"><a href="../reference/sec_axis.html">dup_axis</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-15-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -299,7 +327,7 @@
 </h2>
 <p>A <code>Date</code> or <code>POSIXct</code> column gets a date axis automatically. To control the break interval or the label format, declare <code><a href="../reference/scale_x_date.html">scale_x_date()</a></code> (or <code><a href="../reference/scale_x_date.html">scale_x_datetime()</a></code> / <code><a href="../reference/scale_x_date.html">scale_x_time()</a></code>): <code>date_breaks</code> takes an interval string like <code>"6 months"</code>, and <code>date_labels</code> a <code><a href="https://rdrr.io/r/base/strptime.html" class="external-link">strftime()</a></code> format.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">econ</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  day <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0</span><span class="op">:</span><span class="fl">729</span>,</span>
 <span>  value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">730</span><span class="op">)</span><span class="op">)</span></span>
@@ -309,7 +337,7 @@
 <span>  <span class="fu"><a href="../reference/scale_x_date.html">scale_x_date</a></span><span class="op">(</span>date_breaks <span class="op">=</span> <span class="st">"6 months"</span>, date_labels <span class="op">=</span> <span class="st">"%b %Y"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-16-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -318,14 +346,14 @@
 </h2>
 <p>Every scale that needs a legend produces one, and vellumplot stacks multiple legends automatically. Map two aesthetics and you get two guides without asking.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="va">hp</span>, size <span class="op">=</span> <span class="va">disp</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_color_continuous.html">scale_color_continuous</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"Batlow"</span>, name <span class="op">=</span> <span class="st">"Horsepower"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">8</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"Displacement"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-15-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-17-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -334,26 +362,26 @@
 </h2>
 <p><code><a href="../reference/guides.html">guides()</a></code> overrides a single legend without respelling its scale. Pass <code>"none"</code> to hide it, or <code><a href="../reference/guides.html">guide_legend()</a></code> to reverse the key order or override the title.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/guides.html">guides</a></span><span class="op">(</span>color <span class="op">=</span> <span class="fu"><a href="../reference/guides.html">guide_legend</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Cylinders"</span>, reverse <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-16-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-18-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Hiding a legend keeps the mapping; the marks stay coloured, only the guide disappears:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/guides.html">guides</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-17-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-19-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -362,13 +390,13 @@
 </h2>
 <p>Any scale <code>name</code> (and any <code><a href="../reference/labs.html">labs()</a></code> title) accepts <code><a href="../reference/md.html">md()</a></code>, a small markdown subset for bold, italic, superscript, subscript, and coloured spans. Handy for units and formulae.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_color_continuous.html">scale_color_continuous</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="../reference/md.html">md</a></span><span class="op">(</span><span class="st">"Power (hp m^2^)"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-18-1.png" style="width:100.0%"></p>
+<figure><p><img src="scales-and-guides_files/figure-html/unnamed-chunk-20-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
