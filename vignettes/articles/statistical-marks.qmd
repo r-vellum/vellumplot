@@ -120,6 +120,30 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, method = "loess", span = 0.9)
 ```
 
+## Group regions: ellipses and hulls
+
+`mark_ellipse()` and `mark_hull()` enclose a set of points in a single region —
+a way to read group separation on a scatter without drawing every point's
+membership. When a `color` or `fill` is mapped, each group gets its own region.
+
+`mark_ellipse()` draws a covariance ellipse (a robust `t` distribution by
+default, or `"norm"` / `"euclid"`), following ggplot2's `stat_ellipse()`:
+
+```{r}
+vplot(iris) |>
+  mark_point(x = Sepal.Length, y = Sepal.Width, color = Species) |>
+  mark_ellipse(x = Sepal.Length, y = Sepal.Width, color = Species)
+```
+
+`mark_hull()` draws the convex hull instead. Both are unfilled boundaries by
+default (matching ggplot2); map or set a `fill` to shade them:
+
+```{r}
+vplot(iris) |>
+  mark_point(x = Sepal.Length, y = Sepal.Width, color = Species) |>
+  mark_hull(x = Sepal.Length, y = Sepal.Width, fill = Species, alpha = 0.2)
+```
+
 ## Distributions
 
 Several marks summarise how a single variable is distributed. `mark_ecdf()`

@@ -1482,6 +1482,65 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# A group summary region (ellipse / convex hull): one closed polygon per group
+# `.piece`. Stroked by the `color` aesthetic; filled only when a `fill` is
+# mapped or set (so the ggplot2 default -- an unfilled boundary -- holds). The
+# `.piece` grouping comes from the stat; each polygon draws its own vertices.
+#
+# PROVENANCE: `rows = idx` records the polygon's own vertices; when the layer
+# maps a discrete colour/fill, each vertex also carries its series key
+# ("<aes>:<value>") in `meta$legend` (via `.legend_membership`), which is the
+# cross-layer hook a host uses to link a region to its group's points
+# (GAP-ANALYSIS.md 12.1).
+.emit_region <- function(scene, L, scales) {
+  n <- L$n
+  if (!n) {
+    return(scene)
+  }
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  stroke <- rep_len(
+    .aes_colour(L, scales, "#3366bb", fill_fallback = FALSE),
+    n
+  )
+  # Fill only when the layer supplies one; otherwise draw an unfilled boundary.
+  fillv <- if (!is.null(L$values$fill)) {
+    scales$color$map(L$values$fill)
+  } else if (!is.null(L$params$fill)) {
+    L$params$fill
+  } else {
+    NA
+  }
+  fillv <- rep_len(fillv, n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  lwd <- .aes_param(L, "linewidth", 1)
+  piece <- L$values$.piece
+  sk <- .mark_sketch(L, scales)
+  gi <- 0L
+  for (pid in unique(piece)) {
+    idx <- which(piece == pid)
+    i0 <- idx[1]
+    xy <- .xy_path(scales, xn[idx], yn[idx])
+    scene <- .draw(
+      scene,
+      vellum::polygon_grob(
+        xy$x,
+        xy$y,
+        sketch = .sketch_bump(sk, gi),
+        gp = vellum::vl_gpar(
+          fill = fillv[i0],
+          col = stroke[i0],
+          lwd = lwd,
+          alpha = gp_alpha(alpha[i0])
+        )
+      ),
+      rows = idx
+    )
+    gi <- gi + 1L
+  }
+  scene
+}
+
 # Vertical error bars from ymin to ymax (with optional horizontal caps).
 .emit_errorbar <- function(scene, L, scales, caps = TRUE) {
   n <- L$n
@@ -2209,6 +2268,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     ridgeline = .emit_ridgeline(scene, L, scales),
     contour = .emit_contour(scene, L, scales),
     contour_filled = .emit_contour_filled(scene, L, scales),
+    ellipse = .emit_region(scene, L, scales),
+    hull = .emit_region(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
 }
@@ -2329,7 +2390,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   sc <- .mark_ctx$selected_color
   lg <- .mark_ctx$legend
   fv <- .mark_ctx$filter_value
-  if (is.null(tt) && is.null(hg) && is.null(hc) && is.null(sc) && is.null(lg) && is.null(fv)) {
+  if (
+    is.null(tt) &&
+      is.null(hg) &&
+      is.null(hc) &&
+      is.null(sc) &&
+      is.null(lg) &&
+      is.null(fv)
+  ) {
     return(NULL)
   }
   lapply(rows, function(i) {

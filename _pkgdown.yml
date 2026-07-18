@@ -148,6 +148,7 @@ reference:
   - mark_violin
   - mark_histogram
   - mark_ecdf
+  - mark_ellipse
   - mark_tile
   - mark_contour
 - subtitle: Text, pie, and large data
