@@ -49,10 +49,10 @@ A
 
 ## Details
 
-The flows must form a DAG (no cycles). Node order within a column is
-first-appearance; ribbons are ordered to reduce crossings locally but v1
-does no global crossing minimisation. Nodes are coloured from the
-built-in qualitative palette.
+The flows must form a DAG (no cycles). Nodes within a column are ordered
+to minimise ribbon crossings (a deterministic Sugiyama barycenter
+sweep), and ribbons are stacked to meet each node in matching order.
+Nodes are coloured from the built-in qualitative palette.
 
 ## Examples
 

@@ -118,10 +118,10 @@ flow value.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The flows must form a DAG (no cycles). Node order within a column is
-first-appearance; ribbons are ordered to reduce crossings locally but v1 does
-no global crossing minimisation. Nodes are coloured from the built-in
-qualitative palette.</p>
+    <p>The flows must form a DAG (no cycles). Nodes within a column are ordered to
+minimise ribbon crossings (a deterministic Sugiyama barycenter sweep), and
+ribbons are stacked to meet each node in matching order. Nodes are coloured
+from the built-in qualitative palette.</p>
     </div>
 
     <div class="section level2">
