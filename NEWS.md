@@ -5,7 +5,7 @@
   root), and `value` (leaf values; internal nodes sum their children). Depth maps
   to a ring and each node's angular span is its share of its parent's, drawn as
   one batched `sector_grob` in an aspect-locked, axis-free square panel (mirroring
-  `vsankey()`/`vgraph()`). `inner.radius` opens a central hole (a donut/ring
+  `vsankey()`/`vgraph()`). `inner_radius` opens a central hole (a donut/ring
   sunburst); nodes are coloured by depth. `mark_sunburst()` is the exported layer.
   See `vignette("flows-and-hierarchies")`.
 
@@ -30,7 +30,7 @@
 * **`coord_radial()` and `scale_size_area()`.** `coord_radial()` is a fuller
   polar system (ggplot2 3.5's name): besides `theta`/`start`/`direction` it takes
   `end` to sweep only a **partial arc** (e.g. `start = -pi/2, end = pi/2` for a
-  semicircular gauge) and `inner.radius` for a **donut hole**; with the defaults
+  semicircular gauge) and `inner_radius` for a **donut hole**; with the defaults
   it matches `coord_polar()`. `scale_size_area()` maps a value to the marker's
   **area** (value `0` → size `0`), the perceptually honest default for bubble
   charts, with `max_size` the size of the largest value.
@@ -41,7 +41,7 @@
 
 * **Robustness of the new marks.** `vsunburst()`/`mark_sunburst()` now reject a
   missing or negative leaf `value` with a clear message (instead of a cryptic
-  downstream error), and `mark_sunburst()` validates `inner.radius` like
+  downstream error), and `mark_sunburst()` validates `inner_radius` like
   `vsunburst()` and `coord_radial()` do. `mark_halfeye()`/`mark_interval()` skip a
   category with fewer than two finite observations (with a warning) rather than
   drawing an empty interval, and reject a `width =` argument (a likely typo for
@@ -51,9 +51,7 @@
   central-hole fraction is now spelled `inner_radius` everywhere it appears:
   `coord_radial()`, `vsunburst()`/`mark_sunburst()`, and `mark_donut()` (was
   `hole`). `mark_ridgeline()`'s overlap control is now `height` (was `scale`,
-  which collided with `mark_halfeye(scale=)`, a different quantity). The old
-  spellings (`inner.radius`, `hole`, ridgeline `scale`) still work with a
-  deprecation warning.
+  which collided with `mark_halfeye(scale=)`, a different quantity).
 
 * **Consistent `sketch` / `blend` passthrough.** `mark_ecdf()`, `mark_contour()`,
   `mark_contour_filled()`, `mark_dotplot()`, `mark_qq()`, and `mark_qq_line()` now

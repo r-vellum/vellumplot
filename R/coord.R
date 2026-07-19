@@ -284,7 +284,6 @@ coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
 #'   semicircular gauge.
 #' @param inner_radius Radius of the central hole as a fraction of the outer
 #'   radius (`0`–`1`); `0` (default) is a filled disc, `> 0` a donut/ring.
-#' @param inner.radius Deprecated; renamed to `inner_radius`.
 #' @examples
 #' vplot(mtcars) |>
 #'   mark_bar(x = factor(cyl)) |>
@@ -296,20 +295,13 @@ coord_radial <- function(
   start = 0,
   end = NULL,
   direction = 1,
-  inner_radius = 0,
-  inner.radius = NULL
+  inner_radius = 0
 ) {
   .check_plot(plot)
   theta <- rlang::arg_match0(theta, c("x", "y"))
   if (!direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }
-  inner_radius <- .renamed_arg(
-    inner_radius,
-    inner.radius,
-    "inner_radius",
-    "inner.radius"
-  )
   .check_inner_radius(inner_radius)
   plot@coord <- CoordSpec(
     kind = "polar",

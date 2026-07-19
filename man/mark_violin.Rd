@@ -15,8 +15,7 @@ mark_ridgeline(
   height = 1.4,
   blend = NULL,
   sketch = NULL,
-  data = NULL,
-  scale = NULL
+  data = NULL
 )
 
 mark_dotplot(
@@ -41,8 +40,6 @@ needs \code{x}. A mapped \code{color}/\code{fill} sets the shape fill.}
 
 \item{height}{Ridge height as a multiple of the row band (ridgeline; default
 \code{1.4}, so adjacent ridges overlap slightly).}
-
-\item{scale}{Deprecated; renamed to \code{height}.}
 
 \item{binwidth}{Dot-plot bin width, or \code{NULL} to use ~1/30 of the data range.}
 }

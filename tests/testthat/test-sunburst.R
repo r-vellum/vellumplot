@@ -38,7 +38,7 @@ test_that("angular span is proportional to value; children fill the parent", {
   )
 })
 
-test_that("inner.radius opens a centre hole (shifts the innermost ring out)", {
+test_that("inner_radius opens a centre hole (shifts the innermost ring out)", {
   lay0 <- vellumplot:::.sunburst_layout(
     h$id,
     h$parent,
@@ -106,7 +106,7 @@ test_that("a non-finite or negative leaf value is a clear error", {
   )
 })
 
-test_that("inner.radius is validated in both constructors", {
+test_that("inner_radius is validated in both constructors", {
   expect_error(vsunburst(h, id, parent, value, inner_radius = 1), "\\[0, 1\\)")
   expect_error(
     vplot(h) |> mark_sunburst(id, parent, value, inner_radius = -0.1),
@@ -114,13 +114,6 @@ test_that("inner.radius is validated in both constructors", {
   )
 })
 
-test_that("inner.radius is deprecated in favour of inner_radius", {
-  expect_warning(vsunburst(h, id, parent, value, inner.radius = 0.3), "renamed")
-  expect_warning(
-    vplot(h) |> mark_sunburst(id, parent, value, inner.radius = 0.3),
-    "renamed"
-  )
-})
 
 test_that("vsunburst renders, flat and with a hole", {
   f1 <- local_tempfile(fileext = ".png")

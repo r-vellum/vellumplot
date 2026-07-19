@@ -13,11 +13,10 @@ vsunburst(
   inner_radius = 0,
   width = 6,
   height = 6,
-  dpi = 96,
-  inner.radius = NULL
+  dpi = 96
 )
 
-mark_sunburst(plot, id, parent, value, inner_radius = 0, inner.radius = NULL)
+mark_sunburst(plot, id, parent, value, inner_radius = 0)
 }
 \arguments{
 \item{data}{A data frame describing a hierarchy (a parent list).}
@@ -29,8 +28,6 @@ mark_sunburst(plot, id, parent, value, inner_radius = 0, inner.radius = NULL)
 fills to the centre.}
 
 \item{width, height, dpi}{Page size (inches) and resolution.}
-
-\item{inner.radius}{Deprecated; renamed to \code{inner_radius}.}
 
 \item{plot}{A \link{PlotSpec}.}
 }

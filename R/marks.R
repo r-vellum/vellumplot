@@ -294,26 +294,6 @@ after_stat <- function(x) x
   "selected_color"
 )
 
-# Forward a renamed argument: if the caller passed the old (deprecated) spelling,
-# warn and use it; otherwise use the new one. A lightweight stand-in for
-# lifecycle (not a package dependency) during the 0.x dev cycle.
-.renamed_arg <- function(
-  new,
-  old,
-  new_name,
-  old_name,
-  call = rlang::caller_env()
-) {
-  if (!is.null(old)) {
-    cli::cli_warn(
-      "The {.arg {old_name}} argument has been renamed to {.arg {new_name}}.",
-      call = call
-    )
-    return(old)
-  }
-  new
-}
-
 # The slab/interval marks name their interval probabilities `.width` (dotted) to
 # avoid colliding with the `width` aesthetic other marks use. A bare `width =`
 # here is almost certainly a typo for `.width`; catch it rather than let it pass
@@ -621,7 +601,6 @@ mark_bar <- function(
 #'   slice.
 #' @param inner_radius For `mark_donut()`, the inner-hole radius as a fraction of
 #'   the rim (`0` is a pie, the default `0.5` a medium donut).
-#' @param hole Deprecated; renamed to `inner_radius`.
 #' @param ... Further constant aesthetics (e.g. `alpha`).
 #' @param blend Optional blend mode for compositing the layer (see [mark_point()]).
 #' @param data Optional per-layer data frame.
@@ -663,10 +642,8 @@ mark_donut <- function(
   ...,
   blend = NULL,
   sketch = NULL,
-  data = NULL,
-  hole = NULL
+  data = NULL
 ) {
-  inner_radius <- .renamed_arg(inner_radius, hole, "inner_radius", "hole")
   .check_inner_radius(inner_radius)
   .pie_layer(
     plot,
@@ -1538,7 +1515,6 @@ mark_qq_line <- function(
 #' @param adjust Kernel-density bandwidth multiplier (violin/ridgeline).
 #' @param height Ridge height as a multiple of the row band (ridgeline; default
 #'   `1.4`, so adjacent ridges overlap slightly).
-#' @param scale Deprecated; renamed to `height`.
 #' @param binwidth Dot-plot bin width, or `NULL` to use ~1/30 of the data range.
 #' @param blend,sketch,data Standard layer arguments (see [mark_point()]).
 #' @return The modified [PlotSpec].
@@ -1578,11 +1554,9 @@ mark_ridgeline <- function(
   height = 1.4,
   blend = NULL,
   sketch = NULL,
-  data = NULL,
-  scale = NULL
+  data = NULL
 ) {
   .check_plot(plot)
-  height <- .renamed_arg(height, scale, "height", "scale")
   .add_layer(
     plot,
     "ridgeline",
