@@ -253,7 +253,7 @@ scale_y_discrete <- function(plot, limits = NULL, name = NULL) {
 #'   or `NULL` to train from the data.
 #' @param date_breaks A break interval string, e.g. `"1 month"`, `"2 weeks"`,
 #'   `"10 years"` (passed to [scales::breaks_width()]). `NULL` uses `pretty()`.
-#' @param date_labels A [strftime()] format string for the tick labels, e.g.
+#' @param date_labels A [base::strftime()] format string for the tick labels, e.g.
 #'   `"%b %Y"`. `NULL` uses the default format.
 #' @param breaks,labels Explicit break positions / labels (override
 #'   `date_breaks`/`date_labels`), or `NULL`.

@@ -78,7 +78,7 @@ or \code{NULL} to train from the data.}
 \item{date_breaks}{A break interval string, e.g. \code{"1 month"}, \code{"2 weeks"},
 \code{"10 years"} (passed to \code{\link[scales:breaks_width]{scales::breaks_width()}}). \code{NULL} uses \code{pretty()}.}
 
-\item{date_labels}{A \code{\link[=strftime]{strftime()}} format string for the tick labels, e.g.
+\item{date_labels}{A \code{\link[base:strftime]{base::strftime()}} format string for the tick labels, e.g.
 \code{"\%b \%Y"}. \code{NULL} uses the default format.}
 
 \item{breaks, labels}{Explicit break positions / labels (override

@@ -61,7 +61,7 @@ A \code{PlotSpec}.
 object: data, a list of layers, a list of scale overrides, and the page size.
 Nothing is drawn until it is compiled with \code{\link[vellum:as_vellum_scene]{vellum::as_vellum_scene()}} (e.g.
 via \code{\link[=render_plot]{render_plot()}}). Printing it draws the plot; inspect its structure with
-\code{\link[=summary]{summary()}}.
+\code{\link[base:summary]{base::summary()}}.
 }
 \seealso{
 \code{\link[=vplot]{vplot()}}, \code{\link[=mark_point]{mark_point()}}, \code{\link[=scale_x_continuous]{scale_x_continuous()}}
