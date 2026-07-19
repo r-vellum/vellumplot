@@ -59,6 +59,12 @@
   perceptually honest default for bubble charts, with `max_size` the
   size of the largest value.
 
+- **Sankey labels stay on-panel.**
+  [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  now reserves horizontal margin for node labels, so the source column’s
+  labels (drawn to their left) and the terminal column’s (drawn to their
+  right) no longer clip at the panel edge.
+
 - **Robustness of the new marks.**
   [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)/[`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
   now reject a missing or negative leaf `value` with a clear message
