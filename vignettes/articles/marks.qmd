@@ -183,17 +183,17 @@ bar projected through `coord_polar()`, which they set for you.
 ```{r}
 parts <- data.frame(part = c("a", "b", "c", "d"), n = c(3, 5, 2, 4))
 vplot(parts) |>
-  mark_donut(value = n, fill = part, hole = 0.6)
+  mark_donut(value = n, fill = part, inner_radius = 0.6)
 ```
 
 For polar plots generally, `coord_radial()` extends `coord_polar()` with a
-central hole (`inner.radius`) and a partial `start`–`end` arc — e.g. a
+central hole (`inner_radius`) and a partial `start`–`end` arc — e.g. a
 semicircular coxcomb:
 
 ```{r}
 vplot(mtcars) |>
   mark_bar(x = factor(cyl), fill = factor(cyl)) |>
-  coord_radial(theta = "x", start = -pi / 2, end = pi / 2, inner.radius = 0.2)
+  coord_radial(theta = "x", start = -pi / 2, end = pi / 2, inner_radius = 0.2)
 ```
 
 ## Layering is the point

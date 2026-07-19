@@ -158,14 +158,15 @@ NULL
 #' [vsankey()] it returns a ready, axis-free, aspect-locked [PlotSpec];
 #' `mark_sunburst()` is the layer it adds.
 #'
-#' The root is the centre (not drawn as a wedge); `inner.radius` opens a hole.
+#' The root is the centre (not drawn as a wedge); `inner_radius` opens a hole.
 #' Nodes are coloured by depth. The input must be a single-rooted tree.
 #'
 #' @param data A data frame describing a hierarchy (a parent list).
 #' @param id,parent,value Columns (tidy-eval): the node id, its parent id
 #'   (`NA`/`""` for the root), and its value (used for leaves).
-#' @param inner.radius Central hole radius, a fraction in `[0, 1)`; `0` (default)
+#' @param inner_radius Central hole radius, a fraction in `[0, 1)`; `0` (default)
 #'   fills to the centre.
+#' @param inner.radius Deprecated; renamed to `inner_radius`.
 #' @param width,height,dpi Page size (inches) and resolution.
 #' @return A [PlotSpec] (`vsunburst()`) or the modified plot (`mark_sunburst()`).
 #' @examples
@@ -181,15 +182,22 @@ vsunburst <- function(
   id,
   parent,
   value,
-  inner.radius = 0,
+  inner_radius = 0,
   width = 6,
   height = 6,
-  dpi = 96
+  dpi = 96,
+  inner.radius = NULL
 ) {
   if (!is.data.frame(data)) {
     cli::cli_abort("{.arg data} must be a data frame (a parent list).")
   }
-  .check_inner_radius(inner.radius)
+  inner_radius <- .renamed_arg(
+    inner_radius,
+    inner.radius,
+    "inner_radius",
+    "inner.radius"
+  )
+  .check_inner_radius(inner_radius)
   .check_dim(width, "width")
   .check_dim(height, "height")
   .check_dpi(dpi)
@@ -206,20 +214,33 @@ vsunburst <- function(
     id = {{ id }},
     parent = {{ parent }},
     value = {{ value }},
-    inner.radius = inner.radius
+    inner_radius = inner_radius
   )
 }
 
 #' @rdname vsunburst
 #' @param plot A [PlotSpec].
 #' @export
-mark_sunburst <- function(plot, id, parent, value, inner.radius = 0) {
+mark_sunburst <- function(
+  plot,
+  id,
+  parent,
+  value,
+  inner_radius = 0,
+  inner.radius = NULL
+) {
   .check_plot(plot)
-  .check_inner_radius(inner.radius)
+  inner_radius <- .renamed_arg(
+    inner_radius,
+    inner.radius,
+    "inner_radius",
+    "inner.radius"
+  )
+  .check_inner_radius(inner_radius)
   .add_layer(
     plot,
     "sunburst",
     rlang::enquos(id = id, parent = parent, value = value),
-    const_params = list(inner_radius = as.numeric(inner.radius))
+    const_params = list(inner_radius = as.numeric(inner_radius))
   )
 }

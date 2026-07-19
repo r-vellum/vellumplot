@@ -11,10 +11,11 @@ mark_donut(
   plot,
   value,
   fill = NULL,
-  hole = 0.5,
+  inner_radius = 0.5,
   ...,
   sketch = NULL,
-  data = NULL
+  data = NULL,
+  hole = NULL
 )
 }
 \arguments{
@@ -32,8 +33,10 @@ slice.}
 
 \item{data}{Optional per-layer data frame.}
 
-\item{hole}{For \code{mark_donut()}, the inner-hole radius as a fraction of the rim
-(\code{0} is a pie, the default \code{0.5} a medium donut).}
+\item{inner_radius}{For \code{mark_donut()}, the inner-hole radius as a fraction of
+the rim (\code{0} is a pie, the default \code{0.5} a medium donut).}
+
+\item{hole}{Deprecated; renamed to \code{inner_radius}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -41,15 +44,15 @@ The modified \link{PlotSpec}.
 \description{
 Convenience marks for part-of-whole charts. \code{mark_pie()} draws a pie: each
 \code{value} becomes a wedge whose angle is its share of the total, coloured by
-\code{fill}. \code{mark_donut()} is a pie with a hollow centre (\code{hole}, a fraction of
-the radius). Both are shorthand for a stacked bar projected through
+\code{fill}. \code{mark_donut()} is a pie with a hollow centre (\code{inner_radius}, a
+fraction of the radius). Both are shorthand for a stacked bar projected through
 \code{\link[=coord_polar]{coord_polar()}} with \code{theta = "y"}, which they set on the plot; they error if
 the plot already carries a non-polar coordinate.
 }
 \examples{
 df <- data.frame(part = c("a", "b", "c"), n = c(3, 5, 2))
 vplot(df) |> mark_pie(value = n, fill = part)
-vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6)
+vplot(df) |> mark_donut(value = n, fill = part, inner_radius = 0.6)
 }
 \seealso{
 \code{\link[=coord_polar]{coord_polar()}}

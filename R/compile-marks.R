@@ -1514,7 +1514,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   levs <- .cat_levels(yv)
   ypos <- scales$y$map(levs)
   band <- scales$y$band_width %||% 1
-  scale_h <- (L$stat_params$scale %||% 1.4) * band
+  scale_h <- (L$stat_params$height %||% 1.4) * band
   ychar <- as.character(yv)
   dens <- .density_by_cat(xv, yv, levs, adjust)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(xv))

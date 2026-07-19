@@ -107,10 +107,18 @@ test_that("a non-finite or negative leaf value is a clear error", {
 })
 
 test_that("inner.radius is validated in both constructors", {
-  expect_error(vsunburst(h, id, parent, value, inner.radius = 1), "\\[0, 1\\)")
+  expect_error(vsunburst(h, id, parent, value, inner_radius = 1), "\\[0, 1\\)")
   expect_error(
-    vplot(h) |> mark_sunburst(id, parent, value, inner.radius = -0.1),
+    vplot(h) |> mark_sunburst(id, parent, value, inner_radius = -0.1),
     "\\[0, 1\\)"
+  )
+})
+
+test_that("inner.radius is deprecated in favour of inner_radius", {
+  expect_warning(vsunburst(h, id, parent, value, inner.radius = 0.3), "renamed")
+  expect_warning(
+    vplot(h) |> mark_sunburst(id, parent, value, inner.radius = 0.3),
+    "renamed"
   )
 })
 
@@ -119,6 +127,6 @@ test_that("vsunburst renders, flat and with a hole", {
   render_plot(vsunburst(h, id, parent, value), f1)
   expect_gt(file.info(f1)$size, 0)
   f2 <- local_tempfile(fileext = ".png")
-  render_plot(vsunburst(h, id, parent, value, inner.radius = 0.4), f2)
+  render_plot(vsunburst(h, id, parent, value, inner_radius = 0.4), f2)
   expect_gt(file.info(f2)$size, 0)
 })

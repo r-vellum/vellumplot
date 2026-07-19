@@ -35,7 +35,7 @@ CoordSpec <- S7::new_class(
 # sunburst constructors so they reject the same range identically.
 .check_inner_radius <- function(
   x,
-  arg = "inner.radius",
+  arg = "inner_radius",
   call = rlang::caller_env()
 ) {
   if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 0 || x >= 1) {
@@ -276,18 +276,19 @@ coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
 #' @description
 #' `coord_radial()` is a fuller polar system (ggplot2 3.5's name): besides
 #' `theta`/`start`/`direction` it takes `end` to sweep only a **partial arc**
-#' (e.g. a half-circle gauge) and `inner.radius` to open a **donut hole**. With
-#' `end = NULL` and `inner.radius = 0` it is identical to `coord_polar()`.
+#' (e.g. a half-circle gauge) and `inner_radius` to open a **donut hole**. With
+#' `end = NULL` and `inner_radius = 0` it is identical to `coord_polar()`.
 #'
 #' @param end Arc end angle in radians; `NULL` (default) sweeps a full turn from
 #'   `start`. Set it for a partial arc — e.g. `start = -pi/2, end = pi/2` for a
 #'   semicircular gauge.
-#' @param inner.radius Radius of the central hole as a fraction of the outer
+#' @param inner_radius Radius of the central hole as a fraction of the outer
 #'   radius (`0`–`1`); `0` (default) is a filled disc, `> 0` a donut/ring.
+#' @param inner.radius Deprecated; renamed to `inner_radius`.
 #' @examples
 #' vplot(mtcars) |>
 #'   mark_bar(x = factor(cyl)) |>
-#'   coord_radial(theta = "x", inner.radius = 0.3)
+#'   coord_radial(theta = "x", inner_radius = 0.3)
 #' @export
 coord_radial <- function(
   plot,
@@ -295,21 +296,28 @@ coord_radial <- function(
   start = 0,
   end = NULL,
   direction = 1,
-  inner.radius = 0
+  inner_radius = 0,
+  inner.radius = NULL
 ) {
   .check_plot(plot)
   theta <- rlang::arg_match0(theta, c("x", "y"))
   if (!direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }
-  .check_inner_radius(inner.radius)
+  inner_radius <- .renamed_arg(
+    inner_radius,
+    inner.radius,
+    "inner_radius",
+    "inner.radius"
+  )
+  .check_inner_radius(inner_radius)
   plot@coord <- CoordSpec(
     kind = "polar",
     theta = theta,
     start = as.double(start),
     end = if (is.null(end)) NULL else as.double(end),
     direction = as.double(direction),
-    rmin = as.double(inner.radius)
+    rmin = as.double(inner_radius)
   )
   plot
 }

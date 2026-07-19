@@ -40,7 +40,7 @@ vplot(counts) |>
 
 # --- donut ------------------------------------------------------------------
 vplot(counts) |>
-  mark_donut(value = Freq, fill = species, hole = 0.6) |>
+  mark_donut(value = Freq, fill = species, inner_radius = 0.6) |>
   labs(title = "Same data as a donut") |>
   render_plot(file.path(outdir, "09-donut.png"))
 
