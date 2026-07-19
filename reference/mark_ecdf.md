@@ -10,13 +10,27 @@ with `mark_qq_line()` adding the reference line. All respect a mapped
 ## Usage
 
 ``` r
-mark_ecdf(plot, ..., blend = NULL, data = NULL)
+mark_ecdf(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
 mark_rug(plot, ..., sides = "bl", length = 0.03, blend = NULL, data = NULL)
 
-mark_qq(plot, ..., distribution = "qnorm", blend = NULL, data = NULL)
+mark_qq(
+  plot,
+  ...,
+  distribution = "qnorm",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_qq_line(plot, ..., distribution = "qnorm", blend = NULL, data = NULL)
+mark_qq_line(
+  plot,
+  ...,
+  distribution = "qnorm",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 ```
 
 ## Arguments
@@ -32,7 +46,7 @@ mark_qq_line(plot, ..., distribution = "qnorm", blend = NULL, data = NULL)
   `sample`; `mark_rug()` takes `x` and/or `y` (+ `color`, `alpha`,
   `linewidth`, `linetype`).
 
-- blend, data:
+- blend, sketch, data:
 
   Standard layer arguments (see
   [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)).

@@ -19,6 +19,7 @@ mark_contour(
   breaks = NULL,
   n = 100,
   blend = NULL,
+  sketch = NULL,
   data = NULL
 )
 
@@ -30,6 +31,7 @@ mark_contour_filled(
   breaks = NULL,
   n = 100,
   blend = NULL,
+  sketch = NULL,
   data = NULL
 )
 ```
@@ -71,6 +73,16 @@ mark_contour_filled(
   drawn beneath it (the panel and earlier layers), one of the CSS
   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The
   whole layer composites as one isolated group (not per element).
+
+- sketch:
+
+  A
+  [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
+  spec giving this layer a hand-drawn look (wobbly outlines, hachure
+  fills), `NA`/`FALSE` to force it crisp (overriding a plot-wide
+  [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)),
+  or `NULL` (default) to inherit. Geometry marks accept it; text,
+  raster, hex and datashade marks do not.
 
 - data:
 

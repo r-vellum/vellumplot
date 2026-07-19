@@ -93,6 +93,7 @@ Contours are coloured by level automatically — <code>mark_contour()</code> map
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -104,6 +105,7 @@ Contours are coloured by level automatically — <code>mark_contour()</code> map
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -144,6 +146,13 @@ Contours are coloured by level automatically — <code>mark_contour()</code> map
 already drawn beneath it (the panel and earlier layers), one of the CSS
 <code>mix-blend-mode</code> names, e.g. <code>"multiply"</code>, <code>"screen"</code>, <code>"darken"</code>. The whole
 layer composites as one isolated group (not per element).</p></dd>
+
+
+<dt id="arg-sketch">sketch<a class="anchor" aria-label="anchor" href="#arg-sketch"></a></dt>
+<dd><p>A <code><a href="sketch.html">sketch()</a></code> spec giving this layer a hand-drawn look (wobbly
+outlines, hachure fills), <code>NA</code>/<code>FALSE</code> to force it crisp (overriding a
+plot-wide <code><a href="theme_sketch.html">theme_sketch()</a></code>), or <code>NULL</code> (default) to inherit. Geometry marks
+accept it; text, raster, hex and datashade marks do not.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>

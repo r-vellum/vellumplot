@@ -12,7 +12,15 @@ already carries a non-polar coordinate.
 ## Usage
 
 ``` r
-mark_pie(plot, value, fill = NULL, ..., sketch = NULL, data = NULL)
+mark_pie(
+  plot,
+  value,
+  fill = NULL,
+  ...,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
 mark_donut(
   plot,
@@ -20,6 +28,7 @@ mark_donut(
   fill = NULL,
   inner_radius = 0.5,
   ...,
+  blend = NULL,
   sketch = NULL,
   data = NULL,
   hole = NULL
@@ -44,6 +53,11 @@ mark_donut(
 - ...:
 
   Further constant aesthetics (e.g. `alpha`).
+
+- blend:
+
+  Optional blend mode for compositing the layer (see
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)).
 
 - sketch:
 

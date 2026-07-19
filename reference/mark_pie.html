@@ -82,7 +82,15 @@ the plot already carries a non-polar coordinate.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_pie</span><span class="op">(</span><span class="va">plot</span>, <span class="va">value</span>, fill <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_pie</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">value</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mark_donut</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -90,6 +98,7 @@ the plot already carries a non-polar coordinate.</p>
 <span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  inner_radius <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hole <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -115,6 +124,10 @@ slice.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Further constant aesthetics (e.g. <code>alpha</code>).</p></dd>
+
+
+<dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>
+<dd><p>Optional blend mode for compositing the layer (see <code><a href="mark_point.html">mark_point()</a></code>).</p></dd>
 
 
 <dt id="arg-sketch">sketch<a class="anchor" aria-label="anchor" href="#arg-sketch"></a></dt>

@@ -89,6 +89,21 @@
   (`inner.radius`, `hole`, ridgeline `scale`) still work with a
   deprecation warning.
 
+- **Consistent `sketch` / `blend` passthrough.**
+  [`mark_ecdf()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md),
+  [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md),
+  [`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md),
+  [`mark_dotplot()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md),
+  [`mark_qq()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md),
+  and
+  [`mark_qq_line()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)
+  now accept a per-layer `sketch =` (their emitters already honoured
+  it), and
+  [`mark_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
+  /
+  [`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
+  accept `blend =`, matching the rest of the mark surface.
+
 - **Parameterised position adjustments.** New
   [`position_nudge()`](https://r-vellum.github.io/vellumplot/reference/position.md),
   [`position_jitter()`](https://r-vellum.github.io/vellumplot/reference/position.md),
