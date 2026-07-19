@@ -156,7 +156,7 @@
 </div>
 </div>
 </div>
-<p>The root sits at the centre (it is not drawn as a wedge); the first level forms the innermost ring. <code>inner_radius</code> opens a hole for a ring/donut sunburst:</p>
+<p>The root sits at the centre (it is not drawn as a wedge); the first level forms the innermost ring, starting at twelve o’clock and winding clockwise. Each top-level branch takes a distinct hue, and its descendants inherit that hue lightened with depth, so branches stay distinguishable and each ring reads as a shade of its parent. <code>inner_radius</code> opens a hole for a ring/donut sunburst:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vsunburst.html">vsunburst</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, inner_radius <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>

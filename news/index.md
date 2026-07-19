@@ -2,6 +2,15 @@
 
 ## vellumplot (development version)
 
+- **Sunburst rendering fixes.**
+  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+  now colours wedges by their top-level branch (each branch a distinct
+  hue, lightened with depth) instead of a single colour per ring —
+  sibling branches were previously indistinguishable. It also starts the
+  first wedge at twelve o’clock and winds clockwise, matching the
+  package’s pies/roses (`coord_polar`) rather than starting at three
+  o’clock counter-clockwise.
+
 - **Sunburst / radial hierarchies:
   [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md).**
   A new plot type for part-of-whole hierarchies, from a *parent list* —

@@ -79,8 +79,11 @@ vsunburst(h, id, parent, value)
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-4-1.png)
 
 The root sits at the centre (it is not drawn as a wedge); the first
-level forms the innermost ring. `inner_radius` opens a hole for a
-ring/donut sunburst:
+level forms the innermost ring, starting at twelve o’clock and winding
+clockwise. Each top-level branch takes a distinct hue, and its
+descendants inherit that hue lightened with depth, so branches stay
+distinguishable and each ring reads as a shade of its parent.
+`inner_radius` opens a hole for a ring/donut sunburst:
 
 ``` r
 
