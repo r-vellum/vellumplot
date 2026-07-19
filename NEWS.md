@@ -51,6 +51,12 @@
   spellings (`inner.radius`, `hole`, ridgeline `scale`) still work with a
   deprecation warning.
 
+* **Consistent `sketch` / `blend` passthrough.** `mark_ecdf()`, `mark_contour()`,
+  `mark_contour_filled()`, `mark_dotplot()`, `mark_qq()`, and `mark_qq_line()` now
+  accept a per-layer `sketch =` (their emitters already honoured it), and
+  `mark_pie()` / `mark_donut()` accept `blend =`, matching the rest of the mark
+  surface.
+
 * **Parameterised position adjustments.** New `position_nudge()`,
   `position_jitter()`, `position_dodge()`, `position_dodge2()`, and
   `position_jitterdodge()` give a mark's `position` tunable parameters (a bare
