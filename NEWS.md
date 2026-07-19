@@ -1,5 +1,12 @@
 # vellumplot (development version)
 
+* **Sankey crossing minimisation.** `vsankey()` now orders the nodes within each
+  column with the Sugiyama barycenter heuristic to minimise ribbon crossings
+  (previously first-appearance order, which left many avoidable crossings). The
+  reordering is deterministic and pure R. A related fix stacks each node's ribbon
+  slices to meet the node in the same vertical order as the nodes they connect to,
+  removing the remaining crossings within a fan of ribbons.
+
 * **Sunburst rendering fixes.** `vsunburst()` now colours wedges by their
   top-level branch (each branch a distinct hue, lightened with depth) instead of
   a single colour per ring — sibling branches were previously indistinguishable.

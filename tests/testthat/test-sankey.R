@@ -111,3 +111,70 @@ test_that("vsankey renders, with and without labels", {
   render_plot(vsankey(flows, from, to, value, label = FALSE), f2)
   expect_gt(file.info(f2)$size, 0)
 })
+
+# --- crossing minimization -------------------------------------------------
+
+# Build (fi, ti, value, layer, n) for a flow list, as .sankey_layout does.
+sankey_parts <- function(from, to, value) {
+  nodes <- unique(c(from, to))
+  n <- length(nodes)
+  fi <- match(from, nodes)
+  ti <- match(to, nodes)
+  layer <- vellumplot:::.sankey_layers(fi, ti, n)
+  base <- split(seq_len(n), factor(layer, levels = 0:max(layer)))
+  opt <- vellumplot:::.sankey_order(fi, ti, value, layer, n)
+  list(fi = fi, ti = ti, layer = layer, n = n, base = base, opt = opt)
+}
+
+test_that("node ordering never increases crossings, and reduces them here", {
+  p <- sankey_parts(
+    c("Coal", "Gas", "Coal", "Solar", "Grid", "Grid"),
+    c("Grid", "Grid", "Export", "Grid", "Homes", "Industry"),
+    c(30, 20, 10, 15, 40, 25)
+  )
+  cx <- function(o) vellumplot:::.sankey_crossings(p$fi, p$ti, o, p$layer)
+  expect_lte(cx(p$opt), cx(p$base))
+  expect_lt(cx(p$opt), cx(p$base)) # this example has avoidable crossings
+})
+
+test_that("a crafted inversion is fully resolved (crossings -> 0)", {
+  # Nodes 1,2 (layer 0) and 3,4 (layer 1); edges 1->4 and 2->3 cross under the
+  # initial node-index order. Reordering layer 1 to {4,3} uncrosses them.
+  fi <- c(1L, 2L)
+  ti <- c(4L, 3L)
+  value <- c(1, 1)
+  layer <- c(0L, 0L, 1L, 1L)
+  base <- split(1:4, factor(layer, levels = 0:1))
+  opt <- vellumplot:::.sankey_order(fi, ti, value, layer, 4L)
+  expect_gt(vellumplot:::.sankey_crossings(fi, ti, base, layer), 0)
+  expect_equal(vellumplot:::.sankey_crossings(fi, ti, opt, layer), 0)
+})
+
+test_that("ordering is deterministic", {
+  p <- sankey_parts(
+    c("Coal", "Gas", "Coal", "Solar", "Grid", "Grid"),
+    c("Grid", "Grid", "Export", "Grid", "Homes", "Industry"),
+    c(30, 20, 10, 15, 40, 25)
+  )
+  again <- vellumplot:::.sankey_order(
+    p$fi,
+    p$ti,
+    c(30, 20, 10, 15, 40, 25),
+    p$layer,
+    p$n
+  )
+  expect_identical(p$opt, again)
+})
+
+test_that("degenerate inputs order without error", {
+  # single edge (two layers, one node each)
+  p1 <- sankey_parts("x", "y", 1)
+  expect_equal(
+    vellumplot:::.sankey_crossings(p1$fi, p1$ti, p1$opt, p1$layer),
+    0
+  )
+  # a disconnected second component keeps a valid ordering
+  p2 <- sankey_parts(c("a", "c"), c("b", "d"), c(1, 1))
+  expect_length(unlist(p2$opt), p2$n)
+  expect_setequal(unlist(p2$opt), seq_len(p2$n))
+})

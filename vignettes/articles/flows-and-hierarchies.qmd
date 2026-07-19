@@ -39,9 +39,11 @@ vsankey(flows, from, to, value)
 
 Nodes are the union of the `from` and `to` values; a node that appears as both a
 target and a source (here, `Grid`) makes the diagram multi-stage. Columns are
-placed by a longest-path layering of the flows, each node's height is
-proportional to the larger of its total in- and out-flow, and ribbon widths are
-proportional to `value` — so the diagram reads as a conserved flow left to right.
+placed by a longest-path layering of the flows, and nodes within each column are
+ordered to minimise ribbon crossings (a deterministic barycenter sweep). Each
+node's height is proportional to the larger of its total in- and out-flow, and
+ribbon widths are proportional to `value` — so the diagram reads as a conserved
+flow left to right.
 
 The flows must form a directed acyclic graph (a node cannot reach itself), and
 `value`s must be positive. Turn node labels off with `label = FALSE`:
