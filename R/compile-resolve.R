@@ -57,7 +57,11 @@ NULL
       )
     }
     sankey <- .sankey_layout(values$from, values$to, values$value)
-    values$x <- c(0, 1)
+    # Nodes/ribbons live in [0, 1]; when node labels are drawn, widen the x
+    # domain so the outer-column labels (left of the source column, right of the
+    # terminal column) fall inside the panel instead of clipping at its edge.
+    xmargin <- if (isTRUE(layer@params$label)) .SANKEY_LABEL_MARGIN else 0
+    values$x <- c(-xmargin, 1 + xmargin)
     values$y <- c(0, 1)
     types$x <- types$y <- "quantitative"
     n <- nrow(sankey$nodes)

@@ -88,6 +88,21 @@ test_that("a sankey plot cannot be faceted or share the panel with other marks",
   )
 })
 
+test_that("labels widen the x domain so outer-column labels stay on-panel", {
+  # with labels: margin reserved each side (before the scale's own expansion)
+  dom_lab <- vellumplot:::.build_panels(
+    vsankey(flows, from, to, value)
+  )$scales$x$domain
+  expect_lt(dom_lab[1], 0)
+  expect_gt(dom_lab[2], 1)
+  # without labels: nodes fill [0, 1] (only the scale's default expansion beyond)
+  dom_no <- vellumplot:::.build_panels(
+    vsankey(flows, from, to, value, label = FALSE)
+  )$scales$x$domain
+  expect_gt(dom_no[1], dom_lab[1])
+  expect_lt(dom_no[2], dom_lab[2])
+})
+
 test_that("vsankey renders, with and without labels", {
   f1 <- local_tempfile(fileext = ".png")
   render_plot(vsankey(flows, from, to, value), f1)

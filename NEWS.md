@@ -35,6 +35,10 @@
   **area** (value `0` → size `0`), the perceptually honest default for bubble
   charts, with `max_size` the size of the largest value.
 
+* **Sankey labels stay on-panel.** `vsankey()` now reserves horizontal margin for
+  node labels, so the source column's labels (drawn to their left) and the
+  terminal column's (drawn to their right) no longer clip at the panel edge.
+
 * **Robustness of the new marks.** `vsunburst()`/`mark_sunburst()` now reject a
   missing or negative leaf `value` with a clear message (instead of a cryptic
   downstream error), and `mark_sunburst()` validates `inner.radius` like
