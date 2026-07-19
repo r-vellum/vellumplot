@@ -93,3 +93,17 @@ test_that("a z surface is contoured when x/y form a regular grid", {
     "regular grid"
   )
 })
+
+test_that("the after_stat default channel yields to an explicit mapping", {
+  # contour_filled defaults fill = after_stat(level); an explicit fill wins.
+  enc <- function(p) p@layers[[1]]@encoding
+  auto <- vplot(faithful) |> mark_contour_filled(x = eruptions, y = waiting)
+  expect_true("fill" %in% names(enc(auto)))
+  set <- vplot(faithful) |>
+    mark_contour_filled(x = eruptions, y = waiting, fill = "grey")
+  # an explicit constant fill is a param, not an after_stat encoding
+  expect_false("fill" %in% names(enc(set)))
+  # contour defaults color = after_stat(level)
+  cl <- vplot(faithful) |> mark_contour(x = eruptions, y = waiting)
+  expect_true("color" %in% names(enc(cl)))
+})

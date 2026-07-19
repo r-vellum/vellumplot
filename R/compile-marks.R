@@ -1453,6 +1453,39 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   })
 }
 
+# Default extents (fractions/multiples of the category band) of the density-shape
+# marks. Shared by the emitters below and by `.mark_footprint()` (compile-train.R)
+# so a layer's drawn footprint and the domain expansion that makes room for it are
+# computed from the same numbers.
+.VIOLIN_HALFWIDTH <- 0.4 # violin half-width as a fraction of the band
+.RIDGE_HEIGHT <- 1.4 # default ridge height as a multiple of the row band
+.SLAB_WIDTH <- 0.9 # default halfeye slab width as a fraction of the band
+
+# Normalise a kernel density's heights to a drawable extent (peak maps to
+# `extent`); the shared first step of every density-shape polygon.
+.density_offset <- function(d, extent) (d$y / max(d$y)) * extent
+
+# Native-coordinate vertices of a filled density polygon. `support` is the
+# density support (`d$x`) already mapped to native on its own axis; `offset` is
+# the normalised height (`.density_offset()`) laid out perpendicular from `base`.
+# Orientation:
+#   "violin" — mirrored about `base` (value axis), support runs along the other;
+#   "slab"   — one-sided from `base` (flat edge at `base`, bulge to `base+offset`);
+#   "ridge"  — one-sided, rising `offset` above a flat baseline at `base`.
+# Returns `perp`/`supp`: the perpendicular (value) and support coordinates, which
+# the caller assigns to x/y depending on which axis the value runs along.
+.density_polygon <- function(support, base, offset, orient) {
+  m <- length(support)
+  supp <- c(support, rev(support))
+  perp <- switch(
+    orient,
+    violin = c(base + offset, rev(base - offset)),
+    slab = c(rep(base, m), base + rev(offset)),
+    ridge = c(base + offset, rep(base, m))
+  )
+  list(perp = perp, supp = supp)
+}
+
 # A violin: a mirrored kernel-density of `y` per `x` category, drawn as a filled
 # polygon whose half-width is the density scaled to the category band. Mirrors
 # the boxplot layout (categorical x, value y).
@@ -1465,7 +1498,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   levs <- .cat_levels(xv)
   xc_all <- scales$x$map(levs)
   band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
-  hw <- 0.4 * band
+  hw <- .VIOLIN_HALFWIDTH * band
   xchar <- as.character(xv)
   dens <- .density_by_cat(yv, xv, levs, adjust)
   sk <- .mark_sketch(L, scales)
@@ -1476,12 +1509,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     }
     sel <- which(xchar == levs[j])
     a <- alpha[sel[1]]
-    dn <- (d$y / max(d$y)) * hw
-    xc <- xc_all[j]
     # up the right side, then down the mirrored left side
-    px <- c(xc + dn, rev(xc - dn))
-    py <- scales$y$map(c(d$x, rev(d$x)))
-    xy <- .xy_units(scales, px, py)
+    poly <- .density_polygon(
+      scales$y$map(d$x),
+      xc_all[j],
+      .density_offset(d, hw),
+      "violin"
+    )
+    xy <- .xy_units(scales, poly$perp, poly$supp)
     scene <- .draw(
       scene,
       vellum::polygon_grob(
@@ -1514,7 +1549,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   levs <- .cat_levels(yv)
   ypos <- scales$y$map(levs)
   band <- scales$y$band_width %||% 1
-  scale_h <- (L$stat_params$height %||% 1.4) * band
+  scale_h <- (L$stat_params$height %||% .RIDGE_HEIGHT) * band
   ychar <- as.character(yv)
   dens <- .density_by_cat(xv, yv, levs, adjust)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(xv))
@@ -1526,11 +1561,13 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     }
     sel <- which(ychar == levs[j])
     a <- alpha[sel[1]]
-    h <- (d$y / max(d$y)) * scale_h
-    base <- ypos[j]
-    px <- scales$x$map(c(d$x, rev(d$x)))
-    py <- c(base + h, rep(base, length(h)))
-    xy <- .xy_units(scales, px, py)
+    poly <- .density_polygon(
+      scales$x$map(d$x),
+      ypos[j],
+      .density_offset(d, scale_h),
+      "ridge"
+    )
+    xy <- .xy_units(scales, poly$supp, poly$perp)
     scene <- .draw(
       scene,
       vellum::polygon_grob(
@@ -1578,7 +1615,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   colv <- rep_len(.aes_colour(L, scales, "grey30"), length(yv))
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(yv))
   adjust <- L$stat_params$adjust %||% 1
-  hw <- (L$stat_params$scale %||% 0.9) * band
+  hw <- (L$stat_params$scale %||% .SLAB_WIDTH) * band
   xchar <- as.character(xv)
   dens <- if (slab) .density_by_cat(yv, xv, levs, adjust) else NULL
   sk <- .mark_sketch(L, scales)
@@ -1603,11 +1640,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
     if (slab && !is.null(dens[[j]])) {
       d <- dens[[j]]
-      dn <- (d$y / max(d$y)) * hw
-      m <- length(d$x)
-      px <- c(rep(xc, m), xc + rev(dn)) # up the flat left edge, down the bulge
-      py <- scales$y$map(c(d$x, rev(d$x)))
-      xy <- .xy_units(scales, px, py)
+      # up the flat left edge, down the bulge
+      poly <- .density_polygon(
+        scales$y$map(d$x),
+        xc,
+        .density_offset(d, hw),
+        "slab"
+      )
+      xy <- .xy_units(scales, poly$perp, poly$supp)
       scene <- .draw(
         scene,
         vellum::polygon_grob(
@@ -1621,7 +1661,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     }
 
     pit <- .point_interval(yv[sel], widths, point)
-    for (wi in order(widths, decreasing = TRUE)) {
+    # widest first (widths is sorted ascending) so the thick inner bar draws last
+    for (wi in rev(seq_along(widths))) {
       lo <- scales$y$map(pit$ints[[wi]][1])
       hi <- scales$y$map(pit$ints[[wi]][2])
       ab <- .xy_units(scales, c(xc, xc), c(lo, hi))

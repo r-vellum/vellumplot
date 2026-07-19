@@ -1188,7 +1188,7 @@ NULL
     levs <- .cat_levels(xv)
     xc <- scales$x$map(levs)
     band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
-    hw <- 0.4 * band
+    hw <- .VIOLIN_HALFWIDTH * band
     dens <- .density_by_cat(yv, xv, levs, adjust)
     supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
     list(
@@ -1201,7 +1201,7 @@ NULL
     levs <- .cat_levels(yv)
     ypos <- scales$y$map(levs)
     band <- scales$y$band_width %||% 1
-    scale_h <- (L$stat_params$height %||% 1.4) * band
+    scale_h <- (L$stat_params$height %||% .RIDGE_HEIGHT) * band
     dens <- .density_by_cat(xv, yv, levs, adjust)
     supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
     list(
@@ -1216,7 +1216,7 @@ NULL
     levs <- .cat_levels(xv)
     xc <- scales$x$map(levs)
     band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
-    hw <- (L$stat_params$scale %||% 0.9) * band
+    hw <- (L$stat_params$scale %||% .SLAB_WIDTH) * band
     dens <- .density_by_cat(yv, xv, levs, adjust)
     supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
     list(
