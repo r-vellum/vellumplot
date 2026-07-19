@@ -38,6 +38,26 @@ test_that("angular span is proportional to value; children fill the parent", {
   )
 })
 
+test_that("the first top-level wedge starts at 12 o'clock, winding clockwise", {
+  lay <- vellumplot:::.sunburst_layout(h$id, h$parent, h$value)
+  # `sector_grob` fills theta0 -> theta1 increasing (CCW), so a clockwise wedge
+  # from the top has its *upper* edge (theta1) at pi/2 and extends to smaller
+  # angles. The first input child (A) owns fraction 0, so its theta1 == pi/2.
+  expect_equal(lay$theta1[lay$id == "A"], pi / 2, tolerance = 1e-9)
+  expect_lt(lay$theta0[lay$id == "A"], lay$theta1[lay$id == "A"]) # winds clockwise
+})
+
+test_that("wedges are coloured by branch (not by depth), lightened outward", {
+  lay <- vellumplot:::.sunburst_layout(h$id, h$parent, h$value)
+  col <- setNames(lay$colour, lay$id)
+  # sibling branches differ (the old depth-colouring made these identical)
+  expect_false(col[["A"]] == col[["B"]])
+  # a child shares its branch's hue but is lightened (paler) than the parent ring
+  lum <- function(x) sum(farver::decode_colour(x))
+  expect_gt(lum(col[["A1"]]), lum(col[["A"]])) # A1 lighter than A
+  expect_gt(lum(col[["B1"]]), lum(col[["B"]]))
+})
+
 test_that("inner_radius opens a centre hole (shifts the innermost ring out)", {
   lay0 <- vellumplot:::.sunburst_layout(
     h$id,
