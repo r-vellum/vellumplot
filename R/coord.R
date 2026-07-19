@@ -31,6 +31,21 @@ CoordSpec <- S7::new_class(
 # The coord for a spec, or the cartesian default.
 .coord_of <- function(spec) spec@coord %||% CoordSpec(kind = "cartesian")
 
+# Validate a central-hole radius fraction. Shared by coord_radial() and the
+# sunburst constructors so they reject the same range identically.
+.check_inner_radius <- function(
+  x,
+  arg = "inner.radius",
+  call = rlang::caller_env()
+) {
+  if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 0 || x >= 1) {
+    cli::cli_abort(
+      "{.arg {arg}} must be a single number in {.code [0, 1)}.",
+      call = call
+    )
+  }
+}
+
 # Build the per-panel polar context from a coord and the panel's trained x/y
 # scales. The theta aesthetic drives the angle, the other drives the radius.
 # Angles follow ggplot2's familiar convention (zero at twelve o'clock, clockwise
@@ -287,9 +302,7 @@ coord_radial <- function(
   if (!direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }
-  if (inner.radius < 0 || inner.radius >= 1) {
-    cli::cli_abort("{.arg inner.radius} must be in {.code [0, 1)}.")
-  }
+  .check_inner_radius(inner.radius)
   plot@coord <- CoordSpec(
     kind = "polar",
     theta = theta,

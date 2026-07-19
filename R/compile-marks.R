@@ -1582,12 +1582,19 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   xchar <- as.character(xv)
   dens <- if (slab) .density_by_cat(yv, xv, levs, adjust) else NULL
   sk <- .mark_sketch(L, scales)
+  mrk <- if (slab) "mark_halfeye" else "mark_interval"
   # inner intervals thick, outer thin; drawn widest-first so the thick bar is on top
   lwd_by_width <- seq(4, 1.5, length.out = length(widths))
 
   for (j in seq_along(levs)) {
     sel <- which(xchar == levs[j])
-    if (!length(sel)) {
+    # A point-interval summarises a distribution: skip a category with fewer than
+    # 2 finite observations (a single/absent value has no interval and would
+    # otherwise feed NA coordinates into the grobs), matching `.stat_density`.
+    if (sum(is.finite(yv[sel])) < 2L) {
+      cli::cli_warn(
+        "Skipping {.field {levs[j]}}: {.fn {mrk}} needs at least 2 points."
+      )
       next
     }
     xc <- xc_all[j]
