@@ -6,13 +6,14 @@ articles:
   articles/datashading: datashading.html
   articles/effects-and-themes: effects-and-themes.html
   articles/facets-and-composition: facets-and-composition.html
+  articles/flows-and-hierarchies: flows-and-hierarchies.html
   articles/marks: marks.html
   articles/scales-and-guides: scales-and-guides.html
   articles/spatial-and-networks: spatial-and-networks.html
   articles/statistical-marks: statistical-marks.html
   articles/the-compiler: the-compiler.html
   articles/vellumplot: vellumplot.html
-last_built: 2026-07-18T20:29Z
+last_built: 2026-07-19T17:44Z
 urls:
   reference: https://r-vellum.github.io/vellumplot/reference
   article: https://r-vellum.github.io/vellumplot/articles

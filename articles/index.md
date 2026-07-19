@@ -41,6 +41,13 @@
   as maps with coord_sf, and igraph graphs laid out and drawn as
   node-link diagrams with vgraph.
 
+- [Flows and
+  hierarchies](https://r-vellum.github.io/vellumplot/articles/flows-and-hierarchies.md):
+
+  Plot types whose positions come from a layout, not from x/y columns:
+  sankey flow diagrams with vsankey (and, later, hierarchies).
+  Axis-free, computed R-side, drawn through vellum primitives.
+
 - [Statistical
   marks](https://r-vellum.github.io/vellumplot/articles/statistical-marks.md):
 

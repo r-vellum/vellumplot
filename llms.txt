@@ -308,6 +308,9 @@ then render it or write it to a file.
   : Start a plot specification
 - [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
   : Start a graph (network) plot
+- [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  : Sankey (flow) diagram
 - [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
   : Render a plot to a file
 - [`PlotSpec()`](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
@@ -618,6 +621,13 @@ compiled into a scene.
   Two data shapes that are not tidy rows of x and y: sf geometries drawn
   as maps with coord_sf, and igraph graphs laid out and drawn as
   node-link diagrams with vgraph.
+
+- [Flows and
+  hierarchies](https://r-vellum.github.io/vellumplot/articles/flows-and-hierarchies.md):
+
+  Plot types whose positions come from a layout, not from x/y columns:
+  sankey flow diagrams with vsankey (and, later, hierarchies).
+  Axis-free, computed R-side, drawn through vellum primitives.
 
 - [Statistical
   marks](https://r-vellum.github.io/vellumplot/articles/statistical-marks.md):

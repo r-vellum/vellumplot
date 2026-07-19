@@ -9,6 +9,9 @@ then render it or write it to a file.
   : Start a plot specification
 - [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
   : Start a graph (network) plot
+- [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  : Sankey (flow) diagram
 - [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
   : Render a plot to a file
 - [`PlotSpec()`](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
