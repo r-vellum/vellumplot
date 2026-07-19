@@ -44,6 +44,30 @@ test_that("sketch on an unsupported mark (via ...) errors", {
   )
 })
 
+test_that("sketch = rides marks whose emitters honour it", {
+  s <- sketch(roughness = 2)
+  fait <- faithful
+  layers <- list(
+    vplot(mtcars) |> mark_ecdf(x = mpg, sketch = s),
+    vplot(fait) |> mark_contour(x = eruptions, y = waiting, sketch = s),
+    vplot(fait) |> mark_contour_filled(x = eruptions, y = waiting, sketch = s),
+    vplot(fait) |> mark_dotplot(x = waiting, sketch = s),
+    vplot(mtcars) |> mark_qq(sample = mpg, sketch = s),
+    vplot(mtcars) |> mark_qq_line(sample = mpg, sketch = s)
+  )
+  for (p in layers) {
+    expect_identical(p@layers[[1]]@sketch, s)
+  }
+})
+
+test_that("blend = rides pie / donut", {
+  df <- data.frame(part = c("a", "b", "c"), n = c(3, 5, 2))
+  pie <- vplot(df) |> mark_pie(value = n, fill = part, blend = "multiply")
+  donut <- vplot(df) |> mark_donut(value = n, fill = part, blend = "screen")
+  expect_identical(pie@layers[[1]]@blend, "multiply")
+  expect_identical(donut@layers[[1]]@blend, "screen")
+})
+
 # --- element slot ------------------------------------------------------------
 
 test_that("element_line / element_rect carry a validated sketch slot", {

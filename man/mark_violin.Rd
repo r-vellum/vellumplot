@@ -19,7 +19,14 @@ mark_ridgeline(
   scale = NULL
 )
 
-mark_dotplot(plot, ..., binwidth = NULL, blend = NULL, data = NULL)
+mark_dotplot(
+  plot,
+  ...,
+  binwidth = NULL,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}

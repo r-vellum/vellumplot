@@ -5,7 +5,15 @@
 \alias{mark_donut}
 \title{Pie and donut charts}
 \usage{
-mark_pie(plot, value, fill = NULL, ..., sketch = NULL, data = NULL)
+mark_pie(
+  plot,
+  value,
+  fill = NULL,
+  ...,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
 mark_donut(
   plot,
@@ -13,6 +21,7 @@ mark_donut(
   fill = NULL,
   inner_radius = 0.5,
   ...,
+  blend = NULL,
   sketch = NULL,
   data = NULL,
   hole = NULL
@@ -27,6 +36,8 @@ mark_donut(
 slice.}
 
 \item{...}{Further constant aesthetics (e.g. \code{alpha}).}
+
+\item{blend}{Optional blend mode for compositing the layer (see \code{\link[=mark_point]{mark_point()}}).}
 
 \item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving the layer a hand-drawn look, or \code{NULL}
 (default) to inherit.}

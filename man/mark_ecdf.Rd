@@ -7,13 +7,27 @@
 \alias{mark_qq_line}
 \title{Distribution marks}
 \usage{
-mark_ecdf(plot, ..., blend = NULL, data = NULL)
+mark_ecdf(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
 mark_rug(plot, ..., sides = "bl", length = 0.03, blend = NULL, data = NULL)
 
-mark_qq(plot, ..., distribution = "qnorm", blend = NULL, data = NULL)
+mark_qq(
+  plot,
+  ...,
+  distribution = "qnorm",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_qq_line(plot, ..., distribution = "qnorm", blend = NULL, data = NULL)
+mark_qq_line(
+  plot,
+  ...,
+  distribution = "qnorm",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -22,7 +36,7 @@ mark_qq_line(plot, ..., distribution = "qnorm", blend = NULL, data = NULL)
 need \code{sample}; \code{mark_rug()} takes \code{x} and/or \code{y} (+ \code{color}, \code{alpha},
 \code{linewidth}, \code{linetype}).}
 
-\item{blend, data}{Standard layer arguments (see \code{\link[=mark_point]{mark_point()}}).}
+\item{blend, sketch, data}{Standard layer arguments (see \code{\link[=mark_point]{mark_point()}}).}
 
 \item{sides}{Which edges \code{mark_rug()} draws ticks on: any of \code{"b"} (bottom),
 \code{"l"} (left), \code{"t"} (top), \code{"r"} (right); default \code{"bl"}.}

@@ -256,7 +256,7 @@ after_stat <- function(x) x
   if ("sketch" %in% c(names(split$encoding), names(split$params))) {
     cli::cli_abort(c(
       "{.arg sketch} is not an aesthetic.",
-      i = "This mark does not take a {.arg sketch} argument (text, raster, hex and datashade marks are never sketched).",
+      i = "This mark does not take a {.arg sketch} argument (text, image, raster, hex and datashade marks are never sketched).",
       i = "For a plot-wide hand-drawn look, use {.fn theme_sketch}."
     ))
   }
@@ -607,6 +607,7 @@ mark_bar <- function(
 #'   the rim (`0` is a pie, the default `0.5` a medium donut).
 #' @param hole Deprecated; renamed to `inner_radius`.
 #' @param ... Further constant aesthetics (e.g. `alpha`).
+#' @param blend Optional blend mode for compositing the layer (see [mark_point()]).
 #' @param data Optional per-layer data frame.
 #' @param sketch A [sketch()] spec giving the layer a hand-drawn look, or `NULL`
 #'   (default) to inherit.
@@ -622,6 +623,7 @@ mark_pie <- function(
   value,
   fill = NULL,
   ...,
+  blend = NULL,
   sketch = NULL,
   data = NULL
 ) {
@@ -629,6 +631,7 @@ mark_pie <- function(
     plot,
     rlang::enquos(value = value, fill = fill, ...),
     0,
+    blend,
     sketch,
     data
   )
@@ -642,6 +645,7 @@ mark_donut <- function(
   fill = NULL,
   inner_radius = 0.5,
   ...,
+  blend = NULL,
   sketch = NULL,
   data = NULL,
   hole = NULL
@@ -652,6 +656,7 @@ mark_donut <- function(
     plot,
     rlang::enquos(value = value, fill = fill, ...),
     inner_radius,
+    blend,
     sketch,
     data
   )
@@ -659,7 +664,7 @@ mark_donut <- function(
 
 # Shared body of mark_pie/mark_donut: a stacked bar (value -> y, a constant
 # single-band x) forced through polar theta = "y".
-.pie_layer <- function(plot, enc, inner_radius, sketch, data) {
+.pie_layer <- function(plot, enc, inner_radius, blend, sketch, data) {
   .check_plot(plot)
   if (!is.null(plot@coord) && !identical(plot@coord@kind, "polar")) {
     cli::cli_abort(c(
@@ -675,6 +680,7 @@ mark_donut <- function(
     enc,
     extra = rlang::quos(x = factor(1)),
     position = "stack",
+    blend = blend,
     sketch = sketch,
     data = data
   )
@@ -1340,6 +1346,7 @@ mark_contour <- function(
   breaks = NULL,
   n = 100,
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -1359,6 +1366,7 @@ mark_contour <- function(
       n = n
     ),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -1373,6 +1381,7 @@ mark_contour_filled <- function(
   breaks = NULL,
   n = 100,
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -1393,6 +1402,7 @@ mark_contour_filled <- function(
       filled = TRUE
     ),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -1415,14 +1425,14 @@ mark_contour_filled <- function(
 #' @param length Rug tick length as a fraction of the panel (default `0.03`).
 #' @param distribution Quantile function of the reference distribution for
 #'   `mark_qq()` / `mark_qq_line()` (default [stats::qnorm]).
-#' @param blend,data Standard layer arguments (see [mark_point()]).
+#' @param blend,sketch,data Standard layer arguments (see [mark_point()]).
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_ecdf(x = mpg)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_rug()
 #' vplot(mtcars) |> mark_qq(sample = mpg) |> mark_qq_line(sample = mpg)
 #' @export
-mark_ecdf <- function(plot, ..., blend = NULL, data = NULL) {
+mark_ecdf <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -1430,6 +1440,7 @@ mark_ecdf <- function(plot, ..., blend = NULL, data = NULL) {
     rlang::enquos(...),
     stat = "ecdf",
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -1463,6 +1474,7 @@ mark_qq <- function(
   ...,
   distribution = "qnorm",
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -1473,6 +1485,7 @@ mark_qq <- function(
     stat = "qq",
     stat_params = list(distribution = distribution),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -1484,6 +1497,7 @@ mark_qq_line <- function(
   ...,
   distribution = "qnorm",
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -1494,6 +1508,7 @@ mark_qq_line <- function(
     stat = "qq_line",
     stat_params = list(distribution = distribution),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
@@ -1577,6 +1592,7 @@ mark_dotplot <- function(
   ...,
   binwidth = NULL,
   blend = NULL,
+  sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -1587,6 +1603,7 @@ mark_dotplot <- function(
     stat = "dotplot",
     stat_params = list(binwidth = binwidth),
     blend = blend,
+    sketch = sketch,
     data = data
   )
 }
