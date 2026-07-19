@@ -59,6 +59,36 @@
   perceptually honest default for bubble charts, with `max_size` the
   size of the largest value.
 
+- **Robustness of the new marks.**
+  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)/[`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+  now reject a missing or negative leaf `value` with a clear message
+  (instead of a cryptic downstream error), and
+  [`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+  validates `inner.radius` like
+  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+  and
+  [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  do.
+  [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)/[`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  skip a category with fewer than two finite observations (with a
+  warning) rather than drawing an empty interval, and reject a `width =`
+  argument (a likely typo for `.width`) that was previously ignored
+  silently.
+
+- **Consistent argument names for the hole radius / ridge height.** The
+  central-hole fraction is now spelled `inner_radius` everywhere it
+  appears:
+  [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md),
+  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)/[`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md),
+  and
+  [`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
+  (was `hole`).
+  [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)’s
+  overlap control is now `height` (was `scale`, which collided with
+  `mark_halfeye(scale=)`, a different quantity). The old spellings
+  (`inner.radius`, `hole`, ridgeline `scale`) still work with a
+  deprecation warning.
+
 - **Parameterised position adjustments.** New
   [`position_nudge()`](https://r-vellum.github.io/vellumplot/reference/position.md),
   [`position_jitter()`](https://r-vellum.github.io/vellumplot/reference/position.md),

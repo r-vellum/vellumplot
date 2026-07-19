@@ -10,7 +10,7 @@ compiled with
 (e.g. via
 [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)).
 Printing it draws the plot; inspect its structure with
-[`summary()`](https://rdrr.io/r/base/summary.html).
+[`base::summary()`](https://rdrr.io/r/base/summary.html).
 
 ## Usage
 

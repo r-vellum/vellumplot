@@ -3,8 +3,8 @@
 Convenience marks for part-of-whole charts. `mark_pie()` draws a pie:
 each `value` becomes a wedge whose angle is its share of the total,
 coloured by `fill`. `mark_donut()` is a pie with a hollow centre
-(`hole`, a fraction of the radius). Both are shorthand for a stacked bar
-projected through
+(`inner_radius`, a fraction of the radius). Both are shorthand for a
+stacked bar projected through
 [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
 with `theta = "y"`, which they set on the plot; they error if the plot
 already carries a non-polar coordinate.
@@ -18,10 +18,11 @@ mark_donut(
   plot,
   value,
   fill = NULL,
-  hole = 0.5,
+  inner_radius = 0.5,
   ...,
   sketch = NULL,
-  data = NULL
+  data = NULL,
+  hole = NULL
 )
 ```
 
@@ -55,10 +56,14 @@ mark_donut(
 
   Optional per-layer data frame.
 
-- hole:
+- inner_radius:
 
   For `mark_donut()`, the inner-hole radius as a fraction of the rim
   (`0` is a pie, the default `0.5` a medium donut).
+
+- hole:
+
+  Deprecated; renamed to `inner_radius`.
 
 ## Value
 
@@ -75,5 +80,5 @@ The modified
 df <- data.frame(part = c("a", "b", "c"), n = c(3, 5, 2))
 vplot(df) |> mark_pie(value = n, fill = part)
 
-vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6)
+vplot(df) |> mark_donut(value = n, fill = part, inner_radius = 0.6)
 ```

@@ -15,8 +15,8 @@ panel is locked to a square. Lines, areas, and ribbons are interpolated into
 smooth arcs.
 coord_radial() is a fuller polar system (ggplot2 3.5's name): besides
 theta/start/direction it takes end to sweep only a partial arc
-(e.g. a half-circle gauge) and inner.radius to open a donut hole. With
-end = NULL and inner.radius = 0 it is identical to coord_polar()."><meta property="og:description" content="coord_polar() projects the panel into polar space: one position aesthetic
+(e.g. a half-circle gauge) and inner_radius to open a donut hole. With
+end = NULL and inner_radius = 0 it is identical to coord_polar()."><meta property="og:description" content="coord_polar() projects the panel into polar space: one position aesthetic
 becomes the angle and the other the radius. With theta = &quot;x&quot; (the default)
 the x aesthetic maps to angle and y to radius — a categorical bar chart
 becomes a wind-rose / coxcomb, a line becomes a radar/spider trace, a point
@@ -26,8 +26,8 @@ panel is locked to a square. Lines, areas, and ribbons are interpolated into
 smooth arcs.
 coord_radial() is a fuller polar system (ggplot2 3.5's name): besides
 theta/start/direction it takes end to sweep only a partial arc
-(e.g. a half-circle gauge) and inner.radius to open a donut hole. With
-end = NULL and inner.radius = 0 it is identical to coord_polar()."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+(e.g. a half-circle gauge) and inner_radius to open a donut hole. With
+end = NULL and inner_radius = 0 it is identical to coord_polar()."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -94,8 +94,8 @@ panel is locked to a square. Lines, areas, and ribbons are interpolated into
 smooth arcs.</p>
 <p><code>coord_radial()</code> is a fuller polar system (ggplot2 3.5's name): besides
 <code>theta</code>/<code>start</code>/<code>direction</code> it takes <code>end</code> to sweep only a <strong>partial arc</strong>
-(e.g. a half-circle gauge) and <code>inner.radius</code> to open a <strong>donut hole</strong>. With
-<code>end = NULL</code> and <code>inner.radius = 0</code> it is identical to <code>coord_polar()</code>.</p>
+(e.g. a half-circle gauge) and <code>inner_radius</code> to open a <strong>donut hole</strong>. With
+<code>end = NULL</code> and <code>inner_radius = 0</code> it is identical to <code>coord_polar()</code>.</p>
     </div>
 
     <div class="section level2">
@@ -108,7 +108,8 @@ smooth arcs.</p>
 <span>  start <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  end <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  direction <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  inner.radius <span class="op">=</span> <span class="fl">0</span></span>
+<span>  inner_radius <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  inner.radius <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -141,9 +142,13 @@ counter-clockwise.</p></dd>
 semicircular gauge.</p></dd>
 
 
-<dt id="arg-inner-radius">inner.radius<a class="anchor" aria-label="anchor" href="#arg-inner-radius"></a></dt>
+<dt id="arg-inner-radius">inner_radius<a class="anchor" aria-label="anchor" href="#arg-inner-radius"></a></dt>
 <dd><p>Radius of the central hole as a fraction of the outer
 radius (<code>0</code>–<code>1</code>); <code>0</code> (default) is a filled disc, <code>&gt; 0</code> a donut/ring.</p></dd>
+
+
+<dt id="arg-inner-radius">inner.radius<a class="anchor" aria-label="anchor" href="#arg-inner-radius"></a></dt>
+<dd><p>Deprecated; renamed to <code>inner_radius</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -161,7 +166,7 @@ radius (<code>0</code>–<code>1</code>); <code>0</code> (default) is a filled d
 <span class="r-plt img"><img src="coord_polar-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">coord_radial</span><span class="op">(</span>theta <span class="op">=</span> <span class="st">"x"</span>, inner.radius <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">coord_radial</span><span class="op">(</span>theta <span class="op">=</span> <span class="st">"x"</span>, inner_radius <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="coord_polar-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>

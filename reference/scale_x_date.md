@@ -91,8 +91,9 @@ scale_y_time(
 
 - date_labels:
 
-  A [`strftime()`](https://rdrr.io/r/base/strptime.html) format string
-  for the tick labels, e.g. `"%b %Y"`. `NULL` uses the default format.
+  A [`base::strftime()`](https://rdrr.io/r/base/strptime.html) format
+  string for the tick labels, e.g. `"%b %Y"`. `NULL` uses the default
+  format.
 
 - breaks, labels:
 

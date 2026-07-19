@@ -79,12 +79,12 @@ vsunburst(h, id, parent, value)
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-4-1.png)
 
 The root sits at the centre (it is not drawn as a wedge); the first
-level forms the innermost ring. `inner.radius` opens a hole for a
+level forms the innermost ring. `inner_radius` opens a hole for a
 ring/donut sunburst:
 
 ``` r
 
-vsunburst(h, id, parent, value, inner.radius = 0.4)
+vsunburst(h, id, parent, value, inner_radius = 0.4)
 ```
 
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-5-1.png)

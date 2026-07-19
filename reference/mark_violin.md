@@ -15,10 +15,11 @@ mark_ridgeline(
   plot,
   ...,
   adjust = 1,
-  scale = 1.4,
+  height = 1.4,
   blend = NULL,
   sketch = NULL,
-  data = NULL
+  data = NULL,
+  scale = NULL
 )
 
 mark_dotplot(plot, ..., binwidth = NULL, blend = NULL, data = NULL)
@@ -47,10 +48,14 @@ mark_dotplot(plot, ..., binwidth = NULL, blend = NULL, data = NULL)
   Standard layer arguments (see
   [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)).
 
-- scale:
+- height:
 
   Ridge height as a multiple of the row band (ridgeline; default `1.4`,
   so adjacent ridges overlap slightly).
+
+- scale:
+
+  Deprecated; renamed to `height`.
 
 - binwidth:
 

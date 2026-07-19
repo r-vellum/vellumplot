@@ -7,13 +7,13 @@
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Pie and donut charts — mark_pie"><meta name="description" content='Convenience marks for part-of-whole charts. mark_pie() draws a pie: each
 value becomes a wedge whose angle is its share of the total, coloured by
-fill. mark_donut() is a pie with a hollow centre (hole, a fraction of
-the radius). Both are shorthand for a stacked bar projected through
+fill. mark_donut() is a pie with a hollow centre (inner_radius, a
+fraction of the radius). Both are shorthand for a stacked bar projected through
 coord_polar() with theta = "y", which they set on the plot; they error if
 the plot already carries a non-polar coordinate.'><meta property="og:description" content='Convenience marks for part-of-whole charts. mark_pie() draws a pie: each
 value becomes a wedge whose angle is its share of the total, coloured by
-fill. mark_donut() is a pie with a hollow centre (hole, a fraction of
-the radius). Both are shorthand for a stacked bar projected through
+fill. mark_donut() is a pie with a hollow centre (inner_radius, a
+fraction of the radius). Both are shorthand for a stacked bar projected through
 coord_polar() with theta = "y", which they set on the plot; they error if
 the plot already carries a non-polar coordinate.'><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -74,8 +74,8 @@ the plot already carries a non-polar coordinate.'><meta property="og:image" cont
     <div class="ref-description section level2">
     <p>Convenience marks for part-of-whole charts. <code>mark_pie()</code> draws a pie: each
 <code>value</code> becomes a wedge whose angle is its share of the total, coloured by
-<code>fill</code>. <code>mark_donut()</code> is a pie with a hollow centre (<code>hole</code>, a fraction of
-the radius). Both are shorthand for a stacked bar projected through
+<code>fill</code>. <code>mark_donut()</code> is a pie with a hollow centre (<code>inner_radius</code>, a
+fraction of the radius). Both are shorthand for a stacked bar projected through
 <code><a href="coord_polar.html">coord_polar()</a></code> with <code>theta = "y"</code>, which they set on the plot; they error if
 the plot already carries a non-polar coordinate.</p>
     </div>
@@ -88,10 +88,11 @@ the plot already carries a non-polar coordinate.</p>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">value</span>,</span>
 <span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  hole <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  inner_radius <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  hole <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -125,9 +126,13 @@ slice.</p></dd>
 <dd><p>Optional per-layer data frame.</p></dd>
 
 
+<dt id="arg-inner-radius">inner_radius<a class="anchor" aria-label="anchor" href="#arg-inner-radius"></a></dt>
+<dd><p>For <code>mark_donut()</code>, the inner-hole radius as a fraction of
+the rim (<code>0</code> is a pie, the default <code>0.5</code> a medium donut).</p></dd>
+
+
 <dt id="arg-hole">hole<a class="anchor" aria-label="anchor" href="#arg-hole"></a></dt>
-<dd><p>For <code>mark_donut()</code>, the inner-hole radius as a fraction of the rim
-(<code>0</code> is a pie, the default <code>0.5</code> a medium donut).</p></dd>
+<dd><p>Deprecated; renamed to <code>inner_radius</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -144,7 +149,7 @@ slice.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>part <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">5</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_pie</span><span class="op">(</span>value <span class="op">=</span> <span class="va">n</span>, fill <span class="op">=</span> <span class="va">part</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_pie-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_donut</span><span class="op">(</span>value <span class="op">=</span> <span class="va">n</span>, fill <span class="op">=</span> <span class="va">part</span>, hole <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_donut</span><span class="op">(</span>value <span class="op">=</span> <span class="va">n</span>, fill <span class="op">=</span> <span class="va">part</span>, inner_radius <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_pie-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>

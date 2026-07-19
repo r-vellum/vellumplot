@@ -237,7 +237,7 @@ which they set for you.
 
 parts <- data.frame(part = c("a", "b", "c", "d"), n = c(3, 5, 2, 4))
 vplot(parts) |>
-  mark_donut(value = n, fill = part, hole = 0.6)
+  mark_donut(value = n, fill = part, inner_radius = 0.6)
 ```
 
 ![](marks_files/figure-html/unnamed-chunk-13-1.png)
@@ -246,14 +246,14 @@ For polar plots generally,
 [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
 extends
 [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
-with a central hole (`inner.radius`) and a partial `start`–`end` arc —
+with a central hole (`inner_radius`) and a partial `start`–`end` arc —
 e.g. a semicircular coxcomb:
 
 ``` r
 
 vplot(mtcars) |>
   mark_bar(x = factor(cyl), fill = factor(cyl)) |>
-  coord_radial(theta = "x", start = -pi / 2, end = pi / 2, inner.radius = 0.2)
+  coord_radial(theta = "x", start = -pi / 2, end = pi / 2, inner_radius = 0.2)
 ```
 
 ![](marks_files/figure-html/unnamed-chunk-14-1.png)

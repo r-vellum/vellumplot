@@ -258,7 +258,7 @@ vplot(penguins) |>
 [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
 turns that on its side: a density of `x` per categorical `y`, with the
 ridges overlapping so many groups fit in little vertical space. Use the
-`scale` argument to tune how much they overlap.
+`height` argument to tune how much they overlap.
 
 ``` r
 

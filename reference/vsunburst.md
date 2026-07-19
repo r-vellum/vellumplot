@@ -19,13 +19,14 @@ vsunburst(
   id,
   parent,
   value,
-  inner.radius = 0,
+  inner_radius = 0,
   width = 6,
   height = 6,
-  dpi = 96
+  dpi = 96,
+  inner.radius = NULL
 )
 
-mark_sunburst(plot, id, parent, value, inner.radius = 0)
+mark_sunburst(plot, id, parent, value, inner_radius = 0, inner.radius = NULL)
 ```
 
 ## Arguments
@@ -39,7 +40,7 @@ mark_sunburst(plot, id, parent, value, inner.radius = 0)
   Columns (tidy-eval): the node id, its parent id (`NA`/`""` for the
   root), and its value (used for leaves).
 
-- inner.radius:
+- inner_radius:
 
   Central hole radius, a fraction in `[0, 1)`; `0` (default) fills to
   the centre.
@@ -47,6 +48,10 @@ mark_sunburst(plot, id, parent, value, inner.radius = 0)
 - width, height, dpi:
 
   Page size (inches) and resolution.
+
+- inner.radius:
+
+  Deprecated; renamed to `inner_radius`.
 
 - plot:
 
@@ -61,7 +66,7 @@ A
 
 ## Details
 
-The root is the centre (not drawn as a wedge); `inner.radius` opens a
+The root is the centre (not drawn as a wedge); `inner_radius` opens a
 hole. Nodes are coloured by depth. The input must be a single-rooted
 tree.
 
