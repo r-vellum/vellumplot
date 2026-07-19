@@ -70,6 +70,8 @@ navbar:
       - text: Beyond scatter plots
       - text: Spatial and networks
         href: articles/spatial-and-networks.html
+      - text: Flows and hierarchies
+        href: articles/flows-and-hierarchies.html
       - text: Statistical marks
         href: articles/statistical-marks.html
       - text: Datashading a third of a billion points
@@ -115,6 +117,7 @@ articles:
   navbar: Beyond scatter plots
   contents:
   - articles/spatial-and-networks
+  - articles/flows-and-hierarchies
   - articles/statistical-marks
   - articles/datashading
   - articles/effects-and-themes
@@ -132,6 +135,7 @@ reference:
   contents:
   - vplot
   - vgraph
+  - vsankey
   - render_plot
   - PlotSpec
 
