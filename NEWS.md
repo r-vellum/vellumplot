@@ -35,6 +35,14 @@
   **area** (value `0` → size `0`), the perceptually honest default for bubble
   charts, with `max_size` the size of the largest value.
 
+* **Robustness of the new marks.** `vsunburst()`/`mark_sunburst()` now reject a
+  missing or negative leaf `value` with a clear message (instead of a cryptic
+  downstream error), and `mark_sunburst()` validates `inner.radius` like
+  `vsunburst()` and `coord_radial()` do. `mark_halfeye()`/`mark_interval()` skip a
+  category with fewer than two finite observations (with a warning) rather than
+  drawing an empty interval, and reject a `width =` argument (a likely typo for
+  `.width`) that was previously ignored silently.
+
 * **Parameterised position adjustments.** New `position_nudge()`,
   `position_jitter()`, `position_dodge()`, `position_dodge2()`, and
   `position_jitterdodge()` give a mark's `position` tunable parameters (a bare

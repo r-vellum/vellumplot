@@ -86,6 +86,22 @@ NULL
     )
   }
 
+  # A leaf's own `value` drives its angular span, so it must be a finite,
+  # non-negative number (internal nodes derive their value and may be NA). Reject
+  # a bad leaf value with a clear message rather than the cryptic error it would
+  # otherwise trigger downstream ("missing value where TRUE/FALSE needed").
+  is_leaf <- lengths(children) == 0L
+  bad <- is_leaf & (!is.finite(value) | value < 0)
+  if (any(bad)) {
+    cli::cli_abort(
+      c(
+        "{.fn vsunburst} leaf {.arg value}s must be finite and non-negative.",
+        i = "Node{?s} {.val {id[bad]}} {?has a/have} missing or negative value{?s}."
+      ),
+      call = call
+    )
+  }
+
   # Node value bottom-up: a leaf uses its own `value`, an internal node the sum
   # of its children.
   val <- numeric(n)
@@ -173,9 +189,7 @@ vsunburst <- function(
   if (!is.data.frame(data)) {
     cli::cli_abort("{.arg data} must be a data frame (a parent list).")
   }
-  if (inner.radius < 0 || inner.radius >= 1) {
-    cli::cli_abort("{.arg inner.radius} must be in {.code [0, 1)}.")
-  }
+  .check_inner_radius(inner.radius)
   .check_dim(width, "width")
   .check_dim(height, "height")
   .check_dpi(dpi)
@@ -201,6 +215,7 @@ vsunburst <- function(
 #' @export
 mark_sunburst <- function(plot, id, parent, value, inner.radius = 0) {
   .check_plot(plot)
+  .check_inner_radius(inner.radius)
   .add_layer(
     plot,
     "sunburst",

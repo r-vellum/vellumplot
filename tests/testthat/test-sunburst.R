@@ -85,6 +85,35 @@ test_that("a sunburst plot cannot be faceted or share the panel", {
   )
 })
 
+test_that("a non-finite or negative leaf value is a clear error", {
+  bad_na <- data.frame(
+    id = c("root", "A", "B"),
+    parent = c(NA, "root", "root"),
+    value = c(NA, NA, 2)
+  )
+  expect_error(
+    vellumplot:::.sunburst_layout(bad_na$id, bad_na$parent, bad_na$value),
+    "finite and non-negative"
+  )
+  bad_neg <- data.frame(
+    id = c("root", "A", "B"),
+    parent = c(NA, "root", "root"),
+    value = c(NA, 1, -2)
+  )
+  expect_error(
+    vellumplot:::.sunburst_layout(bad_neg$id, bad_neg$parent, bad_neg$value),
+    "finite and non-negative"
+  )
+})
+
+test_that("inner.radius is validated in both constructors", {
+  expect_error(vsunburst(h, id, parent, value, inner.radius = 1), "\\[0, 1\\)")
+  expect_error(
+    vplot(h) |> mark_sunburst(id, parent, value, inner.radius = -0.1),
+    "\\[0, 1\\)"
+  )
+})
+
 test_that("vsunburst renders, flat and with a hole", {
   f1 <- local_tempfile(fileext = ".png")
   render_plot(vsunburst(h, id, parent, value), f1)

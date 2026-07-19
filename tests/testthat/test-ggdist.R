@@ -64,3 +64,27 @@ test_that("halfeye and interval render, plain and grouped", {
     expect_gt(file.info(f)$size, 0)
   }
 })
+
+test_that("width = is rejected (a likely typo for .width)", {
+  expect_error(
+    vplot(mtcars) |> mark_halfeye(x = factor(cyl), y = mpg, width = 0.9),
+    "\\.width"
+  )
+  expect_error(
+    vplot(mtcars) |> mark_interval(x = factor(cyl), y = mpg, width = 0.9),
+    "\\.width"
+  )
+})
+
+test_that("a category with < 2 finite observations is skipped with a warning", {
+  d <- data.frame(
+    g = c("a", "a", "a", "a", "b"), # b has a single observation
+    v = c(1, 2, 3, 4, 5)
+  )
+  f <- local_tempfile(fileext = ".png")
+  expect_warning(
+    render_plot(vplot(d) |> mark_interval(x = g, y = v), f),
+    "Skipping.*b"
+  )
+  expect_gt(file.info(f)$size, 0) # group a still draws
+})

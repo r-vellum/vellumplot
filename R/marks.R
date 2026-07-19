@@ -294,6 +294,22 @@ after_stat <- function(x) x
   "selected_color"
 )
 
+# The slab/interval marks name their interval probabilities `.width` (dotted) to
+# avoid colliding with the `width` aesthetic other marks use. A bare `width =`
+# here is almost certainly a typo for `.width`; catch it rather than let it pass
+# through as an inert aesthetic (`L$values$width`) that silently does nothing.
+.reject_width_arg <- function(dots, call = rlang::caller_env()) {
+  if ("width" %in% names(dots)) {
+    cli::cli_abort(
+      c(
+        "{.arg width} is not an aesthetic of this mark.",
+        i = "Did you mean {.arg .width} (the interval probabilities)?"
+      ),
+      call = call
+    )
+  }
+}
+
 #' Add marks to a plot
 #'
 #' Each `mark_*()` appends a drawing layer to a [PlotSpec]. Encodings are bare
@@ -1596,10 +1612,12 @@ mark_halfeye <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  dots <- rlang::enquos(...)
+  .reject_width_arg(dots)
   .add_layer(
     plot,
     "halfeye",
-    rlang::enquos(...),
+    dots,
     stat_params = list(
       width = .width,
       point = point,
@@ -1623,10 +1641,12 @@ mark_interval <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  dots <- rlang::enquos(...)
+  .reject_width_arg(dots)
   .add_layer(
     plot,
     "interval",
-    rlang::enquos(...),
+    dots,
     stat_params = list(width = .width, point = point),
     blend = blend,
     data = data
