@@ -136,6 +136,7 @@ reference:
   - vplot
   - vgraph
   - vsankey
+  - vsunburst
   - render_plot
   - PlotSpec
 

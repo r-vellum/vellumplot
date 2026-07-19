@@ -102,11 +102,10 @@ NULL
     sf_geographic <- proj$geographic
   }
 
-  built <- .build_panels(spec)
-  built$sf_geographic <- sf_geographic
-
   # Layout marks (sankey/sunburst) compute one global layout in an axis-free
-  # panel; they cannot be faceted or share a panel with other marks.
+  # panel; they cannot be faceted or share a panel with other marks. Guard
+  # *before* building panels: faceting would resolve the flow/hierarchy per panel
+  # (splitting it) and fail obscurely inside the layout instead.
   if (
     any(vapply(spec@layers, function(l) l@mark %in% .LAYOUT_MARKS, logical(1)))
   ) {
@@ -115,12 +114,15 @@ NULL
         "A {.field sankey}/{.field sunburst} plot takes no other layers."
       )
     }
-    if (built$fa$R != 1L || built$fa$C != 1L) {
+    if (!is.null(spec@facet)) {
       cli::cli_abort(
         "A {.field sankey}/{.field sunburst} plot cannot be faceted."
       )
     }
   }
+
+  built <- .build_panels(spec)
+  built$sf_geographic <- sf_geographic
 
   # Marginal plots (add_marginal()) reserve tracks around a single panel and reuse
   # its scales; they are incompatible with facets, non-Cartesian coords, and a
