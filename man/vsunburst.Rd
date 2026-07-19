@@ -10,13 +10,14 @@ vsunburst(
   id,
   parent,
   value,
-  inner.radius = 0,
+  inner_radius = 0,
   width = 6,
   height = 6,
-  dpi = 96
+  dpi = 96,
+  inner.radius = NULL
 )
 
-mark_sunburst(plot, id, parent, value, inner.radius = 0)
+mark_sunburst(plot, id, parent, value, inner_radius = 0, inner.radius = NULL)
 }
 \arguments{
 \item{data}{A data frame describing a hierarchy (a parent list).}
@@ -24,10 +25,12 @@ mark_sunburst(plot, id, parent, value, inner.radius = 0)
 \item{id, parent, value}{Columns (tidy-eval): the node id, its parent id
 (\code{NA}/\code{""} for the root), and its value (used for leaves).}
 
-\item{inner.radius}{Central hole radius, a fraction in \verb{[0, 1)}; \code{0} (default)
+\item{inner_radius}{Central hole radius, a fraction in \verb{[0, 1)}; \code{0} (default)
 fills to the centre.}
 
 \item{width, height, dpi}{Page size (inches) and resolution.}
+
+\item{inner.radius}{Deprecated; renamed to \code{inner_radius}.}
 
 \item{plot}{A \link{PlotSpec}.}
 }
@@ -43,7 +46,7 @@ an internal node's value is the sum of its children). Like \code{\link[=vgraph]{
 \code{mark_sunburst()} is the layer it adds.
 }
 \details{
-The root is the centre (not drawn as a wedge); \code{inner.radius} opens a hole.
+The root is the centre (not drawn as a wedge); \code{inner_radius} opens a hole.
 Nodes are coloured by depth. The input must be a single-rooted tree.
 }
 \examples{

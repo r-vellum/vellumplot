@@ -1201,7 +1201,7 @@ NULL
     levs <- .cat_levels(yv)
     ypos <- scales$y$map(levs)
     band <- scales$y$band_width %||% 1
-    scale_h <- (L$stat_params$scale %||% 1.4) * band
+    scale_h <- (L$stat_params$height %||% 1.4) * band
     dens <- .density_by_cat(xv, yv, levs, adjust)
     supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
     list(

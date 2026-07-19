@@ -43,6 +43,14 @@
   drawing an empty interval, and reject a `width =` argument (a likely typo for
   `.width`) that was previously ignored silently.
 
+* **Consistent argument names for the hole radius / ridge height.** The
+  central-hole fraction is now spelled `inner_radius` everywhere it appears:
+  `coord_radial()`, `vsunburst()`/`mark_sunburst()`, and `mark_donut()` (was
+  `hole`). `mark_ridgeline()`'s overlap control is now `height` (was `scale`,
+  which collided with `mark_halfeye(scale=)`, a different quantity). The old
+  spellings (`inner.radius`, `hole`, ridgeline `scale`) still work with a
+  deprecation warning.
+
 * **Parameterised position adjustments.** New `position_nudge()`,
   `position_jitter()`, `position_dodge()`, `position_dodge2()`, and
   `position_jitterdodge()` give a mark's `position` tunable parameters (a bare

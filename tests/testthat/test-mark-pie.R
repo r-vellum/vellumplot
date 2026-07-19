@@ -19,10 +19,10 @@ test_that("mark_pie appends a stacked bar and sets a polar coord", {
 })
 
 test_that("mark_donut sets the inner-hole radius", {
-  p <- vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6)
+  p <- vplot(df) |> mark_donut(value = n, fill = part, inner_radius = 0.6)
   expect_identical(p@coord@kind, "polar")
   expect_equal(p@coord@rmin, 0.6)
-  expect_error(vplot(df) |> mark_donut(value = n, hole = 1.5))
+  expect_error(vplot(df) |> mark_donut(value = n, inner_radius = 1.5))
 })
 
 test_that("mark_pie errors on a conflicting non-polar coord", {
@@ -53,7 +53,7 @@ test_that("mark_donut leaves an un-filled hole at the centre", {
   # the innermost radius is empty: far fewer slice-fill pixels in a central box
   # than the equivalent pie.
   pie <- vplot(df) |> mark_pie(value = n, fill = part)
-  donut <- vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6)
+  donut <- vplot(df) |> mark_donut(value = n, fill = part, inner_radius = 0.6)
   box <- function(img) {
     H <- dim(img)[1]
     W <- dim(img)[2]
@@ -95,4 +95,11 @@ test_that("polar area and ribbon render (densified bands)", {
   expect_no_error(render_px(
     vplot(d2) |> mark_area(x = a, y = hi) |> coord_polar(theta = "x")
   ))
+})
+
+test_that("mark_donut() `hole` is deprecated for `inner_radius`", {
+  expect_warning(
+    vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6),
+    "renamed"
+  )
 })

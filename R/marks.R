@@ -294,6 +294,26 @@ after_stat <- function(x) x
   "selected_color"
 )
 
+# Forward a renamed argument: if the caller passed the old (deprecated) spelling,
+# warn and use it; otherwise use the new one. A lightweight stand-in for
+# lifecycle (not a package dependency) during the 0.x dev cycle.
+.renamed_arg <- function(
+  new,
+  old,
+  new_name,
+  old_name,
+  call = rlang::caller_env()
+) {
+  if (!is.null(old)) {
+    cli::cli_warn(
+      "The {.arg {old_name}} argument has been renamed to {.arg {new_name}}.",
+      call = call
+    )
+    return(old)
+  }
+  new
+}
+
 # The slab/interval marks name their interval probabilities `.width` (dotted) to
 # avoid colliding with the `width` aesthetic other marks use. A bare `width =`
 # here is almost certainly a typo for `.width`; catch it rather than let it pass
@@ -574,8 +594,8 @@ mark_bar <- function(
 #'
 #' Convenience marks for part-of-whole charts. `mark_pie()` draws a pie: each
 #' `value` becomes a wedge whose angle is its share of the total, coloured by
-#' `fill`. `mark_donut()` is a pie with a hollow centre (`hole`, a fraction of
-#' the radius). Both are shorthand for a stacked bar projected through
+#' `fill`. `mark_donut()` is a pie with a hollow centre (`inner_radius`, a
+#' fraction of the radius). Both are shorthand for a stacked bar projected through
 #' [coord_polar()] with `theta = "y"`, which they set on the plot; they error if
 #' the plot already carries a non-polar coordinate.
 #'
@@ -583,8 +603,9 @@ mark_bar <- function(
 #' @param value Encoding (tidy-eval) for each slice's magnitude.
 #' @param fill Encoding (tidy-eval) for the slice colour. Omit for a single
 #'   slice.
-#' @param hole For `mark_donut()`, the inner-hole radius as a fraction of the rim
-#'   (`0` is a pie, the default `0.5` a medium donut).
+#' @param inner_radius For `mark_donut()`, the inner-hole radius as a fraction of
+#'   the rim (`0` is a pie, the default `0.5` a medium donut).
+#' @param hole Deprecated; renamed to `inner_radius`.
 #' @param ... Further constant aesthetics (e.g. `alpha`).
 #' @param data Optional per-layer data frame.
 #' @param sketch A [sketch()] spec giving the layer a hand-drawn look, or `NULL`
@@ -594,7 +615,7 @@ mark_bar <- function(
 #' @examples
 #' df <- data.frame(part = c("a", "b", "c"), n = c(3, 5, 2))
 #' vplot(df) |> mark_pie(value = n, fill = part)
-#' vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6)
+#' vplot(df) |> mark_donut(value = n, fill = part, inner_radius = 0.6)
 #' @export
 mark_pie <- function(
   plot,
@@ -619,18 +640,18 @@ mark_donut <- function(
   plot,
   value,
   fill = NULL,
-  hole = 0.5,
+  inner_radius = 0.5,
   ...,
   sketch = NULL,
-  data = NULL
+  data = NULL,
+  hole = NULL
 ) {
-  if (!is.numeric(hole) || hole < 0 || hole >= 1) {
-    cli::cli_abort("{.arg hole} must be a fraction in {.val [0, 1)}.")
-  }
+  inner_radius <- .renamed_arg(inner_radius, hole, "inner_radius", "hole")
+  .check_inner_radius(inner_radius)
   .pie_layer(
     plot,
     rlang::enquos(value = value, fill = fill, ...),
-    hole,
+    inner_radius,
     sketch,
     data
   )
@@ -638,7 +659,7 @@ mark_donut <- function(
 
 # Shared body of mark_pie/mark_donut: a stacked bar (value -> y, a constant
 # single-band x) forced through polar theta = "y".
-.pie_layer <- function(plot, enc, hole, sketch, data) {
+.pie_layer <- function(plot, enc, inner_radius, sketch, data) {
   .check_plot(plot)
   if (!is.null(plot@coord) && !identical(plot@coord@kind, "polar")) {
     cli::cli_abort(c(
@@ -658,7 +679,7 @@ mark_donut <- function(
     data = data
   )
   if (is.null(plot@coord)) {
-    plot@coord <- CoordSpec(kind = "polar", theta = "y", rmin = hole)
+    plot@coord <- CoordSpec(kind = "polar", theta = "y", rmin = inner_radius)
   }
   plot
 }
@@ -1490,8 +1511,9 @@ mark_qq_line <- function(
 #'   `mark_ridgeline()` needs numeric `x` and categorical `y`; `mark_dotplot()`
 #'   needs `x`. A mapped `color`/`fill` sets the shape fill.
 #' @param adjust Kernel-density bandwidth multiplier (violin/ridgeline).
-#' @param scale Ridge height as a multiple of the row band (ridgeline; default
+#' @param height Ridge height as a multiple of the row band (ridgeline; default
 #'   `1.4`, so adjacent ridges overlap slightly).
+#' @param scale Deprecated; renamed to `height`.
 #' @param binwidth Dot-plot bin width, or `NULL` to use ~1/30 of the data range.
 #' @param blend,sketch,data Standard layer arguments (see [mark_point()]).
 #' @return The modified [PlotSpec].
@@ -1528,18 +1550,20 @@ mark_ridgeline <- function(
   plot,
   ...,
   adjust = 1,
-  scale = 1.4,
+  height = 1.4,
   blend = NULL,
   sketch = NULL,
-  data = NULL
+  data = NULL,
+  scale = NULL
 ) {
   .check_plot(plot)
+  height <- .renamed_arg(height, scale, "height", "scale")
   .add_layer(
     plot,
     "ridgeline",
     rlang::enquos(...),
     stat = "identity",
-    stat_params = list(adjust = adjust, scale = scale),
+    stat_params = list(adjust = adjust, height = height),
     blend = blend,
     sketch = sketch,
     data = data

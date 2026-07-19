@@ -8,7 +8,7 @@ sm_xy <- function(p) {
 test_that("coord_radial sets the polar coord with end + inner.radius", {
   co <- (vplot(mtcars) |>
     mark_bar(x = factor(cyl)) |>
-    coord_radial(theta = "x", end = pi, inner.radius = 0.3))@coord
+    coord_radial(theta = "x", end = pi, inner_radius = 0.3))@coord
   expect_identical(co@kind, "polar")
   expect_equal(co@end, pi)
   expect_equal(co@rmin, 0.3)
@@ -35,14 +35,14 @@ test_that("inner.radius must be in [0, 1)", {
   expect_error(
     vplot(mtcars) |>
       mark_bar(x = factor(cyl)) |>
-      coord_radial(inner.radius = 1),
-    "inner.radius"
+      coord_radial(inner_radius = 1),
+    "inner_radius"
   )
   expect_error(
     vplot(mtcars) |>
       mark_bar(x = factor(cyl)) |>
-      coord_radial(inner.radius = -0.2),
-    "inner.radius"
+      coord_radial(inner_radius = -0.2),
+    "inner_radius"
   )
 })
 
@@ -77,7 +77,7 @@ test_that("coord_radial and scale_size_area render", {
   render_plot(
     vplot(mtcars) |>
       mark_bar(x = factor(cyl)) |>
-      coord_radial(inner.radius = 0.4),
+      coord_radial(inner_radius = 0.4),
     f1
   )
   expect_gt(file.info(f1)$size, 0)
@@ -89,4 +89,14 @@ test_that("coord_radial and scale_size_area render", {
     f2
   )
   expect_gt(file.info(f2)$size, 0)
+})
+
+test_that("coord_radial() `inner.radius` is deprecated for `inner_radius`", {
+  expect_warning(
+    co <- (vplot(mtcars) |>
+      mark_bar(x = factor(cyl)) |>
+      coord_radial(inner.radius = 0.3))@coord,
+    "renamed"
+  )
+  expect_equal(co@rmin, 0.3)
 })

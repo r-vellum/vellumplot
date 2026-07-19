@@ -13,7 +13,8 @@ coord_radial(
   start = 0,
   end = NULL,
   direction = 1,
-  inner.radius = 0
+  inner_radius = 0,
+  inner.radius = NULL
 )
 }
 \arguments{
@@ -32,8 +33,10 @@ counter-clockwise.}
 \code{start}. Set it for a partial arc — e.g. \verb{start = -pi/2, end = pi/2} for a
 semicircular gauge.}
 
-\item{inner.radius}{Radius of the central hole as a fraction of the outer
+\item{inner_radius}{Radius of the central hole as a fraction of the outer
 radius (\code{0}–\code{1}); \code{0} (default) is a filled disc, \verb{> 0} a donut/ring.}
+
+\item{inner.radius}{Deprecated; renamed to \code{inner_radius}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -50,14 +53,14 @@ smooth arcs.
 
 \code{coord_radial()} is a fuller polar system (ggplot2 3.5's name): besides
 \code{theta}/\code{start}/\code{direction} it takes \code{end} to sweep only a \strong{partial arc}
-(e.g. a half-circle gauge) and \code{inner.radius} to open a \strong{donut hole}. With
-\code{end = NULL} and \code{inner.radius = 0} it is identical to \code{coord_polar()}.
+(e.g. a half-circle gauge) and \code{inner_radius} to open a \strong{donut hole}. With
+\code{end = NULL} and \code{inner_radius = 0} it is identical to \code{coord_polar()}.
 }
 \examples{
 vplot(mtcars) |> mark_bar(x = factor(cyl)) |> coord_polar(theta = "x")
 vplot(mtcars) |>
   mark_bar(x = factor(cyl)) |>
-  coord_radial(theta = "x", inner.radius = 0.3)
+  coord_radial(theta = "x", inner_radius = 0.3)
 }
 \seealso{
 \code{\link[=mark_pie]{mark_pie()}}, \code{\link[=mark_donut]{mark_donut()}}

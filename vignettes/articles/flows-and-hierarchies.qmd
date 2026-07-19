@@ -72,10 +72,10 @@ vsunburst(h, id, parent, value)
 ```
 
 The root sits at the centre (it is not drawn as a wedge); the first level forms
-the innermost ring. `inner.radius` opens a hole for a ring/donut sunburst:
+the innermost ring. `inner_radius` opens a hole for a ring/donut sunburst:
 
 ```{r}
-vsunburst(h, id, parent, value, inner.radius = 0.4)
+vsunburst(h, id, parent, value, inner_radius = 0.4)
 ```
 
 Both `vsankey()` and `vsunburst()` follow the `vgraph()` pattern: the layout is

@@ -133,3 +133,12 @@ test_that("explicit limits are not widened by the density footprint", {
   expect_equal(vio$y$domain, ref$y$domain)
   expect_lt(vio$y$domain[2], 8.5)
 })
+
+test_that("mark_ridgeline() `scale` is deprecated for `height`", {
+  df <- data.frame(g = rep(letters[1:3], each = 50), v = rnorm(150))
+  expect_warning(
+    L <- (vplot(df) |> mark_ridgeline(x = v, y = g, scale = 2))@layers[[1]],
+    "renamed"
+  )
+  expect_equal(L@stat_params$height, 2)
+})
