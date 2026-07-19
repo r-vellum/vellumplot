@@ -1725,6 +1725,30 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# A sunburst radial hierarchy. The partition (`L$sunburst`, native radii/angles
+# centred at the origin) is computed at resolve; drawn as one batched sector grob
+# in the aspect-locked square panel (domain [-1, 1], so native 0 is the centre).
+.emit_sunburst <- function(scene, L, scales) {
+  lay <- L$sunburst
+  n <- nrow(lay)
+  if (!n) {
+    return(scene)
+  }
+  .draw(
+    scene,
+    vellum::sector_grob(
+      x = vellum::vl_unit(rep(0, n), "native"),
+      y = vellum::vl_unit(rep(0, n), "native"),
+      r0 = vellum::vl_unit(lay$r0, "native"),
+      r1 = vellum::vl_unit(lay$r1, "native"),
+      theta0 = lay$theta0,
+      theta1 = lay$theta1,
+      fill = lay$colour,
+      gp = vellum::vl_gpar(col = "white", lwd = 0.5)
+    )
+  )
+}
+
 # A group summary region (ellipse / convex hull): one closed polygon per group
 # `.piece`. Stroked by the `color` aesthetic; filled only when a `fill` is
 # mapped or set (so the ggplot2 default -- an unfilled boundary -- holds). The
@@ -2516,6 +2540,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     ellipse = .emit_region(scene, L, scales),
     hull = .emit_region(scene, L, scales),
     sankey = .emit_sankey(scene, L, scales),
+    sunburst = .emit_sunburst(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
 }

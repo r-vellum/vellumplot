@@ -83,4 +83,5 @@ Collate:
     'sankey.R'
     'scales.R'
     'scales-binned.R'
+    'sunburst.R'
     'zzz.R'

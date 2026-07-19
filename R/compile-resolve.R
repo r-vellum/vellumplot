@@ -63,6 +63,28 @@ NULL
     n <- nrow(sankey$nodes)
   }
 
+  # A sunburst layer draws a radial hierarchy: compute the partition from the
+  # `id`/`parent`/`value` channels (see `.sunburst_layout`) and synthesise the
+  # centred [-1, 1] extent so the aspect-locked square panel holds the circle.
+  sunburst <- NULL
+  if (identical(layer@mark, "sunburst")) {
+    if (is.null(values$id) || is.null(values$parent) || is.null(values$value)) {
+      cli::cli_abort(
+        "{.fn vsunburst} needs {.arg id}, {.arg parent}, and {.arg value}."
+      )
+    }
+    sunburst <- .sunburst_layout(
+      values$id,
+      values$parent,
+      values$value,
+      inner_radius = layer@params$inner_radius %||% 0
+    )
+    values$x <- c(-1, 1)
+    values$y <- c(-1, 1)
+    types$x <- types$y <- "quantitative"
+    n <- nrow(sunburst)
+  }
+
   # A datashade layer aggregates its (potentially hundreds of millions of) points
   # into a raster in one Rust pass. Keep the full coordinate vectors in `ds` for
   # the emitter, but hand scale training only their 2-value range via `values`:
@@ -98,6 +120,7 @@ NULL
     n = n,
     sf = sf,
     sankey = sankey,
+    sunburst = sunburst,
     ds = ds,
     stat = layer@stat,
     stat_params = layer@stat_params,
