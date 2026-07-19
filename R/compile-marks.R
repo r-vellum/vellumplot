@@ -1721,7 +1721,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       vellum::polygon_grob(
         xy$x,
         xy$y,
-        gp = vellum::vl_gpar(fill = rib$colour[i], col = NA, alpha = 0.5)
+        gp = vellum::vl_gpar(
+          fill = rib$colour[i],
+          col = NA,
+          alpha = .SANKEY_RIBBON_ALPHA
+        )
       )
     )
   }
@@ -1765,7 +1769,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           x = xy$x + pad,
           y = xy$y,
           just = just,
-          gp = vellum::vl_gpar(fontsize = 8)
+          gp = vellum::vl_gpar(fontsize = .SANKEY_LABEL_FONTSIZE)
         )
       )
     }

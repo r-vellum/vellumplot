@@ -23,6 +23,14 @@ NULL
 .SANKEY_NODE_WIDTH <- 0.04
 .SANKEY_NODE_GAP <- 0.02
 
+# Drawing constants.
+.SANKEY_RIBBON_ALPHA <- 0.5 # ribbon fill opacity (ribbons overlap)
+.SANKEY_LABEL_FONTSIZE <- 8 # node-label font size (pt)
+# Horizontal margin (native fraction) reserved each side of the [0, 1] node band
+# so the outer-column labels -- source labels sit left of x = 0, terminal labels
+# right of x = 1 -- render inside the panel instead of clipping at its edge.
+.SANKEY_LABEL_MARGIN <- 0.15
+
 # Longest-path layer index per node (0 = a source with no incoming flow).
 # Iterates the edge relation to a fixpoint; non-convergence within N+1 passes
 # means a cycle (a sankey must be a DAG).
