@@ -13,8 +13,7 @@ coord_radial(
   start = 0,
   end = NULL,
   direction = 1,
-  inner_radius = 0,
-  inner.radius = NULL
+  inner_radius = 0
 )
 }
 \arguments{
@@ -35,8 +34,6 @@ semicircular gauge.}
 
 \item{inner_radius}{Radius of the central hole as a fraction of the outer
 radius (\code{0}–\code{1}); \code{0} (default) is a filled disc, \verb{> 0} a donut/ring.}
-
-\item{inner.radius}{Deprecated; renamed to \code{inner_radius}.}
 }
 \value{
 The modified \link{PlotSpec}.

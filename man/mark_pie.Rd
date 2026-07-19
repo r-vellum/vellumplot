@@ -23,8 +23,7 @@ mark_donut(
   ...,
   blend = NULL,
   sketch = NULL,
-  data = NULL,
-  hole = NULL
+  data = NULL
 )
 }
 \arguments{
@@ -46,8 +45,6 @@ slice.}
 
 \item{inner_radius}{For \code{mark_donut()}, the inner-hole radius as a fraction of
 the rim (\code{0} is a pie, the default \code{0.5} a medium donut).}
-
-\item{hole}{Deprecated; renamed to \code{inner_radius}.}
 }
 \value{
 The modified \link{PlotSpec}.

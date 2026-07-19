@@ -166,7 +166,6 @@ NULL
 #'   (`NA`/`""` for the root), and its value (used for leaves).
 #' @param inner_radius Central hole radius, a fraction in `[0, 1)`; `0` (default)
 #'   fills to the centre.
-#' @param inner.radius Deprecated; renamed to `inner_radius`.
 #' @param width,height,dpi Page size (inches) and resolution.
 #' @return A [PlotSpec] (`vsunburst()`) or the modified plot (`mark_sunburst()`).
 #' @examples
@@ -185,18 +184,11 @@ vsunburst <- function(
   inner_radius = 0,
   width = 6,
   height = 6,
-  dpi = 96,
-  inner.radius = NULL
+  dpi = 96
 ) {
   if (!is.data.frame(data)) {
     cli::cli_abort("{.arg data} must be a data frame (a parent list).")
   }
-  inner_radius <- .renamed_arg(
-    inner_radius,
-    inner.radius,
-    "inner_radius",
-    "inner.radius"
-  )
   .check_inner_radius(inner_radius)
   .check_dim(width, "width")
   .check_dim(height, "height")
@@ -221,21 +213,8 @@ vsunburst <- function(
 #' @rdname vsunburst
 #' @param plot A [PlotSpec].
 #' @export
-mark_sunburst <- function(
-  plot,
-  id,
-  parent,
-  value,
-  inner_radius = 0,
-  inner.radius = NULL
-) {
+mark_sunburst <- function(plot, id, parent, value, inner_radius = 0) {
   .check_plot(plot)
-  inner_radius <- .renamed_arg(
-    inner_radius,
-    inner.radius,
-    "inner_radius",
-    "inner.radius"
-  )
   .check_inner_radius(inner_radius)
   .add_layer(
     plot,

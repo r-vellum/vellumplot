@@ -96,10 +96,3 @@ test_that("polar area and ribbon render (densified bands)", {
     vplot(d2) |> mark_area(x = a, y = hi) |> coord_polar(theta = "x")
   ))
 })
-
-test_that("mark_donut() `hole` is deprecated for `inner_radius`", {
-  expect_warning(
-    vplot(df) |> mark_donut(value = n, fill = part, hole = 0.6),
-    "renamed"
-  )
-})

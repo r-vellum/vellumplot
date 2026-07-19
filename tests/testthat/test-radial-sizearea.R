@@ -5,7 +5,7 @@ sm_xy <- function(p) {
   e[, c("x", "y")]
 }
 
-test_that("coord_radial sets the polar coord with end + inner.radius", {
+test_that("coord_radial sets the polar coord with end + inner_radius", {
   co <- (vplot(mtcars) |>
     mark_bar(x = factor(cyl)) |>
     coord_radial(theta = "x", end = pi, inner_radius = 0.3))@coord
@@ -31,7 +31,7 @@ test_that("a partial arc changes the geometry", {
   expect_false(isTRUE(all.equal(full, half)))
 })
 
-test_that("inner.radius must be in [0, 1)", {
+test_that("inner_radius must be in [0, 1)", {
   expect_error(
     vplot(mtcars) |>
       mark_bar(x = factor(cyl)) |>
@@ -89,14 +89,4 @@ test_that("coord_radial and scale_size_area render", {
     f2
   )
   expect_gt(file.info(f2)$size, 0)
-})
-
-test_that("coord_radial() `inner.radius` is deprecated for `inner_radius`", {
-  expect_warning(
-    co <- (vplot(mtcars) |>
-      mark_bar(x = factor(cyl)) |>
-      coord_radial(inner.radius = 0.3))@coord,
-    "renamed"
-  )
-  expect_equal(co@rmin, 0.3)
 })
