@@ -171,7 +171,7 @@ ScaleSpec <- S7::new_class(
 #' object: data, a list of layers, a list of scale overrides, and the page size.
 #' Nothing is drawn until it is compiled with [vellum::as_vellum_scene()] (e.g.
 #' via [render_plot()]). Printing it draws the plot; inspect its structure with
-#' [summary()].
+#' [base::summary()].
 #'
 #' @param data The data frame.
 #' @param edge_data For a graph plot (from [vgraph()]), the edge table; the
