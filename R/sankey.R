@@ -11,9 +11,10 @@ NULL
 #
 # Input is a *flow list*: one row per flow with `from`, `to`, `value`. Nodes are
 # the union of `from`/`to`; a node that is both a source and a target makes the
-# diagram multi-stage. The DAG is layered by longest-path; within a layer nodes
-# keep first-appearance order (no crossing minimisation in v1); ribbon slices are
-# ordered by the opposite node's height to reduce crossings locally.
+# diagram multi-stage. The DAG is layered by longest-path; nodes within a layer
+# are then ordered by the Sugiyama barycenter heuristic (`.sankey_order`) to
+# minimise ribbon crossings, and ribbon slices are ordered by the opposite node's
+# height so ribbons meet each node edge in matching order.
 
 # Layout marks (whole-plot types with a global R-side layout in an axis-free
 # panel): they take no other layers and cannot be faceted (guarded in the seam).
@@ -53,6 +54,113 @@ NULL
     ),
     call = call
   )
+}
+
+# Direction-split neighbour lists (+ matching flow values) per node. Splitting on
+# a factor with all node levels guarantees length-`n` lists with empty entries for
+# nodes lacking in/out edges, so isolated-side nodes fall out for free.
+.sankey_adjacency <- function(fi, ti, value, n) {
+  ti_f <- factor(ti, levels = seq_len(n))
+  fi_f <- factor(fi, levels = seq_len(n))
+  list(
+    up = split(fi, ti_f), # sources feeding into each node
+    up_w = split(value, ti_f),
+    dn = split(ti, fi_f), # targets each node feeds out to
+    dn_w = split(value, fi_f)
+  )
+}
+
+# Order nodes within each layer to reduce ribbon crossings: the classic Sugiyama
+# layered barycenter heuristic (as used by d3-sankey). Alternating down/up sweeps
+# reorder each layer by the value-weighted mean of its neighbours' normalised
+# positions in the adjacent, already-placed layers; a node with no neighbour on
+# the swept side holds its position. Deterministic (stable tie-break on the
+# current order, no RNG) and cheap -- O(iterations * (n log n + edges)). Returns a
+# list shaped exactly like `split(seq_len(n), layer)` (a drop-in replacement) so
+# the rest of the layout is unchanged.
+.sankey_order <- function(fi, ti, value, layer, n, iterations = 8L) {
+  nlayers <- max(layer) + 1L
+  cols <- split(seq_len(n), factor(layer, levels = 0:(nlayers - 1L)))
+  if (nlayers < 2L) {
+    return(cols) # a single column: nothing can cross
+  }
+  adj <- .sankey_adjacency(fi, ti, value, n)
+
+  pos <- numeric(n) # normalised rank within own layer (comparable across layers)
+  set_layer_pos <- function(li) {
+    col <- cols[[li]]
+    m <- length(col)
+    if (m) {
+      pos[col] <<- (seq_len(m) - 0.5) / m
+    }
+  }
+  for (li in seq_len(nlayers)) {
+    set_layer_pos(li)
+  }
+
+  bary <- function(v, nbr, wt) {
+    ns <- nbr[[v]]
+    if (!length(ns)) {
+      return(NA_real_)
+    }
+    sum(pos[ns] * wt[[v]]) / sum(wt[[v]])
+  }
+  reorder_layer <- function(li, side) {
+    col <- cols[[li]]
+    m <- length(col)
+    if (m < 2L) {
+      return(col)
+    }
+    nbr <- if (side == "up") adj$up else adj$dn
+    wt <- if (side == "up") adj$up_w else adj$dn_w
+    key <- vapply(col, bary, numeric(1), nbr = nbr, wt = wt)
+    na <- is.na(key)
+    key[na] <- pos[col][na] # no neighbour this side: hold position
+    col[order(key, seq_along(col))] # stable, deterministic tie-break
+  }
+
+  prev <- NULL
+  for (it in seq_len(iterations)) {
+    down <- (it %% 2L) == 1L
+    lis <- if (down) 2:nlayers else (nlayers - 1L):1L
+    for (li in lis) {
+      cols[[li]] <- reorder_layer(li, if (down) "up" else "dn")
+      set_layer_pos(li)
+    }
+    sig <- unlist(cols, use.names = FALSE)
+    if (!is.null(prev) && identical(sig, prev)) {
+      break # fixed point
+    }
+    prev <- sig
+  }
+  cols
+}
+
+# Count ribbon crossings between consecutive layers (pairwise inversions of the
+# span-1 edges by node position). Used in tests to assert the ordered layout does
+# not increase crossings over first-appearance order.
+.sankey_crossings <- function(fi, ti, layers_list, layer) {
+  pos <- integer(length(layer))
+  for (col in layers_list) {
+    pos[col] <- seq_along(col)
+  }
+  total <- 0L
+  for (L in sort(unique(layer))) {
+    e <- which(layer[fi] == L & layer[ti] == L + 1L)
+    if (length(e) < 2L) {
+      next
+    }
+    su <- pos[fi[e]]
+    sv <- pos[ti[e]]
+    for (a in seq_along(e)) {
+      for (b in seq_along(e)) {
+        if (a < b && sign(su[a] - su[b]) * sign(sv[a] - sv[b]) < 0) {
+          total <- total + 1L
+        }
+      }
+    }
+  }
+  total
 }
 
 # Compute the full sankey layout in native [0, 1] coordinates. Returns a `nodes`
@@ -102,7 +210,7 @@ NULL
   # A single value->height scale across all layers (so ribbon widths match on
   # both ends): set by the layer that is fullest once its inter-node gaps are
   # removed.
-  layers_list <- split(seq_len(n), layer)
+  layers_list <- .sankey_order(fi, ti, value, layer, n)
   avail <- vapply(
     layers_list,
     function(ns) 1 - (length(ns) - 1L) * node_gap,
@@ -129,10 +237,13 @@ NULL
 
   # Ribbon y-slices: stack a node's outgoing flows down its right edge (ordered
   # by the target's height, to reduce crossings), and incoming down its left edge
-  # (ordered by the source's height). Slice thickness = value * ky.
+  # (ordered by the source's height). Slices fill top-to-bottom, so the opposite
+  # node highest on the page must take the topmost slice -- order by *descending*
+  # `order_key` (a y-centre); the ascending order would connect the lowest
+  # opposite node to the top slice and cross every ribbon. Thickness = value * ky.
   nf <- length(value)
   assign_slices <- function(node_idx, order_key) {
-    o <- order(node_idx, order_key)
+    o <- order(node_idx, -order_key)
     y1 <- numeric(nf)
     y0 <- numeric(nf)
     top <- node_y1
@@ -195,10 +306,10 @@ NULL
 #' axis-free, aspect-free panel; `mark_sankey()` is the layer it adds and can be
 #' used directly on a plot you have set up yourself.
 #'
-#' The flows must form a DAG (no cycles). Node order within a column is
-#' first-appearance; ribbons are ordered to reduce crossings locally but v1 does
-#' no global crossing minimisation. Nodes are coloured from the built-in
-#' qualitative palette.
+#' The flows must form a DAG (no cycles). Nodes within a column are ordered to
+#' minimise ribbon crossings (a deterministic Sugiyama barycenter sweep), and
+#' ribbons are stacked to meet each node in matching order. Nodes are coloured
+#' from the built-in qualitative palette.
 #'
 #' @param data A data frame of flows.
 #' @param from,to,value Columns (tidy-eval): the source node, target node, and

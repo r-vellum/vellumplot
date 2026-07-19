@@ -33,10 +33,10 @@ axis-free, aspect-free panel; \code{mark_sankey()} is the layer it adds and can 
 used directly on a plot you have set up yourself.
 }
 \details{
-The flows must form a DAG (no cycles). Node order within a column is
-first-appearance; ribbons are ordered to reduce crossings locally but v1 does
-no global crossing minimisation. Nodes are coloured from the built-in
-qualitative palette.
+The flows must form a DAG (no cycles). Nodes within a column are ordered to
+minimise ribbon crossings (a deterministic Sugiyama barycenter sweep), and
+ribbons are stacked to meet each node in matching order. Nodes are coloured
+from the built-in qualitative palette.
 }
 \examples{
 flows <- data.frame(
