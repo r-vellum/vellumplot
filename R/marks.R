@@ -318,6 +318,22 @@ after_stat <- function(x) x
 # avoid colliding with the `width` aesthetic other marks use. A bare `width =`
 # here is almost certainly a typo for `.width`; catch it rather than let it pass
 # through as an inert aesthetic (`L$values$width`) that silently does nothing.
+# Default an unmapped primary channel to a computed (`after_stat()`) variable.
+# `quo` is the fallback quosure (e.g. `after_stat(count)`). A `fill` default also
+# yields to an explicit `color`/`colour` (the two are easily confused on a filled
+# mark); a `color` default yields to `colour`. No-op if already mapped. Shared by
+# the binning/contour marks so their defaults stay in step.
+.default_channel <- function(dots, channel, quo) {
+  mapped <- !is.null(dots[[channel]]) || !is.null(dots$colour)
+  if (channel == "fill") {
+    mapped <- mapped || !is.null(dots$color)
+  }
+  if (!mapped) {
+    dots[[channel]] <- quo
+  }
+  dots
+}
+
 .reject_width_arg <- function(dots, call = rlang::caller_env()) {
   if ("width" %in% names(dots)) {
     cli::cli_abort(
@@ -1275,9 +1291,7 @@ mark_image <- function(
 mark_bin2d <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
-  if (is.null(dots$fill) && is.null(dots$color) && is.null(dots$colour)) {
-    dots$fill <- rlang::quo(after_stat(count))
-  }
+  dots <- .default_channel(dots, "fill", rlang::quo(after_stat(count)))
   .add_layer(
     plot,
     "tile",
@@ -1351,9 +1365,7 @@ mark_contour <- function(
 ) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
-  if (is.null(dots$color) && is.null(dots$colour)) {
-    dots$color <- rlang::quo(after_stat(level))
-  }
+  dots <- .default_channel(dots, "color", rlang::quo(after_stat(level)))
   .add_layer(
     plot,
     "contour",
@@ -1386,9 +1398,7 @@ mark_contour_filled <- function(
 ) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
-  if (is.null(dots$fill)) {
-    dots$fill <- rlang::quo(after_stat(level))
-  }
+  dots <- .default_channel(dots, "fill", rlang::quo(after_stat(level)))
   .add_layer(
     plot,
     "contour_filled",
@@ -1699,9 +1709,7 @@ mark_interval <- function(
 mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
-  if (is.null(dots$fill) && is.null(dots$color) && is.null(dots$colour)) {
-    dots$fill <- rlang::quo(after_stat(count))
-  }
+  dots <- .default_channel(dots, "fill", rlang::quo(after_stat(count)))
   .add_layer(
     plot,
     "hex",
