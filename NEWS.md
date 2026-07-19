@@ -1,5 +1,15 @@
 # vellumplot (development version)
 
+* **Sankey / flow diagrams: `vsankey()`.** A new plot type for layered flows,
+  built from a *flow list* — one row per flow with `from`, `to`, and `value` (the
+  ribbon width). Nodes are the union of `from`/`to`; a node that is both a source
+  and a target makes the diagram multi-stage. `vsankey(data, from, to, value)`
+  returns a ready, axis-free plot (mirroring `vgraph()`); `mark_sankey()` is the
+  exported layer it adds. The layout is computed R-side (longest-path layering,
+  value-proportional node heights and ribbon widths, filled Bézier ribbons) and is
+  deterministic. Flows must form a DAG; nodes are coloured from the qualitative
+  palette. See `vignette("flows-and-hierarchies")`.
+
 * **Uncertainty marks: `mark_halfeye()` and `mark_interval()`.** ggdist-style
   slab + interval marks for sample/posterior input (many `y` rows per categorical
   `x`). `mark_halfeye()` draws a one-sided density slab with a point-interval at

@@ -1653,6 +1653,78 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   .emit_slabinterval(scene, L, scales, slab = FALSE)
 }
 
+# A sankey flow diagram. The layout (`L$sankey`, native [0, 1] coords) is computed
+# at resolve; here we draw filled Bézier ribbons (under) then node rects + labels.
+.emit_sankey <- function(scene, L, scales) {
+  lay <- L$sankey
+  nodes <- lay$nodes
+  rib <- lay$ribbons
+  sk <- .mark_sketch(L, scales)
+
+  # ribbons: a filled band between two horizontal cubic-Bézier edges
+  for (i in seq_len(nrow(rib))) {
+    top <- .sankey_bezier(rib$xl[i], rib$sy1[i], rib$xr[i], rib$ty1[i])
+    bot <- .sankey_bezier(rib$xl[i], rib$sy0[i], rib$xr[i], rib$ty0[i])
+    px <- scales$x$map(c(top$x, rev(bot$x)))
+    py <- scales$y$map(c(top$y, rev(bot$y)))
+    xy <- .xy_path(scales, px, py)
+    scene <- .draw(
+      scene,
+      vellum::polygon_grob(
+        xy$x,
+        xy$y,
+        gp = vellum::vl_gpar(fill = rib$colour[i], col = NA, alpha = 0.5)
+      )
+    )
+  }
+
+  # nodes: a thin filled rect per node
+  for (i in seq_len(nrow(nodes))) {
+    xc <- scales$x$map((nodes$x0[i] + nodes$x1[i]) / 2)
+    yc <- scales$y$map((nodes$y0[i] + nodes$y1[i]) / 2)
+    w <- scales$x$map(nodes$x1[i]) - scales$x$map(nodes$x0[i])
+    h <- scales$y$map(nodes$y1[i]) - scales$y$map(nodes$y0[i])
+    r <- .rect_units(scales, xc, yc, w, h)
+    scene <- .draw(
+      scene,
+      vellum::rect_grob(
+        x = r$x,
+        y = r$y,
+        width = r$width,
+        height = r$height,
+        sketch = sk,
+        gp = vellum::vl_gpar(fill = nodes$colour[i], col = NA)
+      )
+    )
+  }
+
+  # labels: source column (x0 ~ 0) to the left, everything else to the right
+  if (isTRUE(L$params$label)) {
+    for (i in seq_len(nrow(nodes))) {
+      left <- nodes$x0[i] < 1e-6
+      xlab <- if (left) nodes$x0[i] else nodes$x1[i]
+      just <- c(if (left) "right" else "left", "centre")
+      xy <- .xy_units(
+        scales,
+        scales$x$map(xlab),
+        scales$y$map((nodes$y0[i] + nodes$y1[i]) / 2)
+      )
+      pad <- vellum::vl_unit(if (left) -1 else 1, "mm")
+      scene <- .draw(
+        scene,
+        vellum::text_grob(
+          nodes$name[i],
+          x = xy$x + pad,
+          y = xy$y,
+          just = just,
+          gp = vellum::vl_gpar(fontsize = 8)
+        )
+      )
+    }
+  }
+  scene
+}
+
 # A group summary region (ellipse / convex hull): one closed polygon per group
 # `.piece`. Stroked by the `color` aesthetic; filled only when a `fill` is
 # mapped or set (so the ggplot2 default -- an unfilled boundary -- holds). The
@@ -2443,6 +2515,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     contour_filled = .emit_contour_filled(scene, L, scales),
     ellipse = .emit_region(scene, L, scales),
     hull = .emit_region(scene, L, scales),
+    sankey = .emit_sankey(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
 }

@@ -45,6 +45,24 @@ NULL
     n <- length(sf)
   }
 
+  # A sankey layer draws a flow diagram, not x/y points: compute the layout from
+  # the `from`/`to`/`value` channels into native [0, 1] coordinates (see
+  # `.sankey_layout`), then synthesise the panel extent so position training gets
+  # a domain (mirrors the sf path). Geometry is read from `sankey` by the emitter.
+  sankey <- NULL
+  if (identical(layer@mark, "sankey")) {
+    if (is.null(values$from) || is.null(values$to) || is.null(values$value)) {
+      cli::cli_abort(
+        "{.fn vsankey} needs {.arg from}, {.arg to}, and {.arg value}."
+      )
+    }
+    sankey <- .sankey_layout(values$from, values$to, values$value)
+    values$x <- c(0, 1)
+    values$y <- c(0, 1)
+    types$x <- types$y <- "quantitative"
+    n <- nrow(sankey$nodes)
+  }
+
   # A datashade layer aggregates its (potentially hundreds of millions of) points
   # into a raster in one Rust pass. Keep the full coordinate vectors in `ds` for
   # the emitter, but hand scale training only their 2-value range via `values`:
@@ -79,6 +97,7 @@ NULL
     params = layer@params,
     n = n,
     sf = sf,
+    sankey = sankey,
     ds = ds,
     stat = layer@stat,
     stat_params = layer@stat_params,
