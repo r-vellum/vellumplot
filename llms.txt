@@ -311,6 +311,9 @@ then render it or write it to a file.
 - [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   : Sankey (flow) diagram
+- [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+  [`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+  : Sunburst (radial hierarchy) diagram
 - [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
   : Render a plot to a file
 - [`PlotSpec()`](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)

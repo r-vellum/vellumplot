@@ -2,6 +2,19 @@
 
 ## vellumplot (development version)
 
+- **Sunburst / radial hierarchies:
+  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md).**
+  A new plot type for part-of-whole hierarchies, from a *parent list* —
+  `id`, `parent` (`NA` at the root), and `value` (leaf values; internal
+  nodes sum their children). Depth maps to a ring and each node’s
+  angular span is its share of its parent’s, drawn as one batched
+  `sector_grob` in an aspect-locked, axis-free square panel (mirroring
+  [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)/[`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)).
+  `inner.radius` opens a central hole (a donut/ring sunburst); nodes are
+  coloured by depth.
+  [`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+  is the exported layer. See `vignette("flows-and-hierarchies")`.
+
 - **Sankey / flow diagrams:
   [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md).**
   A new plot type for layered flows, built from a *flow list* — one row

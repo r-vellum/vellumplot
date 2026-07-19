@@ -57,3 +57,44 @@ layer to an axis-free, free-aspect panel;
 [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
 is exported too, for building a flow layer on a plot you have set up
 yourself.
+
+## Sunburst diagrams
+
+[`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+draws a hierarchy as concentric rings of sectors: depth maps to a ring,
+and each node’s angular span is its share of its parent’s. Input is a
+**parent list** — `id`, `parent` (`NA` for the root), and `value` (given
+for leaves; an internal node’s value is the sum of its children).
+
+``` r
+
+h <- data.frame(
+  id     = c("all", "tech", "food", "phones", "laptops", "fruit", "grain"),
+  parent = c(NA, "all", "all", "tech", "tech", "food", "food"),
+  value  = c(NA, NA, NA, 8, 5, 6, 4)
+)
+vsunburst(h, id, parent, value)
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-4-1.png)
+
+The root sits at the centre (it is not drawn as a wedge); the first
+level forms the innermost ring. `inner.radius` opens a hole for a
+ring/donut sunburst:
+
+``` r
+
+vsunburst(h, id, parent, value, inner.radius = 0.4)
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-5-1.png)
+
+Both
+[`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+and
+[`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+follow the
+[`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+pattern: the layout is computed in R and drawn through vellum
+primitives, so they are ordinary specs you can render, print, or (in
+future) make interactive through the same machinery as every other plot.
