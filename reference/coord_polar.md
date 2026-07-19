@@ -29,8 +29,7 @@ coord_radial(
   start = 0,
   end = NULL,
   direction = 1,
-  inner_radius = 0,
-  inner.radius = NULL
+  inner_radius = 0
 )
 ```
 
@@ -65,10 +64,6 @@ coord_radial(
 
   Radius of the central hole as a fraction of the outer radius
   (`0`–`1`); `0` (default) is a filled disc, `> 0` a donut/ring.
-
-- inner.radius:
-
-  Deprecated; renamed to `inner_radius`.
 
 ## Value
 

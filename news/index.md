@@ -10,7 +10,7 @@
   angular span is its share of its parent’s, drawn as one batched
   `sector_grob` in an aspect-locked, axis-free square panel (mirroring
   [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)/[`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)).
-  `inner.radius` opens a central hole (a donut/ring sunburst); nodes are
+  `inner_radius` opens a central hole (a donut/ring sunburst); nodes are
   coloured by depth.
   [`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
   is the exported layer. See `vignette("flows-and-hierarchies")`.
@@ -52,7 +52,7 @@
   is a fuller polar system (ggplot2 3.5’s name): besides
   `theta`/`start`/`direction` it takes `end` to sweep only a **partial
   arc** (e.g. `start = -pi/2, end = pi/2` for a semicircular gauge) and
-  `inner.radius` for a **donut hole**; with the defaults it matches
+  `inner_radius` for a **donut hole**; with the defaults it matches
   [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md).
   [`scale_size_area()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
   maps a value to the marker’s **area** (value `0` → size `0`), the
@@ -70,7 +70,7 @@
   now reject a missing or negative leaf `value` with a clear message
   (instead of a cryptic downstream error), and
   [`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
-  validates `inner.radius` like
+  validates `inner_radius` like
   [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
   and
   [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
@@ -91,9 +91,7 @@
   (was `hole`).
   [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)’s
   overlap control is now `height` (was `scale`, which collided with
-  `mark_halfeye(scale=)`, a different quantity). The old spellings
-  (`inner.radius`, `hole`, ridgeline `scale`) still work with a
-  deprecation warning.
+  `mark_halfeye(scale=)`, a different quantity).
 
 - **Consistent `sketch` / `blend` passthrough.**
   [`mark_ecdf()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md),

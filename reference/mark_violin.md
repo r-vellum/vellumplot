@@ -18,8 +18,7 @@ mark_ridgeline(
   height = 1.4,
   blend = NULL,
   sketch = NULL,
-  data = NULL,
-  scale = NULL
+  data = NULL
 )
 
 mark_dotplot(
@@ -59,10 +58,6 @@ mark_dotplot(
 
   Ridge height as a multiple of the row band (ridgeline; default `1.4`,
   so adjacent ridges overlap slightly).
-
-- scale:
-
-  Deprecated; renamed to `height`.
 
 - binwidth:
 

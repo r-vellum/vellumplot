@@ -22,11 +22,10 @@ vsunburst(
   inner_radius = 0,
   width = 6,
   height = 6,
-  dpi = 96,
-  inner.radius = NULL
+  dpi = 96
 )
 
-mark_sunburst(plot, id, parent, value, inner_radius = 0, inner.radius = NULL)
+mark_sunburst(plot, id, parent, value, inner_radius = 0)
 ```
 
 ## Arguments
@@ -48,10 +47,6 @@ mark_sunburst(plot, id, parent, value, inner_radius = 0, inner.radius = NULL)
 - width, height, dpi:
 
   Page size (inches) and resolution.
-
-- inner.radius:
-
-  Deprecated; renamed to `inner_radius`.
 
 - plot:
 

@@ -30,8 +30,7 @@ mark_donut(
   ...,
   blend = NULL,
   sketch = NULL,
-  data = NULL,
-  hole = NULL
+  data = NULL
 )
 ```
 
@@ -74,10 +73,6 @@ mark_donut(
 
   For `mark_donut()`, the inner-hole radius as a fraction of the rim
   (`0` is a pie, the default `0.5` a medium donut).
-
-- hole:
-
-  Deprecated; renamed to `inner_radius`.
 
 ## Value
 
