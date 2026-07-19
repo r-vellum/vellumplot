@@ -135,18 +135,55 @@ NULL
   assign_frac(root)
 
   w <- (1 - inner_radius) / D
-  pal <- grDevices::hcl.colors(D, "Batlow")
-  keep <- depth >= 1L
+
+  # Colour by branch, not by depth: every node takes the hue of its depth-1
+  # ancestor (so sibling branches are distinguishable), lightened toward white
+  # with depth (so the inner ring reads darkest). This matches the usual d3 /
+  # ggplot sunburst; colouring purely by ring made every wedge in a ring
+  # identical and unreadable.
+  branch <- vapply(
+    seq_len(n),
+    function(i) {
+      b <- i
+      while (depth[b] > 1L) {
+        b <- pidx[b]
+      }
+      b
+    },
+    integer(1)
+  )
+  branch_nodes <- which(depth == 1L) # in input order
+  base_of <- stats::setNames(.qual_palette(length(branch_nodes)), branch_nodes)
+
+  # Angles: mirror the package's polar convention (12 o'clock, clockwise) used by
+  # coord_polar/pies via `ang_frac` (pi/2 - 2*pi*frac), rather than vellum's raw
+  # 0-at-3-o'clock / counter-clockwise. `sector_grob` fills theta0 -> theta1
+  # increasing, so the span maps to (pi/2 - 2*pi*f1, pi/2 - 2*pi*f0).
+  keep <- depth >= 1L # the root is the centre, never a wedge
+  colour <- .lighten(
+    base_of[as.character(branch[keep])],
+    (depth[keep] - 1L) / max(1L, D - 1L) * 0.6
+  )
   data.frame(
     id = id[keep],
     depth = depth[keep],
     r0 = inner_radius + (depth[keep] - 1L) * w,
     r1 = inner_radius + depth[keep] * w,
-    theta0 = 2 * pi * f0[keep],
-    theta1 = 2 * pi * f1[keep],
-    colour = pal[depth[keep]],
+    theta0 = pi / 2 - 2 * pi * f1[keep],
+    theta1 = pi / 2 - 2 * pi * f0[keep],
+    colour = colour,
     stringsAsFactors = FALSE
   )
+}
+
+# Blend colours toward white by `amount` in [0, 1] (0 = unchanged, 1 = white),
+# in linear-ish sRGB. Vectorised over `col`/`amount`. Used to fade sunburst
+# branch hues outward by depth.
+.lighten <- function(col, amount) {
+  m <- farver::decode_colour(col)
+  amount <- pmin(pmax(amount, 0), 1)
+  m <- m + (255 - m) * amount
+  farver::encode_colour(m)
 }
 
 #' Sunburst (radial hierarchy) diagram
