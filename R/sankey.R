@@ -285,6 +285,8 @@ NULL
       ty1 = t$y1,
       value = value,
       colour = rib_colour,
+      colour_src = pal[fi], # source/target node colours, for gradient ribbons
+      colour_tgt = pal[ti],
       stringsAsFactors = FALSE
     )
   )
@@ -322,7 +324,8 @@ NULL
 #' @param show_values Append each node's value to its label (e.g. `"Grid (60)"`)?
 #'   Default `FALSE`. Ignored when `label = FALSE`.
 #' @param flow_color Ribbon fill: `"source"` (default) colours each ribbon by its
-#'   source node, `"target"` by its target node.
+#'   source node, `"target"` by its target node, and `"gradient"` fades each
+#'   ribbon from its source colour to its target colour.
 #' @param node_width Node-rectangle width, as a fraction of the plotting width
 #'   (default `0.04`).
 #' @param node_gap Vertical gap between the nodes in a column, as a fraction of
@@ -394,7 +397,7 @@ mark_sankey <- function(
   node_gap = 0.02
 ) {
   .check_plot(plot)
-  flow_color <- rlang::arg_match0(flow_color, c("source", "target"))
+  flow_color <- rlang::arg_match0(flow_color, c("source", "target", "gradient"))
   .check_node_fraction(node_width, "node_width")
   .check_node_fraction(node_gap, "node_gap")
   .add_layer(

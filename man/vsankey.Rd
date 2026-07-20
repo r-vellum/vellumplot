@@ -44,7 +44,8 @@ flow value.}
 Default \code{FALSE}. Ignored when \code{label = FALSE}.}
 
 \item{flow_color}{Ribbon fill: \code{"source"} (default) colours each ribbon by its
-source node, \code{"target"} by its target node.}
+source node, \code{"target"} by its target node, and \code{"gradient"} fades each
+ribbon from its source colour to its target colour.}
 
 \item{node_width}{Node-rectangle width, as a fraction of the plotting width
 (default \code{0.04}).}
