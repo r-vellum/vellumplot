@@ -2782,6 +2782,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # when it is not in that selection's members — scoped to this view, so a
   # cross-view filter never touches the source cell.
   filt_tags <- .mark_ctx$plot_filters
+  # `join`: the cross-view identity (the original data id before per-cell key
+  # prefixing), so a host can match a selection in one cell to rows in another.
+  # Present only in a composition; NULL in a single plot.
+  join <- .mark_ctx$join
   if (
     is.null(tt) &&
       is.null(hg) &&
@@ -2790,7 +2794,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       is.null(lg) &&
       is.null(fv) &&
       is.null(cond_tags) &&
-      is.null(filt_tags)
+      is.null(filt_tags) &&
+      is.null(join)
   ) {
     return(NULL)
   }
@@ -2828,6 +2833,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     # `filt`: the filter selections this view is filtered by.
     if (!is.null(filt_tags)) {
       rec$filt <- filt_tags
+    }
+    # `join`: cross-view identity (per-cell key prefixing keeps it separate).
+    if (!is.null(join)) {
+      rec$join <- as.character(join[[i]])
     }
     rec
   })
@@ -3058,6 +3067,23 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         L$n >= 1L
     ) {
       .mark_ctx$data_id <- as.character(seq_len(L$n))
+    }
+    # In a composition, each cell is a separate plot compiled independently, so
+    # cells share row-index keys that would collide in one host runtime (hiding one
+    # cell's key-3 would hit every cell's key-3). So a composition cell's DOM key is
+    # made unique (prefixed with its `subplot-N` panel), while the original value is
+    # kept as `join` -- the cross-view identity a host matches on (brush cell A ->
+    # filter cell B's rows with the same join). A single plot or facet panel
+    # (`panel-r-c`, whose keys are already original row ids) is unchanged: no prefix,
+    # no `join`.
+    .mark_ctx$join <- NULL
+    if (
+      !is.null(.mark_ctx$data_id) &&
+        !is.na(.mark_ctx$panel) &&
+        startsWith(.mark_ctx$panel, "subplot-")
+    ) {
+      .mark_ctx$join <- .mark_ctx$data_id
+      .mark_ctx$data_id <- paste0(.mark_ctx$panel, ":", .mark_ctx$data_id)
     }
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
