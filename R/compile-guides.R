@@ -1525,7 +1525,14 @@ NULL
 # (top/bottom) legend packs them left-to-right in a mm-width block centred in the
 # cell. Each guide is drawn to its own measured extent, so spacing is uniform and
 # resize-stable regardless of how many guides share the legend.
-.draw_legends <- function(scene, cell, guides, rt, orient = "vertical") {
+.draw_legends <- function(
+  scene,
+  cell,
+  guides,
+  rt,
+  orient = "vertical",
+  avail_h = Inf
+) {
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(
@@ -1593,29 +1600,57 @@ NULL
     }
     scene <- vellum::pop(scene)
   } else {
-    hs <- vapply(guides, .guide_height_mm, 0, m = m)
-    total <- sum(hs) + (n - 1) * m$spacing
+    # Pack guides into as many columns as it takes to fit `avail_h` (the figure
+    # height), so a tall stack wraps sideways instead of spilling off the top and
+    # bottom of the page (#80). One column when avail_h is Inf -> unchanged.
+    cols <- .legend_columns(guides, m, avail_h)
+    ncol <- length(cols)
+    colw <- vapply(
+      cols,
+      function(idx) max(vapply(guides[idx], .guide_col_width, 0, m = m)),
+      0
+    )
     scene <- vellum::push(
       scene,
       vellum::vl_viewport(
-        y = vellum::vl_unit(0.5, "npc"),
-        width = vellum::vl_unit(1, "npc"),
-        height = vellum::vl_unit(total, "mm"),
         layout = vellum::grid_layout(
-          heights = .interleave_mm(hs, m$spacing),
-          widths = vellum::vl_unit(1, "null")
+          widths = .interleave_mm(colw, m$spacing),
+          heights = vellum::vl_unit(1, "null")
         )
       )
     )
-    for (i in seq_len(n)) {
+    for (c in seq_len(ncol)) {
+      idx <- cols[[c]]
+      hs <- vapply(guides[idx], .guide_height_mm, 0, m = m)
+      total <- sum(hs) + (length(idx) - 1L) * m$spacing
       scene <- vellum::push(
         scene,
-        vellum::vl_viewport(row = 2L * i - 1L, col = 1)
+        vellum::vl_viewport(row = 1, col = 2L * c - 1L)
       )
-      scene <- .draw_guide_v(scene, guides[[i]], m, rt)
-      scene <- vellum::pop(scene)
+      scene <- vellum::push(
+        scene,
+        vellum::vl_viewport(
+          y = vellum::vl_unit(0.5, "npc"),
+          width = vellum::vl_unit(1, "npc"),
+          height = vellum::vl_unit(total, "mm"),
+          layout = vellum::grid_layout(
+            heights = .interleave_mm(hs, m$spacing),
+            widths = vellum::vl_unit(1, "null")
+          )
+        )
+      )
+      for (i in seq_along(idx)) {
+        scene <- vellum::push(
+          scene,
+          vellum::vl_viewport(row = 2L * i - 1L, col = 1)
+        )
+        scene <- .draw_guide_v(scene, guides[[idx[i]]], m, rt)
+        scene <- vellum::pop(scene)
+      }
+      scene <- vellum::pop(scene) # this column's stack
+      scene <- vellum::pop(scene) # this column's cell
     }
-    scene <- vellum::pop(scene)
+    scene <- vellum::pop(scene) # columns grid
   }
   scene <- vellum::pop(scene) # content (2, 2) cell
   scene <- vellum::pop(scene) # margin grid

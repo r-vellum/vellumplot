@@ -55,25 +55,83 @@ NULL
 # always plain strings; a guide title may be a rich `md()` object, so it is
 # measured directly (never folded into the character vector, which would coerce
 # it to a mangled string).
-.legend_width <- function(guides, rt) {
-  m <- .legend_metrics(rt)
-  w <- 0
-  for (g in guides) {
-    labs <- .guide_labels(g)
-    lw <- .mm_tw(labs, m$text_fs)
-    body <- if (g$kind == "color_continuous") {
-      m$pad + m$bar_w + m$lab_gap + lw
-    } else {
-      m$pad + .guide_key_d(g, m) + m$lab_gap + lw
-    }
-    tw <- if (m$show_title && !is.null(g$sc$name)) {
-      .mm_tw_any(g$sc$name, m$title_fs)
-    } else {
-      0
-    }
-    w <- max(w, body, tw)
+# The width (mm) one guide needs: the wider of its key+label body and its title.
+.guide_col_width <- function(g, m) {
+  labs <- .guide_labels(g)
+  lw <- .mm_tw(labs, m$text_fs)
+  body <- if (g$kind == "color_continuous") {
+    m$pad + m$bar_w + m$lab_gap + lw
+  } else {
+    m$pad + .guide_key_d(g, m) + m$lab_gap + lw
   }
-  vellum::vl_unit(w + m$margin[2] + m$margin[4], "mm")
+  tw <- if (m$show_title && !is.null(g$sc$name)) {
+    .mm_tw_any(g$sc$name, m$title_fs)
+  } else {
+    0
+  }
+  max(body, tw)
+}
+
+# Pack a vertical legend's guides into columns that each fit `avail_h` (mm) --
+# the height the legend column has to work with (roughly the figure height). A
+# non-finite `avail_h` (the default, and every horizontal / composition path)
+# keeps everything in one column, so behaviour is unchanged unless the caller
+# opts in with a real height. Greedy top-to-bottom fill; a lone guide taller than
+# `avail_h` still gets its own column (nothing else it can do). Returns a list of
+# integer index vectors, one per column.
+.legend_columns <- function(guides, m, avail_h) {
+  n <- length(guides)
+  if (!n) {
+    return(list())
+  }
+  if (!is.finite(avail_h) || n == 1L) {
+    return(list(seq_len(n)))
+  }
+  hs <- vapply(guides, .guide_height_mm, 0, m = m)
+  cols <- list()
+  cur <- integer(0)
+  cur_h <- 0
+  for (i in seq_len(n)) {
+    inc <- if (length(cur)) m$spacing + hs[i] else hs[i]
+    if (length(cur) && (cur_h + inc) > avail_h) {
+      cols <- c(cols, list(cur))
+      cur <- i
+      cur_h <- hs[i]
+    } else {
+      cur <- c(cur, i)
+      cur_h <- cur_h + inc
+    }
+  }
+  c(cols, list(cur))
+}
+
+# Available height (mm) for a vertical legend that spans the whole figure height,
+# less its top/bottom margins. `NULL` page height -> Inf (single column).
+.legend_avail_h <- function(page_height, rt) {
+  if (is.null(page_height)) {
+    return(Inf)
+  }
+  m <- .legend_metrics(rt)
+  page_height * 25.4 - m$margin[1] - m$margin[3]
+}
+
+# Width (mm) a vertical legend reserves: guides pack into as many columns as it
+# takes to fit `avail_h`, and the reserved width is the sum of the per-column
+# widths (+ inter-column spacing). `.draw_legends()` repeats the same packing so
+# the drawn columns match the reserved width exactly.
+.legend_width <- function(guides, rt, avail_h = Inf) {
+  m <- .legend_metrics(rt)
+  cols <- .legend_columns(guides, m, avail_h)
+  if (!length(cols)) {
+    return(vellum::vl_unit(m$margin[2] + m$margin[4], "mm"))
+  }
+  colw <- vapply(
+    cols,
+    function(idx) max(vapply(guides[idx], .guide_col_width, 0, m = m)),
+    0
+  )
+  total <- sum(colw) + (length(cols) - 1L) * m$spacing
+  vellum::vl_unit(total + m$margin[2] + m$margin[4], "mm")
 }
 
 # Height of a horizontal legend row (top/bottom): the tallest guide, each a title
@@ -118,8 +176,13 @@ NULL
   rt = .resolve_theme(.theme_default()),
   flip = FALSE,
   coord = NULL,
-  marginal = NULL
+  marginal = NULL,
+  page_height = NULL
 ) {
+  # A vertical legend spans the whole figure height; tell the width/draw code how
+  # much height it has so a tall guide stack wraps into columns instead of
+  # spilling off the top and bottom of the page (#80).
+  legend_avail_h <- .legend_avail_h(page_height, rt)
   fa <- built$fa
   R <- fa$R
   C <- fa$C
@@ -242,7 +305,7 @@ NULL
   W <- .tracks()
   legend_col <- NA_integer_
   if (legend_vert && pos == "left") {
-    legend_col <- .tk_add(W, .legend_width(guides, rt))
+    legend_col <- .tk_add(W, .legend_width(guides, rt, legend_avail_h))
   }
   ytitle_col <- .tk_add(W, yt)
   panel_col <- integer(C)
@@ -267,7 +330,7 @@ NULL
   }
   rowstrip_col <- if (has_row_strip) .tk_add(W, strip) else NA_integer_
   if (legend_vert && pos == "right") {
-    legend_col <- .tk_add(W, .legend_width(guides, rt))
+    legend_col <- .tk_add(W, .legend_width(guides, rt, legend_avail_h))
   }
 
   # --- rows: [ tag? | title? | subtitle? | col-strip? |
@@ -365,6 +428,7 @@ NULL
     legend_col = legend_col,
     legend_row = legend_row,
     legend_pos = pos,
+    legend_avail_h = legend_avail_h,
     title_row = title_row,
     subtitle_row = subtitle_row,
     tag_row = tag_row,

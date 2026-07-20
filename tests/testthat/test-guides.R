@@ -173,3 +173,73 @@ test_that("a merged legend still renders in every position", {
     expect_gt(file.info(f)$size, 0)
   }
 })
+
+# --- multi-column legend wrapping (#80) --------------------------------------
+
+test_that(".legend_columns wraps guides to fit the available height", {
+  m <- .legend_metrics(.resolve_theme(.theme_default()))
+  mkg <- function(k) {
+    list(
+      kind = "size",
+      sc = list(
+        legend_labels = as.character(seq_len(k)),
+        legend_sizes = seq_len(k)
+      )
+    )
+  }
+  guides <- replicate(4, mkg(4), simplify = FALSE)
+  gh <- .guide_height_mm(guides[[1]], m)
+  # Inf height (the default / composition / horizontal paths) keeps one column.
+  expect_length(.legend_columns(guides, m, Inf), 1L)
+  # A height fitting ~2 guides wraps four guides into two columns.
+  cols <- .legend_columns(guides, m, avail_h = gh * 2 + m$spacing + 0.5)
+  expect_length(cols, 2L)
+  expect_identical(sort(unlist(cols)), 1:4)
+})
+
+test_that("many legends stay on-canvas by wrapping into columns (#80)", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph("Zachary")
+  g <- igraph::set_vertex_attr(g, "grp", value = factor(igraph::degree(g) %% 4))
+  g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
+  g <- igraph::set_edge_attr(g, "w", value = seq_len(igraph::ecount(g)))
+  # four legends (fill, size, edge colour, edge width) on a short figure
+  p <- vgraph(g, width = 6, height = 4) |>
+    mark_edges(color = w, linewidth = w) |>
+    mark_nodes(fill = grp, size = deg) |>
+    scale_edge_color(palette = "Grays") |>
+    scale_edge_width(range = c(0.3, 2.5)) |>
+    scale_size(range = c(2, 9))
+  f <- local_tempfile(fileext = ".svg")
+  render_plot(p, f)
+  svg <- paste(readLines(f), collapse = "\n")
+  height_px <- as.numeric(sub(
+    '.*<svg[^>]* height="([0-9.]+)".*',
+    "\\1",
+    regmatches(svg, regexpr("<svg[^>]*>", svg))
+  ))
+  # every legend-title y (x/y within its translate) must sit inside the canvas
+  titles <- regmatches(
+    svg,
+    gregexpr(
+      '<text x="[0-9.]+" y="[0-9.]+"[^>]*transform="matrix\\([^)]*\\)"[^>]*>(grp|deg|w)</text>',
+      svg
+    )
+  )[[1]]
+  expect_gte(length(titles), 4L) # all four legends are emitted
+  ys <- vapply(
+    titles,
+    function(t) {
+      y <- as.numeric(sub('.* y="([0-9.]+)".*', "\\1", t))
+      ty <- as.numeric(sub(
+        ".*matrix\\(1 0 0 1 [0-9.-]+ ([0-9.-]+)\\).*",
+        "\\1",
+        t
+      ))
+      y + ty
+    },
+    numeric(1)
+  )
+  expect_true(all(ys >= 0 & ys <= height_px)) # none clipped off top/bottom
+})
