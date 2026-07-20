@@ -178,3 +178,74 @@ test_that("degenerate inputs order without error", {
   expect_length(unlist(p2$opt), p2$n)
   expect_setequal(unlist(p2$opt), seq_len(p2$n))
 })
+
+# --- node sizing, flow colour, value labels --------------------------------
+
+test_that("flow_color picks the source or target node colour for ribbons", {
+  src <- vellumplot:::.sankey_layout(flows$from, flows$to, flows$value)
+  tgt <- vellumplot:::.sankey_layout(
+    flows$from,
+    flows$to,
+    flows$value,
+    flow_color = "target"
+  )
+  fi <- match(flows$from, src$nodes$name)
+  ti <- match(flows$to, src$nodes$name)
+  expect_equal(src$ribbons$colour, src$nodes$colour[fi])
+  expect_equal(tgt$ribbons$colour, tgt$nodes$colour[ti])
+})
+
+test_that("node_width / node_gap change the node geometry", {
+  narrow <- vellumplot:::.sankey_layout(
+    flows$from,
+    flows$to,
+    flows$value,
+    node_width = 0.02
+  )
+  wide <- vellumplot:::.sankey_layout(
+    flows$from,
+    flows$to,
+    flows$value,
+    node_width = 0.10
+  )
+  expect_equal(narrow$nodes$x1 - narrow$nodes$x0, rep(0.02, nrow(narrow$nodes)))
+  expect_equal(wide$nodes$x1 - wide$nodes$x0, rep(0.10, nrow(wide$nodes)))
+})
+
+test_that("the layout carries each node's value (for show_values labels)", {
+  lay <- vellumplot:::.sankey_layout(flows$from, flows$to, flows$value)
+  v <- setNames(lay$nodes$value, lay$nodes$name)
+  # C -> D (4) + C -> E (2) = 6 out; no inflow -> node value 6
+  expect_equal(v[["C"]], 6)
+  # D <- B (4) + C (4) = 8 in; no outflow -> node value 8
+  expect_equal(v[["D"]], 8)
+})
+
+test_that("sankey parameters are validated", {
+  expect_error(mark_sankey(vplot(flows), from, to, value, flow_color = "nope"))
+  expect_error(
+    mark_sankey(vplot(flows), from, to, value, node_width = 1.5),
+    "\\[0, 1\\)"
+  )
+  expect_error(
+    mark_sankey(vplot(flows), from, to, value, node_gap = -0.1),
+    "\\[0, 1\\)"
+  )
+})
+
+test_that("show_values / flow_color / node sizing render", {
+  f <- local_tempfile(fileext = ".png")
+  render_plot(
+    vsankey(
+      flows,
+      from,
+      to,
+      value,
+      show_values = TRUE,
+      flow_color = "target",
+      node_width = 0.06
+    ),
+    f
+  )
+  expect_gt(file.info(f)$size, 0)
+})

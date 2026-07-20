@@ -5,9 +5,32 @@
 \alias{mark_sankey}
 \title{Sankey (flow) diagram}
 \usage{
-vsankey(data, from, to, value, label = TRUE, width = 8, height = 5, dpi = 96)
+vsankey(
+  data,
+  from,
+  to,
+  value,
+  label = TRUE,
+  show_values = FALSE,
+  flow_color = "source",
+  node_width = 0.04,
+  node_gap = 0.02,
+  width = 8,
+  height = 5,
+  dpi = 96
+)
 
-mark_sankey(plot, from, to, value, label = TRUE)
+mark_sankey(
+  plot,
+  from,
+  to,
+  value,
+  label = TRUE,
+  show_values = FALSE,
+  flow_color = "source",
+  node_width = 0.04,
+  node_gap = 0.02
+)
 }
 \arguments{
 \item{data}{A data frame of flows.}
@@ -16,6 +39,18 @@ mark_sankey(plot, from, to, value, label = TRUE)
 flow value.}
 
 \item{label}{Draw node labels? Default \code{TRUE}.}
+
+\item{show_values}{Append each node's value to its label (e.g. \code{"Grid (60)"})?
+Default \code{FALSE}. Ignored when \code{label = FALSE}.}
+
+\item{flow_color}{Ribbon fill: \code{"source"} (default) colours each ribbon by its
+source node, \code{"target"} by its target node.}
+
+\item{node_width}{Node-rectangle width, as a fraction of the plotting width
+(default \code{0.04}).}
+
+\item{node_gap}{Vertical gap between the nodes in a column, as a fraction of
+the column height (default \code{0.02}).}
 
 \item{width, height, dpi}{Page size (inches) and resolution.}
 
@@ -45,4 +80,5 @@ flows <- data.frame(
   value = c(4, 6, 4, 4, 2)
 )
 vsankey(flows, from, to, value)
+vsankey(flows, from, to, value, show_values = TRUE, flow_color = "target")
 }

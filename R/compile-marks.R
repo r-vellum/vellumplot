@@ -1750,12 +1750,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     )
   }
 
-  # labels: source column (x0 ~ 0) to the left, everything else to the right
+  # labels: source column (x0 ~ 0) to the left, everything else to the right;
+  # with `show_values` the node's value is appended, e.g. "Grid (60)".
   if (isTRUE(L$params$label)) {
+    show_values <- isTRUE(L$params$show_values)
     for (i in seq_len(nrow(nodes))) {
       left <- nodes$x0[i] < 1e-6
       xlab <- if (left) nodes$x0[i] else nodes$x1[i]
       just <- c(if (left) "right" else "left", "centre")
+      txt <- nodes$name[i]
+      if (show_values) {
+        txt <- paste0(txt, " (", .label_number_default(nodes$value[i]), ")")
+      }
       xy <- .xy_units(
         scales,
         scales$x$map(xlab),
@@ -1765,7 +1771,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       scene <- .draw(
         scene,
         vellum::text_grob(
-          nodes$name[i],
+          txt,
           x = xy$x + pad,
           y = xy$y,
           just = just,
