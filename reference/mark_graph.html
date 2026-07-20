@@ -125,6 +125,16 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dist <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  top_n <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  by <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  repel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  box_padding <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  point_padding <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  min_segment_length <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  max_overlaps <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
@@ -137,6 +147,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  angle <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -222,6 +233,30 @@ expression. For nodes, <code>fill</code> (or <code>color</code>) is the marker c
 an edge attribute, e.g. <code>label = weight</code>).</p></dd>
 
 
+<dt id="arg-dist">dist<a class="anchor" aria-label="anchor" href="#arg-dist"></a></dt>
+<dd><p>For <code>mark_node_text()</code>, a radial offset (mm) pushing each label
+outward from the layout centroid, so labels clear the node markers instead of
+sitting on them. <code>0</code> (default) centres the label on the vertex.</p></dd>
+
+
+<dt id="arg-top-n-by">top_n, by<a class="anchor" aria-label="anchor" href="#arg-top-n-by"></a></dt>
+<dd><p>For <code>mark_node_text()</code>, label only the <code>top_n</code> vertices with
+the largest <code>by</code> (an edge/vertex metric column, e.g. <code>by = degree</code>) – the
+idiomatic "label just the hubs" filter. <code>NULL</code> (default) labels every vertex.</p></dd>
+
+
+<dt id="arg-repel">repel<a class="anchor" aria-label="anchor" href="#arg-repel"></a></dt>
+<dd><p>For <code>mark_node_text()</code>, <code>TRUE</code> to move overlapping labels apart
+with a force-directed layout (ggrepel-style), drawing a thin leader line back
+to each vertex. <code>box_padding</code>, <code>point_padding</code>, <code>min_segment_length</code>,
+<code>max_overlaps</code>, and <code>seed</code> tune it exactly as in <code><a href="mark_text.html">mark_text()</a></code>.</p></dd>
+
+
+<dt id="arg-box-padding-point-padding-min-segment-length-max-overlaps-seed">box_padding, point_padding, min_segment_length, max_overlaps, seed<a class="anchor" aria-label="anchor" href="#arg-box-padding-point-padding-min-segment-length-max-overlaps-seed"></a></dt>
+<dd><p>Repel
+tuning for <code>mark_node_text(repel = TRUE)</code>; see <code><a href="mark_text.html">mark_text()</a></code>.</p></dd>
+
+
 <dt id="arg-angle">angle<a class="anchor" aria-label="anchor" href="#arg-angle"></a></dt>
 <dd><p>For <code>mark_edge_text()</code>, the label rotation: a constant in degrees,
 or <code>"along"</code> to rotate each label along its edge. <code>NULL</code> (default) draws
@@ -239,6 +274,11 @@ horizontal labels.</p></dd>
 <code><a href="scale_edge_width.html">scale_edge_width()</a></code>), independent of the node colour/alpha/linetype scales –
 so a plot can map node fill to a discrete community and edge colour to a
 continuous weight without the two legends colliding.</p>
+<p><code>mark_node_text()</code> has the label-legibility tools a dense graph needs:
+<code>repel = TRUE</code> nudges overlapping labels apart with leader lines, <code>dist</code> pushes
+labels radially clear of the node markers, <code>top_n</code>/<code>by</code> label only the hubs,
+and <code>effects = list(outline())</code> draws a halo so labels stay readable over
+edges. <code>mark_edge_text()</code> takes the same <code>effects</code>.</p>
 <p>These are thin over the point / segment / text marks; <code>igraph</code> need not be
 installed to use them (only <code><a href="vgraph.html">vgraph()</a></code> needs it).</p>
     </div>

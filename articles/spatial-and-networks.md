@@ -144,6 +144,42 @@ vgraph(d, layout = "stress") |>
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-6-1.png)
 
+### Readable labels
+
+Labelling every vertex of a real network is unreadable, and labels that
+sit on the markers or vanish into the edges are worse.
+[`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+has four tools for this:
+
+- `top_n` / `by` label only the most important vertices (e.g. the
+  highest-degree hubs) – the common “label a handful, not all 34” move
+  as a one-liner.
+- `dist` pushes each label radially outward from the layout centre, so
+  it clears its node marker.
+- `repel = TRUE` nudges any labels that still overlap apart,
+  ggrepel-style, with a thin leader line back to each vertex.
+- `effects = list(outline())` draws a halo (shadowtext) so a label stays
+  legible where it crosses an edge.
+  [`mark_edge_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  takes the same `effects`.
+
+``` r
+
+vgraph(g, layout = "stress") |>
+  mark_edges(alpha = 0.3) |>
+  mark_nodes(size = deg, fill = grp) |>
+  mark_node_text(
+    label = name,
+    top_n = 8,
+    by = deg,
+    dist = 3,
+    effects = list(outline(color = "white"))
+  ) |>
+  scale_size(range = c(2, 9))
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png)
+
 ### Choosing a layout
 
 `layout` accepts a name (`"stress"`, `"sparse_stress"`, `"backbone"`,
@@ -158,7 +194,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a
