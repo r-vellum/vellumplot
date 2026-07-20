@@ -13,9 +13,32 @@ adds and can be used directly on a plot you have set up yourself.
 ## Usage
 
 ``` r
-vsankey(data, from, to, value, label = TRUE, width = 8, height = 5, dpi = 96)
+vsankey(
+  data,
+  from,
+  to,
+  value,
+  label = TRUE,
+  show_values = FALSE,
+  flow_color = "source",
+  node_width = 0.04,
+  node_gap = 0.02,
+  width = 8,
+  height = 5,
+  dpi = 96
+)
 
-mark_sankey(plot, from, to, value, label = TRUE)
+mark_sankey(
+  plot,
+  from,
+  to,
+  value,
+  label = TRUE,
+  show_values = FALSE,
+  flow_color = "source",
+  node_width = 0.04,
+  node_gap = 0.02
+)
 ```
 
 ## Arguments
@@ -31,6 +54,26 @@ mark_sankey(plot, from, to, value, label = TRUE)
 - label:
 
   Draw node labels? Default `TRUE`.
+
+- show_values:
+
+  Append each node's value to its label (e.g. `"Grid (60)"`)? Default
+  `FALSE`. Ignored when `label = FALSE`.
+
+- flow_color:
+
+  Ribbon fill: `"source"` (default) colours each ribbon by its source
+  node, `"target"` by its target node.
+
+- node_width:
+
+  Node-rectangle width, as a fraction of the plotting width (default
+  `0.04`).
+
+- node_gap:
+
+  Vertical gap between the nodes in a column, as a fraction of the
+  column height (default `0.02`).
 
 - width, height, dpi:
 
@@ -63,4 +106,6 @@ flows <- data.frame(
   value = c(4, 6, 4, 4, 2)
 )
 vsankey(flows, from, to, value)
+
+vsankey(flows, from, to, value, show_values = TRUE, flow_color = "target")
 ```

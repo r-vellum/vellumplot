@@ -2,6 +2,14 @@
 
 ## vellumplot (development version)
 
+- **Sankey styling options.**
+  [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  /
+  [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  gain `show_values` (append each node’s value to its label),
+  `flow_color` (`"source"` or `"target"`, colouring ribbons by either
+  endpoint), and `node_width` / `node_gap` to tune the node rectangles.
+
 - **Sankey crossing minimisation.**
   [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   now orders the nodes within each column with the Sugiyama barycenter

@@ -82,9 +82,32 @@ used directly on a plot you have set up yourself.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vsankey</span><span class="op">(</span><span class="va">data</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">value</span>, label <span class="op">=</span> <span class="cn">TRUE</span>, width <span class="op">=</span> <span class="fl">8</span>, height <span class="op">=</span> <span class="fl">5</span>, dpi <span class="op">=</span> <span class="fl">96</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vsankey</span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">from</span>,</span>
+<span>  <span class="va">to</span>,</span>
+<span>  <span class="va">value</span>,</span>
+<span>  label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_values <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  flow_color <span class="op">=</span> <span class="st">"source"</span>,</span>
+<span>  node_width <span class="op">=</span> <span class="fl">0.04</span>,</span>
+<span>  node_gap <span class="op">=</span> <span class="fl">0.02</span>,</span>
+<span>  width <span class="op">=</span> <span class="fl">8</span>,</span>
+<span>  height <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  dpi <span class="op">=</span> <span class="fl">96</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">mark_sankey</span><span class="op">(</span><span class="va">plot</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">value</span>, label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">mark_sankey</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">from</span>,</span>
+<span>  <span class="va">to</span>,</span>
+<span>  <span class="va">value</span>,</span>
+<span>  label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_values <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  flow_color <span class="op">=</span> <span class="st">"source"</span>,</span>
+<span>  node_width <span class="op">=</span> <span class="fl">0.04</span>,</span>
+<span>  node_gap <span class="op">=</span> <span class="fl">0.02</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -102,6 +125,26 @@ flow value.</p></dd>
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
 <dd><p>Draw node labels? Default <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-show-values">show_values<a class="anchor" aria-label="anchor" href="#arg-show-values"></a></dt>
+<dd><p>Append each node's value to its label (e.g. <code>"Grid (60)"</code>)?
+Default <code>FALSE</code>. Ignored when <code>label = FALSE</code>.</p></dd>
+
+
+<dt id="arg-flow-color">flow_color<a class="anchor" aria-label="anchor" href="#arg-flow-color"></a></dt>
+<dd><p>Ribbon fill: <code>"source"</code> (default) colours each ribbon by its
+source node, <code>"target"</code> by its target node.</p></dd>
+
+
+<dt id="arg-node-width">node_width<a class="anchor" aria-label="anchor" href="#arg-node-width"></a></dt>
+<dd><p>Node-rectangle width, as a fraction of the plotting width
+(default <code>0.04</code>).</p></dd>
+
+
+<dt id="arg-node-gap">node_gap<a class="anchor" aria-label="anchor" href="#arg-node-gap"></a></dt>
+<dd><p>Vertical gap between the nodes in a column, as a fraction of
+the column height (default <code>0.02</code>).</p></dd>
 
 
 <dt id="arg-width-height-dpi">width, height, dpi<a class="anchor" aria-label="anchor" href="#arg-width-height-dpi"></a></dt>
@@ -133,6 +176,8 @@ from the built-in qualitative palette.</p>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">vsankey</span><span class="op">(</span><span class="va">flows</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">value</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="vsankey-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">vsankey</span><span class="op">(</span><span class="va">flows</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">value</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span>, flow_color <span class="op">=</span> <span class="st">"target"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="vsankey-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

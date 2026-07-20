@@ -38,6 +38,18 @@ the larger of its total in- and out-flow, and ribbon widths are
 proportional to `value` — so the diagram reads as a conserved flow left
 to right.
 
+Ribbons are coloured by their source node by default;
+`flow_color = "target"` colours them by their target instead.
+`show_values = TRUE` appends each node’s value to its label, and
+`node_width` / `node_gap` tune the node rectangles.
+
+``` r
+
+vsankey(flows, from, to, value, show_values = TRUE, flow_color = "target")
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-3-1.png)
+
 The flows must form a directed acyclic graph (a node cannot reach
 itself), and `value`s must be positive. Turn node labels off with
 `label = FALSE`:
@@ -47,7 +59,7 @@ itself), and `value`s must be positive. Turn node labels off with
 vsankey(flows, from, to, value, label = FALSE)
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-3-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-4-1.png)
 
 [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
 returns an ordinary \[PlotSpec\], so it renders with
@@ -78,7 +90,7 @@ h <- data.frame(
 vsunburst(h, id, parent, value)
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-4-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-5-1.png)
 
 The root sits at the centre (it is not drawn as a wedge); the first
 level forms the innermost ring, starting at twelve o’clock and winding
@@ -92,7 +104,7 @@ distinguishable and each ring reads as a shade of its parent.
 vsunburst(h, id, parent, value, inner_radius = 0.4)
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-5-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-6-1.png)
 
 Both
 [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
