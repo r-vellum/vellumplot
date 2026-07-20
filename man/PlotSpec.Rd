@@ -54,6 +54,13 @@ PNG's pixel dimensions are \code{width * dpi} by \code{height * dpi}.}
 
 \item{marginal}{A marginal-distribution specification (from \code{\link[=add_marginal]{add_marginal()}}),
 or \code{NULL} for no marginals.}
+
+\item{selections}{A list of interactive selection declarations (from
+\code{\link[=select_point]{select_point()}} / \code{\link[=select_interval]{select_interval()}} / \code{\link[=add_selection]{add_selection()}}).}
+
+\item{filters}{A list of filter declarations (from \code{\link[=filter_by]{filter_by()}}).}
+
+\item{binds}{A list of scale-domain bind declarations (from \code{\link[=bind_scale]{bind_scale()}}).}
 }
 \value{
 A \code{PlotSpec}.

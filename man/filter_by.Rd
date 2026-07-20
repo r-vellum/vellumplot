@@ -9,7 +9,7 @@ filter_by(plot, selection)
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{selection}{A \link{SelectionSpec}, or a selection name string.}
+\item{selection}{A \code{SelectionSpec}, or a selection name string.}
 }
 \value{
 The \link{PlotSpec}, with the filter registered.

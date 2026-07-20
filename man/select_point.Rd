@@ -50,7 +50,7 @@ or \emph{none} (\code{FALSE}).}
 or \code{"lasso"} (a freehand polygon).}
 }
 \value{
-A \link{PlotSpec} (piped form) or a \link{SelectionSpec} (free-standing form).
+A \link{PlotSpec} (piped form) or a \code{SelectionSpec} (free-standing form).
 }
 \description{
 A \strong{selection} is a named set of data elements defined by a user gesture. On
@@ -66,7 +66,7 @@ with it, serialise with it, and are enacted by any capable host
 to an axis.
 
 Both are \strong{pipe-first} (attach to the plot and return it) \emph{or} \strong{free-standing}
-(call with the name as the first argument to get a \link{SelectionSpec} you can share
+(call with the name as the first argument to get a \code{SelectionSpec} you can share
 across views, then attach with \code{\link[=add_selection]{add_selection()}}).
 }
 \examples{

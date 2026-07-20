@@ -63,7 +63,7 @@ NULL
 #' to an axis.
 #'
 #' Both are **pipe-first** (attach to the plot and return it) *or* **free-standing**
-#' (call with the name as the first argument to get a [SelectionSpec] you can share
+#' (call with the name as the first argument to get a `SelectionSpec` you can share
 #' across views, then attach with [add_selection()]).
 #'
 #' @param plot A [PlotSpec] (piped form), or a selection **name** string
@@ -84,7 +84,7 @@ NULL
 #'   default — so an unselected plot shows its full self and selecting *narrows*)
 #'   or *none* (`FALSE`).
 #'
-#' @return A [PlotSpec] (piped form) or a [SelectionSpec] (free-standing form).
+#' @return A [PlotSpec] (piped form) or a `SelectionSpec` (free-standing form).
 #' @seealso [condition()], [filter_by()], [add_selection()], [bind_scale()]
 #' @examples
 #' df <- data.frame(x = 1:10, y = runif(10), g = rep(c("a", "b"), 5))
@@ -148,14 +148,14 @@ select_interval <- function(
 
 #' Register a free-standing selection on a plot
 #'
-#' Attach a [SelectionSpec] (from the free-standing form of [select_point()] /
+#' Attach a `SelectionSpec` (from the free-standing form of [select_point()] /
 #' [select_interval()]) to a plot, marking that the selection's gesture is active
 #' on this plot's marks. Use it when a selection is defined once and shared across
 #' views in a composition (define + `add_selection()` on one plot, [filter_by()]
 #' on another).
 #'
 #' @param plot A [PlotSpec].
-#' @param selection A [SelectionSpec].
+#' @param selection A `SelectionSpec`.
 #' @return The [PlotSpec], with the selection registered.
 #' @seealso [select_point()], [filter_by()]
 #' @export
@@ -207,7 +207,7 @@ condition <- function(selection, if_true, if_false, empty = TRUE) {
 #' a linked panel redraws to just those rows.
 #'
 #' @param plot A [PlotSpec].
-#' @param selection A [SelectionSpec], or a selection name string.
+#' @param selection A `SelectionSpec`, or a selection name string.
 #' @return The [PlotSpec], with the filter registered.
 #' @seealso [select_interval()], [add_selection()]
 #' @export
@@ -226,7 +226,7 @@ filter_by <- function(plot, selection) {
 #' is a display-tier view change (pan/zoom), not a scale retrain.
 #'
 #' @param plot A [PlotSpec] (the detail view).
-#' @param selection A [SelectionSpec] (an interval selection), or a name string.
+#' @param selection A `SelectionSpec` (an interval selection), or a name string.
 #' @param aes The axis to bind, `"x"` (default) or `"y"`.
 #' @return The [PlotSpec], with the bind registered.
 #' @seealso [select_interval()]

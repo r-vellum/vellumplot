@@ -9,13 +9,13 @@ add_selection(plot, selection)
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{selection}{A \link{SelectionSpec}.}
+\item{selection}{A \code{SelectionSpec}.}
 }
 \value{
 The \link{PlotSpec}, with the selection registered.
 }
 \description{
-Attach a \link{SelectionSpec} (from the free-standing form of \code{\link[=select_point]{select_point()}} /
+Attach a \code{SelectionSpec} (from the free-standing form of \code{\link[=select_point]{select_point()}} /
 \code{\link[=select_interval]{select_interval()}}) to a plot, marking that the selection's gesture is active
 on this plot's marks. Use it when a selection is defined once and shared across
 views in a composition (define + \code{add_selection()} on one plot, \code{\link[=filter_by]{filter_by()}}

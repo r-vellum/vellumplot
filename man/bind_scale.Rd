@@ -9,7 +9,7 @@ bind_scale(plot, selection, aes = c("x", "y"))
 \arguments{
 \item{plot}{A \link{PlotSpec} (the detail view).}
 
-\item{selection}{A \link{SelectionSpec} (an interval selection), or a name string.}
+\item{selection}{A \code{SelectionSpec} (an interval selection), or a name string.}
 
 \item{aes}{The axis to bind, \code{"x"} (default) or \code{"y"}.}
 }

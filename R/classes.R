@@ -264,6 +264,10 @@ DomainBindSpec <- S7::new_class(
 #' @param labels A named list of plot/axis/legend label overrides (see [labs()]).
 #' @param marginal A marginal-distribution specification (from [add_marginal()]),
 #'   or `NULL` for no marginals.
+#' @param selections A list of interactive selection declarations (from
+#'   [select_point()] / [select_interval()] / [add_selection()]).
+#' @param filters A list of filter declarations (from [filter_by()]).
+#' @param binds A list of scale-domain bind declarations (from [bind_scale()]).
 #'
 #' @return A `PlotSpec`.
 #' @seealso [vplot()], [mark_point()], [scale_x_continuous()]
