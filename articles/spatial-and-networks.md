@@ -180,6 +180,39 @@ vgraph(g, layout = "stress") |>
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png)
 
+### Edge routing
+
+Edges are straight by default. `routing = "elbow"` draws orthogonal
+right-angle steps instead – still straight segments (curved edges are a
+deliberate non-goal), stepping along whichever axis the endpoints are
+farther apart on, so a top-down tree bends downward. It is the natural
+routing for `"tree"`, `"sugiyama"`, and dendrogram layouts, and keeps
+node-boundary caps and arrowheads.
+
+``` r
+
+tr <- igraph::make_tree(15, children = 2, mode = "out")
+vgraph(tr, layout = "tree") |>
+  mark_edges(routing = "elbow", arrow = TRUE) |>
+  mark_nodes(size = 5, fill = "steelblue")
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png)
+
+For directed graphs, `gradient = TRUE` fades each edge from faint at its
+source to opaque at its target – a direction cue that reads without
+arrowheads (and without the clutter they add on a dense graph).
+
+``` r
+
+dg <- igraph::sample_gnp(15, 0.2, directed = TRUE)
+vgraph(dg) |>
+  mark_edges(gradient = TRUE) |>
+  mark_nodes(size = 4, fill = "grey30")
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-9-1.png)
+
 ### Augmenting and filtering
 
 Vertex metrics are the analyst’s choice, not something
@@ -206,7 +239,7 @@ vgraph(g, augment = c("degree", "community"), k_core = 2) |>
   scale_size(range = c(2, 9))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png)
 
 ### Choosing a layout
 
@@ -222,7 +255,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-9-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a

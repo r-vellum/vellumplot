@@ -97,6 +97,8 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  alpha <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  linetype <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  arrow <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  routing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"straight"</span>, <span class="st">"elbow"</span><span class="op">)</span>,</span>
+<span>  gradient <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  auto <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -186,6 +188,20 @@ edge's target end (the directed convention), <code>FALSE</code>/<code>NULL</code
 Edges are capped exactly at each endpoint's node boundary (per vertex, at any
 size/resolution), so the head sits on the node edge; self-loops are drawn as
 teardrop loops sized to the node, with the head on the node boundary.</p></dd>
+
+
+<dt id="arg-routing">routing<a class="anchor" aria-label="anchor" href="#arg-routing"></a></dt>
+<dd><p>For <code>mark_edges()</code>, edge routing: <code>"straight"</code> (default) or
+<code>"elbow"</code> – orthogonal right-angle steps for tree / DAG / dendrogram
+layouts (still straight segments, no curvature), stepping along whichever
+axis the endpoints are farther apart on. Elbows keep node-boundary caps and
+arrowheads.</p></dd>
+
+
+<dt id="arg-gradient">gradient<a class="anchor" aria-label="anchor" href="#arg-gradient"></a></dt>
+<dd><p>For <code>mark_edges()</code>, <code>TRUE</code> to fade each (straight) edge from
+faint at its source to opaque at its target – a direction cue that needs no
+arrowhead (igraph's <code>edge.gradient</code>). Ignored with <code>routing = "elbow"</code>.</p></dd>
 
 
 <dt id="arg-auto">auto<a class="anchor" aria-label="anchor" href="#arg-auto"></a></dt>
