@@ -2057,57 +2057,33 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   gap <- 0.4
 
   loop <- x0 == x1 & y0 == y1
-  # Straight edges, batched by (col, alpha, rounded lwd). Each end is capped at
-  # its node's boundary via vellum's start_cap/end_cap (absolute mm).
   si <- which(!loop)
+  # Bundle the resolved per-edge arrays for the routing helpers below. Non-loop
+  # edges are drawn straight (default), as an orthogonal elbow (hierarchies), or
+  # as a source->target gradient -- each still made of straight segments (no
+  # curvature, a design non-goal). Self-loops always take the loop_grob path.
+  E <- list(
+    x0 = x0,
+    y0 = y0,
+    x1 = x1,
+    y1 = y1,
+    col = col,
+    alpha = alpha,
+    lwd = lwd,
+    lty = lty,
+    arr = arr,
+    sk = sk,
+    gh = gh,
+    gap = gap
+  )
+  routing <- L$stat_params$routing %||% "straight"
   if (length(si)) {
-    grp_lwd <- round(lwd, 2)
-    for (idx in .style_groups(
-      length(si),
-      list(
-        col = col[si],
-        alpha = alpha[si],
-        lwd = grp_lwd[si],
-        lty = if (is.null(lty)) NULL else lty[si]
-      )
-    )) {
-      g <- si[idx]
-      a <- alpha[g[1]]
-      s <- .seg_units(
-        scales,
-        vellum::vl_unit(x0[g], "native"),
-        vellum::vl_unit(y0[g], "native"),
-        vellum::vl_unit(x1[g], "native"),
-        vellum::vl_unit(y1[g], "native")
-      )
-      # Node-boundary caps and parallel-edge spacing are both absolute (mm),
-      # resolved by vellum in device space -> they track the mm node markers.
-      start_cap <- if (!is.null(gh)) {
-        vellum::vl_unit(gh$start_cap[g] + gap, "mm")
-      }
-      end_cap <- if (!is.null(gh)) vellum::vl_unit(gh$end_cap[g] + gap, "mm")
-      offset <- if (!is.null(gh)) vellum::vl_unit(gh$offset[g], "mm")
-      scene <- .draw(
-        scene,
-        vellum::segments_grob(
-          s$x0,
-          s$y0,
-          s$x1,
-          s$y1,
-          arrow = arr,
-          start_cap = start_cap,
-          end_cap = end_cap,
-          offset = offset,
-          sketch = sk,
-          gp = vellum::vl_gpar(
-            col = col[g[1]],
-            lwd = lwd[g[1]],
-            lty = if (is.null(lty)) NULL else lty[g[1]],
-            alpha = gp_alpha(a)
-          )
-        ),
-        rows = g
-      )
+    scene <- if (identical(routing, "elbow")) {
+      .emit_edges_elbow(scene, si, E, scales)
+    } else if (isTRUE(L$stat_params$gradient)) {
+      .emit_edges_gradient(scene, si, E, scales)
+    } else {
+      .emit_edges_straight(scene, si, E, scales)
     }
   }
 
@@ -2152,6 +2128,173 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
             alpha = gp_alpha(a)
           )
         )
+      )
+    }
+  }
+  scene
+}
+
+# Straight edges: one batched segments_grob per (colour, alpha, width, linetype)
+# style group, each end capped at its node boundary (mm) and parallel/reciprocal
+# edges spread by the device-space offset. The default routing.
+.emit_edges_straight <- function(scene, si, E, scales) {
+  grp_lwd <- round(E$lwd, 2)
+  for (idx in .style_groups(
+    length(si),
+    list(
+      col = E$col[si],
+      alpha = E$alpha[si],
+      lwd = grp_lwd[si],
+      lty = if (is.null(E$lty)) NULL else E$lty[si]
+    )
+  )) {
+    g <- si[idx]
+    a <- E$alpha[g[1]]
+    s <- .seg_units(
+      scales,
+      vellum::vl_unit(E$x0[g], "native"),
+      vellum::vl_unit(E$y0[g], "native"),
+      vellum::vl_unit(E$x1[g], "native"),
+      vellum::vl_unit(E$y1[g], "native")
+    )
+    start_cap <- if (!is.null(E$gh)) {
+      vellum::vl_unit(E$gh$start_cap[g] + E$gap, "mm")
+    }
+    end_cap <- if (!is.null(E$gh)) {
+      vellum::vl_unit(E$gh$end_cap[g] + E$gap, "mm")
+    }
+    offset <- if (!is.null(E$gh)) vellum::vl_unit(E$gh$offset[g], "mm")
+    scene <- .draw(
+      scene,
+      vellum::segments_grob(
+        s$x0,
+        s$y0,
+        s$x1,
+        s$y1,
+        arrow = E$arr,
+        start_cap = start_cap,
+        end_cap = end_cap,
+        offset = offset,
+        sketch = E$sk,
+        gp = vellum::vl_gpar(
+          col = E$col[g[1]],
+          lwd = E$lwd[g[1]],
+          lty = if (is.null(E$lty)) NULL else E$lty[g[1]],
+          alpha = gp_alpha(a)
+        )
+      ),
+      rows = g
+    )
+  }
+  scene
+}
+
+# The orthogonal step for one edge: a right-angle polyline (no curvature). The
+# step runs along whichever axis the endpoints are farther apart on, so a
+# top-down tree bends vertically and a left-right one horizontally, keeping
+# sibling edges consistent.
+.elbow_points <- function(x0, y0, x1, y1) {
+  if (abs(y1 - y0) >= abs(x1 - x0)) {
+    ym <- (y0 + y1) / 2
+    list(x = c(x0, x0, x1, x1), y = c(y0, ym, ym, y1))
+  } else {
+    xm <- (x0 + x1) / 2
+    list(x = c(x0, xm, xm, x1), y = c(y0, y0, y1, y1))
+  }
+}
+
+# Elbow (orthogonal) edges for tree / DAG / dendrogram layouts. Each edge is a
+# right-angle polyline drawn as its own lines_grob -- `lines_grob` caps trim the
+# whole path, so per-edge node-boundary caps (mm) and the target arrowhead need
+# one grob per edge (fine: elbows are for hierarchies, not hairballs). No
+# curvature, no parallel offset.
+.emit_edges_elbow <- function(scene, si, E, scales) {
+  for (e in si) {
+    p <- .elbow_points(E$x0[e], E$y0[e], E$x1[e], E$y1[e])
+    xy <- .xy_units(scales, p$x, p$y)
+    start_cap <- if (!is.null(E$gh)) {
+      vellum::vl_unit(E$gh$start_cap[e] + E$gap, "mm")
+    }
+    end_cap <- if (!is.null(E$gh)) {
+      vellum::vl_unit(E$gh$end_cap[e] + E$gap, "mm")
+    }
+    scene <- .draw(
+      scene,
+      vellum::lines_grob(
+        xy$x,
+        xy$y,
+        arrow = E$arr,
+        start_cap = start_cap,
+        end_cap = end_cap,
+        sketch = E$sk,
+        gp = vellum::vl_gpar(
+          col = E$col[e],
+          lwd = E$lwd[e],
+          lty = if (is.null(E$lty)) NULL else E$lty[e],
+          alpha = gp_alpha(E$alpha[e])
+        )
+      ),
+      rows = e
+    )
+  }
+  scene
+}
+
+# Number of straight sub-segments a gradient edge is split into.
+.GRADIENT_SEGMENTS <- 20L
+
+# Source->target gradient edges: each straight edge is cut into `.GRADIENT_SEGMENTS`
+# pieces whose opacity ramps from faint (source) to full (target), so direction
+# reads without an arrowhead (igraph `edge.gradient`). All edges' piece `j` share
+# one opacity, so the whole layer emits `K x styles` batched segments_grob calls.
+# Nodes overdraw the endpoints (z-order), so no caps/arrows are needed here.
+.emit_edges_gradient <- function(scene, si, E, scales) {
+  k <- .GRADIENT_SEGMENTS
+  grp_lwd <- round(E$lwd, 2)
+  groups <- .style_groups(
+    length(si),
+    list(
+      col = E$col[si],
+      alpha = E$alpha[si],
+      lwd = grp_lwd[si],
+      lty = if (is.null(E$lty)) NULL else E$lty[si]
+    )
+  )
+  for (j in seq_len(k)) {
+    t0 <- (j - 1L) / k
+    t1 <- j / k
+    ramp <- 0.12 + 0.88 * ((j - 0.5) / k) # faint at source -> opaque at target
+    for (idx in groups) {
+      g <- si[idx]
+      base_a <- E$alpha[g[1]]
+      a <- (if (is.na(base_a)) 1 else base_a) * ramp
+      ax <- E$x0[g] + t0 * (E$x1[g] - E$x0[g])
+      ay <- E$y0[g] + t0 * (E$y1[g] - E$y0[g])
+      bx <- E$x0[g] + t1 * (E$x1[g] - E$x0[g])
+      by <- E$y0[g] + t1 * (E$y1[g] - E$y0[g])
+      s <- .seg_units(
+        scales,
+        vellum::vl_unit(ax, "native"),
+        vellum::vl_unit(ay, "native"),
+        vellum::vl_unit(bx, "native"),
+        vellum::vl_unit(by, "native")
+      )
+      scene <- .draw(
+        scene,
+        vellum::segments_grob(
+          s$x0,
+          s$y0,
+          s$x1,
+          s$y1,
+          sketch = E$sk,
+          gp = vellum::vl_gpar(
+            col = E$col[g[1]],
+            lwd = E$lwd[g[1]],
+            lty = if (is.null(E$lty)) NULL else E$lty[g[1]],
+            alpha = gp_alpha(a)
+          )
+        ),
+        rows = g
       )
     }
   }

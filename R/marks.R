@@ -1956,6 +1956,14 @@ mark_segment <- function(
 #'   Edges are capped exactly at each endpoint's node boundary (per vertex, at any
 #'   size/resolution), so the head sits on the node edge; self-loops are drawn as
 #'   teardrop loops sized to the node, with the head on the node boundary.
+#' @param routing For `mark_edges()`, edge routing: `"straight"` (default) or
+#'   `"elbow"` -- orthogonal right-angle steps for tree / DAG / dendrogram
+#'   layouts (still straight segments, no curvature), stepping along whichever
+#'   axis the endpoints are farther apart on. Elbows keep node-boundary caps and
+#'   arrowheads.
+#' @param gradient For `mark_edges()`, `TRUE` to fade each (straight) edge from
+#'   faint at its source to opaque at its target -- a direction cue that needs no
+#'   arrowhead (igraph's `edge.gradient`). Ignored with `routing = "elbow"`.
 #' @param auto For `mark_edges()`, `TRUE` to datashade a large graph's edges as a
 #'   density raster ([vellum::datashade_segments()]) once the edge count exceeds
 #'   the datashade threshold, instead of drawing each edge as a vector segment —
@@ -2008,6 +2016,8 @@ mark_edges <- function(
   alpha = NULL,
   linetype = NULL,
   arrow = FALSE,
+  routing = c("straight", "elbow"),
+  gradient = FALSE,
   auto = FALSE,
   blend = NULL,
   effects = list(),
@@ -2015,6 +2025,14 @@ mark_edges <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  routing <- match.arg(routing)
+  gradient <- isTRUE(gradient)
+  if (identical(routing, "elbow") && gradient) {
+    cli::cli_warn(
+      "{.arg gradient} is ignored with {.code routing = \"elbow\"}; drawing elbows."
+    )
+    gradient <- FALSE
+  }
   dots <- .with_default_aes(
     rlang::enquos(...),
     rlang::quos(x = x, y = y, xend = xend, yend = yend)
@@ -2030,7 +2048,12 @@ mark_edges <- function(
     "edges",
     .rename_edge_aes(dots),
     .rename_edge_aes(extra),
-    stat_params = list(arrow = .resolve_edge_arrow(arrow), auto = isTRUE(auto)),
+    stat_params = list(
+      arrow = .resolve_edge_arrow(arrow),
+      routing = routing,
+      gradient = gradient,
+      auto = isTRUE(auto)
+    ),
     blend = blend,
     effects = effects,
     sketch = sketch,
