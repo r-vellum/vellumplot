@@ -2301,6 +2301,60 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# Pie / donut node glyphs: each vertex is drawn as a pie whose wedges are sized by
+# the row's `cols` values (a composition), in absolute mm at the native vertex
+# anchor (a proper circle under the aspect-locked graph panel). Wedges for
+# category `j` across all nodes batch into one sector_grob, so the layer emits one
+# grob per category. Categories take the qualitative palette (or `fill`) in order.
+.emit_node_pie <- function(scene, L, scales) {
+  sp <- L$stat_params
+  weights <- sp$weights
+  n <- nrow(weights)
+  k <- ncol(weights)
+  if (!n || !k) {
+    return(scene)
+  }
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  cols_fill <- sp$fill %||% .qual_palette(k)
+  # per-node fractions -> cumulative angles (a zero-weight node draws nothing)
+  rs <- rowSums(weights, na.rm = TRUE)
+  rs[!is.finite(rs) | rs == 0] <- 1
+  frac <- weights / rs
+  frac[!is.finite(frac)] <- 0
+  cum <- t(apply(frac, 1L, function(z) cumsum(c(0, z)))) # n x (k + 1)
+  r0 <- vellum::vl_unit(sp$inner * sp$size, "mm")
+  r1 <- vellum::vl_unit(sp$size, "mm")
+  for (j in seq_len(k)) {
+    th0 <- cum[, j] * 2 * pi
+    th1 <- cum[, j + 1L] * 2 * pi
+    keep <- (th1 - th0) > 1e-9
+    if (!any(keep)) {
+      next
+    }
+    xy <- .xy_units(scales, xn[keep], yn[keep])
+    scene <- .draw(
+      scene,
+      vellum::sector_grob(
+        x = xy$x,
+        y = xy$y,
+        r0 = r0,
+        r1 = r1,
+        theta0 = th0[keep],
+        theta1 = th1[keep],
+        fill = cols_fill[j],
+        gp = vellum::vl_gpar(
+          col = sp$color,
+          lwd = sp$linewidth,
+          alpha = gp_alpha(sp$alpha)
+        )
+      ),
+      rows = which(keep)
+    )
+  }
+  scene
+}
+
 # Resolve an edge's width: a mapped linewidth channel via the trained edge-width
 # scale, a constant linewidth param, or the default.
 .edge_width <- function(L, scales, default) {
@@ -2774,6 +2828,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     segment = .emit_segment(scene, L, scales),
     edges = .emit_edges(scene, L, scales),
     nodes = .emit_point(scene, L, scales),
+    node_pie = .emit_node_pie(scene, L, scales),
     node_text = .emit_text(scene, L, scales),
     edge_text = .emit_text(scene, L, scales),
     hex = .emit_hex(scene, L, scales),

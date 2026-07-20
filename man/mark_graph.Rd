@@ -6,6 +6,8 @@
 \alias{mark_nodes}
 \alias{mark_node_text}
 \alias{mark_edge_text}
+\alias{mark_node_hull}
+\alias{mark_node_pie}
 \title{Network (graph) marks}
 \usage{
 mark_edges(
@@ -72,6 +74,29 @@ mark_edge_text(
   blend = NULL,
   data = NULL
 )
+
+mark_node_hull(
+  plot,
+  ...,
+  fill = NULL,
+  color = NULL,
+  alpha = 0.25,
+  expand = 0.08,
+  data = NULL
+)
+
+mark_node_pie(
+  plot,
+  cols,
+  ...,
+  size = 4,
+  inner = 0,
+  fill = NULL,
+  color = "white",
+  linewidth = 0.5,
+  alpha = NA,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}, normally from \code{\link[=vgraph]{vgraph()}}.}
@@ -82,7 +107,8 @@ mark_edge_text(
 mapped.}
 
 \item{linewidth}{For \code{mark_edges()}, the edge width; a constant or (via
-\code{\link[=scale_edge_width]{scale_edge_width()}}) a mapped expression such as \code{linewidth = weight}.}
+\code{\link[=scale_edge_width]{scale_edge_width()}}) a mapped expression such as \code{linewidth = weight}. For
+\code{mark_node_pie()}, the wedge border width.}
 
 \item{linetype}{For \code{mark_edges()}, the edge line type; a constant or (via
 \code{\link[=scale_edge_linetype]{scale_edge_linetype()}}) a mapped expression.}
@@ -153,6 +179,16 @@ tuning for \code{mark_node_text(repel = TRUE)}; see \code{\link[=mark_text]{mark
 \item{angle}{For \code{mark_edge_text()}, the label rotation: a constant in degrees,
 or \code{"along"} to rotate each label along its edge. \code{NULL} (default) draws
 horizontal labels.}
+
+\item{expand}{For \code{mark_node_hull()}, the fraction to grow each hull outward
+from its centroid so it encloses the node markers (default \code{0.08}).}
+
+\item{cols}{For \code{mark_node_pie()}, the compositional columns (a character
+vector of node-table column names, at least two) whose values size each
+node's wedges.}
+
+\item{inner}{For \code{mark_node_pie()}, the inner-radius fraction: \code{0} (default)
+draws a pie, \verb{> 0} a donut (e.g. \code{0.5}).}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -179,6 +215,11 @@ continuous weight without the two legends colliding.
 labels radially clear of the node markers, \code{top_n}/\code{by} label only the hubs,
 and \code{effects = list(outline())} draws a halo so labels stay readable over
 edges. \code{mark_edge_text()} takes the same \code{effects}.
+
+Two more decorations: \code{mark_node_hull()} shades communities with a convex hull
+behind the graph (grouped by a mapped \code{fill}, drawn under the edges), and
+\code{mark_node_pie()} replaces node markers with pie / donut glyphs whose wedges
+come from a set of compositional columns.
 
 These are thin over the point / segment / text marks; \code{igraph} need not be
 installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it).

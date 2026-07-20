@@ -211,6 +211,40 @@ vgraph(g, augment = c("degree", "community"), k_core = 2) |>
   scale_size(range = c(2, 9))
 ```
 
+### Community hulls and node glyphs
+
+`mark_node_hull()` shades groups of nodes with a convex hull drawn *behind* the
+graph -- the standard way to show community structure. Group by a mapped `fill`;
+`expand` grows each hull so it wraps the markers rather than clipping them.
+
+```{r}
+#| eval: !expr have_net
+g <- igraph::set_vertex_attr(
+  g, "comm",
+  value = factor(igraph::membership(igraph::cluster_louvain(g)))
+)
+vgraph(g, layout = "stress") |>
+  mark_node_hull(fill = comm, expand = 0.12) |>
+  mark_edges(alpha = 0.3) |>
+  mark_nodes(size = deg, fill = comm) |>
+  scale_size(range = c(2, 9))
+```
+
+`mark_node_pie()` replaces the node markers with pie (or donut, via `inner`)
+glyphs whose wedges come from a set of compositional columns -- one wedge per
+column, sized by that column's value at each vertex.
+
+```{r}
+#| eval: !expr have_net
+set.seed(1)
+for (nm in c("x1", "x2", "x3")) {
+  g <- igraph::set_vertex_attr(g, nm, value = runif(igraph::vcount(g)))
+}
+vgraph(g, layout = "stress") |>
+  mark_edges(alpha = 0.3) |>
+  mark_node_pie(cols = c("x1", "x2", "x3"), size = 5)
+```
+
 ### Choosing a layout
 
 `layout` accepts a name (`"stress"`, `"sparse_stress"`, `"backbone"`, `"fr"`,

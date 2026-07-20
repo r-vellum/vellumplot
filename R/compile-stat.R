@@ -1022,7 +1022,18 @@ NULL
       return(NULL)
     }
     h <- grDevices::chull(xi, yi)
-    df <- data.frame(x = xi[h], y = yi[h], .piece = k)
+    hx <- xi[h]
+    hy <- yi[h]
+    # `expand` grows the hull outward from its centroid so it encloses the node
+    # markers (whose centres the raw hull passes through). 0 = the tight hull.
+    expand <- L$stat_params$expand %||% 0
+    if (expand != 0) {
+      cx <- mean(hx)
+      cy <- mean(hy)
+      hx <- cx + (hx - cx) * (1 + expand)
+      hy <- cy + (hy - cy) * (1 + expand)
+    }
+    df <- data.frame(x = hx, y = hy, .piece = k)
     if (!is.null(grp)) {
       df$group <- factor(gn, levels = glevs)
     }

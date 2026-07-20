@@ -16,7 +16,7 @@ mark_ellipse(
   data = NULL
 )
 
-mark_hull(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_hull(plot, ..., expand = 0, blend = NULL, sketch = NULL, data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -41,6 +41,10 @@ plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default)
 accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
+
+\item{expand}{For \code{mark_hull()}, grow each hull outward from its centroid by
+this fraction (e.g. \code{0.1} = 10\% larger), so it encloses the markers it wraps
+rather than passing through their centres. \code{0} (default) is the tight hull.}
 }
 \value{
 The modified \link{PlotSpec}.
