@@ -69,6 +69,9 @@ NULL
       "Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}."
     )
   }
+  # Interaction context for the mark emitter (single-plot path; the aligned
+  # composition path sets it per cell). See `.set_interaction_ctx`.
+  .set_interaction_ctx(spec)
   # Draw-order bands: layers sort by `z` (stable — insertion order within a band).
   # Ordinary marks all sit at z = 0 (unchanged); graph marks fix edges (1) under
   # nodes (2) under labels (3) regardless of pipe order.
@@ -617,14 +620,6 @@ NULL
 # The body of the as_vellum_scene() method for a single plot.
 .compile_plot <- function(spec) {
   .provenance_reset()
-  # A plot that declares any interaction (a selection/filter/bind) needs its marks
-  # keyed so a host can address them, even where no per-mark tooltip/condition was
-  # declared. Recorded for the mark emitter (see `.compile_marks`); a plot with no
-  # declared interaction is unaffected (keys still emit only where declared).
-  .mark_ctx$plot_interactive <- S7::S7_inherits(spec, PlotSpec) &&
-    (length(spec@selections) > 0L ||
-      length(spec@filters) > 0L ||
-      length(spec@binds) > 0L)
   scene <- vellum::vl_scene(
     width = spec@width,
     height = spec@height,
