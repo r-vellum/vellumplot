@@ -227,6 +227,19 @@ reference:
   - sketch
   - gradients
 
+- title: Interactivity
+  desc: >
+    Declare interactions as part of the plot — selections bound to gestures,
+    conditional encodings, filters, and scale-domain binds. Inert on a static
+    render; enacted by a host such as vellumwidget.
+  contents:
+  - select_point
+  - condition
+  - add_selection
+  - filter_by
+  - bind_scale
+  - interaction_model
+
 - title: Accessibility and provenance
   desc: >
     Attach a text alternative for screen readers, or inspect how a spec

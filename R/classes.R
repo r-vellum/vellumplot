@@ -11,7 +11,12 @@ channel <- S7::new_class(
   properties = list(
     expr = S7::class_any, # a quosure (rlang)
     type = S7::new_property(S7::class_character, default = ""),
-    after = S7::new_property(S7::class_logical, default = FALSE) # after_stat() channel?
+    after = S7::new_property(S7::class_logical, default = FALSE), # after_stat() channel?
+    # A conditional encoding (from `condition()`): a list(selection=, if_false=,
+    # empty=) where `expr` above holds the `if_true` branch, so labelling, type
+    # inference, scale training, and drawing all see the plain (if_true) encoding.
+    # NULL for an ordinary channel.
+    condition = S7::new_property(S7::class_any, default = NULL)
   )
 )
 
@@ -162,6 +167,73 @@ ScaleSpec <- S7::new_class(
   )
 )
 
+# --- interactivity spec nodes -----------------------------------------------
+
+# A named selection: a set of data elements defined by a user gesture. Inert on a
+# static render; a host (vellumwidget) binds it to a gesture it already performs.
+# `kind`: "point" (click/hover/legend) or "interval" (brush/lasso/axis range).
+# `on`: the gesture ("click"|"hover" for point; "xy"|"x"|"y" for interval).
+# `region`: interval region shape ("rect"|"lasso"). `fields`: for a point
+# selection, the columns whose match extends membership (a click selects every row
+# equal on these fields -- e.g. "select the whole group"); NULL = the clicked
+# element only. `toggle`: click toggles membership. `empty`: does an empty
+# selection contain all elements (TRUE, the default -- spotlight semantics) or
+# none (FALSE)?
+SelectionSpec <- S7::new_class(
+  "SelectionSpec",
+  package = "vellumplot",
+  properties = list(
+    name = S7::class_character,
+    kind = S7::class_character, # "point" | "interval"
+    on = S7::new_property(S7::class_character, default = "click"),
+    region = S7::new_property(S7::class_character, default = "rect"),
+    fields = S7::new_property(S7::class_any, default = NULL), # chr | NULL
+    toggle = S7::new_property(S7::class_logical, default = TRUE),
+    empty = S7::new_property(S7::class_logical, default = TRUE)
+  )
+)
+
+# A conditional encoding: an aesthetic whose value depends on selection
+# membership. Held inside a `LayerSpec@encoding` channel (resolved from a
+# `condition()` call). `if_true` is drawn (and trains scales) exactly as the
+# equivalent plain encoding, so a static render shows the full plot; `if_false`
+# (a constant, or NULL = the theme dim) is applied to non-members once the
+# selection is active. `empty = TRUE`: an empty selection matches all, so the
+# static / initial state shows `if_true` for every element.
+ConditionSpec <- S7::new_class(
+  "ConditionSpec",
+  package = "vellumplot",
+  properties = list(
+    selection = S7::class_character,
+    if_true = S7::new_property(S7::class_any, default = NULL), # resolved value(s)
+    if_false = S7::new_property(S7::class_any, default = NULL), # constant | NULL (theme dim)
+    empty = S7::new_property(S7::class_logical, default = TRUE)
+  )
+)
+
+# A cross-view (or single-view) filter: show only the rows in `selection`,
+# hiding the rest. Attached to a plot via `filter_by()`. Display-tier (hide, not
+# re-aggregate).
+FilterSpec <- S7::new_class(
+  "FilterSpec",
+  package = "vellumplot",
+  properties = list(
+    selection = S7::class_character
+  )
+)
+
+# A scale-domain bind (overview + detail): the `aes` view of this plot's panel
+# follows an interval `selection` defined elsewhere -- the host pans/zooms the
+# panel to the selected range (display-tier, no scale retrain).
+DomainBindSpec <- S7::new_class(
+  "DomainBindSpec",
+  package = "vellumplot",
+  properties = list(
+    selection = S7::class_character,
+    aes = S7::new_property(S7::class_character, default = "x") # "x" | "y"
+  )
+)
+
 # --- the spec ---------------------------------------------------------------
 
 #' The plot specification
@@ -192,6 +264,10 @@ ScaleSpec <- S7::new_class(
 #' @param labels A named list of plot/axis/legend label overrides (see [labs()]).
 #' @param marginal A marginal-distribution specification (from [add_marginal()]),
 #'   or `NULL` for no marginals.
+#' @param selections A list of interactive selection declarations (from
+#'   [select_point()] / [select_interval()] / [add_selection()]).
+#' @param filters A list of filter declarations (from [filter_by()]).
+#' @param binds A list of scale-domain bind declarations (from [bind_scale()]).
 #'
 #' @return A `PlotSpec`.
 #' @seealso [vplot()], [mark_point()], [scale_x_continuous()]
@@ -212,6 +288,14 @@ PlotSpec <- S7::new_class(
     dpi = S7::new_property(S7::class_double, default = 96),
     theme = S7::new_property(S7::class_any, default = NULL),
     labels = S7::new_property(S7::class_list, default = list()), # plot/axis labels
-    marginal = S7::new_property(S7::class_any, default = NULL) # MarginalSpec | NULL
+    marginal = S7::new_property(S7::class_any, default = NULL), # MarginalSpec | NULL
+    # Declarative interactivity (all inert on a static render). `selections`:
+    # named gestures (from select_point()/select_interval()). `filters`: show-only
+    # references (from filter_by()). `binds`: scale-domain binds (from
+    # bind_scale()). Empty by default -> a plot without them compiles and renders
+    # exactly as before.
+    selections = S7::new_property(S7::class_list, default = list()), # list<SelectionSpec>
+    filters = S7::new_property(S7::class_list, default = list()), # list<FilterSpec>
+    binds = S7::new_property(S7::class_list, default = list()) # list<DomainBindSpec>
   )
 )

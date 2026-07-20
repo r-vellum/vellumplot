@@ -1,5 +1,17 @@
 # vellumplot (development version)
 
+* **Declarative interactivity (new).** Interaction is now part of the plot spec
+  rather than something a host is configured to do. Declare a named selection
+  with `select_point()` (click/hover) or `select_interval()` (brush/lasso), then
+  refer to it from `condition()` (style an aesthetic by selection membership),
+  `filter_by()` (show only members — point a second view at the same selection
+  for cross-filtering), or `bind_scale()` (drive another panel's view, for
+  overview + detail). `add_selection()` shares a free-standing selection across
+  views; `interaction_model()` returns the compiled declaration block a host
+  reads. Every node is inert on a static render (a plot with interactions renders
+  byte-for-byte identically to one without), and `condition("s", g, "grey80")`
+  trains scales and draws exactly like `color = g`. Enacted by `vellumwidget`.
+
 # vellumplot 0.6.0
 
 * **Sankey styling options.** `vsankey()` / `mark_sankey()` gain `show_values`
