@@ -72,9 +72,7 @@ The node and edge aesthetics are the same ones you already know.
 [`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
 takes `size`, `shape`, `fill`, and `color`;
 [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
-takes `color`, `linewidth` (scaled by
-[`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md)),
-and `alpha`, plus `arrow = TRUE` for directed graphs.
+takes `color`, `linewidth`, `linetype`, and `alpha`.
 [`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
 adds vertex labels.
 
@@ -87,6 +85,64 @@ vgraph(g, layout = "stress") |>
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-4-1.png)
+
+### Independent edge scales
+
+Edge colour, opacity, line type, and width train on their **own** scales
+–
+[`scale_edge_color()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md),
+[`scale_edge_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md),
+[`scale_edge_linetype()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md),
+and
+[`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md)
+– separate from the node colour/alpha/linetype scales. So a figure can
+map node fill to a discrete community *and* edge colour to a continuous
+edge weight, and each gets its own legend instead of the two collapsing
+into one. Map an edge attribute to `color` and it is trained as an edge
+scale automatically; call
+[`scale_edge_color()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md)
+to choose the palette.
+
+``` r
+
+g <- igraph::set_edge_attr(g, "w", value = runif(igraph::ecount(g)))
+
+vgraph(g, layout = "stress") |>
+  mark_edges(color = w, linewidth = w) |>
+  mark_nodes(fill = grp, size = deg) |>
+  scale_edge_color(palette = "Grays") |>
+  scale_edge_width(range = c(0.3, 2.5)) |>
+  scale_size(range = c(2, 9))
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-5-1.png)
+
+### Directed edges, arrows, and edge labels
+
+For directed graphs, `arrow = TRUE` draws a closed arrowhead at each
+edge’s target end; edges are capped at the node boundary so the head is
+never buried under the marker. Pass a
+[`vellum::vl_arrow()`](https://r-vellum.github.io/vellum/reference/vl_arrow.html)
+for full control over the head (`ends`, `type`, `length`, `angle`).
+[`mark_edge_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+labels the edges at their midpoints, and `angle = "along"` rotates each
+label to follow its edge.
+
+``` r
+
+el <- matrix(c(1, 2, 2, 3, 3, 1, 1, 4, 4, 2), ncol = 2, byrow = TRUE)
+d <- igraph::graph_from_edgelist(el, directed = TRUE)
+d <- igraph::set_edge_attr(d, "flow", value = c(3, 1, 4, 1, 5))
+
+vgraph(d, layout = "stress") |>
+  mark_edges(linewidth = flow, arrow = TRUE) |>
+  mark_nodes(size = 8, fill = "steelblue") |>
+  mark_edge_text(label = flow, size = 7) |>
+  mark_node_text(label = name, size = 8, color = "white") |>
+  scale_edge_width(range = c(0.4, 2.5))
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-6-1.png)
 
 ### Choosing a layout
 
@@ -102,7 +158,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-5-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a

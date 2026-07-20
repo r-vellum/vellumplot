@@ -93,9 +93,15 @@ Layers that draw data. Scales train across every mark on the panel.
 - [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  [`mark_edge_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   : Network (graph) marks
 - [`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md)
   : Edge-width scale
+- [`scale_edge_color()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md)
+  [`scale_edge_colour()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md)
+  [`scale_edge_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md)
+  [`scale_edge_linetype()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md)
+  : Edge colour / alpha / line-type scales
 
 ## Scales
 
