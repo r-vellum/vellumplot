@@ -1,4 +1,4 @@
-# vellumplot (development version)
+# vellumplot 0.6.0
 
 * **Sankey styling options.** `vsankey()` / `mark_sankey()` gain `show_values`
   (append each node's value to its label), `flow_color` (`"source"`, `"target"`,
