@@ -63,7 +63,8 @@ mark_sankey(
 - flow_color:
 
   Ribbon fill: `"source"` (default) colours each ribbon by its source
-  node, `"target"` by its target node.
+  node, `"target"` by its target node, and `"gradient"` fades each
+  ribbon from its source colour to its target colour.
 
 - node_width:
 
