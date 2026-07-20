@@ -20,5 +20,8 @@ utils::globalVariables(c(
   "xend",
   "yend",
   "name",
-  "level"
+  "level",
+  # per-row radial label offsets attached by mark_node_text(dist=)
+  ".node_nudge_x",
+  ".node_nudge_y"
 ))
