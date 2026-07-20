@@ -1,5 +1,7 @@
 # Changelog
 
+## vellumplot (development version)
+
 ## vellumplot 0.6.0
 
 - **Sankey styling options.**
