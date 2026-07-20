@@ -243,7 +243,8 @@ teardrop self-loops) do not apply to the rasterised edges.</p></dd>
 
 <dt id="arg-effects">effects<a class="anchor" aria-label="anchor" href="#arg-effects"></a></dt>
 <dd><p>A list of layer render effects (<code><a href="glow.html">glow()</a></code>, <code><a href="outline.html">outline()</a></code>,
-<code><a href="shadow.html">shadow()</a></code>) applied to the mark at draw time.</p></dd>
+<code><a href="shadow.html">shadow()</a></code>) applied to the mark at draw time. On the text marks
+(<code>mark_node_text()</code> / <code>mark_edge_text()</code>) only <code><a href="shadow.html">shadow()</a></code> applies.</p></dd>
 
 
 <dt id="arg-sketch">sketch<a class="anchor" aria-label="anchor" href="#arg-sketch"></a></dt>
@@ -333,8 +334,9 @@ continuous weight without the two legends colliding.</p>
 <p><code>mark_node_text()</code> has the label-legibility tools a dense graph needs:
 <code>repel = TRUE</code> nudges overlapping labels apart with leader lines, <code>dist</code> pushes
 labels radially clear of the node markers, <code>top_n</code>/<code>by</code> label only the hubs,
-and <code>effects = list(outline())</code> draws a halo so labels stay readable over
-edges. <code>mark_edge_text()</code> takes the same <code>effects</code>.</p>
+and <code>effects = list(shadow())</code> drops a shadow behind each label so it stays
+readable over edges. <code>mark_edge_text()</code> takes the same <code>effects</code>. (Only
+<code><a href="shadow.html">shadow()</a></code> applies to text; a glyph outline / glow is not available yet.)</p>
 <p>Two more decorations: <code>mark_node_hull()</code> shades communities with a convex hull
 behind the graph (grouped by a mapped <code>fill</code>, drawn under the edges), and
 <code>mark_node_pie()</code> replaces node markers with pie / donut glyphs whose wedges

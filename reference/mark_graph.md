@@ -185,7 +185,10 @@ mark_node_pie(
   ([`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md),
   [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md),
   [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md))
-  applied to the mark at draw time.
+  applied to the mark at draw time. On the text marks
+  (`mark_node_text()` / `mark_edge_text()`) only
+  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
+  applies.
 
 - sketch:
 
@@ -285,8 +288,11 @@ without the two legends colliding.
 `mark_node_text()` has the label-legibility tools a dense graph needs:
 `repel = TRUE` nudges overlapping labels apart with leader lines, `dist`
 pushes labels radially clear of the node markers, `top_n`/`by` label
-only the hubs, and `effects = list(outline())` draws a halo so labels
-stay readable over edges. `mark_edge_text()` takes the same `effects`.
+only the hubs, and `effects = list(shadow())` drops a shadow behind each
+label so it stays readable over edges. `mark_edge_text()` takes the same
+`effects`. (Only
+[`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
+applies to text; a glyph outline / glow is not available yet.)
 
 Two more decorations: `mark_node_hull()` shades communities with a
 convex hull behind the graph (grouped by a mapped `fill`, drawn under

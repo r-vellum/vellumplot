@@ -158,8 +158,8 @@ has four tools for this:
   it clears its node marker.
 - `repel = TRUE` nudges any labels that still overlap apart,
   ggrepel-style, with a thin leader line back to each vertex.
-- `effects = list(outline())` draws a halo (shadowtext) so a label stays
-  legible where it crosses an edge.
+- `effects = list(shadow())` drops a shadow behind each label so it
+  stays legible where it crosses an edge.
   [`mark_edge_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   takes the same `effects`.
 
@@ -173,7 +173,8 @@ vgraph(g, layout = "stress") |>
     top_n = 8,
     by = deg,
     dist = 3,
-    effects = list(outline(color = "white"))
+    color = "white",
+    effects = list(shadow(x = 0.4, y = -0.4))
   ) |>
   scale_size(range = c(2, 9))
 ```
