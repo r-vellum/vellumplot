@@ -2,6 +2,15 @@
 
 ## vellumplot (development version)
 
+- **`select_point(group_by=)` now links whole groups.** A point
+  selection with `group_by` / `fields` groups elements sharing those
+  column values, so hovering or clicking one mark highlights (and
+  [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
+  spotlights) its whole group — the “hover a series, light up the
+  series” behaviour. Implemented by emitting the group as the element
+  `hover_group`, so it needs no widget change; a user-declared
+  `hover_group` still wins. Inert on a static render.
+
 - **Declarative interactivity (new).** Interaction is now part of the
   plot spec rather than something a host is configured to do. Declare a
   named selection with
