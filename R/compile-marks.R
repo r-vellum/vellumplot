@@ -154,6 +154,29 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   L$params$linetype %||% default
 }
 
+# Edge-scoped colour / alpha / linetype: identical to the `.aes_*` resolvers
+# above but keyed on the edge channels + edge scales, so an edge's colour is
+# trained and mapped independently of the node colour scale (N1a). A constant
+# (e.g. `mark_edges(color = "grey60")`) lands in the matching edge param.
+.aes_edge_colour <- function(L, scales, default) {
+  if (!is.null(scales$edge_color) && !is.null(L$values$edge_color)) {
+    return(scales$edge_color$map(L$values$edge_color))
+  }
+  L$params$edge_color %||% default
+}
+.aes_edge_alpha <- function(L, scales, default = NA_real_) {
+  if (!is.null(scales$edge_alpha) && !is.null(L$values$edge_alpha)) {
+    return(scales$edge_alpha$map(L$values$edge_alpha))
+  }
+  L$params$edge_alpha %||% default
+}
+.aes_edge_linetype <- function(L, scales, default = NULL) {
+  if (!is.null(scales$edge_linetype) && !is.null(L$values$edge_linetype)) {
+    return(scales$edge_linetype$map(L$values$edge_linetype))
+  }
+  L$params$edge_linetype %||% default
+}
+
 # Apply a layer's `nudge_x`/`nudge_y` (millimetres) to a resolved `.xy_units()`
 # pair, as a device-exact compound offset (vellum's `native + mm` unit). A zero
 # nudge is left untouched, so an un-nudged mark is byte-identical.
@@ -2005,16 +2028,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   y0 <- rep_len(scales$y$map(L$values$y), n)
   x1 <- rep_len(scales$x$map(L$values$xend), n)
   y1 <- rep_len(scales$y$map(L$values$yend), n)
-  col <- rep_len(.aes_colour(L, scales, "grey40"), n)
-  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  col <- rep_len(.aes_edge_colour(L, scales, "grey40"), n)
+  alpha <- rep_len(.aes_edge_alpha(L, scales, NA_real_), n)
   lwd <- rep_len(.edge_width(L, scales, 0.5), n)
-  lty <- .aes_linetype(L, scales, NULL)
+  lty <- .aes_edge_linetype(L, scales, NULL)
   lty <- if (is.null(lty)) NULL else rep_len(lty, n)
-  arr <- if (isTRUE(L$stat_params$arrow)) {
-    vellum::vl_arrow(type = "closed", length = vellum::vl_unit(2, "mm"))
-  } else {
-    NULL
-  }
+  # `arrow` is resolved to a vl_arrow spec (or NULL) at mark-build time, so a
+  # bare `arrow = TRUE` and an explicit `arrow = vl_arrow(...)` share one path.
+  arr <- L$stat_params$arrow
   # Straight edges can be sketched; self-loops (loop_grob) are always crisp.
   sk <- .mark_sketch(L, scales)
 
@@ -2601,6 +2622,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     edges = .emit_edges(scene, L, scales),
     nodes = .emit_point(scene, L, scales),
     node_text = .emit_text(scene, L, scales),
+    edge_text = .emit_text(scene, L, scales),
     hex = .emit_hex(scene, L, scales),
     datashade = .emit_datashade(scene, L, scales),
     rug = .emit_rug(scene, L, scales),

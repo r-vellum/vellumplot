@@ -639,7 +639,17 @@ NULL
   # the mapping still applies to the marks, but no guide is drawn. Drop it here
   # so neither the standalone nor the merge path picks it up. This is a local
   # copy, so the emitters' own scales are unaffected.
-  for (k in c("color", "size", "shape", "edge_width", "alpha", "linetype")) {
+  for (k in c(
+    "color",
+    "size",
+    "shape",
+    "edge_width",
+    "alpha",
+    "linetype",
+    "edge_color",
+    "edge_alpha",
+    "edge_linetype"
+  )) {
     if (!is.null(scales[[k]]) && isTRUE(scales[[k]]$no_guide)) {
       scales[[k]] <- NULL
     }
@@ -688,6 +698,24 @@ NULL
   }
   if (!is.null(scales$linetype)) {
     out <- c(out, list(list(kind = "linetype", sc = scales$linetype)))
+  }
+  # Edge colour / alpha / linetype guides reuse the node guide renderers (the
+  # scale objects are structurally identical), but never merge with shape/size --
+  # they belong to the edge layer, whose key glyph is a line. A discrete edge
+  # colour scale draws as swatches; a continuous one as a colourbar.
+  if (!is.null(scales$edge_color)) {
+    gk <- scales$edge_color$kind
+    k <- if (gk %in% c("discrete", "binned")) "discrete" else gk
+    out <- c(
+      out,
+      list(list(kind = paste0("color_", k), sc = scales$edge_color))
+    )
+  }
+  if (!is.null(scales$edge_alpha)) {
+    out <- c(out, list(list(kind = "alpha", sc = scales$edge_alpha)))
+  }
+  if (!is.null(scales$edge_linetype)) {
+    out <- c(out, list(list(kind = "linetype", sc = scales$edge_linetype)))
   }
   out
 }

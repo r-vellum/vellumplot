@@ -5,6 +5,7 @@
 \alias{mark_edges}
 \alias{mark_nodes}
 \alias{mark_node_text}
+\alias{mark_edge_text}
 \title{Network (graph) marks}
 \usage{
 mark_edges(
@@ -13,6 +14,7 @@ mark_edges(
   color = NULL,
   linewidth = NULL,
   alpha = NULL,
+  linetype = NULL,
   arrow = FALSE,
   auto = FALSE,
   blend = NULL,
@@ -45,23 +47,40 @@ mark_node_text(
   blend = NULL,
   data = NULL
 )
+
+mark_edge_text(
+  plot,
+  ...,
+  label = NULL,
+  color = NULL,
+  size = NULL,
+  alpha = NULL,
+  angle = NULL,
+  blend = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}, normally from \code{\link[=vgraph]{vgraph()}}.}
 
 \item{...}{Encodings mapping node/edge attributes to aesthetics. Nodes: \code{size},
 \code{color}/\code{fill}, \code{shape}, \code{alpha}. Edges: \code{color}, \code{linewidth}, \code{linetype},
-\code{alpha}. The
-position channels are supplied by \code{vgraph()} and need not be mapped.}
+\code{alpha}. The position channels are supplied by \code{vgraph()} and need not be
+mapped.}
 
 \item{linewidth}{For \code{mark_edges()}, the edge width; a constant or (via
 \code{\link[=scale_edge_width]{scale_edge_width()}}) a mapped expression such as \code{linewidth = weight}.}
 
-\item{arrow}{For \code{mark_edges()}, \code{TRUE} to draw an arrowhead at each edge's
-target end (directed graphs). Edges are capped exactly at each endpoint's
-node boundary (per vertex, at any size/resolution), so the head sits on the
-node edge; self-loops are drawn as teardrop loops sized to the node, with the
-head on the node boundary.}
+\item{linetype}{For \code{mark_edges()}, the edge line type; a constant or (via
+\code{\link[=scale_edge_linetype]{scale_edge_linetype()}}) a mapped expression.}
+
+\item{arrow}{For \code{mark_edges()}, \code{TRUE} to draw a closed arrowhead at each
+edge's target end (the directed convention), \code{FALSE}/\code{NULL} for none, or a
+\code{\link[vellum:vl_arrow]{vellum::vl_arrow()}} spec for full control (\code{ends}, \code{type}, \code{length},
+\code{angle}) -- e.g. \code{arrow = vellum::vl_arrow(ends = "both", type = "open")}.
+Edges are capped exactly at each endpoint's node boundary (per vertex, at any
+size/resolution), so the head sits on the node edge; self-loops are drawn as
+teardrop loops sized to the node, with the head on the node boundary.}
 
 \item{auto}{For \code{mark_edges()}, \code{TRUE} to datashade a large graph's edges as a
 density raster (\code{\link[vellum:datashade_segments]{vellum::datashade_segments()}}) once the edge count exceeds
@@ -81,27 +100,41 @@ teardrop self-loops) do not apply to the rasterised edges.}
 \item{data}{Optional layer data; overrides the default table.}
 
 \item{size, shape}{For \code{mark_nodes()}, the node size (mm) / shape; a constant or
-a mapped expression.}
+a mapped expression. \code{size} is also the label font size for
+\code{mark_node_text()}/\code{mark_edge_text()}.}
 
 \item{fill, color, alpha}{Convenience aesthetics; a constant or a mapped
-expression. For nodes, \code{fill} (or \code{color}) is the marker colour.}
+expression. For nodes, \code{fill} (or \code{color}) is the marker colour; for
+\code{mark_edges()}, \code{color}/\code{alpha} map through the edge scales.}
 
 \item{label}{For \code{mark_node_text()}, the label expression (default the vertex
-\code{name}).}
+\code{name}); for \code{mark_edge_text()}, the edge label expression (no default -- map
+an edge attribute, e.g. \code{label = weight}).}
+
+\item{angle}{For \code{mark_edge_text()}, the label rotation: a constant in degrees,
+or \code{"along"} to rotate each label along its edge. \code{NULL} (default) draws
+horizontal labels.}
 }
 \value{
 The modified \link{PlotSpec}.
 }
 \description{
 Draw a node-link diagram on a \link{PlotSpec} from \code{\link[=vgraph]{vgraph()}}. \code{mark_edges()} draws
-the edges (straight lines, batched), \code{mark_nodes()} the vertices (points), and
-\code{mark_node_text()} the vertex labels. Draw order is fixed regardless of the
-order you pipe them: edges under nodes under labels. Edges default to the edge
-table (\code{vgraph()}'s \code{edge_data}), nodes and labels to the node table; the
-\code{x}/\code{y}/\code{xend}/\code{yend}/\code{label}/\code{name} columns those tables carry are mapped
-automatically, so bare \code{mark_edges() |> mark_nodes()} just works.
+the edges (straight lines, batched), \code{mark_nodes()} the vertices (points),
+\code{mark_node_text()} the vertex labels, and \code{mark_edge_text()} labels on the
+edges. Draw order is fixed regardless of the order you pipe them: edges under
+edge labels under nodes under node labels. Edges (and edge labels) default to
+the edge table (\code{vgraph()}'s \code{edge_data}), nodes and node labels to the node
+table; the \code{x}/\code{y}/\code{xend}/\code{yend}/\code{label}/\code{name} columns those tables carry are
+mapped automatically, so bare \code{mark_edges() |> mark_nodes()} just works.
 }
 \details{
+Edge colour, opacity, and line type train on \strong{their own scales}
+(\code{\link[=scale_edge_color]{scale_edge_color()}}, \code{\link[=scale_edge_alpha]{scale_edge_alpha()}}, \code{\link[=scale_edge_linetype]{scale_edge_linetype()}}, plus
+\code{\link[=scale_edge_width]{scale_edge_width()}}), independent of the node colour/alpha/linetype scales --
+so a plot can map node fill to a discrete community and edge colour to a
+continuous weight without the two legends colliding.
+
 These are thin over the point / segment / text marks; \code{igraph} need not be
 installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it).
 }
@@ -114,5 +147,5 @@ vgraph(g) |>
 }
 }
 \seealso{
-\code{\link[=vgraph]{vgraph()}}, \code{\link[=scale_edge_width]{scale_edge_width()}}
+\code{\link[=vgraph]{vgraph()}}, \code{\link[=scale_edge_width]{scale_edge_width()}}, \code{\link[=scale_edge_color]{scale_edge_color()}}
 }

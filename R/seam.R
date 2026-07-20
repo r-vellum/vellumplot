@@ -74,7 +74,7 @@ NULL
   .set_interaction_ctx(spec)
   # Draw-order bands: layers sort by `z` (stable — insertion order within a band).
   # Ordinary marks all sit at z = 0 (unchanged); graph marks fix edges (1) under
-  # nodes (2) under labels (3) regardless of pipe order.
+  # edge labels (2) under nodes (3) under node labels (4) regardless of pipe order.
   zz <- vapply(spec@layers, function(l) l@z, integer(1))
   if (any(zz != 0L)) {
     spec@layers <- spec@layers[order(zz, seq_along(zz))]
@@ -84,7 +84,7 @@ NULL
   # panel for graph plots (ordinary plots still clip to their axes).
   panel_clip <- !any(vapply(
     spec@layers,
-    function(l) l@mark %in% c("edges", "nodes", "node_text"),
+    function(l) l@mark %in% c("edges", "edge_text", "nodes", "node_text"),
     logical(1)
   ))
   rt <- .resolve_theme(.theme_of(spec))
@@ -336,6 +336,9 @@ NULL
       edge_width = built$scales$edge_width,
       alpha = built$scales$alpha,
       linetype = built$scales$linetype,
+      edge_color = built$scales$edge_color,
+      edge_alpha = built$scales$edge_alpha,
+      edge_linetype = built$scales$edge_linetype,
       flip = flip,
       polar = NULL,
       trans = NULL,

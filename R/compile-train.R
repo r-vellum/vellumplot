@@ -698,20 +698,27 @@ NULL
 # Train the colour scale (if any layer maps `color`/`fill`). Returns NULL when
 # colour is not mapped, else a trained-scale list carrying a values->colour
 # mapping plus the data the legend needs.
-.train_colour <- function(spec, resolved) {
-  values <- .pool_values(resolved, "color")
-  if (is.null(values)) {
-    values <- .pool_values(resolved, "fill")
+.train_colour <- function(
+  spec,
+  resolved,
+  channel = "color",
+  fill_channel = "fill",
+  aes = "color"
+) {
+  values <- .pool_values(resolved, channel)
+  if (is.null(values) && !is.null(fill_channel)) {
+    values <- .pool_values(resolved, fill_channel)
   }
   if (is.null(values)) {
     return(NULL)
   }
 
-  scalespec <- .scale_for(spec, "color")
+  scalespec <- .scale_for(spec, aes)
   # channel type from the first layer mapping colour
   chan_type <- NULL
   for (L in resolved) {
-    chan_type <- L$types[["color"]] %||% L$types[["fill"]]
+    chan_type <- L$types[[channel]] %||%
+      (if (!is.null(fill_channel)) L$types[[fill_channel]] else NULL)
     if (!is.null(chan_type)) break
   }
   kind <- if (
@@ -723,7 +730,7 @@ NULL
   } else {
     "discrete"
   }
-  title <- .scale_title(scalespec, .default_title(spec, "color"))
+  title <- .scale_title(scalespec, .default_title(spec, aes))
 
   pal <- if (!is.null(scalespec)) scalespec@palette else NULL
   # No explicit palette? A theme may supply a default (e.g. theme_cyberpunk()'s
@@ -741,7 +748,7 @@ NULL
   # value was actually NA (so the guide shows a distinct NA swatch).
   na_value <- .colour_na_value(spec, scalespec, resolved)
   has_na <- any(is.na(unlist(values, use.names = FALSE)))
-  key_glyph <- .key_glyph_for_aes(resolved, "color")
+  key_glyph <- .key_glyph_for_aes(resolved, channel)
 
   # An identity scale uses the data values verbatim as colours (they must already
   # be valid R/CSS colours) and draws no legend.
@@ -785,7 +792,7 @@ NULL
       out[!is.finite(x)] <- na_value
       out
     }
-    labels <- .match_labels(user_labels, seq_len(k), "color") %||%
+    labels <- .match_labels(user_labels, seq_len(k), aes) %||%
       .interval_labels(brks)
     list(
       kind = "binned",
@@ -836,7 +843,7 @@ NULL
     } else {
       scales::breaks_extended()(rng)
     }
-    llab <- .match_labels(user_labels, lbrk, "color")
+    llab <- .match_labels(user_labels, lbrk, aes)
     keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
     lbrk <- lbrk[keep]
     if (!is.null(llab)) {
@@ -875,7 +882,7 @@ NULL
     } else {
       all_levels
     }
-    labels <- .match_labels(user_labels, levels, "color") %||% levels
+    labels <- .match_labels(user_labels, levels, aes) %||% levels
     list(
       kind = "discrete",
       map = map,
@@ -1108,17 +1115,22 @@ NULL
 
 # Train the linetype scale (if any layer maps `linetype` to data). Always
 # discrete: levels cycle through `.LINETYPE_PALETTE` (or a user palette).
-.train_linetype <- function(spec, resolved) {
-  values <- .pool_values(resolved, "linetype")
+.train_linetype <- function(
+  spec,
+  resolved,
+  channel = "linetype",
+  aes = "linetype"
+) {
+  values <- .pool_values(resolved, channel)
   if (is.null(values)) {
     return(NULL)
   }
-  scalespec <- .scale_for(spec, "linetype")
+  scalespec <- .scale_for(spec, aes)
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
     return(list(
       kind = "linetype",
       map = function(x) as.character(x),
-      name = .default_title(spec, "linetype"),
+      name = .default_title(spec, aes),
       no_guide = TRUE
     ))
   }
@@ -1136,13 +1148,53 @@ NULL
   }
   ltys <- rep_len(pal, length(levels))
   names(ltys) <- levels
-  name <- .scale_title(scalespec, .default_title(spec, "linetype"))
+  name <- .scale_title(scalespec, .default_title(spec, aes))
   list(
     kind = "linetype",
     map = function(x) unname(ltys[as.character(x)]),
     name = name,
     levels = levels,
     linetypes = unname(ltys)
+  )
+}
+
+# --- edge-scoped colour / alpha / linetype ---------------------------------
+# Edge marks carry their colour / alpha / linetype on dedicated channels
+# (`edge_color` / `edge_alpha` / `edge_linetype`), so an edge aesthetic never
+# pools into -- and never collides with -- the node colour / alpha / linetype
+# scale. Each edge trainer reuses the matching node trainer's body, only pointing
+# it at the edge channel and the `scale_edge_*()` scale key. (`edge_width`, the
+# one edge scale that shipped first, already works this way via the `linewidth`
+# channel; these three complete the set -- see _docs/GAPS-NETWORKS.md N1.)
+
+.train_edge_colour <- function(spec, resolved) {
+  .train_colour(
+    spec,
+    resolved,
+    channel = "edge_color",
+    fill_channel = NULL,
+    aes = "edge_color"
+  )
+}
+
+.train_edge_alpha <- function(spec, resolved) {
+  .train_continuous_aes(
+    spec,
+    resolved,
+    kind = "alpha",
+    channel = "edge_alpha",
+    aes = "edge_alpha",
+    out_default = .ALPHA_RANGE,
+    legend_field = "legend_alphas"
+  )
+}
+
+.train_edge_linetype <- function(spec, resolved) {
+  .train_linetype(
+    spec,
+    resolved,
+    channel = "edge_linetype",
+    aes = "edge_linetype"
   )
 }
 
@@ -1281,10 +1333,23 @@ NULL
     shape = .train_shape(spec, resolved),
     edge_width = .train_edge_width(spec, resolved),
     alpha = .train_alpha(spec, resolved),
-    linetype = .train_linetype(spec, resolved)
+    linetype = .train_linetype(spec, resolved),
+    edge_color = .train_edge_colour(spec, resolved),
+    edge_alpha = .train_edge_alpha(spec, resolved),
+    edge_linetype = .train_edge_linetype(spec, resolved)
   )
   # Apply per-scale guide overrides (guides(): guide = "none" / guide_legend()).
-  for (aes in c("color", "size", "shape", "edge_width", "alpha", "linetype")) {
+  for (aes in c(
+    "color",
+    "size",
+    "shape",
+    "edge_width",
+    "alpha",
+    "linetype",
+    "edge_color",
+    "edge_alpha",
+    "edge_linetype"
+  )) {
     ss <- .scale_for(spec, aes)
     g <- if (!is.null(ss)) ss@guide else NULL
     if (!is.null(scales[[aes]]) && !is.null(g)) {

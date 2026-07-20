@@ -171,6 +171,7 @@ reference:
   - mark_sf
   - mark_graph
   - scale_edge_width
+  - scale_edge
 
 - title: Scales
   desc: Map data values to visual properties, with trained domains and guides.

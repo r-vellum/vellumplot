@@ -272,6 +272,9 @@ NULL
     edge_width = built$scales$edge_width,
     alpha = built$scales$alpha,
     linetype = built$scales$linetype,
+    edge_color = built$scales$edge_color,
+    edge_alpha = built$scales$edge_alpha,
+    edge_linetype = built$scales$edge_linetype,
     flip = plan$flip,
     polar = NULL
   )
