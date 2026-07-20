@@ -4,7 +4,19 @@
 \alias{vgraph}
 \title{Start a graph (network) plot}
 \usage{
-vgraph(g, layout = "stress", ..., seed = 42L, width = 6, height = 4, dpi = 96)
+vgraph(
+  g,
+  layout = "stress",
+  ...,
+  augment = FALSE,
+  filter_nodes = NULL,
+  filter_edges = NULL,
+  k_core = NULL,
+  seed = 42L,
+  width = 6,
+  height = 4,
+  dpi = 96
+)
 }
 \arguments{
 \item{g}{An \code{igraph} graph (or a two-column edge-list matrix).}
@@ -15,6 +27,23 @@ supplied \verb{N x 2} coordinate matrix, or a function \code{f(g, ...)} returnin
 
 \item{...}{Extra arguments forwarded to the layout function (e.g. \verb{pivots =}
 for sparse stress).}
+
+\item{augment}{Opt-in vertex metrics to attach as graph attributes (so they
+can be mapped -- \code{mark_nodes(size = degree)} -- or used by \code{filter_nodes}).
+\code{FALSE} (default) attaches nothing; \code{TRUE} attaches \code{degree} and
+\code{components}; a character vector picks from \code{"degree"}, \code{"in_degree"},
+\code{"out_degree"}, \code{"betweenness"}, \code{"closeness"}, \code{"eigen"}, \code{"coreness"},
+\code{"components"}, \code{"community"}. Never computed silently -- vellum does not
+guess which centrality you meant.}
+
+\item{filter_nodes, filter_edges}{Data-masked predicates that keep the vertices
+/ edges for which they are \code{TRUE}, evaluated against the vertex / edge
+attribute table -- e.g. \code{filter_edges = weight > 0.5},
+\code{filter_nodes = degree >= 2} (with \code{augment}). The graph is reduced \emph{before}
+the layout, so the picture is of the subgraph, not a full layout with holes.}
+
+\item{k_core}{Keep only the k-core: vertices with coreness \verb{>= k_core} (and
+their induced edges). \code{NULL} (default) keeps everything.}
 
 \item{seed}{Integer seed for stochastic layouts (\code{"fr"}, \code{"drl"}), making the
 figure reproducible. The global RNG stream is restored afterwards.}
@@ -45,6 +74,10 @@ the centre line (not curved); self-loops as small loops.
 
 \code{igraph} (and \code{graphlayouts}, for its layouts) are optional dependencies (in
 \code{Suggests}); \code{vgraph()} errors with an install hint if they are not available.
+
+Reductions apply in a fixed order: \code{augment} (metrics computed on the input
+graph) -> \code{filter_edges} -> \code{filter_nodes} -> \code{k_core}. Augmented metrics thus
+reflect the \emph{input} graph, not the post-filter subgraph.
 }
 \examples{
 \dontrun{
@@ -52,6 +85,11 @@ g <- igraph::make_graph("Zachary")
 vgraph(g, layout = "stress") |>
   mark_edges() |>
   mark_nodes(size = 3)
+
+# attach degree, then plot only the 2-core, sized by degree
+vgraph(g, augment = TRUE, k_core = 2) |>
+  mark_edges() |>
+  mark_nodes(size = degree)
 }
 }
 \seealso{
