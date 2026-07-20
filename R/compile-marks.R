@@ -3068,6 +3068,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     ) {
       .mark_ctx$data_id <- as.character(seq_len(L$n))
     }
+    # A `group_by`/`fields` point selection groups elements sharing those column
+    # values -- carried as the element `hover_group`, so a host links the whole
+    # group on hover/click (the existing hover-group machinery; the condition then
+    # spotlights the group). Only when the layer doesn't already declare a
+    # hover_group, and the values align 1:1 with the drawn rows.
+    if (
+      is.null(.mark_ctx$hover_group) &&
+        !is.null(L$selgroup) &&
+        length(L$selgroup) == L$n
+    ) {
+      .mark_ctx$hover_group <- as.character(L$selgroup)
+    }
     # In a composition, each cell is a separate plot compiled independently, so
     # cells share row-index keys that would collide in one host runtime (hiding one
     # cell's key-3 would hit every cell's key-3). So a composition cell's DOM key is

@@ -185,6 +185,48 @@ test_that("a cross-view filter tags only the filtering cell's elements", {
   expect_equal(sum(has_filt), nrow(df))
 })
 
+test_that("select_point(group_by=) emits the field value as hover_group", {
+  # group_by lets a host link the whole group on hover/click via the existing
+  # hover-group machinery (no widget change). One hover_group per element, = its
+  # group value; inert on a static render.
+  d <- data.frame(x = 1:6, y = 1:6, g = rep(c("a", "b", "c"), 2))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, color = condition("hi", g, "grey80")) |>
+    select_point("hi", on = "hover", group_by = "g")
+  m <- vellum::scene_model(vellum::as_vellum_scene(p))
+  el <- m$elements[!is.na(m$elements$key), , drop = FALSE]
+  hg <- vapply(
+    el$meta,
+    function(mm) if (is.null(mm$hover_group)) NA_character_ else mm$hover_group,
+    character(1)
+  )
+  expect_setequal(hg, c("a", "b", "c"))
+  expect_equal(sum(hg == "a"), 2L) # each group has its members
+
+  # transparent to the static render
+  r <- function(pl) {
+    f <- withr::local_tempfile(fileext = ".png")
+    render_plot(pl, f)
+    readBin(f, "raw", 1e7)
+  }
+  expect_identical(
+    r(vplot(d) |> mark_point(x = x, y = y, color = g)),
+    r(p)
+  )
+  # a user-declared hover_group is not overridden by group_by
+  p2 <- vplot(d) |>
+    mark_point(x = x, y = y, hover_group = y) |>
+    select_point("hi", on = "hover", group_by = "g")
+  m2 <- vellum::scene_model(vellum::as_vellum_scene(p2))
+  el2 <- m2$elements[!is.na(m2$elements$key), , drop = FALSE]
+  hg2 <- vapply(
+    el2$meta,
+    function(mm) as.character(mm$hover_group),
+    character(1)
+  )
+  expect_setequal(hg2, as.character(1:6)) # the user's y-based hover_group wins
+})
+
 test_that("bind_scale records a domain bind", {
   p <- vplot(df) |>
     mark_point(x = x, y = y) |>

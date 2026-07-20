@@ -233,10 +233,37 @@ NULL
 # `data` resolves against that instead (per-panel subsetting is handled upstream
 # in `.build_panels`; this path is the non-faceted / fallback case).
 .resolve_on <- function(spec, data) {
+  # A point selection with `fields`/`group_by` (from select_point()) groups
+  # elements sharing those column values — which is exactly what `hover_group`
+  # already does. Compute the per-row group value here (spec + data both in
+  # scope) so a host links the whole group on hover/click via the existing
+  # hover-group machinery; the emitter (`.compile_marks`) sets it as the element
+  # hover_group when the layer doesn't declare one. v1 uses the first such
+  # selection whose columns are all present.
+  fsel <- Filter(
+    function(s) {
+      S7::S7_inherits(s, SelectionSpec) && length(s@fields) > 0L
+    },
+    spec@selections
+  )
   lapply(spec@layers, function(layer) {
     ld <- layer@data %||% data
-    .apply_position(.apply_stat(.resolve_layer(layer, ld)))
+    res <- .apply_position(.apply_stat(.resolve_layer(layer, ld)))
+    res$selgroup <- .selection_group_values(fsel, ld)
+    res
   })
+}
+
+# The per-row group key for the first fields-selection whose columns are all in
+# `data` (the fields joined with a unit separator). NULL when none applies.
+.selection_group_values <- function(fsel, data) {
+  for (s in fsel) {
+    if (all(s@fields %in% names(data))) {
+      parts <- lapply(s@fields, function(col) as.character(data[[col]]))
+      return(do.call(paste, c(parts, sep = "")))
+    }
+  }
+  NULL
 }
 
 # Resolve every layer of a spec against its full data.

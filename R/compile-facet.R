@@ -147,6 +147,11 @@ NULL
 # row indices; a layer with its own `data` is subset by the facet variable(s)
 # found in that data (or drawn whole when it lacks them).
 .resolve_panel <- function(spec, panel) {
+  # group_by/fields point selections -> per-row hover_group (see `.resolve_on`).
+  fsel <- Filter(
+    function(s) S7::S7_inherits(s, SelectionSpec) && length(s@fields) > 0L,
+    spec@selections
+  )
   lapply(spec@layers, function(layer) {
     if (is.null(layer@data)) {
       d <- spec@data[panel$idx, , drop = FALSE]
@@ -154,7 +159,9 @@ NULL
       idx <- .layer_panel_idx(spec@facet, layer@data, panel)
       d <- layer@data[idx, , drop = FALSE]
     }
-    .apply_position(.apply_stat(.resolve_layer(layer, d)))
+    res <- .apply_position(.apply_stat(.resolve_layer(layer, d)))
+    res$selgroup <- .selection_group_values(fsel, d)
+    res
   })
 }
 
