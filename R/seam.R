@@ -84,7 +84,9 @@ NULL
   # panel for graph plots (ordinary plots still clip to their axes).
   panel_clip <- !any(vapply(
     spec@layers,
-    function(l) l@mark %in% c("edges", "edge_text", "nodes", "node_text"),
+    function(l) {
+      l@mark %in% c("edges", "edge_text", "nodes", "node_pie", "node_text")
+    },
     logical(1)
   ))
   rt <- .resolve_theme(.theme_of(spec))

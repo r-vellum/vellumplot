@@ -358,6 +358,82 @@ test_that("mark_edges stores the resolved arrow spec", {
 
 # --- N1 end to end -----------------------------------------------------------
 
+# --- N6: community hulls + pie glyphs ----------------------------------------
+
+test_that(".stat_hull(expand=) grows the hull outward", {
+  L <- list(
+    values = list(x = c(0, 2, 2, 0, 1), y = c(0, 0, 2, 2, 1)),
+    stat_params = list(expand = 0)
+  )
+  h0 <- .stat_hull(L)
+  L$stat_params$expand <- 1
+  h1 <- .stat_hull(L)
+  expect_gt(diff(range(h1$x)), diff(range(h0$x)))
+  expect_gt(diff(range(h1$y)), diff(range(h0$y)))
+})
+
+test_that("mark_node_hull draws a hull behind the graph (z = 0)", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph("Zachary")
+  g <- igraph::set_vertex_attr(
+    g,
+    "grp",
+    value = factor(igraph::membership(igraph::cluster_louvain(g)))
+  )
+  p <- vgraph(g) |>
+    mark_node_hull(fill = grp) |>
+    mark_edges(alpha = 0.3) |>
+    mark_nodes(size = 4, fill = grp)
+  L <- p@layers[[1]]
+  expect_identical(L@mark, "hull")
+  expect_identical(L@z, 0L) # behind edges (z = 1)
+  expect_true("fill" %in% names(L@encoding))
+  png <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, png))
+  expect_true(file.exists(png))
+})
+
+test_that("mark_node_pie builds a node_pie layer and validates cols", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_ring(6)
+  for (nm in c("a", "b", "c")) {
+    g <- igraph::set_vertex_attr(g, nm, value = runif(6))
+  }
+  p <- vgraph(g) |>
+    mark_edges(alpha = 0.3) |>
+    mark_node_pie(cols = c("a", "b", "c"), size = 5)
+  L <- p@layers[[2]]
+  expect_identical(L@mark, "node_pie")
+  expect_identical(dim(L@stat_params$weights), c(6L, 3L))
+  expect_identical(L@stat_params$categories, c("a", "b", "c"))
+  expect_error(vgraph(g) |> mark_node_pie(cols = "a"), "at least two")
+  expect_error(vgraph(g) |> mark_node_pie(cols = c("a", "zzz")), "Unknown pie")
+  expect_error(
+    vgraph(g) |> mark_node_pie(cols = c("a", "b"), fill = "red"),
+    "one colour per column"
+  )
+})
+
+test_that("pie and donut node glyphs render", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_ring(6)
+  for (nm in c("a", "b", "c")) {
+    g <- igraph::set_vertex_attr(g, nm, value = runif(6))
+  }
+  for (inner in c(0, 0.5)) {
+    p <- vgraph(g) |>
+      mark_edges(alpha = 0.3) |>
+      mark_node_pie(cols = c("a", "b", "c"), size = 5, inner = inner)
+    expect_no_error(vellum::as_vellum_scene(p))
+    png <- local_tempfile(fileext = ".png")
+    expect_no_error(render_plot(p, png))
+    expect_true(file.exists(png))
+  }
+})
+
 # --- N4: elbow routing + gradient edges --------------------------------------
 
 test_that(".elbow_points steps along the dominant axis", {

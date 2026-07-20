@@ -879,10 +879,14 @@ mark_ellipse <- function(
 }
 
 #' @rdname mark_ellipse
+#' @param expand For `mark_hull()`, grow each hull outward from its centroid by
+#'   this fraction (e.g. `0.1` = 10% larger), so it encloses the markers it wraps
+#'   rather than passing through their centres. `0` (default) is the tight hull.
 #' @export
 mark_hull <- function(
   plot,
   ...,
+  expand = 0,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -893,7 +897,7 @@ mark_hull <- function(
     "hull",
     rlang::enquos(...),
     stat = "hull",
-    stat_params = list(),
+    stat_params = list(expand = as.numeric(expand)),
     blend = blend,
     sketch = sketch,
     data = data
@@ -1931,6 +1935,11 @@ mark_segment <- function(
 #' and `effects = list(outline())` draws a halo so labels stay readable over
 #' edges. `mark_edge_text()` takes the same `effects`.
 #'
+#' Two more decorations: `mark_node_hull()` shades communities with a convex hull
+#' behind the graph (grouped by a mapped `fill`, drawn under the edges), and
+#' `mark_node_pie()` replaces node markers with pie / donut glyphs whose wedges
+#' come from a set of compositional columns.
+#'
 #' These are thin over the point / segment / text marks; `igraph` need not be
 #' installed to use them (only [vgraph()] needs it).
 #'
@@ -1946,7 +1955,8 @@ mark_segment <- function(
 #'   expression. For nodes, `fill` (or `color`) is the marker colour; for
 #'   `mark_edges()`, `color`/`alpha` map through the edge scales.
 #' @param linewidth For `mark_edges()`, the edge width; a constant or (via
-#'   [scale_edge_width()]) a mapped expression such as `linewidth = weight`.
+#'   [scale_edge_width()]) a mapped expression such as `linewidth = weight`. For
+#'   `mark_node_pie()`, the wedge border width.
 #' @param linetype For `mark_edges()`, the edge line type; a constant or (via
 #'   [scale_edge_linetype()]) a mapped expression.
 #' @param arrow For `mark_edges()`, `TRUE` to draw a closed arrowhead at each
@@ -1988,6 +1998,13 @@ mark_segment <- function(
 #'   `max_overlaps`, and `seed` tune it exactly as in [mark_text()].
 #' @param box_padding,point_padding,min_segment_length,max_overlaps,seed Repel
 #'   tuning for `mark_node_text(repel = TRUE)`; see [mark_text()].
+#' @param cols For `mark_node_pie()`, the compositional columns (a character
+#'   vector of node-table column names, at least two) whose values size each
+#'   node's wedges.
+#' @param inner For `mark_node_pie()`, the inner-radius fraction: `0` (default)
+#'   draws a pie, `> 0` a donut (e.g. `0.5`).
+#' @param expand For `mark_node_hull()`, the fraction to grow each hull outward
+#'   from its centroid so it encloses the node markers (default `0.08`).
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data; overrides the default table.
 #' @param effects A list of layer render effects ([glow()], [outline()],
@@ -2253,6 +2270,94 @@ mark_edge_text <- function(
     blend = blend,
     data = data %||% plot@edge_data,
     z = 2L
+  )
+}
+
+#' @rdname mark_graph
+#' @export
+mark_node_hull <- function(
+  plot,
+  ...,
+  fill = NULL,
+  color = NULL,
+  alpha = 0.25,
+  expand = 0.08,
+  data = NULL
+) {
+  .check_plot(plot)
+  # A convex hull per group (the mapped `fill`) drawn *behind* the graph (z = 0),
+  # to shade communities. The outline defaults to the fill's group colour so it
+  # matches the shading. Reuses the general hull mark/stat (with `expand`).
+  fill_q <- rlang::enquo(fill)
+  color_q <- rlang::enquo(color)
+  if (rlang::quo_is_null(color_q)) {
+    color_q <- fill_q
+  }
+  dots <- .with_default_aes(rlang::enquos(...), rlang::quos(x = x, y = y))
+  extra <- rlang::quos(fill = !!fill_q, color = !!color_q, alpha = !!alpha)
+  .add_layer(
+    plot,
+    "hull",
+    dots,
+    extra,
+    stat = "hull",
+    stat_params = list(expand = as.numeric(expand)),
+    data = data %||% plot@data,
+    z = 0L
+  )
+}
+
+#' @rdname mark_graph
+#' @export
+mark_node_pie <- function(
+  plot,
+  cols,
+  ...,
+  size = 4,
+  inner = 0,
+  fill = NULL,
+  color = "white",
+  linewidth = 0.5,
+  alpha = NA,
+  data = NULL
+) {
+  .check_plot(plot)
+  d <- data %||% plot@data
+  cols <- as.character(cols)
+  if (length(cols) < 2L) {
+    cli::cli_abort(c(
+      "{.fn mark_node_pie} needs at least two {.arg cols} to divide each node.",
+      i = "Pass the compositional columns, e.g. {.code cols = c(\"a\", \"b\", \"c\")}."
+    ))
+  }
+  miss <- setdiff(cols, names(d))
+  if (length(miss)) {
+    cli::cli_abort("Unknown pie {.arg cols}: {.val {miss}}.")
+  }
+  weights <- as.matrix(d[, cols, drop = FALSE])
+  storage.mode(weights) <- "double"
+  if (!is.null(fill) && length(fill) != length(cols)) {
+    cli::cli_abort(
+      "{.arg fill} must give one colour per column ({length(cols)})."
+    )
+  }
+  dots <- .with_default_aes(rlang::enquos(...), rlang::quos(x = x, y = y))
+  .add_layer(
+    plot,
+    "node_pie",
+    dots,
+    stat_params = list(
+      weights = weights,
+      categories = cols,
+      fill = fill,
+      size = as.numeric(size),
+      inner = as.numeric(inner),
+      linewidth = as.numeric(linewidth),
+      color = color,
+      alpha = as.numeric(alpha)
+    ),
+    data = d,
+    z = 3L
   )
 }
 
