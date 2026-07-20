@@ -180,6 +180,34 @@ vgraph(g, layout = "stress") |>
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png)
 
+### Augmenting and filtering
+
+Vertex metrics are the analyst’s choice, not something
+[`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+computes behind your back – but `augment` attaches a set on request, so
+you can map or filter by them without a manual igraph round-trip.
+`augment = TRUE` adds `degree` and `components`; a character vector
+picks from `degree`, `betweenness`, `closeness`, `eigen`, `coreness`,
+`components`, `community`, and the in/out-degree variants.
+
+`filter_nodes` / `filter_edges` take data-masked predicates over the
+vertex / edge attributes, and `k_core` keeps the k-core. Filtering
+happens **before** the layout, so you see a clean layout of the subgraph
+rather than a full layout with holes – the honest way to tame a dense
+graph (the node-link idiom breaks down past a link density of ~3).
+
+``` r
+
+# attach degree + community, then plot just the 2-core, sized and coloured by them
+vgraph(g, augment = c("degree", "community"), k_core = 2) |>
+  mark_edges(alpha = 0.3) |>
+  mark_nodes(size = degree, fill = factor(community)) |>
+  mark_node_text(label = name, top_n = 6, by = degree, dist = 3) |>
+  scale_size(range = c(2, 9))
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png)
+
 ### Choosing a layout
 
 `layout` accepts a name (`"stress"`, `"sparse_stress"`, `"backbone"`,
@@ -194,7 +222,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-9-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a

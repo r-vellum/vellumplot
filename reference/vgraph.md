@@ -16,7 +16,19 @@ edges default to the edge table and nodes to the node table.
 ## Usage
 
 ``` r
-vgraph(g, layout = "stress", ..., seed = 42L, width = 6, height = 4, dpi = 96)
+vgraph(
+  g,
+  layout = "stress",
+  ...,
+  augment = FALSE,
+  filter_nodes = NULL,
+  filter_edges = NULL,
+  k_core = NULL,
+  seed = 42L,
+  width = 6,
+  height = 4,
+  dpi = 96
+)
 ```
 
 ## Arguments
@@ -36,6 +48,29 @@ vgraph(g, layout = "stress", ..., seed = 42L, width = 6, height = 4, dpi = 96)
 
   Extra arguments forwarded to the layout function (e.g. `pivots =` for
   sparse stress).
+
+- augment:
+
+  Opt-in vertex metrics to attach as graph attributes (so they can be
+  mapped – `mark_nodes(size = degree)` – or used by `filter_nodes`).
+  `FALSE` (default) attaches nothing; `TRUE` attaches `degree` and
+  `components`; a character vector picks from `"degree"`, `"in_degree"`,
+  `"out_degree"`, `"betweenness"`, `"closeness"`, `"eigen"`,
+  `"coreness"`, `"components"`, `"community"`. Never computed silently –
+  vellum does not guess which centrality you meant.
+
+- filter_nodes, filter_edges:
+
+  Data-masked predicates that keep the vertices / edges for which they
+  are `TRUE`, evaluated against the vertex / edge attribute table – e.g.
+  `filter_edges = weight > 0.5`, `filter_nodes = degree >= 2` (with
+  `augment`). The graph is reduced *before* the layout, so the picture
+  is of the subgraph, not a full layout with holes.
+
+- k_core:
+
+  Keep only the k-core: vertices with coreness `>= k_core` (and their
+  induced edges). `NULL` (default) keeps everything.
 
 - seed:
 
@@ -71,6 +106,11 @@ centre line (not curved); self-loops as small loops.
 (in `Suggests`); `vgraph()` errors with an install hint if they are not
 available.
 
+Reductions apply in a fixed order: `augment` (metrics computed on the
+input graph) -\> `filter_edges` -\> `filter_nodes` -\> `k_core`.
+Augmented metrics thus reflect the *input* graph, not the post-filter
+subgraph.
+
 ## See also
 
 [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
@@ -85,5 +125,10 @@ g <- igraph::make_graph("Zachary")
 vgraph(g, layout = "stress") |>
   mark_edges() |>
   mark_nodes(size = 3)
+
+# attach degree, then plot only the 2-core, sized by degree
+vgraph(g, augment = TRUE, k_core = 2) |>
+  mark_edges() |>
+  mark_nodes(size = degree)
 } # }
 ```

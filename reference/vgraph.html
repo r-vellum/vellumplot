@@ -83,7 +83,19 @@ edge table and nodes to the node table.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vgraph</span><span class="op">(</span><span class="va">g</span>, layout <span class="op">=</span> <span class="st">"stress"</span>, <span class="va">...</span>, seed <span class="op">=</span> <span class="fl">42L</span>, width <span class="op">=</span> <span class="fl">6</span>, height <span class="op">=</span> <span class="fl">4</span>, dpi <span class="op">=</span> <span class="fl">96</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vgraph</span><span class="op">(</span></span>
+<span>  <span class="va">g</span>,</span>
+<span>  layout <span class="op">=</span> <span class="st">"stress"</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  augment <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  filter_nodes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  filter_edges <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  k_core <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  width <span class="op">=</span> <span class="fl">6</span>,</span>
+<span>  height <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  dpi <span class="op">=</span> <span class="fl">96</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -103,6 +115,29 @@ supplied <code>N x 2</code> coordinate matrix, or a function <code>f(g, ...)</co
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Extra arguments forwarded to the layout function (e.g. <code>pivots =</code>
 for sparse stress).</p></dd>
+
+
+<dt id="arg-augment">augment<a class="anchor" aria-label="anchor" href="#arg-augment"></a></dt>
+<dd><p>Opt-in vertex metrics to attach as graph attributes (so they
+can be mapped – <code>mark_nodes(size = degree)</code> – or used by <code>filter_nodes</code>).
+<code>FALSE</code> (default) attaches nothing; <code>TRUE</code> attaches <code>degree</code> and
+<code>components</code>; a character vector picks from <code>"degree"</code>, <code>"in_degree"</code>,
+<code>"out_degree"</code>, <code>"betweenness"</code>, <code>"closeness"</code>, <code>"eigen"</code>, <code>"coreness"</code>,
+<code>"components"</code>, <code>"community"</code>. Never computed silently – vellum does not
+guess which centrality you meant.</p></dd>
+
+
+<dt id="arg-filter-nodes-filter-edges">filter_nodes, filter_edges<a class="anchor" aria-label="anchor" href="#arg-filter-nodes-filter-edges"></a></dt>
+<dd><p>Data-masked predicates that keep the vertices
+/ edges for which they are <code>TRUE</code>, evaluated against the vertex / edge
+attribute table – e.g. <code>filter_edges = weight &gt; 0.5</code>,
+<code>filter_nodes = degree &gt;= 2</code> (with <code>augment</code>). The graph is reduced <em>before</em>
+the layout, so the picture is of the subgraph, not a full layout with holes.</p></dd>
+
+
+<dt id="arg-k-core">k_core<a class="anchor" aria-label="anchor" href="#arg-k-core"></a></dt>
+<dd><p>Keep only the k-core: vertices with coreness <code>&gt;= k_core</code> (and
+their induced edges). <code>NULL</code> (default) keeps everything.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -133,6 +168,9 @@ Reciprocal and parallel edges are drawn as parallel straight lines offset off
 the centre line (not curved); self-loops as small loops.</p>
 <p><code>igraph</code> (and <code>graphlayouts</code>, for its layouts) are optional dependencies (in
 <code>Suggests</code>); <code>vgraph()</code> errors with an install hint if they are not available.</p>
+<p>Reductions apply in a fixed order: <code>augment</code> (metrics computed on the input
+graph) -&gt; <code>filter_edges</code> -&gt; <code>filter_nodes</code> -&gt; <code>k_core</code>. Augmented metrics thus
+reflect the <em>input</em> graph, not the post-filter subgraph.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -146,6 +184,11 @@ the centre line (not curved); self-loops as small loops.</p>
 <span class="r-in"><span><span class="fu">vgraph</span><span class="op">(</span><span class="va">g</span>, layout <span class="op">=</span> <span class="st">"stress"</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_graph.html">mark_edges</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># attach degree, then plot only the 2-core, sized by degree</span></span></span>
+<span class="r-in"><span><span class="fu">vgraph</span><span class="op">(</span><span class="va">g</span>, augment <span class="op">=</span> <span class="cn">TRUE</span>, k_core <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_graph.html">mark_edges</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="va">degree</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
