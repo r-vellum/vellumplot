@@ -131,6 +131,37 @@ test_that("a plot that declares interaction keys its marks (for a host to addres
   expect_equal(sum(!is.na(m0$elements$key)), 0L)
 })
 
+test_that("a composition resolves cross-cell selection references", {
+  # selection defined in cell A (add_selection), referenced by filter_by in cell B
+  sel <- select_interval("br", on = "x")
+  comp <- vconcat(
+    vplot(df) |> mark_point(x = x, y = y) |> add_selection(sel),
+    vplot(df) |> mark_point(x = x, y = y) |> filter_by(sel)
+  )
+  im <- interaction_model(comp)
+  expect_length(im$selections, 1L)
+  expect_length(im$filters, 1L)
+  expect_identical(im$filters[[1]]$selection, "br")
+})
+
+test_that("a cross-view filter tags only the filtering cell's elements", {
+  sel <- select_interval("br", on = "x")
+  comp <- vconcat(
+    vplot(df) |> mark_point(x = x, y = y) |> add_selection(sel), # source
+    vplot(df) |> mark_point(x = x, y = y) |> filter_by(sel) # filtered
+  )
+  m <- vellum::scene_model(vellum::as_vellum_scene(comp))
+  keyed <- m$elements[!is.na(m$elements$key), , drop = FALSE]
+  # both cells keyed (shared row-index keys), only the filtered cell carries `filt`
+  expect_equal(nrow(keyed), 2L * nrow(df))
+  has_filt <- vapply(
+    keyed$meta,
+    function(mm) !is.null(mm[["filt"]]) && "br" %in% mm[["filt"]],
+    logical(1)
+  )
+  expect_equal(sum(has_filt), nrow(df))
+})
+
 test_that("bind_scale records a domain bind", {
   p <- vplot(df) |>
     mark_point(x = x, y = y) |>

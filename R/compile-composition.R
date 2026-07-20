@@ -288,6 +288,10 @@ NULL
   )
   scene <- .draw_panel_bg(scene, hsc, vsc, rt)
   pkey <- if (is.na(subplot)) NA_character_ else sprintf("subplot-%d", subplot)
+  # Per-cell interaction context (the aligned path does not go through
+  # `.draw_plot`): a cell declaring an interaction keys its marks, and a cell with
+  # a `filter_by()` tags its elements so a host scopes the filter to this view.
+  .set_interaction_ctx(plan$spec)
   scene <- .compile_marks(scene, panel$resolved, psc, panel = pkey)
   scene <- vellum::pop(scene)
   # axes + axis titles

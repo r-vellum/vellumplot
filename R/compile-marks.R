@@ -2692,6 +2692,26 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # per layer and is single-threaded with the rest of compilation.)
 .mark_ctx <- new.env(parent = emptyenv())
 
+# Set the per-plot (or per composition-cell) interaction context the mark emitter
+# reads: `plot_interactive` (a plot declaring any selection/filter/bind keys its
+# marks so a host can address them) and `plot_filters` (the selection names whose
+# filter_by() targets this view -- emitted as per-element `filt` tags so a host
+# scopes the hide to this view, never the cross-view source). Called by both the
+# single-plot path (`.draw_plot`) and the aligned-composition path.
+.set_interaction_ctx <- function(spec) {
+  if (!S7::S7_inherits(spec, PlotSpec)) {
+    .mark_ctx$plot_interactive <- FALSE
+    .mark_ctx$plot_filters <- NULL
+    return(invisible())
+  }
+  filt_names <- vapply(spec@filters, function(f) f@selection, character(1))
+  .mark_ctx$plot_interactive <- length(spec@selections) > 0L ||
+    length(filt_names) > 0L ||
+    length(spec@binds) > 0L
+  .mark_ctx$plot_filters <- if (length(filt_names)) unique(filt_names) else NULL
+  invisible()
+}
+
 # Stamp every emitted grob with its stable, globally-unique node id (surfaced as
 # `data-vellum-id` in SVG) and record its provenance (DESIGN §4, see
 # `R/provenance.R`). `rows` is the row-key refinement: pass the original
@@ -2757,6 +2777,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   } else {
     NULL
   }
+  # `filt` tags: the selection names whose filter_by() targets this view (plot /
+  # composition cell), the same for every element. A host hides a tagged element
+  # when it is not in that selection's members — scoped to this view, so a
+  # cross-view filter never touches the source cell.
+  filt_tags <- .mark_ctx$plot_filters
   if (
     is.null(tt) &&
       is.null(hg) &&
@@ -2764,7 +2789,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       is.null(sc) &&
       is.null(lg) &&
       is.null(fv) &&
-      is.null(cond_tags)
+      is.null(cond_tags) &&
+      is.null(filt_tags)
   ) {
     return(NULL)
   }
@@ -2798,6 +2824,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       if (!is.null(cond_rowvals)) {
         rec$cond_value <- lapply(cond_rowvals, function(v) v[[i]])
       }
+    }
+    # `filt`: the filter selections this view is filtered by.
+    if (!is.null(filt_tags)) {
+      rec$filt <- filt_tags
     }
     rec
   })

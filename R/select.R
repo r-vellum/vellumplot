@@ -343,29 +343,46 @@ interaction_model.default <- function(x) {
   )
 }
 
-.interaction_model_plot <- function(plot) {
-  sels <- plot@selections
-  conds <- .plot_conditions(plot)
-  filters <- plot@filters
-  binds <- plot@binds
-  if (!length(sels) && !length(conds) && !length(filters) && !length(binds)) {
-    return(NULL)
-  }
-  defined <- vapply(sels, function(s) s@name, character(1))
-  refs <- c(
-    vapply(conds, function(c) c$selection, character(1)),
-    vapply(filters, function(f) f@selection, character(1)),
-    vapply(binds, function(b) b@selection, character(1))
-  )
-  .validate_selection_refs(defined, refs)
+# Collect a single plot's interaction declarations into the plain block form,
+# WITHOUT cross-reference validation (a composition validates once across all
+# cells, since a selection may be defined in one cell and referenced in another).
+.plot_interaction_parts <- function(plot) {
   list(
-    selections = lapply(sels, .selection_record),
-    conditions = conds,
-    filters = lapply(filters, function(f) list(selection = f@selection)),
-    binds = lapply(binds, function(b) {
+    selections = lapply(plot@selections, .selection_record),
+    conditions = .plot_conditions(plot),
+    filters = lapply(plot@filters, function(f) list(selection = f@selection)),
+    binds = lapply(plot@binds, function(b) {
       list(selection = b@selection, aes = b@aes)
     })
   )
+}
+
+.parts_empty <- function(p) {
+  !length(p$selections) &&
+    !length(p$conditions) &&
+    !length(p$filters) &&
+    !length(p$binds)
+}
+
+# Validate that every condition/filter/bind reference resolves to a declared
+# selection, given the merged block.
+.validate_parts <- function(parts) {
+  defined <- vapply(parts$selections, function(s) s$name, character(1))
+  refs <- c(
+    vapply(parts$conditions, function(c) c$selection, character(1)),
+    vapply(parts$filters, function(f) f$selection, character(1)),
+    vapply(parts$binds, function(b) b$selection, character(1))
+  )
+  .validate_selection_refs(defined, refs)
+}
+
+.interaction_model_plot <- function(plot) {
+  parts <- .plot_interaction_parts(plot)
+  if (.parts_empty(parts)) {
+    return(NULL)
+  }
+  .validate_parts(parts)
+  parts
 }
 
 # Composition-level interaction model: collect declarations across all cells so a
@@ -375,11 +392,7 @@ interaction_model.default <- function(x) {
 # runtime resolve references by name across the whole composition.
 .interaction_model_composition <- function(comp) {
   cells <- .composition_leaf_plots(comp)
-  parts <- lapply(cells, .interaction_model_plot)
-  parts <- parts[!vapply(parts, is.null, logical(1))]
-  if (!length(parts)) {
-    return(NULL)
-  }
+  parts <- lapply(cells, .plot_interaction_parts) # collect, DON'T validate per cell
   merged <- list(
     selections = list(),
     conditions = list(),
@@ -390,6 +403,9 @@ interaction_model.default <- function(x) {
     for (k in names(merged)) {
       merged[[k]] <- c(merged[[k]], p[[k]])
     }
+  }
+  if (.parts_empty(merged)) {
+    return(NULL)
   }
   # A selection may be registered on more than one cell (same object, same name);
   # keep one record per name.
@@ -405,13 +421,7 @@ interaction_model.default <- function(x) {
     },
     merged$selections
   )
-  defined <- vapply(merged$selections, function(s) s$name, character(1))
-  refs <- c(
-    vapply(merged$conditions, function(c) c$selection, character(1)),
-    vapply(merged$filters, function(f) f$selection, character(1)),
-    vapply(merged$binds, function(b) b$selection, character(1))
-  )
-  .validate_selection_refs(defined, refs)
+  .validate_parts(merged)
   merged
 }
 
