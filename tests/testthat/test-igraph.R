@@ -358,6 +358,60 @@ test_that("mark_edges stores the resolved arrow spec", {
 
 # --- N1 end to end -----------------------------------------------------------
 
+# --- N4: elbow routing + gradient edges --------------------------------------
+
+test_that(".elbow_points steps along the dominant axis", {
+  # dy dominant -> vertical-major (x held, then y): a top-down tree bends down.
+  v <- .elbow_points(0, 0, 1, 4)
+  expect_equal(v$x, c(0, 0, 1, 1))
+  expect_equal(v$y, c(0, 2, 2, 4))
+  # dx dominant -> horizontal-major.
+  h <- .elbow_points(0, 0, 4, 1)
+  expect_equal(h$x, c(0, 2, 2, 4))
+  expect_equal(h$y, c(0, 0, 1, 1))
+})
+
+test_that("mark_edges(routing=) records the routing and validates it", {
+  skip_if_not_installed("igraph")
+  p <- vgraph(igraph::make_ring(4)) |> mark_edges(routing = "elbow")
+  expect_identical(p@layers[[1]]@stat_params$routing, "elbow")
+  # default is straight
+  p0 <- vgraph(igraph::make_ring(4)) |> mark_edges()
+  expect_identical(p0@layers[[1]]@stat_params$routing, "straight")
+  expect_error(
+    vgraph(igraph::make_ring(4)) |> mark_edges(routing = "curvy"),
+    "should be one of"
+  )
+})
+
+test_that("mark_edges(gradient=) records the flag; elbow+gradient warns", {
+  skip_if_not_installed("igraph")
+  p <- vgraph(igraph::make_ring(4)) |> mark_edges(gradient = TRUE)
+  expect_true(p@layers[[1]]@stat_params$gradient)
+  expect_warning(
+    vgraph(igraph::make_ring(4)) |>
+      mark_edges(routing = "elbow", gradient = TRUE),
+    "ignored"
+  )
+})
+
+test_that("elbow and gradient edges compile and render", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  tr <- igraph::make_tree(15, children = 2, mode = "out")
+  p_elbow <- vgraph(tr, layout = "tree") |>
+    mark_edges(routing = "elbow", arrow = TRUE) |>
+    mark_nodes(size = 4)
+  g <- igraph::sample_gnp(12, 0.3, directed = TRUE)
+  p_grad <- vgraph(g) |> mark_edges(gradient = TRUE) |> mark_nodes(size = 4)
+  for (p in list(p_elbow, p_grad)) {
+    expect_no_error(vellum::as_vellum_scene(p))
+    png <- local_tempfile(fileext = ".png")
+    expect_no_error(render_plot(p, png))
+    expect_true(file.exists(png))
+  }
+})
+
 # --- N3: data reduction (augment + filters) ---------------------------------
 
 test_that("vgraph(augment=) attaches vertex metrics (opt-in only)", {

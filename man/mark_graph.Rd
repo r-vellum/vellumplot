@@ -16,6 +16,8 @@ mark_edges(
   alpha = NULL,
   linetype = NULL,
   arrow = FALSE,
+  routing = c("straight", "elbow"),
+  gradient = FALSE,
   auto = FALSE,
   blend = NULL,
   effects = list(),
@@ -92,6 +94,16 @@ edge's target end (the directed convention), \code{FALSE}/\code{NULL} for none, 
 Edges are capped exactly at each endpoint's node boundary (per vertex, at any
 size/resolution), so the head sits on the node edge; self-loops are drawn as
 teardrop loops sized to the node, with the head on the node boundary.}
+
+\item{routing}{For \code{mark_edges()}, edge routing: \code{"straight"} (default) or
+\code{"elbow"} -- orthogonal right-angle steps for tree / DAG / dendrogram
+layouts (still straight segments, no curvature), stepping along whichever
+axis the endpoints are farther apart on. Elbows keep node-boundary caps and
+arrowheads.}
+
+\item{gradient}{For \code{mark_edges()}, \code{TRUE} to fade each (straight) edge from
+faint at its source to opaque at its target -- a direction cue that needs no
+arrowhead (igraph's \code{edge.gradient}). Ignored with \code{routing = "elbow"}.}
 
 \item{auto}{For \code{mark_edges()}, \code{TRUE} to datashade a large graph's edges as a
 density raster (\code{\link[vellum:datashade_segments]{vellum::datashade_segments()}}) once the edge count exceeds

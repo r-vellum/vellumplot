@@ -158,6 +158,35 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(2, 9))
 ```
 
+### Edge routing
+
+Edges are straight by default. `routing = "elbow"` draws orthogonal right-angle
+steps instead -- still straight segments (curved edges are a deliberate
+non-goal), stepping along whichever axis the endpoints are farther apart on, so a
+top-down tree bends downward. It is the natural routing for `"tree"`,
+`"sugiyama"`, and dendrogram layouts, and keeps node-boundary caps and
+arrowheads.
+
+```{r}
+#| eval: !expr have_net
+tr <- igraph::make_tree(15, children = 2, mode = "out")
+vgraph(tr, layout = "tree") |>
+  mark_edges(routing = "elbow", arrow = TRUE) |>
+  mark_nodes(size = 5, fill = "steelblue")
+```
+
+For directed graphs, `gradient = TRUE` fades each edge from faint at its source
+to opaque at its target -- a direction cue that reads without arrowheads (and
+without the clutter they add on a dense graph).
+
+```{r}
+#| eval: !expr have_net
+dg <- igraph::sample_gnp(15, 0.2, directed = TRUE)
+vgraph(dg) |>
+  mark_edges(gradient = TRUE) |>
+  mark_nodes(size = 4, fill = "grey30")
+```
+
 ### Augmenting and filtering
 
 Vertex metrics are the analyst's choice, not something `vgraph()` computes behind
