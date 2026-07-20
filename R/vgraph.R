@@ -345,6 +345,129 @@ NULL
   )
 }
 
+# --- data reduction (N3): augment + filter, applied before layout -----------
+#
+# Reductions run on the igraph *before* the layout, so the picture is of the
+# reduced subgraph (a filtered layout, not a full layout with holes). Order:
+# augment (metrics on the input graph) -> filter_edges -> filter_nodes ->
+# k_core. Metrics are computed on the input graph, so a `filter_nodes = degree
+# > 2` reads the full-graph degree -- documented, and the predictable choice.
+
+# Vertex metrics `augment=` can attach. Each is `f(g) -> per-vertex vector`.
+.AUGMENT_METRICS <- list(
+  degree = function(g) igraph::degree(g),
+  in_degree = function(g) igraph::degree(g, mode = "in"),
+  out_degree = function(g) igraph::degree(g, mode = "out"),
+  betweenness = function(g) igraph::betweenness(g),
+  closeness = function(g) igraph::closeness(g),
+  eigen = function(g) igraph::eigen_centrality(g)$vector,
+  coreness = function(g) igraph::coreness(g),
+  components = function(g) as.integer(igraph::components(g)$membership),
+  community = function(g) {
+    as.integer(igraph::membership(
+      igraph::cluster_louvain(igraph::as_undirected(g, mode = "collapse"))
+    ))
+  }
+)
+
+# `augment = TRUE` attaches this default set.
+.AUGMENT_DEFAULT <- c("degree", "components")
+
+# Attach vertex metrics as graph attributes (so they flow into the node table and
+# can be mapped, or referenced by `filter_nodes`). `augment` is TRUE (the default
+# set), or a character vector of metric names.
+.graph_augment <- function(g, augment, call = rlang::caller_env()) {
+  metrics <- if (isTRUE(augment)) .AUGMENT_DEFAULT else as.character(augment)
+  bad <- setdiff(metrics, names(.AUGMENT_METRICS))
+  if (length(bad)) {
+    cli::cli_abort(
+      c(
+        "Unknown {.arg augment} metric{?s}: {.val {bad}}.",
+        i = "Choose from {.val {names(.AUGMENT_METRICS)}}."
+      ),
+      call = call
+    )
+  }
+  for (m in metrics) {
+    g <- igraph::set_vertex_attr(g, m, value = .AUGMENT_METRICS[[m]](g))
+  }
+  g
+}
+
+# Evaluate a filter predicate (captured quosure) against the vertex/edge
+# attribute table and return the keep mask. Errors clearly on a non-logical or
+# wrong-length result (a mis-typed predicate must not silently drop everything).
+.graph_keep_mask <- function(quo, tbl, n, what, call = rlang::caller_env()) {
+  keep <- rlang::eval_tidy(quo, tbl)
+  if (!is.logical(keep) || length(keep) != n) {
+    cli::cli_abort(
+      c(
+        "{.arg filter_{what}} must evaluate to a logical vector, one per {what}.",
+        i = "Got {.obj_type_friendly {keep}} of length {length(keep)} for {n} {what}{?s}."
+      ),
+      call = call
+    )
+  }
+  keep & !is.na(keep)
+}
+
+# Drop edges failing `filter_edges` (vertices kept).
+.graph_filter_edges <- function(g, quo, call = rlang::caller_env()) {
+  edf <- igraph::as_data_frame(g, what = "edges")
+  keep <- .graph_keep_mask(quo, edf, igraph::ecount(g), "edge", call)
+  igraph::delete_edges(g, igraph::E(g)[!keep])
+}
+
+# Drop vertices failing `filter_nodes` (their incident edges go too).
+.graph_filter_nodes <- function(g, quo, call = rlang::caller_env()) {
+  vdf <- igraph::as_data_frame(g, what = "vertices")
+  keep <- .graph_keep_mask(quo, vdf, igraph::vcount(g), "node", call)
+  igraph::delete_vertices(g, igraph::V(g)[!keep])
+}
+
+# Keep the k-core: vertices whose coreness is >= k (and induced edges).
+.graph_kcore <- function(g, k, call = rlang::caller_env()) {
+  if (!is.numeric(k) || length(k) != 1L || !is.finite(k)) {
+    cli::cli_abort("{.arg k_core} must be a single number.", call = call)
+  }
+  core <- igraph::coreness(g)
+  igraph::delete_vertices(g, igraph::V(g)[core < k])
+}
+
+# Apply the reduction pipeline in a fixed, documented order, then guard against a
+# graph reduced to nothing (a layout of zero vertices is meaningless).
+.graph_reduce <- function(
+  g,
+  augment,
+  fe_quo,
+  fn_quo,
+  k_core,
+  call = rlang::caller_env()
+) {
+  if (!isFALSE(augment)) {
+    g <- .graph_augment(g, augment, call)
+  }
+  if (!rlang::quo_is_null(fe_quo)) {
+    g <- .graph_filter_edges(g, fe_quo, call)
+  }
+  if (!rlang::quo_is_null(fn_quo)) {
+    g <- .graph_filter_nodes(g, fn_quo, call)
+  }
+  if (!is.null(k_core)) {
+    g <- .graph_kcore(g, k_core, call)
+  }
+  if (igraph::vcount(g) == 0L) {
+    cli::cli_abort(
+      c(
+        "The filters removed every vertex.",
+        i = "Loosen {.arg filter_nodes} / {.arg filter_edges} / {.arg k_core}."
+      ),
+      call = call
+    )
+  }
+  g
+}
+
 #' Start a graph (network) plot
 #'
 #' `vgraph()` begins a node-link diagram from an `igraph` graph. It computes a
@@ -370,12 +493,30 @@ NULL
 #'   supplied `N x 2` coordinate matrix, or a function `f(g, ...)` returning one.
 #' @param ... Extra arguments forwarded to the layout function (e.g. `pivots =`
 #'   for sparse stress).
+#' @param augment Opt-in vertex metrics to attach as graph attributes (so they
+#'   can be mapped -- `mark_nodes(size = degree)` -- or used by `filter_nodes`).
+#'   `FALSE` (default) attaches nothing; `TRUE` attaches `degree` and
+#'   `components`; a character vector picks from `"degree"`, `"in_degree"`,
+#'   `"out_degree"`, `"betweenness"`, `"closeness"`, `"eigen"`, `"coreness"`,
+#'   `"components"`, `"community"`. Never computed silently -- vellum does not
+#'   guess which centrality you meant.
+#' @param filter_nodes,filter_edges Data-masked predicates that keep the vertices
+#'   / edges for which they are `TRUE`, evaluated against the vertex / edge
+#'   attribute table -- e.g. `filter_edges = weight > 0.5`,
+#'   `filter_nodes = degree >= 2` (with `augment`). The graph is reduced *before*
+#'   the layout, so the picture is of the subgraph, not a full layout with holes.
+#' @param k_core Keep only the k-core: vertices with coreness `>= k_core` (and
+#'   their induced edges). `NULL` (default) keeps everything.
 #' @param seed Integer seed for stochastic layouts (`"fr"`, `"drl"`), making the
 #'   figure reproducible. The global RNG stream is restored afterwards.
 #' @param width,height Page size in inches.
 #' @param dpi Output resolution in dots per inch (see [vplot()]).
 #' @return A [PlotSpec] whose data is the node table and whose `edge_data` is the
 #'   edge table.
+#' @details
+#' Reductions apply in a fixed order: `augment` (metrics computed on the input
+#' graph) -> `filter_edges` -> `filter_nodes` -> `k_core`. Augmented metrics thus
+#' reflect the *input* graph, not the post-filter subgraph.
 #' @seealso [mark_edges()], [mark_nodes()], [mark_node_text()]
 #' @examples
 #' \dontrun{
@@ -383,12 +524,21 @@ NULL
 #' vgraph(g, layout = "stress") |>
 #'   mark_edges() |>
 #'   mark_nodes(size = 3)
+#'
+#' # attach degree, then plot only the 2-core, sized by degree
+#' vgraph(g, augment = TRUE, k_core = 2) |>
+#'   mark_edges() |>
+#'   mark_nodes(size = degree)
 #' }
 #' @export
 vgraph <- function(
   g,
   layout = "stress",
   ...,
+  augment = FALSE,
+  filter_nodes = NULL,
+  filter_edges = NULL,
+  k_core = NULL,
   seed = 42L,
   width = 6,
   height = 4,
@@ -397,6 +547,13 @@ vgraph <- function(
   .need_pkg("igraph", "vgraph()")
   g <- .as_igraph(g)
   .check_dpi(dpi)
+  g <- .graph_reduce(
+    g,
+    augment,
+    rlang::enquo(filter_edges),
+    rlang::enquo(filter_nodes),
+    k_core
+  )
   xy <- .with_seed(seed, .graph_layout(g, layout, ...))
   lim <- .graph_limits(xy)
   PlotSpec(

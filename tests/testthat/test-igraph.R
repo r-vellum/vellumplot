@@ -358,6 +358,68 @@ test_that("mark_edges stores the resolved arrow spec", {
 
 # --- N1 end to end -----------------------------------------------------------
 
+# --- N3: data reduction (augment + filters) ---------------------------------
+
+test_that("vgraph(augment=) attaches vertex metrics (opt-in only)", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_star(6, mode = "undirected")
+  p <- vgraph(g, augment = TRUE)
+  expect_true(all(c("degree", "components") %in% names(p@data)))
+  expect_equal(max(p@data$degree), 5) # the hub
+  expect_true("betweenness" %in% names(vgraph(g, augment = "betweenness")@data))
+  expect_error(vgraph(g, augment = "bogus"), "Unknown")
+  # default: nothing attached
+  expect_false("degree" %in% names(vgraph(g)@data))
+})
+
+test_that("vgraph(filter_edges=) drops edges before layout", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_ring(4)
+  g <- igraph::set_edge_attr(g, "w", value = c(1, 2, 3, 4))
+  p <- vgraph(g, filter_edges = w >= 3)
+  expect_identical(nrow(p@edge_data), 2L)
+})
+
+test_that("vgraph(filter_nodes=) drops vertices, can read augment metrics", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::graph_from_literal(a - b, b - c, c - a, c - d) # d is a pendant
+  p <- vgraph(g, augment = "degree", filter_nodes = degree >= 2)
+  expect_identical(nrow(p@data), 3L)
+  expect_false("d" %in% p@data$name)
+})
+
+test_that("vgraph(k_core=) keeps the k-core", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::graph_from_literal(a - b, b - c, c - a, c - d)
+  p <- vgraph(g, k_core = 2) # the triangle is the 2-core; d drops
+  expect_identical(nrow(p@data), 3L)
+})
+
+test_that("vgraph() errors when filters remove everything or are ill-typed", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_ring(4)
+  expect_error(vgraph(g, k_core = 99), "removed every vertex")
+  expect_error(vgraph(g, filter_edges = 1:4), "logical")
+})
+
+test_that("a reduced graph compiles and renders", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph("Zachary")
+  p <- vgraph(g, augment = TRUE, k_core = 2) |>
+    mark_edges(alpha = 0.3) |>
+    mark_nodes(size = degree)
+  expect_lt(nrow(p@data), 34L) # the 2-core is a strict subgraph
+  png <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, png))
+  expect_true(file.exists(png))
+})
+
 # --- N2: label quality (repel, halo, radial offset, top-n) -------------------
 
 test_that("mark_node_text(repel=) plumbs repel params", {
