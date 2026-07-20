@@ -71,6 +71,14 @@
   layer effects like glow and shadow, gradient fills, and the one-line
   hand-drawn sketch mode.
 
+- [Declarative
+  interactivity](https://r-vellum.github.io/vellumplot/articles/interactivity.md):
+
+  Declare interaction as part of the plot: named selections bound to
+  gestures, conditional encodings that style by membership, filters that
+  show only the selection, and cross-view cross-filtering. Inert on a
+  static render; enacted by a host such as vellumwidget.
+
 ### Background
 
 - [The compiler: spec to
