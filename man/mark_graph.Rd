@@ -141,7 +141,8 @@ teardrop self-loops) do not apply to the rasterised edges.}
 \item{blend}{Optional blend mode (see \code{\link[=mark_point]{mark_point()}}).}
 
 \item{effects}{A list of layer render effects (\code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}},
-\code{\link[=shadow]{shadow()}}) applied to the mark at draw time.}
+\code{\link[=shadow]{shadow()}}) applied to the mark at draw time. On the text marks
+(\code{mark_node_text()} / \code{mark_edge_text()}) only \code{\link[=shadow]{shadow()}} applies.}
 
 \item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving the layer a hand-drawn look,
 \code{NA}/\code{FALSE} to force it crisp, or \code{NULL} (default) to inherit.}
@@ -213,8 +214,9 @@ continuous weight without the two legends colliding.
 \code{mark_node_text()} has the label-legibility tools a dense graph needs:
 \code{repel = TRUE} nudges overlapping labels apart with leader lines, \code{dist} pushes
 labels radially clear of the node markers, \code{top_n}/\code{by} label only the hubs,
-and \code{effects = list(outline())} draws a halo so labels stay readable over
-edges. \code{mark_edge_text()} takes the same \code{effects}.
+and \code{effects = list(shadow())} drops a shadow behind each label so it stays
+readable over edges. \code{mark_edge_text()} takes the same \code{effects}. (Only
+\code{\link[=shadow]{shadow()}} applies to text; a glyph outline / glow is not available yet.)
 
 Two more decorations: \code{mark_node_hull()} shades communities with a convex hull
 behind the graph (grouped by a mapped \code{fill}, drawn under the edges), and

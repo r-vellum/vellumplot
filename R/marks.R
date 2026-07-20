@@ -1932,8 +1932,9 @@ mark_segment <- function(
 #' `mark_node_text()` has the label-legibility tools a dense graph needs:
 #' `repel = TRUE` nudges overlapping labels apart with leader lines, `dist` pushes
 #' labels radially clear of the node markers, `top_n`/`by` label only the hubs,
-#' and `effects = list(outline())` draws a halo so labels stay readable over
-#' edges. `mark_edge_text()` takes the same `effects`.
+#' and `effects = list(shadow())` drops a shadow behind each label so it stays
+#' readable over edges. `mark_edge_text()` takes the same `effects`. (Only
+#' [shadow()] applies to text; a glyph outline / glow is not available yet.)
 #'
 #' Two more decorations: `mark_node_hull()` shades communities with a convex hull
 #' behind the graph (grouped by a mapped `fill`, drawn under the edges), and
@@ -2008,7 +2009,8 @@ mark_segment <- function(
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data; overrides the default table.
 #' @param effects A list of layer render effects ([glow()], [outline()],
-#'   [shadow()]) applied to the mark at draw time.
+#'   [shadow()]) applied to the mark at draw time. On the text marks
+#'   (`mark_node_text()` / `mark_edge_text()`) only [shadow()] applies.
 #' @param sketch A [sketch()] spec giving the layer a hand-drawn look,
 #'   `NA`/`FALSE` to force it crisp, or `NULL` (default) to inherit.
 #' @return The modified [PlotSpec].

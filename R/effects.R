@@ -12,12 +12,16 @@ NULL
   "nodes"
 )
 # The marks an effect applies to (used for validation + error messages). Glow /
-# outline / shadow decorate stroked and point marks, plus text marks (as a
-# halo / shadowtext, drawn by `.emit_text_halo()`); if an effect ever needs a
-# different set this becomes a per-class dispatch.
+# outline / shadow decorate stroked and point marks. Text marks are handled
+# separately in `.check_effects()`: only `shadow()` reads correctly on text (an
+# offset drop copy) — `outline()` / `glow()` would need to stroke the glyph
+# outlines, which the text primitive can't do yet (see r-vellum/vellum#13).
 .effect_marks <- function() {
-  c(.STROKE_POINT_MARKS, "text", "label", "node_text", "edge_text")
+  .STROKE_POINT_MARKS
 }
+
+# Text marks a `shadow()` (only) can decorate.
+.TEXT_EFFECT_MARKS <- c("text", "label", "node_text", "edge_text")
 
 #' Neon glow layer effect
 #'
@@ -287,6 +291,7 @@ echo <- function(
       call = call
     )
   }
+  is_text <- mark %in% .TEXT_EFFECT_MARKS
   for (e in effects) {
     if (!S7::S7_inherits(e, Effect)) {
       cli::cli_abort(
@@ -294,15 +299,30 @@ echo <- function(
         call = call
       )
     }
-    ok <- .effect_marks()
-    if (!mark %in% ok) {
-      cli::cli_abort(
-        c(
-          "This effect does not apply to a {.val {mark}} mark.",
-          i = "It applies to: {.val {ok}}."
-        ),
-        call = call
-      )
+    if (is_text) {
+      # Only shadow() reads correctly on text (an offset drop copy). outline() /
+      # glow() would have to stroke the glyph outlines, which vellum's text
+      # primitive can't do yet — reject them rather than draw a broken halo.
+      if (!S7::S7_inherits(e, ShadowSpec)) {
+        cli::cli_abort(
+          c(
+            "Only {.fn shadow} applies to a text mark ({.val {mark}}).",
+            i = "{.fn outline} / {.fn glow} need a glyph outline the text primitive can't draw yet."
+          ),
+          call = call
+        )
+      }
+    } else {
+      ok <- .effect_marks()
+      if (!mark %in% ok) {
+        cli::cli_abort(
+          c(
+            "This effect does not apply to a {.val {mark}} mark.",
+            i = "It applies to: {.val {ok}}."
+          ),
+          call = call
+        )
+      }
     }
   }
   effects

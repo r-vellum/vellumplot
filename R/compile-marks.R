@@ -3141,7 +3141,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   yoff = 0
 ) {
   is_point <- L$mark %in% c("point", "nodes")
-  is_text <- L$mark %in% .TEXT_MARKS
   base <- .glow_base(L)
   rng <- .panel_scale_range(scales)
   scene <- vellum::push(
@@ -3164,14 +3163,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       L2$params$color <- colour
       L2$params$fill <- colour
     }
-    if (is_text) {
-      # Text has no stroke to widen: a halo is the label re-drawn in the halo
-      # colour, offset around a ring of radius `d` (mm) in 8 compass directions,
-      # beneath the crisp original -- shadowtext. `outline()` (one delta) gives a
-      # crisp halo, `glow()` (several) a soft one, `shadow()` a directional drop.
-      scene <- .emit_text_halo(scene, L2, scales, d, rng)
-      next
-    }
     if (is_point) {
       L2$values$size <- NULL
       L2$params$size <- base + d
@@ -3181,33 +3172,6 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     scene <- .emit_layer(scene, L2, scales)
   }
   vellum::pop(scene)
-}
-
-# Text marks a layer effect can decorate (halo / shadowtext).
-.TEXT_MARKS <- c("text", "label", "node_text", "edge_text")
-
-# Draw `L`'s labels offset around a ring of radius `d` (mm) in 8 directions, each
-# a full re-emit in a translated viewport -- the halo copies that sit beneath the
-# crisp text. A zero radius draws a single centred copy (degenerate, harmless).
-.emit_text_halo <- function(scene, L, scales, d, rng) {
-  if (!is.finite(d) || d <= 0) {
-    return(.emit_layer(scene, L, scales))
-  }
-  dirs <- utils::head(seq(0, 2 * pi, length.out = 9L), -1L)
-  for (th in dirs) {
-    scene <- vellum::push(
-      scene,
-      vellum::vl_viewport(
-        x = vellum::vl_unit(0.5, "npc") + vellum::vl_unit(d * cos(th), "mm"),
-        y = vellum::vl_unit(0.5, "npc") + vellum::vl_unit(d * sin(th), "mm"),
-        xscale = rng$x,
-        yscale = rng$y
-      )
-    )
-    scene <- .emit_layer(scene, L, scales)
-    scene <- vellum::pop(scene)
-  }
-  scene
 }
 
 .emit_glow <- function(scene, L, scales, g) {
