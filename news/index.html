@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.6.0" id="vellumplot-060">vellumplot 0.6.0<a class="anchor" aria-label="anchor" href="#vellumplot-060"></a></h2>
 <ul><li><p><strong>Sankey styling options.</strong> <code><a href="../reference/vsankey.html">vsankey()</a></code> / <code><a href="../reference/vsankey.html">mark_sankey()</a></code> gain <code>show_values</code> (append each node’s value to its label), <code>flow_color</code> (<code>"source"</code>, <code>"target"</code>, or <code>"gradient"</code> — a source-to-target colour fade per ribbon), and <code>node_width</code> / <code>node_gap</code> to tune the node rectangles.</p></li>
 <li><p><strong>Sankey crossing minimisation.</strong> <code><a href="../reference/vsankey.html">vsankey()</a></code> now orders the nodes within each column with the Sugiyama barycenter heuristic to minimise ribbon crossings (previously first-appearance order, which left many avoidable crossings). The reordering is deterministic and pure R. A related fix stacks each node’s ribbon slices to meet the node in the same vertical order as the nodes they connect to, removing the remaining crossings within a fan of ribbons.</p></li>
 <li><p><strong>Sunburst rendering fixes.</strong> <code><a href="../reference/vsunburst.html">vsunburst()</a></code> now colours wedges by their top-level branch (each branch a distinct hue, lightened with depth) instead of a single colour per ring — sibling branches were previously indistinguishable. It also starts the first wedge at twelve o’clock and winds clockwise, matching the package’s pies/roses (<code>coord_polar</code>) rather than starting at three o’clock counter-clockwise.</p></li>

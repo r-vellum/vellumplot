@@ -1,6 +1,6 @@
 # Changelog
 
-## vellumplot (development version)
+## vellumplot 0.6.0
 
 - **Sankey styling options.**
   [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
