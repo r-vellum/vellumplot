@@ -180,13 +180,23 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # Apply a layer's `nudge_x`/`nudge_y` (millimetres) to a resolved `.xy_units()`
 # pair, as a device-exact compound offset (vellum's `native + mm` unit). A zero
 # nudge is left untouched, so an un-nudged mark is byte-identical.
-.nudge_xy <- function(xy, L) {
-  nx <- .aes_param(L, "nudge_x", 0)
-  ny <- .aes_param(L, "nudge_y", 0)
-  if (!is.null(nx) && nx != 0) {
+.nudge_xy <- function(xy, L, idx = NULL) {
+  # A per-row nudge (mm) mapped as a `nudge_x`/`nudge_y` channel wins over the
+  # scalar `nudge_x`/`nudge_y` param -- this is how `mark_node_text(dist=)` pushes
+  # each label radially outward from the graph centroid. `idx` subsets it to the
+  # rows drawn in the current style group.
+  nx <- L$values$nudge_x %||% .aes_param(L, "nudge_x", 0)
+  ny <- L$values$nudge_y %||% .aes_param(L, "nudge_y", 0)
+  if (!is.null(idx)) {
+    if (length(nx) > 1L) {
+      nx <- nx[idx]
+    }
+    if (length(ny) > 1L) ny <- ny[idx]
+  }
+  if (!is.null(nx) && any(nx != 0)) {
     xy$x <- xy$x + vellum::vl_unit(nx, "mm")
   }
-  if (!is.null(ny) && ny != 0) {
+  if (!is.null(ny) && any(ny != 0)) {
     xy$y <- xy$y + vellum::vl_unit(ny, "mm")
   }
   xy
@@ -1077,7 +1087,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
-    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L)
+    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
     scene <- .draw(
       scene,
       vellum::text_grob(
@@ -1139,7 +1149,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   for (idx in .style_groups(n, list(col = col, fill = bg, alpha = alpha))) {
     a <- alpha[idx[1]]
-    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L)
+    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
     scene <- .draw(
       scene,
       vellum::roundrect_grob(
@@ -1313,7 +1323,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     img <- .read_image(src[i], cache)
     h_mm <- size[i]
     w_mm <- size[i] * (img$iw / img$ih)
-    xy <- .nudge_xy(.xy_units(scales, xn[i], yn[i]), L)
+    xy <- .nudge_xy(.xy_units(scales, xn[i], yn[i]), L, i)
     scene <- .draw(
       scene,
       vellum::raster_grob(
@@ -2933,6 +2943,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   yoff = 0
 ) {
   is_point <- L$mark %in% c("point", "nodes")
+  is_text <- L$mark %in% .TEXT_MARKS
   base <- .glow_base(L)
   rng <- .panel_scale_range(scales)
   scene <- vellum::push(
@@ -2955,6 +2966,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       L2$params$color <- colour
       L2$params$fill <- colour
     }
+    if (is_text) {
+      # Text has no stroke to widen: a halo is the label re-drawn in the halo
+      # colour, offset around a ring of radius `d` (mm) in 8 compass directions,
+      # beneath the crisp original -- shadowtext. `outline()` (one delta) gives a
+      # crisp halo, `glow()` (several) a soft one, `shadow()` a directional drop.
+      scene <- .emit_text_halo(scene, L2, scales, d, rng)
+      next
+    }
     if (is_point) {
       L2$values$size <- NULL
       L2$params$size <- base + d
@@ -2964,6 +2983,33 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     scene <- .emit_layer(scene, L2, scales)
   }
   vellum::pop(scene)
+}
+
+# Text marks a layer effect can decorate (halo / shadowtext).
+.TEXT_MARKS <- c("text", "label", "node_text", "edge_text")
+
+# Draw `L`'s labels offset around a ring of radius `d` (mm) in 8 directions, each
+# a full re-emit in a translated viewport -- the halo copies that sit beneath the
+# crisp text. A zero radius draws a single centred copy (degenerate, harmless).
+.emit_text_halo <- function(scene, L, scales, d, rng) {
+  if (!is.finite(d) || d <= 0) {
+    return(.emit_layer(scene, L, scales))
+  }
+  dirs <- utils::head(seq(0, 2 * pi, length.out = 9L), -1L)
+  for (th in dirs) {
+    scene <- vellum::push(
+      scene,
+      vellum::vl_viewport(
+        x = vellum::vl_unit(0.5, "npc") + vellum::vl_unit(d * cos(th), "mm"),
+        y = vellum::vl_unit(0.5, "npc") + vellum::vl_unit(d * sin(th), "mm"),
+        xscale = rng$x,
+        yscale = rng$y
+      )
+    )
+    scene <- .emit_layer(scene, L, scales)
+    scene <- vellum::pop(scene)
+  }
+  scene
 }
 
 .emit_glow <- function(scene, L, scales, g) {

@@ -358,6 +358,85 @@ test_that("mark_edges stores the resolved arrow spec", {
 
 # --- N1 end to end -----------------------------------------------------------
 
+# --- N2: label quality (repel, halo, radial offset, top-n) -------------------
+
+test_that("mark_node_text(repel=) plumbs repel params", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(5)
+  p <- vgraph(g) |> mark_node_text(label = name, repel = TRUE)
+  prm <- p@layers[[length(p@layers)]]@stat_params$repel
+  expect_true(isTRUE(prm$on))
+  p0 <- vgraph(g) |> mark_node_text(label = name)
+  expect_null(p0@layers[[length(p0@layers)]]@stat_params$repel)
+})
+
+test_that("mark_node_text / mark_edge_text accept halo effects", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(4)
+  # Previously effects were rejected on text marks; now they draw a halo.
+  expect_no_error(
+    vgraph(g) |> mark_node_text(label = name, effects = list(outline()))
+  )
+  expect_no_error(
+    vgraph(g) |>
+      mark_edge_text(label = "e", effects = list(shadow())) |>
+      identity()
+  )
+})
+
+test_that(".node_label_offsets pushes labels radially outward from the centroid", {
+  full <- data.frame(x = c(-1, 1, 0, 0), y = c(0, 0, -1, 1)) # centroid (0,0)
+  lab <- .node_label_offsets(full, data.frame(x = 1, y = 0), dist = 2)
+  # a node due east of the centroid nudges +x by the full dist, 0 in y.
+  expect_equal(lab$.node_nudge_x, 2)
+  expect_equal(lab$.node_nudge_y, 0)
+  # dist = 0 is a no-op (no nudge columns).
+  z <- .node_label_offsets(full, data.frame(x = 1, y = 0), dist = 0)
+  expect_false(".node_nudge_x" %in% names(z))
+})
+
+test_that("mark_node_text(dist=) maps per-row radial nudges", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(6)
+  p <- vgraph(g) |> mark_node_text(label = name, dist = 3)
+  L <- p@layers[[length(p@layers)]]
+  expect_true(all(c("nudge_x", "nudge_y") %in% names(L@encoding)))
+  expect_true(".node_nudge_x" %in% names(L@data))
+})
+
+test_that("mark_node_text(top_n=, by=) keeps only the top-n vertices", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_star(8, mode = "undirected") # vertex 1 is the hub
+  g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
+  p <- vgraph(g) |> mark_node_text(label = name, top_n = 3, by = deg)
+  expect_identical(nrow(p@layers[[length(p@layers)]]@data), 3L)
+  expect_error(
+    vgraph(g) |> mark_node_text(label = name, top_n = 3),
+    "needs a"
+  )
+})
+
+test_that("label-quality features render end to end", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph("Zachary")
+  g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
+  p <- vgraph(g) |>
+    mark_edges(alpha = 0.3) |>
+    mark_nodes(size = deg) |>
+    mark_node_text(
+      label = name,
+      dist = 3,
+      top_n = 6,
+      by = deg,
+      effects = list(outline(color = "white"))
+    )
+  expect_no_error(vellum::as_vellum_scene(p))
+  png <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, png))
+  expect_true(file.exists(png))
+})
+
 test_that("independent node/edge colour + edge label + arrow spec render", {
   skip_if_not_installed("igraph")
   skip_if_not_installed("graphlayouts")

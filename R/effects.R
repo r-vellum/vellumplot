@@ -11,11 +11,12 @@ NULL
   "edges",
   "nodes"
 )
-# The marks an effect applies to (used for validation + error messages). All
-# current effects (glow / outline / shadow) decorate stroked and point marks;
-# if an effect ever needs a different set this becomes a per-class dispatch.
+# The marks an effect applies to (used for validation + error messages). Glow /
+# outline / shadow decorate stroked and point marks, plus text marks (as a
+# halo / shadowtext, drawn by `.emit_text_halo()`); if an effect ever needs a
+# different set this becomes a per-class dispatch.
 .effect_marks <- function() {
-  .STROKE_POINT_MARKS
+  c(.STROKE_POINT_MARKS, "text", "label", "node_text", "edge_text")
 }
 
 #' Neon glow layer effect

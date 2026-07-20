@@ -44,6 +44,16 @@ mark_node_text(
   color = NULL,
   size = NULL,
   alpha = NULL,
+  dist = 0,
+  top_n = NULL,
+  by = NULL,
+  repel = FALSE,
+  box_padding = 1,
+  point_padding = 1,
+  min_segment_length = 2,
+  max_overlaps = 10,
+  seed = NULL,
+  effects = list(),
   blend = NULL,
   data = NULL
 )
@@ -56,6 +66,7 @@ mark_edge_text(
   size = NULL,
   alpha = NULL,
   angle = NULL,
+  effects = list(),
   blend = NULL,
   data = NULL
 )
@@ -111,6 +122,22 @@ expression. For nodes, \code{fill} (or \code{color}) is the marker colour; for
 \code{name}); for \code{mark_edge_text()}, the edge label expression (no default -- map
 an edge attribute, e.g. \code{label = weight}).}
 
+\item{dist}{For \code{mark_node_text()}, a radial offset (mm) pushing each label
+outward from the layout centroid, so labels clear the node markers instead of
+sitting on them. \code{0} (default) centres the label on the vertex.}
+
+\item{top_n, by}{For \code{mark_node_text()}, label only the \code{top_n} vertices with
+the largest \code{by} (an edge/vertex metric column, e.g. \code{by = degree}) -- the
+idiomatic "label just the hubs" filter. \code{NULL} (default) labels every vertex.}
+
+\item{repel}{For \code{mark_node_text()}, \code{TRUE} to move overlapping labels apart
+with a force-directed layout (ggrepel-style), drawing a thin leader line back
+to each vertex. \code{box_padding}, \code{point_padding}, \code{min_segment_length},
+\code{max_overlaps}, and \code{seed} tune it exactly as in \code{\link[=mark_text]{mark_text()}}.}
+
+\item{box_padding, point_padding, min_segment_length, max_overlaps, seed}{Repel
+tuning for \code{mark_node_text(repel = TRUE)}; see \code{\link[=mark_text]{mark_text()}}.}
+
 \item{angle}{For \code{mark_edge_text()}, the label rotation: a constant in degrees,
 or \code{"along"} to rotate each label along its edge. \code{NULL} (default) draws
 horizontal labels.}
@@ -134,6 +161,12 @@ Edge colour, opacity, and line type train on \strong{their own scales}
 \code{\link[=scale_edge_width]{scale_edge_width()}}), independent of the node colour/alpha/linetype scales --
 so a plot can map node fill to a discrete community and edge colour to a
 continuous weight without the two legends colliding.
+
+\code{mark_node_text()} has the label-legibility tools a dense graph needs:
+\code{repel = TRUE} nudges overlapping labels apart with leader lines, \code{dist} pushes
+labels radially clear of the node markers, \code{top_n}/\code{by} label only the hubs,
+and \code{effects = list(outline())} draws a halo so labels stay readable over
+edges. \code{mark_edge_text()} takes the same \code{effects}.
 
 These are thin over the point / segment / text marks; \code{igraph} need not be
 installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it).
