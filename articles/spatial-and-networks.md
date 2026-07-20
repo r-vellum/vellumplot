@@ -63,7 +63,7 @@ g <- igraph::set_vertex_attr(g, "deg", value = igraph::degree(g))
 vgraph(g, layout = "stress") |>
   mark_edges(alpha = 0.4) |>
   mark_nodes(size = deg, fill = grp) |>
-  scale_size(range = c(2, 9))
+  scale_size(range = c(0.5, 3))
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-3-1.png)
@@ -80,7 +80,7 @@ adds vertex labels.
 
 vgraph(g, layout = "stress") |>
   mark_edges(color = "grey70") |>
-  mark_nodes(fill = grp, size = 6) |>
+  mark_nodes(fill = grp, size = 2) |>
   mark_node_text(label = name, size = 8)
 ```
 
@@ -112,7 +112,7 @@ vgraph(g, layout = "stress") |>
   mark_nodes(fill = grp, size = deg) |>
   scale_edge_color(palette = "Grays") |>
   scale_edge_width(range = c(0.3, 2.5)) |>
-  scale_size(range = c(2, 9))
+  scale_size(range = c(0.5, 3))
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-5-1.png)
@@ -136,7 +136,7 @@ d <- igraph::set_edge_attr(d, "flow", value = c(3, 1, 4, 1, 5))
 
 vgraph(d, layout = "stress") |>
   mark_edges(linewidth = flow, arrow = TRUE) |>
-  mark_nodes(size = 8, fill = "steelblue") |>
+  mark_nodes(size = 2, fill = "steelblue") |>
   mark_edge_text(label = flow, size = 7) |>
   mark_node_text(label = name, size = 8, color = "white") |>
   scale_edge_width(range = c(0.4, 2.5))
@@ -176,7 +176,7 @@ vgraph(g, layout = "stress") |>
     color = "white",
     effects = list(shadow(x = 0.4, y = -0.4))
   ) |>
-  scale_size(range = c(2, 9))
+  scale_size(range = c(0.5, 3))
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png)
@@ -195,7 +195,7 @@ node-boundary caps and arrowheads.
 tr <- igraph::make_tree(15, children = 2, mode = "out")
 vgraph(tr, layout = "tree") |>
   mark_edges(routing = "elbow", arrow = TRUE) |>
-  mark_nodes(size = 5, fill = "steelblue")
+  mark_nodes(size = 2, fill = "steelblue")
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png)
@@ -209,7 +209,7 @@ arrowheads (and without the clutter they add on a dense graph).
 dg <- igraph::sample_gnp(15, 0.2, directed = TRUE)
 vgraph(dg) |>
   mark_edges(gradient = TRUE) |>
-  mark_nodes(size = 4, fill = "grey30")
+  mark_nodes(size = 2, fill = "grey30")
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-9-1.png)
@@ -237,7 +237,7 @@ vgraph(g, augment = c("degree", "community"), k_core = 2) |>
   mark_edges(alpha = 0.3) |>
   mark_nodes(size = degree, fill = factor(community)) |>
   mark_node_text(label = name, top_n = 6, by = degree, dist = 3) |>
-  scale_size(range = c(2, 9))
+  scale_size(range = c(0.5, 3))
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png)
@@ -260,7 +260,7 @@ vgraph(g, layout = "stress") |>
   mark_node_hull(fill = comm, expand = 0.12) |>
   mark_edges(alpha = 0.3) |>
   mark_nodes(size = deg, fill = comm) |>
-  scale_size(range = c(2, 9))
+  scale_size(range = c(0.5, 3))
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
@@ -294,7 +294,7 @@ Stochastic layouts take a `seed` so the figure is reproducible.
 
 vgraph(g, layout = "circle") |>
   mark_edges(alpha = 0.3) |>
-  mark_nodes(fill = grp, size = 5)
+  mark_nodes(fill = grp, size = 2)
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)

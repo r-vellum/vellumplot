@@ -141,7 +141,7 @@
 <span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">g</span>, layout <span class="op">=</span> <span class="st">"stress"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="va">deg</span>, fill <span class="op">=</span> <span class="va">grp</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-3-1.png" style="width:100.0%"></p>
@@ -154,7 +154,7 @@
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">g</span>, layout <span class="op">=</span> <span class="st">"stress"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"grey70"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">grp</span>, size <span class="op">=</span> <span class="fl">6</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">grp</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_node_text</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">name</span>, size <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
@@ -175,7 +175,7 @@
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">grp</span>, size <span class="op">=</span> <span class="va">deg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_edge.html">scale_edge_color</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"Grays"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_edge_width.html">scale_edge_width</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">2.5</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-5-1.png" style="width:100.0%"></p>
@@ -194,7 +194,7 @@
 <span></span>
 <span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">d</span>, layout <span class="op">=</span> <span class="st">"stress"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="va">flow</span>, arrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">8</span>, fill <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, fill <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edge_text</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">flow</span>, size <span class="op">=</span> <span class="fl">7</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_node_text</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">name</span>, size <span class="op">=</span> <span class="fl">8</span>, color <span class="op">=</span> <span class="st">"white"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_edge_width.html">scale_edge_width</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">2.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -231,7 +231,7 @@
 <span>    color <span class="op">=</span> <span class="st">"white"</span>,</span>
 <span>    effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/shadow.html">shadow</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">0.4</span>, y <span class="op">=</span> <span class="op">-</span><span class="fl">0.4</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
@@ -247,7 +247,7 @@
 <code class="sourceCode R"><span><span class="va">tr</span> <span class="op">&lt;-</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/make_tree.html" class="external-link">make_tree</a></span><span class="op">(</span><span class="fl">15</span>, children <span class="op">=</span> <span class="fl">2</span>, mode <span class="op">=</span> <span class="st">"out"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">tr</span>, layout <span class="op">=</span> <span class="st">"tree"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>routing <span class="op">=</span> <span class="st">"elbow"</span>, arrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">5</span>, fill <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, fill <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
@@ -261,7 +261,7 @@
 <code class="sourceCode R"><span><span class="va">dg</span> <span class="op">&lt;-</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/sample_gnp.html" class="external-link">sample_gnp</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">0.2</span>, directed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">dg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>gradient <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">4</span>, fill <span class="op">=</span> <span class="st">"grey30"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, fill <span class="op">=</span> <span class="st">"grey30"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
@@ -280,7 +280,7 @@
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="va">degree</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">community</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_node_text</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">name</span>, top_n <span class="op">=</span> <span class="fl">6</span>, by <span class="op">=</span> <span class="va">degree</span>, dist <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
@@ -301,7 +301,7 @@
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_node_hull</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">comm</span>, expand <span class="op">=</span> <span class="fl">0.12</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="va">deg</span>, fill <span class="op">=</span> <span class="va">comm</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
@@ -333,7 +333,7 @@
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">g</span>, layout <span class="op">=</span> <span class="st">"circle"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">grp</span>, size <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">grp</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
