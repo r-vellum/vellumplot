@@ -144,6 +144,29 @@ test_that("a composition resolves cross-cell selection references", {
   expect_identical(im$filters[[1]]$selection, "br")
 })
 
+test_that("composition cells get unique keys + a join id; single plots do not", {
+  # single plot: keys are the row/data ids, no join
+  sp <- vellum::scene_model(vellum::as_vellum_scene(
+    vplot(df) |> mark_point(x = x, y = y, tooltip = x)
+  ))$elements
+  sp <- sp[!is.na(sp$key), , drop = FALSE]
+  expect_false(any(grepl(":", sp$key)))
+  expect_null(sp$meta[[1]]$join)
+
+  # composition: cells share row identity via `join`, but keys are unique per cell
+  sel <- select_interval("br", on = "x")
+  comp <- vconcat(
+    vplot(df) |> mark_point(x = x, y = y) |> add_selection(sel),
+    vplot(df) |> mark_point(x = x, y = y) |> filter_by(sel)
+  )
+  kc <- vellum::scene_model(vellum::as_vellum_scene(comp))$elements
+  kc <- kc[!is.na(kc$key), , drop = FALSE]
+  expect_equal(length(unique(kc$key)), nrow(kc)) # all keys unique
+  expect_true(all(grepl("^subplot-", kc$key)))
+  joins <- vapply(kc$meta, function(m) m$join, character(1))
+  expect_setequal(joins, as.character(rep(seq_len(nrow(df)), 2))) # shared identity
+})
+
 test_that("a cross-view filter tags only the filtering cell's elements", {
   sel <- select_interval("br", on = "x")
   comp <- vconcat(
