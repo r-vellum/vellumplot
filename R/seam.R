@@ -262,7 +262,16 @@ NULL
       )
     }
   }
-  lay <- .build_layout(built, guides, spec@labels, rt, flip, co, spec@marginal)
+  lay <- .build_layout(
+    built,
+    guides,
+    spec@labels,
+    rt,
+    flip,
+    co,
+    spec@marginal,
+    page_height = spec@height
+  )
 
   # Outer margin grid: absolute mm tracks around a single `null` cell holding the
   # real layout. (Done as a grid rather than an inset viewport because vellum
@@ -569,7 +578,8 @@ NULL
       ),
       guides,
       rt,
-      orient = "vertical"
+      orient = "vertical",
+      avail_h = lay$legend_avail_h
     )
   } else if (!is.na(lay$legend_row)) {
     scene <- .draw_legends(
