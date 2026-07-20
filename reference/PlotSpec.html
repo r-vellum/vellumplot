@@ -95,7 +95,10 @@ via <code><a href="render_plot.html">render_plot()</a></code>). Printing it draw
 <span>  dpi <span class="op">=</span> <span class="fl">96</span>,</span>
 <span>  theme <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  marginal <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  marginal <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  selections <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  binds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -156,6 +159,19 @@ PNG's pixel dimensions are <code>width * dpi</code> by <code>height * dpi</code>
 <dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
 <dd><p>A marginal-distribution specification (from <code><a href="add_marginal.html">add_marginal()</a></code>),
 or <code>NULL</code> for no marginals.</p></dd>
+
+
+<dt id="arg-selections">selections<a class="anchor" aria-label="anchor" href="#arg-selections"></a></dt>
+<dd><p>A list of interactive selection declarations (from
+<code><a href="select_point.html">select_point()</a></code> / <code><a href="select_point.html">select_interval()</a></code> / <code><a href="add_selection.html">add_selection()</a></code>).</p></dd>
+
+
+<dt id="arg-filters">filters<a class="anchor" aria-label="anchor" href="#arg-filters"></a></dt>
+<dd><p>A list of filter declarations (from <code><a href="filter_by.html">filter_by()</a></code>).</p></dd>
+
+
+<dt id="arg-binds">binds<a class="anchor" aria-label="anchor" href="#arg-binds"></a></dt>
+<dd><p>A list of scale-domain bind declarations (from <code><a href="bind_scale.html">bind_scale()</a></code>).</p></dd>
 
 </dl></div>
     <div class="section level2">

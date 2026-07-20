@@ -566,6 +566,26 @@ fills.
   [`radial_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
   : Gradient fill paints
 
+## Interactivity
+
+Declare interactions as part of the plot — selections bound to gestures,
+conditional encodings, filters, and scale-domain binds. Inert on a
+static render; enacted by a host such as vellumwidget.
+
+- [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
+  [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
+  : Declare an interactive selection
+- [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
+  : Conditional encoding: style by selection membership
+- [`add_selection()`](https://r-vellum.github.io/vellumplot/reference/add_selection.md)
+  : Register a free-standing selection on a plot
+- [`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md)
+  : Filter a view by a selection
+- [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)
+  : Bind a panel's view to a selection (overview + detail)
+- [`interaction_model()`](https://r-vellum.github.io/vellumplot/reference/interaction_model.md)
+  : The interaction model of a compiled plot
+
 ## Accessibility and provenance
 
 Attach a text alternative for screen readers, or inspect how a spec

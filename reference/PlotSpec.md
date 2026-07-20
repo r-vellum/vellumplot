@@ -28,7 +28,10 @@ PlotSpec(
   dpi = 96,
   theme = NULL,
   labels = list(),
-  marginal = NULL
+  marginal = NULL,
+  selections = list(),
+  filters = list(),
+  binds = list()
 )
 ```
 
@@ -103,6 +106,25 @@ PlotSpec(
   A marginal-distribution specification (from
   [`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)),
   or `NULL` for no marginals.
+
+- selections:
+
+  A list of interactive selection declarations (from
+  [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
+  /
+  [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
+  /
+  [`add_selection()`](https://r-vellum.github.io/vellumplot/reference/add_selection.md)).
+
+- filters:
+
+  A list of filter declarations (from
+  [`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md)).
+
+- binds:
+
+  A list of scale-domain bind declarations (from
+  [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)).
 
 ## Value
 
