@@ -1925,6 +1925,12 @@ mark_segment <- function(
 #' so a plot can map node fill to a discrete community and edge colour to a
 #' continuous weight without the two legends colliding.
 #'
+#' `mark_node_text()` has the label-legibility tools a dense graph needs:
+#' `repel = TRUE` nudges overlapping labels apart with leader lines, `dist` pushes
+#' labels radially clear of the node markers, `top_n`/`by` label only the hubs,
+#' and `effects = list(outline())` draws a halo so labels stay readable over
+#' edges. `mark_edge_text()` takes the same `effects`.
+#'
 #' These are thin over the point / segment / text marks; `igraph` need not be
 #' installed to use them (only [vgraph()] needs it).
 #'
@@ -1962,6 +1968,18 @@ mark_segment <- function(
 #' @param angle For `mark_edge_text()`, the label rotation: a constant in degrees,
 #'   or `"along"` to rotate each label along its edge. `NULL` (default) draws
 #'   horizontal labels.
+#' @param dist For `mark_node_text()`, a radial offset (mm) pushing each label
+#'   outward from the layout centroid, so labels clear the node markers instead of
+#'   sitting on them. `0` (default) centres the label on the vertex.
+#' @param top_n,by For `mark_node_text()`, label only the `top_n` vertices with
+#'   the largest `by` (an edge/vertex metric column, e.g. `by = degree`) -- the
+#'   idiomatic "label just the hubs" filter. `NULL` (default) labels every vertex.
+#' @param repel For `mark_node_text()`, `TRUE` to move overlapping labels apart
+#'   with a force-directed layout (ggrepel-style), drawing a thin leader line back
+#'   to each vertex. `box_padding`, `point_padding`, `min_segment_length`,
+#'   `max_overlaps`, and `seed` tune it exactly as in [mark_text()].
+#' @param box_padding,point_padding,min_segment_length,max_overlaps,seed Repel
+#'   tuning for `mark_node_text(repel = TRUE)`; see [mark_text()].
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data; overrides the default table.
 #' @param effects A list of layer render effects ([glow()], [outline()],
@@ -2066,23 +2084,99 @@ mark_node_text <- function(
   color = NULL,
   size = NULL,
   alpha = NULL,
+  dist = 0,
+  top_n = NULL,
+  by = NULL,
+  repel = FALSE,
+  box_padding = 1,
+  point_padding = 1,
+  min_segment_length = 2,
+  max_overlaps = 10,
+  seed = NULL,
+  effects = list(),
   blend = NULL,
   data = NULL
 ) {
   .check_plot(plot)
+  # `top_n`/`by`: label only the n vertices with the largest `by` (a per-layer
+  # data filter -- the idiomatic "label the hubs" move made a one-liner). The
+  # centroid for the radial offset stays the *full* layout, so kept labels still
+  # fan outward correctly.
+  full <- data %||% plot@data
+  lab <- full
+  by_q <- rlang::enquo(by)
+  if (!is.null(top_n)) {
+    if (rlang::quo_is_null(by_q)) {
+      cli::cli_abort(c(
+        "{.arg top_n} needs a {.arg by} metric.",
+        i = "e.g. {.code mark_node_text(top_n = 10, by = degree)}."
+      ))
+    }
+    vals <- rlang::eval_tidy(by_q, lab)
+    keep <- utils::head(order(vals, decreasing = TRUE), as.integer(top_n))
+    lab <- lab[sort(keep), , drop = FALSE]
+  }
+  lab <- .node_label_offsets(full, lab, as.numeric(dist))
   dots <- .with_default_aes(
     rlang::enquos(...),
     rlang::quos(x = x, y = y, label = name)
   )
+  extra <- rlang::enquos(
+    label = label,
+    color = color,
+    size = size,
+    alpha = alpha
+  )
+  if (as.numeric(dist) != 0) {
+    extra <- c(
+      extra,
+      rlang::quos(nudge_x = .node_nudge_x, nudge_y = .node_nudge_y)
+    )
+  }
   .add_layer(
     plot,
     "node_text",
     dots,
-    rlang::enquos(label = label, color = color, size = size, alpha = alpha),
+    extra,
+    stat_params = list(
+      repel = .repel_params(
+        repel,
+        box_padding,
+        point_padding,
+        min_segment_length,
+        max_overlaps,
+        seed
+      )
+    ),
+    effects = effects,
     blend = blend,
-    data = data,
+    data = lab,
     z = 4L
   )
+}
+
+# Attach the per-row radial nudges (mm) a `mark_node_text(dist=)` uses to push
+# each label outward from the full layout's centroid, so labels clear the node
+# markers instead of sitting on them. No-op when `dist == 0`.
+.node_label_offsets <- function(full, lab, dist, call = rlang::caller_env()) {
+  if (dist == 0) {
+    return(lab)
+  }
+  if (!all(c("x", "y") %in% names(lab))) {
+    cli::cli_abort(
+      "{.arg dist} needs {.field x}/{.field y} columns (use it on a {.fn vgraph} plot).",
+      call = call
+    )
+  }
+  cx <- mean(full$x)
+  cy <- mean(full$y)
+  dx <- lab$x - cx
+  dy <- lab$y - cy
+  r <- sqrt(dx^2 + dy^2)
+  r[r == 0] <- 1 # a node at the centroid has no outward direction
+  lab$.node_nudge_x <- dist * dx / r
+  lab$.node_nudge_y <- dist * dy / r
+  lab
 }
 
 #' @rdname mark_graph
@@ -2095,6 +2189,7 @@ mark_edge_text <- function(
   size = NULL,
   alpha = NULL,
   angle = NULL,
+  effects = list(),
   blend = NULL,
   data = NULL
 ) {
@@ -2131,6 +2226,7 @@ mark_edge_text <- function(
     "edge_text",
     dots,
     extra,
+    effects = effects,
     blend = blend,
     data = data %||% plot@edge_data,
     z = 2L
