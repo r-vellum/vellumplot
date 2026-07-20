@@ -241,6 +241,47 @@ vgraph(g, augment = c("degree", "community"), k_core = 2) |>
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png)
 
+### Community hulls and node glyphs
+
+[`mark_node_hull()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+shades groups of nodes with a convex hull drawn *behind* the graph – the
+standard way to show community structure. Group by a mapped `fill`;
+`expand` grows each hull so it wraps the markers rather than clipping
+them.
+
+``` r
+
+g <- igraph::set_vertex_attr(
+  g, "comm",
+  value = factor(igraph::membership(igraph::cluster_louvain(g)))
+)
+vgraph(g, layout = "stress") |>
+  mark_node_hull(fill = comm, expand = 0.12) |>
+  mark_edges(alpha = 0.3) |>
+  mark_nodes(size = deg, fill = comm) |>
+  scale_size(range = c(2, 9))
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+
+[`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+replaces the node markers with pie (or donut, via `inner`) glyphs whose
+wedges come from a set of compositional columns – one wedge per column,
+sized by that column’s value at each vertex.
+
+``` r
+
+set.seed(1)
+for (nm in c("x1", "x2", "x3")) {
+  g <- igraph::set_vertex_attr(g, nm, value = runif(igraph::vcount(g)))
+}
+vgraph(g, layout = "stress") |>
+  mark_edges(alpha = 0.3) |>
+  mark_node_pie(cols = c("x1", "x2", "x3"), size = 5)
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
+
 ### Choosing a layout
 
 `layout` accepts a name (`"stress"`, `"sparse_stress"`, `"backbone"`,
@@ -255,7 +296,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a

@@ -81,6 +81,29 @@ mark_edge_text(
   blend = NULL,
   data = NULL
 )
+
+mark_node_hull(
+  plot,
+  ...,
+  fill = NULL,
+  color = NULL,
+  alpha = 0.25,
+  expand = 0.08,
+  data = NULL
+)
+
+mark_node_pie(
+  plot,
+  cols,
+  ...,
+  size = 4,
+  inner = 0,
+  fill = NULL,
+  color = "white",
+  linewidth = 0.5,
+  alpha = NA,
+  data = NULL
+)
 ```
 
 ## Arguments
@@ -104,7 +127,8 @@ mark_edge_text(
 
   For `mark_edges()`, the edge width; a constant or (via
   [`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md))
-  a mapped expression such as `linewidth = weight`.
+  a mapped expression such as `linewidth = weight`. For
+  `mark_node_pie()`, the wedge border width.
 
 - linetype:
 
@@ -225,6 +249,22 @@ mark_edge_text(
   `"along"` to rotate each label along its edge. `NULL` (default) draws
   horizontal labels.
 
+- expand:
+
+  For `mark_node_hull()`, the fraction to grow each hull outward from
+  its centroid so it encloses the node markers (default `0.08`).
+
+- cols:
+
+  For `mark_node_pie()`, the compositional columns (a character vector
+  of node-table column names, at least two) whose values size each
+  node's wedges.
+
+- inner:
+
+  For `mark_node_pie()`, the inner-radius fraction: `0` (default) draws
+  a pie, `> 0` a donut (e.g. `0.5`).
+
 ## Value
 
 The modified
@@ -247,6 +287,11 @@ without the two legends colliding.
 pushes labels radially clear of the node markers, `top_n`/`by` label
 only the hubs, and `effects = list(outline())` draws a halo so labels
 stay readable over edges. `mark_edge_text()` takes the same `effects`.
+
+Two more decorations: `mark_node_hull()` shades communities with a
+convex hull behind the graph (grouped by a mapped `fill`, drawn under
+the edges), and `mark_node_pie()` replaces node markers with pie / donut
+glyphs whose wedges come from a set of compositional columns.
 
 These are thin over the point / segment / text marks; `igraph` need not
 be installed to use them (only

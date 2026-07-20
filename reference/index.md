@@ -94,6 +94,8 @@ Layers that draw data. Scales train across every mark on the panel.
   [`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_edge_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  [`mark_node_hull()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   : Network (graph) marks
 - [`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md)
   : Edge-width scale

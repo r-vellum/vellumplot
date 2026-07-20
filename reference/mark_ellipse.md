@@ -18,7 +18,7 @@ mark_ellipse(
   data = NULL
 )
 
-mark_hull(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_hull(plot, ..., expand = 0, blend = NULL, sketch = NULL, data = NULL)
 ```
 
 ## Arguments
@@ -67,6 +67,13 @@ mark_hull(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 - data:
 
   Optional layer data frame; overrides the plot data for this layer.
+
+- expand:
+
+  For `mark_hull()`, grow each hull outward from its centroid by this
+  fraction (e.g. `0.1` = 10% larger), so it encloses the markers it
+  wraps rather than passing through their centres. `0` (default) is the
+  tight hull.
 
 ## Value
 

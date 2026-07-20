@@ -152,6 +152,29 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">mark_node_hull</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.25</span>,</span>
+<span>  expand <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">mark_node_pie</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">cols</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  size <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  inner <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  color <span class="op">=</span> <span class="st">"white"</span>,</span>
+<span>  linewidth <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -172,7 +195,8 @@ mapped.</p></dd>
 
 <dt id="arg-linewidth">linewidth<a class="anchor" aria-label="anchor" href="#arg-linewidth"></a></dt>
 <dd><p>For <code>mark_edges()</code>, the edge width; a constant or (via
-<code><a href="scale_edge_width.html">scale_edge_width()</a></code>) a mapped expression such as <code>linewidth = weight</code>.</p></dd>
+<code><a href="scale_edge_width.html">scale_edge_width()</a></code>) a mapped expression such as <code>linewidth = weight</code>. For
+<code>mark_node_pie()</code>, the wedge border width.</p></dd>
 
 
 <dt id="arg-linetype">linetype<a class="anchor" aria-label="anchor" href="#arg-linetype"></a></dt>
@@ -278,6 +302,22 @@ tuning for <code>mark_node_text(repel = TRUE)</code>; see <code><a href="mark_te
 or <code>"along"</code> to rotate each label along its edge. <code>NULL</code> (default) draws
 horizontal labels.</p></dd>
 
+
+<dt id="arg-expand">expand<a class="anchor" aria-label="anchor" href="#arg-expand"></a></dt>
+<dd><p>For <code>mark_node_hull()</code>, the fraction to grow each hull outward
+from its centroid so it encloses the node markers (default <code>0.08</code>).</p></dd>
+
+
+<dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>
+<dd><p>For <code>mark_node_pie()</code>, the compositional columns (a character
+vector of node-table column names, at least two) whose values size each
+node's wedges.</p></dd>
+
+
+<dt id="arg-inner">inner<a class="anchor" aria-label="anchor" href="#arg-inner"></a></dt>
+<dd><p>For <code>mark_node_pie()</code>, the inner-radius fraction: <code>0</code> (default)
+draws a pie, <code>&gt; 0</code> a donut (e.g. <code>0.5</code>).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -295,6 +335,10 @@ continuous weight without the two legends colliding.</p>
 labels radially clear of the node markers, <code>top_n</code>/<code>by</code> label only the hubs,
 and <code>effects = list(outline())</code> draws a halo so labels stay readable over
 edges. <code>mark_edge_text()</code> takes the same <code>effects</code>.</p>
+<p>Two more decorations: <code>mark_node_hull()</code> shades communities with a convex hull
+behind the graph (grouped by a mapped <code>fill</code>, drawn under the edges), and
+<code>mark_node_pie()</code> replaces node markers with pie / donut glyphs whose wedges
+come from a set of compositional columns.</p>
 <p>These are thin over the point / segment / text marks; <code>igraph</code> need not be
 installed to use them (only <code><a href="vgraph.html">vgraph()</a></code> needs it).</p>
     </div>

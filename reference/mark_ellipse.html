@@ -82,7 +82,7 @@ fill is mapped) as a single enclosing region drawn over the raw points."><meta p
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">mark_hull</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">mark_hull</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, expand <span class="op">=</span> <span class="fl">0</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -126,6 +126,12 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>Optional layer data frame; overrides the plot data for this layer.</p></dd>
+
+
+<dt id="arg-expand">expand<a class="anchor" aria-label="anchor" href="#arg-expand"></a></dt>
+<dd><p>For <code>mark_hull()</code>, grow each hull outward from its centroid by
+this fraction (e.g. <code>0.1</code> = 10% larger), so it encloses the markers it wraps
+rather than passing through their centres. <code>0</code> (default) is the tight hull.</p></dd>
 
 </dl></div>
     <div class="section level2">
