@@ -1709,20 +1709,35 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   rib <- lay$ribbons
   sk <- .mark_sketch(L, scales)
 
-  # ribbons: a filled band between two horizontal cubic-Bézier edges
+  # ribbons: a filled band between two horizontal cubic-Bézier edges. With
+  # `flow_color = "gradient"` each ribbon fades (horizontally, in native coords)
+  # from its source colour to its target colour; otherwise a flat source/target
+  # fill (`rib$colour`).
+  gradient <- identical(L$params$flow_color, "gradient")
   for (i in seq_len(nrow(rib))) {
     top <- .sankey_bezier(rib$xl[i], rib$sy1[i], rib$xr[i], rib$ty1[i])
     bot <- .sankey_bezier(rib$xl[i], rib$sy0[i], rib$xr[i], rib$ty0[i])
     px <- scales$x$map(c(top$x, rev(bot$x)))
     py <- scales$y$map(c(top$y, rev(bot$y)))
     xy <- .xy_path(scales, px, py)
+    fill <- if (gradient) {
+      vellum::linear_gradient(
+        c(rib$colour_src[i], rib$colour_tgt[i]),
+        x1 = scales$x$map(rib$xl[i]),
+        x2 = scales$x$map(rib$xr[i]),
+        units = "native",
+        interpolation = "oklab"
+      )
+    } else {
+      rib$colour[i]
+    }
     scene <- .draw(
       scene,
       vellum::polygon_grob(
         xy$x,
         xy$y,
         gp = vellum::vl_gpar(
-          fill = rib$colour[i],
+          fill = fill,
           col = NA,
           alpha = .SANKEY_RIBBON_ALPHA
         )

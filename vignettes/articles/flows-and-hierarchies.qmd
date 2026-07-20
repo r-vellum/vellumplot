@@ -46,11 +46,17 @@ ribbon widths are proportional to `value` — so the diagram reads as a conserve
 flow left to right.
 
 Ribbons are coloured by their source node by default; `flow_color = "target"`
-colours them by their target instead. `show_values = TRUE` appends each node's
-value to its label, and `node_width` / `node_gap` tune the node rectangles.
+colours them by their target instead, and `flow_color = "gradient"` fades each
+ribbon from its source colour to its target colour. `show_values = TRUE` appends
+each node's value to its label, and `node_width` / `node_gap` tune the node
+rectangles.
 
 ```{r}
 vsankey(flows, from, to, value, show_values = TRUE, flow_color = "target")
+```
+
+```{r}
+vsankey(flows, from, to, value, flow_color = "gradient")
 ```
 
 The flows must form a directed acyclic graph (a node cannot reach itself), and

@@ -249,3 +249,14 @@ test_that("show_values / flow_color / node sizing render", {
   )
   expect_gt(file.info(f)$size, 0)
 })
+
+test_that("flow_color = 'gradient' carries endpoint colours and renders", {
+  lay <- vellumplot:::.sankey_layout(flows$from, flows$to, flows$value)
+  fi <- match(flows$from, lay$nodes$name)
+  ti <- match(flows$to, lay$nodes$name)
+  expect_equal(lay$ribbons$colour_src, lay$nodes$colour[fi])
+  expect_equal(lay$ribbons$colour_tgt, lay$nodes$colour[ti])
+  f <- local_tempfile(fileext = ".png")
+  render_plot(vsankey(flows, from, to, value, flow_color = "gradient"), f)
+  expect_gt(file.info(f)$size, 0)
+})
