@@ -78,6 +78,8 @@ navbar:
         href: articles/datashading.html
       - text: Effects and themes
         href: articles/effects-and-themes.html
+      - text: Declarative interactivity
+        href: articles/interactivity.html
       - text: Background
       - text: "The compiler: spec to scene"
         href: articles/the-compiler.html
@@ -121,6 +123,7 @@ articles:
   - articles/statistical-marks
   - articles/datashading
   - articles/effects-and-themes
+  - articles/interactivity
 - title: Background
   navbar: Background
   contents:
