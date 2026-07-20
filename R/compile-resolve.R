@@ -14,15 +14,33 @@ NULL
   values <- list()
   types <- list()
   after <- list()
+  conditions <- list()
   for (nm in names(layer@encoding)) {
     ch <- layer@encoding[[nm]]
     if (isTRUE(ch@after)) {
       after[[nm]] <- ch@expr
       next
     }
+    # An ordinary channel evaluates its `expr`; a `condition()` channel's `expr`
+    # already *is* the `if_true` branch (set at split), so this resolves + trains
+    # transparently. The condition's selection + `if_false` (a constant, or a
+    # per-row column) are then recorded for the interactive host.
     v <- rlang::eval_tidy(ch@expr, data = data)
     values[[nm]] <- v
     types[[nm]] <- if (nzchar(ch@type)) ch@type else .infer_type(v)
+    if (!is.null(ch@condition)) {
+      cnd <- ch@condition
+      if_false <- if (!is.null(cnd$if_false)) {
+        rlang::eval_tidy(cnd$if_false, data = data)
+      } else {
+        NULL
+      }
+      conditions[[nm]] <- list(
+        selection = cnd$selection,
+        if_false = if_false,
+        empty = cnd$empty
+      )
+    }
   }
   n <- if (length(values)) max(lengths(values)) else nrow(data)
 
@@ -144,7 +162,12 @@ NULL
     # `values` so it is never scale-trained. Aligns to the drawn elements when the
     # mark is `stat = "identity"` (row-preserving); a length guard at emit time
     # drops it for aggregating stats where rows no longer map 1:1.
-    meta = .resolve_interactivity(layer@interactivity, data)
+    meta = .resolve_interactivity(layer@interactivity, data),
+    # Per-aesthetic conditional encodings (from `condition()`): selection name +
+    # `if_false` + `empty`, keyed by aesthetic. Empty when the layer declares
+    # none. Drives the per-element `cond` membership tags at emit and the
+    # plot-level interaction block; inert on a static render.
+    conditions = conditions
   )
 }
 

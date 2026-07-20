@@ -17,7 +17,10 @@ PlotSpec(
   dpi = 96,
   theme = NULL,
   labels = list(),
-  marginal = NULL
+  marginal = NULL,
+  selections = list(),
+  filters = list(),
+  binds = list()
 )
 }
 \arguments{

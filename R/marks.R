@@ -63,6 +63,12 @@ NULL
       # after_stat(expr): a stage-2 channel evaluated against the stat output.
       inner <- rlang::new_quosure(e[[2]], rlang::quo_get_env(q))
       encoding[[nm]] <- channel(expr = inner, after = TRUE)
+    } else if (is.call(e) && identical(rlang::call_name(e), "condition")) {
+      # color = condition(sel, if_true, if_false): a conditional encoding. Store the
+      # `if_true` branch as the channel expr (so labelling / type / training /
+      # drawing see the plain encoding -- transparency), and carry the selection +
+      # `if_false` + `empty` alongside for the interactive host.
+      encoding[[nm]] <- .condition_channel(e, rlang::quo_get_env(q))
     } else if (is.call(e) && .is_paint_call(e)) {
       # fill = linear_gradient(...) -> a paint *value* (constant aesthetic), not a
       # data channel: evaluate it now and store as a param.
@@ -293,6 +299,42 @@ after_stat <- function(x) x
   "hover_color",
   "selected_color"
 )
+
+# Parse a `condition(selection, if_true, if_false, empty)` call into a `channel`
+# whose `expr` is the `if_true` branch (so everything downstream sees a plain
+# encoding) and whose `condition` slot carries the selection name (a constant,
+# resolved now), the `if_false` quosure (or NULL = theme dim), and `empty`.
+.condition_channel <- function(e, env, call = rlang::caller_env()) {
+  m <- rlang::call_match(e, condition)
+  args <- rlang::call_args(m)
+  if (is.null(args$selection) || is.null(args$if_true)) {
+    cli::cli_abort(
+      "{.fn condition} needs a selection name and an {.arg if_true} value.",
+      call = call
+    )
+  }
+  selection <- rlang::eval_tidy(rlang::new_quosure(args$selection, env))
+  if (!is.character(selection) || length(selection) != 1L) {
+    cli::cli_abort(
+      "{.fn condition} selection must be a single string.",
+      call = call
+    )
+  }
+  empty <- if (!is.null(args$empty)) {
+    isTRUE(rlang::eval_tidy(rlang::new_quosure(args$empty, env)))
+  } else {
+    TRUE
+  }
+  if_false <- if (!is.null(args$if_false)) {
+    rlang::new_quosure(args$if_false, env)
+  } else {
+    NULL
+  }
+  channel(
+    expr = rlang::new_quosure(args$if_true, env),
+    condition = list(selection = selection, if_false = if_false, empty = empty)
+  )
+}
 
 # The slab/interval marks name their interval probabilities `.width` (dotted) to
 # avoid colliding with the `width` aesthetic other marks use. A bare `width =`

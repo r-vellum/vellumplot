@@ -2734,13 +2734,37 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   sc <- .mark_ctx$selected_color
   lg <- .mark_ctx$legend
   fv <- .mark_ctx$filter_value
+  cond <- .mark_ctx$conditions
+  # The "<sel>:<aes>" tags this layer's elements participate in (same for every
+  # row of the layer, since a condition applies to the whole layer). A per-row
+  # `if_false` column is carried per element as `cond_value`; a constant one lives
+  # in the plot-level block.
+  cond_tags <- if (length(cond)) {
+    paste0(
+      vapply(cond, function(c) c$selection, character(1)),
+      ":",
+      names(cond)
+    )
+  } else {
+    NULL
+  }
+  cond_rowvals <- if (length(cond)) {
+    cv <- lapply(cond, function(c) {
+      f <- c$if_false
+      if (!is.null(f) && length(f) > 1L) f else NULL # per-row only
+    })
+    if (any(lengths(cv) > 0L)) stats::setNames(cv, cond_tags) else NULL
+  } else {
+    NULL
+  }
   if (
     is.null(tt) &&
       is.null(hg) &&
       is.null(hc) &&
       is.null(sc) &&
       is.null(lg) &&
-      is.null(fv)
+      is.null(fv) &&
+      is.null(cond_tags)
   ) {
     return(NULL)
   }
@@ -2767,6 +2791,13 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     # interactive colorbar filter.
     if (!is.null(fv)) {
       rec$filter_value <- fv[[i]]
+    }
+    # `cond`: the conditional-encoding tags this element participates in.
+    if (!is.null(cond_tags)) {
+      rec$cond <- cond_tags
+      if (!is.null(cond_rowvals)) {
+        rec$cond_value <- lapply(cond_rowvals, function(v) v[[i]])
+      }
     }
     rec
   })
@@ -2985,6 +3016,15 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       v <- L$values$color %||% L$values$fill
       if (is.null(v)) NULL else as.numeric(rep_len(v, L$n))
     })
+    # Conditional encodings (from `condition()`): a layer bearing one is
+    # interactive, so its elements need addressable keys even if no `data_id` was
+    # declared -- default to the row index. `cond` carries, per row, the "<sel>:<aes>"
+    # tags this element participates in (like `legend`), so a host can style
+    # non-members; the `if_false` constant + `empty` live in the plot-level block.
+    .mark_ctx$conditions <- if (length(L$conditions)) L$conditions else NULL
+    if (is.null(.mark_ctx$data_id) && length(L$conditions) && L$n >= 1L) {
+      .mark_ctx$data_id <- as.character(seq_len(L$n))
+    }
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)
