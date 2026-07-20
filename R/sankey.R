@@ -172,6 +172,7 @@ NULL
   value,
   node_width = .SANKEY_NODE_WIDTH,
   node_gap = .SANKEY_NODE_GAP,
+  flow_color = "source",
   call = rlang::caller_env()
 ) {
   from <- as.character(from)
@@ -262,6 +263,8 @@ NULL
   t <- assign_slices(ti, src_yc)
 
   pal <- .qual_palette(n)
+  # Ribbon fill: the source node's colour (default) or the target's.
+  rib_colour <- if (identical(flow_color, "target")) pal[ti] else pal[fi]
   list(
     nodes = data.frame(
       name = nodes,
@@ -269,6 +272,7 @@ NULL
       x1 = node_x1,
       y0 = node_y0,
       y1 = node_y1,
+      value = nodeval,
       colour = pal,
       stringsAsFactors = FALSE
     ),
@@ -280,7 +284,7 @@ NULL
       ty0 = t$y0,
       ty1 = t$y1,
       value = value,
-      colour = pal[fi],
+      colour = rib_colour,
       stringsAsFactors = FALSE
     )
   )
@@ -315,6 +319,14 @@ NULL
 #' @param from,to,value Columns (tidy-eval): the source node, target node, and
 #'   flow value.
 #' @param label Draw node labels? Default `TRUE`.
+#' @param show_values Append each node's value to its label (e.g. `"Grid (60)"`)?
+#'   Default `FALSE`. Ignored when `label = FALSE`.
+#' @param flow_color Ribbon fill: `"source"` (default) colours each ribbon by its
+#'   source node, `"target"` by its target node.
+#' @param node_width Node-rectangle width, as a fraction of the plotting width
+#'   (default `0.04`).
+#' @param node_gap Vertical gap between the nodes in a column, as a fraction of
+#'   the column height (default `0.02`).
 #' @param width,height,dpi Page size (inches) and resolution.
 #' @return A [PlotSpec] (`vsankey()`) or the modified plot (`mark_sankey()`).
 #' @examples
@@ -324,6 +336,7 @@ NULL
 #'   value = c(4, 6, 4, 4, 2)
 #' )
 #' vsankey(flows, from, to, value)
+#' vsankey(flows, from, to, value, show_values = TRUE, flow_color = "target")
 #' @export
 vsankey <- function(
   data,
@@ -331,6 +344,10 @@ vsankey <- function(
   to,
   value,
   label = TRUE,
+  show_values = FALSE,
+  flow_color = "source",
+  node_width = 0.04,
+  node_gap = 0.02,
   width = 8,
   height = 5,
   dpi = 96
@@ -354,19 +371,52 @@ vsankey <- function(
     from = {{ from }},
     to = {{ to }},
     value = {{ value }},
-    label = label
+    label = label,
+    show_values = show_values,
+    flow_color = flow_color,
+    node_width = node_width,
+    node_gap = node_gap
   )
 }
 
 #' @rdname vsankey
 #' @param plot A [PlotSpec].
 #' @export
-mark_sankey <- function(plot, from, to, value, label = TRUE) {
+mark_sankey <- function(
+  plot,
+  from,
+  to,
+  value,
+  label = TRUE,
+  show_values = FALSE,
+  flow_color = "source",
+  node_width = 0.04,
+  node_gap = 0.02
+) {
   .check_plot(plot)
+  flow_color <- rlang::arg_match0(flow_color, c("source", "target"))
+  .check_node_fraction(node_width, "node_width")
+  .check_node_fraction(node_gap, "node_gap")
   .add_layer(
     plot,
     "sankey",
     rlang::enquos(from = from, to = to, value = value),
-    const_params = list(label = isTRUE(label))
+    const_params = list(
+      label = isTRUE(label),
+      show_values = isTRUE(show_values),
+      flow_color = flow_color,
+      node_width = as.numeric(node_width),
+      node_gap = as.numeric(node_gap)
+    )
   )
+}
+
+# A sankey geometry fraction (node width / gap) must be a single number in [0, 1).
+.check_node_fraction <- function(x, arg, call = rlang::caller_env()) {
+  if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 0 || x >= 1) {
+    cli::cli_abort(
+      "{.arg {arg}} must be a single number in {.code [0, 1)}.",
+      call = call
+    )
+  }
 }

@@ -1,5 +1,10 @@
 # vellumplot (development version)
 
+* **Sankey styling options.** `vsankey()` / `mark_sankey()` gain `show_values`
+  (append each node's value to its label), `flow_color` (`"source"` or
+  `"target"`, colouring ribbons by either endpoint), and `node_width` / `node_gap`
+  to tune the node rectangles.
+
 * **Sankey crossing minimisation.** `vsankey()` now orders the nodes within each
   column with the Sugiyama barycenter heuristic to minimise ribbon crossings
   (previously first-appearance order, which left many avoidable crossings). The

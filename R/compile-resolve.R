@@ -56,7 +56,14 @@ NULL
         "{.fn vsankey} needs {.arg from}, {.arg to}, and {.arg value}."
       )
     }
-    sankey <- .sankey_layout(values$from, values$to, values$value)
+    sankey <- .sankey_layout(
+      values$from,
+      values$to,
+      values$value,
+      node_width = layer@params$node_width %||% .SANKEY_NODE_WIDTH,
+      node_gap = layer@params$node_gap %||% .SANKEY_NODE_GAP,
+      flow_color = layer@params$flow_color %||% "source"
+    )
     # Nodes/ribbons live in [0, 1]; when node labels are drawn, widen the x
     # domain so the outer-column labels (left of the source column, right of the
     # terminal column) fall inside the panel instead of clipping at its edge.
