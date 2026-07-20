@@ -562,17 +562,25 @@ test_that("mark_node_text(repel=) plumbs repel params", {
   expect_null(p0@layers[[length(p0@layers)]]@stat_params$repel)
 })
 
-test_that("mark_node_text / mark_edge_text accept halo effects", {
+test_that("text marks take shadow() but reject outline()/glow() (#81)", {
   skip_if_not_installed("igraph")
   g <- igraph::make_ring(4)
-  # Previously effects were rejected on text marks; now they draw a halo.
+  # shadow() reads correctly on text (an offset drop copy).
   expect_no_error(
-    vgraph(g) |> mark_node_text(label = name, effects = list(outline()))
+    vgraph(g) |> mark_node_text(label = name, effects = list(shadow()))
   )
   expect_no_error(
-    vgraph(g) |>
-      mark_edge_text(label = "e", effects = list(shadow())) |>
-      identity()
+    vgraph(g) |> mark_edge_text(label = "e", effects = list(shadow()))
+  )
+  # outline() / glow() can't stroke glyph outlines yet -> rejected, not a broken
+  # ring of offset label copies.
+  expect_error(
+    vgraph(g) |> mark_node_text(label = name, effects = list(outline())),
+    "Only .*shadow"
+  )
+  expect_error(
+    vgraph(g) |> mark_edge_text(label = "e", effects = list(glow())),
+    "Only .*shadow"
   )
 })
 
@@ -621,7 +629,7 @@ test_that("label-quality features render end to end", {
       dist = 3,
       top_n = 6,
       by = deg,
-      effects = list(outline(color = "white"))
+      effects = list(shadow())
     )
   expect_no_error(vellum::as_vellum_scene(p))
   png <- local_tempfile(fileext = ".png")
