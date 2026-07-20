@@ -3022,7 +3022,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     # tags this element participates in (like `legend`), so a host can style
     # non-members; the `if_false` constant + `empty` live in the plot-level block.
     .mark_ctx$conditions <- if (length(L$conditions)) L$conditions else NULL
-    if (is.null(.mark_ctx$data_id) && length(L$conditions) && L$n >= 1L) {
+    if (
+      is.null(.mark_ctx$data_id) &&
+        (length(L$conditions) || isTRUE(.mark_ctx$plot_interactive)) &&
+        L$n >= 1L
+    ) {
       .mark_ctx$data_id <- as.character(seq_len(L$n))
     }
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.

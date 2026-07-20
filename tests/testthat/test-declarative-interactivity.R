@@ -116,6 +116,21 @@ test_that("the compiled scene carries condition membership tags + keys", {
   expect_null(keyed$meta[[1]]$tooltip)
 })
 
+test_that("a plot that declares interaction keys its marks (for a host to address)", {
+  # filter_by / a selection with no per-mark condition or tooltip still needs keys
+  p <- vplot(df) |>
+    mark_point(x = x, y = y) |>
+    select_interval("br", on = "x") |>
+    filter_by("br")
+  m <- vellum::scene_model(vellum::as_vellum_scene(p))
+  expect_equal(sum(!is.na(m$elements$key)), nrow(df))
+  # a plot with no declared interaction stays unkeyed (SVG unchanged)
+  m0 <- vellum::scene_model(vellum::as_vellum_scene(
+    vplot(df) |> mark_point(x = x, y = y)
+  ))
+  expect_equal(sum(!is.na(m0$elements$key)), 0L)
+})
+
 test_that("bind_scale records a domain bind", {
   p <- vplot(df) |>
     mark_point(x = x, y = y) |>
