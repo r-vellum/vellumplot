@@ -74,8 +74,7 @@ vgraph(g, layout = "stress") |>
 
 The node and edge aesthetics are the same ones you already know. `mark_nodes()`
 takes `size`, `shape`, `fill`, and `color`; `mark_edges()` takes `color`,
-`linewidth` (scaled by `scale_edge_width()`), and `alpha`, plus `arrow = TRUE`
-for directed graphs. `mark_node_text()` adds vertex labels.
+`linewidth`, `linetype`, and `alpha`. `mark_node_text()` adds vertex labels.
 
 ```{r}
 #| eval: !expr have_net
@@ -83,6 +82,50 @@ vgraph(g, layout = "stress") |>
   mark_edges(color = "grey70") |>
   mark_nodes(fill = grp, size = 6) |>
   mark_node_text(label = name, size = 8)
+```
+
+### Independent edge scales
+
+Edge colour, opacity, line type, and width train on their **own** scales --
+`scale_edge_color()`, `scale_edge_alpha()`, `scale_edge_linetype()`, and
+`scale_edge_width()` -- separate from the node colour/alpha/linetype scales. So a
+figure can map node fill to a discrete community *and* edge colour to a
+continuous edge weight, and each gets its own legend instead of the two
+collapsing into one. Map an edge attribute to `color` and it is trained as an
+edge scale automatically; call `scale_edge_color()` to choose the palette.
+
+```{r}
+#| eval: !expr have_net
+g <- igraph::set_edge_attr(g, "w", value = runif(igraph::ecount(g)))
+
+vgraph(g, layout = "stress") |>
+  mark_edges(color = w, linewidth = w) |>
+  mark_nodes(fill = grp, size = deg) |>
+  scale_edge_color(palette = "Grays") |>
+  scale_edge_width(range = c(0.3, 2.5)) |>
+  scale_size(range = c(2, 9))
+```
+
+### Directed edges, arrows, and edge labels
+
+For directed graphs, `arrow = TRUE` draws a closed arrowhead at each edge's
+target end; edges are capped at the node boundary so the head is never buried
+under the marker. Pass a `vellum::vl_arrow()` for full control over the head
+(`ends`, `type`, `length`, `angle`). `mark_edge_text()` labels the edges at
+their midpoints, and `angle = "along"` rotates each label to follow its edge.
+
+```{r}
+#| eval: !expr have_net
+el <- matrix(c(1, 2, 2, 3, 3, 1, 1, 4, 4, 2), ncol = 2, byrow = TRUE)
+d <- igraph::graph_from_edgelist(el, directed = TRUE)
+d <- igraph::set_edge_attr(d, "flow", value = c(3, 1, 4, 1, 5))
+
+vgraph(d, layout = "stress") |>
+  mark_edges(linewidth = flow, arrow = TRUE) |>
+  mark_nodes(size = 8, fill = "steelblue") |>
+  mark_edge_text(label = flow, size = 7) |>
+  mark_node_text(label = name, size = 8, color = "white") |>
+  scale_edge_width(range = c(0.4, 2.5))
 ```
 
 ### Choosing a layout

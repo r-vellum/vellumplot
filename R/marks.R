@@ -1872,15 +1872,58 @@ mark_segment <- function(
   c(dots, defaults[setdiff(names(defaults), names(dots))])
 }
 
+# Move a graph edge's colour / alpha / line-type encodings onto dedicated edge
+# channels (`edge_color`/`edge_alpha`/`edge_linetype`) so they train and legend
+# independently of the node scales (see _docs/GAPS-NETWORKS.md N1a). Position
+# channels (x/y/xend/yend) and edge width (`linewidth` -> the `edge_width` scale)
+# are left untouched; `colour`/`fill` both fold into `edge_color`.
+.EDGE_AES_MAP <- c(
+  color = "edge_color",
+  colour = "edge_color",
+  fill = "edge_color",
+  alpha = "edge_alpha",
+  linetype = "edge_linetype"
+)
+.rename_edge_aes <- function(quos) {
+  if (!length(quos)) {
+    return(quos)
+  }
+  nm <- names(quos)
+  hit <- nm %in% names(.EDGE_AES_MAP)
+  nm[hit] <- unname(.EDGE_AES_MAP[nm[hit]])
+  names(quos) <- nm
+  quos
+}
+
+# Resolve `mark_edges(arrow = )` to a vellum arrow spec, or NULL. `FALSE`/`NULL`
+# draws no head; `TRUE` the default closed head at the target end (the directed
+# convention); a `vl_arrow()` object is used verbatim (custom ends/type/size).
+.resolve_edge_arrow <- function(arrow) {
+  if (is.null(arrow) || isFALSE(arrow)) {
+    return(NULL)
+  }
+  if (isTRUE(arrow)) {
+    return(vellum::vl_arrow(type = "closed", length = vellum::vl_unit(2, "mm")))
+  }
+  arrow
+}
+
 #' Network (graph) marks
 #'
 #' Draw a node-link diagram on a [PlotSpec] from [vgraph()]. `mark_edges()` draws
-#' the edges (straight lines, batched), `mark_nodes()` the vertices (points), and
-#' `mark_node_text()` the vertex labels. Draw order is fixed regardless of the
-#' order you pipe them: edges under nodes under labels. Edges default to the edge
-#' table (`vgraph()`'s `edge_data`), nodes and labels to the node table; the
-#' `x`/`y`/`xend`/`yend`/`label`/`name` columns those tables carry are mapped
-#' automatically, so bare `mark_edges() |> mark_nodes()` just works.
+#' the edges (straight lines, batched), `mark_nodes()` the vertices (points),
+#' `mark_node_text()` the vertex labels, and `mark_edge_text()` labels on the
+#' edges. Draw order is fixed regardless of the order you pipe them: edges under
+#' edge labels under nodes under node labels. Edges (and edge labels) default to
+#' the edge table (`vgraph()`'s `edge_data`), nodes and node labels to the node
+#' table; the `x`/`y`/`xend`/`yend`/`label`/`name` columns those tables carry are
+#' mapped automatically, so bare `mark_edges() |> mark_nodes()` just works.
+#'
+#' Edge colour, opacity, and line type train on **their own scales**
+#' ([scale_edge_color()], [scale_edge_alpha()], [scale_edge_linetype()], plus
+#' [scale_edge_width()]), independent of the node colour/alpha/linetype scales --
+#' so a plot can map node fill to a discrete community and edge colour to a
+#' continuous weight without the two legends colliding.
 #'
 #' These are thin over the point / segment / text marks; `igraph` need not be
 #' installed to use them (only [vgraph()] needs it).
@@ -1888,19 +1931,25 @@ mark_segment <- function(
 #' @param plot A [PlotSpec], normally from [vgraph()].
 #' @param ... Encodings mapping node/edge attributes to aesthetics. Nodes: `size`,
 #'   `color`/`fill`, `shape`, `alpha`. Edges: `color`, `linewidth`, `linetype`,
-#'   `alpha`. The
-#'   position channels are supplied by `vgraph()` and need not be mapped.
+#'   `alpha`. The position channels are supplied by `vgraph()` and need not be
+#'   mapped.
 #' @param size,shape For `mark_nodes()`, the node size (mm) / shape; a constant or
-#'   a mapped expression.
+#'   a mapped expression. `size` is also the label font size for
+#'   `mark_node_text()`/`mark_edge_text()`.
 #' @param fill,color,alpha Convenience aesthetics; a constant or a mapped
-#'   expression. For nodes, `fill` (or `color`) is the marker colour.
+#'   expression. For nodes, `fill` (or `color`) is the marker colour; for
+#'   `mark_edges()`, `color`/`alpha` map through the edge scales.
 #' @param linewidth For `mark_edges()`, the edge width; a constant or (via
 #'   [scale_edge_width()]) a mapped expression such as `linewidth = weight`.
-#' @param arrow For `mark_edges()`, `TRUE` to draw an arrowhead at each edge's
-#'   target end (directed graphs). Edges are capped exactly at each endpoint's
-#'   node boundary (per vertex, at any size/resolution), so the head sits on the
-#'   node edge; self-loops are drawn as teardrop loops sized to the node, with the
-#'   head on the node boundary.
+#' @param linetype For `mark_edges()`, the edge line type; a constant or (via
+#'   [scale_edge_linetype()]) a mapped expression.
+#' @param arrow For `mark_edges()`, `TRUE` to draw a closed arrowhead at each
+#'   edge's target end (the directed convention), `FALSE`/`NULL` for none, or a
+#'   [vellum::vl_arrow()] spec for full control (`ends`, `type`, `length`,
+#'   `angle`) -- e.g. `arrow = vellum::vl_arrow(ends = "both", type = "open")`.
+#'   Edges are capped exactly at each endpoint's node boundary (per vertex, at any
+#'   size/resolution), so the head sits on the node edge; self-loops are drawn as
+#'   teardrop loops sized to the node, with the head on the node boundary.
 #' @param auto For `mark_edges()`, `TRUE` to datashade a large graph's edges as a
 #'   density raster ([vellum::datashade_segments()]) once the edge count exceeds
 #'   the datashade threshold, instead of drawing each edge as a vector segment —
@@ -1908,7 +1957,11 @@ mark_segment <- function(
 #'   of the vector path (parallel-edge offsets, node-boundary caps, arrowheads,
 #'   teardrop self-loops) do not apply to the rasterised edges.
 #' @param label For `mark_node_text()`, the label expression (default the vertex
-#'   `name`).
+#'   `name`); for `mark_edge_text()`, the edge label expression (no default -- map
+#'   an edge attribute, e.g. `label = weight`).
+#' @param angle For `mark_edge_text()`, the label rotation: a constant in degrees,
+#'   or `"along"` to rotate each label along its edge. `NULL` (default) draws
+#'   horizontal labels.
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data; overrides the default table.
 #' @param effects A list of layer render effects ([glow()], [outline()],
@@ -1916,7 +1969,7 @@ mark_segment <- function(
 #' @param sketch A [sketch()] spec giving the layer a hand-drawn look,
 #'   `NA`/`FALSE` to force it crisp, or `NULL` (default) to inherit.
 #' @return The modified [PlotSpec].
-#' @seealso [vgraph()], [scale_edge_width()]
+#' @seealso [vgraph()], [scale_edge_width()], [scale_edge_color()]
 #' @name mark_graph
 #' @examples
 #' \dontrun{
@@ -1935,6 +1988,7 @@ mark_edges <- function(
   color = NULL,
   linewidth = NULL,
   alpha = NULL,
+  linetype = NULL,
   arrow = FALSE,
   auto = FALSE,
   blend = NULL,
@@ -1947,12 +2001,18 @@ mark_edges <- function(
     rlang::enquos(...),
     rlang::quos(x = x, y = y, xend = xend, yend = yend)
   )
+  extra <- rlang::enquos(
+    color = color,
+    linewidth = linewidth,
+    alpha = alpha,
+    linetype = linetype
+  )
   .add_layer(
     plot,
     "edges",
-    dots,
-    rlang::enquos(color = color, linewidth = linewidth, alpha = alpha),
-    stat_params = list(arrow = isTRUE(arrow), auto = isTRUE(auto)),
+    .rename_edge_aes(dots),
+    .rename_edge_aes(extra),
+    stat_params = list(arrow = .resolve_edge_arrow(arrow), auto = isTRUE(auto)),
     blend = blend,
     effects = effects,
     sketch = sketch,
@@ -1993,7 +2053,7 @@ mark_nodes <- function(
     effects = effects,
     sketch = sketch,
     data = data,
-    z = 2L
+    z = 3L
   )
 }
 
@@ -2021,7 +2081,59 @@ mark_node_text <- function(
     rlang::enquos(label = label, color = color, size = size, alpha = alpha),
     blend = blend,
     data = data,
-    z = 3L
+    z = 4L
+  )
+}
+
+#' @rdname mark_graph
+#' @export
+mark_edge_text <- function(
+  plot,
+  ...,
+  label = NULL,
+  color = NULL,
+  size = NULL,
+  alpha = NULL,
+  angle = NULL,
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  if (rlang::quo_is_null(rlang::enquo(label))) {
+    cli::cli_abort(c(
+      "{.fn mark_edge_text} needs a {.arg label} mapping.",
+      i = "Map an edge attribute, e.g. {.code mark_edge_text(label = weight)}."
+    ))
+  }
+  # Position defaults to the edge midpoint (mean of the two endpoints). Under the
+  # aspect-locked graph panel a native slope equals the device slope, so an angle
+  # computed from the raw endpoints rotates the label along the edge exactly.
+  dots <- .with_default_aes(
+    rlang::enquos(...),
+    rlang::quos(x = (x + xend) / 2, y = (y + yend) / 2)
+  )
+  extra <- rlang::enquos(
+    label = label,
+    color = color,
+    size = size,
+    alpha = alpha
+  )
+  if (identical(angle, "along")) {
+    extra <- c(
+      extra,
+      rlang::quos(angle = atan2(yend - y, xend - x) * 180 / pi)
+    )
+  } else if (!is.null(angle)) {
+    extra <- c(extra, rlang::quos(angle = !!angle))
+  }
+  .add_layer(
+    plot,
+    "edge_text",
+    dots,
+    extra,
+    blend = blend,
+    data = data %||% plot@edge_data,
+    z = 2L
   )
 }
 

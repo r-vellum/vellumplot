@@ -194,8 +194,8 @@ test_that("graph marks default to the right table and carry z bands", {
   # mark_edges defaults its data to the edge table.
   expect_identical(p@layers[[1]]@mark, "edges")
   expect_identical(nrow(p@layers[[1]]@data), 78L)
-  expect_identical(p@layers[[1]]@z, 1L)
-  expect_identical(p@layers[[2]]@z, 2L)
+  expect_identical(p@layers[[1]]@z, 1L) # edges
+  expect_identical(p@layers[[2]]@z, 3L) # nodes (edge labels reserve band 2)
 })
 
 test_that("z-order draws edges under nodes under labels regardless of pipe order", {
@@ -246,6 +246,133 @@ test_that("a weighted directed graph compiles and renders", {
     mark_nodes(size = 6, fill = "tomato") |>
     mark_node_text(label = name) |>
     scale_edge_width(range = c(0.5, 3))
+  expect_no_error(vellum::as_vellum_scene(p))
+  png <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, png))
+  expect_true(file.exists(png))
+})
+
+# --- N1a: independent edge colour / alpha / line-type scales -----------------
+
+test_that(".rename_edge_aes moves colour/alpha/linetype to edge channels", {
+  q <- list(color = 1, fill = 2, alpha = 3, linetype = 4, linewidth = 5, x = 6)
+  nm <- names(.rename_edge_aes(q))
+  expect_true(all(c("edge_color", "edge_alpha", "edge_linetype") %in% nm))
+  # edge width (linewidth) and position channels are left untouched.
+  expect_true(all(c("linewidth", "x") %in% nm))
+  expect_false(any(c("color", "alpha", "linetype", "fill") %in% nm))
+})
+
+test_that("mark_edges scopes colour/alpha/linetype to edge channels", {
+  p <- vplot(data.frame(x = 1)) |>
+    mark_edges(color = w, alpha = 0.5, linetype = "dashed", linewidth = w)
+  L <- p@layers[[1]]
+  enc <- names(L@encoding)
+  par <- names(L@params)
+  expect_true("edge_color" %in% enc) # mapped colour -> edge channel
+  expect_false(any(c("color", "fill") %in% enc)) # never the node colour scale
+  expect_true("linewidth" %in% enc) # edge-width channel unchanged
+  expect_true("edge_alpha" %in% par) # constant -> edge param
+  expect_true("edge_linetype" %in% par)
+})
+
+test_that(".legend_guides emits independent node and edge colour guides", {
+  guides <- .legend_guides(list(
+    color = list(kind = "discrete", colors = "red", levels = "a", name = "grp"),
+    edge_color = list(kind = "continuous", legend_labels = "1", name = "w"),
+    edge_alpha = list(kind = "alpha", legend_labels = "0.5", name = "a"),
+    edge_linetype = list(kind = "linetype", levels = "solid", name = "t")
+  ))
+  kinds <- vapply(guides, function(g) g$kind, character(1))
+  expect_true("color_discrete" %in% kinds) # node colour
+  expect_true("color_continuous" %in% kinds) # edge colour, own guide
+  expect_true("alpha" %in% kinds)
+  expect_true("linetype" %in% kinds)
+})
+
+test_that("scale_edge_color/alpha/linetype declare edge-scoped scales", {
+  p <- vplot(data.frame(x = 1)) |>
+    scale_edge_color(palette = "Grays") |>
+    scale_edge_alpha(range = c(0.2, 0.9)) |>
+    scale_edge_linetype()
+  aes <- vapply(p@scales, function(s) s@aesthetic, character(1))
+  expect_true(all(
+    c("edge_color", "edge_alpha", "edge_linetype") %in% aes
+  ))
+  expect_identical(scale_edge_colour, scale_edge_color) # British alias
+})
+
+# --- N1b: mark_edge_text -----------------------------------------------------
+
+test_that("mark_edge_text adds an edge_text layer at the midpoint, above edges", {
+  p <- vplot(data.frame(x = 1)) |> mark_edge_text(label = w)
+  L <- p@layers[[1]]
+  expect_identical(L@mark, "edge_text")
+  expect_identical(L@z, 2L)
+  expect_true(all(c("x", "y", "label") %in% names(L@encoding)))
+})
+
+test_that("mark_edge_text requires a label mapping", {
+  expect_error(
+    vplot(data.frame(x = 1)) |> mark_edge_text(),
+    "needs a"
+  )
+})
+
+test_that("mark_edge_text angle = 'along' maps a per-edge rotation", {
+  p <- vplot(data.frame(x = 1)) |> mark_edge_text(label = w, angle = "along")
+  expect_true("angle" %in% names(p@layers[[1]]@encoding))
+})
+
+test_that("graph marks assign fixed z bands regardless of pipe order", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(4)
+  p <- vgraph(g) |>
+    mark_node_text(label = name) |>
+    mark_nodes() |>
+    mark_edge_text(label = name) |>
+    mark_edges()
+  z <- vapply(p@layers, function(l) l@z, integer(1))
+  m <- vapply(p@layers, function(l) l@mark, character(1))
+  expect_identical(z[m == "edges"], 1L)
+  expect_identical(z[m == "edge_text"], 2L)
+  expect_identical(z[m == "nodes"], 3L)
+  expect_identical(z[m == "node_text"], 4L)
+})
+
+# --- N1c: arrow spec ---------------------------------------------------------
+
+test_that(".resolve_edge_arrow handles FALSE / TRUE / a vl_arrow spec", {
+  expect_null(.resolve_edge_arrow(FALSE))
+  expect_null(.resolve_edge_arrow(NULL))
+  expect_true(inherits(.resolve_edge_arrow(TRUE), "vellum_arrow"))
+  a <- vellum::vl_arrow(ends = "both", type = "open")
+  expect_identical(.resolve_edge_arrow(a), a) # custom spec passes through
+})
+
+test_that("mark_edges stores the resolved arrow spec", {
+  p <- vplot(data.frame(x = 1)) |>
+    mark_edges(arrow = vellum::vl_arrow(ends = "both"))
+  expect_true(inherits(p@layers[[1]]@stat_params$arrow, "vellum_arrow"))
+})
+
+# --- N1 end to end -----------------------------------------------------------
+
+test_that("independent node/edge colour + edge label + arrow spec render", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  el <- matrix(c(1, 2, 2, 3, 3, 1, 1, 4), ncol = 2, byrow = TRUE)
+  d <- igraph::graph_from_edgelist(el, directed = TRUE)
+  d <- igraph::set_vertex_attr(d, "grp", value = factor(c("a", "a", "b", "b")))
+  d <- igraph::set_edge_attr(d, "w", value = c(1, 2, 3, 4))
+  p <- vgraph(d) |>
+    mark_edges(
+      color = w,
+      arrow = vellum::vl_arrow(ends = "both", type = "open")
+    ) |>
+    mark_nodes(fill = grp, size = 5) |>
+    mark_edge_text(label = w, angle = "along") |>
+    scale_edge_color(palette = "Grays")
   expect_no_error(vellum::as_vellum_scene(p))
   png <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, png))
