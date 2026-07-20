@@ -1,6 +1,6 @@
 Package: vellumplot
 Title: A Grammar of Graphics on the 'vellum' Backend
-Version: 0.6.0
+Version: 0.6.0.9000
 Authors@R:
     person("David", "Schoch", , "david.schoch@cynkra.com", role = c("aut", "cre"))
 Description: A declarative, pipe-first grammar of graphics that compiles an

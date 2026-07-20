@@ -1,3 +1,5 @@
+# vellumplot (development version)
+
 # vellumplot 0.6.0
 
 * **Sankey styling options.** `vsankey()` / `mark_sankey()` gain `show_values`
