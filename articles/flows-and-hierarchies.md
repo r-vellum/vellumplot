@@ -80,13 +80,13 @@ layer to an axis-free, free-aspect panel;
 is exported too, for building a flow layer on a plot you have set up
 yourself.
 
-## Sunburst diagrams
+## Hierarchy diagrams
 
-[`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
-draws a hierarchy as concentric rings of sectors: depth maps to a ring,
-and each node’s angular span is its share of its parent’s. Input is a
-**parent list** — `id`, `parent` (`NA` for the root), and `value` (given
-for leaves; an internal node’s value is the sum of its children).
+[`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
+draws a tree as a space-filling diagram. All four geometries take the
+same **parent list** — `id`, `parent` (`NA` for the root), and `value`
+(given for leaves; an internal node’s value is the sum of its children)
+— so you switch between them with `type` and nothing else changes.
 
 ``` r
 
@@ -95,44 +95,64 @@ h <- data.frame(
   parent = c(NA, "all", "all", "tech", "tech", "food", "food"),
   value  = c(NA, NA, NA, 8, 5, 6, 4)
 )
-vsunburst(h, id, parent, value)
+vhierarchy(h, id, parent, value) # type = "sunburst" (default)
 ```
 
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-6-1.png)
 
-The root sits at the centre (it is not drawn as a wedge); the first
-level forms the innermost ring, starting at twelve o’clock and winding
-clockwise. Each top-level branch takes a distinct hue, and its
-descendants inherit that hue lightened with depth, so branches stay
-distinguishable and each ring reads as a shade of its parent.
+The root is structural and never drawn; every top-level branch takes a
+distinct hue, and its descendants inherit that hue lightened with depth,
+so branches stay distinguishable and each level reads as a shade of its
+parent. Each node is labelled with its `id` where the label fits (small
+nodes are left unlabelled, so a dense diagram stays legible), and
+`show_values` appends the value.
 
-Each segment is labelled with its `id` by default, oriented
-(tangentially, radially, or horizontally) to fit its wedge and kept
-upright; a label that fits in no orientation is dropped, so a busy
-sunburst stays legible. `show_values` appends each node’s value, and
-`root_label` writes the root — with its total when values are shown — in
-the centre:
+**Sunburst** lays depth out as concentric rings, each node’s angular
+span its share of its parent’s, starting at twelve o’clock and winding
+clockwise. Labels are oriented to fit their wedge and kept upright;
+`root_label` writes the root in the centre and `inner_radius` opens a
+hole for a ring/donut look.
 
 ``` r
 
-vsunburst(h, id, parent, value, show_values = TRUE, root_label = TRUE)
+vhierarchy(h, id, parent, value, show_values = TRUE, root_label = TRUE)
 ```
 
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png)
 
-`inner_radius` opens a hole for a ring/donut sunburst:
+**Treemap** packs the tree into squarified nested rectangles, and
+**circlepack** into circles enclosed in circles — both read area as
+value:
 
 ``` r
 
-vsunburst(h, id, parent, value, inner_radius = 0.4)
+vhierarchy(h, id, parent, value, type = "treemap", show_values = TRUE)
 ```
 
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-8-1.png)
 
+``` r
+
+vhierarchy(h, id, parent, value, type = "circlepack", show_values = TRUE)
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-8-2.png)
+
+**Icicle** is the rectangular cousin of the sunburst: depth becomes
+adjacent bands and `flow` chooses the direction (`"down"`, `"up"`,
+`"right"`, `"left"`):
+
+``` r
+
+vhierarchy(h, id, parent, value, type = "icicle", flow = "right")
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-9-1.png)
+
 Both
 [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
 and
-[`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
+[`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
 follow the
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
 pattern: the layout is computed in R and drawn through vellum

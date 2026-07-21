@@ -42,7 +42,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -160,9 +160,9 @@
 </div>
 </div>
 <p><code><a href="../reference/vsankey.html">vsankey()</a></code> returns an ordinary [PlotSpec], so it renders with <code><a href="../reference/render_plot.html">render_plot()</a></code> / <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> like any other plot. Under the hood it adds a single <code><a href="../reference/vsankey.html">mark_sankey()</a></code> layer to an axis-free, free-aspect panel; <code><a href="../reference/vsankey.html">mark_sankey()</a></code> is exported too, for building a flow layer on a plot you have set up yourself.</p>
-</section><section class="level2"><h2 id="sunburst-diagrams">Sunburst diagrams<a class="anchor" aria-label="anchor" href="#sunburst-diagrams"></a>
+</section><section class="level2"><h2 id="hierarchy-diagrams">Hierarchy diagrams<a class="anchor" aria-label="anchor" href="#hierarchy-diagrams"></a>
 </h2>
-<p><code><a href="../reference/vsunburst.html">vsunburst()</a></code> draws a hierarchy as concentric rings of sectors: depth maps to a ring, and each node’s angular span is its share of its parent’s. Input is a <strong>parent list</strong> — <code>id</code>, <code>parent</code> (<code>NA</code> for the root), and <code>value</code> (given for leaves; an internal node’s value is the sum of its children).</p>
+<p><code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> draws a tree as a space-filling diagram. All four geometries take the same <strong>parent list</strong> — <code>id</code>, <code>parent</code> (<code>NA</code> for the root), and <code>value</code> (given for leaves; an internal node’s value is the sum of its children) — so you switch between them with <code>type</code> and nothing else changes.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -170,7 +170,7 @@
 <span>  parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="st">"all"</span>, <span class="st">"all"</span>, <span class="st">"tech"</span>, <span class="st">"tech"</span>, <span class="st">"food"</span>, <span class="st">"food"</span><span class="op">)</span>,</span>
 <span>  value  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="fl">8</span>, <span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/vsunburst.html">vsunburst</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span><span class="op">)</span> <span class="co"># type = "sunburst" (default)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
@@ -178,11 +178,11 @@
 </div>
 </div>
 </div>
-<p>The root sits at the centre (it is not drawn as a wedge); the first level forms the innermost ring, starting at twelve o’clock and winding clockwise. Each top-level branch takes a distinct hue, and its descendants inherit that hue lightened with depth, so branches stay distinguishable and each ring reads as a shade of its parent.</p>
-<p>Each segment is labelled with its <code>id</code> by default, oriented (tangentially, radially, or horizontally) to fit its wedge and kept upright; a label that fits in no orientation is dropped, so a busy sunburst stays legible. <code>show_values</code> appends each node’s value, and <code>root_label</code> writes the root — with its total when values are shown — in the centre:</p>
+<p>The root is structural and never drawn; every top-level branch takes a distinct hue, and its descendants inherit that hue lightened with depth, so branches stay distinguishable and each level reads as a shade of its parent. Each node is labelled with its <code>id</code> where the label fits (small nodes are left unlabelled, so a dense diagram stays legible), and <code>show_values</code> appends the value.</p>
+<p><strong>Sunburst</strong> lays depth out as concentric rings, each node’s angular span its share of its parent’s, starting at twelve o’clock and winding clockwise. Labels are oriented to fit their wedge and kept upright; <code>root_label</code> writes the root in the centre and <code>inner_radius</code> opens a hole for a ring/donut look.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vsunburst.html">vsunburst</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span>, root_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span>, root_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
@@ -190,18 +190,37 @@
 </div>
 </div>
 </div>
-<p><code>inner_radius</code> opens a hole for a ring/donut sunburst:</p>
+<p><strong>Treemap</strong> packs the tree into squarified nested rectangles, and <strong>circlepack</strong> into circles enclosed in circles — both read area as value:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vsunburst.html">vsunburst</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, inner_radius <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, type <span class="op">=</span> <span class="st">"treemap"</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, type <span class="op">=</span> <span class="st">"circlepack"</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-8-2.png" style="width:100.0%"></p>
+</figure>
 </div>
-<p>Both <code><a href="../reference/vsankey.html">vsankey()</a></code> and <code><a href="../reference/vsunburst.html">vsunburst()</a></code> follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
+</div>
+</div>
+<p><strong>Icicle</strong> is the rectangular cousin of the sunburst: depth becomes adjacent bands and <code>flow</code> chooses the direction (<code>"down"</code>, <code>"up"</code>, <code>"right"</code>, <code>"left"</code>):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, type <span class="op">=</span> <span class="st">"icicle"</span>, flow <span class="op">=</span> <span class="st">"right"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Both <code><a href="../reference/vsankey.html">vsankey()</a></code> and <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

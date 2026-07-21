@@ -1,6 +1,19 @@
 # Changelog
 
-## vellumplot (development version)
+## vellumplot 0.7.0
+
+- **New
+  [`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
+  for space-filling hierarchies — breaking.**
+  `vhierarchy(id, parent, value, type = )` draws a tree four ways from
+  one parent list, switching only `type`: `"sunburst"` (default),
+  `"icicle"`, `"treemap"`, or `"circlepack"`. This **replaces
+  `vsunburst()`** — `vhierarchy(..., type = "sunburst")` reproduces the
+  old radial sunburst, and `vsunburst()` / `mark_sunburst()` are
+  removed. Treemaps use a squarified layout; circle-pack is a faithful
+  port of d3’s front-chain packing.
+  [`mark_hierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
+  is the exported layer.
 
 - **Sunbursts, polar pies, and self-loops render un-mirrored.** Requires
   vellum (\>= 0.5.1), which fixes `sector_grob()`/`loop_grob()` to draw
@@ -63,27 +76,24 @@
   slices to meet the node in the same vertical order as the nodes they
   connect to, removing the remaining crossings within a fan of ribbons.
 
-- **Sunburst rendering fixes.**
-  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
-  now colours wedges by their top-level branch (each branch a distinct
-  hue, lightened with depth) instead of a single colour per ring —
-  sibling branches were previously indistinguishable. It also starts the
-  first wedge at twelve o’clock and winds clockwise, matching the
-  package’s pies/roses (`coord_polar`) rather than starting at three
-  o’clock counter-clockwise.
+- **Sunburst rendering fixes.** `vsunburst()` now colours wedges by
+  their top-level branch (each branch a distinct hue, lightened with
+  depth) instead of a single colour per ring — sibling branches were
+  previously indistinguishable. It also starts the first wedge at twelve
+  o’clock and winds clockwise, matching the package’s pies/roses
+  (`coord_polar`) rather than starting at three o’clock
+  counter-clockwise.
 
-- **Sunburst / radial hierarchies:
-  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md).**
-  A new plot type for part-of-whole hierarchies, from a *parent list* —
-  `id`, `parent` (`NA` at the root), and `value` (leaf values; internal
-  nodes sum their children). Depth maps to a ring and each node’s
-  angular span is its share of its parent’s, drawn as one batched
-  `sector_grob` in an aspect-locked, axis-free square panel (mirroring
+- **Sunburst / radial hierarchies: `vsunburst()`.** A new plot type for
+  part-of-whole hierarchies, from a *parent list* — `id`, `parent` (`NA`
+  at the root), and `value` (leaf values; internal nodes sum their
+  children). Depth maps to a ring and each node’s angular span is its
+  share of its parent’s, drawn as one batched `sector_grob` in an
+  aspect-locked, axis-free square panel (mirroring
   [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)/[`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)).
   `inner_radius` opens a central hole (a donut/ring sunburst); nodes are
-  coloured by depth.
-  [`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
-  is the exported layer. See `vignette("flows-and-hierarchies")`.
+  coloured by depth. `mark_sunburst()` is the exported layer. See
+  `vignette("flows-and-hierarchies")`.
 
 - **Sankey / flow diagrams:
   [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md).**
@@ -135,14 +145,10 @@
   labels (drawn to their left) and the terminal column’s (drawn to their
   right) no longer clip at the panel edge.
 
-- **Robustness of the new marks.**
-  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)/[`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
-  now reject a missing or negative leaf `value` with a clear message
-  (instead of a cryptic downstream error), and
-  [`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
-  validates `inner_radius` like
-  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)
-  and
+- **Robustness of the new marks.** `vsunburst()`/`mark_sunburst()` now
+  reject a missing or negative leaf `value` with a clear message
+  (instead of a cryptic downstream error), and `mark_sunburst()`
+  validates `inner_radius` like `vsunburst()` and
   [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
   do.
   [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)/[`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
@@ -155,8 +161,7 @@
   central-hole fraction is now spelled `inner_radius` everywhere it
   appears:
   [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md),
-  [`vsunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md)/[`mark_sunburst()`](https://r-vellum.github.io/vellumplot/reference/vsunburst.md),
-  and
+  `vsunburst()`/`mark_sunburst()`, and
   [`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
   (was `hole`).
   [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)’s
