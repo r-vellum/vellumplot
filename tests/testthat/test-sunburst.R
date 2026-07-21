@@ -184,6 +184,45 @@ test_that("labels render, and show_values / root_label are drawables", {
   expect_gt(file.info(f)$size, 0)
 })
 
+test_that("each label sits on its own wedge (matches the drawn sector angle)", {
+  # `sector_grob` paints in the device (y-down) frame, so a wedge the layout
+  # places at angle `theta` is drawn at `-theta`; the emitter negates the
+  # mid-angle so the label lands on its own wedge, not the vertical mirror.
+  # Guard that negation: a label's polar angle must equal `-(theta0+theta1)/2`
+  # and its radius the ring mid-radius.
+  text_grobs <- function(p) {
+    sc <- vellum::as_vellum_scene(p)
+    root <- vellum:::.materialize(sc)
+    acc <- list()
+    walk <- function(node) {
+      if (S7::S7_inherits(node, vellum:::gtree)) {
+        for (ch in node@children) {
+          walk(ch)
+        }
+      } else if (S7::S7_inherits(node, vellum:::grob_text)) {
+        acc[[length(acc) + 1L]] <<- node
+      }
+    }
+    walk(root)
+    acc
+  }
+  lay <- vellumplot:::.sunburst_layout(h$id, h$parent, h$value)
+  want_ang <- setNames(-(lay$theta0 + lay$theta1) / 2, lay$id)
+  want_rad <- setNames((lay$r0 + lay$r1) / 2, lay$id)
+  for (g in text_grobs(vsunburst(h, id, parent, value))) {
+    id <- g@label
+    if (!id %in% lay$id) {
+      next
+    } # skip a root/centre label
+    x <- vctrs::field(g@x, "value")
+    y <- vctrs::field(g@y, "value")
+    ang <- atan2(y, x)
+    d <- ((ang - want_ang[[id]] + pi) %% (2 * pi)) - pi # wrapped difference
+    expect_equal(d, 0, tolerance = 1e-6, info = id)
+    expect_equal(sqrt(x^2 + y^2), want_rad[[id]], tolerance = 1e-6, info = id)
+  }
+})
+
 test_that("small wedges drop their label (fewer text grobs than segments)", {
   text_n <- function(p) {
     sc <- vellum::as_vellum_scene(p)

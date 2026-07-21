@@ -1880,7 +1880,13 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   lw <- vapply(labels, function(s) .mm_tw(s, fs), numeric(1)) # label width, mm
   lh <- fs * 25.4 / 72 # a line's height, mm
 
-  thetamid <- (lay$theta0 + lay$theta1) / 2
+  # `sector_grob` draws its arcs in the device (y-down) frame -- it applies
+  # `cy + r*sin(theta)` without the y-flip that `text_grob`/`points`/`segments`
+  # use -- so every sector renders vertically mirrored relative to those
+  # primitives (a wedge the layout puts at angle `theta` is painted at `-theta`).
+  # Negate here so a label lands on its own wedge rather than the mirror image.
+  # (If vellum's sector angle convention is ever made y-up, drop this negation.)
+  thetamid <- -(lay$theta0 + lay$theta1) / 2
   rmid <- (lay$r0 + lay$r1) / 2
   arc_mm <- rmid * abs(lay$theta1 - lay$theta0) * nat2mm # tangential capacity
   rad_mm <- (lay$r1 - lay$r0) * nat2mm # radial capacity
