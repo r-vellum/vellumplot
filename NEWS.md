@@ -1,5 +1,13 @@
 # vellumplot (development version)
 
+* **Sunbursts, polar pies, and self-loops render un-mirrored.** Requires
+  vellum (>= 0.5.1), which fixes `sector_grob()`/`loop_grob()` to draw in the
+  same y-up frame as every other primitive. Sunburst segment labels now sit on
+  their own wedges (they previously landed on the vertical mirror on unbalanced
+  trees), sunbursts wind clockwise from twelve o'clock as documented, and graph
+  self-loops point into the empty gap between a vertex's incident edges rather
+  than its mirror image.
+
 * **`select_point(group_by=)` now links whole groups.** A point selection with
   `group_by` / `fields` groups elements sharing those column values, so hovering
   or clicking one mark highlights (and `condition()` spotlights) its whole group
