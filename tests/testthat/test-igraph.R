@@ -657,3 +657,104 @@ test_that("independent node/edge colour + edge label + arrow spec render", {
   expect_no_error(render_plot(p, png))
   expect_true(file.exists(png))
 })
+
+# --- N8: graph interaction substrate (node/edge keys + endpoint identity) -----
+
+# Per-element meta from the compiled scene, for a given mark kind.
+.graph_elem_meta <- function(p) {
+  sm <- vellum::scene_model(vellum::as_vellum_scene(p))
+  sm$elements
+}
+
+test_that(".resolve_layer attaches graph_identity to node and edge marks", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_graph(~ a - b, b - c, c - a)
+  node_layer <- vgraph(g) |> mark_nodes()
+  edge_layer <- vgraph(g) |> mark_edges()
+  rn <- .resolve_layer(node_layer@layers[[1]], node_layer@data)
+  re <- .resolve_layer(edge_layer@layers[[1]], edge_layer@edge_data)
+  edf <- igraph::as_data_frame(g, "edges") # igraph's canonical edge order
+  expect_identical(rn$graph_identity$kind, "nodes")
+  expect_identical(rn$graph_identity$key, c("a", "b", "c"))
+  expect_identical(re$graph_identity$kind, "edges")
+  # source/target mirror the edge table's endpoint names exactly
+  expect_identical(re$graph_identity$source, as.character(edf$from))
+  expect_identical(re$graph_identity$target, as.character(edf$to))
+  expect_length(unique(re$graph_identity$key), 3L) # stable, distinct per edge
+})
+
+test_that("an interactive graph keys nodes by name and edges by endpoints", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph(~ a - b, b - c, c - a, c - d)
+  p <- vgraph(g) |>
+    mark_edges() |>
+    mark_nodes(size = 4) |>
+    select_point("s", on = "hover")
+  el <- .graph_elem_meta(p)
+  # node elements keyed by vertex name
+  nodes <- el[el$mark %in% c("point", "circle"), , drop = FALSE]
+  expect_setequal(unique(nodes$key), c("a", "b", "c", "d"))
+  # edge elements carry source/target = endpoint names
+  src <- vapply(el$meta, function(m) m$source %||% NA_character_, character(1))
+  tgt <- vapply(el$meta, function(m) m$target %||% NA_character_, character(1))
+  keyed <- which(!is.na(src))
+  expect_gte(length(keyed), 4L)
+  edf <- igraph::as_data_frame(g, "edges")
+  pairs <- paste0(edf$from, "-", edf$to)
+  expect_true(all(paste0(src[keyed], "-", tgt[keyed]) %in% pairs))
+})
+
+test_that("a non-interactive graph emits no keys (static render unchanged)", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph(~ a - b, b - c, c - a)
+  el <- .graph_elem_meta(vgraph(g) |> mark_edges() |> mark_nodes(size = 4))
+  # no edge carries source/target when the plot declares no interaction
+  src <- vapply(el$meta, function(m) m$source %||% NA_character_, character(1))
+  expect_true(all(is.na(src)))
+})
+
+test_that("node tooltip defaults to the vertex name when interactive", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph(~ a - b, b - c)
+  el <- .graph_elem_meta(
+    vgraph(g) |> mark_nodes(size = 4) |> select_point("s", on = "hover")
+  )
+  nodes <- el[el$mark %in% c("point", "circle"), , drop = FALSE]
+  tips <- vapply(
+    nodes$meta,
+    function(m) m$tooltip %||% NA_character_,
+    character(1)
+  )
+  expect_setequal(tips, c("a", "b", "c"))
+})
+
+test_that("elbow edges are keyed; self-loops stay unkeyed but render", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  # elbow routing (lines_grob, one grob per edge) still carries endpoint keys
+  tr <- igraph::make_tree(7, 2, mode = "out")
+  el <- .graph_elem_meta(
+    vgraph(tr, layout = "tree") |>
+      mark_edges(routing = "elbow") |>
+      mark_nodes(size = 3) |>
+      select_point("s", on = "hover")
+  )
+  src <- vapply(el$meta, function(m) m$source %||% NA_character_, character(1))
+  expect_gt(sum(!is.na(src)), 0L)
+  # a self-loop compiles + renders (its loop grob is drawn without a key)
+  d <- igraph::graph_from_edgelist(matrix(
+    c(1, 1, 1, 2),
+    ncol = 2,
+    byrow = TRUE
+  ))
+  p <- vgraph(d) |>
+    mark_edges() |>
+    mark_nodes(size = 4) |>
+    select_point("s", on = "hover")
+  png <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, png))
+  expect_true(file.exists(png))
+})

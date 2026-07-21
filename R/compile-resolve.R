@@ -140,6 +140,29 @@ NULL
     }
   }
 
+  # Graph identity (inert): lets an interactive host relate nodes to edges for
+  # neighbour highlighting. Node marks key by vertex `name`; edge marks carry
+  # their two endpoint node `name`s as source/target plus a stable per-edge key
+  # (endpoint pair + within-pair ordinal, so parallel/reciprocal edges stay
+  # distinct). Pure data -- NOT keyed here (untouched by `.resolve_interactivity`);
+  # the emitter attaches it only when the plot is interactive, so the static
+  # render stays byte-identical.
+  graph_identity <- NULL
+  if (
+    layer@mark %in% c("nodes", "node_text", "node_pie") && !is.null(data$name)
+  ) {
+    graph_identity <- list(kind = "nodes", key = as.character(data$name))
+  } else if (identical(layer@mark, "edges") && !is.null(data$from)) {
+    frm <- as.character(data$from)
+    to <- as.character(data$to)
+    graph_identity <- list(
+      kind = "edges",
+      key = paste(frm, to, seq_along(frm), sep = ""),
+      source = frm,
+      target = to
+    )
+  }
+
   list(
     mark = layer@mark,
     values = values,
@@ -151,6 +174,7 @@ NULL
     sankey = sankey,
     sunburst = sunburst,
     ds = ds,
+    graph_identity = graph_identity,
     stat = layer@stat,
     stat_params = layer@stat_params,
     position = layer@position,
