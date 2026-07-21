@@ -758,3 +758,45 @@ test_that("elbow edges are keyed; self-loops stay unkeyed but render", {
   expect_no_error(render_plot(p, png))
   expect_true(file.exists(png))
 })
+
+# --- N8: select_neighbours() preset ------------------------------------------
+
+test_that("select_neighbours() builds a point selection carrying an expand spec", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph(~ a - b, b - c, c - a)
+  p <- vgraph(g) |>
+    mark_edges() |>
+    mark_nodes(size = 3) |>
+    select_neighbours(on = "hover", degree = 2, edges = FALSE)
+  expect_length(p@selections, 1L)
+  im <- interaction_model(p)
+  s <- im$selections[[1]]
+  expect_identical(s$name, "neighbours")
+  expect_identical(s$kind, "point")
+  expect_identical(s$on, "hover")
+  expect_identical(s$expand$mode, "neighbours")
+  expect_identical(s$expand$degree, 2L)
+  expect_false(s$expand$edges)
+})
+
+test_that("select_neighbours() is free-standing and validates degree", {
+  fs <- select_neighbours("nbr")
+  expect_true(S7::S7_inherits(fs, SelectionSpec))
+  expect_identical(fs@expand$mode, "neighbours")
+  expect_identical(fs@expand$degree, 1L)
+  expect_error(select_neighbours("nbr", degree = 0), "positive integer")
+})
+
+test_that("select_neighbours() makes the graph interactive (keys are emitted)", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph(~ a - b, b - c, c - a)
+  p <- vgraph(g) |>
+    mark_edges() |>
+    mark_nodes(size = 3) |>
+    select_neighbours()
+  el <- .graph_elem_meta(p)
+  src <- vapply(el$meta, function(m) m$source %||% NA_character_, character(1))
+  expect_gt(sum(!is.na(src)), 0L) # edges carry endpoints under the preset
+})

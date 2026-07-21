@@ -189,7 +189,12 @@ SelectionSpec <- S7::new_class(
     region = S7::new_property(S7::class_character, default = "rect"),
     fields = S7::new_property(S7::class_any, default = NULL), # chr | NULL
     toggle = S7::new_property(S7::class_logical, default = TRUE),
-    empty = S7::new_property(S7::class_logical, default = TRUE)
+    empty = S7::new_property(S7::class_logical, default = TRUE),
+    # Optional projection that expands a raw gesture to a related set before it is
+    # applied, e.g. `list(mode = "neighbours", degree, edges)` from
+    # `select_neighbours()` (a hovered graph node -> its incident edges +
+    # neighbour nodes). NULL for an ordinary selection. Enacted host-side.
+    expand = S7::new_property(S7::class_any, default = NULL)
   )
 )
 
