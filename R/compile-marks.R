@@ -2985,6 +2985,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   lg <- .mark_ctx$legend
   fv <- .mark_ctx$filter_value
   cond <- .mark_ctx$conditions
+  # Graph edge endpoints: the two node keys (`name`s) this edge joins, so a host
+  # can relate edges to nodes for neighbour highlighting. NULL for non-edge marks.
+  esrc <- .mark_ctx$edge_source
+  etgt <- .mark_ctx$edge_target
   # The "<sel>:<aes>" tags this layer's elements participate in (same for every
   # row of the layer, since a condition applies to the whole layer). A per-row
   # `if_false` column is carried per element as `cond_value`; a constant one lives
@@ -3025,7 +3029,9 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       is.null(fv) &&
       is.null(cond_tags) &&
       is.null(filt_tags) &&
-      is.null(join)
+      is.null(join) &&
+      is.null(esrc) &&
+      is.null(etgt)
   ) {
     return(NULL)
   }
@@ -3042,6 +3048,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     }
     if (!is.null(sc)) {
       rec$selected_color <- as.character(sc[[i]])
+    }
+    if (!is.null(esrc)) {
+      rec$source <- as.character(esrc[[i]])
+    }
+    if (!is.null(etgt)) {
+      rec$target <- as.character(etgt[[i]])
     }
     # `legend`: the discrete series this element belongs to ("<aes>:<value>"), so a
     # legend swatch (tagged with `legend_for`) can highlight the whole series.
@@ -3309,6 +3321,26 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         length(L$selgroup) == L$n
     ) {
       .mark_ctx$hover_group <- as.character(L$selgroup)
+    }
+    # Graph marks (nodes/edges): when the plot is interactive, key nodes by vertex
+    # `name` and carry each edge's two endpoint node names as source/target, so a
+    # host can relate nodes to edges for neighbour highlighting. Overrides the
+    # row-index default above with the stable graph key. A node with no declared
+    # tooltip defaults to its name. Inert on a static render (gated on
+    # `plot_interactive`). Straight / gradient / elbow edges all carry per-edge
+    # keys (they pass `rows=` to `.draw`); self-loops draw without `rows=` so they
+    # stay unkeyed -- harmless, a loop's only neighbour is its own node.
+    .mark_ctx$edge_source <- NULL
+    .mark_ctx$edge_target <- NULL
+    gi <- L$graph_identity
+    if (isTRUE(.mark_ctx$plot_interactive) && !is.null(gi)) {
+      .mark_ctx$data_id <- gi$key
+      if (identical(gi$kind, "edges")) {
+        .mark_ctx$edge_source <- gi$source
+        .mark_ctx$edge_target <- gi$target
+      } else if (is.null(.mark_ctx$tooltip)) {
+        .mark_ctx$tooltip <- gi$key
+      }
     }
     # In a composition, each cell is a separate plot compiled independently, so
     # cells share row-index keys that would collide in one host runtime (hiding one
