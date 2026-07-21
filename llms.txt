@@ -583,6 +583,8 @@ static render; enacted by a host such as vellumwidget.
 - [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
   [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
   : Declare an interactive selection
+- [`select_neighbours()`](https://r-vellum.github.io/vellumplot/reference/select_neighbours.md)
+  : Highlight a node's graph neighbourhood
 - [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
   : Conditional encoding: style by selection membership
 - [`add_selection()`](https://r-vellum.github.io/vellumplot/reference/add_selection.md)

@@ -283,6 +283,31 @@ vgraph(g, layout = "stress") |>
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
 
+### Interactive neighbour highlighting
+
+[`select_neighbours()`](https://r-vellum.github.io/vellumplot/reference/select_neighbours.md)
+is a network-aware selection preset: in an interactive host
+(`vellumwidget::as_widget()`), pointing at a node spotlights **its
+neighbourhood** — the node, its incident edges, and its adjacent nodes —
+and dims the rest; pointing at an edge highlights its two endpoints.
+`degree = 2` reaches neighbours-of-neighbours. Like every selection it
+is inert on a static render, so the code below draws the same picture on
+the page but comes alive under `as_widget()`.
+
+``` r
+
+vgraph(g, layout = "stress") |>
+  mark_edges(alpha = 0.3) |>
+  mark_nodes(size = deg, fill = grp) |>
+  mark_node_text(label = name, top_n = 8, by = deg) |>
+  select_neighbours(on = "hover") |>
+  scale_size(range = c(0.5, 3))
+```
+
+Declaring the selection also keys every node (by its vertex name) and
+edge, so node/edge tooltips, click-select, and pan/zoom work in the
+widget too.
+
 ### Choosing a layout
 
 `layout` accepts a name (`"stress"`, `"sparse_stress"`, `"backbone"`,
@@ -297,7 +322,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 2)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a
