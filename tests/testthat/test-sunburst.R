@@ -185,11 +185,9 @@ test_that("labels render, and show_values / root_label are drawables", {
 })
 
 test_that("each label sits on its own wedge (matches the drawn sector angle)", {
-  # `sector_grob` paints in the device (y-down) frame, so a wedge the layout
-  # places at angle `theta` is drawn at `-theta`; the emitter negates the
-  # mid-angle so the label lands on its own wedge, not the vertical mirror.
-  # Guard that negation: a label's polar angle must equal `-(theta0+theta1)/2`
-  # and its radius the ring mid-radius.
+  # A label sits at its wedge's centroid: polar angle `(theta0+theta1)/2` and
+  # radius the ring mid-radius. (`sector_grob` and `text_grob` share the y-up
+  # frame since vellum 0.5.1, so no angle negation is needed.)
   text_grobs <- function(p) {
     sc <- vellum::as_vellum_scene(p)
     root <- vellum:::.materialize(sc)
@@ -207,7 +205,7 @@ test_that("each label sits on its own wedge (matches the drawn sector angle)", {
     acc
   }
   lay <- vellumplot:::.sunburst_layout(h$id, h$parent, h$value)
-  want_ang <- setNames(-(lay$theta0 + lay$theta1) / 2, lay$id)
+  want_ang <- setNames((lay$theta0 + lay$theta1) / 2, lay$id)
   want_rad <- setNames((lay$r0 + lay$r1) / 2, lay$id)
   for (g in text_grobs(vsunburst(h, id, parent, value))) {
     id <- g@label
