@@ -105,6 +105,21 @@ level forms the innermost ring, starting at twelve o’clock and winding
 clockwise. Each top-level branch takes a distinct hue, and its
 descendants inherit that hue lightened with depth, so branches stay
 distinguishable and each ring reads as a shade of its parent.
+
+Each segment is labelled with its `id` by default, oriented
+(tangentially, radially, or horizontally) to fit its wedge and kept
+upright; a label that fits in no orientation is dropped, so a busy
+sunburst stays legible. `show_values` appends each node’s value, and
+`root_label` writes the root — with its total when values are shown — in
+the centre:
+
+``` r
+
+vsunburst(h, id, parent, value, show_values = TRUE, root_label = TRUE)
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png)
+
 `inner_radius` opens a hole for a ring/donut sunburst:
 
 ``` r
@@ -112,7 +127,7 @@ distinguishable and each ring reads as a shade of its parent.
 vsunburst(h, id, parent, value, inner_radius = 0.4)
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-8-1.png)
 
 Both
 [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)

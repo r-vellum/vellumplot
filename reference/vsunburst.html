@@ -89,12 +89,26 @@ an internal node's value is the sum of its children). Like <code><a href="vgraph
 <span>  <span class="va">parent</span>,</span>
 <span>  <span class="va">value</span>,</span>
 <span>  inner_radius <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_values <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"radial"</span>, <span class="st">"tangential"</span>, <span class="st">"horizontal"</span><span class="op">)</span>,</span>
+<span>  root_label <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  width <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>  height <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>  dpi <span class="op">=</span> <span class="fl">96</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">mark_sunburst</span><span class="op">(</span><span class="va">plot</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, inner_radius <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">mark_sunburst</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">id</span>,</span>
+<span>  <span class="va">parent</span>,</span>
+<span>  <span class="va">value</span>,</span>
+<span>  inner_radius <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_values <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"radial"</span>, <span class="st">"tangential"</span>, <span class="st">"horizontal"</span><span class="op">)</span>,</span>
+<span>  root_label <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -115,6 +129,27 @@ an internal node's value is the sum of its children). Like <code><a href="vgraph
 fills to the centre.</p></dd>
 
 
+<dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
+<dd><p>Label each segment with its <code>id</code>? Default <code>TRUE</code>. Segments too
+small for their label (in every allowed orientation) are left unlabelled.</p></dd>
+
+
+<dt id="arg-show-values">show_values<a class="anchor" aria-label="anchor" href="#arg-show-values"></a></dt>
+<dd><p>Append each node's value to its label, e.g. <code>"A1 (3)"</code>
+(and, with <code>root_label</code>, the root's total). Default <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-orientation">orientation<a class="anchor" aria-label="anchor" href="#arg-orientation"></a></dt>
+<dd><p>How segment labels are angled: <code>"auto"</code> (default) picks
+tangential / radial / horizontal per segment to best fit the wedge, or force
+one of <code>"radial"</code>, <code>"tangential"</code>, <code>"horizontal"</code>. Labels are always kept
+upright (never upside-down).</p></dd>
+
+
+<dt id="arg-root-label">root_label<a class="anchor" aria-label="anchor" href="#arg-root-label"></a></dt>
+<dd><p>Write the root's name in the centre? Default <code>FALSE</code>.</p></dd>
+
+
 <dt id="arg-width-height-dpi">width, height, dpi<a class="anchor" aria-label="anchor" href="#arg-width-height-dpi"></a></dt>
 <dd><p>Page size (inches) and resolution.</p></dd>
 
@@ -131,6 +166,11 @@ fills to the centre.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The root is the centre (not drawn as a wedge); <code>inner_radius</code> opens a hole.
 Nodes are coloured by depth. The input must be a single-rooted tree.</p>
+<p>By default each segment is labelled with its <code>id</code>, oriented to fit its wedge
+(see <code>orientation</code>); a label that fits in no orientation is dropped, so a dense
+sunburst stays legible. <code>show_values</code> appends the node's value, and
+<code>root_label</code> writes the root's name (and, with <code>show_values</code>, its total) in the
+centre.</p>
     </div>
 
     <div class="section level2">
@@ -140,7 +180,7 @@ Nodes are coloured by depth. The input must be a single-rooted tree.</p>
 <span class="r-in"><span>  parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="st">"root"</span>, <span class="st">"root"</span>, <span class="st">"A"</span>, <span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">vsunburst</span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">vsunburst</span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="vsunburst-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>

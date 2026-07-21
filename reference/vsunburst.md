@@ -20,12 +20,26 @@ vsunburst(
   parent,
   value,
   inner_radius = 0,
+  label = TRUE,
+  show_values = FALSE,
+  orientation = c("auto", "radial", "tangential", "horizontal"),
+  root_label = FALSE,
   width = 6,
   height = 6,
   dpi = 96
 )
 
-mark_sunburst(plot, id, parent, value, inner_radius = 0)
+mark_sunburst(
+  plot,
+  id,
+  parent,
+  value,
+  inner_radius = 0,
+  label = TRUE,
+  show_values = FALSE,
+  orientation = c("auto", "radial", "tangential", "horizontal"),
+  root_label = FALSE
+)
 ```
 
 ## Arguments
@@ -43,6 +57,27 @@ mark_sunburst(plot, id, parent, value, inner_radius = 0)
 
   Central hole radius, a fraction in `[0, 1)`; `0` (default) fills to
   the centre.
+
+- label:
+
+  Label each segment with its `id`? Default `TRUE`. Segments too small
+  for their label (in every allowed orientation) are left unlabelled.
+
+- show_values:
+
+  Append each node's value to its label, e.g. `"A1 (3)"` (and, with
+  `root_label`, the root's total). Default `FALSE`.
+
+- orientation:
+
+  How segment labels are angled: `"auto"` (default) picks tangential /
+  radial / horizontal per segment to best fit the wedge, or force one of
+  `"radial"`, `"tangential"`, `"horizontal"`. Labels are always kept
+  upright (never upside-down).
+
+- root_label:
+
+  Write the root's name in the centre? Default `FALSE`.
 
 - width, height, dpi:
 
@@ -65,6 +100,12 @@ The root is the centre (not drawn as a wedge); `inner_radius` opens a
 hole. Nodes are coloured by depth. The input must be a single-rooted
 tree.
 
+By default each segment is labelled with its `id`, oriented to fit its
+wedge (see `orientation`); a label that fits in no orientation is
+dropped, so a dense sunburst stays legible. `show_values` appends the
+node's value, and `root_label` writes the root's name (and, with
+`show_values`, its total) in the centre.
+
 ## Examples
 
 ``` r
@@ -73,5 +114,5 @@ h <- data.frame(
   parent = c(NA, "root", "root", "A", "A", "B"),
   value = c(NA, NA, NA, 3, 2, 4)
 )
-vsunburst(h, id, parent, value)
+vsunburst(h, id, parent, value, show_values = TRUE)
 ```

@@ -178,13 +178,25 @@
 </div>
 </div>
 </div>
-<p>The root sits at the centre (it is not drawn as a wedge); the first level forms the innermost ring, starting at twelve o’clock and winding clockwise. Each top-level branch takes a distinct hue, and its descendants inherit that hue lightened with depth, so branches stay distinguishable and each ring reads as a shade of its parent. <code>inner_radius</code> opens a hole for a ring/donut sunburst:</p>
+<p>The root sits at the centre (it is not drawn as a wedge); the first level forms the innermost ring, starting at twelve o’clock and winding clockwise. Each top-level branch takes a distinct hue, and its descendants inherit that hue lightened with depth, so branches stay distinguishable and each ring reads as a shade of its parent.</p>
+<p>Each segment is labelled with its <code>id</code> by default, oriented (tangentially, radially, or horizontally) to fit its wedge and kept upright; a label that fits in no orientation is dropped, so a busy sunburst stays legible. <code>show_values</code> appends each node’s value, and <code>root_label</code> writes the root — with its total when values are shown — in the centre:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vsunburst.html">vsunburst</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, inner_radius <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vsunburst.html">vsunburst</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span>, root_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><code>inner_radius</code> opens a hole for a ring/donut sunburst:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vsunburst.html">vsunburst</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, inner_radius <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
