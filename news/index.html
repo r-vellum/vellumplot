@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,6 +61,9 @@
       <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.0" id="vellumplot-070">vellumplot 0.7.0<a class="anchor" aria-label="anchor" href="#vellumplot-070"></a></h2>
 <ul><li><p><strong>New <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> for space-filling hierarchies — breaking.</strong> <code>vhierarchy(id, parent, value, type = )</code> draws a tree four ways from one parent list, switching only <code>type</code>: <code>"sunburst"</code> (default), <code>"icicle"</code>, <code>"treemap"</code>, or <code>"circlepack"</code>. This <strong>replaces <code>vsunburst()</code></strong> — <code>vhierarchy(..., type = "sunburst")</code> reproduces the old radial sunburst, and <code>vsunburst()</code> / <code>mark_sunburst()</code> are removed. Treemaps use a squarified layout; circle-pack is a faithful port of d3’s front-chain packing. <code><a href="../reference/vhierarchy.html">mark_hierarchy()</a></code> is the exported layer.</p></li>
