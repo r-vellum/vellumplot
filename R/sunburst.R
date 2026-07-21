@@ -164,9 +164,10 @@ NULL
     base_of[as.character(branch[keep])],
     (depth[keep] - 1L) / max(1L, D - 1L) * 0.6
   )
-  data.frame(
+  lay <- data.frame(
     id = id[keep],
     depth = depth[keep],
+    value = val[keep], # node value (leaf's own / internal sum), for labels
     r0 = inner_radius + (depth[keep] - 1L) * w,
     r1 = inner_radius + depth[keep] * w,
     theta0 = pi / 2 - 2 * pi * f1[keep],
@@ -174,6 +175,10 @@ NULL
     colour = colour,
     stringsAsFactors = FALSE
   )
+  # The root is the centre (not a wedge); carry its id + total so the emitter can
+  # draw an optional centre label.
+  attr(lay, "root") <- list(id = id[root], value = val[root])
+  lay
 }
 
 # Blend colours toward white by `amount` in [0, 1] (0 = unchanged, 1 = white),
@@ -184,6 +189,29 @@ NULL
   amount <- pmin(pmax(amount, 0), 1)
   m <- m + (255 - m) * amount
   farver::encode_colour(m)
+}
+
+# A readable ink colour (black or white) for text drawn over each fill, chosen by
+# perceived luminance (Rec. 601). Vectorised over `fill`. Reuses farver like
+# `.lighten()`.
+.contrast_ink <- function(fill) {
+  m <- farver::decode_colour(fill)
+  lum <- (0.299 * m[, 1] + 0.587 * m[, 2] + 0.114 * m[, 3]) / 255
+  ifelse(lum > 0.6, "black", "white")
+}
+
+# Rotation (degrees) for a label whose baseline runs along a segment's radius
+# (`along = "radius"`) or its tangent (`along = "tangent"`), given the segment's
+# mid-angle in radians (math convention, 0 at 3 o'clock, CCW). Kept upright: an
+# angle that would point the text into the left half is flipped 180 degrees so it
+# never reads upside-down (`just = "centre"` means no justification swap needed).
+.upright_rot <- function(theta_rad, along = c("radius", "tangent")) {
+  along <- match.arg(along)
+  deg <- theta_rad * 180 / pi + if (along == "tangent") 90 else 0
+  deg <- ((deg + 180) %% 360) - 180 # normalise to (-180, 180]
+  deg[deg > 90] <- deg[deg > 90] - 180
+  deg[deg <= -90] <- deg[deg <= -90] + 180
+  deg
 }
 
 #' Sunburst (radial hierarchy) diagram
@@ -198,11 +226,26 @@ NULL
 #' The root is the centre (not drawn as a wedge); `inner_radius` opens a hole.
 #' Nodes are coloured by depth. The input must be a single-rooted tree.
 #'
+#' By default each segment is labelled with its `id`, oriented to fit its wedge
+#' (see `orientation`); a label that fits in no orientation is dropped, so a dense
+#' sunburst stays legible. `show_values` appends the node's value, and
+#' `root_label` writes the root's name (and, with `show_values`, its total) in the
+#' centre.
+#'
 #' @param data A data frame describing a hierarchy (a parent list).
 #' @param id,parent,value Columns (tidy-eval): the node id, its parent id
 #'   (`NA`/`""` for the root), and its value (used for leaves).
 #' @param inner_radius Central hole radius, a fraction in `[0, 1)`; `0` (default)
 #'   fills to the centre.
+#' @param label Label each segment with its `id`? Default `TRUE`. Segments too
+#'   small for their label (in every allowed orientation) are left unlabelled.
+#' @param show_values Append each node's value to its label, e.g. `"A1 (3)"`
+#'   (and, with `root_label`, the root's total). Default `FALSE`.
+#' @param orientation How segment labels are angled: `"auto"` (default) picks
+#'   tangential / radial / horizontal per segment to best fit the wedge, or force
+#'   one of `"radial"`, `"tangential"`, `"horizontal"`. Labels are always kept
+#'   upright (never upside-down).
+#' @param root_label Write the root's name in the centre? Default `FALSE`.
 #' @param width,height,dpi Page size (inches) and resolution.
 #' @return A [PlotSpec] (`vsunburst()`) or the modified plot (`mark_sunburst()`).
 #' @examples
@@ -211,7 +254,7 @@ NULL
 #'   parent = c(NA, "root", "root", "A", "A", "B"),
 #'   value = c(NA, NA, NA, 3, 2, 4)
 #' )
-#' vsunburst(h, id, parent, value)
+#' vsunburst(h, id, parent, value, show_values = TRUE)
 #' @export
 vsunburst <- function(
   data,
@@ -219,6 +262,10 @@ vsunburst <- function(
   parent,
   value,
   inner_radius = 0,
+  label = TRUE,
+  show_values = FALSE,
+  orientation = c("auto", "radial", "tangential", "horizontal"),
+  root_label = FALSE,
   width = 6,
   height = 6,
   dpi = 96
@@ -243,20 +290,40 @@ vsunburst <- function(
     id = {{ id }},
     parent = {{ parent }},
     value = {{ value }},
-    inner_radius = inner_radius
+    inner_radius = inner_radius,
+    label = label,
+    show_values = show_values,
+    orientation = match.arg(orientation),
+    root_label = root_label
   )
 }
 
 #' @rdname vsunburst
 #' @param plot A [PlotSpec].
 #' @export
-mark_sunburst <- function(plot, id, parent, value, inner_radius = 0) {
+mark_sunburst <- function(
+  plot,
+  id,
+  parent,
+  value,
+  inner_radius = 0,
+  label = TRUE,
+  show_values = FALSE,
+  orientation = c("auto", "radial", "tangential", "horizontal"),
+  root_label = FALSE
+) {
   .check_plot(plot)
   .check_inner_radius(inner_radius)
   .add_layer(
     plot,
     "sunburst",
     rlang::enquos(id = id, parent = parent, value = value),
-    const_params = list(inner_radius = as.numeric(inner_radius))
+    const_params = list(
+      inner_radius = as.numeric(inner_radius),
+      label = isTRUE(label),
+      show_values = isTRUE(show_values),
+      orientation = match.arg(orientation),
+      root_label = isTRUE(root_label)
+    )
   )
 }
