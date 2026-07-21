@@ -143,3 +143,71 @@ test_that("vsunburst renders, flat and with a hole", {
   render_plot(vsunburst(h, id, parent, value, inner_radius = 0.4), f2)
   expect_gt(file.info(f2)$size, 0)
 })
+
+# ---- labels ---------------------------------------------------------------
+
+test_that("layout carries each node's value and the root as an attribute", {
+  lay <- vellumplot:::.sunburst_layout(h$id, h$parent, h$value)
+  expect_true("value" %in% names(lay))
+  val <- setNames(lay$value, lay$id)
+  # leaves keep their own value; an internal node sums its subtree
+  expect_equal(unname(val[["A1"]]), 3)
+  expect_equal(unname(val[["A"]]), 5) # A1(3) + A2(2)
+  root <- attr(lay, "root")
+  expect_identical(root$id, "root")
+  expect_equal(root$value, 9) # whole-tree total 3+2+4
+})
+
+test_that(".upright_rot() keeps text upright, in (-90, 90]", {
+  # a full sweep of mid-angles, both orientations, must never point down
+  th <- seq(-pi, pi, length.out = 33)
+  for (along in c("radius", "tangent")) {
+    r <- vellumplot:::.upright_rot(th, along)
+    expect_true(all(r > -90 & r <= 90))
+  }
+  # horizontal segment: radial baseline is flat, tangential is vertical
+  expect_equal(vellumplot:::.upright_rot(0, "radius"), 0)
+  expect_equal(vellumplot:::.upright_rot(0, "tangent"), 90)
+})
+
+test_that(".contrast_ink() picks white on dark fills, black on light", {
+  ink <- vellumplot:::.contrast_ink(c("#0b1f2a", "#f0f0f0", "black", "white"))
+  expect_identical(ink, c("white", "black", "white", "black"))
+})
+
+test_that("labels render, and show_values / root_label are drawables", {
+  f <- local_tempfile(fileext = ".png")
+  render_plot(
+    vsunburst(h, id, parent, value, show_values = TRUE, root_label = TRUE),
+    f
+  )
+  expect_gt(file.info(f)$size, 0)
+})
+
+test_that("small wedges drop their label (fewer text grobs than segments)", {
+  text_n <- function(p) {
+    sc <- vellum::as_vellum_scene(p)
+    root <- vellum:::.materialize(sc)
+    n <- 0L
+    walk <- function(node) {
+      if (S7::S7_inherits(node, vellum:::gtree)) {
+        for (ch in node@children) {
+          walk(ch)
+        }
+      } else if (S7::S7_inherits(node, vellum:::grob_text)) {
+        n <<- n + 1L
+      }
+    }
+    walk(root)
+    n
+  }
+  # one dominant branch plus many slivers: most slivers can't fit a label
+  wide <- data.frame(
+    id = c("root", "Big", paste0("s", 1:12)),
+    parent = c(NA, "root", rep("root", 12)),
+    value = c(NA, 500, rep(1, 12))
+  )
+  n_seg <- nrow(vellumplot:::.sunburst_layout(wide$id, wide$parent, wide$value))
+  n_txt <- text_n(vsunburst(wide, id, parent, value, width = 4, height = 4))
+  expect_lt(n_txt, n_seg) # at least one sliver went unlabelled
+})

@@ -1834,13 +1834,15 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # A sunburst radial hierarchy. The partition (`L$sunburst`, native radii/angles
 # centred at the origin) is computed at resolve; drawn as one batched sector grob
 # in the aspect-locked square panel (domain [-1, 1], so native 0 is the centre).
+.SUNBURST_LABEL_FS <- 8 # label font size (pt)
+
 .emit_sunburst <- function(scene, L, scales) {
   lay <- L$sunburst
   n <- nrow(lay)
   if (!n) {
     return(scene)
   }
-  .draw(
+  scene <- .draw(
     scene,
     vellum::sector_grob(
       x = vellum::vl_unit(rep(0, n), "native"),
@@ -1853,6 +1855,103 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       gp = vellum::vl_gpar(col = "white", lwd = 0.5)
     )
   )
+  if (isTRUE(L$params$label)) {
+    scene <- .emit_sunburst_labels(scene, L, lay)
+  }
+  scene
+}
+
+# Draw the segment labels (and the optional centre/root label). Each label is
+# placed at its segment's centroid, oriented to fit the wedge, kept upright, and
+# inked for contrast; a label that fits in no allowed orientation is dropped.
+.emit_sunburst_labels <- function(scene, L, lay) {
+  fs <- .SUNBURST_LABEL_FS
+  # native -> mm: the aspect-locked panel spans the [-1, 1] square, so radius 1
+  # (native) is ~half the shorter page side. Approximate (ignores gutters), which
+  # is fine for a fit/hide heuristic.
+  pg <- .mark_ctx$page
+  page_mm <- if (!is.null(pg)) min(pg) * 25.4 else 6 * 25.4
+  nat2mm <- page_mm / 2
+
+  labels <- lay$id
+  if (isTRUE(L$params$show_values)) {
+    labels <- paste0(labels, " (", .label_number_default(lay$value), ")")
+  }
+  lw <- vapply(labels, function(s) .mm_tw(s, fs), numeric(1)) # label width, mm
+  lh <- fs * 25.4 / 72 # a line's height, mm
+
+  thetamid <- (lay$theta0 + lay$theta1) / 2
+  rmid <- (lay$r0 + lay$r1) / 2
+  arc_mm <- rmid * abs(lay$theta1 - lay$theta0) * nat2mm # tangential capacity
+  rad_mm <- (lay$r1 - lay$r0) * nat2mm # radial capacity
+
+  want <- L$params$orientation %||% "auto"
+  # Per segment: choose an orientation whose capacity holds the label, else NA
+  # (dropped). "auto" tries tangential -> radial -> horizontal.
+  fit_orient <- function(i) {
+    tang <- arc_mm[i] >= lw[i] && rad_mm[i] >= lh
+    radial <- rad_mm[i] >= lw[i] && arc_mm[i] >= lh
+    horiz <- arc_mm[i] >= lw[i] && rad_mm[i] >= lh # wedge box near rmid holds it
+    if (want == "tangential") {
+      return(if (tang) "tangential" else NA_character_)
+    }
+    if (want == "radial") {
+      return(if (radial) "radial" else NA_character_)
+    }
+    if (want == "horizontal") {
+      return(if (horiz) "horizontal" else NA_character_)
+    }
+    if (tang) {
+      "tangential"
+    } else if (radial) {
+      "radial"
+    } else {
+      NA_character_
+    }
+  }
+  orient <- vapply(seq_len(nrow(lay)), fit_orient, character(1))
+  ink <- .contrast_ink(lay$colour)
+
+  keep <- which(!is.na(orient))
+  for (i in keep) {
+    rot <- switch(
+      orient[i],
+      tangential = .upright_rot(thetamid[i], "tangent"),
+      radial = .upright_rot(thetamid[i], "radius"),
+      0
+    )
+    scene <- .draw(
+      scene,
+      vellum::text_grob(
+        labels[i],
+        vellum::vl_unit(rmid[i] * cos(thetamid[i]), "native"),
+        vellum::vl_unit(rmid[i] * sin(thetamid[i]), "native"),
+        just = c("centre", "centre"),
+        rot = rot,
+        gp = vellum::vl_gpar(fontsize = fs, col = ink[i])
+      )
+    )
+  }
+
+  # Optional centre / root label.
+  root <- attr(lay, "root")
+  if (isTRUE(L$params$root_label) && !is.null(root)) {
+    txt <- root$id
+    if (isTRUE(L$params$show_values)) {
+      txt <- paste0(txt, "\n", .label_number_default(root$value))
+    }
+    scene <- .draw(
+      scene,
+      vellum::text_grob(
+        txt,
+        vellum::vl_unit(0, "native"),
+        vellum::vl_unit(0, "native"),
+        just = c("centre", "centre"),
+        gp = vellum::vl_gpar(fontsize = fs + 1, col = "black")
+      )
+    )
+  }
+  scene
 }
 
 # A group summary region (ellipse / convex hull): one closed polygon per group
@@ -2929,11 +3028,15 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # scopes the hide to this view, never the cross-view source). Called by both the
 # single-plot path (`.draw_plot`) and the aligned-composition path.
 .set_interaction_ctx <- function(spec) {
+  # Page size (inches), for emitters that must compare device text extent to a
+  # native span -- e.g. sunburst label fitting. NULL when unknown.
+  .mark_ctx$page <- NULL
   if (!S7::S7_inherits(spec, PlotSpec)) {
     .mark_ctx$plot_interactive <- FALSE
     .mark_ctx$plot_filters <- NULL
     return(invisible())
   }
+  .mark_ctx$page <- c(w = spec@width, h = spec@height)
   filt_names <- vapply(spec@filters, function(f) f@selection, character(1))
   .mark_ctx$plot_interactive <- length(spec@selections) > 0L ||
     length(filt_names) > 0L ||

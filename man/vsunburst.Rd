@@ -11,12 +11,26 @@ vsunburst(
   parent,
   value,
   inner_radius = 0,
+  label = TRUE,
+  show_values = FALSE,
+  orientation = c("auto", "radial", "tangential", "horizontal"),
+  root_label = FALSE,
   width = 6,
   height = 6,
   dpi = 96
 )
 
-mark_sunburst(plot, id, parent, value, inner_radius = 0)
+mark_sunburst(
+  plot,
+  id,
+  parent,
+  value,
+  inner_radius = 0,
+  label = TRUE,
+  show_values = FALSE,
+  orientation = c("auto", "radial", "tangential", "horizontal"),
+  root_label = FALSE
+)
 }
 \arguments{
 \item{data}{A data frame describing a hierarchy (a parent list).}
@@ -26,6 +40,19 @@ mark_sunburst(plot, id, parent, value, inner_radius = 0)
 
 \item{inner_radius}{Central hole radius, a fraction in \verb{[0, 1)}; \code{0} (default)
 fills to the centre.}
+
+\item{label}{Label each segment with its \code{id}? Default \code{TRUE}. Segments too
+small for their label (in every allowed orientation) are left unlabelled.}
+
+\item{show_values}{Append each node's value to its label, e.g. \code{"A1 (3)"}
+(and, with \code{root_label}, the root's total). Default \code{FALSE}.}
+
+\item{orientation}{How segment labels are angled: \code{"auto"} (default) picks
+tangential / radial / horizontal per segment to best fit the wedge, or force
+one of \code{"radial"}, \code{"tangential"}, \code{"horizontal"}. Labels are always kept
+upright (never upside-down).}
+
+\item{root_label}{Write the root's name in the centre? Default \code{FALSE}.}
 
 \item{width, height, dpi}{Page size (inches) and resolution.}
 
@@ -45,6 +72,12 @@ an internal node's value is the sum of its children). Like \code{\link[=vgraph]{
 \details{
 The root is the centre (not drawn as a wedge); \code{inner_radius} opens a hole.
 Nodes are coloured by depth. The input must be a single-rooted tree.
+
+By default each segment is labelled with its \code{id}, oriented to fit its wedge
+(see \code{orientation}); a label that fits in no orientation is dropped, so a dense
+sunburst stays legible. \code{show_values} appends the node's value, and
+\code{root_label} writes the root's name (and, with \code{show_values}, its total) in the
+centre.
 }
 \examples{
 h <- data.frame(
@@ -52,5 +85,5 @@ h <- data.frame(
   parent = c(NA, "root", "root", "A", "A", "B"),
   value = c(NA, NA, NA, 3, 2, 4)
 )
-vsunburst(h, id, parent, value)
+vsunburst(h, id, parent, value, show_values = TRUE)
 }
