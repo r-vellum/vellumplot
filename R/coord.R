@@ -32,7 +32,7 @@ CoordSpec <- S7::new_class(
 .coord_of <- function(spec) spec@coord %||% CoordSpec(kind = "cartesian")
 
 # Validate a central-hole radius fraction. Shared by coord_radial() and the
-# sunburst constructors so they reject the same range identically.
+# vhierarchy() sunburst so they reject the same range identically.
 .check_inner_radius <- function(
   x,
   arg = "inner_radius",

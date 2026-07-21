@@ -1,4 +1,13 @@
-# vellumplot (development version)
+# vellumplot 0.7.0
+
+* **New `vhierarchy()` for space-filling hierarchies — breaking.**
+  `vhierarchy(id, parent, value, type = )` draws a tree four ways from one
+  parent list, switching only `type`: `"sunburst"` (default), `"icicle"`,
+  `"treemap"`, or `"circlepack"`. This **replaces `vsunburst()`** —
+  `vhierarchy(..., type = "sunburst")` reproduces the old radial sunburst, and
+  `vsunburst()` / `mark_sunburst()` are removed. Treemaps use a squarified
+  layout; circle-pack is a faithful port of d3's front-chain packing. `mark_hierarchy()`
+  is the exported layer.
 
 * **Sunbursts, polar pies, and self-loops render un-mirrored.** Requires
   vellum (>= 0.5.1), which fixes `sector_grob()`/`loop_grob()` to draw in the
