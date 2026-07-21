@@ -107,7 +107,7 @@ NULL
     sf_geographic <- proj$geographic
   }
 
-  # Layout marks (sankey/sunburst) compute one global layout in an axis-free
+  # Layout marks (sankey/hierarchy) compute one global layout in an axis-free
   # panel; they cannot be faceted or share a panel with other marks. Guard
   # *before* building panels: faceting would resolve the flow/hierarchy per panel
   # (splitting it) and fail obscurely inside the layout instead.
@@ -116,12 +116,12 @@ NULL
   ) {
     if (length(spec@layers) != 1L) {
       cli::cli_abort(
-        "A {.field sankey}/{.field sunburst} plot takes no other layers."
+        "A {.field sankey}/{.field hierarchy} plot takes no other layers."
       )
     }
     if (!is.null(spec@facet)) {
       cli::cli_abort(
-        "A {.field sankey}/{.field sunburst} plot cannot be faceted."
+        "A {.field sankey}/{.field hierarchy} plot cannot be faceted."
       )
     }
   }

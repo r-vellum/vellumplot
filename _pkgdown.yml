@@ -139,7 +139,7 @@ reference:
   - vplot
   - vgraph
   - vsankey
-  - vsunburst
+  - vhierarchy
   - render_plot
   - PlotSpec
 

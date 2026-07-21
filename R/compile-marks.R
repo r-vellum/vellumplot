@@ -1831,18 +1831,41 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
-# A sunburst radial hierarchy. The partition (`L$sunburst`, native radii/angles
-# centred at the origin) is computed at resolve; drawn as one batched sector grob
-# in the aspect-locked square panel (domain [-1, 1], so native 0 is the centre).
-.SUNBURST_LABEL_FS <- 8 # label font size (pt)
+# A space-filling hierarchy (sunburst / icicle / treemap / circlepack). The
+# layout (`L$hierarchy`, native geometry centred at the origin) is computed at
+# resolve; drawn as one batched grob per type in the aspect-locked square panel
+# (domain [-1, 1], so native 0 is the centre). Nodes are painted shallow-first,
+# the order the layout returns (BFS-ish), so nested children overlay their parent.
+.HIER_LABEL_FS <- 8 # label font size (pt)
 
-.emit_sunburst <- function(scene, L, scales) {
-  lay <- L$sunburst
-  n <- nrow(lay)
-  if (!n) {
+.emit_hierarchy <- function(scene, L, scales) {
+  lay <- L$hierarchy
+  if (!nrow(lay)) {
     return(scene)
   }
-  scene <- .draw(
+  type <- L$params$type %||% "sunburst"
+  scene <- switch(
+    type,
+    sunburst = .emit_sunburst_regions(scene, lay),
+    icicle = ,
+    treemap = .emit_rect_regions(scene, lay),
+    circlepack = .emit_circle_regions(scene, lay)
+  )
+  if (isTRUE(L$params$label)) {
+    scene <- switch(
+      type,
+      sunburst = .emit_sunburst_labels(scene, L, lay),
+      icicle = .emit_rect_labels(scene, L, lay, leaf_only = FALSE),
+      treemap = .emit_rect_labels(scene, L, lay, leaf_only = TRUE),
+      circlepack = .emit_circle_labels(scene, L, lay)
+    )
+  }
+  scene
+}
+
+.emit_sunburst_regions <- function(scene, lay) {
+  n <- nrow(lay)
+  .draw(
     scene,
     vellum::sector_grob(
       x = vellum::vl_unit(rep(0, n), "native"),
@@ -1855,8 +1878,42 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       gp = vellum::vl_gpar(col = "white", lwd = 0.5)
     )
   )
-  if (isTRUE(L$params$label)) {
-    scene <- .emit_sunburst_labels(scene, L, lay)
+}
+
+# Treemap / icicle rectangles: `rect_grob`/`circle_grob` take a single gpar fill,
+# so batch one grob per distinct colour (siblings share a branch+depth hue). The
+# layout is shallow-first, so children still overlay parents within a colour.
+.emit_rect_regions <- function(scene, lay) {
+  for (col in unique(lay$colour)) {
+    s <- lay[lay$colour == col, , drop = FALSE]
+    scene <- .draw(
+      scene,
+      vellum::rect_grob(
+        x = vellum::vl_unit((s$x0 + s$x1) / 2, "native"),
+        y = vellum::vl_unit((s$y0 + s$y1) / 2, "native"),
+        width = vellum::vl_unit(s$x1 - s$x0, "native"),
+        height = vellum::vl_unit(s$y1 - s$y0, "native"),
+        gp = vellum::vl_gpar(fill = col, col = "white", lwd = 0.5)
+      )
+    )
+  }
+  scene
+}
+
+# Circle-pack circles: one grob per distinct colour (drop zero-radius nodes).
+.emit_circle_regions <- function(scene, lay) {
+  lay <- lay[lay$cr > 0, , drop = FALSE]
+  for (col in unique(lay$colour)) {
+    s <- lay[lay$colour == col, , drop = FALSE]
+    scene <- .draw(
+      scene,
+      vellum::circle_grob(
+        x = vellum::vl_unit(s$cx, "native"),
+        y = vellum::vl_unit(s$cy, "native"),
+        r = vellum::vl_unit(s$cr, "native"),
+        gp = vellum::vl_gpar(fill = col, col = "white", lwd = 0.5)
+      )
+    )
   }
   scene
 }
@@ -1865,7 +1922,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # placed at its segment's centroid, oriented to fit the wedge, kept upright, and
 # inked for contrast; a label that fits in no allowed orientation is dropped.
 .emit_sunburst_labels <- function(scene, L, lay) {
-  fs <- .SUNBURST_LABEL_FS
+  fs <- .HIER_LABEL_FS
   # native -> mm: the aspect-locked panel spans the [-1, 1] square, so radius 1
   # (native) is ~half the shorter page side. Approximate (ignores gutters), which
   # is fine for a fit/hide heuristic.
@@ -1948,6 +2005,82 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         vellum::vl_unit(0, "native"),
         just = c("centre", "centre"),
         gp = vellum::vl_gpar(fontsize = fs + 1, col = "black")
+      )
+    )
+  }
+  scene
+}
+
+# native -> mm for the aspect-locked [-1, 1] square panel: radius 1 is ~half the
+# shorter page side. Approximate (ignores gutters), fine for a fit/hide heuristic.
+.hier_nat2mm <- function() {
+  pg <- .mark_ctx$page
+  page_mm <- if (!is.null(pg)) min(pg) * 25.4 else 6 * 25.4
+  page_mm / 2
+}
+
+# Treemap / icicle labels: centred horizontally in each node's rectangle, drawn
+# where the text fits (width and a line's height both inside the rect). Treemap
+# labels only leaves (parents sit under their children); icicle labels every
+# node (bands do not overlap).
+.emit_rect_labels <- function(scene, L, lay, leaf_only) {
+  fs <- .HIER_LABEL_FS
+  nat2mm <- .hier_nat2mm()
+  labels <- lay$id
+  if (isTRUE(L$params$show_values)) {
+    labels <- paste0(labels, " (", .label_number_default(lay$value), ")")
+  }
+  lh <- fs * 25.4 / 72
+  cand <- if (leaf_only) which(lay$leaf) else seq_len(nrow(lay))
+  ink <- .contrast_ink(lay$colour)
+  for (i in cand) {
+    w_mm <- (lay$x1[i] - lay$x0[i]) * nat2mm
+    h_mm <- (lay$y1[i] - lay$y0[i]) * nat2mm
+    if (.mm_tw(labels[i], fs) > w_mm || lh > h_mm) {
+      next
+    }
+    scene <- .draw(
+      scene,
+      vellum::text_grob(
+        labels[i],
+        vellum::vl_unit((lay$x0[i] + lay$x1[i]) / 2, "native"),
+        vellum::vl_unit((lay$y0[i] + lay$y1[i]) / 2, "native"),
+        just = c("centre", "centre"),
+        gp = vellum::vl_gpar(fontsize = fs, col = ink[i])
+      )
+    )
+  }
+  scene
+}
+
+# Circle-pack labels: centred in each leaf's circle, drawn where the text chord
+# fits (internal nodes are covered by their children, so only leaves are named).
+.emit_circle_labels <- function(scene, L, lay) {
+  fs <- .HIER_LABEL_FS
+  nat2mm <- .hier_nat2mm()
+  labels <- lay$id
+  if (isTRUE(L$params$show_values)) {
+    labels <- paste0(labels, " (", .label_number_default(lay$value), ")")
+  }
+  lh <- fs * 25.4 / 72
+  ink <- .contrast_ink(lay$colour)
+  for (i in which(lay$leaf & lay$cr > 0)) {
+    r_mm <- lay$cr[i] * nat2mm
+    half <- (r_mm * r_mm) - (lh / 2)^2 # widest chord at the text's height
+    if (half <= 0) {
+      next
+    }
+    if (.mm_tw(labels[i], fs) > 2 * sqrt(half)) {
+      next
+    }
+    scene <- .draw(
+      scene,
+      vellum::text_grob(
+        labels[i],
+        vellum::vl_unit(lay$cx[i], "native"),
+        vellum::vl_unit(lay$cy[i], "native"),
+        just = c("centre", "centre"),
+        gp = vellum::vl_gpar(fontsize = fs, col = ink[i])
       )
     )
   }
@@ -2942,7 +3075,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     ellipse = .emit_region(scene, L, scales),
     hull = .emit_region(scene, L, scales),
     sankey = .emit_sankey(scene, L, scales),
-    sunburst = .emit_sunburst(scene, L, scales),
+    hierarchy = .emit_hierarchy(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
 }

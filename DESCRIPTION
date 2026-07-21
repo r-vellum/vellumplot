@@ -1,6 +1,6 @@
 Package: vellumplot
 Title: A Grammar of Graphics on the 'vellum' Backend
-Version: 0.6.0.9000
+Version: 0.7.0
 Authors@R:
     person("David", "Schoch", , "david.schoch@cynkra.com", role = c("aut", "cre"))
 Description: A declarative, pipe-first grammar of graphics that compiles an
@@ -72,17 +72,18 @@ Collate:
     'compile-stat.R'
     'effects.R'
     'guides.R'
+    'hierarchy-pack.R'
+    'vgraph.R'
+    'vplot.R'
+    'sankey.R'
+    'hierarchy.R'
     'labs.R'
     'positions.R'
     'provenance.R'
     'reexports.R'
     'repeat.R'
     'repel.R'
-    'vgraph.R'
-    'vplot.R'
-    'sankey.R'
     'scales.R'
     'scales-binned.R'
     'select.R'
-    'sunburst.R'
     'zzz.R'

@@ -92,26 +92,29 @@ NULL
     n <- nrow(sankey$nodes)
   }
 
-  # A sunburst layer draws a radial hierarchy: compute the partition from the
-  # `id`/`parent`/`value` channels (see `.sunburst_layout`) and synthesise the
-  # centred [-1, 1] extent so the aspect-locked square panel holds the circle.
-  sunburst <- NULL
-  if (identical(layer@mark, "sunburst")) {
+  # A hierarchy layer (sunburst / icicle / treemap / circlepack) draws a
+  # space-filling tree: compute the layout from the `id`/`parent`/`value`
+  # channels (see `.hierarchy_layout`) and synthesise the centred [-1, 1] extent
+  # so the aspect-locked square panel holds it.
+  hierarchy <- NULL
+  if (identical(layer@mark, "hierarchy")) {
     if (is.null(values$id) || is.null(values$parent) || is.null(values$value)) {
       cli::cli_abort(
-        "{.fn vsunburst} needs {.arg id}, {.arg parent}, and {.arg value}."
+        "{.fn vhierarchy} needs {.arg id}, {.arg parent}, and {.arg value}."
       )
     }
-    sunburst <- .sunburst_layout(
+    hierarchy <- .hierarchy_layout(
       values$id,
       values$parent,
       values$value,
-      inner_radius = layer@params$inner_radius %||% 0
+      type = layer@params$type %||% "sunburst",
+      inner_radius = layer@params$inner_radius %||% 0,
+      flow = layer@params$flow %||% "down"
     )
     values$x <- c(-1, 1)
     values$y <- c(-1, 1)
     types$x <- types$y <- "quantitative"
-    n <- nrow(sunburst)
+    n <- nrow(hierarchy)
   }
 
   # A datashade layer aggregates its (potentially hundreds of millions of) points
@@ -172,7 +175,7 @@ NULL
     n = n,
     sf = sf,
     sankey = sankey,
-    sunburst = sunburst,
+    hierarchy = hierarchy,
     ds = ds,
     graph_identity = graph_identity,
     stat = layer@stat,
