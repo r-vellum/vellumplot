@@ -2319,6 +2319,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     gap = gap
   )
   routing <- L$stat_params$routing %||% "straight"
+  E$elbow_at <- L$stat_params$elbow_at %||% "mid"
+  E$elbow_axis <- L$stat_params$elbow_axis %||% "auto"
   if (length(si)) {
     scene <- if (identical(routing, "elbow")) {
       .emit_edges_elbow(scene, si, E, scales)
@@ -2435,12 +2437,25 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # step runs along whichever axis the endpoints are farther apart on, so a
 # top-down tree bends vertically and a left-right one horizontally, keeping
 # sibling edges consistent.
-.elbow_points <- function(x0, y0, x1, y1) {
-  if (abs(y1 - y0) >= abs(x1 - x0)) {
-    ym <- (y0 + y1) / 2
+# `at` places the corner along the primary axis: `"mid"` (default; the S-bend
+# used by tree/DAG layouts), or `"start"`/`"end"` for the corner at the source or
+# target coordinate -- `"start"` gives the dendrogram *bracket* (siblings share a
+# bar at the parent's level). `axis` forces the primary axis (`"v"` = corner
+# moves in y, `"h"` = in x); `"auto"` picks the longer side (the historical
+# behaviour). Defaults reproduce the original midpoint elbow exactly.
+.elbow_points <- function(x0, y0, x1, y1, at = "mid", axis = "auto") {
+  vertical <- switch(
+    axis,
+    v = TRUE,
+    h = FALSE,
+    abs(y1 - y0) >= abs(x1 - x0)
+  )
+  frac <- switch(at, start = 0, end = 1, 0.5)
+  if (vertical) {
+    ym <- y0 + (y1 - y0) * frac
     list(x = c(x0, x0, x1, x1), y = c(y0, ym, ym, y1))
   } else {
-    xm <- (x0 + x1) / 2
+    xm <- x0 + (x1 - x0) * frac
     list(x = c(x0, xm, xm, x1), y = c(y0, y0, y1, y1))
   }
 }
@@ -2452,7 +2467,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # curvature, no parallel offset.
 .emit_edges_elbow <- function(scene, si, E, scales) {
   for (e in si) {
-    p <- .elbow_points(E$x0[e], E$y0[e], E$x1[e], E$y1[e])
+    p <- .elbow_points(
+      E$x0[e],
+      E$y0[e],
+      E$x1[e],
+      E$y1[e],
+      at = E$elbow_at,
+      axis = E$elbow_axis
+    )
     xy <- .xy_units(scales, p$x, p$y)
     start_cap <- if (!is.null(E$gh)) {
       vellum::vl_unit(E$gh$start_cap[e] + E$gap, "mm")

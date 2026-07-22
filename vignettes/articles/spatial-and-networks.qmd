@@ -188,6 +188,41 @@ vgraph(dg) |>
   mark_nodes(size = 2, fill = "grey30")
 ```
 
+### Dendrograms
+
+`vgraph()` also accepts a base `hclust`/`dendrogram`, coercing it to a tree that
+carries each merge's height. The `"dendrogram"` layout places leaves on a line
+and every merge at its height, and `elbow_at = "start"` turns the elbow into the
+classic *bracket* (siblings share a bar at the parent's level):
+
+```{r}
+#| eval: !expr have_net
+hc <- hclust(dist(USArrests))
+vgraph(hc, layout = "dendrogram") |>
+  mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v") |>
+  mark_node_text(label = label, size = 2, dist = 1)
+```
+
+`vdendrogram()` is the one-line preset for that -- bracket edges and leaf labels,
+`direction` to orient it, and `k` to cut the tree and colour the clusters
+(branches above the cut stay neutral):
+
+```{r}
+#| eval: !expr have_net
+vdendrogram(hc, k = 3)
+```
+
+For unrooted trees (phylogeny-style), `layout = "unrooted"` uses graphlayouts'
+`layout_as_tree_unrooted()` -- `mode` picks `"equalangle"`, `"equaldaylight"`, or
+`"stress"`:
+
+```{r}
+#| eval: !expr have_net && packageVersion("graphlayouts") >= "1.2.5"
+vgraph(igraph::make_tree(31, 3, "undirected"), layout = "unrooted", mode = "equaldaylight") |>
+  mark_edges(alpha = 0.6) |>
+  mark_nodes(size = 1.5, fill = "grey30")
+```
+
 ### Augmenting and filtering
 
 Vertex metrics are the analyst's choice, not something `vgraph()` computes behind
@@ -272,9 +307,9 @@ node/edge tooltips, click-select, and pan/zoom work in the widget too.
 ### Choosing a layout
 
 `layout` accepts a name (`"stress"`, `"sparse_stress"`, `"backbone"`, `"fr"`,
-`"kk"`, `"circle"`, `"tree"`, `"sugiyama"`, and more), a supplied N-by-2
-coordinate matrix, or a function that returns one. Stochastic layouts take a
-`seed` so the figure is reproducible.
+`"kk"`, `"circle"`, `"tree"`, `"sugiyama"`, `"dendrogram"`, `"unrooted"`, and
+more), a supplied N-by-2 coordinate matrix, or a function that returns one.
+Stochastic layouts take a `seed` so the figure is reproducible.
 
 ```{r}
 #| eval: !expr have_net

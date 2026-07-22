@@ -1969,9 +1969,14 @@ mark_segment <- function(
 #'   teardrop loops sized to the node, with the head on the node boundary.
 #' @param routing For `mark_edges()`, edge routing: `"straight"` (default) or
 #'   `"elbow"` -- orthogonal right-angle steps for tree / DAG / dendrogram
-#'   layouts (still straight segments, no curvature), stepping along whichever
-#'   axis the endpoints are farther apart on. Elbows keep node-boundary caps and
-#'   arrowheads.
+#'   layouts (still straight segments, no curvature). Elbows keep node-boundary
+#'   caps and arrowheads.
+#' @param elbow_at,elbow_axis For `mark_edges(routing = "elbow")`, the corner
+#'   placement and axis. `elbow_at` is `"mid"` (default, an S-bend at the
+#'   midpoint), or `"start"` / `"end"` for the corner at the source / target --
+#'   `"start"` gives the dendrogram *bracket* (siblings share a bar at the
+#'   parent's level). `elbow_axis` is `"auto"` (default, the longer side),
+#'   `"v"`, or `"h"` to force which axis the corner steps along.
 #' @param gradient For `mark_edges()`, `TRUE` to fade each (straight) edge from
 #'   faint at its source to opaque at its target -- a direction cue that needs no
 #'   arrowhead (igraph's `edge.gradient`). Ignored with `routing = "elbow"`.
@@ -2036,6 +2041,8 @@ mark_edges <- function(
   linetype = NULL,
   arrow = FALSE,
   routing = c("straight", "elbow"),
+  elbow_at = c("mid", "start", "end"),
+  elbow_axis = c("auto", "v", "h"),
   gradient = FALSE,
   auto = FALSE,
   blend = NULL,
@@ -2045,6 +2052,8 @@ mark_edges <- function(
 ) {
   .check_plot(plot)
   routing <- match.arg(routing)
+  elbow_at <- match.arg(elbow_at)
+  elbow_axis <- match.arg(elbow_axis)
   gradient <- isTRUE(gradient)
   if (identical(routing, "elbow") && gradient) {
     cli::cli_warn(
@@ -2070,6 +2079,8 @@ mark_edges <- function(
     stat_params = list(
       arrow = .resolve_edge_arrow(arrow),
       routing = routing,
+      elbow_at = elbow_at,
+      elbow_axis = elbow_axis,
       gradient = gradient,
       auto = isTRUE(auto)
     ),
@@ -2159,16 +2170,23 @@ mark_node_text <- function(
     lab <- lab[sort(keep), , drop = FALSE]
   }
   lab <- .node_label_offsets(full, lab, as.numeric(dist))
+  # `label` defaults to the vertex `name`, but an explicit `label =` must win.
+  # Resolve it here (rather than as a `.with_default_aes` default) so it doesn't
+  # collide with the explicit param under the same key.
+  label_q <- rlang::enquo(label)
+  if (rlang::quo_is_null(label_q)) {
+    label_q <- rlang::quo(name)
+  }
   dots <- .with_default_aes(
     rlang::enquos(...),
-    rlang::quos(x = x, y = y, label = name)
+    rlang::quos(x = x, y = y)
   )
   extra <- rlang::enquos(
-    label = label,
     color = color,
     size = size,
     alpha = alpha
   )
+  extra$label <- label_q
   if (as.numeric(dist) != 0) {
     extra <- c(
       extra,
