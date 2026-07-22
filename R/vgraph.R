@@ -38,7 +38,10 @@ NULL
   star = list(pkg = "igraph", fn = "layout_as_star"),
   tree = list(pkg = "igraph", fn = "layout_as_tree"),
   sugiyama = list(pkg = "igraph", fn = "layout_with_sugiyama"),
-  bipartite = list(pkg = "igraph", fn = "layout_as_bipartite")
+  bipartite = list(pkg = "igraph", fn = "layout_as_bipartite"),
+  # unrooted tree layout (equal-angle / equal-daylight / stress); `mode` and
+  # `weights` pass through as layout args. Needs graphlayouts (>= 1.2.5).
+  unrooted = list(pkg = "graphlayouts", fn = "layout_as_tree_unrooted")
 )
 
 # Auto-swap full stress for the pivot-based variant above this vertex count
@@ -50,16 +53,86 @@ NULL
   if (inherits(g, "igraph")) {
     return(g)
   }
+  if (inherits(g, "dendrogram")) {
+    g <- stats::as.hclust(g)
+  }
+  if (inherits(g, "hclust")) {
+    return(.hclust_to_igraph(g))
+  }
   if (is.matrix(g) && ncol(g) == 2L) {
     return(igraph::graph_from_edgelist(g, directed = FALSE))
   }
   cli::cli_abort(
     c(
-      "{.arg g} must be an {.cls igraph} graph (or a 2-column edge-list matrix).",
+      "{.arg g} must be an {.cls igraph} graph, an {.cls hclust}/{.cls dendrogram}, or a 2-column edge-list matrix.",
       i = "Got {.obj_type_friendly {g}}."
     ),
     call = call
   )
+}
+
+# Coerce an `hclust` to a directed igraph tree for the dendrogram layout. Leaves
+# are vertices 1..L (named by `hc$labels`, height 0); each of the L-1 merges is an
+# internal vertex L+i at `hc$height[i]`, with a directed edge to each of its two
+# children. `.leaf_pos` records each leaf's slot in `hc$order` so the layout
+# spreads leaves without crossings; `cluster` (optional) is the `cutree(k)` group
+# of every node whose subtree is monochromatic (NA above the cut), for colouring.
+.hclust_to_igraph <- function(hc, k = NULL) {
+  merge <- hc$merge
+  nmerge <- nrow(merge)
+  L <- nmerge + 1L
+  n <- L + nmerge
+  labels <- hc$labels %||% as.character(seq_len(L))
+  # child node index for a merge-matrix entry: negative -> leaf, positive -> merge
+  child_node <- function(e) if (e < 0) -e else L + e
+  from <- integer(0)
+  to <- integer(0)
+  for (i in seq_len(nmerge)) {
+    parent <- L + i
+    from <- c(from, parent, parent)
+    to <- c(to, child_node(merge[i, 1L]), child_node(merge[i, 2L]))
+  }
+  # `name` must be unique (it keys the node table); internal merges get synthetic
+  # ids. `label` carries the display text -- leaf labels only, blank for merges.
+  name <- c(as.character(labels), paste0(".merge", seq_len(nmerge)))
+  label <- c(as.character(labels), rep("", nmerge))
+  height <- c(rep(0, L), hc$height)
+  leaf <- c(rep(TRUE, L), rep(FALSE, nmerge))
+  leaf_pos <- rep(NA_real_, n)
+  leaf_pos[hc$order] <- seq_len(L) # leaf i sits at its rank in hc$order
+  g <- igraph::make_empty_graph(n = n, directed = TRUE)
+  g <- igraph::add_edges(g, rbind(from, to))
+  igraph::V(g)$name <- name
+  igraph::V(g)$label <- label
+  igraph::V(g)$height <- height
+  igraph::V(g)$leaf <- leaf
+  igraph::V(g)$.leaf_pos <- leaf_pos
+  if (!is.null(k)) {
+    node_cluster <- .hclust_clusters(hc, k, L, nmerge)
+    igraph::V(g)$cluster <- node_cluster
+    # an edge takes its child's cluster (NA above the cut -> neutral)
+    igraph::E(g)$cluster <- node_cluster[to]
+  }
+  g
+}
+
+# `cutree(hc, k)` group per node, as a character vector length `L + nmerge`: each
+# leaf's group, and each merge's group iff its whole subtree is one group (else
+# NA -- the merge is at/above the cut and reads neutral).
+.hclust_clusters <- function(hc, k, L, nmerge) {
+  leaf_grp <- stats::cutree(hc, k = k)
+  node_grp <- rep(NA_character_, L + nmerge)
+  node_grp[seq_len(L)] <- as.character(leaf_grp)
+  # bottom-up: a merge is monochromatic iff both children are the same group
+  for (i in seq_len(nmerge)) {
+    kids <- hc$merge[i, ]
+    g1 <- if (kids[1] < 0) node_grp[-kids[1]] else node_grp[L + kids[1]]
+    g2 <- if (kids[2] < 0) node_grp[-kids[2]] else node_grp[L + kids[2]]
+    if (!is.na(g1) && !is.na(g2) && identical(g1, g2)) {
+      node_grp[L + i] <- g1
+    }
+  }
+  node_grp
 }
 
 # Normalise a layout function's return value to an N x 2 numeric matrix. Some
@@ -84,6 +157,87 @@ NULL
   m[, 1:2, drop = FALSE]
 }
 
+# Rooted dendrogram layout: leaves spread along one axis, each internal node
+# centred over its children, the cross axis set to merge height (a `height`
+# vertex attr, e.g. from an `hclust`) or to depth otherwise. `direction` orients
+# it. Self-computed -- no igraph/graphlayouts call. Returns an N x 2 matrix.
+.layout_dendrogram <- function(
+  g,
+  direction = c("down", "up", "left", "right"),
+  ...
+) {
+  direction <- match.arg(direction)
+  n <- igraph::vcount(g)
+  if (!n) {
+    return(matrix(numeric(0), 0L, 2L))
+  }
+  va <- igraph::vertex_attr_names(g)
+  height <- if ("height" %in% va) as.numeric(igraph::V(g)$height) else NULL
+  leaf_pos <- if (".leaf_pos" %in% va) {
+    as.numeric(igraph::vertex_attr(g, ".leaf_pos"))
+  } else {
+    rep(NA_real_, n)
+  }
+  # Root: the tallest node (hclust), else the unique in-degree-0 vertex, else 1.
+  root <- if (!is.null(height)) {
+    which.max(height)
+  } else {
+    ind <- igraph::degree(g, mode = "in")
+    if (igraph::is_directed(g) && sum(ind == 0) == 1L) which(ind == 0) else 1L
+  }
+  # Root the tree by BFS (undirected adjacency), recording depth + child lists.
+  adj <- igraph::adjacent_vertices(g, igraph::V(g), mode = "all")
+  parent <- rep(NA_integer_, n)
+  depth <- rep(NA_integer_, n)
+  children <- vector("list", n)
+  depth[root] <- 0L
+  queue <- root
+  while (length(queue)) {
+    v <- queue[1L]
+    queue <- queue[-1L]
+    kids <- setdiff(as.integer(adj[[v]]), parent[v])
+    kids <- kids[is.na(depth[kids])]
+    children[[v]] <- kids
+    parent[kids] <- v
+    depth[kids] <- depth[v] + 1L
+    queue <- c(queue, kids)
+  }
+  is_leaf <- lengths(children) == 0L
+  cross <- if (!is.null(height)) height else (max(depth) - depth)
+  # Leaf spread: hclust ranks (crossing-free) when present, else in-order DFS.
+  spread <- rep(NA_real_, n)
+  if (all(!is.na(leaf_pos[is_leaf]))) {
+    spread[is_leaf] <- leaf_pos[is_leaf]
+  } else {
+    counter <- 0L
+    dfs <- function(v) {
+      if (is_leaf[v]) {
+        counter <<- counter + 1L
+        spread[v] <<- counter
+      } else {
+        for (c in children[[v]]) {
+          dfs(c)
+        }
+      }
+    }
+    dfs(root)
+  }
+  # Internal nodes centre over their children (bottom-up).
+  for (v in order(depth, decreasing = TRUE)) {
+    if (!is_leaf[v]) {
+      spread[v] <- mean(spread[children[[v]]])
+    }
+  }
+  xy <- switch(
+    direction,
+    down = cbind(spread, cross),
+    up = cbind(spread, -cross),
+    right = cbind(cross, spread),
+    left = cbind(-cross, spread)
+  )
+  unname(xy)
+}
+
 # Compute vertex coordinates. `layout` is a name (dispatched via the registry), a
 # supplied N x 2 matrix, or a function `f(g, ...)`.
 .graph_layout <- function(
@@ -100,6 +254,14 @@ NULL
   }
   if (is.function(layout)) {
     return(.layout_matrix(do.call(layout, c(list(g), layout_args)), n, call))
+  }
+  # Dendrogram is self-computed (height-aware), not a registry/igraph layout.
+  if (is.character(layout) && identical(tolower(layout), "dendrogram")) {
+    return(.layout_matrix(
+      do.call(.layout_dendrogram, c(list(g), layout_args)),
+      n,
+      call
+    ))
   }
   if (!is.character(layout) || length(layout) != 1L) {
     cli::cli_abort(
@@ -285,6 +447,18 @@ NULL
   ry <- range(xy[, 2])
   pad <- .GRAPH_PAD_FRAC * max(diff(rx), diff(ry), 1)
   list(x = rx + c(-pad, pad), y = ry + c(-pad, pad))
+}
+
+# Dendrogram limits: pad each axis by a fraction of *its own* range (the height
+# and spread axes have unrelated scales, so a shared pad -- `.graph_limits` --
+# would crush the shorter one). A little extra room for the leaf labels.
+.dendro_limits <- function(xy) {
+  ax <- function(r) {
+    d <- diff(r)
+    p <- if (d > 0) 0.12 * d else 0.5
+    r + c(-p, p)
+  }
+  list(x = ax(range(xy[, 1])), y = ax(range(xy[, 2])))
 }
 
 # Per-vertex node radius (mm) so the edge emitter can cap each edge exactly at its
@@ -555,11 +729,19 @@ vgraph <- function(
     k_core
   )
   xy <- .with_seed(seed, .graph_layout(g, layout, ...))
-  lim <- .graph_limits(xy)
+  # Networks want equal x/y scaling (aspect-locked); a dendrogram instead fills
+  # the panel, its height and leaf-spread axes scaling independently.
+  is_dendro <- is.character(layout) && identical(tolower(layout), "dendrogram")
+  lim <- if (is_dendro) .dendro_limits(xy) else .graph_limits(xy)
+  coord <- if (is_dendro) {
+    CoordSpec(kind = "cartesian")
+  } else {
+    CoordSpec(kind = "fixed", ratio = 1)
+  }
   PlotSpec(
     data = .node_table(g, xy),
     edge_data = .edge_table(g, xy),
-    coord = CoordSpec(kind = "fixed", ratio = 1),
+    coord = coord,
     theme = .theme_vgraph(),
     scales = list(
       ScaleSpec(aesthetic = "x", type = "continuous", domain = lim$x),
@@ -569,4 +751,75 @@ vgraph <- function(
     height = as.double(height),
     dpi = as.double(dpi)
   )
+}
+
+#' Dendrogram from a clustering
+#'
+#' `vdendrogram()` turns a base `hclust`/`dendrogram` (e.g. from [stats::hclust()])
+#' into a ready node-link dendrogram: leaves spread along a line, each merge drawn
+#' at its height, joined by right-angle brackets. It is a thin preset over
+#' `vgraph(<clustering>, layout = "dendrogram")` plus bracket edges and leaf
+#' labels; for full control, use that path and add marks yourself.
+#'
+#' @param x An `hclust` or `dendrogram` object.
+#' @param direction Growth direction (leaves opposite the root): `"down"`
+#'   (default; root at top), `"up"`, `"left"`, or `"right"`.
+#' @param k Optionally cut the tree into `k` clusters ([stats::cutree()]) and
+#'   colour branches and leaf labels by cluster; branches above the cut stay
+#'   neutral. `NULL` (default) draws a single-colour tree.
+#' @param labels Draw the leaf labels? Default `TRUE`.
+#' @param width,height,dpi Page size (inches) and resolution.
+#' @return A [PlotSpec].
+#' @seealso [vgraph()] for the general node-link path (`layout = "dendrogram"`
+#'   or `"unrooted"`).
+#' @examples
+#' hc <- hclust(dist(USArrests))
+#' vdendrogram(hc, k = 3)
+#' @export
+vdendrogram <- function(
+  x,
+  direction = c("down", "up", "left", "right"),
+  k = NULL,
+  labels = TRUE,
+  width = 7,
+  height = 5,
+  dpi = 96
+) {
+  if (inherits(x, "dendrogram")) {
+    x <- stats::as.hclust(x)
+  }
+  if (!inherits(x, "hclust")) {
+    cli::cli_abort("{.arg x} must be an {.cls hclust} or {.cls dendrogram}.")
+  }
+  direction <- match.arg(direction)
+  g <- .hclust_to_igraph(x, k = k)
+  axis <- if (direction %in% c("down", "up")) "v" else "h"
+  p <- vgraph(
+    g,
+    layout = "dendrogram",
+    direction = direction,
+    width = width,
+    height = height,
+    dpi = dpi
+  )
+  # Bracket edges (corner at the parent's height); colour by cluster when cut.
+  p <- if (is.null(k)) {
+    mark_edges(p, routing = "elbow", elbow_at = "start", elbow_axis = axis)
+  } else {
+    mark_edges(
+      p,
+      color = cluster,
+      routing = "elbow",
+      elbow_at = "start",
+      elbow_axis = axis
+    )
+  }
+  if (isTRUE(labels)) {
+    p <- if (is.null(k)) {
+      mark_node_text(p, label = label, size = 2.5, dist = 1)
+    } else {
+      mark_node_text(p, label = label, color = cluster, size = 2.5, dist = 1)
+    }
+  }
+  p
 }

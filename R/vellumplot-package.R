@@ -21,6 +21,9 @@ utils::globalVariables(c(
   "yend",
   "name",
   "level",
+  # vdendrogram() maps these dendrogram node/edge columns via NSE
+  "label",
+  "cluster",
   # per-row radial label offsets attached by mark_node_text(dist=)
   ".node_nudge_x",
   ".node_nudge_y"

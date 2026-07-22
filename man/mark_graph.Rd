@@ -19,6 +19,8 @@ mark_edges(
   linetype = NULL,
   arrow = FALSE,
   routing = c("straight", "elbow"),
+  elbow_at = c("mid", "start", "end"),
+  elbow_axis = c("auto", "v", "h"),
   gradient = FALSE,
   auto = FALSE,
   blend = NULL,
@@ -123,9 +125,15 @@ teardrop loops sized to the node, with the head on the node boundary.}
 
 \item{routing}{For \code{mark_edges()}, edge routing: \code{"straight"} (default) or
 \code{"elbow"} -- orthogonal right-angle steps for tree / DAG / dendrogram
-layouts (still straight segments, no curvature), stepping along whichever
-axis the endpoints are farther apart on. Elbows keep node-boundary caps and
-arrowheads.}
+layouts (still straight segments, no curvature). Elbows keep node-boundary
+caps and arrowheads.}
+
+\item{elbow_at, elbow_axis}{For \code{mark_edges(routing = "elbow")}, the corner
+placement and axis. \code{elbow_at} is \code{"mid"} (default, an S-bend at the
+midpoint), or \code{"start"} / \code{"end"} for the corner at the source / target --
+\code{"start"} gives the dendrogram \emph{bracket} (siblings share a bar at the
+parent's level). \code{elbow_axis} is \code{"auto"} (default, the longer side),
+\code{"v"}, or \code{"h"} to force which axis the corner steps along.}
 
 \item{gradient}{For \code{mark_edges()}, \code{TRUE} to fade each (straight) edge from
 faint at its source to opaque at its target -- a direction cue that needs no

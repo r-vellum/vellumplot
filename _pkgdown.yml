@@ -138,6 +138,7 @@ reference:
   contents:
   - vplot
   - vgraph
+  - vdendrogram
   - vsankey
   - vhierarchy
   - render_plot
