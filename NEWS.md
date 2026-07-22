@@ -1,5 +1,11 @@
 # vellumplot (development version)
 
+* **`mark_text()` honours `hjust`/`vjust` passed as a variable.** They were only
+  read as constant params, so a value routed through a variable (as
+  `vdendrogram()` does per direction) silently fell back to centred, letting leaf
+  labels run over the edges. `.emit_text()` now reads them value-first, like
+  `angle`. `vdendrogram()` leaf labels also get a larger default gap.
+
 * **Dendrograms and unrooted trees.** `vgraph()` now accepts a base
   `hclust`/`dendrogram` and gains a height-aware `"dendrogram"` layout plus an
   `"unrooted"` layout (via `graphlayouts::layout_as_tree_unrooted()`, needs
