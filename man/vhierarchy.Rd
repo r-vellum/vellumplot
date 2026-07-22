@@ -10,9 +10,11 @@ vhierarchy(
   id,
   parent,
   value,
+  fill = NULL,
   type = c("sunburst", "icicle", "treemap", "circlepack"),
   inner_radius = 0,
   flow = c("down", "up", "right", "left"),
+  lighten = 0.6,
   label = TRUE,
   show_values = FALSE,
   orientation = c("auto", "radial", "tangential", "horizontal"),
@@ -27,9 +29,11 @@ mark_hierarchy(
   id,
   parent,
   value,
+  fill = NULL,
   type = c("sunburst", "icicle", "treemap", "circlepack"),
   inner_radius = 0,
   flow = c("down", "up", "right", "left"),
+  lighten = 0.6,
   label = TRUE,
   show_values = FALSE,
   orientation = c("auto", "radial", "tangential", "horizontal"),
@@ -42,6 +46,10 @@ mark_hierarchy(
 \item{id, parent, value}{Columns (tidy-eval): the node id, its parent id
 (\code{NA}/\code{""} for the root), and its value (used for leaves).}
 
+\item{fill}{Optional column (tidy-eval) to colour nodes by. Unmapped
+(default), nodes are coloured by their depth-1 branch and lightened with
+depth; mapped, each node takes its \code{fill} value's colour with no depth fade.}
+
 \item{type}{Diagram geometry: \code{"sunburst"} (default), \code{"icicle"}, \code{"treemap"},
 or \code{"circlepack"}.}
 
@@ -50,6 +58,10 @@ or \code{"circlepack"}.}
 
 \item{flow}{Icicle only: the direction of increasing depth — \code{"down"}
 (default), \code{"up"}, \code{"right"}, or \code{"left"}.}
+
+\item{lighten}{Branch mode only: how far the deepest level fades toward white,
+a fraction in \verb{[0, 1]} (default \code{0.6}; \code{0} = flat colour per branch).
+Ignored when \code{fill} is mapped.}
 
 \item{label}{Label each node with its \code{id}? Default \code{TRUE}. Nodes too small
 for their label are left unlabelled.}
@@ -82,11 +94,20 @@ data. Like \code{\link[=vgraph]{vgraph()}} / \code{\link[=vsankey]{vsankey()}} i
 aspect-locked \link{PlotSpec}; \code{mark_hierarchy()} is the layer it adds.
 }
 \details{
-The root is structural and never drawn (in a sunburst it is the centre);
-nodes are coloured by their depth-1 branch, lightened with depth. Each node is
-labelled with its \code{id} where the label fits, and \code{show_values} appends the
-value; small nodes are left unlabelled so a dense diagram stays legible.
+The root is structural and never drawn (in a sunburst it is the centre). Each
+node is labelled with its \code{id} where the label fits, and \code{show_values} appends
+the value; small nodes are left unlabelled so a dense diagram stays legible.
 }
+\section{Colour}{
+By default nodes are coloured by their depth-1 \emph{branch} and lightened one step
+per level, so sibling branches stay distinct and depth reads as shade. The
+branch is an ordinary discrete fill scale, so \verb{scale_fill_*()} recolours the
+branches (e.g. \code{scale_fill_brewer()}), and \code{lighten} controls the depth fade
+(\code{0} = flat colour per branch). Map \code{fill} to a node column instead to colour
+every node by that variable — discrete or continuous, with the matching
+\verb{scale_fill_*()} — in which case the depth fade is not applied.
+}
+
 \examples{
 h <- data.frame(
   id = c("root", "A", "B", "A1", "A2", "B1"),

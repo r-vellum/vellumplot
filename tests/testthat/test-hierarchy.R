@@ -54,7 +54,7 @@ test_that("the tree core sums subtree values and carries the root", {
   val <- setNames(lay$value, lay$id)
   expect_equal(unname(val[["A1"]]), 3) # leaf keeps its own value
   expect_equal(unname(val[["A"]]), 5) # internal node sums its children
-  expect_true(all(c("depth", "colour", "leaf") %in% names(lay)))
+  expect_true(all(c("depth", "branch", "leaf") %in% names(lay)))
   expect_identical(lay$leaf[lay$id == "A1"], TRUE)
   expect_identical(lay$leaf[lay$id == "A"], FALSE)
   root <- attr(lay, "root")
@@ -62,12 +62,13 @@ test_that("the tree core sums subtree values and carries the root", {
   expect_equal(root$value, 9) # 3 + 2 + 4
 })
 
-test_that("wedges are coloured by branch, lightened outward", {
+test_that("the layout carries the branch id and its input-order levels", {
   lay <- vellumplot:::.hierarchy_layout(h$id, h$parent, h$value)
-  col <- setNames(lay$colour, lay$id)
-  expect_false(col[["A"]] == col[["B"]]) # sibling branches differ
-  lum <- function(x) sum(farver::decode_colour(x))
-  expect_gt(lum(col[["A1"]]), lum(col[["A"]])) # child paler than parent
+  br <- setNames(lay$branch, lay$id)
+  expect_identical(unname(br[c("A", "A1", "A2")]), c("A", "A", "A"))
+  expect_identical(unname(br[c("B", "B1")]), c("B", "B"))
+  # depth-1 branches in input order, so the default palette matches historically
+  expect_identical(attr(lay, "branch_levels"), c("A", "B"))
 })
 
 test_that("non-tree inputs are rejected", {
@@ -274,7 +275,9 @@ test_that("sunburst labels sit on their own wedge (y-up, since vellum 0.5.1)", {
   )
   want_ang <- setNames((lay$theta0 + lay$theta1) / 2, lay$id)
   want_rad <- setNames((lay$r0 + lay$r1) / 2, lay$id)
-  for (g in text_grobs(vhierarchy(h, id, parent, value))) {
+  # drop the branch legend, whose keys share the node ids ("A"/"B")
+  p <- vhierarchy(h, id, parent, value) |> theme(legend.position = "none")
+  for (g in text_grobs(p)) {
     id <- g@label
     if (!id %in% lay$id) {
       next
@@ -285,6 +288,75 @@ test_that("sunburst labels sit on their own wedge (y-up, since vellum 0.5.1)", {
     expect_equal(d, 0, tolerance = 1e-6, info = id)
     expect_equal(sqrt(x^2 + y^2), want_rad[[id]], tolerance = 1e-6, info = id)
   }
+})
+
+# ---- fill: branch default vs mapped ----------------------------------------
+
+hf <- data.frame(
+  id = c("root", "A", "B", "A1", "A2", "B1"),
+  parent = c(NA, "root", "root", "A", "A", "B"),
+  value = c(NA, NA, NA, 3, 2, 4),
+  region = c(NA, NA, NA, "x", "y", "x"),
+  score = c(NA, NA, NA, 1, 5, 9)
+)
+
+resolve1 <- function(p) vellumplot:::.resolve_layer(p@layers[[1]], p@data)
+
+test_that("unmapped fill colours by branch: a factor in input order, branch mode", {
+  r <- resolve1(vhierarchy(hf, id, parent, value))
+  expect_identical(r$hier_fill_mode, "branch")
+  expect_s3_class(r$values$fill, "factor")
+  expect_identical(levels(r$values$fill), c("A", "B")) # input order
+  # one fill value per drawn node, aligned to the (depth-sorted) layout rows
+  expect_length(r$values$fill, nrow(r$hierarchy))
+  expect_identical(as.character(r$values$fill), r$hierarchy$branch)
+})
+
+test_that("mapped fill trains on the column, realigned to the layout rows", {
+  r <- resolve1(vhierarchy(hf, id, parent, value, fill = region))
+  expect_identical(r$hier_fill_mode, "mapped")
+  # value realigned to the layout's node order (via the frame's .node index)
+  expect_identical(r$values$fill, hf$region[r$hierarchy$.node])
+})
+
+test_that("branch mode sets a 'branch' legend title; mapped and labs() override", {
+  # labs(fill=) and the branch default both live under the canonical `color` key
+  expect_identical(vhierarchy(hf, id, parent, value)@labels$color, "branch")
+  expect_null(vhierarchy(hf, id, parent, value, fill = region)@labels$color)
+  p <- vhierarchy(hf, id, parent, value) |> labs(fill = "Division")
+  expect_identical(p@labels$color, "Division")
+})
+
+test_that("lighten is validated", {
+  expect_error(vhierarchy(hf, id, parent, value, lighten = 2), "\\[0, 1\\]")
+  expect_error(
+    vplot(hf) |> mark_hierarchy(id, parent, value, lighten = -1),
+    "\\[0, 1\\]"
+  )
+})
+
+test_that("lighten and mapped fill change the rendered fills", {
+  fills <- function(p) {
+    svg <- vellum::scene_svg(vellum::as_vellum_scene(p))
+    unique(regmatches(svg, gregexpr("#[0-9a-fA-F]{6}", svg))[[1]])
+  }
+  base <- fills(vhierarchy(hf, id, parent, value, type = "treemap"))
+  flat <- fills(vhierarchy(
+    hf,
+    id,
+    parent,
+    value,
+    type = "treemap",
+    lighten = 0
+  ))
+  # flat colouring collapses each branch to one hue -> fewer distinct fills
+  expect_lt(length(flat), length(base))
+  # a manual branch palette puts its colours on the plot
+  manual <- fills(
+    vhierarchy(hf, id, parent, value, type = "treemap") |>
+      scale_fill_manual(values = c(A = "#112233", B = "#445566"))
+  )
+  expect_true("#112233" %in% tolower(manual))
 })
 
 # ---- rendering -------------------------------------------------------------

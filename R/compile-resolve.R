@@ -97,6 +97,7 @@ NULL
   # channels (see `.hierarchy_layout`) and synthesise the centred [-1, 1] extent
   # so the aspect-locked square panel holds it.
   hierarchy <- NULL
+  hier_fill_mode <- NULL
   if (identical(layer@mark, "hierarchy")) {
     if (is.null(values$id) || is.null(values$parent) || is.null(values$value)) {
       cli::cli_abort(
@@ -111,6 +112,22 @@ NULL
       inner_radius = layer@params$inner_radius %||% 0,
       flow = layer@params$flow %||% "down"
     )
+    # Fill is a normal discrete/continuous scale. Unmapped, colour by the depth-1
+    # branch (a factor whose levels are the branches in input order, so the
+    # default palette matches the historical look) and let the emitter lighten by
+    # depth. Mapped, realign the node column to the layout's (depth-sorted) rows
+    # and train it as given; the emitter uses it verbatim (no depth fade).
+    if (is.null(values$fill)) {
+      values$fill <- factor(
+        hierarchy$branch,
+        levels = attr(hierarchy, "branch_levels")
+      )
+      types$fill <- "nominal"
+      hier_fill_mode <- "branch"
+    } else {
+      values$fill <- values$fill[hierarchy$.node]
+      hier_fill_mode <- "mapped"
+    }
     values$x <- c(-1, 1)
     values$y <- c(-1, 1)
     types$x <- types$y <- "quantitative"
@@ -176,6 +193,7 @@ NULL
     sf = sf,
     sankey = sankey,
     hierarchy = hierarchy,
+    hier_fill_mode = hier_fill_mode,
     ds = ds,
     graph_identity = graph_identity,
     stat = layer@stat,

@@ -128,9 +128,11 @@ NULL
   }
   assign_frac(root)
 
-  # Colour by branch, not by depth: every node takes the hue of its depth-1
-  # ancestor (so sibling branches differ), lightened toward white with depth (so
-  # the inner/root level reads darkest). Matches the usual d3/ggplot hierarchy.
+  # Each node belongs to a depth-1 *branch* (its depth-1 ancestor). The branch is
+  # what a fill scale colours by default; depth-lightening then separates levels
+  # within a branch. `branch_levels` are the branch ids in input order, so the
+  # default discrete fill scale assigns its palette in that order (preserving the
+  # historical look) rather than alphabetically.
   branch <- vapply(
     seq_len(n),
     function(i) {
@@ -142,14 +144,7 @@ NULL
     },
     integer(1)
   )
-  branch_nodes <- which(depth == 1L) # input order
-  base_of <- stats::setNames(.qual_palette(length(branch_nodes)), branch_nodes)
-  colour <- rep("#7f7f7f", n)
-  nz <- depth >= 1L
-  colour[nz] <- .lighten(
-    base_of[as.character(branch[nz])],
-    (depth[nz] - 1L) / max(1L, D - 1L) * 0.6
-  )
+  branch_levels <- id[which(depth == 1L)] # depth-1 ids, input order
 
   list(
     id = id,
@@ -161,7 +156,8 @@ NULL
     D = D,
     f0 = f0,
     f1 = f1,
-    colour = colour
+    branch = id[branch],
+    branch_levels = branch_levels
   )
 }
 
@@ -174,8 +170,9 @@ NULL
     id = tree$id[keep],
     depth = tree$depth[keep],
     value = tree$value[keep],
-    colour = tree$colour[keep],
+    branch = tree$branch[keep], # depth-1 ancestor id (default fill variable)
     leaf = lengths(tree$children)[keep] == 0L,
+    .node = keep, # original input index, to realign a mapped fill column
     stringsAsFactors = FALSE
   )
   lay <- cbind(lay, geom[keep, , drop = FALSE])
@@ -187,6 +184,7 @@ NULL
     id = tree$id[tree$root],
     value = tree$value[tree$root]
   )
+  attr(lay, "branch_levels") <- tree$branch_levels
   lay
 }
 
@@ -429,14 +427,29 @@ NULL
 #' data. Like [vgraph()] / [vsankey()] it returns a ready, axis-free,
 #' aspect-locked [PlotSpec]; `mark_hierarchy()` is the layer it adds.
 #'
-#' The root is structural and never drawn (in a sunburst it is the centre);
-#' nodes are coloured by their depth-1 branch, lightened with depth. Each node is
-#' labelled with its `id` where the label fits, and `show_values` appends the
-#' value; small nodes are left unlabelled so a dense diagram stays legible.
+#' The root is structural and never drawn (in a sunburst it is the centre). Each
+#' node is labelled with its `id` where the label fits, and `show_values` appends
+#' the value; small nodes are left unlabelled so a dense diagram stays legible.
+#'
+#' # Colour
+#'
+#' By default nodes are coloured by their depth-1 *branch* and lightened one step
+#' per level, so sibling branches stay distinct and depth reads as shade. The
+#' branch is an ordinary discrete fill scale, so `scale_fill_*()` recolours the
+#' branches (e.g. `scale_fill_brewer()`), and `lighten` controls the depth fade
+#' (`0` = flat colour per branch). Map `fill` to a node column instead to colour
+#' every node by that variable — discrete or continuous, with the matching
+#' `scale_fill_*()` — in which case the depth fade is not applied.
 #'
 #' @param data A data frame describing a hierarchy (a parent list).
 #' @param id,parent,value Columns (tidy-eval): the node id, its parent id
 #'   (`NA`/`""` for the root), and its value (used for leaves).
+#' @param fill Optional column (tidy-eval) to colour nodes by. Unmapped
+#'   (default), nodes are coloured by their depth-1 branch and lightened with
+#'   depth; mapped, each node takes its `fill` value's colour with no depth fade.
+#' @param lighten Branch mode only: how far the deepest level fades toward white,
+#'   a fraction in `[0, 1]` (default `0.6`; `0` = flat colour per branch).
+#'   Ignored when `fill` is mapped.
 #' @param type Diagram geometry: `"sunburst"` (default), `"icicle"`, `"treemap"`,
 #'   or `"circlepack"`.
 #' @param inner_radius Sunburst only: central hole radius, a fraction in
@@ -468,9 +481,11 @@ vhierarchy <- function(
   id,
   parent,
   value,
+  fill = NULL,
   type = c("sunburst", "icicle", "treemap", "circlepack"),
   inner_radius = 0,
   flow = c("down", "up", "right", "left"),
+  lighten = 0.6,
   label = TRUE,
   show_values = FALSE,
   orientation = c("auto", "radial", "tangential", "horizontal"),
@@ -499,9 +514,11 @@ vhierarchy <- function(
     id = {{ id }},
     parent = {{ parent }},
     value = {{ value }},
+    fill = {{ fill }},
     type = match.arg(type),
     inner_radius = inner_radius,
     flow = match.arg(flow),
+    lighten = lighten,
     label = label,
     show_values = show_values,
     orientation = match.arg(orientation),
@@ -517,9 +534,11 @@ mark_hierarchy <- function(
   id,
   parent,
   value,
+  fill = NULL,
   type = c("sunburst", "icicle", "treemap", "circlepack"),
   inner_radius = 0,
   flow = c("down", "up", "right", "left"),
+  lighten = 0.6,
   label = TRUE,
   show_values = FALSE,
   orientation = c("auto", "radial", "tangential", "horizontal"),
@@ -527,12 +546,28 @@ mark_hierarchy <- function(
 ) {
   .check_plot(plot)
   .check_inner_radius(inner_radius)
+  if (
+    !is.numeric(lighten) || length(lighten) != 1L || lighten < 0 || lighten > 1
+  ) {
+    cli::cli_abort("{.arg lighten} must be a single number in {.val [0, 1]}.")
+  }
+  fill_q <- rlang::enquo(fill)
+  channels <- rlang::enquos(id = id, parent = parent, value = value)
+  if (!rlang::quo_is_null(fill_q)) {
+    channels$fill <- fill_q
+  } else if (is.null(plot@labels$color) && is.null(plot@labels$fill)) {
+    # Default branch-fill legend title (the synthesised fill has no expression to
+    # name it). Stored under the canonical `color` key; a later labs()/scale name
+    # still wins.
+    plot@labels$color <- "branch"
+  }
   .add_layer(
     plot,
     "hierarchy",
-    rlang::enquos(id = id, parent = parent, value = value),
+    channels,
     const_params = list(
       type = match.arg(type),
+      lighten = as.numeric(lighten),
       inner_radius = as.numeric(inner_radius),
       flow = match.arg(flow),
       label = isTRUE(label),

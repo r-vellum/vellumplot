@@ -1,5 +1,13 @@
 # vellumplot (development version)
 
+* **`vhierarchy()` respects `scale_fill_*()`.** By default nodes are still
+  coloured by their depth-1 branch and lightened with depth, but the branch is
+  now an ordinary discrete fill scale, so `scale_fill_manual()` /
+  `scale_fill_discrete()` recolour the branches and a `lighten` argument controls
+  the depth fade (`0` = flat colour per branch). Mapping `fill` to a node column
+  instead colours every node by that variable (discrete or continuous, with the
+  matching `scale_fill_*()`), with no depth fade.
+
 # vellumplot 0.7.0
 
 * **New `vhierarchy()` for space-filling hierarchies — breaking.**
