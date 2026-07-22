@@ -9,6 +9,23 @@ NULL
 # does not mangle it in summary output.
 .lab_str <- function(x) if (is.character(x)) x else "<rich text>"
 
+# The facet variable expressions (a list of quosures) as one string joined by
+# `sep`, or NULL for an empty/absent set. Shared by the summary tree (" + ") and
+# the alt-text builder (" and ").
+.facet_var_labels <- function(qs, sep) {
+  if (is.null(qs) || !length(qs)) {
+    return(NULL)
+  }
+  paste(
+    vapply(
+      qs,
+      function(q) rlang::as_label(rlang::quo_get_expr(q)),
+      character(1)
+    ),
+    collapse = sep
+  )
+}
+
 # One line per layer: `mark_point(x = wt, y = mpg, color = hp)  [size = 3]`.
 .format_layer <- function(layer) {
   enc <- vapply(
@@ -87,16 +104,7 @@ NULL
   }
   if (!is.null(x@facet)) {
     f <- x@facet
-    lab <- function(qs) {
-      paste(
-        vapply(
-          qs,
-          function(q) rlang::as_label(rlang::quo_get_expr(q)),
-          character(1)
-        ),
-        collapse = " + "
-      )
-    }
+    lab <- function(qs) .facet_var_labels(qs, " + ")
     spec <- if (f@type == "wrap") {
       paste0("wrap(", lab(f@cols), ")")
     } else {

@@ -140,20 +140,15 @@ scale_x_continuous <- function(
   name = NULL,
   sec.axis = NULL
 ) {
-  .check_plot(plot)
-  .check_continuous_limits(limits, "limits")
-  .add_scale(
+  .continuous_position_scale(
     plot,
-    ScaleSpec(
-      aesthetic = "x",
-      type = "continuous",
-      domain = limits,
-      trans = trans,
-      breaks = breaks,
-      labels = labels,
-      name = name,
-      sec_axis = .check_sec_axis(sec.axis)
-    )
+    "x",
+    limits,
+    trans,
+    breaks,
+    labels,
+    name,
+    sec.axis
   )
 }
 
@@ -168,12 +163,36 @@ scale_y_continuous <- function(
   name = NULL,
   sec.axis = NULL
 ) {
+  .continuous_position_scale(
+    plot,
+    "y",
+    limits,
+    trans,
+    breaks,
+    labels,
+    name,
+    sec.axis
+  )
+}
+
+# Shared body of scale_x_continuous() / scale_y_continuous() (identical but for
+# the aesthetic).
+.continuous_position_scale <- function(
+  plot,
+  aesthetic,
+  limits,
+  trans,
+  breaks,
+  labels,
+  name,
+  sec.axis
+) {
   .check_plot(plot)
   .check_continuous_limits(limits, "limits")
   .add_scale(
     plot,
     ScaleSpec(
-      aesthetic = "y",
+      aesthetic = aesthetic,
       type = "continuous",
       domain = limits,
       trans = trans,
