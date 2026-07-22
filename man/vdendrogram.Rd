@@ -9,6 +9,7 @@ vdendrogram(
   direction = c("down", "up", "left", "right"),
   k = NULL,
   labels = TRUE,
+  label_size = 5,
   width = 7,
   height = 5,
   dpi = 96
@@ -25,6 +26,9 @@ colour branches and leaf labels by cluster; branches above the cut stay
 neutral. \code{NULL} (default) draws a single-colour tree.}
 
 \item{labels}{Draw the leaf labels? Default \code{TRUE}.}
+
+\item{label_size}{Leaf-label font size (points). Default \code{5}; lower it for a
+tree with many leaves.}
 
 \item{width, height, dpi}{Page size (inches) and resolution.}
 }

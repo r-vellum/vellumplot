@@ -768,6 +768,8 @@ vgraph <- function(
 #'   colour branches and leaf labels by cluster; branches above the cut stay
 #'   neutral. `NULL` (default) draws a single-colour tree.
 #' @param labels Draw the leaf labels? Default `TRUE`.
+#' @param label_size Leaf-label font size (points). Default `5`; lower it for a
+#'   tree with many leaves.
 #' @param width,height,dpi Page size (inches) and resolution.
 #' @return A [PlotSpec].
 #' @seealso [vgraph()] for the general node-link path (`layout = "dendrogram"`
@@ -781,6 +783,7 @@ vdendrogram <- function(
   direction = c("down", "up", "left", "right"),
   k = NULL,
   labels = TRUE,
+  label_size = 5,
   width = 7,
   height = 5,
   dpi = 96
@@ -821,10 +824,10 @@ vdendrogram <- function(
     leaves <- p@data[p@data$leaf, , drop = FALSE]
     pl <- switch(
       direction,
-      down = list(angle = 90, hjust = "right", nx = 0, ny = -1.5),
-      up = list(angle = 90, hjust = "left", nx = 0, ny = 1.5),
-      right = list(angle = 0, hjust = "right", nx = -1.5, ny = 0),
-      left = list(angle = 0, hjust = "left", nx = 1.5, ny = 0)
+      down = list(angle = 90, hjust = "right", nx = 0, ny = -3),
+      up = list(angle = 90, hjust = "left", nx = 0, ny = 3),
+      right = list(angle = 0, hjust = "right", nx = -3, ny = 0),
+      left = list(angle = 0, hjust = "left", nx = 3, ny = 0)
     )
     p <- if (is.null(k)) {
       mark_text(
@@ -832,7 +835,7 @@ vdendrogram <- function(
         x = x,
         y = y,
         label = label,
-        size = 2.5,
+        size = !!label_size,
         angle = pl$angle,
         hjust = pl$hjust,
         vjust = "centre",
@@ -847,7 +850,7 @@ vdendrogram <- function(
         y = y,
         label = label,
         color = cluster,
-        size = 2.5,
+        size = !!label_size,
         angle = pl$angle,
         hjust = pl$hjust,
         vjust = "centre",
