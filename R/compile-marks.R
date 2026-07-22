@@ -1083,7 +1083,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   ang <- .text_angle(L, n)
   fs <- .aes_param(L, "size", 8)
-  just <- c(.aes_param(L, "hjust", "centre"), .aes_param(L, "vjust", "centre"))
+  # `hjust`/`vjust` may arrive as a constant param or (when passed a variable) a
+  # resolved value; check values first, like `.text_angle`. A single just applies
+  # to the whole batch, so take the first if a vector came through.
+  hj <- L$values$hjust %||% .aes_param(L, "hjust", "centre")
+  vj <- L$values$vjust %||% .aes_param(L, "vjust", "centre")
+  just <- c(hj[[1]], vj[[1]])
 
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]

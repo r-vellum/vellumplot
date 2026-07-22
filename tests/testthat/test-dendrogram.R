@@ -145,6 +145,19 @@ test_that("vdendrogram() labels only leaves, vertical for a top/bottom tree", {
   expect_false(rotated(vdendrogram(hc, direction = "left")))
 })
 
+test_that("leaf labels justify away from the tree (not centred on the leaf)", {
+  # regression: labels must clear the edges. A centred anchor would run the text
+  # back over the edge; they should be end-/start-anchored so they sit outside.
+  anchor <- function(p) {
+    svg <- vellum::scene_svg(vellum::as_vellum_scene(p))
+    t <- regmatches(svg, gregexpr("<text[^>]*>[^<]+</text>", svg))[[1]][1]
+    sub('.*text-anchor="([a-z]+)".*', "\\1", t)
+  }
+  expect_identical(anchor(vdendrogram(hc, direction = "right")), "end")
+  expect_identical(anchor(vdendrogram(hc, direction = "left")), "start")
+  expect_identical(anchor(vdendrogram(hc, direction = "down")), "end")
+})
+
 test_that("vdendrogram(k=) cuts the tree and carries clusters", {
   g <- vellumplot:::.hclust_to_igraph(hc, k = 3)
   expect_setequal(
