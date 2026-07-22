@@ -2,6 +2,33 @@
 
 ## vellumplot (development version)
 
+- **`mark_point(auto = TRUE)` no longer datashades under a warped
+  coordinate system.** Under
+  [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  /
+  [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)
+  the \>50000-row datashade fallback — which bins in linear data space —
+  would rasterise into the wrong place; it is now skipped and the vector
+  path draws, matching the documented behaviour and the other `auto`
+  marks (line/step/segment/edges).
+
+- **A sankey column with too many nodes errors clearly.** When a column
+  has more nodes than its inter-node gaps can fit, the node/ribbon
+  heights previously went negative and spilled outside the panel;
+  [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  /
+  [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+  now abort with a message pointing at `node_gap`.
+
+- **Aggregating stats drop missing summaries consistently, with a
+  warning.** For a value-summarising bar (`mark_bar(y = , fun = )` and
+  friends), a category whose summary is `NA` (an empty group, or a
+  summary of data containing `NA` when the function does not remove it)
+  is now dropped with a warning on **both** the grouped and ungrouped
+  paths, which previously treated `NA` differently. A layer mapping both
+  `color` and `fill` also keeps both aligned after aggregation (`fill`
+  could previously be left at the wrong length).
+
 - **Clearer errors for malformed scale bounds.**
   [`scale_x_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
   [`scale_y_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
