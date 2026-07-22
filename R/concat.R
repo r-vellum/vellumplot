@@ -176,10 +176,23 @@ plot_spacer <- function() Spacer()
 #' concat(a, b, design = list(area(1, 1, 1, 2), area(2, 1, 2, 1)))
 #' @export
 area <- function(t, l, b = t, r = l) {
-  t <- as.numeric(t)
-  l <- as.numeric(l)
-  b <- as.numeric(b)
-  r <- as.numeric(r)
+  # A cell index must be a single positive integer. Guard before coercion:
+  # `as.numeric("a")` is a silent `NA`, so `NA > b` would abort with the opaque
+  # "missing value where TRUE/FALSE needed" rather than a clear message.
+  cell <- function(v, nm) {
+    n <- suppressWarnings(as.numeric(v))
+    if (length(n) != 1L || is.na(n) || n < 1 || n != round(n)) {
+      cli::cli_abort(c(
+        "{.arg {nm}} must be a single positive integer (a 1-based cell index).",
+        i = "Got {.obj_type_friendly {v}}."
+      ))
+    }
+    n
+  }
+  t <- cell(t, "t")
+  l <- cell(l, "l")
+  b <- cell(b, "b")
+  r <- cell(r, "r")
   if (t > b || l > r) {
     cli::cli_abort(c(
       "An {.fn area} must have {.code t <= b} and {.code l <= r}.",
