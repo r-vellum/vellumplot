@@ -15,6 +15,7 @@ vdendrogram(
   direction = c("down", "up", "left", "right"),
   k = NULL,
   labels = TRUE,
+  label_size = 5,
   width = 7,
   height = 5,
   dpi = 96
@@ -42,6 +43,11 @@ vdendrogram(
 - labels:
 
   Draw the leaf labels? Default `TRUE`.
+
+- label_size:
+
+  Leaf-label font size (points). Default `5`; lower it for a tree with
+  many leaves.
 
 - width, height, dpi:
 
