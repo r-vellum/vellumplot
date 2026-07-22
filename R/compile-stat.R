@@ -2,7 +2,18 @@
 NULL
 
 # The optional grouping value for a layer (a mapped colour/fill), or NULL.
-.layer_group <- function(L) L$values$color %||% L$values$fill
+# The grouping vector for a stat (colour, else fill). Recycled to the layer's row
+# count so a grouping aesthetic that resolved shorter than the data (e.g. a
+# constant of length 1) still aligns 1:1 when masked by `is.finite(x)` etc.,
+# matching the defensive `rep_len()` in `.position_stack`.
+.layer_group <- function(L) {
+  g <- L$values$color %||% L$values$fill
+  n <- L$n %||% length(g)
+  if (!is.null(g) && length(g) >= 1L && length(g) != n) {
+    g <- rep_len(g, n)
+  }
+  g
+}
 
 # Apply a layer's statistical transform, producing new `values` (and evaluating
 # any `after_stat()` channels against the stat output). The identity stat is a
@@ -54,9 +65,14 @@ NULL
   }
   L$values$x <- sdf$x
   if (!is.null(sdf$group)) {
+    # Realign *both* colour and fill to the aggregated groups. Grouping is taken
+    # from colour %||% fill, so at least one matches the group; setting both keeps
+    # the other aesthetic length-consistent with the reduced row count (a fill
+    # left at its pre-stat, now-wrong-length vector would misalign downstream).
     if (!is.null(L$values$color)) {
       L$values$color <- sdf$group
-    } else {
+    }
+    if (!is.null(L$values$fill)) {
       L$values$fill <- sdf$group
     }
   }
@@ -490,7 +506,24 @@ NULL
   do.call(rbind, parts)
 }
 
-# Summarise y per x category (per group) with `fun` (default mean).
+# Warn about aggregated categories whose summary is `NA` (an empty group, or a
+# summary of data containing `NA` when `fun` does not remove it -- e.g. the
+# default `mean` without `na.rm = TRUE`), and return the keep mask. Both branches
+# of `.stat_aggregate` use this so the grouped and ungrouped paths drop `NA`
+# summaries on identical terms.
+.drop_na_summary <- function(is_na) {
+  if (any(is_na)) {
+    cli::cli_warn(
+      "Dropped {sum(is_na)} categor{?y/ies} with a missing summary value ({.code NA})."
+    )
+  }
+  !is_na
+}
+
+# Summarise y per x category (per group) with `fun` (default mean). `fun` sees
+# every value in a category (including NAs); a category whose summary is `NA` is
+# dropped with a warning. The grouped path uses `na.action = na.pass` so it feeds
+# `fun` the same NA-inclusive values the ungrouped `tapply` path does.
 .stat_aggregate <- function(L) {
   x <- L$values$x
   y <- as.numeric(L$values$y)
@@ -500,7 +533,7 @@ NULL
   grp <- .layer_group(L)
   if (is.null(grp)) {
     yv <- tapply(y, xf, fun)
-    keep <- !is.na(yv)
+    keep <- .drop_na_summary(is.na(yv))
     data.frame(
       x = factor(xlevs[keep], levels = xlevs),
       y = as.numeric(yv[keep])
@@ -508,11 +541,12 @@ NULL
   } else {
     glevs <- .cat_levels(grp)
     gf <- factor(as.character(grp), levels = glevs)
-    agg <- stats::aggregate(y ~ xf + gf, FUN = fun)
+    agg <- stats::aggregate(y ~ xf + gf, FUN = fun, na.action = stats::na.pass)
+    keep <- .drop_na_summary(is.na(agg$y))
     data.frame(
-      x = factor(as.character(agg$xf), levels = xlevs),
-      group = factor(as.character(agg$gf), levels = glevs),
-      y = agg$y
+      x = factor(as.character(agg$xf[keep]), levels = xlevs),
+      group = factor(as.character(agg$gf[keep]), levels = glevs),
+      y = agg$y[keep]
     )
   }
 }
