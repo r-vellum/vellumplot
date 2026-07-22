@@ -98,6 +98,8 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  linetype <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  arrow <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  routing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"straight"</span>, <span class="st">"elbow"</span><span class="op">)</span>,</span>
+<span>  elbow_at <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mid"</span>, <span class="st">"start"</span>, <span class="st">"end"</span><span class="op">)</span>,</span>
+<span>  elbow_axis <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"v"</span>, <span class="st">"h"</span><span class="op">)</span>,</span>
 <span>  gradient <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  auto <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -217,9 +219,17 @@ teardrop loops sized to the node, with the head on the node boundary.</p></dd>
 <dt id="arg-routing">routing<a class="anchor" aria-label="anchor" href="#arg-routing"></a></dt>
 <dd><p>For <code>mark_edges()</code>, edge routing: <code>"straight"</code> (default) or
 <code>"elbow"</code> – orthogonal right-angle steps for tree / DAG / dendrogram
-layouts (still straight segments, no curvature), stepping along whichever
-axis the endpoints are farther apart on. Elbows keep node-boundary caps and
-arrowheads.</p></dd>
+layouts (still straight segments, no curvature). Elbows keep node-boundary
+caps and arrowheads.</p></dd>
+
+
+<dt id="arg-elbow-at-elbow-axis">elbow_at, elbow_axis<a class="anchor" aria-label="anchor" href="#arg-elbow-at-elbow-axis"></a></dt>
+<dd><p>For <code>mark_edges(routing = "elbow")</code>, the corner
+placement and axis. <code>elbow_at</code> is <code>"mid"</code> (default, an S-bend at the
+midpoint), or <code>"start"</code> / <code>"end"</code> for the corner at the source / target –
+<code>"start"</code> gives the dendrogram <em>bracket</em> (siblings share a bar at the
+parent's level). <code>elbow_axis</code> is <code>"auto"</code> (default, the longer side),
+<code>"v"</code>, or <code>"h"</code> to force which axis the corner steps along.</p></dd>
 
 
 <dt id="arg-gradient">gradient<a class="anchor" aria-label="anchor" href="#arg-gradient"></a></dt>

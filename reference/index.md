@@ -9,6 +9,8 @@ then render it or write it to a file.
   : Start a plot specification
 - [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
   : Start a graph (network) plot
+- [`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
+  : Dendrogram from a clustering
 - [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   : Sankey (flow) diagram

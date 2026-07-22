@@ -214,6 +214,50 @@ vgraph(dg) |>
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-9-1.png)
 
+### Dendrograms
+
+[`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+also accepts a base `hclust`/`dendrogram`, coercing it to a tree that
+carries each merge’s height. The `"dendrogram"` layout places leaves on
+a line and every merge at its height, and `elbow_at = "start"` turns the
+elbow into the classic *bracket* (siblings share a bar at the parent’s
+level):
+
+``` r
+
+hc <- hclust(dist(USArrests))
+vgraph(hc, layout = "dendrogram") |>
+  mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v") |>
+  mark_node_text(label = label, size = 2, dist = 1)
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png)
+
+[`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
+is the one-line preset for that – bracket edges and leaf labels,
+`direction` to orient it, and `k` to cut the tree and colour the
+clusters (branches above the cut stay neutral):
+
+``` r
+
+vdendrogram(hc, k = 3)
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+
+For unrooted trees (phylogeny-style), `layout = "unrooted"` uses
+graphlayouts’ `layout_as_tree_unrooted()` – `mode` picks `"equalangle"`,
+`"equaldaylight"`, or `"stress"`:
+
+``` r
+
+vgraph(igraph::make_tree(31, 3, "undirected"), layout = "unrooted", mode = "equaldaylight") |>
+  mark_edges(alpha = 0.6) |>
+  mark_nodes(size = 1.5, fill = "grey30")
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
+
 ### Augmenting and filtering
 
 Vertex metrics are the analyst’s choice, not something
@@ -240,7 +284,7 @@ vgraph(g, augment = c("degree", "community"), k_core = 2) |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
 
 ### Community hulls and node glyphs
 
@@ -263,7 +307,7 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
 
 [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
 replaces the node markers with pie (or donut, via `inner`) glyphs whose
@@ -281,7 +325,7 @@ vgraph(g, layout = "stress") |>
   mark_node_pie(cols = c("x1", "x2", "x3"), size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png)
 
 ### Interactive neighbour highlighting
 
@@ -311,9 +355,10 @@ widget too.
 ### Choosing a layout
 
 `layout` accepts a name (`"stress"`, `"sparse_stress"`, `"backbone"`,
-`"fr"`, `"kk"`, `"circle"`, `"tree"`, `"sugiyama"`, and more), a
-supplied N-by-2 coordinate matrix, or a function that returns one.
-Stochastic layouts take a `seed` so the figure is reproducible.
+`"fr"`, `"kk"`, `"circle"`, `"tree"`, `"sugiyama"`, `"dendrogram"`,
+`"unrooted"`, and more), a supplied N-by-2 coordinate matrix, or a
+function that returns one. Stochastic layouts take a `seed` so the
+figure is reproducible.
 
 ``` r
 
@@ -322,7 +367,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 2)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-17-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a

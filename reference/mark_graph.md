@@ -26,6 +26,8 @@ mark_edges(
   linetype = NULL,
   arrow = FALSE,
   routing = c("straight", "elbow"),
+  elbow_at = c("mid", "start", "end"),
+  elbow_axis = c("auto", "v", "h"),
   gradient = FALSE,
   auto = FALSE,
   blend = NULL,
@@ -152,9 +154,17 @@ mark_node_pie(
 
   For `mark_edges()`, edge routing: `"straight"` (default) or `"elbow"`
   – orthogonal right-angle steps for tree / DAG / dendrogram layouts
-  (still straight segments, no curvature), stepping along whichever axis
-  the endpoints are farther apart on. Elbows keep node-boundary caps and
-  arrowheads.
+  (still straight segments, no curvature). Elbows keep node-boundary
+  caps and arrowheads.
+
+- elbow_at, elbow_axis:
+
+  For `mark_edges(routing = "elbow")`, the corner placement and axis.
+  `elbow_at` is `"mid"` (default, an S-bend at the midpoint), or
+  `"start"` / `"end"` for the corner at the source / target – `"start"`
+  gives the dendrogram *bracket* (siblings share a bar at the parent's
+  level). `elbow_axis` is `"auto"` (default, the longer side), `"v"`, or
+  `"h"` to force which axis the corner steps along.
 
 - gradient:
 

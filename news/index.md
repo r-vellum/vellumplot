@@ -2,6 +2,20 @@
 
 ## vellumplot (development version)
 
+- **Dendrograms and unrooted trees.**
+  [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  now accepts a base `hclust`/`dendrogram` and gains a height-aware
+  `"dendrogram"` layout plus an `"unrooted"` layout (via
+  [`graphlayouts::layout_as_tree_unrooted()`](https://schochastics.github.io/graphlayouts/reference/layout_tree_unrooted.html),
+  needs graphlayouts \>= 1.2.5). `mark_edges(routing = "elbow")` gained
+  `elbow_at` / `elbow_axis` so the elbow can be the dendrogram *bracket*
+  (corner at the parent’s level) rather than only the midpoint S-bend.
+  [`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
+  is a one-line preset: bracket edges, leaf labels, `direction`, and `k`
+  to cut the tree and colour clusters. Also fixes
+  `mark_node_text(label = )` so an explicit `label` mapping overrides
+  the default vertex name (it was previously ignored).
+
 - **[`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
   respects `scale_fill_*()`.** By default nodes are still coloured by
   their depth-1 branch and lightened with depth, but the branch is now
