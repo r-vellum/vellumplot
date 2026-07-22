@@ -1844,6 +1844,16 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     return(scene)
   }
   type <- L$params$type %||% "sunburst"
+  # Node fill comes from the (branch or mapped) fill scale; in branch mode fade
+  # each node toward white by depth so levels within a branch stay distinct.
+  base <- rep_len(.aes_colour(L, scales, "#7f7f7f"), nrow(lay))
+  if (identical(L$hier_fill_mode, "branch")) {
+    D <- max(lay$depth)
+    amt <- (lay$depth - 1L) / max(1L, D - 1L) * (L$params$lighten %||% 0.6)
+    lay$colour <- .lighten(base, amt)
+  } else {
+    lay$colour <- base
+  }
   scene <- switch(
     type,
     sunburst = .emit_sunburst_regions(scene, lay),

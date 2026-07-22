@@ -117,6 +117,27 @@ bands and `flow` chooses the direction (`"down"`, `"up"`, `"right"`, `"left"`):
 vhierarchy(h, id, parent, value, type = "icicle", flow = "right")
 ```
 
+### Colour
+
+By default each top-level branch takes a hue and its descendants inherit it
+lightened one step per level. The branch is an ordinary discrete fill scale, so
+`scale_fill_*()` recolours the branches and `lighten` controls the fade (`0` for
+a flat colour per branch):
+
+```{r}
+vhierarchy(h, id, parent, value, type = "treemap", lighten = 0.3) |>
+  scale_fill_manual(values = c(tech = "#1b7837", food = "#762a83"))
+```
+
+Map `fill` to a node column to colour every node by that variable instead, with
+the matching `scale_fill_*()`. The depth fade is dropped, since the colour now
+carries its own meaning:
+
+```{r}
+h$owner <- c(NA, NA, NA, "Sam", "Sam", "Lee", "Lee")
+vhierarchy(h, id, parent, value, fill = owner, type = "circlepack")
+```
+
 Both `vsankey()` and `vhierarchy()` follow the `vgraph()` pattern: the layout is
 computed in R and drawn through vellum primitives, so they are ordinary specs you
 can render, print, or (in future) make interactive through the same machinery as
