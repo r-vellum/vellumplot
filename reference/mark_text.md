@@ -23,7 +23,6 @@ mark_text(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   blend = NULL,
   data = NULL
@@ -45,7 +44,6 @@ mark_label(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   blend = NULL,
   sketch = NULL,
@@ -103,10 +101,6 @@ mark_label(
 
   Shortest leader line (mm) worth drawing; a label that barely moved
   gets none.
-
-- max_overlaps:
-
-  Reserved for a future overlap cap (currently unused).
 
 - seed:
 

@@ -64,7 +64,6 @@ mark_node_text(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   effects = list(),
   blend = NULL,
@@ -248,10 +247,10 @@ mark_node_pie(
   For `mark_node_text()`, `TRUE` to move overlapping labels apart with a
   force-directed layout (ggrepel-style), drawing a thin leader line back
   to each vertex. `box_padding`, `point_padding`, `min_segment_length`,
-  `max_overlaps`, and `seed` tune it exactly as in
+  and `seed` tune it exactly as in
   [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md).
 
-- box_padding, point_padding, min_segment_length, max_overlaps, seed:
+- box_padding, point_padding, min_segment_length, seed:
 
   Repel tuning for `mark_node_text(repel = TRUE)`; see
   [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md).

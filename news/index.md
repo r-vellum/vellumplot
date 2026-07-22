@@ -2,6 +2,14 @@
 
 ## vellumplot (development version)
 
+- **Removed the unused `max_overlaps` argument** from
+  [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+  and
+  [`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md).
+  It was reserved for a never-implemented overlap cap and did nothing;
+  drop it from any call.
+
 - **More robust handling of degenerate and extreme inputs.** A single
   distinct value on an axis under
   [`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)

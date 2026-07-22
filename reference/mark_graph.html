@@ -136,7 +136,6 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  box_padding <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  point_padding <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  min_segment_length <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  max_overlaps <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -299,11 +298,11 @@ idiomatic "label just the hubs" filter. <code>NULL</code> (default) labels every
 <dt id="arg-repel">repel<a class="anchor" aria-label="anchor" href="#arg-repel"></a></dt>
 <dd><p>For <code>mark_node_text()</code>, <code>TRUE</code> to move overlapping labels apart
 with a force-directed layout (ggrepel-style), drawing a thin leader line back
-to each vertex. <code>box_padding</code>, <code>point_padding</code>, <code>min_segment_length</code>,
-<code>max_overlaps</code>, and <code>seed</code> tune it exactly as in <code><a href="mark_text.html">mark_text()</a></code>.</p></dd>
+to each vertex. <code>box_padding</code>, <code>point_padding</code>, <code>min_segment_length</code>, and
+<code>seed</code> tune it exactly as in <code><a href="mark_text.html">mark_text()</a></code>.</p></dd>
 
 
-<dt id="arg-box-padding-point-padding-min-segment-length-max-overlaps-seed">box_padding, point_padding, min_segment_length, max_overlaps, seed<a class="anchor" aria-label="anchor" href="#arg-box-padding-point-padding-min-segment-length-max-overlaps-seed"></a></dt>
+<dt id="arg-box-padding-point-padding-min-segment-length-seed">box_padding, point_padding, min_segment_length, seed<a class="anchor" aria-label="anchor" href="#arg-box-padding-point-padding-min-segment-length-seed"></a></dt>
 <dd><p>Repel
 tuning for <code>mark_node_text(repel = TRUE)</code>; see <code><a href="mark_text.html">mark_text()</a></code>.</p></dd>
 
