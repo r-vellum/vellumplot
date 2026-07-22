@@ -226,6 +226,22 @@ NULL
   paste(c(s1, s2, s3, s4), collapse = " ")
 }
 
+# The user-provided alt text (from labs(alt = )) if it is a single non-empty
+# string, else NULL. Shared by both plot_alt() branches.
+.manual_alt <- function(x) {
+  manual <- x@labels$alt
+  if (
+    !is.null(manual) &&
+      is.character(manual) &&
+      length(manual) == 1L &&
+      nzchar(manual)
+  ) {
+    manual
+  } else {
+    NULL
+  }
+}
+
 #' Text alternative (alt text) for a plot
 #'
 #' Returns the description used as the plot's text alternative for assistive
@@ -248,22 +264,6 @@ NULL
 #' plot_alt(p)
 #' plot_alt(labs(p, alt = "Heavier cars get fewer miles per gallon."))
 #' @export
-# The user-provided alt text (from labs(alt = )) if it is a single non-empty
-# string, else NULL. Shared by both plot_alt() branches.
-.manual_alt <- function(x) {
-  manual <- x@labels$alt
-  if (
-    !is.null(manual) &&
-      is.character(manual) &&
-      length(manual) == 1L &&
-      nzchar(manual)
-  ) {
-    manual
-  } else {
-    NULL
-  }
-}
-
 plot_alt <- function(x) {
   is_spec <- S7::S7_inherits(x, PlotSpec)
   is_comp <- S7::S7_inherits(x, PlotComposition)

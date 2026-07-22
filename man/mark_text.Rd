@@ -20,7 +20,6 @@ mark_text(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   blend = NULL,
   data = NULL
@@ -42,7 +41,6 @@ mark_label(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   blend = NULL,
   sketch = NULL,
@@ -76,8 +74,6 @@ and around each anchor point during repulsion.}
 
 \item{min_segment_length}{Shortest leader line (mm) worth drawing; a label
 that barely moved gets none.}
-
-\item{max_overlaps}{Reserved for a future overlap cap (currently unused).}
 
 \item{seed}{Integer seed making the repel layout reproducible (the global RNG
 stream is restored afterwards).}

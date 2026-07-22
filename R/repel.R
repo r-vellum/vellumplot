@@ -153,13 +153,13 @@ NULL
 
   # measure each label in device px (inches * dpi), plus padding
   in2px <- dpi
-  wmm <- vapply(
+  w_px <- vapply(
     label,
     function(s) vellum::vl_strwidth(s, fontsize = fs, unit = "in"),
     numeric(1)
   ) *
     in2px
-  hmm <- vapply(
+  h_px <- vapply(
     label,
     function(s) vellum::vl_strheight(s, fontsize = fs, unit = "in"),
     numeric(1)
@@ -167,8 +167,8 @@ NULL
     in2px
   box_pad <- (p$box_padding %||% 1) / 25.4 * dpi
   pt_pad <- (p$point_padding %||% 1) / 25.4 * dpi
-  w <- wmm + 2 * box_pad
-  h <- hmm + 2 * box_pad
+  w <- w_px + 2 * box_pad
+  h <- h_px + 2 * box_pad
 
   sol <- .repel_solve(
     a$x,
@@ -234,7 +234,6 @@ NULL
       i = "It cannot yet be combined with facets or a plot composition."
     ))
   }
-  panels <- data_panels
   built <- .build_panels(spec)
   scales <- built$scales
   if (!is.null(scales$polar) || !is.null(scales$trans)) {
@@ -242,7 +241,7 @@ NULL
       "{.arg repel} is not supported under {.fn coord_polar} / {.fn coord_trans}."
     )
   }
-  panel <- as.list(panels[1, , drop = FALSE])
+  panel <- as.list(data_panels[1, , drop = FALSE])
   resolved <- .resolve_layers(spec)
   layers <- spec@layers
   for (i in seq_along(layers)) {
@@ -269,7 +268,6 @@ NULL
   box_padding,
   point_padding,
   min_segment_length,
-  max_overlaps,
   seed
 ) {
   if (!isTRUE(repel)) {
@@ -280,7 +278,6 @@ NULL
     box_padding = box_padding,
     point_padding = point_padding,
     min_segment_length = min_segment_length,
-    max_overlaps = max_overlaps,
     seed = seed,
     solution = NULL
   )

@@ -1,5 +1,9 @@
 # vellumplot (development version)
 
+* **Removed the unused `max_overlaps` argument** from `mark_text()`,
+  `mark_label()`, and `mark_node_text()`. It was reserved for a never-implemented
+  overlap cap and did nothing; drop it from any call.
+
 * **More robust handling of degenerate and extreme inputs.** A single distinct
   value on an axis under `coord_fixed()` / `coord_sf()` no longer collapses the
   panel to nothing; a map centred on a pole no longer gets a runaway aspect

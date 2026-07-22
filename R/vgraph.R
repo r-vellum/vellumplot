@@ -12,7 +12,7 @@ NULL
 # point layer, edges a segment layer, in an aspect-locked cartesian panel.
 #
 # `igraph` and `graphlayouts` are Suggests: the package installs and runs without
-# them; vgraph() errors clearly if they are absent. See _docs/DESIGN-igraph.md.
+# them; vgraph() errors clearly if they are absent.
 
 # Perpendicular spacing between parallel/reciprocal edges, as a fraction of the
 # endpoint node radius (mm). Applied device-side via segments_grob(offset=), so it
@@ -78,8 +78,8 @@ NULL
 # spreads leaves without crossings; `cluster` (optional) is the `cutree(k)` group
 # of every node whose subtree is monochromatic (NA above the cut), for colouring.
 .hclust_to_igraph <- function(hc, k = NULL) {
-  merge <- hc$merge
-  nmerge <- nrow(merge)
+  merge_mat <- hc$merge
+  nmerge <- nrow(merge_mat)
   L <- nmerge + 1L
   n <- L + nmerge
   labels <- hc$labels %||% as.character(seq_len(L))
@@ -90,7 +90,7 @@ NULL
   for (i in seq_len(nmerge)) {
     parent <- L + i
     from <- c(from, parent, parent)
-    to <- c(to, child_node(merge[i, 1L]), child_node(merge[i, 2L]))
+    to <- c(to, child_node(merge_mat[i, 1L]), child_node(merge_mat[i, 2L]))
   }
   # `name` must be unique (it keys the node table); internal merges get synthetic
   # ids. `label` carries the display text -- leaf labels only, blank for merges.
@@ -139,7 +139,7 @@ NULL
 # layouts return a list (backbone -> $xy, sugiyama -> $layout).
 .layout_matrix <- function(res, n, call = rlang::caller_env()) {
   if (is.list(res) && !is.data.frame(res)) {
-    res <- res[["xy"]] %||% res[["layout"]] %||% NULL
+    res <- res[["xy"]] %||% res[["layout"]]
     if (is.null(res)) {
       cli::cli_abort(
         "Layout function returned an unrecognised structure.",
@@ -221,8 +221,8 @@ NULL
         counter <<- counter + 1L
         spread[v] <<- counter
       } else {
-        for (c in children[[v]]) {
-          dfs(c)
+        for (kid in children[[v]]) {
+          dfs(kid)
         }
       }
     }
@@ -470,7 +470,7 @@ NULL
 # Per-vertex node radius (mm) so the edge emitter can cap each edge exactly at its
 # endpoints' node boundaries -- resolution-independently, since vellum resolves
 # the mm caps in device space at render (see `segments_grob(start_cap=/end_cap=)`
-# and `loop_grob()`, added for this; _docs/HANDOVER-response.md). Returns per-edge
+# and `loop_grob()`, added for this). Returns per-edge
 # source/target radii (keyed through the edge endpoint indices) plus the per-vertex
 # radii. NULL when the panel has no edge layer or node layer (nothing to cap).
 .graph_caps <- function(resolved, edge_data, node_n, scales) {

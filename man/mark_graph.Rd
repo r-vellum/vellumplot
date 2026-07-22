@@ -57,7 +57,6 @@ mark_node_text(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   effects = list(),
   blend = NULL,
@@ -179,10 +178,10 @@ idiomatic "label just the hubs" filter. \code{NULL} (default) labels every verte
 
 \item{repel}{For \code{mark_node_text()}, \code{TRUE} to move overlapping labels apart
 with a force-directed layout (ggrepel-style), drawing a thin leader line back
-to each vertex. \code{box_padding}, \code{point_padding}, \code{min_segment_length},
-\code{max_overlaps}, and \code{seed} tune it exactly as in \code{\link[=mark_text]{mark_text()}}.}
+to each vertex. \code{box_padding}, \code{point_padding}, \code{min_segment_length}, and
+\code{seed} tune it exactly as in \code{\link[=mark_text]{mark_text()}}.}
 
-\item{box_padding, point_padding, min_segment_length, max_overlaps, seed}{Repel
+\item{box_padding, point_padding, min_segment_length, seed}{Repel
 tuning for \code{mark_node_text(repel = TRUE)}; see \code{\link[=mark_text]{mark_text()}}.}
 
 \item{angle}{For \code{mark_edge_text()}, the label rotation: a constant in degrees,

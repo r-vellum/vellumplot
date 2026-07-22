@@ -69,7 +69,7 @@ NULL
   list(
     scale = key,
     type = sc$type %||% sc$kind %||% NA_character_,
-    domain = sc$domain %||% sc$levels %||% NULL
+    domain = sc$domain %||% sc$levels
   )
 }
 

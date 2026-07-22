@@ -7,7 +7,7 @@ NULL
 # ribbons between them whose width encodes a value. Like `vgraph()` (network),
 # the layout is computed R-side into native [0, 1] coordinates and drawn through
 # ordinary vellum primitives (node rects + filled Bézier ribbons); the plot is
-# axis-free (a void theme), free-aspect. See `_docs/TIER2-PLAN.md` Phase 5a.
+# axis-free (a void theme), free-aspect.
 #
 # Input is a *flow list*: one row per flow with `from`, `to`, `value`. Nodes are
 # the union of `from`/`to`; a node that is both a source and a target makes the
@@ -271,7 +271,7 @@ NULL
   tgt_yc <- (node_y0[ti] + node_y1[ti]) / 2
   src_yc <- (node_y0[fi] + node_y1[fi]) / 2
   s <- assign_slices(fi, tgt_yc)
-  t <- assign_slices(ti, src_yc)
+  tgt <- assign_slices(ti, src_yc)
 
   pal <- .qual_palette(n)
   # Ribbon fill: the source node's colour (default) or the target's.
@@ -292,8 +292,8 @@ NULL
       xr = node_x0[ti],
       sy0 = s$y0,
       sy1 = s$y1,
-      ty0 = t$y0,
-      ty1 = t$y1,
+      ty0 = tgt$y0,
+      ty1 = tgt$y1,
       value = value,
       colour = rib_colour,
       colour_src = pal[fi], # source/target node colours, for gradient ribbons
