@@ -118,13 +118,31 @@ test_that("vdendrogram() builds a ready dendrogram spec", {
   p <- vdendrogram(hc)
   expect_s3_class(p, "vellumplot::PlotSpec")
   marks <- vapply(p@layers, function(l) l@mark, character(1))
-  expect_true("edges" %in% marks && "node_text" %in% marks)
+  expect_true("edges" %in% marks && "text" %in% marks) # bracket edges + labels
   expect_false("nodes" %in% marks) # no node markers by default
   # the edge layer routes as a bracket
   edge_L <- Find(function(l) l@mark == "edges", p@layers)
   expect_identical(edge_L@stat_params$routing, "elbow")
   expect_identical(edge_L@stat_params$elbow_at, "start")
   expect_identical(edge_L@stat_params$elbow_axis, "v") # down -> vertical
+})
+
+test_that("vdendrogram() labels only leaves, vertical for a top/bottom tree", {
+  text_L <- function(p) Find(function(l) l@mark == "text", p@layers)
+  # merge nodes are dropped from the text layer -- only the leaves are labelled
+  expect_equal(nrow(text_L(vdendrogram(hc))@data), nrow(hc$merge) + 1L)
+  # down/up rotate the labels vertical; left/right leave them horizontal
+  rotated <- function(p) {
+    grepl(
+      "rotate(-90",
+      vellum::scene_svg(vellum::as_vellum_scene(p)),
+      fixed = TRUE
+    )
+  }
+  expect_true(rotated(vdendrogram(hc, direction = "down")))
+  expect_true(rotated(vdendrogram(hc, direction = "up")))
+  expect_false(rotated(vdendrogram(hc, direction = "right")))
+  expect_false(rotated(vdendrogram(hc, direction = "left")))
 })
 
 test_that("vdendrogram(k=) cuts the tree and carries clusters", {

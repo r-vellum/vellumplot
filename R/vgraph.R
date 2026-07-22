@@ -815,10 +815,46 @@ vdendrogram <- function(
     )
   }
   if (isTRUE(labels)) {
+    # Leaf labels only, placed against the leaf ends of the tree: vertical for a
+    # top/bottom tree, horizontal for a left/right one, justified so the text
+    # runs *away* from the leaf and its near end aligns with the edge tip.
+    leaves <- p@data[p@data$leaf, , drop = FALSE]
+    pl <- switch(
+      direction,
+      down = list(angle = 90, hjust = "right", nx = 0, ny = -1.5),
+      up = list(angle = 90, hjust = "left", nx = 0, ny = 1.5),
+      right = list(angle = 0, hjust = "right", nx = -1.5, ny = 0),
+      left = list(angle = 0, hjust = "left", nx = 1.5, ny = 0)
+    )
     p <- if (is.null(k)) {
-      mark_node_text(p, label = label, size = 2.5, dist = 1)
+      mark_text(
+        p,
+        x = x,
+        y = y,
+        label = label,
+        size = 2.5,
+        angle = pl$angle,
+        hjust = pl$hjust,
+        vjust = "centre",
+        nudge_x = pl$nx,
+        nudge_y = pl$ny,
+        data = leaves
+      )
     } else {
-      mark_node_text(p, label = label, color = cluster, size = 2.5, dist = 1)
+      mark_text(
+        p,
+        x = x,
+        y = y,
+        label = label,
+        color = cluster,
+        size = 2.5,
+        angle = pl$angle,
+        hjust = pl$hjust,
+        vjust = "centre",
+        nudge_x = pl$nx,
+        nudge_y = pl$ny,
+        data = leaves
+      )
     }
   }
   p
