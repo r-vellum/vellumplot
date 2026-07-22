@@ -437,7 +437,9 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
 .emit_point <- function(scene, L, scales) {
   n <- L$n
-  if (isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO) {
+  if (
+    isTRUE(L$stat_params$auto) && n > .DATASHADE_AUTO && .can_datashade(scales)
+  ) {
     return(.emit_datashade(scene, L, scales))
   }
   sk <- .mark_sketch(L, scales)

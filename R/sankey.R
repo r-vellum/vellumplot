@@ -217,6 +217,17 @@ NULL
     function(ns) 1 - (length(ns) - 1L) * node_gap,
     numeric(1)
   )
+  # The inter-node gaps in the fullest column must leave room for the nodes
+  # themselves. Past ~1/node_gap nodes the gaps alone exceed the panel height,
+  # `avail` goes negative, and every node/ribbon height inverts and spills
+  # outside [0, 1]. Refuse with a clear message rather than draw broken geometry.
+  if (any(avail <= 0)) {
+    worst <- max(lengths(layers_list))
+    cli::cli_abort(c(
+      "A {.field sankey} column has too many nodes for the inter-node gaps to fit.",
+      i = "The widest column has {worst} nodes; reduce {.arg node_gap} (below {signif(1 / (worst - 1), 2)}) or the node count."
+    ))
+  }
   lval <- vapply(layers_list, function(ns) sum(nodeval[ns]), numeric(1))
   ky <- min((avail / lval)[lval > 0])
 
