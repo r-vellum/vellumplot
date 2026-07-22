@@ -8,6 +8,20 @@ NULL
 # (vellumwidget) enacts them on the frozen scene.
 # ---------------------------------------------------------------------------
 
+# A selection flag (`toggle`/`empty`) must be a single `TRUE`/`FALSE`. Without
+# this, a truthy-but-non-logical value (`toggle = "yes"`, `empty = 1`) was
+# silently coerced to `FALSE` by `isTRUE()` -- the opposite of what the caller
+# meant -- rather than rejected.
+.check_flag <- function(x, arg, call = rlang::caller_env()) {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+    cli::cli_abort(
+      "{.arg {arg}} must be a single {.code TRUE} or {.code FALSE}.",
+      call = call
+    )
+  }
+  invisible(x)
+}
+
 # Build a SelectionSpec, or attach it to a plot when piped. `x` is either a
 # PlotSpec (attach inline, return the plot) or the selection name string (return
 # a free-standing SelectionSpec for cross-view use via add_selection()).
@@ -38,14 +52,16 @@ NULL
       )
     }
   }
+  .check_flag(toggle, "toggle", call = call)
+  .check_flag(empty, "empty", call = call)
   sel <- SelectionSpec(
     name = name,
     kind = kind,
     on = on,
     region = region,
     fields = fields,
-    toggle = isTRUE(toggle),
-    empty = isTRUE(empty),
+    toggle = toggle,
+    empty = empty,
     expand = expand
   )
   if (inline) add_selection(x, sel) else sel

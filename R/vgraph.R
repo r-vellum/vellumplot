@@ -720,6 +720,8 @@ vgraph <- function(
 ) {
   .need_pkg("igraph", "vgraph()")
   g <- .as_igraph(g)
+  .check_dim(width, "width")
+  .check_dim(height, "height")
   .check_dpi(dpi)
   g <- .graph_reduce(
     g,

@@ -13,6 +13,43 @@ NULL
   plot
 }
 
+# Validate a continuous scale bound (`limits` or an output `range`). `NULL` means
+# "derive from the data" and is always allowed. Otherwise it must be a length-2
+# vector `c(min, max)`; `numeric = TRUE` additionally requires it to be numeric
+# (for size/alpha/edge-width output ranges and their data limits, which are never
+# dates). Without this, a malformed bound (a length-1 or length-3 vector) slips
+# into the training code as `diff(rng)` / `is.finite(rng)` inside `if()`/`||` and
+# aborts with a cryptic low-level message instead of a clear one.
+.check_continuous_limits <- function(
+  x,
+  arg = "limits",
+  numeric = FALSE,
+  call = rlang::caller_env()
+) {
+  if (is.null(x)) {
+    return(invisible(x))
+  }
+  if (length(x) != 2L) {
+    cli::cli_abort(
+      c(
+        "{.arg {arg}} must be a length-2 vector {.code c(min, max)} or {.code NULL}.",
+        i = "Got {length(x)} value{?s}."
+      ),
+      call = call
+    )
+  }
+  if (numeric && !is.numeric(x)) {
+    cli::cli_abort(
+      c(
+        "{.arg {arg}} must be numeric.",
+        i = "Got {.obj_type_friendly {x}}."
+      ),
+      call = call
+    )
+  }
+  invisible(x)
+}
+
 # Normalise a `sec_axis()`/`dup_axis()` `transform` to a plain forward function
 # mapping primary data values to secondary data values. Accepts a formula
 # (`~ . * 2`), a function, or a `scales::transform_*()` object.
@@ -104,6 +141,7 @@ scale_x_continuous <- function(
   sec.axis = NULL
 ) {
   .check_plot(plot)
+  .check_continuous_limits(limits, "limits")
   .add_scale(
     plot,
     ScaleSpec(
@@ -131,6 +169,7 @@ scale_y_continuous <- function(
   sec.axis = NULL
 ) {
   .check_plot(plot)
+  .check_continuous_limits(limits, "limits")
   .add_scale(
     plot,
     ScaleSpec(
@@ -457,11 +496,8 @@ scale_y_time <- function(
   aesthetic <- .canonical_lim_aes(aesthetic)
   discrete <- is.character(limits) || is.factor(limits)
   dom <- if (is.factor(limits)) as.character(limits) else limits
-  if (!discrete && length(dom) != 2L) {
-    cli::cli_abort(c(
-      "Continuous limits must be a length-2 vector {.code c(min, max)}.",
-      i = "Got {length(dom)} value{?s} for {.field {aesthetic}}."
-    ))
+  if (!discrete) {
+    .check_continuous_limits(dom, "limits")
   }
   .add_scale(
     plot,
@@ -736,6 +772,8 @@ scale_size <- function(
   name = NULL
 ) {
   .check_plot(plot)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE)
   .add_scale(
     plot,
     ScaleSpec(
@@ -772,6 +810,8 @@ scale_size_area <- function(
   name = NULL
 ) {
   .check_plot(plot)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .check_dim(max_size, "max_size")
   .add_scale(
     plot,
     ScaleSpec(
@@ -814,6 +854,8 @@ scale_edge_width <- function(
   name = NULL
 ) {
   .check_plot(plot)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE)
   .add_scale(
     plot,
     ScaleSpec(
@@ -905,6 +947,8 @@ scale_edge_alpha <- function(
   name = NULL
 ) {
   .check_plot(plot)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE)
   .add_scale(
     plot,
     ScaleSpec(
@@ -1062,6 +1106,8 @@ scale_alpha <- function(
   name = NULL
 ) {
   .check_plot(plot)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE)
   .add_scale(
     plot,
     ScaleSpec(

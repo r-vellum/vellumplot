@@ -119,7 +119,12 @@ add_marginal <- function(
     # Require cleanly numeric x and y: a partly-coercible column (e.g.
     # c("1","2","a")) would introduce silent NAs that skew the marginal. A value
     # that was present but became NA under coercion means the column isn't numeric.
-    clean <- function(orig, num) !any(is.na(num) & !is.na(orig))
+    # A factor is explicitly rejected: `as.numeric(factor(...))` yields the integer
+    # level codes with no NAs, so it would otherwise pass and the marginal would be
+    # computed over the codes (1, 2, 3, ...) rather than the data.
+    clean <- function(orig, num) {
+      !is.factor(orig) && !any(is.na(num) & !is.na(orig))
+    }
     if (!clean(vx, nx) || !clean(vy, ny)) {
       next
     }
