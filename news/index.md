@@ -2,6 +2,40 @@
 
 ## vellumplot (development version)
 
+- **Clearer errors for malformed scale bounds.**
+  [`scale_x_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_y_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+  [`scale_size_area()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+  [`scale_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md),
+  [`scale_edge_width()`](https://r-vellum.github.io/vellumplot/reference/scale_edge_width.md),
+  and
+  [`scale_edge_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_edge.md)
+  now reject a `limits` (or output `range`) that is not a length-2
+  vector — and, for the size/alpha/edge scales, a non-numeric one — with
+  a clear message, instead of failing later with a cryptic low-level
+  error (e.g. `'length = 2' in coercion to 'logical(1)'`).
+  [`scale_size_area()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  also validates `max_size`.
+
+- **[`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
+  rejects a non-numeric mapping.** A factor `x`/`y` previously slipped
+  through and the marginal was computed over the integer level codes
+  rather than the data; it now errors clearly, as a character column
+  already did.
+
+- **Stricter validation of interactivity and layout arguments.**
+  [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)/[`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
+  reject a non-logical `toggle`/`empty` (it was silently coerced to
+  `FALSE`);
+  [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  validates `width`/`height` like
+  [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)/[`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md);
+  and
+  [`area()`](https://r-vellum.github.io/vellumplot/reference/area.md)
+  rejects a non-numeric or non-integer cell index instead of aborting
+  with an opaque “missing value where TRUE/FALSE needed”.
+
 - **[`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
   honours `hjust`/`vjust` passed as a variable.** They were only read as
   constant params, so a value routed through a variable (as
