@@ -2672,6 +2672,34 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
 # Datashade: aggregate the points into a density raster filling the panel. The
 # raster is binned over the panel's native domain so it aligns with the axes.
+# The named arguments common to vellum's datashade*() family, resolved from a
+# datashade layer's stat params: the flip-aware raster dimensions + limits and
+# the shading controls. `spread_default` differs by mark (points: none;
+# lines/segments: "auto" dynspread); `colors` lets the categorical point path
+# pass per-level hues in place of the default density ramp.
+.datashade_args <- function(
+  sp,
+  scales,
+  flip,
+  spread_default = NULL,
+  colors = NULL
+) {
+  w <- as.integer(sp$width %||% 400L)
+  h <- as.integer(sp$height %||% 300L)
+  list(
+    width = if (flip) h else w,
+    height = if (flip) w else h,
+    xlim = if (flip) scales$y$domain else scales$x$domain,
+    ylim = if (flip) scales$x$domain else scales$y$domain,
+    colors = colors %||% sp$colors %||% c("#deebf7", "#08306b"),
+    how = sp$how %||% "eq_hist",
+    span = sp$span,
+    clip = sp$clip,
+    spread = sp$spread %||% spread_default,
+    interpolate = FALSE
+  )
+}
+
 .emit_datashade <- function(scene, L, scales) {
   # Full coordinate vectors live in `L$ds` (training only saw their range, see
   # .resolve_layer); `mark_point(auto=)` falls through here without an `ds` slot,
@@ -2680,15 +2708,13 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   xn <- scales$x$map(ds$x)
   yn <- scales$y$map(ds$y)
   sp <- L$stat_params
-  w <- as.integer(sp$width %||% 400L)
-  h <- as.integer(sp$height %||% 300L)
 
   # Categorical (count_cat): a mapped colour/fill trained the discrete colour
   # scale (see .resolve_layer). Feed the full-length category vector plus the
   # per-level hues from that scale's map, so a legend comes for free. A
   # non-discrete colour mapping (or none) falls back to plain density shading.
   category <- NULL
-  colors <- sp$colors %||% c("#deebf7", "#08306b")
+  colors <- NULL
   if (
     !is.null(ds$cat) &&
       !is.null(scales$color) &&
@@ -2701,20 +2727,16 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   # Under flip the raster axes swap with the data (the per-point category does not).
   flip <- .flipped(scales)
-  g <- vellum::datashade(
-    if (flip) yn else xn,
-    if (flip) xn else yn,
-    width = if (flip) h else w,
-    height = if (flip) w else h,
-    xlim = if (flip) scales$y$domain else scales$x$domain,
-    ylim = if (flip) scales$x$domain else scales$y$domain,
-    category = category,
-    colors = colors,
-    how = sp$how %||% "eq_hist",
-    span = sp$span,
-    clip = sp$clip,
-    spread = sp$spread,
-    interpolate = FALSE
+  g <- do.call(
+    vellum::datashade,
+    c(
+      list(
+        if (flip) yn else xn,
+        if (flip) xn else yn,
+        category = category
+      ),
+      .datashade_args(sp, scales, flip, colors = colors)
+    )
   )
   .draw(scene, g)
 }
@@ -2762,24 +2784,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   group <- unlist(grp, use.names = FALSE)
 
   sp <- L$stat_params
-  w <- as.integer(sp$width %||% 400L)
-  h <- as.integer(sp$height %||% 300L)
   flip <- .flipped(scales)
-  g <- vellum::datashade_lines(
-    if (flip) y else x,
-    if (flip) x else y,
-    group = group,
-    width = if (flip) h else w,
-    height = if (flip) w else h,
-    xlim = if (flip) scales$y$domain else scales$x$domain,
-    ylim = if (flip) scales$x$domain else scales$y$domain,
-    colors = sp$colors %||% c("#deebf7", "#08306b"),
-    how = sp$how %||% "eq_hist",
-    span = sp$span,
-    clip = sp$clip,
-    # Thin single-pixel lines vanish, so datashaded lines default to dynspread.
-    spread = sp$spread %||% "auto",
-    interpolate = FALSE
+  # Thin single-pixel lines vanish, so datashaded lines default to dynspread.
+  g <- do.call(
+    vellum::datashade_lines,
+    c(
+      list(if (flip) y else x, if (flip) x else y, group = group),
+      .datashade_args(sp, scales, flip, spread_default = "auto")
+    )
   )
   .draw(scene, g)
 }
@@ -2800,24 +2812,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   y1 <- rep_len(scales$y$map(L$values$yend), n)
 
   sp <- L$stat_params
-  w <- as.integer(sp$width %||% 400L)
-  h <- as.integer(sp$height %||% 300L)
   flip <- .flipped(scales)
-  g <- vellum::datashade_segments(
-    if (flip) y0 else x0,
-    if (flip) x0 else y0,
-    if (flip) y1 else x1,
-    if (flip) x1 else y1,
-    width = if (flip) h else w,
-    height = if (flip) w else h,
-    xlim = if (flip) scales$y$domain else scales$x$domain,
-    ylim = if (flip) scales$x$domain else scales$y$domain,
-    colors = sp$colors %||% c("#deebf7", "#08306b"),
-    how = sp$how %||% "eq_hist",
-    span = sp$span,
-    clip = sp$clip,
-    spread = sp$spread %||% "auto",
-    interpolate = FALSE
+  g <- do.call(
+    vellum::datashade_segments,
+    c(
+      list(
+        if (flip) y0 else x0,
+        if (flip) x0 else y0,
+        if (flip) y1 else x1,
+        if (flip) x1 else y1
+      ),
+      .datashade_args(sp, scales, flip, spread_default = "auto")
+    )
   )
   .draw(scene, g)
 }
@@ -2843,6 +2849,22 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # this is identical to per-feature drawing; two same-fill features that *overlap*
 # would XOR-cancel in the overlap (the same property a self-overlapping
 # MULTIPOLYGON already has today). Interactive maps are unaffected (per feature).
+# The interactive-vs-batched fan-out shared by the sf polygon and line branches.
+# When interactive, emit one keyed grob per feature so `.draw(rows = i)` can
+# attach its data_id/tooltip; otherwise batch the whole style group into a single
+# grob. `gather(rows)` assembles a feature set's drawing coords (NULL to skip);
+# `emit(scene, g, rows)` draws them.
+.sf_fan_out <- function(scene, idx, interactive, gather, emit) {
+  if (interactive) {
+    for (i in idx) {
+      scene <- emit(scene, gather(i), i)
+    }
+    scene
+  } else {
+    emit(scene, gather(idx), idx)
+  }
+}
+
 .emit_sf <- function(scene, L, scales) {
   feats <- L$sf
   n <- L$n
@@ -2965,7 +2987,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         lwd = lwd,
         alpha = gp_alpha(a)
       )
-      emit1 <- function(scene, g, rows) {
+      emit <- function(scene, g, rows) {
         if (is.null(g)) {
           return(scene)
         }
@@ -2983,14 +3005,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           rows = rows
         )
       }
-      if (interactive) {
-        for (i in idx) {
-          scene <- emit1(scene, gather_poly(i), rows = i)
-        }
-        scene
-      } else {
-        emit1(scene, gather_poly(idx), rows = idx)
-      }
+      .sf_fan_out(scene, idx, interactive, gather_poly, emit)
     }
   )
 
@@ -3003,7 +3018,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     kind_col("grey20"),
     function(scene, idx, col, a) {
       gpp <- vellum::vl_gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
-      emit1 <- function(scene, g, rows) {
+      emit <- function(scene, g, rows) {
         if (is.null(g)) {
           return(scene)
         }
@@ -3014,14 +3029,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           rows = rows
         )
       }
-      if (interactive) {
-        for (i in idx) {
-          scene <- emit1(scene, gather_line(i), rows = i)
-        }
-        scene
-      } else {
-        emit1(scene, gather_line(idx), rows = idx)
-      }
+      .sf_fan_out(scene, idx, interactive, gather_line, emit)
     }
   )
 

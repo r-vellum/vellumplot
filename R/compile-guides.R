@@ -260,100 +260,115 @@ NULL
 
 # y-axis labels for `y_sc`, right-aligned in the gutter cell and aligned to the
 # gridlines (the gutter viewport shares the panel's y native scale).
-.draw_y_axis <- function(scene, row, col, y_sc, rt) {
-  vp_name <- sprintf("axis-y-%d", row)
-  el <- rt[["axis.text.y"]]
-  aline <- rt[["axis.line.y"]]
+# One axis-label track. `axis` is "x"/"y"; `sec = TRUE` is the secondary
+# (opposite-gutter) variant. The four former .draw_{x,y}_axis[_sec] drawers were
+# byte-identical but for the small geometry table below (viewport name + scale,
+# the axis-line segment endpoints and its sketch seed, and the label anchor +
+# justification), so they are now thin wrappers over this.
+.draw_axis <- function(scene, row, col, sc, rt, axis, sec = FALSE) {
+  is_y <- identical(axis, "y")
+  el <- rt[[if (is_y) "axis.text.y" else "axis.text.x"]]
+  aline <- rt[[if (is_y) "axis.line.y" else "axis.line.x"]]
   if (.is_blank(el) && .is_blank(aline)) {
     return(scene)
   }
-  scene <- vellum::push(
-    scene,
+  geom <- if (is_y && !sec) {
+    # panel-adjacent (right) edge; labels right-justified in the left gutter
+    list(
+      nm = sprintf("axis-y-%d", row),
+      seg = c(1, 0, 1, 1),
+      seed = 9L,
+      lx = 0.96,
+      just = c("right", "centre")
+    )
+  } else if (is_y && sec) {
+    # panel-adjacent (left) edge; labels left-justified in the right gutter
+    list(
+      nm = sprintf("axis-y2-%d", row),
+      seg = c(0, 0, 0, 1),
+      seed = 11L,
+      lx = 0.04,
+      just = c("left", "centre")
+    )
+  } else if (!is_y && !sec) {
+    # panel-adjacent (top) edge; labels top-justified in the bottom gutter
+    list(
+      nm = sprintf("axis-x-%d", col),
+      seg = c(0, 1, 1, 1),
+      seed = 8L,
+      ly = 0.82,
+      just = c("centre", "top")
+    )
+  } else {
+    # panel-adjacent (bottom) edge; labels bottom-justified in the top gutter
+    list(
+      nm = sprintf("axis-x2-%d", col),
+      seg = c(0, 0, 1, 0),
+      seed = 12L,
+      ly = 0.18,
+      just = c("centre", "bottom")
+    )
+  }
+  vp <- if (is_y) {
     vellum::vl_viewport(
       row = row,
       col = col,
-      yscale = y_sc$domain,
-      name = vp_name
+      yscale = sc$domain,
+      name = geom$nm
     )
-  )
-  # axis line along the panel-adjacent (right) edge of the gutter
+  } else {
+    vellum::vl_viewport(
+      row = row,
+      col = col,
+      xscale = sc$domain,
+      name = geom$nm
+    )
+  }
+  scene <- vellum::push(scene, vp)
   if (!.is_blank(aline)) {
+    s <- geom$seg
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::vl_unit(1, "npc"),
-        vellum::vl_unit(0, "npc"),
-        vellum::vl_unit(1, "npc"),
-        vellum::vl_unit(1, "npc"),
-        sketch = .el_sketch(aline, 9L),
+        vellum::vl_unit(s[1], "npc"),
+        vellum::vl_unit(s[2], "npc"),
+        vellum::vl_unit(s[3], "npc"),
+        vellum::vl_unit(s[4], "npc"),
+        sketch = .el_sketch(aline, geom$seed),
         gp = .el_gpar_line(aline)
       )
     )
   }
   if (!.is_blank(el)) {
     gp <- .el_gpar_text(el)
-    for (i in seq_along(y_sc$breaks)) {
+    for (i in seq_along(sc$breaks)) {
+      x <- if (is_y) {
+        vellum::vl_unit(geom$lx, "npc")
+      } else {
+        vellum::vl_unit(sc$breaks[i], "native")
+      }
+      y <- if (is_y) {
+        vellum::vl_unit(sc$breaks[i], "native")
+      } else {
+        vellum::vl_unit(geom$ly, "npc")
+      }
       scene <- vellum::draw(
         scene,
-        vellum::text_grob(
-          y_sc$labels[i],
-          x = vellum::vl_unit(0.96, "npc"),
-          y = vellum::vl_unit(y_sc$breaks[i], "native"),
-          just = c("right", "centre"),
-          gp = gp
-        )
+        vellum::text_grob(sc$labels[i], x = x, y = y, just = geom$just, gp = gp)
       )
     }
   }
   vellum::pop(scene)
 }
 
+# y-axis labels for `y_sc`, right-justified against each gridline.
+.draw_y_axis <- function(scene, row, col, y_sc, rt) {
+  .draw_axis(scene, row, col, y_sc, rt, "y")
+}
+
 # x-axis labels for `x_sc`, centred under each gridline.
 .draw_x_axis <- function(scene, row, col, x_sc, rt) {
-  el <- rt[["axis.text.x"]]
-  aline <- rt[["axis.line.x"]]
-  if (.is_blank(el) && .is_blank(aline)) {
-    return(scene)
-  }
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      row = row,
-      col = col,
-      xscale = x_sc$domain,
-      name = sprintf("axis-x-%d", col)
-    )
-  )
-  # axis line along the panel-adjacent (top) edge of the gutter
-  if (!.is_blank(aline)) {
-    scene <- vellum::draw(
-      scene,
-      vellum::segments_grob(
-        vellum::vl_unit(0, "npc"),
-        vellum::vl_unit(1, "npc"),
-        vellum::vl_unit(1, "npc"),
-        vellum::vl_unit(1, "npc"),
-        sketch = .el_sketch(aline, 8L),
-        gp = .el_gpar_line(aline)
-      )
-    )
-  }
-  if (!.is_blank(el)) {
-    gp <- .el_gpar_text(el)
-    for (i in seq_along(x_sc$breaks)) {
-      scene <- vellum::draw(
-        scene,
-        vellum::text_grob(
-          x_sc$labels[i],
-          x = vellum::vl_unit(x_sc$breaks[i], "native"),
-          y = vellum::vl_unit(0.82, "npc"),
-          just = c("centre", "top"),
-          gp = gp
-        )
-      )
-    }
-  }
-  vellum::pop(scene)
+  .draw_axis(scene, row, col, x_sc, rt, "x")
 }
 
 # A facet strip: an optional filled background plus a centred label. `rot = 90`
@@ -396,178 +411,72 @@ NULL
   vellum::pop(scene)
 }
 
-.draw_y_title <- function(scene, row, col, name, rt, rowspan = 1) {
-  el <- rt[["axis.title.y"]]
-  if (.is_blank(el)) {
+# One axis-title band. `axis` is "x"/"y"; `sec = TRUE` is the secondary variant
+# (right/top, and skipped when `name` is NULL). The four former
+# .draw_{x,y}_title[_sec] drawers differed only in rotation, the viewport name,
+# the row/col span axis, and the secondary NULL-name guard.
+.draw_axis_title <- function(
+  scene,
+  row,
+  col,
+  name,
+  rt,
+  axis,
+  sec = FALSE,
+  span = 1
+) {
+  is_y <- identical(axis, "y")
+  el <- rt[[if (is_y) "axis.title.y" else "axis.title.x"]]
+  if (.is_blank(el) || (sec && is.null(name))) {
     return(scene)
   }
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      row = row,
-      col = col,
-      rowspan = rowspan,
-      name = "axis-title-y"
-    )
-  )
+  vp_name <- paste0("axis-title-", axis, if (sec) "2" else "")
+  rot <- if (!is_y) {
+    0
+  } else if (sec) {
+    -90
+  } else {
+    90
+  }
+  vp <- if (is_y) {
+    vellum::vl_viewport(row = row, col = col, rowspan = span, name = vp_name)
+  } else {
+    vellum::vl_viewport(row = row, col = col, colspan = span, name = vp_name)
+  }
+  scene <- vellum::push(scene, vp)
   scene <- vellum::draw(
     scene,
-    vellum::text_grob(name, rot = 90, gp = .el_gpar_text(el))
+    vellum::text_grob(name, rot = rot, gp = .el_gpar_text(el))
   )
   vellum::pop(scene)
 }
 
+.draw_y_title <- function(scene, row, col, name, rt, rowspan = 1) {
+  .draw_axis_title(scene, row, col, name, rt, "y", span = rowspan)
+}
+
 .draw_x_title <- function(scene, row, col, name, rt, colspan = 1) {
-  el <- rt[["axis.title.x"]]
-  if (.is_blank(el)) {
-    return(scene)
-  }
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      row = row,
-      col = col,
-      colspan = colspan,
-      name = "axis-title-x"
-    )
-  )
-  scene <- vellum::draw(scene, vellum::text_grob(name, gp = .el_gpar_text(el)))
-  vellum::pop(scene)
+  .draw_axis_title(scene, row, col, name, rt, "x", span = colspan)
 }
 
 # Secondary y-axis: mirror of `.draw_y_axis` on the RIGHT gutter. The axis line
 # sits on the panel-adjacent (left) edge and labels are left-justified.
 .draw_y_axis_sec <- function(scene, row, col, y_sc, rt) {
-  el <- rt[["axis.text.y"]]
-  aline <- rt[["axis.line.y"]]
-  if (.is_blank(el) && .is_blank(aline)) {
-    return(scene)
-  }
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      row = row,
-      col = col,
-      yscale = y_sc$domain,
-      name = sprintf("axis-y2-%d", row)
-    )
-  )
-  if (!.is_blank(aline)) {
-    scene <- vellum::draw(
-      scene,
-      vellum::segments_grob(
-        vellum::vl_unit(0, "npc"),
-        vellum::vl_unit(0, "npc"),
-        vellum::vl_unit(0, "npc"),
-        vellum::vl_unit(1, "npc"),
-        sketch = .el_sketch(aline, 11L),
-        gp = .el_gpar_line(aline)
-      )
-    )
-  }
-  if (!.is_blank(el)) {
-    gp <- .el_gpar_text(el)
-    for (i in seq_along(y_sc$breaks)) {
-      scene <- vellum::draw(
-        scene,
-        vellum::text_grob(
-          y_sc$labels[i],
-          x = vellum::vl_unit(0.04, "npc"),
-          y = vellum::vl_unit(y_sc$breaks[i], "native"),
-          just = c("left", "centre"),
-          gp = gp
-        )
-      )
-    }
-  }
-  vellum::pop(scene)
+  .draw_axis(scene, row, col, y_sc, rt, "y", sec = TRUE)
 }
 
 # Secondary x-axis: mirror of `.draw_x_axis` on the TOP gutter. The axis line
 # sits on the panel-adjacent (bottom) edge and labels are bottom-justified.
 .draw_x_axis_sec <- function(scene, row, col, x_sc, rt) {
-  el <- rt[["axis.text.x"]]
-  aline <- rt[["axis.line.x"]]
-  if (.is_blank(el) && .is_blank(aline)) {
-    return(scene)
-  }
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      row = row,
-      col = col,
-      xscale = x_sc$domain,
-      name = sprintf("axis-x2-%d", col)
-    )
-  )
-  if (!.is_blank(aline)) {
-    scene <- vellum::draw(
-      scene,
-      vellum::segments_grob(
-        vellum::vl_unit(0, "npc"),
-        vellum::vl_unit(0, "npc"),
-        vellum::vl_unit(1, "npc"),
-        vellum::vl_unit(0, "npc"),
-        sketch = .el_sketch(aline, 12L),
-        gp = .el_gpar_line(aline)
-      )
-    )
-  }
-  if (!.is_blank(el)) {
-    gp <- .el_gpar_text(el)
-    for (i in seq_along(x_sc$breaks)) {
-      scene <- vellum::draw(
-        scene,
-        vellum::text_grob(
-          x_sc$labels[i],
-          x = vellum::vl_unit(x_sc$breaks[i], "native"),
-          y = vellum::vl_unit(0.18, "npc"),
-          just = c("centre", "bottom"),
-          gp = gp
-        )
-      )
-    }
-  }
-  vellum::pop(scene)
+  .draw_axis(scene, row, col, x_sc, rt, "x", sec = TRUE)
 }
 
 .draw_y_title_sec <- function(scene, row, col, name, rt, rowspan = 1) {
-  el <- rt[["axis.title.y"]]
-  if (.is_blank(el) || is.null(name)) {
-    return(scene)
-  }
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      row = row,
-      col = col,
-      rowspan = rowspan,
-      name = "axis-title-y2"
-    )
-  )
-  scene <- vellum::draw(
-    scene,
-    vellum::text_grob(name, rot = -90, gp = .el_gpar_text(el))
-  )
-  vellum::pop(scene)
+  .draw_axis_title(scene, row, col, name, rt, "y", sec = TRUE, span = rowspan)
 }
 
 .draw_x_title_sec <- function(scene, row, col, name, rt, colspan = 1) {
-  el <- rt[["axis.title.x"]]
-  if (.is_blank(el) || is.null(name)) {
-    return(scene)
-  }
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      row = row,
-      col = col,
-      colspan = colspan,
-      name = "axis-title-x2"
-    )
-  )
-  scene <- vellum::draw(scene, vellum::text_grob(name, gp = .el_gpar_text(el)))
-  vellum::pop(scene)
+  .draw_axis_title(scene, row, col, name, rt, "x", sec = TRUE, span = colspan)
 }
 
 # --- plot title / subtitle / caption / tag bands ----------------------------
