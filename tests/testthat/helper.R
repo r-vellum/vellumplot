@@ -25,6 +25,38 @@ render_px <- function(plot) {
   aperm(arr, c(3, 2, 1)) / 255
 }
 
+# A platform-stable structural digest of a compiled plot, for refactor-safety
+# snapshots. It captures only facts vellumplot *computes* — element counts per
+# mark type, panel names, and the data-space (not pixel) scale ranges — never
+# pixel geometry, which depends on font metrics and so differs between a
+# macOS-local run and the Linux CI runner. `scene_model()` is deterministic
+# across compiles, and these facts are independent of the vellum version CI
+# builds from source, so a snapshot generated locally matches on CI. A
+# behaviour-preserving refactor must not change any of them.
+scene_digest <- function(plot) {
+  m <- vellum::scene_model(vellum::as_vellum_scene(plot))
+  el <- m$elements
+  pan <- m$panels
+  marks <- sort(table(el$mark))
+  # Data-space scale ranges per drawing panel. Only `panel-*` panels carry
+  # trained scales; the plot background, legend, and facet strips have layout
+  # 0..1 ranges that are artefacts, not trained scales, so exclude them.
+  is_data_panel <- grepl("^panel-", pan$name)
+  scales <- lapply(which(is_data_panel), function(i) {
+    list(
+      panel = pan$name[i],
+      x = round(c(pan$xscale_lo[i], pan$xscale_hi[i]), 3),
+      y = round(c(pan$yscale_lo[i], pan$yscale_hi[i]), 3)
+    )
+  })
+  list(
+    n_elements = nrow(el),
+    marks = as.list(marks),
+    panels = sort(unique(pan$name)),
+    scales = scales
+  )
+}
+
 # Count pixels whose RGB is within `tol` of a target (each channel 0..1).
 count_near <- function(img, rgb, tol = 0.06) {
   r <- img[,, 1]
