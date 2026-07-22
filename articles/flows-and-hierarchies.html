@@ -220,8 +220,34 @@
 </div>
 </div>
 </div>
+<section class="level3"><h3 id="colour">Colour<a class="anchor" aria-label="anchor" href="#colour"></a>
+</h3>
+<p>By default each top-level branch takes a hue and its descendants inherit it lightened one step per level. The branch is an ordinary discrete fill scale, so <code>scale_fill_*()</code> recolours the branches and <code>lighten</code> controls the fade (<code>0</code> for a flat colour per branch):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, type <span class="op">=</span> <span class="st">"treemap"</span>, lighten <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/scale_color_continuous.html">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>tech <span class="op">=</span> <span class="st">"#1b7837"</span>, food <span class="op">=</span> <span class="st">"#762a83"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Map <code>fill</code> to a node column to colour every node by that variable instead, with the matching <code>scale_fill_*()</code>. The depth fade is dropped, since the colour now carries its own meaning:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">h</span><span class="op">$</span><span class="va">owner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="st">"Sam"</span>, <span class="st">"Sam"</span>, <span class="st">"Lee"</span>, <span class="st">"Lee"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, fill <span class="op">=</span> <span class="va">owner</span>, type <span class="op">=</span> <span class="st">"circlepack"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
 <p>Both <code><a href="../reference/vsankey.html">vsankey()</a></code> and <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
-</section><script id="quarto-html-after-body" type="application/javascript">
+</section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

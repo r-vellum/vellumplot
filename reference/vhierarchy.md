@@ -22,9 +22,11 @@ vhierarchy(
   id,
   parent,
   value,
+  fill = NULL,
   type = c("sunburst", "icicle", "treemap", "circlepack"),
   inner_radius = 0,
   flow = c("down", "up", "right", "left"),
+  lighten = 0.6,
   label = TRUE,
   show_values = FALSE,
   orientation = c("auto", "radial", "tangential", "horizontal"),
@@ -39,9 +41,11 @@ mark_hierarchy(
   id,
   parent,
   value,
+  fill = NULL,
   type = c("sunburst", "icicle", "treemap", "circlepack"),
   inner_radius = 0,
   flow = c("down", "up", "right", "left"),
+  lighten = 0.6,
   label = TRUE,
   show_values = FALSE,
   orientation = c("auto", "radial", "tangential", "horizontal"),
@@ -60,6 +64,12 @@ mark_hierarchy(
   Columns (tidy-eval): the node id, its parent id (`NA`/`""` for the
   root), and its value (used for leaves).
 
+- fill:
+
+  Optional column (tidy-eval) to colour nodes by. Unmapped (default),
+  nodes are coloured by their depth-1 branch and lightened with depth;
+  mapped, each node takes its `fill` value's colour with no depth fade.
+
 - type:
 
   Diagram geometry: `"sunburst"` (default), `"icicle"`, `"treemap"`, or
@@ -74,6 +84,12 @@ mark_hierarchy(
 
   Icicle only: the direction of increasing depth — `"down"` (default),
   `"up"`, `"right"`, or `"left"`.
+
+- lighten:
+
+  Branch mode only: how far the deepest level fades toward white, a
+  fraction in `[0, 1]` (default `0.6`; `0` = flat colour per branch).
+  Ignored when `fill` is mapped.
 
 - label:
 
@@ -113,11 +129,21 @@ A
 
 ## Details
 
-The root is structural and never drawn (in a sunburst it is the centre);
-nodes are coloured by their depth-1 branch, lightened with depth. Each
-node is labelled with its `id` where the label fits, and `show_values`
-appends the value; small nodes are left unlabelled so a dense diagram
-stays legible.
+The root is structural and never drawn (in a sunburst it is the centre).
+Each node is labelled with its `id` where the label fits, and
+`show_values` appends the value; small nodes are left unlabelled so a
+dense diagram stays legible.
+
+## Colour
+
+By default nodes are coloured by their depth-1 *branch* and lightened
+one step per level, so sibling branches stay distinct and depth reads as
+shade. The branch is an ordinary discrete fill scale, so
+`scale_fill_*()` recolours the branches (e.g. `scale_fill_brewer()`),
+and `lighten` controls the depth fade (`0` = flat colour per branch).
+Map `fill` to a node column instead to colour every node by that
+variable — discrete or continuous, with the matching `scale_fill_*()` —
+in which case the depth fade is not applied.
 
 ## Examples
 

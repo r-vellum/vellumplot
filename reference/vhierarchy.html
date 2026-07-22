@@ -94,9 +94,11 @@ aspect-locked <a href="PlotSpec.html">PlotSpec</a>; <code>mark_hierarchy()</code
 <span>  <span class="va">id</span>,</span>
 <span>  <span class="va">parent</span>,</span>
 <span>  <span class="va">value</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sunburst"</span>, <span class="st">"icicle"</span>, <span class="st">"treemap"</span>, <span class="st">"circlepack"</span><span class="op">)</span>,</span>
 <span>  inner_radius <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  flow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"down"</span>, <span class="st">"up"</span>, <span class="st">"right"</span>, <span class="st">"left"</span><span class="op">)</span>,</span>
+<span>  lighten <span class="op">=</span> <span class="fl">0.6</span>,</span>
 <span>  label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  show_values <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  orientation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"radial"</span>, <span class="st">"tangential"</span>, <span class="st">"horizontal"</span><span class="op">)</span>,</span>
@@ -111,9 +113,11 @@ aspect-locked <a href="PlotSpec.html">PlotSpec</a>; <code>mark_hierarchy()</code
 <span>  <span class="va">id</span>,</span>
 <span>  <span class="va">parent</span>,</span>
 <span>  <span class="va">value</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sunburst"</span>, <span class="st">"icicle"</span>, <span class="st">"treemap"</span>, <span class="st">"circlepack"</span><span class="op">)</span>,</span>
 <span>  inner_radius <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  flow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"down"</span>, <span class="st">"up"</span>, <span class="st">"right"</span>, <span class="st">"left"</span><span class="op">)</span>,</span>
+<span>  lighten <span class="op">=</span> <span class="fl">0.6</span>,</span>
 <span>  label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  show_values <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  orientation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"radial"</span>, <span class="st">"tangential"</span>, <span class="st">"horizontal"</span><span class="op">)</span>,</span>
@@ -134,6 +138,12 @@ aspect-locked <a href="PlotSpec.html">PlotSpec</a>; <code>mark_hierarchy()</code
 (<code>NA</code>/<code>""</code> for the root), and its value (used for leaves).</p></dd>
 
 
+<dt id="arg-fill">fill<a class="anchor" aria-label="anchor" href="#arg-fill"></a></dt>
+<dd><p>Optional column (tidy-eval) to colour nodes by. Unmapped
+(default), nodes are coloured by their depth-1 branch and lightened with
+depth; mapped, each node takes its <code>fill</code> value's colour with no depth fade.</p></dd>
+
+
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>Diagram geometry: <code>"sunburst"</code> (default), <code>"icicle"</code>, <code>"treemap"</code>,
 or <code>"circlepack"</code>.</p></dd>
@@ -147,6 +157,12 @@ or <code>"circlepack"</code>.</p></dd>
 <dt id="arg-flow">flow<a class="anchor" aria-label="anchor" href="#arg-flow"></a></dt>
 <dd><p>Icicle only: the direction of increasing depth — <code>"down"</code>
 (default), <code>"up"</code>, <code>"right"</code>, or <code>"left"</code>.</p></dd>
+
+
+<dt id="arg-lighten">lighten<a class="anchor" aria-label="anchor" href="#arg-lighten"></a></dt>
+<dd><p>Branch mode only: how far the deepest level fades toward white,
+a fraction in <code>[0, 1]</code> (default <code>0.6</code>; <code>0</code> = flat colour per branch).
+Ignored when <code>fill</code> is mapped.</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
@@ -184,10 +200,19 @@ in the centre? Default <code>FALSE</code>. Most useful for <code>"sunburst"</cod
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The root is structural and never drawn (in a sunburst it is the centre);
-nodes are coloured by their depth-1 branch, lightened with depth. Each node is
-labelled with its <code>id</code> where the label fits, and <code>show_values</code> appends the
-value; small nodes are left unlabelled so a dense diagram stays legible.</p>
+    <p>The root is structural and never drawn (in a sunburst it is the centre). Each
+node is labelled with its <code>id</code> where the label fits, and <code>show_values</code> appends
+the value; small nodes are left unlabelled so a dense diagram stays legible.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="colour">Colour<a class="anchor" aria-label="anchor" href="#colour"></a></h2>
+    <p>By default nodes are coloured by their depth-1 <em>branch</em> and lightened one step
+per level, so sibling branches stay distinct and depth reads as shade. The
+branch is an ordinary discrete fill scale, so <code>scale_fill_*()</code> recolours the
+branches (e.g. <code>scale_fill_brewer()</code>), and <code>lighten</code> controls the depth fade
+(<code>0</code> = flat colour per branch). Map <code>fill</code> to a node column instead to colour
+every node by that variable — discrete or continuous, with the matching
+<code>scale_fill_*()</code> — in which case the depth fade is not applied.</p>
     </div>
 
     <div class="section level2">

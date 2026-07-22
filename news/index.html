@@ -63,7 +63,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
-</div>
+<ul><li>
+<strong><code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> respects <code>scale_fill_*()</code>.</strong> By default nodes are still coloured by their depth-1 branch and lightened with depth, but the branch is now an ordinary discrete fill scale, so <code><a href="../reference/scale_color_continuous.html">scale_fill_manual()</a></code> / <code><a href="../reference/scale_color_continuous.html">scale_fill_discrete()</a></code> recolour the branches and a <code>lighten</code> argument controls the depth fade (<code>0</code> = flat colour per branch). Mapping <code>fill</code> to a node column instead colours every node by that variable (discrete or continuous, with the matching <code>scale_fill_*()</code>), with no depth fade.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.0" id="vellumplot-070">vellumplot 0.7.0<a class="anchor" aria-label="anchor" href="#vellumplot-070"></a></h2>
 <ul><li><p><strong>New <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> for space-filling hierarchies — breaking.</strong> <code>vhierarchy(id, parent, value, type = )</code> draws a tree four ways from one parent list, switching only <code>type</code>: <code>"sunburst"</code> (default), <code>"icicle"</code>, <code>"treemap"</code>, or <code>"circlepack"</code>. This <strong>replaces <code>vsunburst()</code></strong> — <code>vhierarchy(..., type = "sunburst")</code> reproduces the old radial sunburst, and <code>vsunburst()</code> / <code>mark_sunburst()</code> are removed. Treemaps use a squarified layout; circle-pack is a faithful port of d3’s front-chain packing. <code><a href="../reference/vhierarchy.html">mark_hierarchy()</a></code> is the exported layer.</p></li>

@@ -149,6 +149,33 @@ vhierarchy(h, id, parent, value, type = "icicle", flow = "right")
 
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-9-1.png)
 
+### Colour
+
+By default each top-level branch takes a hue and its descendants inherit
+it lightened one step per level. The branch is an ordinary discrete fill
+scale, so `scale_fill_*()` recolours the branches and `lighten` controls
+the fade (`0` for a flat colour per branch):
+
+``` r
+
+vhierarchy(h, id, parent, value, type = "treemap", lighten = 0.3) |>
+  scale_fill_manual(values = c(tech = "#1b7837", food = "#762a83"))
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-10-1.png)
+
+Map `fill` to a node column to colour every node by that variable
+instead, with the matching `scale_fill_*()`. The depth fade is dropped,
+since the colour now carries its own meaning:
+
+``` r
+
+h$owner <- c(NA, NA, NA, "Sam", "Sam", "Lee", "Lee")
+vhierarchy(h, id, parent, value, fill = owner, type = "circlepack")
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-11-1.png)
+
 Both
 [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
 and
