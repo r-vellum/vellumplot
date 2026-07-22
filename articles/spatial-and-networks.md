@@ -227,15 +227,32 @@ level):
 
 hc <- hclust(dist(USArrests))
 vgraph(hc, layout = "dendrogram") |>
-  mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v") |>
-  mark_node_text(label = label, size = 2, dist = 1)
+  mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v")
 ```
 
 ![](spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png)
 
+Add labels with
+[`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+which controls `angle` and justification – for a top-down tree the leaf
+labels read vertically, hanging below their leaves (merge nodes carry a
+blank label, so only the leaves show):
+
+``` r
+
+vgraph(hc, layout = "dendrogram") |>
+  mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v") |>
+  mark_text(
+    x = x, y = y, label = label, size = 1.6,
+    angle = 90, hjust = "right", nudge_y = -1.5
+  )
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+
 [`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
-is the one-line preset for that – bracket edges and leaf labels,
-`direction` to orient it, and `k` to cut the tree and colour the
+is the one-line preset for all of that – bracket edges and placed leaf
+labels, `direction` to orient it, and `k` to cut the tree and colour the
 clusters (branches above the cut stay neutral):
 
 ``` r
@@ -243,7 +260,7 @@ clusters (branches above the cut stay neutral):
 vdendrogram(hc, k = 3)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
 
 For unrooted trees (phylogeny-style), `layout = "unrooted"` uses
 graphlayouts’ `layout_as_tree_unrooted()` – `mode` picks `"equalangle"`,
@@ -256,7 +273,7 @@ vgraph(igraph::make_tree(31, 3, "undirected"), layout = "unrooted", mode = "equa
   mark_nodes(size = 1.5, fill = "grey30")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
 
 ### Augmenting and filtering
 
@@ -284,7 +301,7 @@ vgraph(g, augment = c("degree", "community"), k_core = 2) |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
 
 ### Community hulls and node glyphs
 
@@ -307,7 +324,7 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png)
 
 [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
 replaces the node markers with pie (or donut, via `inner`) glyphs whose
@@ -325,7 +342,7 @@ vgraph(g, layout = "stress") |>
   mark_node_pie(cols = c("x1", "x2", "x3"), size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-16-1.png)
 
 ### Interactive neighbour highlighting
 
@@ -367,7 +384,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 2)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-17-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-18-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a
