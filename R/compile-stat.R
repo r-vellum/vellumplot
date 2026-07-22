@@ -918,6 +918,12 @@ NULL
   }
   # Rolling windows default to 7; lag/lead shift by 1 unless told otherwise.
   k <- L$stat_params$k %||% (if (op %in% c("lag", "lead")) 1L else 7L)
+  if (!is.numeric(k) || length(k) != 1L || is.na(k) || k < 1 || k != round(k)) {
+    cli::cli_abort(c(
+      "{.fn mark_line} {.arg window} needs a positive integer {.field k}.",
+      i = "Got {.obj_type_friendly {k}}."
+    ))
+  }
   k <- as.integer(k)
   align <- L$stat_params$align %||% "right"
   partial <- L$stat_params$partial %||% TRUE

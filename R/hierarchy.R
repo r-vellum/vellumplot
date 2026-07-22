@@ -1,6 +1,13 @@
 #' @include classes.R vplot.R theme.R vgraph.R sankey.R
 NULL
 
+# The tree layouts (hierarchy fraction assignment; dendrogram leaf DFS in
+# vgraph.R) recurse once per level, so recursion depth == tree depth. A
+# pathologically deep tree (a near-chain) would overflow R's evaluation stack
+# with a cryptic error; refuse past this bound instead. Far above any legible
+# hierarchy/dendrogram (a balanced tree of depth 20 already holds ~1e6 leaves).
+.MAX_TREE_DEPTH <- 1000L
+
 # --- vhierarchy: space-filling hierarchy diagrams ---------------------------
 #
 # One constructor draws a tree four ways, differing only in the layout geometry:
@@ -79,6 +86,15 @@ NULL
   if (D < 1L) {
     cli::cli_abort(
       "{.fn vhierarchy} needs at least one level below the root.",
+      call = call
+    )
+  }
+  if (D > .MAX_TREE_DEPTH) {
+    cli::cli_abort(
+      c(
+        "{.fn vhierarchy}: the tree is too deep ({D} levels) to lay out.",
+        i = "The layout recurses per level; keep depth under {.val {(.MAX_TREE_DEPTH)}}."
+      ),
       call = call
     )
   }

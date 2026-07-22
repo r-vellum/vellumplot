@@ -203,6 +203,12 @@ NULL
     queue <- c(queue, kids)
   }
   is_leaf <- lengths(children) == 0L
+  if (max(depth) > .MAX_TREE_DEPTH) {
+    cli::cli_abort(c(
+      "The tree is too deep ({max(depth)} levels) to lay out as a dendrogram.",
+      i = "The layout recurses per level; keep depth under {.val {(.MAX_TREE_DEPTH)}}."
+    ))
+  }
   cross <- if (!is.null(height)) height else (max(depth) - depth)
   # Leaf spread: hclust ranks (crossing-free) when present, else in-order DFS.
   spread <- rep(NA_real_, n)

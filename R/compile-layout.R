@@ -13,6 +13,12 @@ NULL
 .LEGEND_MIN_BAR_MM <- 22 # minimum colour-bar length
 .LEGEND_TICK_MM <- 1.6 # colour-bar break tick length
 
+# A trained position range can be a single point (min == max) -- e.g. one
+# distinct value under coord_fixed()/coord_sf(). Its width is 0, which as a `null`
+# track weight collapses the panel to nothing under respect = TRUE. Floor a
+# degenerate (zero / non-finite) span to 1 so the panel keeps a finite extent.
+.nonzero_span <- function(x) if (!is.finite(x) || x == 0) 1 else x
+
 # The longest string in a vector (by character count). For an empty vector it
 # returns "0" -- a one-character width floor so an axis with no labels still
 # reserves a sane gutter.
@@ -221,8 +227,8 @@ NULL
     respect <- TRUE
   } else if (!is.null(coord) && identical(coord@kind, "fixed")) {
     ratio <- coord@ratio %||% 1
-    xr <- abs(diff(range(built$scales$x$domain)))
-    yr <- abs(diff(range(built$scales$y$domain)))
+    xr <- .nonzero_span(abs(diff(range(built$scales$x$domain))))
+    yr <- .nonzero_span(abs(diff(range(built$scales$y$domain))))
     panel_w <- vellum::vl_unit(xr, "null")
     panel_h <- vellum::vl_unit(ratio * yr, "null")
     respect <- TRUE
@@ -230,10 +236,12 @@ NULL
     # Map aspect: 1 for a projected CRS; the equirectangular correction
     # 1/cos(mean_latitude) for unprojected lon/lat (one degree N == one degree E
     # at the map centre). Same null-track mechanism as coord_fixed.
-    xr <- abs(diff(range(built$scales$x$domain)))
-    yr <- abs(diff(range(built$scales$y$domain)))
+    xr <- .nonzero_span(abs(diff(range(built$scales$x$domain))))
+    yr <- .nonzero_span(abs(diff(range(built$scales$y$domain))))
     ratio <- if (isTRUE(built$sf_geographic)) {
-      mean_lat <- mean(built$scales$y$domain)
+      # Clamp away from the poles: cos(+-90deg) == 0 would make the aspect
+      # infinite for pole-centred lon/lat.
+      mean_lat <- max(min(mean(built$scales$y$domain), 89.9), -89.9)
       1 / cos(mean_lat * pi / 180)
     } else {
       1

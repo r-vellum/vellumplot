@@ -127,20 +127,26 @@ NULL
   if (is.null(facet) || is.null(panel$lvl)) {
     return(seq_len(nrow(data)))
   }
-  tryCatch(
-    {
-      keys <- .facet_keys(facet, data)
-      if (facet@type == "wrap") {
-        which(as.character(keys$wrap) == panel$lvl$wrap)
-      } else {
-        which(
-          as.character(keys$r) == panel$lvl$r &
-            as.character(keys$c) == panel$lvl$c
-        )
-      }
-    },
-    error = function(e) seq_len(nrow(data))
-  )
+  # Fall back to "every panel" only when this data genuinely lacks the facet
+  # variable(s) (an annotation layer's own data). A catch-all `tryCatch` here
+  # would also swallow a real evaluation bug into a silently-wrong plot, so guard
+  # on the specific condition and let any other error propagate.
+  vars <- unique(unlist(lapply(
+    c(facet@cols, facet@rows),
+    function(q) all.vars(rlang::quo_get_expr(q))
+  )))
+  if (!all(vars %in% names(data))) {
+    return(seq_len(nrow(data)))
+  }
+  keys <- .facet_keys(facet, data)
+  if (facet@type == "wrap") {
+    which(as.character(keys$wrap) == panel$lvl$wrap)
+  } else {
+    which(
+      as.character(keys$r) == panel$lvl$r &
+        as.character(keys$c) == panel$lvl$c
+    )
+  }
 }
 
 # Resolve every layer for one panel. Main-data layers use the panel's precomputed
