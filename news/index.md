@@ -2,6 +2,16 @@
 
 ## vellumplot (development version)
 
+- **[`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  honours `hjust`/`vjust` passed as a variable.** They were only read as
+  constant params, so a value routed through a variable (as
+  [`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
+  does per direction) silently fell back to centred, letting leaf labels
+  run over the edges. `.emit_text()` now reads them value-first, like
+  `angle`.
+  [`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
+  leaf labels also get a larger default gap.
+
 - **Dendrograms and unrooted trees.**
   [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
   now accepts a base `hclust`/`dendrogram` and gains a height-aware
