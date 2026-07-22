@@ -57,15 +57,17 @@ OutlineSpec <- S7::new_class(
 )
 
 # A drop / ambient shadow: dark, low-`alpha` copies of a mark drawn beneath the
-# original, offset by (`x`, `y`) as a fraction of the panel (npc; +x right, +y
-# up), and softened by stacking `layers` copies widened up to `spread` mm.
+# original, offset by (`x`, `y`) in millimetres (+x right, +y up), and softened by
+# stacking `layers` copies widened up to `spread` mm. Defaults match `shadow()`
+# (the only constructor); the offset is resolved device-side in mm via vellum's
+# compound npc+mm unit (see `.emit_copies`).
 ShadowSpec <- S7::new_class(
   "ShadowSpec",
   package = "vellumplot",
   parent = Effect,
   properties = list(
-    x = S7::new_property(S7::class_double, default = 0.006),
-    y = S7::new_property(S7::class_double, default = -0.006),
+    x = S7::new_property(S7::class_double, default = 0.5),
+    y = S7::new_property(S7::class_double, default = -0.5),
     color = S7::new_property(S7::class_character, default = "black"),
     alpha = S7::new_property(S7::class_double, default = 0.3),
     spread = S7::new_property(S7::class_double, default = 1.5),

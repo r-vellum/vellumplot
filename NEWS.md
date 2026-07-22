@@ -1,5 +1,25 @@
 # vellumplot (development version)
 
+* **More robust handling of degenerate and extreme inputs.** A single distinct
+  value on an axis under `coord_fixed()` / `coord_sf()` no longer collapses the
+  panel to nothing; a map centred on a pole no longer gets a runaway aspect
+  ratio; a circle-pack of collinear equal-value leaves no longer produces `NaN`
+  coordinates; and a pathologically deep hierarchy or dendrogram aborts with a
+  clear "too deep" message instead of overflowing the call stack.
+
+* **`mark_line(window = )` requires a positive integer `k`.** A zero, negative,
+  or fractional window size now errors clearly instead of silently producing a
+  wrong (or empty) result.
+
+* **A computed-constant `if_false` in `condition()` is carried into the
+  interaction model.** A negative literal (e.g. `-0.5`) or a computed constant
+  (e.g. `grey(0.5)`) was previously dropped; only genuine per-row column
+  references are now excluded (and carried per element instead).
+
+* **A faceted layer whose own data lacks the facet variable still draws on every
+  panel**, but a genuine evaluation error there is no longer silently swallowed
+  into that fallback.
+
 * **`mark_point(auto = TRUE)` no longer datashades under a warped coordinate
   system.** Under `coord_polar()` / `coord_trans()` the >50000-row datashade
   fallback — which bins in linear data space — would rasterise into the wrong

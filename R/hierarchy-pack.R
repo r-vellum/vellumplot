@@ -252,6 +252,19 @@
   d2 <- d1 - x2 * x2 - y2 * y2 + r2 * r2
   d3 <- d1 - x3 * x3 - y3 * y3 + r3 * r3
   ab <- a3 * b2 - a2 * b3
+  # Collinear centres give ab == 0: there is no proper three-circle basis, and
+  # dividing by it would yield Inf/NaN coordinates that poison the pack. Fall back
+  # to the two-circle basis of whichever pair weakly encloses the third circle.
+  if (ab == 0) {
+    for (pr in list(c(1L, 2L), c(1L, 3L), c(2L, 3L))) {
+      circs <- list(a, b, c)
+      cand <- .enc_basis2(circs[[pr[1]]], circs[[pr[2]]])
+      if (.enc_encloses_weak_all(cand, circs)) {
+        return(cand)
+      }
+    }
+    return(.enc_basis2(a, c))
+  }
   xa <- (b2 * d3 - b3 * d2) / (ab * 2) - x1
   xb <- (b3 * c2 - b2 * c3) / ab
   ya <- (a3 * d2 - a2 * d3) / (ab * 2) - y1

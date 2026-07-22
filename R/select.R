@@ -377,8 +377,13 @@ interaction_model.default <- function(x) {
       } else {
         NULL
       }
-      if_false <- if (!is.null(fe) && !is.symbol(fe) && !is.call(fe)) {
-        rlang::eval_tidy(cnd$if_false) # a constant literal
+      # A constant `if_false` is one that references no data column, i.e. its
+      # expression has no free variables: a bare literal, but also a negative
+      # literal (`-0.5`, a call to unary `-`) or a computed constant like
+      # `rgb(1, 0, 0)`. Anything with a free variable is a per-row column,
+      # carried per element instead (NULL here).
+      if_false <- if (!is.null(fe) && length(all.vars(fe)) == 0L) {
+        rlang::eval_tidy(cnd$if_false) # a constant expression
       } else {
         NULL # absent (theme dim) or a per-row column (carried per element)
       }
