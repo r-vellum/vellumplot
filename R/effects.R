@@ -132,14 +132,7 @@ shadow <- function(
   .check_num(y, "y")
   .check_req_colour(color, "color")
   .check_unit_alpha(alpha)
-  if (
-    !is.numeric(spread) ||
-      length(spread) != 1L ||
-      !is.finite(spread) ||
-      spread < 0
-  ) {
-    cli::cli_abort("{.arg spread} must be a single non-negative number (mm).")
-  }
+  .check_nonneg_num(spread, "spread", "mm")
   .check_pos_int(layers, "layers")
   ShadowSpec(
     x = as.double(x),
@@ -249,9 +242,10 @@ echo <- function(
     cli::cli_abort("{.arg {arg}} must be a single finite number.")
   }
 }
-.check_nonneg_num <- function(v, arg) {
+.check_nonneg_num <- function(v, arg, unit = NULL) {
   if (!is.numeric(v) || length(v) != 1L || !is.finite(v) || v < 0) {
-    cli::cli_abort("{.arg {arg}} must be a single non-negative number.")
+    suffix <- if (!is.null(unit)) paste0(" (", unit, ")") else ""
+    cli::cli_abort("{.arg {arg}} must be a single non-negative number{suffix}.")
   }
 }
 .check_pos_int <- function(v, arg) {

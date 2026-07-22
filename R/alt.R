@@ -116,19 +116,7 @@ NULL
 
 # The faceting variables, as a readable "a and b" string, or NULL.
 .alt_facet_vars <- function(f) {
-  lab <- function(qs) {
-    if (is.null(qs) || !length(qs)) {
-      return(NULL)
-    }
-    paste(
-      vapply(
-        qs,
-        function(q) rlang::as_label(rlang::quo_get_expr(q)),
-        character(1)
-      ),
-      collapse = " and "
-    )
-  }
+  lab <- function(qs) .facet_var_labels(qs, " and ")
   if (identical(f@type, "wrap")) {
     lab(f@cols)
   } else {
@@ -260,43 +248,47 @@ NULL
 #' plot_alt(p)
 #' plot_alt(labs(p, alt = "Heavier cars get fewer miles per gallon."))
 #' @export
+# The user-provided alt text (from labs(alt = )) if it is a single non-empty
+# string, else NULL. Shared by both plot_alt() branches.
+.manual_alt <- function(x) {
+  manual <- x@labels$alt
+  if (
+    !is.null(manual) &&
+      is.character(manual) &&
+      length(manual) == 1L &&
+      nzchar(manual)
+  ) {
+    manual
+  } else {
+    NULL
+  }
+}
+
 plot_alt <- function(x) {
-  if (S7::S7_inherits(x, PlotSpec)) {
-    manual <- x@labels$alt
-    if (
-      !is.null(manual) &&
-        is.character(manual) &&
-        length(manual) == 1L &&
-        nzchar(manual)
-    ) {
-      return(manual)
-    }
+  is_spec <- S7::S7_inherits(x, PlotSpec)
+  is_comp <- S7::S7_inherits(x, PlotComposition)
+  if (!is_spec && !is_comp) {
+    cli::cli_abort("{.arg x} must be a {.cls PlotSpec} or plot composition.")
+  }
+  manual <- .manual_alt(x)
+  if (!is.null(manual)) {
+    return(manual)
+  }
+  if (is_spec) {
     return(.plot_alt_auto(x))
   }
-  if (S7::S7_inherits(x, PlotComposition)) {
-    manual <- x@labels$alt
-    if (
-      !is.null(manual) &&
-        is.character(manual) &&
-        length(manual) == 1L &&
-        nzchar(manual)
-    ) {
-      return(manual)
-    }
-    n <- length(x@plots)
-    return(paste0(
-      "A composition of ",
-      n,
-      " plot",
-      if (n != 1L) "s",
-      " arranged in a ",
-      x@nrow,
-      " by ",
-      x@ncol,
-      " grid."
-    ))
-  }
-  cli::cli_abort("{.arg x} must be a {.cls PlotSpec} or plot composition.")
+  n <- length(x@plots)
+  paste0(
+    "A composition of ",
+    n,
+    " plot",
+    if (n != 1L) "s",
+    " arranged in a ",
+    x@nrow,
+    " by ",
+    x@ncol,
+    " grid."
+  )
 }
 
 # The accessible name (scene title): a plain-string labs() title, else NULL.

@@ -154,6 +154,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   L$params$linetype %||% default
 }
 
+# The layer's resolved line type recycled to the element count `n`, or NULL when
+# no linetype is mapped/set (so the caller falls back to its own default). The
+# per-mark idiom shared by the point/line/step/segment/area/... emitters.
+.resolve_lty <- function(L, scales, n) {
+  lty <- .aes_linetype(L, scales, NULL)
+  if (is.null(lty)) NULL else rep_len(lty, n)
+}
+
 # Edge-scoped colour / alpha / linetype: identical to the `.aes_*` resolvers
 # above but keyed on the edge channels + edge scales, so an edge's colour is
 # trained and mapped independently of the node colour scale (N1a). A constant
@@ -516,8 +524,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
-  lty <- .aes_linetype(L, scales, NULL)
-  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  lty <- .resolve_lty(L, scales, n)
   lwd <- .aes_param(L, "linewidth", 1.5)
   sk <- .mark_sketch(L, scales)
 
@@ -553,8 +560,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   col <- rep_len(.aes_colour(L, scales, "#3366bb"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 0.6)
-  lty <- .aes_linetype(L, scales, NULL)
-  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  lty <- .resolve_lty(L, scales, n)
   piece <- L$values$.piece
   sk <- .mark_sketch(L, scales)
   gi <- 0L
@@ -987,8 +993,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
-  lty <- .aes_linetype(L, scales, NULL)
-  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  lty <- .resolve_lty(L, scales, n)
   lwd <- .aes_param(L, "linewidth", 1.5)
   dir <- L$stat_params$direction %||% "hv"
   sk <- .mark_sketch(L, scales)
@@ -2171,8 +2176,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   ymax <- rep_len(scales$y$map(L$values$ymax), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   lwd <- .aes_param(L, "linewidth", 1)
-  lty <- .aes_linetype(L, scales, NULL)
-  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  lty <- .resolve_lty(L, scales, n)
   band <- scales$x$band_width %||% .resolution(xn)
   half <- (.aes_param(L, "width", 0.5) * band) / 2
   sk <- .mark_sketch(L, scales)
@@ -2239,8 +2243,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1)
-  lty <- .aes_linetype(L, scales, NULL)
-  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  lty <- .resolve_lty(L, scales, n)
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
@@ -2730,8 +2733,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
-  lty <- .aes_linetype(L, scales, NULL)
-  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  lty <- .resolve_lty(L, scales, n)
   dir <- L$stat_params$direction %||% "hv"
 
   gx <- gy <- grp <- list()
@@ -3130,8 +3132,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 0.5)
-  lty <- .aes_linetype(L, scales, NULL)
-  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  lty <- .resolve_lty(L, scales, n)
   # One segments grob per distinct (colour, alpha, linetype) so a mapped
   # colour/alpha/linetype is honoured per tick rather than collapsed to the
   # first row's style.

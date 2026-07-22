@@ -144,10 +144,7 @@ NULL
     cli::cli_abort("{.fn mark_histogram} needs at least one finite value.")
   }
   bins <- L$stat_params$bins %||% 30L
-  rng <- range(x)
-  if (diff(rng) == 0) {
-    rng <- rng + c(-0.5, 0.5)
-  }
+  rng <- .pad_degenerate_range(range(x))
   breaks <- seq(rng[1], rng[2], length.out = bins + 1L)
   width <- diff(breaks)[1]
   centers <- (utils::head(breaks, -1L) + breaks[-1L]) / 2
@@ -194,20 +191,15 @@ NULL
 # Bin a continuous (x, y) into a `bins x bins` grid; one row per non-empty cell
 # with its centre, count, and cell width/height (for tile rendering).
 .stat_bin2d <- function(L) {
-  x <- as.numeric(L$values$x)
-  y <- as.numeric(L$values$y)
-  ok <- is.finite(x) & is.finite(y)
-  x <- x[ok]
-  y <- y[ok]
+  xy <- .finite_xy(as.numeric(L$values$x), as.numeric(L$values$y))
+  x <- xy$x
+  y <- xy$y
   if (!length(x)) {
     cli::cli_abort("{.fn mark_bin2d} needs at least one finite (x, y) pair.")
   }
   bins <- L$stat_params$bins %||% 30L
   edges <- function(v) {
-    rng <- range(v)
-    if (diff(rng) == 0) {
-      rng <- rng + c(-0.5, 0.5)
-    }
+    rng <- .pad_degenerate_range(range(v))
     seq(rng[1], rng[2], length.out = bins + 1L)
   }
   xb <- edges(x)
@@ -258,9 +250,9 @@ NULL
     list(gx = ux, gy = uy, gz = m)
   } else {
     .need_pkg("MASS", "2-D density contours (mark_contour())")
-    ok <- is.finite(x) & is.finite(y)
-    x <- x[ok]
-    y <- y[ok]
+    xy <- .finite_xy(x, y)
+    x <- xy$x
+    y <- xy$y
     if (length(x) < 3L) {
       cli::cli_abort("A 2-D density contour needs at least 3 finite points.")
     }
@@ -417,23 +409,15 @@ NULL
 # Binning is done in an isotropic space (y scaled to the x range) so hexes are
 # regular there; they render geometrically exact under coord_fixed().
 .stat_hexbin <- function(L) {
-  x <- as.numeric(L$values$x)
-  y <- as.numeric(L$values$y)
-  ok <- is.finite(x) & is.finite(y)
-  x <- x[ok]
-  y <- y[ok]
+  xy <- .finite_xy(as.numeric(L$values$x), as.numeric(L$values$y))
+  x <- xy$x
+  y <- xy$y
   if (!length(x)) {
     cli::cli_abort("{.fn mark_hex} needs at least one finite (x, y) pair.")
   }
   bins <- L$stat_params$bins %||% 30L
-  xr <- range(x)
-  yr <- range(y)
-  if (diff(xr) == 0) {
-    xr <- xr + c(-0.5, 0.5)
-  }
-  if (diff(yr) == 0) {
-    yr <- yr + c(-0.5, 0.5)
-  }
+  xr <- .pad_degenerate_range(range(x))
+  yr <- .pad_degenerate_range(range(y))
   r <- diff(xr) / (bins * 1.5) # circumradius in x-units (flat-top columns at 1.5r)
   asp <- diff(xr) / diff(yr)
   px <- x - xr[1]
@@ -473,27 +457,24 @@ NULL
   list(groups = groups, levels = glevs)
 }
 
-# A 1-D kernel density of x (per group): a dense (x, density) curve. Groups with
-# fewer than 2 finite points are skipped with a warning (a density needs >= 2).
-.stat_density <- function(L) {
-  x <- as.numeric(L$values$x)
+# The shared per-group scaffold for the grouped stats (density/ecdf/qq/qq_line/
+# smooth/ellipse/hull). `compute(idx, gn, grouped, k)` gets a group's row indices,
+# its level name, whether the layer is grouped, and the group's 1-based index
+# (for a `.piece`); it returns that group's stat rows (without the `group`
+# column) or NULL to drop the group. The scaffold splits by group, drops the
+# NULLs, attaches the `group` factor, aborts with `empty_msg` when every group is
+# dropped, and rbinds the survivors.
+.per_group <- function(L, n, compute, empty_msg) {
   grp <- .layer_group(L)
-  g <- .stat_groups(grp, length(x))
+  g <- .stat_groups(grp, n)
   glevs <- g$levels
-  adjust <- L$stat_params$adjust %||% 1
-  parts <- lapply(names(g$groups), function(gn) {
-    xi <- x[g$groups[[gn]]]
-    xi <- xi[is.finite(xi)]
-    if (length(xi) < 2) {
-      if (!is.null(grp)) {
-        cli::cli_warn(
-          "Skipping {.field {gn}}: {.fn mark_density} needs at least 2 points."
-        )
-      }
+  gnames <- names(g$groups)
+  parts <- lapply(seq_along(gnames), function(k) {
+    gn <- gnames[[k]]
+    df <- compute(g$groups[[gn]], gn, !is.null(grp), k)
+    if (is.null(df)) {
       return(NULL)
     }
-    d <- stats::density(xi, adjust = adjust)
-    df <- data.frame(x = d$x, y = d$y, density = d$y)
     if (!is.null(grp)) {
       df$group <- factor(gn, levels = glevs)
     }
@@ -501,9 +482,48 @@ NULL
   })
   parts <- parts[!vapply(parts, is.null, logical(1))]
   if (!length(parts)) {
-    cli::cli_abort("{.fn mark_density} needs at least 2 finite points.")
+    cli::cli_abort(empty_msg)
   }
   do.call(rbind, parts)
+}
+
+# Keep only the positions where both x and y are finite (a common pre-filter for
+# the 2-D stats).
+.finite_xy <- function(x, y) {
+  ok <- is.finite(x) & is.finite(y)
+  list(x = x[ok], y = y[ok])
+}
+
+# Expand a degenerate (zero-width) range so downstream binning has a non-zero
+# span to divide.
+.pad_degenerate_range <- function(rng) {
+  if (diff(rng) == 0) rng + c(-0.5, 0.5) else rng
+}
+
+# A 1-D kernel density of x (per group): a dense (x, density) curve. Groups with
+# fewer than 2 finite points are skipped with a warning (a density needs >= 2).
+.stat_density <- function(L) {
+  x <- as.numeric(L$values$x)
+  adjust <- L$stat_params$adjust %||% 1
+  .per_group(
+    L,
+    length(x),
+    function(idx, gn, grouped, k) {
+      xi <- x[idx]
+      xi <- xi[is.finite(xi)]
+      if (length(xi) < 2) {
+        if (grouped) {
+          cli::cli_warn(
+            "Skipping {.field {gn}}: {.fn mark_density} needs at least 2 points."
+          )
+        }
+        return(NULL)
+      }
+      d <- stats::density(xi, adjust = adjust)
+      data.frame(x = d$x, y = d$y, density = d$y)
+    },
+    "{.fn mark_density} needs at least 2 finite points."
+  )
 }
 
 # Warn about aggregated categories whose summary is `NA` (an empty group, or a
@@ -691,68 +711,48 @@ NULL
   method.args <- L$stat_params$method.args %||% list()
   x <- as.numeric(L$values$x)
   y <- as.numeric(L$values$y)
-  grp <- .layer_group(L)
-  g <- .stat_groups(grp, length(x))
-  glevs <- g$levels
-
-  parts <- lapply(names(g$groups), function(gn) {
-    i <- g$groups[[gn]]
-    xi <- x[i]
-    yi <- y[i]
-    ok <- is.finite(xi) & is.finite(yi)
-    xi <- xi[ok]
-    yi <- yi[ok]
-    if (length(unique(xi)) < 2) {
-      if (!is.null(grp)) {
-        cli::cli_warn(
-          "Skipping {.field {gn}}: {.fn mark_smooth} needs at least 2 distinct x values."
-        )
+  .per_group(
+    L,
+    length(x),
+    function(idx, gn, grouped, k) {
+      f <- .finite_xy(x[idx], y[idx])
+      xi <- f$x
+      yi <- f$y
+      if (length(unique(xi)) < 2) {
+        if (grouped) {
+          cli::cli_warn(
+            "Skipping {.field {gn}}: {.fn mark_smooth} needs at least 2 distinct x values."
+          )
+        }
+        return(NULL)
       }
-      return(NULL)
-    }
-    m <- if (identical(method, "auto")) .smooth_auto(length(xi)) else method
-    xg <- seq(min(xi), max(xi), length.out = 80)
-    df <- .smooth_fit(m, xi, yi, xg, se, level, span, formula, method.args)
-    if (!is.null(grp)) {
-      df$group <- factor(gn, levels = glevs)
-    }
-    df
-  })
-  parts <- parts[!vapply(parts, is.null, logical(1))]
-  if (!length(parts)) {
-    cli::cli_abort(
-      "{.fn mark_smooth} needs at least 2 distinct x values to fit."
-    )
-  }
-  do.call(rbind, parts)
+      m <- if (identical(method, "auto")) .smooth_auto(length(xi)) else method
+      xg <- seq(min(xi), max(xi), length.out = 80)
+      .smooth_fit(m, xi, yi, xg, se, level, span, formula, method.args)
+    },
+    "{.fn mark_smooth} needs at least 2 distinct x values to fit."
+  )
 }
 
 # The empirical cumulative distribution of x (per group): sorted x against the
 # cumulative proportion, drawn as a right-continuous step.
 .stat_ecdf <- function(L) {
   x <- as.numeric(L$values$x)
-  grp <- .layer_group(L)
-  g <- .stat_groups(grp, length(x))
-  glevs <- g$levels
-  parts <- lapply(names(g$groups), function(gn) {
-    xi <- sort(x[g$groups[[gn]]])
-    xi <- xi[is.finite(xi)]
-    if (!length(xi)) {
-      return(NULL)
-    }
-    n <- length(xi)
-    y <- seq_len(n) / n
-    df <- data.frame(x = xi, y = y, ecdf = y)
-    if (!is.null(grp)) {
-      df$group <- factor(gn, levels = glevs)
-    }
-    df
-  })
-  parts <- parts[!vapply(parts, is.null, logical(1))]
-  if (!length(parts)) {
-    cli::cli_abort("{.fn mark_ecdf} needs at least one finite value.")
-  }
-  do.call(rbind, parts)
+  .per_group(
+    L,
+    length(x),
+    function(idx, gn, grouped, k) {
+      xi <- sort(x[idx])
+      xi <- xi[is.finite(xi)]
+      if (!length(xi)) {
+        return(NULL)
+      }
+      n <- length(xi)
+      y <- seq_len(n) / n
+      data.frame(x = xi, y = y, ecdf = y)
+    },
+    "{.fn mark_ecdf} needs at least one finite value."
+  )
 }
 
 # Sorted sample values against the theoretical quantiles of a reference
@@ -761,27 +761,20 @@ NULL
   s0 <- L$values$sample %||% L$values$y %||% L$values$x
   s0 <- as.numeric(s0)
   dist <- match.fun(L$stat_params$distribution %||% "qnorm")
-  grp <- .layer_group(L)
-  g <- .stat_groups(grp, length(s0))
-  glevs <- g$levels
-  parts <- lapply(names(g$groups), function(gn) {
-    s <- sort(s0[g$groups[[gn]]])
-    s <- s[is.finite(s)]
-    if (!length(s)) {
-      return(NULL)
-    }
-    theo <- dist(stats::ppoints(length(s)))
-    df <- data.frame(x = theo, y = s, sample = s, theoretical = theo)
-    if (!is.null(grp)) {
-      df$group <- factor(gn, levels = glevs)
-    }
-    df
-  })
-  parts <- parts[!vapply(parts, is.null, logical(1))]
-  if (!length(parts)) {
-    cli::cli_abort("{.fn mark_qq} needs at least one finite sample value.")
-  }
-  do.call(rbind, parts)
+  .per_group(
+    L,
+    length(s0),
+    function(idx, gn, grouped, k) {
+      s <- sort(s0[idx])
+      s <- s[is.finite(s)]
+      if (!length(s)) {
+        return(NULL)
+      }
+      theo <- dist(stats::ppoints(length(s)))
+      data.frame(x = theo, y = s, sample = s, theoretical = theo)
+    },
+    "{.fn mark_qq} needs at least one finite sample value."
+  )
 }
 
 # The Q-Q reference line (per group): the line through the 1st and 3rd sample
@@ -791,32 +784,25 @@ NULL
   s0 <- L$values$sample %||% L$values$y %||% L$values$x
   s0 <- as.numeric(s0)
   dist <- match.fun(L$stat_params$distribution %||% "qnorm")
-  grp <- .layer_group(L)
-  g <- .stat_groups(grp, length(s0))
-  glevs <- g$levels
-  parts <- lapply(names(g$groups), function(gn) {
-    s <- sort(s0[g$groups[[gn]]])
-    s <- s[is.finite(s)]
-    if (length(s) < 2) {
-      return(NULL)
-    }
-    theo <- dist(stats::ppoints(length(s)))
-    sq <- stats::quantile(s, c(0.25, 0.75), names = FALSE)
-    tq <- dist(c(0.25, 0.75))
-    slope <- diff(sq) / diff(tq)
-    intercept <- sq[1] - slope * tq[1]
-    xr <- range(theo)
-    df <- data.frame(x = xr, y = intercept + slope * xr)
-    if (!is.null(grp)) {
-      df$group <- factor(gn, levels = glevs)
-    }
-    df
-  })
-  parts <- parts[!vapply(parts, is.null, logical(1))]
-  if (!length(parts)) {
-    cli::cli_abort("{.fn mark_qq_line} needs at least 2 finite sample values.")
-  }
-  do.call(rbind, parts)
+  .per_group(
+    L,
+    length(s0),
+    function(idx, gn, grouped, k) {
+      s <- sort(s0[idx])
+      s <- s[is.finite(s)]
+      if (length(s) < 2) {
+        return(NULL)
+      }
+      theo <- dist(stats::ppoints(length(s)))
+      sq <- stats::quantile(s, c(0.25, 0.75), names = FALSE)
+      tq <- dist(c(0.25, 0.75))
+      slope <- diff(sq) / diff(tq)
+      intercept <- sq[1] - slope * tq[1]
+      xr <- range(theo)
+      data.frame(x = xr, y = intercept + slope * xr)
+    },
+    "{.fn mark_qq_line} needs at least 2 finite sample values."
+  )
 }
 
 # A dot plot: bin x into equal-width bins and stack one dot per observation
@@ -1005,36 +991,24 @@ NULL
   segments <- L$stat_params$segments %||% 51L
   x <- as.numeric(L$values$x)
   y <- as.numeric(L$values$y)
-  grp <- .layer_group(L)
-  g <- .stat_groups(grp, length(x))
-  glevs <- g$levels
-  gnames <- names(g$groups)
-  parts <- lapply(seq_along(gnames), function(k) {
-    gn <- gnames[[k]]
-    i <- g$groups[[gn]]
-    xi <- x[i]
-    yi <- y[i]
-    ok <- is.finite(xi) & is.finite(yi)
-    xi <- xi[ok]
-    yi <- yi[ok]
-    if (length(xi) < 3) {
-      cli::cli_warn(
-        "Skipping {.field {gn}}: {.fn mark_ellipse} needs at least 3 points."
-      )
-      return(NULL)
-    }
-    pts <- .ellipse_points(xi, yi, type, level, segments)
-    df <- data.frame(x = pts[, 1], y = pts[, 2], .piece = k)
-    if (!is.null(grp)) {
-      df$group <- factor(gn, levels = glevs)
-    }
-    df
-  })
-  parts <- parts[!vapply(parts, is.null, logical(1))]
-  if (!length(parts)) {
-    cli::cli_abort("{.fn mark_ellipse} needs at least 3 points to fit.")
-  }
-  do.call(rbind, parts)
+  .per_group(
+    L,
+    length(x),
+    function(idx, gn, grouped, k) {
+      f <- .finite_xy(x[idx], y[idx])
+      xi <- f$x
+      yi <- f$y
+      if (length(xi) < 3) {
+        cli::cli_warn(
+          "Skipping {.field {gn}}: {.fn mark_ellipse} needs at least 3 points."
+        )
+        return(NULL)
+      }
+      pts <- .ellipse_points(xi, yi, type, level, segments)
+      data.frame(x = pts[, 1], y = pts[, 2], .piece = k)
+    },
+    "{.fn mark_ellipse} needs at least 3 points to fit."
+  )
 }
 
 # Per-group convex hull. Emits the hull vertices (counter-clockwise) with a
@@ -1043,45 +1017,33 @@ NULL
   .need_xy(L, "{.fn mark_hull}")
   x <- as.numeric(L$values$x)
   y <- as.numeric(L$values$y)
-  grp <- .layer_group(L)
-  g <- .stat_groups(grp, length(x))
-  glevs <- g$levels
-  gnames <- names(g$groups)
-  parts <- lapply(seq_along(gnames), function(k) {
-    gn <- gnames[[k]]
-    i <- g$groups[[gn]]
-    xi <- x[i]
-    yi <- y[i]
-    ok <- is.finite(xi) & is.finite(yi)
-    xi <- xi[ok]
-    yi <- yi[ok]
-    if (length(xi) < 3) {
-      cli::cli_warn(
-        "Skipping {.field {gn}}: {.fn mark_hull} needs at least 3 points."
-      )
-      return(NULL)
-    }
-    h <- grDevices::chull(xi, yi)
-    hx <- xi[h]
-    hy <- yi[h]
-    # `expand` grows the hull outward from its centroid so it encloses the node
-    # markers (whose centres the raw hull passes through). 0 = the tight hull.
-    expand <- L$stat_params$expand %||% 0
-    if (expand != 0) {
-      cx <- mean(hx)
-      cy <- mean(hy)
-      hx <- cx + (hx - cx) * (1 + expand)
-      hy <- cy + (hy - cy) * (1 + expand)
-    }
-    df <- data.frame(x = hx, y = hy, .piece = k)
-    if (!is.null(grp)) {
-      df$group <- factor(gn, levels = glevs)
-    }
-    df
-  })
-  parts <- parts[!vapply(parts, is.null, logical(1))]
-  if (!length(parts)) {
-    cli::cli_abort("{.fn mark_hull} needs at least 3 points.")
-  }
-  do.call(rbind, parts)
+  expand <- L$stat_params$expand %||% 0
+  .per_group(
+    L,
+    length(x),
+    function(idx, gn, grouped, k) {
+      f <- .finite_xy(x[idx], y[idx])
+      xi <- f$x
+      yi <- f$y
+      if (length(xi) < 3) {
+        cli::cli_warn(
+          "Skipping {.field {gn}}: {.fn mark_hull} needs at least 3 points."
+        )
+        return(NULL)
+      }
+      h <- grDevices::chull(xi, yi)
+      hx <- xi[h]
+      hy <- yi[h]
+      # `expand` grows the hull outward from its centroid so it encloses the node
+      # markers (whose centres the raw hull passes through). 0 = the tight hull.
+      if (expand != 0) {
+        cx <- mean(hx)
+        cy <- mean(hy)
+        hx <- cx + (hx - cx) * (1 + expand)
+        hy <- cy + (hy - cy) * (1 + expand)
+      }
+      data.frame(x = hx, y = hy, .piece = k)
+    },
+    "{.fn mark_hull} needs at least 3 points."
+  )
 }
