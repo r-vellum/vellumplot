@@ -199,13 +199,26 @@ classic *bracket* (siblings share a bar at the parent's level):
 #| eval: !expr have_net
 hc <- hclust(dist(USArrests))
 vgraph(hc, layout = "dendrogram") |>
-  mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v") |>
-  mark_node_text(label = label, size = 2, dist = 1)
+  mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v")
 ```
 
-`vdendrogram()` is the one-line preset for that -- bracket edges and leaf labels,
-`direction` to orient it, and `k` to cut the tree and colour the clusters
-(branches above the cut stay neutral):
+Add labels with `mark_text()`, which controls `angle` and justification -- for a
+top-down tree the leaf labels read vertically, hanging below their leaves (merge
+nodes carry a blank label, so only the leaves show):
+
+```{r}
+#| eval: !expr have_net
+vgraph(hc, layout = "dendrogram") |>
+  mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v") |>
+  mark_text(
+    x = x, y = y, label = label, size = 1.6,
+    angle = 90, hjust = "right", nudge_y = -1.5
+  )
+```
+
+`vdendrogram()` is the one-line preset for all of that -- bracket edges and
+placed leaf labels, `direction` to orient it, and `k` to cut the tree and colour
+the clusters (branches above the cut stay neutral):
 
 ```{r}
 #| eval: !expr have_net
