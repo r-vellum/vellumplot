@@ -153,7 +153,7 @@ NULL
   # resolved theme `rt` as a per-plot transport, but they are NOT theme members --
   # they come from the spec, not from theme(), so they bypass the theme tree
   # (absent from .DRAWN_LEAVES / .SETTINGS_DEFAULTS). The contract: reserved keys
-  # carry a leading dot and are documented here + in _docs/DESIGN.md 3.10, so a
+  # carry a leading dot and are documented here, so a
   # drawer reading one is never confused with a real theme leaf. Read by the guide
   # drawers in compile-guides.R.
   #

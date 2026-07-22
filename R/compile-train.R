@@ -1165,7 +1165,7 @@ NULL
 # scale. Each edge trainer reuses the matching node trainer's body, only pointing
 # it at the edge channel and the `scale_edge_*()` scale key. (`edge_width`, the
 # one edge scale that shipped first, already works this way via the `linewidth`
-# channel; these three complete the set -- see _docs/GAPS-NETWORKS.md N1.)
+# channel; these three complete the set.)
 
 .train_edge_colour <- function(spec, resolved) {
   .train_colour(

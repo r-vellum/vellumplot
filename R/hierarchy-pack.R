@@ -316,7 +316,9 @@
       }
     }
   }
-  stop(".enc_extend_basis: no enclosing basis found")
+  cli::cli_abort(
+    ".enc_extend_basis: no enclosing basis found (internal error)."
+  )
 }
 
 # Smallest circle enclosing the input circles. Returns list(x, y, r).

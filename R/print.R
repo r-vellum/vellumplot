@@ -81,8 +81,12 @@ NULL
 # Print a readable tree: data dims, page size, layers, declared scales.
 .print_plotspec <- function(x, ...) {
   d <- x@data
+  # A spec can carry no data frame (e.g. a graph spec built differently);
+  # report 0x0 rather than let nrow(NULL)/ncol(NULL) mangle the summary line.
+  nr <- nrow(d) %||% 0L
+  nc <- ncol(d) %||% 0L
   cli::cli_text(
-    "{.cls PlotSpec} {.field {nrow(d)}}x{.field {ncol(d)}} ({ncol(d)} column{?s}), page {x@width}x{x@height} in"
+    "{.cls PlotSpec} {.field {nr}}x{.field {nc}} ({nc} column{?s}), page {x@width}x{x@height} in"
   )
   if (length(x@layers)) {
     cli::cli_h3("layers")

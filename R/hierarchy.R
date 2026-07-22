@@ -65,15 +65,15 @@ NULL
   while (length(queue)) {
     i <- queue[1L]
     queue <- queue[-1L]
-    for (c in children[[i]]) {
-      if (!is.na(depth[c])) {
+    for (kid in children[[i]]) {
+      if (!is.na(depth[kid])) {
         cli::cli_abort(
           "{.fn vhierarchy} {.arg parent} relations must form a tree (no cycles).",
           call = call
         )
       }
-      depth[c] <- depth[i] + 1L
-      queue <- c(queue, c)
+      depth[kid] <- depth[i] + 1L
+      queue <- c(queue, kid)
     }
   }
   if (anyNA(depth)) {
@@ -134,12 +134,12 @@ NULL
     span <- f1[i] - f0[i]
     tot <- sum(val[ch])
     cum <- f0[i]
-    for (c in ch) {
-      w <- if (tot > 0) val[c] / tot * span else span / length(ch)
-      f0[c] <<- cum
-      f1[c] <<- cum + w
+    for (kid in ch) {
+      w <- if (tot > 0) val[kid] / tot * span else span / length(ch)
+      f0[kid] <<- cum
+      f1[kid] <<- cum + w
       cum <- cum + w
-      assign_frac(c)
+      assign_frac(kid)
     }
   }
   assign_frac(root)
@@ -271,23 +271,23 @@ NULL
     }
     row <- areas[i:j]
     s <- sum(row)
-    t <- s / w # row thickness along the longer side
+    thick <- s / w # row thickness along the longer side
     if ((x1 - x0) >= (y1 - y0)) {
       cy <- y0
       for (k in seq_along(row)) {
-        ch <- row[k] / t
-        out[i + k - 1L, ] <- c(x0, cy, x0 + t, cy + ch)
+        ch <- row[k] / thick
+        out[i + k - 1L, ] <- c(x0, cy, x0 + thick, cy + ch)
         cy <- cy + ch
       }
-      x0 <- x0 + t
+      x0 <- x0 + thick
     } else {
       cx <- x0
       for (k in seq_along(row)) {
-        cw <- row[k] / t
-        out[i + k - 1L, ] <- c(cx, y0, cx + cw, y0 + t)
+        cw <- row[k] / thick
+        out[i + k - 1L, ] <- c(cx, y0, cx + cw, y0 + thick)
         cx <- cx + cw
       }
-      y0 <- y0 + t
+      y0 <- y0 + thick
     }
     i <- j + 1L
   }

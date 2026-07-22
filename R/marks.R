@@ -1092,7 +1092,6 @@ mark_step <- function(
 #'   and around each anchor point during repulsion.
 #' @param min_segment_length Shortest leader line (mm) worth drawing; a label
 #'   that barely moved gets none.
-#' @param max_overlaps Reserved for a future overlap cap (currently unused).
 #' @param seed Integer seed making the repel layout reproducible (the global RNG
 #'   stream is restored afterwards).
 #' @return The modified [PlotSpec].
@@ -1116,7 +1115,6 @@ mark_text <- function(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   blend = NULL,
   data = NULL
@@ -1144,7 +1142,6 @@ mark_text <- function(
         box_padding,
         point_padding,
         min_segment_length,
-        max_overlaps,
         seed
       )
     ),
@@ -1171,7 +1168,6 @@ mark_label <- function(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   blend = NULL,
   sketch = NULL,
@@ -1201,7 +1197,6 @@ mark_label <- function(
         box_padding,
         point_padding,
         min_segment_length,
-        max_overlaps,
         seed
       )
     ),
@@ -1878,7 +1873,7 @@ mark_segment <- function(
 
 # Move a graph edge's colour / alpha / line-type encodings onto dedicated edge
 # channels (`edge_color`/`edge_alpha`/`edge_linetype`) so they train and legend
-# independently of the node scales (see _docs/GAPS-NETWORKS.md N1a). Position
+# independently of the node scales. Position
 # channels (x/y/xend/yend) and edge width (`linewidth` -> the `edge_width` scale)
 # are left untouched; `colour`/`fill` both fold into `edge_color`.
 .EDGE_AES_MAP <- c(
@@ -2000,9 +1995,9 @@ mark_segment <- function(
 #'   idiomatic "label just the hubs" filter. `NULL` (default) labels every vertex.
 #' @param repel For `mark_node_text()`, `TRUE` to move overlapping labels apart
 #'   with a force-directed layout (ggrepel-style), drawing a thin leader line back
-#'   to each vertex. `box_padding`, `point_padding`, `min_segment_length`,
-#'   `max_overlaps`, and `seed` tune it exactly as in [mark_text()].
-#' @param box_padding,point_padding,min_segment_length,max_overlaps,seed Repel
+#'   to each vertex. `box_padding`, `point_padding`, `min_segment_length`, and
+#'   `seed` tune it exactly as in [mark_text()].
+#' @param box_padding,point_padding,min_segment_length,seed Repel
 #'   tuning for `mark_node_text(repel = TRUE)`; see [mark_text()].
 #' @param cols For `mark_node_pie()`, the compositional columns (a character
 #'   vector of node-table column names, at least two) whose values size each
@@ -2144,7 +2139,6 @@ mark_node_text <- function(
   box_padding = 1,
   point_padding = 1,
   min_segment_length = 2,
-  max_overlaps = 10,
   seed = NULL,
   effects = list(),
   blend = NULL,
@@ -2204,7 +2198,6 @@ mark_node_text <- function(
         box_padding,
         point_padding,
         min_segment_length,
-        max_overlaps,
         seed
       )
     ),

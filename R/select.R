@@ -458,7 +458,7 @@ interaction_model.default <- function(x) {
 .validate_parts <- function(parts) {
   defined <- vapply(parts$selections, function(s) s$name, character(1))
   refs <- c(
-    vapply(parts$conditions, function(c) c$selection, character(1)),
+    vapply(parts$conditions, function(cnd) cnd$selection, character(1)),
     vapply(parts$filters, function(f) f$selection, character(1)),
     vapply(parts$binds, function(b) b$selection, character(1))
   )

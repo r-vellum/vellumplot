@@ -3279,7 +3279,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # in the plot-level block.
   cond_tags <- if (length(cond)) {
     paste0(
-      vapply(cond, function(c) c$selection, character(1)),
+      vapply(cond, function(cnd) cnd$selection, character(1)),
       ":",
       names(cond)
     )
@@ -3287,8 +3287,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     NULL
   }
   cond_rowvals <- if (length(cond)) {
-    cv <- lapply(cond, function(c) {
-      f <- c$if_false
+    cv <- lapply(cond, function(cnd) {
+      f <- cnd$if_false
       if (!is.null(f) && length(f) > 1L) f else NULL # per-row only
     })
     if (any(lengths(cv) > 0L)) stats::setNames(cv, cond_tags) else NULL

@@ -286,6 +286,7 @@ echo <- function(
     )
   }
   is_text <- mark %in% .TEXT_EFFECT_MARKS
+  ok <- .effect_marks() # loop-invariant: the marks any non-text effect applies to
   for (e in effects) {
     if (!S7::S7_inherits(e, Effect)) {
       cli::cli_abort(
@@ -307,7 +308,6 @@ echo <- function(
         )
       }
     } else {
-      ok <- .effect_marks()
       if (!mark %in% ok) {
         cli::cli_abort(
           c(
