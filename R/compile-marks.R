@@ -2115,6 +2115,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # and the ribbon points share vellum's y-up frame, so arcs and ribbons align.
 .CHORD_RIBBON_ALPHA <- 0.6
 .CHORD_LABEL_FS <- 8
+.CHORD_GAP <- 0.06 # radial inset of a ribbon's target end for `direction = "gap"`
+
+# Append an alpha byte to a `#RRGGBB` colour, for per-stop gradient opacity.
+.chord_rgba <- function(hex, a) {
+  paste0(hex, sprintf("%02X", pmin(255L, pmax(0L, as.integer(round(a * 255))))))
+}
 
 .emit_chord <- function(scene, L, scales) {
   ch <- L$chord
@@ -2124,12 +2130,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     return(scene)
   }
   r_in <- .CHORD_R_IN
+  dir <- L$params$direction %||% "gradient"
+  grad <- dir %in% c("gradient", "both")
+  # "gap" pulls the target end short of the ring, leaving a directional gap.
+  r_tgt <- if (dir %in% c("gap", "both")) r_in - .CHORD_GAP else r_in
 
   # Ribbons: a closed polygon bounded by the source sub-arc, a Bezier through the
-  # centre to the target sub-arc, the target sub-arc, and a Bezier back.
+  # centre to the target sub-arc, the target sub-arc, and a Bezier back. The
+  # source end sits on the ring; the target end may be inset (gap) and/or faded
+  # (gradient), so direction reads as solid-source -> faint/short-target.
   for (i in seq_len(nrow(rib))) {
     s <- .chord_arc(r_in, rib$sa0[i], rib$sa1[i])
-    t <- .chord_arc(r_in, rib$ta0[i], rib$ta1[i])
+    t <- .chord_arc(r_tgt, rib$ta0[i], rib$ta1[i])
     ns <- length(s$x)
     nt <- length(t$x)
     b1 <- .chord_bezier(s$x[ns], s$y[ns], t$x[1], t$y[1])
@@ -2137,16 +2149,32 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     px <- c(s$x, b1$x, t$x, b2$x)
     py <- c(s$y, b1$y, t$y, b2$y)
     xy <- .xy_path(scales, px, py)
+    if (grad) {
+      # Alpha fade along the source->target axis (opaque source, faint target).
+      sm <- (rib$sa0[i] + rib$sa1[i]) / 2
+      tm <- (rib$ta0[i] + rib$ta1[i]) / 2
+      fill <- vellum::linear_gradient(
+        c(
+          .chord_rgba(rib$colour[i], 0.75),
+          .chord_rgba(rib$colour[i], 0.08)
+        ),
+        x1 = scales$x$map(r_in * cos(sm)),
+        y1 = scales$y$map(r_in * sin(sm)),
+        x2 = scales$x$map(r_tgt * cos(tm)),
+        y2 = scales$y$map(r_tgt * sin(tm)),
+        units = "native"
+      )
+      alpha <- 1
+    } else {
+      fill <- rib$colour[i]
+      alpha <- .CHORD_RIBBON_ALPHA
+    }
     scene <- .draw(
       scene,
       vellum::polygon_grob(
         xy$x,
         xy$y,
-        gp = vellum::vl_gpar(
-          fill = rib$colour[i],
-          col = NA,
-          alpha = .CHORD_RIBBON_ALPHA
-        )
+        gp = vellum::vl_gpar(fill = fill, col = NA, alpha = alpha)
       )
     )
   }
