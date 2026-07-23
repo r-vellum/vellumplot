@@ -157,6 +157,17 @@ test_that("direction = gradient/both adds a fade; gap/none do not", {
   expect_false(faded("none"))
 })
 
+# ---- label room (no clipping) ----------------------------------------------
+
+test_that("panel extent widens for long labels so they do not clip", {
+  short <- vellumplot:::.chord_extent(c("A", "B"), TRUE)
+  long <- vellumplot:::.chord_extent(c("Borussia Moenchengladbach", "X"), TRUE)
+  expect_gt(long, short) # longer labels reserve more room outside the ring
+  # labels off: just the ring plus a touch (no label margin)
+  off <- vellumplot:::.chord_extent(c("Borussia Moenchengladbach"), FALSE)
+  expect_lt(off, short)
+})
+
 # ---- rendering -------------------------------------------------------------
 
 test_that("chord renders (data frame, matrix, sorted, target-coloured)", {
