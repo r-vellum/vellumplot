@@ -178,10 +178,10 @@
 </div>
 </div>
 </div>
-<p>Flows are directed: each node’s arc splits into an outgoing block then an incoming block, so <code>a -&gt; b</code> and <code>b -&gt; a</code> are distinct ribbons and a self-flow loops from a node’s out-block to its own in-block. Sectors take a qualitative palette; ribbons inherit their source node’s colour (<code>link_color = "target"</code> to colour by target instead). <code>sort = "value"</code> orders sectors by weight, and <code>gap</code> sets the spacing between them:</p>
+<p>Flows are directed: each node’s arc splits into an outgoing block then an incoming block, so <code>a -&gt; b</code> and <code>b -&gt; a</code> are distinct ribbons and a self-flow loops from a node’s out-block to its own in-block. To make direction legible, <code>direction</code> fades each ribbon from opaque at its source to faint at its target (<code>"gradient"</code>, the default), or stops it short of the target sector (<code>"gap"</code>), or <code>"both"</code>. Sectors take a qualitative palette; ribbons inherit their source node’s colour (<code>link_color = "target"</code> to colour by target instead). <code>sort = "value"</code> orders sectors by weight, and <code>gap</code> sets the spacing between them:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vchord.html">vchord</a></span><span class="op">(</span><span class="va">flows</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">value</span>, sort <span class="op">=</span> <span class="st">"value"</span>, link_color <span class="op">=</span> <span class="st">"target"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vchord.html">vchord</a></span><span class="op">(</span><span class="va">flows</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">value</span>, sort <span class="op">=</span> <span class="st">"value"</span>, direction <span class="op">=</span> <span class="st">"both"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>

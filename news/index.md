@@ -8,8 +8,10 @@
   matrix) onto a circle – one arc per node, one ribbon per flow through
   the centre. Directed: each node’s arc splits into an outgoing then an
   incoming block, so `a -> b` and `b -> a` are distinct ribbons and
-  self-flows loop within a node’s sector. `sort`, `gap`, and
-  `link_color` echo
+  self-flows loop within a node’s sector. `direction` shows a ribbon’s
+  direction by fading it from source to target (`"gradient"`, default),
+  stopping it short of the target (`"gap"`), or `"both"`. `sort`, `gap`,
+  and `link_color` echo
   [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md);
   [`mark_chord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md)
   is the exported layer.

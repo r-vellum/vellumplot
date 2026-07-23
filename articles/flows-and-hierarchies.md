@@ -103,14 +103,17 @@ vchord(flows, from, to, value)
 
 Flows are directed: each node’s arc splits into an outgoing block then
 an incoming block, so `a -> b` and `b -> a` are distinct ribbons and a
-self-flow loops from a node’s out-block to its own in-block. Sectors
-take a qualitative palette; ribbons inherit their source node’s colour
+self-flow loops from a node’s out-block to its own in-block. To make
+direction legible, `direction` fades each ribbon from opaque at its
+source to faint at its target (`"gradient"`, the default), or stops it
+short of the target sector (`"gap"`), or `"both"`. Sectors take a
+qualitative palette; ribbons inherit their source node’s colour
 (`link_color = "target"` to colour by target instead). `sort = "value"`
 orders sectors by weight, and `gap` sets the spacing between them:
 
 ``` r
 
-vchord(flows, from, to, value, sort = "value", link_color = "target")
+vchord(flows, from, to, value, sort = "value", direction = "both")
 ```
 
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png)

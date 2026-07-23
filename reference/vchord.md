@@ -24,6 +24,7 @@ vchord(
   gap = 0.02,
   sort = c("input", "value"),
   link_color = c("source", "target"),
+  direction = c("gradient", "gap", "both", "none"),
   label = TRUE,
   width = 6,
   height = 6,
@@ -38,6 +39,7 @@ mark_chord(
   gap = 0.02,
   sort = c("input", "value"),
   link_color = c("source", "target"),
+  direction = c("gradient", "gap", "both", "none"),
   label = TRUE
 )
 ```
@@ -67,6 +69,13 @@ mark_chord(
 - link_color:
 
   Colour ribbons by their `"source"` (default) or `"target"` node.
+
+- direction:
+
+  How to show a ribbon's direction: `"gradient"` (default, fade from
+  opaque at the source to faint at the target), `"gap"` (stop the ribbon
+  short of the target sector, leaving a small gap), `"both"`, or
+  `"none"`.
 
 - label:
 
