@@ -134,6 +134,30 @@ NULL
     n <- nrow(hierarchy)
   }
 
+  # A chord layer wraps a flow list onto a circle: sectors + ribbons computed
+  # from the `from`/`to`/`value` channels (see `.chord_layout`), drawn in the
+  # aspect-locked square panel. Synthesise the centred [-1, 1] extent.
+  chord <- NULL
+  if (identical(layer@mark, "chord")) {
+    if (is.null(values$from) || is.null(values$to) || is.null(values$value)) {
+      cli::cli_abort(
+        "{.fn vchord} needs {.arg from}, {.arg to}, and {.arg value}."
+      )
+    }
+    chord <- .chord_layout(
+      values$from,
+      values$to,
+      values$value,
+      gap = layer@params$gap %||% 0.02,
+      sort = layer@params$sort %||% "input",
+      link_color = layer@params$link_color %||% "source"
+    )
+    values$x <- c(-1, 1)
+    values$y <- c(-1, 1)
+    types$x <- types$y <- "quantitative"
+    n <- nrow(chord$sectors)
+  }
+
   # A datashade layer aggregates its (potentially hundreds of millions of) points
   # into a raster in one Rust pass. Keep the full coordinate vectors in `ds` for
   # the emitter, but hand scale training only their 2-value range via `values`:
@@ -195,6 +219,7 @@ NULL
     sankey = sankey,
     hierarchy = hierarchy,
     hier_fill_mode = hier_fill_mode,
+    chord = chord,
     ds = ds,
     graph_identity = graph_identity,
     stat = layer@stat,

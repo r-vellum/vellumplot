@@ -116,12 +116,12 @@ NULL
   ) {
     if (length(spec@layers) != 1L) {
       cli::cli_abort(
-        "A {.field sankey}/{.field hierarchy} plot takes no other layers."
+        "A layout plot (sankey/hierarchy/chord) takes no other layers."
       )
     }
     if (!is.null(spec@facet)) {
       cli::cli_abort(
-        "A {.field sankey}/{.field hierarchy} plot cannot be faceted."
+        "A layout plot (sankey/hierarchy/chord) cannot be faceted."
       )
     }
   }

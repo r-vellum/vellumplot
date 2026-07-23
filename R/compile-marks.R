@@ -2109,6 +2109,86 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# A chord diagram (`L$chord`, sectors + ribbons in native circle coords centred
+# at the origin). Ribbons are drawn first (filled Bezier polygons, under), then
+# the sector band (one batched sector grob), then the node labels. `sector_grob`
+# and the ribbon points share vellum's y-up frame, so arcs and ribbons align.
+.CHORD_RIBBON_ALPHA <- 0.6
+.CHORD_LABEL_FS <- 8
+
+.emit_chord <- function(scene, L, scales) {
+  ch <- L$chord
+  sec <- ch$sectors
+  rib <- ch$ribbons
+  if (!nrow(sec)) {
+    return(scene)
+  }
+  r_in <- .CHORD_R_IN
+
+  # Ribbons: a closed polygon bounded by the source sub-arc, a Bezier through the
+  # centre to the target sub-arc, the target sub-arc, and a Bezier back.
+  for (i in seq_len(nrow(rib))) {
+    s <- .chord_arc(r_in, rib$sa0[i], rib$sa1[i])
+    t <- .chord_arc(r_in, rib$ta0[i], rib$ta1[i])
+    ns <- length(s$x)
+    nt <- length(t$x)
+    b1 <- .chord_bezier(s$x[ns], s$y[ns], t$x[1], t$y[1])
+    b2 <- .chord_bezier(t$x[nt], t$y[nt], s$x[1], s$y[1])
+    px <- c(s$x, b1$x, t$x, b2$x)
+    py <- c(s$y, b1$y, t$y, b2$y)
+    xy <- .xy_path(scales, px, py)
+    scene <- .draw(
+      scene,
+      vellum::polygon_grob(
+        xy$x,
+        xy$y,
+        gp = vellum::vl_gpar(
+          fill = rib$colour[i],
+          col = NA,
+          alpha = .CHORD_RIBBON_ALPHA
+        )
+      )
+    )
+  }
+
+  # Sector band: one batched sector grob (centre at native origin).
+  n <- nrow(sec)
+  scene <- .draw(
+    scene,
+    vellum::sector_grob(
+      x = vellum::vl_unit(rep(0, n), "native"),
+      y = vellum::vl_unit(rep(0, n), "native"),
+      r0 = vellum::vl_unit(rep(r_in, n), "native"),
+      r1 = vellum::vl_unit(rep(.CHORD_R_OUT, n), "native"),
+      theta0 = sec$theta0,
+      theta1 = sec$theta1,
+      fill = sec$colour,
+      gp = vellum::vl_gpar(col = "white", lwd = 0.5)
+    )
+  )
+
+  # Node labels just outside the ring, radial and kept upright.
+  if (isTRUE(L$params$label)) {
+    fs <- .CHORD_LABEL_FS
+    rl <- .CHORD_R_OUT + 0.03
+    mid <- (sec$theta0 + sec$theta1) / 2
+    for (i in seq_len(n)) {
+      scene <- .draw(
+        scene,
+        vellum::text_grob(
+          sec$node[i],
+          vellum::vl_unit(rl * cos(mid[i]), "native"),
+          vellum::vl_unit(rl * sin(mid[i]), "native"),
+          just = c("centre", "centre"),
+          rot = .upright_rot(mid[i], "radius"),
+          gp = vellum::vl_gpar(fontsize = fs, col = "black")
+        )
+      )
+    }
+  }
+  scene
+}
+
 # A group summary region (ellipse / convex hull): one closed polygon per group
 # `.piece`. Stroked by the `color` aesthetic; filled only when a `fill` is
 # mapped or set (so the ggplot2 default -- an unfilled boundary -- holds). The
@@ -3125,6 +3205,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     hull = .emit_region(scene, L, scales),
     sankey = .emit_sankey(scene, L, scales),
     hierarchy = .emit_hierarchy(scene, L, scales),
+    chord = .emit_chord(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")
   )
 }
