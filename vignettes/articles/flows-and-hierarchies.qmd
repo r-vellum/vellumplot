@@ -71,6 +71,33 @@ vsankey(flows, from, to, value, label = FALSE)
 layer to an axis-free, free-aspect panel; `mark_sankey()` is exported too, for
 building a flow layer on a plot you have set up yourself.
 
+## Chord diagrams
+
+`vchord()` wraps the same kind of weighted flow onto a circle: one arc (*sector*)
+per node, sized by the node's total incident weight, and one ribbon per flow
+joining a slice of the source sector to a slice of the target sector through the
+centre. Input is a flow list (`from`, `to`, `value`) or a square flow matrix.
+
+```{r}
+flows <- data.frame(
+  from  = c("Coal", "Gas", "Grid", "Grid", "Solar", "Grid"),
+  to    = c("Grid", "Grid", "Homes", "Industry", "Grid", "Grid"),
+  value = c(30, 20, 34, 26, 12, 6)
+)
+vchord(flows, from, to, value)
+```
+
+Flows are directed: each node's arc splits into an outgoing block then an
+incoming block, so `a -> b` and `b -> a` are distinct ribbons and a self-flow
+loops from a node's out-block to its own in-block. Sectors take a qualitative
+palette; ribbons inherit their source node's colour (`link_color = "target"` to
+colour by target instead). `sort = "value"` orders sectors by weight, and `gap`
+sets the spacing between them:
+
+```{r}
+vchord(flows, from, to, value, sort = "value", link_color = "target")
+```
+
 ## Hierarchy diagrams
 
 `vhierarchy()` draws a tree as a space-filling diagram. All four geometries take
@@ -138,7 +165,7 @@ h$owner <- c(NA, NA, NA, "Sam", "Sam", "Lee", "Lee")
 vhierarchy(h, id, parent, value, fill = owner, type = "circlepack")
 ```
 
-Both `vsankey()` and `vhierarchy()` follow the `vgraph()` pattern: the layout is
+`vsankey()`, `vchord()`, and `vhierarchy()` all follow the `vgraph()` pattern: the layout is
 computed in R and drawn through vellum primitives, so they are ordinary specs you
 can render, print, or (in future) make interactive through the same machinery as
 every other plot.

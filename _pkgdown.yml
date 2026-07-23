@@ -140,6 +140,7 @@ reference:
   - vgraph
   - vdendrogram
   - vsankey
+  - vchord
   - vhierarchy
   - render_plot
   - PlotSpec

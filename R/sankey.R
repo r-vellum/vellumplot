@@ -18,7 +18,7 @@ NULL
 
 # Layout marks (whole-plot types with a global R-side layout in an axis-free
 # panel): they take no other layers and cannot be faceted (guarded in the seam).
-.LAYOUT_MARKS <- c("sankey", "hierarchy")
+.LAYOUT_MARKS <- c("sankey", "hierarchy", "chord")
 
 # Geometry constants (native [0, 1] units).
 .SANKEY_NODE_WIDTH <- 0.04
