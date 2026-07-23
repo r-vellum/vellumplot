@@ -13,6 +13,7 @@ vchord(
   gap = 0.02,
   sort = c("input", "value"),
   link_color = c("source", "target"),
+  direction = c("gradient", "gap", "both", "none"),
   label = TRUE,
   width = 6,
   height = 6,
@@ -27,6 +28,7 @@ mark_chord(
   gap = 0.02,
   sort = c("input", "value"),
   link_color = c("source", "target"),
+  direction = c("gradient", "gap", "both", "none"),
   label = TRUE
 )
 }
@@ -45,6 +47,11 @@ node, target node, and flow weight. Omit for the matrix form.}
 
 \item{link_color}{Colour ribbons by their \code{"source"} (default) or \code{"target"}
 node.}
+
+\item{direction}{How to show a ribbon's direction: \code{"gradient"} (default,
+fade from opaque at the source to faint at the target), \code{"gap"} (stop the
+ribbon short of the target sector, leaving a small gap), \code{"both"}, or
+\code{"none"}.}
 
 \item{label}{Label each sector with its node name? Default \code{TRUE}.}
 

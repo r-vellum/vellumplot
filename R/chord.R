@@ -191,6 +191,10 @@ NULL
 #'   `"value"` (largest weight first).
 #' @param link_color Colour ribbons by their `"source"` (default) or `"target"`
 #'   node.
+#' @param direction How to show a ribbon's direction: `"gradient"` (default,
+#'   fade from opaque at the source to faint at the target), `"gap"` (stop the
+#'   ribbon short of the target sector, leaving a small gap), `"both"`, or
+#'   `"none"`.
 #' @param label Label each sector with its node name? Default `TRUE`.
 #' @param width,height,dpi Page size (inches) and resolution.
 #' @return A [PlotSpec] (`vchord()`) or the modified plot (`mark_chord()`).
@@ -210,6 +214,7 @@ vchord <- function(
   gap = 0.02,
   sort = c("input", "value"),
   link_color = c("source", "target"),
+  direction = c("gradient", "gap", "both", "none"),
   label = TRUE,
   width = 6,
   height = 6,
@@ -217,6 +222,7 @@ vchord <- function(
 ) {
   sort <- match.arg(sort)
   link_color <- match.arg(link_color)
+  direction <- match.arg(direction)
   .check_dim(width, "width")
   .check_dim(height, "height")
   .check_dpi(dpi)
@@ -249,6 +255,7 @@ vchord <- function(
     gap = gap,
     sort = sort,
     link_color = link_color,
+    direction = direction,
     label = label
   )
 }
@@ -264,6 +271,7 @@ mark_chord <- function(
   gap = 0.02,
   sort = c("input", "value"),
   link_color = c("source", "target"),
+  direction = c("gradient", "gap", "both", "none"),
   label = TRUE
 ) {
   .check_plot(plot)
@@ -275,6 +283,7 @@ mark_chord <- function(
       gap = as.numeric(gap),
       sort = match.arg(sort),
       link_color = match.arg(link_color),
+      direction = match.arg(direction),
       label = isTRUE(label)
     )
   )

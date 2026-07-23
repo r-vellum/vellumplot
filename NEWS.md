@@ -4,8 +4,10 @@
   list or a square flow matrix) onto a circle -- one arc per node, one ribbon per
   flow through the centre. Directed: each node's arc splits into an outgoing then
   an incoming block, so `a -> b` and `b -> a` are distinct ribbons and self-flows
-  loop within a node's sector. `sort`, `gap`, and `link_color` echo `vsankey()`;
-  `mark_chord()` is the exported layer.
+  loop within a node's sector. `direction` shows a ribbon's direction by fading
+  it from source to target (`"gradient"`, default), stopping it short of the
+  target (`"gap"`), or `"both"`. `sort`, `gap`, and `link_color` echo
+  `vsankey()`; `mark_chord()` is the exported layer.
 
 * **Removed the unused `max_overlaps` argument** from `mark_text()`,
   `mark_label()`, and `mark_node_text()`. It was reserved for a never-implemented

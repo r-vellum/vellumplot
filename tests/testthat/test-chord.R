@@ -142,6 +142,21 @@ test_that("sector labels are anchored outward (justified, not centred on the rin
   expect_false(any(anch == "middle")) # every label justified away from the ring
 })
 
+# ---- direction cue ---------------------------------------------------------
+
+test_that("direction = gradient/both adds a fade; gap/none do not", {
+  faded <- function(dir) {
+    svg <- vellum::scene_svg(vellum::as_vellum_scene(
+      vchord(flows, from, to, value, direction = dir)
+    ))
+    grepl("stop-opacity", svg) # a linear-gradient fill emits per-stop opacity
+  }
+  expect_true(faded("gradient"))
+  expect_true(faded("both"))
+  expect_false(faded("gap"))
+  expect_false(faded("none"))
+})
+
 # ---- rendering -------------------------------------------------------------
 
 test_that("chord renders (data frame, matrix, sorted, target-coloured)", {
