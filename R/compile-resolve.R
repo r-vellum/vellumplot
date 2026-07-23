@@ -136,7 +136,9 @@ NULL
 
   # A chord layer wraps a flow list onto a circle: sectors + ribbons computed
   # from the `from`/`to`/`value` channels (see `.chord_layout`), drawn in the
-  # aspect-locked square panel. Synthesise the centred [-1, 1] extent.
+  # aspect-locked square panel. The ring is at native radius 1; widen the extent
+  # so the sector labels (which radiate outward past the ring) fit inside the
+  # panel instead of clipping at its edge.
   chord <- NULL
   if (identical(layer@mark, "chord")) {
     if (is.null(values$from) || is.null(values$to) || is.null(values$value)) {
@@ -152,8 +154,12 @@ NULL
       sort = layer@params$sort %||% "input",
       link_color = layer@params$link_color %||% "source"
     )
-    values$x <- c(-1, 1)
-    values$y <- c(-1, 1)
+    ext <- .chord_extent(
+      chord$sectors$node,
+      isTRUE(layer@params$label %||% TRUE)
+    )
+    values$x <- c(-ext, ext)
+    values$y <- c(-ext, ext)
     types$x <- types$y <- "quantitative"
     n <- nrow(chord$sectors)
   }

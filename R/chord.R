@@ -151,6 +151,28 @@ NULL
   list(sectors = sectors, ribbons = ribbons)
 }
 
+# Panel half-extent (native): the ring sits at radius 1, but sector labels
+# radiate outward past it, so reserve room for the longest label or they clip at
+# the panel edge. A label's native width scales with the extent, so solve for the
+# extent that keeps the longest label (starting just past the ring) inside the
+# ~5%-expanded domain. Falls back to the default 6in page when unknown; clamped.
+.chord_extent <- function(labels, has_labels) {
+  base <- .CHORD_R_OUT + 0.06
+  if (!has_labels || !length(labels)) {
+    return(base)
+  }
+  pg <- .mark_ctx$page
+  page_mm <- if (!is.null(pg)) min(pg) * 25.4 else 6 * 25.4
+  lw_mm <- max(
+    vapply(labels, function(s) .mm_tw(s, .CHORD_LABEL_FS), numeric(1)),
+    0
+  )
+  inner <- .CHORD_R_OUT + 0.04 # radius where labels start
+  denom <- 1.05 - 2.1 * lw_mm / page_mm
+  ext <- if (denom > 0.2) 1.06 * inner / denom else 4
+  max(base, min(ext, 4))
+}
+
 # Sample points along a circle arc (radius r) from angle a0 to a1, `nseg`+1 pts.
 .chord_arc <- function(r, a0, a1, nseg = 24L) {
   a <- seq(a0, a1, length.out = nseg + 1L)
