@@ -313,6 +313,9 @@ then render it or write it to a file.
 - [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   : Sankey (flow) diagram
+- [`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md)
+  [`mark_chord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md)
+  : Chord diagram
 - [`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
   [`mark_hierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
   : Hierarchy diagrams: sunburst, icicle, treemap, circle-pack

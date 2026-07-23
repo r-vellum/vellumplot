@@ -80,6 +80,41 @@ layer to an axis-free, free-aspect panel;
 is exported too, for building a flow layer on a plot you have set up
 yourself.
 
+## Chord diagrams
+
+[`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md)
+wraps the same kind of weighted flow onto a circle: one arc (*sector*)
+per node, sized by the node’s total incident weight, and one ribbon per
+flow joining a slice of the source sector to a slice of the target
+sector through the centre. Input is a flow list (`from`, `to`, `value`)
+or a square flow matrix.
+
+``` r
+
+flows <- data.frame(
+  from  = c("Coal", "Gas", "Grid", "Grid", "Solar", "Grid"),
+  to    = c("Grid", "Grid", "Homes", "Industry", "Grid", "Grid"),
+  value = c(30, 20, 34, 26, 12, 6)
+)
+vchord(flows, from, to, value)
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-6-1.png)
+
+Flows are directed: each node’s arc splits into an outgoing block then
+an incoming block, so `a -> b` and `b -> a` are distinct ribbons and a
+self-flow loops from a node’s out-block to its own in-block. Sectors
+take a qualitative palette; ribbons inherit their source node’s colour
+(`link_color = "target"` to colour by target instead). `sort = "value"`
+orders sectors by weight, and `gap` sets the spacing between them:
+
+``` r
+
+vchord(flows, from, to, value, sort = "value", link_color = "target")
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png)
+
 ## Hierarchy diagrams
 
 [`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
@@ -98,7 +133,7 @@ h <- data.frame(
 vhierarchy(h, id, parent, value) # type = "sunburst" (default)
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-6-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-8-1.png)
 
 The root is structural and never drawn; every top-level branch takes a
 distinct hue, and its descendants inherit that hue lightened with depth,
@@ -118,7 +153,7 @@ hole for a ring/donut look.
 vhierarchy(h, id, parent, value, show_values = TRUE, root_label = TRUE)
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-9-1.png)
 
 **Treemap** packs the tree into squarified nested rectangles, and
 **circlepack** into circles enclosed in circles — both read area as
@@ -129,14 +164,14 @@ value:
 vhierarchy(h, id, parent, value, type = "treemap", show_values = TRUE)
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-8-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-10-1.png)
 
 ``` r
 
 vhierarchy(h, id, parent, value, type = "circlepack", show_values = TRUE)
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-8-2.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-10-2.png)
 
 **Icicle** is the rectangular cousin of the sunburst: depth becomes
 adjacent bands and `flow` chooses the direction (`"down"`, `"up"`,
@@ -147,7 +182,7 @@ adjacent bands and `flow` chooses the direction (`"down"`, `"up"`,
 vhierarchy(h, id, parent, value, type = "icicle", flow = "right")
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-9-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-11-1.png)
 
 ### Colour
 
@@ -162,7 +197,7 @@ vhierarchy(h, id, parent, value, type = "treemap", lighten = 0.3) |>
   scale_fill_manual(values = c(tech = "#1b7837", food = "#762a83"))
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-10-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-12-1.png)
 
 Map `fill` to a node column to colour every node by that variable
 instead, with the matching `scale_fill_*()`. The depth fade is dropped,
@@ -174,13 +209,13 @@ h$owner <- c(NA, NA, NA, "Sam", "Sam", "Lee", "Lee")
 vhierarchy(h, id, parent, value, fill = owner, type = "circlepack")
 ```
 
-![](flows-and-hierarchies_files/figure-html/unnamed-chunk-11-1.png)
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-13-1.png)
 
-Both
-[`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
+[`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md),
+[`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md),
 and
 [`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
-follow the
+all follow the
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
 pattern: the layout is computed in R and drawn through vellum
 primitives, so they are ordinary specs you can render, print, or (in

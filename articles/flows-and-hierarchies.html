@@ -160,11 +160,40 @@
 </div>
 </div>
 <p><code><a href="../reference/vsankey.html">vsankey()</a></code> returns an ordinary [PlotSpec], so it renders with <code><a href="../reference/render_plot.html">render_plot()</a></code> / <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> like any other plot. Under the hood it adds a single <code><a href="../reference/vsankey.html">mark_sankey()</a></code> layer to an axis-free, free-aspect panel; <code><a href="../reference/vsankey.html">mark_sankey()</a></code> is exported too, for building a flow layer on a plot you have set up yourself.</p>
+</section><section class="level2"><h2 id="chord-diagrams">Chord diagrams<a class="anchor" aria-label="anchor" href="#chord-diagrams"></a>
+</h2>
+<p><code><a href="../reference/vchord.html">vchord()</a></code> wraps the same kind of weighted flow onto a circle: one arc (<em>sector</em>) per node, sized by the node’s total incident weight, and one ribbon per flow joining a slice of the source sector to a slice of the target sector through the centre. Input is a flow list (<code>from</code>, <code>to</code>, <code>value</code>) or a square flow matrix.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">flows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  from  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Coal"</span>, <span class="st">"Gas"</span>, <span class="st">"Grid"</span>, <span class="st">"Grid"</span>, <span class="st">"Solar"</span>, <span class="st">"Grid"</span><span class="op">)</span>,</span>
+<span>  to    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Grid"</span>, <span class="st">"Grid"</span>, <span class="st">"Homes"</span>, <span class="st">"Industry"</span>, <span class="st">"Grid"</span>, <span class="st">"Grid"</span><span class="op">)</span>,</span>
+<span>  value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">34</span>, <span class="fl">26</span>, <span class="fl">12</span>, <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vchord.html">vchord</a></span><span class="op">(</span><span class="va">flows</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">value</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Flows are directed: each node’s arc splits into an outgoing block then an incoming block, so <code>a -&gt; b</code> and <code>b -&gt; a</code> are distinct ribbons and a self-flow loops from a node’s out-block to its own in-block. Sectors take a qualitative palette; ribbons inherit their source node’s colour (<code>link_color = "target"</code> to colour by target instead). <code>sort = "value"</code> orders sectors by weight, and <code>gap</code> sets the spacing between them:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vchord.html">vchord</a></span><span class="op">(</span><span class="va">flows</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">value</span>, sort <span class="op">=</span> <span class="st">"value"</span>, link_color <span class="op">=</span> <span class="st">"target"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
 </section><section class="level2"><h2 id="hierarchy-diagrams">Hierarchy diagrams<a class="anchor" aria-label="anchor" href="#hierarchy-diagrams"></a>
 </h2>
 <p><code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> draws a tree as a space-filling diagram. All four geometries take the same <strong>parent list</strong> — <code>id</code>, <code>parent</code> (<code>NA</code> for the root), and <code>value</code> (given for leaves; an internal node’s value is the sum of its children) — so you switch between them with <code>type</code> and nothing else changes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  id     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"tech"</span>, <span class="st">"food"</span>, <span class="st">"phones"</span>, <span class="st">"laptops"</span>, <span class="st">"fruit"</span>, <span class="st">"grain"</span><span class="op">)</span>,</span>
 <span>  parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="st">"all"</span>, <span class="st">"all"</span>, <span class="st">"tech"</span>, <span class="st">"tech"</span>, <span class="st">"food"</span>, <span class="st">"food"</span><span class="op">)</span>,</span>
@@ -173,7 +202,7 @@
 <span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span><span class="op">)</span> <span class="co"># type = "sunburst" (default)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-6-1.png" style="width:100.0%"></p>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -181,41 +210,41 @@
 <p>The root is structural and never drawn; every top-level branch takes a distinct hue, and its descendants inherit that hue lightened with depth, so branches stay distinguishable and each level reads as a shade of its parent. Each node is labelled with its <code>id</code> where the label fits (small nodes are left unlabelled, so a dense diagram stays legible), and <code>show_values</code> appends the value.</p>
 <p><strong>Sunburst</strong> lays depth out as concentric rings, each node’s angular span its share of its parent’s, starting at twelve o’clock and winding clockwise. Labels are oriented to fit their wedge and kept upright; <code>root_label</code> writes the root in the centre and <code>inner_radius</code> opens a hole for a ring/donut look.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span>, root_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><strong>Treemap</strong> packs the tree into squarified nested rectangles, and <strong>circlepack</strong> into circles enclosed in circles — both read area as value:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, type <span class="op">=</span> <span class="st">"treemap"</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, type <span class="op">=</span> <span class="st">"circlepack"</span>, show_values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-8-2.png" style="width:100.0%"></p>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-10-2.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><strong>Icicle</strong> is the rectangular cousin of the sunburst: depth becomes adjacent bands and <code>flow</code> chooses the direction (<code>"down"</code>, <code>"up"</code>, <code>"right"</code>, <code>"left"</code>):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, type <span class="op">=</span> <span class="st">"icicle"</span>, flow <span class="op">=</span> <span class="st">"right"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -224,29 +253,29 @@
 </h3>
 <p>By default each top-level branch takes a hue and its descendants inherit it lightened one step per level. The branch is an ordinary discrete fill scale, so <code>scale_fill_*()</code> recolours the branches and <code>lighten</code> controls the fade (<code>0</code> for a flat colour per branch):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, type <span class="op">=</span> <span class="st">"treemap"</span>, lighten <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_color_continuous.html">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>tech <span class="op">=</span> <span class="st">"#1b7837"</span>, food <span class="op">=</span> <span class="st">"#762a83"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Map <code>fill</code> to a node column to colour every node by that variable instead, with the matching <code>scale_fill_*()</code>. The depth fade is dropped, since the colour now carries its own meaning:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">h</span><span class="op">$</span><span class="va">owner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="st">"Sam"</span>, <span class="st">"Sam"</span>, <span class="st">"Lee"</span>, <span class="st">"Lee"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/vhierarchy.html">vhierarchy</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">id</span>, <span class="va">parent</span>, <span class="va">value</span>, fill <span class="op">=</span> <span class="va">owner</span>, type <span class="op">=</span> <span class="st">"circlepack"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Both <code><a href="../reference/vsankey.html">vsankey()</a></code> and <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
+<p><code><a href="../reference/vsankey.html">vsankey()</a></code>, <code><a href="../reference/vchord.html">vchord()</a></code>, and <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> all follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
 </section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

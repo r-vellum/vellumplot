@@ -2,6 +2,18 @@
 
 ## vellumplot (development version)
 
+- **Chord diagrams:
+  [`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md).**
+  Wraps a weighted flow (a `from`/`to`/`value` list or a square flow
+  matrix) onto a circle – one arc per node, one ribbon per flow through
+  the centre. Directed: each node’s arc splits into an outgoing then an
+  incoming block, so `a -> b` and `b -> a` are distinct ribbons and
+  self-flows loop within a node’s sector. `sort`, `gap`, and
+  `link_color` echo
+  [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md);
+  [`mark_chord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md)
+  is the exported layer.
+
 - **Removed the unused `max_overlaps` argument** from
   [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
   [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
