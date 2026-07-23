@@ -2167,19 +2167,24 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     )
   )
 
-  # Node labels just outside the ring, radial and kept upright.
+  # Node labels radial, kept upright, and anchored at their *inner* end just
+  # outside the ring so the text runs outward and never overlaps the sectors.
+  # Upright-flipping reverses the reading direction on the left half, so the
+  # justification that means "outward" flips with it.
   if (isTRUE(L$params$label)) {
     fs <- .CHORD_LABEL_FS
-    rl <- .CHORD_R_OUT + 0.03
+    rl <- .CHORD_R_OUT + 0.04
     mid <- (sec$theta0 + sec$theta1) / 2
     for (i in seq_len(n)) {
+      deg <- ((mid[i] * 180 / pi + 180) %% 360) - 180
+      flip <- deg > 90 || deg <= -90 # left half: label is flipped upright
       scene <- .draw(
         scene,
         vellum::text_grob(
           sec$node[i],
           vellum::vl_unit(rl * cos(mid[i]), "native"),
           vellum::vl_unit(rl * sin(mid[i]), "native"),
-          just = c("centre", "centre"),
+          just = c(if (flip) "right" else "left", "centre"),
           rot = .upright_rot(mid[i], "radius"),
           gp = vellum::vl_gpar(fontsize = fs, col = "black")
         )

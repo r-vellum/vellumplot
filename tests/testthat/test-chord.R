@@ -125,6 +125,23 @@ test_that("a square matrix unrolls to from/to/value flows (diagonal = self)", {
   expect_s3_class(vchord(m), "vellumplot::PlotSpec")
 })
 
+# ---- labels ----------------------------------------------------------------
+
+test_that("sector labels are anchored outward (justified, not centred on the ring)", {
+  # regression: centred labels overlapped the sector band; they must be
+  # start-/end-anchored so they sit outside the ring.
+  svg <- vellum::scene_svg(vellum::as_vellum_scene(vchord(
+    flows,
+    from,
+    to,
+    value
+  )))
+  anch <- regmatches(svg, gregexpr('text-anchor="[a-z]+"', svg))[[1]]
+  anch <- sub('text-anchor="([a-z]+)"', "\\1", anch)
+  expect_true(length(anch) > 0)
+  expect_false(any(anch == "middle")) # every label justified away from the ring
+})
+
 # ---- rendering -------------------------------------------------------------
 
 test_that("chord renders (data frame, matrix, sorted, target-coloured)", {
