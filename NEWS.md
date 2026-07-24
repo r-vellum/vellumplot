@@ -1,5 +1,13 @@
 # vellumplot (development version)
 
+* **Flow maps: `mark_flow_map()`.** A one-to-many flow map on a `vgraph()` plot:
+  a single `root` fans out to every destination along smooth, merging branches
+  whose width tracks the flow volume (the Minard / migration-map idiom).
+  `type = "spiral"` (default) builds an angle-restricted spiral tree from the
+  \pkg{edgebundle} package; `type = "steiner"` builds an approximate Steiner tree
+  (additionally needs \pkg{interp}). Edge `weight` drives the flow, which is
+  mapped onto `width_range`. Needs the suggested \pkg{edgebundle} package.
+
 * **Edge bundling: `mark_edge_bundle()`.** A drop-in alternative to `mark_edges()`
   that routes a graph's edges as bundled curves instead of straight lines, so a
   dense node-link hairball collapses into a few legible trunks. `type` selects the

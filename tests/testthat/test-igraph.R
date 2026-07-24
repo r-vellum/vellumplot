@@ -851,3 +851,71 @@ test_that("mark_edge_bundle() trains the edge colour/width scales", {
     scale_edge_width(range = c(0.5, 3))
   expect_no_error(render_plot(p, local_tempfile(fileext = ".png")))
 })
+
+# --- N14: flow maps (mark_flow_map) -----------------------------------------
+
+# a small one-to-many (star) flow graph rooted at "hub", with fixed coords.
+.flow_fixture <- function() {
+  g <- igraph::make_star(6, mode = "undirected")
+  igraph::V(g)$name <- c("hub", letters[1:5])
+  igraph::E(g)$weight <- c(5, 3, 8, 2, 4)
+  list(g = g, xy = cbind(c(0, 1, 1, -1, -1, 2), c(0, 1, -1, 1, -1, 0)))
+}
+
+test_that("mark_flow_map() resolves the root to a coordinate at build time", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  fx <- .flow_fixture()
+  # root by name and by index resolve to the same (hub) coordinate.
+  by_name <- vgraph(fx$g, layout = fx$xy) |> mark_flow_map(root = "hub")
+  by_idx <- vgraph(fx$g, layout = fx$xy) |> mark_flow_map(root = 1)
+  L <- by_name@layers[[1]]
+  expect_identical(L@mark, "flow_map")
+  expect_identical(L@z, 1L)
+  expect_equal(L@stat_params$root_xy, c(0, 0))
+  expect_equal(by_idx@layers[[1]]@stat_params$root_xy, c(0, 0))
+  # weight defaults to the graph's weight attribute (edge-table order).
+  expect_equal(L@stat_params$weight, c(5, 3, 8, 2, 4))
+})
+
+test_that("mark_flow_map() validates root, width_range, and the plot", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  fx <- .flow_fixture()
+  p <- vgraph(fx$g, layout = fx$xy)
+  expect_error(mark_flow_map(p), "root.*is required")
+  expect_error(mark_flow_map(p, root = "nope"), "does not match")
+  expect_error(mark_flow_map(p, root = 1, width_range = 3), "width_range")
+  # a non-graph plot has no node coordinates to place the root against.
+  expect_error(
+    mark_flow_map(vplot(data.frame(x = 1)), root = 1),
+    "vgraph"
+  )
+})
+
+test_that(".const_runs splits a flow vector into overlapping equal-flow runs", {
+  # constant flow -> one run spanning every point.
+  expect_identical(vellumplot:::.const_runs(c(2, 2, 2)), list(1:3))
+  # a change at point 3 -> two runs that share point 3 (no gap between them).
+  runs <- vellumplot:::.const_runs(c(1, 1, 5, 5))
+  expect_identical(runs[[1]], 1:3)
+  expect_identical(runs[[2]], 3:4)
+})
+
+test_that("spiral and steiner flow maps render", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  fx <- .flow_fixture()
+  spiral <- vgraph(fx$g, layout = fx$xy) |>
+    mark_flow_map(root = "hub", type = "spiral") |>
+    mark_nodes(size = 2)
+  expect_no_error(vellum::as_vellum_scene(spiral))
+  expect_no_error(render_plot(spiral, local_tempfile(fileext = ".png")))
+
+  skip_if_not_installed("interp")
+  steiner <- vgraph(fx$g, layout = fx$xy) |>
+    mark_flow_map(root = "hub", type = "steiner") |>
+    mark_nodes(size = 2)
+  expect_no_error(render_plot(steiner, local_tempfile(fileext = ".png")))
+})

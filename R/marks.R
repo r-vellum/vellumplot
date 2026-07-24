@@ -1944,9 +1944,18 @@ mark_segment <- function(
 #' `"hammer"`, `"mingle"`) and `params` passes tuning through. Bundled edges are
 #' faint by default (`alpha = 0.3`) so overlapping trunks read as density.
 #'
+#' `mark_flow_map()` draws a **flow map**: a single `root` fans out to many
+#' destinations along smooth, merging branches whose width tracks the flow volume
+#' (the Minard / migration-map idiom). It expects a one-to-many (star) graph
+#' rooted at `root`, laid out at fixed coordinates; edge `weight` drives the flow.
+#' `type = "spiral"` (default, an angle-restricted spiral tree) needs only
+#' \pkg{edgebundle}; `type = "steiner"` (an approximate Steiner tree) additionally
+#' needs \pkg{interp}. Branch width is mapped from the computed flow into
+#' `width_range`.
+#'
 #' These are thin over the point / segment / text marks; `igraph` need not be
-#' installed to use them (only [vgraph()] needs it). `mark_edge_bundle()` also
-#' needs the \pkg{edgebundle} package.
+#' installed to use them (only [vgraph()] needs it). `mark_edge_bundle()` and
+#' `mark_flow_map()` also need the \pkg{edgebundle} package.
 #'
 #' @param plot A [PlotSpec], normally from [vgraph()].
 #' @param ... Encodings mapping node/edge attributes to aesthetics. Nodes: `size`,
@@ -2020,10 +2029,23 @@ mark_segment <- function(
 #'   direction-split bundles), `"stub"` (short stubs at each endpoint), `"path"`
 #'   (shortest-path bundling), `"hammer"` (hammer bundling), or `"mingle"`
 #'   (multilevel agglomerative edge bundling). Delegated to
-#'   [edgebundle::edge_bundle()].
+#'   [edgebundle::edge_bundle()]. For `mark_flow_map()`, the flow-tree layout:
+#'   `"spiral"` (default, angle-restricted spiral tree; \pkg{edgebundle} only) or
+#'   `"steiner"` (approximate Steiner tree; also needs \pkg{interp}).
 #' @param params For `mark_edge_bundle()`, a named list of extra arguments passed
 #'   to [edgebundle::edge_bundle()] for the chosen `type` (e.g.
-#'   `params = list(compatibility_threshold = 0.8)`). Empty by default.
+#'   `params = list(compatibility_threshold = 0.8)`). For `mark_flow_map()`,
+#'   extra arguments for the flow-tree builder -- [edgebundle::flow_tree()] when
+#'   `type = "spiral"` (e.g. `list(alpha = 30)`), [edgebundle::tnss_tree()] when
+#'   `type = "steiner"` (e.g. `list(gamma = 0.9)`). Empty by default.
+#' @param root For `mark_flow_map()`, the source vertex the flow fans out from:
+#'   a vertex name (matched against the node table) or a vertex index.
+#' @param weight For `mark_flow_map()`, the per-edge flow volume (a mapped edge
+#'   column, e.g. `weight = migrants`). Defaults to the graph's `weight` edge
+#'   attribute, or `1` if there is none.
+#' @param width_range For `mark_flow_map()`, the drawn branch width range
+#'   `c(min, max)` (in `linewidth` units) that the computed flow is mapped onto.
+#'   Default `c(0.3, 3)`.
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data; overrides the default table.
 #' @param effects A list of layer render effects ([glow()], [outline()],
@@ -2148,6 +2170,85 @@ mark_edge_bundle <- function(
     effects = effects,
     sketch = sketch,
     data = data %||% plot@edge_data,
+    z = 1L
+  )
+}
+
+#' @rdname mark_graph
+#' @export
+mark_flow_map <- function(
+  plot,
+  ...,
+  root,
+  type = c("spiral", "steiner"),
+  weight = NULL,
+  width_range = c(0.3, 3),
+  color = NULL,
+  alpha = NULL,
+  params = list(),
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  type <- match.arg(type)
+  if (missing(root) || is.null(root)) {
+    cli::cli_abort(
+      "{.arg root} is required: the source vertex the flow fans out from."
+    )
+  }
+  if (!is.list(params)) {
+    cli::cli_abort(
+      "{.arg params} must be a list of arguments for the flow-tree builder."
+    )
+  }
+  if (!is.numeric(width_range) || length(width_range) != 2L) {
+    cli::cli_abort("{.arg width_range} must be a numeric {.code c(min, max)}.")
+  }
+  # Resolve the root vertex to a coordinate now, from the node table -- so the
+  # emitter (which reconstructs the graph from edge endpoints, with no vertex
+  # identity) can find it as the reconstructed point nearest that coordinate.
+  nodes <- plot@data
+  if (is.null(nodes) || !all(c("x", "y") %in% names(nodes))) {
+    cli::cli_abort(c(
+      "{.fn mark_flow_map} needs a {.fn vgraph} plot with node coordinates.",
+      i = "Build the plot with {.fn vgraph} (its node table carries {.field x}/{.field y})."
+    ))
+  }
+  ri <- if (is.character(root)) match(root, nodes$name) else as.integer(root)[1]
+  if (is.na(ri) || ri < 1L || ri > nrow(nodes)) {
+    cli::cli_abort("{.arg root} does not match a vertex in the graph.")
+  }
+  root_xy <- c(nodes$x[ri], nodes$y[ri])
+  # Per-edge flow volume, resolved against the edge table (mapped column, the
+  # `weight` attribute, or 1).
+  edges <- data %||% plot@edge_data
+  wv <- rlang::eval_tidy(rlang::enquo(weight), edges)
+  if (is.null(wv)) {
+    wv <- edges$weight %||% 1
+  }
+  dots <- .with_default_aes(
+    rlang::enquos(...),
+    rlang::quos(x = x, y = y, xend = xend, yend = yend)
+  )
+  .add_layer(
+    plot,
+    "flow_map",
+    .rename_edge_aes(dots),
+    stat_params = list(
+      type = type,
+      root_xy = root_xy,
+      weight = wv,
+      width_range = width_range,
+      color = color,
+      alpha = alpha,
+      params = params
+    ),
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = edges,
     z = 1L
   )
 }

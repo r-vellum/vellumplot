@@ -4,6 +4,7 @@
 \alias{mark_graph}
 \alias{mark_edges}
 \alias{mark_edge_bundle}
+\alias{mark_flow_map}
 \alias{mark_nodes}
 \alias{mark_node_text}
 \alias{mark_edge_text}
@@ -38,6 +39,22 @@ mark_edge_bundle(
   linewidth = NULL,
   alpha = NULL,
   linetype = NULL,
+  params = list(),
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
+
+mark_flow_map(
+  plot,
+  ...,
+  root,
+  type = c("spiral", "steiner"),
+  weight = NULL,
+  width_range = c(0.3, 3),
+  color = NULL,
+  alpha = NULL,
   params = list(),
   blend = NULL,
   effects = list(),
@@ -177,11 +194,27 @@ teardrop self-loops) do not apply to the rasterised edges.}
 direction-split bundles), \code{"stub"} (short stubs at each endpoint), \code{"path"}
 (shortest-path bundling), \code{"hammer"} (hammer bundling), or \code{"mingle"}
 (multilevel agglomerative edge bundling). Delegated to
-\code{\link[edgebundle:edge_bundle]{edgebundle::edge_bundle()}}.}
+\code{\link[edgebundle:edge_bundle]{edgebundle::edge_bundle()}}. For \code{mark_flow_map()}, the flow-tree layout:
+\code{"spiral"} (default, angle-restricted spiral tree; \pkg{edgebundle} only) or
+\code{"steiner"} (approximate Steiner tree; also needs \pkg{interp}).}
 
 \item{params}{For \code{mark_edge_bundle()}, a named list of extra arguments passed
 to \code{\link[edgebundle:edge_bundle]{edgebundle::edge_bundle()}} for the chosen \code{type} (e.g.
-\code{params = list(compatibility_threshold = 0.8)}). Empty by default.}
+\code{params = list(compatibility_threshold = 0.8)}). For \code{mark_flow_map()},
+extra arguments for the flow-tree builder -- \code{\link[edgebundle:flow_tree]{edgebundle::flow_tree()}} when
+\code{type = "spiral"} (e.g. \code{list(alpha = 30)}), \code{\link[edgebundle:tnss_tree]{edgebundle::tnss_tree()}} when
+\code{type = "steiner"} (e.g. \code{list(gamma = 0.9)}). Empty by default.}
+
+\item{root}{For \code{mark_flow_map()}, the source vertex the flow fans out from:
+a vertex name (matched against the node table) or a vertex index.}
+
+\item{weight}{For \code{mark_flow_map()}, the per-edge flow volume (a mapped edge
+column, e.g. \code{weight = migrants}). Defaults to the graph's \code{weight} edge
+attribute, or \code{1} if there is none.}
+
+\item{width_range}{For \code{mark_flow_map()}, the drawn branch width range
+\code{c(min, max)} (in \code{linewidth} units) that the computed flow is mapped onto.
+Default \code{c(0.3, 3)}.}
 
 \item{size, shape}{For \code{mark_nodes()}, the node size (mm) / shape; a constant or
 a mapped expression. \code{size} is also the label font size for
@@ -265,9 +298,18 @@ package (install it) and draws the returned paths with the edge aesthetics --
 \code{"hammer"}, \code{"mingle"}) and \code{params} passes tuning through. Bundled edges are
 faint by default (\code{alpha = 0.3}) so overlapping trunks read as density.
 
+\code{mark_flow_map()} draws a \strong{flow map}: a single \code{root} fans out to many
+destinations along smooth, merging branches whose width tracks the flow volume
+(the Minard / migration-map idiom). It expects a one-to-many (star) graph
+rooted at \code{root}, laid out at fixed coordinates; edge \code{weight} drives the flow.
+\code{type = "spiral"} (default, an angle-restricted spiral tree) needs only
+\pkg{edgebundle}; \code{type = "steiner"} (an approximate Steiner tree) additionally
+needs \pkg{interp}. Branch width is mapped from the computed flow into
+\code{width_range}.
+
 These are thin over the point / segment / text marks; \code{igraph} need not be
-installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it). \code{mark_edge_bundle()} also
-needs the \pkg{edgebundle} package.
+installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it). \code{mark_edge_bundle()} and
+\code{mark_flow_map()} also need the \pkg{edgebundle} package.
 }
 \examples{
 \dontrun{

@@ -2764,6 +2764,124 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# Flow map: a one-to-many tree from `root` fanning out to every destination
+# along smooth merging branches whose width tracks the flow volume (the Minard
+# idiom). Like `.emit_edge_bundle`, the graph + node xy are reconstructed from the
+# edge endpoints (native coords) and the algorithm is delegated to edgebundle; the
+# root is located as the reconstructed point nearest the coordinate resolved at
+# mark-build time. `flow_tree` (spiral) and the `tnss_*` pipeline (Steiner) both
+# return per-branch paths with a `flow` column; branches are drawn as constant-flow
+# runs, each a `lines_grob` whose width comes from `flow` (round caps join them).
+.emit_flow_map <- function(scene, L, scales) {
+  .need_pkg("edgebundle", "mark_flow_map()")
+  .need_pkg("igraph", "mark_flow_map()")
+  sp <- L$stat_params
+  type <- sp$type %||% "spiral"
+  n <- L$n
+  x0 <- rep_len(scales$x$map(L$values$x), n)
+  y0 <- rep_len(scales$y$map(L$values$y), n)
+  x1 <- rep_len(scales$x$map(L$values$xend), n)
+  y1 <- rep_len(scales$y$map(L$values$yend), n)
+
+  loop <- x0 == x1 & y0 == y1
+  keep <- which(!loop)
+  if (!length(keep)) {
+    return(scene)
+  }
+  src <- cbind(x0[keep], y0[keep])
+  tgt <- cbind(x1[keep], y1[keep])
+  pts <- unique(rbind(src, tgt))
+  key <- function(m) paste(m[, 1L], m[, 2L], sep = "\r")
+  pk <- key(pts)
+  g <- igraph::graph_from_edgelist(
+    cbind(match(key(src), pk), match(key(tgt), pk)),
+    directed = FALSE
+  )
+  igraph::E(g)$weight <- rep_len(sp$weight %||% 1, n)[keep]
+  # Root: the reconstructed point nearest the build-time root coordinate, mapped
+  # into the same native space as the endpoints.
+  rxy <- c(scales$x$map(sp$root_xy[1]), scales$y$map(sp$root_xy[2]))
+  root_i <- which.min((pts[, 1] - rxy[1])^2 + (pts[, 2] - rxy[2])^2)
+
+  fm <- .flow_paths(type, g, pts, root_i, sp$params %||% list())
+  if (is.null(fm) || !nrow(fm)) {
+    return(scene)
+  }
+
+  # Map the computed flow onto the drawn width range (linewidth units), bounded so
+  # a 1000x flow range stays legible rather than swamping the panel.
+  wr <- sp$width_range %||% c(0.3, 3)
+  fr <- range(fm$flow)
+  wmap <- if (diff(fr) < .Machine$double.eps) {
+    function(f) mean(wr)
+  } else {
+    function(f) wr[1L] + (f - fr[1L]) / (fr[2L] - fr[1L]) * (wr[2L] - wr[1L])
+  }
+
+  col <- sp$color %||% "#B2182B"
+  a <- sp$alpha %||% 1
+  sk <- .mark_sketch(L, scales)
+
+  for (idx in split(seq_len(nrow(fm)), fm$grp)) {
+    fv <- fm$flow[idx]
+    for (r in .const_runs(fv)) {
+      sub <- idx[r]
+      xy <- .xy_path(scales, fm$x[sub], fm$y[sub])
+      scene <- .draw(
+        scene,
+        vellum::lines_grob(
+          xy$x,
+          xy$y,
+          sketch = sk,
+          gp = vellum::vl_gpar(
+            col = col,
+            lwd = wmap(fv[r[1L]]),
+            alpha = gp_alpha(a),
+            lineend = "round",
+            linejoin = "round"
+          )
+        )
+      )
+    }
+  }
+  scene
+}
+
+# Dispatch the flow-tree builder for `.emit_flow_map`, normalising both backends
+# to a data frame of x / y / flow / grp (one group per drawable branch).
+.flow_paths <- function(type, g, xy, root, params) {
+  if (identical(type, "steiner")) {
+    .need_pkg("interp", "mark_flow_map(type = \"steiner\")")
+    dummies <- edgebundle::tnss_dummies(xy, root)
+    gt <- do.call(
+      edgebundle::tnss_tree,
+      c(list(g = g, xy = xy, xydummy = dummies, root = root), params)
+    )
+    sm <- edgebundle::tnss_smooth(gt)
+    data.frame(x = sm$x, y = sm$y, flow = sm$flow, grp = sm$destination)
+  } else {
+    fm <- do.call(
+      edgebundle::flow_tree,
+      c(list(object = g, xy = xy, root = root), params)
+    )
+    data.frame(x = fm$x, y = fm$y, flow = fm$flow, grp = fm$edge)
+  }
+}
+
+# Split an ordered flow vector into maximal runs of equal flow, each run extended
+# to include the first point of the next so consecutive `lines_grob`s meet with no
+# gap (round caps hide the width step). Returns a list of index ranges into `f`.
+.const_runs <- function(f) {
+  n <- length(f)
+  if (n <= 1L) {
+    return(list(seq_len(n)))
+  }
+  brk <- which(f[-1L] != f[-n]) # positions where flow changes
+  starts <- c(1L, brk + 1L)
+  ends <- c(brk, n)
+  Map(function(s, e) s:min(e + 1L, n), starts, ends)
+}
+
 # Pie / donut node glyphs: each vertex is drawn as a pie whose wedges are sized by
 # the row's `cols` values (a composition), in absolute mm at the native vertex
 # anchor (a proper circle under the aspect-locked graph panel). Wedges for
@@ -3298,6 +3416,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     segment = .emit_segment(scene, L, scales),
     edges = .emit_edges(scene, L, scales),
     edge_bundle = .emit_edge_bundle(scene, L, scales),
+    flow_map = .emit_flow_map(scene, L, scales),
     nodes = .emit_point(scene, L, scales),
     node_pie = .emit_node_pie(scene, L, scales),
     node_text = .emit_text(scene, L, scales),
@@ -3606,7 +3725,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     L$params$size %||% 1
   } else {
     L$params$linewidth %||%
-      switch(L$mark, line = 1.5, step = 1.5, edges = 0.5, edge_bundle = 0.5, 1)
+      switch(
+        L$mark,
+        line = 1.5,
+        step = 1.5,
+        edges = 0.5,
+        edge_bundle = 0.5,
+        1
+      )
   }
 }
 

@@ -86,7 +86,15 @@ NULL
     spec@layers,
     function(l) {
       l@mark %in%
-        c("edges", "edge_bundle", "edge_text", "nodes", "node_pie", "node_text")
+        c(
+          "edges",
+          "edge_bundle",
+          "flow_map",
+          "edge_text",
+          "nodes",
+          "node_pie",
+          "node_text"
+        )
     },
     logical(1)
   ))

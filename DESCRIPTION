@@ -38,6 +38,7 @@ Suggests:
     edgebundle (>= 1.0.0),
     graphlayouts (>= 1.2.5),
     igraph,
+    interp,
     isoband,
     magick,
     MASS,
