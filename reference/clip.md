@@ -12,6 +12,8 @@ that fades the panel out towards its edges (a vignette / spotlight).
 ``` r
 clip_to(plot, region, invert = FALSE)
 
+clip_layer(plot, region, invert = FALSE)
+
 set_mask(plot, region = NULL, type = c("luminance", "alpha"), feather = 0.35)
 ```
 
@@ -51,10 +53,15 @@ The modified
 
 ## Details
 
-Both attach to the plot and resolve at render into an isolated masked
-layer
+`clip_to()` / `set_mask()` mask the **whole panel**; `clip_layer()`
+masks only the **most-recently-added layer** (the one just piped in), so
+one raster layer can be clipped to a shape while the axes and other
+layers stay full-bleed.
+
+All three attach to the plot and resolve at render into an isolated
+masked layer
 ([`vellum::as_mask()`](https://r-vellum.github.io/vellum/reference/as_mask.html)),
-so the static output is unchanged when neither is set. Cartesian
+so the static output is unchanged when none is set. Cartesian
 coordinates only (not polar or a nonlinear
 [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)).
 

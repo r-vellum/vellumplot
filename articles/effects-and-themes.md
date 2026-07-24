@@ -167,10 +167,29 @@ each take a `color`, a transparent-or-solid `bg`, and a `spacing` (in mm
 by default); stripes/crosshatch also take an `angle` restricted to `0`,
 `45`, `90`, or `135`. Patterns work on any filled mark — bars, areas,
 ribbons, rects, tiles, boxplots, violins, ridgelines, half-eyes, hulls,
-and `sf` polygons — and render on every backend including PDF. As with
-gradients, a pattern is one fill per region (an unscaled value, not a
-mapped channel). For a custom motif, build the tile yourself with
+and `sf` polygons — and render on every backend including PDF. For a
+custom motif, build the tile yourself with
 [`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md).
+
+To vary the texture *by a variable* (rather than a single constant
+fill), map the `pattern` aesthetic and let
+[`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
+assign a distinct texture to each level — the greyscale- and
+colour-vision-safe way to tell a few series apart:
+
+``` r
+
+bars <- data.frame(method = c("A", "B", "C", "D"), score = c(4, 7, 5, 6))
+vplot(bars) |>
+  mark_bar(x = method, y = score, pattern = method) |>
+  scale_pattern(name = NULL)
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
+
+`scale_pattern(values = )` overrides the palette with builder names
+(`"stripe"`, `"dot"`, …) or your own `pattern_*()` objects; the legend
+keys are drawn as patterned swatches.
 
 ## Clipping and masking to a shape
 
@@ -190,7 +209,7 @@ vplot(grid) |>
   clip_to(diamond)
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)
 
 `invert = TRUE` keeps the marks *outside* the shape (punching it out as
 a hole).
@@ -205,12 +224,33 @@ vplot(grid) |>
   set_mask(feather = 0.5)
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-11-1.png)
 
-Both work under cartesian coordinates (a smooth feathered edge on an
-arbitrary polygon is not available yet, so
 [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
-is hard-edged; reach for
+and
+[`set_mask()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+mask the whole panel;
+[`clip_layer()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+masks only the most-recently-added layer, so one raster layer can be
+clipped to a shape while the axes and other layers stay full-bleed:
+
+``` r
+
+set.seed(1)
+pts <- data.frame(x = runif(60, 1, 24), y = runif(60, 1, 24))
+vplot(grid) |>
+  mark_tile(x = x, y = y, fill = z) |>
+  clip_layer(diamond) |>
+  mark_point(data = pts, x = x, y = y, size = 1.5, color = "white")
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-12-1.png)
+
+All three work under cartesian coordinates (a smooth feathered edge on
+an arbitrary polygon is not available yet, so
+[`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md) /
+[`clip_layer()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+are hard-edged; reach for
 [`set_mask()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
 when you want a soft fade).
 
@@ -229,7 +269,7 @@ vplot(mtcars) |>
   theme_sketch()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-11-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-13-1.png)
 
 For finer control,
 [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
@@ -255,4 +295,4 @@ vplot(mtcars) |>
   )
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-12-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-14-1.png)

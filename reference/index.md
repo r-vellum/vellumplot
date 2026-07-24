@@ -152,6 +152,8 @@ Map data values to visual properties, with trained domains and guides.
   : Binned (classed) colour scales
 - [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
   : Shape scale
+- [`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
+  : Pattern (texture) scale
 - [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
   [`scale_size_area()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
   : Size scale
@@ -290,6 +292,7 @@ Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient
 - [`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md)
   : Custom tiling-pattern fill
 - [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+  [`clip_layer()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
   [`set_mask()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
   : Clip or mask a plot to a geometry
 
