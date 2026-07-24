@@ -224,7 +224,7 @@ reference:
   - md
 
 - title: Layer effects
-  desc: Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient fills.
+  desc: Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient / pattern fills.
   contents:
   - glow
   - shadow
@@ -232,6 +232,8 @@ reference:
   - motion
   - sketch
   - gradients
+  - patterns
+  - vl_pattern
 
 - title: Interactivity
   desc: >

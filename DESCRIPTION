@@ -83,6 +83,7 @@ Collate:
     'hierarchy-pack.R'
     'hierarchy.R'
     'labs.R'
+    'pattern.R'
     'positions.R'
     'provenance.R'
     'reexports.R'

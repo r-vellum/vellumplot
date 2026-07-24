@@ -37,12 +37,19 @@ NULL
       return(scales$color$map(L$values$fill))
     }
   }
+  # A paint-valued `fill` (gradient/pattern) is not a per-row colour: ignore it
+  # here (the emitter substitutes it at the `vl_gpar(fill = )` site via
+  # `.paint_or()`), so this returns a plain colour the row vector / grouping needs.
+  fillp <- if (.is_paint(L$params$fill)) NULL else L$params$fill
   if (fill_fallback) {
-    L$params$color %||% L$params$fill %||% default
+    L$params$color %||% fillp %||% default
   } else {
     L$params$color %||% default
   }
 }
+
+# A fill value can be a constant *paint* (gradient or pattern), not just a colour.
+.is_paint <- function(x) inherits(x, c("vellum_gradient", "vellum_pattern"))
 
 .aes_param <- function(L, name, default) L$params[[name]] %||% default
 
@@ -52,8 +59,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
 # The gpar for a filled mark's style group `i` (fill from the group's colour, no
 # stroke, per-group alpha). Shared by the filled marks (band/bar/tile).
-.gp_fill <- function(fill, alpha, i) {
-  vellum::vl_gpar(fill = fill[i], col = NA, alpha = gp_alpha(alpha[i]))
+.gp_fill <- function(fill, alpha, i, paint = NULL) {
+  vellum::vl_gpar(
+    fill = paint %||% fill[i],
+    col = NA,
+    alpha = gp_alpha(alpha[i])
+  )
 }
 
 # The gpar for a stroked mark's style group `i`: per-group colour + alpha, a
@@ -105,18 +116,37 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   out
 }
 
-# A gradient/paint fill value on a layer (from `fill = linear_gradient(...)`), or
-# NULL. When present, a filled mark paints its whole region with one grob rather
-# than a per-row colour vector (the paint is a single value, not data-mapped).
-.grad_fill <- function(L) {
+# A constant paint fill value on a layer (from `fill = linear_gradient(...)` or a
+# `pattern_*()` builder), or NULL. When present, a filled mark paints its shapes
+# with the paint rather than a per-row colour vector (a single value, not mapped).
+.paint_fill <- function(L) {
   f <- L$params$fill
-  if (inherits(f, "vellum_gradient")) f else NULL
+  if (.is_paint(f)) f else NULL
 }
 
-# The marks whose emitters implement a gradient `fill` (paint the whole region
-# with one grob). Every other mark would pass the paint straight into a per-row
-# `vl_gpar(fill = ...)` undefined, so `.emit_layer` rejects it up front.
-.GRADIENT_MARKS <- c("bar", "area", "ribbon")
+# Substitute a layer's constant paint fill for a resolved colour at a
+# `vl_gpar(fill = )` site; returns the colour unchanged when there is no paint.
+.paint_or <- function(L, col) .paint_fill(L) %||% col
+
+# The marks whose emitters honour a constant paint (gradient/pattern) `fill`.
+# Every other mark would pass the paint into an undefined per-row fill, so
+# `.emit_layer` rejects it up front. (Inherently multi-category fills -- pie /
+# donut / sunburst / chord -- take textures via the mapped `pattern` aesthetic,
+# not a single constant paint.)
+.PAINT_MARKS <- c(
+  "bar",
+  "area",
+  "ribbon",
+  "rect",
+  "tile",
+  "boxplot",
+  "violin",
+  "ridgeline",
+  "halfeye",
+  "hull",
+  "ellipse",
+  "sf"
+)
 
 # Resolve a layer's point size (mm): a mapped size channel (via the trained size
 # scale), a constant size param, or the supplied default.
@@ -773,10 +803,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 }
 
 .emit_bar <- function(scene, L, scales) {
-  grad <- .grad_fill(L)
+  grad <- .paint_fill(L)
   if (!is.null(scales$polar)) {
     if (!is.null(grad)) {
-      cli::cli_abort("Gradient fills are not supported for polar bars / pies.")
+      cli::cli_abort(
+        "Paint fills (gradient/pattern) are not supported for polar bars / pies."
+      )
     }
     return(.emit_bar_polar(scene, L, scales))
   }
@@ -916,7 +948,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   xn <- rep_len(scales$x$map(L$values$x), n)
   sk <- .mark_sketch(L, scales)
 
-  grad <- .grad_fill(L)
+  grad <- .paint_fill(L)
   if (!is.null(grad)) {
     o <- order(xn)
     poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
@@ -1199,6 +1231,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # default to the data resolution so tiles abut.
 .emit_tile <- function(scene, L, scales) {
   n <- L$n
+  paint <- .paint_fill(L)
   xp <- rep_len(scales$x$map(L$values$x), n)
   yp <- rep_len(scales$y$map(L$values$y), n)
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
@@ -1218,7 +1251,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, alpha, idx[1])
+        gp = .gp_fill(fill, alpha, idx[1], paint)
       ),
       rows = idx
     )
@@ -1233,6 +1266,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # a centre + size for `.rect_units` (which handles flip / coord_trans).
 .emit_rect <- function(scene, L, scales) {
   n <- L$n
+  paint <- .paint_fill(L)
   x0 <- rep_len(.bound_native(L$values$xmin, scales$x), n)
   x1 <- rep_len(.bound_native(L$values$xmax, scales$x), n)
   y0 <- rep_len(.bound_native(L$values$ymin, scales$y), n)
@@ -1256,7 +1290,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, alpha, idx[1])
+        gp = .gp_fill(fill, alpha, idx[1], paint)
       ),
       rows = idx
     )
@@ -1431,7 +1465,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         width = r$width,
         height = r$height,
         sketch = skj,
-        gp = vellum::vl_gpar(fill = fillc, col = "grey20", lwd = 1)
+        gp = vellum::vl_gpar(
+          fill = .paint_or(L, fillc),
+          col = "grey20",
+          lwd = 1
+        )
       ),
       # PROVENANCE: a box summarises all rows of its category.
       rows = sel
@@ -1569,7 +1607,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$y,
         sketch = .sketch_bump(sk, j),
         gp = vellum::vl_gpar(
-          fill = colv[sel[1]],
+          fill = .paint_or(L, colv[sel[1]]),
           col = "grey30",
           lwd = 1,
           alpha = gp_alpha(a)
@@ -1620,7 +1658,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$y,
         sketch = .sketch_bump(sk, j),
         gp = vellum::vl_gpar(
-          fill = colv[sel[1]],
+          fill = .paint_or(L, colv[sel[1]]),
           col = "grey30",
           lwd = 1,
           alpha = gp_alpha(a)
@@ -1699,7 +1737,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           xy$x,
           xy$y,
           sketch = .sketch_bump(sk, j),
-          gp = vellum::vl_gpar(fill = ccol, col = NA, alpha = gp_alpha(0.5))
+          gp = vellum::vl_gpar(
+            fill = .paint_or(L, ccol),
+            col = NA,
+            alpha = gp_alpha(0.5)
+          )
         ),
         rows = sel
       )
@@ -2244,9 +2286,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     n
   )
   # Fill only when the layer supplies one; otherwise draw an unfilled boundary.
+  # A constant paint (gradient/pattern) fill is substituted at the gp below, not
+  # carried in the per-row colour vector (which `rep_len` would corrupt).
+  paint <- .paint_fill(L)
   fillv <- if (!is.null(L$values$fill)) {
     scales$color$map(L$values$fill)
-  } else if (!is.null(L$params$fill)) {
+  } else if (!is.null(L$params$fill) && is.null(paint)) {
     L$params$fill
   } else {
     NA
@@ -2268,7 +2313,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$y,
         sketch = .sketch_bump(sk, gi),
         gp = vellum::vl_gpar(
-          fill = fillv[i0],
+          fill = .paint_or(L, fillv[i0]),
           col = stroke[i0],
           lwd = lwd,
           alpha = gp_alpha(alpha[i0])
@@ -3289,7 +3334,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     kind_col("grey80"),
     function(scene, idx, fill, a) {
       gpp <- vellum::vl_gpar(
-        fill = fill,
+        fill = .paint_or(L, fill),
         col = border,
         lwd = lwd,
         alpha = gp_alpha(a)
@@ -3384,13 +3429,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 }
 
 .emit_layer <- function(scene, L, scales) {
-  # A gradient `fill` is only implemented by the filled-region marks; anywhere
-  # else it would leak into a per-row `vl_gpar(fill = ...)` undefined, so reject
-  # it with a clear message (cf. the polar-bar gradient abort in `.emit_bar`).
-  if (!is.null(.grad_fill(L)) && !L$mark %in% .GRADIENT_MARKS) {
+  # A constant paint `fill` (gradient/pattern) is only honoured by the filled
+  # marks; anywhere else it would leak into a per-row `vl_gpar(fill = ...)`
+  # undefined, so reject it with a clear message (cf. the polar-bar abort in
+  # `.emit_bar`).
+  if (!is.null(.paint_fill(L)) && !L$mark %in% .PAINT_MARKS) {
     cli::cli_abort(c(
-      "Gradient fills are not supported for the {.val {L$mark}} mark.",
-      i = "A gradient {.arg fill} works on {.fn mark_area}, {.fn mark_ribbon}, and {.fn mark_bar}."
+      "A paint {.arg fill} (gradient or pattern) is not supported for the {.val {L$mark}} mark.",
+      i = "It works on the filled marks: {.val {(.PAINT_MARKS)}}."
     ))
   }
   switch(

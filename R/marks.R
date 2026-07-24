@@ -1,12 +1,22 @@
 #' @include classes.R
 NULL
 
-# A call to a paint constructor (linear_gradient / radial_gradient), whose result
+# A call to a paint constructor (a gradient or a pattern builder), whose result
 # is an unscaled fill *value*, not a data-mapped channel. Namespace-qualified
 # calls (`vellum::linear_gradient(...)`) match too (call_name strips the `::`).
+.PAINT_CALLS <- c(
+  "linear_gradient",
+  "radial_gradient",
+  "vl_pattern",
+  "pattern_stripe",
+  "pattern_crosshatch",
+  "pattern_grid",
+  "pattern_dot",
+  "pattern_checker"
+)
 .is_paint_call <- function(e) {
   nm <- rlang::call_name(e)
-  !is.null(nm) && nm %in% c("linear_gradient", "radial_gradient")
+  !is.null(nm) && nm %in% .PAINT_CALLS
 }
 
 # If a channel quosure is a bare *symbol* bound (in its own environment) to a
@@ -21,7 +31,7 @@ NULL
     return(NULL)
   }
   val <- tryCatch(rlang::eval_tidy(q), error = function(e) NULL)
-  if (inherits(val, "vellum_gradient")) val else NULL
+  if (inherits(val, c("vellum_gradient", "vellum_pattern"))) val else NULL
 }
 
 # Split captured aesthetic quosures into data-mapped channels vs constant

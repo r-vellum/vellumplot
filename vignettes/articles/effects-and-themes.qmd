@@ -111,6 +111,28 @@ Because a gradient is one paint per region, it cannot be mapped to a data
 column; for that you want a colour scale (see
 **[Scales and guides](scales-and-guides.html)**).
 
+## Pattern (hatch) fills
+
+A *pattern* is the texture counterpart of a gradient: another unscaled `fill`
+value, built by the `pattern_*()` family. Distinguishing regions by texture (not
+only hue) keeps a plot legible in greyscale print and under colour-vision
+deficiency. Pass one directly as a `fill`:
+
+```{r}
+bars <- data.frame(method = c("A", "B", "C"), score = c(4, 7, 5))
+vplot(bars) |>
+  mark_bar(x = method, y = score, fill = pattern_crosshatch(color = "grey20"))
+```
+
+`pattern_stripe()`, `pattern_crosshatch()`, `pattern_grid()`, `pattern_dot()`,
+and `pattern_checker()` each take a `color`, a transparent-or-solid `bg`, and a
+`spacing` (in mm by default); stripes/crosshatch also take an `angle` restricted
+to `0`, `45`, `90`, or `135`. Patterns work on any filled mark — bars, areas,
+ribbons, rects, tiles, boxplots, violins, ridgelines, half-eyes, hulls, and `sf`
+polygons — and render on every backend including PDF. As with gradients, a
+pattern is one fill per region (an unscaled value, not a mapped channel). For a
+custom motif, build the tile yourself with `vl_pattern()`.
+
 ## Hand-drawn sketch mode
 
 `theme_sketch()` turns an entire plot hand-drawn in one line: wobbly gridlines,
