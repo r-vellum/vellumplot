@@ -2,6 +2,19 @@
 
 ## vellumplot (development version)
 
+- **Edge bundling:
+  [`mark_edge_bundle()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md).**
+  A drop-in alternative to
+  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  that routes a graph’s edges as bundled curves instead of straight
+  lines, so a dense node-link hairball collapses into a few legible
+  trunks. `type` selects the algorithm (`"force"`, `"divided"`,
+  `"stub"`, `"path"`, `"hammer"`, `"mingle"`) and `params` passes tuning
+  through to the package, which computes the geometry; vellumplot draws
+  the returned paths with the usual edge aesthetics (faint by default so
+  overlapping trunks read as density). Needs the suggested package
+  (`>= 1.0.0`).
+
 - **Chord diagrams:
   [`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md).**
   Wraps a weighted flow (a `from`/`to`/`value` list or a square flow

@@ -36,6 +36,21 @@ mark_edges(
   data = NULL
 )
 
+mark_edge_bundle(
+  plot,
+  ...,
+  type = c("force", "divided", "stub", "path", "hammer", "mingle"),
+  color = NULL,
+  linewidth = NULL,
+  alpha = NULL,
+  linetype = NULL,
+  params = list(),
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
+
 mark_nodes(
   plot,
   ...,
@@ -210,6 +225,22 @@ mark_node_pie(
 
   Optional layer data; overrides the default table.
 
+- type:
+
+  For `mark_edge_bundle()`, the bundling algorithm: `"force"` (default,
+  force-directed / FDEB), `"divided"` (force-directed with
+  direction-split bundles), `"stub"` (short stubs at each endpoint),
+  `"path"` (shortest-path bundling), `"hammer"` (hammer bundling), or
+  `"mingle"` (multilevel agglomerative edge bundling). Delegated to
+  [`edgebundle::edge_bundle()`](https://schochastics.github.io/edgebundle/reference/edge_bundle.html).
+
+- params:
+
+  For `mark_edge_bundle()`, a named list of extra arguments passed to
+  [`edgebundle::edge_bundle()`](https://schochastics.github.io/edgebundle/reference/edge_bundle.html)
+  for the chosen `type` (e.g.
+  `params = list(compatibility_threshold = 0.8)`). Empty by default.
+
 - size, shape:
 
   For `mark_nodes()`, the node size (mm) / shape; a constant or a mapped
@@ -308,10 +339,19 @@ convex hull behind the graph (grouped by a mapped `fill`, drawn under
 the edges), and `mark_node_pie()` replaces node markers with pie / donut
 glyphs whose wedges come from a set of compositional columns.
 
+`mark_edge_bundle()` is a drop-in alternative to `mark_edges()` that
+routes the edges as **bundled** curves instead of straight lines, so a
+hairball collapses into a few legible trunks. It delegates the geometry
+to the edgebundle package (install it) and draws the returned paths with
+the edge aesthetics – `type` picks the algorithm (`"force"`,
+`"divided"`, `"stub"`, `"path"`, `"hammer"`, `"mingle"`) and `params`
+passes tuning through. Bundled edges are faint by default
+(`alpha = 0.3`) so overlapping trunks read as density.
+
 These are thin over the point / segment / text marks; `igraph` need not
 be installed to use them (only
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
-needs it).
+needs it). `mark_edge_bundle()` also needs the edgebundle package.
 
 ## See also
 
