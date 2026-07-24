@@ -234,6 +234,7 @@ reference:
   - gradients
   - patterns
   - vl_pattern
+  - clip
 
 - title: Interactivity
   desc: >

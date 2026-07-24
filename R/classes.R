@@ -275,6 +275,8 @@ DomainBindSpec <- S7::new_class(
 #'   [select_point()] / [select_interval()] / [add_selection()]).
 #' @param filters A list of filter declarations (from [filter_by()]).
 #' @param binds A list of scale-domain bind declarations (from [bind_scale()]).
+#' @param clip A [clip_to()] / [set_mask()] geometry clip (a `ClipSpec`), or
+#'   `NULL` for none.
 #'
 #' @return A `PlotSpec`.
 #' @seealso [vplot()], [mark_point()], [scale_x_continuous()]
@@ -303,6 +305,24 @@ PlotSpec <- S7::new_class(
     # exactly as before.
     selections = S7::new_property(S7::class_list, default = list()), # list<SelectionSpec>
     filters = S7::new_property(S7::class_list, default = list()), # list<FilterSpec>
-    binds = S7::new_property(S7::class_list, default = list()) # list<DomainBindSpec>
+    binds = S7::new_property(S7::class_list, default = list()), # list<DomainBindSpec>
+    clip = S7::new_property(S7::class_any, default = NULL) # ClipSpec | NULL
+  )
+)
+
+# A clip / mask applied to the whole plot panel (from clip_to() / set_mask()),
+# resolved in seam at panel-push into a `vl_viewport(mask = )`. `region` is a
+# normalised list of coordinate rings (data coords) or NULL (whole-panel).
+# `kind`: "clip" (hard alpha) or "mask" (soft luminance vignette). `NULL` on
+# PlotSpec@clip means no clip (the common path is untouched).
+ClipSpec <- S7::new_class(
+  "ClipSpec",
+  package = "vellumplot",
+  properties = list(
+    region = S7::new_property(S7::class_any, default = NULL),
+    kind = S7::new_property(S7::class_character, default = "clip"),
+    type = S7::new_property(S7::class_character, default = "alpha"),
+    feather = S7::new_property(S7::class_double, default = 0),
+    invert = S7::new_property(S7::class_logical, default = FALSE)
   )
 )
