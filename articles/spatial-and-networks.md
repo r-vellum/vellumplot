@@ -244,6 +244,42 @@ hierarchically. For a directed graph, `type = "divided"` splits each
 trunk by direction. Pass algorithm-specific tuning through `params`,
 e.g. `params = list(compatibility_threshold = 0.5)`.
 
+### Flow maps
+
+A *flow map* shows one source fanning out to many destinations, the
+branches merging into trunks whose width grows with the combined flow –
+the shape Minard used for Napoleon’s march and cartographers use for
+migration. Give
+[`mark_flow_map()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+a one-to-many (star) graph laid out at fixed coordinates, name the
+`root`, and map the per-edge flow to `weight`.
+
+``` r
+
+set.seed(1)
+dest <- 10
+fg <- igraph::make_star(dest + 1, mode = "undirected")
+igraph::V(fg)$name <- c("hub", paste0("d", seq_len(dest)))
+igraph::E(fg)$weight <- sample(1:20, dest, replace = TRUE)
+coords <- rbind(
+  c(0, 0),
+  cbind(runif(dest, 1, 6), runif(dest, -3, 3))
+)
+
+vgraph(fg, layout = coords) |>
+  mark_flow_map(root = "hub", weight = weight) |>
+  mark_nodes(size = 1.5, fill = "grey30")
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+
+`type = "spiral"` (the default) is the recommended layout: a planar,
+angle-restricted spiral tree that needs only the edgebundle package.
+`type = "steiner"` builds an approximate Steiner tree instead (it
+additionally needs the package). The computed flow is mapped onto
+`width_range`, so the widest trunk near the root stays legible however
+lopsided the weights are.
+
 ### Dendrograms
 
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
@@ -260,7 +296,7 @@ vgraph(hc, layout = "dendrogram") |>
   mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
 
 Add labels with
 [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
@@ -278,7 +314,7 @@ vgraph(hc, layout = "dendrogram") |>
   )
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
 
 [`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
 is the one-line preset for all of that – bracket edges and placed leaf
@@ -290,7 +326,7 @@ clusters (branches above the cut stay neutral):
 vdendrogram(hc, k = 3)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
 
 For unrooted trees (phylogeny-style), `layout = "unrooted"` uses
 graphlayouts’ `layout_as_tree_unrooted()` – `mode` picks `"equalangle"`,
@@ -303,7 +339,7 @@ vgraph(igraph::make_tree(31, 3, "undirected"), layout = "unrooted", mode = "equa
   mark_nodes(size = 1.5, fill = "grey30")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png)
 
 ### Augmenting and filtering
 
@@ -331,7 +367,7 @@ vgraph(g, augment = c("degree", "community"), k_core = 2) |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-16-1.png)
 
 ### Community hulls and node glyphs
 
@@ -354,7 +390,7 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-16-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-17-1.png)
 
 [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
 replaces the node markers with pie (or donut, via `inner`) glyphs whose
@@ -372,7 +408,7 @@ vgraph(g, layout = "stress") |>
   mark_node_pie(cols = c("x1", "x2", "x3"), size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-17-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-18-1.png)
 
 ### Interactive neighbour highlighting
 
@@ -414,7 +450,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 2)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-19-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-20-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a

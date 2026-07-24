@@ -286,14 +286,24 @@
 </div>
 </div>
 <p>The other algorithms trade off speed against how aggressively they merge: <code>"force"</code> (the default, force-directed) and <code>"path"</code> bend edges gently, <code>"stub"</code> only tufts each endpoint, and <code>"mingle"</code> merges hierarchically. For a directed graph, <code>type = "divided"</code> splits each trunk by direction. Pass algorithm-specific tuning through <code>params</code>, e.g. <code>params = list(compatibility_threshold = 0.5)</code>.</p>
-</section><section class="level3"><h3 id="dendrograms">Dendrograms<a class="anchor" aria-label="anchor" href="#dendrograms"></a>
+</section><section class="level3"><h3 id="flow-maps">Flow maps<a class="anchor" aria-label="anchor" href="#flow-maps"></a>
 </h3>
-<p><code><a href="../reference/vgraph.html">vgraph()</a></code> also accepts a base <code>hclust</code>/<code>dendrogram</code>, coercing it to a tree that carries each merge’s height. The <code>"dendrogram"</code> layout places leaves on a line and every merge at its height, and <code>elbow_at = "start"</code> turns the elbow into the classic <em>bracket</em> (siblings share a bar at the parent’s level):</p>
+<p>A <em>flow map</em> shows one source fanning out to many destinations, the branches merging into trunks whose width grows with the combined flow – the shape Minard used for Napoleon’s march and cartographers use for migration. Give <code><a href="../reference/mark_graph.html">mark_flow_map()</a></code> a one-to-many (star) graph laid out at fixed coordinates, name the <code>root</code>, and map the per-edge flow to <code>weight</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/hclust.html" class="external-link">hclust</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">USArrests</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">hc</span>, layout <span class="op">=</span> <span class="st">"dendrogram"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>routing <span class="op">=</span> <span class="st">"elbow"</span>, elbow_at <span class="op">=</span> <span class="st">"start"</span>, elbow_axis <span class="op">=</span> <span class="st">"v"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">dest</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">fg</span> <span class="op">&lt;-</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/make_star.html" class="external-link">make_star</a></span><span class="op">(</span><span class="va">dest</span> <span class="op">+</span> <span class="fl">1</span>, mode <span class="op">=</span> <span class="st">"undirected"</span><span class="op">)</span></span>
+<span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/V.html" class="external-link">V</a></span><span class="op">(</span><span class="va">fg</span><span class="op">)</span><span class="op">$</span><span class="va">name</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hub"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">dest</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/E.html" class="external-link">E</a></span><span class="op">(</span><span class="va">fg</span><span class="op">)</span><span class="op">$</span><span class="va">weight</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="va">dest</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">coords</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">dest</span>, <span class="fl">1</span>, <span class="fl">6</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">dest</span>, <span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">fg</span>, layout <span class="op">=</span> <span class="va">coords</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_flow_map</a></span><span class="op">(</span>root <span class="op">=</span> <span class="st">"hub"</span>, weight <span class="op">=</span> <span class="va">weight</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">1.5</span>, fill <span class="op">=</span> <span class="st">"grey30"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
@@ -301,9 +311,25 @@
 </div>
 </div>
 </div>
-<p>Add labels with <code><a href="../reference/mark_text.html">mark_text()</a></code>, which controls <code>angle</code> and justification – for a top-down tree the leaf labels read vertically, hanging below their leaves (merge nodes carry a blank label, so only the leaves show):</p>
+<p><code>type = "spiral"</code> (the default) is the recommended layout: a planar, angle-restricted spiral tree that needs only the edgebundle package. <code>type = "steiner"</code> builds an approximate Steiner tree instead (it additionally needs the package). The computed flow is mapped onto <code>width_range</code>, so the widest trunk near the root stays legible however lopsided the weights are.</p>
+</section><section class="level3"><h3 id="dendrograms">Dendrograms<a class="anchor" aria-label="anchor" href="#dendrograms"></a>
+</h3>
+<p><code><a href="../reference/vgraph.html">vgraph()</a></code> also accepts a base <code>hclust</code>/<code>dendrogram</code>, coercing it to a tree that carries each merge’s height. The <code>"dendrogram"</code> layout places leaves on a line and every merge at its height, and <code>elbow_at = "start"</code> turns the elbow into the classic <em>bracket</em> (siblings share a bar at the parent’s level):</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/hclust.html" class="external-link">hclust</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">USArrests</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">hc</span>, layout <span class="op">=</span> <span class="st">"dendrogram"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>routing <span class="op">=</span> <span class="st">"elbow"</span>, elbow_at <span class="op">=</span> <span class="st">"start"</span>, elbow_axis <span class="op">=</span> <span class="st">"v"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Add labels with <code><a href="../reference/mark_text.html">mark_text()</a></code>, which controls <code>angle</code> and justification – for a top-down tree the leaf labels read vertically, hanging below their leaves (merge nodes carry a blank label, so only the leaves show):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">hc</span>, layout <span class="op">=</span> <span class="st">"dendrogram"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>routing <span class="op">=</span> <span class="st">"elbow"</span>, elbow_at <span class="op">=</span> <span class="st">"start"</span>, elbow_axis <span class="op">=</span> <span class="st">"v"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_text.html">mark_text</a></span><span class="op">(</span></span>
@@ -312,31 +338,31 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
+<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code><a href="../reference/vdendrogram.html">vdendrogram()</a></code> is the one-line preset for all of that – bracket edges and placed leaf labels, <code>direction</code> to orient it, and <code>k</code> to cut the tree and colour the clusters (branches above the cut stay neutral):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vdendrogram.html">vdendrogram</a></span><span class="op">(</span><span class="va">hc</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
+<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>For unrooted trees (phylogeny-style), <code>layout = "unrooted"</code> uses graphlayouts’ <code>layout_as_tree_unrooted()</code> – <code>mode</code> picks <code>"equalangle"</code>, <code>"equaldaylight"</code>, or <code>"stress"</code>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/make_tree.html" class="external-link">make_tree</a></span><span class="op">(</span><span class="fl">31</span>, <span class="fl">3</span>, <span class="st">"undirected"</span><span class="op">)</span>, layout <span class="op">=</span> <span class="st">"unrooted"</span>, mode <span class="op">=</span> <span class="st">"equaldaylight"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">1.5</span>, fill <span class="op">=</span> <span class="st">"grey30"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
+<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -346,7 +372,7 @@
 <p>Vertex metrics are the analyst’s choice, not something <code><a href="../reference/vgraph.html">vgraph()</a></code> computes behind your back – but <code>augment</code> attaches a set on request, so you can map or filter by them without a manual igraph round-trip. <code>augment = TRUE</code> adds <code>degree</code> and <code>components</code>; a character vector picks from <code>degree</code>, <code>betweenness</code>, <code>closeness</code>, <code>eigen</code>, <code>coreness</code>, <code>components</code>, <code>community</code>, and the in/out-degree variants.</p>
 <p><code>filter_nodes</code> / <code>filter_edges</code> take data-masked predicates over the vertex / edge attributes, and <code>k_core</code> keeps the k-core. Filtering happens <strong>before</strong> the layout, so you see a clean layout of the subgraph rather than a full layout with holes – the honest way to tame a dense graph (the node-link idiom breaks down past a link density of ~3).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># attach degree + community, then plot just the 2-core, sized and coloured by them</span></span>
 <span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">g</span>, augment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"degree"</span>, <span class="st">"community"</span><span class="op">)</span>, k_core <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -355,7 +381,7 @@
 <span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png" style="width:100.0%"></p>
+<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-16-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -364,7 +390,7 @@
 </h3>
 <p><code><a href="../reference/mark_graph.html">mark_node_hull()</a></code> shades groups of nodes with a convex hull drawn <em>behind</em> the graph – the standard way to show community structure. Group by a mapped <code>fill</code>; <code>expand</code> grows each hull so it wraps the markers rather than clipping them.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/set_vertex_attr.html" class="external-link">set_vertex_attr</a></span><span class="op">(</span></span>
 <span>  <span class="va">g</span>, <span class="st">"comm"</span>,</span>
 <span>  value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/communities.html" class="external-link">membership</a></span><span class="op">(</span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/cluster_louvain.html" class="external-link">cluster_louvain</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -376,14 +402,14 @@
 <span>  <span class="fu"><a href="../reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-16-1.png" style="width:100.0%"></p>
+<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-17-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code><a href="../reference/mark_graph.html">mark_node_pie()</a></code> replaces the node markers with pie (or donut, via <code>inner</code>) glyphs whose wedges come from a set of compositional columns – one wedge per column, sized by that column’s value at each vertex.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">nm</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/set_vertex_attr.html" class="external-link">set_vertex_attr</a></span><span class="op">(</span><span class="va">g</span>, <span class="va">nm</span>, value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/gorder.html" class="external-link">vcount</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -393,7 +419,7 @@
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_node_pie</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-17-1.png" style="width:100.0%"></p>
+<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-18-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -402,7 +428,7 @@
 </h3>
 <p><code><a href="../reference/select_neighbours.html">select_neighbours()</a></code> is a network-aware selection preset: in an interactive host (<code>vellumwidget::as_widget()</code>), pointing at a node spotlights <strong>its neighbourhood</strong> — the node, its incident edges, and its adjacent nodes — and dims the rest; pointing at an edge highlights its two endpoints. <code>degree = 2</code> reaches neighbours-of-neighbours. Like every selection it is inert on a static render, so the code below draws the same picture on the page but comes alive under <code>as_widget()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">g</span>, layout <span class="op">=</span> <span class="st">"stress"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="va">deg</span>, fill <span class="op">=</span> <span class="va">grp</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -415,13 +441,13 @@
 </h3>
 <p><code>layout</code> accepts a name (<code>"stress"</code>, <code>"sparse_stress"</code>, <code>"backbone"</code>, <code>"fr"</code>, <code>"kk"</code>, <code>"circle"</code>, <code>"tree"</code>, <code>"sugiyama"</code>, <code>"dendrogram"</code>, <code>"unrooted"</code>, and more), a supplied N-by-2 coordinate matrix, or a function that returns one. Stochastic layouts take a <code>seed</code> so the figure is reproducible.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vgraph.html">vgraph</a></span><span class="op">(</span><span class="va">g</span>, layout <span class="op">=</span> <span class="st">"circle"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">grp</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-19-1.png" style="width:100.0%"></p>
+<figure><p><img src="spatial-and-networks_files/figure-html/unnamed-chunk-20-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>

@@ -97,6 +97,7 @@ Layers that draw data. Scales train across every mark on the panel.
   : Draw simple-feature (sf) geometries
 - [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_edge_bundle()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  [`mark_flow_map()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_edge_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)

@@ -123,6 +123,22 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">mark_flow_map</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  <span class="va">root</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"spiral"</span>, <span class="st">"steiner"</span><span class="op">)</span>,</span>
+<span>  weight <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  width_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">mark_nodes</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
@@ -286,13 +302,35 @@ teardrop self-loops) do not apply to the rasterised edges.</p></dd>
 direction-split bundles), <code>"stub"</code> (short stubs at each endpoint), <code>"path"</code>
 (shortest-path bundling), <code>"hammer"</code> (hammer bundling), or <code>"mingle"</code>
 (multilevel agglomerative edge bundling). Delegated to
-<code><a href="https://schochastics.github.io/edgebundle/reference/edge_bundle.html" class="external-link">edgebundle::edge_bundle()</a></code>.</p></dd>
+<code><a href="https://schochastics.github.io/edgebundle/reference/edge_bundle.html" class="external-link">edgebundle::edge_bundle()</a></code>. For <code>mark_flow_map()</code>, the flow-tree layout:
+<code>"spiral"</code> (default, angle-restricted spiral tree; <span class="pkg">edgebundle</span> only) or
+<code>"steiner"</code> (approximate Steiner tree; also needs <span class="pkg">interp</span>).</p></dd>
 
 
 <dt id="arg-params">params<a class="anchor" aria-label="anchor" href="#arg-params"></a></dt>
 <dd><p>For <code>mark_edge_bundle()</code>, a named list of extra arguments passed
 to <code><a href="https://schochastics.github.io/edgebundle/reference/edge_bundle.html" class="external-link">edgebundle::edge_bundle()</a></code> for the chosen <code>type</code> (e.g.
-<code>params = list(compatibility_threshold = 0.8)</code>). Empty by default.</p></dd>
+<code>params = list(compatibility_threshold = 0.8)</code>). For <code>mark_flow_map()</code>,
+extra arguments for the flow-tree builder – <code><a href="https://schochastics.github.io/edgebundle/reference/flow_tree.html" class="external-link">edgebundle::flow_tree()</a></code> when
+<code>type = "spiral"</code> (e.g. <code>list(alpha = 30)</code>), <code><a href="https://schochastics.github.io/edgebundle/reference/tnss_tree.html" class="external-link">edgebundle::tnss_tree()</a></code> when
+<code>type = "steiner"</code> (e.g. <code>list(gamma = 0.9)</code>). Empty by default.</p></dd>
+
+
+<dt id="arg-root">root<a class="anchor" aria-label="anchor" href="#arg-root"></a></dt>
+<dd><p>For <code>mark_flow_map()</code>, the source vertex the flow fans out from:
+a vertex name (matched against the node table) or a vertex index.</p></dd>
+
+
+<dt id="arg-weight">weight<a class="anchor" aria-label="anchor" href="#arg-weight"></a></dt>
+<dd><p>For <code>mark_flow_map()</code>, the per-edge flow volume (a mapped edge
+column, e.g. <code>weight = migrants</code>). Defaults to the graph's <code>weight</code> edge
+attribute, or <code>1</code> if there is none.</p></dd>
+
+
+<dt id="arg-width-range">width_range<a class="anchor" aria-label="anchor" href="#arg-width-range"></a></dt>
+<dd><p>For <code>mark_flow_map()</code>, the drawn branch width range
+<code>c(min, max)</code> (in <code>linewidth</code> units) that the computed flow is mapped onto.
+Default <code>c(0.3, 3)</code>.</p></dd>
 
 
 <dt id="arg-size-shape">size, shape<a class="anchor" aria-label="anchor" href="#arg-size-shape"></a></dt>
@@ -387,9 +425,17 @@ package (install it) and draws the returned paths with the edge aesthetics –
 <code>type</code> picks the algorithm (<code>"force"</code>, <code>"divided"</code>, <code>"stub"</code>, <code>"path"</code>,
 <code>"hammer"</code>, <code>"mingle"</code>) and <code>params</code> passes tuning through. Bundled edges are
 faint by default (<code>alpha = 0.3</code>) so overlapping trunks read as density.</p>
+<p><code>mark_flow_map()</code> draws a <strong>flow map</strong>: a single <code>root</code> fans out to many
+destinations along smooth, merging branches whose width tracks the flow volume
+(the Minard / migration-map idiom). It expects a one-to-many (star) graph
+rooted at <code>root</code>, laid out at fixed coordinates; edge <code>weight</code> drives the flow.
+<code>type = "spiral"</code> (default, an angle-restricted spiral tree) needs only
+<span class="pkg">edgebundle</span>; <code>type = "steiner"</code> (an approximate Steiner tree) additionally
+needs <span class="pkg">interp</span>. Branch width is mapped from the computed flow into
+<code>width_range</code>.</p>
 <p>These are thin over the point / segment / text marks; <code>igraph</code> need not be
-installed to use them (only <code><a href="vgraph.html">vgraph()</a></code> needs it). <code>mark_edge_bundle()</code> also
-needs the <span class="pkg">edgebundle</span> package.</p>
+installed to use them (only <code><a href="vgraph.html">vgraph()</a></code> needs it). <code>mark_edge_bundle()</code> and
+<code>mark_flow_map()</code> also need the <span class="pkg">edgebundle</span> package.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

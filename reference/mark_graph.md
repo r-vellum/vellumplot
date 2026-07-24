@@ -51,6 +51,22 @@ mark_edge_bundle(
   data = NULL
 )
 
+mark_flow_map(
+  plot,
+  ...,
+  root,
+  type = c("spiral", "steiner"),
+  weight = NULL,
+  width_range = c(0.3, 3),
+  color = NULL,
+  alpha = NULL,
+  params = list(),
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
+
 mark_nodes(
   plot,
   ...,
@@ -233,13 +249,38 @@ mark_node_pie(
   `"path"` (shortest-path bundling), `"hammer"` (hammer bundling), or
   `"mingle"` (multilevel agglomerative edge bundling). Delegated to
   [`edgebundle::edge_bundle()`](https://schochastics.github.io/edgebundle/reference/edge_bundle.html).
+  For `mark_flow_map()`, the flow-tree layout: `"spiral"` (default,
+  angle-restricted spiral tree; edgebundle only) or `"steiner"`
+  (approximate Steiner tree; also needs interp).
 
 - params:
 
   For `mark_edge_bundle()`, a named list of extra arguments passed to
   [`edgebundle::edge_bundle()`](https://schochastics.github.io/edgebundle/reference/edge_bundle.html)
   for the chosen `type` (e.g.
-  `params = list(compatibility_threshold = 0.8)`). Empty by default.
+  `params = list(compatibility_threshold = 0.8)`). For
+  `mark_flow_map()`, extra arguments for the flow-tree builder –
+  [`edgebundle::flow_tree()`](https://schochastics.github.io/edgebundle/reference/flow_tree.html)
+  when `type = "spiral"` (e.g. `list(alpha = 30)`),
+  [`edgebundle::tnss_tree()`](https://schochastics.github.io/edgebundle/reference/tnss_tree.html)
+  when `type = "steiner"` (e.g. `list(gamma = 0.9)`). Empty by default.
+
+- root:
+
+  For `mark_flow_map()`, the source vertex the flow fans out from: a
+  vertex name (matched against the node table) or a vertex index.
+
+- weight:
+
+  For `mark_flow_map()`, the per-edge flow volume (a mapped edge column,
+  e.g. `weight = migrants`). Defaults to the graph's `weight` edge
+  attribute, or `1` if there is none.
+
+- width_range:
+
+  For `mark_flow_map()`, the drawn branch width range `c(min, max)` (in
+  `linewidth` units) that the computed flow is mapped onto. Default
+  `c(0.3, 3)`.
 
 - size, shape:
 
@@ -348,10 +389,20 @@ the edge aesthetics – `type` picks the algorithm (`"force"`,
 passes tuning through. Bundled edges are faint by default
 (`alpha = 0.3`) so overlapping trunks read as density.
 
+`mark_flow_map()` draws a **flow map**: a single `root` fans out to many
+destinations along smooth, merging branches whose width tracks the flow
+volume (the Minard / migration-map idiom). It expects a one-to-many
+(star) graph rooted at `root`, laid out at fixed coordinates; edge
+`weight` drives the flow. `type = "spiral"` (default, an
+angle-restricted spiral tree) needs only edgebundle; `type = "steiner"`
+(an approximate Steiner tree) additionally needs interp. Branch width is
+mapped from the computed flow into `width_range`.
+
 These are thin over the point / segment / text marks; `igraph` need not
 be installed to use them (only
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
-needs it). `mark_edge_bundle()` also needs the edgebundle package.
+needs it). `mark_edge_bundle()` and `mark_flow_map()` also need the
+edgebundle package.
 
 ## See also
 

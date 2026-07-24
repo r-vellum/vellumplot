@@ -2,6 +2,18 @@
 
 ## vellumplot (development version)
 
+- **Flow maps:
+  [`mark_flow_map()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md).**
+  A one-to-many flow map on a
+  [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  plot: a single `root` fans out to every destination along smooth,
+  merging branches whose width tracks the flow volume (the Minard /
+  migration-map idiom). `type = "spiral"` (default) builds an
+  angle-restricted spiral tree from the package; `type = "steiner"`
+  builds an approximate Steiner tree (additionally needs ). Edge
+  `weight` drives the flow, which is mapped onto `width_range`. Needs
+  the suggested package.
+
 - **Edge bundling:
   [`mark_edge_bundle()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md).**
   A drop-in alternative to
