@@ -4010,13 +4010,28 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)
     }
-    # The core layer (isolated in its own blend group if it carries a blend).
+    # The core layer, optionally isolated in its own group for a blend and/or a
+    # per-layer clip (clip_layer()). Both are viewport properties, so a layer that
+    # has both takes one group carrying the mask + blend together.
     blend <- L$blend %||% "normal"
-    if (!identical(blend, "normal")) {
+    # Per-layer clip (cartesian only, like the panel-level clip); the native-coord
+    # mask would not align under polar / nonlinear trans.
+    layer_mask <- if (
+      !is.null(L$clip) && is.null(scales$polar) && is.null(scales$trans)
+    ) {
+      rng <- .panel_scale_range(scales)
+      .clip_mask(L$clip, rng$x, rng$y)
+    }
+    if (!identical(blend, "normal") || !is.null(layer_mask)) {
       rng <- .panel_scale_range(scales)
       scene <- vellum::push(
         scene,
-        vellum::vl_viewport(xscale = rng$x, yscale = rng$y, blend = blend)
+        vellum::vl_viewport(
+          xscale = rng$x,
+          yscale = rng$y,
+          blend = if (identical(blend, "normal")) NULL else blend,
+          mask = layer_mask
+        )
       )
       scene <- .emit_layer(scene, L, scales)
       scene <- vellum::pop(scene)

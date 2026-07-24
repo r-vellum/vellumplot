@@ -94,3 +94,38 @@ test_that("no clip leaves the render path untouched", {
   expect_null(p@clip)
   expect_no_error(render_plot(p, local_tempfile(fileext = ".png")))
 })
+
+test_that("clip_layer() clips only the most-recent layer", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    clip_to(diamond) # <- would be plot-level; ensure layer clip is separate
+  p2 <- vplot(mtcars) |>
+    mark_tile(x = wt, y = mpg) |>
+    clip_layer(diamond) |>
+    mark_point(x = wt, y = mpg)
+  # the tile layer carries a clip; the later point layer does not
+  expect_s3_class(p2@layers[[1]]@clip, "vellumplot::ClipSpec")
+  expect_null(p2@layers[[2]]@clip)
+  # and it is a layer clip, not a plot-level one
+  expect_null(p2@clip)
+})
+
+test_that("clip_layer() needs a layer and a region", {
+  expect_error(clip_layer(vplot(mtcars), diamond), "needs a layer")
+  expect_error(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg) |> clip_layer(),
+    "region.*is required"
+  )
+})
+
+test_that("a per-layer clip renders with other layers full-bleed", {
+  grid <- expand.grid(x = 1:10, y = 1:10)
+  grid$z <- grid$x + grid$y
+  p <- vplot(grid) |>
+    mark_tile(x = x, y = y, fill = z) |>
+    clip_layer(diamond) |>
+    mark_point(x = x, y = y, size = 1)
+  f <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, f))
+  expect_gt(file.info(f)$size, 0)
+})

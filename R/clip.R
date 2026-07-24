@@ -10,9 +10,13 @@ NULL
 #' choropleth). `set_mask()` is a **soft** mask: a radial luminance ramp that
 #' fades the panel out towards its edges (a vignette / spotlight).
 #'
-#' Both attach to the plot and resolve at render into an isolated masked layer
-#' ([vellum::as_mask()]), so the static output is unchanged when neither is set.
-#' Cartesian coordinates only (not polar or a nonlinear `coord_trans()`).
+#' `clip_to()` / `set_mask()` mask the **whole panel**; `clip_layer()` masks only
+#' the **most-recently-added layer** (the one just piped in), so one raster layer
+#' can be clipped to a shape while the axes and other layers stay full-bleed.
+#'
+#' All three attach to the plot and resolve at render into an isolated masked
+#' layer ([vellum::as_mask()]), so the static output is unchanged when none is
+#' set. Cartesian coordinates only (not polar or a nonlinear `coord_trans()`).
 #'
 #' A smooth *feathered* edge on an arbitrary polygon needs a blur the renderer
 #' does not provide yet, so `clip_to()` is hard-edged; use `set_mask()` for a
@@ -48,6 +52,30 @@ clip_to <- function(plot, region, invert = FALSE) {
     cli::cli_abort("{.arg region} is required: the geometry to clip to.")
   }
   plot@clip <- ClipSpec(
+    region = .clip_region(region),
+    kind = "clip",
+    type = "alpha",
+    feather = 0,
+    invert = isTRUE(invert)
+  )
+  plot
+}
+
+#' @rdname clip
+#' @export
+clip_layer <- function(plot, region, invert = FALSE) {
+  .check_plot(plot)
+  if (missing(region) || is.null(region)) {
+    cli::cli_abort(
+      "{.arg region} is required: the geometry to clip the layer to."
+    )
+  }
+  n <- length(plot@layers)
+  if (!n) {
+    cli::cli_abort("{.fn clip_layer} needs a layer to clip; add a mark first.")
+  }
+  # Clip the most-recently-added layer (the one just piped in).
+  plot@layers[[n]]@clip <- ClipSpec(
     region = .clip_region(region),
     kind = "clip",
     type = "alpha",
@@ -124,10 +152,11 @@ set_mask <- function(
   list(rings = unname(rings))
 }
 
-# Build the vellum mask for a resolved clip spec against a panel's scales, drawn
-# in the panel's native (data) coordinate system -- so it aligns with the marks.
-# Returns a `vellum_mask` or NULL. Cartesian panels only (the caller guards).
-.clip_mask <- function(cs, hsc, vsc) {
+# Build the vellum mask for a resolved clip spec, drawn in the panel's native
+# (data) coordinate system -- so it aligns with the marks. `xdom`/`ydom` are the
+# panel's x/y domain ranges c(min, max). Returns a `vellum_mask` or NULL.
+# Cartesian panels only (the caller guards).
+.clip_mask <- function(cs, xdom, ydom) {
   if (is.null(cs)) {
     return(NULL)
   }
@@ -154,8 +183,8 @@ set_mask <- function(
   k <- 0L
   if (isTRUE(cs@invert)) {
     k <- k + 1L
-    xs[[k]] <- hsc$domain[c(1, 2, 2, 1)]
-    ys[[k]] <- vsc$domain[c(1, 1, 2, 2)]
+    xs[[k]] <- xdom[c(1, 2, 2, 1)]
+    ys[[k]] <- ydom[c(1, 1, 2, 2)]
     id[[k]] <- rep.int(k, 4L)
   }
   for (ring in rings) {

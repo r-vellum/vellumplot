@@ -430,7 +430,7 @@ NULL
           clip = panel_clip,
           # A clip_to()/set_mask() geometry mask, built in this panel's native
           # coords (NULL when none is set, leaving the common path untouched).
-          mask = .clip_mask(spec@clip, hsc, vsc),
+          mask = .clip_mask(spec@clip, hsc$domain, vsc$domain),
           name = pname,
           meta = .panel_scales_meta(hsc, vsc),
           # Clip-stable pan group so a host (vellumwidget) can pan/zoom this panel's

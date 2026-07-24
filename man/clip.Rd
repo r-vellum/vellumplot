@@ -3,10 +3,13 @@
 \name{clip}
 \alias{clip}
 \alias{clip_to}
+\alias{clip_layer}
 \alias{set_mask}
 \title{Clip or mask a plot to a geometry}
 \usage{
 clip_to(plot, region, invert = FALSE)
+
+clip_layer(plot, region, invert = FALSE)
 
 set_mask(plot, region = NULL, type = c("luminance", "alpha"), feather = 0.35)
 }
@@ -38,9 +41,13 @@ choropleth). \code{set_mask()} is a \strong{soft} mask: a radial luminance ramp 
 fades the panel out towards its edges (a vignette / spotlight).
 }
 \details{
-Both attach to the plot and resolve at render into an isolated masked layer
-(\code{\link[vellum:as_mask]{vellum::as_mask()}}), so the static output is unchanged when neither is set.
-Cartesian coordinates only (not polar or a nonlinear \code{coord_trans()}).
+\code{clip_to()} / \code{set_mask()} mask the \strong{whole panel}; \code{clip_layer()} masks only
+the \strong{most-recently-added layer} (the one just piped in), so one raster layer
+can be clipped to a shape while the axes and other layers stay full-bleed.
+
+All three attach to the plot and resolve at render into an isolated masked
+layer (\code{\link[vellum:as_mask]{vellum::as_mask()}}), so the static output is unchanged when none is
+set. Cartesian coordinates only (not polar or a nonlinear \code{coord_trans()}).
 
 A smooth \emph{feathered} edge on an arbitrary polygon needs a blur the renderer
 does not provide yet, so \code{clip_to()} is hard-edged; use \code{set_mask()} for a

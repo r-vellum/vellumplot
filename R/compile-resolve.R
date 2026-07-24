@@ -234,6 +234,8 @@ NULL
     blend = layer@blend,
     effects = layer@effects,
     sketch = layer@sketch,
+    clip = layer@clip, # per-layer clip (clip_layer()) | NULL
+
     # Per-row interactivity (NULL when none declared): a data key + optional
     # tooltip / hover-group, evaluated against the raw layer data. Kept out of
     # `values` so it is never scale-trained. Aligns to the drawn elements when the

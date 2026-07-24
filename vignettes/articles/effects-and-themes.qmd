@@ -159,9 +159,22 @@ vplot(grid) |>
   set_mask(feather = 0.5)
 ```
 
-Both work under cartesian coordinates (a smooth feathered edge on an arbitrary
-polygon is not available yet, so `clip_to()` is hard-edged; reach for
-`set_mask()` when you want a soft fade).
+`clip_to()` and `set_mask()` mask the whole panel; `clip_layer()` masks only the
+most-recently-added layer, so one raster layer can be clipped to a shape while
+the axes and other layers stay full-bleed:
+
+```{r}
+set.seed(1)
+pts <- data.frame(x = runif(60, 1, 24), y = runif(60, 1, 24))
+vplot(grid) |>
+  mark_tile(x = x, y = y, fill = z) |>
+  clip_layer(diamond) |>
+  mark_point(data = pts, x = x, y = y, size = 1.5, color = "white")
+```
+
+All three work under cartesian coordinates (a smooth feathered edge on an
+arbitrary polygon is not available yet, so `clip_to()` / `clip_layer()` are
+hard-edged; reach for `set_mask()` when you want a soft fade).
 
 ## Hand-drawn sketch mode
 

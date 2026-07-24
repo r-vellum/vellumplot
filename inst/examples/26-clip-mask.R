@@ -31,3 +31,15 @@ vplot(grid) |>
   set_mask(feather = 0.5) |>
   labs(title = "Vignette (set_mask)") |>
   render_plot(file.path(outdir, "26-vignette.png"))
+
+# --- 4. clip a single layer (clip_layer) ------------------------------------
+# The tile layer is clipped to the diamond; the points layer, added after, is
+# full-bleed on top -- clip_layer() masks only the most-recent layer.
+set.seed(1)
+pts <- data.frame(x = runif(60, 1, 24), y = runif(60, 1, 24))
+vplot(grid) |>
+  mark_tile(x = x, y = y, fill = z) |>
+  clip_layer(diamond) |>
+  mark_point(data = pts, x = x, y = y, size = 1.5, color = "white") |>
+  labs(title = "One layer clipped (clip_layer)") |>
+  render_plot(file.path(outdir, "26-clip-layer.png"))

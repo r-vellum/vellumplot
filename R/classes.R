@@ -118,6 +118,9 @@ LayerSpec <- S7::new_class(
     sketch = S7::new_property(S7::class_any, default = NULL),
     data = S7::new_property(S7::class_any, default = NULL), # per-layer data | NULL
     z = S7::new_property(S7::class_integer, default = 0L), # draw-order band
+    # A per-layer clip (from clip_layer()): a ClipSpec masking just this layer, or
+    # NULL. Distinct from PlotSpec@clip, which masks the whole panel.
+    clip = S7::new_property(S7::class_any, default = NULL),
     # Interactivity declarations (host-agnostic; ignored by a static render). A
     # named list of quosures for the reserved args `tooltip`, `data_id`,
     # `hover_group`, `hover_color`, `selected_color` — evaluated per data row at
