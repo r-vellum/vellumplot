@@ -81,3 +81,12 @@ vplot(df) |>
   ) |>
   labs(title = "Hatched violins", x = NULL) |>
   render_plot(file.path(outdir, "25-violins.png"))
+
+# --- 4. mapping the pattern aesthetic ---------------------------------------
+# Map a variable to textures: each level gets a distinct pattern, with a
+# patterned legend. scale_pattern(values=) overrides the palette.
+grouped <- data.frame(method = c("A", "B", "C", "D"), score = c(4, 7, 5, 6))
+vplot(grouped) |>
+  mark_bar(x = method, y = score, pattern = method) |>
+  labs(title = "Pattern mapped to a variable", x = NULL, y = "score") |>
+  render_plot(file.path(outdir, "25-mapped.png"))

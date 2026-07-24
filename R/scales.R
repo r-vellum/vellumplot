@@ -1044,6 +1044,39 @@ scale_shape <- function(plot, values = NULL, name = NULL) {
   )
 }
 
+#' Pattern (texture) scale
+#'
+#' Map a discrete variable to fill **textures** -- the greyscale- and
+#' colour-vision-safe companion of a fill palette -- via a filled mark's `pattern`
+#' aesthetic: `mark_bar(x = g, y = n, pattern = series)`. Each level takes a
+#' distinct [pattern_stripe()]-family texture. Applies to the filled marks (bar,
+#' area, tile, rect, boxplot, violin, hull).
+#'
+#' @param plot A [PlotSpec].
+#' @param values Optional textures, one per level: a character vector of builder
+#'   names (`"stripe"`, `"crosshatch"`, `"grid"`, `"dot"`, `"checker"`), or a list
+#'   of `vellum_pattern` objects (e.g. from [pattern_stripe()]). `NULL` (default)
+#'   cycles a built-in palette of distinct textures.
+#' @param name Optional legend title.
+#' @return The modified [PlotSpec].
+#' @seealso [pattern_stripe()], [scale_shape()]
+#' @examples
+#' df <- data.frame(g = c("a", "b", "c"), n = c(3, 5, 2))
+#' vplot(df) |> mark_bar(x = g, y = n, pattern = g) |> scale_pattern()
+#' @export
+scale_pattern <- function(plot, values = NULL, name = NULL) {
+  .check_plot(plot)
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "pattern",
+      type = "discrete",
+      palette = values,
+      name = name
+    )
+  )
+}
+
 #' Identity scales
 #'
 #' Use the data values *directly* as the aesthetic — no training and no legend.

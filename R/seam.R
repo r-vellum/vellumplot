@@ -360,6 +360,7 @@ NULL
       color = built$scales$color,
       size = built$scales$size,
       shape = built$scales$shape,
+      pattern = built$scales$pattern,
       edge_width = built$scales$edge_width,
       alpha = built$scales$alpha,
       linetype = built$scales$linetype,

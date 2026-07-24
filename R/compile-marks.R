@@ -128,6 +128,31 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # `vl_gpar(fill = )` site; returns the colour unchanged when there is no paint.
 .paint_or <- function(L, col) .paint_fill(L) %||% col
 
+# Per-row grouping key for a mapped `pattern` aesthetic (the trained level), or
+# NULL when the layer has no pattern channel. Added to a fill mark's style
+# grouping so each level draws with its own texture.
+.aes_pattern_key <- function(L, scales, n) {
+  if (!is.null(scales$pattern) && !is.null(L$values$pattern)) {
+    rep_len(scales$pattern$map(L$values$pattern), n)
+  }
+}
+
+# The `vellum_pattern` for the group whose representative row `i` has key
+# `pkey[i]`, or NULL when there is no pattern mapping.
+.pattern_obj <- function(scales, pkey, i) {
+  if (is.null(pkey)) {
+    return(NULL)
+  }
+  scales$pattern$objs[[pkey[i]]]
+}
+
+# The mapped `vellum_pattern` for layer row `i` (or NULL) -- the convenience used
+# by the per-group emitters (boxplot / violin / ridgeline / halfeye / hull) whose
+# fill is resolved one representative row at a time.
+.pattern_at <- function(L, scales, i) {
+  .pattern_obj(scales, .aes_pattern_key(L, scales, L$n), i)
+}
+
 # The marks whose emitters honour a constant paint (gradient/pattern) `fill`.
 # Every other mark would pass the paint into an undefined per-row fill, so
 # `.emit_layer` rejects it up front. (Inherently multi-category fills -- pie /
@@ -872,7 +897,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   }
 
   gi <- 0L
-  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+  pkey <- .aes_pattern_key(L, scales, n)
+  for (idx in .style_groups(
+    n,
+    c(list(fill = fill, alpha = alpha), if (!is.null(pkey)) list(pat = pkey))
+  )) {
     r <- .rect_units(
       scales,
       xc[idx],
@@ -888,7 +917,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, alpha, idx[1])
+        gp = .gp_fill(fill, alpha, idx[1], .pattern_obj(scales, pkey, idx[1]))
       ),
       rows = idx
     )
@@ -1241,7 +1270,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+  pkey <- .aes_pattern_key(L, scales, n)
+  for (idx in .style_groups(
+    n,
+    c(list(fill = fill, alpha = alpha), if (!is.null(pkey)) list(pat = pkey))
+  )) {
     r <- .rect_units(scales, xp[idx], yp[idx], w[idx], h[idx])
     scene <- .draw(
       scene,
@@ -1251,7 +1284,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, alpha, idx[1], paint)
+        gp = .gp_fill(
+          fill,
+          alpha,
+          idx[1],
+          paint %||% .pattern_obj(scales, pkey, idx[1])
+        )
       ),
       rows = idx
     )
@@ -1280,7 +1318,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+  pkey <- .aes_pattern_key(L, scales, n)
+  for (idx in .style_groups(
+    n,
+    c(list(fill = fill, alpha = alpha), if (!is.null(pkey)) list(pat = pkey))
+  )) {
     r <- .rect_units(scales, xc[idx], yc[idx], w[idx], h[idx])
     scene <- .draw(
       scene,
@@ -1290,7 +1332,12 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, alpha, idx[1], paint)
+        gp = .gp_fill(
+          fill,
+          alpha,
+          idx[1],
+          paint %||% .pattern_obj(scales, pkey, idx[1])
+        )
       ),
       rows = idx
     )
@@ -1466,7 +1513,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         height = r$height,
         sketch = skj,
         gp = vellum::vl_gpar(
-          fill = .paint_or(L, fillc),
+          fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, fillc),
           col = "grey20",
           lwd = 1
         )
@@ -1607,7 +1654,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$y,
         sketch = .sketch_bump(sk, j),
         gp = vellum::vl_gpar(
-          fill = .paint_or(L, colv[sel[1]]),
+          fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, colv[sel[1]]),
           col = "grey30",
           lwd = 1,
           alpha = gp_alpha(a)
@@ -1658,7 +1705,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$y,
         sketch = .sketch_bump(sk, j),
         gp = vellum::vl_gpar(
-          fill = .paint_or(L, colv[sel[1]]),
+          fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, colv[sel[1]]),
           col = "grey30",
           lwd = 1,
           alpha = gp_alpha(a)
@@ -1738,7 +1785,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           xy$y,
           sketch = .sketch_bump(sk, j),
           gp = vellum::vl_gpar(
-            fill = .paint_or(L, ccol),
+            fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, ccol),
             col = NA,
             alpha = gp_alpha(0.5)
           )
@@ -2313,7 +2360,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$y,
         sketch = .sketch_bump(sk, gi),
         gp = vellum::vl_gpar(
-          fill = .paint_or(L, fillv[i0]),
+          fill = .pattern_at(L, scales, i0) %||% .paint_or(L, fillv[i0]),
           col = stroke[i0],
           lwd = lwd,
           alpha = gp_alpha(alpha[i0])

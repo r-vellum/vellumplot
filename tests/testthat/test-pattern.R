@@ -86,3 +86,60 @@ test_that("gradient fills still work (no paint-path regression)", {
   f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
 })
+
+# --- mapped pattern aesthetic + scale_pattern() -----------------------------
+
+test_that("mapping the pattern aesthetic trains a discrete pattern scale", {
+  bars <- data.frame(g = c("a", "b", "c"), n = c(3, 5, 2))
+  sc <- vellumplot:::.train_pattern(
+    vplot(bars) |> mark_bar(x = g, y = n, pattern = g),
+    list(list(mark = "bar", values = list(pattern = bars$g)))
+  )
+  expect_identical(sc$kind, "pattern")
+  expect_setequal(sc$levels, c("a", "b", "c"))
+  expect_length(sc$patterns, 3L)
+  expect_s3_class(sc$patterns[[1]], "vellum_pattern")
+})
+
+test_that("scale_pattern(values=) accepts builder names and pattern objects", {
+  expect_length(vellumplot:::.resolve_pattern_values(c("stripe", "dot")), 2L)
+  objs <- vellumplot:::.resolve_pattern_values(list(
+    pattern_stripe(),
+    pattern_dot()
+  ))
+  expect_s3_class(objs[[2]], "vellum_pattern")
+  expect_error(
+    vellumplot:::.resolve_pattern_values("nope"),
+    "Unknown pattern"
+  )
+})
+
+test_that("too many levels for the palette is a clear error", {
+  df <- data.frame(g = letters[1:9], n = 1:9)
+  expect_error(
+    render_plot(
+      vplot(df) |>
+        mark_bar(x = g, y = n, pattern = g) |>
+        scale_pattern(values = c("stripe", "dot")),
+      local_tempfile(fileext = ".png")
+    ),
+    "Not enough patterns"
+  )
+})
+
+test_that("a mapped pattern renders (bar + boxplot) with a legend", {
+  bars <- data.frame(g = c("a", "b", "c", "d"), n = c(4, 7, 5, 6))
+  p1 <- vplot(bars) |> mark_bar(x = g, y = n, pattern = g)
+  f1 <- local_tempfile(fileext = ".svg")
+  render_plot(p1, f1)
+  svg <- paste(readLines(f1, warn = FALSE), collapse = "\n")
+  # one <pattern> per bar plus the legend swatches -> several tiling patterns
+  expect_gt(lengths(regmatches(svg, gregexpr("<pattern", svg))), 1L)
+
+  set.seed(1)
+  df <- data.frame(grp = rep(c("a", "b", "c"), each = 30), y = rnorm(90))
+  p2 <- vplot(df) |>
+    mark_boxplot(x = grp, y = y, pattern = grp) |>
+    scale_pattern(values = c("stripe", "dot", "crosshatch"), name = "grp")
+  expect_no_error(render_plot(p2, local_tempfile(fileext = ".png")))
+})

@@ -129,9 +129,23 @@ and `pattern_checker()` each take a `color`, a transparent-or-solid `bg`, and a
 `spacing` (in mm by default); stripes/crosshatch also take an `angle` restricted
 to `0`, `45`, `90`, or `135`. Patterns work on any filled mark — bars, areas,
 ribbons, rects, tiles, boxplots, violins, ridgelines, half-eyes, hulls, and `sf`
-polygons — and render on every backend including PDF. As with gradients, a
-pattern is one fill per region (an unscaled value, not a mapped channel). For a
-custom motif, build the tile yourself with `vl_pattern()`.
+polygons — and render on every backend including PDF. For a custom motif, build
+the tile yourself with `vl_pattern()`.
+
+To vary the texture *by a variable* (rather than a single constant fill), map the
+`pattern` aesthetic and let `scale_pattern()` assign a distinct texture to each
+level — the greyscale- and colour-vision-safe way to tell a few series apart:
+
+```{r}
+bars <- data.frame(method = c("A", "B", "C", "D"), score = c(4, 7, 5, 6))
+vplot(bars) |>
+  mark_bar(x = method, y = score, pattern = method) |>
+  scale_pattern(name = NULL)
+```
+
+`scale_pattern(values = )` overrides the palette with builder names (`"stripe"`,
+`"dot"`, …) or your own `pattern_*()` objects; the legend keys are drawn as
+patterned swatches.
 
 ## Clipping and masking to a shape
 

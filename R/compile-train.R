@@ -1085,6 +1085,83 @@ NULL
   )
 }
 
+# Distinct textures a mapped (discrete) `pattern` aesthetic cycles through, in a
+# legible order (orientation then motif). Each is a `vellum_pattern`.
+.pattern_palette <- function() {
+  list(
+    pattern_stripe(angle = 45),
+    pattern_crosshatch(),
+    pattern_dot(),
+    pattern_grid(),
+    pattern_stripe(angle = 0),
+    pattern_stripe(angle = 90),
+    pattern_checker(),
+    pattern_stripe(angle = 135)
+  )
+}
+
+# A `scale_pattern(values =)` palette to a list of `vellum_pattern`: either a list
+# of patterns already, or a character vector of builder names.
+.resolve_pattern_values <- function(values) {
+  if (
+    is.list(values) &&
+      all(vapply(values, function(v) inherits(v, "vellum_pattern"), logical(1)))
+  ) {
+    return(values)
+  }
+  builders <- list(
+    stripe = pattern_stripe,
+    crosshatch = pattern_crosshatch,
+    grid = pattern_grid,
+    dot = pattern_dot,
+    checker = pattern_checker
+  )
+  lapply(as.character(values), function(nm) {
+    b <- builders[[nm]]
+    if (is.null(b)) {
+      cli::cli_abort(c(
+        "Unknown pattern {.val {nm}} in {.arg scale_pattern(values=)}.",
+        i = "Use {.or {.val {names(builders)}}}, or pass {.fn pattern_stripe}-style objects."
+      ))
+    }
+    b()
+  })
+}
+
+# Train the pattern scale (if any layer maps `pattern`). Always discrete: levels
+# cycle through `.pattern_palette()` (or a user `scale_pattern(values)`). `map`
+# returns the per-row level (a grouping key); `objs` looks the level up to its
+# `vellum_pattern`, used as the fill paint at emit and the legend swatch.
+.train_pattern <- function(spec, resolved) {
+  values <- .pool_values(resolved, "pattern")
+  if (is.null(values)) {
+    return(NULL)
+  }
+  scalespec <- .scale_for(spec, "pattern")
+  levels <- .cat_levels(values)
+  pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
+    .resolve_pattern_values(scalespec@palette)
+  } else {
+    .pattern_palette()
+  }
+  if (length(levels) > length(pal)) {
+    cli::cli_abort(c(
+      "Not enough patterns for {length(levels)} {.field pattern} level{?s} ({length(pal)} available).",
+      i = "Supply at least {length(levels)} via {.arg scale_pattern(values=)}."
+    ))
+  }
+  objs <- pal[seq_along(levels)]
+  names(objs) <- levels
+  list(
+    kind = "pattern",
+    map = function(x) as.character(x),
+    objs = objs,
+    name = .scale_title(scalespec, .default_title(spec, "pattern")),
+    levels = levels,
+    patterns = unname(objs)
+  )
+}
+
 # Output opacity range a mapped `alpha` aesthetic spans (kept off 0 so the
 # faintest mark is still visible).
 .ALPHA_RANGE <- c(0.1, 1)
@@ -1331,6 +1408,7 @@ NULL
     color = .train_colour(spec, resolved),
     size = .train_size(spec, resolved),
     shape = .train_shape(spec, resolved),
+    pattern = .train_pattern(spec, resolved),
     edge_width = .train_edge_width(spec, resolved),
     alpha = .train_alpha(spec, resolved),
     linetype = .train_linetype(spec, resolved),
@@ -1343,6 +1421,7 @@ NULL
     "color",
     "size",
     "shape",
+    "pattern",
     "edge_width",
     "alpha",
     "linetype",

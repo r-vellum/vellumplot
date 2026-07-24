@@ -599,6 +599,9 @@ NULL
   if (!is.null(scales$shape) && !identical(merged, "shape")) {
     out <- c(out, list(list(kind = "shape", sc = scales$shape)))
   }
+  if (!is.null(scales$pattern)) {
+    out <- c(out, list(list(kind = "pattern", sc = scales$pattern)))
+  }
   if (!is.null(scales$edge_width)) {
     out <- c(out, list(list(kind = "edge_width", sc = scales$edge_width)))
   }
@@ -742,6 +745,7 @@ NULL
       l <- sc$levels
       if (isTRUE(sc$na)) c(l, "NA") else l
     },
+    pattern = sc$levels,
     edge_width = sc$legend_labels,
     alpha = sc$legend_labels,
     linetype = sc$levels,
@@ -906,6 +910,14 @@ NULL
         gp = vellum::vl_gpar(fill = "grey35", col = "grey35")
       )
     },
+    pattern = vellum::rect_grob(
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      width = vellum::vl_unit(0.86, "npc"),
+      height = vellum::vl_unit(0.86, "npc"),
+      sketch = sk,
+      gp = vellum::vl_gpar(fill = sc$patterns[[i]], col = "grey55")
+    ),
     edge_width = vellum::segments_grob(
       vellum::vl_unit(0.12, "npc"),
       vellum::vl_unit(0.5, "npc"),
