@@ -64,6 +64,7 @@ Collate:
     'vplot.R'
     'sankey.R'
     'chord.R'
+    'clip.R'
     'marginal.R'
     'compile-marks.R'
     'compile-layout.R'

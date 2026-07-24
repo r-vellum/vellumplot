@@ -20,7 +20,8 @@ PlotSpec(
   marginal = NULL,
   selections = list(),
   filters = list(),
-  binds = list()
+  binds = list(),
+  clip = NULL
 )
 }
 \arguments{
@@ -61,6 +62,9 @@ or \code{NULL} for no marginals.}
 \item{filters}{A list of filter declarations (from \code{\link[=filter_by]{filter_by()}}).}
 
 \item{binds}{A list of scale-domain bind declarations (from \code{\link[=bind_scale]{bind_scale()}}).}
+
+\item{clip}{A \code{\link[=clip_to]{clip_to()}} / \code{\link[=set_mask]{set_mask()}} geometry clip (a \code{ClipSpec}), or
+\code{NULL} for none.}
 }
 \value{
 A \code{PlotSpec}.

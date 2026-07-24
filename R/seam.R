@@ -180,6 +180,13 @@ NULL
   flip <- identical(co@kind, "flip")
   polar <- identical(co@kind, "polar")
   trans <- identical(co@kind, "trans")
+  # A geometry clip/mask is applied only in the cartesian panel branch; warn if
+  # one was set under a coordinate system that cannot carry it.
+  if (!is.null(spec@clip) && (polar || trans)) {
+    cli::cli_warn(
+      "{.fn clip_to} / {.fn set_mask} are only applied under cartesian coordinates; ignoring here."
+    )
+  }
   hscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$h # horizontal (bottom)
   vscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$v # vertical (left)
   shared_hv <- .hv_roles(built$scales$x, built$scales$y, flip)
@@ -421,6 +428,9 @@ NULL
           xscale = hsc$domain,
           yscale = vsc$domain,
           clip = panel_clip,
+          # A clip_to()/set_mask() geometry mask, built in this panel's native
+          # coords (NULL when none is set, leaving the common path untouched).
+          mask = .clip_mask(spec@clip, hsc, vsc),
           name = pname,
           meta = .panel_scales_meta(hsc, vsc),
           # Clip-stable pan group so a host (vellumwidget) can pan/zoom this panel's
