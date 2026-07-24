@@ -1936,8 +1936,17 @@ mark_segment <- function(
 #' `mark_node_pie()` replaces node markers with pie / donut glyphs whose wedges
 #' come from a set of compositional columns.
 #'
+#' `mark_edge_bundle()` is a drop-in alternative to `mark_edges()` that routes the
+#' edges as **bundled** curves instead of straight lines, so a hairball collapses
+#' into a few legible trunks. It delegates the geometry to the \pkg{edgebundle}
+#' package (install it) and draws the returned paths with the edge aesthetics --
+#' `type` picks the algorithm (`"force"`, `"divided"`, `"stub"`, `"path"`,
+#' `"hammer"`, `"mingle"`) and `params` passes tuning through. Bundled edges are
+#' faint by default (`alpha = 0.3`) so overlapping trunks read as density.
+#'
 #' These are thin over the point / segment / text marks; `igraph` need not be
-#' installed to use them (only [vgraph()] needs it).
+#' installed to use them (only [vgraph()] needs it). `mark_edge_bundle()` also
+#' needs the \pkg{edgebundle} package.
 #'
 #' @param plot A [PlotSpec], normally from [vgraph()].
 #' @param ... Encodings mapping node/edge attributes to aesthetics. Nodes: `size`,
@@ -2006,6 +2015,15 @@ mark_segment <- function(
 #'   draws a pie, `> 0` a donut (e.g. `0.5`).
 #' @param expand For `mark_node_hull()`, the fraction to grow each hull outward
 #'   from its centroid so it encloses the node markers (default `0.08`).
+#' @param type For `mark_edge_bundle()`, the bundling algorithm:
+#'   `"force"` (default, force-directed / FDEB), `"divided"` (force-directed with
+#'   direction-split bundles), `"stub"` (short stubs at each endpoint), `"path"`
+#'   (shortest-path bundling), `"hammer"` (hammer bundling), or `"mingle"`
+#'   (multilevel agglomerative edge bundling). Delegated to
+#'   [edgebundle::edge_bundle()].
+#' @param params For `mark_edge_bundle()`, a named list of extra arguments passed
+#'   to [edgebundle::edge_bundle()] for the chosen `type` (e.g.
+#'   `params = list(compatibility_threshold = 0.8)`). Empty by default.
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data; overrides the default table.
 #' @param effects A list of layer render effects ([glow()], [outline()],
@@ -2079,6 +2097,53 @@ mark_edges <- function(
       gradient = gradient,
       auto = isTRUE(auto)
     ),
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data %||% plot@edge_data,
+    z = 1L
+  )
+}
+
+#' @rdname mark_graph
+#' @export
+mark_edge_bundle <- function(
+  plot,
+  ...,
+  type = c("force", "divided", "stub", "path", "hammer", "mingle"),
+  color = NULL,
+  linewidth = NULL,
+  alpha = NULL,
+  linetype = NULL,
+  params = list(),
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  type <- match.arg(type)
+  if (!is.list(params)) {
+    cli::cli_abort(
+      "{.arg params} must be a list of arguments for {.fn edgebundle::edge_bundle}."
+    )
+  }
+  dots <- .with_default_aes(
+    rlang::enquos(...),
+    rlang::quos(x = x, y = y, xend = xend, yend = yend)
+  )
+  extra <- rlang::enquos(
+    color = color,
+    linewidth = linewidth,
+    alpha = alpha,
+    linetype = linetype
+  )
+  .add_layer(
+    plot,
+    "edge_bundle",
+    .rename_edge_aes(dots),
+    .rename_edge_aes(extra),
+    stat_params = list(type = type, params = params),
     blend = blend,
     effects = effects,
     sketch = sketch,

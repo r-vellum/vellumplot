@@ -3,6 +3,7 @@
 \name{mark_graph}
 \alias{mark_graph}
 \alias{mark_edges}
+\alias{mark_edge_bundle}
 \alias{mark_nodes}
 \alias{mark_node_text}
 \alias{mark_edge_text}
@@ -23,6 +24,21 @@ mark_edges(
   elbow_axis = c("auto", "v", "h"),
   gradient = FALSE,
   auto = FALSE,
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
+
+mark_edge_bundle(
+  plot,
+  ...,
+  type = c("force", "divided", "stub", "path", "hammer", "mingle"),
+  color = NULL,
+  linewidth = NULL,
+  alpha = NULL,
+  linetype = NULL,
+  params = list(),
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -156,6 +172,17 @@ teardrop self-loops) do not apply to the rasterised edges.}
 
 \item{data}{Optional layer data; overrides the default table.}
 
+\item{type}{For \code{mark_edge_bundle()}, the bundling algorithm:
+\code{"force"} (default, force-directed / FDEB), \code{"divided"} (force-directed with
+direction-split bundles), \code{"stub"} (short stubs at each endpoint), \code{"path"}
+(shortest-path bundling), \code{"hammer"} (hammer bundling), or \code{"mingle"}
+(multilevel agglomerative edge bundling). Delegated to
+\code{\link[edgebundle:edge_bundle]{edgebundle::edge_bundle()}}.}
+
+\item{params}{For \code{mark_edge_bundle()}, a named list of extra arguments passed
+to \code{\link[edgebundle:edge_bundle]{edgebundle::edge_bundle()}} for the chosen \code{type} (e.g.
+\code{params = list(compatibility_threshold = 0.8)}). Empty by default.}
+
 \item{size, shape}{For \code{mark_nodes()}, the node size (mm) / shape; a constant or
 a mapped expression. \code{size} is also the label font size for
 \code{mark_node_text()}/\code{mark_edge_text()}.}
@@ -230,8 +257,17 @@ behind the graph (grouped by a mapped \code{fill}, drawn under the edges), and
 \code{mark_node_pie()} replaces node markers with pie / donut glyphs whose wedges
 come from a set of compositional columns.
 
+\code{mark_edge_bundle()} is a drop-in alternative to \code{mark_edges()} that routes the
+edges as \strong{bundled} curves instead of straight lines, so a hairball collapses
+into a few legible trunks. It delegates the geometry to the \pkg{edgebundle}
+package (install it) and draws the returned paths with the edge aesthetics --
+\code{type} picks the algorithm (\code{"force"}, \code{"divided"}, \code{"stub"}, \code{"path"},
+\code{"hammer"}, \code{"mingle"}) and \code{params} passes tuning through. Bundled edges are
+faint by default (\code{alpha = 0.3}) so overlapping trunks read as density.
+
 These are thin over the point / segment / text marks; \code{igraph} need not be
-installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it).
+installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it). \code{mark_edge_bundle()} also
+needs the \pkg{edgebundle} package.
 }
 \examples{
 \dontrun{
