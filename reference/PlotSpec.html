@@ -99,7 +99,8 @@ via <code><a href="render_plot.html">render_plot()</a></code>). Printing it draw
 <span>  marginal <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  selections <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  binds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  binds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  clip <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -173,6 +174,11 @@ or <code>NULL</code> for no marginals.</p></dd>
 
 <dt id="arg-binds">binds<a class="anchor" aria-label="anchor" href="#arg-binds"></a></dt>
 <dd><p>A list of scale-domain bind declarations (from <code><a href="bind_scale.html">bind_scale()</a></code>).</p></dd>
+
+
+<dt id="arg-clip">clip<a class="anchor" aria-label="anchor" href="#arg-clip"></a></dt>
+<dd><p>A <code><a href="clip.html">clip_to()</a></code> / <code><a href="clip.html">set_mask()</a></code> geometry clip (a <code>ClipSpec</code>), or
+<code>NULL</code> for none.</p></dd>
 
 </dl></div>
     <div class="section level2">

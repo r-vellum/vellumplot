@@ -221,14 +221,18 @@
 </div>
 </div>
 <p><code><a href="../reference/patterns.html">pattern_stripe()</a></code>, <code><a href="../reference/patterns.html">pattern_crosshatch()</a></code>, <code><a href="../reference/patterns.html">pattern_grid()</a></code>, <code><a href="../reference/patterns.html">pattern_dot()</a></code>, and <code><a href="../reference/patterns.html">pattern_checker()</a></code> each take a <code>color</code>, a transparent-or-solid <code>bg</code>, and a <code>spacing</code> (in mm by default); stripes/crosshatch also take an <code>angle</code> restricted to <code>0</code>, <code>45</code>, <code>90</code>, or <code>135</code>. Patterns work on any filled mark — bars, areas, ribbons, rects, tiles, boxplots, violins, ridgelines, half-eyes, hulls, and <code>sf</code> polygons — and render on every backend including PDF. As with gradients, a pattern is one fill per region (an unscaled value, not a mapped channel). For a custom motif, build the tile yourself with <code><a href="../reference/vl_pattern.html">vl_pattern()</a></code>.</p>
-</section><section class="level2"><h2 id="hand-drawn-sketch-mode">Hand-drawn sketch mode<a class="anchor" aria-label="anchor" href="#hand-drawn-sketch-mode"></a>
+</section><section class="level2"><h2 id="clipping-and-masking-to-a-shape">Clipping and masking to a shape<a class="anchor" aria-label="anchor" href="#clipping-and-masking-to-a-shape"></a>
 </h2>
-<p><code><a href="../reference/theme_sketch.html">theme_sketch()</a></code> turns an entire plot hand-drawn in one line: wobbly gridlines, axis lines, and marks, on a warm paper background. The look is generated natively in the engine, so it is exact and works across PNG, SVG, and PDF.</p>
+<p><code><a href="../reference/clip.html">clip_to()</a></code> restricts a plot’s marks to a geometry instead of the panel rectangle — the way to pour a raster or tile heatmap into a region outline. Give it an <code>sf</code> object or a data frame of <code>x</code>/<code>y</code> polygon vertices.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/theme_sketch.html">theme_sketch</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">24</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">24</span><span class="op">)</span></span>
+<span><span class="va">grid</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">grid</span>, <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">x</span> <span class="op">/</span> <span class="fl">4</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">y</span> <span class="op">/</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">diamond</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">22</span>, <span class="fl">12</span>, <span class="fl">2</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">12</span>, <span class="fl">22</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_tile.html">mark_tile</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span>, fill <span class="op">=</span> <span class="va">z</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/clip.html">clip_to</a></span><span class="op">(</span><span class="va">diamond</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
@@ -236,9 +240,38 @@
 </div>
 </div>
 </div>
-<p>For finer control, <code><a href="../reference/sketch.html">sketch()</a></code> is the vocabulary: <code>roughness</code>, <code>bowing</code>, <code>fill_style</code> (<code>"hachure"</code>, <code>"crosshatch"</code>, <code>"zigzag"</code>, and more), and so on. Pass a <code><a href="../reference/sketch.html">sketch()</a></code> value to a single mark’s <code>sketch =</code> argument to rough up just that layer, or to an <code><a href="../reference/element.html">element_line()</a></code> / <code><a href="../reference/element.html">element_rect()</a></code> slot inside <code><a href="../reference/theme_gray.html">theme()</a></code>. Set <code>sketch = NA</code> on a mark to force it crisp even under a plot-wide <code><a href="../reference/theme_sketch.html">theme_sketch()</a></code>.</p>
+<p><code>invert = TRUE</code> keeps the marks <em>outside</em> the shape (punching it out as a hole). <code><a href="../reference/clip.html">set_mask()</a></code> instead applies a soft radial mask — a vignette that fades the panel towards its edges, with <code>feather</code> setting how gentle the fade is:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_tile.html">mark_tile</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span>, fill <span class="op">=</span> <span class="va">z</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/clip.html">set_mask</a></span><span class="op">(</span>feather <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Both work under cartesian coordinates (a smooth feathered edge on an arbitrary polygon is not available yet, so <code><a href="../reference/clip.html">clip_to()</a></code> is hard-edged; reach for <code><a href="../reference/clip.html">set_mask()</a></code> when you want a soft fade).</p>
+</section><section class="level2"><h2 id="hand-drawn-sketch-mode">Hand-drawn sketch mode<a class="anchor" aria-label="anchor" href="#hand-drawn-sketch-mode"></a>
+</h2>
+<p><code><a href="../reference/theme_sketch.html">theme_sketch()</a></code> turns an entire plot hand-drawn in one line: wobbly gridlines, axis lines, and marks, on a warm paper background. The look is generated natively in the engine, so it is exact and works across PNG, SVG, and PDF.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/theme_sketch.html">theme_sketch</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>For finer control, <code><a href="../reference/sketch.html">sketch()</a></code> is the vocabulary: <code>roughness</code>, <code>bowing</code>, <code>fill_style</code> (<code>"hachure"</code>, <code>"crosshatch"</code>, <code>"zigzag"</code>, and more), and so on. Pass a <code><a href="../reference/sketch.html">sketch()</a></code> value to a single mark’s <code>sketch =</code> argument to rough up just that layer, or to an <code><a href="../reference/element.html">element_line()</a></code> / <code><a href="../reference/element.html">element_rect()</a></code> slot inside <code><a href="../reference/theme_gray.html">theme()</a></code>. Set <code>sketch = NA</code> on a mark to force it crisp even under a plot-wide <code><a href="../reference/theme_sketch.html">theme_sketch()</a></code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>,</span>
@@ -246,7 +279,7 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>

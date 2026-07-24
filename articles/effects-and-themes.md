@@ -172,6 +172,48 @@ gradients, a pattern is one fill per region (an unscaled value, not a
 mapped channel). For a custom motif, build the tile yourself with
 [`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md).
 
+## Clipping and masking to a shape
+
+[`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+restricts a plot’s marks to a geometry instead of the panel rectangle —
+the way to pour a raster or tile heatmap into a region outline. Give it
+an `sf` object or a data frame of `x`/`y` polygon vertices.
+
+``` r
+
+grid <- expand.grid(x = 1:24, y = 1:24)
+grid$z <- with(grid, sin(x / 4) + cos(y / 4))
+diamond <- data.frame(x = c(12, 22, 12, 2), y = c(2, 12, 22, 12))
+
+vplot(grid) |>
+  mark_tile(x = x, y = y, fill = z) |>
+  clip_to(diamond)
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
+
+`invert = TRUE` keeps the marks *outside* the shape (punching it out as
+a hole).
+[`set_mask()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+instead applies a soft radial mask — a vignette that fades the panel
+towards its edges, with `feather` setting how gentle the fade is:
+
+``` r
+
+vplot(grid) |>
+  mark_tile(x = x, y = y, fill = z) |>
+  set_mask(feather = 0.5)
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)
+
+Both work under cartesian coordinates (a smooth feathered edge on an
+arbitrary polygon is not available yet, so
+[`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+is hard-edged; reach for
+[`set_mask()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+when you want a soft fade).
+
 ## Hand-drawn sketch mode
 
 [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
@@ -187,7 +229,7 @@ vplot(mtcars) |>
   theme_sketch()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-11-1.png)
 
 For finer control,
 [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
@@ -213,4 +255,4 @@ vplot(mtcars) |>
   )
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-12-1.png)

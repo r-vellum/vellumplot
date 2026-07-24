@@ -289,6 +289,9 @@ Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient
   : Pattern (hatch) fills
 - [`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md)
   : Custom tiling-pattern fill
+- [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+  [`set_mask()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+  : Clip or mask a plot to a geometry
 
 ## Interactivity
 

@@ -31,7 +31,8 @@ PlotSpec(
   marginal = NULL,
   selections = list(),
   filters = list(),
-  binds = list()
+  binds = list(),
+  clip = NULL
 )
 ```
 
@@ -125,6 +126,14 @@ PlotSpec(
 
   A list of scale-domain bind declarations (from
   [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)).
+
+- clip:
+
+  A
+  [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+  /
+  [`set_mask()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+  geometry clip (a `ClipSpec`), or `NULL` for none.
 
 ## Value
 
