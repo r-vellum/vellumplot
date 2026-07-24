@@ -56,6 +56,39 @@ radial_gradient <- function(colours, stops = NULL, ...) {
   vellum::radial_gradient(colours, stops = stops, ...)
 }
 
+#' Custom tiling-pattern fill
+#'
+#' A thin re-export of [vellum::vl_pattern()] for building a pattern fill from an
+#' arbitrary tile grob, when the ready-made [pattern_stripe()] family does not fit.
+#' Like a gradient, the result is an unscaled `fill` *value*.
+#'
+#' @param grob,width,height,x,y,units,extend See [vellum::vl_pattern()].
+#' @return A `vellum_pattern` object usable as a `fill` value.
+#' @seealso [pattern_stripe()], [linear_gradient()]
+#' @examples
+#' dots <- vellum::circle_grob(r = 0.25, gp = vellum::vl_gpar(fill = "grey30"))
+#' vl_pattern(dots, width = 0.08, height = 0.08)
+#' @export
+vl_pattern <- function(
+  grob,
+  width = 0.1,
+  height = 0.1,
+  x = 0.5,
+  y = 0.5,
+  units = "npc",
+  extend = "repeat"
+) {
+  vellum::vl_pattern(
+    grob,
+    width = width,
+    height = height,
+    x = x,
+    y = y,
+    units = units,
+    extend = extend
+  )
+}
+
 #' Hand-drawn ("sketch") rendering
 #'
 #' A re-export of [vellum::sketch()] — the one vocabulary vellumplot speaks for the
