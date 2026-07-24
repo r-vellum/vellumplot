@@ -213,6 +213,37 @@ only tufts each endpoint, and `"mingle"` merges hierarchically. For a directed
 graph, `type = "divided"` splits each trunk by direction. Pass algorithm-specific
 tuning through `params`, e.g. `params = list(compatibility_threshold = 0.5)`.
 
+### Flow maps
+
+A *flow map* shows one source fanning out to many destinations, the branches
+merging into trunks whose width grows with the combined flow -- the shape
+Minard used for Napoleon's march and cartographers use for migration. Give
+`mark_flow_map()` a one-to-many (star) graph laid out at fixed coordinates, name
+the `root`, and map the per-edge flow to `weight`.
+
+```{r}
+#| eval: !expr have_bundle
+set.seed(1)
+dest <- 10
+fg <- igraph::make_star(dest + 1, mode = "undirected")
+igraph::V(fg)$name <- c("hub", paste0("d", seq_len(dest)))
+igraph::E(fg)$weight <- sample(1:20, dest, replace = TRUE)
+coords <- rbind(
+  c(0, 0),
+  cbind(runif(dest, 1, 6), runif(dest, -3, 3))
+)
+
+vgraph(fg, layout = coords) |>
+  mark_flow_map(root = "hub", weight = weight) |>
+  mark_nodes(size = 1.5, fill = "grey30")
+```
+
+`type = "spiral"` (the default) is the recommended layout: a planar,
+angle-restricted spiral tree that needs only the edgebundle package.
+`type = "steiner"` builds an approximate Steiner tree instead (it additionally
+needs the \pkg{interp} package). The computed flow is mapped onto `width_range`,
+so the widest trunk near the root stays legible however lopsided the weights are.
+
 ### Dendrograms
 
 `vgraph()` also accepts a base `hclust`/`dendrogram`, coercing it to a tree that
