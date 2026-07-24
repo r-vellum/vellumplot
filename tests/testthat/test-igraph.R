@@ -800,3 +800,54 @@ test_that("select_neighbours() makes the graph interactive (keys are emitted)", 
   src <- vapply(el$meta, function(m) m$source %||% NA_character_, character(1))
   expect_gt(sum(!is.na(src)), 0L) # edges carry endpoints under the preset
 })
+
+# --- N13: edge bundling (mark_edge_bundle) ----------------------------------
+
+test_that("mark_edge_bundle() is an edge-table layer scoped to edge channels", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  g <- igraph::make_graph("Zachary")
+  p <- vgraph(g) |> mark_edge_bundle(type = "force", color = "grey50")
+  L <- p@layers[[1]]
+  expect_identical(L@mark, "edge_bundle")
+  expect_identical(nrow(L@data), 78L) # defaults to the edge table
+  expect_identical(L@z, 1L) # same band as mark_edges (under nodes)
+  expect_identical(L@stat_params$type, "force")
+  expect_true("edge_color" %in% names(L@params)) # constant -> edge channel
+})
+
+test_that("mark_edge_bundle() validates type and params", {
+  p <- vplot(data.frame(x = 1))
+  expect_error(mark_edge_bundle(p, type = "nope"), "should be one of")
+  expect_error(mark_edge_bundle(p, params = "x"), "must be a list")
+})
+
+test_that("every bundling type reconstructs the graph and renders", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  set.seed(1)
+  g <- igraph::sample_gnp(30, 0.1)
+  for (ty in c("force", "divided", "stub", "path", "hammer", "mingle")) {
+    p <- vgraph(g, layout = "stress") |>
+      mark_edge_bundle(type = ty) |>
+      mark_nodes(size = 2)
+    expect_no_error(vellum::as_vellum_scene(p))
+    png <- local_tempfile(fileext = ".png")
+    expect_no_error(render_plot(p, png))
+    expect_gt(file.info(png)$size, 0)
+  }
+})
+
+test_that("mark_edge_bundle() trains the edge colour/width scales", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  g <- igraph::sample_gnp(20, 0.15)
+  igraph::E(g)$w <- seq_len(igraph::ecount(g))
+  p <- vgraph(g, layout = "stress") |>
+    mark_edge_bundle(type = "hammer", color = w, linewidth = w) |>
+    mark_nodes(size = 2) |>
+    scale_edge_width(range = c(0.5, 3))
+  expect_no_error(render_plot(p, local_tempfile(fileext = ".png")))
+})

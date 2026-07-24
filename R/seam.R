@@ -85,7 +85,8 @@ NULL
   panel_clip <- !any(vapply(
     spec@layers,
     function(l) {
-      l@mark %in% c("edges", "edge_text", "nodes", "node_pie", "node_text")
+      l@mark %in%
+        c("edges", "edge_bundle", "edge_text", "nodes", "node_pie", "node_text")
     },
     logical(1)
   ))

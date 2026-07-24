@@ -31,9 +31,11 @@ Imports:
     vellum (>= 0.5.1)
 Remotes:
     r-vellum/vellum,
+    schochastics/edgebundle,
     schochastics/graphlayouts
 Suggests:
     classInt,
+    edgebundle (>= 1.0.0),
     graphlayouts (>= 1.2.5),
     igraph,
     isoband,

@@ -2688,6 +2688,82 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# Bundled edges: draw each edge as a curved trunk instead of a straight line.
+# The geometry is delegated to edgebundle (the "delegate the algorithm, own the
+# drawing" pattern shared with graphlayouts): reconstruct an igraph + node
+# coordinates from the edge endpoints, hand them to edgebundle::edge_bundle() for
+# the chosen algorithm, and draw the returned polylines with this layer's edge
+# aesthetics. Bundling runs in the layout's own (native) coordinate space, so the
+# returned paths come back in native coords and map through .xy_path once, exactly
+# like a straight edge. Self-loops carry no geometry to bundle and are skipped.
+.emit_edge_bundle <- function(scene, L, scales) {
+  .need_pkg("edgebundle", "mark_edge_bundle()")
+  .need_pkg("igraph", "mark_edge_bundle()")
+  n <- L$n
+  x0 <- rep_len(scales$x$map(L$values$x), n)
+  y0 <- rep_len(scales$y$map(L$values$y), n)
+  x1 <- rep_len(scales$x$map(L$values$xend), n)
+  y1 <- rep_len(scales$y$map(L$values$yend), n)
+  col <- rep_len(.aes_edge_colour(L, scales, "grey40"), n)
+  # Bundled trunks overlap heavily, so a faint default alpha lets density read.
+  alpha <- rep_len(.aes_edge_alpha(L, scales, 0.3), n)
+  lwd <- rep_len(.edge_width(L, scales, 0.5), n)
+  lty <- .aes_edge_linetype(L, scales, NULL)
+  lty <- if (is.null(lty)) NULL else rep_len(lty, n)
+  sk <- .mark_sketch(L, scales)
+
+  # Reconstruct nodes (unique endpoints) and a directed igraph over them. `keep`
+  # drops self-loops (degenerate for bundling); the group->edge index below maps
+  # back through it to recover each trunk's original-edge aesthetics.
+  loop <- x0 == x1 & y0 == y1
+  keep <- which(!loop)
+  if (!length(keep)) {
+    return(scene)
+  }
+  src <- cbind(x0[keep], y0[keep])
+  tgt <- cbind(x1[keep], y1[keep])
+  pts <- unique(rbind(src, tgt))
+  key <- function(m) paste(m[, 1L], m[, 2L], sep = "\r")
+  pk <- key(pts)
+  g <- igraph::graph_from_edgelist(
+    cbind(match(key(src), pk), match(key(tgt), pk)),
+    directed = TRUE
+  )
+
+  type <- L$stat_params$type %||% "force"
+  args <- c(
+    list(object = g, xy = pts, type = type),
+    L$stat_params$params %||% list()
+  )
+  b <- do.call(edgebundle::edge_bundle, args)
+
+  # `group` labels each returned path; it is the edge index for most algorithms
+  # and "<edge>.<stub>" for type = "stub" (two half-paths per edge). Stripping the
+  # decimal recovers the position within `keep`, hence the original edge row.
+  edge_of <- keep[as.integer(sub("\\..*$", "", as.character(b$group)))]
+  paths <- split(seq_len(nrow(b)), b$group)
+  for (idx in paths) {
+    e <- edge_of[idx[1L]]
+    xy <- .xy_path(scales, b$x[idx], b$y[idx])
+    scene <- .draw(
+      scene,
+      vellum::lines_grob(
+        xy$x,
+        xy$y,
+        sketch = sk,
+        gp = vellum::vl_gpar(
+          col = col[e],
+          lwd = lwd[e],
+          lty = if (is.null(lty)) NULL else lty[e],
+          alpha = gp_alpha(alpha[e])
+        )
+      ),
+      rows = e
+    )
+  }
+  scene
+}
+
 # Pie / donut node glyphs: each vertex is drawn as a pie whose wedges are sized by
 # the row's `cols` values (a composition), in absolute mm at the native vertex
 # anchor (a proper circle under the aspect-locked graph panel). Wedges for
@@ -3221,6 +3297,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     linerange = .emit_linerange(scene, L, scales),
     segment = .emit_segment(scene, L, scales),
     edges = .emit_edges(scene, L, scales),
+    edge_bundle = .emit_edge_bundle(scene, L, scales),
     nodes = .emit_point(scene, L, scales),
     node_pie = .emit_node_pie(scene, L, scales),
     node_text = .emit_text(scene, L, scales),
@@ -3529,7 +3606,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     L$params$size %||% 1
   } else {
     L$params$linewidth %||%
-      switch(L$mark, line = 1.5, step = 1.5, edges = 0.5, 1)
+      switch(L$mark, line = 1.5, step = 1.5, edges = 0.5, edge_bundle = 0.5, 1)
   }
 }
 
