@@ -141,6 +141,37 @@ Because a gradient is one paint per region, it cannot be mapped to a
 data column; for that you want a colour scale (see **[Scales and
 guides](https://r-vellum.github.io/vellumplot/articles/scales-and-guides.md)**).
 
+## Pattern (hatch) fills
+
+A *pattern* is the texture counterpart of a gradient: another unscaled
+`fill` value, built by the `pattern_*()` family. Distinguishing regions
+by texture (not only hue) keeps a plot legible in greyscale print and
+under colour-vision deficiency. Pass one directly as a `fill`:
+
+``` r
+
+bars <- data.frame(method = c("A", "B", "C"), score = c(4, 7, 5))
+vplot(bars) |>
+  mark_bar(x = method, y = score, fill = pattern_crosshatch(color = "grey20"))
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-8-1.png)
+
+[`pattern_stripe()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+[`pattern_crosshatch()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+[`pattern_grid()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+[`pattern_dot()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+and
+[`pattern_checker()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
+each take a `color`, a transparent-or-solid `bg`, and a `spacing` (in mm
+by default); stripes/crosshatch also take an `angle` restricted to `0`,
+`45`, `90`, or `135`. Patterns work on any filled mark — bars, areas,
+ribbons, rects, tiles, boxplots, violins, ridgelines, half-eyes, hulls,
+and `sf` polygons — and render on every backend including PDF. As with
+gradients, a pattern is one fill per region (an unscaled value, not a
+mapped channel). For a custom motif, build the tile yourself with
+[`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md).
+
 ## Hand-drawn sketch mode
 
 [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
@@ -156,7 +187,7 @@ vplot(mtcars) |>
   theme_sketch()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-8-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
 
 For finer control,
 [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
@@ -182,4 +213,4 @@ vplot(mtcars) |>
   )
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)

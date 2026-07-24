@@ -564,7 +564,7 @@ Combine plots into a single figure, or repeat one over a variable.
 ## Layer effects
 
 Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient
-fills.
+/ pattern fills.
 
 - [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md) :
   Neon glow layer effect
@@ -580,6 +580,14 @@ fills.
 - [`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
   [`radial_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
   : Gradient fill paints
+- [`pattern_stripe()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
+  [`pattern_crosshatch()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
+  [`pattern_grid()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
+  [`pattern_dot()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
+  [`pattern_checker()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
+  : Pattern (hatch) fills
+- [`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md)
+  : Custom tiling-pattern fill
 
 ## Interactivity
 

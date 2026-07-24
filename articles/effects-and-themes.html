@@ -205,14 +205,14 @@
 </div>
 </div>
 <p>Because a gradient is one paint per region, it cannot be mapped to a data column; for that you want a colour scale (see <strong><a href="scales-and-guides.html">Scales and guides</a></strong>).</p>
-</section><section class="level2"><h2 id="hand-drawn-sketch-mode">Hand-drawn sketch mode<a class="anchor" aria-label="anchor" href="#hand-drawn-sketch-mode"></a>
+</section><section class="level2"><h2 id="pattern-hatch-fills">Pattern (hatch) fills<a class="anchor" aria-label="anchor" href="#pattern-hatch-fills"></a>
 </h2>
-<p><code><a href="../reference/theme_sketch.html">theme_sketch()</a></code> turns an entire plot hand-drawn in one line: wobbly gridlines, axis lines, and marks, on a warm paper background. The look is generated natively in the engine, so it is exact and works across PNG, SVG, and PDF.</p>
+<p>A <em>pattern</em> is the texture counterpart of a gradient: another unscaled <code>fill</code> value, built by the <code>pattern_*()</code> family. Distinguishing regions by texture (not only hue) keeps a plot legible in greyscale print and under colour-vision deficiency. Pass one directly as a <code>fill</code>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/theme_sketch.html">theme_sketch</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">bars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>, score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">7</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">bars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">score</span>, fill <span class="op">=</span> <span class="fu"><a href="../reference/patterns.html">pattern_crosshatch</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"grey20"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-8-1.png" style="width:100.0%"></p>
@@ -220,9 +220,25 @@
 </div>
 </div>
 </div>
-<p>For finer control, <code><a href="../reference/sketch.html">sketch()</a></code> is the vocabulary: <code>roughness</code>, <code>bowing</code>, <code>fill_style</code> (<code>"hachure"</code>, <code>"crosshatch"</code>, <code>"zigzag"</code>, and more), and so on. Pass a <code><a href="../reference/sketch.html">sketch()</a></code> value to a single mark’s <code>sketch =</code> argument to rough up just that layer, or to an <code><a href="../reference/element.html">element_line()</a></code> / <code><a href="../reference/element.html">element_rect()</a></code> slot inside <code><a href="../reference/theme_gray.html">theme()</a></code>. Set <code>sketch = NA</code> on a mark to force it crisp even under a plot-wide <code><a href="../reference/theme_sketch.html">theme_sketch()</a></code>.</p>
+<p><code><a href="../reference/patterns.html">pattern_stripe()</a></code>, <code><a href="../reference/patterns.html">pattern_crosshatch()</a></code>, <code><a href="../reference/patterns.html">pattern_grid()</a></code>, <code><a href="../reference/patterns.html">pattern_dot()</a></code>, and <code><a href="../reference/patterns.html">pattern_checker()</a></code> each take a <code>color</code>, a transparent-or-solid <code>bg</code>, and a <code>spacing</code> (in mm by default); stripes/crosshatch also take an <code>angle</code> restricted to <code>0</code>, <code>45</code>, <code>90</code>, or <code>135</code>. Patterns work on any filled mark — bars, areas, ribbons, rects, tiles, boxplots, violins, ridgelines, half-eyes, hulls, and <code>sf</code> polygons — and render on every backend including PDF. As with gradients, a pattern is one fill per region (an unscaled value, not a mapped channel). For a custom motif, build the tile yourself with <code><a href="../reference/vl_pattern.html">vl_pattern()</a></code>.</p>
+</section><section class="level2"><h2 id="hand-drawn-sketch-mode">Hand-drawn sketch mode<a class="anchor" aria-label="anchor" href="#hand-drawn-sketch-mode"></a>
+</h2>
+<p><code><a href="../reference/theme_sketch.html">theme_sketch()</a></code> turns an entire plot hand-drawn in one line: wobbly gridlines, axis lines, and marks, on a warm paper background. The look is generated natively in the engine, so it is exact and works across PNG, SVG, and PDF.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/theme_sketch.html">theme_sketch</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>For finer control, <code><a href="../reference/sketch.html">sketch()</a></code> is the vocabulary: <code>roughness</code>, <code>bowing</code>, <code>fill_style</code> (<code>"hachure"</code>, <code>"crosshatch"</code>, <code>"zigzag"</code>, and more), and so on. Pass a <code><a href="../reference/sketch.html">sketch()</a></code> value to a single mark’s <code>sketch =</code> argument to rough up just that layer, or to an <code><a href="../reference/element.html">element_line()</a></code> / <code><a href="../reference/element.html">element_rect()</a></code> slot inside <code><a href="../reference/theme_gray.html">theme()</a></code>. Set <code>sketch = NA</code> on a mark to force it crisp even under a plot-wide <code><a href="../reference/theme_sketch.html">theme_sketch()</a></code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>,</span>
@@ -230,7 +246,7 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+<figure><p><img src="effects-and-themes_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
