@@ -143,6 +143,7 @@ reference:
   - vchord
   - vhierarchy
   - vsparkline
+  - vtable
   - render_plot
   - PlotSpec
 

@@ -604,10 +604,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 }
 
 # A sparkline (vsparkline()): a compact, axis-free chart of one series drawn to
-# fill the panel box. `type` picks the shape -- a "line" trend (with optional dots
-# on its extremes / last point), a "bar" column micro-chart (bars from the
-# clamped baseline), or a "winloss" chart of equal up/down bars about the
-# baseline. Read the options from `stat_params`; draws in the trained x/y space.
+# FILL the panel box, directly in npc (like the layout marks) rather than through
+# the trained scales -- so it fits tightly with no axis expansion. `type` picks
+# the shape: a "line" trend (optional dots on its extremes / last point, kept off
+# the edge by a small pad), a "bar" column micro-chart (bars from the box floor),
+# or a "winloss" chart of equal up/down bars about the mid line.
 .emit_sparkline <- function(scene, L, scales) {
   n <- L$n
   sp <- L$stat_params
@@ -617,18 +618,27 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   o <- order(rawx)
   rawx <- rawx[o]
   rawy <- rawy[o]
-  x <- scales$x$map(rawx)
-  y <- scales$y$map(rawy)
   col <- sp$color %||% "grey30"
-  w <- 0.7 * .resolution(x)
+  npc <- function(u) vellum::vl_unit(u, "npc")
+
+  xr <- range(rawx)
+  xn <- if (diff(xr) > 0) (rawx - xr[1]) / diff(xr) else rep(0.5, n)
+  yr <- range(rawy[is.finite(rawy)])
+  yspan <- yr[2] - yr[1]
+  bw <- 0.7 / n # bar slot as a fraction of the box width
 
   if (identical(type, "line")) {
-    xy <- .xy_path(scales, x, y)
+    pad <- 0.14 # keep the trend (and its dots) off the top/bottom edge
+    yn <- if (yspan > 0) {
+      pad + (1 - 2 * pad) * (rawy - yr[1]) / yspan
+    } else {
+      rep(0.5, n)
+    }
     scene <- .draw(
       scene,
       vellum::lines_grob(
-        xy$x,
-        xy$y,
+        npc(xn),
+        npc(yn),
         gp = vellum::vl_gpar(
           col = col,
           lwd = sp$linewidth %||% 1,
@@ -646,12 +656,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     )
     if (length(hi)) {
       pc <- sp$point_color %||% "firebrick"
-      d <- .xy_units(scales, x[hi], y[hi])
       scene <- .draw(
         scene,
         vellum::points_grob(
-          d$x,
-          d$y,
+          npc(xn[hi]),
+          npc(yn[hi]),
           size = vellum::vl_unit(sp$point_size %||% 1.5, "mm"),
           shape = "circle",
           gp = vellum::vl_gpar(fill = pc, col = pc)
@@ -662,63 +671,53 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     return(scene)
   }
 
+  # bar centres inset by half a slot so the edge bars sit inside the box.
+  bx <- bw / 2 + xn * (1 - bw)
+
   if (identical(type, "bar")) {
-    base_n <- .clamp_baseline(scales$y$map(sp$baseline %||% 0), scales$y$domain)
-    r <- .rect_units(
-      scales,
-      x,
-      (base_n + y) / 2,
-      rep_len(w, n),
-      abs(y - base_n)
-    )
+    base <- min(rawy, sp$baseline %||% Inf, na.rm = TRUE) # box floor
+    top <- max(rawy)
+    frac <- if (top > base) (rawy - base) / (top - base) else rep(0.5, n)
+    h <- 0.94 * frac
     return(.draw(
       scene,
       vellum::rect_grob(
-        r$x,
-        r$y,
-        width = r$width,
-        height = r$height,
+        npc(bx),
+        npc(h / 2),
+        width = npc(rep(bw, n)),
+        height = npc(h),
         gp = vellum::vl_gpar(fill = col, col = NA)
       ),
       rows = o
     ))
   }
 
-  # winloss: equal-height up/down bars about the baseline threshold.
-  baseval <- sp$baseline %||% 0
-  up <- rawy >= baseval
-  mid <- scales$y$map(baseval)
-  dom <- scales$y$domain
-  h <- 0.4 * (dom[2] - dom[1])
-  ytop <- ifelse(up, mid + h, mid)
-  ybot <- ifelse(up, mid, mid - h)
-  for (side in list(
-    list(sel = up, fill = sp$win_color %||% "#2c7fb8"),
-    list(sel = !up, fill = sp$loss_color %||% "#d7301f")
-  )) {
-    sel <- which(side$sel)
+  # winloss: equal up/down bars about the mid line.
+  up <- rawy >= (sp$baseline %||% 0)
+  h <- 0.4
+  draw_side <- function(scene, sel, yc, fill) {
     if (!length(sel)) {
-      next
+      return(scene)
     }
-    r <- .rect_units(
-      scales,
-      x[sel],
-      (ytop[sel] + ybot[sel]) / 2,
-      rep_len(w, length(sel)),
-      abs(ytop[sel] - ybot[sel])
-    )
-    scene <- .draw(
+    .draw(
       scene,
       vellum::rect_grob(
-        r$x,
-        r$y,
-        width = r$width,
-        height = r$height,
-        gp = vellum::vl_gpar(fill = side$fill, col = NA)
+        npc(bx[sel]),
+        npc(yc),
+        width = npc(rep(bw, length(sel))),
+        height = npc(h),
+        gp = vellum::vl_gpar(fill = fill, col = NA)
       ),
       rows = o[sel]
     )
   }
+  scene <- draw_side(scene, which(up), 0.5 + h / 2, sp$win_color %||% "#2c7fb8")
+  scene <- draw_side(
+    scene,
+    which(!up),
+    0.5 - h / 2,
+    sp$loss_color %||% "#d7301f"
+  )
   scene
 }
 

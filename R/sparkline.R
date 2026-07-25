@@ -1,6 +1,15 @@
 #' @include classes.R vplot.R theme.R vgraph.R
 NULL
 
+# A chrome-free theme that also zeroes the plot margin, so the sparkline's panel
+# is the whole box (the emitter then draws edge-to-edge in npc).
+.theme_sparkline <- function() {
+  .merge_theme(
+    .theme_vgraph(),
+    list(plot.margin = c(0, 0, 0, 0), panel.spacing = 0)
+  )
+}
+
 # Length in `units` -> inches, for the sparkline's physical page size.
 .spark_inches <- function(x, units) {
   switch(
@@ -80,7 +89,7 @@ vsparkline <- function(
   p <- PlotSpec(
     data = df,
     coord = CoordSpec(kind = "cartesian"), # free aspect; chrome-free via the theme
-    theme = .theme_vgraph(),
+    theme = .theme_sparkline(),
     width = as.double(w_in),
     height = as.double(h_in),
     dpi = as.double(dpi)
