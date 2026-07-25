@@ -263,6 +263,26 @@
 </div>
 </div>
 <p>Map a column to a <code>type</code> (<code>"line"</code>/<code>"bar"</code>/<code>"winloss"</code>) or to a builder function for full control, e.g. <code>spark = list(trend = \(v) vsparkline(v, color = "steelblue"))</code>.</p>
+</section><section class="level3"><h3 id="sparkline-and-grob-callouts">Sparkline (and grob) callouts<a class="anchor" aria-label="anchor" href="#sparkline-and-grob-callouts"></a>
+</h3>
+<p><code>annotate("sparkline", …)</code> drops a sparkline at a data coordinate — a little trend callout inside a plot. More generally, <code>annotate("grob", grob = …)</code> places <em>any</em> vellum grob (or a <code>PlotSpec</code>) at a coordinate, sized in physical units and anchored by <code>halign</code>/<code>valign</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/annotate.html">annotate</a></span><span class="op">(</span></span>
+<span>    <span class="st">"sparkline"</span>,</span>
+<span>    x <span class="op">=</span> <span class="fl">4</span>, y <span class="op">=</span> <span class="fl">33</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">30</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    width <span class="op">=</span> <span class="fl">32</span>, height <span class="op">=</span> <span class="fl">10</span>, halign <span class="op">=</span> <span class="st">"left"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="facets-and-composition_files/figure-html/unnamed-chunk-13-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
 </section><section class="level3"><h3 id="repeat-over-a-variable">Repeat over a variable<a class="anchor" aria-label="anchor" href="#repeat-over-a-variable"></a>
 </h3>
 <p><code><a href="../reference/repeat_.html">repeat_()</a></code> builds a small multiple by repeating one plot template across a set of values, the composition-side counterpart to faceting when you want each panel to be a fully independent plot rather than a shared-scale small multiple.</p>

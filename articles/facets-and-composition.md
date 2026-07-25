@@ -184,6 +184,28 @@ Map a column to a `type` (`"line"`/`"bar"`/`"winloss"`) or to a builder
 function for full control,
 e.g. `spark = list(trend = \(v) vsparkline(v, color = "steelblue"))`.
 
+### Sparkline (and grob) callouts
+
+`annotate("sparkline", …)` drops a sparkline at a data coordinate — a
+little trend callout inside a plot. More generally,
+`annotate("grob", grob = …)` places *any* vellum grob (or a `PlotSpec`)
+at a coordinate, sized in physical units and anchored by
+`halign`/`valign`.
+
+``` r
+
+set.seed(1)
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  annotate(
+    "sparkline",
+    x = 4, y = 33, values = cumsum(rnorm(30)),
+    width = 32, height = 10, halign = "left"
+  )
+```
+
+![](facets-and-composition_files/figure-html/unnamed-chunk-13-1.png)
+
 ### Repeat over a variable
 
 [`repeat_()`](https://r-vellum.github.io/vellumplot/reference/repeat_.md)
