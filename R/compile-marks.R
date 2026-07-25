@@ -603,6 +603,125 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# A sparkline (vsparkline()): a compact, axis-free chart of one series drawn to
+# fill the panel box. `type` picks the shape -- a "line" trend (with optional dots
+# on its extremes / last point), a "bar" column micro-chart (bars from the
+# clamped baseline), or a "winloss" chart of equal up/down bars about the
+# baseline. Read the options from `stat_params`; draws in the trained x/y space.
+.emit_sparkline <- function(scene, L, scales) {
+  n <- L$n
+  sp <- L$stat_params
+  type <- sp$type %||% "line"
+  rawx <- rep_len(L$values$x, n)
+  rawy <- rep_len(L$values$y, n)
+  o <- order(rawx)
+  rawx <- rawx[o]
+  rawy <- rawy[o]
+  x <- scales$x$map(rawx)
+  y <- scales$y$map(rawy)
+  col <- sp$color %||% "grey30"
+  w <- 0.7 * .resolution(x)
+
+  if (identical(type, "line")) {
+    xy <- .xy_path(scales, x, y)
+    scene <- .draw(
+      scene,
+      vellum::lines_grob(
+        xy$x,
+        xy$y,
+        gp = vellum::vl_gpar(
+          col = col,
+          lwd = sp$linewidth %||% 1,
+          lineend = "round",
+          linejoin = "round"
+        )
+      ),
+      rows = o
+    )
+    hi <- switch(
+      sp$points %||% "extremes",
+      extremes = unique(c(which.min(rawy), which.max(rawy))),
+      last = n,
+      integer(0)
+    )
+    if (length(hi)) {
+      pc <- sp$point_color %||% "firebrick"
+      d <- .xy_units(scales, x[hi], y[hi])
+      scene <- .draw(
+        scene,
+        vellum::points_grob(
+          d$x,
+          d$y,
+          size = vellum::vl_unit(sp$point_size %||% 1.5, "mm"),
+          shape = "circle",
+          gp = vellum::vl_gpar(fill = pc, col = pc)
+        ),
+        rows = o[hi]
+      )
+    }
+    return(scene)
+  }
+
+  if (identical(type, "bar")) {
+    base_n <- .clamp_baseline(scales$y$map(sp$baseline %||% 0), scales$y$domain)
+    r <- .rect_units(
+      scales,
+      x,
+      (base_n + y) / 2,
+      rep_len(w, n),
+      abs(y - base_n)
+    )
+    return(.draw(
+      scene,
+      vellum::rect_grob(
+        r$x,
+        r$y,
+        width = r$width,
+        height = r$height,
+        gp = vellum::vl_gpar(fill = col, col = NA)
+      ),
+      rows = o
+    ))
+  }
+
+  # winloss: equal-height up/down bars about the baseline threshold.
+  baseval <- sp$baseline %||% 0
+  up <- rawy >= baseval
+  mid <- scales$y$map(baseval)
+  dom <- scales$y$domain
+  h <- 0.4 * (dom[2] - dom[1])
+  ytop <- ifelse(up, mid + h, mid)
+  ybot <- ifelse(up, mid, mid - h)
+  for (side in list(
+    list(sel = up, fill = sp$win_color %||% "#2c7fb8"),
+    list(sel = !up, fill = sp$loss_color %||% "#d7301f")
+  )) {
+    sel <- which(side$sel)
+    if (!length(sel)) {
+      next
+    }
+    r <- .rect_units(
+      scales,
+      x[sel],
+      (ytop[sel] + ybot[sel]) / 2,
+      rep_len(w, length(sel)),
+      abs(ytop[sel] - ybot[sel])
+    )
+    scene <- .draw(
+      scene,
+      vellum::rect_grob(
+        r$x,
+        r$y,
+        width = r$width,
+        height = r$height,
+        gp = vellum::vl_gpar(fill = side$fill, col = NA)
+      ),
+      rows = o[sel]
+    )
+  }
+  scene
+}
+
 # Contour lines: one polyline per traced piece, vertices kept in trace order (not
 # x-sorted — a contour is not a function of x), coloured by the mapped level.
 .emit_contour <- function(scene, L, scales) {
@@ -3526,6 +3645,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     ellipse = .emit_region(scene, L, scales),
     hull = .emit_region(scene, L, scales),
     sankey = .emit_sankey(scene, L, scales),
+    sparkline = .emit_sparkline(scene, L, scales),
     hierarchy = .emit_hierarchy(scene, L, scales),
     chord = .emit_chord(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")

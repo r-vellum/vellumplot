@@ -43,6 +43,7 @@ Suggests:
     magick,
     MASS,
     mgcv,
+    png,
     quantreg,
     sf,
     testthat (>= 3.0.0),
@@ -93,4 +94,5 @@ Collate:
     'scales.R'
     'scales-binned.R'
     'select.R'
+    'sparkline.R'
     'zzz.R'
