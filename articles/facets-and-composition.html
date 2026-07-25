@@ -240,6 +240,29 @@
 </div>
 </div>
 </div>
+</section><section class="level3"><h3 id="tables-with-sparklines">Tables with sparklines<a class="anchor" aria-label="anchor" href="#tables-with-sparklines"></a>
+</h3>
+<p><code><a href="../reference/vtable.html">vtable()</a></code> lays a data frame out as a grid of cells: ordinary columns render as text, and a <strong>list-column of numeric vectors</strong> renders as a per-row sparkline. The whole table is one vector scene, so it prints and exports like any plot — chart-in-table without leaving the plotting pipeline.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  metric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Revenue"</span>, <span class="st">"Users"</span>, <span class="st">"Latency"</span>, <span class="st">"Errors"</span><span class="op">)</span>,</span>
+<span>  latest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4213</span>, <span class="fl">18402</span>, <span class="fl">128</span>, <span class="fl">37</span><span class="op">)</span>,</span>
+<span>  change <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"+4.2%"</span>, <span class="st">"+1.1%"</span>, <span class="st">"-8ms"</span>, <span class="st">"-12%"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">df</span><span class="op">$</span><span class="va">trend</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">24</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">df</span><span class="op">$</span><span class="va">volume</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/vtable.html">vtable</a></span><span class="op">(</span><span class="va">df</span>, spark <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trend <span class="op">=</span> <span class="st">"line"</span>, volume <span class="op">=</span> <span class="st">"bar"</span><span class="op">)</span>, row_height <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="facets-and-composition_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Map a column to a <code>type</code> (<code>"line"</code>/<code>"bar"</code>/<code>"winloss"</code>) or to a builder function for full control, e.g. <code>spark = list(trend = \(v) vsparkline(v, color = "steelblue"))</code>.</p>
 </section><section class="level3"><h3 id="repeat-over-a-variable">Repeat over a variable<a class="anchor" aria-label="anchor" href="#repeat-over-a-variable"></a>
 </h3>
 <p><code><a href="../reference/repeat_.html">repeat_()</a></code> builds a small multiple by repeating one plot template across a set of values, the composition-side counterpart to faceting when you want each panel to be a fully independent plot rather than a shared-scale small multiple.</p>

@@ -156,6 +156,34 @@ inset(main, spark, left = 0.62, bottom = 0.9, right = 0.98, top = 0.99)
 
 ![](facets-and-composition_files/figure-html/unnamed-chunk-11-1.png)
 
+### Tables with sparklines
+
+[`vtable()`](https://r-vellum.github.io/vellumplot/reference/vtable.md)
+lays a data frame out as a grid of cells: ordinary columns render as
+text, and a **list-column of numeric vectors** renders as a per-row
+sparkline. The whole table is one vector scene, so it prints and exports
+like any plot — chart-in-table without leaving the plotting pipeline.
+
+``` r
+
+set.seed(1)
+df <- data.frame(
+  metric = c("Revenue", "Users", "Latency", "Errors"),
+  latest = c(4213, 18402, 128, 37),
+  change = c("+4.2%", "+1.1%", "-8ms", "-12%")
+)
+df$trend <- lapply(1:4, function(i) cumsum(rnorm(24)))
+df$volume <- lapply(1:4, function(i) rpois(20, 6))
+
+vtable(df, spark = list(trend = "line", volume = "bar"), row_height = 8)
+```
+
+![](facets-and-composition_files/figure-html/unnamed-chunk-12-1.png)
+
+Map a column to a `type` (`"line"`/`"bar"`/`"winloss"`) or to a builder
+function for full control,
+e.g. `spark = list(trend = \(v) vsparkline(v, color = "steelblue"))`.
+
 ### Repeat over a variable
 
 [`repeat_()`](https://r-vellum.github.io/vellumplot/reference/repeat_.md)

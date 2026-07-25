@@ -321,6 +321,8 @@ then render it or write it to a file.
   : Hierarchy diagrams: sunburst, icicle, treemap, circle-pack
 - [`vsparkline()`](https://r-vellum.github.io/vellumplot/reference/vsparkline.md)
   : Sparklines — tiny word-sized charts
+- [`vtable()`](https://r-vellum.github.io/vellumplot/reference/vtable.md)
+  : Tables with sparkline columns
 - [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
   : Render a plot to a file
 - [`PlotSpec()`](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
