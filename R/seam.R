@@ -763,10 +763,12 @@ S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
 #' @export
 render_plot <- function(plot, path, text = "native", dpi = NULL) {
   if (
-    !S7::S7_inherits(plot, PlotSpec) && !S7::S7_inherits(plot, PlotComposition)
+    !S7::S7_inherits(plot, PlotSpec) &&
+      !S7::S7_inherits(plot, PlotComposition) &&
+      !S7::S7_inherits(plot, VTable)
   ) {
     cli::cli_abort(
-      "{.arg plot} must be a {.cls PlotSpec} or {.cls PlotComposition}."
+      "{.arg plot} must be a {.cls PlotSpec}, {.cls PlotComposition}, or {.cls VTable}."
     )
   }
   scene <- vellum::as_vellum_scene(plot)

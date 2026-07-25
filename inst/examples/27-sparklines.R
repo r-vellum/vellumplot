@@ -44,3 +44,16 @@ main <- vplot(mtcars) |>
 spark <- vsparkline(cumsum(rnorm(40)), points = "last")
 inset(main, spark, left = 0.62, bottom = 0.9, right = 0.98, top = 0.99) |>
   render_plot(file.path(outdir, "27-inset.png"))
+
+# --- 3. a table with sparkline columns (vtable) -----------------------------
+# Ordinary columns render as text; a list-column of numeric vectors renders as a
+# per-row sparkline. The whole table is one vector scene.
+df <- data.frame(
+  metric = c("Revenue", "Users", "Latency", "Errors"),
+  latest = c(4213, 18402, 128, 37),
+  change = c("+4.2%", "+1.1%", "-8ms", "-12%")
+)
+df$trend <- lapply(1:4, function(i) cumsum(rnorm(24)))
+df$volume <- lapply(1:4, function(i) rpois(20, 6))
+vtable(df, spark = list(trend = "line", volume = "bar"), row_height = 8) |>
+  render_plot(file.path(outdir, "27-table.png"), dpi = 200)

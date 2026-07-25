@@ -95,4 +95,5 @@ Collate:
     'scales-binned.R'
     'select.R'
     'sparkline.R'
+    'table.R'
     'zzz.R'
