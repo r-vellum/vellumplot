@@ -721,6 +721,39 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# A grob / sub-plot annotation (annotate("grob"/"sparkline")): place a supplied
+# vellum grob or a PlotSpec (e.g. a vsparkline) at each data coordinate, in a box
+# of physical size `width` x `height`, aligned by `halign`/`valign`. The box is
+# anchored with a compound native+mm coordinate so it tracks the data point at any
+# size/aspect. A PlotSpec is drawn via the same `.draw_plot` seam `inset()` uses.
+.emit_grob <- function(scene, L, scales) {
+  n <- L$n
+  sp <- L$stat_params
+  g <- sp$grob
+  w_mm <- .mm(sp$width, sp$units)
+  h_mm <- .mm(sp$height, sp$units)
+  hoff <- switch(sp$halign %||% "centre", left = 0.5, right = -0.5, 0) * w_mm
+  voff <- switch(sp$valign %||% "centre", bottom = 0.5, top = -0.5, 0) * h_mm
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  is_plot <- S7::S7_inherits(g, PlotSpec)
+  for (i in seq_len(n)) {
+    pos <- .xy_units(scales, xn[i], yn[i])
+    scene <- vellum::push(
+      scene,
+      vellum::vl_viewport(
+        x = pos$x + vellum::vl_unit(hoff, "mm"),
+        y = pos$y + vellum::vl_unit(voff, "mm"),
+        width = vellum::vl_unit(w_mm, "mm"),
+        height = vellum::vl_unit(h_mm, "mm")
+      )
+    )
+    scene <- if (is_plot) .draw_plot(scene, g) else vellum::draw(scene, g)
+    scene <- vellum::pop(scene)
+  }
+  scene
+}
+
 # Contour lines: one polyline per traced piece, vertices kept in trace order (not
 # x-sorted — a contour is not a function of x), coloured by the mapped level.
 .emit_contour <- function(scene, L, scales) {
@@ -3645,6 +3678,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     hull = .emit_region(scene, L, scales),
     sankey = .emit_sankey(scene, L, scales),
     sparkline = .emit_sparkline(scene, L, scales),
+    grob = .emit_grob(scene, L, scales),
     hierarchy = .emit_hierarchy(scene, L, scales),
     chord = .emit_chord(scene, L, scales),
     cli::cli_abort("Unknown mark {.val {L$mark}}.")

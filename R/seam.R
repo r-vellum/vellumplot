@@ -96,7 +96,10 @@ NULL
           "node_text",
           # A sparkline's extreme/last dots sit on the domain boundary; clipping
           # would slice them in half, so its tiny box is drawn unclipped.
-          "sparkline"
+          "sparkline",
+          # A grob/sparkline annotation is a physically-sized box at a data point;
+          # near the panel edge its box would clip, so draw it unclipped.
+          "grob"
         )
     },
     logical(1)
