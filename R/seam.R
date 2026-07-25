@@ -93,7 +93,10 @@ NULL
           "edge_text",
           "nodes",
           "node_pie",
-          "node_text"
+          "node_text",
+          # A sparkline's extreme/last dots sit on the domain boundary; clipping
+          # would slice them in half, so its tiny box is drawn unclipped.
+          "sparkline"
         )
     },
     logical(1)

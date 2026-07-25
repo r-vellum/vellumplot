@@ -14,6 +14,9 @@ utils::globalVariables(c(
   "count",
   "width",
   "height",
+  # vsparkline() maps its internal index / value columns via NSE
+  ".i",
+  ".v",
   # network marks read igraph node/edge columns via NSE
   "x",
   "y",

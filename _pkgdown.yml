@@ -142,6 +142,7 @@ reference:
   - vsankey
   - vchord
   - vhierarchy
+  - vsparkline
   - render_plot
   - PlotSpec
 
