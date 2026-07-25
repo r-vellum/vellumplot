@@ -20,6 +20,8 @@ then render it or write it to a file.
 - [`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
   [`mark_hierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
   : Hierarchy diagrams: sunburst, icicle, treemap, circle-pack
+- [`vsparkline()`](https://r-vellum.github.io/vellumplot/reference/vsparkline.md)
+  : Sparklines — tiny word-sized charts
 - [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
   : Render a plot to a file
 - [`PlotSpec()`](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)

@@ -119,6 +119,43 @@ inset(main, mini, left = 0.6, bottom = 0.6, right = 0.98, top = 0.98)
 
 ![](facets-and-composition_files/figure-html/unnamed-chunk-8-1.png)
 
+### Sparklines
+
+[`vsparkline()`](https://r-vellum.github.io/vellumplot/reference/vsparkline.md)
+is a compact, axis-free chart of a single series, sized in physical
+units (mm by default) so it reads as a *word-sized graphic*. It is a
+plain `PlotSpec` — render it, or
+[`inset()`](https://r-vellum.github.io/vellumplot/reference/inset.md) it
+into a figure. Three shapes: a `"line"` trend (with a dot on its
+extremes or last point), a `"bar"` column micro-chart, and a `"winloss"`
+chart of equal up/down bars.
+
+``` r
+
+set.seed(1)
+vsparkline(cumsum(rnorm(40)), width = 60, height = 16)
+```
+
+![](facets-and-composition_files/figure-html/unnamed-chunk-9-1.png)
+
+``` r
+
+vsparkline(rpois(24, 6), type = "bar", color = "steelblue", width = 60, height = 16)
+```
+
+![](facets-and-composition_files/figure-html/unnamed-chunk-10-1.png)
+
+Because it is a `PlotSpec`, a sparkline drops into any composition —
+e.g. floated onto a plot as a tiny trend indicator:
+
+``` r
+
+spark <- vsparkline(cumsum(rnorm(40)))
+inset(main, spark, left = 0.62, bottom = 0.9, right = 0.98, top = 0.99)
+```
+
+![](facets-and-composition_files/figure-html/unnamed-chunk-11-1.png)
+
 ### Repeat over a variable
 
 [`repeat_()`](https://r-vellum.github.io/vellumplot/reference/repeat_.md)

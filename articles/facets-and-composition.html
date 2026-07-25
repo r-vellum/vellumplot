@@ -204,6 +204,42 @@
 </div>
 </div>
 </div>
+</section><section class="level3"><h3 id="sparklines">Sparklines<a class="anchor" aria-label="anchor" href="#sparklines"></a>
+</h3>
+<p><code><a href="../reference/vsparkline.html">vsparkline()</a></code> is a compact, axis-free chart of a single series, sized in physical units (mm by default) so it reads as a <em>word-sized graphic</em>. It is a plain <code>PlotSpec</code> — render it, or <code><a href="../reference/inset.html">inset()</a></code> it into a figure. Three shapes: a <code>"line"</code> trend (with a dot on its extremes or last point), a <code>"bar"</code> column micro-chart, and a <code>"winloss"</code> chart of equal up/down bars.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vsparkline.html">vsparkline</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span><span class="op">)</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">60</span>, height <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="facets-and-composition_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vsparkline.html">vsparkline</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">24</span>, <span class="fl">6</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"bar"</span>, color <span class="op">=</span> <span class="st">"steelblue"</span>, width <span class="op">=</span> <span class="fl">60</span>, height <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="facets-and-composition_files/figure-html/unnamed-chunk-10-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Because it is a <code>PlotSpec</code>, a sparkline drops into any composition — e.g. floated onto a plot as a tiny trend indicator:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spark</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vsparkline.html">vsparkline</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/inset.html">inset</a></span><span class="op">(</span><span class="va">main</span>, <span class="va">spark</span>, left <span class="op">=</span> <span class="fl">0.62</span>, bottom <span class="op">=</span> <span class="fl">0.9</span>, right <span class="op">=</span> <span class="fl">0.98</span>, top <span class="op">=</span> <span class="fl">0.99</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="facets-and-composition_files/figure-html/unnamed-chunk-11-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
 </section><section class="level3"><h3 id="repeat-over-a-variable">Repeat over a variable<a class="anchor" aria-label="anchor" href="#repeat-over-a-variable"></a>
 </h3>
 <p><code><a href="../reference/repeat_.html">repeat_()</a></code> builds a small multiple by repeating one plot template across a set of values, the composition-side counterpart to faceting when you want each panel to be a fully independent plot rather than a shared-scale small multiple.</p>
