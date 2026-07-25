@@ -70,10 +70,26 @@ test_that("annotate('rect') with infinite bounds renders a full-panel band (#29)
   # dropped silently. Both a fully-infinite and a single-sided rect must render.
   builds <- list(
     function(p) {
-      annotate(p, "rect", xmin = -Inf, xmax = Inf, ymin = 25, ymax = 30, alpha = 0.4)
+      annotate(
+        p,
+        "rect",
+        xmin = -Inf,
+        xmax = Inf,
+        ymin = 25,
+        ymax = 30,
+        alpha = 0.4
+      )
     },
     function(p) {
-      annotate(p, "rect", xmin = -Inf, xmax = 5, ymin = 10, ymax = 20, alpha = 0.4)
+      annotate(
+        p,
+        "rect",
+        xmin = -Inf,
+        xmax = 5,
+        ymin = 10,
+        ymax = 20,
+        alpha = 0.4
+      )
     }
   )
   for (b in builds) {
@@ -108,4 +124,67 @@ test_that("mark_segment draws x/y -> xend/yend", {
     f
   )
   expect_gt(file.info(f)$size, 0)
+})
+
+# --- grob / sparkline annotations -------------------------------------------
+
+test_that('annotate("grob") adds a grob layer carrying the grob + box spec', {
+  g <- vellum::circle_grob(r = 0.4)
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    annotate(
+      "grob",
+      x = 3,
+      y = 20,
+      grob = g,
+      width = 8,
+      height = 8,
+      halign = "left"
+    )
+  L <- p@layers[[length(p@layers)]]
+  expect_identical(L@mark, "grob")
+  expect_identical(L@stat_params$grob, g)
+  expect_equal(L@stat_params$width, 8)
+  expect_identical(L@stat_params$halign, "left")
+})
+
+test_that('annotate("sparkline") builds and places a vsparkline', {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    annotate("sparkline", x = 4, y = 30, values = 1:20, type = "bar")
+  L <- p@layers[[length(p@layers)]]
+  expect_identical(L@mark, "grob")
+  expect_s3_class(L@stat_params$grob, "vellumplot::PlotSpec")
+  expect_identical(
+    L@stat_params$grob@layers[[1]]@stat_params$type,
+    "bar"
+  )
+})
+
+test_that("the grob/sparkline annotations validate their payload", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_error(annotate(base, "grob", x = 1, y = 1), "needs a")
+  expect_error(annotate(base, "sparkline", x = 1, y = 1), "needs")
+})
+
+test_that("grob and sparkline annotations render", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  plots <- list(
+    base |>
+      annotate("grob", x = 3, y = 20, grob = vellum::circle_grob(r = 0.4)),
+    base |> annotate("sparkline", x = 4, y = 30, values = cumsum(rnorm(20))),
+    # vectorised: a glyph at several points
+    base |>
+      annotate(
+        "grob",
+        x = c(2, 4),
+        y = c(15, 30),
+        grob = vellum::circle_grob(r = 0.3)
+      )
+  )
+  for (p in plots) {
+    f <- local_tempfile(fileext = ".png")
+    expect_no_error(render_plot(p, f))
+    expect_gt(file.info(f)$size, 0)
+  }
 })

@@ -23,9 +23,9 @@ annotate(
 \item{plot}{A \link{PlotSpec}.}
 
 \item{geom}{The annotation geometry: one of \code{"text"}, \code{"label"}, \code{"point"},
-\code{"segment"}, \code{"rect"}.}
+\code{"segment"}, \code{"rect"}, \code{"grob"}, \code{"sparkline"}.}
 
-\item{x, y}{Position (text/label/point; segment start).}
+\item{x, y}{Position (text/label/point/grob/sparkline; segment start).}
 
 \item{xend, yend}{Segment end.}
 
@@ -34,7 +34,11 @@ annotate(
 \item{label}{Text to draw (text/label).}
 
 \item{...}{Constant aesthetics passed to the mark (e.g. \code{color}, \code{fill},
-\code{alpha}, \code{size}).}
+\code{alpha}, \code{size}). For \code{"grob"}: \verb{grob =} (a vellum grob or \code{PlotSpec}). For
+\code{"sparkline"}: \verb{values =} plus any \code{\link[=vsparkline]{vsparkline()}} argument. Both accept
+\code{width}/\code{height}/\code{units} (the box, default \verb{20 x 6} mm) and
+\code{halign} (\code{"left"}/\code{"centre"}/\code{"right"}) / \code{valign}
+(\code{"top"}/\code{"centre"}/\code{"bottom"}) to anchor the box relative to \verb{(x, y)}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -44,11 +48,22 @@ Draw a single mark (or a short vector of them) from values supplied directly,
 rather than mapping a data column. The values become a small inline layer
 \code{data} frame, so annotations are independent of the plot data (and repeat on
 every facet panel). Supported \code{geom}s: \code{"text"}, \code{"label"}, \code{"point"},
-\code{"segment"}, and \code{"rect"}.
+\code{"segment"}, \code{"rect"}, \code{"grob"}, and \code{"sparkline"}.
+}
+\details{
+\code{"grob"} places an arbitrary vellum grob (or a \link{PlotSpec}, e.g. a
+\code{\link[=vsparkline]{vsparkline()}}) at data coordinate(s), in a box of physical size — a general
+"glyph / chart in a panel" seam. \code{"sparkline"} is the convenience for the
+common case: pass \verb{values =} and it builds and places a \code{\link[=vsparkline]{vsparkline()}}.
 }
 \examples{
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   annotate("text", x = 4, y = 30, label = "note") |>
   annotate("rect", xmin = 3, xmax = 4, ymin = 15, ymax = 20, alpha = 0.2)
+\dontrun{
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  annotate("sparkline", x = 4, y = 30, values = cumsum(rnorm(30)))
+}
 }

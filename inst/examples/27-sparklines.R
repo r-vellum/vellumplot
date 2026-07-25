@@ -57,3 +57,20 @@ df$trend <- lapply(1:4, function(i) cumsum(rnorm(24)))
 df$volume <- lapply(1:4, function(i) rpois(20, 6))
 vtable(df, spark = list(trend = "line", volume = "bar"), row_height = 8) |>
   render_plot(file.path(outdir, "27-table.png"), dpi = 200)
+
+# --- 4. a sparkline callout inside a plot (annotate) ------------------------
+# annotate("sparkline") drops a sparkline at a data coordinate; annotate("grob")
+# places any vellum grob / PlotSpec there.
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  annotate(
+    "sparkline",
+    x = 4,
+    y = 33,
+    values = cumsum(rnorm(30)),
+    width = 32,
+    height = 10,
+    halign = "left"
+  ) |>
+  labs(title = "Trend callout") |>
+  render_plot(file.path(outdir, "27-callout.png"))
