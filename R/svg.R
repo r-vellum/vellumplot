@@ -15,6 +15,15 @@ NULL
 #' @param scaling `"fixed"` (default) keeps the pixel size; `"fit"` sets the root
 #'   `<svg>` `width`/`height` to `100%` so it fills its container (the `viewBox`
 #'   preserves the aspect).
+#' @param inline `TRUE` strips the leading `<?xml …?>` prolog so the `<svg>` is a
+#'   valid fragment to drop straight into an HTML paragraph / cell / Quarto inline
+#'   expression. `FALSE` (default) keeps the stand-alone-file prolog.
+#' @param recolor Optional named character vector mapping a **source colour** to a
+#'   replacement written verbatim into the SVG — e.g.
+#'   `c(grey30 = "currentColor")` makes a `grey30` sparkline follow the surrounding
+#'   text colour (dark-mode-adaptive inline). Each name is resolved to its hex and
+#'   swapped for the value; use for CSS keywords (`"currentColor"`) or `var(--x)`
+#'   that R's colour engine can't emit itself.
 #' @param text How glyphs are emitted: `"native"` (default) or `"outline"` (paths,
 #'   for maximum portability).
 #' @return A length-1 character SVG string.
@@ -22,12 +31,18 @@ NULL
 #' @examples
 #' svg <- plot_svg(vsparkline(cumsum(rnorm(20))))
 #' substr(svg, 1, 40)
+#' # a transparent, prolog-free, dark-mode-adaptive inline sparkline:
+#' plot_svg(vsparkline(1:9, color = "grey30"),
+#'   inline = TRUE, recolor = c(grey30 = "currentColor")
+#' )
 #' @export
 plot_svg <- function(
   plot,
   width = NULL,
   height = NULL,
   scaling = c("fixed", "fit"),
+  inline = FALSE,
+  recolor = NULL,
   text = "native"
 ) {
   scaling <- match.arg(scaling)
@@ -51,7 +66,34 @@ plot_svg <- function(
       svg
     )
   }
+  if (length(recolor)) {
+    from <- names(recolor)
+    if (is.null(from) || any(!nzchar(from))) {
+      cli::cli_abort(
+        "{.arg recolor} must be a named vector: {.code c(from = to)}."
+      )
+    }
+    for (i in seq_along(recolor)) {
+      # resolve the source colour to the hex the backend emits (lowercase), then
+      # swap it for the replacement token verbatim.
+      hex <- tolower(.as_hex(from[i]))
+      svg <- gsub(hex, recolor[[i]], svg, ignore.case = TRUE)
+    }
+  }
+  if (isTRUE(inline)) {
+    svg <- sub("^\\s*<\\?xml[^>]*\\?>\\s*", "", svg)
+  }
   svg
+}
+
+# A colour spec -> the `#rrggbb` string the SVG backend emits. A hex is returned
+# as-is; a name / spec is resolved via grDevices (no alpha -- SVG uses fill-opacity).
+.as_hex <- function(color) {
+  if (is.character(color) && grepl("^#[0-9A-Fa-f]{6,8}$", color)) {
+    return(substr(color, 1L, 7L))
+  }
+  rgb <- grDevices::col2rgb(color)
+  grDevices::rgb(rgb[1L], rgb[2L], rgb[3L], maxColorValue = 255)
 }
 
 #' Add a vellumplot sparkline column to a `gt` table

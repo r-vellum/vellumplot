@@ -658,6 +658,23 @@ NULL
   vellum::pop(scene) # outer margin grid
 }
 
+# The scene (page) background, derived from the resolved theme's plot.background:
+# a blank / NA-fill background yields a transparent canvas (so the plot sits on
+# whatever surrounds it -- e.g. an embedded sparkline). The default theme keeps a
+# white plot.background, so ordinary plots are unchanged.
+.scene_bg <- function(rt) {
+  pbg <- rt[["plot.background"]]
+  if (.is_blank(pbg)) {
+    return("transparent")
+  }
+  fill <- pbg@fill
+  if (is.null(fill) || (length(fill) == 1L && is.na(fill))) {
+    "transparent"
+  } else {
+    fill
+  }
+}
+
 # The body of the as_vellum_scene() method for a single plot.
 .compile_plot <- function(spec) {
   .provenance_reset()
@@ -665,7 +682,7 @@ NULL
     width = spec@width,
     height = spec@height,
     dpi = spec@dpi,
-    bg = "white",
+    bg = .scene_bg(.resolve_theme(.theme_of(spec))),
     # Accessibility (WCAG 1.1.1): the plot title is the accessible name and the
     # alt text is the description. vellum emits these as an accessible SVG /
     # tagged PDF. Additive — geometry is unchanged. See R/alt.R.

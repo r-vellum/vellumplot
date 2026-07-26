@@ -55,3 +55,45 @@ test_that("gt_vsparkline() errors on a missing or non-list column", {
   expect_error(gt::gt(df) |> gt_vsparkline(nope), "no column")
   expect_error(gt::gt(df) |> gt_vsparkline(n), "must be a list-column")
 })
+
+# --- inline embedding (transparent, prolog-free, recolor) --------------------
+
+test_that("inline = TRUE strips the XML prolog", {
+  s <- plot_svg(vsparkline(1:10), inline = TRUE)
+  expect_false(startsWith(s, "<?xml"))
+  expect_true(startsWith(sub("^\\s*", "", s), "<svg"))
+  # default keeps the stand-alone prolog
+  expect_true(startsWith(plot_svg(vsparkline(1:10)), "<?xml"))
+})
+
+test_that("a sparkline has a transparent background (no white fill)", {
+  s <- plot_svg(vsparkline(cumsum(rnorm(20))))
+  expect_false(grepl("fill=\"#ffffff\"", s, fixed = TRUE))
+})
+
+test_that("an ordinary plot keeps its white background (no regression)", {
+  s <- plot_svg(vplot(mtcars) |> mark_point(x = wt, y = mpg))
+  expect_true(grepl("fill=\"#ffffff\"", s, fixed = TRUE))
+})
+
+test_that("recolor swaps a source colour for a verbatim token, leaving others", {
+  s <- plot_svg(
+    vsparkline(cumsum(rnorm(20)), color = "grey30"),
+    recolor = c(grey30 = "currentColor")
+  )
+  expect_true(grepl("currentColor", s, fixed = TRUE))
+  expect_false(grepl("#4d4d4d", s, fixed = TRUE)) # grey30 hex gone
+  expect_true(grepl("b22222", tolower(s), fixed = TRUE)) # firebrick dots untouched
+})
+
+test_that("recolor accepts a hex source and requires names", {
+  s <- plot_svg(
+    vsparkline(1:8, color = "#4d4d4d"),
+    recolor = c("#4d4d4d" = "red")
+  )
+  expect_true(grepl("stroke=\"red\"", s, fixed = TRUE))
+  expect_error(
+    plot_svg(vsparkline(1:8), recolor = "currentColor"),
+    "must be a named vector"
+  )
+})

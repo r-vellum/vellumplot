@@ -9,6 +9,8 @@ plot_svg(
   width = NULL,
   height = NULL,
   scaling = c("fixed", "fit"),
+  inline = FALSE,
+  recolor = NULL,
   text = "native"
 )
 }
@@ -21,6 +23,17 @@ object's own size).}
 \item{scaling}{\code{"fixed"} (default) keeps the pixel size; \code{"fit"} sets the root
 \verb{<svg>} \code{width}/\code{height} to \verb{100\%} so it fills its container (the \code{viewBox}
 preserves the aspect).}
+
+\item{inline}{\code{TRUE} strips the leading \verb{<?xml …?>} prolog so the \verb{<svg>} is a
+valid fragment to drop straight into an HTML paragraph / cell / Quarto inline
+expression. \code{FALSE} (default) keeps the stand-alone-file prolog.}
+
+\item{recolor}{Optional named character vector mapping a \strong{source colour} to a
+replacement written verbatim into the SVG — e.g.
+\code{c(grey30 = "currentColor")} makes a \code{grey30} sparkline follow the surrounding
+text colour (dark-mode-adaptive inline). Each name is resolved to its hex and
+swapped for the value; use for CSS keywords (\code{"currentColor"}) or \code{var(--x)}
+that R's colour engine can't emit itself.}
 
 \item{text}{How glyphs are emitted: \code{"native"} (default) or \code{"outline"} (paths,
 for maximum portability).}
@@ -38,6 +51,10 @@ string carries a \code{viewBox}, so it scales.
 \examples{
 svg <- plot_svg(vsparkline(cumsum(rnorm(20))))
 substr(svg, 1, 40)
+# a transparent, prolog-free, dark-mode-adaptive inline sparkline:
+plot_svg(vsparkline(1:9, color = "grey30"),
+  inline = TRUE, recolor = c(grey30 = "currentColor")
+)
 }
 \seealso{
 \code{\link[=vsparkline]{vsparkline()}}, \code{\link[=gt_vsparkline]{gt_vsparkline()}}, \code{\link[=render_plot]{render_plot()}}
