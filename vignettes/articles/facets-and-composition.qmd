@@ -193,7 +193,17 @@ gt(df) |>
 
 Under the hood this uses `plot_svg()`, which turns *any* vellumplot object into a
 self-contained SVG string — so the same trick embeds a chart inline in
-`reactable` / `DT` cells or a Quarto callout, not just gt.
+`reactable` / `DT` cells or a Quarto callout, not just gt. `inline = TRUE` drops
+the XML prolog so the fragment goes straight into a paragraph, and
+`recolor = c(grey30 = "currentColor")` makes the ink follow the surrounding text
+colour (so it adapts to dark mode):
+
+```r
+plot_svg(
+  vsparkline(cumsum(rnorm(20)), color = "grey30"),
+  inline = TRUE, recolor = c(grey30 = "currentColor")
+)
+```
 
 ### Repeat over a variable
 

@@ -1,12 +1,17 @@
 #' @include classes.R vplot.R theme.R vgraph.R
 NULL
 
-# A chrome-free theme that also zeroes the plot margin, so the sparkline's panel
-# is the whole box (the emitter then draws edge-to-edge in npc).
+# A chrome-free theme that zeroes the plot margin (so the sparkline's panel is the
+# whole box) and blanks the plot background (so the box is transparent -- a
+# sparkline exists to be embedded, on whatever surrounds it).
 .theme_sparkline <- function() {
   .merge_theme(
     .theme_vgraph(),
-    list(plot.margin = c(0, 0, 0, 0), panel.spacing = 0)
+    list(
+      plot.margin = c(0, 0, 0, 0),
+      panel.spacing = 0,
+      plot.background = element_blank()
+    )
   )
 }
 
