@@ -144,7 +144,9 @@ reference:
   - vhierarchy
   - vsparkline
   - vtable
+  - gt_vsparkline
   - render_plot
+  - plot_svg
   - PlotSpec
 
 - title: Marks
