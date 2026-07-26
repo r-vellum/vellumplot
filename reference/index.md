@@ -7,25 +7,42 @@ then render it or write it to a file.
 
 - [`vplot()`](https://r-vellum.github.io/vellumplot/reference/vplot.md)
   : Start a plot specification
+
 - [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
   : Start a graph (network) plot
+
 - [`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
   : Dendrogram from a clustering
+
 - [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   [`mark_sankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md)
   : Sankey (flow) diagram
+
 - [`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md)
   [`mark_chord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md)
   : Chord diagram
+
 - [`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
   [`mark_hierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
   : Hierarchy diagrams: sunburst, icicle, treemap, circle-pack
+
 - [`vsparkline()`](https://r-vellum.github.io/vellumplot/reference/vsparkline.md)
   : Sparklines — tiny word-sized charts
+
 - [`vtable()`](https://r-vellum.github.io/vellumplot/reference/vtable.md)
   : Tables with sparkline columns
+
+- [`gt_vsparkline()`](https://r-vellum.github.io/vellumplot/reference/gt_vsparkline.md)
+  :
+
+  Add a vellumplot sparkline column to a `gt` table
+
 - [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
   : Render a plot to a file
+
+- [`plot_svg()`](https://r-vellum.github.io/vellumplot/reference/plot_svg.md)
+  : Render a plot to a self-contained SVG string
+
 - [`PlotSpec()`](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
   : The plot specification
 

@@ -283,6 +283,513 @@
 </div>
 </div>
 </div>
+</section><section class="level3"><h3 id="sparklines-in-a-gt-table">Sparklines in a <code>gt</code> table<a class="anchor" aria-label="anchor" href="#sparklines-in-a-gt-table"></a>
+</h3>
+<p>Beyond the native <code><a href="../reference/vtable.html">vtable()</a></code>, you can add a vellum sparkline column to a <a href="https://gt.rstudio.com" class="external-link">gt</a> table — keeping all of gt’s formatting and theming. <code><a href="../reference/gt_vsparkline.html">gt_vsparkline()</a></code> renders a list-column of numeric vectors as inline-SVG sparklines (HTML output).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gt.rstudio.com" class="external-link">gt</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'gt'</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:vellumplot':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     md</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>metric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Revenue"</span>, <span class="st">"Users"</span>, <span class="st">"Latency"</span>, <span class="st">"Errors"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">df</span><span class="op">$</span><span class="va">trend</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">24</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">df</span><span class="op">$</span><span class="va">volume</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://gt.rstudio.com/reference/gt.html" class="external-link">gt</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/gt_vsparkline.html">gt_vsparkline</a></span><span class="op">(</span><span class="va">trend</span>, type <span class="op">=</span> <span class="st">"line"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/gt_vsparkline.html">gt_vsparkline</a></span><span class="op">(</span><span class="va">volume</span>, type <span class="op">=</span> <span class="st">"bar"</span>, color <span class="op">=</span> <span class="st">"#4682b4"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div id="yxuuvfrpbh" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#yxuuvfrpbh table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#yxuuvfrpbh thead, #yxuuvfrpbh tbody, #yxuuvfrpbh tfoot, #yxuuvfrpbh tr, #yxuuvfrpbh td, #yxuuvfrpbh th {
+  border-style: none;
+}
+
+#yxuuvfrpbh p {
+  margin: 0;
+  padding: 0;
+}
+
+#yxuuvfrpbh .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#yxuuvfrpbh .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#yxuuvfrpbh .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#yxuuvfrpbh .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#yxuuvfrpbh .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#yxuuvfrpbh .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#yxuuvfrpbh .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#yxuuvfrpbh .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#yxuuvfrpbh .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#yxuuvfrpbh .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#yxuuvfrpbh .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#yxuuvfrpbh .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#yxuuvfrpbh .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#yxuuvfrpbh .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#yxuuvfrpbh .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#yxuuvfrpbh .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#yxuuvfrpbh .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#yxuuvfrpbh .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#yxuuvfrpbh .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#yxuuvfrpbh .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#yxuuvfrpbh .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#yxuuvfrpbh .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#yxuuvfrpbh .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#yxuuvfrpbh .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#yxuuvfrpbh .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#yxuuvfrpbh .gt_left {
+  text-align: left;
+}
+
+#yxuuvfrpbh .gt_center {
+  text-align: center;
+}
+
+#yxuuvfrpbh .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#yxuuvfrpbh .gt_font_normal {
+  font-weight: normal;
+}
+
+#yxuuvfrpbh .gt_font_bold {
+  font-weight: bold;
+}
+
+#yxuuvfrpbh .gt_font_italic {
+  font-style: italic;
+}
+
+#yxuuvfrpbh .gt_super {
+  font-size: 65%;
+}
+
+#yxuuvfrpbh .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#yxuuvfrpbh .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#yxuuvfrpbh .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#yxuuvfrpbh .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#yxuuvfrpbh .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#yxuuvfrpbh .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#yxuuvfrpbh .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#yxuuvfrpbh .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#yxuuvfrpbh div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="table gt_table caption-top" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead><tr class="gt_col_headings header">
+<th id="metric" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">metric</th>
+<th id="trend" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col">trend</th>
+<th id="volume" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col">volume</th>
+</tr></thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="metric">Revenue</td>
+<td class="gt_row gt_center" headers="trend"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewbox="0 0 113 30" role="img" aria-labelledby="vl1204-d"><desc id="vl1204-d">A sparkline plot. It plots .v (vertical axis) against .i (horizontal axis). Based on 24 observations.</desc><defs></defs><rect width="113" height="30" fill="#ffffff" fill-opacity="1"></rect><g data-vellum-panel="plot"><g data-vellum-panel="plot-background"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#ffffff" fill-opacity="1" transform="matrix(113 0 0 30 56.5 15)"></path></g><g data-vellum-panel="panel-area"><g data-vellum-panel="panel-1-1"><g data-vellum-pan="panel-1-1"><g data-vellum-id="layer-1-sparkline-g1"><path d="M0 23.748476 L4.9130435 23.170628 L9.826087 25.8 L14.73913 20.780321 L19.652174 19.743498 L24.565218 22.325169 L29.47826 20.791433 L34.391304 18.468235 L39.304348 16.656492 L44.217392 17.617422 L49.130436 12.860481 L54.04348 11.633808 L58.95652 13.588592 L63.869564 20.557323 L68.78261 17.017637 L73.695656 17.159025 L78.608696 17.209969 L83.521736 14.240112 L88.434784 11.656074 L93.347824 9.787315 L98.26087 6.8956795 L103.17391 4.4346247 L108.08696 4.2 L113 10.459655" fill="none" stroke="#4d4d4d" stroke-opacity="1" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10"></path></g><g data-vellum-id="layer-1-sparkline-g2"><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="#b22222" fill-opacity="1" transform="matrix(5.6692915 0 0 5.6692915 9.826087 25.8)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="none" stroke="#b22222" stroke-opacity="1" stroke-width="0.17638889" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" transform="matrix(5.6692915 0 0 5.6692915 9.826087 25.8)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="#b22222" fill-opacity="1" transform="matrix(5.6692915 0 0 5.6692915 108.08696 4.2)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="none" stroke="#b22222" stroke-opacity="1" stroke-width="0.17638889" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" transform="matrix(5.6692915 0 0 5.6692915 108.08696 4.2)"></path></g></g></g></g></g></svg></td>
+<td class="gt_row gt_center" headers="volume"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewbox="0 0 113 30" role="img" aria-labelledby="vl1288-d"><desc id="vl1288-d">A sparkline plot. It plots .v (vertical axis) against .i (horizontal axis). Based on 20 observations.</desc><defs></defs><rect width="113" height="30" fill="#ffffff" fill-opacity="1"></rect><g data-vellum-panel="plot"><g data-vellum-panel="plot-background"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#ffffff" fill-opacity="1" transform="matrix(113 0 0 30 56.5 15)"></path></g><g data-vellum-panel="panel-area"><g data-vellum-panel="panel-1-1"><g data-vellum-pan="panel-1-1"><g data-vellum-id="layer-1-sparkline-g1"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 7.690909 1.9775 26.154545)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 25.636364 7.7167106 17.181818)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 10.254545 13.455921 24.872726)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 15.381818 19.195131 22.309092)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 7.690909 24.934341 26.154545)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 20.50909 30.673553 19.745455)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 12.818182 36.41276 23.59091)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 20.50909 42.151974 19.745455)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 10.254545 47.891186 24.872726)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 10.254545 53.630394 24.872726)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 15.381818 59.369606 22.309092)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 10.254545 65.10882 24.872726)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 10.254545 70.84803 24.872726)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 15.381818 76.587234 22.309092)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 15.381818 82.32645 22.309092)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 7.690909 88.06566 26.154545)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 10.254545 93.80487 24.872726)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 17.945454 99.54408 21.027273)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 28.2 105.28329 15.9)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 7.690909 111.0225 26.154545)"></path></g></g></g></g></g></svg></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="metric">Users</td>
+<td class="gt_row gt_center" headers="trend"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewbox="0 0 113 30" role="img" aria-labelledby="vl1225-d"><desc id="vl1225-d">A sparkline plot. It plots .v (vertical axis) against .i (horizontal axis). Based on 24 observations.</desc><defs></defs><rect width="113" height="30" fill="#ffffff" fill-opacity="1"></rect><g data-vellum-panel="plot"><g data-vellum-panel="plot-background"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#ffffff" fill-opacity="1" transform="matrix(113 0 0 30 56.5 15)"></path></g><g data-vellum-panel="panel-area"><g data-vellum-panel="panel-1-1"><g data-vellum-pan="panel-1-1"><g data-vellum-id="layer-1-sparkline-g1"><path d="M0 6.6022067 L4.9130435 7.0514126 L9.826087 8.298265 L14.73913 20.068895 L19.652174 23.895594 L24.565218 20.55075 L29.47826 9.677055 L34.391304 10.49968 L39.304348 7.3970914 L44.217392 7.8277006 L49.130436 18.848494 L54.04348 22.169752 L58.95652 25.325306 L63.869564 25.8 L68.78261 16.99635 L73.695656 10.88855 L78.608696 12.205255 L83.521736 14.232943 L88.434784 8.65505 L93.347824 4.2 L98.26087 9.712205 L103.17391 15.374384 L108.08696 12.456585 L113 6.3059125" fill="none" stroke="#4d4d4d" stroke-opacity="1" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10"></path></g><g data-vellum-id="layer-1-sparkline-g2"><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="#b22222" fill-opacity="1" transform="matrix(5.6692915 0 0 5.6692915 63.869564 25.8)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="none" stroke="#b22222" stroke-opacity="1" stroke-width="0.17638889" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" transform="matrix(5.6692915 0 0 5.6692915 63.869564 25.8)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="#b22222" fill-opacity="1" transform="matrix(5.6692915 0 0 5.6692915 93.347824 4.2)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="none" stroke="#b22222" stroke-opacity="1" stroke-width="0.17638889" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" transform="matrix(5.6692915 0 0 5.6692915 93.347824 4.2)"></path></g></g></g></g></g></svg></td>
+<td class="gt_row gt_center" headers="volume"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewbox="0 0 113 30" role="img" aria-labelledby="vl1308-d"><desc id="vl1308-d">A sparkline plot. It plots .v (vertical axis) against .i (horizontal axis). Based on 20 observations.</desc><defs></defs><rect width="113" height="30" fill="#ffffff" fill-opacity="1"></rect><g data-vellum-panel="plot"><g data-vellum-panel="plot-background"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#ffffff" fill-opacity="1" transform="matrix(113 0 0 30 56.5 15)"></path></g><g data-vellum-panel="panel-area"><g data-vellum-panel="panel-1-1"><g data-vellum-pan="panel-1-1"><g data-vellum-id="layer-1-sparkline-g1"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 22.56 1.9775 18.72)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 28.2 7.7167106 15.9)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 22.56 13.455921 18.72)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 19.195131 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 19.74 24.934341 20.13)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 28.2 30.673553 15.9)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 28.2 36.41276 15.9)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 42.151974 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 11.28 47.891186 24.36)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 11.28 53.630394 24.36)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 59.369606 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 65.10882 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 28.2 70.84803 15.9)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 76.587234 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 11.28 82.32645 24.36)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 5.64 88.06566 27.18)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 93.80487 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 25.38 99.54408 17.31)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 105.28329 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 8.46 111.0225 25.77)"></path></g></g></g></g></g></svg></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="metric">Latency</td>
+<td class="gt_row gt_center" headers="trend"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewbox="0 0 113 30" role="img" aria-labelledby="vl1246-d"><desc id="vl1246-d">A sparkline plot. It plots .v (vertical axis) against .i (horizontal axis). Based on 24 observations.</desc><defs></defs><rect width="113" height="30" fill="#ffffff" fill-opacity="1"></rect><g data-vellum-panel="plot"><g data-vellum-panel="plot-background"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#ffffff" fill-opacity="1" transform="matrix(113 0 0 30 56.5 15)"></path></g><g data-vellum-panel="panel-area"><g data-vellum-panel="panel-1-1"><g data-vellum-pan="panel-1-1"><g data-vellum-id="layer-1-sparkline-g1"><path d="M0 25.447805 L4.9130435 22.884356 L9.826087 21.726126 L14.73913 23.506725 L19.652174 22.514288 L24.565218 25.8 L29.47826 21.630835 L34.391304 15.86916 L39.304348 16.937536 L44.217392 19.975286 L49.130436 18.317774 L54.04348 18.710695 L58.95652 11.723551 L63.869564 11.837714 L68.78261 9.831021 L73.695656 9.749554 L78.608696 11.911995 L83.521736 11.362732 L88.434784 16.613987 L93.347824 12.350176 L98.26087 11.904308 L103.17391 5.583423 L108.08696 4.2 L113 6.265482" fill="none" stroke="#4d4d4d" stroke-opacity="1" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10"></path></g><g data-vellum-id="layer-1-sparkline-g2"><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="#b22222" fill-opacity="1" transform="matrix(5.6692915 0 0 5.6692915 24.565218 25.8)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="none" stroke="#b22222" stroke-opacity="1" stroke-width="0.17638889" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" transform="matrix(5.6692915 0 0 5.6692915 24.565218 25.8)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="#b22222" fill-opacity="1" transform="matrix(5.6692915 0 0 5.6692915 108.08696 4.2)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="none" stroke="#b22222" stroke-opacity="1" stroke-width="0.17638889" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" transform="matrix(5.6692915 0 0 5.6692915 108.08696 4.2)"></path></g></g></g></g></g></svg></td>
+<td class="gt_row gt_center" headers="volume"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewbox="0 0 113 30" role="img" aria-labelledby="vl1328-d"><desc id="vl1328-d">A sparkline plot. It plots .v (vertical axis) against .i (horizontal axis). Based on 20 observations.</desc><defs></defs><rect width="113" height="30" fill="#ffffff" fill-opacity="1"></rect><g data-vellum-panel="plot"><g data-vellum-panel="plot-background"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#ffffff" fill-opacity="1" transform="matrix(113 0 0 30 56.5 15)"></path></g><g data-vellum-panel="panel-area"><g data-vellum-panel="panel-1-1"><g data-vellum-pan="panel-1-1"><g data-vellum-id="layer-1-sparkline-g1"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 1.9775 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 19.74 7.7167106 20.13)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 13.455921 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 19.74 19.195131 20.13)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 19.74 24.934341 20.13)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 30.673553 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 36.41276 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 42.151974 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 47.891186 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 53.630394 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 25.38 59.369606 17.31)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 8.46 65.10882 25.77)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 70.84803 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 11.28 76.587234 24.36)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 82.32645 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 8.46 88.06566 25.77)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 93.80487 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 28.2 99.54408 15.9)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 22.56 105.28329 18.72)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 28.2 111.0225 15.9)"></path></g></g></g></g></g></svg></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="metric">Errors</td>
+<td class="gt_row gt_center" headers="trend"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewbox="0 0 113 30" role="img" aria-labelledby="vl1267-d"><desc id="vl1267-d">A sparkline plot. It plots .v (vertical axis) against .i (horizontal axis). Based on 24 observations.</desc><defs></defs><rect width="113" height="30" fill="#ffffff" fill-opacity="1"></rect><g data-vellum-panel="plot"><g data-vellum-panel="plot-background"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#ffffff" fill-opacity="1" transform="matrix(113 0 0 30 56.5 15)"></path></g><g data-vellum-panel="panel-area"><g data-vellum-panel="panel-1-1"><g data-vellum-pan="panel-1-1"><g data-vellum-id="layer-1-sparkline-g1"><path d="M0 13.746562 L4.9130435 16.631304 L9.826087 20.50286 L14.73913 19.602795 L19.652174 20.9718 L24.565218 20.968386 L29.47826 20.7388 L34.391304 22.559397 L39.304348 24.315598 L44.217392 24.733067 L49.130436 21.094818 L54.04348 25.8 L58.95652 23.965736 L63.869564 22.937496 L68.78261 19.65436 L73.695656 20.593761 L78.608696 19.451044 L83.521736 18.626171 L88.434784 20.301619 L93.347824 16.5714 L98.26087 12.987767 L103.17391 10.82532 L108.08696 5.924755 L113 4.2" fill="none" stroke="#4d4d4d" stroke-opacity="1" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10"></path></g><g data-vellum-id="layer-1-sparkline-g2"><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="#b22222" fill-opacity="1" transform="matrix(5.6692915 0 0 5.6692915 54.04348 25.8)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="none" stroke="#b22222" stroke-opacity="1" stroke-width="0.17638889" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" transform="matrix(5.6692915 0 0 5.6692915 54.04348 25.8)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="#b22222" fill-opacity="1" transform="matrix(5.6692915 0 0 5.6692915 113 4.2)"></path><path d="M1 0 Q0.99999994 0.41421354 0.70710677 0.70710677 Q0.41421354 0.99999994 0 1 Q-0.41421354 0.99999994 -0.70710677 0.70710677 Q-0.99999994 0.41421354 -1 0 Q-0.99999994 -0.41421354 -0.70710677 -0.70710677 Q-0.41421354 -0.99999994 0 -1 Q0.41421354 -0.99999994 0.70710677 -0.70710677 Q0.99999994 -0.41421354 1 0 Z" fill="none" stroke="#b22222" stroke-opacity="1" stroke-width="0.17638889" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" transform="matrix(5.6692915 0 0 5.6692915 113 4.2)"></path></g></g></g></g></g></svg></td>
+<td class="gt_row gt_center" headers="volume"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewbox="0 0 113 30" role="img" aria-labelledby="vl1348-d"><desc id="vl1348-d">A sparkline plot. It plots .v (vertical axis) against .i (horizontal axis). Based on 20 observations.</desc><defs></defs><rect width="113" height="30" fill="#ffffff" fill-opacity="1"></rect><g data-vellum-panel="plot"><g data-vellum-panel="plot-background"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#ffffff" fill-opacity="1" transform="matrix(113 0 0 30 56.5 15)"></path></g><g data-vellum-panel="panel-area"><g data-vellum-panel="panel-1-1"><g data-vellum-pan="panel-1-1"><g data-vellum-id="layer-1-sparkline-g1"><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 1.9775 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 7.7167106 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 13.455921 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 8.46 19.195131 25.77)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 11.28 24.934341 24.36)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 30.673553 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 36.41276 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 28.2 42.151974 15.9)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 16.92 47.891186 21.54)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 14.1 53.630394 22.95)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 11.28 59.369606 24.36)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 22.56 65.10882 18.72)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 19.74 70.84803 20.13)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 11.28 76.587234 24.36)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 8.46 82.32645 25.77)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 22.56 88.06566 18.72)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 19.74 93.80487 20.13)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 11.28 99.54408 24.36)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 8.46 105.28329 25.77)"></path><path d="M-0.5 -0.5 L0.5 -0.5 L0.5 0.5 L-0.5 0.5 Z" fill="#4682b4" fill-opacity="1" transform="matrix(3.955 0 0 8.46 111.0225 25.77)"></path></g></g></g></g></g></svg></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>Under the hood this uses <code><a href="../reference/plot_svg.html">plot_svg()</a></code>, which turns <em>any</em> vellumplot object into a self-contained SVG string — so the same trick embeds a chart inline in <code>reactable</code> / <code>DT</code> cells or a Quarto callout, not just gt.</p>
 </section><section class="level3"><h3 id="repeat-over-a-variable">Repeat over a variable<a class="anchor" aria-label="anchor" href="#repeat-over-a-variable"></a>
 </h3>
 <p><code><a href="../reference/repeat_.html">repeat_()</a></code> builds a small multiple by repeating one plot template across a set of values, the composition-side counterpart to faceting when you want each panel to be a fully independent plot rather than a shared-scale small multiple.</p>
