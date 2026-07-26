@@ -37,6 +37,7 @@ Suggests:
     classInt,
     edgebundle (>= 1.0.0),
     graphlayouts (>= 1.2.5),
+    gt,
     igraph,
     interp,
     isoband,
@@ -95,5 +96,6 @@ Collate:
     'scales-binned.R'
     'select.R'
     'sparkline.R'
+    'svg.R'
     'table.R'
     'zzz.R'

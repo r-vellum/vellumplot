@@ -74,3 +74,21 @@ vplot(mtcars) |>
   ) |>
   labs(title = "Trend callout") |>
   render_plot(file.path(outdir, "27-callout.png"))
+
+# --- 5. inline SVG + a gt table with sparkline columns ----------------------
+# plot_svg() turns any vellumplot object into a self-contained SVG string (for
+# gt / reactable / DT / Quarto). gt_vsparkline() is the gt convenience.
+svg <- plot_svg(vsparkline(cumsum(rnorm(20))), scaling = "fit")
+cat(substr(svg, 1, 60), "...\n")
+
+if (requireNamespace("gt", quietly = TRUE)) {
+  df <- data.frame(metric = c("Revenue", "Users", "Latency", "Errors"))
+  df$trend <- lapply(1:4, function(i) cumsum(rnorm(24)))
+  df$volume <- lapply(1:4, function(i) rpois(20, 6))
+  tbl <- gt::gt(df) |>
+    gt::tab_header(title = "Service metrics") |>
+    gt_vsparkline(trend, type = "line") |>
+    gt_vsparkline(volume, type = "bar", color = "#4682b4")
+  # gt renders HTML; save it (screenshot with webshot2/gtsave for an image).
+  gt::gtsave(tbl, file.path(outdir, "27-gt-table.html"))
+}

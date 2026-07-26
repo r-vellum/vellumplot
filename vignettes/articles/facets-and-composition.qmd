@@ -171,6 +171,30 @@ vplot(mtcars) |>
   )
 ```
 
+### Sparklines in a `gt` table
+
+Beyond the native `vtable()`, you can add a vellum sparkline column to a
+[gt](https://gt.rstudio.com) table — keeping all of gt's formatting and theming.
+`gt_vsparkline()` renders a list-column of numeric vectors as inline-SVG
+sparklines (HTML output).
+
+```{r}
+#| eval: !expr requireNamespace("gt", quietly = TRUE)
+library(gt)
+set.seed(1)
+df <- data.frame(metric = c("Revenue", "Users", "Latency", "Errors"))
+df$trend <- lapply(1:4, function(i) cumsum(rnorm(24)))
+df$volume <- lapply(1:4, function(i) rpois(20, 6))
+
+gt(df) |>
+  gt_vsparkline(trend, type = "line") |>
+  gt_vsparkline(volume, type = "bar", color = "#4682b4")
+```
+
+Under the hood this uses `plot_svg()`, which turns *any* vellumplot object into a
+self-contained SVG string — so the same trick embeds a chart inline in
+`reactable` / `DT` cells or a Quarto callout, not just gt.
+
 ### Repeat over a variable
 
 `repeat_()` builds a small multiple by repeating one plot template across a set
