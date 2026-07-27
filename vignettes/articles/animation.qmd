@@ -109,10 +109,29 @@ Between two keyframes, an element's **position**, **size**, **alpha**, and
 vivid instead of passing through grey. Discrete attributes (a marker shape, a line
 type, a text label) do not interpolate continuously; they snap at the midpoint.
 
-The clean case is a **stable set of elements** with the same identity in every
-state (the same countries each year, the same cars in each cylinder group). When
-the set of elements changes between states, or the plot is faceted, the transition
-is not a smooth morph — that is outside the current scope.
+When the set of elements changes between states — a country that only has data in
+some years — give the animated mark a `data_id` identifying each element across
+states (`mark_point(..., data_id = country)`). Elements that appear **enter**
+(fade in) and elements that leave **exit** (fade out), while the ones present in
+both tween normally. Without a `data_id` a stable element set is assumed (elements
+are matched by position). Faceted animations are outside the current scope.
+
+## Continuous time
+
+`transition_time()` is the continuous-time sibling of `transition_states()`: it
+treats the column as a numeric time and allocates frames **in proportion to each
+time gap**, so the animation runs at a constant rate even when the times are
+unevenly spaced. Time flows once — no pause on a state, no wrap.
+
+```{r}
+#| eval: false
+vplot(gapminder) |>
+  mark_point(x = gdpPercap, y = lifeExp, size = pop, color = continent) |>
+  scale_x_continuous(transform = "log10") |>
+  transition_time(year) |>
+  animate(nframes = 100, fps = 25) |>
+  (\(a) anim_save("gapminder.gif", a))()
+```
 
 ## Timing
 

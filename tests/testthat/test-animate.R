@@ -60,13 +60,38 @@ test_that("easing functions hit their endpoints and stay monotone", {
 })
 
 test_that(".anim_schedule spans the keyframes within [0, 1]", {
-  s <- vellumplot:::.anim_schedule(3, 30, "linear", 1, 1, wrap = FALSE)
+  s <- vellumplot:::.anim_schedule(3, 30, "linear", c(1, 1), 1, wrap = FALSE)
+  expect_equal(length(s$seg), 30L)
   expect_equal(length(s$seg), length(s$frac))
   expect_true(all(s$seg %in% 1:2)) # K-1 segments, no wrap
   expect_true(all(s$frac >= 0 & s$frac <= 1))
   # wrap adds a segment K -> K+1
-  sw <- vellumplot:::.anim_schedule(3, 30, "linear", 1, 1, wrap = TRUE)
+  sw <- vellumplot:::.anim_schedule(3, 30, "linear", c(1, 1, 1), 1, wrap = TRUE)
   expect_true(max(sw$seg) == 3L)
+  # per-segment weights allocate frames proportionally (no holds)
+  wt <- vellumplot:::.anim_schedule(3, 40, "linear", c(1, 3), 0, wrap = FALSE)
+  expect_equal(sum(wt$seg == 1L), 10L)
+  expect_equal(sum(wt$seg == 2L), 30L)
+})
+
+test_that("transition_time weights frames by the time gap", {
+  d <- data.frame(
+    t = rep(c(0, 1, 10), each = 2),
+    x = c(1, 2, 2, 3, 5, 6),
+    y = 1:6
+  )
+  p <- vplot(d) |> mark_point(x = x, y = y) |> transition_time(t)
+  expect_equal(p@transition@kind, "time")
+  a <- animate(p, nframes = 30)
+  expect_equal(a@states, c("0", "1", "10"))
+  expect_equal(a@seg_weights, c(1, 9)) # gaps between 0,1,10
+  expect_false(a@wrap)
+})
+
+test_that("transition_time needs a numeric column", {
+  d <- data.frame(g = rep(letters[1:2], each = 2), x = 1:4, y = 1:4)
+  p <- vplot(d) |> mark_point(x = x, y = y) |> transition_time(g)
+  expect_error(animate(p), "numeric time column")
 })
 
 test_that("animate() compiles one keyframe per state", {
@@ -111,6 +136,33 @@ test_that("scales are frozen across keyframes (the non-reactive guardrail)", {
   i4 <- vplot(mtcars[mtcars$cyl == 4, ]) |> mark_point(x = wt, y = mpg)
   i8 <- vplot(mtcars[mtcars$cyl == 8, ]) |> mark_point(x = wt, y = mpg)
   expect_false(identical(axis_text(i4), axis_text(i8)))
+})
+
+test_that("data_id carries element identity through to the keyframes (enter/exit)", {
+  # Element "z" exists only in state 2, so it enters; "a"/"b" persist. The Rust
+  # tween keys off these to fade z in (per-element enter/exit tested in vellum);
+  # here we assert the identity plumbing: keys reach each keyframe scene.
+  d <- data.frame(
+    st = c(1, 1, 2, 2, 2),
+    id = c("a", "b", "a", "b", "z"),
+    x = c(0.2, 0.5, 0.2, 0.5, 0.8),
+    y = 0.5
+  )
+  a <- vplot(d) |>
+    mark_point(x = x, y = y, data_id = id, size = 8) |>
+    transition_states(st, wrap = FALSE) |>
+    animate(nframes = 4)
+
+  keys <- function(sc) {
+    sort(stats::na.omit(vellum::scene_model(sc)$elements$key))
+  }
+  expect_setequal(keys(a@scenes[[1]]), c("a", "b"))
+  expect_setequal(keys(a@scenes[[2]]), c("a", "b", "z")) # z enters
+
+  skip_if_not_installed("magick")
+  gif <- withr::local_tempfile(fileext = ".gif")
+  anim_save(gif, a)
+  expect_true(file.exists(gif))
 })
 
 test_that("anim_save() writes a GIF and an APNG", {

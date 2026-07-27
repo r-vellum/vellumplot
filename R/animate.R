@@ -67,6 +67,38 @@ transition_states <- function(
   plot
 }
 
+#' Animate a plot along a continuous time
+#'
+#' `transition_time()` is like [transition_states()] but treats `time` as a
+#' continuous quantity: the states are its distinct values and each transition is
+#' allocated frames **in proportion to its time gap**, so the animation plays at a
+#' constant rate through unevenly spaced times. There is no pause on a state and no
+#' wrap — time flows once, start to finish.
+#'
+#' @param plot A [PlotSpec] (from [vplot()]).
+#' @param time A numeric column giving each row's time.
+#' @return The modified [PlotSpec].
+#' @seealso [transition_states()], [ease_aes()], [animate()]
+#' @examples
+#' if (requireNamespace("gapminder", quietly = TRUE)) {
+#'   vplot(gapminder::gapminder) |>
+#'     mark_point(x = gdpPercap, y = lifeExp, size = pop, color = continent) |>
+#'     scale_x_continuous(transform = "log10") |>
+#'     transition_time(year)
+#' }
+#' @export
+transition_time <- function(plot, time) {
+  .check_plot(plot)
+  var <- rlang::enquo(time)
+  if (rlang::quo_is_missing(var)) {
+    cli::cli_abort(
+      "{.fn transition_time} needs a numeric time column, e.g. {.code transition_time(year)}."
+    )
+  }
+  plot@transition <- TransitionSpec(var = var, kind = "time", wrap = FALSE)
+  plot
+}
+
 #' Set the easing of an animation's frames
 #'
 #' `ease_aes()` chooses the easing function that shapes how the interpolation
@@ -120,7 +152,7 @@ vellum_animation <- S7::new_class(
     states = S7::class_character, # state labels, in order
     nframes = S7::new_property(S7::class_double, default = 50),
     fps = S7::new_property(S7::class_double, default = 25),
-    transition_length = S7::new_property(S7::class_double, default = 1),
+    seg_weights = S7::new_property(S7::class_double, default = numeric(0)), # per segment
     state_length = S7::new_property(S7::class_double, default = 1),
     wrap = S7::new_property(S7::class_logical, default = TRUE),
     easing = S7::new_property(S7::class_character, default = "linear"),
@@ -160,7 +192,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
   tr <- plot@transition
   if (is.null(tr)) {
     cli::cli_abort(
-      "{.fn animate} needs a transition; add {.fn transition_states} first."
+      "{.fn animate} needs a transition; add {.fn transition_states} or {.fn transition_time} first."
     )
   }
   if (!is.null(plot@facet)) {
@@ -170,12 +202,17 @@ animate <- function(plot, nframes = 50, fps = 25) {
   fps <- .pos_num(fps, "fps")
   easing <- if (is.null(plot@ease)) "linear" else plot@ease@default
 
-  key <- .facet_key(list(tr@var), plot@data)
-  states <- levels(key)
+  # Enumerate the states and per-segment timing. `transition_states` gives equal
+  # segments over a column's levels; `transition_time` treats the column as a
+  # numeric time and weights each segment by its time gap, so the animation plays
+  # at a constant rate through unevenly spaced times (and never holds or wraps).
+  en <- .enumerate_states(tr, plot@data)
+  key <- en$key
+  states <- en$states
   if (length(states) < 2L) {
     cli::cli_abort(c(
-      "{.fn transition_states} needs at least 2 states.",
-      i = "The state column has {length(states)} distinct value{?s}."
+      "A transition needs at least 2 states.",
+      i = "The {.field {tr@kind}} column has {length(states)} distinct value{?s}."
     ))
   }
 
@@ -211,14 +248,49 @@ animate <- function(plot, nframes = 50, fps = 25) {
     states = states,
     nframes = nframes,
     fps = fps,
-    transition_length = tr@transition_length,
-    state_length = tr@state_length,
-    wrap = tr@wrap,
+    seg_weights = en$seg_weights,
+    state_length = en$state_length,
+    wrap = en$wrap,
     easing = easing,
     width = plot@width,
     height = plot@height,
     dpi = plot@dpi
   )
+}
+
+# Enumerate a transition's states and the per-segment timing. Returns `key` (a
+# factor assigning each data row to a state), `states` (the ordered labels),
+# `seg_weights` (a relative duration per inter-keyframe segment), `state_length`
+# (the held-pause weight per state), and `wrap`.
+.enumerate_states <- function(tr, data) {
+  if (identical(tr@kind, "time")) {
+    vals <- rlang::eval_tidy(tr@var, data)
+    if (!is.numeric(vals)) {
+      cli::cli_abort("{.fn transition_time} needs a numeric time column.")
+    }
+    times <- sort(unique(vals[is.finite(vals)]))
+    states <- as.character(times)
+    # Segments weighted by the time gaps: constant playback speed through
+    # unevenly spaced times. Time flows once, so no hold and no wrap.
+    list(
+      key = factor(as.character(vals), levels = states),
+      states = states,
+      seg_weights = if (length(times) > 1L) diff(times) else numeric(0),
+      state_length = 0,
+      wrap = FALSE
+    )
+  } else {
+    key <- .facet_key(list(tr@var), data)
+    states <- levels(key)
+    segs <- if (tr@wrap) length(states) else length(states) - 1L
+    list(
+      key = key,
+      states = states,
+      seg_weights = rep(tr@transition_length, max(0L, segs)),
+      state_length = tr@state_length,
+      wrap = tr@wrap
+    )
+  }
 }
 
 #' Write a keyframe animation to a file
@@ -262,7 +334,7 @@ anim_save <- function(filename, animation) {
     k,
     animation@nframes,
     animation@easing,
-    animation@transition_length,
+    animation@seg_weights,
     animation@state_length,
     animation@wrap
   )
@@ -289,16 +361,17 @@ anim_save <- function(filename, animation) {
 # left-keyframe index (`seg`) and the eased interpolation fraction (`frac`).
 #
 # The animation is a timeline of weighted intervals -- for each state a
-# `state_length`-weighted pause on its keyframe, then a `transition_length`-
-# weighted move to the next -- and exactly `nframes` frames are sampled evenly
-# across it, so `animate(nframes = n)` always yields `n` frames. Easing shapes the
-# fraction within each transition interval. With `wrap`, the last state moves back
-# to the first (keyframe K+1 = a copy of keyframe 1, appended by the caller).
+# `state_length`-weighted pause on its keyframe, then a move to the next weighted
+# by `seg_weights[state]` (equal for `transition_states`; the time gap for
+# `transition_time`) -- and exactly `nframes` frames are sampled evenly across it,
+# so `animate(nframes = n)` always yields `n` frames. Easing shapes the fraction
+# within each transition interval. With `wrap`, the last state moves back to the
+# first (keyframe K+1 = a copy of keyframe 1, appended by the caller).
 .anim_schedule <- function(
   k,
   nframes,
   easing,
-  transition_length,
+  seg_weights,
   state_length,
   wrap
 ) {
@@ -319,7 +392,7 @@ anim_save <- function(filename, animation) {
   for (state in seq_len(k)) {
     if (state <= segs) {
       add(state, 0, 0, state_length) # hold on keyframe `state`
-      add(state, 0, 1, transition_length) # move `state` -> `state + 1`
+      add(state, 0, 1, seg_weights[state]) # move `state` -> `state + 1`
     } else {
       # The last state without wrap has no outgoing move: hold it as the end
       # (fraction 1) of the previous segment.

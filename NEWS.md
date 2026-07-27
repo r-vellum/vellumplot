@@ -8,9 +8,14 @@
   parallel, streaming pass in vellum's Rust backend. `ease_aes()` sets the easing
   (`linear`, or a family like `cubic`/`sine`/`elastic`/`bounce` with an
   `-in`/`-out`/`-in-out` direction). Position, size, alpha and colour interpolate
-  (colour perceptually, in Oklab); discrete attributes snap. See the *Animation*
-  article and `inst/examples/28-animation.R`. Requires the development version of
-  vellum (`vl_render_animation()`).
+  (colour perceptually, in Oklab); discrete attributes snap. `transition_time()`
+  is the continuous-time variant — it allocates frames in proportion to the time
+  gaps, so unevenly spaced times play at a constant rate. Giving an animated mark
+  a `data_id` enables per-element **enter/exit**: elements that appear fade in and
+  elements that leave fade out (matched elements tween as usual); without it a
+  stable element set is assumed. See the *Animation* article and
+  `inst/examples/28-animation.R`. Requires the development version of vellum
+  (`vl_render_animation()`).
 
 # vellumplot 0.8.0
 

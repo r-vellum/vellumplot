@@ -264,6 +264,7 @@ reference:
     the frames (GIF / APNG) in vellum's parallel Rust backend.
   contents:
   - transition_states
+  - transition_time
   - ease_aes
   - animate
   - anim_save
