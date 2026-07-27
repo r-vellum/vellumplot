@@ -31,13 +31,25 @@ knitr::opts_chunk$set(
 ```
 
 vellumplot is a declarative, pipe-first grammar of graphics built on the
-[vellum](https://github.com/r-vellum/vellum) graphics backend. You describe
-a plot as an inspectable, serializable *spec*; nothing is drawn until the spec is
+[vellum](https://github.com/r-vellum/vellum) graphics backend. You describe a
+plot as an inspectable, serializable *spec*; nothing is drawn until the spec is
 compiled into a vellum scene and rendered.
 
-It is a real compiler — spec → resolve encodings → train scales → measure layout
-→ compile guides → compile marks → vellum scene — not a thin wrapper around the
-drawing primitives.
+The compile is a real pipeline (spec → resolve encodings → train scales → measure
+layout → compile guides → compile marks → vellum scene) and it runs without a
+graphics device, because vellum measures text itself. Two consequences are the
+reason to pick this stack:
+
+* **Every mark keeps its identity through to the output.** A compiled plot *is* a
+  vellum scene, so each drawn element carries its data key and its resolved
+  device-pixel box (`vellum::scene_model()`). That is what
+  [vellumwidget](https://github.com/r-vellum/vellumwidget) reads to add tooltips,
+  brushing, and linked selection: the same marks you already declared, not
+  `*_interactive()` twins of them, and no second engine re-drawing your plot.
+* **One spec, one solved layout, several destinations.** `render_plot()` writes
+  PNG, SVG, or PDF from the *same* compiled scene instead of re-solving layout per
+  device, and `as_widget()` hands that scene to the browser. The static figure and
+  the interactive one cannot drift, because they are one scene.
 
 ## Installation
 

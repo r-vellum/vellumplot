@@ -13,9 +13,23 @@ vellumplot is a declarative, pipe-first grammar of graphics built on the
 describe a plot as an inspectable, serializable *spec*; nothing is drawn
 until the spec is compiled into a vellum scene and rendered.
 
-It is a real compiler — spec → resolve encodings → train scales →
-measure layout → compile guides → compile marks → vellum scene — not a
-thin wrapper around the drawing primitives.
+The compile is a real pipeline (spec → resolve encodings → train scales
+→ measure layout → compile guides → compile marks → vellum scene) and it
+runs without a graphics device, because vellum measures text itself. Two
+consequences are the reason to pick this stack:
+
+- **Every mark keeps its identity through to the output.** A compiled
+  plot *is* a vellum scene, so each drawn element carries its data key
+  and its resolved device-pixel box (`vellum::scene_model()`). That is
+  what [vellumwidget](https://github.com/r-vellum/vellumwidget) reads to
+  add tooltips, brushing, and linked selection: the same marks you
+  already declared, not `*_interactive()` twins of them, and no second
+  engine re-drawing your plot.
+- **One spec, one solved layout, several destinations.** `render_plot()`
+  writes PNG, SVG, or PDF from the *same* compiled scene instead of
+  re-solving layout per device, and `as_widget()` hands that scene to
+  the browser. The static figure and the interactive one cannot drift,
+  because they are one scene.
 
 ## Installation
 
@@ -24,8 +38,8 @@ thin wrapper around the drawing primitives.
 pak::pak("r-vellum/vellumplot")
 ```
 
-vellumplot needs the [vellum](https://github.com/r-vellum/vellum) backend,
-which compiles a Rust crate, so you also need a Rust toolchain
+vellumplot needs the [vellum](https://github.com/r-vellum/vellum)
+backend, which compiles a Rust crate, so you also need a Rust toolchain
 (`cargo`/`rustc`); pak pulls vellum in automatically.
 
 ## Usage
@@ -124,7 +138,8 @@ render_plot(p, "cars.png")
   tiles/heatmaps (`mark_tile()`, `mark_raster()`), 2-D binning
   (`mark_bin2d()`, `mark_hex()`), 2-D density contours
   (`mark_contour()`, `mark_contour_filled()`), text (`mark_text()`,
-  `mark_label()`), and pie/donut shortcuts (`mark_pie()`, `mark_donut()`).
+  `mark_label()`), and pie/donut shortcuts (`mark_pie()`,
+  `mark_donut()`).
 - Spatial: `mark_sf()` draws an `sf` geometry column as a map layer,
   with `coord_sf()` to reproject and lock the aspect ratio.
 - Network: `vgraph()` starts a node-link diagram from an `igraph` graph
@@ -151,10 +166,7 @@ render_plot(p, "cars.png")
 - Position adjustments: stack / dodge / fill bars, jittered points.
 - Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
   `"screen"`, …).
-- `mark_datashade()` for million-point density rasters; `auto = TRUE` on
-  `mark_point()` / `mark_line()` / `mark_step()` / `mark_segment()` /
-  `mark_edges()` falls back to datashading (dense scatter, timeseries, and
-  large-graph edges) past a row threshold.
+- `mark_datashade()` for million-point density rasters.
 - Annotations: `annotate()`, `labs()`, and `md()` markdown titles.
 - Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
   `theme_classic()`, `theme_void()`, `theme_cyberpunk()`, `theme()` /
@@ -170,16 +182,15 @@ render_plot(p, "cars.png")
 
 ## The vellum ecosystem
 
-vellumplot is the grammar layer of a small ecosystem of packages that share
-the vellum scene model:
+vellumplot is the grammar layer of a small ecosystem of packages that
+share the vellum scene model:
 
-- **[vellum](https://github.com/r-vellum/vellum)** — the parchment:
-  the low-level graphics backend (Rust scene graph, PNG/SVG/PDF
-  renderer).
-- **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen: this
-  package.
-- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the annotation: turns
-  a vellumplot plot (or a raw vellum scene) into a client-side interactive
-  HTML widget via `as_widget()`.
-- **[vellumverse](https://github.com/r-vellum/vellumverse)** —
-  installs and loads the whole ecosystem in one step.
+- **[vellum](https://github.com/r-vellum/vellum)** — the parchment: the
+  low-level graphics backend (Rust scene graph, PNG/SVG/PDF renderer).
+- **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen:
+  this package.
+- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the
+  annotation: turns a vellumplot plot (or a raw vellum scene) into a
+  client-side interactive HTML widget via `as_widget()`.
+- **[vellumverse](https://github.com/r-vellum/vellumverse)** — installs
+  and loads the whole ecosystem in one step.

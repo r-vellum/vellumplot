@@ -90,12 +90,23 @@ compile.
 **Inspectability.** You can look at a plot before committing to it. `summary()`
 reports the layers and page size; the spec itself carries the answer to
 "what will this draw?" without drawing it. That makes plots testable: you can
-assert on the spec.
+assert on the spec. (`ggplot2` also has a `summary()` method, so this is a
+difference of degree — the degree being that the compile runs without a device,
+so the answer extends to *where things land*, not just what is mapped.)
 
-**One scene, many outputs.** The compiler targets a `vellum` scene, not a
-device. The same spec renders to a raster or a vector file, and the same scene
-model is what the `vellumwidget` package turns into an interactive widget. Write the
-plot once; choose the output later.
+**Marks keep their identity, and their geometry, after the compile.** Because the
+target is a `vellum` scene rather than a device, each drawn element arrives with
+its data key and its resolved device-pixel box (`vellum::scene_model()`). That
+table is what `vellumwidget` reads to add tooltips, selection, and brushing, what
+the accessibility layer turns into a described image, and what a positional test
+can assert against. It is the one thing in this stack with no counterpart in the
+grid/ggplot2 pipeline, where resolved geometry lives inside a draw and is gone
+when the draw ends.
+
+**One scene, many outputs.** The same compiled scene is walked for raster, for
+vector, and for the widget, instead of each output re-solving layout with its own
+device's text metrics. Write the plot once, choose the output later, and the
+versions cannot disagree about geometry.
 
 ## Rendering
 
