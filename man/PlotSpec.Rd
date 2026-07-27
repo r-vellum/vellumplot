@@ -21,7 +21,9 @@ PlotSpec(
   selections = list(),
   filters = list(),
   binds = list(),
-  clip = NULL
+  clip = NULL,
+  transition = NULL,
+  ease = NULL
 )
 }
 \arguments{

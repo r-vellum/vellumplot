@@ -1,5 +1,17 @@
 # vellumplot (development version)
 
+* **Keyframe animation.** `transition_states()` turns a plot into an animation
+  over the levels of a column; `animate()` compiles one keyframe scene per state —
+  training the scales **once over all states and freezing them**, so nothing
+  retrains between frames (non-reactive keyframe animation) — and `anim_save()`
+  tweens and encodes the in-between frames to a looping GIF or animated PNG in one
+  parallel, streaming pass in vellum's Rust backend. `ease_aes()` sets the easing
+  (`linear`, or a family like `cubic`/`sine`/`elastic`/`bounce` with an
+  `-in`/`-out`/`-in-out` direction). Position, size, alpha and colour interpolate
+  (colour perceptually, in Oklab); discrete attributes snap. See the *Animation*
+  article and `inst/examples/28-animation.R`. Requires the development version of
+  vellum (`vl_render_animation()`).
+
 # vellumplot 0.8.0
 
 * **Flow maps: `mark_flow_map()`.** A one-to-many flow map on a `vgraph()` plot:
