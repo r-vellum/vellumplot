@@ -14,7 +14,7 @@ vsparkline(
   win_color = "#2c7fb8",
   loss_color = "#d7301f",
   linewidth = 1,
-  point_size = 1.5,
+  point_size = 1.4,
   width = 20,
   height = 6,
   units = "mm",
@@ -41,7 +41,7 @@ vsparkline(
 
 \item{linewidth}{Trend line width (default \code{1}).}
 
-\item{point_size}{Dot diameter in mm (default \code{1.5}).}
+\item{point_size}{Dot \strong{diameter} in mm (default \code{1.4}).}
 
 \item{width, height, units}{Physical size of the sparkline; \code{units} is one of
 \code{"mm"} (default), \code{"cm"}, \code{"in"}, \code{"pt"}. Default \verb{20 x 6} mm.}

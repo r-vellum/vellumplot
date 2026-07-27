@@ -661,7 +661,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         vellum::points_grob(
           npc(xn[hi]),
           npc(yn[hi]),
-          size = vellum::vl_unit(sp$point_size %||% 1.5, "mm"),
+          # point_size is a diameter (mm); points_grob wants a radius.
+          size = vellum::vl_unit((sp$point_size %||% 1.4) / 2, "mm"),
           shape = "circle",
           gp = vellum::vl_gpar(fill = pc, col = pc)
         ),
