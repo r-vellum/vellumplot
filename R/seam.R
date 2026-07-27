@@ -63,7 +63,7 @@ NULL
 # layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
 # grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
 # and popping its own grid_layout), so a composition can place plots in cells.
-.draw_plot <- function(scene, spec) {
+.draw_plot <- function(scene, spec, frozen_scales = NULL) {
   if (!length(spec@layers)) {
     cli::cli_abort(
       "Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}."
@@ -141,7 +141,7 @@ NULL
     }
   }
 
-  built <- .build_panels(spec)
+  built <- .build_panels(spec, frozen_scales = frozen_scales)
   built$sf_geographic <- sf_geographic
 
   # Marginal plots (add_marginal()) reserve tracks around a single panel and reuse
@@ -676,7 +676,7 @@ NULL
 }
 
 # The body of the as_vellum_scene() method for a single plot.
-.compile_plot <- function(spec) {
+.compile_plot <- function(spec, frozen_scales = NULL) {
   .provenance_reset()
   scene <- vellum::vl_scene(
     width = spec@width,
@@ -689,7 +689,7 @@ NULL
     title = .alt_name(spec@labels),
     desc = .alt_desc_safe(spec)
   )
-  scene <- .draw_plot(scene, spec)
+  scene <- .draw_plot(scene, spec, frozen_scales = frozen_scales)
   # Carry the row-key / scale-ref schema on the returned scene (DESIGN §4). Set
   # last so it survives to the caller; the `id` of each record matches a grob's
   # `data-vellum-id`. Additive only -- render() ignores it.

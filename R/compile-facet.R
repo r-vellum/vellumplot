@@ -175,7 +175,7 @@ NULL
 # train scales honouring the resolve lattice: colour/size always shared;
 # position shared by default, or independent per panel (wrap) / per column-row
 # (grid) when free.
-.build_panels <- function(spec) {
+.build_panels <- function(spec, frozen_scales = NULL) {
   fa <- .facet_assign(spec)
   panels <- lapply(fa$panels, function(p) {
     p$resolved <- .resolve_panel(spec, p)
@@ -191,7 +191,17 @@ NULL
 
   # Shared scales (x, y, colour, size) trained on the pooled data. Colour/size
   # are always taken from here; x/y are used unless the aesthetic is free.
-  shared <- .train_scales(spec, all_res)
+  # For a frozen-scale compile (a keyframe of an animation), the scales were
+  # trained once over every state and are injected here instead of retrained, and
+  # every aesthetic is shared (a frozen animation never has free/independent
+  # scales) so axis breaks don't move between frames -- the non-reactive contract.
+  if (is.null(frozen_scales)) {
+    shared <- .train_scales(spec, all_res)
+  } else {
+    shared <- frozen_scales
+    free_x <- FALSE
+    free_y <- FALSE
+  }
   shared_x <- shared$x
   shared_y <- shared$y
 

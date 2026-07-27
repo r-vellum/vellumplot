@@ -28,7 +28,7 @@ Imports:
     scales,
     stats,
     utils,
-    vellum (>= 0.5.1)
+    vellum (>= 0.5.1.9000)
 Remotes:
     r-vellum/vellum,
     schochastics/edgebundle,
@@ -36,6 +36,7 @@ Remotes:
 Suggests:
     classInt,
     edgebundle (>= 1.0.0),
+    gapminder,
     graphlayouts (>= 1.2.5),
     gt,
     igraph,
@@ -56,26 +57,27 @@ Collate:
     'classes.R'
     'print.R'
     'alt.R'
-    'marks.R'
-    'annotate.R'
+    'compile-resolve.R'
+    'coord.R'
+    'compile-train.R'
+    'facet.R'
+    'compile-facet.R'
+    'marginal.R'
+    'compile-marks.R'
     'elements.R'
     'theme-tree.R'
     'theme.R'
-    'coord.R'
+    'compile-layout.R'
+    'compile-guides.R'
+    'seam.R'
+    'animate.R'
+    'marks.R'
+    'annotate.R'
     'vgraph.R'
     'vplot.R'
     'sankey.R'
     'chord.R'
     'clip.R'
-    'marginal.R'
-    'compile-marks.R'
-    'compile-layout.R'
-    'compile-guides.R'
-    'compile-resolve.R'
-    'compile-train.R'
-    'facet.R'
-    'compile-facet.R'
-    'seam.R'
     'concat.R'
     'compile-composition.R'
     'compile-position.R'

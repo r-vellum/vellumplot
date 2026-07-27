@@ -244,6 +244,36 @@ DomainBindSpec <- S7::new_class(
   )
 )
 
+# A non-reactive keyframe-animation transition: the plot is compiled into K
+# keyframe scenes (one per state) whose scales are trained once over all states
+# and frozen, then the frames between them are tweened. `var` is the quosure whose
+# levels enumerate the states; `kind` is "states" (more kinds later). Lengths are
+# relative durations: `transition_length` weights the moving segments between
+# states, `state_length` the held pause on each state. `wrap` loops the last state
+# back to the first. Inert on a static render (only `animate()` reads it).
+TransitionSpec <- S7::new_class(
+  "TransitionSpec",
+  package = "vellumplot",
+  properties = list(
+    var = S7::class_any, # a quosure (rlang) naming the state column
+    kind = S7::new_property(S7::class_character, default = "states"),
+    transition_length = S7::new_property(S7::class_double, default = 1),
+    state_length = S7::new_property(S7::class_double, default = 1),
+    wrap = S7::new_property(S7::class_logical, default = TRUE)
+  )
+)
+
+# Easing for a transition's frame schedule: `default` names the easing applied to
+# every interpolated aesthetic (e.g. "cubic-in-out"). Per-aesthetic easing is a
+# later extension. Inert on a static render.
+EaseSpec <- S7::new_class(
+  "EaseSpec",
+  package = "vellumplot",
+  properties = list(
+    default = S7::new_property(S7::class_character, default = "linear")
+  )
+)
+
 # --- the spec ---------------------------------------------------------------
 
 #' The plot specification
@@ -280,6 +310,10 @@ DomainBindSpec <- S7::new_class(
 #' @param binds A list of scale-domain bind declarations (from [bind_scale()]).
 #' @param clip A [clip_to()] / [set_mask()] geometry clip (a `ClipSpec`), or
 #'   `NULL` for none.
+#' @param transition A keyframe-animation transition (from [transition_states()] /
+#'   [transition_time()] / [transition_reveal()]), or `NULL`. Read only by
+#'   [animate()]; inert on a static render.
+#' @param ease An animation easing (from [ease_aes()]), or `NULL`.
 #'
 #' @return A `PlotSpec`.
 #' @seealso [vplot()], [mark_point()], [scale_x_continuous()]
@@ -309,7 +343,12 @@ PlotSpec <- S7::new_class(
     selections = S7::new_property(S7::class_list, default = list()), # list<SelectionSpec>
     filters = S7::new_property(S7::class_list, default = list()), # list<FilterSpec>
     binds = S7::new_property(S7::class_list, default = list()), # list<DomainBindSpec>
-    clip = S7::new_property(S7::class_any, default = NULL) # ClipSpec | NULL
+    clip = S7::new_property(S7::class_any, default = NULL), # ClipSpec | NULL
+    # Keyframe animation (inert on a static render; read only by animate()).
+    # `transition` (a TransitionSpec) enumerates the states; `ease` (an EaseSpec)
+    # sets the frame easing. NULL -> a plain, non-animated plot.
+    transition = S7::new_property(S7::class_any, default = NULL), # TransitionSpec | NULL
+    ease = S7::new_property(S7::class_any, default = NULL) # EaseSpec | NULL
   )
 )
 
@@ -326,6 +365,9 @@ ClipSpec <- S7::new_class(
     kind = S7::new_property(S7::class_character, default = "clip"),
     type = S7::new_property(S7::class_character, default = "alpha"),
     feather = S7::new_property(S7::class_double, default = 0),
-    invert = S7::new_property(S7::class_logical, default = FALSE)
+    invert = S7::new_property(S7::class_logical, default = FALSE),
+    # For `kind = "reveal"` (transition_reveal): the fraction of the panel, left
+    # to right, that is unmasked. The animation tween grows this from 0 to 1.
+    reveal_frac = S7::new_property(S7::class_double, default = NA_real_)
   )
 )

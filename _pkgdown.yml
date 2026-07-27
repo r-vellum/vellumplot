@@ -80,6 +80,8 @@ navbar:
         href: articles/effects-and-themes.html
       - text: Declarative interactivity
         href: articles/interactivity.html
+      - text: Animation
+        href: articles/animation.html
       - text: Background
       - text: "The compiler: spec to scene"
         href: articles/the-compiler.html
@@ -254,6 +256,19 @@ reference:
   - filter_by
   - bind_scale
   - interaction_model
+
+- title: Animation
+  desc: >
+    Non-reactive keyframe animation: compile a plot into one keyframe per state,
+    train the scales once over all states and freeze them, then tween and encode
+    the frames (GIF / APNG) in vellum's parallel Rust backend.
+  contents:
+  - transition_states
+  - transition_time
+  - transition_reveal
+  - ease_aes
+  - animate
+  - anim_save
 
 - title: Accessibility and provenance
   desc: >
