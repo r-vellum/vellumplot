@@ -1,14 +1,17 @@
 #' @include classes.R vplot.R theme.R vgraph.R
 NULL
 
-# A chrome-free theme that zeroes the plot margin (so the sparkline's panel is the
-# whole box) and blanks the plot background (so the box is transparent -- a
-# sparkline exists to be embedded, on whatever surrounds it).
-.theme_sparkline <- function() {
+# A chrome-free theme that blanks the plot background (so the box is transparent
+# -- a sparkline exists to be embedded) and reserves only `margin` (t,r,b,l mm)
+# around the panel. The default is a zero margin (tight fill); a line sparkline
+# with dots passes a small horizontal margin so its first/last-point dots aren't
+# cropped at the box edge (the vertical pad in the emitter reserves the top/bottom
+# dot room).
+.theme_sparkline <- function(margin = c(0, 0, 0, 0)) {
   .merge_theme(
     .theme_vgraph(),
     list(
-      plot.margin = c(0, 0, 0, 0),
+      plot.margin = margin,
       panel.spacing = 0,
       plot.background = element_blank()
     )
@@ -54,7 +57,7 @@ NULL
 #' @param win_color,loss_color For `"winloss"`, the up / down bar colours
 #'   (defaults blue / red).
 #' @param linewidth Trend line width (default `1`).
-#' @param point_size Dot diameter in mm (default `1.5`).
+#' @param point_size Dot **diameter** in mm (default `1.4`).
 #' @param width,height,units Physical size of the sparkline; `units` is one of
 #'   `"mm"` (default), `"cm"`, `"in"`, `"pt"`. Default `20 x 6` mm.
 #' @param dpi Resolution for raster output.
@@ -76,7 +79,7 @@ vsparkline <- function(
   win_color = "#2c7fb8",
   loss_color = "#d7301f",
   linewidth = 1,
-  point_size = 1.5,
+  point_size = 1.4,
   width = 20,
   height = 6,
   units = "mm",
@@ -91,10 +94,15 @@ vsparkline <- function(
   w_in <- .spark_inches(width, units)
   h_in <- .spark_inches(height, units)
   df <- data.frame(.i = seq_along(values), .v = values)
+  # A line sparkline's first/last-point dot can sit on the box's left/right edge;
+  # reserve a horizontal margin of the dot radius plus a small gap (mm) so the dot
+  # sits fully inside the box. (The emitter's vertical pad handles the top/bottom
+  # dot room.)
+  hm <- if (type == "line" && points != "none") point_size / 2 + 0.4 else 0
   p <- PlotSpec(
     data = df,
     coord = CoordSpec(kind = "cartesian"), # free aspect; chrome-free via the theme
-    theme = .theme_sparkline(),
+    theme = .theme_sparkline(margin = c(0, hm, 0, hm)),
     width = as.double(w_in),
     height = as.double(h_in),
     dpi = as.double(dpi)

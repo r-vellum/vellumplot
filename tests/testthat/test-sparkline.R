@@ -72,3 +72,44 @@ test_that("a sparkline panel is drawn unclipped (boundary dots survive)", {
   top <- red[seq_len(ceiling(0.15 * nrow(red))), ]
   expect_gt(sum(top), 0L)
 })
+
+test_that("an endpoint dot is not cropped at the box's horizontal edge", {
+  # the max is the LAST value, so its dot sits on the right edge of the box.
+  # a horizontal plot margin reserves the dot radius so the dot stays whole.
+  skip_if_not_installed("png")
+  p <- vsparkline(
+    c(1, 1, 1, 1, 1, 9),
+    point_size = 3,
+    point_color = "red",
+    width = 40,
+    height = 20
+  )
+  f <- local_tempfile(fileext = ".png")
+  render_plot(p, f, dpi = 150)
+  img <- png::readPNG(f)
+  red <- img[,, 1] > 0.6 & img[,, 2] < 0.3 & img[,, 3] < 0.3
+  # the rightmost red pixels should be inside the box, not slammed against the
+  # last column (a cropped dot would spill to / be sliced at the final columns).
+  cols_with_red <- which(colSums(red) > 0)
+  expect_gt(length(cols_with_red), 0L)
+  expect_lt(max(cols_with_red), ncol(red)) # not touching the very last column
+})
+
+test_that("point_size is a diameter: a bigger value draws a bigger dot", {
+  skip_if_not_installed("png")
+  count_red <- function(ps) {
+    p <- vsparkline(
+      c(1, 1, 9, 1, 1),
+      point_size = ps,
+      point_color = "red",
+      width = 40,
+      height = 20
+    )
+    f <- local_tempfile(fileext = ".png")
+    render_plot(p, f, dpi = 150)
+    img <- png::readPNG(f)
+    sum(img[,, 1] > 0.6 & img[,, 2] < 0.3 & img[,, 3] < 0.3)
+  }
+  # area scales with diameter^2; 4mm dot has ~4x the pixels of a 2mm dot.
+  expect_gt(count_red(4), count_red(2) * 2)
+})
