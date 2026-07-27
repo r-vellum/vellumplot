@@ -24,7 +24,7 @@ vsparkline(
   win_color = "#2c7fb8",
   loss_color = "#d7301f",
   linewidth = 1,
-  point_size = 1.5,
+  point_size = 1.4,
   width = 20,
   height = 6,
   units = "mm",
@@ -70,7 +70,7 @@ vsparkline(
 
 - point_size:
 
-  Dot diameter in mm (default `1.5`).
+  Dot **diameter** in mm (default `1.4`).
 
 - width, height, units:
 
