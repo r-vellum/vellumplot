@@ -75,8 +75,10 @@ test_that(".anim_schedule spans the keyframes within [0, 1]", {
 })
 
 test_that("transition_time weights frames by the time gap", {
+  # Integer times (e.g. years) are the common case; the gap weights must still be
+  # doubles for the animation object.
   d <- data.frame(
-    t = rep(c(0, 1, 10), each = 2),
+    t = rep(c(0L, 1L, 10L), each = 2),
     x = c(1, 2, 2, 3, 5, 6),
     y = 1:6
   )
@@ -84,7 +86,8 @@ test_that("transition_time weights frames by the time gap", {
   expect_equal(p@transition@kind, "time")
   a <- animate(p, nframes = 30)
   expect_equal(a@states, c("0", "1", "10"))
-  expect_equal(a@seg_weights, c(1, 9)) # gaps between 0,1,10
+  expect_equal(a@seg_weights, c(1, 9)) # gaps between 0, 1, 10
+  expect_type(a@seg_weights, "double")
   expect_false(a@wrap)
 })
 

@@ -332,7 +332,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
     if (!is.numeric(vals)) {
       cli::cli_abort("{.fn transition_time} needs a numeric time column.")
     }
-    times <- sort(unique(vals[is.finite(vals)]))
+    times <- as.double(sort(unique(vals[is.finite(vals)])))
     states <- as.character(times)
     # Segments weighted by the time gaps: constant playback speed through
     # unevenly spaced times. Time flows once, so no hold and no wrap.
