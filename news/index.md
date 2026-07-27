@@ -1,6 +1,6 @@
 # Changelog
 
-## vellumplot (development version)
+## vellumplot 0.8.0
 
 - **Flow maps:
   [`mark_flow_map()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md).**
