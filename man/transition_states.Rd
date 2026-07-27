@@ -45,7 +45,7 @@ if (requireNamespace("gapminder", quietly = TRUE)) {
   library(gapminder)
   p <- vplot(gapminder) |>
     mark_point(x = gdpPercap, y = lifeExp, size = pop, color = continent) |>
-    scale_x_continuous(transform = "log10") |>
+    scale_x_continuous(trans = "log10") |>
     transition_states(year)
 }
 }

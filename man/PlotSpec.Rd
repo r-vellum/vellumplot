@@ -67,6 +67,12 @@ or \code{NULL} for no marginals.}
 
 \item{clip}{A \code{\link[=clip_to]{clip_to()}} / \code{\link[=set_mask]{set_mask()}} geometry clip (a \code{ClipSpec}), or
 \code{NULL} for none.}
+
+\item{transition}{A keyframe-animation transition (from \code{\link[=transition_states]{transition_states()}} /
+\code{\link[=transition_time]{transition_time()}} / \code{\link[=transition_reveal]{transition_reveal()}}), or \code{NULL}. Read only by
+\code{\link[=animate]{animate()}}; inert on a static render.}
+
+\item{ease}{An animation easing (from \code{\link[=ease_aes]{ease_aes()}}), or \code{NULL}.}
 }
 \value{
 A \code{PlotSpec}.

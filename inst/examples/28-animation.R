@@ -11,7 +11,7 @@ dir.create(outdir, showWarnings = FALSE)
 if (requireNamespace("gapminder", quietly = TRUE)) {
   a <- vplot(gapminder::gapminder) |>
     mark_point(x = gdpPercap, y = lifeExp, size = pop, color = continent) |>
-    scale_x_continuous(transform = "log10") |>
+    scale_x_continuous(trans = "log10") |>
     labs(title = "Gapminder", x = "GDP per capita", y = "Life expectancy") |>
     transition_states(year, transition_length = 2, state_length = 1) |>
     ease_aes("cubic-in-out") |>

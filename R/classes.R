@@ -310,6 +310,10 @@ EaseSpec <- S7::new_class(
 #' @param binds A list of scale-domain bind declarations (from [bind_scale()]).
 #' @param clip A [clip_to()] / [set_mask()] geometry clip (a `ClipSpec`), or
 #'   `NULL` for none.
+#' @param transition A keyframe-animation transition (from [transition_states()] /
+#'   [transition_time()] / [transition_reveal()]), or `NULL`. Read only by
+#'   [animate()]; inert on a static render.
+#' @param ease An animation easing (from [ease_aes()]), or `NULL`.
 #'
 #' @return A `PlotSpec`.
 #' @seealso [vplot()], [mark_point()], [scale_x_continuous()]

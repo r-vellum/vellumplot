@@ -36,6 +36,7 @@ Remotes:
 Suggests:
     classInt,
     edgebundle (>= 1.0.0),
+    gapminder,
     graphlayouts (>= 1.2.5),
     gt,
     igraph,
