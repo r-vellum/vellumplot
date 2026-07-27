@@ -99,6 +99,36 @@ transition_time <- function(plot, time) {
   plot
 }
 
+#' Reveal a plot progressively along a variable
+#'
+#' `transition_reveal()` wipes the plot into view left to right — the classic
+#' "line draws itself" animation. Unlike [transition_states()], it does not tween
+#' between states: the full plot is compiled and a clip rectangle grows across the
+#' panel, revealing the marks in `along` order. Best for a line or path over a
+#' continuous `along` (typically the x variable, e.g. time).
+#'
+#' @param plot A [PlotSpec] (from [vplot()]).
+#' @param along The variable the reveal follows (mapped to x, increasing left to
+#'   right).
+#' @return The modified [PlotSpec].
+#' @seealso [transition_states()], [transition_time()], [animate()]
+#' @examples
+#' vplot(data.frame(t = 1:20, y = cumsum(rnorm(20)))) |>
+#'   mark_line(x = t, y = y) |>
+#'   transition_reveal(t)
+#' @export
+transition_reveal <- function(plot, along) {
+  .check_plot(plot)
+  var <- rlang::enquo(along)
+  if (rlang::quo_is_missing(var)) {
+    cli::cli_abort(
+      "{.fn transition_reveal} needs an {.arg along} variable, e.g. {.code transition_reveal(time)}."
+    )
+  }
+  plot@transition <- TransitionSpec(var = var, kind = "reveal", wrap = FALSE)
+  plot
+}
+
 #' Set the easing of an animation's frames
 #'
 #' `ease_aes()` chooses the easing function that shapes how the interpolation
@@ -202,6 +232,12 @@ animate <- function(plot, nframes = 50, fps = 25) {
   fps <- .pos_num(fps, "fps")
   easing <- if (is.null(plot@ease)) "linear" else plot@ease@default
 
+  # A reveal is not a state tween: compile the plot once (two keyframes that
+  # differ only in a clip rectangle) and let the tween grow the clip.
+  if (identical(tr@kind, "reveal")) {
+    return(.animate_reveal(plot, nframes, fps, easing))
+  }
+
   # Enumerate the states and per-segment timing. `transition_states` gives equal
   # segments over a column's levels; `transition_time` treats the column as a
   # numeric time and weights each segment by its time gap, so the animation plays
@@ -251,6 +287,34 @@ animate <- function(plot, nframes = 50, fps = 25) {
     seg_weights = en$seg_weights,
     state_length = en$state_length,
     wrap = en$wrap,
+    easing = easing,
+    width = plot@width,
+    height = plot@height,
+    dpi = plot@dpi
+  )
+}
+
+# A reveal animation: compile the plot with a reveal clip at 0% and at 100% —
+# same data, same frozen scales, differing only in the clip rectangle — and let
+# the tween grow the clip across the panel. The axes/labels sit outside the panel
+# viewport, so only the marks wipe in.
+.animate_reveal <- function(plot, nframes, fps, easing) {
+  base <- plot
+  base@transition <- NULL
+  base@ease <- NULL
+  reveal_at <- function(f) {
+    s <- base
+    s@clip <- ClipSpec(kind = "reveal", type = "alpha", reveal_frac = f)
+    .compile_plot(s)
+  }
+  vellum_animation(
+    scenes = list(reveal_at(0), reveal_at(1)),
+    states = c("0", "1"),
+    nframes = nframes,
+    fps = fps,
+    seg_weights = 1,
+    state_length = 0,
+    wrap = FALSE,
     easing = easing,
     width = plot@width,
     height = plot@height,

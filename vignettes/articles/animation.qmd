@@ -133,6 +133,23 @@ vplot(gapminder) |>
   (\(a) anim_save("gapminder.gif", a))()
 ```
 
+## Reveal
+
+`transition_reveal()` is a different kind of animation: instead of tweening
+between states, it **wipes the plot into view** left to right — the classic "line
+draws itself". The full plot is compiled once and a clip rectangle grows across
+the panel, revealing the marks in order. The axes stay put; only the data wipes
+in.
+
+```{r}
+#| eval: false
+vplot(data.frame(t = 1:100, y = cumsum(rnorm(100)))) |>
+  mark_line(x = t, y = y) |>
+  transition_reveal(t) |>
+  animate(nframes = 80, fps = 25) |>
+  (\(a) anim_save("draw.gif", a))()
+```
+
 ## Timing
 
 `transition_length` and `state_length` are *relative* durations: how long the

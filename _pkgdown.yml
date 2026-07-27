@@ -265,6 +265,7 @@ reference:
   contents:
   - transition_states
   - transition_time
+  - transition_reveal
   - ease_aes
   - animate
   - anim_save

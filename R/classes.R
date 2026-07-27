@@ -361,6 +361,9 @@ ClipSpec <- S7::new_class(
     kind = S7::new_property(S7::class_character, default = "clip"),
     type = S7::new_property(S7::class_character, default = "alpha"),
     feather = S7::new_property(S7::class_double, default = 0),
-    invert = S7::new_property(S7::class_logical, default = FALSE)
+    invert = S7::new_property(S7::class_logical, default = FALSE),
+    # For `kind = "reveal"` (transition_reveal): the fraction of the panel, left
+    # to right, that is unmasked. The animation tween grows this from 0 to 1.
+    reveal_frac = S7::new_property(S7::class_double, default = NA_real_)
   )
 )

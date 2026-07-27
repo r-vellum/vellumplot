@@ -13,7 +13,9 @@
   gaps, so unevenly spaced times play at a constant rate. Giving an animated mark
   a `data_id` enables per-element **enter/exit**: elements that appear fade in and
   elements that leave fade out (matched elements tween as usual); without it a
-  stable element set is assumed. See the *Animation* article and
+  stable element set is assumed. `transition_reveal()` wipes the plot into view
+  left to right (the "line draws itself" animation) by growing a clip rectangle
+  over a single compile. See the *Animation* article and
   `inst/examples/28-animation.R`. Requires the development version of vellum
   (`vl_render_animation()`).
 

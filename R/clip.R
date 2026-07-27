@@ -160,6 +160,21 @@ set_mask <- function(
   if (is.null(cs)) {
     return(NULL)
   }
+  if (identical(cs@kind, "reveal")) {
+    # A left-to-right wipe (transition_reveal): a white rectangle covering the npc
+    # x-range [0, frac] of the panel. The animation tween grows `frac` from 0 to 1
+    # so the marks are revealed in x order. A centred rect anchored at the left
+    # edge (x = frac/2, width = frac) grows rightward as frac increases.
+    f <- max(0, min(1, cs@reveal_frac))
+    g <- vellum::rect_grob(
+      x = vellum::vl_unit(f / 2, "npc"),
+      y = vellum::vl_unit(0.5, "npc"),
+      width = vellum::vl_unit(f, "npc"),
+      height = vellum::vl_unit(1, "npc"),
+      gp = vellum::vl_gpar(fill = "white", col = NA)
+    )
+    return(vellum::as_mask(g, type = "alpha"))
+  }
   if (identical(cs@kind, "mask")) {
     # Soft vignette: a full-panel rect with a radial white->black luminance ramp.
     # `feather` widens the white core; the ramp reaches ~the panel corners.

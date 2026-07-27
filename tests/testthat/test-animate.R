@@ -165,6 +165,45 @@ test_that("data_id carries element identity through to the keyframes (enter/exit
   expect_true(file.exists(gif))
 })
 
+test_that("transition_reveal() wipes the panel left to right", {
+  skip_if_not_installed("png")
+  d <- data.frame(t = 1:30, y = sin(seq(0, 6, length.out = 30)))
+  p <- vplot(d) |> mark_line(x = t, y = y) |> transition_reveal(t)
+  expect_equal(p@transition@kind, "reveal")
+  a <- animate(p, nframes = 6)
+  expect_length(a@scenes, 2L) # one compile, revealed at 0% and 100%
+
+  dir <- withr::local_tempdir()
+  sch <- vellumplot:::.anim_schedule(
+    2,
+    6,
+    "linear",
+    a@seg_weights,
+    a@state_length,
+    a@wrap
+  )
+  vellum::vl_render_animation(
+    a@scenes,
+    sch$seg,
+    sch$frac,
+    dir,
+    format = "frames",
+    fps = 10
+  )
+  files <- sort(list.files(dir, pattern = "\\.png$", full.names = TRUE))
+
+  # Ink in the right half of the panel appears only once the wipe reaches it, so
+  # it is (near) empty early and fuller late; the left half fills first.
+  right_ink <- function(f) {
+    arr <- png::readPNG(f)
+    w <- dim(arr)[2]
+    sum(arr[, (w / 2 + 1):w, 1] < 0.5)
+  }
+  ri <- vapply(files, right_ink, numeric(1))
+  expect_lt(ri[1], ri[length(ri)]) # right side reveals later
+  expect_true(ri[length(ri)] > ri[2]) # and keeps growing
+})
+
 test_that("anim_save() writes a GIF and an APNG", {
   skip_if_not_installed("magick")
   a <- vplot(mtcars) |>
