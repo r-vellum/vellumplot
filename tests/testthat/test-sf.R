@@ -295,3 +295,86 @@ test_that("lines batch when non-interactive, split per feature when keyed", {
   expect_true(all(keyed$mark == "line"))
   expect_setequal(keyed$key, c("l1", "l2", "l3"))
 })
+
+# --- map decorations: scale bar, compass, graticule ------------------------
+
+test_that(".nice_scalebar_len snaps to a 1/2/5 x 10^k value", {
+  expect_equal(.nice_scalebar_len(37), 20)
+  expect_equal(.nice_scalebar_len(6), 5)
+  expect_equal(.nice_scalebar_len(0.7), 0.5)
+  expect_equal(.nice_scalebar_len(1000), 1000)
+  expect_equal(.nice_scalebar_len(0), 1) # degenerate guard
+})
+
+test_that(".corner_anchor resolves the four corners and abbreviations", {
+  bl <- .corner_anchor("bottomleft")
+  expect_equal(c(bl$x0, bl$y0, bl$hdir, bl$vdir), c(0, 0, 1, 1))
+  tr <- .corner_anchor("tr")
+  expect_equal(c(tr$x0, tr$y0, tr$hdir, tr$vdir), c(1, 1, -1, -1))
+  expect_error(.corner_anchor("middle"), "position")
+})
+
+test_that("mark_scalebar / mark_compass compile and render on a map", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- vplot(nc) |>
+    mark_sf(fill = BIR74) |>
+    coord_sf(crs = 3857) |>
+    mark_scalebar() |>
+    mark_compass()
+  expect_true(inherits(vellum::as_vellum_scene(p), "vellum::vellum_scene"))
+  prov <- plot_provenance(p)
+  expect_gt(length(Filter(function(e) e$mark == "scalebar", prov)), 0L)
+  expect_gt(length(Filter(function(e) e$mark == "compass", prov)), 0L)
+  f <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, f))
+  expect_true(file.exists(f))
+})
+
+test_that("mark_scalebar() errors without a map coordinate system", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_scalebar()
+  expect_error(vellum::as_vellum_scene(p), "map|coord_sf")
+})
+
+test_that("mark_scalebar() accepts a custom unit and explicit distance", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- vplot(nc) |>
+    mark_sf() |>
+    coord_sf(crs = 3857) |>
+    mark_scalebar(unit = "mi", distance = 100, position = "bottomright")
+  expect_no_error(vellum::as_vellum_scene(p))
+})
+
+test_that("graticule reprojection curves meridians for a conic CRS", {
+  skip_if_not_installed("sf")
+  # Web Mercator: a meridian stays vertical (x constant).
+  merc <- .grat_project_line(rep(-80, 30), seq(30, 45, length.out = 30), 3857)
+  expect_equal(diff(range(merc$x)), 0, tolerance = 1e-6)
+  # Albers (5070) is conic: meridians converge, so x varies along a meridian.
+  alb <- .grat_project_line(rep(-100, 30), seq(25, 49, length.out = 30), 5070)
+  expect_gt(diff(range(alb$x)), 0)
+})
+
+test_that(".grat_lonlat_range recovers a plausible lon/lat window", {
+  skip_if_not_installed("sf")
+  r <- .grat_lonlat_range(c(-9.2e6, -8.5e6), c(4.1e6, 4.4e6), 3857)
+  expect_lt(r$lon[1], r$lon[2])
+  expect_lt(r$lat[1], r$lat[2])
+  expect_true(r$lon[2] < -70 && r$lat[1] > 30) # eastern-US-ish window
+})
+
+test_that("coord_sf(graticule=) renders projected and geographic maps", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  proj <- vplot(nc) |>
+    mark_sf(fill = BIR74) |>
+    coord_sf(crs = 5070, graticule = TRUE)
+  geo <- vplot(nc) |>
+    mark_sf(fill = BIR74) |>
+    coord_sf(crs = "OGC:CRS84", graticule = list(lon = c(-82, -80, -78)))
+  f1 <- local_tempfile(fileext = ".png")
+  f2 <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(proj, f1))
+  expect_no_error(render_plot(geo, f2))
+})

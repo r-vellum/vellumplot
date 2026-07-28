@@ -177,6 +177,7 @@ reference:
 - subtitle: Spatial and network
   contents:
   - mark_sf
+  - map_decorations
   - mark_graph
   - scale_edge_width
   - scale_edge

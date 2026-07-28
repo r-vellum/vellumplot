@@ -83,6 +83,7 @@ Collate:
     'compile-position.R'
     'compile-sf.R'
     'compile-stat.R'
+    'decorations.R'
     'effects.R'
     'guides.R'
     'hierarchy-pack.R'

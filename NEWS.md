@@ -1,5 +1,13 @@
 # vellumplot (development version)
 
+* **Map decorations.** `coord_sf(graticule = TRUE)` draws meridians and parallels
+  behind the map; because they are generated in longitude/latitude and reprojected,
+  they curve correctly under a projected CRS (a straight grid would be wrong).
+  `mark_scalebar()` adds a segmented distance bar that sizes itself from the map's
+  CRS (units `"km"`/`"m"`/`"mi"`/`"ft"`), and `mark_compass()` adds a north arrow;
+  both are pinned to a panel corner via `position`. The scale bar and compass need
+  no `sf` themselves, but do require a map coordinate system.
+
 * **Keyframe animation.** `transition_states()` turns a plot into an animation
   over the levels of a column; `animate()` compiles one keyframe scene per state —
   training the scales **once over all states and freezing them**, so nothing

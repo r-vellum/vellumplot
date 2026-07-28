@@ -3642,6 +3642,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     L$mark,
     point = .emit_point(scene, L, scales),
     sf = .emit_sf(scene, L, scales),
+    scalebar = .emit_scalebar(scene, L, scales),
+    compass = .emit_compass(scene, L, scales),
     line = .emit_line(scene, L, scales),
     rule = .emit_rule(scene, L, scales),
     bar = .emit_bar(scene, L, scales),
