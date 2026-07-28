@@ -30,7 +30,7 @@ NULL
 #' @param color,fill Stroke and fill colours. For the scale bar the segments
 #'   alternate `color` and `fill`; for the compass the arrow is `fill` with a
 #'   `color` outline.
-#' @param data Optional layer data (rarely needed — decorations are not
+#' @param data Optional layer data (rarely needed -- decorations are not
 #'   data-driven).
 #' @return The modified [PlotSpec].
 #' @seealso [coord_sf()], [mark_sf()]
@@ -344,7 +344,8 @@ mark_compass <- function(
   b[b >= rng[1] & b <= rng[2]]
 }
 
-# Format a longitude / latitude break as a degree label ("80°W", "40°N").
+# Format a longitude / latitude break as a degree label (e.g. "80W", "40N" with
+# a degree sign).
 .fmt_lon <- function(d) {
   hemi <- if (d < 0) {
     "W"
@@ -353,7 +354,7 @@ mark_compass <- function(
   } else {
     ""
   }
-  paste0(formatC(abs(d), format = "g"), "°", hemi)
+  paste0(formatC(abs(d), format = "g"), "\u00b0", hemi)
 }
 .fmt_lat <- function(d) {
   hemi <- if (d < 0) {
@@ -363,7 +364,7 @@ mark_compass <- function(
   } else {
     ""
   }
-  paste0(formatC(abs(d), format = "g"), "°", hemi)
+  paste0(formatC(abs(d), format = "g"), "\u00b0", hemi)
 }
 
 # Recover the lon/lat range covered by the projected panel extent: densify the
