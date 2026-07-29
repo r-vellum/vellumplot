@@ -131,6 +131,7 @@ articles:
   navbar: Background
   contents:
   - articles/the-compiler
+  - articles/specs-and-agents
   - articles/accessibility
 
 reference:
@@ -274,11 +275,29 @@ reference:
 
 - title: Accessibility and provenance
   desc: >
-    Attach a text alternative for screen readers, or inspect how a spec
-    compiled into a scene.
+    Attach a text alternative for screen readers, trace each drawn element back
+    to its data, or verify a figure against the data it was drawn from.
   contents:
   - plot_alt
   - plot_provenance
+  - provenance_join
+  - provenance_payload
+  - plot_manifest
+  - plot_verify
+
+- title: Specs, agents, and interoperability
+  desc: >
+    Serialize a plot to a portable spec (and back), generate and validate plots
+    from an LLM / MCP agent, and translate to and from Vega-Lite.
+  contents:
+  - as_spec
+  - spec_to_json
+  - spec_schema
+  - spec_fields
+  - vplot_from_spec
+  - vplot_ask
+  - mcp_serve
+  - spec_to_vegalite
 
 - title: Package
   contents:
