@@ -79,6 +79,13 @@
   show only the selection, and cross-view cross-filtering. Inert on a
   static render; enacted by a host such as vellumwidget.
 
+- [Animation](https://r-vellum.github.io/vellumplot/articles/animation.md):
+
+  Non-reactive keyframe animation: compile a plot into one keyframe per
+  state, train the scales once over every state and freeze them, then
+  tween and encode the in-between frames (GIF / APNG) in vellum’s
+  parallel Rust backend.
+
 ### Background
 
 - [The compiler: spec to
@@ -90,7 +97,7 @@
 
 - [Accessibility](https://r-vellum.github.io/vellumplot/articles/accessibility.md):
 
-  Every plot the vellum ecosystem produces is accessible by default: a
-  labelled, described SVG, a tagged PDF, an auto-generated text
-  alternative, and a keyboard- and screen-reader-navigable interactive
-  widget. This is how it works and how to author it well.
+  What every plot gets for free (a labelled, described SVG, a tagged
+  PDF, a generated text alternative, and a keyboard- and
+  screen-reader-navigable interactive widget), what that baseline does
+  not cover, and how to author the rest.

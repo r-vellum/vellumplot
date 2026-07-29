@@ -5,9 +5,25 @@ vellumplot is a declarative, pipe-first grammar of graphics built on the
 describe a plot as an inspectable, serializable *spec*; nothing is drawn
 until the spec is compiled into a vellum scene and rendered.
 
-It is a real compiler — spec → resolve encodings → train scales →
-measure layout → compile guides → compile marks → vellum scene — not a
-thin wrapper around the drawing primitives.
+The compile is a real pipeline (spec → resolve encodings → train scales
+→ measure layout → compile guides → compile marks → vellum scene) and it
+runs without a graphics device, because vellum measures text itself. Two
+consequences are the reason to pick this stack:
+
+- **Every mark keeps its identity through to the output.** A compiled
+  plot *is* a vellum scene, so each drawn element carries its data key
+  and its resolved device-pixel box
+  ([`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)).
+  That is what [vellumwidget](https://github.com/r-vellum/vellumwidget)
+  reads to add tooltips, brushing, and linked selection: the same marks
+  you already declared, not `*_interactive()` twins of them, and no
+  second engine re-drawing your plot.
+- **One spec, one solved layout, several destinations.**
+  [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+  writes PNG, SVG, or PDF from the *same* compiled scene instead of
+  re-solving layout per device, and `as_widget()` hands that scene to
+  the browser. The static figure and the interactive one cannot drift,
+  because they are one scene.
 
 ## Installation
 
@@ -227,18 +243,7 @@ render_plot(p, "cars.png")
 - Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
   `"screen"`, …).
 - [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
-  for million-point density rasters; `auto = TRUE` on
-  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
-  /
-  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
-  /
-  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
-  /
-  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
-  /
-  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
-  falls back to datashading (dense scatter, timeseries, and large-graph
-  edges) past a row threshold.
+  for million-point density rasters.
 - Annotations:
   [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md),
   [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md),
@@ -415,6 +420,9 @@ Layers that draw data. Scales train across every mark on the panel.
 
 - [`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
   : Draw simple-feature (sf) geometries
+- [`mark_scalebar()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
+  [`mark_compass()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
+  : Map decorations
 - [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_edge_bundle()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_flow_map()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
@@ -638,6 +646,25 @@ static render; enacted by a host such as vellumwidget.
 - [`interaction_model()`](https://r-vellum.github.io/vellumplot/reference/interaction_model.md)
   : The interaction model of a compiled plot
 
+## Animation
+
+Non-reactive keyframe animation: compile a plot into one keyframe per
+state, train the scales once over all states and freeze them, then tween
+and encode the frames (GIF / APNG) in vellum’s parallel Rust backend.
+
+- [`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md)
+  : Animate a plot across the states of a variable
+- [`transition_time()`](https://r-vellum.github.io/vellumplot/reference/transition_time.md)
+  : Animate a plot along a continuous time
+- [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md)
+  : Reveal a plot progressively along a variable
+- [`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md)
+  : Set the easing of an animation's frames
+- [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
+  : Build a keyframe animation from a plot
+- [`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+  : Write a keyframe animation to a file
+
 ## Accessibility and provenance
 
 Attach a text alternative for screen readers, or inspect how a spec
@@ -735,6 +762,13 @@ compiled into a scene.
   show only the selection, and cross-view cross-filtering. Inert on a
   static render; enacted by a host such as vellumwidget.
 
+- [Animation](https://r-vellum.github.io/vellumplot/articles/animation.md):
+
+  Non-reactive keyframe animation: compile a plot into one keyframe per
+  state, train the scales once over every state and freeze them, then
+  tween and encode the in-between frames (GIF / APNG) in vellum’s
+  parallel Rust backend.
+
 ### Background
 
 - [The compiler: spec to
@@ -746,7 +780,7 @@ compiled into a scene.
 
 - [Accessibility](https://r-vellum.github.io/vellumplot/articles/accessibility.md):
 
-  Every plot the vellum ecosystem produces is accessible by default: a
-  labelled, described SVG, a tagged PDF, an auto-generated text
-  alternative, and a keyboard- and screen-reader-navigable interactive
-  widget. This is how it works and how to author it well.
+  What every plot gets for free (a labelled, described SVG, a tagged
+  PDF, a generated text alternative, and a keyboard- and
+  screen-reader-navigable interactive widget), what that baseline does
+  not cover, and how to author the rest.

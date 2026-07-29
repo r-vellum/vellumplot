@@ -2,11 +2,17 @@
 
 A chart that a screen-reader user cannot perceive, or that a keyboard
 user cannot operate, excludes people. The vellum ecosystem treats
-accessibility as part of the output contract, not an afterthought:
-**every plot you compile is an accessible image by default**, and the
-interactive widget is operable without a mouse. This article is the
-cross-package guide: where the pieces live, what they emit, and how to
-author them well.
+accessibility as part of the output contract rather than an
+afterthought: **every plot you compile starts from a usable baseline** —
+a title and a generated text alternative, an SVG that announces itself
+as an image, a tagged PDF, and a widget you can operate without a mouse.
+
+A baseline is not compliance. A generated description can say what is
+plotted but not what it means, and nothing here checks your colour
+contrast or decides whether your takeaway is legible. What the ecosystem
+removes is the boilerplate excuse: the mechanics are already in place,
+so the remaining work is editorial. This article is the cross-package
+guide to both halves.
 
 The work is split across the three packages along the same seam as
 everything else:

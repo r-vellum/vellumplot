@@ -46,6 +46,7 @@ base::summary()."><meta property="og:image" content="https://r-vellum.github.io/
     <li><a class="dropdown-item" href="../articles/datashading.html">Datashading a third of a billion points</a></li>
     <li><a class="dropdown-item" href="../articles/effects-and-themes.html">Effects and themes</a></li>
     <li><a class="dropdown-item" href="../articles/interactivity.html">Declarative interactivity</a></li>
+    <li><a class="dropdown-item" href="../articles/animation.html">Animation</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/the-compiler.html">The compiler: spec to scene</a></li>
     <li><a class="dropdown-item" href="../articles/accessibility.html">Accessibility</a></li>
@@ -100,7 +101,9 @@ via <code><a href="render_plot.html">render_plot()</a></code>). Printing it draw
 <span>  selections <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  binds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  clip <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  transition <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ease <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -179,6 +182,16 @@ or <code>NULL</code> for no marginals.</p></dd>
 <dt id="arg-clip">clip<a class="anchor" aria-label="anchor" href="#arg-clip"></a></dt>
 <dd><p>A <code><a href="clip.html">clip_to()</a></code> / <code><a href="clip.html">set_mask()</a></code> geometry clip (a <code>ClipSpec</code>), or
 <code>NULL</code> for none.</p></dd>
+
+
+<dt id="arg-transition">transition<a class="anchor" aria-label="anchor" href="#arg-transition"></a></dt>
+<dd><p>A keyframe-animation transition (from <code><a href="transition_states.html">transition_states()</a></code> /
+<code><a href="transition_time.html">transition_time()</a></code> / <code><a href="transition_reveal.html">transition_reveal()</a></code>), or <code>NULL</code>. Read only by
+<code><a href="animate.html">animate()</a></code>; inert on a static render.</p></dd>
+
+
+<dt id="arg-ease">ease<a class="anchor" aria-label="anchor" href="#arg-ease"></a></dt>
+<dd><p>An animation easing (from <code><a href="ease_aes.html">ease_aes()</a></code>), or <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

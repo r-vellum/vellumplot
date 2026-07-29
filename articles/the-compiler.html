@@ -67,6 +67,7 @@
     <li><a class="dropdown-item" href="../articles/datashading.html">Datashading a third of a billion points</a></li>
     <li><a class="dropdown-item" href="../articles/effects-and-themes.html">Effects and themes</a></li>
     <li><a class="dropdown-item" href="../articles/interactivity.html">Declarative interactivity</a></li>
+    <li><a class="dropdown-item" href="../articles/animation.html">Animation</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/the-compiler.html">The compiler: spec to scene</a></li>
     <li><a class="dropdown-item" href="../articles/accessibility.html">Accessibility</a></li>
@@ -150,8 +151,9 @@
 </h2>
 <p><strong>Scales that span layers.</strong> Training happens after every layer’s data is resolved, so a point cloud and a fitted line automatically land on the same axes. There is no drawing order to get wrong.</p>
 <p><strong>Faceting is a layout question, not a redraw.</strong> Because layout is its own stage over an already-trained spec, splitting into panels reuses the same resolved data and scales. Panels can share scales or, via the <code><a href="../reference/resolve_scale.html">resolve_scale()</a></code> lattice, train independently, and either way it is one compile.</p>
-<p><strong>Inspectability.</strong> You can look at a plot before committing to it. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> reports the layers and page size; the spec itself carries the answer to “what will this draw?” without drawing it. That makes plots testable: you can assert on the spec.</p>
-<p><strong>One scene, many outputs.</strong> The compiler targets a <code>vellum</code> scene, not a device. The same spec renders to a raster or a vector file, and the same scene model is what the <code>vellumwidget</code> package turns into an interactive widget. Write the plot once; choose the output later.</p>
+<p><strong>Inspectability.</strong> You can look at a plot before committing to it. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> reports the layers and page size; the spec itself carries the answer to “what will this draw?” without drawing it. That makes plots testable: you can assert on the spec. (<code>ggplot2</code> also has a <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method, so this is a difference of degree — the degree being that the compile runs without a device, so the answer extends to <em>where things land</em>, not just what is mapped.)</p>
+<p><strong>Marks keep their identity, and their geometry, after the compile.</strong> Because the target is a <code>vellum</code> scene rather than a device, each drawn element arrives with its data key and its resolved device-pixel box (<code><a href="https://r-vellum.github.io/vellum/reference/scene_model.html" class="external-link">vellum::scene_model()</a></code>). That table is what <code>vellumwidget</code> reads to add tooltips, selection, and brushing, what the accessibility layer turns into a described image, and what a positional test can assert against. It is the one thing in this stack with no counterpart in the grid/ggplot2 pipeline, where resolved geometry lives inside a draw and is gone when the draw ends.</p>
+<p><strong>One scene, many outputs.</strong> The same compiled scene is walked for raster, for vector, and for the widget, instead of each output re-solving layout with its own device’s text metrics. Write the plot once, choose the output later, and the versions cannot disagree about geometry.</p>
 </section><section class="level2"><h2 id="rendering">Rendering<a class="anchor" aria-label="anchor" href="#rendering"></a>
 </h2>
 <p>Two ways to draw. Print the spec to see it in the plots pane or embed it in a knitr or Quarto document, exactly like ggplot2:</p>

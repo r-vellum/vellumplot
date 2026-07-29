@@ -46,6 +46,7 @@ coordinates, and it locks the panel aspect ratio so the map is not stretched:
     <li><a class="dropdown-item" href="../articles/datashading.html">Datashading a third of a billion points</a></li>
     <li><a class="dropdown-item" href="../articles/effects-and-themes.html">Effects and themes</a></li>
     <li><a class="dropdown-item" href="../articles/interactivity.html">Declarative interactivity</a></li>
+    <li><a class="dropdown-item" href="../articles/animation.html">Animation</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/the-compiler.html">The compiler: spec to scene</a></li>
     <li><a class="dropdown-item" href="../articles/accessibility.html">Accessibility</a></li>
@@ -83,7 +84,14 @@ coordinates, and it locks the panel aspect ratio so the map is not stretched:
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">coord_sf</span><span class="op">(</span><span class="va">plot</span>, crs <span class="op">=</span> <span class="cn">NULL</span>, xlim <span class="op">=</span> <span class="cn">NULL</span>, ylim <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">coord_sf</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  xlim <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ylim <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  graticule <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  graticule_labels <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -105,6 +113,19 @@ guaranteed longitude/latitude order, use <code>"OGC:CRS84"</code> rather than
 <dt id="arg-xlim-ylim">xlim, ylim<a class="anchor" aria-label="anchor" href="#arg-xlim-ylim"></a></dt>
 <dd><p>Length-2 view-window limits in the target CRS, or <code>NULL</code>.</p></dd>
 
+
+<dt id="arg-graticule">graticule<a class="anchor" aria-label="anchor" href="#arg-graticule"></a></dt>
+<dd><p>Draw meridians and parallels behind the map. <code>FALSE</code>
+(default) draws none; <code>TRUE</code> picks round longitude/latitude breaks
+automatically; a list <code>list(lon = , lat = )</code> sets the breaks explicitly (in
+degrees). For a projected CRS the lines are reprojected and therefore curved;
+for unprojected longitude/latitude they are straight.</p></dd>
+
+
+<dt id="arg-graticule-labels">graticule_labels<a class="anchor" aria-label="anchor" href="#arg-graticule-labels"></a></dt>
+<dd><p>Label the graticule lines with their degree values
+(default <code>TRUE</code>); ignored when <code>graticule</code> is <code>FALSE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -117,7 +138,7 @@ install hint if it is not available at render time.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="mark_sf.html">mark_sf()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="mark_sf.html">mark_sf()</a></code>, <code><a href="map_decorations.html">mark_scalebar()</a></code>, <code><a href="map_decorations.html">mark_compass()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -125,6 +146,7 @@ install hint if it is not available at render time.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">nc</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"shape/nc.shp"</span>, package <span class="op">=</span> <span class="st">"sf"</span><span class="op">)</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">nc</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_sf.html">mark_sf</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">BIR74</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">coord_sf</span><span class="op">(</span>crs <span class="op">=</span> <span class="st">"OGC:CRS84"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">nc</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_sf.html">mark_sf</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">BIR74</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">coord_sf</span><span class="op">(</span>crs <span class="op">=</span> <span class="fl">3857</span>, graticule <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

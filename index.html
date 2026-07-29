@@ -69,6 +69,7 @@
     <li><a class="dropdown-item" href="articles/datashading.html">Datashading a third of a billion points</a></li>
     <li><a class="dropdown-item" href="articles/effects-and-themes.html">Effects and themes</a></li>
     <li><a class="dropdown-item" href="articles/interactivity.html">Declarative interactivity</a></li>
+    <li><a class="dropdown-item" href="articles/animation.html">Animation</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="articles/the-compiler.html">The compiler: spec to scene</a></li>
     <li><a class="dropdown-item" href="articles/accessibility.html">Accessibility</a></li>
@@ -102,7 +103,13 @@
 <!-- badges: start -->
 
 <p>vellumplot is a declarative, pipe-first grammar of graphics built on the <a href="https://github.com/r-vellum/vellum" class="external-link">vellum</a> graphics backend. You describe a plot as an inspectable, serializable <em>spec</em>; nothing is drawn until the spec is compiled into a vellum scene and rendered.</p>
-<p>It is a real compiler — spec → resolve encodings → train scales → measure layout → compile guides → compile marks → vellum scene — not a thin wrapper around the drawing primitives.</p>
+<p>The compile is a real pipeline (spec → resolve encodings → train scales → measure layout → compile guides → compile marks → vellum scene) and it runs without a graphics device, because vellum measures text itself. Two consequences are the reason to pick this stack:</p>
+<ul>
+<li>
+<strong>Every mark keeps its identity through to the output.</strong> A compiled plot <em>is</em> a vellum scene, so each drawn element carries its data key and its resolved device-pixel box (<code><a href="https://r-vellum.github.io/vellum/reference/scene_model.html" class="external-link">vellum::scene_model()</a></code>). That is what <a href="https://github.com/r-vellum/vellumwidget" class="external-link">vellumwidget</a> reads to add tooltips, brushing, and linked selection: the same marks you already declared, not <code>*_interactive()</code> twins of them, and no second engine re-drawing your plot.</li>
+<li>
+<strong>One spec, one solved layout, several destinations.</strong> <code><a href="reference/render_plot.html">render_plot()</a></code> writes PNG, SVG, or PDF from the <em>same</em> compiled scene instead of re-solving layout per device, and <code>as_widget()</code> hands that scene to the browser. The static figure and the interactive one cannot drift, because they are one scene.</li>
+</ul>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -185,7 +192,7 @@
 <li>Position adjustments: stack / dodge / fill bars, jittered points.</li>
 <li>Per-mark <code>blend =</code> modes (CSS <code>mix-blend-mode</code>: <code>"multiply"</code>, <code>"screen"</code>, …).</li>
 <li>
-<code><a href="reference/mark_datashade.html">mark_datashade()</a></code> for million-point density rasters; <code>auto = TRUE</code> on <code><a href="reference/mark_point.html">mark_point()</a></code> / <code><a href="reference/mark_point.html">mark_line()</a></code> / <code><a href="reference/mark_area.html">mark_step()</a></code> / <code><a href="reference/mark_segment.html">mark_segment()</a></code> / <code><a href="reference/mark_graph.html">mark_edges()</a></code> falls back to datashading (dense scatter, timeseries, and large-graph edges) past a row threshold.</li>
+<code><a href="reference/mark_datashade.html">mark_datashade()</a></code> for million-point density rasters.</li>
 <li>Annotations: <code><a href="reference/annotate.html">annotate()</a></code>, <code><a href="reference/labs.html">labs()</a></code>, and <code><a href="reference/md.html">md()</a></code> markdown titles.</li>
 <li>Themes (<code><a href="reference/theme_gray.html">theme_gray()</a></code> default, <code><a href="reference/theme_gray.html">theme_minimal()</a></code>, <code><a href="reference/theme_gray.html">theme_bw()</a></code>, <code><a href="reference/theme_gray.html">theme_classic()</a></code>, <code><a href="reference/theme_gray.html">theme_void()</a></code>, <code><a href="reference/theme_gray.html">theme_cyberpunk()</a></code>, <code><a href="reference/theme_gray.html">theme()</a></code> / <code><a href="reference/theme_gray.html">set_theme()</a></code>) and multi-plot composition (<code><a href="reference/concat.html">hconcat()</a></code>, <code><a href="reference/concat.html">vconcat()</a></code>, <code><a href="reference/concat.html">concat()</a></code>, <code><a href="reference/concat.html">wrap_plots()</a></code>, <code><a href="reference/inset.html">inset()</a></code>, <code><a href="reference/repeat_.html">repeat_()</a></code>).</li>
 <li>Layer effects (<code><a href="reference/glow.html">glow()</a></code>, <code><a href="reference/outline.html">outline()</a></code>, <code><a href="reference/shadow.html">shadow()</a></code>) and gradient fills (<code><a href="reference/gradients.html">linear_gradient()</a></code>, <code><a href="reference/gradients.html">radial_gradient()</a></code>).</li>

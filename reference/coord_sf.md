@@ -13,7 +13,14 @@ for unprojected longitude/latitude data.
 ## Usage
 
 ``` r
-coord_sf(plot, crs = NULL, xlim = NULL, ylim = NULL)
+coord_sf(
+  plot,
+  crs = NULL,
+  xlim = NULL,
+  ylim = NULL,
+  graticule = FALSE,
+  graticule_labels = TRUE
+)
 ```
 
 ## Arguments
@@ -37,6 +44,19 @@ coord_sf(plot, crs = NULL, xlim = NULL, ylim = NULL)
 
   Length-2 view-window limits in the target CRS, or `NULL`.
 
+- graticule:
+
+  Draw meridians and parallels behind the map. `FALSE` (default) draws
+  none; `TRUE` picks round longitude/latitude breaks automatically; a
+  list `list(lon = , lat = )` sets the breaks explicitly (in degrees).
+  For a projected CRS the lines are reprojected and therefore curved;
+  for unprojected longitude/latitude they are straight.
+
+- graticule_labels:
+
+  Label the graticule lines with their degree values (default `TRUE`);
+  ignored when `graticule` is `FALSE`.
+
 ## Value
 
 The modified
@@ -49,7 +69,9 @@ an install hint if it is not available at render time.
 
 ## See also
 
-[`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
+[`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md),
+[`mark_scalebar()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md),
+[`mark_compass()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
 
 ## Examples
 
@@ -57,5 +79,6 @@ an install hint if it is not available at render time.
 if (FALSE) { # \dontrun{
 nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf(crs = "OGC:CRS84")
+vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf(crs = 3857, graticule = TRUE)
 } # }
 ```

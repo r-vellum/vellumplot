@@ -116,6 +116,9 @@ Layers that draw data. Scales train across every mark on the panel.
 
 - [`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
   : Draw simple-feature (sf) geometries
+- [`mark_scalebar()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
+  [`mark_compass()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
+  : Map decorations
 - [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_edge_bundle()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   [`mark_flow_map()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
@@ -338,6 +341,25 @@ static render; enacted by a host such as vellumwidget.
   : Bind a panel's view to a selection (overview + detail)
 - [`interaction_model()`](https://r-vellum.github.io/vellumplot/reference/interaction_model.md)
   : The interaction model of a compiled plot
+
+## Animation
+
+Non-reactive keyframe animation: compile a plot into one keyframe per
+state, train the scales once over all states and freeze them, then tween
+and encode the frames (GIF / APNG) in vellum’s parallel Rust backend.
+
+- [`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md)
+  : Animate a plot across the states of a variable
+- [`transition_time()`](https://r-vellum.github.io/vellumplot/reference/transition_time.md)
+  : Animate a plot along a continuous time
+- [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md)
+  : Reveal a plot progressively along a variable
+- [`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md)
+  : Set the easing of an animation's frames
+- [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
+  : Build a keyframe animation from a plot
+- [`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+  : Write a keyframe animation to a file
 
 ## Accessibility and provenance
 

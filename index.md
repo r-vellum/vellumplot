@@ -5,9 +5,25 @@ vellumplot is a declarative, pipe-first grammar of graphics built on the
 describe a plot as an inspectable, serializable *spec*; nothing is drawn
 until the spec is compiled into a vellum scene and rendered.
 
-It is a real compiler — spec → resolve encodings → train scales →
-measure layout → compile guides → compile marks → vellum scene — not a
-thin wrapper around the drawing primitives.
+The compile is a real pipeline (spec → resolve encodings → train scales
+→ measure layout → compile guides → compile marks → vellum scene) and it
+runs without a graphics device, because vellum measures text itself. Two
+consequences are the reason to pick this stack:
+
+- **Every mark keeps its identity through to the output.** A compiled
+  plot *is* a vellum scene, so each drawn element carries its data key
+  and its resolved device-pixel box
+  ([`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)).
+  That is what [vellumwidget](https://github.com/r-vellum/vellumwidget)
+  reads to add tooltips, brushing, and linked selection: the same marks
+  you already declared, not `*_interactive()` twins of them, and no
+  second engine re-drawing your plot.
+- **One spec, one solved layout, several destinations.**
+  [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+  writes PNG, SVG, or PDF from the *same* compiled scene instead of
+  re-solving layout per device, and `as_widget()` hands that scene to
+  the browser. The static figure and the interactive one cannot drift,
+  because they are one scene.
 
 ## Installation
 
@@ -227,18 +243,7 @@ render_plot(p, "cars.png")
 - Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
   `"screen"`, …).
 - [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
-  for million-point density rasters; `auto = TRUE` on
-  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
-  /
-  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
-  /
-  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
-  /
-  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
-  /
-  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
-  falls back to datashading (dense scatter, timeseries, and large-graph
-  edges) past a row threshold.
+  for million-point density rasters.
 - Annotations:
   [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md),
   [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md),

@@ -3,6 +3,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/LICENSE-text.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/LICENSE.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/accessibility.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/articles/animation.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/datashading.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/effects-and-themes.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/facets-and-composition.html</loc></url>
@@ -22,6 +23,8 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/add_marginal.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/add_selection.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/after_stat.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/anim_save.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/animate.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/annotate.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/area.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/bind_scale.html</loc></url>
@@ -33,6 +36,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/coord_polar.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/coord_sf.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/coord_trans.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/ease_aes.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/element.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/facet_wrap.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/filter_by.html</loc></url>
@@ -45,6 +49,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/interaction_model.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/labs.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/lims.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/map_decorations.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_area.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_boxplot.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_contour.html</loc></url>
@@ -94,6 +99,9 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/sketch.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/theme_gray.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/theme_sketch.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/transition_reveal.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/transition_states.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/transition_time.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vchord.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vdendrogram.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vellumplot-package.html</loc></url>

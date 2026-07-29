@@ -32,7 +32,9 @@ PlotSpec(
   selections = list(),
   filters = list(),
   binds = list(),
-  clip = NULL
+  clip = NULL,
+  transition = NULL,
+  ease = NULL
 )
 ```
 
@@ -134,6 +136,24 @@ PlotSpec(
   /
   [`set_mask()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
   geometry clip (a `ClipSpec`), or `NULL` for none.
+
+- transition:
+
+  A keyframe-animation transition (from
+  [`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md)
+  /
+  [`transition_time()`](https://r-vellum.github.io/vellumplot/reference/transition_time.md)
+  /
+  [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md)),
+  or `NULL`. Read only by
+  [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md);
+  inert on a static render.
+
+- ease:
+
+  An animation easing (from
+  [`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md)),
+  or `NULL`.
 
 ## Value
 

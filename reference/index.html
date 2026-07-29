@@ -36,6 +36,7 @@
     <li><a class="dropdown-item" href="../articles/datashading.html">Datashading a third of a billion points</a></li>
     <li><a class="dropdown-item" href="../articles/effects-and-themes.html">Effects and themes</a></li>
     <li><a class="dropdown-item" href="../articles/interactivity.html">Declarative interactivity</a></li>
+    <li><a class="dropdown-item" href="../articles/animation.html">Animation</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/the-compiler.html">The compiler: spec to scene</a></li>
     <li><a class="dropdown-item" href="../articles/accessibility.html">Accessibility</a></li>
@@ -306,6 +307,13 @@
 
         </dt>
         <dd>Draw simple-feature (sf) geometries</dd>
+
+        <dt>
+
+          <code><a href="map_decorations.html">mark_scalebar()</a></code> <code><a href="map_decorations.html">mark_compass()</a></code>
+
+        </dt>
+        <dd>Map decorations</dd>
 
         <dt>
 
@@ -738,6 +746,57 @@
 
         </dt>
         <dd>The interaction model of a compiled plot</dd>
+      </dl></div><div class="section level2">
+      <h2 id="animation">Animation<a class="anchor" aria-label="anchor" href="#animation"></a></h2>
+
+      <div class="section-desc"><p>Non-reactive keyframe animation: compile a plot into one keyframe per state, train the scales once over all states and freeze them, then tween and encode the frames (GIF / APNG) in vellum’s parallel Rust backend.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="transition_states.html">transition_states()</a></code>
+
+        </dt>
+        <dd>Animate a plot across the states of a variable</dd>
+
+        <dt>
+
+          <code><a href="transition_time.html">transition_time()</a></code>
+
+        </dt>
+        <dd>Animate a plot along a continuous time</dd>
+
+        <dt>
+
+          <code><a href="transition_reveal.html">transition_reveal()</a></code>
+
+        </dt>
+        <dd>Reveal a plot progressively along a variable</dd>
+
+        <dt>
+
+          <code><a href="ease_aes.html">ease_aes()</a></code>
+
+        </dt>
+        <dd>Set the easing of an animation's frames</dd>
+
+        <dt>
+
+          <code><a href="animate.html">animate()</a></code>
+
+        </dt>
+        <dd>Build a keyframe animation from a plot</dd>
+
+        <dt>
+
+          <code><a href="anim_save.html">anim_save()</a></code>
+
+        </dt>
+        <dd>Write a keyframe animation to a file</dd>
       </dl></div><div class="section level2">
       <h2 id="accessibility-and-provenance">Accessibility and provenance<a class="anchor" aria-label="anchor" href="#accessibility-and-provenance"></a></h2>
 
