@@ -149,9 +149,11 @@ NULL
 
 # Reproject every sf data frame in the spec (plot data + per-layer data) to the
 # target CRS, *before* scale training so vellum only ever sees projected
-# cartesian coordinates. Returns list(spec = <reprojected>, geographic = <lgl>)
-# where `geographic` reports whether the target CRS is lon/lat (drives the map
-# aspect correction in the layout). Requires `sf`.
+# cartesian coordinates. Returns list(spec = <reprojected>, geographic = <lgl>,
+# crs = <target CRS or NULL>) where `geographic` reports whether the target CRS
+# is lon/lat (drives the map aspect correction in the layout) and `crs` is the
+# resolved target CRS, which a scale bar / graticule needs at emit time.
+# Requires `sf`.
 .project_sf_data <- function(spec) {
   .need_pkg("sf", "coord_sf()")
   co <- .coord_of(spec)
@@ -188,5 +190,5 @@ NULL
     ll <- sf::st_is_longlat(ref)
     geo <- isTRUE(ll)
   }
-  list(spec = spec, geographic = geo)
+  list(spec = spec, geographic = geo, crs = crs)
 }

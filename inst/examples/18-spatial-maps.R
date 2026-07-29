@@ -51,5 +51,17 @@ if (!requireNamespace("sf", quietly = TRUE)) {
     labs(title = "Equal-area projection (EPSG:32119)", fill = "BIR74") |>
     render_plot(file.path(outdir, "18-projected.png"))
 
-  message("18-spatial-maps: wrote 4 figures to ", outdir)
+  # --- 5. Cartographic furniture ---------------------------------------------
+  # coord_sf(graticule = TRUE) draws meridians/parallels (reprojected, so they
+  # curve under a conic projection); mark_scalebar() and mark_compass() add a
+  # distance bar and a north arrow, each pinned to a panel corner.
+  vplot(nc) |>
+    mark_sf(fill = BIR74, color = "white", linewidth = 0.2) |>
+    coord_sf(crs = 5070, graticule = TRUE) |>
+    mark_scalebar(unit = "km", position = "bottomleft") |>
+    mark_compass(position = "topright") |>
+    labs(title = "Decorated map (graticule, scale bar, compass)", fill = "BIR74") |>
+    render_plot(file.path(outdir, "18-decorations.png"))
+
+  message("18-spatial-maps: wrote 5 figures to ", outdir)
 }

@@ -22,6 +22,7 @@ CoordSpec <- S7::new_class(
     direction = S7::new_property(S7::class_double, default = 1),
     rmin = S7::new_property(S7::class_double, default = 0),
     crs = S7::new_property(S7::class_any, default = NULL), # coord_sf target CRS
+    graticule = S7::new_property(S7::class_any, default = NULL), # coord_sf lon/lat grid spec (list) or NULL
     # coord_trans per-axis display transform (name or scales::transform_* object).
     xtrans = S7::new_property(S7::class_any, default = "identity"),
     ytrans = S7::new_property(S7::class_any, default = "identity")
@@ -382,16 +383,44 @@ coord_trans <- function(plot, x = "identity", y = "identity") {
 #'   guaranteed longitude/latitude order, use `"OGC:CRS84"` rather than
 #'   `EPSG:4326`. For choropleths, prefer an equal-area CRS.
 #' @param xlim,ylim Length-2 view-window limits in the target CRS, or `NULL`.
+#' @param graticule Draw meridians and parallels behind the map. `FALSE`
+#'   (default) draws none; `TRUE` picks round longitude/latitude breaks
+#'   automatically; a list `list(lon = , lat = )` sets the breaks explicitly (in
+#'   degrees). For a projected CRS the lines are reprojected and therefore curved;
+#'   for unprojected longitude/latitude they are straight.
+#' @param graticule_labels Label the graticule lines with their degree values
+#'   (default `TRUE`); ignored when `graticule` is `FALSE`.
 #' @return The modified [PlotSpec].
-#' @seealso [mark_sf()]
+#' @seealso [mark_sf()], [mark_scalebar()], [mark_compass()]
 #' @examples
 #' \dontrun{
 #' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 #' vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf(crs = "OGC:CRS84")
+#' vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf(crs = 3857, graticule = TRUE)
 #' }
 #' @export
-coord_sf <- function(plot, crs = NULL, xlim = NULL, ylim = NULL) {
+coord_sf <- function(
+  plot,
+  crs = NULL,
+  xlim = NULL,
+  ylim = NULL,
+  graticule = FALSE,
+  graticule_labels = TRUE
+) {
   .check_plot(plot)
-  plot@coord <- CoordSpec(kind = "sf", crs = crs, xlim = xlim, ylim = ylim)
+  grat <- if (isTRUE(graticule)) {
+    list(labels = graticule_labels)
+  } else if (is.list(graticule)) {
+    utils::modifyList(list(labels = graticule_labels), graticule)
+  } else {
+    NULL
+  }
+  plot@coord <- CoordSpec(
+    kind = "sf",
+    crs = crs,
+    xlim = xlim,
+    ylim = ylim,
+    graticule = grat
+  )
   plot
 }

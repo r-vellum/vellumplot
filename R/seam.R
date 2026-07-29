@@ -112,6 +112,7 @@ NULL
   # training, and record whether that CRS is geographic (for the aspect ratio).
   co <- .coord_of(spec)
   sf_geographic <- FALSE
+  sf_crs <- NULL
   if (.has_sf_layer(spec) && identical(co@kind, "cartesian")) {
     spec@coord <- CoordSpec(kind = "sf", xlim = co@xlim, ylim = co@ylim)
     co <- spec@coord
@@ -120,6 +121,7 @@ NULL
     proj <- .project_sf_data(spec)
     spec <- proj$spec
     sf_geographic <- proj$geographic
+    sf_crs <- proj$crs
   }
 
   # Layout marks (sankey/hierarchy) compute one global layout in an axis-free
@@ -143,6 +145,7 @@ NULL
 
   built <- .build_panels(spec, frozen_scales = frozen_scales)
   built$sf_geographic <- sf_geographic
+  built$sf_crs <- sf_crs
 
   # Marginal plots (add_marginal()) reserve tracks around a single panel and reuse
   # its scales; they are incompatible with facets, non-Cartesian coords, and a
@@ -376,7 +379,9 @@ NULL
       flip = flip,
       polar = NULL,
       trans = NULL,
-      sketch = plot_sketch
+      sketch = plot_sketch,
+      sf_geographic = isTRUE(built$sf_geographic),
+      sf_crs = built$sf_crs
     )
     psc$graph <- .graph_caps(
       p$resolved,
@@ -448,6 +453,17 @@ NULL
         )
       )
       scene <- .draw_panel_bg(scene, hsc, vsc, rt)
+      if (identical(co@kind, "sf") && !is.null(co@graticule)) {
+        scene <- .draw_graticule(
+          scene,
+          hsc,
+          vsc,
+          rt,
+          built$sf_crs,
+          isTRUE(built$sf_geographic),
+          co@graticule
+        )
+      }
     }
     scene <- .compile_marks(scene, p$resolved, psc, panel = pname)
     scene <- vellum::pop(scene)

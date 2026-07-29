@@ -126,6 +126,7 @@ articles:
   - articles/datashading
   - articles/effects-and-themes
   - articles/interactivity
+  - articles/animation
 - title: Background
   navbar: Background
   contents:
@@ -177,6 +178,7 @@ reference:
 - subtitle: Spatial and network
   contents:
   - mark_sf
+  - map_decorations
   - mark_graph
   - scale_edge_width
   - scale_edge

@@ -49,6 +49,28 @@ Because `mark_sf()` is an ordinary layer, you can stack it: draw a base layer
 of boundaries, then a second `mark_sf()` for highlighted features or point
 locations on top, and every layer reprojects together.
 
+### Cartographic furniture
+
+A map usually wants more than the polygons: a graticule to place it on the
+globe, a scale bar to read distances, and a north arrow. `coord_sf(graticule =
+TRUE)` draws meridians and parallels behind the marks — and because they are
+generated in longitude/latitude and then reprojected, they curve correctly under
+a projected CRS rather than being drawn as a naive straight grid.
+`mark_scalebar()` and `mark_compass()` are fixed-position decorations pinned to a
+panel corner (`position = "bottomleft"`, `"topright"`, and so on); the scale bar
+reads the map's CRS to size itself, defaulting to a round distance near a quarter
+of the panel width.
+
+```{r}
+#| eval: !expr have_sf
+vplot(nc) |>
+  mark_sf(fill = BIR74, color = "white", linewidth = 0.2) |>
+  scale_fill_binned(style = "quantile", n = 6, palette = "Batlow") |>
+  coord_sf(crs = 5070, graticule = TRUE) |>
+  mark_scalebar(unit = "km") |>
+  mark_compass()
+```
+
 ## Networks from igraph
 
 `vgraph()` starts a node-link diagram from an `igraph` graph. It runs a layout

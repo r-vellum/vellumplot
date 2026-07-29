@@ -4,7 +4,14 @@
 \alias{coord_sf}
 \title{Map coordinate system}
 \usage{
-coord_sf(plot, crs = NULL, xlim = NULL, ylim = NULL)
+coord_sf(
+  plot,
+  crs = NULL,
+  xlim = NULL,
+  ylim = NULL,
+  graticule = FALSE,
+  graticule_labels = TRUE
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -16,6 +23,15 @@ guaranteed longitude/latitude order, use \code{"OGC:CRS84"} rather than
 \code{EPSG:4326}. For choropleths, prefer an equal-area CRS.}
 
 \item{xlim, ylim}{Length-2 view-window limits in the target CRS, or \code{NULL}.}
+
+\item{graticule}{Draw meridians and parallels behind the map. \code{FALSE}
+(default) draws none; \code{TRUE} picks round longitude/latitude breaks
+automatically; a list \code{list(lon = , lat = )} sets the breaks explicitly (in
+degrees). For a projected CRS the lines are reprojected and therefore curved;
+for unprojected longitude/latitude they are straight.}
+
+\item{graticule_labels}{Label the graticule lines with their degree values
+(default \code{TRUE}); ignored when \code{graticule} is \code{FALSE}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -36,8 +52,9 @@ install hint if it is not available at render time.
 \dontrun{
 nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf(crs = "OGC:CRS84")
+vplot(nc) |> mark_sf(fill = BIR74) |> coord_sf(crs = 3857, graticule = TRUE)
 }
 }
 \seealso{
-\code{\link[=mark_sf]{mark_sf()}}
+\code{\link[=mark_sf]{mark_sf()}}, \code{\link[=mark_scalebar]{mark_scalebar()}}, \code{\link[=mark_compass]{mark_compass()}}
 }

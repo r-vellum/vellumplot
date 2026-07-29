@@ -277,7 +277,9 @@ NULL
     edge_alpha = built$scales$edge_alpha,
     edge_linetype = built$scales$edge_linetype,
     flip = plan$flip,
-    polar = NULL
+    polar = NULL,
+    sf_geographic = isTRUE(built$sf_geographic),
+    sf_crs = built$sf_crs
   )
   # panel: background + marks
   scene <- vellum::push(
@@ -291,6 +293,22 @@ NULL
     )
   )
   scene <- .draw_panel_bg(scene, hsc, vsc, rt)
+  co_g <- .coord_of(plan$spec)
+  if (
+    identical(co_g@kind, "sf") &&
+      !is.null(co_g@graticule) &&
+      !is.null(built$sf_crs)
+  ) {
+    scene <- .draw_graticule(
+      scene,
+      hsc,
+      vsc,
+      rt,
+      built$sf_crs,
+      isTRUE(built$sf_geographic),
+      co_g@graticule
+    )
+  }
   pkey <- if (is.na(subplot)) NA_character_ else sprintf("subplot-%d", subplot)
   # Per-cell interaction context (the aligned path does not go through
   # `.draw_plot`): a cell declaring an interaction keys its marks, and a cell with
