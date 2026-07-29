@@ -258,6 +258,7 @@ reference:
   - add_selection
   - filter_by
   - bind_scale
+  - inspect_source
   - interaction_model
 
 - title: Animation

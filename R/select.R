@@ -319,6 +319,39 @@ bind_scale <- function(plot, selection, aes = c("x", "y")) {
   plot
 }
 
+#' Inspect the data behind a clicked element (click-to-source)
+#'
+#' Declare that a host should surface the **source data rows** behind an element
+#' when the user clicks (or hovers) it — the "click-to-source" affordance. It is
+#' inert on a static render; a host (`vellumwidget::as_widget()`) reads the
+#' compiled scene's provenance ([provenance_join()] / [provenance_payload()]) to
+#' answer the gesture, and under Shiny reports the clicked element's rows to
+#' `input$<id>_source`.
+#'
+#' This is opt-in because the row mapping adds to the widget payload; declaring it
+#' on the plot (rather than as a host flag) keeps interactivity a property of the
+#' spec.
+#'
+#' @param plot A [PlotSpec].
+#' @param on The gesture that reveals the source, `"click"` (default) or
+#'   `"hover"`.
+#' @param values If `TRUE`, also ship the referenced data rows so the host can
+#'   display their values (a heavier payload); `FALSE` (default) ships only row
+#'   indices.
+#' @return The [PlotSpec], with source inspection registered.
+#' @seealso [provenance_payload()], [select_point()]
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg) |>
+#'   inspect_source()
+#' @export
+inspect_source <- function(plot, on = c("click", "hover"), values = FALSE) {
+  .check_plot(plot)
+  on <- match.arg(on)
+  plot@source <- SourceSpec(on = on, values = isTRUE(values))
+  plot
+}
+
 # Resolve a selection reference (a SelectionSpec or a name string) to its name.
 .selection_ref <- function(selection, call = rlang::caller_env()) {
   if (S7::S7_inherits(selection, SelectionSpec)) {
@@ -342,8 +375,9 @@ bind_scale <- function(plot, selection, aes = c("x", "y")) {
 #' `vellumwidget::as_widget()` reads it to wire gestures to reactions.
 #'
 #' @param x A [PlotSpec] or a plot composition.
-#' @return A named list (`selections`, `conditions`, `filters`, `binds`), or
-#'   `NULL` if there is no declared interactivity.
+#' @return A named list (`selections`, `conditions`, `filters`, `binds`, and
+#'   `source` when [inspect_source()] is declared), or `NULL` if there is no
+#'   declared interactivity.
 #' @export
 interaction_model <- function(x) {
   UseMethod("interaction_model")
@@ -436,7 +470,7 @@ interaction_model.default <- function(x) {
 # WITHOUT cross-reference validation (a composition validates once across all
 # cells, since a selection may be defined in one cell and referenced in another).
 .plot_interaction_parts <- function(plot) {
-  list(
+  parts <- list(
     selections = lapply(plot@selections, .selection_record),
     conditions = .plot_conditions(plot),
     filters = lapply(plot@filters, function(f) list(selection = f@selection)),
@@ -444,13 +478,18 @@ interaction_model.default <- function(x) {
       list(selection = b@selection, aes = b@aes)
     })
   )
+  if (!is.null(plot@source)) {
+    parts$source <- list(on = plot@source@on, values = plot@source@values)
+  }
+  parts
 }
 
 .parts_empty <- function(p) {
   !length(p$selections) &&
     !length(p$conditions) &&
     !length(p$filters) &&
-    !length(p$binds)
+    !length(p$binds) &&
+    is.null(p$source)
 }
 
 # Validate that every condition/filter/bind reference resolves to a declared
@@ -491,6 +530,10 @@ interaction_model.default <- function(x) {
   for (p in parts) {
     for (k in names(merged)) {
       merged[[k]] <- c(merged[[k]], p[[k]])
+    }
+    # source inspection is plot-wide; the first cell that declares it wins.
+    if (is.null(merged$source) && !is.null(p$source)) {
+      merged$source <- p$source
     }
   }
   if (.parts_empty(merged)) {

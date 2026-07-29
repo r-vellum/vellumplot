@@ -10,8 +10,9 @@ interaction_model(x)
 \item{x}{A \link{PlotSpec} or a plot composition.}
 }
 \value{
-A named list (\code{selections}, \code{conditions}, \code{filters}, \code{binds}), or
-\code{NULL} if there is no declared interactivity.
+A named list (\code{selections}, \code{conditions}, \code{filters}, \code{binds}, and
+\code{source} when \code{\link[=inspect_source]{inspect_source()}} is declared), or \code{NULL} if there is no
+declared interactivity.
 }
 \description{
 Returns the serialisable declaration block a host needs to enact a plot's

@@ -244,6 +244,21 @@ DomainBindSpec <- S7::new_class(
   )
 )
 
+# A source-inspection declaration (from `inspect_source()`): the plot asks a host
+# to surface, on a gesture, the source data rows behind a clicked/hovered element
+# (the "click-to-source" affordance). Inert on a static render; enacted by a host
+# (vellumwidget), which reads the compiled scene's provenance table to answer it.
+# `on`: the gesture ("click" or "hover"). `values`: also ship the referenced data
+# rows so the host can display them (heavier payload; off by default).
+SourceSpec <- S7::new_class(
+  "SourceSpec",
+  package = "vellumplot",
+  properties = list(
+    on = S7::new_property(S7::class_character, default = "click"),
+    values = S7::new_property(S7::class_logical, default = FALSE)
+  )
+)
+
 # A non-reactive keyframe-animation transition: the plot is compiled into K
 # keyframe scenes (one per state) whose scales are trained once over all states
 # and frozen, then the frames between them are tweened. `var` is the quosure whose
@@ -314,6 +329,9 @@ EaseSpec <- S7::new_class(
 #'   [transition_time()] / [transition_reveal()]), or `NULL`. Read only by
 #'   [animate()]; inert on a static render.
 #' @param ease An animation easing (from [ease_aes()]), or `NULL`.
+#' @param source A source-inspection declaration (from [inspect_source()]), or
+#'   `NULL`. Inert on a static render; a host surfaces the data rows behind a
+#'   clicked element.
 #'
 #' @return A `PlotSpec`.
 #' @seealso [vplot()], [mark_point()], [scale_x_continuous()]
@@ -348,7 +366,10 @@ PlotSpec <- S7::new_class(
     # `transition` (a TransitionSpec) enumerates the states; `ease` (an EaseSpec)
     # sets the frame easing. NULL -> a plain, non-animated plot.
     transition = S7::new_property(S7::class_any, default = NULL), # TransitionSpec | NULL
-    ease = S7::new_property(S7::class_any, default = NULL) # EaseSpec | NULL
+    ease = S7::new_property(S7::class_any, default = NULL), # EaseSpec | NULL
+    # Source inspection (from inspect_source()): a SourceSpec asking a host to
+    # surface the data rows behind a clicked element. NULL -> no click-to-source.
+    source = S7::new_property(S7::class_any, default = NULL) # SourceSpec | NULL
   )
 )
 
