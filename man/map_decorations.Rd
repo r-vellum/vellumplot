@@ -58,7 +58,7 @@ near a quarter of the panel width.}
 alternate \code{color} and \code{fill}; for the compass the arrow is \code{fill} with a
 \code{color} outline.}
 
-\item{data}{Optional layer data (rarely needed — decorations are not
+\item{data}{Optional layer data (rarely needed -- decorations are not
 data-driven).}
 
 \item{size}{Glyph height, in millimetres.}

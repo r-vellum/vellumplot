@@ -1,5 +1,37 @@
 # vellumplot (development version)
 
+* **Portable plot specs.** A plot is now a serializable *document*: `as_spec()`
+  turns a `PlotSpec` into a plain nested list and `from_spec()` rebuilds it,
+  with `spec_to_json()` / `spec_from_json()` for the JSON wire format and
+  `spec_schema()` for the bundled JSON Schema. The serializer covers the
+  encoding-level grammar exactly and **refuses** (with a classed
+  `vellumplot_unserializable` error) anything a portable document cannot carry —
+  custom transform functions, paint/pattern fills, sketch geometry, secondary
+  axes — rather than dropping it silently.
+
+* **LLM- / agent-native plotting.** `spec_fields()` summarises a data frame's
+  columns and inferred encoding types to ground a model; `vplot_from_spec()` /
+  `spec_diagnose()` validate a generated spec against the data and return
+  *structured* diagnostics (unknown field with a suggestion, compile error)
+  instead of a traceback; and `mcp_serve()` runs a pure-R Model Context Protocol
+  server (bundled launcher at `system.file("mcp/server.R")`) exposing
+  `get_schema` / `list_fields` / `render_spec` tools so an agent generates
+  *validated data*, never executed code. `vplot_ask()` is a model-agnostic
+  natural-language convenience over the three.
+
+* **Vega-Lite interoperability.** `spec_to_vegalite()` and
+  `spec_from_vegalite()` translate a plot to and from a Vega-Lite specification
+  over a documented subset (marks, encodings, scales, `bin`/`count`, faceting,
+  inline data, title), reporting any features they cannot map rather than
+  diverging silently.
+
+* **Self-documenting, reproducible plots.** `provenance_join()` ties every drawn
+  element to both its source data rows and its device-pixel geometry;
+  `provenance_payload()` exposes the same as a click-to-source payload for a
+  host; and `plot_manifest()` + `plot_svg(manifest = TRUE)` + `plot_verify()`
+  embed a data fingerprint in an SVG so a figure can be checked against the data
+  it was drawn from.
+
 * **Map decorations.** `coord_sf(graticule = TRUE)` draws meridians and parallels
   behind the map; because they are generated in longitude/latitude and reprojected,
   they curve correctly under a projected CRS (a straight grid would be wrong).

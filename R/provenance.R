@@ -172,3 +172,244 @@ NULL
 plot_provenance <- function(x) {
   attr(vellum::as_vellum_scene(x), "vellumplot_provenance") %||% list()
 }
+
+#' Join a plot's provenance to its rendered geometry
+#'
+#' `provenance_join()` compiles `x` once and returns a tidy table with one row
+#' per emitted mark element, tying each drawn primitive to **both** the source
+#' data rows that produced it (`rows`, a list column) **and** its device-pixel
+#' geometry (`x0`, `y0`, `x1`, `y1`, `x`, `y`, `w`, `h`) from
+#' [vellum::scene_model()]. It is the consumer of the provenance table that
+#' [plot_provenance()] emits — the substrate for click-to-source interactivity,
+#' auditing "which rows made this element?", and linked views.
+#'
+#' @param x A [PlotSpec] or composition.
+#' @return A data frame: `id`, `layer`, `mark`, `kind`, `panel`, the pixel bbox
+#'   (`x0`, `y0`, `x1`, `y1`, `x`, `y`, `w`, `h`), `n_rows`, and `rows` (a list
+#'   column of integer source-row indices). Empty for a plot with no mark grobs.
+#' @seealso [plot_provenance()], [vellum::scene_model()]
+#' @examples
+#' df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, cyl = factor(mtcars$cyl))
+#' p <- vplot(df) |> mark_point(x = wt, y = mpg, color = cyl)
+#' pj <- provenance_join(p)
+#' pj[, c("id", "mark", "n_rows")]
+#' @export
+provenance_join <- function(x) {
+  if (S7::S7_inherits(x, PlotSpec) && !length(x@layers)) {
+    return(.empty_provenance_join())
+  }
+  scene <- vellum::as_vellum_scene(x)
+  prov <- attr(scene, "vellumplot_provenance") %||% list()
+  if (!length(prov)) {
+    return(.empty_provenance_join())
+  }
+  model <- vellum::scene_model(scene)
+  el <- model$elements
+  el <- el[!is.na(el$id), , drop = FALSE]
+  # A grob (one provenance record) can expand to many elements in scene_model
+  # (e.g. a points grob -> one box per point) that share its id. Reduce to the
+  # group's aggregate bounding box so the join is one row per provenance record.
+  geom_for <- function(id) {
+    g <- el[el$id == id, , drop = FALSE]
+    if (!nrow(g)) {
+      return(data.frame(
+        x0 = NA,
+        y0 = NA,
+        x1 = NA,
+        y1 = NA,
+        x = NA,
+        y = NA,
+        w = NA,
+        h = NA
+      ))
+    }
+    x0 <- min(g$x0)
+    y0 <- min(g$y0)
+    x1 <- max(g$x1)
+    y1 <- max(g$y1)
+    data.frame(
+      x0 = x0,
+      y0 = y0,
+      x1 = x1,
+      y1 = y1,
+      x = mean(g$x),
+      y = mean(g$y),
+      w = x1 - x0,
+      h = y1 - y0
+    )
+  }
+  rows <- lapply(prov, function(p) {
+    cbind(
+      data.frame(
+        id = p$id,
+        layer = p$layer,
+        mark = p$mark,
+        kind = p$kind %||% "mark",
+        panel = p$panel %||% NA_character_,
+        n_rows = length(p$rows %||% integer(0)),
+        stringsAsFactors = FALSE
+      ),
+      geom_for(p$id)
+    )
+  })
+  out <- do.call(rbind, rows)
+  # rows as a list column, aligned to the provenance order.
+  out$rows <- lapply(prov, function(p) p$rows %||% integer(0))
+  out[order(out$layer, out$id), , drop = FALSE]
+}
+
+.empty_provenance_join <- function() {
+  df <- data.frame(
+    id = character(0),
+    layer = integer(0),
+    mark = character(0),
+    kind = character(0),
+    panel = character(0),
+    n_rows = integer(0),
+    x0 = numeric(0),
+    y0 = numeric(0),
+    x1 = numeric(0),
+    y1 = numeric(0),
+    x = numeric(0),
+    y = numeric(0),
+    w = numeric(0),
+    h = numeric(0),
+    stringsAsFactors = FALSE
+  )
+  df$rows <- list()
+  df
+}
+
+#' A reproducibility manifest for a plot
+#'
+#' `plot_manifest()` returns a small, serializable fingerprint of a plot: a hash
+#' of its input data (order- and column-sensitive), the data's shape and column
+#' names, a structural hash of the spec, and the number of emitted elements. It
+#' is what [plot_svg()] can embed (with `manifest = TRUE`) so a figure carries
+#' its own provenance, and what [plot_verify()] recomputes to confirm a figure
+#' still matches its data.
+#'
+#' @param x A [PlotSpec].
+#' @return A named list: `version`, `data` (a `hash`/`nrow`/`columns` record),
+#'   `spec_hash`, and `n_elements`.
+#' @seealso [plot_verify()], [plot_svg()], [provenance_join()]
+#' @examples
+#' plot_manifest(vplot(mtcars) |> mark_point(x = wt, y = mpg))$data$hash
+#' @export
+plot_manifest <- function(x) {
+  data_ir <- .data_to_ir(x@data)
+  data_rec <- if (is.null(data_ir)) {
+    NULL
+  } else {
+    list(hash = data_ir$hash, nrow = data_ir$nrow, columns = data_ir$columns)
+  }
+  # A structural spec hash that does not depend on full serialisability: try the
+  # real spec, else fall back to the layer/encoding skeleton.
+  spec_hash <- tryCatch(
+    {
+      s <- as_spec(x)
+      rlang::hash(s[setdiff(names(s), "data")])
+    },
+    error = function(e) {
+      skel <- lapply(x@layers, function(L) {
+        list(mark = L@mark, aes = names(L@encoding), stat = L@stat)
+      })
+      rlang::hash(skel)
+    }
+  )
+  n_elements <- length(
+    attr(vellum::as_vellum_scene(x), "vellumplot_provenance") %||% list()
+  )
+  list(
+    version = .SPEC_VERSION,
+    data = data_rec,
+    spec_hash = spec_hash,
+    n_elements = n_elements
+  )
+}
+
+#' Verify a rendered figure against its data
+#'
+#' `plot_verify()` extracts the manifest embedded in an SVG written with
+#' [plot_svg()]`(manifest = TRUE)` and recomputes the data fingerprint from
+#' `data`, reporting whether the figure still matches the data it was drawn from
+#' — a lightweight, self-contained reproducibility check.
+#'
+#' @param svg An SVG string (from [plot_svg()]) or a path to an `.svg` file.
+#' @param data The data frame to check the figure against.
+#' @return A list with `ok` (logical), `expected` (the embedded data hash), and
+#'   `actual` (the recomputed hash). Errors if the SVG carries no manifest.
+#' @seealso [plot_manifest()], [plot_svg()]
+#' @examplesIf requireNamespace("jsonlite", quietly = TRUE)
+#' svg <- plot_svg(vplot(mtcars) |> mark_point(x = wt, y = mpg), manifest = TRUE)
+#' plot_verify(svg, mtcars)$ok
+#' @export
+plot_verify <- function(svg, data) {
+  .need_pkg("jsonlite", "plot_verify()")
+  if (length(svg) == 1 && !grepl("<svg", svg) && file.exists(svg)) {
+    svg <- paste(readLines(svg, warn = FALSE), collapse = "\n")
+  }
+  m <- regmatches(svg, regexpr("vellumplot-manifest:\\s*\\{.*\\}\\s*-->", svg))
+  if (!length(m)) {
+    cli::cli_abort(c(
+      "No vellumplot manifest found in the SVG.",
+      "i" = "Write it with {.code plot_svg(x, manifest = TRUE)}."
+    ))
+  }
+  json <- sub(".*vellumplot-manifest:\\s*(\\{.*\\})\\s*-->.*", "\\1", m)
+  manifest <- jsonlite::fromJSON(
+    json,
+    simplifyVector = TRUE,
+    simplifyDataFrame = FALSE
+  )
+  expected <- manifest$data$hash
+  actual <- .data_hash(data)
+  list(ok = identical(expected, actual), expected = expected, actual = actual)
+}
+
+#' A widget-ready provenance payload (click-to-source)
+#'
+#' `provenance_payload()` returns a JSON-serializable structure mapping each
+#' rendered element's stable id (`data-vellum-id`, the join key an SVG / widget
+#' carries) to the source data rows that produced it — the enabler for a host
+#' (e.g. vellumwidget) to answer "which rows made this element?" on click,
+#' without re-running the grammar. With `values = TRUE` the referenced data rows
+#' are inlined so the host can display them directly.
+#'
+#' @param x A [PlotSpec] or composition.
+#' @param values If `TRUE`, inline the source data rows (row-wise records) so the
+#'   host needs no separate data access. Default `FALSE` (ids + row indices only).
+#' @return A list with `fields` (column names), `elements` (a list of
+#'   `list(id, rows)` records), and — when `values = TRUE` — `data` (row-wise
+#'   records of the plot's data).
+#' @seealso [provenance_join()], [plot_provenance()]
+#' @examples
+#' p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+#' pl <- provenance_payload(p)
+#' pl$elements[[1]]$id
+#' @export
+provenance_payload <- function(x, values = FALSE) {
+  scene <- vellum::as_vellum_scene(x)
+  prov <- attr(scene, "vellumplot_provenance") %||% list()
+  data <- if (S7::S7_inherits(x, PlotSpec)) x@data else NULL
+  elements <- lapply(prov, function(p) {
+    list(id = p$id, rows = as.integer(p$rows %||% integer(0)))
+  })
+  out <- list(
+    fields = as.list(names(data) %||% character(0)),
+    elements = elements
+  )
+  if (isTRUE(values) && !is.null(data)) {
+    out$data <- lapply(seq_len(nrow(data)), function(i) {
+      as.list(data[i, , drop = FALSE])
+    })
+  }
+  out
+}
+
+# The manifest as a single-line HTML/XML comment for embedding in an SVG.
+.manifest_comment <- function(x) {
+  .need_pkg("jsonlite", "plot_svg(manifest = TRUE)")
+  json <- jsonlite::toJSON(plot_manifest(x), auto_unbox = TRUE, null = "null")
+  paste0("<!-- vellumplot-manifest: ", json, " -->")
+}

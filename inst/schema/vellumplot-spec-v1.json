@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://r-vellum.github.io/vellumplot/spec.json",
+  "title": "vellumplot spec (v1)",
+  "description": "A portable, serializable subset of a vellumplot PlotSpec. Consumed by spec_from_json() / vplot_from_spec() and the MCP render_spec tool. Encoding-level state round-trips exactly; styling and opaque state (custom transform functions, paint/pattern fills, sketch geometry, secondary axes, sf CRS objects, per-layer data) is not representable and is refused by the serializer.",
+  "type": "object",
+  "required": ["layers"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "string", "const": "1" },
+    "width": { "type": "number", "description": "Page width in inches.", "default": 6 },
+    "height": { "type": "number", "description": "Page height in inches.", "default": 4 },
+    "dpi": { "type": "number", "default": 96 },
+    "data": { "$ref": "#/$defs/data" },
+    "layers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/layer" }
+    },
+    "scales": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scale" }
+    },
+    "coord": { "$ref": "#/$defs/coord" },
+    "facet": { "$ref": "#/$defs/facet" },
+    "resolve": {
+      "type": "object",
+      "description": "Per-aesthetic scale resolution across facets.",
+      "additionalProperties": { "enum": ["shared", "independent"] }
+    },
+    "labels": {
+      "type": "object",
+      "description": "Plot/axis/legend text. Keys: title, subtitle, caption, tag, x, y, color, size, alt.",
+      "additionalProperties": { "type": "string" }
+    },
+    "marginal": { "$ref": "#/$defs/marginal" },
+    "theme": { "$ref": "#/$defs/theme" }
+  },
+  "$defs": {
+    "data": {
+      "type": "object",
+      "description": "Inline data (values) when small, else a reference (name + hash + columns) needing from_spec(data=).",
+      "properties": {
+        "name": { "type": "string" },
+        "hash": { "type": "string" },
+        "nrow": { "type": "integer" },
+        "columns": { "type": "array", "items": { "type": "string" } },
+        "values": { "type": "object", "description": "Column-wise arrays." },
+        "value_types": { "type": "object" },
+        "value_levels": { "type": "object" }
+      }
+    },
+    "channel": {
+      "type": "object",
+      "description": "An encoding channel: a data field or an expression over fields.",
+      "properties": {
+        "field": { "type": "string", "description": "A bare column name." },
+        "expr": { "type": "string", "description": "An expression over columns, e.g. \"log(x)\" or \"factor(cyl)\". Mutually exclusive with field." },
+        "type": { "enum": ["", "quantitative", "nominal", "ordinal", "temporal"], "description": "Optional scale-type hint; empty means infer." },
+        "after_stat": { "type": "boolean", "description": "The field is a statistic computed by the mark's stat (e.g. count)." },
+        "condition": {
+          "type": "object",
+          "description": "A selection-conditional encoding.",
+          "properties": {
+            "selection": { "type": "string" },
+            "if_false": {},
+            "empty": { "type": "boolean" }
+          }
+        }
+      },
+      "anyOf": [ { "required": ["field"] }, { "required": ["expr"] } ]
+    },
+    "layer": {
+      "type": "object",
+      "required": ["mark"],
+      "properties": {
+        "mark": {
+          "type": "string",
+          "description": "The mark type, e.g. point, line, bar, area, tile, smooth, boxplot. Note several constructors share a mark string (bar/histogram/pie -> \"bar\"), disambiguated by stat/stat_params."
+        },
+        "encoding": {
+          "type": "object",
+          "description": "Aesthetic -> channel. Keys: x, y, color, fill, size, shape, alpha, xmin, xmax, ymin, ymax, xend, yend, label, ...",
+          "additionalProperties": { "$ref": "#/$defs/channel" }
+        },
+        "params": {
+          "type": "object",
+          "description": "Constant (unmapped) aesthetics, e.g. {\"color\": \"steelblue\", \"size\": 3}."
+        },
+        "stat": { "type": "string", "default": "identity" },
+        "stat_params": { "type": "object" },
+        "position": { "type": "string", "default": "identity", "description": "e.g. identity, stack, dodge, fill, jitter." },
+        "blend": { "type": "string", "default": "normal" },
+        "z": { "type": "integer", "default": 0 },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/effect" }
+        }
+      }
+    },
+    "effect": {
+      "type": "object",
+      "required": ["effect"],
+      "properties": {
+        "effect": { "enum": ["glow", "outline", "shadow", "motion"] },
+        "size": { "type": "number" },
+        "layers": { "type": "integer" },
+        "alpha": { "type": "number" },
+        "blend": { "type": "string" },
+        "color": { "type": ["string", "null"] },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "spread": { "type": "number" },
+        "n": { "type": "integer" },
+        "decay": { "type": "number" }
+      }
+    },
+    "scale": {
+      "type": "object",
+      "required": ["aesthetic", "type"],
+      "properties": {
+        "aesthetic": { "enum": ["x", "y", "color", "fill", "size", "shape", "alpha", "linetype", "linewidth", "pattern"] },
+        "type": { "enum": ["continuous", "discrete", "binned", "area", "identity"] },
+        "domain": { "type": "array", "description": "Limits." },
+        "palette": { "description": "A colour/shape vector, or a palette-name string." },
+        "name": { "type": "string" },
+        "trans": { "type": "string", "description": "A transform *name*, e.g. log10, sqrt, reverse." },
+        "range": { "type": "array" },
+        "breaks": { "type": "array" },
+        "labels": { "type": "array" },
+        "midpoint": { "type": "number" },
+        "na_value": { "type": "string" },
+        "guide": { "description": "\"none\" to hide, or a guide spec." }
+      }
+    },
+    "coord": {
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["cartesian", "flip", "fixed", "polar", "trans", "sf"] },
+        "xlim": { "type": "array" },
+        "ylim": { "type": "array" },
+        "ratio": { "type": "number" },
+        "theta": { "enum": ["x", "y"] },
+        "start": { "type": "number" },
+        "end": { "type": ["number", "null"] },
+        "direction": { "type": "number" },
+        "rmin": { "type": "number" },
+        "crs": { "description": "An EPSG code or CRS string." },
+        "xtrans": { "type": "string" },
+        "ytrans": { "type": "string" }
+      }
+    },
+    "facet": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["wrap", "grid"] },
+        "rows": { "type": "array", "items": { "type": "string" } },
+        "cols": { "type": "array", "items": { "type": "string" } },
+        "ncol": { "type": "integer" },
+        "nrow": { "type": "integer" }
+      }
+    },
+    "marginal": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["density", "histogram"] },
+        "sides": { "type": "string" },
+        "size": { "type": "number" },
+        "adjust": { "type": "number" },
+        "bins": { "type": "integer" },
+        "group": { "type": "boolean" }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "description": "Styling by preset name plus scalar settings; custom element overrides do not round-trip.",
+      "properties": {
+        "preset": { "enum": ["gray", "minimal", "bw", "classic", "void", "cyberpunk"] },
+        "settings": { "type": "object" }
+      }
+    }
+  }
+}

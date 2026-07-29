@@ -42,6 +42,7 @@ Suggests:
     igraph,
     interp,
     isoband,
+    jsonlite,
     magick,
     MASS,
     mgcv,
@@ -89,6 +90,10 @@ Collate:
     'hierarchy-pack.R'
     'hierarchy.R'
     'labs.R'
+    'spec-serialize.R'
+    'spec-json.R'
+    'spec-fields.R'
+    'mcp.R'
     'pattern.R'
     'positions.R'
     'provenance.R'
@@ -99,6 +104,7 @@ Collate:
     'scales-binned.R'
     'select.R'
     'sparkline.R'
+    'spec-vegalite.R'
     'svg.R'
     'table.R'
     'zzz.R'

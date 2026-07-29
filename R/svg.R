@@ -26,8 +26,11 @@ NULL
 #'   that R's colour engine can't emit itself.
 #' @param text How glyphs are emitted: `"native"` (default) or `"outline"` (paths,
 #'   for maximum portability).
+#' @param manifest If `TRUE`, embed a reproducibility manifest (see
+#'   [plot_manifest()]) as an XML comment in the SVG, so the figure carries its
+#'   own data fingerprint; [plot_verify()] reads it back. Default `FALSE`.
 #' @return A length-1 character SVG string.
-#' @seealso [vsparkline()], [gt_vsparkline()], [render_plot()]
+#' @seealso [vsparkline()], [gt_vsparkline()], [render_plot()], [plot_manifest()]
 #' @examples
 #' svg <- plot_svg(vsparkline(cumsum(rnorm(20))))
 #' substr(svg, 1, 40)
@@ -43,7 +46,8 @@ plot_svg <- function(
   scaling = c("fixed", "fit"),
   inline = FALSE,
   recolor = NULL,
-  text = "native"
+  text = "native",
+  manifest = FALSE
 ) {
   scaling <- match.arg(scaling)
   # Size override is set on the plot object (PlotSpec / VTable / composition all
@@ -82,6 +86,10 @@ plot_svg <- function(
   }
   if (isTRUE(inline)) {
     svg <- sub("^\\s*<\\?xml[^>]*\\?>\\s*", "", svg)
+  }
+  if (isTRUE(manifest) && S7::S7_inherits(plot, PlotSpec)) {
+    # inject the manifest comment just before the root <svg> element.
+    svg <- sub("(<svg)", paste0(.manifest_comment(plot), "\n\\1"), svg)
   }
   svg
 }

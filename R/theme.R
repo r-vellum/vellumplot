@@ -120,6 +120,7 @@ NULL
 theme_gray <- function(plot) {
   .check_plot(plot)
   plot@theme <- .theme_gray_complete()
+  attr(plot@theme, "vp_preset") <- "gray"
   plot
 }
 
@@ -138,6 +139,7 @@ theme_minimal <- function(plot) {
       axis.ticks = element_blank()
     )
   )
+  attr(plot@theme, "vp_preset") <- "minimal"
   plot
 }
 
@@ -152,6 +154,7 @@ theme_bw <- function(plot) {
       panel.grid = element_line(colour = "grey90")
     )
   )
+  attr(plot@theme, "vp_preset") <- "bw"
   plot
 }
 
@@ -169,6 +172,7 @@ theme_classic <- function(plot) {
       strip.background = element_blank()
     )
   )
+  attr(plot@theme, "vp_preset") <- "classic"
   plot
 }
 
@@ -188,6 +192,7 @@ theme_void <- function(plot) {
       strip.background = element_blank()
     )
   )
+  attr(plot@theme, "vp_preset") <- "void"
   plot
 }
 
@@ -226,6 +231,7 @@ theme_cyberpunk <- function(plot) {
   # palette is set); they are plain keys, not drawn elements.
   th[["palette"]] <- .NEON_QUAL
   th[["palette.continuous"]] <- .NEON_RAMP
+  attr(th, "vp_preset") <- "cyberpunk"
   plot@theme <- th
   plot
 }

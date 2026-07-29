@@ -11,7 +11,8 @@ plot_svg(
   scaling = c("fixed", "fit"),
   inline = FALSE,
   recolor = NULL,
-  text = "native"
+  text = "native",
+  manifest = FALSE
 )
 }
 \arguments{
@@ -37,6 +38,10 @@ that R's colour engine can't emit itself.}
 
 \item{text}{How glyphs are emitted: \code{"native"} (default) or \code{"outline"} (paths,
 for maximum portability).}
+
+\item{manifest}{If \code{TRUE}, embed a reproducibility manifest (see
+\code{\link[=plot_manifest]{plot_manifest()}}) as an XML comment in the SVG, so the figure carries its
+own data fingerprint; \code{\link[=plot_verify]{plot_verify()}} reads it back. Default \code{FALSE}.}
 }
 \value{
 A length-1 character SVG string.
@@ -57,5 +62,5 @@ plot_svg(vsparkline(1:9, color = "grey30"),
 )
 }
 \seealso{
-\code{\link[=vsparkline]{vsparkline()}}, \code{\link[=gt_vsparkline]{gt_vsparkline()}}, \code{\link[=render_plot]{render_plot()}}
+\code{\link[=vsparkline]{vsparkline()}}, \code{\link[=gt_vsparkline]{gt_vsparkline()}}, \code{\link[=render_plot]{render_plot()}}, \code{\link[=plot_manifest]{plot_manifest()}}
 }
