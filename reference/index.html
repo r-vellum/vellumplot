@@ -800,7 +800,7 @@
       </dl></div><div class="section level2">
       <h2 id="accessibility-and-provenance">Accessibility and provenance<a class="anchor" aria-label="anchor" href="#accessibility-and-provenance"></a></h2>
 
-      <div class="section-desc"><p>Attach a text alternative for screen readers, or inspect how a spec compiled into a scene.</p></div>
+      <div class="section-desc"><p>Attach a text alternative for screen readers, trace each drawn element back to its data, or verify a figure against the data it was drawn from.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -820,6 +820,99 @@
 
         </dt>
         <dd>Inspect the compiled-scene provenance of a plot</dd>
+
+        <dt>
+
+          <code><a href="provenance_join.html">provenance_join()</a></code>
+
+        </dt>
+        <dd>Join a plot's provenance to its rendered geometry</dd>
+
+        <dt>
+
+          <code><a href="provenance_payload.html">provenance_payload()</a></code>
+
+        </dt>
+        <dd>A widget-ready provenance payload (click-to-source)</dd>
+
+        <dt>
+
+          <code><a href="plot_manifest.html">plot_manifest()</a></code>
+
+        </dt>
+        <dd>A reproducibility manifest for a plot</dd>
+
+        <dt>
+
+          <code><a href="plot_verify.html">plot_verify()</a></code>
+
+        </dt>
+        <dd>Verify a rendered figure against its data</dd>
+      </dl></div><div class="section level2">
+      <h2 id="specs-agents-and-interoperability">Specs, agents, and interoperability<a class="anchor" aria-label="anchor" href="#specs-agents-and-interoperability"></a></h2>
+
+      <div class="section-desc"><p>Serialize a plot to a portable spec (and back), generate and validate plots from an LLM / MCP agent, and translate to and from Vega-Lite.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="as_spec.html">as_spec()</a></code> <code><a href="as_spec.html">from_spec()</a></code>
+
+        </dt>
+        <dd>Serialize a plot to a plain spec (and back)</dd>
+
+        <dt>
+
+          <code><a href="spec_to_json.html">spec_to_json()</a></code> <code><a href="spec_to_json.html">spec_from_json()</a></code>
+
+        </dt>
+        <dd>Serialize a plot to / from a JSON spec string</dd>
+
+        <dt>
+
+          <code><a href="spec_schema.html">spec_schema()</a></code>
+
+        </dt>
+        <dd>The vellumplot spec JSON Schema</dd>
+
+        <dt>
+
+          <code><a href="spec_fields.html">spec_fields()</a></code>
+
+        </dt>
+        <dd>Summarise a data frame's fields for a model</dd>
+
+        <dt>
+
+          <code><a href="spec_diagnose.html">spec_diagnose()</a></code> <code><a href="spec_diagnose.html">vplot_from_spec()</a></code>
+
+        </dt>
+        <dd>Diagnose a spec against its data</dd>
+
+        <dt>
+
+          <code><a href="vplot_ask.html">vplot_ask()</a></code>
+
+        </dt>
+        <dd>Generate a plot from a natural-language request</dd>
+
+        <dt>
+
+          <code><a href="mcp_serve.html">mcp_serve()</a></code>
+
+        </dt>
+        <dd>Run the vellumplot MCP server</dd>
+
+        <dt>
+
+          <code><a href="spec_to_vegalite.html">spec_to_vegalite()</a></code> <code><a href="spec_to_vegalite.html">spec_from_vegalite()</a></code>
+
+        </dt>
+        <dd>Convert between a vellumplot spec and a Vega-Lite specification</dd>
       </dl></div><div class="section level2">
       <h2 id="package">Package<a class="anchor" aria-label="anchor" href="#package"></a></h2>
 

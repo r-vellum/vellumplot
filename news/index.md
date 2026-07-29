@@ -2,6 +2,61 @@
 
 ## vellumplot (development version)
 
+- **Portable plot specs.** A plot is now a serializable *document*:
+  [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  turns a `PlotSpec` into a plain nested list and
+  [`from_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  rebuilds it, with
+  [`spec_to_json()`](https://r-vellum.github.io/vellumplot/reference/spec_to_json.md)
+  /
+  [`spec_from_json()`](https://r-vellum.github.io/vellumplot/reference/spec_to_json.md)
+  for the JSON wire format and
+  [`spec_schema()`](https://r-vellum.github.io/vellumplot/reference/spec_schema.md)
+  for the bundled JSON Schema. The serializer covers the encoding-level
+  grammar exactly and **refuses** (with a classed
+  `vellumplot_unserializable` error) anything a portable document cannot
+  carry — custom transform functions, paint/pattern fills, sketch
+  geometry, secondary axes — rather than dropping it silently.
+
+- **LLM- / agent-native plotting.**
+  [`spec_fields()`](https://r-vellum.github.io/vellumplot/reference/spec_fields.md)
+  summarises a data frame’s columns and inferred encoding types to
+  ground a model;
+  [`vplot_from_spec()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
+  /
+  [`spec_diagnose()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
+  validate a generated spec against the data and return *structured*
+  diagnostics (unknown field with a suggestion, compile error) instead
+  of a traceback; and
+  [`mcp_serve()`](https://r-vellum.github.io/vellumplot/reference/mcp_serve.md)
+  runs a pure-R Model Context Protocol server (bundled launcher at
+  `system.file("mcp/server.R")`) exposing `get_schema` / `list_fields` /
+  `render_spec` tools so an agent generates *validated data*, never
+  executed code.
+  [`vplot_ask()`](https://r-vellum.github.io/vellumplot/reference/vplot_ask.md)
+  is a model-agnostic natural-language convenience over the three.
+
+- **Vega-Lite interoperability.**
+  [`spec_to_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  and
+  [`spec_from_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  translate a plot to and from a Vega-Lite specification over a
+  documented subset (marks, encodings, scales, `bin`/`count`, faceting,
+  inline data, title), reporting any features they cannot map rather
+  than diverging silently.
+
+- **Self-documenting, reproducible plots.**
+  [`provenance_join()`](https://r-vellum.github.io/vellumplot/reference/provenance_join.md)
+  ties every drawn element to both its source data rows and its
+  device-pixel geometry;
+  [`provenance_payload()`](https://r-vellum.github.io/vellumplot/reference/provenance_payload.md)
+  exposes the same as a click-to-source payload for a host; and
+  [`plot_manifest()`](https://r-vellum.github.io/vellumplot/reference/plot_manifest.md) +
+  `plot_svg(manifest = TRUE)` +
+  [`plot_verify()`](https://r-vellum.github.io/vellumplot/reference/plot_verify.md)
+  embed a data fingerprint in an SVG so a figure can be checked against
+  the data it was drawn from.
+
 - **Map decorations.** `coord_sf(graticule = TRUE)` draws meridians and
   parallels behind the map; because they are generated in
   longitude/latitude and reprojected, they curve correctly under a

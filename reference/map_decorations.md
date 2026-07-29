@@ -87,7 +87,7 @@ mark_compass(
 
 - data:
 
-  Optional layer data (rarely needed — decorations are not data-driven).
+  Optional layer data (rarely needed – decorations are not data-driven).
 
 - size:
 

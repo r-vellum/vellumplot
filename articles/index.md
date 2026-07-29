@@ -95,6 +95,14 @@
   inspectable, serializable spec, and a real compiler turns it into a
   vellum scene. This is what that means and why it is useful.
 
+- [Specs, agents, and
+  interoperability](https://r-vellum.github.io/vellumplot/articles/specs-and-agents.md):
+
+  A vellumplot plot is a serializable document. This article shows the
+  spec round-trip, how an LLM / MCP agent generates and validates plots,
+  the Vega-Lite bridge (with a coverage table), and data-traceable
+  provenance.
+
 - [Accessibility](https://r-vellum.github.io/vellumplot/articles/accessibility.md):
 
   What every plot gets for free (a labelled, described SVG, a tagged

@@ -13,6 +13,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/articles/marks.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/scales-and-guides.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/spatial-and-networks.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/articles/specs-and-agents.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/statistical-marks.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/the-compiler.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/articles/vellumplot.html</loc></url>
@@ -27,6 +28,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/animate.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/annotate.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/area.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/as_spec.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/bind_scale.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/clip.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/compose_annotation.html</loc></url>
@@ -67,15 +69,20 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_text.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_tile.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_violin.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/mcp_serve.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/md.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/motion.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/outline.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/patterns.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/plot_alt.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/plot_manifest.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/plot_provenance.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/plot_spacer.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/plot_svg.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/plot_verify.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/position.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/provenance_join.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/provenance_payload.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/render_plot.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/repeat_.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/resolve_scale.html</loc></url>
@@ -97,6 +104,11 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/select_point.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/shadow.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/sketch.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/spec_diagnose.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/spec_fields.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/spec_schema.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/spec_to_json.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/theme_gray.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/theme_sketch.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/transition_reveal.html</loc></url>
@@ -109,6 +121,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vhierarchy.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vl_pattern.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vplot.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/vplot_ask.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vsankey.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vsparkline.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/vtable.html</loc></url>

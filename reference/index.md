@@ -363,13 +363,47 @@ and encode the frames (GIF / APNG) in vellum’s parallel Rust backend.
 
 ## Accessibility and provenance
 
-Attach a text alternative for screen readers, or inspect how a spec
-compiled into a scene.
+Attach a text alternative for screen readers, trace each drawn element
+back to its data, or verify a figure against the data it was drawn from.
 
 - [`plot_alt()`](https://r-vellum.github.io/vellumplot/reference/plot_alt.md)
   : Text alternative (alt text) for a plot
 - [`plot_provenance()`](https://r-vellum.github.io/vellumplot/reference/plot_provenance.md)
   : Inspect the compiled-scene provenance of a plot
+- [`provenance_join()`](https://r-vellum.github.io/vellumplot/reference/provenance_join.md)
+  : Join a plot's provenance to its rendered geometry
+- [`provenance_payload()`](https://r-vellum.github.io/vellumplot/reference/provenance_payload.md)
+  : A widget-ready provenance payload (click-to-source)
+- [`plot_manifest()`](https://r-vellum.github.io/vellumplot/reference/plot_manifest.md)
+  : A reproducibility manifest for a plot
+- [`plot_verify()`](https://r-vellum.github.io/vellumplot/reference/plot_verify.md)
+  : Verify a rendered figure against its data
+
+## Specs, agents, and interoperability
+
+Serialize a plot to a portable spec (and back), generate and validate
+plots from an LLM / MCP agent, and translate to and from Vega-Lite.
+
+- [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  [`from_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  : Serialize a plot to a plain spec (and back)
+- [`spec_to_json()`](https://r-vellum.github.io/vellumplot/reference/spec_to_json.md)
+  [`spec_from_json()`](https://r-vellum.github.io/vellumplot/reference/spec_to_json.md)
+  : Serialize a plot to / from a JSON spec string
+- [`spec_schema()`](https://r-vellum.github.io/vellumplot/reference/spec_schema.md)
+  : The vellumplot spec JSON Schema
+- [`spec_fields()`](https://r-vellum.github.io/vellumplot/reference/spec_fields.md)
+  : Summarise a data frame's fields for a model
+- [`spec_diagnose()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
+  [`vplot_from_spec()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
+  : Diagnose a spec against its data
+- [`vplot_ask()`](https://r-vellum.github.io/vellumplot/reference/vplot_ask.md)
+  : Generate a plot from a natural-language request
+- [`mcp_serve()`](https://r-vellum.github.io/vellumplot/reference/mcp_serve.md)
+  : Run the vellumplot MCP server
+- [`spec_to_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  [`spec_from_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  : Convert between a vellumplot spec and a Vega-Lite specification
 
 ## Package
 

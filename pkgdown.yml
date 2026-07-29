@@ -12,10 +12,11 @@ articles:
   articles/marks: marks.html
   articles/scales-and-guides: scales-and-guides.html
   articles/spatial-and-networks: spatial-and-networks.html
+  articles/specs-and-agents: specs-and-agents.html
   articles/statistical-marks: statistical-marks.html
   articles/the-compiler: the-compiler.html
   articles/vellumplot: vellumplot.html
-last_built: 2026-07-29T12:25Z
+last_built: 2026-07-29T20:06Z
 urls:
   reference: https://r-vellum.github.io/vellumplot/reference
   article: https://r-vellum.github.io/vellumplot/articles
