@@ -80,6 +80,32 @@ test_that("moved labels carry leader segments", {
   expect_true(nrow(sol$leaders) >= 1)
 })
 
+test_that("labels stay near their anchors and are not flung across the panel", {
+  # Regression: the dense mtcars example used to fling the three heavy-car
+  # labels off their clustered anchors, up a panel wall, into the far corner
+  # (leaders spanning the whole panel). The leash bounds every displacement.
+  spec <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    mark_text(
+      x = wt,
+      y = mpg,
+      label = rownames(mtcars),
+      repel = TRUE,
+      size = 7,
+      seed = 1
+    )
+  sc <- vellumplot:::.build_panels(spec)$scales
+  nx <- sc$x$map(mtcars$wt)
+  ny <- sc$y$map(mtcars$mpg)
+  sol <- repel_solution(spec)
+  # displacement of each label from its anchor, normalised by native range
+  xr <- diff(range(nx))
+  yr <- diff(range(ny))
+  disp <- sqrt(((sol$x - nx) / xr)^2 + ((sol$y - ny) / yr)^2)
+  # pre-fix this reached ~0.9 (a label thrown almost the full panel height)
+  expect_lt(max(disp), 0.35)
+})
+
 test_that("repel under facets errors clearly", {
   d <- data.frame(x = 1:6, y = 1:6, lab = letters[1:6], g = rep(c("a", "b"), 3))
   expect_error(

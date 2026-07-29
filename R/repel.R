@@ -20,6 +20,10 @@ NULL
 # the tens in practice, so this is cheap.
 .REPEL_MAX_ITER <- 1500L
 
+# A label may drift at most this fraction of the panel's shorter side from its
+# anchor. See the leash note in `.repel_solve()`.
+.REPEL_REACH_FRAC <- 0.22
+
 # Do any of a spec's layers request repulsion?
 .any_repel <- function(spec) {
   if (!S7::S7_inherits(spec, PlotSpec)) {
@@ -77,6 +81,13 @@ NULL
   step <- 0.45
   hw <- w / 2
   hh <- h / 2
+  # A leash bounds how far a label may drift from its anchor. Without it, a
+  # label pushed off a cluster of anchors keeps being repelled with nothing to
+  # pull it back (the spring is deliberately weak), slides along a panel wall,
+  # and ends up flung into a far corner with a panel-spanning leader. Bounding
+  # the displacement to a fraction of the panel keeps every label local -- as
+  # ggrepel does -- so over-dense cases degrade to nearby overlap, not flight.
+  reach <- .REPEL_REACH_FRAC * min(hi - lo)
 
   for (iter in seq_len(.REPEL_MAX_ITER)) {
     fx <- numeric(n)
@@ -116,6 +127,15 @@ NULL
     fy <- fy + spring * (ay - cy)
     cx <- cx + step * fx
     cy <- cy + step * fy
+    # leash: no label may drift further than `reach` from its own anchor
+    ddx <- cx - ax
+    ddy <- cy - ay
+    r <- sqrt(ddx^2 + ddy^2)
+    far <- r > reach
+    if (any(far)) {
+      cx[far] <- ax[far] + ddx[far] / r[far] * reach
+      cy[far] <- ay[far] + ddy[far] / r[far] * reach
+    }
     # keep boxes within the panel
     cx <- pmin(pmax(cx, lo[1] + hw), hi[1] - hw)
     cy <- pmin(pmax(cy, lo[2] + hh), hi[2] - hh)
