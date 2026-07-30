@@ -443,6 +443,12 @@ mark_compass <- function(
   el_y <- rt[["panel.grid.major.y"]]
   el_lon <- if (.is_blank(el_x)) el_y else el_x
   el_lat <- if (.is_blank(el_y)) el_x else el_y
+  # A theme that blanks *both* grids (e.g. theme_classic()) leaves no line style
+  # to inherit. `graticule = TRUE` is an explicit opt-in, so fall back to a plain
+  # default rather than crash on the blank element.
+  grat_default <- element_line(colour = "grey85", linewidth = 0.3)
+  if (.is_blank(el_lon)) el_lon <- grat_default
+  if (.is_blank(el_lat)) el_lat <- grat_default
   gp_lon <- .el_gpar_line(el_lon)
   gp_lat <- .el_gpar_line(el_lat)
   sk <- .el_sketch(el_lon, 8L)
