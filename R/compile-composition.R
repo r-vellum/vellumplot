@@ -12,8 +12,10 @@ NULL
 # up across sub-plots even when their axis labels differ (patchwork's killer
 # feature). Identical legends are collected into one (guides = "collect").
 #
-# Phase scope: single-panel, non-polar sub-plots on a regular grid. Faceted /
-# polar sub-plots fall back to the independent layout (see .compile_composition).
+# Phase scope: single-panel, non-polar, non-sf sub-plots on a regular grid.
+# Faceted / polar / sf sub-plots fall back to the independent layout (see
+# .compile_composition), where each is drawn through .draw_plot() (so an sf map
+# is projected and its graticule drawn, which the aligned path does not do).
 # ============================================================================
 
 # Can every sub-plot be placed on the shared aligned grid?
@@ -28,7 +30,13 @@ NULL
     S7::S7_inherits(p, PlotSpec) &&
       length(p@layers) > 0L &&
       is.null(p@facet) &&
-      !identical(.coord_of(p)@kind, "polar")
+      !identical(.coord_of(p)@kind, "polar") &&
+      # An sf map is aspect-locked (respect = TRUE), like polar, and needs
+      # projection + graticule that the aligned path never runs (`.plan_plot`
+      # skips `.dp_setup_coord`). Fall back to the independent layout, where
+      # `.draw_plot` projects it correctly.
+      !identical(.coord_of(p)@kind, "sf") &&
+      !.has_sf_layer(p)
   }
   all(vapply(comp@plots, ok, logical(1)))
 }
