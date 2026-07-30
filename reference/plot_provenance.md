@@ -4,7 +4,7 @@ Compiles `x` and returns its *provenance table*: one record per emitted
 mark grob, tying each low-level primitive back to the data rows and
 trained scales that produced it. Each record's `id` matches the grob's
 `data-vellum-id` in the SVG output (and the `id` column of
-[`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)),
+[`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html)),
 so it is a stable join key between the rendered scene and the grammar —
 the substrate for interactivity, linked views, and accessibility.
 
@@ -67,7 +67,7 @@ whole layer, since rows no longer map to single elements.
 
 ## See also
 
-[`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)
+[`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html)
 and the scene-contract vignette in vellum.
 
 ## Examples

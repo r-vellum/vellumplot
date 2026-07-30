@@ -98,7 +98,7 @@ vconcat(..., guides = c("collect", "keep"), width = NULL)
 A `PlotComposition` (renders via
 [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
 /
-[`vellum::render()`](https://r-vellum.github.io/vellum/reference/vl_scene.html)).
+[`vellum::render()`](https://r-vellum.github.io/vellum//reference/vl_scene.html)).
 
 ## Details
 

@@ -146,9 +146,9 @@ or <code>"vh"</code>.</p></dd>
 <code><a href="mark_segment.html">mark_segment()</a></code>, and <code><a href="mark_graph.html">mark_edges()</a></code>, when <code>TRUE</code> and the layer has very many
 rows, automatically render it as a datashaded density raster (see
 <code><a href="mark_datashade.html">mark_datashade()</a></code>) instead of individual vector marks: points bin into a
-density grid (<code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>), dense lines/steps rasterise as connected
-polylines (<code><a href="https://r-vellum.github.io/vellum/reference/datashade_lines.html" class="external-link">vellum::datashade_lines()</a></code>), and segments/edges as independent
-segments (<code><a href="https://r-vellum.github.io/vellum/reference/datashade_lines.html" class="external-link">vellum::datashade_segments()</a></code>). The datashaded line/segment output
+density grid (<code><a href="https://r-vellum.github.io/vellum//reference/datashade.html" class="external-link">vellum::datashade()</a></code>), dense lines/steps rasterise as connected
+polylines (<code><a href="https://r-vellum.github.io/vellum//reference/datashade_lines.html" class="external-link">vellum::datashade_lines()</a></code>), and segments/edges as independent
+segments (<code><a href="https://r-vellum.github.io/vellum//reference/datashade_lines.html" class="external-link">vellum::datashade_segments()</a></code>). The datashaded line/segment output
 is <code>dynspread</code>-ed so thin marks stay visible (see the <code>spread</code> argument of
 <code><a href="mark_datashade.html">mark_datashade()</a></code>). The fallback is skipped under a warped coordinate system
 (<code><a href="coord_polar.html">coord_polar()</a></code> / <code><a href="coord_trans.html">coord_trans()</a></code>), which draws the vector marks instead.</p></dd>

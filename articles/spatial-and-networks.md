@@ -150,7 +150,7 @@ vgraph(g, layout = "stress") |>
 For directed graphs, `arrow = TRUE` draws a closed arrowhead at each
 edge’s target end; edges are capped at the node boundary so the head is
 never buried under the marker. Pass a
-[`vellum::vl_arrow()`](https://r-vellum.github.io/vellum/reference/vl_arrow.html)
+[`vellum::vl_arrow()`](https://r-vellum.github.io/vellum//reference/vl_arrow.html)
 for full control over the head (`ends`, `type`, `length`, `angle`).
 [`mark_edge_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
 labels the edges at their midpoints, and `angle = "along"` rotates each

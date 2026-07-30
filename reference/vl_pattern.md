@@ -1,7 +1,7 @@
 # Custom tiling-pattern fill
 
 A thin re-export of
-[`vellum::vl_pattern()`](https://r-vellum.github.io/vellum/reference/vl_pattern.html)
+[`vellum::vl_pattern()`](https://r-vellum.github.io/vellum//reference/vl_pattern.html)
 for building a pattern fill from an arbitrary tile grob, when the
 ready-made
 [`pattern_stripe()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
@@ -27,7 +27,7 @@ vl_pattern(
 - grob, width, height, x, y, units, extend:
 
   See
-  [`vellum::vl_pattern()`](https://r-vellum.github.io/vellum/reference/vl_pattern.html).
+  [`vellum::vl_pattern()`](https://r-vellum.github.io/vellum//reference/vl_pattern.html).
 
 ## Value
 

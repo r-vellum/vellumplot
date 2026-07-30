@@ -20,7 +20,7 @@ In vellumplot this is
 It bins `x` and `y` into a `width`-by-`height` canvas in one pass and
 colours each cell by density, drawing one raster that fills the panel.
 The binning itself is done by the backend’s
-[`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html),
+[`vellum::datashade()`](https://r-vellum.github.io/vellum//reference/datashade.html),
 whose [datashading
 article](https://r-vellum.github.io/vellum/articles/datashading.html)
 covers the aggregation engine, the reductions, and the equalisation
@@ -105,9 +105,9 @@ the edges of a large graph collapse into an unreadable “hairball”. The
 same aggregate-then-shade idea works there: rasterise the *lines* into a
 canvas-sized grid where each cell records how many lines cross it, and
 shade by that coverage. The backend does this with
-[`vellum::datashade_lines()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)
+[`vellum::datashade_lines()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html)
 (connected polylines) and
-[`vellum::datashade_segments()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)
+[`vellum::datashade_segments()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html)
 (independent segments).
 
 You reach it the same way
@@ -159,7 +159,7 @@ single-pixel marks disappear when the image is shown small or on a busy
 background. datashader solves this with *spreading*: dilate each shaded
 pixel over a small neighbourhood. Datashaded lines and segments
 therefore default to `spread = "auto"`, which uses
-[`vellum::dynspread()`](https://r-vellum.github.io/vellum/reference/dynspread.html)
+[`vellum::dynspread()`](https://r-vellum.github.io/vellum//reference/dynspread.html)
 to choose a radius from the image’s own density — sparse regions spread
 more, dense ones less, so everything stays legible.
 
@@ -167,7 +167,7 @@ Point datashading keeps its raw, unspread output by default, but you can
 opt in on
 [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md):
 pass a positive integer for a fixed radius
-([`vellum::spread()`](https://r-vellum.github.io/vellum/reference/spread.html))
+([`vellum::spread()`](https://r-vellum.github.io/vellum//reference/spread.html))
 or `"auto"` for dynamic spreading.
 
 ``` r

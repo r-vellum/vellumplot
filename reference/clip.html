@@ -130,7 +130,7 @@ for several rings). For <code>set_mask()</code>, <code>NULL</code> (default) fad
 the <strong>most-recently-added layer</strong> (the one just piped in), so one raster layer
 can be clipped to a shape while the axes and other layers stay full-bleed.</p>
 <p>All three attach to the plot and resolve at render into an isolated masked
-layer (<code><a href="https://r-vellum.github.io/vellum/reference/as_mask.html" class="external-link">vellum::as_mask()</a></code>), so the static output is unchanged when none is
+layer (<code><a href="https://r-vellum.github.io/vellum//reference/as_mask.html" class="external-link">vellum::as_mask()</a></code>), so the static output is unchanged when none is
 set. Cartesian coordinates only (not polar or a nonlinear <code><a href="coord_trans.html">coord_trans()</a></code>).</p>
 <p>A smooth <em>feathered</em> edge on an arbitrary polygon needs a blur the renderer
 does not provide yet, so <code>clip_to()</code> is hard-edged; use <code>set_mask()</code> for a

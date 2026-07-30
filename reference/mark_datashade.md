@@ -3,7 +3,7 @@
 For data too dense to draw one marker each (overplotted, up to millions
 of points), `mark_datashade()` bins the points into a canvas-sized grid
 in one pass and colours each cell by density (via
-[`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html)),
+[`vellum::datashade()`](https://r-vellum.github.io/vellum//reference/datashade.html)),
 drawing a single raster that fills the panel. Cost is decoupled from
 point count and overplotting.
 
@@ -57,7 +57,7 @@ mark_datashade(
 - span, clip:
 
   Optional density-range clamping passed to
-  [`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html):
+  [`vellum::datashade()`](https://r-vellum.github.io/vellum//reference/datashade.html):
   `span = c(lo, hi)` absolute limits, or `clip = c(0.01, 0.99)`
   percentiles, so a few extreme cells don't flatten the rest. Both
   default `NULL`.
@@ -66,12 +66,12 @@ mark_datashade(
 
   Optional post-aggregation spreading to keep sparse output visible
   (passed to
-  [`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html)):
+  [`vellum::datashade()`](https://r-vellum.github.io/vellum//reference/datashade.html)):
   `NULL` (default) none — the raw one-pass aggregation; a positive
   integer dilates each shaded pixel by that radius
-  ([`vellum::spread()`](https://r-vellum.github.io/vellum/reference/spread.html));
+  ([`vellum::spread()`](https://r-vellum.github.io/vellum//reference/spread.html));
   `"auto"` picks the radius from the image density
-  ([`vellum::dynspread()`](https://r-vellum.github.io/vellum/reference/dynspread.html)).
+  ([`vellum::dynspread()`](https://r-vellum.github.io/vellum//reference/dynspread.html)).
   Datashaded lines/segments (`auto = TRUE` on
   [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
   /

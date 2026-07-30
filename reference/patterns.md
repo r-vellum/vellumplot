@@ -6,7 +6,7 @@ mark, the texture counterpart of
 Distinguishing regions by texture (not only hue) keeps a plot legible in
 greyscale print and under colour-vision deficiency. Each constructor
 assembles a small tile and returns a `vellum_pattern` (via
-[`vellum::vl_pattern()`](https://r-vellum.github.io/vellum/reference/vl_pattern.html));
+[`vellum::vl_pattern()`](https://r-vellum.github.io/vellum//reference/vl_pattern.html));
 pass it straight to `fill`:
 
 ## Usage
@@ -98,7 +98,7 @@ at extreme magnification it can soften; at ordinary sizes it is crisp.
 ## See also
 
 [`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md),
-[`vellum::vl_pattern()`](https://r-vellum.github.io/vellum/reference/vl_pattern.html)
+[`vellum::vl_pattern()`](https://r-vellum.github.io/vellum//reference/vl_pattern.html)
 
 ## Examples
 

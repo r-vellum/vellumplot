@@ -60,7 +60,7 @@ layers stay full-bleed.
 
 All three attach to the plot and resolve at render into an isolated
 masked layer
-([`vellum::as_mask()`](https://r-vellum.github.io/vellum/reference/as_mask.html)),
+([`vellum::as_mask()`](https://r-vellum.github.io/vellum//reference/as_mask.html)),
 so the static output is unchanged when none is set. Cartesian
 coordinates only (not polar or a nonlinear
 [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md)).

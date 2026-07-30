@@ -1,7 +1,7 @@
 # Rich-text labels
 
 A thin wrapper around
-[`vellum::md()`](https://r-vellum.github.io/vellum/reference/md.html)
+[`vellum::md()`](https://r-vellum.github.io/vellum//reference/md.html)
 that builds a rich-text label from a markdown subset: `**bold**`,
 `*italic*` / `_italic_`, `^superscript^`, `~subscript~`, and a colour
 span `[text]{#c00}`. The result can be used anywhere vellumplot draws a
@@ -27,7 +27,7 @@ md(text)
 ## Value
 
 A `vellum_md_label` object accepted by
-[`vellum::text_grob()`](https://r-vellum.github.io/vellum/reference/grob.html).
+[`vellum::text_grob()`](https://r-vellum.github.io/vellum//reference/grob.html).
 
 ## Examples
 

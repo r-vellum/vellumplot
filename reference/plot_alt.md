@@ -30,7 +30,7 @@ A single string.
 
 [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
 (and any compile through
-[`vellum::as_vellum_scene()`](https://r-vellum.github.io/vellum/reference/as_vellum_scene.html))
+[`vellum::as_vellum_scene()`](https://r-vellum.github.io/vellum//reference/as_vellum_scene.html))
 passes this text to the scene's description, so the exported **SVG**
 carries it in `<desc>` (with `role="img"`) and the exported **PDF** tags
 the chart as a `Figure` whose `Alt` is this text. The plot **title**
@@ -40,7 +40,7 @@ the chart as a `Figure` whose `Alt` is this text. The plot **title**
 ## See also
 
 [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md),
-[`vellum::describe()`](https://r-vellum.github.io/vellum/reference/describe.html)
+[`vellum::describe()`](https://r-vellum.github.io/vellum//reference/describe.html)
 
 ## Examples
 

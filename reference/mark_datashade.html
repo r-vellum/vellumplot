@@ -74,7 +74,7 @@ overplotting."><meta property="og:image" content="https://r-vellum.github.io/vel
     <div class="ref-description section level2">
     <p>For data too dense to draw one marker each (overplotted, up to millions of
 points), <code>mark_datashade()</code> bins the points into a canvas-sized grid in one
-pass and colours each cell by density (via <code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>), drawing a
+pass and colours each cell by density (via <code><a href="https://r-vellum.github.io/vellum//reference/datashade.html" class="external-link">vellum::datashade()</a></code>), drawing a
 single raster that fills the panel. Cost is decoupled from point count and
 overplotting.</p>
     </div>
@@ -124,17 +124,17 @@ density shading only; ignored when a <code>color</code>/<code>fill</code> aesthe
 
 
 <dt id="arg-span-clip">span, clip<a class="anchor" aria-label="anchor" href="#arg-span-clip"></a></dt>
-<dd><p>Optional density-range clamping passed to <code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>:
+<dd><p>Optional density-range clamping passed to <code><a href="https://r-vellum.github.io/vellum//reference/datashade.html" class="external-link">vellum::datashade()</a></code>:
 <code>span = c(lo, hi)</code> absolute limits, or <code>clip = c(0.01, 0.99)</code> percentiles, so
 a few extreme cells don't flatten the rest. Both default <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-spread">spread<a class="anchor" aria-label="anchor" href="#arg-spread"></a></dt>
 <dd><p>Optional post-aggregation spreading to keep sparse output
-visible (passed to <code><a href="https://r-vellum.github.io/vellum/reference/datashade.html" class="external-link">vellum::datashade()</a></code>): <code>NULL</code> (default) none — the raw
+visible (passed to <code><a href="https://r-vellum.github.io/vellum//reference/datashade.html" class="external-link">vellum::datashade()</a></code>): <code>NULL</code> (default) none — the raw
 one-pass aggregation; a positive integer dilates each shaded pixel by that
-radius (<code><a href="https://r-vellum.github.io/vellum/reference/spread.html" class="external-link">vellum::spread()</a></code>); <code>"auto"</code> picks the radius from the image density
-(<code><a href="https://r-vellum.github.io/vellum/reference/dynspread.html" class="external-link">vellum::dynspread()</a></code>). Datashaded lines/segments (<code>auto = TRUE</code> on
+radius (<code><a href="https://r-vellum.github.io/vellum//reference/spread.html" class="external-link">vellum::spread()</a></code>); <code>"auto"</code> picks the radius from the image density
+(<code><a href="https://r-vellum.github.io/vellum//reference/dynspread.html" class="external-link">vellum::dynspread()</a></code>). Datashaded lines/segments (<code>auto = TRUE</code> on
 <code><a href="mark_point.html">mark_line()</a></code> / <code><a href="mark_segment.html">mark_segment()</a></code> etc.) default to <code>"auto"</code> since single-pixel
 lines otherwise vanish.</p></dd>
 
