@@ -45,6 +45,15 @@
   inline data, title), reporting any features they cannot map rather
   than diverging silently.
 
+- **Click-to-source.**
+  [`inspect_source()`](https://r-vellum.github.io/vellumplot/reference/inspect_source.md)
+  declares (on the plot, not as a host flag) that a host should surface
+  the source data rows behind a clicked or hovered element; it is
+  carried in
+  [`interaction_model()`](https://r-vellum.github.io/vellumplot/reference/interaction_model.md)
+  and enacted by a host reading the scene’s provenance
+  ([`provenance_payload()`](https://r-vellum.github.io/vellumplot/reference/provenance_payload.md)).
+
 - **Self-documenting, reproducible plots.**
   [`provenance_join()`](https://r-vellum.github.io/vellumplot/reference/provenance_join.md)
   ties every drawn element to both its source data rows and its

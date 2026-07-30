@@ -23,5 +23,7 @@ interaction_model(x)
 
 ## Value
 
-A named list (`selections`, `conditions`, `filters`, `binds`), or `NULL`
-if there is no declared interactivity.
+A named list (`selections`, `conditions`, `filters`, `binds`, and
+`source` when
+[`inspect_source()`](https://r-vellum.github.io/vellumplot/reference/inspect_source.md)
+is declared), or `NULL` if there is no declared interactivity.

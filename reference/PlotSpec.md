@@ -34,7 +34,8 @@ PlotSpec(
   binds = list(),
   clip = NULL,
   transition = NULL,
-  ease = NULL
+  ease = NULL,
+  source = NULL
 )
 ```
 
@@ -154,6 +155,13 @@ PlotSpec(
   An animation easing (from
   [`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md)),
   or `NULL`.
+
+- source:
+
+  A source-inspection declaration (from
+  [`inspect_source()`](https://r-vellum.github.io/vellumplot/reference/inspect_source.md)),
+  or `NULL`. Inert on a static render; a host surfaces the data rows
+  behind a clicked element.
 
 ## Value
 

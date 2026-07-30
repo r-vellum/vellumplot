@@ -103,7 +103,8 @@ via <code><a href="render_plot.html">render_plot()</a></code>). Printing it draw
 <span>  binds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  transition <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  ease <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  ease <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  source <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -192,6 +193,12 @@ or <code>NULL</code> for no marginals.</p></dd>
 
 <dt id="arg-ease">ease<a class="anchor" aria-label="anchor" href="#arg-ease"></a></dt>
 <dd><p>An animation easing (from <code><a href="ease_aes.html">ease_aes()</a></code>), or <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-source">source<a class="anchor" aria-label="anchor" href="#arg-source"></a></dt>
+<dd><p>A source-inspection declaration (from <code><a href="inspect_source.html">inspect_source()</a></code>), or
+<code>NULL</code>. Inert on a static render; a host surfaces the data rows behind a
+clicked element.</p></dd>
 
 </dl></div>
     <div class="section level2">

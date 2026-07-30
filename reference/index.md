@@ -339,6 +339,8 @@ static render; enacted by a host such as vellumwidget.
   : Filter a view by a selection
 - [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)
   : Bind a panel's view to a selection (overview + detail)
+- [`inspect_source()`](https://r-vellum.github.io/vellumplot/reference/inspect_source.md)
+  : Inspect the data behind a clicked element (click-to-source)
 - [`interaction_model()`](https://r-vellum.github.io/vellumplot/reference/interaction_model.md)
   : The interaction model of a compiled plot
 
