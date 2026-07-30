@@ -89,6 +89,12 @@ NULL
 .channel_to_vl <- function(ch, aes, scale, notes) {
   def <- list()
   def$field <- ch$field %||% ch$expr
+  if (is.null(ch$field) && !is.null(ch$expr)) {
+    # Vega-Lite has no inline expression channel; the raw R text is exported as
+    # the field name (approximate), so flag it rather than emit silently-invalid
+    # VL. A future pass could lower it to a VL `calculate` transform.
+    .vl_note(notes, paste0("expression channel '", ch$expr, "'"))
+  }
   if (!is.null(ch$type) && nzchar(ch$type)) {
     def$type <- ch$type
   }
@@ -417,11 +423,12 @@ spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
     rows <- vl$data$values
     nm <- unique(unlist(lapply(rows, names)))
     cols <- lapply(nm, function(k) {
-      vapply(
-        rows,
-        function(r) r[[k]] %||% NA,
-        FUN.VALUE = rows[[1]][[k]] %||% NA
-      )
+      # Type-tolerant column build: collect per-row values (NULL/missing -> NA)
+      # then `unlist` so the common type is derived from *all* rows, not a fragile
+      # `vapply` template keyed off the first row (which breaks when row 1 is
+      # missing the key or holds NA).
+      vals <- lapply(rows, function(r) r[[k]] %||% NA)
+      unlist(vals, use.names = FALSE)
     })
     names(cols) <- nm
     data <- as.data.frame(cols, stringsAsFactors = FALSE)

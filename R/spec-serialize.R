@@ -107,11 +107,17 @@ NULL
 # re-parsed into a quosure evaluated in `env` (the global env by default), so a
 # bare field resolves against the data at compile time.
 .channel_from_ir <- function(rec, env) {
-  text <- rec$field %||% rec$expr
-  if (is.null(text)) {
+  # A `field` is a plain column reference: use it as a symbol so a non-syntactic
+  # name ("Sepal Width", routine from Vega-Lite import) resolves as a column
+  # rather than failing to `parse_expr()` as code. Only `expr` is parsed.
+  if (!is.null(rec$field)) {
+    expr <- rlang::sym(rec$field)
+  } else if (!is.null(rec$expr)) {
+    expr <- rlang::parse_expr(rec$expr)
+  } else {
     cli::cli_abort("A channel needs a {.field field} or {.field expr}.")
   }
-  q <- rlang::new_quosure(rlang::parse_expr(text), env = env)
+  q <- rlang::new_quosure(expr, env = env)
   condition <- NULL
   if (!is.null(rec$condition)) {
     c_ir <- rec$condition

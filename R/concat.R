@@ -216,6 +216,25 @@ area <- function(t, l, b = t, r = l) {
         i = "Got {length(design)} area{?s} for {n} plot{?s}."
       ))
     }
+    # Validate each element is a well-formed area (t/l/b/r), so a hand-built list
+    # missing a field fails here rather than later as a cryptic `$b`/`$r` error.
+    ok_area <- function(a) {
+      is.list(a) &&
+        all(c("t", "l", "b", "r") %in% names(a)) &&
+        all(vapply(
+          a[c("t", "l", "b", "r")],
+          function(v) is.numeric(v) && length(v) == 1L && !is.na(v),
+          logical(1)
+        )) &&
+        a$t <= a$b &&
+        a$l <= a$r
+    }
+    if (!all(vapply(design, ok_area, logical(1)))) {
+      cli::cli_abort(c(
+        "Each element of a {.arg design} list must be an {.fn area}.",
+        i = "Build them with {.fn area}, e.g. {.code area(1, 1, 2, 2)}."
+      ))
+    }
     return(design)
   }
   if (is.character(design)) {
@@ -350,10 +369,12 @@ wrap_plots <- function(
   height = NULL,
   dpi = NULL
 ) {
+  # Strip names so a list element named like a `concat` parameter (e.g. `ncol`)
+  # is spliced as a positional plot, not bound to that argument.
   do.call(
     concat,
     c(
-      plots,
+      unname(plots),
       list(
         ncol = ncol,
         nrow = nrow,
