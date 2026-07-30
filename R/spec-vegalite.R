@@ -308,13 +308,8 @@ spec_to_vegalite <- function(plot, json = FALSE) {
 #' @export
 spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
   if (is.character(vl)) {
-    .need_pkg("jsonlite", "spec_from_vegalite()")
-    vl <- jsonlite::fromJSON(
-      paste(vl, collapse = "\n"),
-      simplifyVector = TRUE,
-      simplifyDataFrame = FALSE,
-      simplifyMatrix = FALSE
-    )
+    # Also accepts a file path (matching spec_from_json), via the shared reader.
+    vl <- .read_json_spec(vl, "spec_from_vegalite()")
   }
   dropped <- character(0)
 

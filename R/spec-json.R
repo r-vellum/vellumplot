@@ -10,6 +10,24 @@ NULL
 # Schema so a caller can validate a spec before `from_spec()`.
 # ---------------------------------------------------------------------------
 
+# Read a JSON spec -- a JSON string, a character vector of lines, or a path to a
+# file -- into a plain IR list. A single string with no `{`/newline that names an
+# existing file is read from disk. `simplifyDataFrame`/`Matrix` are OFF so nested
+# records stay lists (the shape the `*_from_ir` readers expect). Single source
+# for `spec_from_json()`, `spec_diagnose()`, and `spec_from_vegalite()`.
+.read_json_spec <- function(x, what) {
+  .need_pkg("jsonlite", what)
+  if (length(x) == 1 && !grepl("[{\n]", x) && file.exists(x)) {
+    x <- readLines(x, warn = FALSE)
+  }
+  jsonlite::fromJSON(
+    paste(x, collapse = "\n"),
+    simplifyVector = TRUE,
+    simplifyDataFrame = FALSE,
+    simplifyMatrix = FALSE
+  )
+}
+
 #' Serialize a plot to / from a JSON spec string
 #'
 #' `spec_to_json()` renders a [PlotSpec] as a JSON string (via [as_spec()]);
@@ -45,16 +63,7 @@ spec_to_json <- function(plot, pretty = TRUE) {
 #' @rdname spec_to_json
 #' @export
 spec_from_json <- function(json, data = NULL, env = globalenv()) {
-  .need_pkg("jsonlite", "spec_from_json()")
-  if (length(json) == 1 && !grepl("[{\n]", json) && file.exists(json)) {
-    json <- readLines(json, warn = FALSE)
-  }
-  spec <- jsonlite::fromJSON(
-    paste(json, collapse = "\n"),
-    simplifyVector = TRUE,
-    simplifyDataFrame = FALSE,
-    simplifyMatrix = FALSE
-  )
+  spec <- .read_json_spec(json, "spec_from_json()")
   from_spec(spec, data = data, env = env)
 }
 

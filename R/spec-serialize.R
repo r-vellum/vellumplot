@@ -373,6 +373,29 @@ NULL
 
 # --- coord ------------------------------------------------------------------
 
+# Every `CoordSpec` slot except `kind` (which is handled explicitly). Single
+# source for both directions so a new coord slot round-trips without editing two
+# hand-written lists.
+.COORD_SLOTS <- c(
+  "xlim",
+  "ylim",
+  "ratio",
+  "theta",
+  "start",
+  "end",
+  "direction",
+  "rmin",
+  "crs",
+  "graticule",
+  "xtrans",
+  "ytrans"
+)
+
+# Every `MarginalSpec` slot. Single source for both serialize directions; the
+# reader rebuilds via the constructor, so its defaults (not a second hand-written
+# list) fill any absent field.
+.MARGINAL_FIELDS <- c("type", "sides", "size", "adjust", "bins", "group")
+
 .coord_to_ir <- function(co) {
   for (slot in c("xtrans", "ytrans")) {
     v <- S7::prop(co, slot)
@@ -390,20 +413,7 @@ NULL
     )
   }
   out <- list(kind = co@kind)
-  for (slot in c(
-    "xlim",
-    "ylim",
-    "ratio",
-    "theta",
-    "start",
-    "end",
-    "direction",
-    "rmin",
-    "crs",
-    "graticule",
-    "xtrans",
-    "ytrans"
-  )) {
+  for (slot in .COORD_SLOTS) {
     v <- S7::prop(co, slot)
     if (!is.null(v)) {
       out[[slot]] <- v
@@ -413,24 +423,7 @@ NULL
 }
 
 .coord_from_ir <- function(rec) {
-  args <- rec[intersect(
-    names(rec),
-    c(
-      "kind",
-      "xlim",
-      "ylim",
-      "ratio",
-      "theta",
-      "start",
-      "end",
-      "direction",
-      "rmin",
-      "crs",
-      "graticule",
-      "xtrans",
-      "ytrans"
-    )
-  )]
+  args <- rec[intersect(names(rec), c("kind", .COORD_SLOTS))]
   do.call(CoordSpec, args)
 }
 
@@ -726,13 +719,9 @@ as_spec <- function(plot) {
   }
   if (!is.null(plot@marginal)) {
     m <- plot@marginal
-    out$marginal <- list(
-      type = m@type,
-      sides = m@sides,
-      size = m@size,
-      adjust = m@adjust,
-      bins = m@bins,
-      group = m@group
+    out$marginal <- stats::setNames(
+      lapply(.MARGINAL_FIELDS, function(f) S7::prop(m, f)),
+      .MARGINAL_FIELDS
     )
   }
   th <- .theme_to_ir(plot@theme)
@@ -786,14 +775,22 @@ from_spec <- function(spec, data = NULL, env = globalenv()) {
   }
   if (!is.null(spec$marginal)) {
     m <- spec$marginal
-    p@marginal <- MarginalSpec(
-      type = m$type,
-      sides = m$sides %||% "tr",
-      size = as.double(m$size %||% 0.15),
-      adjust = as.double(m$adjust %||% 1),
-      bins = as.integer(m$bins %||% 30L),
-      group = isTRUE(m$group)
-    )
+    args <- m[intersect(names(m), .MARGINAL_FIELDS)]
+    # JSON widens these; restore the types MarginalSpec's props expect. Absent
+    # fields are left out so the constructor supplies its own defaults.
+    if (!is.null(args$size)) {
+      args$size <- as.double(args$size)
+    }
+    if (!is.null(args$adjust)) {
+      args$adjust <- as.double(args$adjust)
+    }
+    if (!is.null(args$bins)) {
+      args$bins <- as.integer(args$bins)
+    }
+    if (!is.null(args$group)) {
+      args$group <- isTRUE(args$group)
+    }
+    p@marginal <- do.call(MarginalSpec, args)
   }
   if (!is.null(spec$theme)) {
     p@theme <- .theme_from_ir(spec$theme)
