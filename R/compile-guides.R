@@ -552,6 +552,7 @@ NULL
     "color",
     "size",
     "shape",
+    "pattern",
     "edge_width",
     "alpha",
     "linetype",

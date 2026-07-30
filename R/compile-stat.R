@@ -63,7 +63,11 @@ NULL
     L$values[[nm]] <- rlang::eval_tidy(L$after[[nm]], data = sdf)
     L$types[[nm]] <- .infer_type(L$values[[nm]])
   }
-  L$values$x <- sdf$x
+  # An `after_stat()` bound to x takes precedence over the stat's default x, just
+  # as it does for y below; only fall back to `sdf$x` when x was not overridden.
+  if (!("x" %in% after_names) && !is.null(sdf$x)) {
+    L$values$x <- sdf$x
+  }
   if (!is.null(sdf$group)) {
     # Realign *both* colour and fill to the aggregated groups. Grouping is taken
     # from colour %||% fill, so at least one matches the group; setting both keeps

@@ -970,6 +970,7 @@ mark_datashade <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  how <- rlang::arg_match0(how, c("eq_hist", "log", "cbrt", "linear"))
   .add_layer(
     plot,
     "datashade",

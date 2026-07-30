@@ -621,7 +621,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   col <- sp$color %||% "grey30"
   npc <- function(u) vellum::vl_unit(u, "npc")
 
-  xr <- range(rawx)
+  xr <- range(rawx[is.finite(rawx)])
   xn <- if (diff(xr) > 0) (rawx - xr[1]) / diff(xr) else rep(0.5, n)
   yr <- range(rawy[is.finite(rawy)])
   yspan <- yr[2] - yr[1]
@@ -677,7 +677,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   if (identical(type, "bar")) {
     base <- min(rawy, sp$baseline %||% Inf, na.rm = TRUE) # box floor
-    top <- max(rawy)
+    top <- max(rawy, na.rm = TRUE)
     frac <- if (top > base) (rawy - base) / (top - base) else rep(0.5, n)
     h <- 0.94 * frac
     return(.draw(
@@ -2207,11 +2207,13 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
   want <- L$params$orientation %||% "auto"
   # Per segment: choose an orientation whose capacity holds the label, else NA
-  # (dropped). "auto" tries tangential -> radial -> horizontal.
+  # (dropped). "auto" tries tangential -> radial (horizontal is modelled with the
+  # same wedge-box capacity as tangential, so it adds nothing as an auto fallback
+  # and is offered only on explicit `orientation = "horizontal"`).
   fit_orient <- function(i) {
     tang <- arc_mm[i] >= lw[i] && rad_mm[i] >= lh
     radial <- rad_mm[i] >= lw[i] && arc_mm[i] >= lh
-    horiz <- arc_mm[i] >= lw[i] && rad_mm[i] >= lh # wedge box near rmid holds it
+    horiz <- arc_mm[i] >= lw[i] && rad_mm[i] >= lh # same box as tangential
     if (want == "tangential") {
       return(if (tang) "tangential" else NA_character_)
     }
@@ -2535,7 +2537,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   lwd <- .aes_param(L, "linewidth", 1)
   lty <- .resolve_lty(L, scales, n)
   band <- scales$x$band_width %||% .resolution(xn)
-  half <- (.aes_param(L, "width", 0.5) * band) / 2
+  # A mapped `width` lands in values (a constant one in params); read values first
+  # so a per-row cap width is honoured, not silently ignored.
+  width <- rep_len(L$values$width %||% .aes_param(L, "width", 0.5), n)
+  half <- (width * band) / 2
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
@@ -2545,8 +2550,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     x1 <- xn[idx]
     y1 <- ymax[idx]
     if (caps) {
-      x0 <- c(x0, xn[idx] - half, xn[idx] - half)
-      x1 <- c(x1, xn[idx] + half, xn[idx] + half)
+      x0 <- c(x0, xn[idx] - half[idx], xn[idx] - half[idx])
+      x1 <- c(x1, xn[idx] + half[idx], xn[idx] + half[idx])
       y0 <- c(y0, ymin[idx], ymax[idx])
       y1 <- c(y1, ymin[idx], ymax[idx])
     }
@@ -3200,7 +3205,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
-  a <- .aes_param(L, "alpha", NA_real_)
+  # One batched hexagon_grob carries a single scalar alpha, so a mapped alpha can
+  # only apply as a representative (its first value), but honour the trained alpha
+  # scale rather than reading the constant param alone (which ignored it entirely).
+  a <- .aes_alpha(L, scales, NA_real_)[1]
   r <- (L$values$width %||% 1)[1]
   w_full <- 2 * r # full x extent (width is the x circumradius)
   h_full <- (L$values$height %||% (r * sqrt(3)))[1] # full y extent

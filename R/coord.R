@@ -203,6 +203,8 @@ CoordSpec <- S7::new_class(
 #' @export
 coord_cartesian <- function(plot, xlim = NULL, ylim = NULL) {
   .check_plot(plot)
+  .check_continuous_limits(xlim, "xlim")
+  .check_continuous_limits(ylim, "ylim")
   plot@coord <- CoordSpec(kind = "cartesian", xlim = xlim, ylim = ylim)
   plot
 }
@@ -211,6 +213,8 @@ coord_cartesian <- function(plot, xlim = NULL, ylim = NULL) {
 #' @export
 coord_flip <- function(plot, xlim = NULL, ylim = NULL) {
   .check_plot(plot)
+  .check_continuous_limits(xlim, "xlim")
+  .check_continuous_limits(ylim, "ylim")
   plot@coord <- CoordSpec(kind = "flip", xlim = xlim, ylim = ylim)
   plot
 }
@@ -219,6 +223,8 @@ coord_flip <- function(plot, xlim = NULL, ylim = NULL) {
 #' @export
 coord_fixed <- function(plot, ratio = 1, xlim = NULL, ylim = NULL) {
   .check_plot(plot)
+  .check_continuous_limits(xlim, "xlim")
+  .check_continuous_limits(ylim, "ylim")
   plot@coord <- CoordSpec(
     kind = "fixed",
     xlim = xlim,
@@ -260,7 +266,7 @@ coord_equal <- function(plot, ratio = 1, xlim = NULL, ylim = NULL) {
 coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
   .check_plot(plot)
   theta <- rlang::arg_match0(theta, c("x", "y"))
-  if (!direction %in% c(1, -1)) {
+  if (length(direction) != 1L || !direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }
   plot@coord <- CoordSpec(
@@ -300,7 +306,7 @@ coord_radial <- function(
 ) {
   .check_plot(plot)
   theta <- rlang::arg_match0(theta, c("x", "y"))
-  if (!direction %in% c(1, -1)) {
+  if (length(direction) != 1L || !direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }
   .check_inner_radius(inner_radius)
@@ -408,6 +414,8 @@ coord_sf <- function(
   graticule_labels = TRUE
 ) {
   .check_plot(plot)
+  .check_continuous_limits(xlim, "xlim")
+  .check_continuous_limits(ylim, "ylim")
   grat <- if (isTRUE(graticule)) {
     list(labels = graticule_labels)
   } else if (is.list(graticule)) {
