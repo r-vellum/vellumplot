@@ -153,7 +153,10 @@ ScaleSpec <- S7::new_class(
   package = "vellumplot",
   properties = list(
     aesthetic = S7::class_character, # "x" | "y" | "color" | "fill" | "size" | "shape"
-    type = S7::class_character, # "continuous" | "discrete" | "binned"
+    # Default "" (not character(0)) means "infer while training"; a zero-length
+    # value would make `type %in% ...` return logical(0) and crash `||`/`&&` on
+    # the position path (guide-only scales never set `type`).
+    type = S7::new_property(S7::class_character, default = ""),
     domain = S7::new_property(S7::class_any, default = NULL), # limits
     palette = S7::new_property(S7::class_any, default = NULL), # colours / shapes
     name = S7::new_property(S7::class_any, default = NULL),

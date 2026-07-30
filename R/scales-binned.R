@@ -31,9 +31,16 @@ NULL
       ),
       equal = seq(min(v), max(v), length.out = n + 1),
       pretty = {
-        p <- pretty(v, n = n)
-        # keep the pretty cuts strictly covering the data range
-        p[p >= min(v) - 1e-9 & p <= max(v) + 1e-9]
+        p <- sort(unique(pretty(v, n = n)))
+        # Keep the cuts that *bracket* the data: the largest cut <= min and the
+        # smallest cut >= max, plus everything between. Trimming to strictly
+        # inside the range (the old behaviour) dropped the outer cuts and left
+        # values below the first / above the last cut unclassified.
+        lo <- which(p <= min(v))
+        hi <- which(p >= max(v))
+        i0 <- if (length(lo)) max(lo) else 1L
+        i1 <- if (length(hi)) min(hi) else length(p)
+        p[i0:i1]
       }
     )
     brks <- sort(unique(as.numeric(brks)))

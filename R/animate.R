@@ -258,7 +258,10 @@ animate <- function(plot, nframes = 50, fps = 25) {
   base@ease <- NULL
   state_spec <- function(level) {
     s <- base
-    s@data <- plot@data[key == level, , drop = FALSE]
+    # `which()` (not a bare logical mask): `key` is a factor and rows with a
+    # non-finite state value carry `key = NA`, so `key == level` would otherwise
+    # inject an all-NA row into every keyframe.
+    s@data <- plot@data[which(key == level), , drop = FALSE]
     s
   }
 
