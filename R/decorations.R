@@ -341,7 +341,13 @@ mark_compass <- function(
 # Nice degree breaks within a lon/lat range.
 .grat_breaks <- function(rng) {
   b <- pretty(rng, n = 5)
-  b[b >= rng[1] & b <= rng[2]]
+  b <- b[b >= rng[1] & b <= rng[2]]
+  # A range too narrow for any pretty cut still deserves a gridline: fall back to
+  # the midpoint so a valid CRS never renders a blank graticule.
+  if (!length(b)) {
+    b <- mean(rng)
+  }
+  b
 }
 
 # Format a longitude / latitude break as a degree label (e.g. "80W", "40N" with
@@ -447,8 +453,12 @@ mark_compass <- function(
   # to inherit. `graticule = TRUE` is an explicit opt-in, so fall back to a plain
   # default rather than crash on the blank element.
   grat_default <- element_line(colour = "grey85", linewidth = 0.3)
-  if (.is_blank(el_lon)) el_lon <- grat_default
-  if (.is_blank(el_lat)) el_lat <- grat_default
+  if (.is_blank(el_lon)) {
+    el_lon <- grat_default
+  }
+  if (.is_blank(el_lat)) {
+    el_lat <- grat_default
+  }
   gp_lon <- .el_gpar_line(el_lon)
   gp_lat <- .el_gpar_line(el_lat)
   sk <- .el_sketch(el_lon, 8L)

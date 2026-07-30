@@ -74,3 +74,44 @@ test_that("mark_hex honours a mapped alpha via the trained scale", {
   f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
 })
+
+# --- 5C: scale/coord/stat robustness ----------------------------------------
+
+test_that("coord_polar/coord_radial reject a non-scalar direction cleanly", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_error(coord_polar(p, direction = c(1, -1)), "direction")
+  expect_error(coord_radial(p, direction = c(1, -1)), "direction")
+  expect_no_error(coord_polar(p, direction = -1))
+})
+
+test_that(".merge_stat keeps an after_stat() mapping on x", {
+  L <- list(
+    values = list(),
+    types = list(),
+    after = list(x = rlang::quo(count * 2))
+  )
+  sdf <- data.frame(x = c(1, 2, 3), count = c(10, 20, 30))
+  merged <- vellumplot:::.merge_stat(L, sdf)
+  # x is the after_stat expression, not clobbered by sdf$x.
+  expect_identical(merged$values$x, c(20, 40, 60))
+})
+
+test_that("scale_alpha/size reject an out-of-bounds output range", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_error(scale_alpha(p, range = c(-0.2, 1)))
+  expect_error(scale_alpha(p, range = c(0, 2)))
+  expect_error(scale_size(p, range = c(-1, 5)))
+  expect_no_error(scale_alpha(p, range = c(0.1, 0.9)))
+  expect_no_error(scale_size(p, range = c(1, 6)))
+})
+
+test_that(".grat_breaks always yields at least one break", {
+  for (rng in list(
+    c(-100, 100),
+    c(0.3, 0.7),
+    c(1.0000001, 1.0000002),
+    c(5, 5)
+  )) {
+    expect_gte(length(vellumplot:::.grat_breaks(rng)), 1L)
+  }
+})

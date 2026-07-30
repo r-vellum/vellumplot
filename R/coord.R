@@ -266,7 +266,7 @@ coord_equal <- function(plot, ratio = 1, xlim = NULL, ylim = NULL) {
 coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
   .check_plot(plot)
   theta <- rlang::arg_match0(theta, c("x", "y"))
-  if (!direction %in% c(1, -1)) {
+  if (length(direction) != 1L || !direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }
   plot@coord <- CoordSpec(
@@ -306,7 +306,7 @@ coord_radial <- function(
 ) {
   .check_plot(plot)
   theta <- rlang::arg_match0(theta, c("x", "y"))
-  if (!direction %in% c(1, -1)) {
+  if (length(direction) != 1L || !direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }
   .check_inner_radius(inner_radius)

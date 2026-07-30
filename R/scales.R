@@ -24,6 +24,8 @@ NULL
   x,
   arg = "limits",
   numeric = FALSE,
+  lower = NULL,
+  upper = NULL,
   call = rlang::caller_env()
 ) {
   if (is.null(x)) {
@@ -44,6 +46,21 @@ NULL
         "{.arg {arg}} must be numeric.",
         i = "Got {.obj_type_friendly {x}}."
       ),
+      call = call
+    )
+  }
+  # Output-range bounds (e.g. opacity in [0, 1], size/width non-negative): reject
+  # a range outside the aesthetic's valid interval up front rather than emitting
+  # silently invalid opacities/sizes.
+  if (numeric && !is.null(lower) && any(x < lower)) {
+    cli::cli_abort(
+      "{.arg {arg}} must be >= {lower}; got {.val {x}}.",
+      call = call
+    )
+  }
+  if (numeric && !is.null(upper) && any(x > upper)) {
+    cli::cli_abort(
+      "{.arg {arg}} must be <= {upper}; got {.val {x}}.",
       call = call
     )
   }
@@ -792,7 +809,7 @@ scale_size <- function(
 ) {
   .check_plot(plot)
   .check_continuous_limits(limits, "limits", numeric = TRUE)
-  .check_continuous_limits(range, "range", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0)
   .add_scale(
     plot,
     ScaleSpec(
@@ -874,7 +891,7 @@ scale_edge_width <- function(
 ) {
   .check_plot(plot)
   .check_continuous_limits(limits, "limits", numeric = TRUE)
-  .check_continuous_limits(range, "range", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0)
   .add_scale(
     plot,
     ScaleSpec(
@@ -967,7 +984,7 @@ scale_edge_alpha <- function(
 ) {
   .check_plot(plot)
   .check_continuous_limits(limits, "limits", numeric = TRUE)
-  .check_continuous_limits(range, "range", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0, upper = 1)
   .add_scale(
     plot,
     ScaleSpec(
@@ -1159,7 +1176,7 @@ scale_alpha <- function(
 ) {
   .check_plot(plot)
   .check_continuous_limits(limits, "limits", numeric = TRUE)
-  .check_continuous_limits(range, "range", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0, upper = 1)
   .add_scale(
     plot,
     ScaleSpec(
