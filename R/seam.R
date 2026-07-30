@@ -59,6 +59,147 @@ NULL
   list(scales = list(cartesian = TRUE, x = x, y = y))
 }
 
+# --- .draw_plot() compatibility guards --------------------------------------
+# Each aborts on an unsupported combination up front (before drawing), with a
+# clear message rather than a low-level failure deeper in the pipeline. Split out
+# of .draw_plot() so the orchestrator reads as a sequence of named checks.
+
+# Layout marks (sankey/hierarchy/chord) compute one global layout in an axis-free
+# panel; they cannot be faceted or share a panel with other marks. Guard *before*
+# building panels: faceting would resolve the flow/hierarchy per panel (splitting
+# it) and fail obscurely inside the layout instead.
+.check_layout_mark_solo <- function(spec) {
+  if (
+    !any(vapply(spec@layers, function(l) l@mark %in% .LAYOUT_MARKS, logical(1)))
+  ) {
+    return(invisible())
+  }
+  if (length(spec@layers) != 1L) {
+    cli::cli_abort(
+      "A layout plot (sankey/hierarchy/chord) takes no other layers."
+    )
+  }
+  if (!is.null(spec@facet)) {
+    cli::cli_abort(
+      "A layout plot (sankey/hierarchy/chord) cannot be faceted."
+    )
+  }
+  invisible()
+}
+
+# Marginal plots (add_marginal()) reserve tracks around a single panel and reuse
+# its scales; they are incompatible with facets, non-Cartesian coords, and a
+# locked aspect (which would distort the panel under `respect = TRUE`).
+.check_marginal_compat <- function(spec, built, co, rt) {
+  if (is.null(spec@marginal)) {
+    return(invisible())
+  }
+  if (built$fa$R != 1L || built$fa$C != 1L) {
+    cli::cli_abort(
+      "{.fn add_marginal} is not supported with facets (single panel only)."
+    )
+  }
+  if (!identical(co@kind, "cartesian")) {
+    cli::cli_abort(
+      "{.fn add_marginal} requires the default Cartesian coordinate system (no flip/polar/fixed/sf)."
+    )
+  }
+  if (!is.null(rt[["aspect.ratio"]])) {
+    cli::cli_abort(
+      "{.fn add_marginal} is incompatible with a locked aspect ratio."
+    )
+  }
+  invisible()
+}
+
+# coord_trans warps only the marks that route through the value-based position
+# seam (.xy_units / .xy_path / .xy_area / .rect_units). Marks built from pre-made
+# unit segments (rule/segment/interval/edges/boxplot) or rasters
+# (datashade/raster) would misplace in the warped viewport, so refuse them rather
+# than silently clip. bar/area also draw from a zero baseline, which a nonlinear
+# value-axis transform cannot place (0 -> -Inf under log).
+.check_coord_trans_marks <- function(spec, co) {
+  if (!identical(co@kind, "trans")) {
+    return(invisible())
+  }
+  ok_marks <- c(
+    "point",
+    "nodes",
+    "line",
+    "smooth",
+    "ribbon",
+    "area",
+    "step",
+    "text",
+    "label",
+    "image",
+    "node_text",
+    "tile",
+    "rect",
+    "bar",
+    "violin",
+    "ridgeline",
+    "hex",
+    "sf",
+    "contour",
+    "contour_filled"
+  )
+  marks <- unique(vapply(spec@layers, function(L) L@mark, character(1)))
+  bad <- setdiff(marks, ok_marks)
+  if (length(bad)) {
+    cli::cli_abort(c(
+      "{.fn coord_trans} does not yet support the {.val {bad}} mark{?s}.",
+      i = "Supported: points, lines, areas/ribbons, bars, tiles, smooths, text, and similar.",
+      i = "Segment/rule/interval, boxplot, edges, and raster/datashade marks are not warped yet."
+    ))
+  }
+  # (An x-only warp leaves the y baseline linear, so allow it.)
+  zero_marks <- intersect(marks, c("bar", "area"))
+  if (length(zero_marks) && !.is_linear_trans(co@ytrans)) {
+    cli::cli_abort(c(
+      "{.fn coord_trans} cannot place the zero baseline of the {.val {zero_marks}} mark{?s} on a nonlinear {.field y} axis.",
+      i = "Transform the scale instead: {.code scale_y_continuous(trans = ...)}."
+    ))
+  }
+  invisible()
+}
+
+# Secondary axes (sec_axis()/dup_axis()) are v1-scoped to the default Cartesian
+# system with shared position scales; reject the unsupported combinations up
+# front with a clear message rather than mis-drawing.
+.check_sec_axis_compat <- function(spec, built, flip, polar, trans) {
+  sec_aes <- unique(vapply(
+    Filter(function(s) !is.null(s@sec_axis), spec@scales),
+    function(s) s@aesthetic,
+    character(1)
+  ))
+  if (!length(sec_aes)) {
+    return(invisible())
+  }
+  if (flip || polar || trans) {
+    cli::cli_abort(c(
+      "A secondary axis is only supported with the default Cartesian coordinate system.",
+      i = "Remove {.fn coord_flip} / {.fn coord_polar} / {.fn coord_trans}, or drop the {.arg sec.axis}."
+    ))
+  }
+  if (!is.null(spec@marginal)) {
+    cli::cli_abort(
+      "A secondary axis is not supported together with {.fn add_marginal}."
+    )
+  }
+  if (built$free_x && "x" %in% sec_aes) {
+    cli::cli_abort(
+      "A secondary {.field x} axis requires a shared {.field x} scale (not {.code scales = \"free_x\"})."
+    )
+  }
+  if (built$free_y && "y" %in% sec_aes) {
+    cli::cli_abort(
+      "A secondary {.field y} axis requires a shared {.field y} scale (not {.code scales = \"free_y\"})."
+    )
+  }
+  invisible()
+}
+
 # Compile one plot: spec -> build panels (facet split + resolve + train) ->
 # layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
 # grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
@@ -124,49 +265,13 @@ NULL
     sf_crs <- proj$crs
   }
 
-  # Layout marks (sankey/hierarchy) compute one global layout in an axis-free
-  # panel; they cannot be faceted or share a panel with other marks. Guard
-  # *before* building panels: faceting would resolve the flow/hierarchy per panel
-  # (splitting it) and fail obscurely inside the layout instead.
-  if (
-    any(vapply(spec@layers, function(l) l@mark %in% .LAYOUT_MARKS, logical(1)))
-  ) {
-    if (length(spec@layers) != 1L) {
-      cli::cli_abort(
-        "A layout plot (sankey/hierarchy/chord) takes no other layers."
-      )
-    }
-    if (!is.null(spec@facet)) {
-      cli::cli_abort(
-        "A layout plot (sankey/hierarchy/chord) cannot be faceted."
-      )
-    }
-  }
+  .check_layout_mark_solo(spec)
 
   built <- .build_panels(spec, frozen_scales = frozen_scales)
   built$sf_geographic <- sf_geographic
   built$sf_crs <- sf_crs
 
-  # Marginal plots (add_marginal()) reserve tracks around a single panel and reuse
-  # its scales; they are incompatible with facets, non-Cartesian coords, and a
-  # locked aspect (which would distort the panel under `respect = TRUE`).
-  if (!is.null(spec@marginal)) {
-    if (built$fa$R != 1L || built$fa$C != 1L) {
-      cli::cli_abort(
-        "{.fn add_marginal} is not supported with facets (single panel only)."
-      )
-    }
-    if (!identical(co@kind, "cartesian")) {
-      cli::cli_abort(
-        "{.fn add_marginal} requires the default Cartesian coordinate system (no flip/polar/fixed/sf)."
-      )
-    }
-    if (!is.null(rt[["aspect.ratio"]])) {
-      cli::cli_abort(
-        "{.fn add_marginal} is incompatible with a locked aspect ratio."
-      )
-    }
-  }
+  .check_marginal_compat(spec, built, co, rt)
   # Reserved resolved-theme keys: `.sketch` / `.interactive` are injected into the
   # resolved theme `rt` as a per-plot transport, but they are NOT theme members --
   # they come from the spec, not from theme(), so they bypass the theme tree
@@ -208,85 +313,8 @@ NULL
   tfy <- if (trans) .resolve_coord_trans(co@ytrans, "y") else NULL
   warp_h <- function(sc) if (trans) .warp_scale(sc, tfx) else sc
   warp_v <- function(sc) if (trans) .warp_scale(sc, tfy) else sc
-  # coord_trans warps only the marks that route through the value-based position
-  # seam (.xy_units / .xy_path / .xy_area / .rect_units). Marks built from
-  # pre-made unit segments (rule/segment/interval/edges/boxplot) or rasters
-  # (datashade/raster) would misplace in the warped viewport, so refuse them
-  # rather than silently clip.
-  if (trans) {
-    ok_marks <- c(
-      "point",
-      "nodes",
-      "line",
-      "smooth",
-      "ribbon",
-      "area",
-      "step",
-      "text",
-      "label",
-      "image",
-      "node_text",
-      "tile",
-      "rect",
-      "bar",
-      "violin",
-      "ridgeline",
-      "hex",
-      "sf",
-      "contour",
-      "contour_filled"
-    )
-    marks <- unique(vapply(spec@layers, function(L) L@mark, character(1)))
-    bad <- setdiff(marks, ok_marks)
-    if (length(bad)) {
-      cli::cli_abort(c(
-        "{.fn coord_trans} does not yet support the {.val {bad}} mark{?s}.",
-        i = "Supported: points, lines, areas/ribbons, bars, tiles, smooths, text, and similar.",
-        i = "Segment/rule/interval, boxplot, edges, and raster/datashade marks are not warped yet."
-      ))
-    }
-    # bar/area draw from a zero baseline, which a nonlinear value-axis transform
-    # cannot place (0 -> -Inf under log). Refuse rather than draw a meaningless
-    # log-baseline bar. (An x-only warp leaves the y baseline linear, so allow it.)
-    zero_marks <- intersect(marks, c("bar", "area"))
-    if (length(zero_marks) && !.is_linear_trans(co@ytrans)) {
-      cli::cli_abort(c(
-        "{.fn coord_trans} cannot place the zero baseline of the {.val {zero_marks}} mark{?s} on a nonlinear {.field y} axis.",
-        i = "Transform the scale instead: {.code scale_y_continuous(trans = ...)}."
-      ))
-    }
-  }
-  # Secondary axes (sec_axis()/dup_axis()) are v1-scoped to the default Cartesian
-  # system with shared position scales; reject the unsupported combinations up
-  # front with a clear message rather than mis-drawing.
-  sec_aes <- unique(vapply(
-    Filter(function(s) !is.null(s@sec_axis), spec@scales),
-    function(s) s@aesthetic,
-    character(1)
-  ))
-  if (length(sec_aes)) {
-    if (flip || polar || trans) {
-      cli::cli_abort(c(
-        "A secondary axis is only supported with the default Cartesian coordinate system.",
-        i = "Remove {.fn coord_flip} / {.fn coord_polar} / {.fn coord_trans}, or drop the {.arg sec.axis}."
-      ))
-    }
-    if (!is.null(spec@marginal)) {
-      cli::cli_abort(
-        "A secondary axis is not supported together with {.fn add_marginal}."
-      )
-    }
-    if (built$free_x && "x" %in% sec_aes) {
-      cli::cli_abort(
-        "A secondary {.field x} axis requires a shared {.field x} scale (not {.code scales = \"free_x\"})."
-      )
-    }
-    if (built$free_y && "y" %in% sec_aes) {
-      cli::cli_abort(
-        "A secondary {.field y} axis requires a shared {.field y} scale (not {.code scales = \"free_y\"})."
-      )
-    }
-  }
+  .check_coord_trans_marks(spec, co)
+  .check_sec_axis_compat(spec, built, flip, polar, trans)
   lay <- .build_layout(
     built,
     guides,
