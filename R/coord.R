@@ -55,6 +55,11 @@ CoordSpec <- S7::new_class(
 # clipped square panel; `rmin` is the donut hole. `theta_map`/`r_map` convert a
 # trained-scale native value to an angle / panel-native radius; emitters and the
 # polar guide drawer use these and never see the convention math.
+# The package's 12-o'clock / clockwise polar convention: a fraction of the circle
+# (0 at the top, increasing clockwise) mapped to an angle in radians. Shared by
+# the chord and hierarchy (sunburst) diagrams.
+.frac_to_angle <- function(frac) pi / 2 - 2 * pi * frac
+
 .polar_ctx <- function(co, x_sc, y_sc) {
   theta_aes <- co@theta
   tsc <- if (theta_aes == "x") x_sc else y_sc
