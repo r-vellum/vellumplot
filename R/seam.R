@@ -222,6 +222,199 @@ NULL
   list(spec = spec, co = co, sf_geographic = sf_geographic, sf_crs = sf_crs)
 }
 
+# Push the plot's outer scaffold and leave the cursor inside `panel-area`: an
+# outer mm-margin grid around a single `null` cell (a grid, not an inset viewport,
+# because vellum disallows the mixed npc/mm unit arithmetic an inset would need),
+# the plot background behind the margins, the margin-inset centre cell, and the
+# panel-area layout grid. Structural viewports carry stable `name`s so vellum's
+# layout-debug tools work on a compiled plot: `render(scene, debug = TRUE)`
+# outlines them and `why_size(scene, "<name>")` explains a region's extent (the
+# "plot" / "plot-background" / "panel-area" / "panel-<r>-<c>" / "axis-*" /
+# "strip-*" / "legend" / title-band names are the query keys). Leaves three
+# viewports pushed; the caller pops them after drawing.
+.dp_push_frame <- function(scene, lay, rt) {
+  m <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      name = "plot",
+      layout = vellum::grid_layout(
+        c(
+          vellum::vl_unit(m[4], "mm"),
+          vellum::vl_unit(1, "null"),
+          vellum::vl_unit(m[2], "mm")
+        ),
+        c(
+          vellum::vl_unit(m[1], "mm"),
+          vellum::vl_unit(1, "null"),
+          vellum::vl_unit(m[3], "mm")
+        )
+      )
+    )
+  )
+
+  # plot background fills the whole page region (behind the margins too)
+  pbg <- rt[["plot.background"]]
+  if (!.is_blank(pbg)) {
+    scene <- vellum::push(
+      scene,
+      vellum::vl_viewport(
+        row = 1,
+        col = 1,
+        rowspan = 3,
+        colspan = 3,
+        name = "plot-background"
+      )
+    )
+    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pbg)))
+    scene <- vellum::pop(scene)
+  }
+
+  # the real layout lives in the centre cell, inset by the margins
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 2, col = 2))
+  vellum::push(
+    scene,
+    vellum::vl_viewport(
+      name = "panel-area",
+      layout = vellum::grid_layout(
+        lay$widths,
+        lay$heights,
+        respect = lay$respect
+      )
+    )
+  )
+}
+
+# Draw every panel: background + gridlines + marks, each in its own native
+# scales, into the pushed `panel-area` grid. A polar panel uses a fixed symmetric
+# [-1, 1] square scale (the polar context maps data to cartesian within it) and
+# its own circular gridlines/labels; a coord_trans panel spans the warped domain;
+# the cartesian branch (incl. coord_flip) carries the pan group, clip mask, and
+# scale meta. See `dp` (assembled in `.draw_plot`) for the threaded state.
+.dp_draw_panels <- function(scene, dp) {
+  spec <- dp$spec
+  co <- dp$co
+  built <- dp$built
+  lay <- dp$lay
+  rt <- dp$rt
+  flip <- dp$flip
+  polar <- dp$polar
+  trans <- dp$trans
+  plot_sketch <- dp$plot_sketch
+  panel_clip <- dp$panel_clip
+  hscale <- dp$hscale
+  vscale <- dp$vscale
+  for (p in built$panels) {
+    hsc <- hscale(p)
+    vsc <- vscale(p)
+    psc <- list(
+      x = p$x_sc,
+      y = p$y_sc,
+      color = built$scales$color,
+      size = built$scales$size,
+      shape = built$scales$shape,
+      pattern = built$scales$pattern,
+      edge_width = built$scales$edge_width,
+      alpha = built$scales$alpha,
+      linetype = built$scales$linetype,
+      edge_color = built$scales$edge_color,
+      edge_alpha = built$scales$edge_alpha,
+      edge_linetype = built$scales$edge_linetype,
+      flip = flip,
+      polar = NULL,
+      trans = NULL,
+      sketch = plot_sketch,
+      sf_geographic = isTRUE(built$sf_geographic),
+      sf_crs = built$sf_crs
+    )
+    psc$graph <- .graph_caps(
+      p$resolved,
+      spec@edge_data,
+      nrow(spec@data),
+      psc
+    )
+    pname <- sprintf("panel-%d-%d", p$r, p$c)
+    if (polar) {
+      ctx <- .polar_ctx(co, p$x_sc, p$y_sc)
+      psc$polar <- ctx
+      scene <- vellum::push(
+        scene,
+        vellum::vl_viewport(
+          row = lay$panel_row[p$r],
+          col = lay$panel_col[p$c],
+          xscale = c(-1, 1),
+          yscale = c(-1, 1),
+          clip = TRUE,
+          name = pname
+        )
+      )
+      scene <- .draw_panel_polar(scene, ctx, rt)
+    } else if (trans) {
+      # Nonlinear display remap: the panel viewport spans the warped domain; marks
+      # warp via `psc$trans`, gridlines/ticks via break/domain-warped scale copies.
+      ctx <- .trans_ctx(co, p$x_sc, p$y_sc)
+      psc$trans <- ctx
+      scene <- vellum::push(
+        scene,
+        vellum::vl_viewport(
+          row = lay$panel_row[p$r],
+          col = lay$panel_col[p$c],
+          xscale = ctx$x_dom,
+          yscale = ctx$y_dom,
+          clip = panel_clip,
+          name = pname,
+          # A linear (e.g. identity) coord_trans is effectively cartesian, so it
+          # stays pannable and byte-identical to the plain plot; a nonlinear warp is
+          # not (a linear pan/zoom wouldn't be axis-aware there).
+          pannable = .is_linear_trans(co@xtrans) && .is_linear_trans(co@ytrans)
+        )
+      )
+      scene <- .draw_panel_bg(
+        scene,
+        .warp_scale(hsc, ctx$x_map),
+        .warp_scale(vsc, ctx$y_map),
+        rt
+      )
+    } else {
+      scene <- vellum::push(
+        scene,
+        vellum::vl_viewport(
+          row = lay$panel_row[p$r],
+          col = lay$panel_col[p$c],
+          xscale = hsc$domain,
+          yscale = vsc$domain,
+          clip = panel_clip,
+          # A clip_to()/set_mask() geometry mask, built in this panel's native
+          # coords (NULL when none is set, leaving the common path untouched).
+          mask = .clip_mask(spec@clip, hsc$domain, vsc$domain),
+          name = pname,
+          meta = .panel_scales_meta(hsc, vsc),
+          # Clip-stable pan group so a host (vellumwidget) can pan/zoom this panel's
+          # marks while its clip + the axes stay fixed (axis-aware zoom). Inert for
+          # static rendering. This cartesian branch (incl. coord_flip) is pannable;
+          # a linear coord_trans matches it (above); polar / nonlinear trans are not.
+          pannable = TRUE
+        )
+      )
+      scene <- .draw_panel_bg(scene, hsc, vsc, rt)
+      if (identical(co@kind, "sf") && !is.null(co@graticule)) {
+        scene <- .draw_graticule(
+          scene,
+          hsc,
+          vsc,
+          rt,
+          built$sf_crs,
+          isTRUE(built$sf_geographic),
+          co@graticule
+        )
+      }
+    }
+    scene <- .compile_marks(scene, p$resolved, psc, panel = pname)
+    scene <- vellum::pop(scene)
+  }
+  scene
+}
+
 # Compile one plot: spec -> build panels (facet split + resolve + train) ->
 # layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
 # grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
@@ -336,176 +529,33 @@ NULL
     page_height = spec@height
   )
 
-  # Outer margin grid: absolute mm tracks around a single `null` cell holding the
-  # real layout. (Done as a grid rather than an inset viewport because vellum
-  # disallows the mixed npc/mm unit arithmetic an inset would need.)
-  # Structural viewports carry stable `name`s so vellum's layout-debug tools work
-  # on a compiled plot: `render(scene, debug = TRUE)` outlines and labels them,
-  # and `why_size(scene, "<name>")` explains a region's resolved extent. The
-  # names below ("plot", "panel-area", "panel-<r>-<c>", "axis-*", "strip-*",
-  # "legend", title bands) are the query keys.
-  m <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      name = "plot",
-      layout = vellum::grid_layout(
-        c(
-          vellum::vl_unit(m[4], "mm"),
-          vellum::vl_unit(1, "null"),
-          vellum::vl_unit(m[2], "mm")
-        ),
-        c(
-          vellum::vl_unit(m[1], "mm"),
-          vellum::vl_unit(1, "null"),
-          vellum::vl_unit(m[3], "mm")
-        )
-      )
-    )
+  # The draw context threaded to the panel/axis/legend drawers below, so each is
+  # a `(scene, dp)` helper rather than a call with a dozen positional locals.
+  # `hscale`/`vscale` (per-panel h/v role picks) and `warp_h`/`warp_v` (coord_trans
+  # axis warps) are closures captured here; everything else is a plain value.
+  dp <- list(
+    spec = spec,
+    co = co,
+    built = built,
+    lay = lay,
+    rt = rt,
+    guides = guides,
+    flip = flip,
+    polar = polar,
+    trans = trans,
+    plot_sketch = plot_sketch,
+    panel_clip = panel_clip,
+    hshared = hshared,
+    vshared = vshared,
+    hscale = hscale,
+    vscale = vscale,
+    warp_h = warp_h,
+    warp_v = warp_v
   )
 
-  # plot background fills the whole page region (behind the margins too)
-  pbg <- rt[["plot.background"]]
-  if (!.is_blank(pbg)) {
-    scene <- vellum::push(
-      scene,
-      vellum::vl_viewport(
-        row = 1,
-        col = 1,
-        rowspan = 3,
-        colspan = 3,
-        name = "plot-background"
-      )
-    )
-    scene <- vellum::draw(scene, vellum::rect_grob(gp = .el_gpar_rect(pbg)))
-    scene <- vellum::pop(scene)
-  }
+  scene <- .dp_push_frame(scene, lay, rt)
 
-  # the real layout lives in the centre cell, inset by the margins
-  scene <- vellum::push(scene, vellum::vl_viewport(row = 2, col = 2))
-  scene <- vellum::push(
-    scene,
-    vellum::vl_viewport(
-      name = "panel-area",
-      layout = vellum::grid_layout(
-        lay$widths,
-        lay$heights,
-        respect = lay$respect
-      )
-    )
-  )
-
-  # panels: background + gridlines + marks, each in its own native scales. A
-  # polar panel uses a fixed symmetric [-1, 1] square scale (the polar context
-  # maps data to cartesian within it) and its own circular gridlines/labels.
-  for (p in built$panels) {
-    hsc <- hscale(p)
-    vsc <- vscale(p)
-    psc <- list(
-      x = p$x_sc,
-      y = p$y_sc,
-      color = built$scales$color,
-      size = built$scales$size,
-      shape = built$scales$shape,
-      pattern = built$scales$pattern,
-      edge_width = built$scales$edge_width,
-      alpha = built$scales$alpha,
-      linetype = built$scales$linetype,
-      edge_color = built$scales$edge_color,
-      edge_alpha = built$scales$edge_alpha,
-      edge_linetype = built$scales$edge_linetype,
-      flip = flip,
-      polar = NULL,
-      trans = NULL,
-      sketch = plot_sketch,
-      sf_geographic = isTRUE(built$sf_geographic),
-      sf_crs = built$sf_crs
-    )
-    psc$graph <- .graph_caps(
-      p$resolved,
-      spec@edge_data,
-      nrow(spec@data),
-      psc
-    )
-    pname <- sprintf("panel-%d-%d", p$r, p$c)
-    if (polar) {
-      ctx <- .polar_ctx(co, p$x_sc, p$y_sc)
-      psc$polar <- ctx
-      scene <- vellum::push(
-        scene,
-        vellum::vl_viewport(
-          row = lay$panel_row[p$r],
-          col = lay$panel_col[p$c],
-          xscale = c(-1, 1),
-          yscale = c(-1, 1),
-          clip = TRUE,
-          name = pname
-        )
-      )
-      scene <- .draw_panel_polar(scene, ctx, rt)
-    } else if (trans) {
-      # Nonlinear display remap: the panel viewport spans the warped domain; marks
-      # warp via `psc$trans`, gridlines/ticks via break/domain-warped scale copies.
-      ctx <- .trans_ctx(co, p$x_sc, p$y_sc)
-      psc$trans <- ctx
-      scene <- vellum::push(
-        scene,
-        vellum::vl_viewport(
-          row = lay$panel_row[p$r],
-          col = lay$panel_col[p$c],
-          xscale = ctx$x_dom,
-          yscale = ctx$y_dom,
-          clip = panel_clip,
-          name = pname,
-          # A linear (e.g. identity) coord_trans is effectively cartesian, so it
-          # stays pannable and byte-identical to the plain plot; a nonlinear warp is
-          # not (a linear pan/zoom wouldn't be axis-aware there).
-          pannable = .is_linear_trans(co@xtrans) && .is_linear_trans(co@ytrans)
-        )
-      )
-      scene <- .draw_panel_bg(
-        scene,
-        .warp_scale(hsc, ctx$x_map),
-        .warp_scale(vsc, ctx$y_map),
-        rt
-      )
-    } else {
-      scene <- vellum::push(
-        scene,
-        vellum::vl_viewport(
-          row = lay$panel_row[p$r],
-          col = lay$panel_col[p$c],
-          xscale = hsc$domain,
-          yscale = vsc$domain,
-          clip = panel_clip,
-          # A clip_to()/set_mask() geometry mask, built in this panel's native
-          # coords (NULL when none is set, leaving the common path untouched).
-          mask = .clip_mask(spec@clip, hsc$domain, vsc$domain),
-          name = pname,
-          meta = .panel_scales_meta(hsc, vsc),
-          # Clip-stable pan group so a host (vellumwidget) can pan/zoom this panel's
-          # marks while its clip + the axes stay fixed (axis-aware zoom). Inert for
-          # static rendering. This cartesian branch (incl. coord_flip) is pannable;
-          # a linear coord_trans matches it (above); polar / nonlinear trans are not.
-          pannable = TRUE
-        )
-      )
-      scene <- .draw_panel_bg(scene, hsc, vsc, rt)
-      if (identical(co@kind, "sf") && !is.null(co@graticule)) {
-        scene <- .draw_graticule(
-          scene,
-          hsc,
-          vsc,
-          rt,
-          built$sf_crs,
-          isTRUE(built$sf_geographic),
-          co@graticule
-        )
-      }
-    }
-    scene <- .compile_marks(scene, p$resolved, psc, panel = pname)
-    scene <- vellum::pop(scene)
-  }
+  scene <- .dp_draw_panels(scene, dp)
 
   # marginal distributions (add_marginal()): drawn into the reserved top/right
   # tracks, sharing the single panel's scales. Single panel, Cartesian only
