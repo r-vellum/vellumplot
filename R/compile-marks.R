@@ -979,6 +979,53 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   list(xc = xc, w = w)
 }
 
+# The shared per-style-group rect draw for the filled rectangular marks (bar,
+# tile, rect): group by fill/alpha/pattern, then draw one `rect_grob` per group
+# from the precomputed centre (`xc`, `yc`) and size (`w`, `h`) vectors. `paint` is
+# a constant fill (e.g. a gradient) that overrides the per-group pattern object.
+.emit_rect_groups <- function(
+  scene,
+  L,
+  scales,
+  xc,
+  yc,
+  w,
+  h,
+  fill,
+  alpha,
+  sk,
+  paint = NULL
+) {
+  n <- L$n
+  gi <- 0L
+  pkey <- .aes_pattern_key(L, scales, n)
+  for (idx in .style_groups(
+    n,
+    c(list(fill = fill, alpha = alpha), if (!is.null(pkey)) list(pat = pkey))
+  )) {
+    r <- .rect_units(scales, xc[idx], yc[idx], w[idx], h[idx])
+    scene <- .draw(
+      scene,
+      vellum::rect_grob(
+        x = r$x,
+        y = r$y,
+        width = r$width,
+        height = r$height,
+        sketch = .sketch_bump(sk, gi),
+        gp = .gp_fill(
+          fill,
+          alpha,
+          idx[1],
+          paint %||% .pattern_obj(scales, pkey, idx[1])
+        )
+      ),
+      rows = idx
+    )
+    gi <- gi + 1L
+  }
+  scene
+}
+
 .emit_bar <- function(scene, L, scales) {
   grad <- .paint_fill(L)
   if (!is.null(scales$polar)) {
@@ -1048,34 +1095,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     ))
   }
 
-  gi <- 0L
-  pkey <- .aes_pattern_key(L, scales, n)
-  for (idx in .style_groups(
-    n,
-    c(list(fill = fill, alpha = alpha), if (!is.null(pkey)) list(pat = pkey))
-  )) {
-    r <- .rect_units(
-      scales,
-      xc[idx],
-      (y0[idx] + y1[idx]) / 2,
-      w[idx],
-      abs(y1[idx] - y0[idx])
-    )
-    scene <- .draw(
-      scene,
-      vellum::rect_grob(
-        x = r$x,
-        y = r$y,
-        width = r$width,
-        height = r$height,
-        sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, alpha, idx[1], .pattern_obj(scales, pkey, idx[1]))
-      ),
-      rows = idx
-    )
-    gi <- gi + 1L
-  }
-  scene
+  .emit_rect_groups(
+    scene,
+    L,
+    scales,
+    xc,
+    (y0 + y1) / 2,
+    w,
+    abs(y1 - y0),
+    fill,
+    alpha,
+    sk
+  )
 }
 
 # A fitted smooth: a confidence ribbon (polygon) under a fitted line, one per
@@ -1421,33 +1452,19 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   h <- rep_len(L$values$height %||% .resolution(yp), n)
   sk <- .mark_sketch(L, scales)
 
-  gi <- 0L
-  pkey <- .aes_pattern_key(L, scales, n)
-  for (idx in .style_groups(
-    n,
-    c(list(fill = fill, alpha = alpha), if (!is.null(pkey)) list(pat = pkey))
-  )) {
-    r <- .rect_units(scales, xp[idx], yp[idx], w[idx], h[idx])
-    scene <- .draw(
-      scene,
-      vellum::rect_grob(
-        x = r$x,
-        y = r$y,
-        width = r$width,
-        height = r$height,
-        sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(
-          fill,
-          alpha,
-          idx[1],
-          paint %||% .pattern_obj(scales, pkey, idx[1])
-        )
-      ),
-      rows = idx
-    )
-    gi <- gi + 1L
-  }
-  scene
+  .emit_rect_groups(
+    scene,
+    L,
+    scales,
+    xp,
+    yp,
+    w,
+    h,
+    fill,
+    alpha,
+    sk,
+    paint = paint
+  )
 }
 
 # A filled rectangle spanning [xmin, xmax] x [ymin, ymax] (from annotate("rect")).
@@ -1469,33 +1486,19 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   sk <- .mark_sketch(L, scales)
 
-  gi <- 0L
-  pkey <- .aes_pattern_key(L, scales, n)
-  for (idx in .style_groups(
-    n,
-    c(list(fill = fill, alpha = alpha), if (!is.null(pkey)) list(pat = pkey))
-  )) {
-    r <- .rect_units(scales, xc[idx], yc[idx], w[idx], h[idx])
-    scene <- .draw(
-      scene,
-      vellum::rect_grob(
-        x = r$x,
-        y = r$y,
-        width = r$width,
-        height = r$height,
-        sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(
-          fill,
-          alpha,
-          idx[1],
-          paint %||% .pattern_obj(scales, pkey, idx[1])
-        )
-      ),
-      rows = idx
-    )
-    gi <- gi + 1L
-  }
-  scene
+  .emit_rect_groups(
+    scene,
+    L,
+    scales,
+    xc,
+    yc,
+    w,
+    h,
+    fill,
+    alpha,
+    sk,
+    paint = paint
+  )
 }
 
 # A heatmap drawn as one raster image (fast path for a complete regular grid).
@@ -2937,6 +2940,28 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# Reconstruct a graph over unique edge endpoints (dropping self-loops), for the
+# edge-bundle and flow-map layouts. Returns the igraph `g`, the unique node
+# coordinates `pts`, and `keep` (the non-loop edge indices, for mapping results
+# back to original-edge aesthetics), or NULL when nothing survives.
+.reconstruct_edge_graph <- function(x0, y0, x1, y1, directed) {
+  loop <- x0 == x1 & y0 == y1
+  keep <- which(!loop)
+  if (!length(keep)) {
+    return(NULL)
+  }
+  src <- cbind(x0[keep], y0[keep])
+  tgt <- cbind(x1[keep], y1[keep])
+  pts <- unique(rbind(src, tgt))
+  key <- function(m) paste(m[, 1L], m[, 2L], sep = "\r")
+  pk <- key(pts)
+  g <- igraph::graph_from_edgelist(
+    cbind(match(key(src), pk), match(key(tgt), pk)),
+    directed = directed
+  )
+  list(g = g, pts = pts, keep = keep)
+}
+
 # Bundled edges: draw each edge as a curved trunk instead of a straight line.
 # The geometry is delegated to edgebundle (the "delegate the algorithm, own the
 # drawing" pattern shared with graphlayouts): reconstruct an igraph + node
@@ -2964,20 +2989,13 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # Reconstruct nodes (unique endpoints) and a directed igraph over them. `keep`
   # drops self-loops (degenerate for bundling); the group->edge index below maps
   # back through it to recover each trunk's original-edge aesthetics.
-  loop <- x0 == x1 & y0 == y1
-  keep <- which(!loop)
-  if (!length(keep)) {
+  rec <- .reconstruct_edge_graph(x0, y0, x1, y1, directed = TRUE)
+  if (is.null(rec)) {
     return(scene)
   }
-  src <- cbind(x0[keep], y0[keep])
-  tgt <- cbind(x1[keep], y1[keep])
-  pts <- unique(rbind(src, tgt))
-  key <- function(m) paste(m[, 1L], m[, 2L], sep = "\r")
-  pk <- key(pts)
-  g <- igraph::graph_from_edgelist(
-    cbind(match(key(src), pk), match(key(tgt), pk)),
-    directed = TRUE
-  )
+  g <- rec$g
+  pts <- rec$pts
+  keep <- rec$keep
 
   type <- L$stat_params$type %||% "force"
   args <- c(
@@ -3032,20 +3050,13 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   x1 <- rep_len(scales$x$map(L$values$xend), n)
   y1 <- rep_len(scales$y$map(L$values$yend), n)
 
-  loop <- x0 == x1 & y0 == y1
-  keep <- which(!loop)
-  if (!length(keep)) {
+  rec <- .reconstruct_edge_graph(x0, y0, x1, y1, directed = FALSE)
+  if (is.null(rec)) {
     return(scene)
   }
-  src <- cbind(x0[keep], y0[keep])
-  tgt <- cbind(x1[keep], y1[keep])
-  pts <- unique(rbind(src, tgt))
-  key <- function(m) paste(m[, 1L], m[, 2L], sep = "\r")
-  pk <- key(pts)
-  g <- igraph::graph_from_edgelist(
-    cbind(match(key(src), pk), match(key(tgt), pk)),
-    directed = FALSE
-  )
+  g <- rec$g
+  pts <- rec$pts
+  keep <- rec$keep
   igraph::E(g)$weight <- rep_len(sp$weight %||% 1, n)[keep]
   # Root: the reconstructed point nearest the build-time root coordinate, mapped
   # into the same native space as the endpoints.
