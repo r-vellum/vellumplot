@@ -59,57 +59,153 @@ NULL
   list(scales = list(cartesian = TRUE, x = x, y = y))
 }
 
-# Compile one plot: spec -> build panels (facet split + resolve + train) ->
-# layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
-# grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
-# and popping its own grid_layout), so a composition can place plots in cells.
-.draw_plot <- function(scene, spec, frozen_scales = NULL) {
-  if (!length(spec@layers)) {
+# --- .draw_plot() compatibility guards --------------------------------------
+# Each aborts on an unsupported combination up front (before drawing), with a
+# clear message rather than a low-level failure deeper in the pipeline. Split out
+# of .draw_plot() so the orchestrator reads as a sequence of named checks.
+
+# Layout marks (sankey/hierarchy/chord) compute one global layout in an axis-free
+# panel; they cannot be faceted or share a panel with other marks. Guard *before*
+# building panels: faceting would resolve the flow/hierarchy per panel (splitting
+# it) and fail obscurely inside the layout instead.
+.check_layout_mark_solo <- function(spec) {
+  if (
+    !any(vapply(spec@layers, function(l) l@mark %in% .LAYOUT_MARKS, logical(1)))
+  ) {
+    return(invisible())
+  }
+  if (length(spec@layers) != 1L) {
     cli::cli_abort(
-      "Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}."
+      "A layout plot (sankey/hierarchy/chord) takes no other layers."
     )
   }
-  # Interaction context for the mark emitter (single-plot path; the aligned
-  # composition path sets it per cell). See `.set_interaction_ctx`.
-  .set_interaction_ctx(spec)
-  # Draw-order bands: layers sort by `z` (stable — insertion order within a band).
-  # Ordinary marks all sit at z = 0 (unchanged); graph marks fix edges (1) under
-  # edge labels (2) under nodes (3) under node labels (4) regardless of pipe order.
-  zz <- vapply(spec@layers, function(l) l@z, integer(1))
-  if (any(zz != 0L)) {
-    spec@layers <- spec@layers[order(zz, seq_along(zz))]
+  if (!is.null(spec@facet)) {
+    cli::cli_abort(
+      "A layout plot (sankey/hierarchy/chord) cannot be faceted."
+    )
   }
-  # A graph has no meaningful domain edges, and its mark decorations (self-loops,
-  # mm node markers) legitimately extend past the layout bbox -- so don't clip the
-  # panel for graph plots (ordinary plots still clip to their axes).
-  panel_clip <- !any(vapply(
-    spec@layers,
-    function(l) {
-      l@mark %in%
-        c(
-          "edges",
-          "edge_bundle",
-          "flow_map",
-          "edge_text",
-          "nodes",
-          "node_pie",
-          "node_text",
-          # A sparkline's extreme/last dots sit on the domain boundary; clipping
-          # would slice them in half, so its tiny box is drawn unclipped.
-          "sparkline",
-          # A grob/sparkline annotation is a physically-sized box at a data point;
-          # near the panel edge its box would clip, so draw it unclipped.
-          "grob"
-        )
-    },
-    logical(1)
-  ))
-  rt <- .resolve_theme(.theme_of(spec))
+  invisible()
+}
 
-  # sf layers: an sf mark implies a map coordinate system. If the user did not
-  # ask for coord_sf() explicitly, adopt it (matching geom_sf's auto-add) so the
-  # map is aspect-locked. Reproject every sf layer to the target CRS before
-  # training, and record whether that CRS is geographic (for the aspect ratio).
+# Marginal plots (add_marginal()) reserve tracks around a single panel and reuse
+# its scales; they are incompatible with facets, non-Cartesian coords, and a
+# locked aspect (which would distort the panel under `respect = TRUE`).
+.check_marginal_compat <- function(spec, built, co, rt) {
+  if (is.null(spec@marginal)) {
+    return(invisible())
+  }
+  if (built$fa$R != 1L || built$fa$C != 1L) {
+    cli::cli_abort(
+      "{.fn add_marginal} is not supported with facets (single panel only)."
+    )
+  }
+  if (!identical(co@kind, "cartesian")) {
+    cli::cli_abort(
+      "{.fn add_marginal} requires the default Cartesian coordinate system (no flip/polar/fixed/sf)."
+    )
+  }
+  if (!is.null(rt[["aspect.ratio"]])) {
+    cli::cli_abort(
+      "{.fn add_marginal} is incompatible with a locked aspect ratio."
+    )
+  }
+  invisible()
+}
+
+# coord_trans warps only the marks that route through the value-based position
+# seam (.xy_units / .xy_path / .xy_area / .rect_units). Marks built from pre-made
+# unit segments (rule/segment/interval/edges/boxplot) or rasters
+# (datashade/raster) would misplace in the warped viewport, so refuse them rather
+# than silently clip. bar/area also draw from a zero baseline, which a nonlinear
+# value-axis transform cannot place (0 -> -Inf under log).
+.check_coord_trans_marks <- function(spec, co) {
+  if (!identical(co@kind, "trans")) {
+    return(invisible())
+  }
+  ok_marks <- c(
+    "point",
+    "nodes",
+    "line",
+    "smooth",
+    "ribbon",
+    "area",
+    "step",
+    "text",
+    "label",
+    "image",
+    "node_text",
+    "tile",
+    "rect",
+    "bar",
+    "violin",
+    "ridgeline",
+    "hex",
+    "sf",
+    "contour",
+    "contour_filled"
+  )
+  marks <- unique(vapply(spec@layers, function(L) L@mark, character(1)))
+  bad <- setdiff(marks, ok_marks)
+  if (length(bad)) {
+    cli::cli_abort(c(
+      "{.fn coord_trans} does not yet support the {.val {bad}} mark{?s}.",
+      i = "Supported: points, lines, areas/ribbons, bars, tiles, smooths, text, and similar.",
+      i = "Segment/rule/interval, boxplot, edges, and raster/datashade marks are not warped yet."
+    ))
+  }
+  # (An x-only warp leaves the y baseline linear, so allow it.)
+  zero_marks <- intersect(marks, c("bar", "area"))
+  if (length(zero_marks) && !.is_linear_trans(co@ytrans)) {
+    cli::cli_abort(c(
+      "{.fn coord_trans} cannot place the zero baseline of the {.val {zero_marks}} mark{?s} on a nonlinear {.field y} axis.",
+      i = "Transform the scale instead: {.code scale_y_continuous(trans = ...)}."
+    ))
+  }
+  invisible()
+}
+
+# Secondary axes (sec_axis()/dup_axis()) are v1-scoped to the default Cartesian
+# system with shared position scales; reject the unsupported combinations up
+# front with a clear message rather than mis-drawing.
+.check_sec_axis_compat <- function(spec, built, flip, polar, trans) {
+  sec_aes <- unique(vapply(
+    Filter(function(s) !is.null(s@sec_axis), spec@scales),
+    function(s) s@aesthetic,
+    character(1)
+  ))
+  if (!length(sec_aes)) {
+    return(invisible())
+  }
+  if (flip || polar || trans) {
+    cli::cli_abort(c(
+      "A secondary axis is only supported with the default Cartesian coordinate system.",
+      i = "Remove {.fn coord_flip} / {.fn coord_polar} / {.fn coord_trans}, or drop the {.arg sec.axis}."
+    ))
+  }
+  if (!is.null(spec@marginal)) {
+    cli::cli_abort(
+      "A secondary axis is not supported together with {.fn add_marginal}."
+    )
+  }
+  if (built$free_x && "x" %in% sec_aes) {
+    cli::cli_abort(
+      "A secondary {.field x} axis requires a shared {.field x} scale (not {.code scales = \"free_x\"})."
+    )
+  }
+  if (built$free_y && "y" %in% sec_aes) {
+    cli::cli_abort(
+      "A secondary {.field y} axis requires a shared {.field y} scale (not {.code scales = \"free_y\"})."
+    )
+  }
+  invisible()
+}
+
+# sf layers: an sf mark implies a map coordinate system. If the user did not ask
+# for coord_sf() explicitly, adopt it (matching geom_sf's auto-add) so the map is
+# aspect-locked. Reproject every sf layer to the target CRS before training, and
+# record whether that CRS is geographic (for the aspect ratio). Returns the
+# (possibly coord-adopted, reprojected) spec plus the resolved coord and sf facts.
+.dp_setup_coord <- function(spec) {
   co <- .coord_of(spec)
   sf_geographic <- FALSE
   sf_crs <- NULL
@@ -123,189 +219,20 @@ NULL
     sf_geographic <- proj$geographic
     sf_crs <- proj$crs
   }
+  list(spec = spec, co = co, sf_geographic = sf_geographic, sf_crs = sf_crs)
+}
 
-  # Layout marks (sankey/hierarchy) compute one global layout in an axis-free
-  # panel; they cannot be faceted or share a panel with other marks. Guard
-  # *before* building panels: faceting would resolve the flow/hierarchy per panel
-  # (splitting it) and fail obscurely inside the layout instead.
-  if (
-    any(vapply(spec@layers, function(l) l@mark %in% .LAYOUT_MARKS, logical(1)))
-  ) {
-    if (length(spec@layers) != 1L) {
-      cli::cli_abort(
-        "A layout plot (sankey/hierarchy/chord) takes no other layers."
-      )
-    }
-    if (!is.null(spec@facet)) {
-      cli::cli_abort(
-        "A layout plot (sankey/hierarchy/chord) cannot be faceted."
-      )
-    }
-  }
-
-  built <- .build_panels(spec, frozen_scales = frozen_scales)
-  built$sf_geographic <- sf_geographic
-  built$sf_crs <- sf_crs
-
-  # Marginal plots (add_marginal()) reserve tracks around a single panel and reuse
-  # its scales; they are incompatible with facets, non-Cartesian coords, and a
-  # locked aspect (which would distort the panel under `respect = TRUE`).
-  if (!is.null(spec@marginal)) {
-    if (built$fa$R != 1L || built$fa$C != 1L) {
-      cli::cli_abort(
-        "{.fn add_marginal} is not supported with facets (single panel only)."
-      )
-    }
-    if (!identical(co@kind, "cartesian")) {
-      cli::cli_abort(
-        "{.fn add_marginal} requires the default Cartesian coordinate system (no flip/polar/fixed/sf)."
-      )
-    }
-    if (!is.null(rt[["aspect.ratio"]])) {
-      cli::cli_abort(
-        "{.fn add_marginal} is incompatible with a locked aspect ratio."
-      )
-    }
-  }
-  # Reserved resolved-theme keys: `.sketch` / `.interactive` are injected into the
-  # resolved theme `rt` as a per-plot transport, but they are NOT theme members --
-  # they come from the spec, not from theme(), so they bypass the theme tree
-  # (absent from .DRAWN_LEAVES / .SETTINGS_DEFAULTS). The contract: reserved keys
-  # carry a leading dot and are documented here, so a
-  # drawer reading one is never confused with a real theme leaf. Read by the guide
-  # drawers in compile-guides.R.
-  #
-  # Plot-wide hand-drawn default (from theme_sketch()); mark emitters fall back
-  # to it when a layer sets no sketch of its own, and legend keys read it from
-  # `rt` so they match a hand-drawn plot.
-  plot_sketch <- .theme_sketch_default(spec)
-  rt[[".sketch"]] <- plot_sketch
-  # Interactivity: when any layer declares it, discrete legend swatches are tagged
-  # (a keyed, hoverable element per series) so a host can highlight/select a whole
-  # series from the legend. Read by the guide drawers (see `.tag_legend_swatch`).
-  rt[[".interactive"]] <- .spec_interactive(spec)
-  guides <- .legend_guides(built$scales)
-  # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
-  flip <- identical(co@kind, "flip")
-  polar <- identical(co@kind, "polar")
-  trans <- identical(co@kind, "trans")
-  # A geometry clip/mask is applied only in the cartesian panel branch; warn if
-  # one was set under a coordinate system that cannot carry it.
-  if (!is.null(spec@clip) && (polar || trans)) {
-    cli::cli_warn(
-      "{.fn clip_to} / {.fn set_mask} are only applied under cartesian coordinates; ignoring here."
-    )
-  }
-  hscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$h # horizontal (bottom)
-  vscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$v # vertical (left)
-  shared_hv <- .hv_roles(built$scales$x, built$scales$y, flip)
-  hshared <- shared_hv$h
-  vshared <- shared_hv$v
-  # coord_trans warps the display of the horizontal/vertical axes (no flip under
-  # trans, so h = x, v = y). The axis drawers get break/domain-warped scale copies
-  # (labels kept); marks warp via the per-panel context built in the panel loop.
-  tfx <- if (trans) .resolve_coord_trans(co@xtrans, "x") else NULL
-  tfy <- if (trans) .resolve_coord_trans(co@ytrans, "y") else NULL
-  warp_h <- function(sc) if (trans) .warp_scale(sc, tfx) else sc
-  warp_v <- function(sc) if (trans) .warp_scale(sc, tfy) else sc
-  # coord_trans warps only the marks that route through the value-based position
-  # seam (.xy_units / .xy_path / .xy_area / .rect_units). Marks built from
-  # pre-made unit segments (rule/segment/interval/edges/boxplot) or rasters
-  # (datashade/raster) would misplace in the warped viewport, so refuse them
-  # rather than silently clip.
-  if (trans) {
-    ok_marks <- c(
-      "point",
-      "nodes",
-      "line",
-      "smooth",
-      "ribbon",
-      "area",
-      "step",
-      "text",
-      "label",
-      "image",
-      "node_text",
-      "tile",
-      "rect",
-      "bar",
-      "violin",
-      "ridgeline",
-      "hex",
-      "sf",
-      "contour",
-      "contour_filled"
-    )
-    marks <- unique(vapply(spec@layers, function(L) L@mark, character(1)))
-    bad <- setdiff(marks, ok_marks)
-    if (length(bad)) {
-      cli::cli_abort(c(
-        "{.fn coord_trans} does not yet support the {.val {bad}} mark{?s}.",
-        i = "Supported: points, lines, areas/ribbons, bars, tiles, smooths, text, and similar.",
-        i = "Segment/rule/interval, boxplot, edges, and raster/datashade marks are not warped yet."
-      ))
-    }
-    # bar/area draw from a zero baseline, which a nonlinear value-axis transform
-    # cannot place (0 -> -Inf under log). Refuse rather than draw a meaningless
-    # log-baseline bar. (An x-only warp leaves the y baseline linear, so allow it.)
-    zero_marks <- intersect(marks, c("bar", "area"))
-    if (length(zero_marks) && !.is_linear_trans(co@ytrans)) {
-      cli::cli_abort(c(
-        "{.fn coord_trans} cannot place the zero baseline of the {.val {zero_marks}} mark{?s} on a nonlinear {.field y} axis.",
-        i = "Transform the scale instead: {.code scale_y_continuous(trans = ...)}."
-      ))
-    }
-  }
-  # Secondary axes (sec_axis()/dup_axis()) are v1-scoped to the default Cartesian
-  # system with shared position scales; reject the unsupported combinations up
-  # front with a clear message rather than mis-drawing.
-  sec_aes <- unique(vapply(
-    Filter(function(s) !is.null(s@sec_axis), spec@scales),
-    function(s) s@aesthetic,
-    character(1)
-  ))
-  if (length(sec_aes)) {
-    if (flip || polar || trans) {
-      cli::cli_abort(c(
-        "A secondary axis is only supported with the default Cartesian coordinate system.",
-        i = "Remove {.fn coord_flip} / {.fn coord_polar} / {.fn coord_trans}, or drop the {.arg sec.axis}."
-      ))
-    }
-    if (!is.null(spec@marginal)) {
-      cli::cli_abort(
-        "A secondary axis is not supported together with {.fn add_marginal}."
-      )
-    }
-    if (built$free_x && "x" %in% sec_aes) {
-      cli::cli_abort(
-        "A secondary {.field x} axis requires a shared {.field x} scale (not {.code scales = \"free_x\"})."
-      )
-    }
-    if (built$free_y && "y" %in% sec_aes) {
-      cli::cli_abort(
-        "A secondary {.field y} axis requires a shared {.field y} scale (not {.code scales = \"free_y\"})."
-      )
-    }
-  }
-  lay <- .build_layout(
-    built,
-    guides,
-    spec@labels,
-    rt,
-    flip,
-    co,
-    spec@marginal,
-    page_height = spec@height
-  )
-
-  # Outer margin grid: absolute mm tracks around a single `null` cell holding the
-  # real layout. (Done as a grid rather than an inset viewport because vellum
-  # disallows the mixed npc/mm unit arithmetic an inset would need.)
-  # Structural viewports carry stable `name`s so vellum's layout-debug tools work
-  # on a compiled plot: `render(scene, debug = TRUE)` outlines and labels them,
-  # and `why_size(scene, "<name>")` explains a region's resolved extent. The
-  # names below ("plot", "panel-area", "panel-<r>-<c>", "axis-*", "strip-*",
-  # "legend", title bands) are the query keys.
+# Push the plot's outer scaffold and leave the cursor inside `panel-area`: an
+# outer mm-margin grid around a single `null` cell (a grid, not an inset viewport,
+# because vellum disallows the mixed npc/mm unit arithmetic an inset would need),
+# the plot background behind the margins, the margin-inset centre cell, and the
+# panel-area layout grid. Structural viewports carry stable `name`s so vellum's
+# layout-debug tools work on a compiled plot: `render(scene, debug = TRUE)`
+# outlines them and `why_size(scene, "<name>")` explains a region's extent (the
+# "plot" / "plot-background" / "panel-area" / "panel-<r>-<c>" / "axis-*" /
+# "strip-*" / "legend" / title-band names are the query keys). Leaves three
+# viewports pushed; the caller pops them after drawing.
+.dp_push_frame <- function(scene, lay, rt) {
   m <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
   scene <- vellum::push(
     scene,
@@ -345,7 +272,7 @@ NULL
 
   # the real layout lives in the centre cell, inset by the margins
   scene <- vellum::push(scene, vellum::vl_viewport(row = 2, col = 2))
-  scene <- vellum::push(
+  vellum::push(
     scene,
     vellum::vl_viewport(
       name = "panel-area",
@@ -356,10 +283,27 @@ NULL
       )
     )
   )
+}
 
-  # panels: background + gridlines + marks, each in its own native scales. A
-  # polar panel uses a fixed symmetric [-1, 1] square scale (the polar context
-  # maps data to cartesian within it) and its own circular gridlines/labels.
+# Draw every panel: background + gridlines + marks, each in its own native
+# scales, into the pushed `panel-area` grid. A polar panel uses a fixed symmetric
+# [-1, 1] square scale (the polar context maps data to cartesian within it) and
+# its own circular gridlines/labels; a coord_trans panel spans the warped domain;
+# the cartesian branch (incl. coord_flip) carries the pan group, clip mask, and
+# scale meta. See `dp` (assembled in `.draw_plot`) for the threaded state.
+.dp_draw_panels <- function(scene, dp) {
+  spec <- dp$spec
+  co <- dp$co
+  built <- dp$built
+  lay <- dp$lay
+  rt <- dp$rt
+  flip <- dp$flip
+  polar <- dp$polar
+  trans <- dp$trans
+  plot_sketch <- dp$plot_sketch
+  panel_clip <- dp$panel_clip
+  hscale <- dp$hscale
+  vscale <- dp$vscale
   for (p in built$panels) {
     hsc <- hscale(p)
     vsc <- vscale(p)
@@ -468,106 +412,110 @@ NULL
     scene <- .compile_marks(scene, p$resolved, psc, panel = pname)
     scene <- vellum::pop(scene)
   }
+  scene
+}
 
-  # marginal distributions (add_marginal()): drawn into the reserved top/right
-  # tracks, sharing the single panel's scales. Single panel, Cartesian only
-  # (guarded above), so `built$panels[[1]]` is the panel.
-  if (!is.null(spec@marginal)) {
-    p1 <- built$panels[[1]]
-    src <- .marginal_source(p1$resolved)
-    scene <- .draw_marginals(
-      scene,
-      spec@marginal,
-      src,
-      lay,
-      hscale(p1),
-      vscale(p1),
-      built$scales$color,
-      rt,
-      plot_sketch
-    )
+# Cartesian axes down the left / along the bottom: per panel when the scale is
+# free, otherwise once per panel row / column for alignment (the left gutter shows
+# the vertical scale, the bottom gutter the horizontal; they swap under
+# coord_flip). Secondary axes go on the opposite edge (shared-scale path only, so
+# h == x and v == y). Polar panels draw their angular/radial labels inside the
+# panel, so this whole block is skipped for them.
+.dp_draw_axes <- function(scene, dp) {
+  if (dp$polar) {
+    return(scene)
   }
+  built <- dp$built
+  lay <- dp$lay
+  rt <- dp$rt
+  warp_h <- dp$warp_h
+  warp_v <- dp$warp_v
+  hscale <- dp$hscale
+  vscale <- dp$vscale
+  hshared <- dp$hshared
+  vshared <- dp$vshared
+  if (built$free_y) {
+    for (p in built$panels) {
+      scene <- .draw_y_axis(
+        scene,
+        lay$panel_row[p$r],
+        lay$ylabels_col[p$c],
+        warp_v(vscale(p)),
+        rt
+      )
+    }
+  } else {
+    for (r in seq_len(lay$R)) {
+      scene <- .draw_y_axis(
+        scene,
+        lay$panel_row[r],
+        lay$ylabels_col[1],
+        warp_v(vshared),
+        rt
+      )
+    }
+  }
+  if (built$free_x) {
+    for (p in built$panels) {
+      scene <- .draw_x_axis(
+        scene,
+        lay$xlabels_row[p$r],
+        lay$panel_col[p$c],
+        warp_h(hscale(p)),
+        rt
+      )
+    }
+  } else {
+    for (cc in seq_len(lay$C)) {
+      scene <- .draw_x_axis(
+        scene,
+        lay$xlabels_row[1],
+        lay$panel_col[cc],
+        warp_h(hshared),
+        rt
+      )
+    }
+  }
+  # Secondary axes on the opposite edge. Only the shared-scale path can reach here
+  # (free + sec is rejected above), so flip/polar/trans are already ruled out.
+  if (!is.null(vshared$sec)) {
+    for (r in seq_len(lay$R)) {
+      scene <- .draw_y_axis_sec(
+        scene,
+        lay$panel_row[r],
+        lay$y2labels_col,
+        vshared$sec,
+        rt
+      )
+    }
+  }
+  if (!is.null(hshared$sec)) {
+    for (cc in seq_len(lay$C)) {
+      scene <- .draw_x_axis_sec(
+        scene,
+        lay$x2labels_row,
+        lay$panel_col[cc],
+        hshared$sec,
+        rt
+      )
+    }
+  }
+  scene
+}
 
-  # axes: per panel when scales are free, otherwise once down the left / along
-  # the bottom (drawn per panel row / column for alignment).
-  # Left gutter shows the vertical scale; bottom gutter the horizontal scale
-  # (these swap under coord_flip). Polar panels draw their angular/radial labels
-  # inside the panel itself (no gutters), so the cartesian axis block is skipped.
-  if (!polar) {
-    if (built$free_y) {
-      for (p in built$panels) {
-        scene <- .draw_y_axis(
-          scene,
-          lay$panel_row[p$r],
-          lay$ylabels_col[p$c],
-          warp_v(vscale(p)),
-          rt
-        )
-      }
-    } else {
-      for (r in seq_len(lay$R)) {
-        scene <- .draw_y_axis(
-          scene,
-          lay$panel_row[r],
-          lay$ylabels_col[1],
-          warp_v(vshared),
-          rt
-        )
-      }
-    }
-    if (built$free_x) {
-      for (p in built$panels) {
-        scene <- .draw_x_axis(
-          scene,
-          lay$xlabels_row[p$r],
-          lay$panel_col[p$c],
-          warp_h(hscale(p)),
-          rt
-        )
-      }
-    } else {
-      for (cc in seq_len(lay$C)) {
-        scene <- .draw_x_axis(
-          scene,
-          lay$xlabels_row[1],
-          lay$panel_col[cc],
-          warp_h(hshared),
-          rt
-        )
-      }
-    }
-    # Secondary axes on the opposite edge. Only the shared-scale path can reach
-    # here (free + sec is rejected above), so flip/polar/trans are already ruled
-    # out and h == x, v == y.
-    if (!is.null(vshared$sec)) {
-      for (r in seq_len(lay$R)) {
-        scene <- .draw_y_axis_sec(
-          scene,
-          lay$panel_row[r],
-          lay$y2labels_col,
-          vshared$sec,
-          rt
-        )
-      }
-    }
-    if (!is.null(hshared$sec)) {
-      for (cc in seq_len(lay$C)) {
-        scene <- .draw_x_axis_sec(
-          scene,
-          lay$x2labels_row,
-          lay$panel_col[cc],
-          hshared$sec,
-          rt
-        )
-      }
-    }
-  } # !polar
-
-  scene <- .draw_strips(scene, built, lay, rt)
-
-  # titles span the panel block; legend spans the panel rows. Polar panels have
-  # no axis-title gutters, so the x/y titles are suppressed.
-  if (!polar) {
+# Axis titles, the legend, and the plot title/subtitle/caption/tag bands. Axis
+# titles span the panel block (suppressed under polar, which has no title
+# gutters); a left/right legend takes its whole column spanning every row, a
+# top/bottom legend its row spanning the panel columns; the plot bands span the
+# full figure width.
+.dp_draw_labels_legends <- function(scene, dp) {
+  lay <- dp$lay
+  rt <- dp$rt
+  guides <- dp$guides
+  vshared <- dp$vshared
+  hshared <- dp$hshared
+  labels <- dp$spec@labels
+  if (!dp$polar) {
     scene <- .draw_y_title(
       scene,
       lay$panel_row[1],
@@ -643,7 +591,7 @@ NULL
       scene,
       lay$title_row,
       lay$ncol_total,
-      spec@labels$title,
+      labels$title,
       rt
     )
   }
@@ -652,7 +600,7 @@ NULL
       scene,
       lay$subtitle_row,
       lay$ncol_total,
-      spec@labels$subtitle,
+      labels$subtitle,
       rt
     )
   }
@@ -661,13 +609,182 @@ NULL
       scene,
       lay$caption_row,
       lay$ncol_total,
-      spec@labels$caption,
+      labels$caption,
       rt
     )
   }
   if (!is.na(lay$tag_row)) {
-    scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, spec@labels$tag, rt)
+    scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, labels$tag, rt)
   }
+  scene
+}
+
+# Compile one plot: spec -> build panels (facet split + resolve + train) ->
+# layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
+# grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
+# and popping its own grid_layout), so a composition can place plots in cells.
+.draw_plot <- function(scene, spec, frozen_scales = NULL) {
+  if (!length(spec@layers)) {
+    cli::cli_abort(
+      "Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}."
+    )
+  }
+  # Interaction context for the mark emitter (single-plot path; the aligned
+  # composition path sets it per cell). See `.set_interaction_ctx`.
+  .set_interaction_ctx(spec)
+  # Draw-order bands: layers sort by `z` (stable — insertion order within a band).
+  # Ordinary marks all sit at z = 0 (unchanged); graph marks fix edges (1) under
+  # edge labels (2) under nodes (3) under node labels (4) regardless of pipe order.
+  zz <- vapply(spec@layers, function(l) l@z, integer(1))
+  if (any(zz != 0L)) {
+    spec@layers <- spec@layers[order(zz, seq_along(zz))]
+  }
+  # A graph has no meaningful domain edges, and its mark decorations (self-loops,
+  # mm node markers) legitimately extend past the layout bbox -- so don't clip the
+  # panel for graph plots (ordinary plots still clip to their axes).
+  panel_clip <- !any(vapply(
+    spec@layers,
+    function(l) {
+      l@mark %in%
+        c(
+          "edges",
+          "edge_bundle",
+          "flow_map",
+          "edge_text",
+          "nodes",
+          "node_pie",
+          "node_text",
+          # A sparkline's extreme/last dots sit on the domain boundary; clipping
+          # would slice them in half, so its tiny box is drawn unclipped.
+          "sparkline",
+          # A grob/sparkline annotation is a physically-sized box at a data point;
+          # near the panel edge its box would clip, so draw it unclipped.
+          "grob"
+        )
+    },
+    logical(1)
+  ))
+  rt <- .resolve_theme(.theme_of(spec))
+
+  sfc <- .dp_setup_coord(spec)
+  spec <- sfc$spec
+  co <- sfc$co
+  sf_geographic <- sfc$sf_geographic
+  sf_crs <- sfc$sf_crs
+
+  .check_layout_mark_solo(spec)
+
+  built <- .build_panels(spec, frozen_scales = frozen_scales)
+  built$sf_geographic <- sf_geographic
+  built$sf_crs <- sf_crs
+
+  .check_marginal_compat(spec, built, co, rt)
+  # Reserved resolved-theme keys: `.sketch` / `.interactive` are injected into the
+  # resolved theme `rt` as a per-plot transport, but they are NOT theme members --
+  # they come from the spec, not from theme(), so they bypass the theme tree
+  # (absent from .DRAWN_LEAVES / .SETTINGS_DEFAULTS). The contract: reserved keys
+  # carry a leading dot and are documented here, so a
+  # drawer reading one is never confused with a real theme leaf. Read by the guide
+  # drawers in compile-guides.R.
+  #
+  # Plot-wide hand-drawn default (from theme_sketch()); mark emitters fall back
+  # to it when a layer sets no sketch of its own, and legend keys read it from
+  # `rt` so they match a hand-drawn plot.
+  plot_sketch <- .theme_sketch_default(spec)
+  rt[[".sketch"]] <- plot_sketch
+  # Interactivity: when any layer declares it, discrete legend swatches are tagged
+  # (a keyed, hoverable element per series) so a host can highlight/select a whole
+  # series from the legend. Read by the guide drawers (see `.tag_legend_swatch`).
+  rt[[".interactive"]] <- .spec_interactive(spec)
+  guides <- .legend_guides(built$scales)
+  # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
+  flip <- identical(co@kind, "flip")
+  polar <- identical(co@kind, "polar")
+  trans <- identical(co@kind, "trans")
+  # A geometry clip/mask is applied only in the cartesian panel branch; warn if
+  # one was set under a coordinate system that cannot carry it.
+  if (!is.null(spec@clip) && (polar || trans)) {
+    cli::cli_warn(
+      "{.fn clip_to} / {.fn set_mask} are only applied under cartesian coordinates; ignoring here."
+    )
+  }
+  hscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$h # horizontal (bottom)
+  vscale <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)$v # vertical (left)
+  shared_hv <- .hv_roles(built$scales$x, built$scales$y, flip)
+  hshared <- shared_hv$h
+  vshared <- shared_hv$v
+  # coord_trans warps the display of the horizontal/vertical axes (no flip under
+  # trans, so h = x, v = y). The axis drawers get break/domain-warped scale copies
+  # (labels kept); marks warp via the per-panel context built in the panel loop.
+  tfx <- if (trans) .resolve_coord_trans(co@xtrans, "x") else NULL
+  tfy <- if (trans) .resolve_coord_trans(co@ytrans, "y") else NULL
+  warp_h <- function(sc) if (trans) .warp_scale(sc, tfx) else sc
+  warp_v <- function(sc) if (trans) .warp_scale(sc, tfy) else sc
+  .check_coord_trans_marks(spec, co)
+  .check_sec_axis_compat(spec, built, flip, polar, trans)
+  lay <- .build_layout(
+    built,
+    guides,
+    spec@labels,
+    rt,
+    flip,
+    co,
+    spec@marginal,
+    page_height = spec@height
+  )
+
+  # The draw context threaded to the panel/axis/legend drawers below, so each is
+  # a `(scene, dp)` helper rather than a call with a dozen positional locals.
+  # `hscale`/`vscale` (per-panel h/v role picks) and `warp_h`/`warp_v` (coord_trans
+  # axis warps) are closures captured here; everything else is a plain value.
+  dp <- list(
+    spec = spec,
+    co = co,
+    built = built,
+    lay = lay,
+    rt = rt,
+    guides = guides,
+    flip = flip,
+    polar = polar,
+    trans = trans,
+    plot_sketch = plot_sketch,
+    panel_clip = panel_clip,
+    hshared = hshared,
+    vshared = vshared,
+    hscale = hscale,
+    vscale = vscale,
+    warp_h = warp_h,
+    warp_v = warp_v
+  )
+
+  scene <- .dp_push_frame(scene, lay, rt)
+
+  scene <- .dp_draw_panels(scene, dp)
+
+  # marginal distributions (add_marginal()): drawn into the reserved top/right
+  # tracks, sharing the single panel's scales. Single panel, Cartesian only
+  # (guarded above), so `built$panels[[1]]` is the panel.
+  if (!is.null(spec@marginal)) {
+    p1 <- built$panels[[1]]
+    src <- .marginal_source(p1$resolved)
+    scene <- .draw_marginals(
+      scene,
+      spec@marginal,
+      src,
+      lay,
+      hscale(p1),
+      vscale(p1),
+      built$scales$color,
+      rt,
+      plot_sketch
+    )
+  }
+
+  scene <- .dp_draw_axes(scene, dp)
+
+  scene <- .draw_strips(scene, built, lay, rt)
+
+  scene <- .dp_draw_labels_legends(scene, dp)
 
   scene <- vellum::pop(scene) # inner layout grid
   scene <- vellum::pop(scene) # centre cell
