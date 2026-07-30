@@ -93,17 +93,16 @@ NULL
     clevs <- levels(ckey)
     R <- length(rlevs)
     C <- length(clevs)
-    panels <- list()
+    panels <- vector("list", R * C)
+    k <- 0L
     for (r in seq_len(R)) {
       for (cc in seq_len(C)) {
-        panels <- c(
-          panels,
-          list(list(
-            r = r,
-            c = cc,
-            idx = which(rkey == rlevs[r] & ckey == clevs[cc]),
-            lvl = list(r = rlevs[r], c = clevs[cc])
-          ))
+        k <- k + 1L
+        panels[[k]] <- list(
+          r = r,
+          c = cc,
+          idx = which(rkey == rlevs[r] & ckey == clevs[cc]),
+          lvl = list(r = rlevs[r], c = clevs[cc])
         )
       }
     }

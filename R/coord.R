@@ -74,6 +74,12 @@ CoordSpec <- S7::new_class(
   # (coord_radial(end=), e.g. a half-circle gauge).
   sweep <- if (is.null(co@end)) 2 * pi else (co@end - start)
   ang_frac <- function(frac) pi / 2 - dir * (start + sweep * frac)
+  # Domain spans (and their positivity) are constant across the panel's points;
+  # compute once rather than per `theta_map`/`r_map` call.
+  tspan <- tdom[2] - tdom[1]
+  rspan <- rdom[2] - rdom[1]
+  tpos <- isTRUE(tspan > 0)
+  rpos <- isTRUE(rspan > 0)
   list(
     theta_aes = theta_aes,
     start = start,
@@ -89,12 +95,10 @@ CoordSpec <- S7::new_class(
     # otherwise divide by zero and emit non-finite angles/radii. Map everything
     # to the domain start (fraction 0) in that case.
     theta_map = function(v) {
-      span <- tdom[2] - tdom[1]
-      ang_frac(if (isTRUE(span > 0)) (v - tdom[1]) / span else 0)
+      ang_frac(if (tpos) (v - tdom[1]) / tspan else 0)
     },
     r_map = function(v) {
-      span <- rdom[2] - rdom[1]
-      frac <- if (isTRUE(span > 0)) (v - rdom[1]) / span else 0
+      frac <- if (rpos) (v - rdom[1]) / rspan else 0
       rmin + frac * (rmax - rmin)
     }
   )

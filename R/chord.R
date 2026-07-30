@@ -64,8 +64,16 @@ NULL
   }
 
   nodes <- unique(c(from, to)) # first-appearance order
-  out_total <- vapply(nodes, function(nd) sum(value[from == nd]), numeric(1))
-  in_total <- vapply(nodes, function(nd) sum(value[to == nd]), numeric(1))
+  # Per-node totals in one pass (tapply) rather than a full value scan per node.
+  # A node absent from `from`/`to` yields no group (tapply NA) -> restore the 0 a
+  # `sum(numeric(0))` gave, and name by `nodes` to match the previous output.
+  node_totals <- function(key) {
+    t <- as.numeric(tapply(value, factor(key, levels = nodes), sum))
+    t[is.na(t)] <- 0
+    stats::setNames(t, nodes)
+  }
+  out_total <- node_totals(from)
+  in_total <- node_totals(to)
   weight <- out_total + in_total
   if (identical(sort, "value")) {
     ord <- order(weight, decreasing = TRUE)

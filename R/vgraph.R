@@ -85,12 +85,16 @@ NULL
   labels <- hc$labels %||% as.character(seq_len(L))
   # child node index for a merge-matrix entry: negative -> leaf, positive -> merge
   child_node <- function(e) if (e < 0) -e else L + e
-  from <- integer(0)
-  to <- integer(0)
+  # Two edges per merge; preallocate rather than grow the vectors each iteration.
+  from <- integer(2L * nmerge)
+  to <- integer(2L * nmerge)
   for (i in seq_len(nmerge)) {
     parent <- L + i
-    from <- c(from, parent, parent)
-    to <- c(to, child_node(merge_mat[i, 1L]), child_node(merge_mat[i, 2L]))
+    j <- 2L * i - 1L
+    from[j] <- parent
+    from[j + 1L] <- parent
+    to[j] <- child_node(merge_mat[i, 1L])
+    to[j + 1L] <- child_node(merge_mat[i, 2L])
   }
   # `name` must be unique (it keys the node table); internal merges get synthetic
   # ids. `label` carries the display text -- leaf labels only, blank for merges.
@@ -191,16 +195,24 @@ NULL
   depth <- rep(NA_integer_, n)
   children <- vector("list", n)
   depth[root] <- 0L
-  queue <- root
-  while (length(queue)) {
-    v <- queue[1L]
-    queue <- queue[-1L]
+  # FIFO queue via head/tail pointers into a preallocated array (each node is
+  # enqueued once), instead of an O(n) `queue[-1L]` pop + `c()` grow each step.
+  queue <- integer(n)
+  queue[1L] <- root
+  qh <- 1L
+  qt <- 2L
+  while (qh < qt) {
+    v <- queue[qh]
+    qh <- qh + 1L
     kids <- setdiff(as.integer(adj[[v]]), parent[v])
     kids <- kids[is.na(depth[kids])]
     children[[v]] <- kids
     parent[kids] <- v
     depth[kids] <- depth[v] + 1L
-    queue <- c(queue, kids)
+    if (length(kids)) {
+      queue[qt:(qt + length(kids) - 1L)] <- kids
+      qt <- qt + length(kids)
+    }
   }
   is_leaf <- lengths(children) == 0L
   if (max(depth) > .MAX_TREE_DEPTH) {
