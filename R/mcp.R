@@ -128,6 +128,9 @@ NULL
 # Dispatch one JSON-RPC request list -> a response list, or NULL for a
 # notification (no `id`, no reply). Pure function: no I/O.
 .mcp_dispatch <- function(req) {
+  if (!is.list(req)) {
+    return(NULL) # not a JSON object -- no id to reply to; drop it
+  }
   id <- req$id
   method <- req$method
   reply <- function(result) list(jsonrpc = "2.0", id = id, result = result)
@@ -136,6 +139,17 @@ NULL
   }
   if (is.null(id)) {
     return(NULL) # a notification (e.g. notifications/initialized)
+  }
+  # A malformed request (no/blank/non-scalar `method`) must return a JSON-RPC
+  # error, not throw -- `switch(NULL, ...)` would error and, unguarded, take the
+  # whole `mcp_serve()` loop down with it.
+  if (
+    !is.character(method) ||
+      length(method) != 1L ||
+      is.na(method) ||
+      !nzchar(method)
+  ) {
+    return(err(-32600, "Invalid Request: missing or malformed 'method'."))
   }
   switch(
     method,
@@ -194,7 +208,22 @@ mcp_serve <- function(input = "stdin", output = stdout()) {
     if (is.null(req)) {
       next
     }
-    resp <- .mcp_dispatch(req)
+    # Never let one request kill the session: any unexpected dispatch error
+    # becomes an internal-error reply (or is dropped when there is no id).
+    resp <- tryCatch(
+      .mcp_dispatch(req),
+      error = function(e) {
+        rid <- tryCatch(req$id, error = function(e2) NULL)
+        if (is.null(rid)) {
+          return(NULL)
+        }
+        list(
+          jsonrpc = "2.0",
+          id = rid,
+          error = list(code = -32603, message = conditionMessage(e))
+        )
+      }
+    )
     if (!is.null(resp)) {
       writeLines(
         jsonlite::toJSON(resp, auto_unbox = TRUE, null = "null"),
