@@ -200,6 +200,28 @@ NULL
   invisible()
 }
 
+# sf layers: an sf mark implies a map coordinate system. If the user did not ask
+# for coord_sf() explicitly, adopt it (matching geom_sf's auto-add) so the map is
+# aspect-locked. Reproject every sf layer to the target CRS before training, and
+# record whether that CRS is geographic (for the aspect ratio). Returns the
+# (possibly coord-adopted, reprojected) spec plus the resolved coord and sf facts.
+.dp_setup_coord <- function(spec) {
+  co <- .coord_of(spec)
+  sf_geographic <- FALSE
+  sf_crs <- NULL
+  if (.has_sf_layer(spec) && identical(co@kind, "cartesian")) {
+    spec@coord <- CoordSpec(kind = "sf", xlim = co@xlim, ylim = co@ylim)
+    co <- spec@coord
+  }
+  if (identical(co@kind, "sf")) {
+    proj <- .project_sf_data(spec)
+    spec <- proj$spec
+    sf_geographic <- proj$geographic
+    sf_crs <- proj$crs
+  }
+  list(spec = spec, co = co, sf_geographic = sf_geographic, sf_crs = sf_crs)
+}
+
 # Compile one plot: spec -> build panels (facet split + resolve + train) ->
 # layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
 # grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
@@ -247,23 +269,11 @@ NULL
   ))
   rt <- .resolve_theme(.theme_of(spec))
 
-  # sf layers: an sf mark implies a map coordinate system. If the user did not
-  # ask for coord_sf() explicitly, adopt it (matching geom_sf's auto-add) so the
-  # map is aspect-locked. Reproject every sf layer to the target CRS before
-  # training, and record whether that CRS is geographic (for the aspect ratio).
-  co <- .coord_of(spec)
-  sf_geographic <- FALSE
-  sf_crs <- NULL
-  if (.has_sf_layer(spec) && identical(co@kind, "cartesian")) {
-    spec@coord <- CoordSpec(kind = "sf", xlim = co@xlim, ylim = co@ylim)
-    co <- spec@coord
-  }
-  if (identical(co@kind, "sf")) {
-    proj <- .project_sf_data(spec)
-    spec <- proj$spec
-    sf_geographic <- proj$geographic
-    sf_crs <- proj$crs
-  }
+  sfc <- .dp_setup_coord(spec)
+  spec <- sfc$spec
+  co <- sfc$co
+  sf_geographic <- sfc$sf_geographic
+  sf_crs <- sfc$sf_crs
 
   .check_layout_mark_solo(spec)
 
