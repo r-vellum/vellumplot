@@ -25,6 +25,11 @@
   inline data, title), reporting any features they cannot map rather than
   diverging silently.
 
+* **Click-to-source.** `inspect_source()` declares (on the plot, not as a host
+  flag) that a host should surface the source data rows behind a clicked or
+  hovered element; it is carried in `interaction_model()` and enacted by a host
+  reading the scene's provenance (`provenance_payload()`).
+
 * **Self-documenting, reproducible plots.** `provenance_join()` ties every drawn
   element to both its source data rows and its device-pixel geometry;
   `provenance_payload()` exposes the same as a click-to-source payload for a

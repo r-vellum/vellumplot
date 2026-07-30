@@ -23,7 +23,8 @@ PlotSpec(
   binds = list(),
   clip = NULL,
   transition = NULL,
-  ease = NULL
+  ease = NULL,
+  source = NULL
 )
 }
 \arguments{
@@ -73,6 +74,10 @@ or \code{NULL} for no marginals.}
 \code{\link[=animate]{animate()}}; inert on a static render.}
 
 \item{ease}{An animation easing (from \code{\link[=ease_aes]{ease_aes()}}), or \code{NULL}.}
+
+\item{source}{A source-inspection declaration (from \code{\link[=inspect_source]{inspect_source()}}), or
+\code{NULL}. Inert on a static render; a host surfaces the data rows behind a
+clicked element.}
 }
 \value{
 A \code{PlotSpec}.
