@@ -415,6 +415,210 @@ NULL
   scene
 }
 
+# Cartesian axes down the left / along the bottom: per panel when the scale is
+# free, otherwise once per panel row / column for alignment (the left gutter shows
+# the vertical scale, the bottom gutter the horizontal; they swap under
+# coord_flip). Secondary axes go on the opposite edge (shared-scale path only, so
+# h == x and v == y). Polar panels draw their angular/radial labels inside the
+# panel, so this whole block is skipped for them.
+.dp_draw_axes <- function(scene, dp) {
+  if (dp$polar) {
+    return(scene)
+  }
+  built <- dp$built
+  lay <- dp$lay
+  rt <- dp$rt
+  warp_h <- dp$warp_h
+  warp_v <- dp$warp_v
+  hscale <- dp$hscale
+  vscale <- dp$vscale
+  hshared <- dp$hshared
+  vshared <- dp$vshared
+  if (built$free_y) {
+    for (p in built$panels) {
+      scene <- .draw_y_axis(
+        scene,
+        lay$panel_row[p$r],
+        lay$ylabels_col[p$c],
+        warp_v(vscale(p)),
+        rt
+      )
+    }
+  } else {
+    for (r in seq_len(lay$R)) {
+      scene <- .draw_y_axis(
+        scene,
+        lay$panel_row[r],
+        lay$ylabels_col[1],
+        warp_v(vshared),
+        rt
+      )
+    }
+  }
+  if (built$free_x) {
+    for (p in built$panels) {
+      scene <- .draw_x_axis(
+        scene,
+        lay$xlabels_row[p$r],
+        lay$panel_col[p$c],
+        warp_h(hscale(p)),
+        rt
+      )
+    }
+  } else {
+    for (cc in seq_len(lay$C)) {
+      scene <- .draw_x_axis(
+        scene,
+        lay$xlabels_row[1],
+        lay$panel_col[cc],
+        warp_h(hshared),
+        rt
+      )
+    }
+  }
+  # Secondary axes on the opposite edge. Only the shared-scale path can reach here
+  # (free + sec is rejected above), so flip/polar/trans are already ruled out.
+  if (!is.null(vshared$sec)) {
+    for (r in seq_len(lay$R)) {
+      scene <- .draw_y_axis_sec(
+        scene,
+        lay$panel_row[r],
+        lay$y2labels_col,
+        vshared$sec,
+        rt
+      )
+    }
+  }
+  if (!is.null(hshared$sec)) {
+    for (cc in seq_len(lay$C)) {
+      scene <- .draw_x_axis_sec(
+        scene,
+        lay$x2labels_row,
+        lay$panel_col[cc],
+        hshared$sec,
+        rt
+      )
+    }
+  }
+  scene
+}
+
+# Axis titles, the legend, and the plot title/subtitle/caption/tag bands. Axis
+# titles span the panel block (suppressed under polar, which has no title
+# gutters); a left/right legend takes its whole column spanning every row, a
+# top/bottom legend its row spanning the panel columns; the plot bands span the
+# full figure width.
+.dp_draw_labels_legends <- function(scene, dp) {
+  lay <- dp$lay
+  rt <- dp$rt
+  guides <- dp$guides
+  vshared <- dp$vshared
+  hshared <- dp$hshared
+  labels <- dp$spec@labels
+  if (!dp$polar) {
+    scene <- .draw_y_title(
+      scene,
+      lay$panel_row[1],
+      lay$ytitle_col,
+      vshared$name,
+      rt,
+      rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
+    )
+    scene <- .draw_x_title(
+      scene,
+      lay$xtitle_row,
+      lay$panel_col[1],
+      hshared$name,
+      rt,
+      colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
+    )
+    if (!is.null(vshared$sec) && !is.na(lay$y2title_col)) {
+      scene <- .draw_y_title_sec(
+        scene,
+        lay$panel_row[1],
+        lay$y2title_col,
+        vshared$sec$name,
+        rt,
+        rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
+      )
+    }
+    if (!is.null(hshared$sec) && !is.na(lay$x2title_row)) {
+      scene <- .draw_x_title_sec(
+        scene,
+        lay$x2title_row,
+        lay$panel_col[1],
+        hshared$sec$name,
+        rt,
+        colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
+      )
+    }
+  }
+  # A left/right legend takes its column spanning every row; a top/bottom legend
+  # takes its row spanning the panel columns (centred under/over the panels).
+  if (!is.na(lay$legend_col)) {
+    # A vertical legend takes its whole column, spanning every row, and centres its
+    # content block within — so a tall multi-guide legend has the full figure
+    # height to work with instead of only the panel-row span.
+    scene <- .draw_legends(
+      scene,
+      list(
+        row = 1,
+        col = lay$legend_col,
+        rowspan = lay$nrow_total
+      ),
+      guides,
+      rt,
+      orient = "vertical",
+      avail_h = lay$legend_avail_h
+    )
+  } else if (!is.na(lay$legend_row)) {
+    scene <- .draw_legends(
+      scene,
+      list(
+        row = lay$legend_row,
+        col = lay$panel_col[1],
+        colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
+      ),
+      guides,
+      rt,
+      orient = "horizontal"
+    )
+  }
+
+  # plot title / subtitle / caption bands + tag overlay (full width)
+  if (!is.na(lay$title_row)) {
+    scene <- .draw_title(
+      scene,
+      lay$title_row,
+      lay$ncol_total,
+      labels$title,
+      rt
+    )
+  }
+  if (!is.na(lay$subtitle_row)) {
+    scene <- .draw_subtitle(
+      scene,
+      lay$subtitle_row,
+      lay$ncol_total,
+      labels$subtitle,
+      rt
+    )
+  }
+  if (!is.na(lay$caption_row)) {
+    scene <- .draw_caption(
+      scene,
+      lay$caption_row,
+      lay$ncol_total,
+      labels$caption,
+      rt
+    )
+  }
+  if (!is.na(lay$tag_row)) {
+    scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, labels$tag, rt)
+  }
+  scene
+}
+
 # Compile one plot: spec -> build panels (facet split + resolve + train) ->
 # layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
 # grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
@@ -576,186 +780,11 @@ NULL
     )
   }
 
-  # axes: per panel when scales are free, otherwise once down the left / along
-  # the bottom (drawn per panel row / column for alignment).
-  # Left gutter shows the vertical scale; bottom gutter the horizontal scale
-  # (these swap under coord_flip). Polar panels draw their angular/radial labels
-  # inside the panel itself (no gutters), so the cartesian axis block is skipped.
-  if (!polar) {
-    if (built$free_y) {
-      for (p in built$panels) {
-        scene <- .draw_y_axis(
-          scene,
-          lay$panel_row[p$r],
-          lay$ylabels_col[p$c],
-          warp_v(vscale(p)),
-          rt
-        )
-      }
-    } else {
-      for (r in seq_len(lay$R)) {
-        scene <- .draw_y_axis(
-          scene,
-          lay$panel_row[r],
-          lay$ylabels_col[1],
-          warp_v(vshared),
-          rt
-        )
-      }
-    }
-    if (built$free_x) {
-      for (p in built$panels) {
-        scene <- .draw_x_axis(
-          scene,
-          lay$xlabels_row[p$r],
-          lay$panel_col[p$c],
-          warp_h(hscale(p)),
-          rt
-        )
-      }
-    } else {
-      for (cc in seq_len(lay$C)) {
-        scene <- .draw_x_axis(
-          scene,
-          lay$xlabels_row[1],
-          lay$panel_col[cc],
-          warp_h(hshared),
-          rt
-        )
-      }
-    }
-    # Secondary axes on the opposite edge. Only the shared-scale path can reach
-    # here (free + sec is rejected above), so flip/polar/trans are already ruled
-    # out and h == x, v == y.
-    if (!is.null(vshared$sec)) {
-      for (r in seq_len(lay$R)) {
-        scene <- .draw_y_axis_sec(
-          scene,
-          lay$panel_row[r],
-          lay$y2labels_col,
-          vshared$sec,
-          rt
-        )
-      }
-    }
-    if (!is.null(hshared$sec)) {
-      for (cc in seq_len(lay$C)) {
-        scene <- .draw_x_axis_sec(
-          scene,
-          lay$x2labels_row,
-          lay$panel_col[cc],
-          hshared$sec,
-          rt
-        )
-      }
-    }
-  } # !polar
+  scene <- .dp_draw_axes(scene, dp)
 
   scene <- .draw_strips(scene, built, lay, rt)
 
-  # titles span the panel block; legend spans the panel rows. Polar panels have
-  # no axis-title gutters, so the x/y titles are suppressed.
-  if (!polar) {
-    scene <- .draw_y_title(
-      scene,
-      lay$panel_row[1],
-      lay$ytitle_col,
-      vshared$name,
-      rt,
-      rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
-    )
-    scene <- .draw_x_title(
-      scene,
-      lay$xtitle_row,
-      lay$panel_col[1],
-      hshared$name,
-      rt,
-      colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
-    )
-    if (!is.null(vshared$sec) && !is.na(lay$y2title_col)) {
-      scene <- .draw_y_title_sec(
-        scene,
-        lay$panel_row[1],
-        lay$y2title_col,
-        vshared$sec$name,
-        rt,
-        rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1
-      )
-    }
-    if (!is.null(hshared$sec) && !is.na(lay$x2title_row)) {
-      scene <- .draw_x_title_sec(
-        scene,
-        lay$x2title_row,
-        lay$panel_col[1],
-        hshared$sec$name,
-        rt,
-        colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
-      )
-    }
-  }
-  # A left/right legend takes its column spanning every row; a top/bottom legend
-  # takes its row spanning the panel columns (centred under/over the panels).
-  if (!is.na(lay$legend_col)) {
-    # A vertical legend takes its whole column, spanning every row, and centres its
-    # content block within — so a tall multi-guide legend has the full figure
-    # height to work with instead of only the panel-row span.
-    scene <- .draw_legends(
-      scene,
-      list(
-        row = 1,
-        col = lay$legend_col,
-        rowspan = lay$nrow_total
-      ),
-      guides,
-      rt,
-      orient = "vertical",
-      avail_h = lay$legend_avail_h
-    )
-  } else if (!is.na(lay$legend_row)) {
-    scene <- .draw_legends(
-      scene,
-      list(
-        row = lay$legend_row,
-        col = lay$panel_col[1],
-        colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
-      ),
-      guides,
-      rt,
-      orient = "horizontal"
-    )
-  }
-
-  # plot title / subtitle / caption bands + tag overlay (full width)
-  if (!is.na(lay$title_row)) {
-    scene <- .draw_title(
-      scene,
-      lay$title_row,
-      lay$ncol_total,
-      spec@labels$title,
-      rt
-    )
-  }
-  if (!is.na(lay$subtitle_row)) {
-    scene <- .draw_subtitle(
-      scene,
-      lay$subtitle_row,
-      lay$ncol_total,
-      spec@labels$subtitle,
-      rt
-    )
-  }
-  if (!is.na(lay$caption_row)) {
-    scene <- .draw_caption(
-      scene,
-      lay$caption_row,
-      lay$ncol_total,
-      spec@labels$caption,
-      rt
-    )
-  }
-  if (!is.na(lay$tag_row)) {
-    scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, spec@labels$tag, rt)
-  }
+  scene <- .dp_draw_labels_legends(scene, dp)
 
   scene <- vellum::pop(scene) # inner layout grid
   scene <- vellum::pop(scene) # centre cell
