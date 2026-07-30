@@ -52,9 +52,13 @@ guide_legend <- function(title = NULL, reverse = FALSE) {
 # the data at train time, exactly as if no scale had been declared).
 .set_guide <- function(plot, aesthetic, guide) {
   aesthetic <- .canonical_lim_aes(aesthetic)
+  # Match color/fill as aliases (as `.scale_for()` does): a `scale_fill_*()`
+  # stores aesthetic "fill", so an exact match on the canonical "color" would
+  # miss it and append an empty guide-only scale that shadows the real palette.
+  aliases <- .aes_aliases(aesthetic)
   idx <- which(vapply(
     plot@scales,
-    function(s) identical(s@aesthetic, aesthetic),
+    function(s) s@aesthetic %in% aliases,
     logical(1)
   ))
   if (length(idx)) {

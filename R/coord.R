@@ -203,6 +203,8 @@ CoordSpec <- S7::new_class(
 #' @export
 coord_cartesian <- function(plot, xlim = NULL, ylim = NULL) {
   .check_plot(plot)
+  .check_continuous_limits(xlim, "xlim")
+  .check_continuous_limits(ylim, "ylim")
   plot@coord <- CoordSpec(kind = "cartesian", xlim = xlim, ylim = ylim)
   plot
 }
@@ -211,6 +213,8 @@ coord_cartesian <- function(plot, xlim = NULL, ylim = NULL) {
 #' @export
 coord_flip <- function(plot, xlim = NULL, ylim = NULL) {
   .check_plot(plot)
+  .check_continuous_limits(xlim, "xlim")
+  .check_continuous_limits(ylim, "ylim")
   plot@coord <- CoordSpec(kind = "flip", xlim = xlim, ylim = ylim)
   plot
 }
@@ -219,6 +223,8 @@ coord_flip <- function(plot, xlim = NULL, ylim = NULL) {
 #' @export
 coord_fixed <- function(plot, ratio = 1, xlim = NULL, ylim = NULL) {
   .check_plot(plot)
+  .check_continuous_limits(xlim, "xlim")
+  .check_continuous_limits(ylim, "ylim")
   plot@coord <- CoordSpec(
     kind = "fixed",
     xlim = xlim,
@@ -408,6 +414,8 @@ coord_sf <- function(
   graticule_labels = TRUE
 ) {
   .check_plot(plot)
+  .check_continuous_limits(xlim, "xlim")
+  .check_continuous_limits(ylim, "ylim")
   grat <- if (isTRUE(graticule)) {
     list(labels = graticule_labels)
   } else if (is.list(graticule)) {
