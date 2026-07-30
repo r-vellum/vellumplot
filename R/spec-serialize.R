@@ -732,7 +732,7 @@ as_spec <- function(plot) {
     )
     if (length(dropped) && is.null(attr(plot@theme, "vp_preset"))) {
       cli::cli_warn(
-        "Dropped custom theme elements ({.field {dropped}}) — theme styling does not round-trip; the preset name is kept."
+        "Dropped custom theme elements ({.field {dropped}}) \u2014 theme styling does not round-trip; the preset name is kept."
       )
     }
   }
