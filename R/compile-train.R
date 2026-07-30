@@ -767,6 +767,12 @@ NULL
   if (identical(kind, "binned")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
     v <- v[is.finite(v)]
+    # A user-set `limits` (domain) restricts the data the scale bins over, so the
+    # classes cover the requested range rather than the observed data extent.
+    if (!is.null(scalespec) && !is.null(scalespec@domain)) {
+      dom <- as.numeric(scalespec@domain)
+      v <- v[v >= min(dom) & v <= max(dom)]
+    }
     nclass <- as.integer(scalespec@n %||% 5L)
     style <- scalespec@style %||% "quantile"
     brks <- if (!is.null(user_breaks)) {
@@ -809,7 +815,15 @@ NULL
   } else if (identical(kind, "continuous")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
     v <- v[is.finite(v)]
-    rng <- if (length(v)) range(v) else c(0, 1)
+    # A user-set `limits` (domain) fixes the colour range, matching the size /
+    # alpha trainer; without it the range is the observed data extent.
+    rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
+      as.numeric(scalespec@domain)
+    } else if (length(v)) {
+      range(v)
+    } else {
+      c(0, 1)
+    }
     if (diff(rng) == 0) {
       rng <- rng + c(-0.5, 0.5)
     }

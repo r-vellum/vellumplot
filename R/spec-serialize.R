@@ -117,9 +117,13 @@ NULL
     c_ir <- rec$condition
     if_false <- c_ir$if_false
     if (is.character(if_false) && length(if_false) == 1) {
-      # A bare colour/number string stays a constant; an expression is re-quoted.
+      # A bare colour/number string stays a constant; only a genuine *call*
+      # (e.g. `rgb(...)`, `x > 3`) is re-quoted. A bare symbol like "red" is a
+      # colour name, not a variable reference -- `is_syntactic_literal()` would
+      # (wrongly) treat it as an expression and re-quote it into a quosure that
+      # evaluates the missing variable `red`.
       parsed <- tryCatch(rlang::parse_expr(if_false), error = function(e) NULL)
-      if (!is.null(parsed) && !rlang::is_syntactic_literal(parsed)) {
+      if (!is.null(parsed) && rlang::is_call(parsed)) {
         if_false <- rlang::new_quosure(parsed, env = env)
       }
     }
@@ -613,6 +617,14 @@ NULL
       Date = as.Date(v),
       POSIXct = as.POSIXct(v, tz = "UTC"),
       factor = factor(v, levels = levs[[nm]] %||% unique(v)),
+      # JSON collapses integer/logical to double/character on the way out, so
+      # restore the recorded `typeof()` (write path stores it) or the column
+      # comes back a different type -- changing the data hash and any
+      # is.integer()/is.logical()-dependent stat.
+      integer = as.integer(v),
+      logical = as.logical(v),
+      double = as.double(v),
+      character = as.character(v),
       v
     )
   })

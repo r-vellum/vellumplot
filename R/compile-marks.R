@@ -105,8 +105,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   lo <- min(scale$domain)
   hi <- max(scale$domain)
   out <- rep(NA_real_, length(v))
-  neg <- v == -Inf
-  pos <- v == Inf
+  neg <- !is.na(v) & v == -Inf
+  pos <- !is.na(v) & v == Inf
   fin <- is.finite(v)
   out[neg] <- lo
   out[pos] <- hi

@@ -41,6 +41,21 @@ NULL
       call = call
     )
   }
+  # Drop NA endpoints (as `vsankey` does): an NA node otherwise poisons every
+  # per-node total and yields a broken/empty diagram.
+  keep <- !is.na(from) & !is.na(to)
+  if (!all(keep)) {
+    cli::cli_warn(
+      "{.fn vchord}: dropping {sum(!keep)} flow{?s} with an NA endpoint.",
+      call = call
+    )
+    from <- from[keep]
+    to <- to[keep]
+    value <- value[keep]
+  }
+  if (!length(from)) {
+    cli::cli_abort("{.fn vchord} needs at least one valid flow.", call = call)
+  }
   if (any(!is.finite(value) | value < 0)) {
     cli::cli_abort(
       "{.fn vchord} {.arg value}s must be finite and non-negative.",
