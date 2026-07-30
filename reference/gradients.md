@@ -1,9 +1,9 @@
 # Gradient fill paints
 
 Thin re-exports of
-[`vellum::linear_gradient()`](https://r-vellum.github.io/vellum//reference/gradients.html)
+[`vellum::linear_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html)
 and
-[`vellum::radial_gradient()`](https://r-vellum.github.io/vellum//reference/gradients.html).
+[`vellum::radial_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html).
 A gradient is an unscaled *value* for the `fill` aesthetic: pass it
 directly, e.g.
 `mark_area(x = t, y = y, fill = linear_gradient(c("#00e5ff", "#00e5ff00")))`,
@@ -27,9 +27,9 @@ radial_gradient(colours, stops = NULL, ...)
 - colours, stops:
 
   See
-  [`vellum::linear_gradient()`](https://r-vellum.github.io/vellum//reference/gradients.html)
+  [`vellum::linear_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html)
   /
-  [`vellum::radial_gradient()`](https://r-vellum.github.io/vellum//reference/gradients.html).
+  [`vellum::radial_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html).
 
 - ...:
 
@@ -39,9 +39,9 @@ radial_gradient(colours, stops = NULL, ...)
   (`"srgb"` default, or `"oklab"` / `"oklch"` to blend the stops
   perceptually — `"oklch"` additionally preserves chroma by rotating
   hue). See
-  [`vellum::linear_gradient()`](https://r-vellum.github.io/vellum//reference/gradients.html)
+  [`vellum::linear_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html)
   /
-  [`vellum::radial_gradient()`](https://r-vellum.github.io/vellum//reference/gradients.html).
+  [`vellum::radial_gradient()`](https://r-vellum.github.io/vellum/reference/gradients.html).
 
 ## Value
 

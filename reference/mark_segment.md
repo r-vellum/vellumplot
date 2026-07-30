@@ -43,11 +43,11 @@ mark_segment(
   as a datashaded density raster (see
   [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md))
   instead of individual vector marks: points bin into a density grid
-  ([`vellum::datashade()`](https://r-vellum.github.io/vellum//reference/datashade.html)),
+  ([`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html)),
   dense lines/steps rasterise as connected polylines
-  ([`vellum::datashade_lines()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html)),
+  ([`vellum::datashade_lines()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)),
   and segments/edges as independent segments
-  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html)).
+  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)).
   The datashaded line/segment output is `dynspread`-ed so thin marks
   stay visible (see the `spread` argument of
   [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)).

@@ -102,11 +102,11 @@ mark_bar(
   as a datashaded density raster (see
   [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md))
   instead of individual vector marks: points bin into a density grid
-  ([`vellum::datashade()`](https://r-vellum.github.io/vellum//reference/datashade.html)),
+  ([`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html)),
   dense lines/steps rasterise as connected polylines
-  ([`vellum::datashade_lines()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html)),
+  ([`vellum::datashade_lines()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)),
   and segments/edges as independent segments
-  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html)).
+  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)).
   The datashaded line/segment output is `dynspread`-ed so thin marks
   stay visible (see the `spread` argument of
   [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)).
@@ -187,7 +187,7 @@ by an interactive host without changing what a static render draws:
 - `data_id` — a per-element **data key** (e.g. `data_id = model`).
   Emitted by the SVG backend as `data-key` on each element and returned
   by
-  [`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html);
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html);
   it is the join key a host uses to map a hover/click back to a datum,
   and to link the same datum across views.
 
@@ -214,7 +214,7 @@ drop them, since rows no longer map 1:1 to elements.
 How these flow into the vellum scene (the `scene_model()` element table,
 the SVG `data-key` / `data-vellum-*` attributes, and the reserved `meta`
 key vocabulary) is described in vellum's "The scene contract" vignette
-([`vignette("scene-contract", package = "vellum")`](https://r-vellum.github.io/vellum//articles/scene-contract.html)).
+([`vignette("scene-contract", package = "vellum")`](https://r-vellum.github.io/vellum/articles/scene-contract.html)).
 
 ## Examples
 

@@ -1,7 +1,7 @@
 # Hand-drawn ("sketch") rendering
 
 A re-export of
-[`vellum::sketch()`](https://r-vellum.github.io/vellum//reference/sketch.html)
+[`vellum::sketch()`](https://r-vellum.github.io/vellum/reference/sketch.html)
 — the one vocabulary vellumplot speaks for the hand-drawn look (wobbly
 outlines, hachure fills, à la [Rough.js](https://roughjs.com)). Pass a
 `sketch()` value to any mark's `sketch =` argument, to an
@@ -22,7 +22,7 @@ sketch(...)
 - ...:
 
   Sketch parameters passed straight to
-  [`vellum::sketch()`](https://r-vellum.github.io/vellum//reference/sketch.html)
+  [`vellum::sketch()`](https://r-vellum.github.io/vellum/reference/sketch.html)
   — `roughness`, `bowing`, `fill_style`, `fill_weight`, `hachure_angle`,
   `hachure_gap`, `curve_tightness`, `disable_multi_stroke`,
   `preserve_vertices`, `seed`. See there for defaults.

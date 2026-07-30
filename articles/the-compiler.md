@@ -95,7 +95,7 @@ mapped.)
 **Marks keep their identity, and their geometry, after the compile.**
 Because the target is a `vellum` scene rather than a device, each drawn
 element arrives with its data key and its resolved device-pixel box
-([`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html)).
+([`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)).
 That table is what `vellumwidget` reads to add tooltips, selection, and
 brushing, what the accessibility layer turns into a described image, and
 what a positional test can assert against. It is the one thing in this

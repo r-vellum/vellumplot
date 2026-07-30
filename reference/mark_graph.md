@@ -172,7 +172,7 @@ mark_node_pie(
 
   For `mark_edges()`, `TRUE` to draw a closed arrowhead at each edge's
   target end (the directed convention), `FALSE`/`NULL` for none, or a
-  [`vellum::vl_arrow()`](https://r-vellum.github.io/vellum//reference/vl_arrow.html)
+  [`vellum::vl_arrow()`](https://r-vellum.github.io/vellum/reference/vl_arrow.html)
   spec for full control (`ends`, `type`, `length`, `angle`) – e.g.
   `arrow = vellum::vl_arrow(ends = "both", type = "open")`. Edges are
   capped exactly at each endpoint's node boundary (per vertex, at any
@@ -207,7 +207,7 @@ mark_node_pie(
 
   For `mark_edges()`, `TRUE` to datashade a large graph's edges as a
   density raster
-  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html))
+  ([`vellum::datashade_segments()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html))
   once the edge count exceeds the datashade threshold, instead of
   drawing each edge as a vector segment — the fast, overplotting-honest
   path for hairballs. The device-space refinements of the vector path

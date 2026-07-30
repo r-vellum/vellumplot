@@ -4,7 +4,7 @@
 row per emitted mark element, tying each drawn primitive to **both** the
 source data rows that produced it (`rows`, a list column) **and** its
 device-pixel geometry (`x0`, `y0`, `x1`, `y1`, `x`, `y`, `w`, `h`) from
-[`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html).
+[`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html).
 It is the consumer of the provenance table that
 [`plot_provenance()`](https://r-vellum.github.io/vellumplot/reference/plot_provenance.md)
 emits — the substrate for click-to-source interactivity, auditing "which
@@ -34,7 +34,7 @@ mark grobs.
 ## See also
 
 [`plot_provenance()`](https://r-vellum.github.io/vellumplot/reference/plot_provenance.md),
-[`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html)
+[`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)
 
 ## Examples
 

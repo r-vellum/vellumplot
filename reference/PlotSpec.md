@@ -6,7 +6,7 @@ creates and the `mark_*()` / `scale_*()` functions extend. It is a
 plain, inspectable, serializable data object: data, a list of layers, a
 list of scale overrides, and the page size. Nothing is drawn until it is
 compiled with
-[`vellum::as_vellum_scene()`](https://r-vellum.github.io/vellum//reference/as_vellum_scene.html)
+[`vellum::as_vellum_scene()`](https://r-vellum.github.io/vellum/reference/as_vellum_scene.html)
 (e.g. via
 [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)).
 Printing it draws the plot; inspect its structure with

@@ -484,7 +484,7 @@
   leader line back to its point. Because the plot size is fixed on the
   spec, the repulsion is resolved *exactly* against the true rendered
   panel — a two-pass compile that reads the panel’s device geometry from
-  [`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html),
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html),
   relaxes the label boxes in pixel space, and maps the result back — so
   it needs no approximation and no `vellum` change, and is deterministic
   under `seed`. Tunable via `box_padding`, `point_padding`,
@@ -567,7 +567,7 @@
   now attaches each mark’s colour value as `filter_value` in its element
   `meta`, and a `colorbar` descriptor (value domain + orientation) to
   the gradient-bar grob. Together (via
-  [`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html))
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html))
   these let a host such as `vellumwidget` overlay an interactive
   value-range filter on the colorbar. Discrete/binned colour scales are
   unaffected. No change to rendered output.
@@ -628,9 +628,9 @@
   gain an `auto = TRUE` switch (parallel to `mark_point(auto = TRUE)`):
   past a row threshold the layer rasterises into a line- /
   segment-density field via
-  [`vellum::datashade_lines()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html)
+  [`vellum::datashade_lines()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)
   /
-  [`vellum::datashade_segments()`](https://r-vellum.github.io/vellum//reference/datashade_lines.html)
+  [`vellum::datashade_segments()`](https://r-vellum.github.io/vellum/reference/datashade_lines.html)
   instead of emitting one vector per element, so overplotted timeseries
   stacks and graph “hairballs” render fast and honestly. The fallback is
   skipped under a warped coordinate system
@@ -643,9 +643,9 @@
 - **`mark_datashade(spread = )`** exposes vellum’s post-aggregation
   spreading: `NULL` (default, raw output), a positive integer for a
   fixed pixel radius
-  ([`vellum::spread()`](https://r-vellum.github.io/vellum//reference/spread.html)),
+  ([`vellum::spread()`](https://r-vellum.github.io/vellum/reference/spread.html)),
   or `"auto"` for density-adaptive dilation
-  ([`vellum::dynspread()`](https://r-vellum.github.io/vellum//reference/dynspread.html)).
+  ([`vellum::dynspread()`](https://r-vellum.github.io/vellum/reference/dynspread.html)).
   Datashaded lines and segments default to `"auto"` so single-pixel
   marks stay visible.
 
@@ -1096,7 +1096,7 @@ and free non-position scales across facets; triple-merge legends
   mark grob, tying each low-level primitive back to the data rows and
   trained scales that produced it, with an `id` that matches the grob’s
   `data-vellum-id` in SVG and the `id` column of
-  [`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html).
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html).
   This is the first public consumer of the provenance metadata
   (previously internal), the substrate for interactivity, linked views,
   and accessibility.
@@ -1120,7 +1120,7 @@ below ships in this first release.
   `tooltip`, and `hover_group` (tidy-eval expressions). They flow into
   the vellum scene as per-element keys/metadata — `data_id` becomes the
   SVG `data-key` and both surface in
-  [`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html)
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)
   — the foundation a companion widget uses for hover/select/linking. A
   plot without them compiles and renders exactly as before. Applies to
   `stat = "identity"` marks (points, bars, tiles, segments, edges,
@@ -1144,7 +1144,7 @@ below ships in this first release.
 - **Auto-display**: printing a plot (or composition) draws it into the
   active graphics device — the RStudio / Positron Plots pane, or a
   knitr/Quarto chunk — like ggplot2 (via
-  [`vellum::display()`](https://r-vellum.github.io/vellum//reference/display.html)).
+  [`vellum::display()`](https://r-vellum.github.io/vellum/reference/display.html)).
   [`summary()`](https://rdrr.io/r/base/summary.html) shows the
   inspectable spec tree instead;
   [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
@@ -1247,7 +1247,7 @@ below ships in this first release.
 - **Datashading**:
   [`mark_datashade()`](https://r-vellum.github.io/vellumplot/reference/mark_datashade.md)
   aggregates a large point cloud into a density raster (via
-  [`vellum::datashade()`](https://r-vellum.github.io/vellum//reference/datashade.html))
+  [`vellum::datashade()`](https://r-vellum.github.io/vellum/reference/datashade.html))
   that fills the panel — cost independent of point count.
   `mark_point(auto = TRUE)` switches to this automatically above ~50k
   rows.

@@ -13,7 +13,7 @@ consequences are the reason to pick this stack:
 - **Every mark keeps its identity through to the output.** A compiled
   plot *is* a vellum scene, so each drawn element carries its data key
   and its resolved device-pixel box
-  ([`vellum::scene_model()`](https://r-vellum.github.io/vellum//reference/scene_model.html)).
+  ([`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)).
   That is what [vellumwidget](https://github.com/r-vellum/vellumwidget)
   reads to add tooltips, brushing, and linked selection: the same marks
   you already declared, not `*_interactive()` twins of them, and no
