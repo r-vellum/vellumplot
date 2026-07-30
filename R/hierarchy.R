@@ -61,10 +61,15 @@ NULL
   # Depth by BFS; a revisit is a cycle, an unreached node a disconnected forest.
   depth <- rep(NA_integer_, n)
   depth[root] <- 0L
-  queue <- root
-  while (length(queue)) {
-    i <- queue[1L]
-    queue <- queue[-1L]
+  # FIFO queue via head/tail pointers into a preallocated array (each node is
+  # enqueued once), instead of an O(n) `queue[-1L]` pop + `c()` grow each step.
+  queue <- integer(n)
+  queue[1L] <- root
+  qh <- 1L
+  qt <- 2L
+  while (qh < qt) {
+    i <- queue[qh]
+    qh <- qh + 1L
     for (kid in children[[i]]) {
       if (!is.na(depth[kid])) {
         cli::cli_abort(
@@ -73,7 +78,8 @@ NULL
         )
       }
       depth[kid] <- depth[i] + 1L
-      queue <- c(queue, kid)
+      queue[qt] <- kid
+      qt <- qt + 1L
     }
   }
   if (anyNA(depth)) {

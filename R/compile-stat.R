@@ -456,8 +456,8 @@ NULL
   }
   glevs <- .cat_levels(grp)
   gc <- as.character(grp)
-  groups <- lapply(glevs, function(g) which(gc == g))
-  names(groups) <- glevs
+  # One pass in level order, instead of a which() scan per level (O(n * groups)).
+  groups <- split(seq_len(n), factor(gc, levels = glevs))
   list(groups = groups, levels = glevs)
 }
 

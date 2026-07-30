@@ -771,8 +771,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   piece <- L$values$.piece
   sk <- .mark_sketch(L, scales)
   gi <- 0L
-  for (pid in unique(piece)) {
-    idx <- which(piece == pid)
+  # split once (first-appearance order) instead of a which() rescan per piece.
+  for (idx in split(seq_along(piece), factor(piece, levels = unique(piece)))) {
     xy <- .xy_path(scales, xn[idx], yn[idx])
     scene <- .draw(
       scene,
@@ -804,8 +804,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   ring <- L$values$.ring
   sk <- .mark_sketch(L, scales)
   gi <- 0L
-  for (pid in unique(piece)) {
-    idx <- which(piece == pid)
+  # split once (first-appearance order) instead of a which() rescan per piece.
+  for (idx in split(seq_along(piece), factor(piece, levels = unique(piece)))) {
     a <- alpha[idx[1]]
     xy <- .xy_path(scales, xn[idx], yn[idx])
     scene <- .draw(
@@ -1394,14 +1394,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   sk <- .mark_sketch(L, scales)
   fs <- .aes_param(L, "size", 8)
   pad <- vellum::vl_unit(1.2, "mm")
-  ws <- do.call(
-    c,
-    lapply(label, function(l) vellum::grobwidth(.txt(l, fs)) + pad)
-  )
-  hs <- do.call(
-    c,
-    lapply(label, function(l) vellum::grobheight(.txt(l, fs)) + pad)
-  )
+  # Build each text grob once, then take its width and height (two passes built
+  # the grob twice).
+  txts <- lapply(label, function(l) .txt(l, fs))
+  ws <- do.call(c, lapply(txts, function(t) vellum::grobwidth(t) + pad))
+  hs <- do.call(c, lapply(txts, function(t) vellum::grobheight(t) + pad))
 
   for (idx in .style_groups(n, list(col = col, fill = bg, alpha = alpha))) {
     a <- alpha[idx[1]]
@@ -2506,8 +2503,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   piece <- L$values$.piece
   sk <- .mark_sketch(L, scales)
   gi <- 0L
-  for (pid in unique(piece)) {
-    idx <- which(piece == pid)
+  # split once (first-appearance order) instead of a which() rescan per piece.
+  for (idx in split(seq_along(piece), factor(piece, levels = unique(piece)))) {
     i0 <- idx[1]
     xy <- .xy_path(scales, xn[idx], yn[idx])
     scene <- .draw(
