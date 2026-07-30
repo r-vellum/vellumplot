@@ -148,3 +148,55 @@ test_that("spec_schema is valid JSON and self-describes", {
   expect_identical(sch$title, "vellumplot spec (v1)")
   expect_true("layers" %in% names(sch$properties))
 })
+
+# --- REVIEW3 D1: slot-list constants drive both round-trip directions --------
+
+test_that("a polar coord round-trips every non-default slot", {
+  p <- vplot(mtcars) |>
+    mark_bar(x = factor(cyl)) |>
+    coord_radial(
+      theta = "y",
+      start = 0.5,
+      end = 3,
+      direction = -1,
+      inner_radius = 0.3
+    )
+  co <- from_spec(as_spec(p))@coord
+  expect_identical(co@kind, "polar")
+  expect_identical(co@theta, "y")
+  expect_equal(co@start, 0.5)
+  expect_equal(co@end, 3)
+  expect_equal(co@direction, -1)
+  expect_equal(co@rmin, 0.3)
+})
+
+test_that("a coord_trans round-trips its per-axis transforms", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    coord_trans(x = "log10", y = "sqrt")
+  co <- from_spec(as_spec(p))@coord
+  expect_identical(co@kind, "trans")
+  expect_identical(co@xtrans, "log10")
+  expect_identical(co@ytrans, "sqrt")
+})
+
+test_that("marginal distributions round-trip with their field types intact", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    add_marginal(
+      type = "histogram",
+      sides = "t",
+      size = 0.2,
+      bins = 12L,
+      group = TRUE
+    )
+  m <- from_spec(as_spec(p))@marginal
+  expect_identical(m@type, "histogram")
+  expect_identical(m@sides, "t")
+  expect_equal(m@size, 0.2)
+  expect_type(m@bins, "integer")
+  expect_identical(m@bins, 12L)
+  expect_true(m@group)
+  # an unspecified field falls back to the MarginalSpec default, not a NULL
+  expect_equal(m@adjust, 1)
+})

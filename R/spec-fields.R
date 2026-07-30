@@ -124,18 +124,7 @@ spec_diagnose <- function(spec, data = NULL, env = globalenv()) {
   # 1. parse the spec (JSON string / path / list) into an IR list.
   if (is.character(spec)) {
     spec <- tryCatch(
-      {
-        .need_pkg("jsonlite", "spec_diagnose()")
-        if (length(spec) == 1 && !grepl("[{\n]", spec) && file.exists(spec)) {
-          spec <- readLines(spec, warn = FALSE)
-        }
-        jsonlite::fromJSON(
-          paste(spec, collapse = "\n"),
-          simplifyVector = TRUE,
-          simplifyDataFrame = FALSE,
-          simplifyMatrix = FALSE
-        )
-      },
+      .read_json_spec(spec, "spec_diagnose()"),
       error = function(e) {
         add("error", paste0("Invalid JSON: ", conditionMessage(e)))
         NULL
