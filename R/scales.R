@@ -796,6 +796,41 @@ scale_colour_gradient2 <- scale_color_gradient2
 #' @param limits Numeric length-2 data domain, or `NULL` to train from the data.
 #' @param breaks Explicit legend breaks, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
+# The shared engine behind the continuous output-range scales (size / alpha /
+# edge_width / edge_alpha): validate the data `limits` and the output `range`
+# (non-negative, and <= `upper` when the aesthetic is bounded like opacity), then
+# declare a continuous scale for `aesthetic`.
+.continuous_range_scale <- function(
+  plot,
+  aesthetic,
+  range,
+  limits,
+  breaks,
+  name,
+  upper = NULL
+) {
+  .check_plot(plot)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .check_continuous_limits(
+    range,
+    "range",
+    numeric = TRUE,
+    lower = 0,
+    upper = upper
+  )
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = aesthetic,
+      type = "continuous",
+      domain = limits,
+      range = range,
+      breaks = breaks,
+      name = name
+    )
+  )
+}
+
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp) |> scale_size(range = c(1, 8))
@@ -807,20 +842,7 @@ scale_size <- function(
   breaks = NULL,
   name = NULL
 ) {
-  .check_plot(plot)
-  .check_continuous_limits(limits, "limits", numeric = TRUE)
-  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0)
-  .add_scale(
-    plot,
-    ScaleSpec(
-      aesthetic = "size",
-      type = "continuous",
-      domain = limits,
-      range = range,
-      breaks = breaks,
-      name = name
-    )
-  )
+  .continuous_range_scale(plot, "size", range, limits, breaks, name)
 }
 
 #' @rdname scale_size
@@ -889,20 +911,7 @@ scale_edge_width <- function(
   breaks = NULL,
   name = NULL
 ) {
-  .check_plot(plot)
-  .check_continuous_limits(limits, "limits", numeric = TRUE)
-  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0)
-  .add_scale(
-    plot,
-    ScaleSpec(
-      aesthetic = "edge_width",
-      type = "continuous",
-      domain = limits,
-      range = range,
-      breaks = breaks,
-      name = name
-    )
-  )
+  .continuous_range_scale(plot, "edge_width", range, limits, breaks, name)
 }
 
 #' Edge colour / alpha / line-type scales
@@ -982,17 +991,48 @@ scale_edge_alpha <- function(
   breaks = NULL,
   name = NULL
 ) {
+  .continuous_range_scale(
+    plot,
+    "edge_alpha",
+    range,
+    limits,
+    breaks,
+    name,
+    upper = 1
+  )
+}
+
+# The shared engine behind the discrete-palette scales (shape / linetype /
+# edge_linetype): validate `values` against the aesthetic's fixed palette, then
+# declare a discrete scale. `{qty(bad)}` keeps the count (not `noun`) governing
+# the `{?s}` pluralisation.
+.discrete_palette_scale <- function(
+  plot,
+  aesthetic,
+  values,
+  valid,
+  noun,
+  name
+) {
   .check_plot(plot)
-  .check_continuous_limits(limits, "limits", numeric = TRUE)
-  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0, upper = 1)
+  if (!is.null(values)) {
+    bad <- setdiff(as.character(values), valid)
+    if (length(bad)) {
+      # Pluralise the noun in R (the count governs, not cli's `{?s}` which would
+      # attach to the length-1 `{noun}` interpolation before it).
+      label <- if (length(bad) > 1L) paste0(noun, "s") else noun
+      cli::cli_abort(c(
+        "Unknown {label} in {.arg values}: {.val {bad}}.",
+        i = "Use {.or {.val {valid}}}."
+      ))
+    }
+  }
   .add_scale(
     plot,
     ScaleSpec(
-      aesthetic = "edge_alpha",
-      type = "continuous",
-      domain = limits,
-      range = range,
-      breaks = breaks,
+      aesthetic = aesthetic,
+      type = "discrete",
+      palette = values,
       name = name
     )
   )
@@ -1001,25 +1041,13 @@ scale_edge_alpha <- function(
 #' @rdname scale_edge
 #' @export
 scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
-  .check_plot(plot)
-  if (!is.null(values)) {
-    valid <- .LINETYPE_PALETTE
-    bad <- setdiff(as.character(values), valid)
-    if (length(bad)) {
-      cli::cli_abort(c(
-        "Unknown line type{?s} in {.arg values}: {.val {bad}}.",
-        i = "Use {.or {.val {valid}}}."
-      ))
-    }
-  }
-  .add_scale(
+  .discrete_palette_scale(
     plot,
-    ScaleSpec(
-      aesthetic = "edge_linetype",
-      type = "discrete",
-      palette = values,
-      name = name
-    )
+    "edge_linetype",
+    values,
+    .LINETYPE_PALETTE,
+    "line type",
+    name
   )
 }
 
@@ -1039,26 +1067,7 @@ scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = factor(cyl))
 #' @export
 scale_shape <- function(plot, values = NULL, name = NULL) {
-  .check_plot(plot)
-  if (!is.null(values)) {
-    valid <- .SHAPE_PALETTE
-    bad <- setdiff(as.character(values), valid)
-    if (length(bad)) {
-      cli::cli_abort(c(
-        "Unknown shape{?s} in {.arg values}: {.val {bad}}.",
-        i = "Use {.or {.val {valid}}}."
-      ))
-    }
-  }
-  .add_scale(
-    plot,
-    ScaleSpec(
-      aesthetic = "shape",
-      type = "discrete",
-      palette = values,
-      name = name
-    )
-  )
+  .discrete_palette_scale(plot, "shape", values, .SHAPE_PALETTE, "shape", name)
 }
 
 #' Pattern (texture) scale
@@ -1174,20 +1183,7 @@ scale_alpha <- function(
   breaks = NULL,
   name = NULL
 ) {
-  .check_plot(plot)
-  .check_continuous_limits(limits, "limits", numeric = TRUE)
-  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0, upper = 1)
-  .add_scale(
-    plot,
-    ScaleSpec(
-      aesthetic = "alpha",
-      type = "continuous",
-      domain = limits,
-      range = range,
-      breaks = breaks,
-      name = name
-    )
-  )
+  .continuous_range_scale(plot, "alpha", range, limits, breaks, name, upper = 1)
 }
 
 #' @rdname scale_alpha
@@ -1212,25 +1208,13 @@ scale_alpha_continuous <- scale_alpha
 #' vplot(df) |> mark_line(x = x, y = y, linetype = g)
 #' @export
 scale_linetype <- function(plot, values = NULL, name = NULL) {
-  .check_plot(plot)
-  if (!is.null(values)) {
-    valid <- .LINETYPE_PALETTE
-    bad <- setdiff(as.character(values), valid)
-    if (length(bad)) {
-      cli::cli_abort(c(
-        "Unknown line type{?s} in {.arg values}: {.val {bad}}.",
-        i = "Use {.or {.val {valid}}}."
-      ))
-    }
-  }
-  .add_scale(
+  .discrete_palette_scale(
     plot,
-    ScaleSpec(
-      aesthetic = "linetype",
-      type = "discrete",
-      palette = values,
-      name = name
-    )
+    "linetype",
+    values,
+    .LINETYPE_PALETTE,
+    "line type",
+    name
   )
 }
 

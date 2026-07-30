@@ -88,7 +88,7 @@ NULL
   totw <- sum(weight)
   unit <- if (totw > 0) (1 - gap_total) / totw else 0
 
-  ang <- function(f) pi / 2 - 2 * pi * f
+  ang <- .frac_to_angle
 
   # Sector bounds + per-node out/in block cursors (in fraction space).
   sec_theta0 <- numeric(n)

@@ -28,6 +28,31 @@ NULL
   as.character(user_labels)
 }
 
+# Keep only the legend breaks (and their paired labels) that are finite and
+# inside `rng`. Shared by every continuous trainer's break/label filter.
+.filter_breaks_labels <- function(breaks, labels, rng) {
+  keep <- is.finite(breaks) & breaks >= min(rng) & breaks <= max(rng)
+  list(
+    breaks = breaks[keep],
+    labels = if (!is.null(labels)) labels[keep] else NULL
+  )
+}
+
+# An identity scale: values pass through verbatim (coerced), with no guide.
+# Shared by the size/alpha/edge-width, shape, linetype and colour trainers.
+.identity_scale <- function(kind, coerce, name) {
+  list(kind = kind, map = coerce, name = name, no_guide = TRUE)
+}
+
+# "Not enough <noun>" abort for a discrete palette that ran short of levels.
+# Shared by the shape / pattern / linetype trainers.
+.not_enough_abort <- function(noun, field, arg, n, avail) {
+  cli::cli_abort(c(
+    "Not enough {noun} for {n} {.field {field}} level{?s} ({avail} available).",
+    i = "Supply at least {n} {noun} via {.arg {arg}}."
+  ))
+}
+
 # Default perceptual ramp for continuous colour and qualitative palette for
 # discrete colour. Batlow (Crameri's scientific colour maps) is perceptually
 # uniform, colour-vision-deficient safe, and grayscale-safe like viridis, but
@@ -124,11 +149,9 @@ NULL
   } else {
     .match_labels(sec@labels, sbreaks, aesthetic)
   }
-  keep <- is.finite(sbreaks) & sbreaks >= srng[1] & sbreaks <= srng[2]
-  sbreaks <- sbreaks[keep]
-  if (!is.null(lab_vec)) {
-    lab_vec <- lab_vec[keep]
-  }
+  fb <- .filter_breaks_labels(sbreaks, lab_vec, srng)
+  sbreaks <- fb$breaks
+  lab_vec <- fb$labels
   # `approx` needs an increasing x; flip both together for a decreasing transform.
   if (dsec[1] < 0) {
     sec_g <- rev(sec_g)
@@ -571,11 +594,9 @@ NULL
       tr$breaks(rng)
     }
     lab <- .match_labels(user_labels, braw, aesthetic)
-    keep <- is.finite(braw) & braw >= min(rng) & braw <= max(rng)
-    braw <- braw[keep]
-    if (!is.null(lab)) {
-      lab <- lab[keep]
-    }
+    fb <- .filter_breaks_labels(braw, lab, rng)
+    braw <- fb$breaks
+    lab <- fb$labels
     breaks <- tr$transform(braw)
     labels <- lab %||% tr$format(braw)
     type <- if (!is.null(scalespec) && identical(scalespec@type, "log10")) {
@@ -753,14 +774,9 @@ NULL
   # An identity scale uses the data values verbatim as colours (they must already
   # be valid R/CSS colours) and draws no legend.
   if (identical(kind, "identity")) {
-    return(list(
-      kind = "identity",
-      map = function(x) as.character(x),
-      name = title,
-      no_guide = TRUE,
-      na = FALSE,
-      na_value = na_value,
-      key_glyph = key_glyph
+    return(c(
+      .identity_scale("identity", as.character, title),
+      list(na = FALSE, na_value = na_value, key_glyph = key_glyph)
     ))
   }
 
@@ -858,11 +874,9 @@ NULL
       scales::breaks_extended()(rng)
     }
     llab <- .match_labels(user_labels, lbrk, aes)
-    keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
-    lbrk <- lbrk[keep]
-    if (!is.null(llab)) {
-      llab <- llab[keep]
-    }
+    fb <- .filter_breaks_labels(lbrk, llab, rng)
+    lbrk <- fb$breaks
+    llab <- fb$labels
     list(
       kind = "continuous",
       map = map,
@@ -954,12 +968,7 @@ NULL
   # An identity scale uses the data values verbatim (mm for size, opacity for
   # alpha), with no guide.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(list(
-      kind = kind,
-      map = function(x) as.numeric(x),
-      name = .default_title(spec, channel),
-      no_guide = TRUE
-    ))
+    return(.identity_scale(kind, as.numeric, .default_title(spec, channel)))
   }
   v <- as.numeric(unlist(values, use.names = FALSE))
   has_na <- anyNA(v) # detect before dropping non-finite, for the NA legend key
@@ -1001,11 +1010,9 @@ NULL
     lbrk,
     aes
   )
-  keep <- is.finite(lbrk) & lbrk >= rng[1] & lbrk <= rng[2]
-  lbrk <- lbrk[keep]
-  if (!is.null(llab)) {
-    llab <- llab[keep]
-  }
+  fb <- .filter_breaks_labels(lbrk, llab, rng)
+  lbrk <- fb$breaks
+  llab <- fb$labels
   out <- list(
     kind = kind,
     map = map,
@@ -1060,11 +1067,10 @@ NULL
   scalespec <- .scale_for(spec, "shape")
   # An identity shape scale uses the data values verbatim as shape names.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(list(
-      kind = "shape",
-      map = function(x) as.character(x),
-      name = .default_title(spec, "shape"),
-      no_guide = TRUE
+    return(.identity_scale(
+      "shape",
+      as.character,
+      .default_title(spec, "shape")
     ))
   }
   levels <- .cat_levels(values)
@@ -1075,10 +1081,13 @@ NULL
     .SHAPE_PALETTE
   }
   if (length(levels) > length(pal)) {
-    cli::cli_abort(c(
-      "Not enough shapes for {length(levels)} {.field shape} level{?s} ({length(pal)} available).",
-      i = "Supply at least {length(levels)} shapes via {.arg scale_shape(values=)}."
-    ))
+    .not_enough_abort(
+      "shapes",
+      "shape",
+      "scale_shape(values=)",
+      length(levels),
+      length(pal)
+    )
   }
   shapes <- rep_len(pal, length(levels))
   names(shapes) <- levels
@@ -1159,10 +1168,13 @@ NULL
     .pattern_palette()
   }
   if (length(levels) > length(pal)) {
-    cli::cli_abort(c(
-      "Not enough patterns for {length(levels)} {.field pattern} level{?s} ({length(pal)} available).",
-      i = "Supply at least {length(levels)} via {.arg scale_pattern(values=)}."
-    ))
+    .not_enough_abort(
+      "patterns",
+      "pattern",
+      "scale_pattern(values=)",
+      length(levels),
+      length(pal)
+    )
   }
   objs <- pal[seq_along(levels)]
   names(objs) <- levels
@@ -1218,12 +1230,7 @@ NULL
   }
   scalespec <- .scale_for(spec, aes)
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(list(
-      kind = "linetype",
-      map = function(x) as.character(x),
-      name = .default_title(spec, aes),
-      no_guide = TRUE
-    ))
+    return(.identity_scale("linetype", as.character, .default_title(spec, aes)))
   }
   levels <- .cat_levels(values)
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
@@ -1232,10 +1239,13 @@ NULL
     .LINETYPE_PALETTE
   }
   if (length(levels) > length(pal)) {
-    cli::cli_abort(c(
-      "Not enough line types for {length(levels)} {.field linetype} level{?s} ({length(pal)} available).",
-      i = "Supply at least {length(levels)} line types via {.arg scale_linetype(values=)}."
-    ))
+    .not_enough_abort(
+      "line types",
+      "linetype",
+      "scale_linetype(values=)",
+      length(levels),
+      length(pal)
+    )
   }
   ltys <- rep_len(pal, length(levels))
   names(ltys) <- levels

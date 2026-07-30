@@ -349,14 +349,30 @@ plot_verify <- function(svg, data) {
   if (length(svg) == 1 && !grepl("<svg", svg) && file.exists(svg)) {
     svg <- paste(readLines(svg, warn = FALSE), collapse = "\n")
   }
-  m <- regmatches(svg, regexpr("vellumplot-manifest:\\s*\\{.*\\}\\s*-->", svg))
+  # Non-greedy match up to the first comment terminator, so a payload can't be
+  # over-matched across other comments.
+  m <- regmatches(
+    svg,
+    regexpr("vellumplot-manifest:\\s*(.+?)\\s*-->", svg, perl = TRUE)
+  )
   if (!length(m)) {
     cli::cli_abort(c(
       "No vellumplot manifest found in the SVG.",
       "i" = "Write it with {.code plot_svg(x, manifest = TRUE)}."
     ))
   }
-  json <- sub(".*vellumplot-manifest:\\s*(\\{.*\\})\\s*-->.*", "\\1", m)
+  payload <- trimws(sub(
+    ".*vellumplot-manifest:\\s*(.+?)\\s*-->.*",
+    "\\1",
+    m,
+    perl = TRUE
+  ))
+  # Current form is base64; the legacy form embedded raw JSON (starts with `{`).
+  json <- if (startsWith(payload, "{")) {
+    payload
+  } else {
+    rawToChar(jsonlite::base64_dec(payload))
+  }
   manifest <- jsonlite::fromJSON(
     json,
     simplifyVector = TRUE,
@@ -407,9 +423,13 @@ provenance_payload <- function(x, values = FALSE) {
   out
 }
 
-# The manifest as a single-line HTML/XML comment for embedding in an SVG.
+# The manifest as a single-line HTML/XML comment for embedding in an SVG. The
+# JSON is base64-encoded so a column name containing `--` (or `>`) can never
+# corrupt the enclosing comment; `plot_verify()` decodes it (and still reads the
+# legacy raw-JSON form).
 .manifest_comment <- function(x) {
   .need_pkg("jsonlite", "plot_svg(manifest = TRUE)")
   json <- jsonlite::toJSON(plot_manifest(x), auto_unbox = TRUE, null = "null")
-  paste0("<!-- vellumplot-manifest: ", json, " -->")
+  enc <- gsub("\\s", "", jsonlite::base64_enc(json))
+  paste0("<!-- vellumplot-manifest: ", enc, " -->")
 }

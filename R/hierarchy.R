@@ -213,8 +213,8 @@ NULL
   data.frame(
     r0 = inner_radius + (tree$depth - 1L) * w,
     r1 = inner_radius + tree$depth * w,
-    theta0 = pi / 2 - 2 * pi * tree$f1,
-    theta1 = pi / 2 - 2 * pi * tree$f0
+    theta0 = .frac_to_angle(tree$f1),
+    theta1 = .frac_to_angle(tree$f0)
   )
 }
 
