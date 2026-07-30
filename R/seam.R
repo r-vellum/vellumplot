@@ -291,6 +291,24 @@ NULL
 # its own circular gridlines/labels; a coord_trans panel spans the warped domain;
 # the cartesian branch (incl. coord_flip) carries the pan group, clip mask, and
 # scale meta. See `dp` (assembled in `.draw_plot`) for the threaded state.
+# Marks whose geometry legitimately extends past the panel bbox and so must not
+# be clipped: graph decorations (self-loops, node markers) and physically-sized
+# annotations (grob / sparkline insets pinned at a data point near the edge). A
+# plot made *entirely* of these leaves the whole panel unclipped; a mixed plot
+# clips the panel for its ordinary marks and draws only these in an unclipped
+# sibling overlay (see `.dp_draw_panels`).
+.BOUNDARY_MARKS <- c(
+  "edges",
+  "edge_bundle",
+  "flow_map",
+  "edge_text",
+  "nodes",
+  "node_pie",
+  "node_text",
+  "sparkline",
+  "grob"
+)
+
 .dp_draw_panels <- function(scene, dp) {
   spec <- dp$spec
   co <- dp$co
@@ -334,9 +352,17 @@ NULL
       psc
     )
     pname <- sprintf("panel-%d-%d", p$r, p$c)
+    # Overlay descriptor (scales + clip flag) for the unclipped boundary-mark
+    # sibling, filled per branch below and used by the shared tail.
+    this_clip <- panel_clip
+    ov_xscale <- hsc$domain
+    ov_yscale <- vsc$domain
     if (polar) {
       ctx <- .polar_ctx(co, p$x_sc, p$y_sc)
       psc$polar <- ctx
+      this_clip <- TRUE
+      ov_xscale <- c(-1, 1)
+      ov_yscale <- c(-1, 1)
       scene <- vellum::push(
         scene,
         vellum::vl_viewport(
@@ -354,6 +380,8 @@ NULL
       # warp via `psc$trans`, gridlines/ticks via break/domain-warped scale copies.
       ctx <- .trans_ctx(co, p$x_sc, p$y_sc)
       psc$trans <- ctx
+      ov_xscale <- ctx$x_dom
+      ov_yscale <- ctx$y_dom
       scene <- vellum::push(
         scene,
         vellum::vl_viewport(
@@ -409,8 +437,48 @@ NULL
         )
       }
     }
-    scene <- .compile_marks(scene, p$resolved, psc, panel = pname)
-    scene <- vellum::pop(scene)
+    boundary <- vapply(
+      p$resolved,
+      function(L) L$mark %in% .BOUNDARY_MARKS,
+      logical(1)
+    )
+    if (this_clip && any(boundary) && !all(boundary)) {
+      # Mixed plot: draw the ordinary marks clipped to the panel, then the
+      # boundary marks (grob/sparkline annotations, graph decorations) in an
+      # unclipped sibling overlay at the same cell + scales, so a single inset
+      # near the edge no longer disables clipping for the whole panel. Boundary
+      # marks land on top of the ordinary ones (they are annotations/decorations).
+      scene <- .compile_marks(
+        scene,
+        p$resolved[!boundary],
+        psc,
+        panel = pname,
+        layer_index = which(!boundary)
+      )
+      scene <- vellum::pop(scene) # leave the clipped panel viewport
+      scene <- vellum::push(
+        scene,
+        vellum::vl_viewport(
+          row = lay$panel_row[p$r],
+          col = lay$panel_col[p$c],
+          xscale = ov_xscale,
+          yscale = ov_yscale,
+          clip = FALSE,
+          name = paste0(pname, "-overlay")
+        )
+      )
+      scene <- .compile_marks(
+        scene,
+        p$resolved[boundary],
+        psc,
+        panel = pname,
+        layer_index = which(boundary)
+      )
+      scene <- vellum::pop(scene) # leave the overlay
+    } else {
+      scene <- .compile_marks(scene, p$resolved, psc, panel = pname)
+      scene <- vellum::pop(scene)
+    }
   }
   scene
 }
@@ -639,29 +707,14 @@ NULL
   if (any(zz != 0L)) {
     spec@layers <- spec@layers[order(zz, seq_along(zz))]
   }
-  # A graph has no meaningful domain edges, and its mark decorations (self-loops,
-  # mm node markers) legitimately extend past the layout bbox -- so don't clip the
-  # panel for graph plots (ordinary plots still clip to their axes).
-  panel_clip <- !any(vapply(
+  # Clip the panel unless *every* layer is a boundary mark (a pure graph plot,
+  # whose decorations legitimately extend past the bbox). A mixed plot still
+  # clips: `.dp_draw_panels` draws its boundary marks in an unclipped overlay, so
+  # one inset near the edge no longer un-clips the ordinary marks. (A plain plot
+  # has no boundary marks, so this stays TRUE -- unchanged.)
+  panel_clip <- !all(vapply(
     spec@layers,
-    function(l) {
-      l@mark %in%
-        c(
-          "edges",
-          "edge_bundle",
-          "flow_map",
-          "edge_text",
-          "nodes",
-          "node_pie",
-          "node_text",
-          # A sparkline's extreme/last dots sit on the domain boundary; clipping
-          # would slice them in half, so its tiny box is drawn unclipped.
-          "sparkline",
-          # A grob/sparkline annotation is a physically-sized box at a data point;
-          # near the panel edge its box would clip, so draw it unclipped.
-          "grob"
-        )
-    },
+    function(l) l@mark %in% .BOUNDARY_MARKS,
     logical(1)
   ))
   rt <- .resolve_theme(.theme_of(spec))

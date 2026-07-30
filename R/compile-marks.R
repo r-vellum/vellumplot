@@ -4111,7 +4111,13 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   }
 }
 
-.compile_marks <- function(scene, resolved, scales, panel = NA_character_) {
+.compile_marks <- function(
+  scene,
+  resolved,
+  scales,
+  panel = NA_character_,
+  layer_index = seq_along(resolved)
+) {
   on.exit(.mark_ctx$id <- NULL, add = TRUE)
   .mark_ctx$panel <- panel
   for (i in seq_along(resolved)) {
@@ -4119,11 +4125,15 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     if (!L$n) {
       next
     } # empty facet panel
-    .mark_ctx$id <- sprintf("layer-%d-%s", i, L$mark)
+    # The layer's stable index in the *original* layer list, so a partitioned
+    # draw (clipped vs unclipped overlay, see `.dp_draw_panels`) keeps provenance
+    # ids/layer numbers consistent with the un-partitioned order.
+    li <- layer_index[i]
+    .mark_ctx$id <- sprintf("layer-%d-%s", li, L$mark)
     # Provenance context for every grob this layer emits (DESIGN §4). Set once
     # per layer: `.draw()` reads it. `rows` defaults to the whole layer -- an
     # emitter that groups rows by style refines it per group (see `PROVENANCE:`).
-    .mark_ctx$layer <- i
+    .mark_ctx$layer <- li
     .mark_ctx$mark <- L$mark
     .mark_ctx$channels <- .layer_channels(L, scales)
     .mark_ctx$rows <- seq_len(L$n)
