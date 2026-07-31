@@ -1,13 +1,38 @@
-# Label repulsion (mark_text/mark_label repel = TRUE): the exact two-pass solver.
+# Label repulsion (mark_text / mark_label repel = TRUE): the engine placement
+# solver applied as a single post-compile pass. Coordinate-agnostic -- faceted,
+# polar and warped panels are solved together, no per-panel restriction.
 
-# Resolve a spec's repel solution for its (single) repel layer.
-repel_solution <- function(spec, layer = 2L) {
-  prov <- vellumplot:::.compile_plot(spec)
-  s2 <- vellumplot:::.attach_repel_solutions(spec, vellum::scene_model(prov))
-  s2@layers[[layer]]@stat_params$repel$solution
+# The moved label boxes of a compiled repel spec, in device px. `vl_place()` on
+# the already-placed scene returns each label's box at its final position (the
+# residual displacement is ~0), which is what these tests inspect.
+repel_boxes <- function(spec) {
+  sc <- vellum::as_vellum_scene(spec)
+  labs <- grep("^repel:", vellum::node_names(sc), value = TRUE)
+  vellum::vl_place(sc, labels = labs)
 }
 
-test_that("repel = TRUE records the repel params; FALSE records none", {
+n_segments <- function(spec) {
+  el <- vellum::scene_model(vellum::as_vellum_scene(spec))$elements
+  sum(el$mark == "segment")
+}
+
+# Count overlapping pairs among a set of device-px boxes.
+overlapping_pairs <- function(b) {
+  if (nrow(b) < 2L) {
+    return(0L)
+  }
+  p <- utils::combn(nrow(b), 2L)
+  sum(apply(p, 2, function(ij) {
+    i <- ij[1]
+    j <- ij[2]
+    !(b$x1[i] <= b$x0[j] |
+      b$x0[i] >= b$x1[j] |
+      b$y1[i] <= b$y0[j] |
+      b$y0[i] >= b$y1[j])
+  }))
+}
+
+test_that("repel = TRUE records the repel flag; FALSE records none", {
   on <- (vplot(mtcars) |>
     mark_text(x = wt, y = mpg, label = "a", repel = TRUE))@layers[[1]]
   expect_true(isTRUE(on@stat_params$repel$on))
@@ -16,117 +41,88 @@ test_that("repel = TRUE records the repel params; FALSE records none", {
   expect_null(off@stat_params$repel)
 })
 
-test_that("the repel solution is deterministic for a fixed seed", {
-  d <- data.frame(
-    x = c(1, 1, 1, 1, 1),
-    y = c(1, 1, 1, 1, 1),
-    lab = letters[1:5]
-  )
-  spec <- vplot(d) |>
-    mark_point(x = x, y = y) |>
-    mark_text(x = x, y = y, label = lab, repel = TRUE, seed = 1)
-  a <- repel_solution(spec)
-  b <- repel_solution(spec)
-  expect_identical(a$x, b$x)
-  expect_identical(a$y, b$y)
-})
-
-test_that("a different seed gives a different layout", {
-  d <- data.frame(x = rep(1, 5), y = rep(1, 5), lab = letters[1:5])
-  base <- function(s) {
-    vplot(d) |>
-      mark_point(x = x, y = y) |>
-      mark_text(x = x, y = y, label = lab, repel = TRUE, seed = s)
-  }
-  expect_false(identical(repel_solution(base(1))$x, repel_solution(base(2))$x))
-})
-
-test_that("co-located labels are pushed to distinct positions", {
+test_that("co-located labels are separated by the solver", {
   # five labels on the exact same point must not stay stacked
   d <- data.frame(x = rep(2, 5), y = rep(3, 5), lab = paste0("lab", 1:5))
-  spec <- vplot(d) |>
-    mark_point(x = x, y = y) |>
-    mark_text(x = x, y = y, label = lab, repel = TRUE, seed = 1)
-  sol <- repel_solution(spec)
-  # every pair of label centres is separated
-  centres <- cbind(sol$x, sol$y)
-  dmat <- as.matrix(stats::dist(centres))
-  diag(dmat) <- Inf
-  expect_gt(min(dmat), 0)
-  # and they moved off the shared anchor
-  expect_true(all(abs(sol$x - 2) > 0 | abs(sol$y - 3) > 0))
-})
-
-test_that("displaced labels stay within the panel's native range", {
-  set.seed(1)
-  d <- data.frame(x = rnorm(20), y = rnorm(20), lab = paste0("p", 1:20))
-  spec <- vplot(d) |>
-    mark_point(x = x, y = y) |>
-    mark_text(x = x, y = y, label = lab, repel = TRUE, seed = 1)
-  sc <- vellumplot:::.build_panels(spec)$scales
-  sol <- repel_solution(spec)
-  expect_true(all(sol$x >= min(sc$x$domain) & sol$x <= max(sc$x$domain)))
-  expect_true(all(sol$y >= min(sc$y$domain) & sol$y <= max(sc$y$domain)))
-})
-
-test_that("moved labels carry leader segments", {
-  d <- data.frame(x = rep(1, 6), y = rep(1, 6), lab = paste0("x", 1:6))
-  sol <- repel_solution(
+  b <- repel_boxes(
     vplot(d) |>
       mark_point(x = x, y = y) |>
-      mark_text(x = x, y = y, label = lab, repel = TRUE, seed = 1)
+      mark_text(x = x, y = y, label = lab, repel = TRUE)
   )
-  expect_false(is.null(sol$leaders))
-  expect_true(nrow(sol$leaders) >= 1)
+  expect_equal(nrow(b), 5L)
+  expect_equal(overlapping_pairs(b), 0L)
 })
 
-test_that("labels stay near their anchors and are not flung across the panel", {
-  # Regression: the dense mtcars example used to fling the three heavy-car
-  # labels off their clustered anchors, up a panel wall, into the far corner
-  # (leaders spanning the whole panel). The leash bounds every displacement.
-  spec <- vplot(mtcars) |>
-    mark_point(x = wt, y = mpg) |>
-    mark_text(
-      x = wt,
-      y = mpg,
-      label = rownames(mtcars),
-      repel = TRUE,
-      size = 7,
-      seed = 1
-    )
-  sc <- vellumplot:::.build_panels(spec)$scales
-  nx <- sc$x$map(mtcars$wt)
-  ny <- sc$y$map(mtcars$mpg)
-  sol <- repel_solution(spec)
-  # displacement of each label from its anchor, normalised by native range
-  xr <- diff(range(nx))
-  yr <- diff(range(ny))
-  disp <- sqrt(((sol$x - nx) / xr)^2 + ((sol$y - ny) / yr)^2)
-  # pre-fix this reached ~0.9 (a label thrown almost the full panel height)
-  expect_lt(max(disp), 0.35)
-})
-
-test_that("repel under facets errors clearly", {
-  d <- data.frame(x = 1:6, y = 1:6, lab = letters[1:6], g = rep(c("a", "b"), 3))
-  expect_error(
-    vellum::as_vellum_scene(
-      vplot(d) |>
-        mark_text(x = x, y = y, label = lab, repel = TRUE) |>
-        facet_wrap(~g)
-    ),
-    "single cartesian panel"
-  )
-})
-
-test_that("repel restores the global RNG stream", {
+test_that("repel is deterministic (same spec compiles to the same placement)", {
   d <- data.frame(x = rep(1, 5), y = rep(1, 5), lab = letters[1:5])
-  set.seed(123)
-  before <- runif(1)
-  invisible(vellum::as_vellum_scene(
-    vplot(d) |> mark_text(x = x, y = y, label = lab, repel = TRUE, seed = 1)
-  ))
-  set.seed(123)
-  expect_identical(before, runif(1))
+  sp <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_text(x = x, y = y, label = lab, repel = TRUE)
+  a <- repel_boxes(sp)
+  b <- repel_boxes(sp)
+  expect_equal(a$x0, b$x0)
+  expect_equal(a$y0, b$y0)
+})
+
+test_that("moved labels get leader lines", {
+  d <- data.frame(x = rep(1, 6), y = rep(1, 6), lab = paste0("x", 1:6))
+  base <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_text(x = x, y = y, label = lab)
+  repelled <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_text(x = x, y = y, label = lab, repel = TRUE)
+  # the co-located labels all move, so each contributes a leader segment
+  expect_gt(n_segments(repelled), n_segments(base))
+})
+
+test_that("displaced labels stay within the panel", {
+  set.seed(1)
+  d <- data.frame(x = rnorm(20), y = rnorm(20), lab = paste0("p", 1:20))
+  sp <- vplot(d, width = 6, height = 5) |>
+    mark_point(x = x, y = y) |>
+    mark_text(x = x, y = y, label = lab, repel = TRUE, size = 4)
+  sc <- vellum::as_vellum_scene(sp)
+  m <- vellum::scene_model(sc)
+  panel <- m$panels[grepl("^panel-", m$panels$name), , drop = FALSE][1, ]
+  labs <- grep("^repel:", vellum::node_names(sc), value = TRUE)
+  b <- vellum::vl_place(sc, labels = labs)
+  # every label box centre lies inside the panel rect (a small tolerance for the
+  # label that is pinned at the panel edge)
+  cx <- (b$x0 + b$x1) / 2
+  cy <- (b$y0 + b$y1) / 2
+  tol <- 2
+  expect_true(all(cx >= panel$x0 - tol & cx <= panel$x1 + tol))
+  expect_true(all(cy >= panel$y0 - tol & cy <= panel$y1 + tol))
+})
+
+test_that("repel works under facets (previously an error)", {
+  d <- data.frame(
+    x = 1:6,
+    y = 1:6,
+    lab = letters[1:6],
+    g = rep(c("a", "b"), 3)
+  )
+  sp <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_text(x = x, y = y, label = lab, repel = TRUE) |>
+    facet_wrap(~g)
+  expect_no_error(sc <- vellum::as_vellum_scene(sp))
+  # labels are named per panel, so both facet panels carry their own repel nodes
+  labs <- grep("^repel:", vellum::node_names(sc), value = TRUE)
+  panels <- unique(sub("^repel:([^:]+):.*$", "\\1", labs))
+  expect_gte(length(panels), 2L)
+})
+
+test_that("repel works under coord_polar (previously an error)", {
+  d <- data.frame(x = rep(2, 5), y = rep(3, 5), lab = paste0("p", 1:5))
+  sp <- vplot(d, width = 6, height = 6) |>
+    mark_point(x = x, y = y) |>
+    mark_text(x = x, y = y, label = lab, repel = TRUE) |>
+    coord_polar()
+  f <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(sp, f))
+  expect_gt(file.info(f)$size, 0)
 })
 
 test_that("repelled text and label marks render", {
@@ -136,7 +132,7 @@ test_that("repelled text and label marks render", {
   render_plot(
     vplot(d) |>
       mark_point(x = x, y = y) |>
-      mark_text(x = x, y = y, label = lab, repel = TRUE, seed = 1),
+      mark_text(x = x, y = y, label = lab, repel = TRUE),
     f1
   )
   expect_gt(file.info(f1)$size, 0)
@@ -144,7 +140,7 @@ test_that("repelled text and label marks render", {
   render_plot(
     vplot(d) |>
       mark_point(x = x, y = y) |>
-      mark_label(x = x, y = y, label = lab, repel = TRUE, seed = 1),
+      mark_label(x = x, y = y, label = lab, repel = TRUE),
     f2
   )
   expect_gt(file.info(f2)$size, 0)

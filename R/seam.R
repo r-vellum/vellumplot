@@ -940,14 +940,15 @@ NULL
 # registers on the shared generic, so `vellum::render(plot, path)` dispatches here.
 .as_vellum_scene <- vellum::as_vellum_scene
 S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
-  # Label repulsion is an exact two-pass compile: compile once to recover the
-  # panel's device-px geometry (via scene_model()), solve label placement in that
-  # pixel space, then recompile with the labels moved. See R/repel.R.
+  scene <- .compile_plot(x)
+  # Label repulsion is a single post-compile pass over the built scene: the
+  # engine solver moves each named label (and its background) by an absolute mm
+  # offset and we draw the leaders. Coordinate-agnostic, so it spans facets /
+  # polar / warped panels together. See R/repel.R.
   if (.any_repel(x)) {
-    provisional <- .compile_plot(x)
-    x <- .attach_repel_solutions(x, vellum::scene_model(provisional))
+    scene <- .repel_scene(scene, x)
   }
-  .compile_plot(x)
+  scene
 }
 
 #' Render a plot to a file

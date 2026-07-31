@@ -1,28 +1,24 @@
 #' @include classes.R compile-marks.R
 NULL
 
-# Label repulsion (ggrepel-style), resolved as an exact two-pass compile.
+# Label repulsion (ggrepel-style), resolved by the engine's placement solver.
 #
-# The hard part of repel is that overlap must be judged in the *device* metric
-# (a label's pixel box vs the panel's pixel extent), not in data units. vellum
-# resolves the panel to device pixels only during its layout pass, but the plot
-# size is fixed on the spec (`vplot(width=, height=, dpi=)`), so the panel
-# geometry is deterministic at compile time and recoverable from `scene_model()`.
+# `vl_place()` / `vl_repel()` (vellum) solve label collisions over the scene's
+# *resolved device geometry* and express the answer as an absolute millimetre
+# offset added on top of each label's existing coordinate. Because that offset is
+# a compound `<anchor> + <mm>` unit resolved at render, repel is
+# coordinate-system agnostic: faceted, polar and warped panels are just more
+# boxes to the solver, and every panel is solved together. So repel here is a
+# single post-compile pass over the built scene -- no second compile, no
+# per-panel affine, and none of the old "single cartesian panel only" limit.
 #
-# So `as_vellum_scene()` on a spec with a repel layer compiles once (labels at
-# their anchors), reads the panel's device-px rect + native ranges from
-# `scene_model()`, runs a force-directed placement in that exact pixel space,
-# maps the settled centres back to native, and recompiles with the labels moved
-# (plus leader segments). No approximation, no vellum change. Scoped to a single
-# cartesian panel for now (faceted / polar / warped plots error clearly).
-
-# Iteration budget for the force relaxation. O(n^2) per step; labels number in
-# the tens in practice, so this is cheap.
-.REPEL_MAX_ITER <- 1500L
-
-# A label may drift at most this fraction of the panel's shorter side from its
-# anchor. See the leash note in `.repel_solve()`.
-.REPEL_REACH_FRAC <- 0.22
+# Flow (`.repel_scene`): the marks compile once with each repel label emitted as
+# a NAMED node ("repel:<panel>:<layer>:<group>"; a mark_label's rounded
+# background as "repelbg:<...>"). Then: solve (`vl_place`), shift each label node
+# -- and its background -- by the solved offset, and draw a leader from each
+# moved label back to its anchor. Every other mark is an obstacle by default (a
+# point under the label is avoided); an obstacle that *contains* a label is
+# background, not a collision (vellum handles that).
 
 # Do any of a spec's layers request repulsion?
 .any_repel <- function(spec) {
@@ -37,252 +33,10 @@ NULL
   FALSE
 }
 
-# native -> device-px affine for a panel row of `scene_model()$panels`. Returns
-# `to_px(nx, ny)` and `to_native(px, py)`, exact inverses. Orientation of the y
-# flip is irrelevant to overlap (symmetric in |dy|) as long as the pair round-
-# trips, so we use a simple lo->px0 / hi->px1 convention.
-.repel_affine <- function(panel) {
-  xr <- panel$xscale_hi - panel$xscale_lo
-  yr <- panel$yscale_hi - panel$yscale_lo
-  sx <- (panel$px1 - panel$px0) / xr
-  sy <- (panel$py1 - panel$py0) / yr
-  list(
-    to_px = function(nx, ny) {
-      list(
-        x = panel$px0 + (nx - panel$xscale_lo) * sx,
-        y = panel$py0 + (ny - panel$yscale_lo) * sy
-      )
-    },
-    to_native = function(px, py) {
-      list(
-        x = panel$xscale_lo + (px - panel$px0) / sx,
-        y = panel$yscale_lo + (py - panel$py0) / sy
-      )
-    },
-    px_lo = c(min(panel$px0, panel$px1), min(panel$py0, panel$py1)),
-    px_hi = c(max(panel$px0, panel$px1), max(panel$py0, panel$py1))
-  )
-}
-
-# Force-directed box placement. `cx,cy` are label-box centres (px), `w,h` their
-# sizes (px, padded), `ax,ay` the anchor points (px). Boxes repel each other and
-# the anchor points, spring back to their own anchor, and stay inside the panel
-# `[lo, hi]` px rectangle. Deterministic given `seed`. Returns settled centres.
-.repel_solve <- function(cx, cy, w, h, ax, ay, lo, hi, seed) {
-  n <- length(cx)
-  span <- max(hi - lo, 1)
-  # A tiny seeded nudge breaks exact ties (co-located points) reproducibly.
-  jit <- .with_seed(seed %||% 1L, stats::runif(2L * n, -1, 1)) * (span * 0.01)
-  cx <- cx + jit[seq_len(n)]
-  cy <- cy + jit[n + seq_len(n)]
-
-  # A gentle spring and a small step keep the relaxation stable.
-  spring <- 0.02
-  step <- 0.45
-  hw <- w / 2
-  hh <- h / 2
-  # A leash bounds how far a label may drift from its anchor. Without it, a
-  # label pushed off a cluster of anchors keeps being repelled with nothing to
-  # pull it back (the spring is deliberately weak), slides along a panel wall,
-  # and ends up flung into a far corner with a panel-spanning leader. Bounding
-  # the displacement to a fraction of the panel keeps every label local -- as
-  # ggrepel does -- so over-dense cases degrade to nearby overlap, not flight.
-  reach <- .REPEL_REACH_FRAC * min(hi - lo)
-
-  for (iter in seq_len(.REPEL_MAX_ITER)) {
-    fx <- numeric(n)
-    fy <- numeric(n)
-    for (i in seq_len(n)) {
-      # box-box overlap: push apart along the centre difference
-      dx <- cx[i] - cx
-      dy <- cy[i] - cy
-      ox <- (hw[i] + hw) - abs(dx)
-      oy <- (hh[i] + hh) - abs(dy)
-      hit <- ox > 0 & oy > 0
-      hit[i] <- FALSE
-      if (any(hit)) {
-        sgnx <- ifelse(dx[hit] >= 0, 1, -1)
-        sgny <- ifelse(dy[hit] >= 0, 1, -1)
-        # push along whichever axis needs the smaller move (less disruptive)
-        push_x <- ox[hit] <= oy[hit]
-        fx[i] <- fx[i] + sum(ifelse(push_x, sgnx * ox[hit], 0))
-        fy[i] <- fy[i] + sum(ifelse(push_x, 0, sgny * oy[hit]))
-      }
-      # box-point repulsion: keep the box off every anchor it covers
-      pdx <- cx[i] - ax
-      pdy <- cy[i] - ay
-      pin <- abs(pdx) < hw[i] & abs(pdy) < hh[i]
-      if (any(pin)) {
-        ex <- hw[i] - abs(pdx[pin])
-        ey <- hh[i] - abs(pdy[pin])
-        px_move <- ex <= ey
-        fx[i] <- fx[i] +
-          sum(ifelse(px_move, ifelse(pdx[pin] >= 0, 1, -1) * ex, 0))
-        fy[i] <- fy[i] +
-          sum(ifelse(px_move, 0, ifelse(pdy[pin] >= 0, 1, -1) * ey))
-      }
-    }
-    # spring each box back toward its own anchor
-    fx <- fx + spring * (ax - cx)
-    fy <- fy + spring * (ay - cy)
-    cx <- cx + step * fx
-    cy <- cy + step * fy
-    # leash: no label may drift further than `reach` from its own anchor
-    ddx <- cx - ax
-    ddy <- cy - ay
-    r <- sqrt(ddx^2 + ddy^2)
-    far <- r > reach
-    if (any(far)) {
-      cx[far] <- ax[far] + ddx[far] / r[far] * reach
-      cy[far] <- ay[far] + ddy[far] / r[far] * reach
-    }
-    # keep boxes within the panel
-    cx <- pmin(pmax(cx, lo[1] + hw), hi[1] - hw)
-    cy <- pmin(pmax(cy, lo[2] + hh), hi[2] - hh)
-    if (max(abs(fx)) < 0.05 && max(abs(fy)) < 0.05) {
-      break
-    }
-  }
-  list(cx = cx, cy = cy)
-}
-
-# The point on a box's edge closest to the anchor, for a leader line's far end.
-.repel_edge_point <- function(cx, cy, hw, hh, ax, ay) {
-  dx <- ax - cx
-  dy <- ay - cy
-  if (dx == 0 && dy == 0) {
-    return(c(cx, cy))
-  }
-  # scale the direction so it lands on the nearer box edge
-  tx <- if (dx != 0) hw / abs(dx) else Inf
-  ty <- if (dy != 0) hh / abs(dy) else Inf
-  t <- min(tx, ty, 1)
-  c(cx + dx * t, cy + dy * t)
-}
-
-# Compute one repel layer's settled label positions + leader segments (native),
-# from its resolved anchors, the trained scales, and a panel's px geometry.
-.repel_layer_solution <- function(L, scales, panel, dpi, p) {
-  nx <- rep_len(scales$x$map(L$values$x), L$n)
-  ny <- rep_len(scales$y$map(L$values$y), L$n)
-  label <- rep_len(as.character(L$values$label), L$n)
-  fs <- L$params$size %||% 8
-
-  aff <- .repel_affine(panel)
-  a <- aff$to_px(nx, ny)
-
-  # measure each label in device px (inches * dpi), plus padding
-  in2px <- dpi
-  w_px <- vapply(
-    label,
-    function(s) vellum::vl_strwidth(s, fontsize = fs, unit = "in"),
-    numeric(1)
-  ) *
-    in2px
-  h_px <- vapply(
-    label,
-    function(s) vellum::vl_strheight(s, fontsize = fs, unit = "in"),
-    numeric(1)
-  ) *
-    in2px
-  box_pad <- (p$box_padding %||% 1) / 25.4 * dpi
-  pt_pad <- (p$point_padding %||% 1) / 25.4 * dpi
-  w <- w_px + 2 * box_pad
-  h <- h_px + 2 * box_pad
-
-  sol <- .repel_solve(
-    a$x,
-    a$y,
-    w + 2 * pt_pad,
-    h + 2 * pt_pad,
-    a$x,
-    a$y,
-    aff$px_lo,
-    aff$px_hi,
-    p$seed
-  )
-
-  # leaders: from the anchor to the label box edge, when the label moved enough
-  min_seg <- (p$min_segment_length %||% 2) / 25.4 * dpi
-  moved <- sqrt((sol$cx - a$x)^2 + (sol$cy - a$y)^2)
-  hw <- w / 2
-  hh <- h / 2
-  seg <- lapply(seq_len(L$n), function(i) {
-    if (moved[i] < min_seg) {
-      return(NULL)
-    }
-    edge <- .repel_edge_point(
-      sol$cx[i],
-      sol$cy[i],
-      hw[i],
-      hh[i],
-      a$x[i],
-      a$y[i]
-    )
-    far <- aff$to_native(edge[1], edge[2])
-    list(x0 = nx[i], y0 = ny[i], x1 = far$x, y1 = far$y)
-  })
-  seg <- seg[!vapply(seg, is.null, logical(1))]
-
-  disp <- aff$to_native(sol$cx, sol$cy)
-  list(
-    x = disp$x,
-    y = disp$y,
-    leaders = if (length(seg)) {
-      data.frame(
-        x0 = vapply(seg, `[[`, numeric(1), "x0"),
-        y0 = vapply(seg, `[[`, numeric(1), "y0"),
-        x1 = vapply(seg, `[[`, numeric(1), "x1"),
-        y1 = vapply(seg, `[[`, numeric(1), "y1")
-      )
-    } else {
-      NULL
-    }
-  )
-}
-
-# Attach a repel solution to each repel layer of `spec`, using the panel geometry
-# from a provisional compile's `scene_model()`. Errors clearly where repel is not
-# yet supported (facets / non-cartesian panels).
-.attach_repel_solutions <- function(spec, sm) {
-  # The data panels are named "panel-<row>-<col>"; other rows (e.g.
-  # "plot-background") are structural. Repel needs exactly one data panel.
-  data_panels <- sm$panels[grepl("^panel-", sm$panels$name), , drop = FALSE]
-  if (nrow(data_panels) != 1L || is.na(data_panels$px0[1])) {
-    cli::cli_abort(c(
-      "{.arg repel} is only supported on a single cartesian panel for now.",
-      i = "It cannot yet be combined with facets or a plot composition."
-    ))
-  }
-  built <- .build_panels(spec)
-  scales <- built$scales
-  if (!is.null(scales$polar) || !is.null(scales$trans)) {
-    cli::cli_abort(
-      "{.arg repel} is not supported under {.fn coord_polar} / {.fn coord_trans}."
-    )
-  }
-  panel <- as.list(data_panels[1, , drop = FALSE])
-  resolved <- .resolve_layers(spec)
-  layers <- spec@layers
-  for (i in seq_along(layers)) {
-    prm <- layers[[i]]@stat_params$repel
-    if (!isTRUE(prm$on)) {
-      next
-    }
-    L <- resolved[[i]]
-    if (is.null(L$values$label)) {
-      cli::cli_abort(
-        "A repel {.fn mark_text} / {.fn mark_label} needs a {.arg label}."
-      )
-    }
-    sol <- .repel_layer_solution(L, scales, panel, spec@dpi, prm)
-    layers[[i]]@stat_params$repel$solution <- sol
-  }
-  spec@layers <- layers
-  spec
-}
-
 # The repel params stored on a text/label layer, or NULL when repel is off.
+# `point_padding`/`seed` are retained for back-compatibility but no longer steer
+# the solve: the engine solver pads every box uniformly and is deterministic, so
+# there is nothing for a seed to vary.
 .repel_params <- function(
   repel,
   box_padding,
@@ -296,32 +50,159 @@ NULL
   list(
     on = TRUE,
     box_padding = box_padding,
-    point_padding = point_padding,
-    min_segment_length = min_segment_length,
-    seed = seed,
-    solution = NULL
+    min_segment_length = min_segment_length
   )
 }
 
-# Draw a repel layer's leader lines (thin, in the label's ink colour). Called by
-# the text/label emitters before the labels themselves.
-.emit_repel_leaders <- function(scene, L, scales) {
-  sol <- L$stat_params$repel$solution
-  if (is.null(sol) || is.null(sol$leaders)) {
+# The node name a repel label (or its background) carries, unique per panel so a
+# faceted layer's per-panel copies never collide. `.mark_ctx$panel` is the
+# enclosing panel ("panel-r-c" / "subplot-N"), or absent for a lone panel.
+.repel_name <- function(gi, bg = FALSE) {
+  pn <- .mark_ctx$panel
+  if (is.null(pn) || is.na(pn)) {
+    pn <- "p"
+  }
+  sprintf(
+    "%s:%s:%s:%d",
+    if (bg) "repelbg" else "repel",
+    pn,
+    .mark_ctx$layer %||% 0L,
+    gi
+  )
+}
+
+# The tuning for the whole-scene solve. All repel labels are solved together, so
+# a single set applies; take it from the first repel layer.
+.repel_scene_params <- function(spec) {
+  for (L in spec@layers) {
+    pr <- L@stat_params$repel
+    if (isTRUE(pr$on)) {
+      return(list(
+        padding = pr$box_padding %||% 1,
+        max_shift = 10,
+        min_seg = pr$min_segment_length %||% 2
+      ))
+    }
+  }
+  list(padding = 1, max_shift = 10, min_seg = 2)
+}
+
+# Resolve label repulsion over a fully compiled scene: solve, shift each label
+# (and its background) by the solved mm offset, then draw the leaders. Returns
+# the edited scene. A no-op when the scene carries no named repel labels.
+.repel_scene <- function(scene, spec) {
+  labs <- grep("^repel:", vellum::node_names(scene), value = TRUE)
+  if (!length(labs)) {
     return(scene)
   }
-  seg <- sol$leaders
-  col <- .text_colour(L, scales, "black")[1]
-  a <- .xy_units(scales, seg$x0, seg$y0)
-  b <- .xy_units(scales, seg$x1, seg$y1)
-  .draw(
+  p <- .repel_scene_params(spec)
+  sol <- vellum::vl_place(
+    scene,
+    labels = labs,
+    padding = p$padding,
+    max_shift = p$max_shift
+  )
+  if (!nrow(sol)) {
+    return(scene)
+  }
+  scene <- .repel_shift(scene, sol)
+  # Re-solve the shifted scene: the labels no longer overlap, so this returns
+  # each label's box at its *moved* position (the residual dx/dy is ~0). Those
+  # boxes are where the leaders must land.
+  moved <- vellum::vl_place(
+    scene,
+    labels = labs,
+    padding = p$padding,
+    max_shift = p$max_shift
+  )
+  .repel_leaders(scene, sol, moved, spec@dpi, spec@height, p$min_seg)
+}
+
+# Shift each solved label node -- and its paired "repelbg:" background box, if
+# any -- by the solved per-index mm offset. Mirrors `vellum::vl_repel()`'s edit,
+# but also carries a mark_label's rounded background along with its text so the
+# two move as one.
+.repel_shift <- function(scene, sol) {
+  present <- vellum::node_names(scene)
+  for (nm in unique(sol$name)) {
+    s <- sol[sol$name == nm, , drop = FALSE]
+    s <- s[order(s$index), , drop = FALSE]
+    scene <- .repel_move_node(scene, nm, s$dx, s$dy, present)
+    bg <- sub("^repel:", "repelbg:", nm)
+    scene <- .repel_move_node(scene, bg, s$dx, s$dy, present)
+  }
+  scene
+}
+
+# Add an absolute (mm) offset to a named node's anchor. A text label has no
+# background, so the "repelbg:" name is skipped when it is not in `present`
+# (`get_node()` aborts on an unknown name rather than returning NULL).
+.repel_move_node <- function(scene, name, dx, dy, present) {
+  if (!name %in% present) {
+    return(scene)
+  }
+  node <- vellum::get_node(scene, name)
+  nx <- vctrs::vec_recycle(node@x, length(dx))
+  ny <- vctrs::vec_recycle(node@y, length(dy))
+  vellum::edit_node(
+    scene,
+    name,
+    x = nx + vellum::vl_unit(dx, "mm"),
+    y = ny + vellum::vl_unit(dy, "mm")
+  )
+}
+
+# The point on a box's edge nearest the anchor, for a leader's far end (so the
+# line stops at the box rather than crossing the text). Vectorised.
+.repel_edge <- function(cx, cy, hw, hh, ax, ay) {
+  dx <- ax - cx
+  dy <- ay - cy
+  tx <- ifelse(dx != 0, hw / abs(dx), Inf)
+  ty <- ifelse(dy != 0, hh / abs(dy), Inf)
+  t <- pmin(tx, ty, 1)
+  list(x = cx + dx * t, y = cy + dy * t)
+}
+
+# Draw a thin leader from each moved label back to its anchor. Drawn in device
+# space at the scene root (px -> mm, y flipped from device-down to root-up), so
+# it is coordinate-agnostic exactly like the offsets: it needs no panel viewport
+# and works under any coord. `sol` supplies each label's ORIGINAL box (its
+# anchor); `moved` the box after shifting. A leader is drawn only when the label
+# travelled at least `min_seg` mm, and it ends at the moved box's nearest edge.
+.repel_leaders <- function(scene, sol, moved, dpi, height_in, min_seg) {
+  key <- function(d) paste(d$name, d$index, sep = "\r")
+  m <- moved[match(key(sol), key(moved)), , drop = FALSE]
+  ax <- (sol$x0 + sol$x1) / 2
+  ay <- (sol$y0 + sol$y1) / 2
+  mx <- (m$x0 + m$x1) / 2
+  my <- (m$y0 + m$y1) / 2
+  hw <- (m$x1 - m$x0) / 2
+  hh <- (m$y1 - m$y0) / 2
+  min_px <- min_seg / 25.4 * dpi
+  dist <- sqrt((mx - ax)^2 + (my - ay)^2)
+  keep <- is.finite(dist) & is.finite(mx) & dist >= min_px
+  if (!any(keep)) {
+    return(scene)
+  }
+  edge <- .repel_edge(
+    mx[keep],
+    my[keep],
+    hw[keep],
+    hh[keep],
+    ax[keep],
+    ay[keep]
+  )
+  h_px <- height_in * dpi
+  x2mm <- function(px) px / dpi * 25.4
+  y2mm <- function(py) (h_px - py) / dpi * 25.4
+  vellum::draw(
     scene,
     vellum::segments_grob(
-      a$x,
-      a$y,
-      b$x,
-      b$y,
-      gp = vellum::vl_gpar(col = col, lwd = 0.4)
+      vellum::vl_unit(x2mm(ax[keep]), "mm"),
+      vellum::vl_unit(y2mm(ay[keep]), "mm"),
+      vellum::vl_unit(x2mm(edge$x), "mm"),
+      vellum::vl_unit(y2mm(edge$y), "mm"),
+      gp = vellum::vl_gpar(col = "grey50", lwd = 0.4)
     )
   )
 }
