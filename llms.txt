@@ -330,6 +330,9 @@ then render it or write it to a file.
   [`mark_hierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
   : Hierarchy diagrams: sunburst, icicle, treemap, circle-pack
 
+- [`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md)
+  : Venn / Euler diagrams
+
 - [`vsparkline()`](https://r-vellum.github.io/vellumplot/reference/vsparkline.md)
   : Sparklines — tiny word-sized charts
 

@@ -214,10 +214,42 @@ vhierarchy(h, id, parent, value, fill = owner, type = "circlepack")
 
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-13-1.png)
 
+## Set diagrams
+
+[`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md)
+draws a Venn/Euler diagram of 2 or 3 sets. Its disjoint regions are
+computed as **boolean geometry** with the engine’s `vl_path_op()`
+(union, intersection, difference), so each region is a *solid* shape
+rather than alpha-composited translucent circles — it stays crisp, and
+in PDF it avoids the rasterised mask that overlapping-fill approaches
+degrade into. Each region is filled by how many elements fall in exactly
+that combination of sets, and labelled with the count. Input is a named
+list of members, or a data frame of logical membership columns.
+
+``` r
+
+vvenn(list(
+  Coffee = c("Ann", "Bo", "Cy", "Di", "Ed"),
+  Tea = c("Bo", "Di", "Ed", "Fi", "Gy", "Hu")
+))
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-14-1.png)
+
+``` r
+
+set.seed(1)
+u <- paste0("g", 1:60)
+vvenn(list(A = sample(u, 34), B = sample(u, 30), C = sample(u, 26)))
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-15-1.png)
+
 [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md),
 [`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md),
+[`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md),
 and
-[`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
+[`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md)
 all follow the
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
 pattern: the layout is computed in R and drawn through vellum

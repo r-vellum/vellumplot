@@ -276,8 +276,36 @@
 </div>
 </div>
 </div>
-<p><code><a href="../reference/vsankey.html">vsankey()</a></code>, <code><a href="../reference/vchord.html">vchord()</a></code>, and <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code> all follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
-</section></section><script id="quarto-html-after-body" type="application/javascript">
+</section></section><section class="level2"><h2 id="set-diagrams">Set diagrams<a class="anchor" aria-label="anchor" href="#set-diagrams"></a>
+</h2>
+<p><code><a href="../reference/vvenn.html">vvenn()</a></code> draws a Venn/Euler diagram of 2 or 3 sets. Its disjoint regions are computed as <strong>boolean geometry</strong> with the engine’s <code>vl_path_op()</code> (union, intersection, difference), so each region is a <em>solid</em> shape rather than alpha-composited translucent circles — it stays crisp, and in PDF it avoids the rasterised mask that overlapping-fill approaches degrade into. Each region is filled by how many elements fall in exactly that combination of sets, and labelled with the count. Input is a named list of members, or a data frame of logical membership columns.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/vvenn.html">vvenn</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  Coffee <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Ann"</span>, <span class="st">"Bo"</span>, <span class="st">"Cy"</span>, <span class="st">"Di"</span>, <span class="st">"Ed"</span><span class="op">)</span>,</span>
+<span>  Tea <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Bo"</span>, <span class="st">"Di"</span>, <span class="st">"Ed"</span>, <span class="st">"Fi"</span>, <span class="st">"Gy"</span>, <span class="st">"Hu"</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">u</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">60</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vvenn.html">vvenn</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">u</span>, <span class="fl">34</span><span class="op">)</span>, B <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">u</span>, <span class="fl">30</span><span class="op">)</span>, C <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">u</span>, <span class="fl">26</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-15-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><code><a href="../reference/vsankey.html">vsankey()</a></code>, <code><a href="../reference/vchord.html">vchord()</a></code>, <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code>, and <code><a href="../reference/vvenn.html">vvenn()</a></code> all follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
+</section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
