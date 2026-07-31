@@ -175,11 +175,22 @@
 <a class="anchor" aria-label="anchor" href="#overview-detail-bind_scale"></a>
 </h2>
 <p><code><a href="../reference/bind_scale.html">bind_scale()</a></code> binds a panel’s view to an interval selection on another (an overview), so brushing the overview pans/zooms the detail. It is declared in the spec today; host enactment is in progress.</p>
+</section><section class="level2"><h2 id="which-marks-are-addressable">Which marks are addressable<a class="anchor" aria-label="anchor" href="#which-marks-are-addressable"></a>
+</h2>
+<p>Give a mark an identity with <code>data_id=</code> (and, optionally, a <code>tooltip=</code>) and it becomes hoverable, selectable and cross-filterable. This is no longer limited to the batched marks (points, bars, tiles, segments): a line or step <strong>series</strong> is one addressable object, a filled <code><a href="../reference/mark_area.html">mark_area()</a></code> / <code><a href="../reference/mark_area.html">mark_ribbon()</a></code> band is one polygon, <code><a href="../reference/mark_text.html">mark_text()</a></code> labels are addressable per datum, <code><a href="../reference/mark_text.html">mark_label()</a></code> keys by its rounded background box, and an sf polygon / choropleth keys per feature.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># hover the whole trend line as one object</span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">pressure</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_line</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">temperature</span>, y <span class="op">=</span> <span class="va">pressure</span>, data_id <span class="op">=</span> <span class="st">"vapor-pressure"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/select_point.html">select_point</a></span><span class="op">(</span><span class="st">"series"</span>, on <span class="op">=</span> <span class="st">"hover"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>A mark you leave without a key is simply not addressable — and, for lines, polygons and text, it contributes no row to the interaction model at all. That is deliberate: a plot’s gridlines and axis labels are unkeyed text and lines, and they must not drown the marks that carry meaning. So <em>absence of a key is a choice you are making</em>, not a limitation.</p>
 </section><section class="level2"><h2 id="what-a-host-does-with-it">What a host does with it<a class="anchor" aria-label="anchor" href="#what-a-host-does-with-it"></a>
 </h2>
 <p><code>vellumplot</code> compiles once and carries the interaction declarations plus the per-element metadata a host needs (<code><a href="../reference/interaction_model.html">interaction_model()</a></code> returns the declaration block). The host reads them and wires the gestures it already performs on the frozen scene — highlight, hide, pan/zoom — with no recompilation. Turn any of the plots above into a live widget with:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">vellumwidget</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span>, color <span class="op">=</span> <span class="fu"><a href="../reference/condition.html">condition</a></span><span class="op">(</span><span class="st">"hi"</span>, <span class="va">cyl</span>, <span class="st">"grey80"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>

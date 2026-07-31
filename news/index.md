@@ -2,6 +2,33 @@
 
 ## vellumplot (development version)
 
+- **Keys on more marks.** Now that the engine can key lines, polygons
+  and text (vellum 0.6.x), the marks that could not previously be made
+  interactive are:
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  /
+  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  (a series is one hoverable object; a colour mapping gives one keyed
+  line per series),
+  [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  /
+  [`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  (the filled band as one polygon),
+  [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  (each data label individually), and the sf polygon / choropleth marks
+  (one keyed feature each). This release also fixes
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+  whose rounded background box is now keyed as the label’s hit target —
+  it was inert before — and
+  [`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  /
+  [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md),
+  whose interval bars now carry the datum key like their slab and centre
+  point already did. Set `data_id=` (and optionally `tooltip=`) on the
+  mark to make it addressable; a mark left without a key stays out of
+  `scene_model()`, so a plot’s furniture never becomes phantom
+  interactive elements. Requires vellum \>= 0.6.3.
+
 - **Portable plot specs.** A plot is now a serializable *document*:
   [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
   turns a `PlotSpec` into a plain nested list and

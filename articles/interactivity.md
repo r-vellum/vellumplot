@@ -109,6 +109,37 @@ binds a panel’s view to an interval selection on another (an overview),
 so brushing the overview pans/zooms the detail. It is declared in the
 spec today; host enactment is in progress.
 
+## Which marks are addressable
+
+Give a mark an identity with `data_id=` (and, optionally, a `tooltip=`)
+and it becomes hoverable, selectable and cross-filterable. This is no
+longer limited to the batched marks (points, bars, tiles, segments): a
+line or step **series** is one addressable object, a filled
+[`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+/
+[`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+band is one polygon,
+[`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+labels are addressable per datum,
+[`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+keys by its rounded background box, and an sf polygon / choropleth keys
+per feature.
+
+``` r
+
+# hover the whole trend line as one object
+vplot(pressure) |>
+  mark_line(x = temperature, y = pressure, data_id = "vapor-pressure") |>
+  select_point("series", on = "hover")
+```
+
+A mark you leave without a key is simply not addressable — and, for
+lines, polygons and text, it contributes no row to the interaction model
+at all. That is deliberate: a plot’s gridlines and axis labels are
+unkeyed text and lines, and they must not drown the marks that carry
+meaning. So *absence of a key is a choice you are making*, not a
+limitation.
+
 ## What a host does with it
 
 `vellumplot` compiles once and carries the interaction declarations plus
