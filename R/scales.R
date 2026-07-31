@@ -1012,11 +1012,20 @@ scale_edge_alpha <- function(
   values,
   valid,
   noun,
-  name
+  name,
+  svg_ok = FALSE
 ) {
   .check_plot(plot)
   if (!is.null(values)) {
     bad <- setdiff(as.character(values), valid)
+    # For `shape`, a value that is not a built-in marker is an SVG icon -- a
+    # `.svg` file, or a path `d` (which begins with a moveto). Both are
+    # legitimate, so don't reject them; a genuine typo still errors.
+    if (svg_ok && length(bad)) {
+      is_svg <- grepl("\\.svg$", bad, ignore.case = TRUE) |
+        grepl("^\\s*[Mm][\\s0-9.,+-]", bad, perl = TRUE)
+      bad <- bad[!is_svg]
+    }
     if (length(bad)) {
       # Pluralise the noun in R (the count governs, not cli's `{?s}` which would
       # attach to the length-1 `{noun}` interpolation before it).
@@ -1058,16 +1067,33 @@ scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
 #' is drawn automatically.
 #'
 #' @param plot A [PlotSpec].
-#' @param values Character vector of shapes (each one of `"circle"`, `"square"`,
-#'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`, `"triangle_down"`, or
-#'   `"star"`), or `NULL` for the default.
+#' @param values Character vector of shapes, or `NULL` for the default. Each is
+#'   either a built-in marker (`"circle"`, `"square"`, `"triangle"`,
+#'   `"diamond"`, `"plus"`, `"cross"`, `"triangle_down"`, `"star"`) **or an SVG
+#'   icon** — a path `d` string (what icon sets ship) or a path to a `.svg`
+#'   file. SVG values are drawn as crisp vector markers (via
+#'   [vellum::svg_grob()]) and the legend shows the icon; the `size` aesthetic
+#'   scales them.
 #' @param name Legend title, or `NULL` to derive from the encoding.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = factor(cyl))
+#' # SVG icon markers, one per level:
+#' star <- "M12 2l3 7h7l-5.5 4.5 2 7-6.5-4.5-6.5 4.5 2-7L2 9h7z"
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
+#'   scale_shape(values = c(star, star, star))
 #' @export
 scale_shape <- function(plot, values = NULL, name = NULL) {
-  .discrete_palette_scale(plot, "shape", values, .SHAPE_PALETTE, "shape", name)
+  .discrete_palette_scale(
+    plot,
+    "shape",
+    values,
+    .SHAPE_PALETTE,
+    "shape",
+    name,
+    svg_ok = TRUE
+  )
 }
 
 #' Pattern (texture) scale

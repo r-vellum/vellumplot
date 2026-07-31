@@ -391,8 +391,11 @@ after_stat <- function(x) x
 #'   `fill`, `size`, `shape`, `alpha`. Stroked marks (line, step, segment, rule,
 #'   linerange) also take `linewidth` and `linetype`.
 #' @param size,shape Convenience arguments for the point size (in mm) / shape;
-#'   may be a constant or a mapped expression. One of `"circle"`, `"square"`,
-#'   `"triangle"`, `"diamond"`, `"plus"`, `"cross"`.
+#'   may be a constant or a mapped expression. A shape is a built-in marker
+#'   (`"circle"`, `"square"`, `"triangle"`, `"diamond"`, `"plus"`, `"cross"`,
+#'   `"triangle_down"`, `"star"`) or an **SVG icon** — a path `d` string or a
+#'   `.svg` file — drawn as a crisp vector marker. Use a literal string for a
+#'   constant icon, or map `shape` and pass icons to [scale_shape()].
 #' @param position Position adjustment: a string — `"identity"` (default),
 #'   `"jitter"` / `"jitterdodge"` (points), `"stack"` / `"fill"` / `"dodge"` /
 #'   `"dodge2"` (bars), `"nudge"` — or a parameterised [position_jitter()] /

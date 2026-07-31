@@ -9,9 +9,13 @@ scale_shape(plot, values = NULL, name = NULL)
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{values}{Character vector of shapes (each one of \code{"circle"}, \code{"square"},
-\code{"triangle"}, \code{"diamond"}, \code{"plus"}, \code{"cross"}, \code{"triangle_down"}, or
-\code{"star"}), or \code{NULL} for the default.}
+\item{values}{Character vector of shapes, or \code{NULL} for the default. Each is
+either a built-in marker (\code{"circle"}, \code{"square"}, \code{"triangle"},
+\code{"diamond"}, \code{"plus"}, \code{"cross"}, \code{"triangle_down"}, \code{"star"}) \strong{or an SVG
+icon} — a path \code{d} string (what icon sets ship) or a path to a \code{.svg}
+file. SVG values are drawn as crisp vector markers (via
+\code{\link[vellum:svg_grob]{vellum::svg_grob()}}) and the legend shows the icon; the \code{size} aesthetic
+scales them.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
 }
@@ -25,4 +29,9 @@ is drawn automatically.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = factor(cyl))
+# SVG icon markers, one per level:
+star <- "M12 2l3 7h7l-5.5 4.5 2 7-6.5-4.5-6.5 4.5 2-7L2 9h7z"
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
+  scale_shape(values = c(star, star, star))
 }
