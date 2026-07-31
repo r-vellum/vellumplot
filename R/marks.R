@@ -1426,8 +1426,9 @@ mark_density <- function(
 #' field is a kernel density estimate (needs the \pkg{MASS} package); map a `z`
 #' aesthetic to instead contour a supplied surface over a regular `x`/`y` grid.
 #' Contours are coloured by level automatically — `mark_contour()` maps
-#' `color = after_stat(level)`, `mark_contour_filled()` maps `fill`. Requires the
-#' \pkg{isoband} package.
+#' `color = after_stat(level)`, `mark_contour_filled()` maps `fill`. Contour
+#' tracing is done by the engine (`vellum::vl_contour()`), so no extra package is
+#' needed for the lines; a density field additionally needs \pkg{MASS}.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y` (+ optional `z` surface, `color` /

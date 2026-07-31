@@ -66,8 +66,9 @@ The modified \link{PlotSpec}.
 field is a kernel density estimate (needs the \pkg{MASS} package); map a \code{z}
 aesthetic to instead contour a supplied surface over a regular \code{x}/\code{y} grid.
 Contours are coloured by level automatically — \code{mark_contour()} maps
-\code{color = after_stat(level)}, \code{mark_contour_filled()} maps \code{fill}. Requires the
-\pkg{isoband} package.
+\code{color = after_stat(level)}, \code{mark_contour_filled()} maps \code{fill}. Contour
+tracing is done by the engine (\code{vellum::vl_contour()}), so no extra package is
+needed for the lines; a density field additionally needs \pkg{MASS}.
 }
 \examples{
 vplot(faithful) |>

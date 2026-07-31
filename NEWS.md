@@ -22,6 +22,14 @@
     cause, and fix, than a changed dataset.
 
   Requires vellum >= 0.6.5.
+* **`mark_contour()` traces in the engine; `isoband` is no longer needed.**
+  2-D contour lines and filled contours are now traced by
+  `vellum::vl_contour()` (marching squares) instead of the `isoband` package,
+  which is dropped from `Suggests`. `mark_contour()` draws each contour as its
+  own chained polyline (closed loops are closed), and `mark_contour_filled()`
+  paints the closed rings in level order for the layered filled-density look. A
+  density field still uses `MASS::kde2d()`; contouring a supplied `z` surface
+  needs nothing extra. Requires vellum >= 0.6.4.
 
 * **Label repulsion works on every panel type.** `mark_text(repel = TRUE)` /
   `mark_label(repel = TRUE)` now go through the engine placement solver
