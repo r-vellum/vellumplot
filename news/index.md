@@ -2,6 +2,43 @@
 
 ## vellumplot (development version)
 
+- **Real blur effects;
+  [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)/[`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
+  now work on text.**
+  [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)
+  and
+  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
+  are drawn with the engine’s real Gaussian blur
+  (`vellum::vl_viewport(blur=)`) — one softened, composited layer
+  instead of a stack of N widened low-opacity copies. It is cheaper and
+  smoother, and it lifts the old restriction that text could not glow:
+  [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  /
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  now take an `effects =` argument and accept
+  [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)
+  and
+  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
+  (a *sharp*
+  [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md)
+  still needs a glyph outline the text primitive can’t stroke).
+  [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md),
+  [`motion()`](https://r-vellum.github.io/vellumplot/reference/motion.md),
+  and
+  [`echo()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
+  are unchanged. The
+  [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)
+  `layers` / `blend` arguments are kept for the neon look (opacity +
+  composite) but no longer stack copies.
+
+- **Relative text sizing and tabular figures.** `element_text(cex = )`
+  sets a size multiplier that cascades through the theme (a base size
+  scaled, rather than an absolute size at every call site). Axis tick
+  labels are now set with tabular figures (`tnum`), so digit columns
+  keep a constant width and stop jittering from tick to tick.
+
+  Requires vellum \>= 0.6.4.
+
 - **Venn / Euler diagrams:
   [`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md).**
   Draws 2 or 3 overlapping sets whose disjoint regions are rendered as

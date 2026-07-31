@@ -5,17 +5,19 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Neon glow layer effect — glow"><meta name="description" content="A render effect for stroked and point marks, in the spirit of
-mplcyberpunk: the mark is drawn as
-several widened, low-opacity copies composited additively (a &quot;screen&quot; blend)
-beneath the crisp original, producing a soft neon halo. Pass it to a mark's
-effects argument, e.g. mark_line(..., effects = list(glow())). Pairs
-naturally with theme_cyberpunk()."><meta property="og:description" content="A render effect for stroked and point marks, in the spirit of
-mplcyberpunk: the mark is drawn as
-several widened, low-opacity copies composited additively (a &quot;screen&quot; blend)
-beneath the crisp original, producing a soft neon halo. Pass it to a mark's
-effects argument, e.g. mark_line(..., effects = list(glow())). Pairs
-naturally with theme_cyberpunk()."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Neon glow layer effect — glow"><meta name="description" content="A render effect for stroked, point, and text marks, in the spirit of
+mplcyberpunk: a widened copy of the
+mark is drawn beneath the crisp original and softened with a real Gaussian
+blur (vellum's vl_viewport(blur=)), composited additively (a &quot;screen&quot;
+blend) into a soft neon halo. Pass it to a mark's effects argument, e.g.
+mark_line(..., effects = list(glow())). Pairs naturally with
+theme_cyberpunk()."><meta property="og:description" content="A render effect for stroked, point, and text marks, in the spirit of
+mplcyberpunk: a widened copy of the
+mark is drawn beneath the crisp original and softened with a real Gaussian
+blur (vellum's vl_viewport(blur=)), composited additively (a &quot;screen&quot;
+blend) into a soft neon halo. Pass it to a mark's effects argument, e.g.
+mark_line(..., effects = list(glow())). Pairs naturally with
+theme_cyberpunk()."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -74,12 +76,13 @@ naturally with theme_cyberpunk()."><meta property="og:image" content="https://r-
     </div>
 
     <div class="ref-description section level2">
-    <p>A render effect for stroked and point marks, in the spirit of
-<a href="https://github.com/dhaitz/mplcyberpunk" class="external-link">mplcyberpunk</a>: the mark is drawn as
-several widened, low-opacity copies composited additively (a <code>"screen"</code> blend)
-beneath the crisp original, producing a soft neon halo. Pass it to a mark's
-<code>effects</code> argument, e.g. <code>mark_line(..., effects = list(glow()))</code>. Pairs
-naturally with <code><a href="theme_gray.html">theme_cyberpunk()</a></code>.</p>
+    <p>A render effect for stroked, point, and text marks, in the spirit of
+<a href="https://github.com/dhaitz/mplcyberpunk" class="external-link">mplcyberpunk</a>: a widened copy of the
+mark is drawn beneath the crisp original and softened with a <strong>real Gaussian
+blur</strong> (<code>vellum</code>'s <code>vl_viewport(blur=)</code>), composited additively (a <code>"screen"</code>
+blend) into a soft neon halo. Pass it to a mark's <code>effects</code> argument, e.g.
+<code>mark_line(..., effects = list(glow()))</code>. Pairs naturally with
+<code><a href="theme_gray.html">theme_cyberpunk()</a></code>.</p>
     </div>
 
     <div class="section level2">
@@ -92,21 +95,19 @@ naturally with <code><a href="theme_gray.html">theme_cyberpunk()</a></code>.</p>
 
 
 <dl><dt id="arg-size">size<a class="anchor" aria-label="anchor" href="#arg-size"></a></dt>
-<dd><p>Extra visual spread, in millimetres, added to the stroke width (or
-point diameter) at the outermost copy.</p></dd>
+<dd><p>Halo spread in millimetres: the blur radius (and, for stroked/point
+marks, how much the copy is widened before blurring).</p></dd>
 
 
-<dt id="arg-layers">layers<a class="anchor" aria-label="anchor" href="#arg-layers"></a></dt>
-<dd><p>Number of stacked halo copies.</p></dd>
+<dt id="arg-layers-blend">layers, blend<a class="anchor" aria-label="anchor" href="#arg-layers-blend"></a></dt>
+<dd><p>Retained for compatibility and the neon look: <code>layers</code>
+scales the halo opacity (it no longer stacks copies – one blurred layer
+replaces them), and <code>blend</code> (typically <code>"screen"</code>/<code>"lighten"</code>) composites
+the halo.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Opacity of each copy (they accumulate toward the centre).</p></dd>
-
-
-<dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>
-<dd><p>Blend mode compositing the halo copies, typically <code>"screen"</code> or
-<code>"lighten"</code> (any CSS <code>mix-blend-mode</code> name).</p></dd>
+<dd><p>Base halo opacity (scaled by <code>layers</code>).</p></dd>
 
 
 <dt id="arg-color">color<a class="anchor" aria-label="anchor" href="#arg-color"></a></dt>
@@ -122,8 +123,8 @@ resolved colour — the usual neon look.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The glow is applied per style group, so a colour-mapped multi-series line
 glows each series in its own hue. It applies to <code><a href="mark_point.html">mark_point()</a></code>, <code><a href="mark_point.html">mark_line()</a></code>,
-<code><a href="mark_area.html">mark_step()</a></code>, <code><a href="mark_point.html">mark_rule()</a></code>, <code><a href="mark_segment.html">mark_segment()</a></code>, <code><a href="mark_graph.html">mark_edges()</a></code>, and
-<code><a href="mark_graph.html">mark_nodes()</a></code>; other marks reject it with an error.</p>
+<code><a href="mark_area.html">mark_step()</a></code>, <code><a href="mark_point.html">mark_rule()</a></code>, <code><a href="mark_segment.html">mark_segment()</a></code>, <code><a href="mark_graph.html">mark_edges()</a></code>, <code><a href="mark_graph.html">mark_nodes()</a></code>,
+and text marks (<code><a href="mark_text.html">mark_text()</a></code> / <code><a href="mark_text.html">mark_label()</a></code>); other marks reject it.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -24,6 +24,7 @@ mark_text(
   point_padding = 1,
   min_segment_length = 2,
   seed = NULL,
+  effects = list(),
   blend = NULL,
   data = NULL
 )
@@ -45,6 +46,7 @@ mark_label(
   point_padding = 1,
   min_segment_length = 2,
   seed = NULL,
+  effects = list(),
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -106,6 +108,15 @@ mark_label(
 
   Integer seed making the repel layout reproducible (the global RNG
   stream is restored afterwards).
+
+- effects:
+
+  A list of layer render effects applied to the mark at draw time —
+  [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md),
+  [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md),
+  and
+  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md).
+  Available on stroked and point marks.
 
 - blend:
 

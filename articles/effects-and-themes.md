@@ -66,12 +66,12 @@ Effects change how a single mark is painted, and they are passed to a
 mark’s `effects` argument as a list. They apply to stroked and point
 marks.
 [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)
-draws widened, low-opacity copies beneath the mark for a neon halo;
+softens a widened copy with a real Gaussian blur for a neon halo;
 [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
-adds an offset drop shadow;
+adds a blurred, offset drop shadow;
 [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md)
-puts a contrasting halo behind the mark so it stays legible over a busy
-backdrop.
+puts a sharp contrasting halo behind the mark so it stays legible over a
+busy backdrop.
 [`motion()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
 and
 [`echo()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
@@ -80,6 +80,23 @@ speed-blur
 ([`motion()`](https://r-vellum.github.io/vellumplot/reference/motion.md),
 many close copies) or discrete ghost repeats
 ([`echo()`](https://r-vellum.github.io/vellumplot/reference/motion.md)).
+
+Because
+[`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md) and
+[`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
+are real blurs, they also work on **text** marks — a neon
+[`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+needs no glyph-stroking:
+
+``` r
+
+vplot(data.frame(x = 1, y = 1, lab = "NEON"), width = 5, height = 2.2) |>
+  mark_text(x = x, y = y, label = lab, size = 42, color = "#00e5ff",
+    effects = list(glow())) |>
+  theme_cyberpunk()
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-4-1.png)
 
 ``` r
 
@@ -90,7 +107,7 @@ vplot(pressure) |>
   )
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-4-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-5-1.png)
 
 ``` r
 
@@ -98,7 +115,7 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg, size = 4, effects = list(motion(x = 4)))
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-5-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-6-1.png)
 
 [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)
 pairs naturally with
@@ -112,7 +129,7 @@ vplot(mtcars) |>
   theme_cyberpunk()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-6-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-7-1.png)
 
 ## Gradient fills
 
@@ -135,7 +152,7 @@ vplot(pressure) |>
   theme_cyberpunk()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-7-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-8-1.png)
 
 Because a gradient is one paint per region, it cannot be mapped to a
 data column; for that you want a colour scale (see **[Scales and
@@ -155,7 +172,7 @@ vplot(bars) |>
   mark_bar(x = method, y = score, fill = pattern_crosshatch(color = "grey20"))
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-8-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
 
 [`pattern_stripe()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
 [`pattern_crosshatch()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
@@ -185,7 +202,7 @@ vplot(bars) |>
   scale_pattern(name = NULL)
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)
 
 `scale_pattern(values = )` overrides the palette with builder names
 (`"stripe"`, `"dot"`, …) or your own `pattern_*()` objects; the legend
@@ -209,7 +226,7 @@ vplot(grid) |>
   clip_to(diamond)
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-11-1.png)
 
 `invert = TRUE` keeps the marks *outside* the shape (punching it out as
 a hole).
@@ -224,7 +241,7 @@ vplot(grid) |>
   set_mask(feather = 0.5)
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-11-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-12-1.png)
 
 [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
 and
@@ -244,7 +261,7 @@ vplot(grid) |>
   mark_point(data = pts, x = x, y = y, size = 1.5, color = "white")
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-12-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-13-1.png)
 
 All three work under cartesian coordinates (a smooth feathered edge on
 an arbitrary polygon is not available yet, so
@@ -269,7 +286,7 @@ vplot(mtcars) |>
   theme_sketch()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-13-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-14-1.png)
 
 For finer control,
 [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
@@ -295,4 +312,4 @@ vplot(mtcars) |>
   )
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-14-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-15-1.png)

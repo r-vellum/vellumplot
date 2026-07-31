@@ -91,6 +91,7 @@ the font size in points; <code>angle</code> (degrees) may be mapped or constant.
 <span>  point_padding <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  min_segment_length <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
@@ -112,6 +113,7 @@ the font size in points; <code>angle</code> (degrees) may be mapped or constant.
 <span>  point_padding <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  min_segment_length <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -172,6 +174,12 @@ that barely moved gets none.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer seed making the repel layout reproducible (the global RNG
 stream is restored afterwards).</p></dd>
+
+
+<dt id="arg-effects">effects<a class="anchor" aria-label="anchor" href="#arg-effects"></a></dt>
+<dd><p>A list of layer render effects applied to the mark at draw
+time — <code><a href="glow.html">glow()</a></code>, <code><a href="outline.html">outline()</a></code>, and <code><a href="shadow.html">shadow()</a></code>. Available on stroked and point
+marks.</p></dd>
 
 
 <dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>

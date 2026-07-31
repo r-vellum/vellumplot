@@ -1,10 +1,11 @@
 # Neon glow layer effect
 
-A render effect for stroked and point marks, in the spirit of
-[mplcyberpunk](https://github.com/dhaitz/mplcyberpunk): the mark is
-drawn as several widened, low-opacity copies composited additively (a
-`"screen"` blend) beneath the crisp original, producing a soft neon
-halo. Pass it to a mark's `effects` argument, e.g.
+A render effect for stroked, point, and text marks, in the spirit of
+[mplcyberpunk](https://github.com/dhaitz/mplcyberpunk): a widened copy
+of the mark is drawn beneath the crisp original and softened with a
+**real Gaussian blur** (`vellum`'s `vl_viewport(blur=)`), composited
+additively (a `"screen"` blend) into a soft neon halo. Pass it to a
+mark's `effects` argument, e.g.
 `mark_line(..., effects = list(glow()))`. Pairs naturally with
 [`theme_cyberpunk()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md).
 
@@ -18,21 +19,19 @@ glow(size = 6, layers = 6L, alpha = 0.12, blend = "screen", color = NULL)
 
 - size:
 
-  Extra visual spread, in millimetres, added to the stroke width (or
-  point diameter) at the outermost copy.
+  Halo spread in millimetres: the blur radius (and, for stroked/point
+  marks, how much the copy is widened before blurring).
 
-- layers:
+- layers, blend:
 
-  Number of stacked halo copies.
+  Retained for compatibility and the neon look: `layers` scales the halo
+  opacity (it no longer stacks copies – one blurred layer replaces
+  them), and `blend` (typically `"screen"`/`"lighten"`) composites the
+  halo.
 
 - alpha:
 
-  Opacity of each copy (they accumulate toward the centre).
-
-- blend:
-
-  Blend mode compositing the halo copies, typically `"screen"` or
-  `"lighten"` (any CSS `mix-blend-mode` name).
+  Base halo opacity (scaled by `layers`).
 
 - color:
 
@@ -53,9 +52,12 @@ line glows each series in its own hue. It applies to
 [`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
 [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md),
 [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
-and
-[`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md);
-other marks reject it with an error.
+[`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
+and text marks
+([`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+/
+[`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md));
+other marks reject it.
 
 ## See also
 
