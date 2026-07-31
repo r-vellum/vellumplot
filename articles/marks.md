@@ -189,6 +189,24 @@ vplot(mtcars) |>
 
 ![](marks_files/figure-html/unnamed-chunk-11-1.png)
 
+[`mark_text_path()`](https://r-vellum.github.io/vellumplot/reference/mark_text_path.md)
+sets a label *along* a curve instead of at a point – one label per
+group, its glyphs following the group’s path and rotated to the local
+tangent. It is the direct way to label a line without a legend, or to
+caption a contour or arc. Glyphs follow the tangent, so a path walked
+right-to-left reads upside-down – traverse it in the reading direction
+(here `sin` over a rising half-period).
+
+``` r
+
+t <- seq(0, pi, length.out = 60)
+curve <- data.frame(x = t, y = sin(t), lab = "y = sin(x)")
+vplot(curve) |>
+  mark_text_path(x = x, y = y, label = lab, size = 9, vjust = "bottom", offset = 2)
+```
+
+![](marks_files/figure-html/unnamed-chunk-12-1.png)
+
 ## Images
 
 [`mark_image()`](https://r-vellum.github.io/vellumplot/reference/mark_image.md)
@@ -215,7 +233,7 @@ vplot(d) |>
   mark_image(x = x, y = y, src = logo, size = 14)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-12-1.png)
+![](marks_files/figure-html/unnamed-chunk-13-1.png)
 
 Reading images needs the magick package (a suggested dependency), which
 decodes PNG, JPEG, SVG, and more. Because `size` is in millimetres
@@ -240,7 +258,7 @@ vplot(parts) |>
   mark_donut(value = n, fill = part, inner_radius = 0.6)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-13-1.png)
+![](marks_files/figure-html/unnamed-chunk-14-1.png)
 
 For polar plots generally,
 [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
@@ -256,7 +274,7 @@ vplot(mtcars) |>
   coord_radial(theta = "x", start = -pi / 2, end = pi / 2, inner_radius = 0.2)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-14-1.png)
+![](marks_files/figure-html/unnamed-chunk-15-1.png)
 
 ## Layering is the point
 
@@ -271,7 +289,7 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, method = "lm")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-15-1.png)
+![](marks_files/figure-html/unnamed-chunk-16-1.png)
 
 From here:
 

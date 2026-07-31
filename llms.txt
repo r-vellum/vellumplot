@@ -408,6 +408,8 @@ Layers that draw data. Scales train across every mark on the panel.
 - [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
   [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
   : Text marks
+- [`mark_text_path()`](https://r-vellum.github.io/vellumplot/reference/mark_text_path.md)
+  : Text set along a path
 - [`mark_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
   [`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
   : Pie and donut charts
