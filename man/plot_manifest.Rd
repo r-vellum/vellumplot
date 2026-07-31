@@ -11,7 +11,11 @@ plot_manifest(x)
 }
 \value{
 A named list: \code{version}, \code{data} (a \code{hash}/\code{nrow}/\code{columns} record),
-\code{spec_hash}, and \code{n_elements}.
+\code{spec_hash}, \code{n_elements}, and \code{fonts} (the faces the plot resolved to, via
+\code{\link[vellum:font_pin]{vellum::font_pin()}}, each a \code{path}/\code{index}/\code{glyphs} record). The fonts are
+what lets \code{\link[=plot_verify]{plot_verify()}} tell a font-stack difference apart from a data
+change — the same pixels are only guaranteed when the same fonts are
+present.
 }
 \description{
 \code{plot_manifest()} returns a small, serializable fingerprint of a plot: a hash

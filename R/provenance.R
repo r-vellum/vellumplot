@@ -291,7 +291,11 @@ provenance_join <- function(x) {
 #'
 #' @param x A [PlotSpec].
 #' @return A named list: `version`, `data` (a `hash`/`nrow`/`columns` record),
-#'   `spec_hash`, and `n_elements`.
+#'   `spec_hash`, `n_elements`, and `fonts` (the faces the plot resolved to, via
+#'   [vellum::font_pin()], each a `path`/`index`/`glyphs` record). The fonts are
+#'   what lets [plot_verify()] tell a font-stack difference apart from a data
+#'   change — the same pixels are only guaranteed when the same fonts are
+#'   present.
 #' @seealso [plot_verify()], [plot_svg()], [provenance_join()]
 #' @examples
 #' plot_manifest(vplot(mtcars) |> mark_point(x = wt, y = mpg))$data$hash
@@ -303,6 +307,17 @@ plot_manifest <- function(x) {
   } else {
     list(hash = data_ir$hash, nrow = data_ir$nrow, columns = data_ir$columns)
   }
+  # Fonts the scene resolved to (path/index/glyphs). vellum's determinism holds
+  # only when the same faces are present, so pinning them turns "same pixels"
+  # from an assumption into something plot_verify() can check.
+  fonts <- tryCatch(
+    {
+      pin <- vellum::font_pin(vellum::as_vellum_scene(x))
+      f <- pin$fonts
+      if (is.null(f) || !nrow(f)) NULL else f
+    },
+    error = function(e) NULL
+  )
   # A structural spec hash that does not depend on full serialisability: try the
   # real spec, else fall back to the layer/encoding skeleton.
   spec_hash <- tryCatch(
@@ -324,8 +339,22 @@ plot_manifest <- function(x) {
     version = .SPEC_VERSION,
     data = data_rec,
     spec_hash = spec_hash,
-    n_elements = n_elements
+    n_elements = n_elements,
+    fonts = fonts
   )
+}
+
+# Font paths recorded in a (round-tripped) manifest, whichever JSON shape they
+# came back in: a list of `{path,...}` records (fromJSON simplifyDataFrame=FALSE)
+# or a columnar `list(path = c(...))`. Empty character vector when none.
+.manifest_font_paths <- function(fonts) {
+  if (is.null(fonts) || !length(fonts)) {
+    return(character(0))
+  }
+  if (!is.null(fonts$path)) {
+    return(as.character(fonts$path))
+  }
+  as.character(unlist(lapply(fonts, function(r) r$path %||% NA_character_)))
 }
 
 #' Verify a rendered figure against its data
@@ -335,10 +364,19 @@ plot_manifest <- function(x) {
 #' `data`, reporting whether the figure still matches the data it was drawn from
 #' — a lightweight, self-contained reproducibility check.
 #'
+#' A font mismatch is reported as a **distinct outcome** from a data mismatch:
+#' `data_ok` is whether the data still hashes the same, `fonts_ok` whether every
+#' font the figure was drawn with is still present on this machine, and `ok`
+#' their conjunction. A pixel difference with `data_ok = TRUE` but
+#' `fonts_ok = FALSE` is the font stack, not your data — a different cause with a
+#' different fix (install/register the font) than a data change.
+#'
 #' @param svg An SVG string (from [plot_svg()]) or a path to an `.svg` file.
 #' @param data The data frame to check the figure against.
-#' @return A list with `ok` (logical), `expected` (the embedded data hash), and
-#'   `actual` (the recomputed hash). Errors if the SVG carries no manifest.
+#' @return A list with `ok` (data *and* fonts match), `data_ok`, `expected` /
+#'   `actual` (the embedded vs recomputed data hash), `fonts_ok`, and
+#'   `fonts_missing` (the recorded font paths absent on this machine). Errors if
+#'   the SVG carries no manifest.
 #' @seealso [plot_manifest()], [plot_svg()]
 #' @examplesIf requireNamespace("jsonlite", quietly = TRUE)
 #' svg <- plot_svg(vplot(mtcars) |> mark_point(x = wt, y = mpg), manifest = TRUE)
@@ -380,7 +418,20 @@ plot_verify <- function(svg, data) {
   )
   expected <- manifest$data$hash
   actual <- .data_hash(data)
-  list(ok = identical(expected, actual), expected = expected, actual = actual)
+  data_ok <- identical(expected, actual)
+  # Fonts: a distinct cause. A recorded face absent here means the figure cannot
+  # reproduce pixel-for-pixel on this machine even if the data is identical.
+  font_paths <- .manifest_font_paths(manifest$fonts)
+  fonts_missing <- font_paths[!file.exists(font_paths)]
+  fonts_ok <- length(fonts_missing) == 0L
+  list(
+    ok = data_ok && fonts_ok,
+    data_ok = data_ok,
+    expected = expected,
+    actual = actual,
+    fonts_ok = fonts_ok,
+    fonts_missing = fonts_missing
+  )
 }
 
 #' A widget-ready provenance payload (click-to-source)

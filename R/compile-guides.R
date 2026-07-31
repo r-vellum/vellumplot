@@ -62,6 +62,13 @@ NULL
 # ticks point inward from the panel edges (their length is in mm from the edge,
 # which avoids mixed npc/mm unit arithmetic vellum disallows).
 .draw_panel_bg <- function(scene, x_sc, y_sc, rt) {
+  # Panel furniture is decorative in a tagged PDF: ticks below carry `role =
+  # "presentation"` (a screen-reader artifact), and gridlines carry `role =
+  # "grid"` (which the engine also treats as decorative, so the interactive-host
+  # selector survives). The panel *background* is deliberately left un-roled: it
+  # is the grob that carries the panel viewport's clip, and tagging it moves the
+  # SVG clip off the panel group. It is a single rect, so the cost of a screen
+  # reader naming it once is negligible next to thousands of gridlines/ticks.
   pb <- rt[["panel.background"]]
   if (!.is_blank(pb)) {
     scene <- vellum::draw(
@@ -108,7 +115,8 @@ NULL
         vellum::vl_unit(b, "native"),
         vellum::vl_unit(rep(tlen, k), "mm"),
         sketch = .el_sketch(tx, 6L),
-        gp = .el_gpar_line(tx)
+        gp = .el_gpar_line(tx),
+        role = "presentation"
       )
     )
   }
@@ -124,7 +132,8 @@ NULL
         vellum::vl_unit(rep(tlen, k), "mm"),
         vellum::vl_unit(b, "native"),
         sketch = .el_sketch(ty, 7L),
-        gp = .el_gpar_line(ty)
+        gp = .el_gpar_line(ty),
+        role = "presentation"
       )
     )
   }

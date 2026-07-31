@@ -4,7 +4,7 @@
 \alias{render_plot}
 \title{Render a plot to a file}
 \usage{
-render_plot(plot, path, text = "native", dpi = NULL)
+render_plot(plot, path, text = "native", dpi = NULL, cvd = "none")
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -17,6 +17,13 @@ render_plot(plot, path, text = "native", dpi = NULL)
 plot's authored resolution (set on \code{\link[=vplot]{vplot()}}); a number overrides it for
 this render, so the PNG's pixel dimensions become \code{width * dpi} by
 \code{height * dpi}. Ignored for \code{.svg}/\code{.pdf}, which are resolution-independent.}
+
+\item{cvd}{Colour-vision-deficiency simulation for a \code{.png} render: one of
+\code{"none"} (default), \code{"protanopia"}, \code{"deuteranopia"}, \code{"tritanopia"}, or
+\code{"achromatopsia"}. Use it to preview how a palette reads for a
+colour-blind viewer (pair with \code{\link[=plot_lint]{plot_lint()}}, which flags low contrast, and
+\code{\link[=scale_pattern]{scale_pattern()}} / \code{\link[=pattern_hatch]{pattern_hatch()}}, which add a redundant non-colour
+encoding). Simulation is raster-only; it is ignored for \code{.svg}/\code{.pdf}.}
 }
 \value{
 \code{path}, invisibly.
@@ -32,4 +39,5 @@ p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 f <- tempfile(fileext = ".png")
 render_plot(p, f)
 render_plot(p, f, dpi = 300) # denser raster, same physical size
+render_plot(p, f, cvd = "deuteranopia") # preview for red-green colour blindness
 }

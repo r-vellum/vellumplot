@@ -190,3 +190,46 @@ pattern_checker <- function(
     units = units
   )
 }
+
+#' Crisp vector hatch fill
+#'
+#' `pattern_hatch()` is the *vector* companion of the tile patterns above:
+#' evenly spaced parallel lines produced as real geometry via [vellum::vl_hatch()]
+#' rather than a rasterised tile. Because it is vector, it stays crisp at any
+#' magnification and in PDF (no embedded image), which makes it the better
+#' redundant, non-colour encoding for accessible and print output — the "fix it"
+#' step alongside [plot_lint()] and `render_plot(cvd = )`.
+#'
+#' Use it exactly like the other pattern constructors: as a constant `fill` on a
+#' filled mark, or as one of the `values` of [scale_pattern()] to map a discrete
+#' variable to hatch textures.
+#'
+#' @param color Line colour (any R colour). Default `"grey20"`.
+#' @param bg Background fill painted behind the lines, or `NA` (default) for a
+#'   transparent field so what is under the shape shows through.
+#' @param angle Line orientation in degrees. Any angle is allowed (unlike the
+#'   tile patterns, vector hatch has no seamless-tiling restriction). Default
+#'   `45`.
+#' @param spacing Distance between lines, in millimetres. Default `3`.
+#' @param linewidth Line width. Default `0.75`.
+#' @return A `vellum_hatch` object, usable as a `fill` value.
+#' @seealso [patterns], [scale_pattern()], [plot_lint()], [vellum::vl_hatch()]
+#' @examples
+#' df <- data.frame(g = c("a", "b", "c"), n = c(3, 5, 2))
+#' vplot(df) |> mark_bar(x = g, y = n, fill = pattern_hatch(angle = 30))
+#' @export
+pattern_hatch <- function(
+  color = "grey20",
+  bg = NA,
+  angle = 45,
+  spacing = 3,
+  linewidth = 0.75
+) {
+  vellum::vl_hatch(
+    angle = angle,
+    spacing = spacing,
+    width = linewidth,
+    col = color,
+    bg = bg
+  )
+}

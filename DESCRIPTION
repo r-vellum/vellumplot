@@ -28,7 +28,7 @@ Imports:
     scales,
     stats,
     utils,
-    vellum (>= 0.6.4)
+    vellum (>= 0.6.5)
 Remotes:
     r-vellum/vellum,
     schochastics/edgebundle,
@@ -89,6 +89,7 @@ Collate:
     'hierarchy-pack.R'
     'hierarchy.R'
     'labs.R'
+    'lint.R'
     'spec-serialize.R'
     'spec-json.R'
     'spec-fields.R'

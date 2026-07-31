@@ -244,6 +244,7 @@ reference:
   - sketch
   - gradients
   - patterns
+  - pattern_hatch
   - vl_pattern
   - clip
 
@@ -281,6 +282,7 @@ reference:
     to its data, or verify a figure against the data it was drawn from.
   contents:
   - plot_alt
+  - plot_lint
   - plot_provenance
   - provenance_join
   - provenance_payload
