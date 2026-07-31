@@ -278,7 +278,12 @@ test_that("merged colour+shape legend swatches carry the colour series key (H32)
 
 # ---- keyed statistical marks (errorbar / linerange / boxplot) ---------------
 
-ebar <- data.frame(g = c("a", "b", "c"), y = c(2, 3, 4), lo = c(1, 2, 3), hi = c(3, 4, 5))
+ebar <- data.frame(
+  g = c("a", "b", "c"),
+  y = c(2, 3, 4),
+  lo = c(1, 2, 3),
+  hi = c(3, 4, 5)
+)
 
 test_that("mark_errorbar keys each bar's segments to its datum", {
   p <- vplot(ebar) |> mark_errorbar(x = g, ymin = lo, ymax = hi, data_id = g)
@@ -319,4 +324,99 @@ test_that("mark_boxplot keys each box by its category", {
   rects <- el[el$mark == "rect" & !is.na(el$key), , drop = FALSE]
   expect_setequal(rects$key, c("4", "6", "8"))
   expect_match(svg_of(p), "data-key=")
+})
+
+# ---- keyed line / area / text / label marks (vellum 0.6.x key support) -------
+# Until the engine could key lines, polygons and text, none of these could be
+# addressed at all. A line/area is one addressable object (its whole series);
+# text and boxed labels are addressable per datum. The rule that governs the row
+# count: lines/polygons/text/roundrect report a scene_model() row ONLY when keyed
+# (so unkeyed gridlines and axis text never become phantom elements).
+
+line_df <- data.frame(
+  x = 1:10,
+  y = (1:10)^1.2,
+  g = rep(c("a", "b"), 5),
+  lab = letters[1:10]
+)
+
+test_that("mark_line keys a whole series as one hoverable object", {
+  p <- vplot(line_df) |> mark_line(x = x, y = y, data_id = "series-1")
+  lines <- model_of(p)$elements
+  lines <- lines[lines$mark == "line" & !is.na(lines$key), , drop = FALSE]
+  # exactly one keyed line element for the series (not one per vertex)
+  expect_equal(nrow(lines), 1L)
+  expect_equal(lines$key, "series-1")
+  expect_match(svg_of(p), 'data-key="series-1"', fixed = TRUE)
+})
+
+test_that("mark_line splits a colour mapping into one keyed line per series", {
+  p <- vplot(line_df) |> mark_line(x = x, y = y, color = g, data_id = g)
+  lines <- model_of(p)$elements
+  lines <- lines[lines$mark == "line" & !is.na(lines$key), , drop = FALSE]
+  expect_equal(nrow(lines), 2L)
+  expect_setequal(lines$key, c("a", "b"))
+})
+
+test_that("mark_area keys its filled band as one polygon", {
+  p <- vplot(line_df) |> mark_area(x = x, y = y, data_id = "band")
+  poly <- model_of(p)$elements
+  poly <- poly[poly$mark == "polygon" & !is.na(poly$key), , drop = FALSE]
+  expect_equal(nrow(poly), 1L)
+  expect_equal(poly$key, "band")
+})
+
+test_that("mark_text keys each data label individually", {
+  p <- vplot(line_df) |>
+    mark_text(x = x, y = y, label = lab, data_id = lab, tooltip = lab)
+  txt <- model_of(p)$elements
+  txt <- txt[txt$mark == "text" & !is.na(txt$key), , drop = FALSE]
+  expect_equal(nrow(txt), nrow(line_df))
+  expect_setequal(txt$key, line_df$lab)
+  i <- match("c", txt$key)
+  expect_equal(txt$meta[[i]]$tooltip, "c")
+})
+
+test_that("mark_label keys each label by its rounded background box", {
+  p <- vplot(line_df) |>
+    mark_label(x = x, y = y, label = lab, data_id = lab, tooltip = lab)
+  el <- model_of(p)$elements
+  keyed <- el[!is.na(el$key), , drop = FALSE]
+  # one keyed element per label, and it is the background box (the hit target),
+  # not the text on top -- so a label is exactly one addressable element
+  expect_equal(nrow(keyed), nrow(line_df))
+  expect_true(all(keyed$mark == "roundrect"))
+  expect_setequal(keyed$key, line_df$lab)
+  i <- match("c", keyed$key)
+  expect_equal(keyed$meta[[i]]$tooltip, "c")
+  expect_match(svg_of(p), 'data-key="c"', fixed = TRUE)
+})
+
+test_that("keyed line / area / label are inert without interactivity", {
+  expect_no_match(svg_of(vplot(line_df) |> mark_line(x = x, y = y)), "data-key")
+  expect_no_match(svg_of(vplot(line_df) |> mark_area(x = x, y = y)), "data-key")
+  expect_no_match(
+    svg_of(vplot(line_df) |> mark_label(x = x, y = y, label = lab)),
+    "data-key"
+  )
+  # and no phantom rows: unkeyed lines/polygons/labels contribute no keyed element
+  el <- model_of(vplot(line_df) |> mark_line(x = x, y = y))$elements
+  expect_equal(sum(el$mark == "line"), 0L)
+})
+
+test_that("mark_interval / mark_halfeye key their interval bars to the datum", {
+  # regression: the interval bars used to be the one unkeyed piece while the slab
+  # and centre point were keyed -- so a bar could not be hovered.
+  pi <- vplot(mtcars) |> mark_interval(x = factor(cyl), y = mpg, data_id = cyl)
+  seg <- model_of(pi)$elements
+  seg <- seg[seg$mark == "segment" & !is.na(seg$key), , drop = FALSE]
+  expect_gt(nrow(seg), 0L)
+  expect_setequal(seg$key, c("4", "6", "8"))
+
+  ph <- vplot(mtcars) |> mark_halfeye(x = factor(cyl), y = mpg, data_id = cyl)
+  el <- model_of(ph)$elements
+  # slab polygon, interval segments and centre point all carry the category key
+  keyed <- el[!is.na(el$key), , drop = FALSE]
+  expect_setequal(keyed$key, c("4", "6", "8"))
+  expect_true(all(c("polygon", "segment", "point") %in% keyed$mark))
 })

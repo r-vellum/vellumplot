@@ -1403,6 +1403,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   for (idx in .style_groups(n, list(col = col, fill = bg, alpha = alpha))) {
     a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
+    # Key the background box, not the text on top: the rounded rect is the whole
+    # label's hit target, and (being a keyed batch mark) it contributes exactly
+    # one `scene_model()` row per label when keyed and none when not -- so a label
+    # is one addressable element, never two. The text stays unkeyed backdrop-side.
     scene <- .draw(
       scene,
       vellum::roundrect_grob(
@@ -1417,7 +1421,9 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           col = NA,
           alpha = gp_alpha(a)
         )
-      )
+      ),
+      # PROVENANCE: `idx` are the layer rows in this style group.
+      rows = idx
     )
     scene <- .draw(
       scene,
@@ -1960,7 +1966,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
           ab$x[2],
           ab$y[2],
           gp = vellum::vl_gpar(col = ccol, lwd = lwd_by_width[wi])
-        )
+        ),
+        # PROVENANCE: this category's rows -- the bar keys to its datum like the
+        # slab and centre point do (a single segment, so the first key is used).
+        rows = sel
       )
     }
     pt <- .xy_units(scales, xc, scales$y$map(pit$point))

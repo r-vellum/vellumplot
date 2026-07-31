@@ -1,5 +1,19 @@
 # vellumplot (development version)
 
+* **Keys on more marks.** Now that the engine can key lines, polygons and text
+  (vellum 0.6.x), the marks that could not previously be made interactive are:
+  `mark_line()` / `mark_step()` (a series is one hoverable object; a colour
+  mapping gives one keyed line per series), `mark_area()` / `mark_ribbon()` (the
+  filled band as one polygon), `mark_text()` (each data label individually), and
+  the sf polygon / choropleth marks (one keyed feature each). This release also
+  fixes `mark_label()`, whose rounded background box is now keyed as the label's
+  hit target — it was inert before — and `mark_interval()` / `mark_halfeye()`,
+  whose interval bars now carry the datum key like their slab and centre point
+  already did. Set `data_id=` (and optionally `tooltip=`) on the mark to make it
+  addressable; a mark left without a key stays out of `scene_model()`, so a
+  plot's furniture never becomes phantom interactive elements. Requires
+  vellum >= 0.6.3.
+
 * **Portable plot specs.** A plot is now a serializable *document*: `as_spec()`
   turns a `PlotSpec` into a plain nested list and `from_spec()` rebuilds it,
   with `spec_to_json()` / `spec_from_json()` for the JSON wire format and
