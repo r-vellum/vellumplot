@@ -2,6 +2,19 @@
 
 ## vellumplot (development version)
 
+- **Label repulsion works on every panel type.**
+  `mark_text(repel = TRUE)` / `mark_label(repel = TRUE)` now go through
+  the engine placement solver
+  ([`vellum::vl_repel()`](https://r-vellum.github.io/vellum/reference/vl_place.html)),
+  which solves in device pixels and applies the answer as an absolute
+  millimetre offset. It is a single post-compile pass — no second
+  compile — and it is coordinate-agnostic: **faceted, polar and warped
+  (`coord_trans`) plots repel correctly**, where before they errored
+  with “single cartesian panel only”. Labels in a faceted plot are
+  solved per panel and kept inside it. The `seed` argument is now inert
+  (the solver is deterministic) and is kept only for back-compatibility.
+  Requires vellum \>= 0.6.4.
+
 - **[`mark_text_path()`](https://r-vellum.github.io/vellumplot/reference/mark_text_path.md)
   — labels that follow a curve.** A new mark that sets one label per
   group along the group’s `x`/`y` path, each glyph rotated to the local

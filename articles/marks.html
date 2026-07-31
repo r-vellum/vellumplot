@@ -234,14 +234,14 @@
 </div>
 </div>
 </div>
-<p>On a crowded scatter, labels collide. <code>repel = TRUE</code> moves them apart with a force-directed layout and draws a thin leader back to each point. The layout is resolved against the true rendered panel size (so it doesn’t drift with the data scale) and is reproducible via <code>seed</code>.</p>
+<p>On a crowded scatter, labels collide. <code>repel = TRUE</code> moves them apart and draws a thin leader back to each point. Placement is solved by the engine in device pixels and applied as an absolute offset, so it does not drift with the data scale and is deterministic (no seed needed). Because the offset is coordinate agnostic, repel also works on <strong>faceted and polar</strong> plots — each panel is solved and its labels kept inside it.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_text.html">mark_text</a></span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span>,</span>
-<span>    repel <span class="op">=</span> <span class="cn">TRUE</span>, size <span class="op">=</span> <span class="fl">4</span>, seed <span class="op">=</span> <span class="fl">1</span></span>
+<span>    repel <span class="op">=</span> <span class="cn">TRUE</span>, size <span class="op">=</span> <span class="fl">4</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
