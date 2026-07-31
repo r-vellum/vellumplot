@@ -40,4 +40,15 @@ vplot(line) |>
   theme_cyberpunk() |>
   render_plot(file.path(outdir, "22-composed.png"))
 
-message("22-layer-effects: wrote 3 figures to ", outdir)
+# --- 4. glow on TEXT (real blur -- once impossible) -------------------------
+# glow()/shadow() are real Gaussian blurs now, so they work on text marks too:
+# a neon label needs no glyph-stroking.
+vplot(data.frame(x = 1, y = 1, lab = "NEON"), width = 5, height = 2.4) |>
+  mark_text(
+    x = x, y = y, label = lab, size = 46, color = "#00e5ff",
+    effects = list(glow())
+  ) |>
+  theme_cyberpunk() |>
+  render_plot(file.path(outdir, "22-text-glow.png"))
+
+message("22-layer-effects: wrote 4 figures to ", outdir)

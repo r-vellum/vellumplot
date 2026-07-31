@@ -1130,6 +1130,7 @@ mark_text <- function(
   point_padding = 1,
   min_segment_length = 2,
   seed = NULL,
+  effects = list(),
   blend = NULL,
   data = NULL
 ) {
@@ -1159,6 +1160,7 @@ mark_text <- function(
         seed
       )
     ),
+    effects = effects,
     blend = blend,
     data = data
   )
@@ -1183,6 +1185,7 @@ mark_label <- function(
   point_padding = 1,
   min_segment_length = 2,
   seed = NULL,
+  effects = list(),
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -1214,6 +1217,7 @@ mark_label <- function(
         seed
       )
     ),
+    effects = effects,
     blend = blend,
     sketch = sketch,
     data = data

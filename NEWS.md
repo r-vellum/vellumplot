@@ -1,5 +1,24 @@
 # vellumplot (development version)
 
+* **Real blur effects; `glow()`/`shadow()` now work on text.** `glow()` and
+  `shadow()` are drawn with the engine's real Gaussian blur
+  (`vellum::vl_viewport(blur=)`) — one softened, composited layer instead of a
+  stack of N widened low-opacity copies. It is cheaper and smoother, and it lifts
+  the old restriction that text could not glow: `mark_text()` / `mark_label()`
+  now take an `effects =` argument and accept `glow()` and `shadow()` (a *sharp*
+  `outline()` still needs a glyph outline the text primitive can't stroke).
+  `outline()`, `motion()`, and `echo()` are unchanged. The `glow()` `layers` /
+  `blend` arguments are kept for the neon look (opacity + composite) but no longer
+  stack copies.
+
+* **Relative text sizing and tabular figures.** `element_text(cex = )` sets a size
+  multiplier that cascades through the theme (a base size scaled, rather than an
+  absolute size at every call site). Axis tick labels are now set with tabular
+  figures (`tnum`), so digit columns keep a constant width and stop jittering
+  from tick to tick.
+
+  Requires vellum >= 0.6.4.
+
 * **Venn / Euler diagrams: `vvenn()`.** Draws 2 or 3 overlapping sets whose
   disjoint regions are rendered as **solid geometry** — computed with the
   engine's boolean set operations (`vellum::vl_path_op()`), so overlapping

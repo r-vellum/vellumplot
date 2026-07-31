@@ -13,36 +13,39 @@ NULL
 )
 # The marks an effect applies to (used for validation + error messages). Glow /
 # outline / shadow decorate stroked and point marks. Text marks are handled
-# separately in `.check_effects()`: only `shadow()` reads correctly on text (an
-# offset drop copy) — `outline()` / `glow()` would need to stroke the glyph
-# outlines, which the text primitive can't do yet (see r-vellum/vellum#13).
+# separately in `.check_effects()`: `shadow()` (a blurred offset copy) and
+# `glow()` (a blurred halo) both read on text now that blur is a real engine
+# effect (`vl_viewport(blur=)`); only a *sharp* `outline()` still needs a glyph
+# outline the text primitive cannot stroke.
 .effect_marks <- function() {
   .STROKE_POINT_MARKS
 }
 
-# Text marks a `shadow()` (only) can decorate.
+# Text marks that `shadow()` / `glow()` can decorate (via real blur).
 .TEXT_EFFECT_MARKS <- c("text", "label", "node_text", "edge_text")
 
 #' Neon glow layer effect
 #'
-#' A render effect for stroked and point marks, in the spirit of
-#' [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk): the mark is drawn as
-#' several widened, low-opacity copies composited additively (a `"screen"` blend)
-#' beneath the crisp original, producing a soft neon halo. Pass it to a mark's
-#' `effects` argument, e.g. `mark_line(..., effects = list(glow()))`. Pairs
-#' naturally with [theme_cyberpunk()].
+#' A render effect for stroked, point, and text marks, in the spirit of
+#' [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk): a widened copy of the
+#' mark is drawn beneath the crisp original and softened with a **real Gaussian
+#' blur** (`vellum`'s `vl_viewport(blur=)`), composited additively (a `"screen"`
+#' blend) into a soft neon halo. Pass it to a mark's `effects` argument, e.g.
+#' `mark_line(..., effects = list(glow()))`. Pairs naturally with
+#' [theme_cyberpunk()].
 #'
 #' The glow is applied per style group, so a colour-mapped multi-series line
 #' glows each series in its own hue. It applies to `mark_point()`, `mark_line()`,
-#' `mark_step()`, `mark_rule()`, `mark_segment()`, `mark_edges()`, and
-#' `mark_nodes()`; other marks reject it with an error.
+#' `mark_step()`, `mark_rule()`, `mark_segment()`, `mark_edges()`, `mark_nodes()`,
+#' and text marks (`mark_text()` / `mark_label()`); other marks reject it.
 #'
-#' @param size Extra visual spread, in millimetres, added to the stroke width (or
-#'   point diameter) at the outermost copy.
-#' @param layers Number of stacked halo copies.
-#' @param alpha Opacity of each copy (they accumulate toward the centre).
-#' @param blend Blend mode compositing the halo copies, typically `"screen"` or
-#'   `"lighten"` (any CSS `mix-blend-mode` name).
+#' @param size Halo spread in millimetres: the blur radius (and, for stroked/point
+#'   marks, how much the copy is widened before blurring).
+#' @param layers,blend Retained for compatibility and the neon look: `layers`
+#'   scales the halo opacity (it no longer stacks copies -- one blurred layer
+#'   replaces them), and `blend` (typically `"screen"`/`"lighten"`) composites
+#'   the halo.
+#' @param alpha Base halo opacity (scaled by `layers`).
 #' @param color Halo colour, or `NULL` (default) to inherit the mark's own
 #'   resolved colour — the usual neon look.
 #' @return A `GlowSpec` object for a mark's `effects` list.
@@ -295,14 +298,15 @@ echo <- function(
       )
     }
     if (is_text) {
-      # Only shadow() reads correctly on text (an offset drop copy). outline() /
-      # glow() would have to stroke the glyph outlines, which vellum's text
-      # primitive can't do yet — reject them rather than draw a broken halo.
-      if (!S7::S7_inherits(e, ShadowSpec)) {
+      # shadow() and glow() both read on text now: a real Gaussian blur (a drop
+      # shadow, or a soft halo) needs no glyph outline. outline() is still
+      # rejected -- a *sharp* halo would have to stroke the glyph outlines, which
+      # the text primitive cannot do (a blurred "outline" is just a glow).
+      if (!S7::S7_inherits(e, ShadowSpec) && !S7::S7_inherits(e, GlowSpec)) {
         cli::cli_abort(
           c(
-            "Only {.fn shadow} applies to a text mark ({.val {mark}}).",
-            i = "{.fn outline} / {.fn glow} need a glyph outline the text primitive can't draw yet."
+            "Only {.fn shadow} and {.fn glow} apply to a text mark ({.val {mark}}).",
+            i = "A sharp {.fn outline} needs a glyph outline the text primitive can't draw yet."
           ),
           call = call
         )

@@ -4202,26 +4202,80 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   vellum::pop(scene)
 }
 
+# One soft copy of the layer inside a blurred group -- the real-blur replacement
+# for the old stack of N widened low-opacity copies. `blur` is the Gaussian
+# radius (mm); the engine blurs the whole group once (cheaper, smoother, and it
+# works on text, unlike stroking N glyph copies). `widen` optionally fattens the
+# stroke/point first so the halo has body before the blur spreads it.
+.emit_soft <- function(scene, L, scales, blur, alpha, colour, blend = "normal",
+                       xoff = 0, yoff = 0, widen = 0) {
+  is_point <- L$mark %in% c("point", "nodes")
+  base <- .glow_base(L)
+  rng <- .panel_scale_range(scales)
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      x = vellum::vl_unit(0.5, "npc") + vellum::vl_unit(xoff, "mm"),
+      y = vellum::vl_unit(0.5, "npc") + vellum::vl_unit(yoff, "mm"),
+      xscale = rng$x,
+      yscale = rng$y,
+      blur = blur,
+      blend = if (identical(blend, "normal")) NULL else blend
+    )
+  )
+  L2 <- L
+  L2$effects <- list()
+  L2$params$alpha <- alpha
+  if (!is.null(colour)) {
+    L2$values$color <- NULL
+    L2$values$fill <- NULL
+    L2$params$color <- colour
+    L2$params$fill <- colour
+  }
+  # Widening fattens a stroke/point before the blur; a text glyph cannot be
+  # fattened, so a text halo comes from the blur alone.
+  if (widen > 0 && L$mark %in% .STROKE_POINT_MARKS) {
+    if (is_point) {
+      L2$values$size <- NULL
+      L2$params$size <- base + widen
+    } else {
+      L2$params$linewidth <- base + widen * .MM_TO_LWD
+    }
+  }
+  scene <- .emit_layer(scene, L2, scales)
+  vellum::pop(scene)
+}
+
 .emit_glow <- function(scene, L, scales, g) {
-  frac <- seq.int(g@layers, 1L) / g@layers
-  .emit_copies(scene, L, scales, frac * g@size, g@alpha, g@color, g@blend)
+  # A real Gaussian blur of one wider copy -- a soft neon halo -- instead of the
+  # old stack of `layers` widened copies. `alpha` accumulates the old per-copy
+  # opacity so brightness is comparable; `blend` (screen by default) keeps the
+  # additive neon look over a dark backdrop.
+  .emit_soft(
+    scene, L, scales,
+    blur = g@size * 0.6,
+    alpha = min(1, g@alpha * g@layers),
+    colour = g@color,
+    blend = g@blend,
+    widen = g@size * 0.35
+  )
 }
 
 .emit_outline <- function(scene, L, scales, o) {
-  # one opaque copy, wider by `size` per side, in a contrasting colour
+  # one opaque copy, wider by `size` per side, in a contrasting colour (sharp --
+  # a sticker halo, not blurred)
   .emit_copies(scene, L, scales, 2 * o@size, o@alpha, o@color, "normal")
 }
 
 .emit_shadow <- function(scene, L, scales, s) {
-  frac <- seq.int(s@layers, 1L) / s@layers
-  .emit_copies(
-    scene,
-    L,
-    scales,
-    frac * s@spread,
-    s@alpha,
-    s@color,
-    "multiply",
+  # A real drop shadow: one blurred, offset copy in the shadow colour, instead of
+  # the old stack of widened copies.
+  .emit_soft(
+    scene, L, scales,
+    blur = s@spread,
+    alpha = min(1, s@alpha * s@layers),
+    colour = s@color,
+    blend = "normal",
     xoff = s@x,
     yoff = s@y
   )

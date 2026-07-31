@@ -18,6 +18,7 @@ NULL
     face = S7::class_any,
     colour = S7::class_any,
     size = S7::class_any, # points
+    cex = S7::class_any, # relative size multiplier on `size`
     hjust = S7::class_any,
     vjust = S7::class_any,
     angle = S7::class_any,
@@ -80,6 +81,7 @@ element_text <- function(
   colour = NULL,
   color = NULL,
   size = NULL,
+  cex = NULL,
   hjust = NULL,
   vjust = NULL,
   angle = NULL,
@@ -95,6 +97,7 @@ element_text <- function(
     face = face,
     colour = colour,
     size = size,
+    cex = cex,
     hjust = hjust,
     vjust = vjust,
     angle = angle,
@@ -164,13 +167,19 @@ element_blank <- S7::new_class(
 }
 
 # Build a vellum gpar from a resolved element (NULL fields stay NULL = inherit).
-.el_gpar_text <- function(el) {
+# `features` opts into OpenType features on the text (e.g. "tnum" for tabular
+# figures on axis labels, so digits keep a constant width and stop jittering
+# between ticks). `cex` is a relative size multiplier vellum applies to
+# `fontsize` -- how a theme cascades a base size (`element_text(cex = 1.2)`).
+.el_gpar_text <- function(el, features = NULL) {
   vellum::vl_gpar(
     fontsize = el@size,
+    cex = el@cex %||% 1,
     col = el@colour,
     fontfamily = el@family,
     fontface = el@face,
-    lineheight = el@lineheight
+    lineheight = el@lineheight,
+    features = features
   )
 }
 

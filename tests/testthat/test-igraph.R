@@ -562,25 +562,22 @@ test_that("mark_node_text(repel=) plumbs repel params", {
   expect_null(p0@layers[[length(p0@layers)]]@stat_params$repel)
 })
 
-test_that("text marks take shadow() but reject outline()/glow() (#81)", {
+test_that("text marks take shadow()/glow() but reject outline() (#81)", {
   skip_if_not_installed("igraph")
   g <- igraph::make_ring(4)
-  # shadow() reads correctly on text (an offset drop copy).
+  # shadow() (blurred offset copy) and glow() (blurred halo) both read on text
+  # now that blur is a real engine effect.
   expect_no_error(
     vgraph(g) |> mark_node_text(label = name, effects = list(shadow()))
   )
   expect_no_error(
-    vgraph(g) |> mark_edge_text(label = "e", effects = list(shadow()))
+    vgraph(g) |> mark_edge_text(label = "e", effects = list(glow()))
   )
-  # outline() / glow() can't stroke glyph outlines yet -> rejected, not a broken
-  # ring of offset label copies.
+  # a *sharp* outline() still needs a glyph outline the text primitive can't
+  # stroke -> rejected, not a broken ring of offset label copies.
   expect_error(
     vgraph(g) |> mark_node_text(label = name, effects = list(outline())),
-    "Only .*shadow"
-  )
-  expect_error(
-    vgraph(g) |> mark_edge_text(label = "e", effects = list(glow())),
-    "Only .*shadow"
+    "outline"
   )
 })
 
