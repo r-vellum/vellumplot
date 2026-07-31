@@ -1,5 +1,14 @@
 # vellumplot (development version)
 
+* **Venn / Euler diagrams: `vvenn()`.** Draws 2 or 3 overlapping sets whose
+  disjoint regions are rendered as **solid geometry** — computed with the
+  engine's boolean set operations (`vellum::vl_path_op()`), so overlapping
+  regions do not alpha-composite and stay crisp, including in PDF where a
+  rasterised mask degrades. Each region is filled by how many elements fall in
+  exactly that combination of sets, and labelled with that count. Input is a
+  named list of member vectors or a data frame of logical membership columns.
+  Requires vellum >= 0.6.4.
+
 * **SVG icon markers: `shape = <svg>`.** A point `shape` can now be an SVG icon —
   a path `d` string (what icon sets ship) or a path to a `.svg` file — drawn as a
   crisp vector marker via `vellum::svg_grob()` instead of a built-in glyph. Pass

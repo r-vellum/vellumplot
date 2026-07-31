@@ -146,6 +146,7 @@ reference:
   - vsankey
   - vchord
   - vhierarchy
+  - vvenn
   - vsparkline
   - vtable
   - gt_vsparkline

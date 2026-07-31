@@ -107,4 +107,5 @@ Collate:
     'spec-vegalite.R'
     'svg.R'
     'table.R'
+    'venn.R'
     'zzz.R'
