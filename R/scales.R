@@ -785,17 +785,6 @@ scale_colour_gradient <- scale_color_gradient
 #' @export
 scale_colour_gradient2 <- scale_color_gradient2
 
-#' Size scale
-#'
-#' Declare the scale for a mapped `size` aesthetic: data values map linearly to a
-#' point-size `range` (in mm). A size legend is drawn automatically.
-#'
-#' @param plot A [PlotSpec].
-#' @param range Numeric length-2 output size range in mm, or `NULL` for the
-#'   default `c(1, 4)`.
-#' @param limits Numeric length-2 data domain, or `NULL` to train from the data.
-#' @param breaks Explicit legend breaks, or `NULL`.
-#' @param name Legend title, or `NULL` to derive from the encoding.
 # The shared engine behind the continuous output-range scales (size / alpha /
 # edge_width / edge_alpha): validate the data `limits` and the output `range`
 # (non-negative, and <= `upper` when the aesthetic is bounded like opacity), then
@@ -831,6 +820,17 @@ scale_colour_gradient2 <- scale_color_gradient2
   )
 }
 
+#' Size scale
+#'
+#' Declare the scale for a mapped `size` aesthetic: data values map linearly to a
+#' point-size `range` (in mm). A size legend is drawn automatically.
+#'
+#' @param plot A [PlotSpec].
+#' @param range Numeric length-2 output size range in mm, or `NULL` for the
+#'   default `c(1, 4)`.
+#' @param limits Numeric length-2 data domain, or `NULL` to train from the data.
+#' @param breaks Explicit legend breaks, or `NULL`.
+#' @param name Legend title, or `NULL` to derive from the encoding.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp) |> scale_size(range = c(1, 8))
