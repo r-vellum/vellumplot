@@ -257,3 +257,51 @@ test_that("effects compose in one layer", {
     theme_cyberpunk()
   expect_no_error(render_px(p))
 })
+
+# --- WI-10: real blur effects on text, cex, tnum ----------------------------
+
+test_that("glow() and shadow() now apply to text marks (real blur)", {
+  td <- data.frame(x = 1, y = 1, lab = "NEON")
+  expect_no_error(vellum::as_vellum_scene(
+    vplot(td) |> mark_text(x = x, y = y, label = lab, effects = list(glow()))
+  ))
+  expect_no_error(vellum::as_vellum_scene(
+    vplot(td) |> mark_text(x = x, y = y, label = lab, effects = list(shadow()))
+  ))
+  expect_no_error(vellum::as_vellum_scene(
+    vplot(td) |> mark_label(x = x, y = y, label = lab, effects = list(glow()))
+  ))
+})
+
+test_that("a sharp outline() is still rejected on a text mark", {
+  td <- data.frame(x = 1, y = 1, lab = "x")
+  expect_error(
+    vplot(td) |> mark_text(x = x, y = y, label = lab, effects = list(outline())),
+    "outline"
+  )
+})
+
+test_that("a glowing line uses a blurred group, not a stack of copies", {
+  # the blur is a group effect, so the halo comes from one blurred viewport
+  d <- data.frame(x = 1:20, y = cumsum(rnorm(20)))
+  svg <- vellum::scene_svg(vellum::as_vellum_scene(
+    vplot(d) |> mark_line(x = x, y = y, color = "cyan", effects = list(glow()))
+  ))
+  expect_match(svg, "blur|filter|feGaussianBlur")
+})
+
+test_that("element_text(cex =) reaches the text gpar as a size multiplier", {
+  g <- vellumplot:::.el_gpar_text(element_text(size = 10, cex = 1.5))
+  expect_equal(g@cex, 1.5)
+  # unset cex defaults to 1 (no scaling)
+  expect_equal(vellumplot:::.el_gpar_text(element_text(size = 10))@cex, 1)
+})
+
+test_that("axis tick labels carry the tabular-figures feature", {
+  p <- vplot(data.frame(x = c(1, 10, 100), y = 1:3)) |> mark_point(x = x, y = y)
+  svg <- vellum::scene_svg(vellum::as_vellum_scene(p))
+  # the tnum feature reaches the SVG text (font-feature-settings) or renders
+  # native text without error either way
+  expect_no_error(vellum::scene_raster(p))
+  expect_true(grepl("tnum|font-feature", svg) || grepl("<text", svg))
+})

@@ -63,11 +63,22 @@ vplot(mtcars) |>
 
 Effects change how a single mark is painted, and they are passed to a mark's
 `effects` argument as a list. They apply to stroked and point marks.
-`glow()` draws widened, low-opacity copies beneath the mark for a neon halo;
-`shadow()` adds an offset drop shadow; `outline()` puts a contrasting halo
-behind the mark so it stays legible over a busy backdrop. `motion()` and
-`echo()` draw a fading trail of copies marching off along a direction — a
-speed-blur (`motion()`, many close copies) or discrete ghost repeats (`echo()`).
+`glow()` softens a widened copy with a real Gaussian blur for a neon halo;
+`shadow()` adds a blurred, offset drop shadow; `outline()` puts a sharp
+contrasting halo behind the mark so it stays legible over a busy backdrop.
+`motion()` and `echo()` draw a fading trail of copies marching off along a
+direction — a speed-blur (`motion()`, many close copies) or discrete ghost
+repeats (`echo()`).
+
+Because `glow()` and `shadow()` are real blurs, they also work on **text** marks
+— a neon `mark_text()` needs no glyph-stroking:
+
+```{r}
+vplot(data.frame(x = 1, y = 1, lab = "NEON"), width = 5, height = 2.2) |>
+  mark_text(x = x, y = y, label = lab, size = 42, color = "#00e5ff",
+    effects = list(glow())) |>
+  theme_cyberpunk()
+```
 
 ```{r}
 vplot(pressure) |>

@@ -21,6 +21,7 @@ mark_text(
   point_padding = 1,
   min_segment_length = 2,
   seed = NULL,
+  effects = list(),
   blend = NULL,
   data = NULL
 )
@@ -42,6 +43,7 @@ mark_label(
   point_padding = 1,
   min_segment_length = 2,
   seed = NULL,
+  effects = list(),
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -77,6 +79,10 @@ that barely moved gets none.}
 
 \item{seed}{Integer seed making the repel layout reproducible (the global RNG
 stream is restored afterwards).}
+
+\item{effects}{A list of layer render effects applied to the mark at draw
+time — \code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}}, and \code{\link[=shadow]{shadow()}}. Available on stroked and point
+marks.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS

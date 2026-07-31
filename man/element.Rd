@@ -14,6 +14,7 @@ element_text(
   colour = NULL,
   color = NULL,
   size = NULL,
+  cex = NULL,
   hjust = NULL,
   vjust = NULL,
   angle = NULL,

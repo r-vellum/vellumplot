@@ -7,15 +7,15 @@
 glow(size = 6, layers = 6L, alpha = 0.12, blend = "screen", color = NULL)
 }
 \arguments{
-\item{size}{Extra visual spread, in millimetres, added to the stroke width (or
-point diameter) at the outermost copy.}
+\item{size}{Halo spread in millimetres: the blur radius (and, for stroked/point
+marks, how much the copy is widened before blurring).}
 
-\item{layers}{Number of stacked halo copies.}
+\item{layers, blend}{Retained for compatibility and the neon look: \code{layers}
+scales the halo opacity (it no longer stacks copies -- one blurred layer
+replaces them), and \code{blend} (typically \code{"screen"}/\code{"lighten"}) composites
+the halo.}
 
-\item{alpha}{Opacity of each copy (they accumulate toward the centre).}
-
-\item{blend}{Blend mode compositing the halo copies, typically \code{"screen"} or
-\code{"lighten"} (any CSS \code{mix-blend-mode} name).}
+\item{alpha}{Base halo opacity (scaled by \code{layers}).}
 
 \item{color}{Halo colour, or \code{NULL} (default) to inherit the mark's own
 resolved colour — the usual neon look.}
@@ -24,18 +24,19 @@ resolved colour — the usual neon look.}
 A \code{GlowSpec} object for a mark's \code{effects} list.
 }
 \description{
-A render effect for stroked and point marks, in the spirit of
-\href{https://github.com/dhaitz/mplcyberpunk}{mplcyberpunk}: the mark is drawn as
-several widened, low-opacity copies composited additively (a \code{"screen"} blend)
-beneath the crisp original, producing a soft neon halo. Pass it to a mark's
-\code{effects} argument, e.g. \code{mark_line(..., effects = list(glow()))}. Pairs
-naturally with \code{\link[=theme_cyberpunk]{theme_cyberpunk()}}.
+A render effect for stroked, point, and text marks, in the spirit of
+\href{https://github.com/dhaitz/mplcyberpunk}{mplcyberpunk}: a widened copy of the
+mark is drawn beneath the crisp original and softened with a \strong{real Gaussian
+blur} (\code{vellum}'s \code{vl_viewport(blur=)}), composited additively (a \code{"screen"}
+blend) into a soft neon halo. Pass it to a mark's \code{effects} argument, e.g.
+\code{mark_line(..., effects = list(glow()))}. Pairs naturally with
+\code{\link[=theme_cyberpunk]{theme_cyberpunk()}}.
 }
 \details{
 The glow is applied per style group, so a colour-mapped multi-series line
 glows each series in its own hue. It applies to \code{mark_point()}, \code{mark_line()},
-\code{mark_step()}, \code{mark_rule()}, \code{mark_segment()}, \code{mark_edges()}, and
-\code{mark_nodes()}; other marks reject it with an error.
+\code{mark_step()}, \code{mark_rule()}, \code{mark_segment()}, \code{mark_edges()}, \code{mark_nodes()},
+and text marks (\code{mark_text()} / \code{mark_label()}); other marks reject it.
 }
 \examples{
 df <- data.frame(x = 1:20, y = cumsum(rnorm(20)))

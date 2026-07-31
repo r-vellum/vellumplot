@@ -1,6 +1,9 @@
 #' @include classes.R elements.R theme-tree.R compile-layout.R
 NULL
 
+# Tabular-figures OpenType feature, for axis tick labels (constant digit width).
+.TNUM <- c(tnum = 1L)
+
 # Minor gridline positions: midpoints between sorted finite breaks, plus one
 # extrapolated half-step past each end so minor lines also appear outside the
 # outer majors (the panel viewport clips any that fall beyond the scale). Empty
@@ -227,7 +230,7 @@ NULL
   # angular tick labels just outside the rim
   tel <- rt[[paste0("axis.text.", theta_aes)]]
   if (!.is_blank(tel) && length(tbreaks)) {
-    gp <- .el_gpar_text(tel)
+    gp <- .el_gpar_text(tel, features = .TNUM)
     ang <- ctx$theta_map(tbreaks)
     rl <- ctx$rmax + 0.12
     labs <- ctx$theta_sc$labels
@@ -248,7 +251,7 @@ NULL
   # radial tick labels up the top-centre spoke
   rel <- rt[[paste0("axis.text.", r_aes)]]
   if (!.is_blank(rel) && length(rbreaks)) {
-    gp <- .el_gpar_text(rel)
+    gp <- .el_gpar_text(rel, features = .TNUM)
     labs <- ctx$r_sc$labels
     for (i in seq_along(rbreaks)) {
       rr <- ctx$r_map(rbreaks[i])
@@ -349,7 +352,10 @@ NULL
     )
   }
   if (!.is_blank(el)) {
-    gp <- .el_gpar_text(el)
+    # Tabular figures on tick labels: digits keep a constant advance width, so a
+    # column of numbers does not jitter left/right from tick to tick. Harmless on
+    # non-numeric labels (only digit glyphs are affected).
+    gp <- .el_gpar_text(el, features = .TNUM)
     for (i in seq_along(sc$breaks)) {
       x <- if (is_y) {
         vellum::vl_unit(geom$lx, "npc")
