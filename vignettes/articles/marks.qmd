@@ -145,6 +145,20 @@ vplot(mtcars) |>
   )
 ```
 
+`mark_text_path()` sets a label *along* a curve instead of at a point -- one
+label per group, its glyphs following the group's path and rotated to the local
+tangent. It is the direct way to label a line without a legend, or to caption a
+contour or arc. Glyphs follow the tangent, so a path walked right-to-left reads
+upside-down -- traverse it in the reading direction (here `sin` over a rising
+half-period).
+
+```{r}
+t <- seq(0, pi, length.out = 60)
+curve <- data.frame(x = t, y = sin(t), lab = "y = sin(x)")
+vplot(curve) |>
+  mark_text_path(x = x, y = y, label = lab, size = 9, vjust = "bottom", offset = 2)
+```
+
 ## Images
 
 `mark_image()` puts a bitmap at each `(x, y)` in place of a marker: a flag or a

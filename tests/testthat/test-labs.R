@@ -162,3 +162,48 @@ test_that("concat carries per-plot labs", {
   render_plot(hconcat(a, b), f)
   expect_gt(file.info(f)$size, 0)
 })
+
+# ---- box text: long title/subtitle/caption wrap to the page width ----------
+
+# First row (top-down fraction) carrying any near-black ink across the width --
+# the top of the drawn content (axis labels, ticks, points). A band that wraps
+# to more lines reserves more height and pushes this down.
+first_ink_row <- function(img, thresh = 0.3) {
+  ink <- apply(img[,, 1:3, drop = FALSE] <= thresh, c(1, 2), all)
+  which(apply(ink, 1, any))[1] / dim(img)[1]
+}
+
+test_that("a long subtitle wraps and reserves height (pushes content down)", {
+  long <- paste(rep("wrap", 60), collapse = " ")
+  base <- vplot(mtcars, width = 6, height = 4) |> mark_point(x = wt, y = mpg)
+  short_top <- first_ink_row(render_px(base |> labs(subtitle = "short")))
+  long_top <- first_ink_row(render_px(base |> labs(subtitle = long)))
+  # the wrapped (multi-line) subtitle reserves noticeably more vertical space
+  expect_gt(long_top, short_top + 0.05)
+})
+
+test_that("a long caption wraps upward, reserving height below the panel", {
+  long <- paste(rep("wrap", 60), collapse = " ")
+  base <- vplot(mtcars, width = 6, height = 4) |> mark_point(x = wt, y = mpg)
+  # bottom-of-content = last inked row; a wrapped caption pushes it up (less of
+  # the page is content, more is caption).
+  last_ink <- function(sub) {
+    img <- render_px(base |> labs(caption = sub))
+    ink <- apply(img[,, 1:3, drop = FALSE] <= 0.3, c(1, 2), all)
+    rows <- which(apply(ink, 1, any))
+    rows[length(rows)] / dim(img)[1]
+  }
+  # a long caption itself inks low, so measure the panel's grey floor instead:
+  # its bottom edge rises when the caption band grows.
+  panel_floor <- function(sub) {
+    img <- render_px(base |> labs(caption = sub))
+    W <- dim(img)[2]
+    col <- round(W * 0.5)
+    grey <- abs(img[, col, 1] - img[, col, 2]) < 0.03 &
+      img[, col, 1] > 0.85 &
+      img[, col, 1] < 0.97
+    r <- which(grey)
+    r[length(r)] / dim(img)[1]
+  }
+  expect_lt(panel_floor(long), panel_floor("short") - 0.03)
+})
