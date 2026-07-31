@@ -167,7 +167,31 @@ h$owner <- c(NA, NA, NA, "Sam", "Sam", "Lee", "Lee")
 vhierarchy(h, id, parent, value, fill = owner, type = "circlepack")
 ```
 
-`vsankey()`, `vchord()`, and `vhierarchy()` all follow the `vgraph()` pattern: the layout is
-computed in R and drawn through vellum primitives, so they are ordinary specs you
-can render, print, or (in future) make interactive through the same machinery as
-every other plot.
+## Set diagrams
+
+`vvenn()` draws a Venn/Euler diagram of 2 or 3 sets. Its disjoint regions are
+computed as **boolean geometry** with the engine's `vl_path_op()` (union,
+intersection, difference), so each region is a *solid* shape rather than
+alpha-composited translucent circles — it stays crisp, and in PDF it avoids the
+rasterised mask that overlapping-fill approaches degrade into. Each region is
+filled by how many elements fall in exactly that combination of sets, and
+labelled with the count. Input is a named list of members, or a data frame of
+logical membership columns.
+
+```{r}
+vvenn(list(
+  Coffee = c("Ann", "Bo", "Cy", "Di", "Ed"),
+  Tea = c("Bo", "Di", "Ed", "Fi", "Gy", "Hu")
+))
+```
+
+```{r}
+set.seed(1)
+u <- paste0("g", 1:60)
+vvenn(list(A = sample(u, 34), B = sample(u, 30), C = sample(u, 26)))
+```
+
+`vsankey()`, `vchord()`, `vhierarchy()`, and `vvenn()` all follow the `vgraph()`
+pattern: the layout is computed in R and drawn through vellum primitives, so they
+are ordinary specs you can render, print, or (in future) make interactive through
+the same machinery as every other plot.

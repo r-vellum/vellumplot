@@ -3845,6 +3845,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     ellipse = .emit_region(scene, L, scales),
     hull = .emit_region(scene, L, scales),
     sankey = .emit_sankey(scene, L, scales),
+    venn = .emit_venn(scene, L, scales),
     sparkline = .emit_sparkline(scene, L, scales),
     grob = .emit_grob(scene, L, scales),
     hierarchy = .emit_hierarchy(scene, L, scales),

@@ -92,6 +92,17 @@ NULL
     n <- nrow(sankey$nodes)
   }
 
+  # A venn layer draws an abstract set diagram in npc; its geometry is
+  # precomputed on the layer (`params$venn`). Just synthesise the unit [0, 1]
+  # panel extent (drawn square by the fixed coord) so position training has a
+  # domain -- like the other layout marks above.
+  if (identical(layer@mark, "venn")) {
+    values$x <- c(0, 1)
+    values$y <- c(0, 1)
+    types$x <- types$y <- "quantitative"
+    n <- 1L
+  }
+
   # A hierarchy layer (sunburst / icicle / treemap / circlepack) draws a
   # space-filling tree: compute the layout from the `id`/`parent`/`value`
   # channels (see `.hierarchy_layout`) and synthesise the centred [-1, 1] extent
