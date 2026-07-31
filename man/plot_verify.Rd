@@ -12,14 +12,24 @@ plot_verify(svg, data)
 \item{data}{The data frame to check the figure against.}
 }
 \value{
-A list with \code{ok} (logical), \code{expected} (the embedded data hash), and
-\code{actual} (the recomputed hash). Errors if the SVG carries no manifest.
+A list with \code{ok} (data \emph{and} fonts match), \code{data_ok}, \code{expected} /
+\code{actual} (the embedded vs recomputed data hash), \code{fonts_ok}, and
+\code{fonts_missing} (the recorded font paths absent on this machine). Errors if
+the SVG carries no manifest.
 }
 \description{
 \code{plot_verify()} extracts the manifest embedded in an SVG written with
 \code{\link[=plot_svg]{plot_svg()}}\code{(manifest = TRUE)} and recomputes the data fingerprint from
 \code{data}, reporting whether the figure still matches the data it was drawn from
 — a lightweight, self-contained reproducibility check.
+}
+\details{
+A font mismatch is reported as a \strong{distinct outcome} from a data mismatch:
+\code{data_ok} is whether the data still hashes the same, \code{fonts_ok} whether every
+font the figure was drawn with is still present on this machine, and \code{ok}
+their conjunction. A pixel difference with \code{data_ok = TRUE} but
+\code{fonts_ok = FALSE} is the font stack, not your data — a different cause with a
+different fix (install/register the font) than a data change.
 }
 \examples{
 \dontshow{if (requireNamespace("jsonlite", quietly = TRUE)) withAutoprint(\{ # examplesIf}

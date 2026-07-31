@@ -1123,12 +1123,18 @@ NULL
   )
 }
 
-# A `scale_pattern(values =)` palette to a list of `vellum_pattern`: either a list
-# of patterns already, or a character vector of builder names.
+# A `scale_pattern(values =)` palette to a list of fill paints: either a list of
+# pattern/hatch objects already (raster `vellum_pattern` from `pattern_stripe()`
+# etc., or crisp vector `vellum_hatch` from `pattern_hatch()`), or a character
+# vector of builder names.
 .resolve_pattern_values <- function(values) {
   if (
     is.list(values) &&
-      all(vapply(values, function(v) inherits(v, "vellum_pattern"), logical(1)))
+      all(vapply(
+        values,
+        function(v) inherits(v, c("vellum_pattern", "vellum_hatch")),
+        logical(1)
+      ))
   ) {
     return(values)
   }
