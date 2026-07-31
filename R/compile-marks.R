@@ -1442,6 +1442,59 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene
 }
 
+# A label set ALONG a path: one string per group, its glyphs following the
+# group's points (in data order) rotated to the local tangent -- for a contour, a
+# curved axis, or a directly-labelled trend line. Distinct from `.emit_text` (one
+# label at each point): here the whole group is one run riding one polyline.
+# Groups split on style AND label, so two series with different colours or labels
+# each get their own run; the label is constant within a run (a per-run string,
+# taken from the group's first row). Glyphs follow the tangent, so a label on the
+# underside of a closed curve reads upside-down -- reverse the path to flip it.
+.emit_text_path <- function(scene, L, scales) {
+  n <- L$n
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  col <- rep_len(.text_colour(L, scales, "black"), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  label <- rep_len(as.character(L$values$label), n)
+  fs <- .aes_param(L, "size", 8)
+  # `hjust` slides the run along the baseline (left = start of the path, centre,
+  # right = end); `vjust` sets the glyphs' standoff from the baseline.
+  hj <- L$values$hjust %||% .aes_param(L, "hjust", "centre")
+  vj <- L$values$vjust %||% .aes_param(L, "vjust", "centre")
+  just <- c(hj[[1]], vj[[1]])
+  # Perpendicular standoff in points (+ = left of travel), for a label riding
+  # just above or below its curve rather than sitting on it.
+  offset <- .aes_param(L, "offset", 0)
+  fam <- .aes_param(L, "family", NULL)
+  face <- .aes_param(L, "fontface", NULL)
+  for (idx in .style_groups(n, list(col = col, alpha = alpha, lab = label))) {
+    lab <- label[idx[1]]
+    if (is.na(lab) || !nzchar(lab) || length(idx) < 2L) {
+      next # a path needs a label and at least two points
+    }
+    xy <- .xy_path(scales, xn[idx], yn[idx])
+    scene <- .draw(
+      scene,
+      vellum::text_path_grob(
+        lab,
+        xy$x,
+        xy$y,
+        just = just,
+        offset = offset,
+        gp = vellum::vl_gpar(
+          fontsize = fs,
+          col = col[idx[1]],
+          fontfamily = fam,
+          fontface = face,
+          alpha = gp_alpha(alpha[idx[1]])
+        )
+      )
+    )
+  }
+  scene
+}
+
 # A heatmap of rectangular tiles at each (x, y), coloured by fill. Width/height
 # default to the data resolution so tiles abut.
 .emit_tile <- function(scene, L, scales) {
@@ -3677,6 +3730,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     ribbon = .emit_ribbon(scene, L, scales),
     step = .emit_step(scene, L, scales),
     text = .emit_text(scene, L, scales),
+    text_path = .emit_text_path(scene, L, scales),
     label = .emit_label(scene, L, scales),
     tile = .emit_tile(scene, L, scales),
     rect = .emit_rect(scene, L, scales),
