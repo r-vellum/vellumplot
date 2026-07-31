@@ -483,49 +483,82 @@ NULL
 # Each spans the full page width (col = 1, colspan = ncol). `default_hjust`
 # reproduces the ggplot2 default placement (title/subtitle/tag flush left,
 # caption flush right); a theme `hjust` overrides it.
-.draw_band <- function(scene, row, ncol, text, el, default_hjust) {
+
+# The anchor (x position + horizontal justification) a band uses for a given
+# hjust. Kept as a single source so the height measurement (layout) and the draw
+# stay in lockstep. `hjust` buckets to left / centre / right, exactly as the
+# original point-anchored placement did.
+.band_anchor <- function(hj) {
+  if (hj < 0.25) {
+    list(x = 0.01, just = "left")
+  } else if (hj > 0.75) {
+    list(x = 0.99, just = "right")
+  } else {
+    list(x = 0.5, just = "centre")
+  }
+}
+
+# The `text_grob` for a title/subtitle/caption/tag band. When `band_w` (the mm
+# width the band spans) is finite and the band is unrotated, the text wraps to
+# that width and its lines are aligned by the element's hjust (`align=`); a label
+# that fits on one line is drawn exactly where the old point-anchored code put it
+# (the box is anchored the same way, so a single line lands on the same edge).
+# With `band_w` unset (the composition path, which does not know its page width
+# here) it is an ordinary single-line label. Shared by the layout height
+# measurement and the draw so the reserved height always matches the drawn text.
+.band_text_grob <- function(text, el, band_w = NA_real_, default_hjust = 0) {
+  hj <- el@hjust %||% default_hjust
+  a <- .band_anchor(hj)
+  rot <- .el_rot(el)
+  # Wrap only for an unrotated band: a rotated box's width is along the rotated
+  # axis, which is not the page-width wrapping the caller measured.
+  wrap <- is.finite(band_w) && band_w > 0 && isTRUE(rot == 0)
+  vellum::text_grob(
+    text,
+    x = vellum::vl_unit(a$x, "npc"),
+    just = c(a$just, "centre"),
+    rot = rot,
+    width = if (wrap) vellum::vl_unit(band_w, "mm") else NULL,
+    align = if (wrap) a$just else "left",
+    gp = .el_gpar_text(el)
+  )
+}
+
+.draw_band <- function(
+  scene,
+  row,
+  ncol,
+  text,
+  el,
+  default_hjust,
+  band_w = NA_real_
+) {
   if (.is_blank(el)) {
     return(scene)
-  }
-  hj <- el@hjust %||% default_hjust
-  x_npc <- 0.01 + hj * 0.98
-  just_h <- if (hj < 0.25) {
-    "left"
-  } else if (hj > 0.75) {
-    "right"
-  } else {
-    "centre"
   }
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(row = row, col = 1, colspan = ncol)
   )
-  scene <- vellum::draw(
-    scene,
-    vellum::text_grob(
-      text,
-      x = vellum::vl_unit(x_npc, "npc"),
-      just = c(just_h, "centre"),
-      rot = .el_rot(el),
-      gp = .el_gpar_text(el)
-    )
-  )
+  scene <- vellum::draw(scene, .band_text_grob(text, el, band_w, default_hjust))
   vellum::pop(scene)
 }
 
-.draw_title <- function(scene, row, ncol, text, rt) {
-  .draw_band(scene, row, ncol, text, rt[["plot.title"]], 0)
+.draw_title <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
+  .draw_band(scene, row, ncol, text, rt[["plot.title"]], 0, band_w)
 }
 
-.draw_subtitle <- function(scene, row, ncol, text, rt) {
-  .draw_band(scene, row, ncol, text, rt[["plot.subtitle"]], 0)
+.draw_subtitle <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
+  .draw_band(scene, row, ncol, text, rt[["plot.subtitle"]], 0, band_w)
 }
 
-.draw_caption <- function(scene, row, ncol, text, rt) {
-  .draw_band(scene, row, ncol, text, rt[["plot.caption"]], 1)
+.draw_caption <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
+  .draw_band(scene, row, ncol, text, rt[["plot.caption"]], 1, band_w)
 }
 
-.draw_tag <- function(scene, row, ncol, text, rt) {
+.draw_tag <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
+  # The tag never wraps -- it is a short corner mark, and its track is sized to a
+  # single line -- so it keeps the single-line box.
   .draw_band(scene, row, ncol, text, rt[["plot.tag"]], 0)
 }
 

@@ -660,7 +660,8 @@ NULL
       lay$title_row,
       lay$ncol_total,
       labels$title,
-      rt
+      rt,
+      lay$band_w
     )
   }
   if (!is.na(lay$subtitle_row)) {
@@ -669,7 +670,8 @@ NULL
       lay$subtitle_row,
       lay$ncol_total,
       labels$subtitle,
-      rt
+      rt,
+      lay$band_w
     )
   }
   if (!is.na(lay$caption_row)) {
@@ -678,7 +680,8 @@ NULL
       lay$caption_row,
       lay$ncol_total,
       labels$caption,
-      rt
+      rt,
+      lay$band_w
     )
   }
   if (!is.na(lay$tag_row)) {
@@ -783,7 +786,8 @@ NULL
     flip,
     co,
     spec@marginal,
-    page_height = spec@height
+    page_height = spec@height,
+    page_width = spec@width
   )
 
   # The draw context threaded to the panel/axis/legend drawers below, so each is

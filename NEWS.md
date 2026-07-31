@@ -1,5 +1,14 @@
 # vellumplot (development version)
 
+* **Long plot titles, subtitles and captions wrap instead of overflowing.** A
+  title / subtitle / caption longer than the page now wraps onto as many lines as
+  it needs, and the layout reserves the height for them (previously the text ran
+  straight off the right edge). Lines are aligned to the band's `hjust`
+  (left / centre / right), and short single-line labels are unchanged. Wrapping
+  is to the page content width, measured in millimetres at compile time.
+  Requires vellum >= 0.6.4 (which fixes `grobheight()` to account for the
+  wrapping when it sizes the band's track).
+
 * **Keys on more marks.** Now that the engine can key lines, polygons and text
   (vellum 0.6.x), the marks that could not previously be made interactive are:
   `mark_line()` / `mark_step()` (a series is one hoverable object; a colour

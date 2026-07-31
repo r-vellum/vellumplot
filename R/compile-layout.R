@@ -50,6 +50,18 @@ NULL
   vellum::grobwidth(.txt(label, el@size, rot)) + vellum::vl_unit(pad_mm, "mm")
 }
 
+# Height (mm) of a full-width title/subtitle/caption band. `band_w` is the mm
+# width the band spans; when finite the label wraps to it, so a long band grows
+# to as many lines as it needs. Measured through the *same* grob the drawer uses
+# (`.band_text_grob`), so the reserved height and the drawn text never disagree.
+.track_h_band <- function(el, label, pad_mm, band_w) {
+  if (.is_blank(el)) {
+    return(vellum::vl_unit(0, "mm"))
+  }
+  vellum::grobheight(.band_text_grob(label, el, band_w)) +
+    vellum::vl_unit(pad_mm, "mm")
+}
+
 # Build the panel + gutter layout. In the simplest single-panel case the columns
 # are [ y-title | y-labels | panel(null) ] and the rows [ panel(null) | x-labels
 # | x-title ]; faceting, strips, a legend track, and the title/subtitle/tag/
@@ -183,12 +195,23 @@ NULL
   flip = FALSE,
   coord = NULL,
   marginal = NULL,
-  page_height = NULL
+  page_height = NULL,
+  page_width = NULL
 ) {
   # A vertical legend spans the whole figure height; tell the width/draw code how
   # much height it has so a tall guide stack wraps into columns instead of
   # spilling off the top and bottom of the page (#80).
   legend_avail_h <- .legend_avail_h(page_height, rt)
+  # The mm width a full-width title/subtitle/caption band spans: the page content
+  # box, i.e. the page less its left/right plot margins (the band viewport spans
+  # every column of that box). Long bands wrap to it; NA when the page width is
+  # unknown (the composition path), where bands stay single-line.
+  band_w <- if (is.null(page_width)) {
+    NA_real_
+  } else {
+    pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+    page_width * 25.4 - pm[2] - pm[4]
+  }
   fa <- built$fa
   R <- fa$R
   C <- fa$C
@@ -354,12 +377,18 @@ NULL
     NA_integer_
   }
   title_row <- if (!is.null(labels$title)) {
-    .tk_add(H, .track_h(rt[["plot.title"]], labels$title, 2 * .PAD_MM))
+    .tk_add(
+      H,
+      .track_h_band(rt[["plot.title"]], labels$title, 2 * .PAD_MM, band_w)
+    )
   } else {
     NA_integer_
   }
   subtitle_row <- if (!is.null(labels$subtitle)) {
-    .tk_add(H, .track_h(rt[["plot.subtitle"]], labels$subtitle, .PAD_MM))
+    .tk_add(
+      H,
+      .track_h_band(rt[["plot.subtitle"]], labels$subtitle, .PAD_MM, band_w)
+    )
   } else {
     NA_integer_
   }
@@ -408,7 +437,10 @@ NULL
     legend_row <- .tk_add(H, .legend_height(guides, rt))
   }
   caption_row <- if (!is.null(labels$caption)) {
-    .tk_add(H, .track_h(rt[["plot.caption"]], labels$caption, .PAD_MM))
+    .tk_add(
+      H,
+      .track_h_band(rt[["plot.caption"]], labels$caption, .PAD_MM, band_w)
+    )
   } else {
     NA_integer_
   }
@@ -443,6 +475,7 @@ NULL
     caption_row = caption_row,
     ncol_total = length(W$u),
     nrow_total = length(H$u),
+    band_w = band_w,
     respect = respect
   )
 }
