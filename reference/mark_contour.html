@@ -10,14 +10,16 @@
 field is a kernel density estimate (needs the MASS package); map a z
 aesthetic to instead contour a supplied surface over a regular x/y grid.
 Contours are coloured by level automatically — mark_contour() maps
-color = after_stat(level), mark_contour_filled() maps fill. Requires the
-isoband package."><meta property="og:description" content="mark_contour() draws iso-density contour lines of a 2-D point cloud
+color = after_stat(level), mark_contour_filled() maps fill. Contour
+tracing is done by the engine (vellum::vl_contour()), so no extra package is
+needed for the lines; a density field additionally needs MASS."><meta property="og:description" content="mark_contour() draws iso-density contour lines of a 2-D point cloud
 (x, y); mark_contour_filled() fills the bands between them. By default the
 field is a kernel density estimate (needs the MASS package); map a z
 aesthetic to instead contour a supplied surface over a regular x/y grid.
 Contours are coloured by level automatically — mark_contour() maps
-color = after_stat(level), mark_contour_filled() maps fill. Requires the
-isoband package."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+color = after_stat(level), mark_contour_filled() maps fill. Contour
+tracing is done by the engine (vellum::vl_contour()), so no extra package is
+needed for the lines; a density field additionally needs MASS."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -81,8 +83,9 @@ isoband package."><meta property="og:image" content="https://r-vellum.github.io/
 field is a kernel density estimate (needs the <span class="pkg">MASS</span> package); map a <code>z</code>
 aesthetic to instead contour a supplied surface over a regular <code>x</code>/<code>y</code> grid.
 Contours are coloured by level automatically — <code>mark_contour()</code> maps
-<code>color = after_stat(level)</code>, <code>mark_contour_filled()</code> maps <code>fill</code>. Requires the
-<span class="pkg">isoband</span> package.</p>
+<code>color = after_stat(level)</code>, <code>mark_contour_filled()</code> maps <code>fill</code>. Contour
+tracing is done by the engine (<code><a href="https://r-vellum.github.io/vellum/reference/vl_contour.html" class="external-link">vellum::vl_contour()</a></code>), so no extra package is
+needed for the lines; a density field additionally needs <span class="pkg">MASS</span>.</p>
     </div>
 
     <div class="section level2">

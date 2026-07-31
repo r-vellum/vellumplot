@@ -6,7 +6,11 @@ By default the field is a kernel density estimate (needs the MASS
 package); map a `z` aesthetic to instead contour a supplied surface over
 a regular `x`/`y` grid. Contours are coloured by level automatically —
 `mark_contour()` maps `color = after_stat(level)`,
-`mark_contour_filled()` maps `fill`. Requires the isoband package.
+`mark_contour_filled()` maps `fill`. Contour tracing is done by the
+engine
+([`vellum::vl_contour()`](https://r-vellum.github.io/vellum/reference/vl_contour.html)),
+so no extra package is needed for the lines; a density field
+additionally needs MASS.
 
 ## Usage
 

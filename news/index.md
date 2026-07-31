@@ -2,6 +2,21 @@
 
 ## vellumplot (development version)
 
+- **[`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+  traces in the engine; `isoband` is no longer needed.** 2-D contour
+  lines and filled contours are now traced by
+  [`vellum::vl_contour()`](https://r-vellum.github.io/vellum/reference/vl_contour.html)
+  (marching squares) instead of the `isoband` package, which is dropped
+  from `Suggests`.
+  [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+  draws each contour as its own chained polyline (closed loops are
+  closed), and
+  [`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+  paints the closed rings in level order for the layered filled-density
+  look. A density field still uses
+  [`MASS::kde2d()`](https://rdrr.io/pkg/MASS/man/kde2d.html); contouring
+  a supplied `z` surface needs nothing extra. Requires vellum \>= 0.6.4.
+
 - **Label repulsion works on every panel type.**
   `mark_text(repel = TRUE)` / `mark_label(repel = TRUE)` now go through
   the engine placement solver

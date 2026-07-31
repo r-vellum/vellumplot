@@ -346,8 +346,10 @@ vplot(grid) |> mark_contour(x = x, y = y, z = z)
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-22-1.png)
 
-Contour tracing needs the `isoband` package (and `MASS` for the density
-estimate).
+Contour tracing is done by the engine
+([`vellum::vl_contour()`](https://r-vellum.github.io/vellum/reference/vl_contour.html)),
+so it needs no extra package; a density field additionally uses `MASS`
+for the estimate.
 
 ## Reaching computed variables with after_stat
 

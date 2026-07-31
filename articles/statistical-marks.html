@@ -403,7 +403,7 @@
 </div>
 </div>
 </div>
-<p>Contour tracing needs the <code>isoband</code> package (and <code>MASS</code> for the density estimate).</p>
+<p>Contour tracing is done by the engine (<code><a href="https://r-vellum.github.io/vellum/reference/vl_contour.html" class="external-link">vellum::vl_contour()</a></code>), so it needs no extra package; a density field additionally uses <code>MASS</code> for the estimate.</p>
 </section><section class="level2"><h2 id="reaching-computed-variables-with-after_stat">Reaching computed variables with after_stat<a class="anchor" aria-label="anchor" href="#reaching-computed-variables-with-after_stat"></a>
 </h2>
 <p>A statistical mark produces new variables that were not in your data: a histogram computes a <code>count</code> and a <code>density</code>, for example. <code><a href="../reference/after_stat.html">after_stat()</a></code> lets an encoding refer to one of those computed variables instead of a data column. The classic use is a density-scaled histogram.</p>
