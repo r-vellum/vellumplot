@@ -917,6 +917,31 @@ NULL
   )
 }
 
+# A legend key glyph for a `shape`: an `svg_grob()` icon when the shape is an
+# SVG (a `d` path or `.svg` file), otherwise the usual `points_grob()` marker.
+# `size_mm` is the marker size for the built-in case (the icon uses a slightly
+# larger longer-side so it reads at legend scale).
+.shape_key_grob <- function(shape, size_mm, fill, col, sk) {
+  d <- .shape_svg_d(shape)
+  if (!is.na(d)) {
+    return(vellum::svg_grob(
+      d,
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      size = vellum::vl_unit(2 * size_mm, "mm"),
+      gp = vellum::vl_gpar(fill = fill, col = col)
+    ))
+  }
+  vellum::points_grob(
+    vellum::vl_unit(0.5, "npc"),
+    vellum::vl_unit(0.5, "npc"),
+    size = vellum::vl_unit(size_mm, "mm"),
+    shape = shape,
+    sketch = sk,
+    gp = vellum::vl_gpar(fill = fill, col = col)
+  )
+}
+
 .key_grob <- function(g, i, m, sketch = NULL) {
   sc <- g$sc
   sk <- .sketch_bump(sketch, 200L + i)
@@ -944,14 +969,7 @@ NULL
     shape = if (isTRUE(sc$na) && i > length(sc$shapes)) {
       .na_key_grob(m, sk)
     } else {
-      vellum::points_grob(
-        vellum::vl_unit(0.5, "npc"),
-        vellum::vl_unit(0.5, "npc"),
-        size = vellum::vl_unit(m$key / 2, "mm"),
-        shape = sc$shapes[i],
-        sketch = sk,
-        gp = vellum::vl_gpar(fill = "grey35", col = "grey35")
-      )
+      .shape_key_grob(sc$shapes[i], m$key / 2, "grey35", "grey35", sk)
     },
     pattern = vellum::rect_grob(
       vellum::vl_unit(0.5, "npc"),
@@ -991,13 +1009,12 @@ NULL
     ),
     # A merged guide's key carries both encodings in one point: the shared
     # variable's colour (fill + stroke) and shape, sized when size is merged in.
-    merged = vellum::points_grob(
-      vellum::vl_unit(0.5, "npc"),
-      vellum::vl_unit(0.5, "npc"),
-      size = vellum::vl_unit(sc$sizes_mm[i] %||% (m$key / 2), "mm"),
-      shape = sc$shapes[i] %||% "circle",
-      sketch = sk,
-      gp = vellum::vl_gpar(fill = sc$fills[i], col = sc$cols[i])
+    merged = .shape_key_grob(
+      sc$shapes[i] %||% "circle",
+      sc$sizes_mm[i] %||% (m$key / 2),
+      sc$fills[i],
+      sc$cols[i],
+      sk
     )
   )
 }

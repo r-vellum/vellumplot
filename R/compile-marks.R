@@ -191,6 +191,53 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   L$params$shape %||% default
 }
 
+# vellum's built-in point-marker shapes; anything else a `shape` resolves to is
+# taken to be an SVG icon (a path `d` string, or a `.svg` file).
+.BUILTIN_SHAPES <- c(
+  "circle",
+  "square",
+  "triangle",
+  "diamond",
+  "plus",
+  "cross",
+  "triangle_down",
+  "star"
+)
+
+# For each resolved shape, the SVG path `d` to draw it as a vector icon, or NA
+# for a built-in marker. A `.svg` file is read and its `<path d=...>` attributes
+# concatenated (icon sets ship exactly these paths); any other non-builtin
+# string is taken to be a `d` already. `svg_grob()` (vellum) parses the `d`;
+# vellumplot only does the four lines of xml2 for the file case.
+.shape_svg_d <- function(shape) {
+  vapply(
+    as.character(shape),
+    function(s) {
+      if (is.na(s) || s %in% .BUILTIN_SHAPES) {
+        return(NA_character_)
+      }
+      if (grepl("\\.svg$", s, ignore.case = TRUE) && file.exists(s)) {
+        .need_pkg("xml2", "SVG-file markers (shape = a .svg path)")
+        doc <- xml2::read_xml(s)
+        ds <- xml2::xml_attr(
+          xml2::xml_find_all(doc, ".//*[local-name()='path']"),
+          "d"
+        )
+        ds <- ds[!is.na(ds)]
+        if (!length(ds)) {
+          cli::cli_abort(
+            "SVG file {.file {s}} has no {.field <path d=...>} to draw."
+          )
+        }
+        return(paste(ds, collapse = " "))
+      }
+      s # already a path `d`
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
+}
+
 # Resolve a layer's opacity: a mapped alpha channel (via the trained alpha
 # scale), a constant alpha param, or the supplied default. Vectorised when mapped.
 .aes_alpha <- function(L, scales, default = NA_real_) {
@@ -542,7 +589,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   shape <- rep_len(.aes_shape(L, scales, "circle"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
 
-  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+  # A `shape` that is not a built-in marker is an SVG icon (a `d` path or a
+  # `.svg` file); those points are drawn as crisp vector `svg_grob()`s, the rest
+  # as the usual batched `points_grob()`.
+  dsvg <- .shape_svg_d(shape)
+  svg_i <- which(!is.na(dsvg))
+  pt_ok <- is.na(dsvg)
+
+  for (idx0 in .style_groups(n, list(col = col, alpha = alpha))) {
+    idx <- idx0[pt_ok[idx0]] # built-in markers in this style group
+    if (!length(idx)) {
+      next
+    }
     a <- alpha[idx[1]]
     xy <- .xy_units(scales, xn[idx], yn[idx])
     # PROVENANCE: `idx` are the layer rows in this style group -- the row-key
@@ -565,8 +623,35 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       rows = idx
     )
   }
+  # SVG icons: one `svg_grob()` per point. `size` is the icon's longer-side
+  # length in mm; the `size` aesthetic scales it, with a factor so a default-size
+  # icon is legible rather than point-sized. Icons are drawn unkeyed: a keyed
+  # multi-sub-path svg path miscounts between `scene_model()`'s grammar walk and
+  # the backend (a vellum-side accounting gap), so per-icon interactivity is not
+  # wired yet -- the icons still render on every backend.
+  for (i in svg_i) {
+    xy <- .xy_units(scales, xn[i], yn[i])
+    scene <- .draw(
+      scene,
+      vellum::svg_grob(
+        dsvg[i],
+        xy$x,
+        xy$y,
+        size = vellum::vl_unit(size[i] * .SVG_MARKER_MM, "mm"),
+        gp = vellum::vl_gpar(
+          fill = col[i],
+          col = col[i],
+          alpha = gp_alpha(alpha[i])
+        )
+      )
+    )
+  }
   scene
 }
+
+# Longer-side length (mm) of a `size = 1` SVG icon marker; the `size` aesthetic
+# scales from here. Chosen so a default icon reads as an icon, not a dot.
+.SVG_MARKER_MM <- 5
 
 .emit_line <- function(scene, L, scales) {
   n <- L$n

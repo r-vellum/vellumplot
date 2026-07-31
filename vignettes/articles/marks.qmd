@@ -45,6 +45,20 @@ vplot(pressure) |>
   mark_point(x = temperature, y = pressure)
 ```
 
+`shape` also accepts an **SVG icon** — a path `d` string (what icon sets ship)
+or a `.svg` file — drawn as a crisp vector marker. Use a literal string for a
+constant icon, or map `shape` and give [scale_shape()] one icon per level (the
+legend shows the icons); `size` scales them.
+
+```{r}
+star <- "M12 2l3 7h7l-5.5 4.5 2 7-6.5-4.5-6.5 4.5 2-7L2 9h7z"
+heart <- "M12 21s-7-4.35-9.5-8.5C1 9 2.5 5 6 5c2 0 3.5 1.5 4 2.5C10.5 6.5 12 5 14 5c3.5 0 5 4 3.5 7.5C19 16.65 12 21 12 21z"
+d <- data.frame(x = 1:6, y = c(2, 4, 3, 5, 4, 6), g = rep(c("a", "b"), 3))
+vplot(d) |>
+  mark_point(x = x, y = y, shape = g, color = g, size = 1.6) |>
+  scale_shape(values = c(a = heart, b = star))
+```
+
 `mark_bar()` draws bars from a zero baseline. Give it an explicit `y` for
 heights, or omit `y` and it counts rows per category (the count stat). When
 `fill` is mapped, groups stack by default; switch to side-by-side with

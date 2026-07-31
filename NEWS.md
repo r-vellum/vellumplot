@@ -1,5 +1,15 @@
 # vellumplot (development version)
 
+* **SVG icon markers: `shape = <svg>`.** A point `shape` can now be an SVG icon —
+  a path `d` string (what icon sets ship) or a path to a `.svg` file — drawn as a
+  crisp vector marker via `vellum::svg_grob()` instead of a built-in glyph. Pass
+  a literal `d`/file for a constant icon, or map `shape` and give
+  `scale_shape(values = )` one icon per level (the legend shows the icons); the
+  `size` aesthetic scales them. The vector marker stays sharp at any zoom and in
+  PDF, replacing the ggimage/ggsvg raster-per-point hacks. (Per-icon
+  interactivity via `data_id` is not yet wired — the icons render on every
+  backend.) Requires vellum >= 0.6.4.
+
 * **An accessibility pass.** Four pieces that make a plot legible for
   colour-blind and low-vision readers, and reproducible across machines:
   - `render_plot(cvd = )` renders a `.png` through a colour-vision-deficiency

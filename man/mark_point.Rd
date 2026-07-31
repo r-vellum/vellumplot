@@ -58,8 +58,11 @@ mark_bar(
 linerange) also take \code{linewidth} and \code{linetype}.}
 
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
-may be a constant or a mapped expression. One of \code{"circle"}, \code{"square"},
-\code{"triangle"}, \code{"diamond"}, \code{"plus"}, \code{"cross"}.}
+may be a constant or a mapped expression. A shape is a built-in marker
+(\code{"circle"}, \code{"square"}, \code{"triangle"}, \code{"diamond"}, \code{"plus"}, \code{"cross"},
+\code{"triangle_down"}, \code{"star"}) or an \strong{SVG icon} — a path \code{d} string or a
+\code{.svg} file — drawn as a crisp vector marker. Use a literal string for a
+constant icon, or map \code{shape} and pass icons to \code{\link[=scale_shape]{scale_shape()}}.}
 
 \item{position}{Position adjustment: a string — \code{"identity"} (default),
 \code{"jitter"} / \code{"jitterdodge"} (points), \code{"stack"} / \code{"fill"} / \code{"dodge"} /
