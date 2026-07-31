@@ -41,7 +41,6 @@ Suggests:
     gt,
     igraph,
     interp,
-    isoband,
     jsonlite,
     magick,
     MASS,

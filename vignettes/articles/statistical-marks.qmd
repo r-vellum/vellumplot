@@ -267,7 +267,8 @@ grid$z <- with(grid, dnorm(x) * dnorm(y))
 vplot(grid) |> mark_contour(x = x, y = y, z = z)
 ```
 
-Contour tracing needs the `isoband` package (and `MASS` for the density estimate).
+Contour tracing is done by the engine (`vellum::vl_contour()`), so it needs no
+extra package; a density field additionally uses `MASS` for the estimate.
 
 ## Reaching computed variables with after_stat
 
