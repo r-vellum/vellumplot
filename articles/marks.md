@@ -42,6 +42,23 @@ vplot(pressure) |>
 
 ![](marks_files/figure-html/unnamed-chunk-3-1.png)
 
+`shape` also accepts an **SVG icon** — a path `d` string (what icon sets
+ship) or a `.svg` file — drawn as a crisp vector marker. Use a literal
+string for a constant icon, or map `shape` and give \[scale_shape()\]
+one icon per level (the legend shows the icons); `size` scales them.
+
+``` r
+
+star <- "M12 2l3 7h7l-5.5 4.5 2 7-6.5-4.5-6.5 4.5 2-7L2 9h7z"
+heart <- "M12 21s-7-4.35-9.5-8.5C1 9 2.5 5 6 5c2 0 3.5 1.5 4 2.5C10.5 6.5 12 5 14 5c3.5 0 5 4 3.5 7.5C19 16.65 12 21 12 21z"
+d <- data.frame(x = 1:6, y = c(2, 4, 3, 5, 4, 6), g = rep(c("a", "b"), 3))
+vplot(d) |>
+  mark_point(x = x, y = y, shape = g, color = g, size = 1.6) |>
+  scale_shape(values = c(a = heart, b = star))
+```
+
+![](marks_files/figure-html/unnamed-chunk-4-1.png)
+
 [`mark_bar()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
 draws bars from a zero baseline. Give it an explicit `y` for heights, or
 omit `y` and it counts rows per category (the count stat). When `fill`
@@ -54,7 +71,7 @@ vplot(mtcars) |>
   mark_bar(x = factor(cyl), fill = factor(gear), position = "dodge")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-4-1.png)
+![](marks_files/figure-html/unnamed-chunk-5-1.png)
 
 For finer control, the `position` argument also takes a parameterised
 `position_*()` object.
@@ -72,7 +89,7 @@ vplot(mtcars) |>
   mark_bar(x = factor(cyl), fill = factor(gear), position = position_dodge2(padding = 0.15))
 ```
 
-![](marks_files/figure-html/unnamed-chunk-5-1.png)
+![](marks_files/figure-html/unnamed-chunk-6-1.png)
 
 ## Areas and intervals
 
@@ -94,7 +111,7 @@ vplot(pressure) |>
   mark_line(x = temperature, y = pressure)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-6-1.png)
+![](marks_files/figure-html/unnamed-chunk-7-1.png)
 
 [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
 summarises the raw `y` values per `x` category into a box-and-whisker
@@ -107,7 +124,7 @@ vplot(mtcars) |>
   mark_boxplot(x = factor(cyl), y = mpg)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-7-1.png)
+![](marks_files/figure-html/unnamed-chunk-8-1.png)
 
 Like points and bars, these summary marks are *addressable*: an error
 bar or line range keyed with `data_id`/`tooltip` carries that identity
@@ -136,7 +153,7 @@ vplot(grid) |>
   scale_fill_continuous(palette = "Batlow")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-8-1.png)
+![](marks_files/figure-html/unnamed-chunk-9-1.png)
 
 [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
 draws iso-density contour lines of a 2-D point cloud (and
@@ -152,7 +169,7 @@ vplot(faithful) |>
   mark_contour(x = eruptions, y = waiting)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-9-1.png)
+![](marks_files/figure-html/unnamed-chunk-10-1.png)
 
 ## Text
 
@@ -170,7 +187,7 @@ vplot(top) |>
   mark_text(x = wt, y = mpg, label = rownames(top), vjust = "bottom", size = 9)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-10-1.png)
+![](marks_files/figure-html/unnamed-chunk-11-1.png)
 
 On a crowded scatter, labels collide. `repel = TRUE` moves them apart
 and draws a thin leader back to each point. Placement is solved by the
@@ -189,7 +206,7 @@ vplot(mtcars) |>
   )
 ```
 
-![](marks_files/figure-html/unnamed-chunk-11-1.png)
+![](marks_files/figure-html/unnamed-chunk-12-1.png)
 
 [`mark_text_path()`](https://r-vellum.github.io/vellumplot/reference/mark_text_path.md)
 sets a label *along* a curve instead of at a point – one label per
@@ -207,7 +224,7 @@ vplot(curve) |>
   mark_text_path(x = x, y = y, label = lab, size = 9, vjust = "bottom", offset = 2)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-12-1.png)
+![](marks_files/figure-html/unnamed-chunk-13-1.png)
 
 ## Images
 
@@ -235,7 +252,7 @@ vplot(d) |>
   mark_image(x = x, y = y, src = logo, size = 14)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-13-1.png)
+![](marks_files/figure-html/unnamed-chunk-14-1.png)
 
 Reading images needs the magick package (a suggested dependency), which
 decodes PNG, JPEG, SVG, and more. Because `size` is in millimetres
@@ -260,7 +277,7 @@ vplot(parts) |>
   mark_donut(value = n, fill = part, inner_radius = 0.6)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-14-1.png)
+![](marks_files/figure-html/unnamed-chunk-15-1.png)
 
 For polar plots generally,
 [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
@@ -276,7 +293,7 @@ vplot(mtcars) |>
   coord_radial(theta = "x", start = -pi / 2, end = pi / 2, inner_radius = 0.2)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-15-1.png)
+![](marks_files/figure-html/unnamed-chunk-16-1.png)
 
 ## Layering is the point
 
@@ -291,7 +308,7 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, method = "lm")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-16-1.png)
+![](marks_files/figure-html/unnamed-chunk-17-1.png)
 
 From here:
 

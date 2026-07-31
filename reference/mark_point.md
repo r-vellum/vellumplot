@@ -72,8 +72,12 @@ mark_bar(
 - size, shape:
 
   Convenience arguments for the point size (in mm) / shape; may be a
-  constant or a mapped expression. One of `"circle"`, `"square"`,
-  `"triangle"`, `"diamond"`, `"plus"`, `"cross"`.
+  constant or a mapped expression. A shape is a built-in marker
+  (`"circle"`, `"square"`, `"triangle"`, `"diamond"`, `"plus"`,
+  `"cross"`, `"triangle_down"`, `"star"`) or an **SVG icon** — a path
+  `d` string or a `.svg` file — drawn as a crisp vector marker. Use a
+  literal string for a constant icon, or map `shape` and pass icons to
+  [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md).
 
 - position:
 

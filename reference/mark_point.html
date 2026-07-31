@@ -141,8 +141,11 @@ linerange) also take <code>linewidth</code> and <code>linetype</code>.</p></dd>
 
 <dt id="arg-size-shape">size, shape<a class="anchor" aria-label="anchor" href="#arg-size-shape"></a></dt>
 <dd><p>Convenience arguments for the point size (in mm) / shape;
-may be a constant or a mapped expression. One of <code>"circle"</code>, <code>"square"</code>,
-<code>"triangle"</code>, <code>"diamond"</code>, <code>"plus"</code>, <code>"cross"</code>.</p></dd>
+may be a constant or a mapped expression. A shape is a built-in marker
+(<code>"circle"</code>, <code>"square"</code>, <code>"triangle"</code>, <code>"diamond"</code>, <code>"plus"</code>, <code>"cross"</code>,
+<code>"triangle_down"</code>, <code>"star"</code>) or an <strong>SVG icon</strong> — a path <code>d</code> string or a
+<code>.svg</code> file — drawn as a crisp vector marker. Use a literal string for a
+constant icon, or map <code>shape</code> and pass icons to <code><a href="scale_shape.html">scale_shape()</a></code>.</p></dd>
 
 
 <dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
