@@ -13,7 +13,7 @@ also works on a plot directly, dispatching through the
 ## Usage
 
 ``` r
-render_plot(plot, path, text = "native", dpi = NULL)
+render_plot(plot, path, text = "native", dpi = NULL, cvd = "none")
 ```
 
 ## Arguments
@@ -41,6 +41,20 @@ render_plot(plot, path, text = "native", dpi = NULL)
   become `width * dpi` by `height * dpi`. Ignored for `.svg`/`.pdf`,
   which are resolution-independent.
 
+- cvd:
+
+  Colour-vision-deficiency simulation for a `.png` render: one of
+  `"none"` (default), `"protanopia"`, `"deuteranopia"`, `"tritanopia"`,
+  or `"achromatopsia"`. Use it to preview how a palette reads for a
+  colour-blind viewer (pair with
+  [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md),
+  which flags low contrast, and
+  [`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
+  /
+  [`pattern_hatch()`](https://r-vellum.github.io/vellumplot/reference/pattern_hatch.md),
+  which add a redundant non-colour encoding). Simulation is raster-only;
+  it is ignored for `.svg`/`.pdf`.
+
 ## Value
 
 `path`, invisibly.
@@ -52,4 +66,5 @@ p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 f <- tempfile(fileext = ".png")
 render_plot(p, f)
 render_plot(p, f, dpi = 300) # denser raster, same physical size
+render_plot(p, f, cvd = "deuteranopia") # preview for red-green colour blindness
 ```

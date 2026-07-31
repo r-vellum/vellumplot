@@ -2,6 +2,40 @@
 
 ## vellumplot (development version)
 
+- **An accessibility pass.** Four pieces that make a plot legible for
+  colour-blind and low-vision readers, and reproducible across machines:
+
+  - `render_plot(cvd = )` renders a `.png` through a
+    colour-vision-deficiency simulation (`"protanopia"`,
+    `"deuteranopia"`, `"tritanopia"`, `"achromatopsia"`) so you can
+    *see* a palette fail.
+  - [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
+    flags the problems a green test suite hides: text below a legibility
+    floor, colour contrast under the WCAG threshold, off-canvas or
+    overlapping labels (geometric rules from the engine), plus
+    grammar-level mistakes — a single-level encoding or a legend too
+    long to read.
+  - [`pattern_hatch()`](https://r-vellum.github.io/vellumplot/reference/pattern_hatch.md)
+    adds a crisp **vector** hatch fill (via
+    [`vellum::vl_hatch()`](https://r-vellum.github.io/vellum/reference/vl_hatch.html))
+    that stays sharp in PDF and survives greyscale — a redundant,
+    non-colour encoding, usable as a constant `fill` or a
+    [`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
+    value.
+  - **Tagged PDF** now marks furniture (gridlines, ticks, panel/plot
+    backgrounds) as decorative artifacts, so a screen reader skips them
+    instead of reading every gridline; the figure-level alt text
+    ([`plot_alt()`](https://r-vellum.github.io/vellumplot/reference/plot_alt.md))
+    carries the meaning.
+  - [`plot_manifest()`](https://r-vellum.github.io/vellumplot/reference/plot_manifest.md)
+    fingerprints the resolved **fonts** and
+    [`plot_verify()`](https://r-vellum.github.io/vellumplot/reference/plot_verify.md)
+    reports a font mismatch as a **distinct outcome** (`fonts_ok`) from
+    a data mismatch (`data_ok`) — a pixel difference from a missing font
+    is a different cause, and fix, than a changed dataset.
+
+  Requires vellum \>= 0.6.5.
+
 - **[`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
   traces in the engine; `isoband` is no longer needed.** 2-D contour
   lines and filled contours are now traced by

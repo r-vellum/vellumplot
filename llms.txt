@@ -619,6 +619,8 @@ Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient
   [`pattern_dot()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
   [`pattern_checker()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
   : Pattern (hatch) fills
+- [`pattern_hatch()`](https://r-vellum.github.io/vellumplot/reference/pattern_hatch.md)
+  : Crisp vector hatch fill
 - [`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md)
   : Custom tiling-pattern fill
 - [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
@@ -676,6 +678,8 @@ back to its data, or verify a figure against the data it was drawn from.
 
 - [`plot_alt()`](https://r-vellum.github.io/vellumplot/reference/plot_alt.md)
   : Text alternative (alt text) for a plot
+- [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
+  : Lint a plot for legibility and accessibility problems
 - [`plot_provenance()`](https://r-vellum.github.io/vellumplot/reference/plot_provenance.md)
   : Inspect the compiled-scene provenance of a plot
 - [`provenance_join()`](https://r-vellum.github.io/vellumplot/reference/provenance_join.md)

@@ -26,7 +26,13 @@ plot_manifest(x)
 ## Value
 
 A named list: `version`, `data` (a `hash`/`nrow`/`columns` record),
-`spec_hash`, and `n_elements`.
+`spec_hash`, `n_elements`, and `fonts` (the faces the plot resolved to,
+via
+[`vellum::font_pin()`](https://r-vellum.github.io/vellum/reference/font_pin.html),
+each a `path`/`index`/`glyphs` record). The fonts are what lets
+[`plot_verify()`](https://r-vellum.github.io/vellumplot/reference/plot_verify.md)
+tell a font-stack difference apart from a data change — the same pixels
+are only guaranteed when the same fonts are present.
 
 ## See also
 

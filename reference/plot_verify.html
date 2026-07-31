@@ -95,8 +95,19 @@ data, reporting whether the figure still matches the data it was drawn from
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>ok</code> (logical), <code>expected</code> (the embedded data hash), and
-<code>actual</code> (the recomputed hash). Errors if the SVG carries no manifest.</p>
+    <p>A list with <code>ok</code> (data <em>and</em> fonts match), <code>data_ok</code>, <code>expected</code> /
+<code>actual</code> (the embedded vs recomputed data hash), <code>fonts_ok</code>, and
+<code>fonts_missing</code> (the recorded font paths absent on this machine). Errors if
+the SVG carries no manifest.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>A font mismatch is reported as a <strong>distinct outcome</strong> from a data mismatch:
+<code>data_ok</code> is whether the data still hashes the same, <code>fonts_ok</code> whether every
+font the figure was drawn with is still present on this machine, and <code>ok</code>
+their conjunction. A pixel difference with <code>data_ok = TRUE</code> but
+<code>fonts_ok = FALSE</code> is the font stack, not your data — a different cause with a
+different fix (install/register the font) than a data change.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

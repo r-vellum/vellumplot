@@ -109,7 +109,7 @@
 
 
     <p>A chart that a screen-reader user cannot perceive, or that a keyboard user cannot operate, excludes people. The vellum ecosystem treats accessibility as part of the output contract rather than an afterthought: <strong>every plot you compile starts from a usable baseline</strong> — a title and a generated text alternative, an SVG that announces itself as an image, a tagged PDF, and a widget you can operate without a mouse.</p>
-<p>A baseline is not compliance. A generated description can say what is plotted but not what it means, and nothing here checks your colour contrast or decides whether your takeaway is legible. What the ecosystem removes is the boilerplate excuse: the mechanics are already in place, so the remaining work is editorial. This article is the cross-package guide to both halves.</p>
+<p>A baseline is not compliance. A generated description can say what is plotted but not what it means. <code><a href="../reference/plot_lint.html">plot_lint()</a></code> now checks your colour contrast and text legibility (see below), but nothing decides whether your <em>takeaway</em> is legible. What the ecosystem removes is the boilerplate excuse: the mechanics are already in place, so the remaining work is editorial. This article is the cross-package guide to both halves.</p>
 <p>The work is split across the three packages along the same seam as everything else:</p>
 <ul>
 <li>
@@ -169,11 +169,78 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/render_plot.html">render_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"fuel.pdf"</span><span class="op">)</span> <span class="co"># a tagged PDF: /StructTreeRoot + a Figure with Alt</span></span></code></pre></div>
 </div>
 <p>Tagging is automatic and additive. A plot with no title/description exports as an ordinary, untagged PDF exactly as before. (Strict PDF/UA-1 <em>validation</em> is a planned follow-up; the tag tree and <code>Alt</code> ship today.)</p>
-</section><section class="level2"><h2 id="the-interactive-widget">The interactive widget<a class="anchor" aria-label="anchor" href="#the-interactive-widget"></a>
+</section><section class="level2"><h2 id="colour-contrast-and-legibility">Colour, contrast, and legibility<a class="anchor" aria-label="anchor" href="#colour-contrast-and-legibility"></a>
+</h2>
+<p>Alt text and tags make a plot <em>perceivable to assistive technology</em>. A separate question is whether the picture itself is legible — text large enough to read, contrast high enough to see, and information that does not vanish for a colour-blind viewer. Three tools form a loop: <strong>see</strong> the problem, <strong>flag</strong> it, <strong>fix</strong> it.</p>
+<section class="level3"><h3 id="see-it-render_plotcvd">See it: <code>render_plot(cvd = )</code>
+<a class="anchor" aria-label="anchor" href="#see-it-render_plotcvd"></a>
+</h3>
+<p>About 1 in 12 men has some form of colour-vision deficiency, most commonly red–green. <code>render_plot(cvd = )</code> renders a <code>.png</code> through a simulation of how a palette reads for such a viewer — <code>"protanopia"</code>, <code>"deuteranopia"</code>, <code>"tritanopia"</code>, or <code>"achromatopsia"</code> — so you can see a failing palette instead of guessing:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/render_plot.html">render_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"normal.png"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/render_plot.html">render_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"deuteranopia.png"</span>, cvd <span class="op">=</span> <span class="st">"deuteranopia"</span><span class="op">)</span> <span class="co"># red-green preview</span></span></code></pre></div>
+</div>
+<p>Simulation is raster-only (it is a pixel operation), so it is ignored for <code>.svg</code>/<code>.pdf</code>.</p>
+</section><section class="level3"><h3 id="flag-it-plot_lint">Flag it: <code>plot_lint()</code>
+<a class="anchor" aria-label="anchor" href="#flag-it-plot_lint"></a>
+</h3>
+<p><code><a href="../reference/plot_lint.html">plot_lint()</a></code> compiles the plot and reports the legibility problems a green test suite hides: text below a readable size, contrast under the WCAG threshold, labels that overlap or fall off the panel (all judged in real device pixels by the engine), plus grammar-level mistakes such as an encoding with a single level or a legend too long to read.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p_bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"all cars"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/theme_gray.html">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="../reference/element.html">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/plot_lint.html">plot_lint</a></span><span class="op">(</span><span class="va">p_bad</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 9 lint findings (8 warnings):</span></span>
+<span><span class="co">#&gt; ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor</span></span>
+<span><span class="co">#&gt; ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor</span></span>
+<span><span class="co">#&gt; ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor</span></span>
+<span><span class="co">#&gt; ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor</span></span>
+<span><span class="co">#&gt; ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor</span></span>
+<span><span class="co">#&gt; ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor</span></span>
+<span><span class="co">#&gt; ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor</span></span>
+<span><span class="co">#&gt; ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor</span></span>
+<span><span class="co">#&gt; ℹ [single_level_scale] scale:color: The color scale has a single level (all</span></span>
+<span><span class="co">#&gt;   cars): the encoding conveys nothing and its legend is redundant.</span></span></code></pre></div>
+</div>
+<p>A well-made plot lints clean:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_lint.html">plot_lint</a></span><span class="op">(</span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ✔ No lint findings.</span></span></code></pre></div>
+</div>
+<p>Each finding is a row (<code>rule</code>, <code>severity</code>, <code>node</code>, <code>message</code>); <code>min_text_px</code> and <code>min_contrast</code> set the thresholds.</p>
+</section><section class="level3"><h3 id="fix-it-a-redundant-non-colour-encoding">Fix it: a redundant, non-colour encoding<a class="anchor" aria-label="anchor" href="#fix-it-a-redundant-non-colour-encoding"></a>
+</h3>
+<p>The robust fix for a colour encoding that fails under CVD or in greyscale is to carry the same information a second way. Map the <code>pattern</code> aesthetic alongside <code>fill</code>, and reach for <code><a href="../reference/pattern_hatch.html">pattern_hatch()</a></code> — a crisp <strong>vector</strong> hatch that stays sharp in PDF and survives being printed in black and white (unlike the raster tile patterns):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">5</span>, <span class="fl">11</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">grp</span>, y <span class="op">=</span> <span class="va">n</span>, fill <span class="op">=</span> <span class="va">grp</span>, pattern <span class="op">=</span> <span class="va">grp</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/scale_pattern.html">scale_pattern</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/pattern_hatch.html">pattern_hatch</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="../reference/pattern_hatch.html">pattern_hatch</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="../reference/pattern_hatch.html">pattern_hatch</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">90</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="accessibility_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Now each bar is distinguished by hatch <em>and</em> colour: the plot survives the CVD preview above, and <code><a href="../reference/plot_lint.html">plot_lint()</a></code>’s contrast rule has less to complain about.</p>
+</section></section><section class="level2"><h2 id="the-interactive-widget">The interactive widget<a class="anchor" aria-label="anchor" href="#the-interactive-widget"></a>
 </h2>
 <p>A static image with alt text is enough for a picture, but an <em>interactive</em> chart must also be operable and explorable without a mouse. <code>vellumwidget::as_widget()</code> (accessibility on by default, <code>a11y = TRUE</code>) makes the widget a first-class interactive chart:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">vellumwidget</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -199,7 +266,9 @@
 <li>
 <strong>Set <code>tooltip</code> / <code>data_id</code></strong> on interactive marks: the tooltip is what a screen-reader user hears when focusing a mark, and appears in the data table.</li>
 <li>
-<strong>Don’t rely on colour alone.</strong> Pair a colour encoding with shape, or label the extremes, so the chart is legible without colour perception.</li>
+<strong>Don’t rely on colour alone.</strong> Pair a colour encoding with a redundant non-colour one — <code>shape</code>, or a <code>pattern</code> mapped through <code><a href="../reference/scale_pattern.html">scale_pattern()</a></code> with <code><a href="../reference/pattern_hatch.html">pattern_hatch()</a></code> — or label the extremes, so the chart is legible without colour perception. Preview it with <code>render_plot(cvd = )</code>.</li>
+<li>
+<strong>Lint before you ship.</strong> Run <code><a href="../reference/plot_lint.html">plot_lint()</a></code> to catch tiny text, low contrast, overlaps and dead encodings while they are still cheap to fix.</li>
 </ul></section><section class="level2"><h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a>
 </h2>
 <ul>

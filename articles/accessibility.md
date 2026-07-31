@@ -8,8 +8,10 @@ a title and a generated text alternative, an SVG that announces itself
 as an image, a tagged PDF, and a widget you can operate without a mouse.
 
 A baseline is not compliance. A generated description can say what is
-plotted but not what it means, and nothing here checks your colour
-contrast or decides whether your takeaway is legible. What the ecosystem
+plotted but not what it means.
+[`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
+now checks your colour contrast and text legibility (see below), but
+nothing decides whether your *takeaway* is legible. What the ecosystem
 removes is the boilerplate excuse: the mechanics are already in place,
 so the remaining work is editorial. This article is the cross-package
 guide to both halves.
@@ -108,6 +110,102 @@ Tagging is automatic and additive. A plot with no title/description
 exports as an ordinary, untagged PDF exactly as before. (Strict PDF/UA-1
 *validation* is a planned follow-up; the tag tree and `Alt` ship today.)
 
+## Colour, contrast, and legibility
+
+Alt text and tags make a plot *perceivable to assistive technology*. A
+separate question is whether the picture itself is legible — text large
+enough to read, contrast high enough to see, and information that does
+not vanish for a colour-blind viewer. Three tools form a loop: **see**
+the problem, **flag** it, **fix** it.
+
+### See it: `render_plot(cvd = )`
+
+About 1 in 12 men has some form of colour-vision deficiency, most
+commonly red–green. `render_plot(cvd = )` renders a `.png` through a
+simulation of how a palette reads for such a viewer — `"protanopia"`,
+`"deuteranopia"`, `"tritanopia"`, or `"achromatopsia"` — so you can see
+a failing palette instead of guessing:
+
+``` r
+
+p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+
+render_plot(p, "normal.png")
+render_plot(p, "deuteranopia.png", cvd = "deuteranopia") # red-green preview
+```
+
+Simulation is raster-only (it is a pixel operation), so it is ignored
+for `.svg`/`.pdf`.
+
+### Flag it: `plot_lint()`
+
+[`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
+compiles the plot and reports the legibility problems a green test suite
+hides: text below a readable size, contrast under the WCAG threshold,
+labels that overlap or fall off the panel (all judged in real device
+pixels by the engine), plus grammar-level mistakes such as an encoding
+with a single level or a legend too long to read.
+
+``` r
+
+p_bad <- vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(rep("all cars", nrow(mtcars)))) |>
+  theme(axis.text = element_text(size = 4))
+
+plot_lint(p_bad)
+#> 9 lint findings (8 warnings):
+#> ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 5.3 px tall - below the 7 px legibility floor
+#> ℹ [single_level_scale] scale:color: The color scale has a single level (all
+#>   cars): the encoding conveys nothing and its legend is redundant.
+```
+
+A well-made plot lints clean:
+
+``` r
+
+plot_lint(vplot(mtcars) |> mark_point(x = wt, y = mpg))
+#> ✔ No lint findings.
+```
+
+Each finding is a row (`rule`, `severity`, `node`, `message`);
+`min_text_px` and `min_contrast` set the thresholds.
+
+### Fix it: a redundant, non-colour encoding
+
+The robust fix for a colour encoding that fails under CVD or in
+greyscale is to carry the same information a second way. Map the
+`pattern` aesthetic alongside `fill`, and reach for
+[`pattern_hatch()`](https://r-vellum.github.io/vellumplot/reference/pattern_hatch.md)
+— a crisp **vector** hatch that stays sharp in PDF and survives being
+printed in black and white (unlike the raster tile patterns):
+
+``` r
+
+d <- data.frame(grp = c("A", "B", "C"), n = c(8, 5, 11))
+
+vplot(d) |>
+  mark_bar(x = grp, y = n, fill = grp, pattern = grp) |>
+  scale_pattern(values = list(
+    pattern_hatch(angle = 0),
+    pattern_hatch(angle = 45),
+    pattern_hatch(angle = 90)
+  ))
+```
+
+![](accessibility_files/figure-html/unnamed-chunk-9-1.png)
+
+Now each bar is distinguished by hatch *and* colour: the plot survives
+the CVD preview above, and
+[`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)’s
+contrast rule has less to complain about.
+
 ## The interactive widget
 
 A static image with alt text is enough for a picture, but an
@@ -152,8 +250,17 @@ there is rarely a reason to.
 - **Set `tooltip` / `data_id`** on interactive marks: the tooltip is
   what a screen-reader user hears when focusing a mark, and appears in
   the data table.
-- **Don’t rely on colour alone.** Pair a colour encoding with shape, or
-  label the extremes, so the chart is legible without colour perception.
+- **Don’t rely on colour alone.** Pair a colour encoding with a
+  redundant non-colour one — `shape`, or a `pattern` mapped through
+  [`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
+  with
+  [`pattern_hatch()`](https://r-vellum.github.io/vellumplot/reference/pattern_hatch.md)
+  — or label the extremes, so the chart is legible without colour
+  perception. Preview it with `render_plot(cvd = )`.
+- **Lint before you ship.** Run
+  [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
+  to catch tiny text, low contrast, overlaps and dead encodings while
+  they are still cheap to fix.
 
 ## See also
 

@@ -26,8 +26,20 @@ plot_verify(svg, data)
 
 ## Value
 
-A list with `ok` (logical), `expected` (the embedded data hash), and
-`actual` (the recomputed hash). Errors if the SVG carries no manifest.
+A list with `ok` (data *and* fonts match), `data_ok`, `expected` /
+`actual` (the embedded vs recomputed data hash), `fonts_ok`, and
+`fonts_missing` (the recorded font paths absent on this machine). Errors
+if the SVG carries no manifest.
+
+## Details
+
+A font mismatch is reported as a **distinct outcome** from a data
+mismatch: `data_ok` is whether the data still hashes the same,
+`fonts_ok` whether every font the figure was drawn with is still present
+on this machine, and `ok` their conjunction. A pixel difference with
+`data_ok = TRUE` but `fonts_ok = FALSE` is the font stack, not your data
+— a different cause with a different fix (install/register the font)
+than a data change.
 
 ## See also
 

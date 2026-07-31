@@ -98,7 +98,11 @@ still matches its data.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list: <code>version</code>, <code>data</code> (a <code>hash</code>/<code>nrow</code>/<code>columns</code> record),
-<code>spec_hash</code>, and <code>n_elements</code>.</p>
+<code>spec_hash</code>, <code>n_elements</code>, and <code>fonts</code> (the faces the plot resolved to, via
+<code><a href="https://r-vellum.github.io/vellum/reference/font_pin.html" class="external-link">vellum::font_pin()</a></code>, each a <code>path</code>/<code>index</code>/<code>glyphs</code> record). The fonts are
+what lets <code><a href="plot_verify.html">plot_verify()</a></code> tell a font-stack difference apart from a data
+change — the same pixels are only guaranteed when the same fonts are
+present.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
