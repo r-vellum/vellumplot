@@ -1294,15 +1294,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
 .emit_text <- function(scene, L, scales) {
   n <- L$n
-  sol <- L$stat_params$repel$solution
-  if (!is.null(sol)) {
-    scene <- .emit_repel_leaders(scene, L, scales)
-    xn <- rep_len(sol$x, n)
-    yn <- rep_len(sol$y, n)
-  } else {
-    xn <- rep_len(scales$x$map(L$values$x), n)
-    yn <- rep_len(scales$y$map(L$values$y), n)
-  }
+  # Labels are drawn at their data anchors; a repel layer is nudged afterwards by
+  # the engine solver, which addresses each label grob by the `name` set below.
+  repel_on <- isTRUE(L$stat_params$repel$on)
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
   # Labels may be plain character (multi-line "\n" supported by vellum), a single
   # rich md() label (drawn at every position), or a per-datum list of md() labels.
   # Only plain labels are flattened with as.character(); rich labels pass through.
@@ -1341,6 +1337,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   vj <- L$values$vjust %||% .aes_param(L, "vjust", "centre")
   just <- c(hj[[1]], vj[[1]])
 
+  gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
@@ -1352,6 +1349,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         xy$y,
         just = just,
         rot = ang[idx],
+        name = if (repel_on) .repel_name(gi),
         gp = vellum::vl_gpar(
           fontsize = fs,
           col = col[idx[1]],
@@ -1363,6 +1361,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       # PROVENANCE: `idx` are the layer rows in this style group.
       rows = idx
     )
+    gi <- gi + 1L
   }
   scene
 }
@@ -1370,15 +1369,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # A text mark with a filled rounded background sized to each label.
 .emit_label <- function(scene, L, scales) {
   n <- L$n
-  sol <- L$stat_params$repel$solution
-  if (!is.null(sol)) {
-    scene <- .emit_repel_leaders(scene, L, scales)
-    xn <- rep_len(sol$x, n)
-    yn <- rep_len(sol$y, n)
-  } else {
-    xn <- rep_len(scales$x$map(L$values$x), n)
-    yn <- rep_len(scales$y$map(L$values$y), n)
-  }
+  # Anchors; a repel layer is nudged afterwards by the engine solver, which
+  # addresses the text ("repel:...") and its background ("repelbg:...") by name.
+  repel_on <- isTRUE(L$stat_params$repel$on)
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
   label <- rep_len(as.character(L$values$label), n)
   col <- rep_len(.text_colour(L, scales, "black"), n)
   # Label background: a mapped `fill` channel (through the colour scale), else a
@@ -1400,6 +1395,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   ws <- do.call(c, lapply(txts, function(t) vellum::grobwidth(t) + pad))
   hs <- do.call(c, lapply(txts, function(t) vellum::grobheight(t) + pad))
 
+  gi <- 0L
   for (idx in .style_groups(n, list(col = col, fill = bg, alpha = alpha))) {
     a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
@@ -1407,6 +1403,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     # label's hit target, and (being a keyed batch mark) it contributes exactly
     # one `scene_model()` row per label when keyed and none when not -- so a label
     # is one addressable element, never two. The text stays unkeyed backdrop-side.
+    # For a repel layer the background is named "repelbg:..." so it moves in
+    # lockstep with its text ("repel:...", which the solver actually places).
     scene <- .draw(
       scene,
       vellum::roundrect_grob(
@@ -1416,6 +1414,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         height = hs[idx],
         r = vellum::vl_unit(0.8, "mm"),
         sketch = sk,
+        name = if (repel_on) .repel_name(gi, bg = TRUE),
         gp = vellum::vl_gpar(
           fill = bg[idx[1]],
           col = NA,
@@ -1431,6 +1430,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         label[idx],
         xy$x,
         xy$y,
+        name = if (repel_on) .repel_name(gi),
         gp = vellum::vl_gpar(
           fontsize = fs,
           col = col[idx[1]],
@@ -1438,6 +1438,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         )
       )
     )
+    gi <- gi + 1L
   }
   scene
 }
