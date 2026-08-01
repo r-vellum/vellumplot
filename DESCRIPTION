@@ -28,7 +28,8 @@ Imports:
     scales,
     stats,
     utils,
-    vellum (>= 0.6.5)
+    vellum (>= 0.6.5),
+    xml2
 Remotes:
     r-vellum/vellum,
     schochastics/edgebundle,
