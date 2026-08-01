@@ -274,3 +274,58 @@ plot, with
 [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
 (see **[Get
 started](https://r-vellum.github.io/vellumplot/articles/vellumplot.md)**).
+
+## Multi-page and batch output
+
+[`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+writes one figure to one file. Two companions handle *many* figures at
+once.
+
+[`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
+writes a list of plots into a single PDF, one plot per page — a report
+or a slide deck. Pages may differ in size (each plot keeps its own
+`width`/`height`), and the per-page accessibility tags (see
+**[Accessibility](https://r-vellum.github.io/vellumplot/articles/accessibility.md)**)
+are written for every page.
+
+``` r
+
+report <- list(
+  vplot(mtcars) |> mark_point(x = wt, y = mpg) |> labs(title = "Weight vs mpg"),
+  vplot(mtcars) |> mark_histogram(x = mpg, bins = 10) |> labs(title = "mpg")
+)
+pdf_pages(report, "report.pdf")
+```
+
+Given a single *faceted* plot instead of a list,
+[`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
+splits it into one page per facet cell — the paged counterpart of a
+small-multiple grid, where each page trains its own scales and is tagged
+independently:
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  facet_wrap(~cyl) |>
+  pdf_pages("by-cylinder.pdf")
+```
+
+[`render_all()`](https://r-vellum.github.io/vellumplot/reference/render_all.md)
+goes the other way: a list of plots to *separate* files, rendered across
+CPU cores. Each plot is one independent job, so the work parallelises
+cleanly (via process forks on macOS/Linux, sequentially on Windows) and
+the output is byte-identical to rendering them one by one. When the list
+is named, `paths` may be a single directory and each plot lands in
+`<name>.png`:
+
+``` r
+
+render_all(
+  list(
+    weight = vplot(mtcars) |> mark_point(x = wt, y = mpg),
+    power = vplot(mtcars) |> mark_point(x = hp, y = mpg)
+  ),
+  "figures/"
+)
+```

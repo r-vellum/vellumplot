@@ -46,12 +46,12 @@ element_blank()
 
 ## Arguments
 
-- family, face, size, colour, color, hjust, vjust, angle, lineheight,
-  margin:
+- family, face, size, cex, colour, color, hjust, vjust, angle,
+  lineheight, margin:
 
-  Text properties. `color` is an alias for `colour`; `size` is in
-  points; `margin` is a numeric vector of millimetres (recycled to
-  length 4).
+  Text properties. `color` is an alias for `colour`; `size` is in points
+  and `cex` is a relative multiplier on the inherited `size`; `margin`
+  is a numeric vector of millimetres (recycled to length 4).
 
 - linewidth, linetype, lineend:
 

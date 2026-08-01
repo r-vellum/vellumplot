@@ -64,9 +64,19 @@ here from the trained scales. Findings are returned most-severe first.
 
 ``` r
 # a tiny-text, single-level-scale plot trips the linter
-p <- vplot(mtcars) |>
-  mark_point(x = wt, y = mpg, color = "one group") |>
+p <- vplot(transform(mtcars, grp = "one group")) |>
+  mark_point(x = wt, y = mpg, color = grp) |>
   theme(axis.text = element_text(size = 2))
 plot_lint(p)
-#> Error in grDevices::col2rgb(x, alpha = TRUE): invalid color name 'one group'
+#> 9 lint findings (8 warnings):
+#> ✖ [tiny_text] text: 2.7 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 2.7 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 2.7 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 2.7 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 2.7 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 2.7 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 2.7 px tall - below the 7 px legibility floor
+#> ✖ [tiny_text] text: 2.7 px tall - below the 7 px legibility floor
+#> ℹ [single_level_scale] scale:color: The color scale has a single level (one
+#>   group): the encoding conveys nothing and its legend is redundant.
 ```

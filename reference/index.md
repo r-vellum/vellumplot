@@ -46,6 +46,12 @@ then render it or write it to a file.
 - [`plot_svg()`](https://r-vellum.github.io/vellumplot/reference/plot_svg.md)
   : Render a plot to a self-contained SVG string
 
+- [`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
+  : Write a multi-page PDF
+
+- [`render_all()`](https://r-vellum.github.io/vellumplot/reference/render_all.md)
+  : Render many plots to separate files, in parallel
+
 - [`PlotSpec()`](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
   : The plot specification
 

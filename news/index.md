@@ -2,6 +2,20 @@
 
 ## vellumplot (development version)
 
+- **Multi-page PDFs and parallel batch export.**
+  [`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
+  writes several plots into one PDF (a report or slide deck), one plot
+  per page — pages may differ in size and each keeps its accessibility
+  tags — or splits a single faceted plot into one page per facet cell.
+  [`render_all()`](https://r-vellum.github.io/vellumplot/reference/render_all.md)
+  renders a list of plots to separate files across CPU cores (small
+  multiples, batch export); it is byte-identical to rendering them one
+  by one and parallelises via process forks on macOS/Linux (sequential
+  on Windows). Both build on the engine’s
+  [`vellum::pdf_pages()`](https://r-vellum.github.io/vellum/reference/pdf_pages.html)
+  /
+  [`vellum::render_all()`](https://r-vellum.github.io/vellum/reference/render_all.html).
+
 - **Real blur effects;
   [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)/[`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
   now work on text.**
