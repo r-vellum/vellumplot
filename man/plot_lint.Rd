@@ -37,8 +37,8 @@ most-severe first.
 }
 \examples{
 # a tiny-text, single-level-scale plot trips the linter
-p <- vplot(mtcars) |>
-  mark_point(x = wt, y = mpg, color = "one group") |>
+p <- vplot(transform(mtcars, grp = "one group")) |>
+  mark_point(x = wt, y = mpg, color = grp) |>
   theme(axis.text = element_text(size = 2))
 plot_lint(p)
 }

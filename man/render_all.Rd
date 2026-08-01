@@ -38,5 +38,5 @@ plots <- list(
 render_all(plots, tempdir())
 }
 \seealso{
-\code{\link[=render_plot]{render_plot()}}, \code{\link[vellum:pdf_pages]{pdf_pages()}}, \code{\link[=repeat_]{repeat_()}}
+\code{\link[=render_plot]{render_plot()}}, \code{\link[=pdf_pages]{pdf_pages()}}, \code{\link[=repeat_]{repeat_()}}
 }

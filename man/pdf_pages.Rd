@@ -36,5 +36,5 @@ faceted <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
 pdf_pages(faceted, tempfile(fileext = ".pdf"))
 }
 \seealso{
-\code{\link[=render_plot]{render_plot()}}, \code{\link[vellum:render_all]{render_all()}}
+\code{\link[=render_plot]{render_plot()}}, \code{\link[=render_all]{render_all()}}
 }

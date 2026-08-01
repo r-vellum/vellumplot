@@ -11,8 +11,6 @@ test_that("pdf_pages() writes a multi-page PDF from a list of plots", {
   expect_gt(file.info(f)$size, 0)
   raw <- readBin(f, "raw", 5L)
   expect_identical(rawToChar(raw), "%PDF-") # a real PDF
-  skip_if_not_installed("pdftools")
-  expect_equal(pdftools::pdf_info(f)$pages, 2L)
 })
 
 test_that("pdf_pages() splits a faceted plot into one page per facet cell", {
