@@ -41,10 +41,36 @@ vplot(gapminder) |>
 ```
 
 The output format follows the file extension: `.gif` for a looping
-animated GIF (universally viewable) or `.png` for an animated PNG (APNG
-— lossless, with transparency). The tween, the parallel render across
-CPU cores, and the streaming encode all happen in one pass in vellum’s
-Rust backend.
+animated GIF (universally viewable), `.png` for an animated PNG (APNG —
+lossless, with transparency), or `.svg` for an animated SVG. The tween,
+the parallel render across CPU cores, and the streaming encode all
+happen in one pass in vellum’s Rust backend.
+
+### Animated SVG, and choosing a format
+
+`.svg` writes a single **animated SVG**: every frame is emitted as
+vector markup and shown in turn by a CSS step animation. Two things make
+it worth reaching for. It is **resolution-independent** — the same file
+is crisp in a slide, on a retina screen, and in print, which no raster
+format is. And it honours **`prefers-reduced-motion`**: a reader who has
+asked their system not to animate is shown the first frame, held, with
+no extra work from you.
+
+The trade-off is size. Because every frame is emitted in full, an
+animated SVG grows with the number of marks times the number of frames,
+where a GIF does not. So it wins clearly on **line art** — a handful of
+moving marks, the common explanatory case — and loses on a **dense
+scatter**, where a raster format is the right answer. Choose by mark
+count, not by preference;
+[`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+says so when a `.svg` scene is dense enough that a raster format would
+likely be smaller. Serve it gzipped (`.svgz`, or a web server with
+compression) to shrink it several-fold.
+
+``` r
+
+p |> animate() |> (\(a) anim_save("draw.svg", a))()
+```
 
 ## What a keyframe looks like
 

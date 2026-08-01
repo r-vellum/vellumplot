@@ -7,11 +7,9 @@
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Write a keyframe animation to a file — anim_save"><meta name="description" content="anim_save() renders a vellum_animation (from animate()) to an animated
 image, tweening the frames between keyframes and encoding them in one parallel,
-streaming pass in vellum's Rust backend. The format follows the file extension:
-.gif (looping GIF) or .png (animated PNG / APNG)."><meta property="og:description" content="anim_save() renders a vellum_animation (from animate()) to an animated
+streaming pass in vellum's Rust backend. The format follows the file extension:"><meta property="og:description" content="anim_save() renders a vellum_animation (from animate()) to an animated
 image, tweening the frames between keyframes and encoding them in one parallel,
-streaming pass in vellum's Rust backend. The format follows the file extension:
-.gif (looping GIF) or .png (animated PNG / APNG)."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+streaming pass in vellum's Rust backend. The format follows the file extension:"><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -72,8 +70,7 @@ streaming pass in vellum's Rust backend. The format follows the file extension:
     <div class="ref-description section level2">
     <p><code>anim_save()</code> renders a <code>vellum_animation</code> (from <code><a href="animate.html">animate()</a></code>) to an animated
 image, tweening the frames between keyframes and encoding them in one parallel,
-streaming pass in vellum's Rust backend. The format follows the file extension:
-<code>.gif</code> (looping GIF) or <code>.png</code> (animated PNG / APNG).</p>
+streaming pass in vellum's Rust backend. The format follows the file extension:</p>
     </div>
 
     <div class="section level2">
@@ -86,7 +83,7 @@ streaming pass in vellum's Rust backend. The format follows the file extension:
 
 
 <dl><dt id="arg-filename">filename<a class="anchor" aria-label="anchor" href="#arg-filename"></a></dt>
-<dd><p>Output path; <code>.gif</code> or <code>.png</code>.</p></dd>
+<dd><p>Output path; <code>.gif</code>, <code>.png</code>, or <code>.svg</code>.</p></dd>
 
 
 <dt id="arg-animation">animation<a class="anchor" aria-label="anchor" href="#arg-animation"></a></dt>
@@ -96,6 +93,25 @@ streaming pass in vellum's Rust backend. The format follows the file extension:
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>filename</code>, invisibly.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+
+<ul><li><p><code>.gif</code> — a looping GIF (universal compatibility).</p></li>
+<li><p><code>.png</code> — an animated PNG (APNG; lossless, alpha).</p></li>
+<li><p><code>.svg</code> — a single <strong>animated SVG</strong>: every frame is emitted as vector markup
+and shown in turn by a CSS step animation. It is resolution-independent (crisp
+at any size, in print and on retina) and honours <code>prefers-reduced-motion</code>
+(a reader who has asked their system not to animate gets the first frame, held).</p></li>
+</ul></div>
+    <div class="section level2">
+    <h2 id="choosing-a-format">Choosing a format<a class="anchor" aria-label="anchor" href="#choosing-a-format"></a></h2>
+    <p>Pick by scene complexity, not preference. An animated SVG emits <em>every frame in
+full</em>, so its size grows with the number of marks times the number of frames;
+a raster format (GIF/APNG) does not. So SVG wins clearly on line art — a few
+moving marks, the common explanatory case — and loses on a dense scatter, where
+a raster format is the right answer. <code>anim_save()</code> says so when a <code>.svg</code> scene
+is dense enough that a raster format would likely be smaller.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -110,6 +126,7 @@ streaming pass in vellum's Rust backend. The format follows the file extension:
 <span class="r-in"><span>  <span class="fu"><a href="transition_states.html">transition_states</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="animate.html">animate</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">anim_save</span><span class="op">(</span><span class="st">"cyl.gif"</span>, <span class="va">a</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">anim_save</span><span class="op">(</span><span class="st">"cyl.svg"</span>, <span class="va">a</span><span class="op">)</span> <span class="co"># resolution-independent</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
