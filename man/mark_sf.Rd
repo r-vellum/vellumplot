@@ -13,6 +13,7 @@ mark_sf(
   linewidth = NULL,
   size = NULL,
   na_value = "grey80",
+  merge = FALSE,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -30,6 +31,12 @@ constant or a mapped expression.}
 
 \item{na_value}{Fill colour for features whose mapped \code{fill}/\code{color} value is
 \code{NA} (drawn as a distinct legend swatch). Default \code{"grey80"}.}
+
+\item{merge}{Dissolve adjacent features that share a fill into one region, so
+the internal borders between same-valued features disappear and each region
+is a single crisp path (no seam artefacts, and exact in PDF). The union is
+real boolean geometry via \code{\link[vellum:vl_path_op]{vellum::vl_path_op()}}. Default \code{FALSE}. Ignored
+when the layer is interactive (merging would drop the per-feature keys).}
 
 \item{blend}{Optional blend mode (see \code{\link[=mark_point]{mark_point()}}).}
 

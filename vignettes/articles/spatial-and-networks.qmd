@@ -49,6 +49,29 @@ Because `mark_sf()` is an ordinary layer, you can stack it: draw a base layer
 of boundaries, then a second `mark_sf()` for highlighted features or point
 locations on top, and every layer reprojects together.
 
+### Merging regions
+
+When several small features share a value — counties grouped into a region, or
+tracts into a district — the borders *between* them are usually noise: you want
+one clean outline per group, not a mesh of internal seams. `merge = TRUE`
+dissolves each same-fill group into a single region with real boolean geometry
+(`vellum::vl_path_op()`), so the shared edges vanish and each region is one crisp
+path that stays exact in PDF (no double-stroked seams, no hairline gaps).
+
+```{r}
+#| eval: !expr have_sf
+nc$region <- cut(sf::st_coordinates(sf::st_centroid(sf::st_geometry(nc)))[, 1],
+  4,
+  labels = c("west", "midwest", "mideast", "east")
+)
+vplot(nc) |>
+  mark_sf(fill = region, merge = TRUE, color = "white") |>
+  coord_sf()
+```
+
+Merging is for static choropleths; on an interactive layer it is ignored, since
+dissolving the features would drop the per-feature keys a tooltip needs.
+
 ### Cartographic furniture
 
 A map usually wants more than the polygons: a graticule to place it on the
