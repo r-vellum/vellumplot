@@ -60,6 +60,44 @@ vplot(mtcars) |>
 
 ![](effects-and-themes_files/figure-html/unnamed-chunk-3-1.png)
 
+### Rotating and wrapping axis labels
+
+Long category names on a discrete axis are a perennial nuisance: side by
+side they collide. Two theme controls handle this. Setting an `angle` on
+`axis.text.x` rotates the tick labels, and the gutter reserves the extra
+height automatically; an explicit `hjust`/`vjust` sets the anchor, and
+otherwise the end of the run is pinned at the tick so the slant clears
+the panel.
+
+``` r
+
+gdp <- data.frame(
+  country = c(
+    "United States", "United Kingdom", "United Arab Emirates",
+    "Republic of Korea", "Czech Republic"
+  ),
+  score = c(9, 6, 7, 8, 5)
+)
+vplot(gdp) |>
+  mark_bar(x = country, y = score) |>
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-4-1.png)
+
+Left horizontal, a long label that would overrun the width of its tick
+instead **wraps** onto multiple lines, and the label row grows to fit —
+the per-tick companion of the title/subtitle/caption wrapping. Labels
+that already fit are untouched, so a plain numeric axis is unchanged.
+
+``` r
+
+vplot(gdp) |>
+  mark_bar(x = country, y = score)
+```
+
+![](effects-and-themes_files/figure-html/unnamed-chunk-5-1.png)
+
 ## Layer effects
 
 Effects change how a single mark is painted, and they are passed to a
@@ -96,7 +134,7 @@ vplot(data.frame(x = 1, y = 1, lab = "NEON"), width = 5, height = 2.2) |>
   theme_cyberpunk()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-4-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-6-1.png)
 
 ``` r
 
@@ -107,7 +145,7 @@ vplot(pressure) |>
   )
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-5-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-7-1.png)
 
 ``` r
 
@@ -115,7 +153,7 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg, size = 4, effects = list(motion(x = 4)))
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-6-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-8-1.png)
 
 [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)
 pairs naturally with
@@ -129,7 +167,7 @@ vplot(mtcars) |>
   theme_cyberpunk()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-7-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
 
 ## Gradient fills
 
@@ -152,7 +190,7 @@ vplot(pressure) |>
   theme_cyberpunk()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-8-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)
 
 Because a gradient is one paint per region, it cannot be mapped to a
 data column; for that you want a colour scale (see **[Scales and
@@ -172,7 +210,7 @@ vplot(bars) |>
   mark_bar(x = method, y = score, fill = pattern_crosshatch(color = "grey20"))
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-9-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-11-1.png)
 
 [`pattern_stripe()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
 [`pattern_crosshatch()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
@@ -202,7 +240,7 @@ vplot(bars) |>
   scale_pattern(name = NULL)
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-10-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-12-1.png)
 
 `scale_pattern(values = )` overrides the palette with builder names
 (`"stripe"`, `"dot"`, …) or your own `pattern_*()` objects; the legend
@@ -226,7 +264,7 @@ vplot(grid) |>
   clip_to(diamond)
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-11-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-13-1.png)
 
 `invert = TRUE` keeps the marks *outside* the shape (punching it out as
 a hole).
@@ -241,7 +279,7 @@ vplot(grid) |>
   set_mask(feather = 0.5)
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-12-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-14-1.png)
 
 [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
 and
@@ -261,7 +299,7 @@ vplot(grid) |>
   mark_point(data = pts, x = x, y = y, size = 1.5, color = "white")
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-13-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-15-1.png)
 
 All three work under cartesian coordinates (a smooth feathered edge on
 an arbitrary polygon is not available yet, so
@@ -286,7 +324,7 @@ vplot(mtcars) |>
   theme_sketch()
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-14-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-16-1.png)
 
 For finer control,
 [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
@@ -312,4 +350,4 @@ vplot(mtcars) |>
   )
 ```
 
-![](effects-and-themes_files/figure-html/unnamed-chunk-15-1.png)
+![](effects-and-themes_files/figure-html/unnamed-chunk-17-1.png)
