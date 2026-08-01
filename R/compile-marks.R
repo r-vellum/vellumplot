@@ -3671,6 +3671,47 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     list(x = unlist(px, use.names = FALSE), y = unlist(py, use.names = FALSE))
   }
 
+  # Dissolve a style group's polygon features into ONE region: union each
+  # feature's rings (interpreted even-odd, so holes and multipart features stay
+  # correct) with `vl_path_op`, so the shared borders between same-valued
+  # features vanish and the fill is a single crisp path (exact in PDF). Raw
+  # coordinates are unioned, then the result is mapped once -- the same map-once
+  # discipline as `gather_poly`. Returns a mapped `path_grob`, or NULL when there
+  # is nothing to merge (< 2 non-empty features) so the caller falls back to the
+  # ordinary batched emit.
+  merge_poly <- function(idx, gpp) {
+    operand <- function(i) {
+      fp <- gather_poly(i)
+      if (is.null(fp)) {
+        return(NULL)
+      }
+      list(x = fp$x, y = fp$y, nper = rle(fp$id)$lengths)
+    }
+    ops <- Filter(Negate(is.null), lapply(idx, operand))
+    if (length(ops) < 2L) {
+      return(NULL)
+    }
+    acc <- ops[[1L]]
+    for (j in seq_along(ops)[-1L]) {
+      acc <- vellum::vl_path_op(acc, ops[[j]], op = "union", rule = "evenodd")
+    }
+    rx <- as.numeric(vctrs::field(acc@x, "value"))
+    ry <- as.numeric(vctrs::field(acc@y, "value"))
+    if (!length(rx)) {
+      return(NULL)
+    }
+    nper <- acc@nper %||% length(rx)
+    xy <- .xy_units(scales, scales$x$map(rx), scales$y$map(ry))
+    vellum::path_grob(
+      xy$x,
+      xy$y,
+      id = rep(seq_along(nper), nper),
+      rule = "winding",
+      sketch = sk,
+      gp = gpp
+    )
+  }
+
   # Iterate style groups of the features that carry kind `k`, calling `draw`.
   by_style <- function(scene, k, colvec, draw) {
     sub <- which(has_kind(k))
@@ -3690,7 +3731,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # polygons: batched into one path_grob per style group (its features' rings are
   # `evenodd` sub-paths) -- unless the layer is interactive, when each feature is
   # its own grob so `.draw()` can key it (`rows = i`) with the feature's data_id /
-  # tooltip. See the EXCEPTION / CAVEAT notes on `.emit_sf`.
+  # tooltip. See the EXCEPTION / CAVEAT notes on `.emit_sf`. With `merge = TRUE`
+  # (and non-interactive) the group's features are instead dissolved into one
+  # unioned region so their shared borders disappear.
+  do_merge <- isTRUE(L$stat_params$merge) && !interactive
   scene <- by_style(
     scene,
     "poly",
@@ -3702,6 +3746,10 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
         lwd = lwd,
         alpha = gp_alpha(a)
       )
+      merged <- if (do_merge) merge_poly(idx, gpp) else NULL
+      if (!is.null(merged)) {
+        return(.draw(scene, merged, rows = NULL))
+      }
       emit <- function(scene, g, rows) {
         if (is.null(g)) {
           return(scene)
@@ -4207,8 +4255,18 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # radius (mm); the engine blurs the whole group once (cheaper, smoother, and it
 # works on text, unlike stroking N glyph copies). `widen` optionally fattens the
 # stroke/point first so the halo has body before the blur spreads it.
-.emit_soft <- function(scene, L, scales, blur, alpha, colour, blend = "normal",
-                       xoff = 0, yoff = 0, widen = 0) {
+.emit_soft <- function(
+  scene,
+  L,
+  scales,
+  blur,
+  alpha,
+  colour,
+  blend = "normal",
+  xoff = 0,
+  yoff = 0,
+  widen = 0
+) {
   is_point <- L$mark %in% c("point", "nodes")
   base <- .glow_base(L)
   rng <- .panel_scale_range(scales)
@@ -4252,7 +4310,9 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # opacity so brightness is comparable; `blend` (screen by default) keeps the
   # additive neon look over a dark backdrop.
   .emit_soft(
-    scene, L, scales,
+    scene,
+    L,
+    scales,
     blur = g@size * 0.6,
     alpha = min(1, g@alpha * g@layers),
     colour = g@color,
@@ -4271,7 +4331,9 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # A real drop shadow: one blurred, offset copy in the shadow colour, instead of
   # the old stack of widened copies.
   .emit_soft(
-    scene, L, scales,
+    scene,
+    L,
+    scales,
     blur = s@spread,
     alpha = min(1, s@alpha * s@layers),
     colour = s@color,

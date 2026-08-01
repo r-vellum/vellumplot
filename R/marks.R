@@ -547,6 +547,11 @@ mark_line <- function(
 #'   constant or a mapped expression.
 #' @param na_value Fill colour for features whose mapped `fill`/`color` value is
 #'   `NA` (drawn as a distinct legend swatch). Default `"grey80"`.
+#' @param merge Dissolve adjacent features that share a fill into one region, so
+#'   the internal borders between same-valued features disappear and each region
+#'   is a single crisp path (no seam artefacts, and exact in PDF). The union is
+#'   real boolean geometry via [vellum::vl_path_op()]. Default `FALSE`. Ignored
+#'   when the layer is interactive (merging would drop the per-feature keys).
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data (an `sf` object); overrides the plot data.
 #' @return The modified [PlotSpec].
@@ -568,6 +573,7 @@ mark_sf <- function(
   linewidth = NULL,
   size = NULL,
   na_value = "grey80",
+  merge = FALSE,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -585,7 +591,7 @@ mark_sf <- function(
       linewidth = linewidth,
       size = size
     ),
-    stat_params = list(na_value = na_value),
+    stat_params = list(na_value = na_value, merge = isTRUE(merge)),
     blend = blend,
     sketch = sketch,
     data = data
