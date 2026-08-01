@@ -44,7 +44,7 @@
 
     <a class="navbar-brand me-2" href="index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,13 +103,30 @@
 <!-- badges: start -->
 
 <p>vellumplot is a declarative, pipe-first grammar of graphics built on the <a href="https://github.com/r-vellum/vellum" class="external-link">vellum</a> graphics backend. You describe a plot as an inspectable, serializable <em>spec</em>; nothing is drawn until the spec is compiled into a vellum scene and rendered.</p>
-<p>The compile is a real pipeline (spec → resolve encodings → train scales → measure layout → compile guides → compile marks → vellum scene) and it runs without a graphics device, because vellum measures text itself. Two consequences are the reason to pick this stack:</p>
+<p>The compile is a real pipeline (spec → resolve encodings → train scales → measure layout → compile guides → compile marks → vellum scene) and it runs without a graphics device, because vellum measures text itself. If you already know ggplot2 the grammar will feel familiar; the reason to reach for this stack is what the retained vector scene underneath makes possible.</p>
+<div class="section level3">
+<h3 id="what-is-a-little-different-here">What is a little different here<a class="anchor" aria-label="anchor" href="#what-is-a-little-different-here"></a>
+</h3>
+<p>Most of these exist somewhere in R; having them in one grammar, from one spec, is what is unusual. None of it is a reason to switch on its own — but together they cover a few gaps.</p>
 <ul>
 <li>
-<strong>Every mark keeps its identity through to the output.</strong> A compiled plot <em>is</em> a vellum scene, so each drawn element carries its data key and its resolved device-pixel box (<code><a href="https://r-vellum.github.io/vellum/reference/scene_model.html" class="external-link">vellum::scene_model()</a></code>). That is what <a href="https://github.com/r-vellum/vellumwidget" class="external-link">vellumwidget</a> reads to add tooltips, brushing, and linked selection: the same marks you already declared, not <code>*_interactive()</code> twins of them, and no second engine re-drawing your plot.</li>
+<strong>One spec, one solved layout, several destinations — including a <em>tagged</em> PDF.</strong> <code><a href="reference/render_plot.html">render_plot()</a></code> writes PNG, SVG, or PDF from the <em>same</em> compiled scene rather than re-solving the layout per device, and the PDF carries a real structure tree and alt text, so a screen reader can navigate it. Accessible (tagged) PDF output is uncommon for R graphics.</li>
 <li>
-<strong>One spec, one solved layout, several destinations.</strong> <code><a href="reference/render_plot.html">render_plot()</a></code> writes PNG, SVG, or PDF from the <em>same</em> compiled scene instead of re-solving layout per device, and <code>as_widget()</code> hands that scene to the browser. The static figure and the interactive one cannot drift, because they are one scene.</li>
+<strong>Accessibility is checkable, not just aspirational.</strong> Render through a colour-vision-deficiency simulation (<code>render(cvd = "deutan")</code>) to see the figure as a colour-blind reader would, and run <code><a href="reference/plot_lint.html">plot_lint()</a></code> to be told about tiny text, low contrast, or a single-level legend <em>before</em> you publish it.</li>
+<li>
+<strong>The interactive widget uses the marks you declared.</strong> A compiled plot <em>is</em> a vellum scene, so each element keeps its data key and its resolved device-pixel box (<code><a href="https://r-vellum.github.io/vellum/reference/scene_model.html" class="external-link">vellum::scene_model()</a></code>). <a href="https://github.com/r-vellum/vellumwidget" class="external-link">vellumwidget</a>’s <code>as_widget()</code> reads those for tooltips, brushing, and linked selection — no <code>*_interactive()</code> twins, and no second engine (Vega, plotly) re-drawing the plot in the browser, so the static and interactive figures cannot drift.</li>
+<li>
+<strong>Effects and regions stay vector where they can.</strong> <code><a href="reference/glow.html">glow()</a></code> / <code><a href="reference/shadow.html">shadow()</a></code> are real Gaussian blur (and work on text); Venn/Euler diagrams and merged choropleth regions are computed as boolean <em>geometry</em> rather than alpha-composited overlaps, so they stay crisp in a PDF instead of being flattened to pixels.</li>
+<li>
+<strong>Texture, not only hue.</strong> <code>pattern_*()</code> hatch fills stay legible in greyscale print and under colour-vision deficiency, and render on every backend including PDF.</li>
+<li>
+<strong>Animation from the same grammar.</strong> <code><a href="reference/transition_states.html">transition_states()</a></code> + <code><a href="reference/animate.html">animate()</a></code> compile one keyframe per state (scales frozen, so the animation is non-reactive) and <code><a href="reference/anim_save.html">anim_save()</a></code> encodes a GIF, an APNG, or a resolution-independent <strong>animated SVG</strong> that honours <code>prefers-reduced-motion</code>.</li>
+<li>
+<strong>A hand-drawn mode that is exact.</strong> <code><a href="reference/theme_sketch.html">theme_sketch()</a></code> (or a <code>sketch =</code> argument) gives a plot a wobbly, hand-drawn look generated <em>natively</em> in the engine, so it is identical across PNG, SVG, and PDF rather than a post-hoc filter.</li>
+<li>
+<strong>The spec is plain data.</strong> <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> shows a plot’s structure without drawing it, and the spec round-trips, so a plot is something you can inspect, store, and program against.</li>
 </ul>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -129,26 +146,42 @@
 <span><span class="fu"><a href="reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/scale_color_continuous.html">scale_color_continuous</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-example-1.png" alt="" width="100%"></p>
+<div class="figure">
+<img src="reference/figures/README-example-1.png" alt="plot of chunk example" width="100%"><p class="caption">
+plot of chunk example
+</p>
+</div>
 <p>Layer marks on a single panel; scales train across every layer:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/mark_histogram.html">mark_smooth</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-layers-1.png" alt="" width="100%"></p>
+<div class="figure">
+<img src="reference/figures/README-layers-1.png" alt="plot of chunk layers" width="100%"><p class="caption">
+plot of chunk layers
+</p>
+</div>
 <p>Facet into a grid of panels (<code><a href="reference/facet_wrap.html">facet_wrap()</a></code> / <code><a href="reference/facet_wrap.html">facet_grid()</a></code>), with shared or free scales:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/facet_wrap.html">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">cyl</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-facet-1.png" alt="" width="100%"></p>
+<div class="figure">
+<img src="reference/figures/README-facet-1.png" alt="plot of chunk facet" width="100%"><p class="caption">
+plot of chunk facet
+</p>
+</div>
 <p>Draw spatial data: <code><a href="reference/mark_sf.html">mark_sf()</a></code> renders an <code>sf</code> geometry column and <code><a href="reference/coord_sf.html">coord_sf()</a></code> reprojects and locks the map aspect ratio:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nc</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"shape/nc.shp"</span>, package <span class="op">=</span> <span class="st">"sf"</span><span class="op">)</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">nc</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/mark_sf.html">mark_sf</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">BIR74</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/coord_sf.html">coord_sf</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-sf-1.png" alt="" width="100%"></p>
+<div class="figure">
+<img src="reference/figures/README-sf-1.png" alt="plot of chunk sf" width="100%"><p class="caption">
+plot of chunk sf
+</p>
+</div>
 <p>Draw a network: <code><a href="reference/vgraph.html">vgraph()</a></code> lays out an <code>igraph</code> graph (stress majorization by default), then <code><a href="reference/mark_graph.html">mark_edges()</a></code> / <code><a href="reference/mark_graph.html">mark_nodes()</a></code> draw it — aspect-locked, no axes, edges under nodes:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/make_graph.html" class="external-link">make_graph</a></span><span class="op">(</span><span class="st">"Zachary"</span><span class="op">)</span></span>
@@ -162,7 +195,11 @@
 <span>  <span class="fu"><a href="reference/mark_graph.html">mark_edges</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/mark_graph.html">mark_nodes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="va">deg</span>, fill <span class="op">=</span> <span class="va">grp</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-network-1.png" alt="" width="100%"></p>
+<div class="figure">
+<img src="reference/figures/README-network-1.png" alt="plot of chunk network" width="100%"><p class="caption">
+plot of chunk network
+</p>
+</div>
 <p>The spec is just data — <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> shows its structure without drawing:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu"><a href="reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="va">hp</span><span class="op">)</span><span class="op">)</span></span>
@@ -195,7 +232,13 @@
 <code><a href="reference/mark_datashade.html">mark_datashade()</a></code> for million-point density rasters.</li>
 <li>Annotations: <code><a href="reference/annotate.html">annotate()</a></code>, <code><a href="reference/labs.html">labs()</a></code>, and <code><a href="reference/md.html">md()</a></code> markdown titles.</li>
 <li>Themes (<code><a href="reference/theme_gray.html">theme_gray()</a></code> default, <code><a href="reference/theme_gray.html">theme_minimal()</a></code>, <code><a href="reference/theme_gray.html">theme_bw()</a></code>, <code><a href="reference/theme_gray.html">theme_classic()</a></code>, <code><a href="reference/theme_gray.html">theme_void()</a></code>, <code><a href="reference/theme_gray.html">theme_cyberpunk()</a></code>, <code><a href="reference/theme_gray.html">theme()</a></code> / <code><a href="reference/theme_gray.html">set_theme()</a></code>) and multi-plot composition (<code><a href="reference/concat.html">hconcat()</a></code>, <code><a href="reference/concat.html">vconcat()</a></code>, <code><a href="reference/concat.html">concat()</a></code>, <code><a href="reference/concat.html">wrap_plots()</a></code>, <code><a href="reference/inset.html">inset()</a></code>, <code><a href="reference/repeat_.html">repeat_()</a></code>).</li>
-<li>Layer effects (<code><a href="reference/glow.html">glow()</a></code>, <code><a href="reference/outline.html">outline()</a></code>, <code><a href="reference/shadow.html">shadow()</a></code>) and gradient fills (<code><a href="reference/gradients.html">linear_gradient()</a></code>, <code><a href="reference/gradients.html">radial_gradient()</a></code>).</li>
+<li>Layer effects (<code><a href="reference/glow.html">glow()</a></code>, <code><a href="reference/outline.html">outline()</a></code>, <code><a href="reference/shadow.html">shadow()</a></code>, <code><a href="reference/motion.html">motion()</a></code>, <code><a href="reference/motion.html">echo()</a></code>) and gradient fills (<code><a href="reference/gradients.html">linear_gradient()</a></code>, <code><a href="reference/gradients.html">radial_gradient()</a></code>).</li>
+<li>Pattern (hatch) fills: <code><a href="reference/patterns.html">pattern_stripe()</a></code>, <code><a href="reference/patterns.html">pattern_crosshatch()</a></code>, <code><a href="reference/patterns.html">pattern_grid()</a></code>, <code><a href="reference/patterns.html">pattern_dot()</a></code>, <code><a href="reference/patterns.html">pattern_checker()</a></code>, mapped via <code><a href="reference/scale_pattern.html">scale_pattern()</a></code> — greyscale- and colour-vision-safe, on every backend.</li>
+<li>Boolean marks: <code><a href="reference/vvenn.html">vvenn()</a></code> draws 2-/3-set Venn/Euler diagrams as solid geometry, and <code>mark_sf(merge = TRUE)</code> dissolves adjacent same-value regions into one.</li>
+<li>SVG icon markers (<code>shape =</code> a <code>d</code> path string or a <code>.svg</code> file) and repelled labels (<code>mark_text_repel()</code>, over the engine’s overlap solver).</li>
+<li>Accessibility: tagged PDF output, <code><a href="reference/plot_lint.html">plot_lint()</a></code> for legibility/contrast problems, colour-vision-deficiency simulation at render time, and font pinning for reproducible text.</li>
+<li>Animation: <code><a href="reference/transition_states.html">transition_states()</a></code> / <code><a href="reference/transition_time.html">transition_time()</a></code> / <code><a href="reference/transition_reveal.html">transition_reveal()</a></code>, <code><a href="reference/ease_aes.html">ease_aes()</a></code>, <code><a href="reference/animate.html">animate()</a></code>, and <code><a href="reference/anim_save.html">anim_save()</a></code> to GIF / APNG / animated SVG.</li>
+<li>Output: <code><a href="reference/render_plot.html">render_plot()</a></code> (PNG/SVG/PDF), <code><a href="reference/pdf_pages.html">pdf_pages()</a></code> (multi-page reports or one page per facet), <code><a href="reference/render_all.html">render_all()</a></code> (parallel batch), and <code><a href="reference/plot_svg.html">plot_svg()</a></code> for an inline SVG string (e.g. a sparkline inside a <code>gt</code> table).</li>
 <li>Hand-drawn rendering: <code><a href="reference/sketch.html">sketch()</a></code> gives any geometry mark a wobbly, hachure- filled <a href="https://roughjs.com" class="external-link">Rough.js</a> look (a <code>sketch =</code> argument on marks, an <code><a href="reference/element.html">element_line()</a></code> / <code><a href="reference/element.html">element_rect()</a></code> <code>sketch =</code> slot, or the plot-wide <code><a href="reference/theme_sketch.html">theme_sketch()</a></code> one-liner). Generated natively in the engine, so it is exact and works across PNG / SVG / PDF.</li>
 </ul>
 </div>

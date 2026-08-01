@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,8 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.9.0" id="vellumplot-090">vellumplot 0.9.0<a class="anchor" aria-label="anchor" href="#vellumplot-090"></a></h2>
+<p>First tagged release. Everything below is included.</p>
 <ul><li><p><strong>Merged choropleth regions.</strong> <code>mark_sf(merge = TRUE)</code> dissolves adjacent features that share a fill into one region, so the internal borders between same-valued features disappear and each region is a single crisp path — no double-stroked seams, and exact in PDF. The union is real boolean geometry (<code><a href="https://r-vellum.github.io/vellum/reference/vl_path_op.html" class="external-link">vellum::vl_path_op()</a></code>), holes and multipart features preserved. It is ignored on an interactive layer, where per-feature keys must survive.</p></li>
 <li><p><strong>Rotated and wrapping axis tick labels.</strong> <code>axis.text.x</code> / <code>axis.text.y</code> now honour an <code>angle</code> — <code>theme(axis.text.x = element_text(angle = 45))</code> slants the labels and the gutter reserves the rotated height (an explicit <code>hjust</code>/<code>vjust</code> sets the anchor; otherwise the end of the run is pinned at the tick). When the labels are left horizontal, a long discrete label that would overrun its tick spacing wraps onto multiple lines instead of colliding with its neighbour, and the label row grows to fit — the per-tick companion of the title/subtitle/ caption wrapping already shipped. Labels that already fit are unchanged.</p></li>
 <li><p><strong>Multi-page PDFs and parallel batch export.</strong> <code><a href="../reference/pdf_pages.html">pdf_pages()</a></code> writes several plots into one PDF (a report or slide deck), one plot per page — pages may differ in size and each keeps its accessibility tags — or splits a single faceted plot into one page per facet cell. <code><a href="../reference/render_all.html">render_all()</a></code> renders a list of plots to separate files across CPU cores (small multiples, batch export); it is byte-identical to rendering them one by one and parallelises via process forks on macOS/Linux (sequential on Windows). Both build on the engine’s <code><a href="https://r-vellum.github.io/vellum/reference/pdf_pages.html" class="external-link">vellum::pdf_pages()</a></code> / <code><a href="https://r-vellum.github.io/vellum/reference/render_all.html" class="external-link">vellum::render_all()</a></code>.</p></li>

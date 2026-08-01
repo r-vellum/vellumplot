@@ -7,23 +7,66 @@ until the spec is compiled into a vellum scene and rendered.
 
 The compile is a real pipeline (spec → resolve encodings → train scales
 → measure layout → compile guides → compile marks → vellum scene) and it
-runs without a graphics device, because vellum measures text itself. Two
-consequences are the reason to pick this stack:
+runs without a graphics device, because vellum measures text itself. If
+you already know ggplot2 the grammar will feel familiar; the reason to
+reach for this stack is what the retained vector scene underneath makes
+possible.
 
-- **Every mark keeps its identity through to the output.** A compiled
-  plot *is* a vellum scene, so each drawn element carries its data key
-  and its resolved device-pixel box
-  ([`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)).
-  That is what [vellumwidget](https://github.com/r-vellum/vellumwidget)
-  reads to add tooltips, brushing, and linked selection: the same marks
-  you already declared, not `*_interactive()` twins of them, and no
-  second engine re-drawing your plot.
-- **One spec, one solved layout, several destinations.**
+### What is a little different here
+
+Most of these exist somewhere in R; having them in one grammar, from one
+spec, is what is unusual. None of it is a reason to switch on its own —
+but together they cover a few gaps.
+
+- **One spec, one solved layout, several destinations — including a
+  *tagged* PDF.**
   [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
-  writes PNG, SVG, or PDF from the *same* compiled scene instead of
-  re-solving layout per device, and `as_widget()` hands that scene to
-  the browser. The static figure and the interactive one cannot drift,
-  because they are one scene.
+  writes PNG, SVG, or PDF from the *same* compiled scene rather than
+  re-solving the layout per device, and the PDF carries a real structure
+  tree and alt text, so a screen reader can navigate it. Accessible
+  (tagged) PDF output is uncommon for R graphics.
+- **Accessibility is checkable, not just aspirational.** Render through
+  a colour-vision-deficiency simulation (`render(cvd = "deutan")`) to
+  see the figure as a colour-blind reader would, and run
+  [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
+  to be told about tiny text, low contrast, or a single-level legend
+  *before* you publish it.
+- **The interactive widget uses the marks you declared.** A compiled
+  plot *is* a vellum scene, so each element keeps its data key and its
+  resolved device-pixel box
+  ([`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)).
+  [vellumwidget](https://github.com/r-vellum/vellumwidget)’s
+  `as_widget()` reads those for tooltips, brushing, and linked selection
+  — no `*_interactive()` twins, and no second engine (Vega, plotly)
+  re-drawing the plot in the browser, so the static and interactive
+  figures cannot drift.
+- **Effects and regions stay vector where they can.**
+  [`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md) /
+  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md)
+  are real Gaussian blur (and work on text); Venn/Euler diagrams and
+  merged choropleth regions are computed as boolean *geometry* rather
+  than alpha-composited overlaps, so they stay crisp in a PDF instead of
+  being flattened to pixels.
+- **Texture, not only hue.** `pattern_*()` hatch fills stay legible in
+  greyscale print and under colour-vision deficiency, and render on
+  every backend including PDF.
+- **Animation from the same grammar.**
+  [`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md) +
+  [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
+  compile one keyframe per state (scales frozen, so the animation is
+  non-reactive) and
+  [`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+  encodes a GIF, an APNG, or a resolution-independent **animated SVG**
+  that honours `prefers-reduced-motion`.
+- **A hand-drawn mode that is exact.**
+  [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
+  (or a `sketch =` argument) gives a plot a wobbly, hand-drawn look
+  generated *natively* in the engine, so it is identical across PNG,
+  SVG, and PDF rather than a post-hoc filter.
+- **The spec is plain data.**
+  [`summary()`](https://rdrr.io/r/base/summary.html) shows a plot’s
+  structure without drawing it, and the spec round-trips, so a plot is
+  something you can inspect, store, and program against.
 
 ## Installation
 
@@ -54,7 +97,9 @@ vplot(mtcars) |>
   scale_color_continuous()
 ```
 
-![](reference/figures/README-example-1.png)
+![plot of chunk example](reference/figures/README-example-1.png)
+
+plot of chunk example
 
 Layer marks on a single panel; scales train across every layer:
 
@@ -65,7 +110,9 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg)
 ```
 
-![](reference/figures/README-layers-1.png)
+![plot of chunk layers](reference/figures/README-layers-1.png)
+
+plot of chunk layers
 
 Facet into a grid of panels
 ([`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
@@ -80,7 +127,9 @@ vplot(mtcars) |>
   facet_wrap(~cyl)
 ```
 
-![](reference/figures/README-facet-1.png)
+![plot of chunk facet](reference/figures/README-facet-1.png)
+
+plot of chunk facet
 
 Draw spatial data:
 [`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
@@ -96,7 +145,9 @@ vplot(nc) |>
   coord_sf()
 ```
 
-![](reference/figures/README-sf-1.png)
+![plot of chunk sf](reference/figures/README-sf-1.png)
+
+plot of chunk sf
 
 Draw a network:
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
@@ -121,7 +172,9 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(2, 8))
 ```
 
-![](reference/figures/README-network-1.png)
+![plot of chunk network](reference/figures/README-network-1.png)
+
+plot of chunk network
 
 The spec is just data —
 [`summary()`](https://rdrr.io/r/base/summary.html) shows its structure
@@ -270,10 +323,53 @@ render_plot(p, "cars.png")
 - Layer effects
   ([`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md),
   [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md),
-  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md))
+  [`shadow()`](https://r-vellum.github.io/vellumplot/reference/shadow.md),
+  [`motion()`](https://r-vellum.github.io/vellumplot/reference/motion.md),
+  [`echo()`](https://r-vellum.github.io/vellumplot/reference/motion.md))
   and gradient fills
   ([`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md),
   [`radial_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)).
+- Pattern (hatch) fills:
+  [`pattern_stripe()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+  [`pattern_crosshatch()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+  [`pattern_grid()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+  [`pattern_dot()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+  [`pattern_checker()`](https://r-vellum.github.io/vellumplot/reference/patterns.md),
+  mapped via
+  [`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
+  — greyscale- and colour-vision-safe, on every backend.
+- Boolean marks:
+  [`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md)
+  draws 2-/3-set Venn/Euler diagrams as solid geometry, and
+  `mark_sf(merge = TRUE)` dissolves adjacent same-value regions into
+  one.
+- SVG icon markers (`shape =` a `d` path string or a `.svg` file) and
+  repelled labels (`mark_text_repel()`, over the engine’s overlap
+  solver).
+- Accessibility: tagged PDF output,
+  [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
+  for legibility/contrast problems, colour-vision-deficiency simulation
+  at render time, and font pinning for reproducible text.
+- Animation:
+  [`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md)
+  /
+  [`transition_time()`](https://r-vellum.github.io/vellumplot/reference/transition_time.md)
+  /
+  [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md),
+  [`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md),
+  [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md),
+  and
+  [`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+  to GIF / APNG / animated SVG.
+- Output:
+  [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+  (PNG/SVG/PDF),
+  [`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
+  (multi-page reports or one page per facet),
+  [`render_all()`](https://r-vellum.github.io/vellumplot/reference/render_all.md)
+  (parallel batch), and
+  [`plot_svg()`](https://r-vellum.github.io/vellumplot/reference/plot_svg.md)
+  for an inline SVG string (e.g. a sparkline inside a `gt` table).
 - Hand-drawn rendering:
   [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
   gives any geometry mark a wobbly, hachure- filled
