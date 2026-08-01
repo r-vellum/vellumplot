@@ -202,8 +202,9 @@ element_blank <- S7::new_class(
   )
 }
 
-# Text rotation for a resolved text element (degrees).
-.el_rot <- function(el) el@angle %||% 0
+# Text rotation for a resolved text element (degrees). Blank elements draw
+# nothing and carry no `angle` property, so they read as unrotated.
+.el_rot <- function(el) if (.is_blank(el)) 0 else el@angle %||% 0
 
 # The resolved sketch for a drawn line/rect element: the `vellum_sketch` it (or,
 # via the theme tree, a parent element) carries, else NULL (crisp). `NA` (forced

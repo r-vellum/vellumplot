@@ -326,7 +326,14 @@ NULL
   scene <- vellum::pop(scene)
   # axes + axis titles
   scene <- .draw_y_axis(scene, gm$panel_row, gm$ylabels_col, vsc, rt)
-  scene <- .draw_x_axis(scene, gm$xlabels_row, gm$panel_col, hsc, rt)
+  scene <- .draw_x_axis(
+    scene,
+    gm$xlabels_row,
+    gm$panel_col,
+    hsc,
+    rt,
+    gm$xwrap_mm
+  )
   scene <- .draw_y_title(scene, gm$panel_row, gm$ytitle_col, vsc$name, rt)
   scene <- .draw_x_title(scene, gm$xtitle_row, gm$panel_col, hsc$name, rt)
   # per-sub-plot legend (only when not collecting)

@@ -277,7 +277,92 @@ NULL
 # byte-identical but for the small geometry table below (viewport name + scale,
 # the axis-line segment endpoints and its sketch seed, and the label anchor +
 # justification), so they are now thin wrappers over this.
-.draw_axis <- function(scene, row, col, sc, rt, axis, sec = FALSE) {
+# hjust/vjust (0..1) bucketed to a justification word, matching `.band_anchor`.
+.just_h <- function(h) {
+  if (h < 0.25) {
+    "left"
+  } else if (h > 0.75) {
+    "right"
+  } else {
+    "centre"
+  }
+}
+.just_v <- function(v) {
+  if (v < 0.25) {
+    "bottom"
+  } else if (v > 0.75) {
+    "top"
+  } else {
+    "centre"
+  }
+}
+
+# The justification a tick label uses. Unrotated labels keep the track's fixed
+# anchor (`geom$just`). A rotated label honours the element's own `hjust`/`vjust`
+# when set; otherwise it anchors the *end* of the run at the tick so the slanted
+# text hangs clear of the panel (down-outward along the bottom, up-outward along
+# the top).
+.axis_text_just <- function(geom, el, rot) {
+  if (rot == 0) {
+    return(geom$just)
+  }
+  hj <- el@hjust
+  vj <- el@vjust
+  if (!is.null(hj) || !is.null(vj)) {
+    return(c(
+      if (!is.null(hj)) .just_h(hj) else geom$just[1],
+      if (!is.null(vj)) .just_v(vj) else geom$just[2]
+    ))
+  }
+  if (identical(geom$just[2], "top")) {
+    c(if (rot > 0) "right" else "left", "top")
+  } else if (identical(geom$just[2], "bottom")) {
+    c(if (rot > 0) "left" else "right", "bottom")
+  } else {
+    geom$just
+  }
+}
+
+# The `text_grob` for one tick label. When `wrap_mm` (the mm width a single tick
+# gets) is finite and the label is unrotated, the text wraps to that width and
+# its lines centre under the tick; otherwise it is an ordinary single line drawn
+# exactly where the old code placed it. Shared by the draw and the row/gutter
+# height measurement (`.track_h_axis`) so the reserved track always matches.
+.axis_text_grob <- function(
+  label,
+  el,
+  just,
+  x = vellum::vl_unit(0.5, "npc"),
+  y = vellum::vl_unit(0.5, "npc"),
+  rot = 0,
+  wrap_mm = NA_real_
+) {
+  wrap <- length(wrap_mm) == 1L && is.finite(wrap_mm) && wrap_mm > 0 && rot == 0
+  # Tabular figures on tick labels: digits keep a constant advance width, so a
+  # column of numbers does not jitter left/right from tick to tick. Harmless on
+  # non-numeric labels (only digit glyphs are affected).
+  vellum::text_grob(
+    label,
+    x = x,
+    y = y,
+    just = just,
+    rot = rot,
+    width = if (wrap) vellum::vl_unit(wrap_mm, "mm") else NULL,
+    align = if (wrap) "centre" else "left",
+    gp = .el_gpar_text(el, features = .TNUM)
+  )
+}
+
+.draw_axis <- function(
+  scene,
+  row,
+  col,
+  sc,
+  rt,
+  axis,
+  sec = FALSE,
+  wrap_mm = NA_real_
+) {
   is_y <- identical(axis, "y")
   el <- rt[[if (is_y) "axis.text.y" else "axis.text.x"]]
   aline <- rt[[if (is_y) "axis.line.y" else "axis.line.x"]]
@@ -352,10 +437,8 @@ NULL
     )
   }
   if (!.is_blank(el)) {
-    # Tabular figures on tick labels: digits keep a constant advance width, so a
-    # column of numbers does not jitter left/right from tick to tick. Harmless on
-    # non-numeric labels (only digit glyphs are affected).
-    gp <- .el_gpar_text(el, features = .TNUM)
+    rot <- .el_rot(el)
+    just <- .axis_text_just(geom, el, rot)
     for (i in seq_along(sc$breaks)) {
       x <- if (is_y) {
         vellum::vl_unit(geom$lx, "npc")
@@ -369,7 +452,15 @@ NULL
       }
       scene <- vellum::draw(
         scene,
-        vellum::text_grob(sc$labels[i], x = x, y = y, just = geom$just, gp = gp)
+        .axis_text_grob(
+          sc$labels[i],
+          el,
+          just,
+          x = x,
+          y = y,
+          rot = rot,
+          wrap_mm = wrap_mm
+        )
       )
     }
   }
@@ -381,9 +472,12 @@ NULL
   .draw_axis(scene, row, col, y_sc, rt, "y")
 }
 
-# x-axis labels for `x_sc`, centred under each gridline.
-.draw_x_axis <- function(scene, row, col, x_sc, rt) {
-  .draw_axis(scene, row, col, x_sc, rt, "x")
+# x-axis labels for `x_sc`, centred under each gridline. `wrap_mm` is the mm
+# width one tick gets, so a long label wraps to its column instead of colliding
+# with its neighbour; `NA` (the default, and every unknown-width path) keeps
+# single-line labels.
+.draw_x_axis <- function(scene, row, col, x_sc, rt, wrap_mm = NA_real_) {
+  .draw_axis(scene, row, col, x_sc, rt, "x", wrap_mm = wrap_mm)
 }
 
 # A facet strip: an optional filled background plus a centred label. `rot = 90`

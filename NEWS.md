@@ -1,5 +1,14 @@
 # vellumplot (development version)
 
+* **Rotated and wrapping axis tick labels.** `axis.text.x` / `axis.text.y` now
+  honour an `angle` — `theme(axis.text.x = element_text(angle = 45))` slants the
+  labels and the gutter reserves the rotated height (an explicit `hjust`/`vjust`
+  sets the anchor; otherwise the end of the run is pinned at the tick). When the
+  labels are left horizontal, a long discrete label that would overrun its tick
+  spacing wraps onto multiple lines instead of colliding with its neighbour, and
+  the label row grows to fit — the per-tick companion of the title/subtitle/
+  caption wrapping already shipped. Labels that already fit are unchanged.
+
 * **Multi-page PDFs and parallel batch export.** `pdf_pages()` writes several
   plots into one PDF (a report or slide deck), one plot per page — pages may
   differ in size and each keeps its accessibility tags — or splits a single

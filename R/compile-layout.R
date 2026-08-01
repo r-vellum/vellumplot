@@ -62,6 +62,23 @@ NULL
     vellum::vl_unit(pad_mm, "mm")
 }
 
+# Height (mm) of the x tick-label row. Measured through the *same* grob the axis
+# drawer builds (`.axis_text_grob`), so a rotated or wrapped label reserves the
+# height it actually draws at. `wrap_mm` is the per-tick mm budget (NA = no wrap).
+.track_h_axis <- function(el, label, pad_mm, rot = 0, wrap_mm = NA_real_) {
+  if (.is_blank(el)) {
+    return(vellum::vl_unit(0, "mm"))
+  }
+  g <- .axis_text_grob(
+    label,
+    el,
+    c("centre", "top"),
+    rot = rot,
+    wrap_mm = wrap_mm
+  )
+  vellum::grobheight(g) + vellum::vl_unit(pad_mm, "mm")
+}
+
 # Build the panel + gutter layout. In the simplest single-panel case the columns
 # are [ y-title | y-labels | panel(null) ] and the rows [ panel(null) | x-labels
 # | x-title ]; faceting, strips, a legend track, and the title/subtitle/tag/
@@ -288,9 +305,19 @@ NULL
     function(p) (if (flip) p$y_sc else p$x_sc)$labels
   )))
   tick <- rt[["axis.ticks.length"]]
+  # Tick labels honour the element's rotation (`axis.text.x/y` angle), so the
+  # gutter/row is sized from the *rotated* extent. The x tick-label row height is
+  # deferred to below (it also depends on the wrap budget, which needs the legend
+  # placement resolved first).
+  xrot <- .el_rot(rt[["axis.text.x"]])
+  yrot <- .el_rot(rt[["axis.text.y"]])
   yt <- .track_w(rt[["axis.title.y"]], vsc$name, .PAD_MM, rot = 90)
-  yl <- .track_w(rt[["axis.text.y"]], .longest(v_labs), tick + .PAD_MM)
-  xl <- .track_h(rt[["axis.text.x"]], .longest(h_labs), tick + .PAD_MM)
+  yl <- .track_w(
+    rt[["axis.text.y"]],
+    .longest(v_labs),
+    tick + .PAD_MM,
+    rot = yrot
+  )
   xt <- .track_h(rt[["axis.title.x"]], hsc$name, .PAD_MM)
   # Secondary axes (opposite edge): a right-column pair for the vertical scale's
   # sec axis, a top-row pair for the horizontal scale's. Only sized when present,
@@ -300,13 +327,23 @@ NULL
   has_y_sec <- !is.null(y_sec)
   has_x_sec <- !is.null(x_sec)
   y2l <- if (has_y_sec) {
-    .track_w(rt[["axis.text.y"]], .longest(y_sec$labels), tick + .PAD_MM)
+    .track_w(
+      rt[["axis.text.y"]],
+      .longest(y_sec$labels),
+      tick + .PAD_MM,
+      rot = yrot
+    )
   }
   y2t <- if (has_y_sec) {
     .track_w(rt[["axis.title.y"]], y_sec$name, .PAD_MM, rot = 90)
   }
   x2l <- if (has_x_sec) {
-    .track_h(rt[["axis.text.x"]], .longest(x_sec$labels), tick + .PAD_MM)
+    .track_h(
+      rt[["axis.text.x"]],
+      .longest(x_sec$labels),
+      tick + .PAD_MM,
+      rot = xrot
+    )
   }
   x2t <- if (has_x_sec) .track_h(rt[["axis.title.x"]], x_sec$name, .PAD_MM)
   # Polar panels carry their axis labels/titles inside the square panel, so the
@@ -330,6 +367,75 @@ NULL
   show_legend <- length(guides) && !identical(pos, "none")
   legend_vert <- show_legend && pos %in% c("left", "right")
   legend_horiz <- show_legend && pos %in% c("top", "bottom")
+
+  # Per-x-tick wrap budget (mm): the panel's mm width shared among its x ticks, so
+  # a long discrete label wraps to its own column instead of running into its
+  # neighbour. Only knowable when the page width is set (`band_w`), the labels are
+  # unrotated, the x scale is shared, and the panel is a plain (unweighted) null
+  # track -- aspect/fixed/sf/polar/marginal give the panel a weighted null width
+  # that does not resolve to mm here, so those fall back to single-line labels.
+  # Panel mm = content box less the fixed flanking columns (y title/labels, any
+  # secondary y pair, a row strip, a vertical legend) and the inter-panel gaps,
+  # split across the C panel columns.
+  xwrap_mm <- NA_real_
+  can_wrap_x <- is.finite(band_w) &&
+    xrot == 0 &&
+    !respect &&
+    !polar &&
+    is.null(marginal) &&
+    !free_x &&
+    length(hsc$breaks) > 0L &&
+    !.is_blank(rt[["axis.text.x"]])
+  if (can_wrap_x) {
+    leg_w <- if (legend_vert) {
+      .legend_width(guides, rt, legend_avail_h)
+    } else {
+      vellum::vl_unit(0, "mm")
+    }
+    side <- c(
+      list(yt, yl, leg_w),
+      if (has_row_strip) list(strip),
+      if (has_y_sec) list(y2l, y2t)
+    )
+    side_mm <- sum(vapply(
+      side,
+      function(u) vellum::vl_convert(u, "mm"),
+      numeric(1)
+    ))
+    gaps_mm <- vellum::vl_convert(gap, "mm") * (C - 1L)
+    per_panel_mm <- (band_w - side_mm - gaps_mm) / C
+    # Any track that does not resolve to a plain mm (a null width slipping
+    # through) leaves `per_panel_mm` non-finite -- fall back to single-line.
+    if (isTRUE(per_panel_mm > 0)) {
+      budget <- per_panel_mm / length(hsc$breaks)
+      # Only engage wrapping when the widest label actually overruns its budget,
+      # so every plot whose labels already fit keeps its exact single-line layout
+      # (measured through the same grob the drawer builds).
+      el_x <- rt[["axis.text.x"]]
+      natural <- vellum::vl_convert(
+        vellum::grobwidth(.axis_text_grob(
+          .longest(h_labs),
+          el_x,
+          c("centre", "top")
+        )),
+        "mm"
+      )
+      if (isTRUE(natural > budget)) {
+        xwrap_mm <- budget
+      }
+    }
+  }
+  # The x tick-label row height, now that the wrap budget is known (deferred from
+  # the gutter block above). Polar keeps the collapsed zero set earlier.
+  if (!polar) {
+    xl <- .track_h_axis(
+      rt[["axis.text.x"]],
+      .longest(h_labs),
+      tick + .PAD_MM,
+      rot = xrot,
+      wrap_mm = xwrap_mm
+    )
+  }
 
   # --- columns: [ legend(left)? | ytitle | (ylabels panel gap)xC |
   #               row-strip? | legend(right)? ] ---
@@ -476,6 +582,7 @@ NULL
     ncol_total = length(W$u),
     nrow_total = length(H$u),
     band_w = band_w,
+    xwrap_mm = xwrap_mm,
     respect = respect
   )
 }

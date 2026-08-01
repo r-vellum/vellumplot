@@ -544,7 +544,8 @@ NULL
         lay$xlabels_row[1],
         lay$panel_col[cc],
         warp_h(hshared),
-        rt
+        rt,
+        lay$xwrap_mm
       )
     }
   }
