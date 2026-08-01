@@ -186,8 +186,11 @@
   over the levels of a column; `animate()` compiles one keyframe scene per state —
   training the scales **once over all states and freezing them**, so nothing
   retrains between frames (non-reactive keyframe animation) — and `anim_save()`
-  tweens and encodes the in-between frames to a looping GIF or animated PNG in one
-  parallel, streaming pass in vellum's Rust backend. `ease_aes()` sets the easing
+  tweens and encodes the in-between frames to a looping GIF, an animated PNG, or an
+  **animated SVG** (`.svg` — resolution-independent, honours
+  `prefers-reduced-motion`; `anim_save()` advises a raster format when a `.svg`
+  scene is dense enough that one would be smaller) in one parallel, streaming pass
+  in vellum's Rust backend. `ease_aes()` sets the easing
   (`linear`, or a family like `cubic`/`sine`/`elastic`/`bounce` with an
   `-in`/`-out`/`-in-out` direction). Position, size, alpha and colour interpolate
   (colour perceptually, in Oklab); discrete attributes snap. `transition_time()`

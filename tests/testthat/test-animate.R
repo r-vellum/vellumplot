@@ -223,6 +223,38 @@ test_that("anim_save() writes a GIF and an APNG", {
   expect_true(file.exists(apng))
 })
 
+test_that("anim_save() writes an animated SVG", {
+  a <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    transition_states(cyl) |>
+    animate(nframes = 12, fps = 12)
+
+  svg <- withr::local_tempfile(fileext = ".svg")
+  expect_equal(anim_save(svg, a), svg)
+  txt <- paste(readLines(svg, warn = FALSE), collapse = "\n")
+  # a real, self-contained animated SVG: vector markup, a CSS frame cycle, and a
+  # reduced-motion fallback (the accessibility contract WI-11 promises)
+  expect_match(txt, "<svg")
+  expect_match(txt, "@keyframes")
+  expect_match(txt, "prefers-reduced-motion")
+})
+
+test_that("anim_save() advises a raster format for a dense .svg scene", {
+  # each state (keyframe) carries ~1000 marks, past the advisory threshold
+  dense <- data.frame(
+    x = runif(2000),
+    y = runif(2000),
+    g = rep(c("a", "b"), 1000)
+  )
+  a <- vplot(dense) |>
+    mark_point(x = x, y = y) |>
+    transition_states(g) |>
+    animate(nframes = 4)
+  svg <- withr::local_tempfile(fileext = ".svg")
+  expect_gt(vellumplot:::.anim_element_count(a), 800L)
+  expect_message(anim_save(svg, a), "raster format")
+})
+
 test_that("anim_save() validates its inputs", {
   a <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
@@ -230,7 +262,7 @@ test_that("anim_save() validates its inputs", {
     animate(nframes = 6)
   expect_error(
     anim_save(withr::local_tempfile(fileext = ".mp4"), a),
-    "\\.gif.*\\.png"
+    "\\.gif.*\\.png.*\\.svg"
   )
   expect_error(anim_save("x.gif", mtcars), "vellum_animation")
 })
