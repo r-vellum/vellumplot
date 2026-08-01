@@ -59,6 +59,37 @@ vplot(mtcars) |>
   labs(title = "Fuel economy")
 ```
 
+### Rotating and wrapping axis labels
+
+Long category names on a discrete axis are a perennial nuisance: side by side
+they collide. Two theme controls handle this. Setting an `angle` on
+`axis.text.x` rotates the tick labels, and the gutter reserves the extra height
+automatically; an explicit `hjust`/`vjust` sets the anchor, and otherwise the
+end of the run is pinned at the tick so the slant clears the panel.
+
+```{r}
+gdp <- data.frame(
+  country = c(
+    "United States", "United Kingdom", "United Arab Emirates",
+    "Republic of Korea", "Czech Republic"
+  ),
+  score = c(9, 6, 7, 8, 5)
+)
+vplot(gdp) |>
+  mark_bar(x = country, y = score) |>
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+Left horizontal, a long label that would overrun the width of its tick instead
+**wraps** onto multiple lines, and the label row grows to fit — the per-tick
+companion of the title/subtitle/caption wrapping. Labels that already fit are
+untouched, so a plain numeric axis is unchanged.
+
+```{r}
+vplot(gdp) |>
+  mark_bar(x = country, y = score)
+```
+
 ## Layer effects
 
 Effects change how a single mark is painted, and they are passed to a mark's
