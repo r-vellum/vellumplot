@@ -22,6 +22,7 @@ mark_sf(
   linewidth = NULL,
   size = NULL,
   na_value = "grey80",
+  merge = FALSE,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -51,6 +52,16 @@ mark_sf(
 
   Fill colour for features whose mapped `fill`/`color` value is `NA`
   (drawn as a distinct legend swatch). Default `"grey80"`.
+
+- merge:
+
+  Dissolve adjacent features that share a fill into one region, so the
+  internal borders between same-valued features disappear and each
+  region is a single crisp path (no seam artefacts, and exact in PDF).
+  The union is real boolean geometry via
+  [`vellum::vl_path_op()`](https://r-vellum.github.io/vellum/reference/vl_path_op.html).
+  Default `FALSE`. Ignored when the layer is interactive (merging would
+  drop the per-feature keys).
 
 - blend:
 

@@ -38,6 +38,34 @@ then a second
 for highlighted features or point locations on top, and every layer
 reprojects together.
 
+### Merging regions
+
+When several small features share a value — counties grouped into a
+region, or tracts into a district — the borders *between* them are
+usually noise: you want one clean outline per group, not a mesh of
+internal seams. `merge = TRUE` dissolves each same-fill group into a
+single region with real boolean geometry
+([`vellum::vl_path_op()`](https://r-vellum.github.io/vellum/reference/vl_path_op.html)),
+so the shared edges vanish and each region is one crisp path that stays
+exact in PDF (no double-stroked seams, no hairline gaps).
+
+``` r
+
+nc$region <- cut(sf::st_coordinates(sf::st_centroid(sf::st_geometry(nc)))[, 1],
+  4,
+  labels = c("west", "midwest", "mideast", "east")
+)
+vplot(nc) |>
+  mark_sf(fill = region, merge = TRUE, color = "white") |>
+  coord_sf()
+```
+
+![](spatial-and-networks_files/figure-html/unnamed-chunk-3-1.png)
+
+Merging is for static choropleths; on an interactive layer it is
+ignored, since dissolving the features would drop the per-feature keys a
+tooltip needs.
+
 ### Cartographic furniture
 
 A map usually wants more than the polygons: a graticule to place it on
@@ -64,7 +92,7 @@ vplot(nc) |>
   mark_compass()
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-3-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-4-1.png)
 
 ## Networks from igraph
 
@@ -94,7 +122,7 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-4-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-5-1.png)
 
 The node and edge aesthetics are the same ones you already know.
 [`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
@@ -112,7 +140,7 @@ vgraph(g, layout = "stress") |>
   mark_node_text(label = name, size = 8)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-5-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-6-1.png)
 
 ### Independent edge scales
 
@@ -143,7 +171,7 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-6-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png)
 
 ### Directed edges, arrows, and edge labels
 
@@ -170,7 +198,7 @@ vgraph(d, layout = "stress") |>
   scale_edge_width(range = c(0.4, 2.5))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-7-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png)
 
 ### Readable labels
 
@@ -207,7 +235,7 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-8-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-9-1.png)
 
 ### Edge routing
 
@@ -226,7 +254,7 @@ vgraph(tr, layout = "tree") |>
   mark_nodes(size = 2, fill = "steelblue")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-9-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png)
 
 For directed graphs, `gradient = TRUE` fades each edge from faint at its
 source to opaque at its target – a direction cue that reads without
@@ -240,7 +268,7 @@ vgraph(dg) |>
   mark_nodes(size = 2, fill = "grey30")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-10-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
 
 ### Edge bundling
 
@@ -263,7 +291,7 @@ vgraph(gb, layout = "stress") |>
   mark_nodes(size = 1.5, fill = "grey20")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-11-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
 
 The other algorithms trade off speed against how aggressively they
 merge: `"force"` (the default, force-directed) and `"path"` bend edges
@@ -299,7 +327,7 @@ vgraph(fg, layout = coords) |>
   mark_nodes(size = 1.5, fill = "grey30")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-12-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
 
 `type = "spiral"` (the default) is the recommended layout: a planar,
 angle-restricted spiral tree that needs only the edgebundle package.
@@ -324,7 +352,7 @@ vgraph(hc, layout = "dendrogram") |>
   mark_edges(routing = "elbow", elbow_at = "start", elbow_axis = "v")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-13-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
 
 Add labels with
 [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
@@ -342,7 +370,7 @@ vgraph(hc, layout = "dendrogram") |>
   )
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-14-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png)
 
 [`vdendrogram()`](https://r-vellum.github.io/vellumplot/reference/vdendrogram.md)
 is the one-line preset for all of that – bracket edges and placed leaf
@@ -354,7 +382,7 @@ clusters (branches above the cut stay neutral):
 vdendrogram(hc, k = 3)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-15-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-16-1.png)
 
 For unrooted trees (phylogeny-style), `layout = "unrooted"` uses
 graphlayouts’ `layout_as_tree_unrooted()` – `mode` picks `"equalangle"`,
@@ -367,7 +395,7 @@ vgraph(igraph::make_tree(31, 3, "undirected"), layout = "unrooted", mode = "equa
   mark_nodes(size = 1.5, fill = "grey30")
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-16-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-17-1.png)
 
 ### Augmenting and filtering
 
@@ -395,7 +423,7 @@ vgraph(g, augment = c("degree", "community"), k_core = 2) |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-17-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-18-1.png)
 
 ### Community hulls and node glyphs
 
@@ -418,7 +446,7 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(0.5, 3))
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-18-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-19-1.png)
 
 [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
 replaces the node markers with pie (or donut, via `inner`) glyphs whose
@@ -436,7 +464,7 @@ vgraph(g, layout = "stress") |>
   mark_node_pie(cols = c("x1", "x2", "x3"), size = 5)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-19-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-20-1.png)
 
 ### Interactive neighbour highlighting
 
@@ -478,7 +506,7 @@ vgraph(g, layout = "circle") |>
   mark_nodes(fill = grp, size = 2)
 ```
 
-![](spatial-and-networks_files/figure-html/unnamed-chunk-21-1.png)
+![](spatial-and-networks_files/figure-html/unnamed-chunk-22-1.png)
 
 Both of these are still ordinary specs. They face the same scales,
 themes, and composition tools as any other plot, and they render to a

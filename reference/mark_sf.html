@@ -96,6 +96,7 @@ attributes as usual, e.g. <code>fill = AREA</code> for a choropleth. Pair with
 <span>  linewidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
+<span>  merge <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -124,6 +125,14 @@ constant or a mapped expression.</p></dd>
 <dt id="arg-na-value">na_value<a class="anchor" aria-label="anchor" href="#arg-na-value"></a></dt>
 <dd><p>Fill colour for features whose mapped <code>fill</code>/<code>color</code> value is
 <code>NA</code> (drawn as a distinct legend swatch). Default <code>"grey80"</code>.</p></dd>
+
+
+<dt id="arg-merge">merge<a class="anchor" aria-label="anchor" href="#arg-merge"></a></dt>
+<dd><p>Dissolve adjacent features that share a fill into one region, so
+the internal borders between same-valued features disappear and each region
+is a single crisp path (no seam artefacts, and exact in PDF). The union is
+real boolean geometry via <code><a href="https://r-vellum.github.io/vellum/reference/vl_path_op.html" class="external-link">vellum::vl_path_op()</a></code>. Default <code>FALSE</code>. Ignored
+when the layer is interactive (merging would drop the per-feature keys).</p></dd>
 
 
 <dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>

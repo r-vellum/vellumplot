@@ -2,6 +2,15 @@
 
 ## vellumplot (development version)
 
+- **Merged choropleth regions.** `mark_sf(merge = TRUE)` dissolves
+  adjacent features that share a fill into one region, so the internal
+  borders between same-valued features disappear and each region is a
+  single crisp path — no double-stroked seams, and exact in PDF. The
+  union is real boolean geometry
+  ([`vellum::vl_path_op()`](https://r-vellum.github.io/vellum/reference/vl_path_op.html)),
+  holes and multipart features preserved. It is ignored on an
+  interactive layer, where per-feature keys must survive.
+
 - **Rotated and wrapping axis tick labels.** `axis.text.x` /
   `axis.text.y` now honour an `angle` —
   `theme(axis.text.x = element_text(angle = 45))` slants the labels and
