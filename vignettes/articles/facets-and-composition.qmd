@@ -215,3 +215,48 @@ Faceting and composition also compose with each other: a faceted plot is still
 a spec, so it can go straight into a `concat()`. Once your figure looks right,
 send it to a file the same way as any plot, with `render_plot()` (see
 **[Get started](vellumplot.html)**).
+
+## Multi-page and batch output
+
+`render_plot()` writes one figure to one file. Two companions handle *many*
+figures at once.
+
+`pdf_pages()` writes a list of plots into a single PDF, one plot per page — a
+report or a slide deck. Pages may differ in size (each plot keeps its own
+`width`/`height`), and the per-page accessibility tags (see
+**[Accessibility](accessibility.html)**) are written for every page.
+
+```r
+report <- list(
+  vplot(mtcars) |> mark_point(x = wt, y = mpg) |> labs(title = "Weight vs mpg"),
+  vplot(mtcars) |> mark_histogram(x = mpg, bins = 10) |> labs(title = "mpg")
+)
+pdf_pages(report, "report.pdf")
+```
+
+Given a single *faceted* plot instead of a list, `pdf_pages()` splits it into
+one page per facet cell — the paged counterpart of a small-multiple grid, where
+each page trains its own scales and is tagged independently:
+
+```r
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  facet_wrap(~cyl) |>
+  pdf_pages("by-cylinder.pdf")
+```
+
+`render_all()` goes the other way: a list of plots to *separate* files, rendered
+across CPU cores. Each plot is one independent job, so the work parallelises
+cleanly (via process forks on macOS/Linux, sequentially on Windows) and the
+output is byte-identical to rendering them one by one. When the list is named,
+`paths` may be a single directory and each plot lands in `<name>.png`:
+
+```r
+render_all(
+  list(
+    weight = vplot(mtcars) |> mark_point(x = wt, y = mpg),
+    power = vplot(mtcars) |> mark_point(x = hp, y = mpg)
+  ),
+  "figures/"
+)
+```

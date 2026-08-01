@@ -58,9 +58,10 @@ NULL
 #' slots is drawn; any property left `NULL` is inherited from the slot's parent
 #' in the theme tree. `element_blank()` draws nothing.
 #'
-#' @param family,face,size,colour,color,hjust,vjust,angle,lineheight,margin
-#'   Text properties. `color` is an alias for `colour`; `size` is in points;
-#'   `margin` is a numeric vector of millimetres (recycled to length 4).
+#' @param family,face,size,cex,colour,color,hjust,vjust,angle,lineheight,margin
+#'   Text properties. `color` is an alias for `colour`; `size` is in points and
+#'   `cex` is a relative multiplier on the inherited `size`; `margin` is a
+#'   numeric vector of millimetres (recycled to length 4).
 #' @param linewidth,linetype,lineend Line properties.
 #' @param fill Fill colour (rectangles).
 #' @param sketch For [element_line()] / [element_rect()], a [sketch()] spec giving

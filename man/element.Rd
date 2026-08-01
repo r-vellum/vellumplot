@@ -43,8 +43,9 @@ element_rect(
 element_blank()
 }
 \arguments{
-\item{family, face, size, colour, color, hjust, vjust, angle, lineheight, margin}{Text properties. \code{color} is an alias for \code{colour}; \code{size} is in points;
-\code{margin} is a numeric vector of millimetres (recycled to length 4).}
+\item{family, face, size, cex, colour, color, hjust, vjust, angle, lineheight, margin}{Text properties. \code{color} is an alias for \code{colour}; \code{size} is in points and
+\code{cex} is a relative multiplier on the inherited \code{size}; \code{margin} is a
+numeric vector of millimetres (recycled to length 4).}
 
 \item{linewidth, linetype, lineend}{Line properties.}
 
