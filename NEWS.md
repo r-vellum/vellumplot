@@ -1,4 +1,6 @@
-# vellumplot (development version)
+# vellumplot 0.9.0
+
+First tagged release. Everything below is included.
 
 * **Merged choropleth regions.** `mark_sf(merge = TRUE)` dissolves adjacent
   features that share a fill into one region, so the internal borders between

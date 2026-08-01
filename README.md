@@ -1,52 +1,84 @@
-
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
 
 # vellumplot <img src="man/figures/logo.png" align="right" height="138" alt="" />
 
 <!-- badges: start -->
-
 [![R-CMD-check](https://github.com/r-vellum/vellumplot/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-vellum/vellumplot/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
+
+
 vellumplot is a declarative, pipe-first grammar of graphics built on the
-[vellum](https://github.com/r-vellum/vellum) graphics backend. You
-describe a plot as an inspectable, serializable *spec*; nothing is drawn
-until the spec is compiled into a vellum scene and rendered.
+[vellum](https://github.com/r-vellum/vellum) graphics backend. You describe a
+plot as an inspectable, serializable *spec*; nothing is drawn until the spec is
+compiled into a vellum scene and rendered.
 
-The compile is a real pipeline (spec → resolve encodings → train scales
-→ measure layout → compile guides → compile marks → vellum scene) and it
-runs without a graphics device, because vellum measures text itself. Two
-consequences are the reason to pick this stack:
+The compile is a real pipeline (spec → resolve encodings → train scales → measure
+layout → compile guides → compile marks → vellum scene) and it runs without a
+graphics device, because vellum measures text itself. If you already know
+ggplot2 the grammar will feel familiar; the reason to reach for this stack is
+what the retained vector scene underneath makes possible.
 
-- **Every mark keeps its identity through to the output.** A compiled
-  plot *is* a vellum scene, so each drawn element carries its data key
-  and its resolved device-pixel box (`vellum::scene_model()`). That is
-  what [vellumwidget](https://github.com/r-vellum/vellumwidget) reads to
-  add tooltips, brushing, and linked selection: the same marks you
-  already declared, not `*_interactive()` twins of them, and no second
-  engine re-drawing your plot.
-- **One spec, one solved layout, several destinations.** `render_plot()`
-  writes PNG, SVG, or PDF from the *same* compiled scene instead of
-  re-solving layout per device, and `as_widget()` hands that scene to
-  the browser. The static figure and the interactive one cannot drift,
-  because they are one scene.
+### What is a little different here
+
+Most of these exist somewhere in R; having them in one grammar, from one spec, is
+what is unusual. None of it is a reason to switch on its own — but together they
+cover a few gaps.
+
+* **One spec, one solved layout, several destinations — including a *tagged*
+  PDF.** `render_plot()` writes PNG, SVG, or PDF from the *same* compiled scene
+  rather than re-solving the layout per device, and the PDF carries a real
+  structure tree and alt text, so a screen reader can navigate it. Accessible
+  (tagged) PDF output is uncommon for R graphics.
+* **Accessibility is checkable, not just aspirational.** Render through a
+  colour-vision-deficiency simulation (`render(cvd = "deutan")`) to see the figure
+  as a colour-blind reader would, and run `plot_lint()` to be told about tiny
+  text, low contrast, or a single-level legend *before* you publish it.
+* **The interactive widget uses the marks you declared.** A compiled plot *is* a
+  vellum scene, so each element keeps its data key and its resolved device-pixel
+  box (`vellum::scene_model()`).
+  [vellumwidget](https://github.com/r-vellum/vellumwidget)'s `as_widget()` reads
+  those for tooltips, brushing, and linked selection — no `*_interactive()` twins,
+  and no second engine (Vega, plotly) re-drawing the plot in the browser, so the
+  static and interactive figures cannot drift.
+* **Effects and regions stay vector where they can.** `glow()` / `shadow()` are
+  real Gaussian blur (and work on text); Venn/Euler diagrams and merged
+  choropleth regions are computed as boolean *geometry* rather than
+  alpha-composited overlaps, so they stay crisp in a PDF instead of being
+  flattened to pixels.
+* **Texture, not only hue.** `pattern_*()` hatch fills stay legible in greyscale
+  print and under colour-vision deficiency, and render on every backend including
+  PDF.
+* **Animation from the same grammar.** `transition_states()` + `animate()` compile
+  one keyframe per state (scales frozen, so the animation is non-reactive) and
+  `anim_save()` encodes a GIF, an APNG, or a resolution-independent **animated
+  SVG** that honours `prefers-reduced-motion`.
+* **A hand-drawn mode that is exact.** `theme_sketch()` (or a `sketch =` argument)
+  gives a plot a wobbly, hand-drawn look generated *natively* in the engine, so it
+  is identical across PNG, SVG, and PDF rather than a post-hoc filter.
+* **The spec is plain data.** `summary()` shows a plot's structure without drawing
+  it, and the spec round-trips, so a plot is something you can inspect, store, and
+  program against.
 
 ## Installation
 
-``` r
+```r
 # install.packages("pak")
 pak::pak("r-vellum/vellumplot")
 ```
 
-vellumplot needs the [vellum](https://github.com/r-vellum/vellum)
-backend, which compiles a Rust crate, so you also need a Rust toolchain
-(`cargo`/`rustc`); pak pulls vellum in automatically.
+vellumplot needs the [vellum](https://github.com/r-vellum/vellum) backend, which
+compiles a Rust crate, so you also need a Rust toolchain (`cargo`/`rustc`); pak
+pulls vellum in automatically.
 
 ## Usage
 
-Building a plot returns a spec; printing it draws into the Plots pane
-(and embeds in a knitr/Quarto chunk), like ggplot2. Use `render_plot()`
-to write a file.
+Building a plot returns a spec; printing it draws into the Plots pane (and
+embeds in a knitr/Quarto chunk), like ggplot2. Use `render_plot()` to write a
+file.
+
 
 ``` r
 library(vellumplot)
@@ -57,9 +89,13 @@ vplot(mtcars) |>
   scale_color_continuous()
 ```
 
-<img src="man/figures/README-example-1.png" alt="" width="100%" />
+<div class="figure">
+<img src="man/figures/README-example-1.png" alt="plot of chunk example" width="100%" />
+<p class="caption">plot of chunk example</p>
+</div>
 
 Layer marks on a single panel; scales train across every layer:
+
 
 ``` r
 vplot(mtcars) |>
@@ -67,10 +103,14 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg)
 ```
 
-<img src="man/figures/README-layers-1.png" alt="" width="100%" />
+<div class="figure">
+<img src="man/figures/README-layers-1.png" alt="plot of chunk layers" width="100%" />
+<p class="caption">plot of chunk layers</p>
+</div>
 
-Facet into a grid of panels (`facet_wrap()` / `facet_grid()`), with
-shared or free scales:
+Facet into a grid of panels (`facet_wrap()` / `facet_grid()`), with shared or
+free scales:
+
 
 ``` r
 vplot(mtcars) |>
@@ -78,10 +118,14 @@ vplot(mtcars) |>
   facet_wrap(~cyl)
 ```
 
-<img src="man/figures/README-facet-1.png" alt="" width="100%" />
+<div class="figure">
+<img src="man/figures/README-facet-1.png" alt="plot of chunk facet" width="100%" />
+<p class="caption">plot of chunk facet</p>
+</div>
 
-Draw spatial data: `mark_sf()` renders an `sf` geometry column and
-`coord_sf()` reprojects and locks the map aspect ratio:
+Draw spatial data: `mark_sf()` renders an `sf` geometry column and `coord_sf()`
+reprojects and locks the map aspect ratio:
+
 
 ``` r
 nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
@@ -90,11 +134,15 @@ vplot(nc) |>
   coord_sf()
 ```
 
-<img src="man/figures/README-sf-1.png" alt="" width="100%" />
+<div class="figure">
+<img src="man/figures/README-sf-1.png" alt="plot of chunk sf" width="100%" />
+<p class="caption">plot of chunk sf</p>
+</div>
 
-Draw a network: `vgraph()` lays out an `igraph` graph (stress
-majorization by default), then `mark_edges()` / `mark_nodes()` draw it —
-aspect-locked, no axes, edges under nodes:
+Draw a network: `vgraph()` lays out an `igraph` graph (stress majorization by
+default), then `mark_edges()` / `mark_nodes()` draw it — aspect-locked, no axes,
+edges under nodes:
+
 
 ``` r
 g <- igraph::make_graph("Zachary")
@@ -110,9 +158,13 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(2, 8))
 ```
 
-<img src="man/figures/README-network-1.png" alt="" width="100%" />
+<div class="figure">
+<img src="man/figures/README-network-1.png" alt="plot of chunk network" width="100%" />
+<p class="caption">plot of chunk network</p>
+</div>
 
 The spec is just data — `summary()` shows its structure without drawing:
+
 
 ``` r
 summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
@@ -124,73 +176,83 @@ summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
 
 Write to a file with `render_plot()` (the format follows the extension):
 
+
 ``` r
 p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 render_plot(p, "cars.png")
 ```
 
-## What’s included
+## What's included
 
-- Marks: `mark_point()`, `mark_line()`, `mark_step()`, `mark_rule()`,
-  `mark_bar()` (explicit heights, or row counts per category),
-  `mark_area()` / `mark_ribbon()`, intervals (`mark_errorbar()`,
-  `mark_linerange()`, `mark_segment()`), `mark_boxplot()`,
-  tiles/heatmaps (`mark_tile()`, `mark_raster()`), 2-D binning
-  (`mark_bin2d()`, `mark_hex()`), 2-D density contours
-  (`mark_contour()`, `mark_contour_filled()`), text (`mark_text()`,
-  `mark_label()`), and pie/donut shortcuts (`mark_pie()`,
-  `mark_donut()`).
-- Spatial: `mark_sf()` draws an `sf` geometry column as a map layer,
-  with `coord_sf()` to reproject and lock the aspect ratio.
-- Network: `vgraph()` starts a node-link diagram from an `igraph` graph
+* Marks: `mark_point()`, `mark_line()`, `mark_step()`, `mark_rule()`,
+  `mark_bar()` (explicit heights, or row counts per category), `mark_area()` /
+  `mark_ribbon()`, intervals (`mark_errorbar()`, `mark_linerange()`,
+  `mark_segment()`), `mark_boxplot()`, tiles/heatmaps (`mark_tile()`,
+  `mark_raster()`), 2-D binning (`mark_bin2d()`, `mark_hex()`), 2-D density
+  contours (`mark_contour()`, `mark_contour_filled()`), text (`mark_text()`,
+  `mark_label()`), and pie/donut shortcuts (`mark_pie()`, `mark_donut()`).
+* Spatial: `mark_sf()` draws an `sf` geometry column as a map layer, with
+  `coord_sf()` to reproject and lock the aspect ratio.
+* Network: `vgraph()` starts a node-link diagram from an `igraph` graph
   (stress layout by default, via `graphlayouts`), with `mark_edges()`,
   `mark_nodes()`, `mark_node_text()`, and `scale_edge_width()`.
-- Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`,
-  `alpha`.
-- Position scales (`scale_x_continuous()`, `scale_y_continuous()`;
-  linear and `log10`) with auto-trained, expanded domains; discrete band
-  scales (`scale_x_discrete()`, `scale_y_discrete()`) for categorical
-  axes.
-- Colour scales (`scale_color_continuous()` / `scale_fill_continuous()`,
-  `scale_color_discrete()` / `scale_fill_discrete()`, `_gradient()`,
-  `_binned()`, `_manual()`), `scale_shape()`, and a trained
-  `scale_size()`, with stacked legends.
-- Trained axes, a panel with gridlines, and layering on one panel.
-- Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales,
-  via the `resolve_scale()` lattice.
-- Statistical marks: `mark_histogram()`, `mark_density()`,
-  `mark_summary()`, `mark_smooth()` (with `after_stat()`).
-- Coordinate systems: `coord_cartesian()`, `coord_flip()`,
-  `coord_fixed()` / `coord_equal()`, `coord_trans()` (nonlinear display
-  remap), `coord_polar()` (pie / coxcomb / radar), and `coord_sf()`.
-- Position adjustments: stack / dodge / fill bars, jittered points.
-- Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`,
-  `"screen"`, …).
-- `mark_datashade()` for million-point density rasters.
-- Annotations: `annotate()`, `labs()`, and `md()` markdown titles.
-- Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
+* Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`, `alpha`.
+* Position scales (`scale_x_continuous()`, `scale_y_continuous()`; linear and
+  `log10`) with auto-trained, expanded domains; discrete band scales
+  (`scale_x_discrete()`, `scale_y_discrete()`) for categorical axes.
+* Colour scales (`scale_color_continuous()` / `scale_fill_continuous()`,
+  `scale_color_discrete()` / `scale_fill_discrete()`, `_gradient()`, `_binned()`,
+  `_manual()`), `scale_shape()`, and a trained `scale_size()`, with stacked
+  legends.
+* Trained axes, a panel with gridlines, and layering on one panel.
+* Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales, via the
+  `resolve_scale()` lattice.
+* Statistical marks: `mark_histogram()`, `mark_density()`, `mark_summary()`,
+  `mark_smooth()` (with `after_stat()`).
+* Coordinate systems: `coord_cartesian()`, `coord_flip()`, `coord_fixed()` /
+  `coord_equal()`, `coord_trans()` (nonlinear display remap),
+  `coord_polar()` (pie / coxcomb / radar), and `coord_sf()`.
+* Position adjustments: stack / dodge / fill bars, jittered points.
+* Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`, `"screen"`, ...).
+* `mark_datashade()` for million-point density rasters.
+* Annotations: `annotate()`, `labs()`, and `md()` markdown titles.
+* Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
   `theme_classic()`, `theme_void()`, `theme_cyberpunk()`, `theme()` /
   `set_theme()`) and multi-plot composition (`hconcat()`, `vconcat()`,
   `concat()`, `wrap_plots()`, `inset()`, `repeat_()`).
-- Layer effects (`glow()`, `outline()`, `shadow()`) and gradient fills
-  (`linear_gradient()`, `radial_gradient()`).
-- Hand-drawn rendering: `sketch()` gives any geometry mark a wobbly,
-  hachure- filled [Rough.js](https://roughjs.com) look (a `sketch =`
-  argument on marks, an `element_line()` / `element_rect()` `sketch =`
-  slot, or the plot-wide `theme_sketch()` one-liner). Generated natively
-  in the engine, so it is exact and works across PNG / SVG / PDF.
+* Layer effects (`glow()`, `outline()`, `shadow()`, `motion()`, `echo()`) and
+  gradient fills (`linear_gradient()`, `radial_gradient()`).
+* Pattern (hatch) fills: `pattern_stripe()`, `pattern_crosshatch()`,
+  `pattern_grid()`, `pattern_dot()`, `pattern_checker()`, mapped via
+  `scale_pattern()` — greyscale- and colour-vision-safe, on every backend.
+* Boolean marks: `vvenn()` draws 2-/3-set Venn/Euler diagrams as solid geometry,
+  and `mark_sf(merge = TRUE)` dissolves adjacent same-value regions into one.
+* SVG icon markers (`shape = ` a `d` path string or a `.svg` file) and repelled
+  labels (`mark_text_repel()`, over the engine's overlap solver).
+* Accessibility: tagged PDF output, `plot_lint()` for legibility/contrast
+  problems, colour-vision-deficiency simulation at render time, and font pinning
+  for reproducible text.
+* Animation: `transition_states()` / `transition_time()` / `transition_reveal()`,
+  `ease_aes()`, `animate()`, and `anim_save()` to GIF / APNG / animated SVG.
+* Output: `render_plot()` (PNG/SVG/PDF), `pdf_pages()` (multi-page reports or
+  one page per facet), `render_all()` (parallel batch), and `plot_svg()` for an
+  inline SVG string (e.g. a sparkline inside a `gt` table).
+* Hand-drawn rendering: `sketch()` gives any geometry mark a wobbly, hachure-
+  filled [Rough.js](https://roughjs.com) look (a `sketch =` argument on marks, an
+  `element_line()` / `element_rect()` `sketch =` slot, or the plot-wide
+  `theme_sketch()` one-liner). Generated natively in the engine, so it is exact
+  and works across PNG / SVG / PDF.
 
 ## The vellum ecosystem
 
-vellumplot is the grammar layer of a small ecosystem of packages that
-share the vellum scene model:
+vellumplot is the grammar layer of a small ecosystem of packages that share the
+vellum scene model:
 
 - **[vellum](https://github.com/r-vellum/vellum)** — the parchment: the
   low-level graphics backend (Rust scene graph, PNG/SVG/PDF renderer).
-- **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen:
-  this package.
-- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the
-  annotation: turns a vellumplot plot (or a raw vellum scene) into a
-  client-side interactive HTML widget via `as_widget()`.
-- **[vellumverse](https://github.com/r-vellum/vellumverse)** — installs
-  and loads the whole ecosystem in one step.
+- **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen: this package.
+- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the annotation: turns a vellumplot
+  plot (or a raw vellum scene) into a client-side interactive HTML widget via
+  `as_widget()`.
+- **[vellumverse](https://github.com/r-vellum/vellumverse)** — installs and
+  loads the whole ecosystem in one step.
