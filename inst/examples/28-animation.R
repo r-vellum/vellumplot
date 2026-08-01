@@ -34,3 +34,20 @@ b <- vplot(mtcars) |>
   animate(nframes = 90, fps = 25)
 
 anim_save(file.path(outdir, "28-mtcars.gif"), b)
+
+# --- 3. animated SVG: resolution-independent, for line art / few marks -------
+# A handful of moving marks is exactly where an animated SVG wins: crisp at any
+# size and honours prefers-reduced-motion. (Dense scatters are better as a
+# raster GIF -- anim_save() says so.)
+sine <- do.call(rbind, lapply(seq_len(40), function(k) {
+  x <- seq(0, 2 * pi, length.out = 60)
+  data.frame(x = x, y = sin(x + k / 6), step = k)
+}))
+wave <- vplot(sine) |>
+  mark_line(x = x, y = y, linewidth = 1.2, color = "#2563eb") |>
+  labs(title = "A travelling wave") |>
+  transition_states(step) |>
+  ease_aes("sine-in-out") |>
+  animate(nframes = 80, fps = 30)
+
+anim_save(file.path(outdir, "28-wave.svg"), wave)

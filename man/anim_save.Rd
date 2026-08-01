@@ -7,7 +7,7 @@
 anim_save(filename, animation)
 }
 \arguments{
-\item{filename}{Output path; \code{.gif} or \code{.png}.}
+\item{filename}{Output path; \code{.gif}, \code{.png}, or \code{.svg}.}
 
 \item{animation}{A \code{vellum_animation} (from \code{\link[=animate]{animate()}}).}
 }
@@ -18,8 +18,26 @@ anim_save(filename, animation)
 \code{anim_save()} renders a \code{vellum_animation} (from \code{\link[=animate]{animate()}}) to an animated
 image, tweening the frames between keyframes and encoding them in one parallel,
 streaming pass in vellum's Rust backend. The format follows the file extension:
-\code{.gif} (looping GIF) or \code{.png} (animated PNG / APNG).
 }
+\details{
+\itemize{
+\item \code{.gif} — a looping GIF (universal compatibility).
+\item \code{.png} — an animated PNG (APNG; lossless, alpha).
+\item \code{.svg} — a single \strong{animated SVG}: every frame is emitted as vector markup
+and shown in turn by a CSS step animation. It is resolution-independent (crisp
+at any size, in print and on retina) and honours \code{prefers-reduced-motion}
+(a reader who has asked their system not to animate gets the first frame, held).
+}
+}
+\section{Choosing a format}{
+Pick by scene complexity, not preference. An animated SVG emits \emph{every frame in
+full}, so its size grows with the number of marks times the number of frames;
+a raster format (GIF/APNG) does not. So SVG wins clearly on line art — a few
+moving marks, the common explanatory case — and loses on a dense scatter, where
+a raster format is the right answer. \code{anim_save()} says so when a \code{.svg} scene
+is dense enough that a raster format would likely be smaller.
+}
+
 \examples{
 \dontrun{
 a <- vplot(mtcars) |>
@@ -27,6 +45,7 @@ a <- vplot(mtcars) |>
   transition_states(cyl) |>
   animate()
 anim_save("cyl.gif", a)
+anim_save("cyl.svg", a) # resolution-independent
 }
 }
 \seealso{

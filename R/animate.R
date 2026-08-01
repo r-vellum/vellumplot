@@ -365,9 +365,24 @@ animate <- function(plot, nframes = 50, fps = 25) {
 #' `anim_save()` renders a `vellum_animation` (from [animate()]) to an animated
 #' image, tweening the frames between keyframes and encoding them in one parallel,
 #' streaming pass in vellum's Rust backend. The format follows the file extension:
-#' `.gif` (looping GIF) or `.png` (animated PNG / APNG).
 #'
-#' @param filename Output path; `.gif` or `.png`.
+#' * `.gif` — a looping GIF (universal compatibility).
+#' * `.png` — an animated PNG (APNG; lossless, alpha).
+#' * `.svg` — a single **animated SVG**: every frame is emitted as vector markup
+#'   and shown in turn by a CSS step animation. It is resolution-independent (crisp
+#'   at any size, in print and on retina) and honours `prefers-reduced-motion`
+#'   (a reader who has asked their system not to animate gets the first frame, held).
+#'
+#' # Choosing a format
+#'
+#' Pick by scene complexity, not preference. An animated SVG emits *every frame in
+#' full*, so its size grows with the number of marks times the number of frames;
+#' a raster format (GIF/APNG) does not. So SVG wins clearly on line art — a few
+#' moving marks, the common explanatory case — and loses on a dense scatter, where
+#' a raster format is the right answer. `anim_save()` says so when a `.svg` scene
+#' is dense enough that a raster format would likely be smaller.
+#'
+#' @param filename Output path; `.gif`, `.png`, or `.svg`.
 #' @param animation A `vellum_animation` (from [animate()]).
 #' @return `filename`, invisibly.
 #' @seealso [animate()]
@@ -378,6 +393,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
 #'   transition_states(cyl) |>
 #'   animate()
 #' anim_save("cyl.gif", a)
+#' anim_save("cyl.svg", a) # resolution-independent
 #' }
 #' @export
 anim_save <- function(filename, animation) {
@@ -391,11 +407,21 @@ anim_save <- function(filename, animation) {
     ext,
     gif = "gif",
     png = "apng",
+    svg = "svg",
     cli::cli_abort(
-      "{.arg filename} must end in {.val .gif} or {.val .png} (got {.val .{ext}})."
+      "{.arg filename} must end in {.val .gif}, {.val .png}, or {.val .svg} (got {.val .{ext}})."
     )
   )
+  if (identical(format, "svg")) {
+    .anim_svg_advice(animation)
+  }
+  .anim_render(animation, filename, format)
+}
 
+# Shared render core: build the eased schedule, wrap the loop, and hand the K
+# keyframes to vellum's one-pass animation encoder. Used by anim_save() and by
+# the widget's animated-SVG embed (vellumwidget), so both drive identical frames.
+.anim_render <- function(animation, filename, format) {
   k <- length(animation@scenes)
   sched <- .anim_schedule(
     k,
@@ -411,7 +437,6 @@ anim_save <- function(filename, animation) {
   if (animation@wrap) {
     scenes <- c(scenes, scenes[1L])
   }
-
   vellum::vl_render_animation(
     scenes,
     sched$seg,
@@ -420,6 +445,30 @@ anim_save <- function(filename, animation) {
     format = format,
     fps = animation@fps
   )
+}
+
+# Drawn-element count of a keyframe (marks + guides). The animated-SVG size grows
+# with this times the frame count, so it is the signal for the format advice.
+.anim_element_count <- function(animation) {
+  sc <- animation@scenes[[1L]]
+  m <- tryCatch(
+    vellum::scene_model(vellum::as_vellum_scene(sc)),
+    error = function(e) NULL
+  )
+  if (is.null(m)) 0L else nrow(m$elements)
+}
+
+# Past the point where a raster format is clearly smaller (see the size table in
+# vellum::vl_render_animation), advise switching. An advisory, not a block:
+# vellum still warns on the finished file if it really is large.
+.anim_svg_advice <- function(animation, threshold = 800L) {
+  marks <- .anim_element_count(animation)
+  if (marks > threshold) {
+    cli::cli_inform(c(
+      "!" = "This scene has ~{marks} elements and an animated SVG emits every frame in full.",
+      "i" = "For a dense scene a raster format is usually smaller -- save to {.val .gif} or {.val .png} instead."
+    ))
+  }
 }
 
 # ---- frame schedule --------------------------------------------------------
