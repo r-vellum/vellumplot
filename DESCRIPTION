@@ -84,6 +84,7 @@ Collate:
     'compile-sf.R'
     'compile-stat.R'
     'decorations.R'
+    'documents.R'
     'effects.R'
     'guides.R'
     'hierarchy-pack.R'
