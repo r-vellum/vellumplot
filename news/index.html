@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,9 +59,15 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/v0.9.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.0.9000" id="vellumplot-0909000-development-version">vellumplot 0.9.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-0909000-development-version"></a></h2>
+<ul><li><p><strong><code><a href="../reference/mark_contour.html">mark_contour_filled()</a></code> closes bands that leave the grid.</strong> A density band whose contour exits the estimation grid was closed with a straight chord back to its start, slicing triangular wedges across the panel (e.g. <code>mark_contour_filled(x = eruptions, y = waiting)</code> on <code>faithful</code>). Open contours are now closed along the grid boundary, so each band fills the correct region.</p></li>
+<li><p><strong><code><a href="../reference/map_decorations.html">mark_scalebar()</a></code> labels read left-to-right in every corner.</strong> With a right-anchored <code>position</code> (<code>"bottomright"</code> / <code>"topright"</code>) the <code>0</code> and distance labels were mirrored, putting the distance on the left. They now always read <code>0</code> at the left end and the distance at the right.</p></li>
+<li><p><strong><code><a href="../reference/mark_sf.html">mark_sf()</a></code> no longer paints a constant <code>color</code> as the fill.</strong> With both a constant <code>fill</code> and a constant <code>color</code>, the polygon fill took the stroke colour and the outline vanished. Fill and stroke are now resolved as the distinct channels they are: <code>fill</code> fills, <code>color</code> strokes.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.9.0" id="vellumplot-090">vellumplot 0.9.0<a class="anchor" aria-label="anchor" href="#vellumplot-090"></a></h2>
 <p>First tagged release. Everything below is included.</p>
