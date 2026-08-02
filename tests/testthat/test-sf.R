@@ -144,6 +144,38 @@ test_that("a choropleth compiles and renders without error", {
   expect_true(file.exists(f))
 })
 
+test_that(".aes_fill_colour prefers the fill channel; .aes_colour prefers color", {
+  scales <- list(color = NULL)
+  # both set as constants: the polygon fill is `fill`, the border colour is
+  # `color` -- a constant `color` must not leak into the fill.
+  both <- list(
+    params = list(fill = "steelblue", color = "red"),
+    values = list()
+  )
+  expect_identical(.aes_fill_colour(both, scales, NA_character_), "steelblue")
+  expect_identical(.aes_colour(both, scales, NA_character_), "red")
+  # fill alone -> fill
+  fonly <- list(params = list(fill = "steelblue"), values = list())
+  expect_identical(.aes_fill_colour(fonly, scales, "grey80"), "steelblue")
+  # color alone -> fill falls to the default, never `color`
+  conly <- list(params = list(color = "red"), values = list())
+  expect_identical(.aes_fill_colour(conly, scales, "grey80"), "grey80")
+})
+
+test_that("mark_sf() with a constant fill + colour fills and strokes distinctly", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  # A steelblue fill with a red border must not render like an all-red map (the
+  # regression: a constant `color` used to be painted as the fill too).
+  fill_and_border <- vellum::scene_raster(
+    vplot(nc) |> mark_sf(fill = "steelblue", color = "red") |> coord_sf()
+  )
+  all_red <- vellum::scene_raster(
+    vplot(nc) |> mark_sf(fill = "red", color = "red") |> coord_sf()
+  )
+  expect_false(identical(fill_and_border, all_red))
+})
+
 test_that("mark_sf() errors on non-sf data", {
   skip_if_not_installed("sf")
   expect_error(
@@ -329,6 +361,31 @@ test_that("mark_scalebar / mark_compass compile and render on a map", {
   f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
   expect_true(file.exists(f))
+})
+
+test_that("scale bar labels read 0-to-distance left-to-right in every corner", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  # The "0" label sits at the low-x end and the distance at the high-x end no
+  # matter which corner the bar occupies (a right-anchored corner grows the bar
+  # leftward, which used to mirror the labels -- distance on the left).
+  label_x <- function(pos) {
+    p <- vplot(nc) |>
+      mark_sf() |>
+      coord_sf(crs = 3857) |>
+      mark_scalebar(position = pos, unit = "km")
+    svg <- vellum::scene_svg(vellum::as_vellum_scene(p))
+    tags <- regmatches(svg, gregexpr("<text[^>]*>[^<]*</text>", svg))[[1]]
+    x_of <- function(pat) {
+      tag <- grep(pat, tags, value = TRUE)[1]
+      as.numeric(regmatches(tag, regexec('x="([-0-9.]+)"', tag))[[1]][2])
+    }
+    c(zero = x_of(">0</text>$"), dist = x_of("km</text>$"))
+  }
+  for (pos in c("bottomleft", "bottomright", "topleft", "topright")) {
+    xs <- label_x(pos)
+    expect_lt(xs[["zero"]], xs[["dist"]])
+  }
 })
 
 test_that("mark_scalebar() errors without a map coordinate system", {

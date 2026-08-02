@@ -44,6 +44,52 @@ test_that(".stat_density_2d yields grouped ordered vertices (lines and bands)", 
   expect_false(is.unsorted(piece_level))
 })
 
+test_that(".close_contour_ring closes an open contour along the domain boundary", {
+  # An open contour entering the bottom edge and leaving the right edge of the
+  # unit square: walking clockwise from the right-edge exit back to the
+  # bottom-edge entry passes the bottom-right corner, so (1, 0) is appended.
+  ex <- c(0.5, 0.8, 1.0)
+  ey <- c(0.0, 0.3, 0.5)
+  r <- .close_contour_ring(ex, ey, xlim = c(0, 1), ylim = c(0, 1))
+  expect_equal(r$x, c(ex, 1))
+  expect_equal(r$y, c(ey, 0))
+
+  # A contour whose endpoints are NOT on the boundary keeps its straight close
+  # (no corners injected) -- the defensive fallback.
+  r2 <- .close_contour_ring(c(0.2, 0.5), c(0.2, 0.5), c(0, 1), c(0, 1))
+  expect_equal(r2$x, c(0.2, 0.5))
+  expect_equal(r2$y, c(0.2, 0.5))
+
+  # A boundary arc that spans two corners injects them in clockwise order.
+  # Entry on the top edge, exit on the bottom edge (both at x = 0.3): walking
+  # clockwise from the bottom exit passes the bottom-left then top-left corner.
+  r3 <- .close_contour_ring(c(0.3, 0.3), c(1, 0), c(0, 1), c(0, 1))
+  expect_equal(tail(r3$x, 2), c(0, 0)) # BL then TL, both x = 0
+  expect_equal(tail(r3$y, 2), c(0, 1)) # BL y = 0, TL y = 1
+})
+
+test_that("filled density bands close along the grid edge (no straight-chord wedges)", {
+  skip_if_no_contour()
+  # faithful's low-level contours exit the KDE grid; closing them with a chord
+  # left triangular wedges across the panel. Closed along the boundary, the
+  # outermost (lowest) band sweeps every grid corner instead.
+  Lf <- list(
+    values = list(x = faithful$eruptions, y = faithful$waiting),
+    stat_params = list(filled = TRUE),
+    after = list(),
+    types = list()
+  )
+  bf <- .stat_density_2d(Lf)
+  kd <- MASS::kde2d(faithful$eruptions, faithful$waiting, n = 100)
+  corners <- expand.grid(x = range(kd$x), y = range(kd$y))
+  hit <- mapply(
+    function(cx, cy) any(abs(bf$x - cx) < 1e-6 & abs(bf$y - cy) < 1e-6),
+    corners$x,
+    corners$y
+  )
+  expect_true(all(hit))
+})
+
 test_that("a z surface is contoured in the right orientation (not transposed)", {
   # z increases with x only, so an iso-line at level L is the VERTICAL line
   # x == L (y free). A transposed field would trace a horizontal line instead --

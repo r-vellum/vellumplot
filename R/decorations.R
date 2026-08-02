@@ -265,19 +265,25 @@ mark_compass <- function(
     )
   }
 
-  # End labels ("0" and the distance), just outside the bar.
+  # End labels, just outside the bar. A scale bar always reads left-to-right --
+  # "0" at the low-x end, the distance at the high-x end -- regardless of which
+  # corner it sits in. For a right-anchored corner the bar grows leftward
+  # (`hdir < 0`), so `xat(0)` is the right end and `xat(1)` the left; swap the
+  # label positions there so "0" stays on the left.
   ylab <- vellum::vl_unit(a$y0, "npc") +
     vellum::vl_unit(a$vdir * (pad + h + 1), "mm")
   lab_just <- c("centre", a$vjust)
   gp_txt <- vellum::vl_gpar(fontsize = ts, col = color)
+  x_zero <- if (a$hdir > 0) xat(0) else xat(1)
+  x_dist <- if (a$hdir > 0) xat(1) else xat(0)
   scene <- .draw(
     scene,
-    vellum::text_grob("0", xat(0), ylab, just = lab_just, gp = gp_txt)
+    vellum::text_grob("0", x_zero, ylab, just = lab_just, gp = gp_txt)
   )
   end_lab <- paste0(format(dist, trim = TRUE), " ", unit)
   scene <- .draw(
     scene,
-    vellum::text_grob(end_lab, xat(1), ylab, just = lab_just, gp = gp_txt)
+    vellum::text_grob(end_lab, x_dist, ylab, just = lab_just, gp = gp_txt)
   )
   scene
 }

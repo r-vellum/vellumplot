@@ -1,3 +1,21 @@
+# vellumplot 0.9.0.9000 (development version)
+
+* **`mark_contour_filled()` closes bands that leave the grid.** A density band
+  whose contour exits the estimation grid was closed with a straight chord back
+  to its start, slicing triangular wedges across the panel (e.g.
+  `mark_contour_filled(x = eruptions, y = waiting)` on `faithful`). Open contours
+  are now closed along the grid boundary, so each band fills the correct region.
+
+* **`mark_scalebar()` labels read left-to-right in every corner.** With a
+  right-anchored `position` (`"bottomright"` / `"topright"`) the `0` and distance
+  labels were mirrored, putting the distance on the left. They now always read
+  `0` at the left end and the distance at the right.
+
+* **`mark_sf()` no longer paints a constant `color` as the fill.** With both a
+  constant `fill` and a constant `color`, the polygon fill took the stroke
+  colour and the outline vanished. Fill and stroke are now resolved as the
+  distinct channels they are: `fill` fills, `color` strokes.
+
 # vellumplot 0.9.0
 
 First tagged release. Everything below is included.

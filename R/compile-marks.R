@@ -48,6 +48,24 @@ NULL
   }
 }
 
+# Resolve a per-row *fill* colour, preferring the `fill` channel over `color`
+# (the mirror of `.aes_colour`, which prefers `color`). For a polygon the fill
+# and stroke are distinct channels: a constant `color` sets the border and must
+# never leak into the fill. Mapped `fill` wins, then mapped `color`; as a
+# constant, `fill` (a plain colour, not a paint) then `default` -- never `color`.
+.aes_fill_colour <- function(L, scales, default) {
+  if (!is.null(scales$color)) {
+    if (!is.null(L$values$fill)) {
+      return(scales$color$map(L$values$fill))
+    }
+    if (!is.null(L$values$color)) {
+      return(scales$color$map(L$values$color))
+    }
+  }
+  fillp <- if (.is_paint(L$params$fill)) NULL else L$params$fill
+  fillp %||% default
+}
+
 # A fill value can be a constant *paint* (gradient or pattern), not just a colour.
 .is_paint <- function(x) inherits(x, c("vellum_gradient", "vellum_pattern"))
 
@@ -3586,20 +3604,23 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   # Interactivity gate: batch only when no per-feature key will be attached (see
   # the EXCEPTION note above). Mirrors the predicate `.draw()` uses at emit time.
   interactive <- !is.null(.mark_ctx$data_id)
-  # primary colour = mapped fill/colour (choropleth) or a constant param; NA when
-  # nothing is set (then filled per-kind below). Border/alpha/lwd/size are params.
+  # Line/point colour = mapped fill/colour (choropleth) or a constant param; NA
+  # when nothing is set (then filled per-kind below). A polygon's fill is a
+  # *distinct* channel resolved separately (`poly_fill`) so a constant `color`
+  # (which sets the polygon border) never leaks into the fill. Border/alpha/lwd/
+  # size are params.
   primary <- rep_len(.aes_colour(L, scales, NA_character_), n)
+  poly_fill <- rep_len(.aes_fill_colour(L, scales, NA_character_), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   border <- .aes_param(L, "color", "grey40")
   lwd <- .aes_param(L, "linewidth", 0.5)
   size <- rep_len(.aes_size(L, scales, 1.5), n)
   sk <- .mark_sketch(L, scales)
 
-  # per-kind colour vector, coalescing the primary colour with a kind default.
-  kind_col <- function(default) {
-    v <- primary
-    v[is.na(v)] <- default
-    v
+  # per-kind colour vector, coalescing a resolved colour with a kind default.
+  kind_col <- function(vec, default) {
+    vec[is.na(vec)] <- default
+    vec
   }
   has_kind <- function(k) {
     vapply(
@@ -3738,7 +3759,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene <- by_style(
     scene,
     "poly",
-    kind_col("grey80"),
+    kind_col(poly_fill, "grey80"),
     function(scene, idx, fill, a) {
       gpp <- vellum::vl_gpar(
         fill = .paint_or(L, fill),
@@ -3778,7 +3799,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene <- by_style(
     scene,
     "line",
-    kind_col("grey20"),
+    kind_col(primary, "grey20"),
     function(scene, idx, col, a) {
       gpp <- vellum::vl_gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
       emit <- function(scene, g, rows) {
@@ -3800,7 +3821,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   scene <- by_style(
     scene,
     "point",
-    kind_col("black"),
+    kind_col(primary, "black"),
     function(scene, idx, col, a) {
       xs <- ys <- szs <- numeric(0)
       rows <- integer(0) # feature index per emitted point (for per-point keys)

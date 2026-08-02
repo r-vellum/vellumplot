@@ -317,11 +317,61 @@ NULL
   do.call(rbind, parts)
 }
 
+# Close an *open* contour -- one that leaves the grid, so its endpoints sit on
+# the domain boundary -- into a filled ring by walking the domain rectangle
+# clockwise from the contour's end point back to its start, inserting the corners
+# passed along the way. `vl_contour()` orients every traced line consistently
+# (the field-above-level side on the right), so the clockwise return keeps that
+# region enclosed instead of cutting a straight chord across the panel (which
+# leaves triangular wedges). Endpoints not on the boundary -- which should not
+# occur for an open marching-squares contour -- fall back to a straight close.
+.close_contour_ring <- function(ex, ey, xlim, ylim) {
+  x0 <- xlim[1]
+  x1 <- xlim[2]
+  y0 <- ylim[1]
+  y1 <- ylim[2]
+  eps <- 1e-9 * max(x1 - x0, y1 - y0, 1)
+  # Clockwise perimeter parameter t in [0, 4): left edge up [0, 1), top edge
+  # right [1, 2), right edge down [2, 3), bottom edge left [3, 4). Corners fall
+  # at the integers t = 0, 1, 2, 3.
+  perim_t <- function(px, py) {
+    if (abs(px - x0) <= eps) {
+      return((py - y0) / (y1 - y0))
+    }
+    if (abs(py - y1) <= eps) {
+      return(1 + (px - x0) / (x1 - x0))
+    }
+    if (abs(px - x1) <= eps) {
+      return(2 + (y1 - py) / (y1 - y0))
+    }
+    if (abs(py - y0) <= eps) {
+      return(3 + (x1 - px) / (x1 - x0))
+    }
+    NA_real_
+  }
+  n <- length(ex)
+  t_end <- perim_t(ex[n], ey[n])
+  t_start <- perim_t(ex[1], ey[1])
+  if (is.na(t_end) || is.na(t_start)) {
+    return(list(x = ex, y = ey))
+  }
+  corner_x <- c(x0, x0, x1, x1) # t = 0, 1, 2, 3
+  corner_y <- c(y0, y1, y1, y0)
+  span <- (t_start - t_end) %% 4 # clockwise arc length from end back to start
+  off <- (c(0, 1, 2, 3) - t_end) %% 4 # each corner's clockwise offset from end
+  keep <- which(off > eps & off < span - eps)
+  keep <- keep[order(off[keep])]
+  list(x = c(ex, corner_x[keep]), y = c(ey, corner_y[keep]))
+}
+
 # `vl_contour()` output -> filled bands. Each contour becomes a filled ring, and
 # the rings are ordered by level ascending so an inner (higher) level paints over
 # the outer (lower) one -- painter's order, which for the nested closed loops of
 # a density gives the layered filled look without an even-odd band construction.
-.vl_contour_bands_df <- function(cc) {
+# An open contour (one that exits the `xlim`/`ylim` grid) is closed along the
+# domain boundary so it fills the region on the field-above-level side rather
+# than closing with a chord that would slice a wedge across the panel.
+.vl_contour_bands_df <- function(cc, xlim, ylim) {
   if (!nrow(cc)) {
     return(.empty_contour_df())
   }
@@ -330,9 +380,14 @@ NULL
   pieces <- pieces[order(vapply(pieces, function(e) e$level[1], numeric(1)))]
   parts <- lapply(seq_along(pieces), function(k) {
     e <- pieces[[k]]
+    ring <- if (isTRUE(e$closed[1])) {
+      list(x = e$x, y = e$y)
+    } else {
+      .close_contour_ring(e$x, e$y, xlim, ylim)
+    }
     data.frame(
-      x = e$x,
-      y = e$y,
+      x = ring$x,
+      y = ring$y,
       level = e$level[1],
       .piece = k,
       .ring = 1L
@@ -354,14 +409,16 @@ NULL
       i = "Set {.arg breaks} or {.arg binwidth} explicitly."
     ))
   }
+  xlim <- range(fld$gx)
+  ylim <- range(fld$gy)
   cc <- vellum::vl_contour(
     fld$gz,
     levels = brks,
-    xlim = range(fld$gx),
-    ylim = range(fld$gy)
+    xlim = xlim,
+    ylim = ylim
   )
   if (isTRUE(L$stat_params$filled)) {
-    .vl_contour_bands_df(cc)
+    .vl_contour_bands_df(cc, xlim, ylim)
   } else {
     .vl_contour_lines_df(cc)
   }
