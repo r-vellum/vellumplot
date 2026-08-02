@@ -2,6 +2,13 @@
 
 ## vellumplot 0.9.0.9000 (development version)
 
+- **Requires vellum \>= 0.6.7**, which fixes animated SVG output:
+  duplicate `<defs>` ids across frames made every frame’s clip resolve
+  to the first frame’s — hidden for all but one frame of the cycle, and
+  a hidden `<clipPath>` child clips everything away — so
+  `anim_save(".svg")` blinked once and then showed an empty panel. The
+  same release also fixes frames playing in reverse.
+
 - **[`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
   closes bands that leave the grid.** A density band whose contour exits
   the estimation grid was closed with a straight chord back to its
