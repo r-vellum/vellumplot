@@ -417,12 +417,17 @@ NULL
 }
 
 # Category levels for a discrete aesthetic, preserving factor level order. `x`
-# may be a single vector or a list of vectors pooled across layers: the first
-# factor's levels win; otherwise sorted unique character values.
+# may be a single vector or a list of vectors pooled across layers (or, under
+# faceting, the same variable evaluated per panel). When any pooled value is a
+# factor, the union of all factor levels wins, taken in first-appearance order so
+# a declared factor ordering survives -- pooling one factor per panel (each
+# carrying only its panel's level) must still recover every level, not just the
+# first panel's. Otherwise: sorted unique character values.
 .cat_levels <- function(x) {
   vals <- if (is.list(x)) x else list(x)
-  for (v in vals) {
-    if (is.factor(v)) return(levels(v))
+  facs <- Filter(is.factor, vals)
+  if (length(facs)) {
+    return(unique(unlist(lapply(facs, levels), use.names = FALSE)))
   }
   sort(unique(as.character(unlist(
     lapply(vals, as.character),

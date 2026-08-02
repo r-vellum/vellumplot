@@ -147,3 +147,25 @@ test_that("a single-panel plot is a 1x1 grid", {
   expect_equal(built$fa$C, 1)
   expect_length(built$panels, 1)
 })
+
+test_that("a discrete colour scale keeps every level when the faceting variable is also the colour (#145)", {
+  # facet_wrap(~cyl) evaluates factor(cyl) per panel, so each panel's resolved
+  # layer carries a factor with only its own level; pooling must still recover
+  # every level -- not collapse to the first panel's, greying out the rest.
+  built <- vellumplot:::.build_panels(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+      facet_wrap(~cyl)
+  )
+  cs <- built$scales$color
+  expect_equal(cs$levels, c("4", "6", "8"))
+  expect_length(cs$colors, 3L)
+  expect_false(anyNA(cs$colors))
+
+  # identical to the unfaceted training (same levels, same colours)
+  unfaceted <- vellumplot:::.build_panels(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  )$scales$color
+  expect_equal(cs$levels, unfaceted$levels)
+  expect_equal(cs$colors, unfaceted$colors)
+})
