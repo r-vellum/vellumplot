@@ -8,6 +8,12 @@
   which deficiency to check, `rules` to run one rule alone, and `min_text_pt` for
   a print-resolution legibility floor.
 
+* **Breaking, minor: `plot_lint()`'s thresholds must be named.** `...` now sits
+  after `x`, so the optional arguments follow it — `plot_lint(p, 5)` used to mean
+  `min_text_px = 5` and now fails, because the `5` reaches the engine as a rule
+  name. Write `plot_lint(p, min_text_px = 5)`. This is the usual convention for
+  arguments after `...`, and it is what makes `cvd =`/`exclude =` reach the engine.
+
 * **Findings carry the box they refer to**, so `vellum::vl_lint_overlay()` can
   draw the report onto the plot rather than describing it, and
   `vellum::vl_lint_assert()` can fail a test suite on it. `plot_lint()` therefore
