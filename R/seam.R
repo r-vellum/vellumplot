@@ -889,6 +889,13 @@ NULL
   # last so it survives to the caller; the `id` of each record matches a grob's
   # `data-vellum-id`. Additive only -- render() ignores it.
   attr(scene, "vellumplot_provenance") <- .provenance_snapshot()
+  # A back-reference to the spec, for the grammar lint rules. They run inside
+  # vellum's registry, which hands a rule the resolved *scene* -- the right thing
+  # for a geometric rule, and not enough for one about the encoding, which needs
+  # the trained scales. Inert: it leaves the scene hash, the serialised form and
+  # the rendered pixels untouched (asserted in test-accessibility.R).
+  # See R/lint.R.
+  attr(scene, "vellumplot_spec") <- spec
   scene
 }
 

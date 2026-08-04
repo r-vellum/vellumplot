@@ -1,5 +1,27 @@
 # vellumplot 0.9.0.9000 (development version)
 
+* **`plot_lint()` gained everything the engine's linter gained**, which is 13 new
+  rules including two it could not have had before: colours that a colour-blind
+  reader cannot tell apart, and characters no font on the running machine can
+  draw. Every `vellum::vl_lint()` argument now comes through — `exclude` to accept
+  a finding you have already judged, `cvd` to pick which deficiency to check,
+  `rules` to run one rule alone, `min_text_pt` for a print-resolution legibility
+  floor.
+
+* **Findings carry the box they refer to**, so `vellum::vl_lint_overlay()` can
+  draw the report onto the plot rather than describing it, and
+  `vellum::vl_lint_assert()` can fail a test suite on it. `plot_lint()` therefore
+  returns four more columns (`x0`, `y0`, `x1`, `y1`); a grammar finding is about a
+  scale rather than a node, so its box is `NA`.
+
+* **The grammar rules are registered in the engine's rule registry** instead of
+  being stitched on afterwards. `vellum::vl_lint_rules()` lists
+  `single_level_scale` and `legend_overflow` with a `grammar` tag, `rules =`
+  selects them, and a plain `vellum::vl_lint()` of a compiled plot now reports
+  encoding problems alongside geometric ones. A compiled scene carries a
+  back-reference to its spec so those rules can reach the trained scales; it
+  leaves the scene's hash, serialised form and pixels untouched.
+
 * **Requires vellum >= 0.6.7**, which fixes animated SVG output: duplicate
   `<defs>` ids across frames made every frame's clip resolve to the first
   frame's — hidden for all but one frame of the cycle, and a hidden `<clipPath>`
