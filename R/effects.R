@@ -9,7 +9,9 @@ NULL
   "rule",
   "segment",
   "edges",
-  "nodes"
+  "nodes",
+  "edge_bundle",
+  "flow_map"
 )
 # The marks an effect applies to (used for validation + error messages). Glow /
 # outline / shadow decorate stroked and point marks. Text marks are handled
@@ -37,7 +39,8 @@ NULL
 #' The glow is applied per style group, so a colour-mapped multi-series line
 #' glows each series in its own hue. It applies to `mark_point()`, `mark_line()`,
 #' `mark_step()`, `mark_rule()`, `mark_segment()`, `mark_edges()`, `mark_nodes()`,
-#' and text marks (`mark_text()` / `mark_label()`); other marks reject it.
+#' `mark_edge_bundle()`, `mark_flow_map()`, and text marks (`mark_text()` /
+#' `mark_label()`); other marks reject it.
 #'
 #' @param size Halo spread in millimetres: the blur radius (and, for stroked/point
 #'   marks, how much the copy is widened before blurring).

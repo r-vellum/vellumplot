@@ -427,12 +427,30 @@ NULL
   vals <- if (is.list(x)) x else list(x)
   facs <- Filter(is.factor, vals)
   if (length(facs)) {
-    return(unique(unlist(lapply(facs, levels), use.names = FALSE)))
+    # Union the factor levels (preserving their order), then append any categories
+    # contributed only by non-factor layers. Combining with `c()` here would coerce
+    # a factor to its integer codes when a sibling layer maps the same axis as a
+    # character; taking levels + the extra strings keeps every real category.
+    fac_levs <- unique(unlist(lapply(facs, levels), use.names = FALSE))
+    others <- unique(as.character(unlist(
+      lapply(Filter(Negate(is.factor), vals), as.character),
+      use.names = FALSE
+    )))
+    return(unique(c(fac_levs, others[!others %in% fac_levs])))
   }
-  sort(unique(as.character(unlist(
+  chr <- unique(as.character(unlist(
     lapply(vals, as.character),
     use.names = FALSE
-  ))))
+  )))
+  # Categories that are all numeric-looking (e.g. a numeric column drawn discretely
+  # by mark_bar) order numerically, so bars run 1, 2, 10 rather than lexicographic
+  # 1, 10, 2. Otherwise fall back to alphabetical order.
+  num <- suppressWarnings(as.numeric(chr))
+  if (length(chr) && !anyNA(num)) {
+    chr[order(num)]
+  } else {
+    sort(chr)
+  }
 }
 
 # Does any resolved layer draw bars (forcing the y axis through zero, and a

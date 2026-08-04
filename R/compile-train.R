@@ -494,7 +494,15 @@ NULL
   # pay for a filtered pass to exclude the values it can't map (ggplot2 does the
   # same -- the mark is still drawn, clipped; only the trained range excludes them).
   rng <- if (!is.null(user_lim)) {
-    as.numeric(user_lim)
+    ul <- as.numeric(user_lim)
+    # Partial limits (`ylim(0, NA)` / `scale_*(limits = c(NA, hi))`) pin the
+    # supplied end and train the NA end from the data, rather than collapsing the
+    # whole axis. Only the NA endpoint(s) are filled from the data range.
+    if (anyNA(ul)) {
+      data_r <- suppressWarnings(range(as.numeric(raw), finite = TRUE))
+      ul[is.na(ul)] <- data_r[is.na(ul)]
+    }
+    ul
   } else if (is_time) {
     suppressWarnings(range(as.numeric(raw), finite = TRUE))
   } else {

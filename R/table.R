@@ -126,7 +126,11 @@ vtable <- function(
         name = nm,
         kind = "spark",
         header = nm,
-        cells = lapply(colvals, function(v) spark_fns[[nm]](as.numeric(v))),
+        # A too-short / empty / all-non-finite cell would make vsparkline() abort
+        # and take down the whole table; render it as a blank cell instead.
+        cells = lapply(colvals, function(v) {
+          tryCatch(spark_fns[[nm]](as.numeric(v)), error = function(e) NULL)
+        }),
         align = "centre",
         width = sw_mm
       )
@@ -230,7 +234,7 @@ vtable <- function(
     grow <- r + row0
     for (c in seq_len(ncol)) {
       d <- vt@descs[[c]]
-      if (identical(d$kind, "spark")) {
+      if (identical(d$kind, "spark") && !is.null(d$cells[[r]])) {
         scene <- vellum::push(
           scene,
           vellum::vl_viewport(row = grow, col = c)

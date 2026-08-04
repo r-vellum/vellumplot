@@ -31,6 +31,14 @@ NULL
     }
     return(L)
   }
+  # A structurally-empty input (e.g. an unpopulated facet_grid cell) has no rows
+  # to aggregate. The binning/density stats abort on empty input, which would
+  # kill the whole render; short-circuit to an empty layer that draws nothing so
+  # the panel renders blank (matching ggplot2).
+  n_in <- if (length(L$values)) max(lengths(L$values)) else 0L
+  if (n_in == 0L) {
+    return(.merge_stat(L, data.frame()))
+  }
   sdf <- switch(
     stat,
     count = .stat_count(L),

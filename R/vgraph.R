@@ -215,6 +215,15 @@ NULL
     }
   }
   is_leaf <- lengths(children) == 0L
+  # A vertex not reachable from `root` keeps `depth = NA` (an arbitrary igraph may
+  # be a forest, unlike an hclust tree). Fail clearly rather than propagating NA
+  # into the "missing value where TRUE/FALSE needed" abort below.
+  if (anyNA(depth)) {
+    cli::cli_abort(c(
+      "{.arg layout = \"dendrogram\"} needs a connected tree.",
+      i = "The graph is disconnected ({sum(is.na(depth))} vertices are unreachable from the root)."
+    ))
+  }
   if (max(depth) > .MAX_TREE_DEPTH) {
     cli::cli_abort(c(
       "The tree is too deep ({max(depth)} levels) to lay out as a dendrogram.",
