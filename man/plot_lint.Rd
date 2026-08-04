@@ -46,7 +46,8 @@ Because every finding carries the box it refers to,
 \code{\link[vellum:vl_lint_assert]{vellum::vl_lint_assert()}} can fail a test on it.
 
 A composition or table has no single set of trained scales, so it reports the
-geometric findings only.
+geometric findings only — lint the cells individually for the grammar ones
+(vellumplot#147).
 }
 \examples{
 # a tiny-text, single-level-scale plot trips the linter

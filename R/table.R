@@ -268,7 +268,8 @@ vtable <- function(
 S7::method(.as_vellum_scene, VTable) <- function(x, ...) {
   scene <- .compile_vtable(x)
   # As for a composition: cells go through `.draw_plot()`, and a table has no one
-  # set of trained scales for the grammar lint rules to report on. See R/lint.R.
+  # set of trained scales for the grammar lint rules to report on. See R/lint.R
+  # and vellumplot#147.
   attr(scene, "vellumplot_lint_scales") <- NULL
   scene
 }
