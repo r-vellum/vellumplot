@@ -47,6 +47,25 @@ test_that("a positional literal is a constant coordinate channel, not a param", 
   expect_identical(r$types$y, "quantitative")
 })
 
+test_that("a constant width/height literal stays a param, not a coordinate", {
+  # `width`/`height` are geometry but not coordinates: they never train a
+  # position scale and their meaning is mark-specific (a data-unit band width on
+  # a bar vs a physical box size on a label). So a constant stays in `params`,
+  # where each emitter reads it -- it is deliberately not a `.POSITION_AES`
+  # channel (vellumplot#3).
+  p <- vplot(data.frame(x = c("a", "b"), y = c(1, 2))) |>
+    mark_bar(x = x, y = y, width = 0.5)
+  L <- p@layers[[1]]
+  expect_equal(L@params$width, 0.5)
+  expect_false("width" %in% names(L@encoding))
+
+  # The param survives resolution rather than being dropped, so the emitter can
+  # read it (a mapped `width = col` would instead be a channel in `values`).
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  expect_equal(r$params$width, 0.5)
+  expect_null(r$values$width)
+})
+
 test_that("multiple marks stack into multiple layers", {
   p <- vplot(mtcars) |>
     mark_line(x = wt, y = mpg) |>
