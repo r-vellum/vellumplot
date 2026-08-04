@@ -9,6 +9,7 @@ NULL
   xv <- L$values$x
   yv <- as.numeric(L$values$y)
   colv <- rep_len(.aes_colour(L, scales, "white"), length(yv))
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(yv))
   sk <- .mark_sketch(L, scales)
   levs <- .cat_levels(xv)
   xc_all <- scales$x$map(levs)
@@ -37,6 +38,7 @@ NULL
     out <- yy[yy < lo | yy > hi]
     xc <- xc_all[j]
     fillc <- colv[sel[1]]
+    a <- alpha[sel[1]]
     line_gp <- vellum::vl_gpar(col = "grey20", lwd = 1)
     skj <- .sketch_bump(sk, j)
 
@@ -58,7 +60,8 @@ NULL
         gp = vellum::vl_gpar(
           fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, fillc),
           col = "grey20",
-          lwd = 1
+          lwd = 1,
+          alpha = gp_alpha(a)
         )
       ),
       # PROVENANCE: a box summarises all rows of its category.
@@ -330,7 +333,8 @@ NULL
           gp = vellum::vl_gpar(
             fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, ccol),
             col = NA,
-            alpha = gp_alpha(0.5)
+            # honour a mapped/constant alpha; fall back to the slab's native 0.5
+            alpha = gp_alpha(if (is.na(a)) 0.5 else a)
           )
         ),
         rows = sel
@@ -350,7 +354,11 @@ NULL
           ab$y[1],
           ab$x[2],
           ab$y[2],
-          gp = vellum::vl_gpar(col = ccol, lwd = lwd_by_width[wi])
+          gp = vellum::vl_gpar(
+            col = ccol,
+            lwd = lwd_by_width[wi],
+            alpha = gp_alpha(a)
+          )
         ),
         # PROVENANCE: this category's rows -- the bar keys to its datum like the
         # slab and centre point do (a single segment, so the first key is used).
@@ -365,7 +373,7 @@ NULL
         pt$y,
         size = vellum::vl_unit(2, "mm"),
         shape = "circle",
-        gp = vellum::vl_gpar(fill = ccol, col = ccol)
+        gp = vellum::vl_gpar(fill = ccol, col = ccol, alpha = gp_alpha(a))
       ),
       rows = sel
     )
