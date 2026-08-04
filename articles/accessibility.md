@@ -142,9 +142,10 @@ for `.svg`/`.pdf`.
 [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
 compiles the plot and reports the legibility problems a green test suite
 hides: text below a readable size, contrast under the WCAG threshold,
-labels that overlap or fall off the panel (all judged in real device
-pixels by the engine), plus grammar-level mistakes such as an encoding
-with a single level or a legend too long to read.
+two palette colours a colour-blind reader cannot tell apart, labels that
+overlap or fall off the panel (all judged in real device pixels by the
+engine), plus grammar-level mistakes such as an encoding with a single
+level or a legend too long to read.
 
 ``` r
 
@@ -174,8 +175,54 @@ plot_lint(vplot(mtcars) |> mark_point(x = wt, y = mpg))
 #> ✔ No lint findings.
 ```
 
-Each finding is a row (`rule`, `severity`, `node`, `message`);
-`min_text_px` and `min_contrast` set the thresholds.
+Each finding is a row: `rule`, `severity`, `node`, `message`, and the
+device-px box the finding refers to. `min_text_px` and `min_contrast`
+set the thresholds, and every other argument of
+[`vellum::vl_lint()`](https://r-vellum.github.io/vellum/reference/vl_lint.html)
+comes through too — `exclude` to accept a finding you have already
+judged, `cvd` to choose which colour-vision deficiency to check, `rules`
+to run one rule on its own.
+
+Because the findings carry their boxes, the report can be drawn onto the
+plot instead of read:
+
+``` r
+
+scene <- vellum::as_vellum_scene(p_bad)
+vellum::display(vellum::vl_lint_overlay(scene, plot_lint(p_bad)))
+```
+
+![The plot above with boxes drawn around each linted
+element.](accessibility_files/figure-html/unnamed-chunk-9-1.png)
+
+And it can gate a test suite, which is the point of flagging things at
+all:
+
+``` r
+
+test_that("the figure is legible", {
+  vellum::vl_lint_assert(my_plot())
+})
+```
+
+The grammar rules are not a separate mechanism. vellumplot registers
+them in the engine’s own rule registry, so
+[`vellum::vl_lint_rules()`](https://r-vellum.github.io/vellum/reference/vl_lint_rule.html)
+lists them, `rules =` selects them, and a plain
+[`vellum::vl_lint()`](https://r-vellum.github.io/vellum/reference/vl_lint.html)
+of a compiled plot reports the encoding problems alongside the geometric
+ones:
+
+``` r
+
+subset(vellum::vl_lint_rules(), tags == "grammar", c("rule", "description"))
+#>                  rule
+#> 14    legend_overflow
+#> 19 single_level_scale
+#>                                                    description
+#> 14 A discrete encoding has more levels than a legend can show.
+#> 19   A discrete encoding has one level, so it encodes nothing.
+```
 
 ### Fix it: a redundant, non-colour encoding
 
@@ -199,7 +246,7 @@ vplot(d) |>
   ))
 ```
 
-![](accessibility_files/figure-html/unnamed-chunk-9-1.png)
+![](accessibility_files/figure-html/unnamed-chunk-12-1.png)
 
 Now each bar is distinguished by hatch *and* colour: the plot survives
 the CVD preview above, and

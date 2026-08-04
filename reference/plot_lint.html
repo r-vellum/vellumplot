@@ -7,16 +7,18 @@
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Lint a plot for legibility and accessibility problems — plot_lint"><meta name="description" content='plot_lint() compiles a plot and reports the design problems a static render
 hides from a green test suite: text too small to read, colour contrast below
-the WCAG threshold, labels that overlap or fall off the panel, and
-grammar-level mistakes such as an encoding with a single level or a legend too
-long to read. It is the "flag it" step of the accessibility workflow — pair it
-with render_plot(cvd = ) to see a failing palette and scale_pattern() /
+the WCAG threshold, two palette colours a colour-blind reader cannot tell
+apart, labels that overlap or fall off the panel, and grammar-level mistakes
+such as an encoding with a single level or a legend too long to read. It is
+the "flag it" step of the accessibility workflow — pair it with
+render_plot(cvd = ) to see a failing palette and scale_pattern() /
 pattern_hatch() to fix it with a redundant non-colour encoding.'><meta property="og:description" content='plot_lint() compiles a plot and reports the design problems a static render
 hides from a green test suite: text too small to read, colour contrast below
-the WCAG threshold, labels that overlap or fall off the panel, and
-grammar-level mistakes such as an encoding with a single level or a legend too
-long to read. It is the "flag it" step of the accessibility workflow — pair it
-with render_plot(cvd = ) to see a failing palette and scale_pattern() /
+the WCAG threshold, two palette colours a colour-blind reader cannot tell
+apart, labels that overlap or fall off the panel, and grammar-level mistakes
+such as an encoding with a single level or a legend too long to read. It is
+the "flag it" step of the accessibility workflow — pair it with
+render_plot(cvd = ) to see a failing palette and scale_pattern() /
 pattern_hatch() to fix it with a redundant non-colour encoding.'><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -78,16 +80,17 @@ pattern_hatch() to fix it with a redundant non-colour encoding.'><meta property=
     <div class="ref-description section level2">
     <p><code>plot_lint()</code> compiles a plot and reports the design problems a static render
 hides from a green test suite: text too small to read, colour contrast below
-the WCAG threshold, labels that overlap or fall off the panel, and
-grammar-level mistakes such as an encoding with a single level or a legend too
-long to read. It is the "flag it" step of the accessibility workflow — pair it
-with <code>render_plot(cvd = )</code> to <em>see</em> a failing palette and <code><a href="scale_pattern.html">scale_pattern()</a></code> /
+the WCAG threshold, two palette colours a colour-blind reader cannot tell
+apart, labels that overlap or fall off the panel, and grammar-level mistakes
+such as an encoding with a single level or a legend too long to read. It is
+the "flag it" step of the accessibility workflow — pair it with
+<code>render_plot(cvd = )</code> to <em>see</em> a failing palette and <code><a href="scale_pattern.html">scale_pattern()</a></code> /
 <code><a href="pattern_hatch.html">pattern_hatch()</a></code> to <em>fix</em> it with a redundant non-colour encoding.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_lint</span><span class="op">(</span><span class="va">x</span>, min_text_px <span class="op">=</span> <span class="fl">7</span>, min_contrast <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_lint</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, min_text_px <span class="op">=</span> <span class="fl">7</span>, min_contrast <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -96,6 +99,11 @@ with <code>render_plot(cvd = )</code> to <em>see</em> a failing palette and <cod
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>A <a href="PlotSpec.html">PlotSpec</a> (or anything <code><a href="https://r-vellum.github.io/vellum/reference/as_vellum_scene.html" class="external-link">vellum::as_vellum_scene()</a></code> accepts).</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Passed to <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint.html" class="external-link">vellum::vl_lint()</a></code>: <code>rules</code>, <code>exclude</code>, <code>severity</code>,
+<code>cvd</code>, <code>min_text_pt</code>, <code>max_overplot</code> and the rest of the thresholds.</p></dd>
 
 
 <dt id="arg-min-text-px">min_text_px<a class="anchor" aria-label="anchor" href="#arg-min-text-px"></a></dt>
@@ -111,20 +119,27 @@ background (default <code>3</code>, the WCAG AA threshold for graphical objects)
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame (class <code>vellum_lint</code>) with one row per finding: <code>rule</code>,
-<code>severity</code> (<code>"warning"</code>/<code>"note"</code>), <code>node</code>, and a human <code>message</code>. Zero rows
-when the plot is clean.</p>
+<code>severity</code> (<code>"warning"</code>/<code>"note"</code>), <code>node</code>, a human <code>message</code>, and the
+device-px box <code>x0</code>/<code>y0</code>/<code>x1</code>/<code>y1</code> — <code>NA</code> for a grammar finding, which is
+about a scale and so has no box. Zero rows when the plot is clean.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The geometric rules (contrast, text size, overlap, off-canvas) come from the
-engine's <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint.html" class="external-link">vellum::vl_lint()</a></code>, which judges them in resolved device pixels; the
-grammar rules are added here from the trained scales. Findings are returned
-most-severe first.</p>
+    <p>The geometric rules come from the engine's <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint.html" class="external-link">vellum::vl_lint()</a></code>, which judges
+them in resolved device pixels. The grammar rules are registered into the same
+registry by vellumplot, so they are not special: <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint_rule.html" class="external-link">vellum::vl_lint_rules()</a></code>
+lists them, <code>rules =</code> selects them, and <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint.html" class="external-link">vellum::vl_lint()</a></code> on a compiled plot
+reports them too. Findings are returned most-severe first.</p>
+<p>Because every finding carries the box it refers to,
+<code><a href="https://r-vellum.github.io/vellum/reference/vl_lint_overlay.html" class="external-link">vellum::vl_lint_overlay()</a></code> can draw the report onto the plot, and
+<code><a href="https://r-vellum.github.io/vellum/reference/vl_lint_assert.html" class="external-link">vellum::vl_lint_assert()</a></code> can fail a test on it.</p>
+<p>A composition or table has no single set of trained scales, so it reports the
+geometric findings only.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="render_plot.html">render_plot()</a></code> (<code>cvd =</code>), <code><a href="scale_pattern.html">scale_pattern()</a></code>, <code><a href="pattern_hatch.html">pattern_hatch()</a></code>,
-<code><a href="https://r-vellum.github.io/vellum/reference/vl_lint.html" class="external-link">vellum::vl_lint()</a></code></p></div>
+<code><a href="https://r-vellum.github.io/vellum/reference/vl_lint.html" class="external-link">vellum::vl_lint()</a></code>, <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint_overlay.html" class="external-link">vellum::vl_lint_overlay()</a></code>, <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint_assert.html" class="external-link">vellum::vl_lint_assert()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -145,6 +160,18 @@ most-severe first.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> [single_level_scale] scale:color: The color scale has a single level (one</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   group): the encoding conveys nothing and its legend is redundant.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the engine's arguments come through, so a project can accept a finding</span></span></span>
+<span class="r-in"><span><span class="fu">plot_lint</span><span class="op">(</span><span class="va">p</span>, exclude <span class="op">=</span> <span class="st">"scale:color"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">8</span> lint findings (8 warnings):</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> [tiny_text] text: 2.7 px tall - below the 7 px legibility floor</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

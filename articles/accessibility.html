@@ -187,7 +187,7 @@
 </section><section class="level3"><h3 id="flag-it-plot_lint">Flag it: <code>plot_lint()</code>
 <a class="anchor" aria-label="anchor" href="#flag-it-plot_lint"></a>
 </h3>
-<p><code><a href="../reference/plot_lint.html">plot_lint()</a></code> compiles the plot and reports the legibility problems a green test suite hides: text below a readable size, contrast under the WCAG threshold, labels that overlap or fall off the panel (all judged in real device pixels by the engine), plus grammar-level mistakes such as an encoding with a single level or a legend too long to read.</p>
+<p><code><a href="../reference/plot_lint.html">plot_lint()</a></code> compiles the plot and reports the legibility problems a green test suite hides: text below a readable size, contrast under the WCAG threshold, two palette colours a colour-blind reader cannot tell apart, labels that overlap or fall off the panel (all judged in real device pixels by the engine), plus grammar-level mistakes such as an encoding with a single level or a legend too long to read.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p_bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -213,12 +213,42 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_lint.html">plot_lint</a></span><span class="op">(</span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ✔ No lint findings.</span></span></code></pre></div>
 </div>
-<p>Each finding is a row (<code>rule</code>, <code>severity</code>, <code>node</code>, <code>message</code>); <code>min_text_px</code> and <code>min_contrast</code> set the thresholds.</p>
+<p>Each finding is a row: <code>rule</code>, <code>severity</code>, <code>node</code>, <code>message</code>, and the device-px box the finding refers to. <code>min_text_px</code> and <code>min_contrast</code> set the thresholds, and every other argument of <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint.html" class="external-link">vellum::vl_lint()</a></code> comes through too — <code>exclude</code> to accept a finding you have already judged, <code>cvd</code> to choose which colour-vision deficiency to check, <code>rules</code> to run one rule on its own.</p>
+<p>Because the findings carry their boxes, the report can be drawn onto the plot instead of read:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">scene</span> <span class="op">&lt;-</span> <span class="fu">vellum</span><span class="fu">::</span><span class="fu"><a href="https://r-vellum.github.io/vellum/reference/as_vellum_scene.html" class="external-link">as_vellum_scene</a></span><span class="op">(</span><span class="va">p_bad</span><span class="op">)</span></span>
+<span><span class="fu">vellum</span><span class="fu">::</span><span class="fu"><a href="https://r-vellum.github.io/vellum/reference/display.html" class="external-link">display</a></span><span class="op">(</span><span class="fu">vellum</span><span class="fu">::</span><span class="fu"><a href="https://r-vellum.github.io/vellum/reference/vl_lint_overlay.html" class="external-link">vl_lint_overlay</a></span><span class="op">(</span><span class="va">scene</span>, <span class="fu"><a href="../reference/plot_lint.html">plot_lint</a></span><span class="op">(</span><span class="va">p_bad</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="accessibility_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%" alt="The plot above with boxes drawn around each linted element."></p>
+</figure>
+</div>
+</div>
+</div>
+<p>And it can gate a test suite, which is the point of flagging things at all:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">test_that</span><span class="op">(</span><span class="st">"the figure is legible"</span>, <span class="op">{</span></span>
+<span>  <span class="fu">vellum</span><span class="fu">::</span><span class="fu"><a href="https://r-vellum.github.io/vellum/reference/vl_lint_assert.html" class="external-link">vl_lint_assert</a></span><span class="op">(</span><span class="fu">my_plot</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>The grammar rules are not a separate mechanism. vellumplot registers them in the engine’s own rule registry, so <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint_rule.html" class="external-link">vellum::vl_lint_rules()</a></code> lists them, <code>rules =</code> selects them, and a plain <code><a href="https://r-vellum.github.io/vellum/reference/vl_lint.html" class="external-link">vellum::vl_lint()</a></code> of a compiled plot reports the encoding problems alongside the geometric ones:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu">vellum</span><span class="fu">::</span><span class="fu"><a href="https://r-vellum.github.io/vellum/reference/vl_lint_rule.html" class="external-link">vl_lint_rules</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">tags</span> <span class="op">==</span> <span class="st">"grammar"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rule"</span>, <span class="st">"description"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                  rule</span></span>
+<span><span class="co">#&gt; 14    legend_overflow</span></span>
+<span><span class="co">#&gt; 19 single_level_scale</span></span>
+<span><span class="co">#&gt;                                                    description</span></span>
+<span><span class="co">#&gt; 14 A discrete encoding has more levels than a legend can show.</span></span>
+<span><span class="co">#&gt; 19   A discrete encoding has one level, so it encodes nothing.</span></span></code></pre></div>
+</div>
 </section><section class="level3"><h3 id="fix-it-a-redundant-non-colour-encoding">Fix it: a redundant, non-colour encoding<a class="anchor" aria-label="anchor" href="#fix-it-a-redundant-non-colour-encoding"></a>
 </h3>
 <p>The robust fix for a colour encoding that fails under CVD or in greyscale is to carry the same information a second way. Map the <code>pattern</code> aesthetic alongside <code>fill</code>, and reach for <code><a href="../reference/pattern_hatch.html">pattern_hatch()</a></code> — a crisp <strong>vector</strong> hatch that stays sharp in PDF and survives being printed in black and white (unlike the raster tile patterns):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">5</span>, <span class="fl">11</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -230,7 +260,7 @@
 <span>  <span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="accessibility_files/figure-html/unnamed-chunk-9-1.png" style="width:100.0%"></p>
+<figure><p><img src="accessibility_files/figure-html/unnamed-chunk-12-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
@@ -240,7 +270,7 @@
 </h2>
 <p>A static image with alt text is enough for a picture, but an <em>interactive</em> chart must also be operable and explorable without a mouse. <code>vellumwidget::as_widget()</code> (accessibility on by default, <code>a11y = TRUE</code>) makes the widget a first-class interactive chart:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">vellumwidget</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
