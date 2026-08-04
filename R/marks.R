@@ -42,6 +42,15 @@ NULL
 # Positional (coordinate) aesthetics. A bare literal on one of these is a
 # constant-valued coordinate that must train the position scale (e.g. a segment
 # baseline `y = 0`), so it is kept as a channel rather than a style param.
+#
+# `width`/`height` are deliberately *not* here, even though they are geometric.
+# They are not coordinates: they never train a position scale, and their meaning
+# is mark-specific -- a band width in *data* units on `mark_bar`/`mark_boxplot`,
+# but a box size in *physical* units on `mark_label`. So each emitter reads them
+# from `params` (via `%||% band` or `.aes_param()`) and interprets them in its
+# own space; a constant width already works through that path. Promoting them to
+# a channel here would force one global meaning and misroute the physical-size
+# case, so the `params` path is the intended design (vellumplot#3).
 .POSITION_AES <- c(
   "x",
   "y",
