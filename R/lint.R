@@ -40,7 +40,7 @@ NULL
 # The summary a compiled scene carries, or NULL. A scene that did not come from
 # a single vellumplot plot has none, which is how these rules stay silent on
 # other people's scenes -- and on a composition, where there is no one set of
-# trained scales to report on.
+# trained scales to report on (vellumplot#147).
 .lint_scales <- function(scene) {
   attr(scene, "vellumplot_lint_scales", exact = TRUE)
 }
@@ -141,7 +141,8 @@ NULL
 #' [vellum::vl_lint_assert()] can fail a test on it.
 #'
 #' A composition or table has no single set of trained scales, so it reports the
-#' geometric findings only.
+#' geometric findings only — lint the cells individually for the grammar ones
+#' (vellumplot#147).
 #'
 #' @param x A [PlotSpec] (or anything [vellum::as_vellum_scene()] accepts).
 #' @param ... Passed to [vellum::vl_lint()]: `rules`, `exclude`, `severity`,

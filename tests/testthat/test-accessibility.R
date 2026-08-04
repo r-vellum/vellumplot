@@ -128,7 +128,7 @@ test_that("the scales summary carries levels, not the plot's data", {
 test_that("a composition reports no grammar findings rather than its last cell", {
   # Cells are drawn through `.draw_plot()`, which leaves its summary behind, so
   # without clearing it a composition would report on whichever cell was drawn
-  # last as though it were the whole figure.
+  # last as though it were the whole figure. Reporting per cell is vellumplot#147.
   one <- vplot(transform(mtcars, grp = "one group")) |>
     mark_point(x = wt, y = mpg, color = grp)
   scene <- vellum::as_vellum_scene(hconcat(one, one))
