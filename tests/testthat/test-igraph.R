@@ -290,6 +290,48 @@ test_that(".legend_guides emits independent node and edge colour guides", {
   expect_true("linetype" %in% kinds)
 })
 
+test_that(".legend_guides folds a shared node+edge colour into one guide", {
+  # One variable colours both nodes and edges: same title, levels, and colours.
+  shared <- list(
+    kind = "discrete",
+    colors = c("red", "blue"),
+    levels = c("a", "b"),
+    name = "grp"
+  )
+  guides <- .legend_guides(list(color = shared, edge_color = shared))
+  kinds <- vapply(guides, function(g) g$kind, character(1))
+  expect_identical(sum(kinds == "color_discrete"), 1L) # one guide, not two
+})
+
+test_that(".legend_guides keeps both guides when node/edge colours differ", {
+  guides <- .legend_guides(list(
+    color = list(
+      kind = "discrete",
+      colors = c("red", "blue"),
+      levels = c("a", "b"),
+      name = "grp"
+    ),
+    # Same variable name, but a different palette -> a genuinely distinct scale.
+    edge_color = list(
+      kind = "discrete",
+      colors = c("green", "orange"),
+      levels = c("a", "b"),
+      name = "grp"
+    )
+  ))
+  kinds <- vapply(guides, function(g) g$kind, character(1))
+  expect_identical(sum(kinds == "color_discrete"), 2L)
+})
+
+test_that("vdendrogram(k=) draws a single cluster colour legend", {
+  skip_if_not_installed("igraph")
+  hc <- hclust(dist(scale(mtcars)), method = "ward.D2")
+  built <- vellumplot:::.build_panels(vdendrogram(hc, k = 4))
+  guides <- vellumplot:::.legend_guides(built$scales)
+  kinds <- vapply(guides, function(g) g$kind, character(1))
+  expect_identical(sum(kinds == "color_discrete"), 1L)
+})
+
 test_that("scale_edge_color/alpha/linetype declare edge-scoped scales", {
   p <- vplot(data.frame(x = 1)) |>
     scale_edge_color(palette = "Grays") |>
