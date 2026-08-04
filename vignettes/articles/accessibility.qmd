@@ -144,10 +144,11 @@ Simulation is raster-only (it is a pixel operation), so it is ignored for
 ### Flag it: `plot_lint()`
 
 `plot_lint()` compiles the plot and reports the legibility problems a green test
-suite hides: text below a readable size, contrast under the WCAG threshold,
-labels that overlap or fall off the panel (all judged in real device pixels by
-the engine), plus grammar-level mistakes such as an encoding with a single level
-or a legend too long to read.
+suite hides: text below a readable size, contrast under the WCAG threshold, two
+palette colours a colour-blind reader cannot tell apart, labels that overlap or
+fall off the panel (all judged in real device pixels by the engine), plus
+grammar-level mistakes such as an encoding with a single level or a legend too
+long to read.
 
 ```{r}
 p_bad <- vplot(mtcars) |>
@@ -163,8 +164,38 @@ A well-made plot lints clean:
 plot_lint(vplot(mtcars) |> mark_point(x = wt, y = mpg))
 ```
 
-Each finding is a row (`rule`, `severity`, `node`, `message`); `min_text_px` and
-`min_contrast` set the thresholds.
+Each finding is a row: `rule`, `severity`, `node`, `message`, and the device-px
+box the finding refers to. `min_text_px` and `min_contrast` set the thresholds,
+and every other argument of `vellum::vl_lint()` comes through too — `exclude` to
+accept a finding you have already judged, `cvd` to choose which colour-vision
+deficiency to check, `rules` to run one rule on its own.
+
+Because the findings carry their boxes, the report can be drawn onto the plot
+instead of read:
+
+```{r}
+#| fig.alt: "The plot above with boxes drawn around each linted element."
+scene <- vellum::as_vellum_scene(p_bad)
+vellum::display(vellum::vl_lint_overlay(scene, plot_lint(p_bad)))
+```
+
+And it can gate a test suite, which is the point of flagging things at all:
+
+```{r}
+#| eval: false
+test_that("the figure is legible", {
+  vellum::vl_lint_assert(my_plot())
+})
+```
+
+The grammar rules are not a separate mechanism. vellumplot registers them in the
+engine's own rule registry, so `vellum::vl_lint_rules()` lists them, `rules =`
+selects them, and a plain `vellum::vl_lint()` of a compiled plot reports the
+encoding problems alongside the geometric ones:
+
+```{r}
+subset(vellum::vl_lint_rules(), tags == "grammar", c("rule", "description"))
+```
 
 ### Fix it: a redundant, non-colour encoding
 

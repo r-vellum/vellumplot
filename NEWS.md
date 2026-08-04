@@ -1,5 +1,42 @@
 # vellumplot 0.9.0.9000 (development version)
 
+* **Requires vellum >= 0.6.8**, and `plot_lint()` gained everything the linter
+  gained there: 13 new rules, two of which vellumplot could not have had on its
+  own — colours a colour-blind reader cannot tell apart, and characters no font on
+  the running machine can draw. Every `vellum::vl_lint()` argument now comes
+  through — `exclude` to accept a finding you have already judged, `cvd` to pick
+  which deficiency to check, `rules` to run one rule alone, and `min_text_pt` for
+  a print-resolution legibility floor.
+
+* **Breaking, minor: `plot_lint()`'s thresholds must be named.** `...` now sits
+  after `x`, so the optional arguments follow it — `plot_lint(p, 5)` used to mean
+  `min_text_px = 5` and now fails, because the `5` reaches the engine as a rule
+  name. Write `plot_lint(p, min_text_px = 5)`. This is the usual convention for
+  arguments after `...`, and it is what makes `cvd =`/`exclude =` reach the engine.
+
+* **Findings carry the box they refer to**, so `vellum::vl_lint_overlay()` can
+  draw the report onto the plot rather than describing it, and
+  `vellum::vl_lint_assert()` can fail a test suite on it. `plot_lint()` therefore
+  returns four more columns (`x0`, `y0`, `x1`, `y1`); a grammar finding is about a
+  scale rather than a node, so its box is `NA`.
+
+* **The grammar rules are registered in the engine's rule registry** instead of
+  being stitched on afterwards. `vellum::vl_lint_rules()` lists
+  `single_level_scale` and `legend_overflow` with a `grammar` tag, `rules =`
+  selects them, and a plain `vellum::vl_lint()` of a compiled plot now reports
+  encoding problems alongside geometric ones — `plot_lint()` is a thin wrapper
+  rather than a second implementation.
+
+  A registry rule is handed the resolved scene, which is not enough for a rule
+  about the encoding, so a compiled scene carries a summary of its trained
+  scales: the `kind` and `levels` of the legend-bearing ones, a couple of
+  kilobytes, computed where the compile had already built them. Deliberately a
+  summary and not the plot spec, which for 50,000 rows runs past a megabyte and
+  would keep the data alive for as long as anyone held the scene. It leaves the
+  scene's hash, serialised form and pixels untouched. A composition or table
+  carries none — there is no one set of scales to report on — so those get the
+  geometric findings only.
+
 * **Requires vellum >= 0.6.7**, which fixes animated SVG output: duplicate
   `<defs>` ids across frames made every frame's clip resolve to the first
   frame's — hidden for all but one frame of the cycle, and a hidden `<clipPath>`

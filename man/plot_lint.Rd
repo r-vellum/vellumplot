@@ -4,10 +4,13 @@
 \alias{plot_lint}
 \title{Lint a plot for legibility and accessibility problems}
 \usage{
-plot_lint(x, min_text_px = 7, min_contrast = 3)
+plot_lint(x, ..., min_text_px = 7, min_contrast = 3)
 }
 \arguments{
 \item{x}{A \link{PlotSpec} (or anything \code{\link[vellum:as_vellum_scene]{vellum::as_vellum_scene()}} accepts).}
+
+\item{...}{Passed to \code{\link[vellum:vl_lint]{vellum::vl_lint()}}: \code{rules}, \code{exclude}, \code{severity},
+\code{cvd}, \code{min_text_pt}, \code{max_overplot} and the rest of the thresholds.}
 
 \item{min_text_px}{Minimum legible text height in pixels (default \code{7}); text
 below it is flagged.}
@@ -17,23 +20,33 @@ background (default \code{3}, the WCAG AA threshold for graphical objects).}
 }
 \value{
 A data frame (class \code{vellum_lint}) with one row per finding: \code{rule},
-\code{severity} (\code{"warning"}/\code{"note"}), \code{node}, and a human \code{message}. Zero rows
-when the plot is clean.
+\code{severity} (\code{"warning"}/\code{"note"}), \code{node}, a human \code{message}, and the
+device-px box \code{x0}/\code{y0}/\code{x1}/\code{y1} — \code{NA} for a grammar finding, which is
+about a scale and so has no box. Zero rows when the plot is clean.
 }
 \description{
 \code{plot_lint()} compiles a plot and reports the design problems a static render
 hides from a green test suite: text too small to read, colour contrast below
-the WCAG threshold, labels that overlap or fall off the panel, and
-grammar-level mistakes such as an encoding with a single level or a legend too
-long to read. It is the "flag it" step of the accessibility workflow — pair it
-with \code{render_plot(cvd = )} to \emph{see} a failing palette and \code{\link[=scale_pattern]{scale_pattern()}} /
+the WCAG threshold, two palette colours a colour-blind reader cannot tell
+apart, labels that overlap or fall off the panel, and grammar-level mistakes
+such as an encoding with a single level or a legend too long to read. It is
+the "flag it" step of the accessibility workflow — pair it with
+\code{render_plot(cvd = )} to \emph{see} a failing palette and \code{\link[=scale_pattern]{scale_pattern()}} /
 \code{\link[=pattern_hatch]{pattern_hatch()}} to \emph{fix} it with a redundant non-colour encoding.
 }
 \details{
-The geometric rules (contrast, text size, overlap, off-canvas) come from the
-engine's \code{\link[vellum:vl_lint]{vellum::vl_lint()}}, which judges them in resolved device pixels; the
-grammar rules are added here from the trained scales. Findings are returned
-most-severe first.
+The geometric rules come from the engine's \code{\link[vellum:vl_lint]{vellum::vl_lint()}}, which judges
+them in resolved device pixels. The grammar rules are registered into the same
+registry by vellumplot, so they are not special: \code{\link[vellum:vl_lint_rules]{vellum::vl_lint_rules()}}
+lists them, \verb{rules =} selects them, and \code{vellum::vl_lint()} on a compiled plot
+reports them too. Findings are returned most-severe first.
+
+Because every finding carries the box it refers to,
+\code{\link[vellum:vl_lint_overlay]{vellum::vl_lint_overlay()}} can draw the report onto the plot, and
+\code{\link[vellum:vl_lint_assert]{vellum::vl_lint_assert()}} can fail a test on it.
+
+A composition or table has no single set of trained scales, so it reports the
+geometric findings only.
 }
 \examples{
 # a tiny-text, single-level-scale plot trips the linter
@@ -41,8 +54,11 @@ p <- vplot(transform(mtcars, grp = "one group")) |>
   mark_point(x = wt, y = mpg, color = grp) |>
   theme(axis.text = element_text(size = 2))
 plot_lint(p)
+
+# the engine's arguments come through, so a project can accept a finding
+plot_lint(p, exclude = "scale:color")
 }
 \seealso{
 \code{\link[=render_plot]{render_plot()}} (\verb{cvd =}), \code{\link[=scale_pattern]{scale_pattern()}}, \code{\link[=pattern_hatch]{pattern_hatch()}},
-\code{\link[vellum:vl_lint]{vellum::vl_lint()}}
+\code{\link[vellum:vl_lint]{vellum::vl_lint()}}, \code{\link[vellum:vl_lint_overlay]{vellum::vl_lint_overlay()}}, \code{\link[vellum:vl_lint_assert]{vellum::vl_lint_assert()}}
 }
