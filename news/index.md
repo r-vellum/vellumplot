@@ -4,6 +4,24 @@
 
 ### Bug fixes
 
+- Several marks no longer silently ignore aesthetics they document:
+  `alpha` now applies to
+  [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  [`mark_errorbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  [`mark_linerange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
+  [`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)/[`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md),
+  and the
+  [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  band;
+  [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  honours `linewidth` for its fitted line; and the text marks
+  ([`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+  [`mark_text_path()`](https://r-vellum.github.io/vellumplot/reference/mark_text_path.md))
+  honour a mapped `size` (trained through a size scale, as points
+  already were).
+
 - [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
   no longer aborts when a row/column combination has no data: a
   structurally-empty panel (e.g. a histogram cell with no observations)
