@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+* Several marks no longer silently ignore aesthetics they document: `alpha` now
+  applies to `mark_boxplot()`, `mark_errorbar()`, `mark_linerange()`,
+  `mark_rule()`, `mark_halfeye()`/`mark_interval()`, and the `mark_smooth()`
+  band; `mark_smooth()` honours `linewidth` for its fitted line; and the text
+  marks (`mark_text()`, `mark_label()`, `mark_text_path()`) honour a mapped
+  `size` (trained through a size scale, as points already were).
 * `facet_grid()` no longer aborts when a row/column combination has no data: a
   structurally-empty panel (e.g. a histogram cell with no observations) now
   renders blank instead of killing the whole plot.

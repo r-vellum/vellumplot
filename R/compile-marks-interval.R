@@ -10,6 +10,7 @@ NULL
   ymin <- rep_len(scales$y$map(L$values$ymin), n)
   ymax <- rep_len(scales$y$map(L$values$ymax), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1)
   lty <- .resolve_lty(L, scales, n)
   band <- scales$x$band_width %||% .resolution(xn)
@@ -20,7 +21,7 @@ NULL
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, lty = lty))) {
+  for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
     x0 <- xn[idx]
     y0 <- ymin[idx]
     x1 <- xn[idx]
@@ -46,11 +47,7 @@ NULL
         s$x1,
         s$y1,
         sketch = .sketch_bump(sk, gi),
-        gp = vellum::vl_gpar(
-          col = col[idx[1]],
-          lwd = lwd,
-          lty = if (is.null(lty)) NULL else lty[idx[1]]
-        )
+        gp = .gp_stroke(col, alpha, idx[1], lwd, lty)
       ),
       # PROVENANCE: each error bar is one datum (row-preserving). The segments are
       # emitted as [bars, lower caps, upper caps] (each `idx`-ordered), so a bar's

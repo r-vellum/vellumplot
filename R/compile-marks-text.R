@@ -55,7 +55,10 @@ NULL
   col <- rep_len(.text_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   ang <- .text_angle(L, n)
-  fs <- .aes_param(L, "size", 8)
+  # A mapped `size` trains a size scale (as for points); honour it, falling back
+  # to a constant `size` param and then the 8pt default. One gpar carries one
+  # fontsize, so a per-datum size splits into style groups below.
+  fs <- rep_len(.aes_size(L, scales, .aes_param(L, "size", 8)), n)
   # `hjust`/`vjust` may arrive as a constant param or (when passed a variable) a
   # resolved value; check values first, like `.text_angle`. A single just applies
   # to the whole batch, so take the first if a vector came through.
@@ -64,7 +67,7 @@ NULL
   just <- c(hj[[1]], vj[[1]])
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+  for (idx in .style_groups(n, list(col = col, alpha = alpha, size = fs))) {
     a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
     scene <- .draw(
@@ -77,7 +80,7 @@ NULL
         rot = ang[idx],
         name = if (repel_on) .repel_name(gi),
         gp = vellum::vl_gpar(
-          fontsize = fs,
+          fontsize = fs[idx[1]],
           col = col[idx[1]],
           fontfamily = .aes_param(L, "family", NULL),
           fontface = .aes_param(L, "fontface", NULL),
@@ -113,16 +116,22 @@ NULL
   bg <- rep_len(bg, n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   sk <- .mark_sketch(L, scales)
-  fs <- .aes_param(L, "size", 8)
+  # A mapped `size` trains a size scale (as for points); honour it per datum so
+  # each box is measured at its own font size. Falls back to a constant `size`
+  # param, then the 8pt default.
+  fs <- rep_len(.aes_size(L, scales, .aes_param(L, "size", 8)), n)
   pad <- vellum::vl_unit(1.2, "mm")
   # Build each text grob once, then take its width and height (two passes built
   # the grob twice).
-  txts <- lapply(label, function(l) .txt(l, fs))
+  txts <- lapply(seq_len(n), function(i) .txt(label[i], fs[i]))
   ws <- do.call(c, lapply(txts, function(t) vellum::grobwidth(t) + pad))
   hs <- do.call(c, lapply(txts, function(t) vellum::grobheight(t) + pad))
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, fill = bg, alpha = alpha))) {
+  for (idx in .style_groups(
+    n,
+    list(col = col, fill = bg, alpha = alpha, size = fs)
+  )) {
     a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
     # Key the background box, not the text on top: the rounded rect is the whole
@@ -158,7 +167,7 @@ NULL
         xy$y,
         name = if (repel_on) .repel_name(gi),
         gp = vellum::vl_gpar(
-          fontsize = fs,
+          fontsize = fs[idx[1]],
           col = col[idx[1]],
           alpha = gp_alpha(a)
         )
@@ -184,7 +193,9 @@ NULL
   col <- rep_len(.text_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   label <- rep_len(as.character(L$values$label), n)
-  fs <- .aes_param(L, "size", 8)
+  # Honour a mapped `size` (trained size scale) like the other text marks; a run
+  # carries one font size, so size joins the grouping key below.
+  fs <- rep_len(.aes_size(L, scales, .aes_param(L, "size", 8)), n)
   # `hjust` slides the run along the baseline (left = start of the path, centre,
   # right = end); `vjust` sets the glyphs' standoff from the baseline.
   hj <- L$values$hjust %||% .aes_param(L, "hjust", "centre")
@@ -195,7 +206,10 @@ NULL
   offset <- .aes_param(L, "offset", 0)
   fam <- .aes_param(L, "family", NULL)
   face <- .aes_param(L, "fontface", NULL)
-  for (idx in .style_groups(n, list(col = col, alpha = alpha, lab = label))) {
+  for (idx in .style_groups(
+    n,
+    list(col = col, alpha = alpha, lab = label, size = fs)
+  )) {
     lab <- label[idx[1]]
     if (is.na(lab) || !nzchar(lab) || length(idx) < 2L) {
       next # a path needs a label and at least two points
@@ -210,7 +224,7 @@ NULL
         just = just,
         offset = offset,
         gp = vellum::vl_gpar(
-          fontsize = fs,
+          fontsize = fs[idx[1]],
           col = col[idx[1]],
           fontfamily = fam,
           fontface = face,

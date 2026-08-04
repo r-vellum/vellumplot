@@ -376,7 +376,13 @@ NULL
   col <- .aes_colour(L, scales, "grey40")[1]
   lwd <- .aes_param(L, "linewidth", 1)
   lty <- .aes_linetype(L, scales, NULL)
-  gp <- vellum::vl_gpar(col = col, lwd = lwd, lty = lty)
+  alpha <- .aes_alpha(L, scales, NA_real_)[1]
+  gp <- vellum::vl_gpar(
+    col = col,
+    lwd = lwd,
+    lty = lty,
+    alpha = gp_alpha(alpha)
+  )
   sk <- .mark_sketch(L, scales)
   yi <- .intercept(L, "yintercept")
   xi <- .intercept(L, "xintercept")
@@ -663,15 +669,20 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "#3366CC"), n)
+  # a mapped/constant band alpha overrides the ribbon's native 0.25; the fitted
+  # line honours a `linewidth` param (its own default weight is 1.5)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  lwd <- .aes_param(L, "linewidth", 1.5)
   sk <- .mark_sketch(L, scales)
   has_se <- !is.null(L$values$ymin)
   ymin <- if (has_se) scales$y$map(L$values$ymin)
   ymax <- if (has_se) scales$y$map(L$values$ymax)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col))) {
+  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])]
     cc <- col[idx[1]]
+    a <- alpha[idx[1]]
     if (has_se) {
       poly <- .xy_area(scales, xn[o], ymin[o], xn[o], ymax[o])
       scene <- .draw(
@@ -680,7 +691,11 @@ NULL
           poly$x,
           poly$y,
           sketch = .sketch_bump(sk, gi),
-          gp = vellum::vl_gpar(fill = cc, col = NA, alpha = 0.25)
+          gp = vellum::vl_gpar(
+            fill = cc,
+            col = NA,
+            alpha = gp_alpha(if (is.na(a)) 0.25 else a)
+          )
         )
       )
     }
@@ -691,7 +706,7 @@ NULL
         ln$x,
         ln$y,
         sketch = .sketch_bump(sk, gi + 50L),
-        gp = vellum::vl_gpar(col = cc, lwd = 1.5)
+        gp = vellum::vl_gpar(col = cc, lwd = lwd)
       )
     )
     gi <- gi + 1L
