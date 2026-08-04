@@ -757,8 +757,14 @@ NULL
   # Edge colour / alpha / linetype guides reuse the node guide renderers (the
   # scale objects are structurally identical), but never merge with shape/size --
   # they belong to the edge layer, whose key glyph is a line. A discrete edge
-  # colour scale draws as swatches; a continuous one as a colourbar.
-  if (!is.null(scales$edge_color)) {
+  # colour scale draws as swatches; a continuous one as a colourbar. When the
+  # edge colour scale is the same encoding as the node colour scale (one variable
+  # colouring both), its guide would duplicate the node swatch, so it folds into
+  # the node guide instead of drawing a second, redundant legend.
+  if (
+    !is.null(scales$edge_color) &&
+      !.can_merge_edge_color(scales$color, scales$edge_color)
+  ) {
     gk <- scales$edge_color$kind
     k <- if (gk %in% c("discrete", "binned")) "discrete" else gk
     out <- c(
@@ -788,6 +794,35 @@ NULL
 # title (they then share the variable, hence its data range and breaks).
 .can_merge_size <- function(color, size) {
   !is.null(color) && !is.null(size) && identical(color$name, size$name)
+}
+
+# A node colour scale and an edge colour scale describe the same encoding when
+# one variable colours both nodes/text and edges (e.g. `vdendrogram(k=)`). Both
+# come from the same `.train_colour`, so their palette-defining fields are
+# directly comparable -- they match when title, kind, and the fields that fix
+# the palette and its breaks agree. `key_glyph` (a swatch for nodes, a line for
+# edges) and `map` (a closure) are expected to differ and are not compared. When
+# they match, the node colour guide already carries the whole encoding, so the
+# edge guide is dropped rather than drawn as a redundant twin.
+.can_merge_edge_color <- function(color, edge_color) {
+  if (is.null(color) || is.null(edge_color)) {
+    return(FALSE)
+  }
+  if (
+    !identical(color$kind, edge_color$kind) ||
+      !identical(color$name, edge_color$name)
+  ) {
+    return(FALSE)
+  }
+  if (identical(color$kind, "continuous")) {
+    identical(color$range, edge_color$range) &&
+      identical(color$pal256, edge_color$pal256) &&
+      identical(color$midpoint, edge_color$midpoint)
+  } else {
+    # discrete / binned: same shown levels drawn in the same colours.
+    identical(color$levels, edge_color$levels) &&
+      identical(color$colors, edge_color$colors)
+  }
 }
 
 # Pseudo-scale for a merged colour+shape guide: one row per shared level, each a
