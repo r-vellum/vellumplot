@@ -520,8 +520,16 @@ anim_save <- function(filename, animation) {
   starts <- cw - w
   total <- cw[length(cw)]
 
-  # Sample `nframes` positions; frame 1 sits at the very start (keyframe 1).
-  pos <- (seq_len(nframes) - 1L) / nframes * total
+  # Sample `nframes` positions; frame 1 sits at the very start (keyframe 1). A
+  # looping (`wrap`) timeline stops just short of `total` so the final frame does
+  # not duplicate the start; a non-looping one lands exactly on `total` so
+  # `transition_reveal()` / `transition_time()` (which have no trailing hold)
+  # actually reach their final keyframe instead of ending ~one frame short.
+  pos <- if (wrap || nframes <= 1L) {
+    (seq_len(nframes) - 1L) / nframes * total
+  } else {
+    (seq_len(nframes) - 1L) / (nframes - 1L) * total
+  }
   seg <- integer(nframes)
   frac <- numeric(nframes)
   for (f in seq_len(nframes)) {

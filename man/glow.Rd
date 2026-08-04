@@ -36,7 +36,8 @@ blend) into a soft neon halo. Pass it to a mark's \code{effects} argument, e.g.
 The glow is applied per style group, so a colour-mapped multi-series line
 glows each series in its own hue. It applies to \code{mark_point()}, \code{mark_line()},
 \code{mark_step()}, \code{mark_rule()}, \code{mark_segment()}, \code{mark_edges()}, \code{mark_nodes()},
-and text marks (\code{mark_text()} / \code{mark_label()}); other marks reject it.
+\code{mark_edge_bundle()}, \code{mark_flow_map()}, and text marks (\code{mark_text()} /
+\code{mark_label()}); other marks reject it.
 }
 \examples{
 df <- data.frame(x = 1:20, y = cumsum(rnorm(20)))

@@ -463,7 +463,11 @@ NULL
     return(list())
   }
   lapply(unlist(x, use.names = FALSE), function(t) {
-    rlang::new_quosure(rlang::parse_expr(t), env = env)
+    # A non-syntactic facet field (e.g. "Miles per Gallon", routine from a
+    # Vega-Lite import) does not parse as an expression; fall back to treating it
+    # as a bare column name, mirroring the channel field/expr split.
+    expr <- tryCatch(rlang::parse_expr(t), error = function(e) rlang::sym(t))
+    rlang::new_quosure(expr, env = env)
   })
 }
 

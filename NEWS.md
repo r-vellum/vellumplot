@@ -1,5 +1,33 @@
 # vellumplot 0.9.0.9000 (development version)
 
+## Bug fixes
+
+* `facet_grid()` no longer aborts when a row/column combination has no data: a
+  structurally-empty panel (e.g. a histogram cell with no observations) now
+  renders blank instead of killing the whole plot.
+* One-sided continuous limits work as in ggplot2: `ylim(0, NA)` /
+  `scale_*_continuous(limits = c(NA, hi))` now pin the supplied end and train the
+  open end from the data, rather than silently collapsing the axis.
+* Numeric variables drawn on a discrete axis (e.g. `mark_bar(x = a_number)`)
+  order their categories numerically (`1, 2, 10`) instead of lexicographically
+  (`1, 10, 2`).
+* Overlaying two layers on one discrete axis, one mapping a `factor` and one a
+  `character`, no longer drops or mislabels categories.
+* A pie / donut (`mark_pie()`, `mark_donut()`) with a constant or short `x`
+  no longer errors.
+* `mark_edge_bundle()` and `mark_flow_map()` now accept their documented
+  `effects =` argument (glow / shadow / outline) instead of rejecting every
+  effect.
+* `layout = "dendrogram"` reports a clear "needs a connected tree" error on a
+  disconnected graph instead of an opaque internal failure.
+* `vtable()` renders a blank cell for a too-short or empty sparkline series
+  instead of aborting the whole table.
+* Non-looping `transition_reveal()` / `transition_time()` animations now reach
+  their final keyframe instead of stopping roughly one frame short.
+* Faceting on a column whose name is not a syntactic R name (e.g.
+  `"Miles per Gallon"`, common after a Vega-Lite import) round-trips through
+  `as_spec()` / `from_spec()` instead of crashing.
+
 * **One variable colouring both nodes and edges now draws a single legend.**
   When a node/text colour and an edge colour resolve to the same scale — same
   title, levels, and palette, as in `vdendrogram(k =)` — the redundant edge
