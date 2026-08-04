@@ -53,7 +53,8 @@
   long as anyone held the scene. It leaves the scene’s hash, serialised
   form and pixels untouched. A composition or table carries none — there
   is no one set of scales to report on — so those get the geometric
-  findings only.
+  findings only
+  ([\#147](https://github.com/r-vellum/vellumplot/issues/147)).
 
 - **Requires vellum \>= 0.6.7**, which fixes animated SVG output:
   duplicate `<defs>` ids across frames made every frame’s clip resolve

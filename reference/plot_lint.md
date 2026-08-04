@@ -73,7 +73,8 @@ can draw the report onto the plot, and
 can fail a test on it.
 
 A composition or table has no single set of trained scales, so it
-reports the geometric findings only.
+reports the geometric findings only — lint the cells individually for
+the grammar ones (vellumplot#147).
 
 ## See also
 
