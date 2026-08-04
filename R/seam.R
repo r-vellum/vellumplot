@@ -850,7 +850,13 @@ NULL
 
   scene <- vellum::pop(scene) # inner layout grid
   scene <- vellum::pop(scene) # centre cell
-  vellum::pop(scene) # outer margin grid
+  scene <- vellum::pop(scene) # outer margin grid
+  # What the grammar lint rules need from the trained scales, left on the scene
+  # for them to read. Set here because this is where `built` already exists --
+  # recomputing it would put a panel build on every render, including every frame
+  # of an animation, to serve a check almost no render asks for. See R/lint.R.
+  attr(scene, "vellumplot_lint_scales") <- .lint_scales_summary(built$scales)
+  scene
 }
 
 # The scene (page) background, derived from the resolved theme's plot.background:
@@ -889,13 +895,6 @@ NULL
   # last so it survives to the caller; the `id` of each record matches a grob's
   # `data-vellum-id`. Additive only -- render() ignores it.
   attr(scene, "vellumplot_provenance") <- .provenance_snapshot()
-  # A back-reference to the spec, for the grammar lint rules. They run inside
-  # vellum's registry, which hands a rule the resolved *scene* -- the right thing
-  # for a geometric rule, and not enough for one about the encoding, which needs
-  # the trained scales. Inert: it leaves the scene hash, the serialised form and
-  # the rendered pixels untouched (asserted in test-accessibility.R).
-  # See R/lint.R.
-  attr(scene, "vellumplot_spec") <- spec
   scene
 }
 

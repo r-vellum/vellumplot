@@ -587,7 +587,14 @@ compose_annotation <- function(
 }
 
 S7::method(.as_vellum_scene, PlotComposition) <- function(x, ...) {
-  .compile_composition(x)
+  scene <- .compile_composition(x)
+  # Cells are drawn through `.draw_plot()`, which leaves its trained-scale
+  # summary on the scene it returns -- so without this a composition would carry
+  # the *last* cell's scales and the grammar lint rules would report on that one
+  # cell as though it were the whole figure. There is no single set of scales for
+  # a composition, so it carries none. See R/lint.R.
+  attr(scene, "vellumplot_lint_scales") <- NULL
+  scene
 }
 
 # Printing a composition draws it (like a plot); summary() reports its shape.

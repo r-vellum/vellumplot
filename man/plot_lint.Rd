@@ -44,6 +44,9 @@ reports them too. Findings are returned most-severe first.
 Because every finding carries the box it refers to,
 \code{\link[vellum:vl_lint_overlay]{vellum::vl_lint_overlay()}} can draw the report onto the plot, and
 \code{\link[vellum:vl_lint_assert]{vellum::vl_lint_assert()}} can fail a test on it.
+
+A composition or table has no single set of trained scales, so it reports the
+geometric findings only.
 }
 \examples{
 # a tiny-text, single-level-scale plot trips the linter

@@ -16,32 +16,33 @@ NULL
   "edge_linetype"
 )
 
-# The trained scales behind a compiled scene, or NULL when there are none to be
-# had. Grammar rules live in vellum's registry, which hands a rule the resolved
-# scene; `.compile_plot()` leaves the spec on the scene so the encoding is still
-# reachable from there. A scene that did not come from vellumplot has no
-# attribute, which is how these rules stay silent on other people's scenes.
-.lint_scales <- function(scene) {
-  spec <- attr(scene, "vellumplot_spec", exact = TRUE)
-  if (is.null(spec)) {
-    return(NULL)
-  }
-  built <- tryCatch(.build_panels(spec), error = function(e) NULL)
-  built$scales
+# What the grammar rules need from a plot's trained scales, and nothing else.
+#
+# Grammar rules live in vellum's registry, which hands a rule the resolved
+# *scene* -- right for a geometric rule, and not enough for one about the
+# encoding. So `.draw_plot()` leaves this on the scene. It is deliberately a
+# summary rather than the scales themselves and emphatically not the spec: the
+# levels of the legend-bearing scales come to a couple of kilobytes, where a
+# `PlotSpec` for 50k rows is well over a megabyte and would keep the whole data
+# frame alive for as long as anyone held the scene.
+.lint_scales_summary <- function(scales) {
+  out <- lapply(.LINT_LEGEND_AES, function(a) {
+    sc <- scales[[a]]
+    if (is.null(sc) || !identical(sc$kind, "discrete")) {
+      return(NULL)
+    }
+    list(kind = sc$kind, levels = as.character(sc$levels))
+  })
+  names(out) <- .LINT_LEGEND_AES
+  out[!vapply(out, is.null, logical(1))]
 }
 
-# The discrete, legend-bearing scales, as (aes, scale) pairs.
-.lint_discrete_scales <- function(scene) {
-  scales <- .lint_scales(scene)
-  keep <- vapply(
-    .LINT_LEGEND_AES,
-    function(a) {
-      sc <- scales[[a]]
-      !is.null(sc) && identical(sc$kind, "discrete")
-    },
-    logical(1)
-  )
-  .LINT_LEGEND_AES[keep]
+# The summary a compiled scene carries, or NULL. A scene that did not come from
+# a single vellumplot plot has none, which is how these rules stay silent on
+# other people's scenes -- and on a composition, where there is no one set of
+# trained scales to report on.
+.lint_scales <- function(scene) {
+  attr(scene, "vellumplot_lint_scales", exact = TRUE)
 }
 
 # One grammar finding. Not built with `vellum::vl_lint_finding()`: that is
@@ -65,8 +66,9 @@ NULL
   vellum::vl_lint_rule(
     "single_level_scale",
     function(scene, nodes, ctx) {
-      out <- lapply(.lint_discrete_scales(scene), function(aes) {
-        sc <- .lint_scales(scene)[[aes]]
+      scales <- .lint_scales(scene)
+      out <- lapply(names(scales), function(aes) {
+        sc <- scales[[aes]]
         if (length(sc$levels) != 1L) {
           return(NULL)
         }
@@ -91,8 +93,9 @@ NULL
   vellum::vl_lint_rule(
     "legend_overflow",
     function(scene, nodes, ctx) {
-      out <- lapply(.lint_discrete_scales(scene), function(aes) {
-        sc <- .lint_scales(scene)[[aes]]
+      scales <- .lint_scales(scene)
+      out <- lapply(names(scales), function(aes) {
+        sc <- scales[[aes]]
         k <- length(sc$levels)
         if (k <= .LINT_MAX_LEGEND) {
           return(NULL)
@@ -136,6 +139,9 @@ NULL
 #' Because every finding carries the box it refers to,
 #' [vellum::vl_lint_overlay()] can draw the report onto the plot, and
 #' [vellum::vl_lint_assert()] can fail a test on it.
+#'
+#' A composition or table has no single set of trained scales, so it reports the
+#' geometric findings only.
 #'
 #' @param x A [PlotSpec] (or anything [vellum::as_vellum_scene()] accepts).
 #' @param ... Passed to [vellum::vl_lint()]: `rules`, `exclude`, `severity`,

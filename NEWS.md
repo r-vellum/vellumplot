@@ -18,9 +18,18 @@
   being stitched on afterwards. `vellum::vl_lint_rules()` lists
   `single_level_scale` and `legend_overflow` with a `grammar` tag, `rules =`
   selects them, and a plain `vellum::vl_lint()` of a compiled plot now reports
-  encoding problems alongside geometric ones. A compiled scene carries a
-  back-reference to its spec so those rules can reach the trained scales; it
-  leaves the scene's hash, serialised form and pixels untouched.
+  encoding problems alongside geometric ones — `plot_lint()` is a thin wrapper
+  rather than a second implementation.
+
+  A registry rule is handed the resolved scene, which is not enough for a rule
+  about the encoding, so a compiled scene carries a summary of its trained
+  scales: the `kind` and `levels` of the legend-bearing ones, a couple of
+  kilobytes, computed where the compile had already built them. Deliberately a
+  summary and not the plot spec, which for 50,000 rows runs past a megabyte and
+  would keep the data alive for as long as anyone held the scene. It leaves the
+  scene's hash, serialised form and pixels untouched. A composition or table
+  carries none — there is no one set of scales to report on — so those get the
+  geometric findings only.
 
 * **Requires vellum >= 0.6.7**, which fixes animated SVG output: duplicate
   `<defs>` ids across frames made every frame's clip resolve to the first

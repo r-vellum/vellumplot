@@ -86,15 +86,15 @@ test_that("the grammar rules live in the engine's registry", {
   expect_equal(nrow(vellum::vl_lint(plain, rules = "single_level_scale")), 0L)
 })
 
-test_that("the spec back-reference on a compiled scene is inert", {
+test_that("the scales summary on a compiled scene is inert", {
   # The grammar rules reach the trained scales through an attribute left on the
-  # scene by `.compile_plot()`. It must not change what the scene *is*: not its
+  # scene by `.draw_plot()`. It must not change what the scene *is*: not its
   # hash, not its serialised form, and not a pixel of its output.
-  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
   scene <- vellum::as_vellum_scene(p)
-  expect_false(is.null(attr(scene, "vellumplot_spec", exact = TRUE)))
+  expect_false(is.null(attr(scene, "vellumplot_lint_scales", exact = TRUE)))
   bare <- scene
-  attr(bare, "vellumplot_spec") <- NULL
+  attr(bare, "vellumplot_lint_scales") <- NULL
   expect_equal(vellum::scene_hash(scene), vellum::scene_hash(bare))
   expect_identical(vellum::scene_png(scene), vellum::scene_png(bare))
   f1 <- withr::local_tempfile(fileext = ".rds")
@@ -102,6 +102,41 @@ test_that("the spec back-reference on a compiled scene is inert", {
   vellum::scene_write(scene, f1)
   vellum::scene_write(bare, f2)
   expect_equal(file.info(f1)$size, file.info(f2)$size)
+})
+
+test_that("the scales summary carries levels, not the plot's data", {
+  # The point of summarising rather than keeping a back-reference to the spec: a
+  # scene must not pin the data frame alive for as long as someone holds it.
+  d <- data.frame(
+    x = runif(20000),
+    y = runif(20000),
+    g = factor(sample(letters[1:4], 20000, replace = TRUE))
+  )
+  p <- vplot(d) |> mark_point(x = x, y = y, color = g)
+  summ <- attr(
+    vellum::as_vellum_scene(p),
+    "vellumplot_lint_scales",
+    exact = TRUE
+  )
+  expect_named(summ, "color")
+  expect_named(summ$color, c("kind", "levels"))
+  expect_equal(summ$color$levels, letters[1:4])
+  # Kilobytes, not the megabyte-plus the spec for this data would cost.
+  expect_lt(as.numeric(object.size(summ)), 20000)
+})
+
+test_that("a composition reports no grammar findings rather than its last cell", {
+  # Cells are drawn through `.draw_plot()`, which leaves its summary behind, so
+  # without clearing it a composition would report on whichever cell was drawn
+  # last as though it were the whole figure.
+  one <- vplot(transform(mtcars, grp = "one group")) |>
+    mark_point(x = wt, y = mpg, color = grp)
+  scene <- vellum::as_vellum_scene(hconcat(one, one))
+  expect_null(attr(scene, "vellumplot_lint_scales", exact = TRUE))
+  found <- vellum::vl_lint(scene)
+  expect_false(any(
+    c("single_level_scale", "legend_overflow") %in% found$rule
+  ))
 })
 
 test_that("plot_lint() flags tiny text (geometric rule from the engine)", {
