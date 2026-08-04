@@ -1,12 +1,12 @@
 # vellumplot 0.9.0.9000 (development version)
 
-* **`plot_lint()` gained everything the engine's linter gained**, which is 13 new
-  rules including two it could not have had before: colours that a colour-blind
-  reader cannot tell apart, and characters no font on the running machine can
-  draw. Every `vellum::vl_lint()` argument now comes through — `exclude` to accept
-  a finding you have already judged, `cvd` to pick which deficiency to check,
-  `rules` to run one rule alone, `min_text_pt` for a print-resolution legibility
-  floor.
+* **Requires vellum >= 0.6.8**, and `plot_lint()` gained everything the linter
+  gained there: 13 new rules, two of which vellumplot could not have had on its
+  own — colours a colour-blind reader cannot tell apart, and characters no font on
+  the running machine can draw. Every `vellum::vl_lint()` argument now comes
+  through — `exclude` to accept a finding you have already judged, `cvd` to pick
+  which deficiency to check, `rules` to run one rule alone, and `min_text_pt` for
+  a print-resolution legibility floor.
 
 * **Findings carry the box they refer to**, so `vellum::vl_lint_overlay()` can
   draw the report onto the plot rather than describing it, and
