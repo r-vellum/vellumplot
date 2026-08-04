@@ -2,6 +2,14 @@
 
 ## vellumplot 0.9.0.9000 (development version)
 
+- **One variable colouring both nodes and edges now draws a single
+  legend.** When a node/text colour and an edge colour resolve to the
+  same scale — same title, levels, and palette, as in `vdendrogram(k =)`
+  — the redundant edge guide folds into the node colour guide instead of
+  drawing a second, identical legend beside it. Genuinely different node
+  and edge colour scales still keep their own guides
+  ([\#94](https://github.com/r-vellum/vellumplot/issues/94)).
+
 - **Requires vellum \>= 0.6.8**, and
   [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
   gained everything the linter gained there: 13 new rules, two of which
