@@ -20,6 +20,11 @@
 
 ## New features
 
+* `mark_sf_label()` labels each `sf` feature at its **interior point**
+  (`sf::st_point_on_surface()`, always inside the polygon), reprojected through
+  the same `coord_sf()` CRS as `mark_sf()` so the labels land on the geometry.
+  Repels crowded labels apart. Layer it over a `mark_sf()` choropleth to name the
+  regions: `vplot(nc) |> mark_sf(fill = AREA) |> mark_sf_label(label = NAME)`.
 * `guide_legend()` gained an **`override.aes`** argument (ggplot2 parity): a named
   list of aesthetics forced on the legend **keys** only, independent of the
   plotted data — e.g. `guides(color = guide_legend(override.aes = list(size = 5,

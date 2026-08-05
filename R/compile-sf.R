@@ -36,7 +36,11 @@ NULL
 
 # Does any layer (or the plot itself) draw an sf mark?
 .has_sf_layer <- function(spec) {
-  any(vapply(spec@layers, function(L) identical(L@mark, "sf"), logical(1)))
+  any(vapply(
+    spec@layers,
+    function(L) L@mark %in% c("sf", "sf_label"),
+    logical(1)
+  ))
 }
 
 # Is an sfg empty? (POINT EMPTY -> no finite coords; others -> zero length /

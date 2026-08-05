@@ -63,6 +63,27 @@ NULL
     n <- length(sf)
   }
 
+  # An sf-label layer draws one text label at each feature's interior point. The
+  # geometry has already been reprojected to the target CRS (`.project_sf_data`),
+  # so the interior points come out in the same projected space as `mark_sf`'s
+  # rings -- position training then unions them into the same panel extent, and
+  # the text emitter maps them through the shared scales. `st_point_on_surface()`
+  # is guaranteed to fall inside each (multi)polygon (unlike a centroid), which is
+  # what a label wants. The `label`/`color`/`size` encodings resolved above.
+  if (identical(layer@mark, "sf_label")) {
+    .need_pkg("sf", "mark_sf_label()")
+    if (!.is_sf(data)) {
+      cli::cli_abort("{.fn mark_sf_label} requires an {.cls sf} data frame.")
+    }
+    geom <- sf::st_geometry(data)
+    pts <- suppressWarnings(sf::st_point_on_surface(geom))
+    xy <- sf::st_coordinates(pts)
+    values$x <- as.numeric(xy[, "X"])
+    values$y <- as.numeric(xy[, "Y"])
+    types$x <- types$y <- "quantitative"
+    n <- length(geom)
+  }
+
   # A sankey layer draws a flow diagram, not x/y points: compute the layout from
   # the `from`/`to`/`value` channels into native [0, 1] coordinates (see
   # `.sankey_layout`), then synthesise the panel extent so position training gets
