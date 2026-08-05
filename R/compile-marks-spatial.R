@@ -634,8 +634,11 @@ NULL
     "point",
     kind_col(primary, "black"),
     function(scene, idx, col, a) {
-      xs <- ys <- szs <- numeric(0)
-      rows <- integer(0) # feature index per emitted point (for per-point keys)
+      # Accumulate into lists and combine once (a nested-loop `c()` grow is
+      # O(k^2)); mirrors gather_poly/gather_line. `rows` is the feature index per
+      # emitted point (for per-point keys).
+      xa <- ya <- sa <- ra <- list()
+      k <- 0L
       for (i in idx) {
         for (p in prims_of(i, "point")) {
           for (m in p$parts) {
@@ -643,16 +646,21 @@ NULL
               next
             }
             nat <- mapnat(m)
-            xs <- c(xs, nat$x)
-            ys <- c(ys, nat$y)
-            szs <- c(szs, rep(size[i], nrow(m)))
-            rows <- c(rows, rep(i, nrow(m)))
+            k <- k + 1L
+            xa[[k]] <- nat$x
+            ya[[k]] <- nat$y
+            sa[[k]] <- rep.int(size[i], nrow(m))
+            ra[[k]] <- rep.int(i, nrow(m))
           }
         }
       }
-      if (!length(xs)) {
+      if (!k) {
         return(scene)
       }
+      xs <- unlist(xa, use.names = FALSE)
+      ys <- unlist(ya, use.names = FALSE)
+      szs <- unlist(sa, use.names = FALSE)
+      rows <- unlist(ra, use.names = FALSE)
       xy <- .xy_units(scales, xs, ys)
       .draw(
         scene,

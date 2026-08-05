@@ -5,6 +5,13 @@ NULL
 
 # A box-and-whisker per x category: box (Q1-Q3), median line, Tukey whiskers
 # (1.5*IQR), and outlier points. Summary is computed here from the raw y values.
+# Row indices grouped by category level (kept in `levs` order), computed once
+# instead of an O(n * levels) `which(xchar == levs[j])` rescan per level. Each
+# level from `.cat_levels()` is present, so every entry is a (non-empty) vector.
+.idx_by_level <- function(xchar, levs) {
+  split(seq_along(xchar), factor(xchar, levels = levs))
+}
+
 .emit_boxplot <- function(scene, L, scales) {
   xv <- L$values$x
   yv <- as.numeric(L$values$y)
@@ -16,10 +23,11 @@ NULL
   band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
   hw <- 0.375 * band
   xchar <- as.character(xv)
+  idx_by_level <- .idx_by_level(xchar, levs)
   my <- function(v) scales$y$map(v)
 
   for (j in seq_along(levs)) {
-    sel <- which(xchar == levs[j])
+    sel <- idx_by_level[[j]]
     if (!length(sel)) {
       next
     }
@@ -176,6 +184,7 @@ NULL
   band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
   hw <- .VIOLIN_HALFWIDTH * band
   xchar <- as.character(xv)
+  idx_by_level <- .idx_by_level(xchar, levs)
   dens <- .density_by_cat(yv, xv, levs, adjust)
   sk <- .mark_sketch(L, scales)
   for (j in seq_along(levs)) {
@@ -183,7 +192,7 @@ NULL
     if (is.null(d)) {
       next
     }
-    sel <- which(xchar == levs[j])
+    sel <- idx_by_level[[j]]
     a <- alpha[sel[1]]
     # up the right side, then down the mirrored left side
     poly <- .density_polygon(
@@ -293,6 +302,7 @@ NULL
   adjust <- L$stat_params$adjust %||% 1
   hw <- (L$stat_params$scale %||% .SLAB_WIDTH) * band
   xchar <- as.character(xv)
+  idx_by_level <- .idx_by_level(xchar, levs)
   dens <- if (slab) .density_by_cat(yv, xv, levs, adjust) else NULL
   sk <- .mark_sketch(L, scales)
   mrk <- if (slab) "mark_halfeye" else "mark_interval"
@@ -300,7 +310,7 @@ NULL
   lwd_by_width <- seq(4, 1.5, length.out = length(widths))
 
   for (j in seq_along(levs)) {
-    sel <- which(xchar == levs[j])
+    sel <- idx_by_level[[j]]
     # A point-interval summarises a distribution: skip a category with fewer than
     # 2 finite observations (a single/absent value has no interval and would
     # otherwise feed NA coordinates into the grobs), matching `.stat_density`.

@@ -1579,12 +1579,14 @@ NULL
   )
   bar@meta <- .colorbar_meta(cl, revb, "h")
   scene <- vellum::draw(scene, bar)
+  # Break positions along the bar (0..1), shared by the tick and label loops.
+  fracs <- scales::rescale(cl$legend_breaks, from = cl$range)
+  if (revb) {
+    fracs <- 1 - fracs
+  }
   # White break ticks reaching up from the bar's bottom (label-side) edge.
   for (i in seq_along(cl$legend_breaks)) {
-    frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
-    if (revb) {
-      frac <- 1 - frac
-    }
+    frac <- fracs[i]
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
@@ -1599,10 +1601,7 @@ NULL
   scene <- vellum::pop(scene)
   scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 1))
   for (i in seq_along(cl$legend_breaks)) {
-    frac <- scales::rescale(cl$legend_breaks[i], from = cl$range)
-    if (revb) {
-      frac <- 1 - frac
-    }
+    frac <- fracs[i]
     # Justify the end labels inward so they never spill past the bar ends.
     hjust <- if (frac <= 0.01) {
       "left"

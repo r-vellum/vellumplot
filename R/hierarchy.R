@@ -155,17 +155,13 @@ NULL
   # within a branch. `branch_levels` are the branch ids in input order, so the
   # default discrete fill scale assigns its palette in that order (preserving the
   # historical look) rather than alphabetically.
-  branch <- vapply(
-    seq_len(n),
-    function(i) {
-      b <- i
-      while (depth[b] > 1L) {
-        b <- pidx[b]
-      }
-      b
-    },
-    integer(1)
-  )
+  # A node's branch is its first ancestor at depth <= 1. Resolve it in one pass by
+  # visiting nodes parent-before-child (increasing depth), so each node inherits
+  # its parent's already-resolved branch instead of re-walking to the root.
+  branch <- integer(n)
+  for (i in order(depth)) {
+    branch[i] <- if (depth[i] <= 1L) i else branch[pidx[i]]
+  }
   branch_levels <- id[which(depth == 1L)] # depth-1 ids, input order
 
   list(
@@ -354,8 +350,6 @@ NULL
       next
     }
     pk <- .pack_siblings(R[ch])
-    relx[ch] <- pk$x
-    rely[ch] <- pk$y
     enc <- .pack_enclose(pk$x, pk$y, R[ch])
     # positions are enclose-centred already; keep the node's radius
     relx[ch] <- pk$x - enc$x
