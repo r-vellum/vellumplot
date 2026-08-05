@@ -4,6 +4,16 @@
 
 ### New features
 
+- [`mark_series_label()`](https://r-vellum.github.io/vellumplot/reference/mark_series_label.md)
+  — **direct labels**: name each colour series at its line end instead
+  of in a legend (the direct-labels idiom). Maps the same
+  `x`/`y`/`color` as the lines; the label text and colour come from the
+  series, and the labels are pushed apart with the same repel solver as
+  [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md).
+  Give the panel a little x-room
+  ([`xlim()`](https://r-vellum.github.io/vellumplot/reference/lims.md))
+  and drop the legend (`guides(color = "none")`).
+
 - [`mark_signif()`](https://r-vellum.github.io/vellumplot/reference/mark_signif.md)
   — significance brackets (the ggsignif / ggpubr idiom): run a pairwise
   test (`wilcox.test` or `t.test`) between `x` groups and draw a bracket
