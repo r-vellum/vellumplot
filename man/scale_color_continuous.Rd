@@ -7,6 +7,9 @@
 \alias{scale_color_gradient}
 \alias{scale_color_gradient2}
 \alias{scale_fill_continuous}
+\alias{scale_color_gradientn}
+\alias{scale_fill_gradientn}
+\alias{scale_colour_gradientn}
 \alias{scale_fill_discrete}
 \alias{scale_fill_manual}
 \alias{scale_fill_gradient}
@@ -21,6 +24,7 @@
 scale_color_continuous(
   plot,
   palette = NULL,
+  limits = NULL,
   breaks = NULL,
   labels = NULL,
   name = NULL
@@ -50,10 +54,17 @@ scale_color_gradient2(
 scale_fill_continuous(
   plot,
   palette = NULL,
+  limits = NULL,
   breaks = NULL,
   labels = NULL,
   name = NULL
 )
+
+scale_color_gradientn(plot, colours, name = NULL)
+
+scale_fill_gradientn(plot, colours, name = NULL)
+
+scale_colour_gradientn(plot, colours, name = NULL)
 
 scale_fill_discrete(
   plot,
@@ -79,6 +90,7 @@ scale_fill_gradient2(
 scale_colour_continuous(
   plot,
   palette = NULL,
+  limits = NULL,
   breaks = NULL,
   labels = NULL,
   name = NULL
@@ -112,6 +124,10 @@ scale_colour_gradient2(
 \code{\link[grDevices:hcl.colors]{grDevices::hcl.colors()}} (e.g. \code{"Batlow"}, \code{"Blues"}, \code{"Set 2"}; matched
 case/space-insensitively). \code{NULL} uses a sensible default.}
 
+\item{limits}{For the continuous colour scales, a length-2 numeric
+\code{c(min, max)} fixing the mapped data range (the direct form of
+\code{lims(color = ...)}).}
+
 \item{breaks, labels}{Explicit legend breaks / labels, or \code{NULL}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
@@ -126,6 +142,9 @@ colours.}
 
 \item{midpoint}{For \verb{scale_*_gradient2()}, the data value placed at \code{mid}
 (default \code{0}); values above and below diverge to \code{high} and \code{low}.}
+
+\item{colours}{For \verb{scale_*_gradientn()}, an n-stop vector of colours the
+continuous ramp interpolates through.}
 }
 \value{
 The modified \link{PlotSpec}.

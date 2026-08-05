@@ -2,6 +2,17 @@
 
 ## New features
 
+* Three more complete themes for ggplot2 parity: `theme_light()`, `theme_dark()`,
+  and `theme_linedraw()`.
+* Named palette scale constructors (thin wrappers over `palette =`, easing
+  migration): `scale_*_viridis_c()`/`_d()` (the viridis maps —
+  viridis/plasma/inferno/cividis/rocket/mako), `scale_*_brewer()` (discrete) and
+  `scale_*_distiller()` (continuous) ColorBrewer-style palettes, and
+  `scale_*_gradientn()` for an arbitrary n-stop colour ramp.
+* `scale_color_continuous()` / `scale_fill_continuous()` gained a `limits =`
+  argument (the direct form of `lims(color = ...)`).
+* The named graph-layout registry gained `gem`, `graphopt`, `dh`, and `lgl`
+  (igraph force-directed layouts, now reachable by name).
 * `vwaffle()` — a self-contained **waffle chart** (square pie): a grid of cells
   coloured by category, each category taking a share of the cells proportional
   to its count (largest-remainder allocation, so the cells sum exactly). Works

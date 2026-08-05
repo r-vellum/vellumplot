@@ -523,6 +523,9 @@ NULL
     bw = theme_bw,
     classic = theme_classic,
     void = theme_void,
+    light = theme_light,
+    dark = theme_dark,
+    linedraw = theme_linedraw,
     cyberpunk = theme_cyberpunk,
     theme_gray
   )

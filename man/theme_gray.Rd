@@ -6,6 +6,9 @@
 \alias{theme_bw}
 \alias{theme_classic}
 \alias{theme_void}
+\alias{theme_light}
+\alias{theme_dark}
+\alias{theme_linedraw}
 \alias{theme_cyberpunk}
 \alias{theme}
 \alias{set_theme}
@@ -20,6 +23,12 @@ theme_bw(plot)
 theme_classic(plot)
 
 theme_void(plot)
+
+theme_light(plot)
+
+theme_dark(plot)
+
+theme_linedraw(plot)
 
 theme_cyberpunk(plot)
 

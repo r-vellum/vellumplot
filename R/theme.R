@@ -197,6 +197,59 @@ theme_void <- function(plot) {
 }
 
 #' @rdname theme_gray
+#' @export
+theme_light <- function(plot) {
+  .check_plot(plot)
+  plot@theme <- .merge_theme(
+    .theme_gray_complete(),
+    list(
+      panel.background = element_rect(fill = "white", colour = NA),
+      panel.grid = element_line(colour = "grey87"),
+      axis.ticks = element_line(colour = "grey70"),
+      axis.text = element_text(colour = "grey30"),
+      strip.background = element_rect(fill = "grey70", colour = NA)
+    )
+  )
+  attr(plot@theme, "vp_preset") <- "light"
+  plot
+}
+
+#' @rdname theme_gray
+#' @export
+theme_dark <- function(plot) {
+  .check_plot(plot)
+  plot@theme <- .merge_theme(
+    .theme_gray_complete(),
+    list(
+      panel.background = element_rect(fill = "grey50", colour = NA),
+      panel.grid = element_line(colour = "grey42"),
+      axis.ticks = element_line(colour = "grey20"),
+      strip.background = element_rect(fill = "grey15", colour = NA)
+    )
+  )
+  attr(plot@theme, "vp_preset") <- "dark"
+  plot
+}
+
+#' @rdname theme_gray
+#' @export
+theme_linedraw <- function(plot) {
+  .check_plot(plot)
+  plot@theme <- .merge_theme(
+    .theme_gray_complete(),
+    list(
+      panel.background = element_rect(fill = "white", colour = NA),
+      panel.grid = element_line(colour = "black", linewidth = 0.1),
+      axis.ticks = element_line(colour = "black"),
+      axis.text = element_text(colour = "black"),
+      strip.background = element_rect(fill = "black", colour = NA)
+    )
+  )
+  attr(plot@theme, "vp_preset") <- "linedraw"
+  plot
+}
+
+#' @rdname theme_gray
 #' @details
 #' `theme_cyberpunk()` sets a dark canvas with dim neon gridlines and a bright
 #' neon default palette (both discrete and continuous), in the spirit of

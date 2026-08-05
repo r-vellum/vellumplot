@@ -117,7 +117,8 @@ NULL
   breaks,
   labels,
   name,
-  midpoint = NULL
+  midpoint = NULL,
+  domain = NULL
 ) {
   .check_plot(plot)
   .add_scale(
@@ -129,7 +130,8 @@ NULL
       breaks = breaks,
       labels = labels,
       name = name,
-      midpoint = midpoint
+      midpoint = midpoint,
+      domain = domain
     )
   )
 }
@@ -626,6 +628,11 @@ ylim <- function(plot, ...) {
 #'   case/space-insensitively). `NULL` uses a sensible default.
 #' @param values For `scale_*_manual()`, a vector of colours; if named, matched to
 #'   data levels by name (unmatched levels draw grey).
+#' @param colours For `scale_*_gradientn()`, an n-stop vector of colours the
+#'   continuous ramp interpolates through.
+#' @param limits For the continuous colour scales, a length-2 numeric
+#'   `c(min, max)` fixing the mapped data range (the direct form of
+#'   `lims(color = ...)`).
 #' @param low,high For `scale_*_gradient()`/`scale_*_gradient2()`, the endpoint
 #'   colours.
 #' @param mid For `scale_*_gradient2()`, the midpoint colour.
@@ -642,11 +649,22 @@ ylim <- function(plot, ...) {
 scale_color_continuous <- function(
   plot,
   palette = NULL,
+  limits = NULL,
   breaks = NULL,
   labels = NULL,
   name = NULL
 ) {
-  .colour_scale(plot, "color", "continuous", palette, breaks, labels, name)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .colour_scale(
+    plot,
+    "color",
+    "continuous",
+    palette,
+    breaks,
+    labels,
+    name,
+    domain = limits
+  )
 }
 
 #' @rdname scale_color_continuous
@@ -715,12 +733,41 @@ scale_color_gradient2 <- function(
 scale_fill_continuous <- function(
   plot,
   palette = NULL,
+  limits = NULL,
   breaks = NULL,
   labels = NULL,
   name = NULL
 ) {
-  .colour_scale(plot, "fill", "continuous", palette, breaks, labels, name)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .colour_scale(
+    plot,
+    "fill",
+    "continuous",
+    palette,
+    breaks,
+    labels,
+    name,
+    domain = limits
+  )
 }
+
+#' @rdname scale_color_continuous
+#' @export
+scale_color_gradientn <- function(plot, colours, name = NULL) {
+  .check_manual_values(colours, "colours")
+  .colour_scale(plot, "color", "continuous", colours, NULL, NULL, name)
+}
+
+#' @rdname scale_color_continuous
+#' @export
+scale_fill_gradientn <- function(plot, colours, name = NULL) {
+  .check_manual_values(colours, "colours")
+  .colour_scale(plot, "fill", "continuous", colours, NULL, NULL, name)
+}
+
+#' @rdname scale_color_continuous
+#' @export
+scale_colour_gradientn <- scale_color_gradientn
 
 #' @rdname scale_color_continuous
 #' @export
@@ -774,6 +821,187 @@ scale_fill_gradient2 <- function(
   )
 }
 
+# Map a viridis `option` (a name or ggplot2's A–H letter) to the matching
+# `grDevices::hcl.colors()` palette name; unknown options fall back to Viridis.
+.viridis_pal <- function(option) {
+  # grDevices::hcl.colors() carries Viridis/Plasma/Inferno/Cividis/Rocket/Mako
+  # (not viridisLite's Magma or Turbo); map ggplot2's letters onto what exists,
+  # falling back to Viridis.
+  switch(
+    tolower(option),
+    b = ,
+    inferno = "Inferno",
+    c = ,
+    plasma = "Plasma",
+    d = ,
+    viridis = "Viridis",
+    e = ,
+    cividis = "Cividis",
+    f = ,
+    rocket = "Rocket",
+    g = ,
+    mako = "Mako",
+    "Viridis"
+  )
+}
+
+#' Viridis and ColorBrewer scales
+#'
+#' Named convenience constructors for popular palettes, easing migration from
+#' ggplot2. They are thin wrappers over the `palette =` argument of
+#' [scale_color_continuous()] / [scale_color_discrete()] (any
+#' [grDevices::hcl.colors()] name works there directly).
+#'
+#' * `scale_*_viridis_c()` / `scale_*_viridis_d()` — the perceptually-uniform,
+#'   colour-vision-deficient-safe viridis maps, continuous (`_c`) or discrete
+#'   (`_d`). `option` picks the map: `"viridis"`, `"plasma"`, `"inferno"`,
+#'   `"cividis"`, `"rocket"`, or `"mako"` (unknown options fall back to viridis).
+#' * `scale_*_brewer()` — a discrete ColorBrewer-style qualitative/sequential
+#'   palette; `scale_*_distiller()` — the same ramp interpolated for continuous
+#'   data. `palette` is any `hcl.colors()` name (e.g. `"Blues"`, `"Set 2"`).
+#'
+#' @param plot A [PlotSpec].
+#' @param option Which viridis map (see above).
+#' @param palette A `grDevices::hcl.colors()` palette name.
+#' @param name,breaks,labels As for [scale_color_continuous()].
+#' @return The modified [PlotSpec].
+#' @seealso [scale_color_continuous()]
+#' @examples
+#' vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp) |> scale_color_viridis_c()
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+#'   scale_color_brewer(palette = "Set 2")
+#' @name scale_viridis
+NULL
+
+#' @rdname scale_viridis
+#' @export
+scale_color_viridis_c <- function(
+  plot,
+  option = "viridis",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .colour_scale(
+    plot,
+    "color",
+    "continuous",
+    .viridis_pal(option),
+    breaks,
+    labels,
+    name
+  )
+}
+
+#' @rdname scale_viridis
+#' @export
+scale_color_viridis_d <- function(
+  plot,
+  option = "viridis",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .colour_scale(
+    plot,
+    "color",
+    "discrete",
+    .viridis_pal(option),
+    breaks,
+    labels,
+    name
+  )
+}
+
+#' @rdname scale_viridis
+#' @export
+scale_fill_viridis_c <- function(
+  plot,
+  option = "viridis",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .colour_scale(
+    plot,
+    "fill",
+    "continuous",
+    .viridis_pal(option),
+    breaks,
+    labels,
+    name
+  )
+}
+
+#' @rdname scale_viridis
+#' @export
+scale_fill_viridis_d <- function(
+  plot,
+  option = "viridis",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .colour_scale(
+    plot,
+    "fill",
+    "discrete",
+    .viridis_pal(option),
+    breaks,
+    labels,
+    name
+  )
+}
+
+#' @rdname scale_viridis
+#' @export
+scale_color_brewer <- function(
+  plot,
+  palette = "Blues",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .colour_scale(plot, "color", "discrete", palette, breaks, labels, name)
+}
+
+#' @rdname scale_viridis
+#' @export
+scale_fill_brewer <- function(
+  plot,
+  palette = "Blues",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .colour_scale(plot, "fill", "discrete", palette, breaks, labels, name)
+}
+
+#' @rdname scale_viridis
+#' @export
+scale_color_distiller <- function(
+  plot,
+  palette = "Blues",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .colour_scale(plot, "color", "continuous", palette, breaks, labels, name)
+}
+
+#' @rdname scale_viridis
+#' @export
+scale_fill_distiller <- function(
+  plot,
+  palette = "Blues",
+  breaks = NULL,
+  labels = NULL,
+  name = NULL
+) {
+  .colour_scale(plot, "fill", "continuous", palette, breaks, labels, name)
+}
+
 # British-spelling aliases: `colour` is honoured everywhere `color` is (the
 # `mark_*()` encodings, `labs()`, `element_*()`), so the scale constructors take
 # the alias too.
@@ -796,6 +1024,22 @@ scale_colour_gradient <- scale_color_gradient
 #' @rdname scale_color_continuous
 #' @export
 scale_colour_gradient2 <- scale_color_gradient2
+
+#' @rdname scale_viridis
+#' @export
+scale_colour_viridis_c <- scale_color_viridis_c
+
+#' @rdname scale_viridis
+#' @export
+scale_colour_viridis_d <- scale_color_viridis_d
+
+#' @rdname scale_viridis
+#' @export
+scale_colour_brewer <- scale_color_brewer
+
+#' @rdname scale_viridis
+#' @export
+scale_colour_distiller <- scale_color_distiller
 
 # The shared engine behind the continuous output-range scales (size / alpha /
 # edge_width / edge_alpha): validate the data `limits` and the output `range`
