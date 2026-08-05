@@ -641,6 +641,82 @@ mark_rule <- function(
   )
 }
 
+#' Reference lines and function curves
+#'
+#' `mark_abline()` draws a sloped reference line `y = slope * x + intercept`
+#' across the panel (the diagonal cousin of `mark_rule()`'s horizontal/vertical
+#' lines). `mark_function()` draws a curve `y = fun(x)` sampled over the panel's
+#' x range — e.g. a theoretical density over a histogram, or a reference curve
+#' over a scatter. Both take no data encodings; they reuse the panel's existing
+#' x/y scales, so add them on top of a data layer. Both assume linear axes.
+#'
+#' @param plot A [PlotSpec].
+#' @param ... For `mark_abline()`/`mark_function()`, styling passed through as
+#'   constants (e.g. `color`, `linewidth`, `linetype`).
+#' @param slope,intercept For `mark_abline()`, the line's slope and intercept
+#'   (each may be a vector to draw several lines). Defaults `1` and `0`.
+#' @param fun For `mark_function()`, a function (or its name) mapping a numeric
+#'   `x` vector to `y`, e.g. `dnorm` or `\(x) x^2`.
+#' @param n For `mark_function()`, the number of points sampled across the x
+#'   range. Default `101`.
+#' @param args For `mark_function()`, extra arguments passed to `fun` (e.g.
+#'   `args = list(mean = 5, sd = 2)`).
+#' @param blend,data See [mark_point()].
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_abline(slope = -5, intercept = 37)
+#' vplot(data.frame(x = rnorm(200))) |>
+#'   mark_histogram(x = x, y = after_stat(density)) |>
+#'   mark_function(fun = dnorm)
+#' @export
+mark_abline <- function(
+  plot,
+  ...,
+  slope = 1,
+  intercept = 0,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "abline",
+    rlang::enquos(...),
+    const_params = list(slope = slope, intercept = intercept),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+#' @rdname mark_abline
+#' @export
+mark_function <- function(
+  plot,
+  ...,
+  fun,
+  n = 101,
+  args = list(),
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  if (missing(fun)) {
+    cli::cli_abort("{.fn mark_function} needs a {.arg fun}.")
+  }
+  .add_layer(
+    plot,
+    "fun",
+    rlang::enquos(...),
+    const_params = list(fun = match.fun(fun), n = n, args = args),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
 #' @rdname mark_point
 #' @details
 #' `mark_bar()` draws bars from a zero baseline. With an explicit `y` it uses the
@@ -1947,6 +2023,85 @@ mark_summary <- function(
     rlang::enquos(...),
     stat = "aggregate",
     stat_params = list(fun = fun),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+#' @rdname mark_boxplot
+#' @details
+#' `mark_pointrange()` draws a point at `(x, y)` with a vertical line from `ymin`
+#' to `ymax` (an identity mark — supply the summary values yourself, e.g. from a
+#' model). `mark_crossbar()` draws a box spanning `ymin`..`ymax` with a
+#' horizontal line at `y`. Both are the identity counterparts of the aggregating
+#' `mark_interval()`.
+#' @export
+mark_pointrange <- function(
+  plot,
+  ...,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "pointrange",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+#' @rdname mark_boxplot
+#' @export
+mark_crossbar <- function(
+  plot,
+  ...,
+  width = 0.5,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "crossbar",
+    rlang::enquos(...),
+    rlang::enquos(width = width),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+#' Count overlapping points
+#'
+#' `mark_count()` collapses coincident `(x, y)` observations to one point sized
+#' by how many fall there (ggplot2's `geom_count()` / `stat_sum()`) — the honest
+#' way to show overplotting on a discrete or rounded grid. `size` defaults to
+#' `after_stat(n)` (the overlap count); map it to `after_stat(prop)` for the
+#' proportion instead.
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): `x`, `y` (+ `color`/`fill` to count within
+#'   groups, and `size` to override the default `after_stat(n)`).
+#' @return The modified [PlotSpec].
+#' @examples
+#' vplot(mpg <- data.frame(cyl = mtcars$cyl, gear = mtcars$gear)) |>
+#'   mark_count(x = cyl, y = gear)
+#' @export
+mark_count <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+  .check_plot(plot)
+  dots <- rlang::enquos(...)
+  dots <- .default_channel(dots, "size", rlang::quo(after_stat(n)))
+  .add_layer(
+    plot,
+    "point",
+    dots,
+    stat = "sum",
     blend = blend,
     sketch = sketch,
     data = data

@@ -5,6 +5,8 @@
 \alias{mark_errorbar}
 \alias{mark_linerange}
 \alias{mark_summary}
+\alias{mark_pointrange}
+\alias{mark_crossbar}
 \title{Boxplot, error bar, and summary marks}
 \usage{
 mark_boxplot(plot, ..., blend = NULL, sketch = NULL, data = NULL)
@@ -14,6 +16,10 @@ mark_errorbar(plot, ..., width = 0.5, blend = NULL, sketch = NULL, data = NULL)
 mark_linerange(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
 mark_summary(plot, ..., fun = mean, blend = NULL, sketch = NULL, data = NULL)
+
+mark_pointrange(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+
+mark_crossbar(plot, ..., width = 0.5, blend = NULL, sketch = NULL, data = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -47,6 +53,13 @@ values (box = Q1-Q3, median line, 1.5*IQR whiskers, outlier points).
 \code{mark_errorbar()} draws vertical bars from \code{ymin} to \code{ymax} with horizontal
 caps; \code{mark_linerange()} omits the caps. \code{mark_summary()} aggregates \code{y} per
 \code{x} with \code{fun} (default mean) and draws the result as points.
+}
+\details{
+\code{mark_pointrange()} draws a point at \verb{(x, y)} with a vertical line from \code{ymin}
+to \code{ymax} (an identity mark — supply the summary values yourself, e.g. from a
+model). \code{mark_crossbar()} draws a box spanning \code{ymin}..\code{ymax} with a
+horizontal line at \code{y}. Both are the identity counterparts of the aggregating
+\code{mark_interval()}.
 }
 \examples{
 vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)

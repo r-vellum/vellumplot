@@ -42,6 +42,7 @@ NULL
   sdf <- switch(
     stat,
     count = .stat_count(L),
+    sum = .stat_sum(L),
     bin = .stat_bin(L),
     bin2d = .stat_bin2d(L),
     density_2d = .stat_density_2d(L),
@@ -145,6 +146,33 @@ NULL
       stringsAsFactors = FALSE
     )
   }
+}
+
+# Count coincident (x, y) observations (per group), keeping one row per unique
+# point with its count `n` and proportion `prop`. `mark_count()` maps `size` to
+# `after_stat(n)`, so overlapping points become one bubble sized by overlap.
+.stat_sum <- function(L) {
+  x <- L$values$x
+  y <- L$values$y
+  grp <- .layer_group(L)
+  key <- if (is.null(grp)) {
+    paste(as.character(x), as.character(y), sep = "\r")
+  } else {
+    paste(as.character(x), as.character(y), as.character(grp), sep = "\r")
+  }
+  first <- !duplicated(key)
+  cnt <- as.integer(table(key)[key[first]])
+  out <- data.frame(
+    x = x[first],
+    y = y[first],
+    n = cnt,
+    stringsAsFactors = FALSE
+  )
+  out$prop <- out$n / sum(out$n)
+  if (!is.null(grp)) {
+    out$group <- grp[first]
+  }
+  out
 }
 
 # Bin a continuous x into `bins` equal-width bins; count per bin (per group).

@@ -161,8 +161,10 @@ reference:
 - subtitle: Points, lines, and bars
   contents:
   - mark_point
+  - mark_count
   - mark_area
   - mark_segment
+  - mark_abline
 - subtitle: Distributions and intervals
   contents:
   - mark_boxplot
