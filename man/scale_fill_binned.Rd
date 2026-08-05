@@ -3,6 +3,9 @@
 \name{scale_fill_binned}
 \alias{scale_fill_binned}
 \alias{scale_color_binned}
+\alias{scale_color_steps}
+\alias{scale_colour_steps}
+\alias{scale_fill_steps}
 \title{Binned (classed) colour scales}
 \usage{
 scale_fill_binned(
@@ -17,6 +20,39 @@ scale_fill_binned(
 )
 
 scale_color_binned(
+  plot,
+  style = "quantile",
+  n = 5,
+  breaks = NULL,
+  palette = NULL,
+  labels = NULL,
+  na_value = "grey80",
+  name = NULL
+)
+
+scale_color_steps(
+  plot,
+  style = "quantile",
+  n = 5,
+  breaks = NULL,
+  palette = NULL,
+  labels = NULL,
+  na_value = "grey80",
+  name = NULL
+)
+
+scale_colour_steps(
+  plot,
+  style = "quantile",
+  n = 5,
+  breaks = NULL,
+  palette = NULL,
+  labels = NULL,
+  na_value = "grey80",
+  name = NULL
+)
+
+scale_fill_steps(
   plot,
   style = "quantile",
   n = 5,
@@ -59,6 +95,11 @@ standard choropleth scale. Class breaks are chosen by a classification
 \code{style}. \code{quantile}, \code{equal}, and \code{pretty} need no extra packages; other
 styles (e.g. \code{"jenks"}, \code{"fisher"}, \code{"kmeans"}, \code{"headtails"}) delegate to the
 optional \code{classInt} package (in \code{Suggests}) and error if it is absent.
+}
+\details{
+\code{scale_color_steps()} / \code{scale_fill_steps()} are aliases of the binned colour
+scales, for ggplot2 users who reach for the \verb{_steps} name — a continuous
+variable cut into steps with an interval-key legend.
 }
 \examples{
 \dontrun{

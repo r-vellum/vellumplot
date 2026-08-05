@@ -154,6 +154,22 @@ scale_color_binned <- function(
   )
 }
 
+#' @rdname scale_fill_binned
+#' @details
+#' `scale_color_steps()` / `scale_fill_steps()` are aliases of the binned colour
+#' scales, for ggplot2 users who reach for the `_steps` name — a continuous
+#' variable cut into steps with an interval-key legend.
+#' @export
+scale_color_steps <- scale_color_binned
+
+#' @rdname scale_fill_binned
+#' @export
+scale_colour_steps <- scale_color_binned
+
+#' @rdname scale_fill_binned
+#' @export
+scale_fill_steps <- scale_fill_binned
+
 #' Binned position scales
 #'
 #' `scale_x_binned()` / `scale_y_binned()` cut a continuous position variable into
