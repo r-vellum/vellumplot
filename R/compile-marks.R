@@ -39,6 +39,7 @@ NULL
     raster = .emit_raster(scene, L, scales),
     image = .emit_image(scene, L, scales),
     boxplot = .emit_boxplot(scene, L, scales),
+    signif = .emit_signif(scene, L, scales),
     errorbar = .emit_errorbar(scene, L, scales),
     linerange = .emit_linerange(scene, L, scales),
     pointrange = .emit_pointrange(scene, L, scales),

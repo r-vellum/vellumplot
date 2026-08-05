@@ -2,6 +2,12 @@
 
 ## New features
 
+* `mark_signif()` — significance brackets (the ggsignif / ggpubr idiom): run a
+  pairwise test (`wilcox.test` or `t.test`) between `x` groups and draw a bracket
+  with its p-value (or stars) over each comparison. Brackets stack above the data
+  and the y-axis expands to fit them. Add on top of a `mark_boxplot()` /
+  `mark_violin()`.
+
 * `scale_color_steps()` / `scale_fill_steps()` — ggplot2-parity aliases of the
   binned colour scales (a continuous variable cut into steps).
 * **Adaptive knit output.** When a plot is knitted (Quarto / R Markdown) to an

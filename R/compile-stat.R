@@ -43,6 +43,7 @@ NULL
     stat,
     count = .stat_count(L),
     sum = .stat_sum(L),
+    signif = .stat_signif(L),
     bin = .stat_bin(L),
     bin2d = .stat_bin2d(L),
     density_2d = .stat_density_2d(L),
@@ -109,6 +110,12 @@ NULL
     L$values$.piece <- sdf$.piece
     L$values$.ring <- sdf$.ring
   }
+  # Significance brackets carry a second x endpoint (`.x2`) and a label (`.blabel`)
+  # per row; the signif emitter reads these.
+  if (!is.null(sdf$.x2)) {
+    L$values$.x2 <- sdf$.x2
+    L$values$.blabel <- sdf$.blabel
+  }
   L$n <- nrow(sdf)
   L
 }
@@ -171,6 +178,84 @@ NULL
   out$prop <- out$n / sum(out$n)
   if (!is.null(grp)) {
     out$group <- grp[first]
+  }
+  out
+}
+
+# Format a p-value as text or significance stars.
+.signif_label <- function(p, kind) {
+  if (!is.finite(p)) {
+    return("NA")
+  }
+  if (identical(kind, "stars")) {
+    if (p < 1e-4) {
+      "****"
+    } else if (p < 1e-3) {
+      "***"
+    } else if (p < 1e-2) {
+      "**"
+    } else if (p < 0.05) {
+      "*"
+    } else {
+      "ns"
+    }
+  } else {
+    paste0("p = ", formatC(p, format = "g", digits = 2))
+  }
+}
+
+# Pairwise significance brackets. For each `comparisons` pair of `x` groups, run
+# `method` on the two groups' `y` and emit one bracket row: its two endpoints
+# (`x` = left group, `.x2` = right group), a stacked height `y` (above the data
+# so the y-scale expands to show it), and the p-value `.blabel`. The signif
+# emitter draws the bracket + label; the y-scale training uses `y`.
+.stat_signif <- function(L) {
+  x <- as.character(L$values$x)
+  y <- as.numeric(L$values$y)
+  ok <- !is.na(x) & is.finite(y)
+  x <- x[ok]
+  y <- y[ok]
+  if (!length(y)) {
+    cli::cli_abort("{.fn mark_signif} needs finite {.field y} values.")
+  }
+  levs <- .cat_levels(x)
+  sp <- L$stat_params
+  comparisons <- sp$comparisons %||%
+    lapply(seq_len(length(levs) - 1L), function(i) levs[c(i, i + 1L)])
+  if (!length(comparisons)) {
+    cli::cli_abort("{.fn mark_signif} needs at least two {.field x} groups.")
+  }
+  testfun <- match.fun(sp$method %||% "wilcox.test")
+  span <- diff(range(y))
+  if (!is.finite(span) || span == 0) {
+    span <- 1
+  }
+  step <- (sp$step %||% 0.12) * span
+  y0 <- max(y)
+  rows <- lapply(seq_along(comparisons), function(i) {
+    cc <- as.character(comparisons[[i]])
+    a <- y[x == cc[1]]
+    b <- y[x == cc[2]]
+    if (length(a) < 2L || length(b) < 2L) {
+      return(NULL)
+    }
+    p <- tryCatch(
+      suppressWarnings(testfun(a, b)$p.value),
+      error = function(e) NA_real_
+    )
+    data.frame(
+      x = cc[1],
+      .x2 = cc[2],
+      y = y0 + step * i,
+      .blabel = .signif_label(p, sp$label %||% "p"),
+      stringsAsFactors = FALSE
+    )
+  })
+  out <- do.call(rbind, rows)
+  if (is.null(out) || !nrow(out)) {
+    cli::cli_abort(
+      "{.fn mark_signif}: no comparable groups (each needs >= 2 finite values)."
+    )
   }
   out
 }
