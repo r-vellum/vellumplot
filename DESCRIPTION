@@ -43,6 +43,7 @@ Suggests:
     igraph,
     interp,
     jsonlite,
+    knitr,
     magick,
     MASS,
     mgcv,

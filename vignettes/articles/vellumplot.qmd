@@ -88,6 +88,19 @@ p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 render_plot(p, "cars.png")
 ```
 
+`plot_svg()` returns the scene as an SVG string, and `plot_data_uri()` inlines a
+plot as a self-contained `data:` URI (vector by default, or `format = "png"`) for
+an `<img>`, a Markdown image, or an email — no separate file.
+
+```{r}
+#| eval: false
+uri <- p |> plot_data_uri()          # data:image/svg+xml;base64,...
+```
+
+Inside a Quarto or R Markdown document you usually write nothing special: a
+plot printed in a chunk adapts to the target — a crisp inline **SVG** for HTML
+output, and the default vector/raster render for PDF or Word.
+
 ## Where to next
 
 - **[Reference](../reference/index.html)**: every mark, scale, coord, facet,
