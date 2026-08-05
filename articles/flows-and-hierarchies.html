@@ -304,7 +304,22 @@
 </div>
 </div>
 </div>
-<p><code><a href="../reference/vsankey.html">vsankey()</a></code>, <code><a href="../reference/vchord.html">vchord()</a></code>, <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code>, and <code><a href="../reference/vvenn.html">vvenn()</a></code> all follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
+</section><section class="level2"><h2 id="waffle-charts">Waffle charts<a class="anchor" aria-label="anchor" href="#waffle-charts"></a>
+</h2>
+<p><code><a href="../reference/vwaffle.html">vwaffle()</a></code> is a <strong>waffle</strong> (square pie): a grid of cells coloured by category, where each category takes a share of the cells proportional to its count. The eye counts squares far more accurately than it judges pie-slice angles, which is why a waffle is often the better part-of-whole chart. Feed it a <code>value</code> column or let it count rows:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">parts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>fuel <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"petrol"</span>, <span class="st">"diesel"</span>, <span class="st">"electric"</span><span class="op">)</span>, share <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">62</span>, <span class="fl">25</span>, <span class="fl">13</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vwaffle.html">vwaffle</a></span><span class="op">(</span><span class="va">parts</span>, category <span class="op">=</span> <span class="va">fuel</span>, value <span class="op">=</span> <span class="va">share</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="flows-and-hierarchies_files/figure-html/unnamed-chunk-16-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><code>n_cells</code> (default 100) and <code>rows</code> (default 10) set the grid; cells are allocated by largest remainder so they sum exactly to <code>n_cells</code>.</p>
+<p><code><a href="../reference/vsankey.html">vsankey()</a></code>, <code><a href="../reference/vchord.html">vchord()</a></code>, <code><a href="../reference/vhierarchy.html">vhierarchy()</a></code>, <code><a href="../reference/vvenn.html">vvenn()</a></code>, and <code><a href="../reference/vwaffle.html">vwaffle()</a></code> all follow the <code><a href="../reference/vgraph.html">vgraph()</a></code> pattern: the layout is computed in R and drawn through vellum primitives, so they are ordinary specs you can render, print, or (in future) make interactive through the same machinery as every other plot.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

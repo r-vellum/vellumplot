@@ -245,11 +245,32 @@ vvenn(list(A = sample(u, 34), B = sample(u, 30), C = sample(u, 26)))
 
 ![](flows-and-hierarchies_files/figure-html/unnamed-chunk-15-1.png)
 
+## Waffle charts
+
+[`vwaffle()`](https://r-vellum.github.io/vellumplot/reference/vwaffle.md)
+is a **waffle** (square pie): a grid of cells coloured by category,
+where each category takes a share of the cells proportional to its
+count. The eye counts squares far more accurately than it judges
+pie-slice angles, which is why a waffle is often the better
+part-of-whole chart. Feed it a `value` column or let it count rows:
+
+``` r
+
+parts <- data.frame(fuel = c("petrol", "diesel", "electric"), share = c(62, 25, 13))
+vwaffle(parts, category = fuel, value = share)
+```
+
+![](flows-and-hierarchies_files/figure-html/unnamed-chunk-16-1.png)
+
+`n_cells` (default 100) and `rows` (default 10) set the grid; cells are
+allocated by largest remainder so they sum exactly to `n_cells`.
+
 [`vsankey()`](https://r-vellum.github.io/vellumplot/reference/vsankey.md),
 [`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md),
 [`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md),
+[`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md),
 and
-[`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md)
+[`vwaffle()`](https://r-vellum.github.io/vellumplot/reference/vwaffle.md)
 all follow the
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
 pattern: the layout is computed in R and drawn through vellum

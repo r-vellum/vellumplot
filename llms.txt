@@ -429,6 +429,9 @@ then render it or write it to a file.
 - [`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md)
   : Venn / Euler diagrams
 
+- [`vwaffle()`](https://r-vellum.github.io/vellumplot/reference/vwaffle.md)
+  : Waffle chart
+
 - [`vsparkline()`](https://r-vellum.github.io/vellumplot/reference/vsparkline.md)
   : Sparklines — tiny word-sized charts
 

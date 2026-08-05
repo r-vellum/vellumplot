@@ -67,6 +67,8 @@
 <div class="section level3">
 <h3 id="new-features-0-9-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0-9000"></a></h3>
 <ul><li>
+<code><a href="../reference/vwaffle.html">vwaffle()</a></code> — a self-contained <strong>waffle chart</strong> (square pie): a grid of cells coloured by category, each category taking a share of the cells proportional to its count (largest-remainder allocation, so the cells sum exactly). Works from a <code>value</code> column or raw row counts.</li>
+<li>
 <code><a href="../reference/position.html">position_sina()</a></code> (and <code>position = "sina"</code>) spreads a category’s points along x by a quasirandom offset scaled to the local y-density, so the cloud traces the distribution’s shape (ggforce’s sina).</li>
 <li>
 <code><a href="../reference/mark_raincloud.html">mark_raincloud()</a></code> composes a <strong>raincloud</strong> — a one-sided density cloud (<code><a href="../reference/mark_halfeye.html">mark_halfeye()</a></code>) with the raw observations as sina “rain” below it — in one call, forwarding any <code>color</code>/<code>fill</code> mapping to both layers.</li>
