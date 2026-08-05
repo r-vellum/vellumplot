@@ -4,6 +4,15 @@
 
 ### New features
 
+- **Adaptive knit output.** When a plot is knitted (Quarto / R Markdown)
+  to an HTML target it is now emitted as a crisp, selectable,
+  resolution-independent inline **SVG**; other targets (LaTeX / Word)
+  keep the default device render. One plot object, the best format per
+  output — no conditional code.
+- [`plot_data_uri()`](https://r-vellum.github.io/vellumplot/reference/plot_data_uri.md)
+  encodes a plot as a self-contained `data:` URI (vector SVG by default,
+  or `format = "png"`) — ready for an HTML `<img src>`, a Markdown
+  image, an email, or a `gt` table’s non-HTML backends.
 - Three more complete themes for ggplot2 parity:
   [`theme_light()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
   [`theme_dark()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),

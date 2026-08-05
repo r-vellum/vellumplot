@@ -49,6 +49,9 @@ then render it or write it to a file.
 - [`plot_svg()`](https://r-vellum.github.io/vellumplot/reference/plot_svg.md)
   : Render a plot to a self-contained SVG string
 
+- [`plot_data_uri()`](https://r-vellum.github.io/vellumplot/reference/plot_data_uri.md)
+  : Encode a plot as a data URI
+
 - [`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
   : Write a multi-page PDF
 
