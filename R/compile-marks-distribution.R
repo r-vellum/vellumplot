@@ -12,6 +12,50 @@ NULL
   split(seq_along(xchar), factor(xchar, levels = levs))
 }
 
+# Significance brackets (ggsignif/ggpubr style): for each precomputed bracket row
+# draw a ┌──┐ over the two groups it spans (`x` .. `.x2` at height `y`, short
+# down-ticks of `tip_length` of the y span) and its p-value label above.
+.emit_signif <- function(scene, L, scales) {
+  n <- L$n
+  x0 <- scales$x$map(L$values$x)
+  x1 <- scales$x$map(L$values$.x2)
+  yv <- scales$y$map(L$values$y)
+  labels <- L$values$.blabel
+  tip <- (L$stat_params$tip_length %||% 0.03) * diff(scales$y$domain)
+  col <- .aes_param(L, "color", "black")
+  lwd <- .aes_param(L, "linewidth", 0.6)
+  fs <- .aes_param(L, "size", 8)
+  sk <- .mark_sketch(L, scales)
+  for (i in seq_len(n)) {
+    ln <- .xy_path(
+      scales,
+      c(x0[i], x0[i], x1[i], x1[i]),
+      c(yv[i] - tip, yv[i], yv[i], yv[i] - tip)
+    )
+    scene <- .draw(
+      scene,
+      vellum::lines_grob(
+        ln$x,
+        ln$y,
+        sketch = .sketch_bump(sk, i),
+        gp = vellum::vl_gpar(col = col, lwd = lwd)
+      )
+    )
+    pt <- .xy_units(scales, (x0[i] + x1[i]) / 2, yv[i] + tip * 0.5)
+    scene <- .draw(
+      scene,
+      vellum::text_grob(
+        labels[i],
+        pt$x,
+        pt$y,
+        just = c("centre", "bottom"),
+        gp = vellum::vl_gpar(fontsize = fs, col = col)
+      )
+    )
+  }
+  scene
+}
+
 .emit_boxplot <- function(scene, L, scales) {
   xv <- L$values$x
   yv <- as.numeric(L$values$y)

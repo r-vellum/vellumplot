@@ -2005,6 +2005,68 @@ mark_boxplot <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
   )
 }
 
+#' Significance brackets
+#'
+#' `mark_signif()` runs a pairwise test between `x` groups and draws a
+#' significance **bracket** over each comparison with its p-value (or stars) —
+#' the ggsignif / ggpubr idiom. Add it on top of a `mark_boxplot()` /
+#' `mark_violin()`; the brackets stack above the data and the y-axis expands to
+#' fit them.
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): a categorical `x` and the numeric `y`.
+#' @param comparisons A list of length-2 character vectors naming the group
+#'   pairs to test, e.g. `list(c("a", "b"), c("b", "c"))`. `NULL` (default) tests
+#'   each adjacent pair of levels.
+#' @param method The two-sample test: `"wilcox.test"` (default) or `"t.test"`.
+#' @param label `"p"` (default, a formatted p-value) or `"stars"`
+#'   (`*`/`**`/`***`/`****`/`ns`).
+#' @param step Vertical gap between stacked brackets, as a fraction of the data's
+#'   y range (default `0.12`).
+#' @param tip_length Bracket down-tick length, as a fraction of the y range
+#'   (default `0.03`).
+#' @return The modified [PlotSpec].
+#' @examples
+#' set.seed(1)
+#' d <- data.frame(g = rep(c("a", "b", "c"), each = 30),
+#'                 y = c(rnorm(30), rnorm(30, 1), rnorm(30, 0.4)))
+#' vplot(d) |>
+#'   mark_boxplot(x = g, y = y) |>
+#'   mark_signif(x = g, y = y, comparisons = list(c("a", "b"), c("a", "c")))
+#' @export
+mark_signif <- function(
+  plot,
+  ...,
+  comparisons = NULL,
+  method = c("wilcox.test", "t.test"),
+  label = c("p", "stars"),
+  step = 0.12,
+  tip_length = 0.03,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  method <- match.arg(method)
+  label <- match.arg(label)
+  .add_layer(
+    plot,
+    "signif",
+    rlang::enquos(...),
+    stat = "signif",
+    stat_params = list(
+      comparisons = comparisons,
+      method = method,
+      label = label,
+      step = step,
+      tip_length = tip_length
+    ),
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
 #' @rdname mark_boxplot
 #' @export
 mark_errorbar <- function(

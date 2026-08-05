@@ -96,6 +96,29 @@ vplot(mtcars) |>
   mark_summary(x = factor(cyl), y = mpg, fun = median)
 ```
 
+## Significance brackets
+
+`mark_signif()` runs a pairwise test between `x` groups and draws a bracket with
+its p-value over each comparison — the ggsignif / ggpubr idiom. Add it on top of
+a boxplot or violin; the brackets stack above the data and the y-axis grows to
+fit. `comparisons` is a list of the group pairs to test (default: each adjacent
+pair); `method` is `"wilcox.test"` or `"t.test"`; `label` is a p-value or stars.
+
+```{r}
+set.seed(1)
+d <- data.frame(
+  grp = rep(c("ctrl", "low", "high"), each = 40),
+  y = c(rnorm(40), rnorm(40, 0.4), rnorm(40, 1.2))
+)
+vplot(d) |>
+  mark_boxplot(x = grp, y = y, fill = grp) |>
+  mark_signif(
+    x = grp, y = y,
+    comparisons = list(c("ctrl", "low"), c("ctrl", "high")),
+    label = "stars"
+  )
+```
+
 ## Smooths
 
 `mark_smooth()` fits a model of `y` on `x` (per group) and draws the fitted line

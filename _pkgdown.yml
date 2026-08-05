@@ -170,6 +170,7 @@ reference:
 - subtitle: Distributions and intervals
   contents:
   - mark_boxplot
+  - mark_signif
   - mark_violin
   - mark_histogram
   - mark_ecdf
