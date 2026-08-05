@@ -148,6 +148,8 @@ Layers that draw data. Scales train across every mark on the panel.
 
 - [`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
   : Draw simple-feature (sf) geometries
+- [`mark_sf_label()`](https://r-vellum.github.io/vellumplot/reference/mark_sf_label.md)
+  : Label sf features at their interior point
 - [`mark_scalebar()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
   [`mark_compass()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
   : Map decorations
