@@ -20,6 +20,12 @@
 
 ## New features
 
+* `guide_legend()` gained an **`override.aes`** argument (ggplot2 parity): a named
+  list of aesthetics forced on the legend **keys** only, independent of the
+  plotted data — e.g. `guides(color = guide_legend(override.aes = list(size = 5,
+  alpha = 1)))` draws large, opaque keys over a scatter of tiny translucent
+  points. Recognised: `size`, `alpha`, `colour`/`color`, `fill`, `shape`,
+  `linewidth`. The key cell grows to hold an overridden size.
 * `scale_x_continuous()` / `scale_y_continuous()` gained an **`expand`** argument
   controlling axis padding: `NULL` (default) keeps the usual 5% margin, and a
   numeric `c(mult, add)` sets a proportion of the data range plus a constant in

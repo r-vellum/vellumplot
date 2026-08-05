@@ -952,7 +952,15 @@ NULL
   } else {
     NULL
   }
-  if (length(sizes)) max(2 * max(sizes), m$key) else m$key
+  # A `guide_legend(override.aes = list(size = ))` forces the key marker size, so
+  # the key cell must grow to hold it (else large keys overflow their rows).
+  ov_size <- g$sc$override_aes[["size"]]
+  cand <- c(
+    if (length(sizes)) 2 * max(sizes),
+    if (!is.null(ov_size)) 2 * ov_size,
+    m$key
+  )
+  max(cand)
 }
 
 # The continuous colour-bar length (mm) for a vertical guide: long enough that
@@ -1070,7 +1078,7 @@ NULL
 # SVG (a `d` path or `.svg` file), otherwise the usual `points_grob()` marker.
 # `size_mm` is the marker size for the built-in case (the icon uses a slightly
 # larger longer-side so it reads at legend scale).
-.shape_key_grob <- function(shape, size_mm, fill, col, sk) {
+.shape_key_grob <- function(shape, size_mm, fill, col, sk, alpha = NULL) {
   d <- .shape_svg_d(shape)
   if (!is.na(d)) {
     return(vellum::svg_grob(
@@ -1078,7 +1086,7 @@ NULL
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.5, "npc"),
       size = vellum::vl_unit(2 * size_mm, "mm"),
-      gp = vellum::vl_gpar(fill = fill, col = col)
+      gp = vellum::vl_gpar(fill = fill, col = col, alpha = alpha)
     ))
   }
   vellum::points_grob(
@@ -1087,13 +1095,17 @@ NULL
     size = vellum::vl_unit(size_mm, "mm"),
     shape = shape,
     sketch = sk,
-    gp = vellum::vl_gpar(fill = fill, col = col)
+    gp = vellum::vl_gpar(fill = fill, col = col, alpha = alpha)
   )
 }
 
 .key_grob <- function(g, i, m, sketch = NULL) {
   sc <- g$sc
   sk <- .sketch_bump(sketch, 200L + i)
+  # `override.aes` (from guide_legend(override.aes=)) forces aesthetics on the
+  # swatch only. Read each named entry with `%||%` so an absent one keeps the
+  # data-driven default. `colour` was canonicalised to `color` in guide_legend().
+  ov <- sc$override_aes %||% list()
   switch(
     g$kind,
     color_discrete = {
@@ -1101,24 +1113,36 @@ NULL
       if (isTRUE(sc$na)) {
         cols <- c(cols, sc$na_value)
       }
-      .colour_key_grob(sc$key_glyph, cols[i], m, sk)
+      .colour_key_grob(sc$key_glyph, cols[i], m, sk, ov)
     },
     size = if (isTRUE(sc$na) && i > length(sc$legend_sizes)) {
       .na_key_grob(m, sk)
     } else {
+      fill <- ov$fill %||% ov$color %||% "grey35"
       vellum::points_grob(
         vellum::vl_unit(0.5, "npc"),
         vellum::vl_unit(0.5, "npc"),
-        size = vellum::vl_unit(sc$legend_sizes[i], "mm"),
-        shape = sc$key_glyph %||% "circle",
+        size = vellum::vl_unit(ov$size %||% sc$legend_sizes[i], "mm"),
+        shape = ov$shape %||% sc$key_glyph %||% "circle",
         sketch = sk,
-        gp = vellum::vl_gpar(fill = "grey35", col = "grey35")
+        gp = vellum::vl_gpar(
+          fill = fill,
+          col = ov$color %||% "grey35",
+          alpha = ov$alpha
+        )
       )
     },
     shape = if (isTRUE(sc$na) && i > length(sc$shapes)) {
       .na_key_grob(m, sk)
     } else {
-      .shape_key_grob(sc$shapes[i], m$key / 2, "grey35", "grey35", sk)
+      .shape_key_grob(
+        ov$shape %||% sc$shapes[i],
+        ov$size %||% (m$key / 2),
+        ov$fill %||% ov$color %||% "grey35",
+        ov$color %||% "grey35",
+        sk,
+        ov$alpha
+      )
     },
     pattern = vellum::rect_grob(
       vellum::vl_unit(0.5, "npc"),
@@ -1134,18 +1158,22 @@ NULL
       vellum::vl_unit(0.88, "npc"),
       vellum::vl_unit(0.5, "npc"),
       sketch = sk,
-      gp = vellum::vl_gpar(col = "grey35", lwd = sc$legend_widths[i])
+      gp = vellum::vl_gpar(
+        col = ov$color %||% "grey35",
+        lwd = sc$legend_widths[i],
+        alpha = ov$alpha
+      )
     ),
     alpha = vellum::points_grob(
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.5, "npc"),
-      size = vellum::vl_unit(m$key / 2, "mm"),
-      shape = "circle",
+      size = vellum::vl_unit(ov$size %||% (m$key / 2), "mm"),
+      shape = ov$shape %||% "circle",
       sketch = sk,
       gp = vellum::vl_gpar(
-        fill = "grey20",
+        fill = ov$fill %||% ov$color %||% "grey20",
         col = NA,
-        alpha = sc$legend_alphas[i]
+        alpha = ov$alpha %||% sc$legend_alphas[i]
       )
     ),
     linetype = vellum::segments_grob(
@@ -1154,33 +1182,46 @@ NULL
       vellum::vl_unit(0.88, "npc"),
       vellum::vl_unit(0.5, "npc"),
       sketch = sk,
-      gp = vellum::vl_gpar(col = "grey35", lwd = 1.5, lty = sc$linetypes[i])
+      gp = vellum::vl_gpar(
+        col = ov$color %||% "grey35",
+        lwd = ov$linewidth %||% 1.5,
+        lty = ov$linetype %||% sc$linetypes[i],
+        alpha = ov$alpha
+      )
     ),
     # A merged guide's key carries both encodings in one point: the shared
     # variable's colour (fill + stroke) and shape, sized when size is merged in.
     merged = .shape_key_grob(
-      sc$shapes[i] %||% "circle",
-      sc$sizes_mm[i] %||% (m$key / 2),
-      sc$fills[i],
-      sc$cols[i],
-      sk
+      ov$shape %||% sc$shapes[i] %||% "circle",
+      ov$size %||% sc$sizes_mm[i] %||% (m$key / 2),
+      ov$fill %||% ov$color %||% sc$fills[i],
+      ov$color %||% sc$cols[i],
+      sk,
+      ov$alpha
     )
   )
 }
 
 # A discrete-colour key drawn as the mark's glyph: a filled point for point/glyph
 # marks, a short line for line marks, else the default filled square swatch.
-.colour_key_grob <- function(glyph, col, m, sketch = NULL) {
+.colour_key_grob <- function(glyph, col, m, sketch = NULL, ov = list()) {
+  # `override.aes` forces key aesthetics: fill/stroke take the overridden colour,
+  # a point key its overridden size/shape/alpha, a line key its linewidth. The
+  # colour itself defaults to the data-driven `col`.
+  fill <- ov$fill %||% ov$color %||% col
+  line_col <- ov$color %||% col
+  alpha <- ov$alpha
+  glyph <- if (!is.null(ov$shape)) "point" else (glyph %||% "square")
   switch(
-    glyph %||% "square",
+    glyph,
     point = ,
     circle = vellum::points_grob(
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.5, "npc"),
-      size = vellum::vl_unit(m$key / 2, "mm"),
-      shape = "circle",
+      size = vellum::vl_unit(ov$size %||% (m$key / 2), "mm"),
+      shape = ov$shape %||% "circle",
       sketch = sketch,
-      gp = vellum::vl_gpar(fill = col, col = NA)
+      gp = vellum::vl_gpar(fill = fill, col = NA, alpha = alpha)
     ),
     line = vellum::segments_grob(
       vellum::vl_unit(0.12, "npc"),
@@ -1188,13 +1229,17 @@ NULL
       vellum::vl_unit(0.88, "npc"),
       vellum::vl_unit(0.5, "npc"),
       sketch = sketch,
-      gp = vellum::vl_gpar(col = col, lwd = 2)
+      gp = vellum::vl_gpar(
+        col = line_col,
+        lwd = ov$linewidth %||% 2,
+        alpha = alpha
+      )
     ),
     vellum::rect_grob(
       width = vellum::vl_unit(m$key, "mm"),
       height = vellum::vl_unit(m$key, "mm"),
       sketch = sketch,
-      gp = vellum::vl_gpar(fill = col, col = NA)
+      gp = vellum::vl_gpar(fill = fill, col = NA, alpha = alpha)
     )
   )
 }
