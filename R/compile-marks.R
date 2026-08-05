@@ -182,6 +182,21 @@ NULL
   if (!is.null(id)) {
     grob@id <- id
   }
+  # Accessibility (#145): a chart is ONE figure with one text alternative -- the
+  # plot-level `plot_alt()` description handed to the scene title/desc. The
+  # individual marks are the visual content of that figure, not sub-figures, so
+  # they are decorative for tagging. Without a role, the tagged-PDF backend makes
+  # every mark its own `Figure` and fills its `/Alt` from the mark's provenance
+  # `id` (a `mark_text(repel=)` label from its `vl_place` handle name), so a
+  # screen reader announces internal identifiers ("layer-1-line-g1",
+  # "repel:panel-1-1:2:0"). `role = "presentation"` marks them as artifacts (the
+  # mechanism that already silences gridlines) -- vellum then keeps the single
+  # whole-page Figure carrying `plot_alt()`. `id`/`keys` are untouched, so
+  # provenance and interactivity are unchanged; an emitter that set its own role
+  # (e.g. "grid") keeps it.
+  if (is.null(grob@role)) {
+    grob@role <- "presentation"
+  }
   # Per-element interactivity (DESIGN-INTERACTIVITY.md Phase 2). Attach the data
   # key + tooltip/hover metadata only when the emitter refined `rows` to *this*
   # grob's own elements (so `data_id[rows]` aligns 1:1 with what is drawn) and

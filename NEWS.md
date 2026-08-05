@@ -1,5 +1,17 @@
 # vellumplot 0.9.0.9000 (development version)
 
+## Bug fixes
+
+* **Tagged-PDF alt text no longer leaks internal identifiers.** A tagged PDF used
+  to make every mark its own `Figure` whose `Alt` was the mark's provenance id
+  (`layer-1-line-g1`) — or, for a `mark_text(repel = TRUE)` label, its internal
+  `vl_place` handle (`repel:panel-1-1:2:0`) — so a screen reader announced those
+  strings, one per mark. Marks are now tagged as **artifacts** (`role =
+  "presentation"`), leaving a single `Figure` that carries the `plot_alt()`
+  description. Provenance (`data-vellum-id`) and interactivity (`data-key`) are
+  unchanged. Needs vellum ≥ 0.6.8 (which keeps the figure for an all-artifact
+  described scene). Reported in #145.
+
 ## New features
 
 * `mark_outlier_label()` — label only the **outliers**, not every point. Keeps the

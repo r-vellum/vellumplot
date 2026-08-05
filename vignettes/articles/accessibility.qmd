@@ -114,6 +114,13 @@ Tagging is automatic and additive. A plot with no title/description exports as
 an ordinary, untagged PDF exactly as before. (Strict PDF/UA-1 *validation* is a
 planned follow-up; the tag tree and `Alt` ship today.)
 
+The chart is a **single** `Figure` carrying the one description — the individual
+marks are its visual content, tagged as *artifacts* rather than each becoming its
+own announced figure. That is deliberate: a screen reader should hear the plot's
+text alternative once, not read out every line, point, and label (still less the
+internal identifiers a mark carries for provenance and interactivity). Gridlines
+and other furniture are artifacts for the same reason.
+
 ## Colour, contrast, and legibility
 
 Alt text and tags make a plot *perceivable to assistive technology*. A separate
