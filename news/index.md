@@ -2,6 +2,26 @@
 
 ## vellumplot 0.9.0.9000 (development version)
 
+### New features
+
+- New reference and summary marks (ggplot2 parity):
+  - [`mark_abline()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
+    — a sloped reference line `y = slope * x + intercept` across the
+    panel (`slope`/`intercept` may be vectors for several lines).
+  - [`mark_function()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
+    — a curve `y = fun(x)` sampled over the panel’s x range,
+    e.g. `mark_function(fun = dnorm)` over a density histogram.
+  - [`mark_pointrange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+    /
+    [`mark_crossbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+    — identity summary marks (a point or a box with `ymin`/`ymax`, the
+    non-aggregating counterparts of
+    [`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)).
+  - [`mark_count()`](https://r-vellum.github.io/vellumplot/reference/mark_count.md)
+    — collapse coincident `(x, y)` points to one bubble sized by overlap
+    count (`geom_count()` / `stat_sum()`); `size` defaults to
+    `after_stat(n)`.
+
 ### Internal
 
 - Performance and cleanup with no change to rendered output: the boxplot

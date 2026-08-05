@@ -132,6 +132,66 @@ on every segment it draws, and a boxplot keys each box by its category —
 so they hover, tooltip, and select as units once rendered as an
 interactive widget.
 
+[`mark_pointrange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+and
+[`mark_crossbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+are the *identity* summary marks: you supply `y`, `ymin`, and `ymax`
+(e.g. a model’s estimate and interval) and they draw a point-with-range
+or a box-with-centre-line — no aggregation.
+
+## Reference lines and function curves
+
+[`mark_abline()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
+draws a sloped reference line `y = slope * x + intercept`, the diagonal
+companion to
+[`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)’s
+horizontal and vertical lines. Both `slope` and `intercept` may be
+vectors to draw a family of lines.
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_abline(slope = -5, intercept = 37, color = "firebrick")
+```
+
+![](marks_files/figure-html/unnamed-chunk-9-1.png)
+
+[`mark_function()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
+draws a curve `y = fun(x)` sampled across the panel’s x range — handy
+for eyeballing a theoretical distribution against the data. Overlay a
+normal density on a density histogram:
+
+``` r
+
+set.seed(1)
+vplot(data.frame(z = rnorm(500))) |>
+  mark_histogram(x = z, y = after_stat(density)) |>
+  mark_function(fun = dnorm, color = "firebrick", linewidth = 1.5)
+```
+
+![](marks_files/figure-html/unnamed-chunk-10-1.png)
+
+Both reuse the panel’s existing scales, so add them on top of a data
+layer.
+([`mark_function()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
+holds a live function, so it does not round-trip through
+[`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md).)
+
+When many observations land on the same `(x, y)` — common with rounded
+or discrete data —
+[`mark_count()`](https://r-vellum.github.io/vellumplot/reference/mark_count.md)
+collapses them to one bubble sized by the overlap count, an honest
+alternative to invisible overplotting:
+
+``` r
+
+vplot(data.frame(cyl = mtcars$cyl, gear = mtcars$gear)) |>
+  mark_count(x = cyl, y = gear)
+```
+
+![](marks_files/figure-html/unnamed-chunk-11-1.png)
+
 ## Tiles and bins
 
 [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
@@ -153,7 +213,7 @@ vplot(grid) |>
   scale_fill_continuous(palette = "Batlow")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-9-1.png)
+![](marks_files/figure-html/unnamed-chunk-12-1.png)
 
 [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
 draws iso-density contour lines of a 2-D point cloud (and
@@ -169,7 +229,7 @@ vplot(faithful) |>
   mark_contour(x = eruptions, y = waiting)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-10-1.png)
+![](marks_files/figure-html/unnamed-chunk-13-1.png)
 
 ## Text
 
@@ -187,7 +247,7 @@ vplot(top) |>
   mark_text(x = wt, y = mpg, label = rownames(top), vjust = "bottom", size = 9)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-11-1.png)
+![](marks_files/figure-html/unnamed-chunk-14-1.png)
 
 On a crowded scatter, labels collide. `repel = TRUE` moves them apart
 and draws a thin leader back to each point. Placement is solved by the
@@ -206,7 +266,7 @@ vplot(mtcars) |>
   )
 ```
 
-![](marks_files/figure-html/unnamed-chunk-12-1.png)
+![](marks_files/figure-html/unnamed-chunk-15-1.png)
 
 [`mark_text_path()`](https://r-vellum.github.io/vellumplot/reference/mark_text_path.md)
 sets a label *along* a curve instead of at a point – one label per
@@ -224,7 +284,7 @@ vplot(curve) |>
   mark_text_path(x = x, y = y, label = lab, size = 9, vjust = "bottom", offset = 2)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-13-1.png)
+![](marks_files/figure-html/unnamed-chunk-16-1.png)
 
 ## Images
 
@@ -252,7 +312,7 @@ vplot(d) |>
   mark_image(x = x, y = y, src = logo, size = 14)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-14-1.png)
+![](marks_files/figure-html/unnamed-chunk-17-1.png)
 
 Reading images needs the magick package (a suggested dependency), which
 decodes PNG, JPEG, SVG, and more. Because `size` is in millimetres
@@ -277,7 +337,7 @@ vplot(parts) |>
   mark_donut(value = n, fill = part, inner_radius = 0.6)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-15-1.png)
+![](marks_files/figure-html/unnamed-chunk-18-1.png)
 
 For polar plots generally,
 [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
@@ -293,7 +353,7 @@ vplot(mtcars) |>
   coord_radial(theta = "x", start = -pi / 2, end = pi / 2, inner_radius = 0.2)
 ```
 
-![](marks_files/figure-html/unnamed-chunk-16-1.png)
+![](marks_files/figure-html/unnamed-chunk-19-1.png)
 
 ## Layering is the point
 
@@ -308,7 +368,7 @@ vplot(mtcars) |>
   mark_smooth(x = wt, y = mpg, method = "lm")
 ```
 
-![](marks_files/figure-html/unnamed-chunk-17-1.png)
+![](marks_files/figure-html/unnamed-chunk-20-1.png)
 
 From here:
 

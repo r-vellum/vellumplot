@@ -87,7 +87,11 @@ caps; <code>mark_linerange()</code> omits the caps. <code>mark_summary()</code> 
 <span></span>
 <span><span class="fu">mark_linerange</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">mark_summary</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, fun <span class="op">=</span> <span class="va">mean</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">mark_summary</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, fun <span class="op">=</span> <span class="va">mean</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">mark_pointrange</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">mark_crossbar</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, width <span class="op">=</span> <span class="fl">0.5</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -133,6 +137,14 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><code>mark_pointrange()</code> draws a point at <code>(x, y)</code> with a vertical line from <code>ymin</code>
+to <code>ymax</code> (an identity mark — supply the summary values yourself, e.g. from a
+model). <code>mark_crossbar()</code> draws a box spanning <code>ymin</code>..<code>ymax</code> with a
+horizontal line at <code>y</code>. Both are the identity counterparts of the aggregating
+<code><a href="mark_halfeye.html">mark_interval()</a></code>.</p>
     </div>
 
     <div class="section level2">

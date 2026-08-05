@@ -17,6 +17,10 @@ mark_errorbar(plot, ..., width = 0.5, blend = NULL, sketch = NULL, data = NULL)
 mark_linerange(plot, ..., blend = NULL, sketch = NULL, data = NULL)
 
 mark_summary(plot, ..., fun = mean, blend = NULL, sketch = NULL, data = NULL)
+
+mark_pointrange(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+
+mark_crossbar(plot, ..., width = 0.5, blend = NULL, sketch = NULL, data = NULL)
 ```
 
 ## Arguments
@@ -67,6 +71,15 @@ mark_summary(plot, ..., fun = mean, blend = NULL, sketch = NULL, data = NULL)
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## Details
+
+`mark_pointrange()` draws a point at `(x, y)` with a vertical line from
+`ymin` to `ymax` (an identity mark — supply the summary values yourself,
+e.g. from a model). `mark_crossbar()` draws a box spanning
+`ymin`..`ymax` with a horizontal line at `y`. Both are the identity
+counterparts of the aggregating
+[`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md).
 
 ## Examples
 

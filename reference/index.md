@@ -66,12 +66,17 @@ Layers that draw data. Scales train across every mark on the panel.
   [`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
   [`mark_bar()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
   : Add marks to a plot
+- [`mark_count()`](https://r-vellum.github.io/vellumplot/reference/mark_count.md)
+  : Count overlapping points
 - [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
   [`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
   [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
   : Area, ribbon, and step marks
 - [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
   : Segment mark
+- [`mark_abline()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
+  [`mark_function()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
+  : Reference lines and function curves
 
 ### Distributions and intervals
 
@@ -79,6 +84,8 @@ Layers that draw data. Scales train across every mark on the panel.
   [`mark_errorbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
   [`mark_linerange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
   [`mark_summary()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  [`mark_pointrange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  [`mark_crossbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
   : Boxplot, error bar, and summary marks
 - [`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
   [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)

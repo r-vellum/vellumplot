@@ -53,9 +53,11 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/labs.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/lims.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/map_decorations.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/mark_abline.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_area.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_boxplot.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_contour.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/mark_count.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_datashade.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_ecdf.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_ellipse.html</loc></url>

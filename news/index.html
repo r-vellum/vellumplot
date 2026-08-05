@@ -65,6 +65,19 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.9.0.9000" id="vellumplot-0909000-development-version">vellumplot 0.9.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-0909000-development-version"></a></h2>
 <div class="section level3">
+<h3 id="new-features-0-9-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0-9000"></a></h3>
+<ul><li>New reference and summary marks (ggplot2 parity):
+<ul><li>
+<code><a href="../reference/mark_abline.html">mark_abline()</a></code> — a sloped reference line <code>y = slope * x + intercept</code> across the panel (<code>slope</code>/<code>intercept</code> may be vectors for several lines).</li>
+<li>
+<code><a href="../reference/mark_abline.html">mark_function()</a></code> — a curve <code>y = fun(x)</code> sampled over the panel’s x range, e.g. <code>mark_function(fun = dnorm)</code> over a density histogram.</li>
+<li>
+<code><a href="../reference/mark_boxplot.html">mark_pointrange()</a></code> / <code><a href="../reference/mark_boxplot.html">mark_crossbar()</a></code> — identity summary marks (a point or a box with <code>ymin</code>/<code>ymax</code>, the non-aggregating counterparts of <code><a href="../reference/mark_halfeye.html">mark_interval()</a></code>).</li>
+<li>
+<code><a href="../reference/mark_count.html">mark_count()</a></code> — collapse coincident <code>(x, y)</code> points to one bubble sized by overlap count (<code>geom_count()</code> / <code>stat_sum()</code>); <code>size</code> defaults to <code>after_stat(n)</code>.</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
 <h3 id="internal-0-9-0-9000">Internal<a class="anchor" aria-label="anchor" href="#internal-0-9-0-9000"></a></h3>
 <ul><li>Performance and cleanup with no change to rendered output: the boxplot / violin / half-eye emitters group rows by category once instead of rescanning per level; the <code>sf</code> point path and the circle-pack / sunburst hierarchy layouts drop quadratic accumulation and repeated ancestor walks; the horizontal colour-bar computes each break position once.</li>
 </ul></div>
