@@ -44,7 +44,14 @@ vplot(mtcars) |>
   scale_color_continuous(palette = "Viridis", name = "Horsepower")
 ```
 
-For a two-colour ramp, `scale_color_gradient()` takes the endpoints directly.
+For a two-colour ramp, `scale_color_gradient()` takes the endpoints directly, and
+`scale_color_gradientn()` an arbitrary n-stop ramp. If you are coming from
+ggplot2, the familiar named constructors are here too and are simply wrappers
+over `palette =`: `scale_color_viridis_c()` / `_d()` for the viridis maps,
+`scale_color_brewer()` (discrete) / `scale_color_distiller()` (continuous) for
+ColorBrewer-style palettes. Set `limits =` on a continuous colour scale to fix
+its mapped range.
+
 For categories, `scale_color_manual()` maps levels to colours; naming the
 values pins each level to a specific colour.
 

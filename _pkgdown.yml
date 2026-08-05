@@ -199,6 +199,7 @@ reference:
   - scale_x_binned
   - scale_x_date
   - scale_color_continuous
+  - scale_viridis
   - scale_fill_binned
   - scale_shape
   - scale_pattern

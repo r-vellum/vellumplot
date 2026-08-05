@@ -41,7 +41,16 @@ NULL
   bipartite = list(pkg = "igraph", fn = "layout_as_bipartite"),
   # unrooted tree layout (equal-angle / equal-daylight / stress); `mode` and
   # `weights` pass through as layout args. Needs graphlayouts (>= 1.2.5).
-  unrooted = list(pkg = "graphlayouts", fn = "layout_as_tree_unrooted")
+  unrooted = list(pkg = "graphlayouts", fn = "layout_as_tree_unrooted"),
+  # further igraph force-directed layouts, exposed by name for discoverability
+  # (they were already reachable via `layout = igraph::layout_with_gem`).
+  # (Metro-map / octilinear routing is NOT here: `layout_as_metromap()` refines an
+  # existing xy layout rather than computing one from scratch, so it needs a
+  # dedicated seed step — left open.)
+  gem = list(pkg = "igraph", fn = "layout_with_gem"),
+  graphopt = list(pkg = "igraph", fn = "layout_with_graphopt"),
+  dh = list(pkg = "igraph", fn = "layout_with_dh"),
+  lgl = list(pkg = "igraph", fn = "layout_with_lgl")
 )
 
 # Auto-swap full stress for the pivot-based variant above this vertex count
