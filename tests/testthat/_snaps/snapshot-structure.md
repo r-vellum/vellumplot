@@ -40,14 +40,14 @@
       scene_digest(p)
     Output
       $n_elements
-      [1] 25
+      [1] 21
       
       $marks
       $marks$rect
       [1] 5
       
       $marks$segment
-      [1] 20
+      [1] 16
       
       
       $panels
@@ -106,7 +106,7 @@
       scene_digest(p)
     Output
       $n_elements
-      [1] 40
+      [1] 36
       
       $marks
       $marks$point
@@ -116,7 +116,7 @@
       [1] 5
       
       $marks$segment
-      [1] 32
+      [1] 28
       
       
       $panels
