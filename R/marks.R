@@ -1380,7 +1380,16 @@ mark_series_label <- function(
     const_params = list(nudge_x = as.numeric(nudge_x), hjust = "left"),
     stat = "series_label",
     stat_params = list(
-      repel = .repel_params(repel, box_padding, 1, min_segment_length, NULL)
+      # avoid = "labels": a line-end label belongs at its anchor, so it may be
+      # pushed off neighbouring labels but never off the (diagonal-bbox) lines.
+      repel = .repel_params(
+        repel,
+        box_padding,
+        1,
+        min_segment_length,
+        NULL,
+        avoid = "labels"
+      )
     ),
     blend = blend,
     data = data
