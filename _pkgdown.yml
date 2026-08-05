@@ -182,6 +182,7 @@ reference:
 - subtitle: Text, pie, and large data
   contents:
   - mark_text
+  - mark_series_label
   - mark_text_path
   - mark_pie
   - mark_image

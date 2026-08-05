@@ -2,6 +2,13 @@
 
 ## New features
 
+* `mark_series_label()` — **direct labels**: name each colour series at its line
+  end instead of in a legend (the direct-labels idiom). Maps the same
+  `x`/`y`/`color` as the lines; the label text and colour come from the series,
+  and the labels are pushed apart with the same repel solver as `mark_text()`.
+  Give the panel a little x-room (`xlim()`) and drop the legend
+  (`guides(color = "none")`).
+
 * `mark_signif()` — significance brackets (the ggsignif / ggpubr idiom): run a
   pairwise test (`wilcox.test` or `t.test`) between `x` groups and draw a bracket
   with its p-value (or stars) over each comparison. Brackets stack above the data
