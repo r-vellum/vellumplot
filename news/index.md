@@ -4,52 +4,72 @@
 
 ### New features
 
+- [`mark_signif()`](https://r-vellum.github.io/vellumplot/reference/mark_signif.md)
+  — significance brackets (the ggsignif / ggpubr idiom): run a pairwise
+  test (`wilcox.test` or `t.test`) between `x` groups and draw a bracket
+  with its p-value (or stars) over each comparison. Brackets stack above
+  the data and the y-axis expands to fit them. Add on top of a
+  [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  /
+  [`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md).
+
 - [`scale_color_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   /
   [`scale_fill_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   — ggplot2-parity aliases of the binned colour scales (a continuous
   variable cut into steps).
+
 - **Adaptive knit output.** When a plot is knitted (Quarto / R Markdown)
   to an HTML target it is now emitted as a crisp, selectable,
   resolution-independent inline **SVG**; other targets (LaTeX / Word)
   keep the default device render. One plot object, the best format per
   output — no conditional code.
+
 - [`plot_data_uri()`](https://r-vellum.github.io/vellumplot/reference/plot_data_uri.md)
   encodes a plot as a self-contained `data:` URI (vector SVG by default,
   or `format = "png"`) — ready for an HTML `<img src>`, a Markdown
   image, an email, or a `gt` table’s non-HTML backends.
+
 - Three more complete themes for ggplot2 parity:
   [`theme_light()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
   [`theme_dark()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
   and
   [`theme_linedraw()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md).
+
 - Named palette scale constructors (thin wrappers over `palette =`,
   easing migration): `scale_*_viridis_c()`/`_d()` (the viridis maps —
   viridis/plasma/inferno/cividis/rocket/mako), `scale_*_brewer()`
   (discrete) and `scale_*_distiller()` (continuous) ColorBrewer-style
   palettes, and `scale_*_gradientn()` for an arbitrary n-stop colour
   ramp.
+
 - [`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
   /
   [`scale_fill_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
   gained a `limits =` argument (the direct form of `lims(color = ...)`).
+
 - The named graph-layout registry gained `gem`, `graphopt`, `dh`, and
   `lgl` (igraph force-directed layouts, now reachable by name).
+
 - [`vwaffle()`](https://r-vellum.github.io/vellumplot/reference/vwaffle.md)
   — a self-contained **waffle chart** (square pie): a grid of cells
   coloured by category, each category taking a share of the cells
   proportional to its count (largest-remainder allocation, so the cells
   sum exactly). Works from a `value` column or raw row counts.
+
 - [`position_sina()`](https://r-vellum.github.io/vellumplot/reference/position.md)
   (and `position = "sina"`) spreads a category’s points along x by a
   quasirandom offset scaled to the local y-density, so the cloud traces
   the distribution’s shape (ggforce’s sina).
+
 - [`mark_raincloud()`](https://r-vellum.github.io/vellumplot/reference/mark_raincloud.md)
   composes a **raincloud** — a one-sided density cloud
   ([`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md))
   with the raw observations as sina “rain” below it — in one call,
   forwarding any `color`/`fill` mapping to both layers.
+
 - New reference and summary marks (ggplot2 parity):
+
   - [`mark_abline()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
     — a sloped reference line `y = slope * x + intercept` across the
     panel (`slope`/`intercept` may be vectors for several lines).

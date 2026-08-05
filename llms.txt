@@ -493,6 +493,8 @@ Layers that draw data. Scales train across every mark on the panel.
   [`mark_pointrange()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
   [`mark_crossbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
   : Boxplot, error bar, and summary marks
+- [`mark_signif()`](https://r-vellum.github.io/vellumplot/reference/mark_signif.md)
+  : Significance brackets
 - [`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
   [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
   [`mark_dotplot()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
