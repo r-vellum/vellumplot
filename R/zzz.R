@@ -7,4 +7,6 @@
   # on a compiled plot reports the encoding problems too, which is the whole
   # point of the registry being open to a layer above. See R/lint.R.
   .register_lint_rules()
+  # Adaptive knit output (crisp inline SVG in HTML; default device elsewhere).
+  .register_knit_print()
 }

@@ -153,6 +153,7 @@ reference:
   - gt_vsparkline
   - render_plot
   - plot_svg
+  - plot_data_uri
   - pdf_pages
   - render_all
   - PlotSpec

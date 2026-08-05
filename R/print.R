@@ -157,3 +157,34 @@ S7::method(plot, PlotSpec) <- function(x, y, ...) {
 S7::method(summary, PlotSpec) <- function(object, ...) {
   .print_plotspec(object, ...)
 }
+
+# Adaptive knit output. In an HTML target emit a crisp inline SVG (vector,
+# selectable text, resolution-independent) instead of a rasterised device
+# figure; other targets (LaTeX / Word) fall through to the default device render
+# via `print()`, which knitr captures as a figure. Registered at load (see
+# `.register_knit_print()`) so it activates only when knitr is present and a
+# document is knitting -- interactive `print()` is untouched.
+.knit_print_plot <- function(x, ...) {
+  if (
+    requireNamespace("knitr", quietly = TRUE) && isTRUE(knitr::is_html_output())
+  ) {
+    return(knitr::asis_output(plot_svg(x, scaling = "fit", inline = TRUE)))
+  }
+  print(x)
+  invisible(x)
+}
+
+.register_knit_print <- function() {
+  if (!requireNamespace("knitr", quietly = TRUE)) {
+    return(invisible())
+  }
+  ns <- asNamespace("knitr")
+  for (cls in c(
+    "vellumplot::PlotSpec",
+    "vellumplot::PlotComposition",
+    "vellumplot::VTable"
+  )) {
+    registerS3method("knit_print", cls, .knit_print_plot, envir = ns)
+  }
+  invisible()
+}
