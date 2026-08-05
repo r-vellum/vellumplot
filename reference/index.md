@@ -105,6 +105,8 @@ Layers that draw data. Scales train across every mark on the panel.
 - [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
   [`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
   : Uncertainty marks (slab + interval)
+- [`mark_raincloud()`](https://r-vellum.github.io/vellumplot/reference/mark_raincloud.md)
+  : Raincloud plot
 - [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   [`mark_raster()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   [`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
@@ -252,6 +254,7 @@ Map data values to visual properties, with trained domains and guides.
   [`position_jitter()`](https://r-vellum.github.io/vellumplot/reference/position.md)
   [`position_dodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
   [`position_dodge2()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  [`position_sina()`](https://r-vellum.github.io/vellumplot/reference/position.md)
   [`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
   : Position adjustments
 

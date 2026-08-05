@@ -305,6 +305,40 @@ vplot(draws) |>
 
 ![](statistical-marks_files/figure-html/unnamed-chunk-19-1.png)
 
+## Raincloud plots
+
+A **raincloud** pairs the density “cloud” with the raw observations as
+“rain” below it — the shape *and* every data point at once.
+[`mark_raincloud()`](https://r-vellum.github.io/vellumplot/reference/mark_raincloud.md)
+composes it in one call (a
+[`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+plus
+[`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+with sina spread), and any `color`/`fill` flows to both:
+
+``` r
+
+vplot(penguins) |>
+  mark_raincloud(x = species, y = bill_len, color = species)
+```
+
+![](statistical-marks_files/figure-html/unnamed-chunk-20-1.png)
+
+The rain uses
+[`position_sina()`](https://r-vellum.github.io/vellumplot/reference/position.md),
+which spreads each group’s points along x in proportion to the local
+density — so the point cloud echoes the violin’s shape rather than a
+flat jitter. Reach for it directly on a plain scatter of a categorical x
+when you want to *see* every observation:
+
+``` r
+
+vplot(penguins) |>
+  mark_point(x = species, y = bill_len, color = species, position = "sina")
+```
+
+![](statistical-marks_files/figure-html/unnamed-chunk-21-1.png)
+
 ## 2-D density contours
 
 [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
@@ -321,7 +355,7 @@ vplot(faithful) |>
   mark_contour(x = eruptions, y = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-20-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-22-1.png)
 
 ``` r
 
@@ -329,7 +363,7 @@ vplot(faithful) |>
   mark_contour_filled(x = eruptions, y = waiting)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-21-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-23-1.png)
 
 The density estimate uses
 [`MASS::kde2d()`](https://rdrr.io/pkg/MASS/man/kde2d.html); tune the
@@ -344,7 +378,7 @@ grid$z <- with(grid, dnorm(x) * dnorm(y))
 vplot(grid) |> mark_contour(x = x, y = y, z = z)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-22-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-24-1.png)
 
 Contour tracing is done by the engine
 ([`vellum::vl_contour()`](https://r-vellum.github.io/vellum/reference/vl_contour.html)),
@@ -365,7 +399,7 @@ vplot(faithful) |>
   mark_histogram(x = waiting, bins = 25, fill = after_stat(density))
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-23-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-25-1.png)
 
 Because the aesthetic is now driven by a computed value, its scale
 trains on that value like any other, and you get the matching legend.
@@ -390,7 +424,7 @@ vplot(big) |>
   mark_datashade(x = y, y = x, how = "eq_hist")
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-24-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-26-1.png)
 
 Here `how = "eq_hist"` uses histogram equalisation so both dense and
 sparse regions stay visible; the grid resolution is set by `width` and
@@ -408,7 +442,7 @@ vplot(big) |>
   mark_datashade(x = y, y = x, color = g)
 ```
 
-![](statistical-marks_files/figure-html/unnamed-chunk-25-1.png)
+![](statistical-marks_files/figure-html/unnamed-chunk-27-1.png)
 
 [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
 also has an `auto = TRUE` switch that falls back to a datashaded raster

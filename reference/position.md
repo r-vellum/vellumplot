@@ -16,6 +16,8 @@ position_dodge(width = NULL)
 
 position_dodge2(padding = 0.1)
 
+position_sina(width = 0.8, seed = NULL)
+
 position_jitterdodge(
   jitter.width = NULL,
   jitter.height = 0,
@@ -32,7 +34,8 @@ position_jitterdodge(
 
 - width, height:
 
-  Maximum jitter (data units); `NULL` uses the default.
+  Maximum jitter (data units); `NULL` uses the default. For
+  `position_sina()`, `width` is the spread as a fraction of the band.
 
 - seed:
 
@@ -71,6 +74,11 @@ A `vellumplot_position` object for a mark's `position` argument.
 
 - `position_jitterdodge()` dodges grouped elements, then jitters within
   each dodged slot (points over dodged boxes).
+
+- `position_sina()` spreads each category's points along x by a
+  quasirandom offset scaled to the local y-density, so the cloud traces
+  the distribution's shape (ggforce's sina). `width` is the maximum
+  spread as a fraction of the category band (default `0.8`).
 
 ## Examples
 

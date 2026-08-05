@@ -4,6 +4,15 @@
 
 ### New features
 
+- [`position_sina()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  (and `position = "sina"`) spreads a category’s points along x by a
+  quasirandom offset scaled to the local y-density, so the cloud traces
+  the distribution’s shape (ggforce’s sina).
+- [`mark_raincloud()`](https://r-vellum.github.io/vellumplot/reference/mark_raincloud.md)
+  composes a **raincloud** — a one-sided density cloud
+  ([`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md))
+  with the raw observations as sina “rain” below it — in one call,
+  forwarding any `color`/`fill` mapping to both layers.
 - New reference and summary marks (ggplot2 parity):
   - [`mark_abline()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
     — a sloped reference line `y = slope * x + intercept` across the
