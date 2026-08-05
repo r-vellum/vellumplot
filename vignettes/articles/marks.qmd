@@ -237,6 +237,18 @@ vplot(econ) |>
   guides(color = "none")
 ```
 
+`mark_outlier_label()` labels only the points that *stand out* — it keeps the
+rows whose `y` is an outlier (Tukey's IQR rule, or `method = "sd"`) and labels
+just those, so a busy scatter names its extremes without a wall of text. Map a
+`label` to name each outlier; with a `color`/`fill` mapped, outliers are found
+within each group.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_outlier_label(x = wt, y = mpg, label = rownames(mtcars))
+```
+
 ## Images
 
 `mark_image()` puts a bitmap at each `(x, y)` in place of a marker: a flag or a
