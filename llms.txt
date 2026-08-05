@@ -615,6 +615,9 @@ Map data values to visual properties, with trained domains and guides.
   : Viridis and ColorBrewer scales
 - [`scale_fill_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   [`scale_color_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_color_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_colour_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_fill_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   : Binned (classed) colour scales
 - [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
   : Shape scale

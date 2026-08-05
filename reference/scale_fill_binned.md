@@ -32,6 +32,39 @@ scale_color_binned(
   na_value = "grey80",
   name = NULL
 )
+
+scale_color_steps(
+  plot,
+  style = "quantile",
+  n = 5,
+  breaks = NULL,
+  palette = NULL,
+  labels = NULL,
+  na_value = "grey80",
+  name = NULL
+)
+
+scale_colour_steps(
+  plot,
+  style = "quantile",
+  n = 5,
+  breaks = NULL,
+  palette = NULL,
+  labels = NULL,
+  na_value = "grey80",
+  name = NULL
+)
+
+scale_fill_steps(
+  plot,
+  style = "quantile",
+  n = 5,
+  breaks = NULL,
+  palette = NULL,
+  labels = NULL,
+  na_value = "grey80",
+  name = NULL
+)
 ```
 
 ## Arguments
@@ -81,6 +114,12 @@ scale_color_binned(
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## Details
+
+`scale_color_steps()` / `scale_fill_steps()` are aliases of the binned
+colour scales, for ggplot2 users who reach for the `_steps` name — a
+continuous variable cut into steps with an interval-key legend.
 
 ## See also
 

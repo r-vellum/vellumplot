@@ -4,6 +4,11 @@
 
 ### New features
 
+- [`scale_color_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  /
+  [`scale_fill_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  — ggplot2-parity aliases of the binned colour scales (a continuous
+  variable cut into steps).
 - **Adaptive knit output.** When a plot is knitted (Quarto / R Markdown)
   to an HTML target it is now emitted as a crisp, selectable,
   resolution-independent inline **SVG**; other targets (LaTeX / Word)

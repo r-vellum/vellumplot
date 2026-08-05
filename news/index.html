@@ -67,6 +67,8 @@
 <div class="section level3">
 <h3 id="new-features-0-9-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0-9000"></a></h3>
 <ul><li>
+<code><a href="../reference/scale_fill_binned.html">scale_color_steps()</a></code> / <code><a href="../reference/scale_fill_binned.html">scale_fill_steps()</a></code> — ggplot2-parity aliases of the binned colour scales (a continuous variable cut into steps).</li>
+<li>
 <strong>Adaptive knit output.</strong> When a plot is knitted (Quarto / R Markdown) to an HTML target it is now emitted as a crisp, selectable, resolution-independent inline <strong>SVG</strong>; other targets (LaTeX / Word) keep the default device render. One plot object, the best format per output — no conditional code.</li>
 <li>
 <code><a href="../reference/plot_data_uri.html">plot_data_uri()</a></code> encodes a plot as a self-contained <code>data:</code> URI (vector SVG by default, or <code>format = "png"</code>) — ready for an HTML <code>&lt;img src&gt;</code>, a Markdown image, an email, or a <code>gt</code> table’s non-HTML backends.</li>

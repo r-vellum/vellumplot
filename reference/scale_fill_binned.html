@@ -104,6 +104,39 @@ optional <code>classInt</code> package (in <code>Suggests</code>) and error if i
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_color_steps</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  style <span class="op">=</span> <span class="st">"quantile"</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_colour_steps</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  style <span class="op">=</span> <span class="st">"quantile"</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_fill_steps</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  style <span class="op">=</span> <span class="st">"quantile"</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -151,6 +184,12 @@ swatch). Default <code>"grey80"</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><code>scale_color_steps()</code> / <code>scale_fill_steps()</code> are aliases of the binned colour
+scales, for ggplot2 users who reach for the <code>_steps</code> name — a continuous
+variable cut into steps with an interval-key legend.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
