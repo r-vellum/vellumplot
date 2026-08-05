@@ -13,6 +13,13 @@ NULL
 #' @param ... Named by aesthetic, e.g. `guides(color = "none", shape = guide_legend(reverse = TRUE))`.
 #' @param title An axis/legend title override, or `NULL` to keep the default.
 #' @param reverse Reverse the order of the legend keys (discrete legends).
+#' @param override.aes A named list of aesthetics to force on the legend **keys**,
+#'   independent of the plotted data --- the classic "make faint, small points
+#'   legible in the key" fix. Recognised names: `size` (mm), `alpha`,
+#'   `colour`/`color`, `fill`, `shape`, and `linewidth`. For example
+#'   `override.aes = list(size = 5, alpha = 1)` draws big, opaque keys over a
+#'   scatter of tiny translucent points. `NULL` (default) leaves the keys as
+#'   drawn from the data.
 #' @return `guides()`: the modified [PlotSpec]. `guide_none()` / `guide_legend()`:
 #'   a guide specification for use inside `guides()`.
 #' @examples
@@ -23,6 +30,11 @@ NULL
 #' vplot(mtcars) |>
 #'   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
 #'   guides(color = guide_legend(reverse = TRUE))
+#'
+#' # legible keys over faint, tiny points
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = factor(cyl), alpha = 0.15, size = 0.6) |>
+#'   guides(color = guide_legend(override.aes = list(size = 5, alpha = 1)))
 #' @export
 guides <- function(plot, ...) {
   .check_plot(plot)
@@ -43,8 +55,33 @@ guide_none <- function() "none"
 
 #' @rdname guides
 #' @export
-guide_legend <- function(title = NULL, reverse = FALSE) {
-  list(kind = "legend", title = title, reverse = isTRUE(reverse))
+guide_legend <- function(title = NULL, reverse = FALSE, override.aes = NULL) {
+  list(
+    kind = "legend",
+    title = title,
+    reverse = isTRUE(reverse),
+    override.aes = .check_override_aes(override.aes)
+  )
+}
+
+# Validate `override.aes`: NULL, or a fully-named list of aesthetic overrides.
+.check_override_aes <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (
+    !is.list(x) ||
+      length(x) == 0L ||
+      is.null(names(x)) ||
+      any(!nzchar(names(x)))
+  ) {
+    cli::cli_abort(
+      "{.arg override.aes} must be a named list, e.g. {.code list(size = 5, alpha = 1)}."
+    )
+  }
+  # Canonicalise the British spelling so the drawer only checks one key.
+  names(x)[names(x) == "colour"] <- "color"
+  x
 }
 
 # Attach a guide spec to the scale for `aesthetic`: update the existing scale if
@@ -87,6 +124,11 @@ guide_legend <- function(title = NULL, reverse = FALSE) {
     }
     if (isTRUE(guide$reverse)) {
       trained <- .reverse_guide(trained)
+    }
+    if (!is.null(guide[["override.aes"]])) {
+      # Carried to the key drawers (`.key_grob` / `.colour_key_grob`), which force
+      # these aesthetics on the swatches only -- the marks are untouched.
+      trained$override_aes <- guide[["override.aes"]]
     }
   }
   trained

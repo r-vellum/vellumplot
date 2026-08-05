@@ -99,3 +99,56 @@ test_that("guided plots render", {
     guides(color = guide_legend(reverse = TRUE))
   expect_no_error(render_plot(p, f))
 })
+
+test_that("guide_legend(override.aes=) forces key aesthetics without touching marks", {
+  base <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl), alpha = 0.15, size = 0.6)
+  p <- base |>
+    guides(color = guide_legend(override.aes = list(size = 5, alpha = 1)))
+  b <- vellumplot:::.build_panels(p)
+  # the override rides the trained scale for the key drawers to read
+  expect_equal(b$scales$color$override_aes, list(size = 5, alpha = 1))
+  # the marks are unaffected: the data alpha/size are unchanged
+  expect_null(
+    base |> (\(x) vellumplot:::.build_panels(x)$scales$color$override_aes)()
+  )
+  # renders for colour, fill, and size legends
+  expect_no_error(plot_svg(p))
+  expect_no_error(plot_svg(
+    vplot(mtcars) |>
+      mark_boxplot(x = factor(cyl), y = mpg, fill = factor(cyl)) |>
+      guides(fill = guide_legend(override.aes = list(alpha = 0.5)))
+  ))
+  expect_no_error(plot_svg(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, size = hp) |>
+      guides(size = guide_legend(override.aes = list(color = "steelblue")))
+  ))
+})
+
+test_that("an override size grows the key cell so large keys do not overflow", {
+  m <- list(key = 4)
+  g_plain <- list(kind = "color_discrete", sc = list())
+  g_big <- list(
+    kind = "color_discrete",
+    sc = list(override_aes = list(size = 5))
+  )
+  expect_equal(vellumplot:::.guide_key_d(g_plain, m), 4) # default
+  expect_equal(vellumplot:::.guide_key_d(g_big, m), 10) # 2 * size
+})
+
+test_that("override.aes validates and canonicalises the British spelling", {
+  expect_error(guide_legend(override.aes = list(5)), "named list")
+  expect_error(guide_legend(override.aes = 5), "named list")
+  g <- guide_legend(override.aes = list(colour = "red"))
+  expect_identical(names(g[["override.aes"]]), "color")
+})
+
+test_that("override.aes round-trips through a spec", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    guides(color = guide_legend(override.aes = list(size = 5, alpha = 1)))
+  q <- from_spec(as_spec(p))
+  gd <- Filter(function(s) !is.null(s@guide), q@scales)[[1]]@guide
+  expect_equal(gd[["override.aes"]], list(size = 5, alpha = 1))
+})

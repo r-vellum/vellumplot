@@ -10,7 +10,7 @@ guides(plot, ...)
 
 guide_none()
 
-guide_legend(title = NULL, reverse = FALSE)
+guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -20,6 +20,14 @@ guide_legend(title = NULL, reverse = FALSE)
 \item{title}{An axis/legend title override, or \code{NULL} to keep the default.}
 
 \item{reverse}{Reverse the order of the legend keys (discrete legends).}
+
+\item{override.aes}{A named list of aesthetics to force on the legend \strong{keys},
+independent of the plotted data --- the classic "make faint, small points
+legible in the key" fix. Recognised names: \code{size} (mm), \code{alpha},
+\code{colour}/\code{color}, \code{fill}, \code{shape}, and \code{linewidth}. For example
+\code{override.aes = list(size = 5, alpha = 1)} draws big, opaque keys over a
+scatter of tiny translucent points. \code{NULL} (default) leaves the keys as
+drawn from the data.}
 }
 \value{
 \code{guides()}: the modified \link{PlotSpec}. \code{guide_none()} / \code{guide_legend()}:
@@ -40,4 +48,9 @@ vplot(mtcars) |>
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
   guides(color = guide_legend(reverse = TRUE))
+
+# legible keys over faint, tiny points
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl), alpha = 0.15, size = 0.6) |>
+  guides(color = guide_legend(override.aes = list(size = 5, alpha = 1)))
 }
