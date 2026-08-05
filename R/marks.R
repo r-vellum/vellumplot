@@ -1387,6 +1387,65 @@ mark_series_label <- function(
   )
 }
 
+#' Label the outliers
+#'
+#' `mark_outlier_label()` labels only the **outlying** points — the extremes,
+#' where the story usually is — instead of every datum. It keeps the rows whose
+#' `y` is an outlier (per colour/fill group) and labels just those, repelled
+#' apart with the same solver as [mark_text()]. Layer it over the raw points.
+#'
+#' The default `method = "iqr"` flags `y` outside `[Q1 - k*IQR, Q3 + k*IQR]` (the
+#' boxplot whisker rule); `method = "sd"` flags `|y - mean| > k * sd`. Map a
+#' `label` to name each outlier; with none mapped, the outlier's `y` value is the
+#' label.
+#'
+#' @inheritParams mark_text
+#' @param ... Encodings (tidy-eval): `x`, `y`, an optional `label` (what to write
+#'   on each outlier), and optionally `color` / `fill` to detect outliers within
+#'   each group.
+#' @param method Outlier rule: `"iqr"` (Tukey's, the default) or `"sd"`.
+#' @param k Threshold multiplier — IQR whisker length (default `1.5`) or number
+#'   of standard deviations.
+#' @return The modified [PlotSpec].
+#' @seealso [mark_text()], [mark_boxplot()]
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg) |>
+#'   mark_outlier_label(x = wt, y = mpg, label = rownames(mtcars))
+#' @export
+mark_outlier_label <- function(
+  plot,
+  ...,
+  method = c("iqr", "sd"),
+  k = 1.5,
+  size = NULL,
+  repel = TRUE,
+  box_padding = 1,
+  min_segment_length = 2,
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  method <- match.arg(method)
+  dots <- rlang::enquos(...)
+  # No `label` mapped? fall back to the outlier's y value (the stat's `.olab`).
+  dots <- .default_channel(dots, "label", rlang::quo(after_stat(.olab)))
+  .add_layer(
+    plot,
+    "text",
+    dots,
+    rlang::enquos(size = size),
+    stat = "outlier",
+    stat_params = list(
+      method = method,
+      k = as.numeric(k),
+      repel = .repel_params(repel, box_padding, 1, min_segment_length, NULL)
+    ),
+    blend = blend,
+    data = data
+  )
+}
+
 #' Text set along a path
 #'
 #' `mark_text_path()` draws a label that *follows a curve* — one string per

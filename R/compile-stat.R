@@ -45,6 +45,7 @@ NULL
     sum = .stat_sum(L),
     signif = .stat_signif(L),
     series_label = .stat_series_label(L),
+    outlier = .stat_outlier(L),
     bin = .stat_bin(L),
     bin2d = .stat_bin2d(L),
     density_2d = .stat_density_2d(L),
@@ -116,6 +117,13 @@ NULL
   if (!is.null(sdf$.x2)) {
     L$values$.x2 <- sdf$.x2
     L$values$.blabel <- sdf$.blabel
+  }
+  # A row-filtering stat (e.g. the outlier callout) that keeps a subset of the
+  # input rows carries the surviving text labels forward, so a user-mapped
+  # `label` aesthetic stays aligned with the reduced row set.
+  if (!is.null(sdf$label) && !("label" %in% after_names)) {
+    L$values$label <- sdf$label
+    L$types$label <- .infer_type(sdf$label)
   }
   L$n <- nrow(sdf)
   L
@@ -290,6 +298,49 @@ NULL
     lab = g[keep],
     stringsAsFactors = FALSE
   )
+}
+
+# Outlier callout: keep only the rows whose y is an outlier (per colour/fill
+# group), so the text/repel emitter labels just the extremes. `"iqr"` flags y
+# outside [Q1 - k*IQR, Q3 + k*IQR] (the boxplot rule); `"sd"` flags |y - mean| >
+# k*sd. A user-mapped `label` is subset to the survivors (`.merge_stat` carries
+# it); when none is mapped, `.olab` (the formatted y value) is the default label.
+.stat_outlier <- function(L) {
+  n <- if (length(L$values)) max(lengths(L$values)) else 0L
+  y <- as.numeric(rep_len(L$values$y, n))
+  x <- as.numeric(rep_len(L$values$x, n))
+  method <- L$stat_params$method %||% "iqr"
+  k <- L$stat_params$k %||% 1.5
+  grp <- .layer_group(L)
+  gvec <- if (is.null(grp)) rep_len("", n) else as.character(rep_len(grp, n))
+  is_out <- logical(n)
+  for (lev in unique(gvec)) {
+    sel <- which(gvec == lev & is.finite(y))
+    yy <- y[sel]
+    if (length(yy) < 3L) {
+      next # too few to judge an outlier
+    }
+    flag <- if (method == "sd") {
+      s <- stats::sd(yy)
+      if (s == 0) rep(FALSE, length(yy)) else abs(yy - mean(yy)) > k * s
+    } else {
+      q <- stats::quantile(yy, c(0.25, 0.75), names = FALSE)
+      iqr <- q[2L] - q[1L]
+      yy < q[1L] - k * iqr | yy > q[2L] + k * iqr
+    }
+    is_out[sel[flag]] <- TRUE
+  }
+  keep <- which(is_out)
+  out <- data.frame(x = x[keep], y = y[keep], stringsAsFactors = FALSE)
+  if (!is.null(grp)) {
+    out$group <- gvec[keep]
+  }
+  lab <- L$values$label
+  if (!is.null(lab)) {
+    out$label <- rep_len(lab, n)[keep]
+  }
+  out$.olab <- format(y[keep], trim = TRUE)
+  out
 }
 
 # Bin a continuous x into `bins` equal-width bins; count per bin (per group).
