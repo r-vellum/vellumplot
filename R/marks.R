@@ -661,7 +661,7 @@ mark_rule <- function(
 #'   range. Default `101`.
 #' @param args For `mark_function()`, extra arguments passed to `fun` (e.g.
 #'   `args = list(mean = 5, sd = 2)`).
-#' @param blend,data See [mark_point()].
+#' @param blend,sketch,data See [mark_point()].
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_abline(slope = -5, intercept = 37)

@@ -35,7 +35,7 @@ constants (e.g. \code{color}, \code{linewidth}, \code{linetype}).}
 \item{slope, intercept}{For \code{mark_abline()}, the line's slope and intercept
 (each may be a vector to draw several lines). Defaults \code{1} and \code{0}.}
 
-\item{blend, data}{See \code{\link[=mark_point]{mark_point()}}.}
+\item{blend, sketch, data}{See \code{\link[=mark_point]{mark_point()}}.}
 
 \item{fun}{For \code{mark_function()}, a function (or its name) mapping a numeric
 \code{x} vector to \code{y}, e.g. \code{dnorm} or \verb{\\(x) x^2}.}
