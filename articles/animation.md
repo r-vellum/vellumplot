@@ -72,6 +72,36 @@ compression) to shrink it several-fold.
 p |> animate() |> (\(a) anim_save("draw.svg", a))()
 ```
 
+## A bar chart race
+
+The viral “bar chart race” needs no special API — it is an ordinary
+[`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md)
+animation over long-format data. Because each bar is keyed by its
+category, the tween slides bars past one another as their ranks change
+between states, and the frozen scales keep the value axis from jumping.
+
+``` r
+
+#| eval: false
+set.seed(1)
+cats <- c("A", "B", "C", "D", "E")
+race <- do.call(rbind, lapply(2000:2006, function(y)
+  data.frame(year = y, cat = cats,
+             value = pmax(1, runif(5, 1, 10) + (y - 2000) * c(2.5, 1, 0.4, 3, 1.6)))))
+
+vplot(race) |>
+  mark_bar(x = cat, y = value, fill = cat) |>
+  coord_flip() |>
+  transition_states(year, transition_length = 2, state_length = 1) |>
+  labs(title = "Bar chart race") |>
+  animate(nframes = 60, fps = 12) |>
+  (\(a) anim_save("race.gif", a))()
+```
+
+[`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+makes the bars horizontal (the familiar racing layout); rank the
+categories within each year first if you want them sorted top-to-bottom.
+
 ## What a keyframe looks like
 
 [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
