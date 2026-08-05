@@ -215,6 +215,28 @@ vplot(curve) |>
   mark_text_path(x = x, y = y, label = lab, size = 9, vjust = "bottom", offset = 2)
 ```
 
+`mark_series_label()` is the other legend-free way to name lines: it puts each
+series' name at its **end** (the point with the largest `x`), coloured to match
+and repelled apart. Map the same `x`/`y`/`color` as the lines — the label text
+and colour follow the series. Give the panel a little x-room and drop the
+now-redundant colour legend.
+
+```{r}
+set.seed(1)
+econ <- data.frame(
+  year = rep(2000:2015, 3),
+  value = c(
+    cumsum(rnorm(16, 2)), cumsum(rnorm(16, 1)), cumsum(rnorm(16, 3))
+  ),
+  series = rep(c("north", "south", "east"), each = 16)
+)
+vplot(econ) |>
+  mark_line(x = year, y = value, color = series) |>
+  mark_series_label(x = year, y = value, color = series) |>
+  xlim(2000, 2018) |>
+  guides(color = "none")
+```
+
 ## Images
 
 `mark_image()` puts a bitmap at each `(x, y)` in place of a marker: a flag or a

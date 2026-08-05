@@ -1329,6 +1329,64 @@ mark_label <- function(
   )
 }
 
+#' Direct series labels
+#'
+#' `mark_series_label()` labels each colour/fill **series at its end** (the point
+#' with the largest `x`) with the series name — a legend-free alternative that
+#' reads faster on a multi-line chart. Labels are pushed apart with the same
+#' repel solver as [mark_text()]. Map the same `x`/`y`/`color` as the lines; the
+#' label text and colour come from the series automatically.
+#'
+#' @inheritParams mark_text
+#' @param ... Encodings (tidy-eval): the same `x`, `y`, and `color`/`fill` as the
+#'   series being labelled.
+#' @param nudge_x Rightward offset (mm) so a label clears its line end (default
+#'   `2`). Widen the x range (or `coord_cartesian(clip = FALSE)`) if labels crowd
+#'   the panel edge.
+#' @return The modified [PlotSpec].
+#' @seealso [mark_text()]
+#' @examples
+#' d <- data.frame(
+#'   t = rep(1:10, 3), v = c(1:10, (1:10) * 1.5, 10:1),
+#'   s = rep(c("a", "b", "c"), each = 10)
+#' )
+#' # Give the panel a little x-room and drop the now-redundant colour legend.
+#' vplot(d) |>
+#'   mark_line(x = t, y = v, color = s) |>
+#'   mark_series_label(x = t, y = v, color = s) |>
+#'   xlim(1, 12) |>
+#'   guides(color = "none")
+#' @export
+mark_series_label <- function(
+  plot,
+  ...,
+  size = NULL,
+  nudge_x = 2,
+  repel = TRUE,
+  box_padding = 1,
+  min_segment_length = 2,
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  dots <- rlang::enquos(...)
+  dots <- .default_channel(dots, "label", rlang::quo(after_stat(lab)))
+  .add_layer(
+    plot,
+    "text",
+    dots,
+    rlang::enquos(size = size),
+    # left-justify so the label starts at the (nudged) line end and reads rightward
+    const_params = list(nudge_x = as.numeric(nudge_x), hjust = "left"),
+    stat = "series_label",
+    stat_params = list(
+      repel = .repel_params(repel, box_padding, 1, min_segment_length, NULL)
+    ),
+    blend = blend,
+    data = data
+  )
+}
+
 #' Text set along a path
 #'
 #' `mark_text_path()` draws a label that *follows a curve* — one string per

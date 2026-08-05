@@ -44,6 +44,7 @@ NULL
     count = .stat_count(L),
     sum = .stat_sum(L),
     signif = .stat_signif(L),
+    series_label = .stat_series_label(L),
     bin = .stat_bin(L),
     bin2d = .stat_bin2d(L),
     density_2d = .stat_density_2d(L),
@@ -258,6 +259,37 @@ NULL
     )
   }
   out
+}
+
+# Direct labels: one label per colour/fill series at its line end (the row with
+# the largest x). `lab` is the series name, `group` realigns the colour so the
+# label inherits the series colour. `mark_series_label()` maps `label` to
+# `after_stat(lab)` and repels the labels apart.
+.stat_series_label <- function(L) {
+  n <- if (length(L$values)) max(lengths(L$values)) else 0L
+  xn <- as.numeric(rep_len(L$values$x, n))
+  yn <- as.numeric(rep_len(L$values$y, n))
+  grp <- L$values$color %||% L$values$fill
+  if (is.null(grp)) {
+    i <- which.max(xn)
+    return(data.frame(x = xn[i], y = yn[i], lab = "", stringsAsFactors = FALSE))
+  }
+  g <- as.character(rep_len(grp, n))
+  keep <- vapply(
+    unique(g),
+    function(lev) {
+      sel <- which(g == lev)
+      sel[which.max(xn[sel])]
+    },
+    integer(1)
+  )
+  data.frame(
+    x = xn[keep],
+    y = yn[keep],
+    group = g[keep],
+    lab = g[keep],
+    stringsAsFactors = FALSE
+  )
 }
 
 # Bin a continuous x into `bins` equal-width bins; count per bin (per group).
