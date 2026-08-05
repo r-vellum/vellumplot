@@ -14,7 +14,7 @@ guides(plot, ...)
 
 guide_none()
 
-guide_legend(title = NULL, reverse = FALSE)
+guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
 ```
 
 ## Arguments
@@ -37,6 +37,16 @@ guide_legend(title = NULL, reverse = FALSE)
 
   Reverse the order of the legend keys (discrete legends).
 
+- override.aes:
+
+  A named list of aesthetics to force on the legend **keys**,
+  independent of the plotted data — the classic "make faint, small
+  points legible in the key" fix. Recognised names: `size` (mm),
+  `alpha`, `colour`/`color`, `fill`, `shape`, and `linewidth`. For
+  example `override.aes = list(size = 5, alpha = 1)` draws big, opaque
+  keys over a scatter of tiny translucent points. `NULL` (default)
+  leaves the keys as drawn from the data.
+
 ## Value
 
 `guides()`: the modified
@@ -55,4 +65,10 @@ vplot(mtcars) |>
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
   guides(color = guide_legend(reverse = TRUE))
+
+
+# legible keys over faint, tiny points
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl), alpha = 0.15, size = 0.6) |>
+  guides(color = guide_legend(override.aes = list(size = 5, alpha = 1)))
 ```
