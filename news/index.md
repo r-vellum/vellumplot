@@ -4,6 +4,42 @@
 
 ### Bug fixes
 
+- Clearer, earlier input validation across several surfaces:
+  `scale_*_binned()` rejects a non-positive or non-scalar `n` and a
+  non-scalar `style`; a numeric scale `range` rejects a non-finite
+  bound; `coord_fixed(ratio=)`, `coord_polar(start=)`, and
+  `coord_radial(start=/end=)` reject non-scalar or non-finite values;
+  the pattern constructors reject a non-positive
+  `spacing`/`size`/`linewidth`; `mark_rug(sides=)` and a rolling
+  `window`’s `k` are validated; and an MCP `tools/call` with no tool
+  name returns a clean error. Each previously failed late with an opaque
+  message (or, for `set_mask(region=)`, silently ignored the argument —
+  now rejected).
+
+- A discrete position axis no longer draws spurious minor gridlines
+  between and outside its categories.
+
+- Legends with mixed titled and untitled guides no longer misalign: a
+  guide with no title reserves no title band.
+
+- An `NA` in a facet variable now consistently drops the row (matching
+  ggplot2) rather than creating a spurious `"NA"` panel for
+  character/multi-variable facets.
+
+- Stacked bars/areas tolerate an `NA` height (dropped from the stack)
+  instead of poisoning the whole group’s cumulative total.
+
+- A non-finite scale break no longer anchors a stray gridline, tick, or
+  axis label.
+
+- Serializing a preset theme carrying an `element_*()` override now
+  warns that the customisation is dropped (previously suppressed
+  whenever a preset was set).
+
+- [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
+  rejects a region vertex whose `group` is `NA` (it was silently
+  dropped, deforming the clip).
+
 - Several marks no longer silently ignore aesthetics they document:
   `alpha` now applies to
   [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),

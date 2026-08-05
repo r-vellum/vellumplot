@@ -94,10 +94,14 @@ mark_label(
   Move overlapping labels apart (force-directed, ggrepel-style), with
   leader lines to the points? Single cartesian panel only.
 
-- box_padding, point_padding:
+- box_padding:
 
-  Extra space (mm) kept around each label box and around each anchor
-  point during repulsion.
+  Extra space (mm) kept around each label box during repulsion.
+
+- point_padding:
+
+  Retained for back-compatibility and currently ignored: the repulsion
+  solver is deterministic and pads uniformly.
 
 - min_segment_length:
 
@@ -106,8 +110,8 @@ mark_label(
 
 - seed:
 
-  Integer seed making the repel layout reproducible (the global RNG
-  stream is restored afterwards).
+  Retained for back-compatibility and currently a no-op: the repel
+  layout is deterministic, so there is nothing for a seed to vary.
 
 - effects:
 

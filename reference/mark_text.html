@@ -161,9 +161,14 @@ regardless of scale or panel aspect. Default <code>0</code>.</p></dd>
 with leader lines to the points? Single cartesian panel only.</p></dd>
 
 
-<dt id="arg-box-padding-point-padding">box_padding, point_padding<a class="anchor" aria-label="anchor" href="#arg-box-padding-point-padding"></a></dt>
-<dd><p>Extra space (mm) kept around each label box
-and around each anchor point during repulsion.</p></dd>
+<dt id="arg-box-padding">box_padding<a class="anchor" aria-label="anchor" href="#arg-box-padding"></a></dt>
+<dd><p>Extra space (mm) kept around each label box during
+repulsion.</p></dd>
+
+
+<dt id="arg-point-padding">point_padding<a class="anchor" aria-label="anchor" href="#arg-point-padding"></a></dt>
+<dd><p>Retained for back-compatibility and currently ignored:
+the repulsion solver is deterministic and pads uniformly.</p></dd>
 
 
 <dt id="arg-min-segment-length">min_segment_length<a class="anchor" aria-label="anchor" href="#arg-min-segment-length"></a></dt>
@@ -172,8 +177,8 @@ that barely moved gets none.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Integer seed making the repel layout reproducible (the global RNG
-stream is restored afterwards).</p></dd>
+<dd><p>Retained for back-compatibility and currently a no-op: the repel
+layout is deterministic, so there is nothing for a seed to vary.</p></dd>
 
 
 <dt id="arg-effects">effects<a class="anchor" aria-label="anchor" href="#arg-effects"></a></dt>
