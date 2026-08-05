@@ -42,6 +42,27 @@ NULL
     xn <- xn + jit$x
     yn <- yn + jit$y
   }
+  # Sina: spread each category's points along x by a quasirandom offset scaled to
+  # the local y-density, so the point cloud traces the violin's shape (ggforce's
+  # geom_sina). Dense y regions spread wide, sparse ones stay narrow.
+  if (identical(L$position, "sina")) {
+    grp_x <- as.character(rep_len(L$values$x, n))
+    maxw <- (L$stat_params$sina_width %||% 0.8) * band_x / 2
+    dens <- numeric(n)
+    for (lev in unique(grp_x)) {
+      sel <- which(grp_x == lev)
+      yy <- yn[sel]
+      if (length(sel) > 1L && diff(range(yy)) > 0) {
+        d <- stats::density(yy)
+        w <- stats::approx(d$x, d$y, xout = yy, rule = 2)$y
+        dens[sel] <- w / max(w)
+      } else {
+        dens[sel] <- 0
+      }
+    }
+    off <- .with_seed(L$stat_params$seed, stats::runif(n, -1, 1)) * dens * maxw
+    xn <- xn + off
+  }
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   size <- rep_len(.aes_size(L, scales, 1), n)
   shape <- rep_len(.aes_shape(L, scales, "circle"), n)
