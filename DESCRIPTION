@@ -118,4 +118,5 @@ Collate:
     'svg.R'
     'table.R'
     'venn.R'
+    'waffle.R'
     'zzz.R'

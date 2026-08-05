@@ -64,6 +64,7 @@ NULL
     hull = .emit_region(scene, L, scales),
     sankey = .emit_sankey(scene, L, scales),
     venn = .emit_venn(scene, L, scales),
+    waffle = .emit_waffle(scene, L, scales),
     sparkline = .emit_sparkline(scene, L, scales),
     grob = .emit_grob(scene, L, scales),
     hierarchy = .emit_hierarchy(scene, L, scales),

@@ -2,6 +2,10 @@
 
 ## New features
 
+* `vwaffle()` — a self-contained **waffle chart** (square pie): a grid of cells
+  coloured by category, each category taking a share of the cells proportional
+  to its count (largest-remainder allocation, so the cells sum exactly). Works
+  from a `value` column or raw row counts.
 * `position_sina()` (and `position = "sina"`) spreads a category's points along
   x by a quasirandom offset scaled to the local y-density, so the cloud traces
   the distribution's shape (ggforce's sina).
