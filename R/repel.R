@@ -42,7 +42,8 @@ NULL
   box_padding,
   point_padding,
   min_segment_length,
-  seed
+  seed,
+  avoid = "marks"
 ) {
   if (!isTRUE(repel)) {
     return(NULL)
@@ -50,7 +51,11 @@ NULL
   list(
     on = TRUE,
     box_padding = box_padding,
-    min_segment_length = min_segment_length
+    min_segment_length = min_segment_length,
+    # What the solve treats as obstacles: "marks" (the default -- scatter text
+    # dodges every mark) or "labels" (direct series labels belong AT their line
+    # end, so they may only be pushed off each other, never off the marks).
+    avoid = avoid
   )
 }
 
@@ -96,9 +101,15 @@ NULL
     return(scene)
   }
   p <- .repel_scene_params(spec)
+  # When every repel layer is a direct-label layer ("labels" mode), the solver
+  # avoids only the labels themselves -- an end-of-line label must not be shoved
+  # off its own (or a neighbour's) polyline, whose bounding box spans the whole
+  # diagonal. Otherwise keep the default (avoid every mark), as scatter text wants.
+  avoid <- if (.repel_avoid_labels_only(spec)) labs else NULL
   sol <- vellum::vl_place(
     scene,
     labels = labs,
+    avoid = avoid,
     padding = p$padding,
     max_shift = p$max_shift
   )
@@ -112,10 +123,25 @@ NULL
   moved <- vellum::vl_place(
     scene,
     labels = labs,
+    avoid = avoid,
     padding = p$padding,
     max_shift = p$max_shift
   )
   .repel_leaders(scene, sol, moved, spec@dpi, spec@height, p$min_seg)
+}
+
+# TRUE when every repel-enabled layer asks to avoid only the other labels (the
+# direct-series-label mode). A mixed plot (any scatter-text repel) falls back to
+# avoiding all marks, so those labels still dodge the geometry.
+.repel_avoid_labels_only <- function(spec) {
+  modes <- character(0)
+  for (L in spec@layers) {
+    pr <- L@stat_params$repel
+    if (isTRUE(pr$on)) {
+      modes <- c(modes, pr$avoid %||% "marks")
+    }
+  }
+  length(modes) > 0L && all(modes == "labels")
 }
 
 # Shift each solved label node -- and its paired "repelbg:" background box, if

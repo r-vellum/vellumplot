@@ -42,3 +42,54 @@ test_that("mark_series_label round-trips through a spec", {
     base |> mark_series_label(x = t, y = v, color = s)
   )))
 })
+
+# Regression: a series label belongs AT its line end, so the repel pass must
+# avoid only the other labels -- never the (diagonal-bbox) lines. Well-separated
+# ends must therefore not be displaced at all.
+repel_offsets <- function(p) {
+  scene <- vellumplot:::.compile_plot(p)
+  labs <- grep("^repel:", vellum::node_names(scene), value = TRUE)
+  pr <- vellumplot:::.repel_scene_params(p)
+  avoid <- if (vellumplot:::.repel_avoid_labels_only(p)) labs else NULL
+  vellum::vl_place(
+    scene,
+    labels = labs,
+    avoid = avoid,
+    padding = pr$padding,
+    max_shift = pr$max_shift
+  )
+}
+
+test_that("series labels repel off each other only (not the lines)", {
+  expect_true(vellumplot:::.repel_avoid_labels_only(
+    base |> mark_series_label(x = t, y = v, color = s)
+  ))
+  # distinct line ends (v = 10, 15, 1) -> no spurious displacement off the lines
+  sol <- repel_offsets(
+    base |> mark_series_label(x = t, y = v, color = s) |> xlim(1, 12)
+  )
+  expect_true(all(sol$dx == 0 & sol$dy == 0))
+})
+
+test_that("crowded series ends are still separated", {
+  d2 <- data.frame(
+    t = rep(1:10, 3),
+    v = c(1:10, (1:10) + 0.3, (1:10) - 0.3),
+    s = rep(c("a", "b", "c"), each = 10)
+  )
+  sol <- repel_offsets(
+    vplot(d2) |>
+      mark_line(x = t, y = v, color = s) |>
+      mark_series_label(x = t, y = v, color = s) |>
+      xlim(1, 12)
+  )
+  expect_true(any(sol$dx != 0 | sol$dy != 0)) # near-coincident ends get spread
+})
+
+test_that("scatter-text repel is unchanged (still avoids marks)", {
+  expect_false(vellumplot:::.repel_avoid_labels_only(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg) |>
+      mark_text(x = wt, y = mpg, label = rownames(mtcars), repel = TRUE)
+  ))
+})
