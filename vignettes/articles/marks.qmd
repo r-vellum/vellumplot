@@ -107,6 +107,46 @@ range keyed with `data_id`/`tooltip` carries that identity on every segment it
 draws, and a boxplot keys each box by its category — so they hover, tooltip, and
 select as units once rendered as an interactive widget.
 
+`mark_pointrange()` and `mark_crossbar()` are the *identity* summary marks: you
+supply `y`, `ymin`, and `ymax` (e.g. a model's estimate and interval) and they
+draw a point-with-range or a box-with-centre-line — no aggregation.
+
+## Reference lines and function curves
+
+`mark_abline()` draws a sloped reference line `y = slope * x + intercept`, the
+diagonal companion to `mark_rule()`'s horizontal and vertical lines. Both
+`slope` and `intercept` may be vectors to draw a family of lines.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_abline(slope = -5, intercept = 37, color = "firebrick")
+```
+
+`mark_function()` draws a curve `y = fun(x)` sampled across the panel's x range —
+handy for eyeballing a theoretical distribution against the data. Overlay a
+normal density on a density histogram:
+
+```{r}
+set.seed(1)
+vplot(data.frame(z = rnorm(500))) |>
+  mark_histogram(x = z, y = after_stat(density)) |>
+  mark_function(fun = dnorm, color = "firebrick", linewidth = 1.5)
+```
+
+Both reuse the panel's existing scales, so add them on top of a data layer.
+(`mark_function()` holds a live function, so it does not round-trip through
+`as_spec()`.)
+
+When many observations land on the same `(x, y)` — common with rounded or
+discrete data — `mark_count()` collapses them to one bubble sized by the overlap
+count, an honest alternative to invisible overplotting:
+
+```{r}
+vplot(data.frame(cyl = mtcars$cyl, gear = mtcars$gear)) |>
+  mark_count(x = cyl, y = gear)
+```
+
 ## Tiles and bins
 
 `mark_tile()` draws a rectangle at each `(x, y)` coloured by `fill`;

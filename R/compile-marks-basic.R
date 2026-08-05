@@ -430,6 +430,89 @@ NULL
   scene
 }
 
+# A sloped reference line y = slope * x + intercept, drawn across the panel's x
+# range. `slope`/`intercept` may be vectors (several lines). Assumes linear axes
+# (the common case); the panel clip trims any overflow beyond the y range.
+.emit_abline <- function(scene, L, scales) {
+  slope <- as.numeric(.intercept(L, "slope") %||% 1)
+  intercept <- as.numeric(.intercept(L, "intercept") %||% 0)
+  k <- max(length(slope), length(intercept))
+  if (!k) {
+    return(scene)
+  }
+  slope <- rep_len(slope, k)
+  intercept <- rep_len(intercept, k)
+  xd <- scales$x$domain
+  col <- rep_len(.aes_colour(L, scales, "grey40"), k)
+  lwd <- .aes_param(L, "linewidth", 1)
+  lty <- .aes_linetype(L, scales, NULL)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), k)
+  sk <- .mark_sketch(L, scales)
+  for (i in seq_len(k)) {
+    y0 <- scales$y$map(slope[i] * xd[1] + intercept[i])
+    y1 <- scales$y$map(slope[i] * xd[2] + intercept[i])
+    s <- .seg_units(
+      scales,
+      vellum::vl_unit(xd[1], "native"),
+      vellum::vl_unit(y0, "native"),
+      vellum::vl_unit(xd[2], "native"),
+      vellum::vl_unit(y1, "native")
+    )
+    scene <- .draw(
+      scene,
+      vellum::segments_grob(
+        s$x0,
+        s$y0,
+        s$x1,
+        s$y1,
+        sketch = .sketch_bump(sk, i),
+        gp = .gp_stroke(col, alpha, i, lwd, if (is.null(lty)) NULL else lty)
+      )
+    )
+  }
+  scene
+}
+
+# A curve y = fun(x) sampled over the panel's x range (`n` points), drawn as one
+# path. `fun` is a param (a function), `args` extra arguments to it. Assumes a
+# linear x axis; pairs with `after_stat`-free overlays (e.g. a `dnorm` fit).
+.emit_function <- function(scene, L, scales) {
+  fun <- L$params$fun
+  if (is.null(fun)) {
+    cli::cli_abort("{.fn mark_function} needs a {.arg fun}.")
+  }
+  fun <- match.fun(fun)
+  n <- as.integer(L$params$n %||% 101L)
+  xg <- seq(scales$x$domain[1], scales$x$domain[2], length.out = n)
+  yg <- as.numeric(do.call(fun, c(list(xg), L$params$args %||% list())))
+  ok <- is.finite(xg) & is.finite(yg)
+  xg <- xg[ok]
+  yg <- yg[ok]
+  if (length(xg) < 2L) {
+    return(scene)
+  }
+  col <- .aes_colour(L, scales, "grey20")[1]
+  lwd <- .aes_param(L, "linewidth", 1)
+  lty <- .aes_linetype(L, scales, NULL)
+  alpha <- .aes_alpha(L, scales, NA_real_)[1]
+  sk <- .mark_sketch(L, scales)
+  ln <- .xy_path(scales, xg, scales$y$map(yg))
+  .draw(
+    scene,
+    vellum::lines_grob(
+      ln$x,
+      ln$y,
+      sketch = sk,
+      gp = vellum::vl_gpar(
+        col = col,
+        lwd = lwd,
+        lty = lty,
+        alpha = gp_alpha(alpha)
+      )
+    )
+  )
+}
+
 # Smallest positive gap between sorted unique positions (the bar width unit on a
 # continuous x); 1 if there is only one bar.
 .resolution <- function(x) {
