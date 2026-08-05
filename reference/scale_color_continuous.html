@@ -90,6 +90,7 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">scale_color_continuous</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -119,10 +120,17 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span><span class="fu">scale_fill_continuous</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_color_gradientn</span><span class="op">(</span><span class="va">plot</span>, <span class="va">colours</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_fill_gradientn</span><span class="op">(</span><span class="va">plot</span>, <span class="va">colours</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_colour_gradientn</span><span class="op">(</span><span class="va">plot</span>, <span class="va">colours</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_discrete</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -148,6 +156,7 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span><span class="fu">scale_colour_continuous</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -189,6 +198,12 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 case/space-insensitively). <code>NULL</code> uses a sensible default.</p></dd>
 
 
+<dt id="arg-limits">limits<a class="anchor" aria-label="anchor" href="#arg-limits"></a></dt>
+<dd><p>For the continuous colour scales, a length-2 numeric
+<code>c(min, max)</code> fixing the mapped data range (the direct form of
+<code>lims(color = ...)</code>).</p></dd>
+
+
 <dt id="arg-breaks-labels">breaks, labels<a class="anchor" aria-label="anchor" href="#arg-breaks-labels"></a></dt>
 <dd><p>Explicit legend breaks / labels, or <code>NULL</code>.</p></dd>
 
@@ -214,6 +229,11 @@ colours.</p></dd>
 <dt id="arg-midpoint">midpoint<a class="anchor" aria-label="anchor" href="#arg-midpoint"></a></dt>
 <dd><p>For <code>scale_*_gradient2()</code>, the data value placed at <code>mid</code>
 (default <code>0</code>); values above and below diverge to <code>high</code> and <code>low</code>.</p></dd>
+
+
+<dt id="arg-colours">colours<a class="anchor" aria-label="anchor" href="#arg-colours"></a></dt>
+<dd><p>For <code>scale_*_gradientn()</code>, an n-stop vector of colours the
+continuous ramp interpolates through.</p></dd>
 
 </dl></div>
     <div class="section level2">

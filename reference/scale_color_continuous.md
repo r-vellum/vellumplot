@@ -15,6 +15,7 @@ drawn automatically when colour is mapped.
 scale_color_continuous(
   plot,
   palette = NULL,
+  limits = NULL,
   breaks = NULL,
   labels = NULL,
   name = NULL
@@ -44,10 +45,17 @@ scale_color_gradient2(
 scale_fill_continuous(
   plot,
   palette = NULL,
+  limits = NULL,
   breaks = NULL,
   labels = NULL,
   name = NULL
 )
+
+scale_color_gradientn(plot, colours, name = NULL)
+
+scale_fill_gradientn(plot, colours, name = NULL)
+
+scale_colour_gradientn(plot, colours, name = NULL)
 
 scale_fill_discrete(
   plot,
@@ -73,6 +81,7 @@ scale_fill_gradient2(
 scale_colour_continuous(
   plot,
   palette = NULL,
+  limits = NULL,
   breaks = NULL,
   labels = NULL,
   name = NULL
@@ -114,6 +123,11 @@ scale_colour_gradient2(
   (e.g. `"Batlow"`, `"Blues"`, `"Set 2"`; matched
   case/space-insensitively). `NULL` uses a sensible default.
 
+- limits:
+
+  For the continuous colour scales, a length-2 numeric `c(min, max)`
+  fixing the mapped data range (the direct form of `lims(color = ...)`).
+
 - breaks, labels:
 
   Explicit legend breaks / labels, or `NULL`.
@@ -139,6 +153,11 @@ scale_colour_gradient2(
 
   For `scale_*_gradient2()`, the data value placed at `mid` (default
   `0`); values above and below diverge to `high` and `low`.
+
+- colours:
+
+  For `scale_*_gradientn()`, an n-stop vector of colours the continuous
+  ramp interpolates through.
 
 ## Value
 

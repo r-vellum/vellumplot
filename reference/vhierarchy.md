@@ -139,7 +139,8 @@ dense diagram stays legible.
 By default nodes are coloured by their depth-1 *branch* and lightened
 one step per level, so sibling branches stay distinct and depth reads as
 shade. The branch is an ordinary discrete fill scale, so
-`scale_fill_*()` recolours the branches (e.g. `scale_fill_brewer()`),
+`scale_fill_*()` recolours the branches (e.g.
+[`scale_fill_brewer()`](https://r-vellum.github.io/vellumplot/reference/scale_viridis.md)),
 and `lighten` controls the depth fade (`0` = flat colour per branch).
 Map `fill` to a node column instead to colour every node by that
 variable — discrete or continuous, with the matching `scale_fill_*()` —

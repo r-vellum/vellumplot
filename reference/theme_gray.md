@@ -20,6 +20,12 @@ theme_classic(plot)
 
 theme_void(plot)
 
+theme_light(plot)
+
+theme_dark(plot)
+
+theme_linedraw(plot)
+
 theme_cyberpunk(plot)
 
 theme(plot, ...)

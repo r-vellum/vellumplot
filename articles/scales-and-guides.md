@@ -33,7 +33,20 @@ vplot(mtcars) |>
 
 For a two-colour ramp,
 [`scale_color_gradient()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
-takes the endpoints directly. For categories,
+takes the endpoints directly, and
+[`scale_color_gradientn()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+an arbitrary n-stop ramp. If you are coming from ggplot2, the familiar
+named constructors are here too and are simply wrappers over
+`palette =`:
+[`scale_color_viridis_c()`](https://r-vellum.github.io/vellumplot/reference/scale_viridis.md)
+/ `_d()` for the viridis maps,
+[`scale_color_brewer()`](https://r-vellum.github.io/vellumplot/reference/scale_viridis.md)
+(discrete) /
+[`scale_color_distiller()`](https://r-vellum.github.io/vellumplot/reference/scale_viridis.md)
+(continuous) for ColorBrewer-style palettes. Set `limits =` on a
+continuous colour scale to fix its mapped range.
+
+For categories,
 [`scale_color_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
 maps levels to colours; naming the values pins each level to a specific
 colour.

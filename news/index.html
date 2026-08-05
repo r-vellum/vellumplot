@@ -66,7 +66,12 @@
 <h2 class="pkg-version" data-toc-text="0.9.0.9000" id="vellumplot-0909000-development-version">vellumplot 0.9.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-0909000-development-version"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-9-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0-9000"></a></h3>
-<ul><li>
+<ul><li>Three more complete themes for ggplot2 parity: <code><a href="../reference/theme_gray.html">theme_light()</a></code>, <code><a href="../reference/theme_gray.html">theme_dark()</a></code>, and <code><a href="../reference/theme_gray.html">theme_linedraw()</a></code>.</li>
+<li>Named palette scale constructors (thin wrappers over <code>palette =</code>, easing migration): <code>scale_*_viridis_c()</code>/<code>_d()</code> (the viridis maps — viridis/plasma/inferno/cividis/rocket/mako), <code>scale_*_brewer()</code> (discrete) and <code>scale_*_distiller()</code> (continuous) ColorBrewer-style palettes, and <code>scale_*_gradientn()</code> for an arbitrary n-stop colour ramp.</li>
+<li>
+<code><a href="../reference/scale_color_continuous.html">scale_color_continuous()</a></code> / <code><a href="../reference/scale_color_continuous.html">scale_fill_continuous()</a></code> gained a <code>limits =</code> argument (the direct form of <code>lims(color = ...)</code>).</li>
+<li>The named graph-layout registry gained <code>gem</code>, <code>graphopt</code>, <code>dh</code>, and <code>lgl</code> (igraph force-directed layouts, now reachable by name).</li>
+<li>
 <code><a href="../reference/vwaffle.html">vwaffle()</a></code> — a self-contained <strong>waffle chart</strong> (square pie): a grid of cells coloured by category, each category taking a share of the cells proportional to its count (largest-remainder allocation, so the cells sum exactly). Works from a <code>value</code> column or raw row counts.</li>
 <li>
 <code><a href="../reference/position.html">position_sina()</a></code> (and <code>position = "sina"</code>) spreads a category’s points along x by a quasirandom offset scaled to the local y-density, so the cloud traces the distribution’s shape (ggforce’s sina).</li>

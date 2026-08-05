@@ -210,7 +210,7 @@ the value; small nodes are left unlabelled so a dense diagram stays legible.</p>
     <p>By default nodes are coloured by their depth-1 <em>branch</em> and lightened one step
 per level, so sibling branches stay distinct and depth reads as shade. The
 branch is an ordinary discrete fill scale, so <code>scale_fill_*()</code> recolours the
-branches (e.g. <code>scale_fill_brewer()</code>), and <code>lighten</code> controls the depth fade
+branches (e.g. <code><a href="scale_viridis.html">scale_fill_brewer()</a></code>), and <code>lighten</code> controls the depth fade
 (<code>0</code> = flat colour per branch). Map <code>fill</code> to a node column instead to colour
 every node by that variable — discrete or continuous, with the matching
 <code>scale_fill_*()</code> — in which case the depth fade is not applied.</p>

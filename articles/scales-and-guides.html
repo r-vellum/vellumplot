@@ -125,7 +125,8 @@
 </div>
 </div>
 </div>
-<p>For a two-colour ramp, <code><a href="../reference/scale_color_continuous.html">scale_color_gradient()</a></code> takes the endpoints directly. For categories, <code><a href="../reference/scale_color_continuous.html">scale_color_manual()</a></code> maps levels to colours; naming the values pins each level to a specific colour.</p>
+<p>For a two-colour ramp, <code><a href="../reference/scale_color_continuous.html">scale_color_gradient()</a></code> takes the endpoints directly, and <code><a href="../reference/scale_color_continuous.html">scale_color_gradientn()</a></code> an arbitrary n-stop ramp. If you are coming from ggplot2, the familiar named constructors are here too and are simply wrappers over <code>palette =</code>: <code><a href="../reference/scale_viridis.html">scale_color_viridis_c()</a></code> / <code>_d()</code> for the viridis maps, <code><a href="../reference/scale_viridis.html">scale_color_brewer()</a></code> (discrete) / <code><a href="../reference/scale_viridis.html">scale_color_distiller()</a></code> (continuous) for ColorBrewer-style palettes. Set <code>limits =</code> on a continuous colour scale to fix its mapped range.</p>
+<p>For categories, <code><a href="../reference/scale_color_continuous.html">scale_color_manual()</a></code> maps levels to colours; naming the values pins each level to a specific colour.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>
