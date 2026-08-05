@@ -4,6 +4,14 @@
 
 ### Bug fixes
 
+- Interop round-trip fidelity: an integer stat parameter (e.g.
+  `mark_histogram(bins = 20L)`) now survives
+  [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)/[`from_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  and JSON as an integer instead of silently widening to a double (which
+  changed the spec hash). And a Vega-Lite export where two aesthetics
+  map onto one channel (e.g. `color` and `fill`) now reports the dropped
+  encoding rather than silently overwriting it.
+
 - Clearer, earlier input validation across several surfaces:
   `scale_*_binned()` rejects a non-positive or non-scalar `n` and a
   non-scalar `style`; a numeric scale `range` rejects a non-finite
