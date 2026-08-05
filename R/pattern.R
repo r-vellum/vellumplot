@@ -57,6 +57,18 @@ NULL
   a
 }
 
+# A single positive finite number (pattern `spacing`/`size`/`linewidth`); a zero
+# or negative value would build a degenerate zero-dimension tile that fails
+# opaquely deep in vellum rather than at the call site.
+.check_pattern_pos <- function(x, arg, call = rlang::caller_env()) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x <= 0) {
+    cli::cli_abort(
+      "{.arg {arg}} must be a single positive number.",
+      call = call
+    )
+  }
+}
+
 # An optional background rect drawn first (so the motif sits on top), or nothing
 # for a transparent tile.
 .pattern_bg <- function(bg) {
@@ -93,6 +105,8 @@ pattern_stripe <- function(
   units = "mm"
 ) {
   angle <- .check_pattern_angle(angle)
+  .check_pattern_pos(spacing, "spacing")
+  .check_pattern_pos(linewidth, "linewidth")
   tile <- c(.pattern_bg(bg), list(.stripe_grob(color, angle, linewidth)))
   vellum::vl_pattern(tile, width = spacing, height = spacing, units = units)
 }
@@ -108,6 +122,8 @@ pattern_crosshatch <- function(
   units = "mm"
 ) {
   angle <- .check_pattern_angle(angle)
+  .check_pattern_pos(spacing, "spacing")
+  .check_pattern_pos(linewidth, "linewidth")
   a2 <- (angle + 90) %% 180 # the perpendicular set (still a seamless angle)
   tile <- c(
     .pattern_bg(bg),
@@ -148,9 +164,8 @@ pattern_dot <- function(
   size = 1.5,
   units = "mm"
 ) {
-  if (!is.numeric(size) || size <= 0) {
-    cli::cli_abort("{.arg size} (dot diameter) must be a positive number.")
-  }
+  .check_pattern_pos(size, "size")
+  .check_pattern_pos(spacing, "spacing")
   r <- min(0.5, (size / spacing) / 2) # dot radius as a fraction of the cell
   tile <- c(
     .pattern_bg(bg),
@@ -172,6 +187,7 @@ pattern_checker <- function(
   size = 4,
   units = "mm"
 ) {
+  .check_pattern_pos(size, "size")
   # Two opposite quadrants filled -> a checkerboard of `size` squares once tiled.
   quad <- function(x, y) {
     vellum::rect_grob(

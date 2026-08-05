@@ -12,13 +12,19 @@ NULL
   }
   parts <- lapply(vals, as.character)
   combined <- do.call(paste, c(parts, sep = ", "))
+  # A row with an NA in any facet variable is dropped (given no panel), matching
+  # the single-factor `droplevels()` path above and ggplot2's default. Without
+  # this, `paste(NA)` would coerce to the string "NA" and create a spurious panel.
+  na_row <- Reduce(`|`, lapply(vals, is.na))
+  combined[na_row] <- NA_character_
   # Order rows by each variable in turn (factors by level code, everything else
   # by its own type), then take the level order from that ordering.
   ord <- do.call(
     order,
     lapply(vals, function(v) if (is.factor(v)) as.integer(v) else v)
   )
-  factor(combined, levels = unique(combined[ord]))
+  lv <- unique(combined[ord])
+  factor(combined, levels = lv[!is.na(lv)])
 }
 
 # Facet key(s) for `data`: the single wrap key, or the row and column keys for a

@@ -47,6 +47,26 @@ CoordSpec <- S7::new_class(
   }
 }
 
+# A single finite numeric scalar (optionally strictly positive). Guards coord
+# scalars (`ratio`, `start`, `end`) that otherwise fail late and opaquely inside
+# the layout / polar mapping (e.g. a length-2 `ratio` becomes a length-2 null
+# panel weight; a length-2 `end` makes every polar angle length-2).
+.check_finite_scalar <- function(
+  x,
+  arg,
+  positive = FALSE,
+  call = rlang::caller_env()
+) {
+  if (
+    !is.numeric(x) || length(x) != 1L || !is.finite(x) || (positive && x <= 0)
+  ) {
+    cli::cli_abort(
+      "{.arg {arg}} must be a single {if (positive) 'positive ' else ''}finite number.",
+      call = call
+    )
+  }
+}
+
 # Build the per-panel polar context from a coord and the panel's trained x/y
 # scales. The theta aesthetic drives the angle, the other drives the radius.
 # Angles follow ggplot2's familiar convention (zero at twelve o'clock, clockwise
@@ -232,6 +252,7 @@ coord_flip <- function(plot, xlim = NULL, ylim = NULL) {
 #' @export
 coord_fixed <- function(plot, ratio = 1, xlim = NULL, ylim = NULL) {
   .check_plot(plot)
+  .check_finite_scalar(ratio, "ratio", positive = TRUE)
   .check_continuous_limits(xlim, "xlim")
   .check_continuous_limits(ylim, "ylim")
   plot@coord <- CoordSpec(
@@ -275,6 +296,7 @@ coord_equal <- function(plot, ratio = 1, xlim = NULL, ylim = NULL) {
 coord_polar <- function(plot, theta = "x", start = 0, direction = 1) {
   .check_plot(plot)
   theta <- rlang::arg_match0(theta, c("x", "y"))
+  .check_finite_scalar(start, "start")
   if (length(direction) != 1L || !direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }
@@ -315,6 +337,10 @@ coord_radial <- function(
 ) {
   .check_plot(plot)
   theta <- rlang::arg_match0(theta, c("x", "y"))
+  .check_finite_scalar(start, "start")
+  if (!is.null(end)) {
+    .check_finite_scalar(end, "end")
+  }
   if (length(direction) != 1L || !direction %in% c(1, -1)) {
     cli::cli_abort("{.arg direction} must be {.val 1} or {.val -1}.")
   }

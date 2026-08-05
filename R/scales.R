@@ -49,6 +49,18 @@ NULL
       call = call
     )
   }
+  # A non-finite entry in a numeric range/limit would make the `<`/`>` bound
+  # checks below return NA (and abort with a cryptic base-R message); reject it
+  # with a clear one instead.
+  if (numeric && any(!is.finite(x))) {
+    cli::cli_abort(
+      c(
+        "{.arg {arg}} must be finite.",
+        i = "Got {.val {x}}."
+      ),
+      call = call
+    )
+  }
   # Output-range bounds (e.g. opacity in [0, 1], size/width non-negative): reject
   # a range outside the aesthetic's valid interval up front rather than emitting
   # silently invalid opacities/sizes.

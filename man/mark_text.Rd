@@ -71,14 +71,17 @@ regardless of scale or panel aspect. Default \code{0}.}
 \item{repel}{Move overlapping labels apart (force-directed, ggrepel-style),
 with leader lines to the points? Single cartesian panel only.}
 
-\item{box_padding, point_padding}{Extra space (mm) kept around each label box
-and around each anchor point during repulsion.}
+\item{box_padding}{Extra space (mm) kept around each label box during
+repulsion.}
+
+\item{point_padding}{Retained for back-compatibility and currently ignored:
+the repulsion solver is deterministic and pads uniformly.}
 
 \item{min_segment_length}{Shortest leader line (mm) worth drawing; a label
 that barely moved gets none.}
 
-\item{seed}{Integer seed making the repel layout reproducible (the global RNG
-stream is restored afterwards).}
+\item{seed}{Retained for back-compatibility and currently a no-op: the repel
+layout is deterministic, so there is nothing for a seed to vary.}
 
 \item{effects}{A list of layer render effects applied to the mark at draw
 time — \code{\link[=glow]{glow()}}, \code{\link[=outline]{outline()}}, and \code{\link[=shadow]{shadow()}}. Available on stroked and point

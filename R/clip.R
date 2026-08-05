@@ -100,8 +100,17 @@ set_mask <- function(
       "{.arg feather} must be a single number in {.val {c(0, 0.9)}}."
     )
   }
+  # `set_mask()` draws a full-panel soft vignette and does not (yet) use a region;
+  # reject one rather than silently ignoring it (and paying `.clip_region()`'s
+  # validation cost) so the caller is not misled.
+  if (!is.null(region)) {
+    cli::cli_abort(c(
+      "{.arg region} is not supported by {.fn set_mask}.",
+      i = "{.fn set_mask} draws a full-panel vignette; use {.fn clip_to} for a region-shaped clip."
+    ))
+  }
   plot@clip <- ClipSpec(
-    region = if (is.null(region)) NULL else .clip_region(region),
+    region = NULL,
     kind = "mask",
     type = type,
     feather = max(0, min(0.9, feather)),
@@ -146,6 +155,14 @@ set_mask <- function(
     ))
   }
   grp <- region$group %||% rep(1L, nrow(region))
+  # `split()` silently drops rows whose group is NA, which would quietly deform
+  # the clip geometry; require every vertex to belong to a ring.
+  if (anyNA(grp)) {
+    cli::cli_abort(c(
+      "{.arg region$group} must not contain missing values.",
+      i = "Every vertex must belong to a ring."
+    ))
+  }
   rings <- lapply(split(seq_len(nrow(region)), grp), function(i) {
     cbind(region$x[i], region$y[i])
   })

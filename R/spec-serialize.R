@@ -506,14 +506,11 @@ NULL
   list(preset = preset, settings = settings)
 }
 
-.theme_from_ir <- function(rec) {
-  if (is.null(rec)) {
-    return(NULL)
-  }
-  # Rebuild the complete theme by invoking the real preset builder on a stub,
-  # then merge the scalar settings back in.
+# The pristine theme a preset name builds (before any user customisation), used
+# to rebuild on read and to detect dropped customisations on write.
+.preset_theme <- function(preset) {
   builder <- switch(
-    rec$preset,
+    preset,
     gray = theme_gray,
     minimal = theme_minimal,
     bw = theme_bw,
@@ -522,8 +519,16 @@ NULL
     cyberpunk = theme_cyberpunk,
     theme_gray
   )
-  stub <- builder(vplot(data.frame()))
-  th <- stub@theme
+  builder(vplot(data.frame()))@theme
+}
+
+.theme_from_ir <- function(rec) {
+  if (is.null(rec)) {
+    return(NULL)
+  }
+  # Rebuild the complete theme from the preset name, then merge the scalar
+  # settings back in.
+  th <- .preset_theme(rec$preset)
   if (length(rec$settings)) {
     th <- .merge_theme(th, rec$settings)
   }
@@ -737,14 +742,28 @@ as_spec <- function(plot) {
   th <- .theme_to_ir(plot@theme)
   if (!is.null(th)) {
     out$theme <- th
-    dropped <- setdiff(
+    # Warn only on element slots that actually DIFFER from the pristine preset:
+    # a bare preset (e.g. `theme_minimal()`) sets many element slots that rebuild
+    # from the preset name and must not warn, but a genuine
+    # `theme(axis.text = element_text(...))` override on top of a preset does not
+    # round-trip and should. The old `vp_preset`-is-null gate suppressed exactly
+    # that case, because a preset keeps its `vp_preset` attribute through
+    # `theme()`.
+    elems <- setdiff(
       names(plot@theme %||% list()),
       c(.theme_setting_names, "palette", "palette.continuous")
     )
-    if (length(dropped) && is.null(attr(plot@theme, "vp_preset"))) {
-      cli::cli_warn(
-        "Dropped custom theme elements ({.field {dropped}}) \u2014 theme styling does not round-trip; the preset name is kept."
+    if (length(elems)) {
+      pristine <- .preset_theme(attr(plot@theme, "vp_preset") %||% "gray")
+      dropped <- Filter(
+        function(nm) !identical(plot@theme[[nm]], pristine[[nm]]),
+        elems
       )
+      if (length(dropped)) {
+        cli::cli_warn(
+          "Dropped custom theme elements ({.field {unlist(dropped)}}) \u2014 theme styling does not round-trip; the preset name is kept."
+        )
+      }
     }
   }
   out

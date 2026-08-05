@@ -14,6 +14,21 @@ NULL
 # `equal`, and `pretty` are handled in base R so no dependency is needed; every
 # other style (jenks, fisher, kmeans, headtails, sd, ...) routes through
 # classInt::classIntervals(). Returns a sorted numeric vector of length n+1.
+# Validate the user-facing `n` (bin count) and `style` up front, so a bad value
+# gives a clear error instead of aborting deep in quantile()/seq()/classInt or on
+# a length > 1 `style %in% ...` comparison.
+.check_binned_args <- function(n, style, call = rlang::caller_env()) {
+  if (
+    !is.null(n) &&
+      (!is.numeric(n) || length(n) != 1L || !is.finite(n) || n < 1)
+  ) {
+    cli::cli_abort("{.arg n} must be a single positive integer.", call = call)
+  }
+  if (!is.null(style) && (!is.character(style) || length(style) != 1L)) {
+    cli::cli_abort("{.arg style} must be a single string.", call = call)
+  }
+}
+
 .binned_breaks <- function(v, n, style) {
   v <- v[is.finite(v)]
   if (!length(v)) {
@@ -192,6 +207,7 @@ scale_y_binned <- function(
   name
 ) {
   .check_plot(plot)
+  .check_binned_args(n, style)
   .add_scale(
     plot,
     ScaleSpec(
@@ -218,6 +234,7 @@ scale_y_binned <- function(
   name
 ) {
   .check_plot(plot)
+  .check_binned_args(n, style)
   .add_scale(
     plot,
     ScaleSpec(

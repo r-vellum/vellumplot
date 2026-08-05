@@ -216,6 +216,18 @@ after_stat <- function(x) x
       call = call
     )
   }
+  if (
+    !is.null(window$k) &&
+      (!is.numeric(window$k) ||
+        length(window$k) != 1L ||
+        !is.finite(window$k) ||
+        window$k < 1)
+  ) {
+    cli::cli_abort(
+      "{.arg window} {.field k} must be a single positive integer.",
+      call = call
+    )
+  }
   list(
     op = window$op,
     k = window$k,
@@ -1117,12 +1129,14 @@ mark_step <- function(
 #'   mapped encoding (e.g. `fill = group`) coloured through the fill/colour scale.
 #' @param repel Move overlapping labels apart (force-directed, ggrepel-style),
 #'   with leader lines to the points? Single cartesian panel only.
-#' @param box_padding,point_padding Extra space (mm) kept around each label box
-#'   and around each anchor point during repulsion.
+#' @param box_padding Extra space (mm) kept around each label box during
+#'   repulsion.
+#' @param point_padding Retained for back-compatibility and currently ignored:
+#'   the repulsion solver is deterministic and pads uniformly.
 #' @param min_segment_length Shortest leader line (mm) worth drawing; a label
 #'   that barely moved gets none.
-#' @param seed Integer seed making the repel layout reproducible (the global RNG
-#'   stream is restored afterwards).
+#' @param seed Retained for back-compatibility and currently a no-op: the repel
+#'   layout is deterministic, so there is nothing for a seed to vary.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
@@ -1582,6 +1596,16 @@ mark_rug <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  if (
+    !is.character(sides) ||
+      length(sides) != 1L ||
+      !grepl("^[tblr]+$", sides)
+  ) {
+    cli::cli_abort(c(
+      "{.arg sides} must be a string of the letters {.val t}, {.val b}, {.val l}, {.val r}.",
+      i = 'For example {.code sides = "bl"} for the bottom and left edges.'
+    ))
+  }
   .add_layer(
     plot,
     "rug",
