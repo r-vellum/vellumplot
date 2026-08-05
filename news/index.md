@@ -4,6 +4,13 @@
 
 ### New features
 
+- [`mark_outlier_label()`](https://r-vellum.github.io/vellumplot/reference/mark_outlier_label.md)
+  — label only the **outliers**, not every point. Keeps the rows whose
+  `y` is an outlier (Tukey’s IQR rule by default, or `method = "sd"`,
+  detected per colour/fill group) and labels just those, repelled apart.
+  Map a `label` to name each; with none mapped, the outlier’s `y` value
+  is the label.
+
 - [`mark_series_label()`](https://r-vellum.github.io/vellumplot/reference/mark_series_label.md)
   — **direct labels**: name each colour series at its line end instead
   of in a legend (the direct-labels idiom). Maps the same
