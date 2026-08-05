@@ -6,6 +6,7 @@
 \alias{position_jitter}
 \alias{position_dodge}
 \alias{position_dodge2}
+\alias{position_sina}
 \alias{position_jitterdodge}
 \title{Position adjustments}
 \usage{
@@ -17,6 +18,8 @@ position_dodge(width = NULL)
 
 position_dodge2(padding = 0.1)
 
+position_sina(width = 0.8, seed = NULL)
+
 position_jitterdodge(
   jitter.width = NULL,
   jitter.height = 0,
@@ -27,7 +30,8 @@ position_jitterdodge(
 \arguments{
 \item{x, y}{\code{position_nudge()} shift (data units).}
 
-\item{width, height}{Maximum jitter (data units); \code{NULL} uses the default.}
+\item{width, height}{Maximum jitter (data units); \code{NULL} uses the default. For
+\code{position_sina()}, \code{width} is the spread as a fraction of the band.}
 
 \item{seed}{Optional integer seed for the random jitter.}
 
@@ -60,6 +64,10 @@ splits the band between them with a \code{padding} gap — so ragged groupings
 stay centred and evenly spaced.
 \item \code{position_jitterdodge()} dodges grouped elements, then jitters within each
 dodged slot (points over dodged boxes).
+\item \code{position_sina()} spreads each category's points along x by a quasirandom
+offset scaled to the local y-density, so the cloud traces the distribution's
+shape (ggforce's sina). \code{width} is the maximum spread as a fraction of the
+category band (default \code{0.8}).
 }
 }
 \examples{

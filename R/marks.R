@@ -1917,6 +1917,47 @@ mark_interval <- function(
   )
 }
 
+#' Raincloud plot
+#'
+#' `mark_raincloud()` is a convenience that composes a **raincloud**: a one-sided
+#' density "cloud" ([mark_halfeye()]) with the raw observations as "rain" below
+#' it ([mark_point()] with sina spread). It is exactly
+#' `plot |> mark_halfeye(...) |> mark_point(..., position = position_sina())`,
+#' so any `color`/`fill` mapping in `...` flows to both layers.
+#'
+#' @param plot A [PlotSpec].
+#' @param x,y The categorical `x` and the sample `y` (tidy-eval).
+#' @param ... Further shared encodings (e.g. `color`, `fill`) forwarded to both
+#'   the slab and the points.
+#' @param width Sina spread of the rain, as a fraction of the band (default
+#'   `0.4`).
+#' @param alpha Point opacity for the rain (default `0.5`).
+#' @return The modified [PlotSpec].
+#' @seealso [mark_halfeye()], [position_sina()]
+#' @examples
+#' set.seed(1)
+#' d <- data.frame(g = rep(c("a", "b", "c"), each = 100),
+#'                 y = rnorm(300, rep(c(0, 1, 2), each = 100)))
+#' vplot(d) |> mark_raincloud(x = g, y = y)
+#' @export
+mark_raincloud <- function(plot, x, y, ..., width = 0.4, alpha = 0.5) {
+  .check_plot(plot)
+  x <- rlang::enquo(x)
+  y <- rlang::enquo(y)
+  dots <- rlang::enquos(...)
+  plot |>
+    mark_halfeye(x = !!x, y = !!y, !!!dots) |>
+    mark_point(
+      x = !!x,
+      y = !!y,
+      !!!dots,
+      position = position_sina(width = width),
+      # unquote the value so it is a constant param, not a mapped `alpha` symbol
+      # (which would train a spurious alpha scale + legend)
+      alpha = !!alpha
+    )
+}
+
 #' @rdname mark_tile
 #' @export
 mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {

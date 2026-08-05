@@ -239,6 +239,28 @@ vplot(draws) |>
   mark_halfeye(x = model, y = estimate, .width = c(0.66, 0.95))
 ```
 
+## Raincloud plots
+
+A **raincloud** pairs the density "cloud" with the raw observations as "rain"
+below it — the shape *and* every data point at once. `mark_raincloud()` composes
+it in one call (a `mark_halfeye()` plus `mark_point()` with sina spread), and any
+`color`/`fill` flows to both:
+
+```{r}
+vplot(penguins) |>
+  mark_raincloud(x = species, y = bill_len, color = species)
+```
+
+The rain uses `position_sina()`, which spreads each group's points along x in
+proportion to the local density — so the point cloud echoes the violin's shape
+rather than a flat jitter. Reach for it directly on a plain scatter of a
+categorical x when you want to *see* every observation:
+
+```{r}
+vplot(penguins) |>
+  mark_point(x = species, y = bill_len, color = species, position = "sina")
+```
+
 ## 2-D density contours
 
 `mark_contour()` estimates the 2-D density of a point cloud and draws its

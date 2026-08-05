@@ -27,9 +27,14 @@ NULL
 #'   stay centred and evenly spaced.
 #' * `position_jitterdodge()` dodges grouped elements, then jitters within each
 #'   dodged slot (points over dodged boxes).
+#' * `position_sina()` spreads each category's points along x by a quasirandom
+#'   offset scaled to the local y-density, so the cloud traces the distribution's
+#'   shape (ggforce's sina). `width` is the maximum spread as a fraction of the
+#'   category band (default `0.8`).
 #'
 #' @param x,y `position_nudge()` shift (data units).
-#' @param width,height Maximum jitter (data units); `NULL` uses the default.
+#' @param width,height Maximum jitter (data units); `NULL` uses the default. For
+#'   `position_sina()`, `width` is the spread as a fraction of the band.
 #' @param dodge.width,jitter.width,jitter.height `position_jitterdodge()`
 #'   dodge / jitter extents.
 #' @param padding `position_dodge2()` gap between dodged elements, as a fraction
@@ -73,6 +78,12 @@ position_dodge <- function(width = NULL) {
 #' @export
 position_dodge2 <- function(padding = 0.1) {
   .new_position("dodge2", dodge2_padding = padding)
+}
+
+#' @rdname position
+#' @export
+position_sina <- function(width = 0.8, seed = NULL) {
+  .new_position("sina", sina_width = as.numeric(width), seed = seed)
 }
 
 #' @rdname position
