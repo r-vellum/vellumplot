@@ -29,7 +29,9 @@ test_that("layers preserve mark, stat, params, position, encoding", {
   s <- as_spec(p)
   expect_identical(s$layers[[1]]$mark, "bar")
   expect_identical(s$layers[[1]]$stat, "bin")
-  expect_identical(s$layers[[1]]$stat_params$bins, 20L)
+  # `bins` is tagged in the IR so its integer type survives JSON (see
+  # test-review4-batch4.R); the guarantee is that the round-trip restores it.
+  expect_identical(from_spec(s)@layers[[1]]@stat_params$bins, 20L)
   expect_identical(s$layers[[2]]$position, "dodge")
   expect_identical(names(s$layers[[1]]$encoding), "x")
   expect_identical(s$layers[[1]]$encoding$x$field, "mpg")

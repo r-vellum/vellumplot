@@ -209,6 +209,23 @@ spec_to_vegalite <- function(plot, json = FALSE) {
       } else {
         scales_by_aes[[aes]]
       }
+      # Several vellumplot aesthetics map onto one Vega-Lite channel (color + fill
+      # -> "color"; y + ymin -> "y"). If two of them are set, the second would
+      # silently overwrite the first; report the collision as a dropped encoding
+      # rather than losing it invisibly, and keep the first-mapped channel.
+      if (!is.null(enc[[vlc]])) {
+        .vl_note(
+          notes,
+          paste0(
+            "encoding '",
+            aes,
+            "' (Vega-Lite channel '",
+            vlc,
+            "' already used)"
+          )
+        )
+        next
+      }
       d <- .channel_to_vl(L$encoding[[aes]], aes, sc, notes)
       if (identical(L[["stat"]], "bin") && aes == "x") {
         d$bin <- TRUE

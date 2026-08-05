@@ -211,6 +211,11 @@ NULL
     v <- vals[[nm]]
     if (inherits(v, "formula")) {
       out[[nm]] <- list(`.formula` = paste(deparse(v), collapse = " "))
+    } else if (is.integer(v)) {
+      # JSON has no integer type, so `jsonlite` widens an integer to double on
+      # read (changing `typeof`, the spec hash, and any `is.integer()`-sensitive
+      # stat). Tag it so `.values_from_ir()` can restore the integer.
+      out[[nm]] <- list(`.integer` = v)
     } else if (.is_plain(v)) {
       out[[nm]] <- v
     } else {
@@ -233,6 +238,8 @@ NULL
     v <- ir[[nm]]
     if (is.list(v) && !is.null(v[[".formula"]])) {
       out[[nm]] <- stats::as.formula(v[[".formula"]], env = globalenv())
+    } else if (is.list(v) && !is.null(v[[".integer"]])) {
+      out[[nm]] <- as.integer(v[[".integer"]])
     } else {
       out[[nm]] <- v
     }
