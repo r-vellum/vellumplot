@@ -45,8 +45,14 @@ labs <- function(
 ) {
   .check_plot(plot)
   rlang::check_dots_empty()
+  # Which arguments were actually supplied (even as NULL). An *explicit* NULL means
+  # "blank this label" (ggplot2 parity: `labs(x = NULL)` drops the axis title),
+  # which is distinct from not passing the argument at all -- so a bare default of
+  # NULL cannot carry that intent and we consult the call.
+  passed <- names(match.call())[-1L]
   color <- color %||% colour %||% fill
-  over <- list(
+  color_passed <- any(c("color", "colour", "fill") %in% passed)
+  candidates <- list(
     title = title,
     subtitle = subtitle,
     caption = caption,
@@ -57,7 +63,10 @@ labs <- function(
     size = size,
     alt = alt
   )
-  over <- over[!vapply(over, is.null, logical(1))]
+  supplied <- c(intersect(names(candidates), passed), if (color_passed) "color")
+  over <- candidates[unique(supplied)]
+  # An explicitly-passed NULL blanks the label ("" also blanks it downstream).
+  over <- lapply(over, function(v) if (is.null(v)) "" else v)
   plot@labels <- utils::modifyList(plot@labels, over)
   plot
 }

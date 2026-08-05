@@ -200,3 +200,12 @@ test_that("a long caption wraps upward, reserving height below the panel", {
   }
   expect_lt(panel_floor(long), panel_floor("short") - 0.03)
 })
+
+test_that("labs(x = NULL) blanks the axis title; an unpassed arg is untouched", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_identical(labs(p, x = NULL)@labels$x, "") # explicit NULL -> blank
+  expect_identical(labs(p, x = "")@labels$x, "") # "" also blanks
+  expect_identical(labs(p, x = "Weight")@labels$x, "Weight")
+  expect_null(labs(p, y = "MPG")@labels$x) # x not passed -> not set
+  expect_identical(labs(p, colour = NULL)@labels$color, "") # alias, explicit NULL
+})

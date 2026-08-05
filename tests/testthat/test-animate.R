@@ -266,3 +266,25 @@ test_that("anim_save() validates its inputs", {
   )
   expect_error(anim_save("x.gif", mtcars), "vellum_animation")
 })
+
+test_that("a layer's own data is filtered to each keyframe's state", {
+  d <- data.frame(
+    x = rep(1:4, 3),
+    y = rep(1:4, 3),
+    s = rep(c("A", "B", "C"), each = 4)
+  )
+  ann <- data.frame(x = 2, y = 2, s = c("A", "B", "C"), lab = c("a", "b", "c"))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_text(x = x, y = y, label = lab, data = ann) |>
+    transition_states(s)
+  a <- animate(p, nframes = 6, fps = 10)
+  expect_length(a@scenes, 3L)
+  # the annotation layer keeps one row per keyframe, not all three at once
+  tr <- p@transition
+  for (lev in c("A", "B", "C")) {
+    expect_equal(sum(vellumplot:::.layer_state_key(tr, ann) == lev), 1L)
+  }
+  # a layer whose data lacks the state column persists whole (NULL key)
+  expect_null(vellumplot:::.layer_state_key(tr, data.frame(x = 1, y = 1)))
+})

@@ -135,3 +135,23 @@ test_that("mcp_serve survives a malformed request and keeps serving", {
   expect_setequal(ids, c(1, 2, 3))
   expect_equal(resps[[which(ids == 2)]]$error$code, -32600)
 })
+
+test_that("mcp_serve() handles more than one request per stream (unopened connection)", {
+  # Regression: an unopened connection was reopened by each readLines(), so the
+  # loop saw EOF after line 1 and a client died right after `initialize`.
+  reqs <- c(
+    '{"jsonrpc":"2.0","id":1,"method":"initialize"}',
+    '{"jsonrpc":"2.0","id":2,"method":"ping"}',
+    '{"jsonrpc":"2.0","id":3,"method":"tools/list"}'
+  )
+  inf <- withr::local_tempfile()
+  writeLines(reqs, inf)
+  outf <- withr::local_tempfile()
+  out <- file(outf, open = "w+")
+  on.exit(close(out), add = TRUE)
+  # pass an UNOPENED file connection as input -> exercises the open-once fix
+  mcp_serve(input = file(inf), output = out)
+  responses <- readLines(outf)
+  ids <- vapply(responses, function(l) jsonlite::fromJSON(l)$id, numeric(1))
+  expect_setequal(ids, c(1, 2, 3))
+})

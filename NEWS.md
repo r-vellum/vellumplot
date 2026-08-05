@@ -2,6 +2,33 @@
 
 ## Bug fixes
 
+* **`mcp_serve()` now handles more than one request per process.** The stdin
+  connection was left unopened, so each `readLines()` reopened it and the loop
+  saw end-of-file after the first line — a real MCP client died right after
+  `initialize`. The connection is now opened once and held across the loop.
+* **`from_spec()` / `vplot_from_spec()` now honour supplied `data` for a spec
+  with no data block**, instead of dropping it and failing later in compile with
+  an opaque "argument must be coercible to non-negative integer". A spec that
+  maps fields but has (and is given) no data now errors clearly, naming the
+  missing references.
+* **`transition_states()` filters a layer's own `data =` per keyframe.** A layer
+  with its own data (e.g. a per-state annotation) was not subset to the current
+  state, so every keyframe drew all states' rows at once. A layer whose data
+  lacks the state column still persists across all frames.
+* **`labs(x = NULL)` now blanks the axis title** (ggplot2 parity), distinct from
+  omitting the argument. Previously only `labs(x = "")` blanked it.
+
+## New features
+
+* `scale_x_continuous()` / `scale_y_continuous()` gained an **`expand`** argument
+  controlling axis padding: `NULL` (default) keeps the usual 5% margin, and a
+  numeric `c(mult, add)` sets a proportion of the data range plus a constant in
+  data units — e.g. `expand = c(0, 0)` clamps the axis exactly to the data.
+* `theme_sketch()` now **sketch-ifies the plot's current theme** instead of
+  resetting to grey, so a self-contained chart that is deliberately axis-free
+  (`vwaffle()` / `vvenn()` / `vsankey()` / …) is no longer given back a grid and
+  axes when hand-drawn. An ordinary axis chart is unchanged.
+
 * **Tagged-PDF alt text no longer leaks internal identifiers.** A tagged PDF used
   to make every mark its own `Figure` whose `Alt` was the mark's provenance id
   (`layer-1-line-g1`) — or, for a `mark_text(repel = TRUE)` label, its internal

@@ -345,7 +345,8 @@ NULL
   "midpoint",
   "date_breaks",
   "date_labels",
-  "guide"
+  "guide",
+  "expand"
 )
 
 .scale_to_ir <- function(s) {
@@ -611,11 +612,16 @@ NULL
 }
 
 .data_from_ir <- function(rec, supplied) {
-  if (is.null(rec)) {
-    return(NULL)
-  }
+  # Supplied data wins whether or not the spec carries a data block -- checked
+  # first so `from_spec(spec, data = df)` also works for a spec with NO data
+  # section (an encoding-only spec). Previously a missing block short-circuited to
+  # NULL here, silently dropping the supplied data and failing later in compile
+  # with an opaque "argument must be coercible to non-negative integer".
   if (!is.null(supplied)) {
     return(supplied)
+  }
+  if (is.null(rec)) {
+    return(NULL)
   }
   if (is.null(rec$values)) {
     cli::cli_abort(
@@ -792,6 +798,22 @@ from_spec <- function(spec, data = NULL, env = globalenv()) {
     )
   }
   df <- .data_from_ir(spec$data, data)
+  # A spec that maps data fields but carries (and was given) no data would fail
+  # deep in compile with an opaque error. Name the missing references instead.
+  if (is.null(df)) {
+    refs <- tryCatch(.spec_referenced_fields(spec), error = function(e) {
+      character()
+    })
+    if (length(refs)) {
+      cli::cli_abort(
+        c(
+          "This spec references data field{?s} {.val {refs}} but has no data.",
+          "i" = "Supply the data frame: {.code from_spec(spec, data = your_df)}."
+        ),
+        class = "vellumplot_missing_data"
+      )
+    }
+  }
   p <- PlotSpec(
     data = df,
     width = as.double(spec$width %||% 6),

@@ -262,6 +262,22 @@ animate <- function(plot, nframes = 50, fps = 25) {
     # non-finite state value carry `key = NA`, so `key == level` would otherwise
     # inject an all-NA row into every keyframe.
     s@data <- plot@data[which(key == level), , drop = FALSE]
+    # A layer with its OWN `data =` must also be filtered to the current state --
+    # otherwise every keyframe draws all states' rows of that layer at once (a
+    # per-state annotation would pile up). Only filter a layer whose data actually
+    # carries the state column; a layer with no state dimension (a static
+    # reference line, say) keeps its data whole and persists across every frame.
+    s@layers <- lapply(s@layers, function(L) {
+      if (is.null(L@data)) {
+        return(L)
+      }
+      lk <- .layer_state_key(tr, L@data)
+      if (is.null(lk)) {
+        return(L)
+      }
+      L@data <- L@data[which(lk == level), , drop = FALSE]
+      L
+    })
     s
   }
 
@@ -329,6 +345,16 @@ animate <- function(plot, nframes = 50, fps = 25) {
 # factor assigning each data row to a state), `states` (the ordered labels),
 # `seg_weights` (a relative duration per inter-keyframe segment), `state_length`
 # (the held-pause weight per state), and `wrap`.
+# The per-row state label for a layer's own data, aligned to the global state
+# labels, or NULL when the layer's data does not carry the transition column (so
+# the caller leaves that layer's data whole). Evaluated defensively: a layer whose
+# data simply lacks the column must not error the whole animation.
+.layer_state_key <- function(tr, data) {
+  tryCatch(as.character(.enumerate_states(tr, data)$key), error = function(e) {
+    NULL
+  })
+}
+
 .enumerate_states <- function(tr, data) {
   if (identical(tr@kind, "time")) {
     vals <- rlang::eval_tidy(tr@var, data)

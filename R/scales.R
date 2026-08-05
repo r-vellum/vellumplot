@@ -108,6 +108,42 @@ NULL
   sec
 }
 
+# Axis-expansion padding for a continuous position scale. `NULL` keeps the
+# default 5% multiplicative pad. A numeric of length 1 or 2 is `c(mult, add)`:
+# a proportion of the data range plus a constant in data units (either may be 0),
+# applied to both ends -- so `expand = c(0, 0)` clamps the axis to the data.
+.check_expand <- function(expand) {
+  if (is.null(expand)) {
+    return(NULL)
+  }
+  if (
+    !is.numeric(expand) ||
+      length(expand) < 1L ||
+      length(expand) > 2L ||
+      anyNA(expand) ||
+      any(expand < 0)
+  ) {
+    cli::cli_abort(
+      "{.arg expand} must be {.code NULL} or a non-negative numeric {.code c(mult, add)} (length 1 or 2)."
+    )
+  }
+  as.numeric(expand)
+}
+
+# Resolve a continuous position scale's expansion to a padded domain. Reads the
+# `expand` slot (c(mult, add)); falls back to the historic 5% multiplicative pad.
+.expand_domain <- function(rng, scalespec) {
+  e <- if (!is.null(scalespec)) scalespec@expand else NULL
+  if (is.null(e)) {
+    return(scales::expand_range(rng, mul = 0.05))
+  }
+  scales::expand_range(
+    rng,
+    mul = e[[1L]],
+    add = if (length(e) >= 2L) e[[2L]] else 0
+  )
+}
+
 # Shared builder for colour/fill scales.
 .colour_scale <- function(
   plot,
@@ -154,6 +190,11 @@ NULL
 #' @param breaks,labels Explicit break positions (data units) and their labels,
 #'   or `NULL` to compute them.
 #' @param name Axis title, or `NULL` to derive from the encoding.
+#' @param expand Axis padding beyond the data. `NULL` (default) keeps the usual
+#'   5% breathing room; a numeric `c(mult, add)` sets a proportion of the data
+#'   range plus a constant in data units (either may be `0`), applied to both
+#'   ends. Use `expand = c(0, 0)` to clamp the axis exactly to the data (e.g. a
+#'   bar chart's baseline), or `expand = c(0.1, 0)` for a wider margin.
 #' @param sec.axis A secondary axis from [sec_axis()] / [dup_axis()], drawn on
 #'   the opposite edge, or `NULL` for none. Continuous Cartesian plots only (see
 #'   [sec_axis()] for the current limitations).
@@ -169,6 +210,7 @@ scale_x_continuous <- function(
   breaks = NULL,
   labels = NULL,
   name = NULL,
+  expand = NULL,
   sec.axis = NULL
 ) {
   .continuous_position_scale(
@@ -179,6 +221,7 @@ scale_x_continuous <- function(
     breaks,
     labels,
     name,
+    expand,
     sec.axis
   )
 }
@@ -192,6 +235,7 @@ scale_y_continuous <- function(
   breaks = NULL,
   labels = NULL,
   name = NULL,
+  expand = NULL,
   sec.axis = NULL
 ) {
   .continuous_position_scale(
@@ -202,6 +246,7 @@ scale_y_continuous <- function(
     breaks,
     labels,
     name,
+    expand,
     sec.axis
   )
 }
@@ -216,6 +261,7 @@ scale_y_continuous <- function(
   breaks,
   labels,
   name,
+  expand,
   sec.axis
 ) {
   .check_plot(plot)
@@ -230,6 +276,7 @@ scale_y_continuous <- function(
       breaks = breaks,
       labels = labels,
       name = name,
+      expand = .check_expand(expand),
       sec_axis = .check_sec_axis(sec.axis)
     )
   )
