@@ -78,6 +78,11 @@ NULL
 
 # Execute one tool call; returns an MCP tool-result list.
 .mcp_call_tool <- function(name, args) {
+  # A `tools/call` without a `params.name` would make `switch(name, ...)` throw
+  # an internal "EXPR must be a length 1 vector" error; return a clean tool error.
+  if (!is.character(name) || length(name) != 1L) {
+    return(.mcp_text("Missing tool 'name'.", is_error = TRUE))
+  }
   tryCatch(
     switch(
       name,

@@ -79,8 +79,15 @@ NULL
       vellum::rect_grob(gp = .el_gpar_rect(pb), sketch = .el_sketch(pb, 1L))
     )
   }
+  # Major gridlines and ticks sit at the finite breaks; a non-finite break (e.g. a
+  # degenerate single-value domain) would anchor a line/tick at a bad coordinate.
+  xb <- x_sc$breaks[is.finite(x_sc$breaks)]
+  yb <- y_sc$breaks[is.finite(y_sc$breaks)]
   mnx <- rt[["panel.grid.minor.x"]]
-  if (!.is_blank(mnx)) {
+  # A discrete position scale has no minor gridlines: its breaks sit at category
+  # centres, so `.minor_breaks()` would draw lines *between and outside* the
+  # categories (ggplot2 draws none).
+  if (!.is_blank(mnx) && !isTRUE(x_sc$discrete)) {
     scene <- .vlines(
       scene,
       .minor_breaks(x_sc$breaks),
@@ -89,7 +96,7 @@ NULL
     )
   }
   mny <- rt[["panel.grid.minor.y"]]
-  if (!.is_blank(mny)) {
+  if (!.is_blank(mny) && !isTRUE(y_sc$discrete)) {
     scene <- .hlines(
       scene,
       .minor_breaks(y_sc$breaks),
@@ -99,16 +106,16 @@ NULL
   }
   gx <- rt[["panel.grid.major.x"]]
   if (!.is_blank(gx)) {
-    scene <- .vlines(scene, x_sc$breaks, .el_gpar_line(gx), .el_sketch(gx, 4L))
+    scene <- .vlines(scene, xb, .el_gpar_line(gx), .el_sketch(gx, 4L))
   }
   gy <- rt[["panel.grid.major.y"]]
   if (!.is_blank(gy)) {
-    scene <- .hlines(scene, y_sc$breaks, .el_gpar_line(gy), .el_sketch(gy, 5L))
+    scene <- .hlines(scene, yb, .el_gpar_line(gy), .el_sketch(gy, 5L))
   }
   tlen <- rt[["axis.ticks.length"]]
   tx <- rt[["axis.ticks.x"]]
-  if (!.is_blank(tx) && length(x_sc$breaks)) {
-    b <- x_sc$breaks
+  if (!.is_blank(tx) && length(xb)) {
+    b <- xb
     k <- length(b)
     scene <- vellum::draw(
       scene,
@@ -124,8 +131,8 @@ NULL
     )
   }
   ty <- rt[["axis.ticks.y"]]
-  if (!.is_blank(ty) && length(y_sc$breaks)) {
-    b <- y_sc$breaks
+  if (!.is_blank(ty) && length(yb)) {
+    b <- yb
     k <- length(b)
     scene <- vellum::draw(
       scene,
@@ -440,6 +447,9 @@ NULL
     rot <- .el_rot(el)
     just <- .axis_text_just(geom, el, rot)
     for (i in seq_along(sc$breaks)) {
+      if (!is.finite(sc$breaks[i])) {
+        next # a non-finite break has no position to anchor its label
+      }
       x <- if (is_y) {
         vellum::vl_unit(geom$lx, "npc")
       } else {
@@ -955,6 +965,10 @@ NULL
 # Measured height (mm) of a vertical guide: title line + key rows (uniform pitch
 # = max(key diameter, text height) + gap), or title + colour bar (+ NA row).
 .guide_height_mm <- function(g, m) {
+  # A guide only reserves a title band when the theme shows titles AND this guide
+  # actually has a name; otherwise a titleless guide would reserve an empty band
+  # and its keys would sit lower than a titled sibling's (misaligned legends).
+  m$show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   if (g$kind == "color_continuous") {
     na <- if (isTRUE(g$sc$na)) max(m$key, m$text_h) + m$row_gap else 0
@@ -1252,6 +1266,9 @@ NULL
 }
 
 .draw_guide_v <- function(scene, g, m, rt) {
+  # Reserve the title band only when this guide has a name (see .guide_height_mm);
+  # the normalised `m` also flows to the continuous drawer and its `th`.
+  m$show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   txt <- .el_gpar_text(rt[["legend.text"]])
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   if (g$kind == "color_continuous") {
@@ -1437,6 +1454,8 @@ NULL
 
 # Draw a horizontal guide into the current viewport (its exact measured mm width).
 .draw_guide_h <- function(scene, g, m, rt) {
+  # Reserve the title band only when this guide has a name (see .guide_height_mm).
+  m$show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   txt <- .el_gpar_text(rt[["legend.text"]])
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   if (g$kind == "color_continuous") {

@@ -43,6 +43,10 @@ NULL
   # one, but stacking groups by row, so every value must be n long.
   x <- as.character(rep_len(L$values$x, n))
   y <- as.numeric(rep_len(L$values$y, n))
+  # A non-finite height would poison the whole x-group's cumulative sum (and, under
+  # fill, every proportion in the stack). ggplot2 drops NA rows before stacking;
+  # treat non-finite as a zero-height contribution so the rest of the stack is sound.
+  y[!is.finite(y)] <- 0
   grp <- L$values$color %||% L$values$fill
   if (!is.null(grp)) {
     grp <- rep_len(grp, n)
