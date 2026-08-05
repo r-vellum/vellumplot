@@ -2,6 +2,15 @@
 
 ## vellumplot 0.9.0.9000 (development version)
 
+### Internal
+
+- Performance and cleanup with no change to rendered output: the boxplot
+  / violin / half-eye emitters group rows by category once instead of
+  rescanning per level; the `sf` point path and the circle-pack /
+  sunburst hierarchy layouts drop quadratic accumulation and repeated
+  ancestor walks; the horizontal colour-bar computes each break position
+  once.
+
 ### Bug fixes
 
 - Interop round-trip fidelity: an integer stat parameter (e.g.
