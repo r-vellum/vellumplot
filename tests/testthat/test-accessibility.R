@@ -204,6 +204,55 @@ test_that("furniture carries decorative roles (PDF artifacts, not read aloud)", 
   expect_match(svg, 'role="grid"')
 })
 
+# All `/Alt(...)` strings in a rendered PDF, as text. A PDF is binary, so scan the
+# raw bytes (rawToChar on the whole file fails on embedded nuls / locale-invalid
+# bytes); the structure entries here are not in compressed streams.
+pdf_alts <- function(f) {
+  pdf <- readBin(f, "raw", file.info(f)$size)
+  hits <- grepRaw("/Alt(", pdf, fixed = TRUE, all = TRUE)
+  vapply(
+    hits,
+    function(at) {
+      tail <- pdf[at:min(length(pdf), at + 400L)]
+      close <- grepRaw(")", tail, fixed = TRUE, all = FALSE)
+      rawToChar(tail[seq_len(close)])
+    },
+    character(1)
+  )
+}
+
+test_that("marks are artifacts: no internal id/repel handle is read aloud", {
+  # Regression (#145): every mark used to be tagged as its own PDF Figure whose
+  # /Alt was its provenance id (or, for a repel label, its vl_place handle name),
+  # so a screen reader announced "layer-1-line-g1", "repel:panel-1-1:2:0", ....
+  # Marks now carry role = "presentation" (artifacts), leaving a single Figure
+  # that carries the plot_alt() description.
+  set.seed(1)
+  d <- data.frame(
+    x = rep(1:10, 3),
+    y = c(1:10, (1:10) * 1.3, 10:1),
+    g = rep(c("a", "b", "c"), each = 10),
+    lab = rep(paste("pt", 1:10), 3)
+  )
+  p <- vplot(d) |>
+    mark_line(x = x, y = y, color = g, data_id = g) |>
+    mark_text(x = x, y = y, label = lab, repel = TRUE)
+  f <- tempfile(fileext = ".pdf")
+  render_plot(p, f)
+  alts <- pdf_alts(f)
+
+  # exactly one Figure Alt, and it is the plot description (not an internal id).
+  # (`pdf_alts()` truncates at the first ")", and plot_alt() contains
+  # "(vertical axis)", so match the paren-free head of the description.)
+  expect_length(alts, 1L)
+  alt_head <- trimws(sub("\\(.*", "", plot_alt(p)))
+  expect_true(grepl(alt_head, alts[[1]], fixed = TRUE))
+  # none of the internal identifiers surface
+  expect_false(any(grepl("layer-", alts, fixed = TRUE)))
+  expect_false(any(grepl("repel:", alts, fixed = TRUE)))
+  expect_false(any(grepl("repelbg:", alts, fixed = TRUE)))
+})
+
 # ---- font pinning in the manifest -------------------------------------------
 
 test_that("plot_manifest() records the resolved fonts", {
