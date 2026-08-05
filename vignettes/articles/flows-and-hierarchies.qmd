@@ -191,7 +191,23 @@ u <- paste0("g", 1:60)
 vvenn(list(A = sample(u, 34), B = sample(u, 30), C = sample(u, 26)))
 ```
 
-`vsankey()`, `vchord()`, `vhierarchy()`, and `vvenn()` all follow the `vgraph()`
-pattern: the layout is computed in R and drawn through vellum primitives, so they
-are ordinary specs you can render, print, or (in future) make interactive through
-the same machinery as every other plot.
+## Waffle charts
+
+`vwaffle()` is a **waffle** (square pie): a grid of cells coloured by category,
+where each category takes a share of the cells proportional to its count. The eye
+counts squares far more accurately than it judges pie-slice angles, which is why
+a waffle is often the better part-of-whole chart. Feed it a `value` column or let
+it count rows:
+
+```{r}
+parts <- data.frame(fuel = c("petrol", "diesel", "electric"), share = c(62, 25, 13))
+vwaffle(parts, category = fuel, value = share)
+```
+
+`n_cells` (default 100) and `rows` (default 10) set the grid; cells are allocated
+by largest remainder so they sum exactly to `n_cells`.
+
+`vsankey()`, `vchord()`, `vhierarchy()`, `vvenn()`, and `vwaffle()` all follow the
+`vgraph()` pattern: the layout is computed in R and drawn through vellum
+primitives, so they are ordinary specs you can render, print, or (in future) make
+interactive through the same machinery as every other plot.

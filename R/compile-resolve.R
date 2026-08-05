@@ -103,6 +103,15 @@ NULL
     n <- 1L
   }
 
+  # A waffle layer draws a grid of cells in npc, one row per cell, coloured by the
+  # mapped `fill` (so a discrete legend trains). Synthesise the unit [0, 1] extent
+  # for position training but keep `n` (the cell count) and the per-cell fill.
+  if (identical(layer@mark, "waffle")) {
+    values$x <- c(0, 1)
+    values$y <- c(0, 1)
+    types$x <- types$y <- "quantitative"
+  }
+
   # A hierarchy layer (sunburst / icicle / treemap / circlepack) draws a
   # space-filling tree: compute the layout from the `id`/`parent`/`value`
   # channels (see `.hierarchy_layout`) and synthesise the centred [-1, 1] extent
