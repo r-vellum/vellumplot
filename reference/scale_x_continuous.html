@@ -85,6 +85,7 @@ let you set the level order via <code>limits</code>.</p>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  expand <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -95,6 +96,7 @@ let you set the level order via <code>limits</code>.</p>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  expand <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -131,6 +133,14 @@ or <code>NULL</code> to compute them.</p></dd>
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Axis title, or <code>NULL</code> to derive from the encoding.</p></dd>
+
+
+<dt id="arg-expand">expand<a class="anchor" aria-label="anchor" href="#arg-expand"></a></dt>
+<dd><p>Axis padding beyond the data. <code>NULL</code> (default) keeps the usual
+5% breathing room; a numeric <code>c(mult, add)</code> sets a proportion of the data
+range plus a constant in data units (either may be <code>0</code>), applied to both
+ends. Use <code>expand = c(0, 0)</code> to clamp the axis exactly to the data (e.g. a
+bar chart's baseline), or <code>expand = c(0.1, 0)</code> for a wider margin.</p></dd>
 
 
 <dt id="arg-sec-axis">sec.axis<a class="anchor" aria-label="anchor" href="#arg-sec-axis"></a></dt>

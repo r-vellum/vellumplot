@@ -15,6 +15,7 @@ scale_x_continuous(
   breaks = NULL,
   labels = NULL,
   name = NULL,
+  expand = NULL,
   sec.axis = NULL
 )
 
@@ -25,6 +26,7 @@ scale_y_continuous(
   breaks = NULL,
   labels = NULL,
   name = NULL,
+  expand = NULL,
   sec.axis = NULL
 )
 
@@ -63,6 +65,15 @@ scale_y_discrete(plot, limits = NULL, name = NULL)
 - name:
 
   Axis title, or `NULL` to derive from the encoding.
+
+- expand:
+
+  Axis padding beyond the data. `NULL` (default) keeps the usual 5%
+  breathing room; a numeric `c(mult, add)` sets a proportion of the data
+  range plus a constant in data units (either may be `0`), applied to
+  both ends. Use `expand = c(0, 0)` to clamp the axis exactly to the
+  data (e.g. a bar chart's baseline), or `expand = c(0.1, 0)` for a
+  wider margin.
 
 - sec.axis:
 
