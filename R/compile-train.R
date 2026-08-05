@@ -544,7 +544,7 @@ NULL
     dlabels <- if (!is.null(scalespec)) scalespec@date_labels else NULL
     is_classed <- inherits(raw, c("Date", "POSIXct"))
     tfun <- function(v) as.numeric(v)
-    domain <- scales::expand_range(rng, mul = 0.05)
+    domain <- .expand_domain(rng, scalespec)
     braw <- if (!is.null(user_breaks)) {
       user_breaks
     } else if (!is.null(dbreaks) && is_classed) {
@@ -591,7 +591,7 @@ NULL
       ))
     }
     # Order-preserving so a reversed `rng` keeps the axis reversed.
-    domain <- scales::expand_range(tdom, mul = 0.05)
+    domain <- .expand_domain(tdom, scalespec)
     # A reverse transform flips the axis direction by decreasing the domain.
     if (isTRUE(tr$flip)) {
       domain <- rev(domain)
@@ -706,7 +706,7 @@ NULL
     discrete = FALSE,
     band_width = bw,
     data_range = c(lo, hi),
-    domain = scales::expand_range(c(lo, hi), mul = 0.05),
+    domain = .expand_domain(c(lo, hi), scalespec),
     breaks = brks,
     labels = labs,
     map = function(x) {

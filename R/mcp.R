@@ -198,6 +198,15 @@ NULL
 mcp_serve <- function(input = "stdin", output = stdout()) {
   .need_pkg("jsonlite", "mcp_serve()")
   con <- if (identical(input, "stdin")) file("stdin") else input
+  # Open the connection ONCE and hold it across the loop. A connection left
+  # unopened is opened-and-closed by each `readLines()`, which re-reads from the
+  # top of the stream every pass -- so the server saw EOF after the first line and
+  # a real MCP client died right after `initialize`. Close only a connection we
+  # opened (an already-open one the caller passed is theirs to manage).
+  if (inherits(con, "connection") && !isOpen(con)) {
+    open(con, "r")
+    on.exit(close(con), add = TRUE)
+  }
   repeat {
     line <- readLines(con, n = 1L, warn = FALSE)
     if (!length(line)) {

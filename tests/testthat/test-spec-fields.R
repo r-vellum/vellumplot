@@ -119,3 +119,13 @@ test_that("MCP render_spec renders a valid spec to a file", {
   expect_false(isTRUE(resp$result$isError))
   expect_true(file.exists(out))
 })
+
+test_that("from_spec() uses supplied data when the spec has no data block", {
+  spec <- as_spec(vplot(mtcars) |> mark_point(x = wt, y = mpg))
+  spec$data <- NULL # encoding-only spec
+  # supplied data wins -> compiles
+  expect_no_error(vellum::as_vellum_scene(from_spec(spec, data = mtcars)))
+  # no data anywhere -> a diagnostic naming the missing references, not a cryptic
+  # low-level compile error
+  expect_error(from_spec(spec), "references data field.*wt.*mpg|no data")
+})

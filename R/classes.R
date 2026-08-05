@@ -171,7 +171,8 @@ ScaleSpec <- S7::new_class(
     date_breaks = S7::new_property(S7::class_any, default = NULL), # date/time: interval string
     date_labels = S7::new_property(S7::class_any, default = NULL), # date/time: format string
     guide = S7::new_property(S7::class_any, default = NULL), # "none"/guide spec (legend control)
-    sec_axis = S7::new_property(S7::class_any, default = NULL) # SecAxisSpec | NULL (secondary axis)
+    sec_axis = S7::new_property(S7::class_any, default = NULL), # SecAxisSpec | NULL (secondary axis)
+    expand = S7::new_property(S7::class_any, default = NULL) # continuous position: c(mult, add) axis padding; NULL = default 5%
   )
 )
 

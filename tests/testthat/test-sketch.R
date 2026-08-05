@@ -157,3 +157,22 @@ test_that("filled marks accept every fill style", {
     expect_no_error(render_px(p))
   }
 })
+
+test_that("theme_sketch() keeps an axis-free chart axis-free", {
+  isb <- vellumplot:::.is_blank
+  res <- function(p, slot) {
+    vellumplot:::.resolve_slot(slot, p@theme, new.env(parent = emptyenv()))
+  }
+  # a normal (axis) plot gets the full hand-drawn frame
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_sketch()
+  expect_false(isb(res(p, "panel.grid.major")))
+  expect_false(isb(res(p, "axis.line")))
+  expect_false(isb(res(p, "axis.text")))
+  # a self-contained waffle stays axis-free (no restored grid/axes) but is sketched
+  w <- vwaffle(data.frame(cat = rep(c("a", "b"), c(3, 2))), cat) |>
+    theme_sketch()
+  expect_true(isb(res(w, "panel.grid.major")))
+  expect_true(isb(res(w, "axis.line")))
+  expect_true(isb(res(w, "axis.text")))
+  expect_false(is.null(w@theme[["sketch"]]))
+})

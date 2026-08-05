@@ -123,3 +123,25 @@ test_that("log10 transform is preserved (breaks within range, log-mapped)", {
   expect_equal(x$map(100), 2) # log10(100)
   expect_true(all(x$breaks >= log10(1) - 1e-9 & x$breaks <= log10(1000) + 1e-9))
 })
+
+test_that("scale_x/y_continuous(expand=) controls axis padding and round-trips", {
+  dom <- function(p, aes = "x") {
+    vellumplot:::.build_panels(p)$scales[[aes]]$domain
+  }
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  # default keeps ~5% breathing room beyond the data
+  expect_gt(diff(dom(p)), diff(range(mtcars$wt)))
+  # expand = c(0, 0) clamps exactly to the data range
+  expect_equal(dom(p |> scale_x_continuous(expand = c(0, 0))), range(mtcars$wt))
+  # additive term pads in data units
+  expect_equal(
+    dom(p |> scale_x_continuous(expand = c(0, 1))),
+    range(mtcars$wt) + c(-1, 1)
+  )
+  # round-trips through a spec
+  q <- from_spec(as_spec(p |> scale_y_continuous(expand = c(0, 0))))
+  expect_equal(q@scales[[1]]@expand, c(0, 0))
+  # invalid values are rejected up front
+  expect_error(scale_x_continuous(p, expand = -1), "non-negative")
+  expect_error(scale_x_continuous(p, expand = c(1, 2, 3)), "length 1 or 2")
+})

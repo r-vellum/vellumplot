@@ -340,27 +340,36 @@ theme_sketch <- function(
     seed = seed
   )
   grid <- "#c7b98f" # muted pencil grid on paper
+  # Sketch-ify the plot's CURRENT theme rather than resetting to grey. The ruled
+  # grid, axis lines and ticks are part of the sketch look, but a self-contained
+  # chart (vwaffle/vvenn/vsankey) is deliberately axis-free -- hand-drawing it must
+  # not draw a coordinate frame it never had. Gate all of that on whether the base
+  # theme actually shows an axis at all (its resolved `axis.text`, which those
+  # charts blank): an axis chart gets the full frame; an axis-free one keeps its
+  # blanks. The paper/ink palette applies to both.
+  base <- .theme_of(plot)
+  cache <- new.env(parent = emptyenv())
+  has_axes <- !.is_blank(.resolve_slot("axis.text", base, cache))
+  frame <- function(el) if (has_axes) el else element_blank()
   th <- .merge_theme(
-    .theme_gray_complete(),
+    base,
     list(
       text = element_text(colour = ink, family = font),
       plot.title = element_text(colour = ink),
       plot.background = element_rect(fill = paper, colour = NA),
       panel.background = element_rect(fill = paper, colour = NA),
-      # the ruled grid, axis lines and ticks go hand-drawn
-      panel.grid.major = element_line(
-        colour = grid,
-        linewidth = 0.6,
-        sketch = sk
+      # the ruled grid, axis lines and ticks go hand-drawn -- only on an axis chart.
+      panel.grid.major = frame(
+        element_line(colour = grid, linewidth = 0.6, sketch = sk)
       ),
-      panel.grid.minor = element_line(
-        colour = grid,
-        linewidth = 0.4,
-        sketch = sk
+      panel.grid.minor = frame(
+        element_line(colour = grid, linewidth = 0.4, sketch = sk)
       ),
-      axis.line = element_line(colour = ink, linewidth = 0.8, sketch = sk),
-      axis.ticks = element_line(colour = ink, sketch = sk),
-      axis.text = element_text(colour = ink),
+      axis.line = frame(
+        element_line(colour = ink, linewidth = 0.8, sketch = sk)
+      ),
+      axis.ticks = frame(element_line(colour = ink, sketch = sk)),
+      axis.text = frame(element_text(colour = ink)),
       strip.background = element_rect(fill = "#e7dcc0", colour = NA),
       strip.text = element_text(colour = ink)
     )
