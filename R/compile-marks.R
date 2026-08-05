@@ -32,6 +32,7 @@ NULL
     ribbon = .emit_ribbon(scene, L, scales),
     step = .emit_step(scene, L, scales),
     text = .emit_text(scene, L, scales),
+    sf_label = .emit_text(scene, L, scales),
     text_path = .emit_text_path(scene, L, scales),
     label = .emit_label(scene, L, scales),
     tile = .emit_tile(scene, L, scales),

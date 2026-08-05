@@ -435,3 +435,70 @@ test_that("coord_sf(graticule=) renders projected and geographic maps", {
   expect_no_error(render_plot(proj, f1))
   expect_no_error(render_plot(geo, f2))
 })
+
+# --- mark_sf_label() --------------------------------------------------------
+
+test_that("mark_sf_label() labels each feature at an interior point", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- vplot(nc) |> mark_sf(fill = AREA) |> mark_sf_label(label = NAME)
+  layer <- p@layers[[length(p@layers)]]
+  expect_identical(layer@mark, "sf_label")
+  # repel avoids only the other labels, never the (huge-bbox) polygons
+  expect_identical(layer@stat_params$repel$avoid, "labels")
+  expect_no_error(plot_svg(p))
+
+  # one interior point per feature, each inside its own polygon
+  proj <- .project_sf_data(p)
+  L <- .build_panels(proj$spec)$panels[[1]]$resolved[[2]]
+  expect_equal(L$n, nrow(nc))
+  expect_setequal(as.character(L$values$label), as.character(nc$NAME))
+  pts <- sf::st_as_sf(
+    data.frame(x = L$values$x, y = L$values$y),
+    coords = c("x", "y"),
+    crs = sf::st_crs(nc)
+  )
+  inside <- vapply(
+    seq_len(nrow(nc)),
+    function(i) {
+      as.logical(sf::st_intersects(pts[i, ], nc[i, ], sparse = FALSE))
+    },
+    logical(1)
+  )
+  expect_equal(sum(inside), nrow(nc))
+})
+
+test_that("mark_sf_label() reprojects labels through coord_sf(crs=)", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- vplot(nc) |>
+    mark_sf() |>
+    mark_sf_label(label = NAME) |>
+    coord_sf(crs = 3857)
+  proj <- .project_sf_data(p)
+  L <- .build_panels(proj$spec)$panels[[1]]$resolved[[2]]
+  # the label points come out in the target CRS and still fall inside the
+  # projected features (the whole point of routing through the projection)
+  nc3857 <- sf::st_transform(nc, 3857)
+  pts <- sf::st_as_sf(
+    data.frame(x = L$values$x, y = L$values$y),
+    coords = c("x", "y"),
+    crs = 3857
+  )
+  inside <- vapply(
+    seq_len(nrow(nc)),
+    function(i) {
+      as.logical(sf::st_intersects(pts[i, ], nc3857[i, ], sparse = FALSE))
+    },
+    logical(1)
+  )
+  expect_equal(sum(inside), nrow(nc))
+})
+
+test_that("mark_sf_label() requires sf data", {
+  skip_if_not_installed("sf")
+  expect_error(
+    plot_svg(vplot(mtcars) |> mark_sf_label(label = cyl)),
+    "requires an .*sf"
+  )
+})

@@ -49,6 +49,21 @@ Because `mark_sf()` is an ordinary layer, you can stack it: draw a base layer
 of boundaries, then a second `mark_sf()` for highlighted features or point
 locations on top, and every layer reprojects together.
 
+### Labelling features
+
+`mark_sf_label()` names each feature at its **interior point**
+(`sf::st_point_on_surface()`, guaranteed to fall inside the polygon rather than
+in a bay or a hole). The label positions reproject through the same `coord_sf()`
+CRS as the geometry, so they always land where the feature is drawn, and crowded
+labels repel apart.
+
+```{r}
+vplot(nc) |>
+  mark_sf(fill = AREA) |>
+  mark_sf_label(label = NAME, size = 5) |>
+  coord_sf()
+```
+
 ### Merging regions
 
 When several small features share a value — counties grouped into a region, or

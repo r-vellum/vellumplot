@@ -619,6 +619,66 @@ mark_sf <- function(
   )
 }
 
+#' Label sf features at their interior point
+#'
+#' `mark_sf_label()` draws one text label per `sf` feature, placed at the
+#' feature's **interior point** (`sf::st_point_on_surface()`, guaranteed to fall
+#' inside each polygon --- unlike a centroid, which can land in a bay or a hole).
+#' The label points are reprojected through the *same* `coord_sf` CRS as
+#' [mark_sf()], so they always land where the geometry is drawn. Layer it over a
+#' `mark_sf()` choropleth to name the regions; `repel = TRUE` (the default) pushes
+#' crowded labels apart.
+#'
+#' @inheritParams mark_text
+#' @param ... Encodings (tidy-eval): the `label` to draw at each feature, plus an
+#'   optional `color` / `size`. The position comes from the geometry, so `x` / `y`
+#'   are not mapped.
+#' @param data An `sf` data frame (defaults to the plot's). Its geometry supplies
+#'   the label positions.
+#' @return The modified [PlotSpec].
+#' @seealso [mark_sf()], [mark_text()]
+#' @examples
+#' if (requireNamespace("sf", quietly = TRUE)) {
+#'   nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+#'   vplot(nc) |>
+#'     mark_sf(fill = AREA) |>
+#'     mark_sf_label(label = NAME, size = 5)
+#' }
+#' @export
+mark_sf_label <- function(
+  plot,
+  ...,
+  size = NULL,
+  repel = TRUE,
+  box_padding = 1,
+  min_segment_length = 2,
+  blend = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .need_pkg("sf", "mark_sf_label()")
+  .add_layer(
+    plot,
+    "sf_label",
+    rlang::enquos(...),
+    rlang::enquos(size = size),
+    stat_params = list(
+      # avoid = "labels": a feature label belongs at its interior point, so repel
+      # spreads labels off each other only, never off the (huge-bbox) sf polygons.
+      repel = .repel_params(
+        repel,
+        box_padding,
+        1,
+        min_segment_length,
+        NULL,
+        avoid = "labels"
+      )
+    ),
+    blend = blend,
+    data = data
+  )
+}
+
 #' @rdname mark_point
 #' @export
 mark_rule <- function(
