@@ -32,6 +32,15 @@ test_that("mark_raincloud composes a halfeye and sina points", {
   expect_no_error(svg(p))
 })
 
+test_that("sina and raincloud tolerate NA values in y", {
+  dn <- data.frame(
+    g = rep(c("a", "b"), each = 20),
+    y = c(rnorm(19), NA, rnorm(20))
+  )
+  expect_no_error(svg(vplot(dn) |> mark_point(x = g, y = y, position = "sina")))
+  expect_no_error(svg(vplot(dn) |> mark_raincloud(x = g, y = y)))
+})
+
 test_that("mark_raincloud forwards colour and does not train a spurious alpha scale", {
   p <- vplot(d) |> mark_raincloud(x = g, y = y, color = g)
   b <- panels(p)

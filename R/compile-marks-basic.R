@@ -52,10 +52,14 @@ NULL
     for (lev in unique(grp_x)) {
       sel <- which(grp_x == lev)
       yy <- yn[sel]
-      if (length(sel) > 1L && diff(range(yy)) > 0) {
-        d <- stats::density(yy)
+      fin <- is.finite(yy)
+      # density()/range() error on NA, so estimate on the finite y only and give
+      # a non-finite point no offset (it will be dropped downstream anyway).
+      if (sum(fin) > 1L && diff(range(yy[fin])) > 0) {
+        d <- stats::density(yy[fin])
         w <- stats::approx(d$x, d$y, xout = yy, rule = 2)$y
-        dens[sel] <- w / max(w)
+        w[!is.finite(w)] <- 0
+        dens[sel] <- w / max(w[fin])
       } else {
         dens[sel] <- 0
       }
