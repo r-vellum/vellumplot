@@ -585,6 +585,7 @@ NULL
     cols <- list()
     types <- list()
     levs <- list()
+    tzs <- list()
     for (nm in names(df)) {
       col <- df[[nm]]
       if (inherits(col, "Date")) {
@@ -593,8 +594,16 @@ NULL
       } else if (inherits(col, "POSIXct")) {
         types[[nm]] <- "POSIXct"
         cols[[nm]] <- format(col, "%Y-%m-%d %H:%M:%OS6", tz = "UTC")
+        # Values are stored as the UTC wall-clock (instant-preserving); keep the
+        # original display zone so axis labels read the same after a round-trip.
+        tz <- attr(col, "tzone")
+        if (!is.null(tz) && nzchar(tz)) {
+          tzs[[nm]] <- tz
+        }
       } else if (is.factor(col)) {
-        types[[nm]] <- "factor"
+        # `ordered` before `factor`: an ordered factor is also a factor, but its
+        # ordering must survive (else an ordinal scale degrades to nominal).
+        types[[nm]] <- if (is.ordered(col)) "ordered" else "factor"
         cols[[nm]] <- as.character(col)
         levs[[nm]] <- levels(col)
       } else {
@@ -606,6 +615,9 @@ NULL
     out$value_types <- types
     if (length(levs)) {
       out$value_levels <- levs
+    }
+    if (length(tzs)) {
+      out$value_tz <- tzs
     }
   }
   out
@@ -634,13 +646,23 @@ NULL
   }
   types <- rec$value_types %||% list()
   levs <- rec$value_levels %||% list()
+  tzs <- rec$value_tz %||% list()
   cols <- lapply(names(rec$values), function(nm) {
     v <- unlist(rec$values[[nm]], use.names = FALSE)
     switch(
       types[[nm]] %||% "",
       Date = as.Date(v),
-      POSIXct = as.POSIXct(v, tz = "UTC"),
+      # Restore the instant from UTC, then re-stamp the original display zone (an
+      # attribute-only change, so the instant is unchanged).
+      POSIXct = {
+        x <- as.POSIXct(v, tz = "UTC")
+        if (!is.null(tzs[[nm]])) {
+          attr(x, "tzone") <- tzs[[nm]]
+        }
+        x
+      },
       factor = factor(v, levels = levs[[nm]] %||% unique(v)),
+      ordered = factor(v, levels = levs[[nm]] %||% unique(v), ordered = TRUE),
       # JSON collapses integer/logical to double/character on the way out, so
       # restore the recorded `typeof()` (write path stores it) or the column
       # comes back a different type -- changing the data hash and any
@@ -715,6 +737,29 @@ as_spec <- function(plot) {
     .unserializable(
       "clip",
       "a plot-level clip/mask geometry is not serializable."
+    )
+  }
+  # Declarative interactivity and animation carry tidy-eval quosures (a selection's
+  # projection, a transition's state column, a bind's domain) that cannot be
+  # serialized. Refuse them explicitly -- like `edge_data`/`clip` and the
+  # layer-level `interactivity` slot -- rather than silently dropping them and
+  # leaving a `condition()` encoding pointing at a selection that no longer exists.
+  if (length(plot@selections) || length(plot@filters) || length(plot@binds)) {
+    .unserializable(
+      "interactivity",
+      "declarative interactivity (select_*/filter_by/bind_scale) is not serializable yet."
+    )
+  }
+  if (!is.null(plot@transition)) {
+    .unserializable(
+      "transition",
+      "a keyframe animation (transition_*) is not serializable yet."
+    )
+  }
+  if (!is.null(plot@source)) {
+    .unserializable(
+      "source",
+      "an inspect_source() provenance binding is not serializable yet."
     )
   }
   out <- list(

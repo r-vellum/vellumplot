@@ -2,6 +2,18 @@
 
 ## Bug fixes
 
+* **`as_spec()` no longer silently drops declarative interactivity or animation.**
+  A plot carrying `select_*()` / `filter_by()` / `bind_scale()`,
+  `transition_*()`, or `inspect_source()` was serialized as if that state did not
+  exist (leaving, e.g., a `condition()` encoding pointing at a vanished
+  selection). These slots — which hold non-serializable tidy-eval quosures — are
+  now **refused** with the same classed `vellumplot_unserializable` error as the
+  other unsupported state, matching the documented contract.
+* **Ordered factors and POSIXct time zones now survive a spec round-trip.** An
+  ordered factor came back unordered (so `spec_fields()` mislabelled it nominal
+  instead of ordinal); a timestamp's display zone was forced to UTC. Both are now
+  preserved (the instant was always correct).
+
 * **`spec_to_vegalite()` / `spec_from_vegalite()` no longer crash off the happy
   path.** Any unmapped mark, aesthetic, layer param, or scale transform (e.g.
   `mark_smooth()`, a `group` encoding, `trans = "reverse"`) hit a lookup that
