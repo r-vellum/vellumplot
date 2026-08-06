@@ -313,3 +313,14 @@ test_that("guide fixes: coloursteps reverse, horizontal measurement, NA, label.p
   expect_error(guide_colourbar(label.position = "top"), "right.*left|left")
   expect_no_error(guide_colourbar(label.position = "left"))
 })
+
+test_that("override.aes survives a merged colour+shape guide", {
+  set.seed(1)
+  d <- data.frame(x = rnorm(20), y = rnorm(20), g = rep(c("a", "b"), 10))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, color = g, shape = g) |>
+    guides(color = guide_legend(override.aes = list(size = 6)))
+  gl <- vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales)
+  expect_identical(gl[[1]]$kind, "merged")
+  expect_equal(gl[[1]]$sc$override_aes, list(size = 6))
+})

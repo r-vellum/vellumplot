@@ -74,3 +74,10 @@ test_that("a mapped fill colours the label background per group (H11)", {
   expect_gt(count_near(img, c(1, 0, 0), 0.15), 50) # red boxes
   expect_gt(count_near(img, c(0, 0, 1), 0.15), 50) # blue boxes
 })
+
+test_that("mark_text() errors clearly when no label is mapped", {
+  expect_error(
+    plot_svg(vplot(mtcars) |> mark_text(x = wt, y = mpg)),
+    "needs a .*label"
+  )
+})

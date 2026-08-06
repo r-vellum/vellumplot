@@ -854,7 +854,9 @@ NULL
     fills = cols,
     cols = cols,
     shapes = shape$shapes,
-    sizes_mm = NULL
+    sizes_mm = NULL,
+    # Keep a colour scale's guide_legend(override.aes=) when it merges with shape.
+    override_aes = color$override_aes
   )
 }
 
@@ -872,7 +874,9 @@ NULL
     fills = cols,
     cols = cols,
     shapes = rep_len("circle", length(cols)),
-    sizes_mm = size$legend_sizes
+    sizes_mm = size$legend_sizes,
+    # Keep a colour scale's guide_legend(override.aes=) when it merges with size.
+    override_aes = color$override_aes
   )
 }
 
@@ -933,7 +937,8 @@ NULL
       l <- sc$labels %||% sc$levels
       if (isTRUE(sc$na)) c(l, "NA") else l
     },
-    size_nested = ,
+    # The bubble legend draws no NA key, so it reserves no "NA" label either.
+    size_nested = sc$legend_labels,
     size = {
       l <- sc$legend_labels
       if (isTRUE(sc$na)) c(l, "NA") else l

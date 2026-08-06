@@ -76,12 +76,24 @@ NULL
       cli::cli_abort("{.fn mark_sf_label} requires an {.cls sf} data frame.")
     }
     geom <- sf::st_geometry(data)
-    pts <- suppressWarnings(sf::st_point_on_surface(geom))
-    xy <- sf::st_coordinates(pts)
+    # An empty geometry has no interior point (st_point_on_surface -> POINT EMPTY
+    # -> NA coordinates); drop those features so a label is never placed at NA.
+    # Subset the resolved encodings (label/colour/size, length = feature count) to
+    # match, keeping every label aligned with its point.
+    keep <- !sf::st_is_empty(geom)
+    xy <- sf::st_coordinates(suppressWarnings(sf::st_point_on_surface(geom[
+      keep
+    ])))
+    if (!all(keep)) {
+      nf <- length(geom)
+      values <- lapply(values, function(v) {
+        if (length(v) == nf) v[keep] else v
+      })
+    }
     values$x <- as.numeric(xy[, "X"])
     values$y <- as.numeric(xy[, "Y"])
     types$x <- types$y <- "quantitative"
-    n <- length(geom)
+    n <- sum(keep)
   }
 
   # A sankey layer draws a flow diagram, not x/y points: compute the layout from

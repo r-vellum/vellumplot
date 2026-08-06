@@ -20,15 +20,30 @@ NULL
 
 .emit_text <- function(scene, L, scales) {
   n <- L$n
+  # The `label` is a mapped column (`L$values$label`) or a constant (a literal
+  # passes through to `L$params$label`, bypassing the encoding split) -- read
+  # either. A text mark with neither has nothing to write (it would otherwise draw
+  # invisible `NA` glyphs at every point), so fail with a clear message.
+  raw <- L$values$label %||% .aes_param(L, "label", NULL)
+  if (is.null(raw)) {
+    fn <- switch(
+      L$mark,
+      sf_label = "mark_sf_label",
+      node_text = "mark_node_text",
+      edge_text = "mark_edge_text",
+      "mark_text"
+    )
+    cli::cli_abort("{.fn {fn}} needs a {.field label} encoding.")
+  }
   # Labels are drawn at their data anchors; a repel layer is nudged afterwards by
   # the engine solver, which addresses each label grob by the `name` set below.
   repel_on <- isTRUE(L$stat_params$repel$on)
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
-  # Labels may be plain character (multi-line "\n" supported by vellum), a single
-  # rich md() label (drawn at every position), or a per-datum list of md() labels.
-  # Only plain labels are flattened with as.character(); rich labels pass through.
-  raw <- L$values$label
+  # `raw` (resolved above) may be plain character (multi-line "\n" supported by
+  # vellum), a single rich md() label (drawn at every position), or a per-datum
+  # list of md() labels. Only plain labels are flattened with as.character(); rich
+  # labels pass through.
   rich_single <- inherits(raw, "vellum::vellum_label")
   rich_list <- !rich_single &&
     is.list(raw) &&

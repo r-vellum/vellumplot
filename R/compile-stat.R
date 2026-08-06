@@ -285,8 +285,16 @@ NULL
 # `after_stat(lab)` and repels the labels apart.
 .stat_series_label <- function(L) {
   n <- if (length(L$values)) max(lengths(L$values)) else 0L
-  xn <- as.numeric(rep_len(L$values$x, n))
-  yn <- as.numeric(rep_len(L$values$y, n))
+  xn <- suppressWarnings(as.numeric(rep_len(L$values$x, n)))
+  yn <- suppressWarnings(as.numeric(rep_len(L$values$y, n)))
+  # The line end is the largest-x point, so a discrete/categorical x has no
+  # "end" to label -- coercing it to numeric would give all-NA and crash below.
+  if (n > 0L && !any(is.finite(xn))) {
+    cli::cli_abort(c(
+      "{.fn mark_series_label} needs a continuous {.field x} (it labels each series at its largest x).",
+      i = "The mapped {.field x} is discrete; use {.fn mark_text} to label a categorical axis."
+    ))
+  }
   grp <- L$values$color %||% L$values$fill
   if (is.null(grp)) {
     i <- which.max(xn)
@@ -297,7 +305,10 @@ NULL
     unique(g),
     function(lev) {
       sel <- which(g == lev)
-      sel[which.max(xn[sel])]
+      # `which.max` is empty for an all-NA group; fall back to its last row so a
+      # single non-finite series never aborts the whole label set.
+      m <- which.max(xn[sel])
+      if (length(m)) sel[m] else sel[length(sel)]
     },
     integer(1)
   )

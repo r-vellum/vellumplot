@@ -2,6 +2,18 @@
 
 ## Bug fixes
 
+* **Constant text labels now render.** `mark_text(label = "...")` (a literal, not
+  a mapped column) drew invisible `NA` glyphs; the label is now read from the
+  layer params too. A text mark (`mark_text()` / `mark_sf_label()` /
+  `mark_node_text()`) with no `label` at all now errors clearly instead of
+  drawing blanks.
+* **`mark_series_label()` on a discrete x** now errors with a clear message (it
+  labels each series at its largest x, which a categorical axis has no notion of)
+  instead of a cryptic internal failure.
+* **`mark_sf_label()` skips empty-geometry features** (which have no interior
+  point) rather than placing a label at `NA` coordinates.
+* `guide_legend(override.aes =)` is now kept when a colour scale's legend merges
+  with its shape/size partner.
 
 * **Colour-guide fixes** (all in the recently-added `guide_colourbar()` /
   `guide_coloursteps()`): `guide_coloursteps(reverse = TRUE)` no longer mislabels its
