@@ -312,6 +312,32 @@ inset <- function(
   if (!S7::S7_inherits(plot, PlotSpec)) {
     cli::cli_abort("{.arg plot} (the inset) must be a {.cls PlotSpec}.")
   }
+  # left/bottom/right/top are fractions of the anchor region; a value outside
+  # [0, 1] or an inverted pair (left >= right, bottom >= top) yields a
+  # negative-size or overflowing viewport that renders silently wrong.
+  bounds <- c(left = left, bottom = bottom, right = right, top = top)
+  if (
+    !all(vapply(
+      bounds,
+      function(v) is.numeric(v) && length(v) == 1L && is.finite(v),
+      logical(1)
+    ))
+  ) {
+    cli::cli_abort(
+      "Inset {.arg left}/{.arg bottom}/{.arg right}/{.arg top} must each be a single finite number."
+    )
+  }
+  if (any(bounds < 0) || any(bounds > 1)) {
+    cli::cli_abort(
+      "Inset {.arg left}/{.arg bottom}/{.arg right}/{.arg top} must be fractions in {.val {c(0, 1)}}."
+    )
+  }
+  if (left >= right || bottom >= top) {
+    cli::cli_abort(c(
+      "Inset bounds must satisfy {.code left < right} and {.code bottom < top}.",
+      "x" = "Got left={left}, right={right}, bottom={bottom}, top={top}."
+    ))
+  }
   comp <- if (S7::S7_inherits(base, PlotComposition)) {
     base
   } else {

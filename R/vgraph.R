@@ -654,6 +654,14 @@ NULL
   k_core,
   call = rlang::caller_env()
 ) {
+  # An empty input graph has nothing to lay out; say so plainly rather than
+  # blaming filters that were never applied.
+  if (igraph::vcount(g) == 0L) {
+    cli::cli_abort(
+      "{.fn vgraph} needs a graph with at least one vertex.",
+      call = call
+    )
+  }
   if (!isFALSE(augment)) {
     g <- .graph_augment(g, augment, call)
   }
