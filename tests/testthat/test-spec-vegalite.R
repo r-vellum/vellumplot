@@ -85,3 +85,39 @@ test_that("spec_to_vegalite can emit JSON", {
   json <- spec_to_vegalite(p, json = TRUE)
   expect_match(json, "vega-lite")
 })
+
+test_that("spec_to_vegalite() degrades gracefully (never crashes) off the happy path", {
+  df <- data.frame(x = 1:6, y = 1:6, g = rep(c("a", "b"), 3))
+  # an unmapped mark, aesthetic, and scale transform each warn + drop, not crash
+  expect_warning(
+    vl <- spec_to_vegalite(vplot(mtcars) |> mark_smooth(x = wt, y = mpg)),
+    "dropped"
+  )
+  expect_equal(vl$mark$type, "point") # unmapped mark falls back to point
+  expect_warning(
+    spec_to_vegalite(vplot(df) |> mark_line(x = x, y = y, group = g)),
+    "group"
+  )
+  expect_warning(
+    spec_to_vegalite(
+      vplot(df) |>
+        mark_point(x = x, y = y) |>
+        scale_y_continuous(trans = "reverse")
+    ),
+    "transform"
+  )
+  # happy path is unchanged (no warning)
+  expect_no_warning(spec_to_vegalite(
+    vplot(df) |> mark_point(x = x, y = y, color = g)
+  ))
+  # import likewise degrades an unmapped mark/channel rather than aborting
+  vl_in <- list(
+    mark = list(type = "trail"),
+    encoding = list(
+      x = list(field = "a", type = "quantitative"),
+      theta = list(field = "b")
+    ),
+    data = list(values = list(list(a = 1, b = 2)))
+  )
+  expect_warning(spec_from_vegalite(vl_in), "trail|theta")
+})
