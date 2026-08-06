@@ -2,6 +2,14 @@
 
 ## Bug fixes
 
+* **`spec_to_vegalite()` / `spec_from_vegalite()` no longer crash off the happy
+  path.** Any unmapped mark, aesthetic, layer param, or scale transform (e.g.
+  `mark_smooth()`, a `group` encoding, `trans = "reverse"`) hit a lookup that
+  threw `subscript out of bounds` instead of returning `NULL`, defeating the
+  bridge's own fallbacks. The translation now degrades as documented — the
+  unsupported feature is dropped and reported in the warning — rather than
+  aborting.
+
 * **Constant text labels now render.** `mark_text(label = "...")` (a literal, not
   a mapped column) drew invisible `NA` glyphs; the label is now read from the
   layer params too. A text mark (`mark_text()` / `mark_sf_label()` /

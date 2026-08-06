@@ -81,6 +81,19 @@ NULL
   identity = "linear"
 )
 
+# Look up `key` in a named lookup vector, returning NULL (not an error) when the
+# key is absent. `map[[key]]` on a named ATOMIC vector throws "subscript out of
+# bounds" for a missing name, which would defeat the is.null()/%||% fallbacks the
+# translator relies on to degrade gracefully (report an unmapped mark / channel /
+# transform, never crash).
+.vl_get <- function(map, key) {
+  if (length(key) == 1L && !is.na(key) && key %in% names(map)) {
+    map[[key]]
+  } else {
+    NULL
+  }
+}
+
 .vl_note <- function(env, what) {
   env$dropped <- c(env$dropped, what)
 }
@@ -107,7 +120,7 @@ NULL
       sc$domain <- scale$domain
     }
     if (!is.null(scale$trans)) {
-      t <- .VL_SCALE_TYPE[[scale$trans]] %||% NA_character_
+      t <- .vl_get(.VL_SCALE_TYPE, scale$trans) %||% NA_character_
       if (is.na(t)) {
         .vl_note(notes, paste0("scale transform '", scale$trans, "'"))
       } else if (t != "linear") {
@@ -185,7 +198,7 @@ spec_to_vegalite <- function(plot, json = FALSE) {
   colour_scale <- scales_by_aes[["color"]] %||% scales_by_aes[["fill"]]
 
   layer_to_vl <- function(L) {
-    mk <- .VL_MARK[[L$mark]]
+    mk <- .vl_get(.VL_MARK, L$mark)
     if (is.null(mk)) {
       .vl_note(notes, paste0("mark '", L$mark, "'"))
       mk <- "point"
@@ -199,7 +212,7 @@ spec_to_vegalite <- function(plot, json = FALSE) {
     }
     enc <- list()
     for (aes in names(L$encoding)) {
-      vlc <- .VL_CHANNEL[[aes]]
+      vlc <- .vl_get(.VL_CHANNEL, aes)
       if (is.null(vlc)) {
         .vl_note(notes, paste0("encoding '", aes, "'"))
         next
@@ -239,7 +252,7 @@ spec_to_vegalite <- function(plot, json = FALSE) {
       .vl_note(notes, paste0("stat '", lstat, "'"))
     }
     for (p in names(L$params)) {
-      vlc <- .VL_CHANNEL[[p]]
+      vlc <- .vl_get(.VL_CHANNEL, p)
       if (!is.null(vlc) && is.null(enc[[vlc]])) {
         enc[[vlc]] <- list(value = L$params[[p]])
       }
@@ -363,7 +376,7 @@ spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
 
   view_to_layer <- function(v) {
     mk <- if (is.list(v$mark)) v$mark$type else v$mark
-    mark <- .VL_MARK_INV[[mk]] %||%
+    mark <- .vl_get(.VL_MARK_INV, mk) %||%
       {
         dropped <<- c(dropped, paste0("mark '", mk, "'"))
         "point"
@@ -373,7 +386,7 @@ spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
     stat <- "identity"
     for (vlc in names(v$encoding)) {
       def <- v$encoding[[vlc]]
-      aes <- .VL_CHANNEL_INV[[vlc]] %||%
+      aes <- .vl_get(.VL_CHANNEL_INV, vlc) %||%
         {
           dropped <<- c(dropped, paste0("channel '", vlc, "'"))
           next
