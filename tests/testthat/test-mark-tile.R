@@ -110,3 +110,31 @@ test_that("tile heatmap fills the panel with coloured cells", {
   panel <- count_near(img, c(0.92, 0.92, 0.92))
   expect_lt(panel, 0.2 * prod(dim(img)[1:2]))
 })
+
+test_that("mark_raster() rejects categorical and irregular grids with a clear message", {
+  # a categorical axis has no cell width -> clear error, not `'min' not meaningful`
+  df_cat <- expand.grid(x = c("a", "b", "c"), y = 1:3)
+  df_cat$z <- seq_len(9)
+  expect_error(
+    plot_svg(vplot(df_cat) |> mark_raster(x = x, y = y, fill = z)),
+    "numeric.*date.*mark_tile"
+  )
+  # an irregularly-spaced complete grid would silently misplace cells -> error
+  df_irr <- expand.grid(x = c(1, 2, 4), y = c(1, 2, 4))
+  df_irr$z <- seq_len(9)
+  expect_error(
+    plot_svg(vplot(df_irr) |> mark_raster(x = x, y = y, fill = z)),
+    "evenly-spaced"
+  )
+  # a regular numeric grid and a regular date grid both render
+  df_reg <- expand.grid(x = 1:3, y = 1:3)
+  df_reg$z <- seq_len(9)
+  expect_no_error(plot_svg(
+    vplot(df_reg) |> mark_raster(x = x, y = y, fill = z)
+  ))
+  df_date <- expand.grid(x = as.Date("2020-01-01") + 0:2, y = 1:3)
+  df_date$z <- seq_len(9)
+  expect_no_error(plot_svg(
+    vplot(df_date) |> mark_raster(x = x, y = y, fill = z)
+  ))
+})
