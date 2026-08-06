@@ -74,6 +74,14 @@ NULL
   }
   xv <- L$values$x
   yv <- L$values$y
+  # A raster is stretched between numeric cell-centre extents, so x/y must be
+  # continuous (numeric, or date/time). A categorical axis has no cell width and
+  # would abort at `min()`/`diff()` below with an opaque base-R message.
+  if (is.character(xv) || is.factor(xv) || is.character(yv) || is.factor(yv)) {
+    cli::cli_abort(
+      "{.fn mark_raster} needs numeric (or date/time) x and y; use {.fn mark_tile} for a categorical axis."
+    )
+  }
   ux <- sort(unique(xv))
   uy <- sort(unique(yv))
   ci <- match(xv, ux)
@@ -87,6 +95,20 @@ NULL
   ) {
     cli::cli_abort(
       "{.fn mark_raster} needs a complete regular grid; use {.fn mark_tile}."
+    )
+  }
+  # ... and *evenly* spaced: one raster image is stretched uniformly across the
+  # extent, so irregular gaps (x = 1, 2, 4) would silently misplace every cell.
+  uniform <- function(u) {
+    if (length(u) <= 2L) {
+      return(TRUE)
+    }
+    d <- diff(as.numeric(u))
+    isTRUE(all.equal(min(d), max(d)))
+  }
+  if (!uniform(ux) || !uniform(uy)) {
+    cli::cli_abort(
+      "{.fn mark_raster} needs an evenly-spaced grid; use {.fn mark_tile} for irregular spacing."
     )
   }
   cols <- rep_len(.aes_colour(L, scales, "grey50"), length(xv))

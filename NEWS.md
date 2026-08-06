@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+
+* **`mark_raster()` fails clearly on input it cannot draw.** A categorical x/y
+  aborted with an opaque `'min' not meaningful for factors`, and an
+  irregularly-spaced grid (e.g. x = 1, 2, 4) rendered with every cell silently
+  misplaced. It now errors with a message pointing to `mark_tile()` in both cases;
+  numeric and evenly-spaced date/time grids are unaffected.
 * **`as_spec()` no longer silently drops declarative interactivity or animation.**
   A plot carrying `select_*()` / `filter_by()` / `bind_scale()`,
   `transition_*()`, or `inspect_source()` was serialized as if that state did not
