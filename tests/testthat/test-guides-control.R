@@ -213,3 +213,46 @@ test_that("guide_colourbar() validates and round-trips", {
   expect_equal(gd$bar_width, 8)
   expect_false(gd$ticks)
 })
+
+test_that("guide_coloursteps() renders a binned scale as a segmented bar", {
+  b <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned()
+  p <- b |> guides(color = guide_coloursteps(barheight = 50))
+  cl <- vellumplot:::.build_panels(p)$scales$color
+  expect_true(isTRUE(cl$stepped)) # flagged for the stepped drawer
+  expect_equal(cl$bar_height, 50)
+  # routed to the stepped-bar guide, not the discrete swatches
+  guides_list <- vellumplot:::.legend_guides(
+    vellumplot:::.build_panels(p)$scales
+  )
+  expect_identical(guides_list[[1]]$kind, "color_steps")
+  # the bar labels the numeric bin boundaries (breaks), not the interval strings
+  expect_equal(
+    vellumplot:::.guide_labels(guides_list[[1]]),
+    format(cl$breaks, trim = TRUE)
+  )
+  expect_no_error(plot_svg(p)) # vertical
+  expect_no_error(plot_svg(p |> theme(legend.position = "bottom"))) # horizontal
+  expect_identical(guide_colorsteps, guide_coloursteps) # US alias
+})
+
+test_that("guide_coloursteps() round-trips and is graceful off a binned scale", {
+  b <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned()
+  gd <- Filter(
+    function(s) !is.null(s@guide),
+    from_spec(as_spec(
+      b |> guides(color = guide_coloursteps(ticks = TRUE))
+    ))@scales
+  )[[1]]@guide
+  expect_identical(gd$kind, "coloursteps")
+  expect_true(gd$ticks)
+  # on a non-binned (continuous) scale it does not force a stepped bar -> no crash
+  expect_no_error(plot_svg(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, color = hp) |>
+      guides(color = guide_coloursteps())
+  ))
+})

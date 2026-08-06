@@ -719,9 +719,12 @@ NULL
   if (!is.null(scales$color)) {
     gk <- scales$color$kind
     # A binned (classed) colour scale draws as discrete swatches with interval
-    # labels, so it reuses the discrete guide.
+    # labels, so it reuses the discrete guide -- unless guide_coloursteps() asked
+    # for a segmented bar, which routes to its own stepped-bar drawer instead.
     discrete <- gk %in% c("discrete", "binned")
-    if (discrete && .can_merge_shape(scales$color, scales$shape)) {
+    if (identical(gk, "binned") && isTRUE(scales$color$stepped)) {
+      out <- c(out, list(list(kind = "color_steps", sc = scales$color)))
+    } else if (discrete && .can_merge_shape(scales$color, scales$shape)) {
       out <- c(
         out,
         list(list(
@@ -921,6 +924,9 @@ NULL
   switch(
     g$kind,
     color_continuous = sc$legend_labels,
+    # A stepped colour bar labels the N+1 bin boundaries (the numeric breaks),
+    # not the interval strings a discrete binned legend shows.
+    color_steps = .steps_break_labels(sc),
     color_discrete = {
       l <- sc$labels %||% sc$levels
       if (isTRUE(sc$na)) c(l, "NA") else l
@@ -971,12 +977,15 @@ NULL
   if (!is.null(g$sc$bar_height)) {
     return(g$sc$bar_height)
   }
-  k <- length(g$sc$legend_labels)
+  k <- length(.guide_labels(g))
   max(.LEGEND_MIN_BAR_MM, k * (m$text_h + m$lab_gap))
 }
 
 # The colourbar's thickness (mm): guide_colourbar(barwidth = ) or the theme default.
 .bar_w_mm <- function(g, m) g$sc$bar_width %||% m$bar_w
+
+# The N+1 bin boundaries of a stepped colour bar, as trimmed numeric labels.
+.steps_break_labels <- function(sc) format(sc$breaks, trim = TRUE)
 
 # Measured height (mm) of a vertical guide: title line + key rows (uniform pitch
 # = max(key diameter, text height) + gap), or title + colour bar (+ NA row).
@@ -986,7 +995,7 @@ NULL
   # and its keys would sit lower than a titled sibling's (misaligned legends).
   m$show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   th <- if (m$show_title) m$title_h + m$title_gap else 0
-  if (g$kind == "color_continuous") {
+  if (g$kind %in% c("color_continuous", "color_steps")) {
     na <- if (isTRUE(g$sc$na)) max(m$key, m$text_h) + m$row_gap else 0
     th + .bar_len_mm(g, m) + na
   } else {
@@ -1005,7 +1014,7 @@ NULL
   } else {
     0
   }
-  if (g$kind == "color_continuous") {
+  if (g$kind %in% c("color_continuous", "color_steps")) {
     na <- if (isTRUE(g$sc$na)) {
       m$spacing + max(m$key, .mm_tw("NA", fs = m$text_fs))
     } else {
@@ -1327,6 +1336,9 @@ NULL
   if (g$kind == "color_continuous") {
     return(.draw_guide_continuous_v(scene, g, m, rt, txt, th))
   }
+  if (g$kind == "color_steps") {
+    return(.draw_guide_steps_v(scene, g, m, rt, txt, th))
+  }
   labs <- .guide_labels(g)
   k <- length(labs)
   key_d <- .guide_key_d(g, m)
@@ -1521,6 +1533,91 @@ NULL
   vellum::pop(scene)
 }
 
+# A stepped (segmented) colour bar for a binned scale under guide_coloursteps():
+# N equal segments in the bin colours, the N+1 bin boundaries labelled at the
+# segment edges. Honours the same barwidth / barheight / ticks / label.position
+# tunables as the smooth bar (ticks default off for a stepped bar).
+.draw_guide_steps_v <- function(scene, g, m, rt, txt, th) {
+  cl <- g$sc
+  revb <- isTRUE(cl$reverse_bar)
+  cols <- if (revb) rev(cl$colors) else cl$colors
+  brk <- if (revb) rev(cl$breaks) else cl$breaks
+  blabs <- format(brk, trim = TRUE)
+  n <- length(cols)
+  heights <- .c_units(
+    if (m$show_title) vellum::vl_unit(th, "mm"),
+    vellum::vl_unit(1, "null")
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      layout = vellum::grid_layout(
+        heights = heights,
+        widths = vellum::vl_unit(1, "null")
+      )
+    )
+  )
+  row_bar <- if (m$show_title) 2L else 1L
+  if (m$show_title) {
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
+    scene <- .draw_guide_title(scene, cl$name, rt)
+    scene <- vellum::pop(scene)
+  }
+  scene <- vellum::push(scene, vellum::vl_viewport(row = row_bar, col = 1))
+  bw <- cl$bar_width %||% m$bar_w
+  ticks_on <- cl$bar_ticks %||% FALSE
+  tick_col <- cl$bar_ticks_colour %||% "white"
+  left_lab <- identical(cl$bar_label_pos, "left")
+  lw <- if (left_lab) .mm_tw(blabs, m$text_fs) else 0
+  x0 <- m$pad + if (left_lab) lw + m$lab_gap else 0
+  lab_x <- if (left_lab) x0 - m$lab_gap else x0 + bw + m$lab_gap
+  lab_just <- c(if (left_lab) "right" else "left", "centre")
+  for (i in seq_len(n)) {
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = vellum::vl_unit(x0 + bw / 2, "mm"),
+        y = vellum::vl_unit((i - 0.5) / n, "npc"),
+        width = vellum::vl_unit(bw, "mm"),
+        height = vellum::vl_unit(1 / n, "npc"),
+        gp = vellum::vl_gpar(fill = cols[i], col = "grey50", lwd = 0.5)
+      )
+    )
+  }
+  for (j in 0:n) {
+    frac <- j / n
+    if (ticks_on && j > 0L && j < n) {
+      tx <- if (left_lab) {
+        c(x0, x0 + .LEGEND_TICK_MM)
+      } else {
+        c(x0 + bw - .LEGEND_TICK_MM, x0 + bw)
+      }
+      scene <- vellum::draw(
+        scene,
+        vellum::segments_grob(
+          vellum::vl_unit(tx[1], "mm"),
+          vellum::vl_unit(frac, "npc"),
+          vellum::vl_unit(tx[2], "mm"),
+          vellum::vl_unit(frac, "npc"),
+          gp = vellum::vl_gpar(col = tick_col, lwd = 0.8)
+        )
+      )
+    }
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        blabs[j + 1L],
+        x = vellum::vl_unit(lab_x, "mm"),
+        y = vellum::vl_unit(frac, "npc"),
+        just = lab_just,
+        gp = txt
+      )
+    )
+  }
+  scene <- vellum::pop(scene)
+  vellum::pop(scene)
+}
+
 # --- horizontal guide drawers (top/bottom legend) ---------------------------
 
 # Draw a horizontal guide into the current viewport (its exact measured mm width).
@@ -1531,6 +1628,9 @@ NULL
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   if (g$kind == "color_continuous") {
     return(.draw_guide_continuous_h(scene, g, m, rt, txt, th))
+  }
+  if (g$kind == "color_steps") {
+    return(.draw_guide_steps_h(scene, g, m, rt, txt, th))
   }
   labs <- .guide_labels(g)
   k <- length(labs)
@@ -1730,6 +1830,89 @@ NULL
     )
     scene <- vellum::pop(scene)
   }
+  vellum::pop(scene)
+}
+
+# A horizontal stepped colour bar (guide_coloursteps() under a top/bottom legend):
+# N equal segments left-to-right, the N+1 boundaries labelled below.
+.draw_guide_steps_h <- function(scene, g, m, rt, txt, th) {
+  cl <- g$sc
+  revb <- isTRUE(cl$reverse_bar)
+  cols <- if (revb) rev(cl$colors) else cl$colors
+  brk <- if (revb) rev(cl$breaks) else cl$breaks
+  blabs <- format(brk, trim = TRUE)
+  n <- length(cols)
+  bar_thick <- cl$bar_height %||% m$bar_w
+  ticks_on <- cl$bar_ticks %||% FALSE
+  tick_col <- cl$bar_ticks_colour %||% "white"
+  heights <- .c_units(
+    if (m$show_title) vellum::vl_unit(th, "mm"),
+    vellum::vl_unit(bar_thick, "mm"),
+    vellum::vl_unit(m$text_h + m$lab_gap, "mm")
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      layout = vellum::grid_layout(
+        heights = heights,
+        widths = vellum::vl_unit(1, "null")
+      )
+    )
+  )
+  off <- if (m$show_title) 1L else 0L
+  if (m$show_title) {
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
+    scene <- .draw_guide_title(scene, cl$name, rt)
+    scene <- vellum::pop(scene)
+  }
+  scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 1))
+  for (i in seq_len(n)) {
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = vellum::vl_unit((i - 0.5) / n, "npc"),
+        y = vellum::vl_unit(0.5, "npc"),
+        width = vellum::vl_unit(1 / n, "npc"),
+        height = vellum::vl_unit(1, "npc"),
+        gp = vellum::vl_gpar(fill = cols[i], col = "grey50", lwd = 0.5)
+      )
+    )
+    if (ticks_on && i < n) {
+      scene <- vellum::draw(
+        scene,
+        vellum::segments_grob(
+          vellum::vl_unit(i / n, "npc"),
+          vellum::vl_unit(0, "npc"),
+          vellum::vl_unit(i / n, "npc"),
+          vellum::vl_unit(.LEGEND_TICK_MM, "mm"),
+          gp = vellum::vl_gpar(col = tick_col, lwd = 0.8)
+        )
+      )
+    }
+  }
+  scene <- vellum::pop(scene)
+  scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 1))
+  for (j in 0:n) {
+    frac <- j / n
+    hjust <- if (j == 0L) {
+      "left"
+    } else if (j == n) {
+      "right"
+    } else {
+      "centre"
+    }
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        blabs[j + 1L],
+        x = vellum::vl_unit(frac, "npc"),
+        y = vellum::vl_unit(0.5, "npc"),
+        just = c(hjust, "centre"),
+        gp = txt
+      )
+    )
+  }
+  scene <- vellum::pop(scene)
   vellum::pop(scene)
 }
 

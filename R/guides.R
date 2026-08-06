@@ -5,9 +5,12 @@ NULL
 #'
 #' `guides()` overrides the legend (guide) for one or more aesthetics without
 #' respelling the whole `scale_*()`. Pass `"none"` (or [guide_none()]) to hide a
-#' legend, or [guide_legend()] to tweak it (reverse the key order, override the
-#' title). Applies to the non-position legends (`color`/`fill`, `size`, `shape`,
-#' `alpha`, `linetype`); position axes are unaffected.
+#' legend, [guide_legend()] to tweak a keyed legend (reverse the key order,
+#' override the title, restyle the keys with `override.aes`), `guide_colourbar()`
+#' to size and style a continuous colour bar, or `guide_coloursteps()` to draw a
+#' **binned** colour scale as a segmented bar instead of swatches. Applies to the
+#' non-position legends (`color`/`fill`, `size`, `shape`, `alpha`, `linetype`);
+#' position axes are unaffected.
 #'
 #' @param plot A [PlotSpec].
 #' @param ... Named by aesthetic, e.g. `guides(color = "none", shape = guide_legend(reverse = TRUE))`.
@@ -17,8 +20,8 @@ NULL
 #'   (`guide_colourbar()`). `barheight` sets the bar's **length** on the default
 #'   vertical bar (and its thickness on a horizontal one); `barwidth` its
 #'   thickness (and the bar length on a horizontal legend). `NULL` auto-sizes.
-#' @param ticks Draw the break ticks on the colour bar? (`guide_colourbar()`,
-#'   default `TRUE`.)
+#' @param ticks Draw the break ticks on the colour bar? (Default `TRUE` for
+#'   `guide_colourbar()`, `FALSE` for the segmented `guide_coloursteps()`.)
 #' @param ticks.colour Colour of the break ticks (default `"white"`).
 #' @param label.position Which side of a **vertical** colour bar the labels sit,
 #'   `"right"` (default) or `"left"`.
@@ -51,6 +54,12 @@ NULL
 #'   guides(color = guide_colourbar(
 #'     barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
 #'   ))
+#'
+#' # a binned colour scale as a segmented bar
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = hp) |>
+#'   scale_color_binned() |>
+#'   guides(color = guide_coloursteps())
 #' @export
 guides <- function(plot, ...) {
   .check_plot(plot)
@@ -91,6 +100,60 @@ guide_colourbar <- function(
   label.position = NULL,
   reverse = FALSE
 ) {
+  .guide_bar(
+    "colourbar",
+    title,
+    barwidth,
+    barheight,
+    ticks,
+    ticks.colour,
+    label.position,
+    reverse
+  )
+}
+
+#' @rdname guides
+#' @export
+guide_colorbar <- guide_colourbar
+
+#' @rdname guides
+#' @export
+guide_coloursteps <- function(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = FALSE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+) {
+  .guide_bar(
+    "coloursteps",
+    title,
+    barwidth,
+    barheight,
+    ticks,
+    ticks.colour,
+    label.position,
+    reverse
+  )
+}
+
+#' @rdname guides
+#' @export
+guide_colorsteps <- guide_coloursteps
+
+# Shared builder + validation for guide_colourbar() / guide_coloursteps().
+.guide_bar <- function(
+  kind,
+  title,
+  barwidth,
+  barheight,
+  ticks,
+  ticks.colour,
+  label.position,
+  reverse
+) {
   pos <- label.position %||% "right"
   if (!pos %in% c("right", "left", "top", "bottom")) {
     cli::cli_abort(
@@ -98,7 +161,7 @@ guide_colourbar <- function(
     )
   }
   list(
-    kind = "colourbar",
+    kind = kind,
     title = title,
     bar_width = .check_bar_dim(barwidth, "barwidth"),
     bar_height = .check_bar_dim(barheight, "barheight"),
@@ -108,10 +171,6 @@ guide_colourbar <- function(
     reverse = isTRUE(reverse)
   )
 }
-
-#' @rdname guides
-#' @export
-guide_colorbar <- guide_colourbar
 
 # A colourbar dimension (`barwidth` / `barheight`) in mm: NULL, or one positive
 # number.
@@ -193,14 +252,19 @@ guide_colorbar <- guide_colourbar
       # these aesthetics on the swatches only -- the marks are untouched.
       trained$override_aes <- guide[["override.aes"]]
     }
-    # guide_colourbar(): carry the bar geometry + tick/label options onto the
-    # trained colour scale for the continuous-guide drawers to read.
-    if (identical(guide$kind, "colourbar")) {
+    # guide_colourbar() / guide_coloursteps(): carry the bar geometry + tick/label
+    # options onto the trained colour scale for the continuous-guide drawers to
+    # read. `coloursteps` also flags a binned scale to render as a segmented bar
+    # (re-routed from discrete swatches to the stepped bar in .legend_guides()).
+    if (guide$kind %in% c("colourbar", "coloursteps")) {
       trained$bar_width <- guide$bar_width
       trained$bar_height <- guide$bar_height
       trained$bar_ticks <- guide$ticks
       trained$bar_ticks_colour <- guide$ticks_colour
       trained$bar_label_pos <- guide$label_position
+      if (identical(guide$kind, "coloursteps")) {
+        trained$stepped <- TRUE
+      }
     }
   }
   trained

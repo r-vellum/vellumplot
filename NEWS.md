@@ -20,6 +20,11 @@
 
 ## New features
 
+* `guide_coloursteps()` (US alias `guide_colorsteps()`) draws a **binned** colour
+  scale as a segmented colour bar — the bin colours in order, labelled at the
+  numeric boundaries — instead of the default discrete swatches. Takes the same
+  `barwidth` / `barheight` / `ticks` / `label.position` tunables as
+  `guide_colourbar()`: `scale_color_binned() |> ... guides(color = guide_coloursteps())`.
 * `guide_colourbar()` (and the US alias `guide_colorbar()`) make the continuous
   colour bar tunable: `barwidth` / `barheight` (bar size in mm), `ticks` /
   `ticks.colour` (the break ticks), and `label.position` (`"right"` / `"left"`
