@@ -4,6 +4,8 @@
 \alias{guides}
 \alias{guide_none}
 \alias{guide_legend}
+\alias{guide_colourbar}
+\alias{guide_colorbar}
 \title{Control a scale's legend}
 \usage{
 guides(plot, ...)
@@ -11,6 +13,26 @@ guides(plot, ...)
 guide_none()
 
 guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
+
+guide_colourbar(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = TRUE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+)
+
+guide_colorbar(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = TRUE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -19,7 +41,7 @@ guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
 
 \item{title}{An axis/legend title override, or \code{NULL} to keep the default.}
 
-\item{reverse}{Reverse the order of the legend keys (discrete legends).}
+\item{reverse}{Reverse the order of the legend keys / the colour bar.}
 
 \item{override.aes}{A named list of aesthetics to force on the legend \strong{keys},
 independent of the plotted data --- the classic "make faint, small points
@@ -28,6 +50,19 @@ legible in the key" fix. Recognised names: \code{size} (mm), \code{alpha},
 \code{override.aes = list(size = 5, alpha = 1)} draws big, opaque keys over a
 scatter of tiny translucent points. \code{NULL} (default) leaves the keys as
 drawn from the data.}
+
+\item{barwidth, barheight}{The colour bar's own width and height, in millimetres
+(\code{guide_colourbar()}). \code{barheight} sets the bar's \strong{length} on the default
+vertical bar (and its thickness on a horizontal one); \code{barwidth} its
+thickness (and the bar length on a horizontal legend). \code{NULL} auto-sizes.}
+
+\item{ticks}{Draw the break ticks on the colour bar? (\code{guide_colourbar()},
+default \code{TRUE}.)}
+
+\item{ticks.colour}{Colour of the break ticks (default \code{"white"}).}
+
+\item{label.position}{Which side of a \strong{vertical} colour bar the labels sit,
+\code{"right"} (default) or \code{"left"}.}
 }
 \value{
 \code{guides()}: the modified \link{PlotSpec}. \code{guide_none()} / \code{guide_legend()}:
@@ -53,4 +88,11 @@ vplot(mtcars) |>
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = factor(cyl), alpha = 0.15, size = 0.6) |>
   guides(color = guide_legend(override.aes = list(size = 5, alpha = 1)))
+
+# a taller, wider colour bar with left-side labels and no ticks
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  guides(color = guide_colourbar(
+    barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
+  ))
 }

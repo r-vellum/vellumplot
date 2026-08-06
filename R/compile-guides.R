@@ -966,9 +966,17 @@ NULL
 # The continuous colour-bar length (mm) for a vertical guide: long enough that
 # consecutive break labels never touch.
 .bar_len_mm <- function(g, m) {
+  # guide_colourbar(barheight = ) fixes the bar length; else it auto-sizes so
+  # consecutive break labels never touch.
+  if (!is.null(g$sc$bar_height)) {
+    return(g$sc$bar_height)
+  }
   k <- length(g$sc$legend_labels)
   max(.LEGEND_MIN_BAR_MM, k * (m$text_h + m$lab_gap))
 }
+
+# The colourbar's thickness (mm): guide_colourbar(barwidth = ) or the theme default.
+.bar_w_mm <- function(g, m) g$sc$bar_width %||% m$bar_w
 
 # Measured height (mm) of a vertical guide: title line + key rows (uniform pitch
 # = max(key diameter, text height) + gap), or title + colour bar (+ NA row).
@@ -1421,15 +1429,26 @@ NULL
     scene <- vellum::pop(scene)
   }
   scene <- vellum::push(scene, vellum::vl_viewport(row = row_bar, col = 1))
+  # guide_colourbar() tunables: bar thickness, whether/what-colour the break ticks
+  # are, and which side the labels sit. `%||% <default>` so a bar with no explicit
+  # guide_colourbar() renders exactly as before.
+  bw <- cl$bar_width %||% m$bar_w
+  ticks_on <- cl$bar_ticks %||% TRUE
+  tick_col <- cl$bar_ticks_colour %||% "white"
+  left_lab <- identical(cl$bar_label_pos, "left")
+  lw <- if (left_lab) .mm_tw(cl$legend_labels, m$text_fs) else 0
+  x0 <- m$pad + if (left_lab) lw + m$lab_gap else 0 # bar's left edge (mm)
+  lab_x <- if (left_lab) x0 - m$lab_gap else x0 + bw + m$lab_gap
+  lab_just <- c(if (left_lab) "right" else "left", "centre")
   # guide_legend(reverse = TRUE) flips a continuous bar by reversing the gradient
   # and mirroring every value position, keeping each value paired with its label.
   revb <- isTRUE(cl$reverse_bar)
   pal <- if (revb) rev(cl$pal256) else cl$pal256
   grad <- vellum::linear_gradient(pal, x1 = 0, y1 = 0, x2 = 0, y2 = 1)
   bar <- vellum::rect_grob(
-    x = vellum::vl_unit(m$pad + m$bar_w / 2, "mm"),
+    x = vellum::vl_unit(x0 + bw / 2, "mm"),
     y = vellum::vl_unit(0.5, "npc"),
-    width = vellum::vl_unit(m$bar_w, "mm"),
+    width = vellum::vl_unit(bw, "mm"),
     height = vellum::vl_unit(1, "npc"),
     gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
   )
@@ -1442,24 +1461,31 @@ NULL
     if (revb) {
       frac <- 1 - frac
     }
-    # A white break tick reaching in from the bar's right (label-side) edge.
-    scene <- vellum::draw(
-      scene,
-      vellum::segments_grob(
-        vellum::vl_unit(m$pad + m$bar_w - .LEGEND_TICK_MM, "mm"),
-        vellum::vl_unit(frac, "npc"),
-        vellum::vl_unit(m$pad + m$bar_w, "mm"),
-        vellum::vl_unit(frac, "npc"),
-        gp = vellum::vl_gpar(col = "white", lwd = 0.8)
+    # A break tick reaching in from the bar's label-side edge.
+    if (ticks_on) {
+      tx <- if (left_lab) {
+        c(x0, x0 + .LEGEND_TICK_MM)
+      } else {
+        c(x0 + bw - .LEGEND_TICK_MM, x0 + bw)
+      }
+      scene <- vellum::draw(
+        scene,
+        vellum::segments_grob(
+          vellum::vl_unit(tx[1], "mm"),
+          vellum::vl_unit(frac, "npc"),
+          vellum::vl_unit(tx[2], "mm"),
+          vellum::vl_unit(frac, "npc"),
+          gp = vellum::vl_gpar(col = tick_col, lwd = 0.8)
+        )
       )
-    )
+    }
     scene <- vellum::draw(
       scene,
       vellum::text_grob(
         cl$legend_labels[i],
-        x = vellum::vl_unit(m$pad + m$bar_w + m$lab_gap, "mm"),
+        x = vellum::vl_unit(lab_x, "mm"),
         y = vellum::vl_unit(frac, "npc"),
-        just = c("left", "centre"),
+        just = lab_just,
         gp = txt
       )
     )
@@ -1473,7 +1499,7 @@ NULL
     scene <- vellum::draw(
       scene,
       vellum::rect_grob(
-        x = vellum::vl_unit(m$pad + m$bar_w / 2, "mm"),
+        x = vellum::vl_unit(x0 + bw / 2, "mm"),
         y = vellum::vl_unit(0.5, "npc"),
         width = vellum::vl_unit(m$key, "mm"),
         height = vellum::vl_unit(m$key, "mm"),
@@ -1484,9 +1510,9 @@ NULL
       scene,
       vellum::text_grob(
         "NA",
-        x = vellum::vl_unit(m$pad + m$bar_w + m$lab_gap, "mm"),
+        x = vellum::vl_unit(lab_x, "mm"),
         y = vellum::vl_unit(0.5, "npc"),
-        just = c("left", "centre"),
+        just = lab_just,
         gp = txt
       )
     )
@@ -1586,9 +1612,16 @@ NULL
   # which reserves a row); the gradient bar takes the remaining `null` width.
   has_na <- isTRUE(cl$na)
   na_w <- if (has_na) max(m$key, .mm_tw("NA", fs = m$text_fs)) else 0
+  # A horizontal bar's thickness is its vertical extent, so guide_colourbar()'s
+  # `barheight` sets it (mirroring `barwidth` on the vertical bar). Ticks honour
+  # the guide's on/off + colour. `barwidth` (the bar length) and top/bottom label
+  # repositioning are honoured on the default vertical colourbar.
+  bar_thick <- cl$bar_height %||% m$bar_w
+  ticks_on <- cl$bar_ticks %||% TRUE
+  tick_col <- cl$bar_ticks_colour %||% "white"
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
-    vellum::vl_unit(m$bar_w, "mm"),
+    vellum::vl_unit(bar_thick, "mm"),
     vellum::vl_unit(m$text_h + m$lab_gap, "mm")
   )
   widths <- if (has_na) {
@@ -1629,19 +1662,21 @@ NULL
   if (revb) {
     fracs <- 1 - fracs
   }
-  # White break ticks reaching up from the bar's bottom (label-side) edge.
+  # Break ticks reaching up from the bar's bottom (label-side) edge.
   for (i in seq_along(cl$legend_breaks)) {
     frac <- fracs[i]
-    scene <- vellum::draw(
-      scene,
-      vellum::segments_grob(
-        vellum::vl_unit(frac, "npc"),
-        vellum::vl_unit(0, "npc"),
-        vellum::vl_unit(frac, "npc"),
-        vellum::vl_unit(.LEGEND_TICK_MM, "mm"),
-        gp = vellum::vl_gpar(col = "white", lwd = 0.8)
+    if (ticks_on) {
+      scene <- vellum::draw(
+        scene,
+        vellum::segments_grob(
+          vellum::vl_unit(frac, "npc"),
+          vellum::vl_unit(0, "npc"),
+          vellum::vl_unit(frac, "npc"),
+          vellum::vl_unit(.LEGEND_TICK_MM, "mm"),
+          gp = vellum::vl_gpar(col = tick_col, lwd = 0.8)
+        )
       )
-    )
+    }
   }
   scene <- vellum::pop(scene)
   scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 1))

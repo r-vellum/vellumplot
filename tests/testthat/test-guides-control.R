@@ -152,3 +152,64 @@ test_that("override.aes round-trips through a spec", {
   gd <- Filter(function(s) !is.null(s@guide), q@scales)[[1]]@guide
   expect_equal(gd[["override.aes"]], list(size = 5, alpha = 1))
 })
+
+test_that("guide_colourbar() carries bar geometry + tick/label options", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+  p <- base |>
+    guides(
+      color = guide_colourbar(
+        barwidth = 8,
+        barheight = 60,
+        ticks = FALSE,
+        ticks.colour = "black",
+        label.position = "left"
+      )
+    )
+  cl <- vellumplot:::.build_panels(p)$scales$color
+  expect_equal(cl$bar_width, 8)
+  expect_equal(cl$bar_height, 60)
+  expect_false(cl$bar_ticks)
+  expect_identical(cl$bar_ticks_colour, "black")
+  expect_identical(cl$bar_label_pos, "left")
+  expect_no_error(plot_svg(p))
+  # a horizontal colour bar still renders (honours thickness + ticks)
+  expect_no_error(plot_svg(
+    base |>
+      guides(color = guide_colourbar(barheight = 6, ticks = FALSE)) |>
+      theme(legend.position = "bottom")
+  ))
+})
+
+test_that("barwidth/barheight resize the colour-bar measurement", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+  g_def <- list(kind = "color_continuous", sc = list(legend_labels = 1:5))
+  g_big <- list(
+    kind = "color_continuous",
+    sc = list(legend_labels = 1:5, bar_width = 20, bar_height = 90)
+  )
+  m <- vellumplot:::.legend_metrics(vellumplot:::.resolve_theme(
+    vellumplot:::.theme_of(base)
+  ))
+  # barheight fixes the bar length; barwidth widens the reserved column
+  expect_equal(vellumplot:::.bar_len_mm(g_big, m), 90)
+  expect_gt(
+    vellumplot:::.guide_col_width(g_big, m),
+    vellumplot:::.guide_col_width(g_def, m)
+  )
+})
+
+test_that("guide_colourbar() validates and round-trips", {
+  expect_error(guide_colourbar(barwidth = -1), "positive")
+  expect_error(guide_colourbar(barheight = c(1, 2)), "positive")
+  expect_error(guide_colourbar(label.position = "sideways"), "label.position")
+  expect_identical(guide_colorbar, guide_colourbar) # US alias
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    guides(color = guide_colourbar(barwidth = 8, ticks = FALSE))
+  gd <- Filter(function(s) !is.null(s@guide), from_spec(as_spec(p))@scales)[[
+    1
+  ]]@guide
+  expect_identical(gd$kind, "colourbar")
+  expect_equal(gd$bar_width, 8)
+  expect_false(gd$ticks)
+})

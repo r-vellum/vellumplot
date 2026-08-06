@@ -12,7 +12,16 @@ NULL
 #' @param plot A [PlotSpec].
 #' @param ... Named by aesthetic, e.g. `guides(color = "none", shape = guide_legend(reverse = TRUE))`.
 #' @param title An axis/legend title override, or `NULL` to keep the default.
-#' @param reverse Reverse the order of the legend keys (discrete legends).
+#' @param reverse Reverse the order of the legend keys / the colour bar.
+#' @param barwidth,barheight The colour bar's own width and height, in millimetres
+#'   (`guide_colourbar()`). `barheight` sets the bar's **length** on the default
+#'   vertical bar (and its thickness on a horizontal one); `barwidth` its
+#'   thickness (and the bar length on a horizontal legend). `NULL` auto-sizes.
+#' @param ticks Draw the break ticks on the colour bar? (`guide_colourbar()`,
+#'   default `TRUE`.)
+#' @param ticks.colour Colour of the break ticks (default `"white"`).
+#' @param label.position Which side of a **vertical** colour bar the labels sit,
+#'   `"right"` (default) or `"left"`.
 #' @param override.aes A named list of aesthetics to force on the legend **keys**,
 #'   independent of the plotted data --- the classic "make faint, small points
 #'   legible in the key" fix. Recognised names: `size` (mm), `alpha`,
@@ -35,6 +44,13 @@ NULL
 #' vplot(mtcars) |>
 #'   mark_point(x = wt, y = mpg, color = factor(cyl), alpha = 0.15, size = 0.6) |>
 #'   guides(color = guide_legend(override.aes = list(size = 5, alpha = 1)))
+#'
+#' # a taller, wider colour bar with left-side labels and no ticks
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = hp) |>
+#'   guides(color = guide_colourbar(
+#'     barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
+#'   ))
 #' @export
 guides <- function(plot, ...) {
   .check_plot(plot)
@@ -62,6 +78,53 @@ guide_legend <- function(title = NULL, reverse = FALSE, override.aes = NULL) {
     reverse = isTRUE(reverse),
     override.aes = .check_override_aes(override.aes)
   )
+}
+
+#' @rdname guides
+#' @export
+guide_colourbar <- function(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = TRUE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+) {
+  pos <- label.position %||% "right"
+  if (!pos %in% c("right", "left", "top", "bottom")) {
+    cli::cli_abort(
+      "{.arg label.position} must be one of {.val {c('right', 'left', 'top', 'bottom')}}."
+    )
+  }
+  list(
+    kind = "colourbar",
+    title = title,
+    bar_width = .check_bar_dim(barwidth, "barwidth"),
+    bar_height = .check_bar_dim(barheight, "barheight"),
+    ticks = isTRUE(ticks),
+    ticks_colour = ticks.colour,
+    label_position = pos,
+    reverse = isTRUE(reverse)
+  )
+}
+
+#' @rdname guides
+#' @export
+guide_colorbar <- guide_colourbar
+
+# A colourbar dimension (`barwidth` / `barheight`) in mm: NULL, or one positive
+# number.
+.check_bar_dim <- function(x, arg) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x <= 0) {
+    cli::cli_abort(
+      "{.arg {arg}} must be a single positive number (millimetres)."
+    )
+  }
+  as.numeric(x)
 }
 
 # Validate `override.aes`: NULL, or a fully-named list of aesthetic overrides.
@@ -129,6 +192,15 @@ guide_legend <- function(title = NULL, reverse = FALSE, override.aes = NULL) {
       # Carried to the key drawers (`.key_grob` / `.colour_key_grob`), which force
       # these aesthetics on the swatches only -- the marks are untouched.
       trained$override_aes <- guide[["override.aes"]]
+    }
+    # guide_colourbar(): carry the bar geometry + tick/label options onto the
+    # trained colour scale for the continuous-guide drawers to read.
+    if (identical(guide$kind, "colourbar")) {
+      trained$bar_width <- guide$bar_width
+      trained$bar_height <- guide$bar_height
+      trained$bar_ticks <- guide$ticks
+      trained$bar_ticks_colour <- guide$ticks_colour
+      trained$bar_label_pos <- guide$label_position
     }
   }
   trained
