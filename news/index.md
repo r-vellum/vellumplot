@@ -30,6 +30,16 @@
 
 ### New features
 
+- [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  (US alias
+  [`guide_colorsteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md))
+  draws a **binned** colour scale as a segmented colour bar — the bin
+  colours in order, labelled at the numeric boundaries — instead of the
+  default discrete swatches. Takes the same `barwidth` / `barheight` /
+  `ticks` / `label.position` tunables as
+  [`guide_colourbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md):
+  `scale_color_binned() |> ... guides(color = guide_coloursteps())`.
+
 - [`guide_colourbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   (and the US alias
   [`guide_colorbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md))

@@ -2,8 +2,11 @@
 
 `guides()` overrides the legend (guide) for one or more aesthetics
 without respelling the whole `scale_*()`. Pass `"none"` (or
-`guide_none()`) to hide a legend, or `guide_legend()` to tweak it
-(reverse the key order, override the title). Applies to the non-position
+`guide_none()`) to hide a legend, `guide_legend()` to tweak a keyed
+legend (reverse the key order, override the title, restyle the keys with
+`override.aes`), `guide_colourbar()` to size and style a continuous
+colour bar, or `guide_coloursteps()` to draw a **binned** colour scale
+as a segmented bar instead of swatches. Applies to the non-position
 legends (`color`/`fill`, `size`, `shape`, `alpha`, `linetype`); position
 axes are unaffected.
 
@@ -31,6 +34,26 @@ guide_colorbar(
   barwidth = NULL,
   barheight = NULL,
   ticks = TRUE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+)
+
+guide_coloursteps(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = FALSE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+)
+
+guide_colorsteps(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = FALSE,
   ticks.colour = "white",
   label.position = NULL,
   reverse = FALSE
@@ -77,8 +100,8 @@ guide_colorbar(
 
 - ticks:
 
-  Draw the break ticks on the colour bar? (`guide_colourbar()`, default
-  `TRUE`.)
+  Draw the break ticks on the colour bar? (Default `TRUE` for
+  `guide_colourbar()`, `FALSE` for the segmented `guide_coloursteps()`.)
 
 - ticks.colour:
 
@@ -121,4 +144,11 @@ vplot(mtcars) |>
   guides(color = guide_colourbar(
     barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
   ))
+
+
+# a binned colour scale as a segmented bar
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  scale_color_binned() |>
+  guides(color = guide_coloursteps())
 ```

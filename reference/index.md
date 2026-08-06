@@ -260,6 +260,8 @@ Map data values to visual properties, with trained domains and guides.
   [`guide_legend()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   [`guide_colourbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   [`guide_colorbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  [`guide_colorsteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   : Control a scale's legend
 - [`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md)
   : Resolve scales as shared or independent across panels
