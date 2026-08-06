@@ -94,7 +94,7 @@ NULL
 .guide_col_width <- function(g, m) {
   labs <- .guide_labels(g)
   lw <- .mm_tw(labs, m$text_fs)
-  body <- if (g$kind == "color_continuous") {
+  body <- if (g$kind %in% c("color_continuous", "color_steps")) {
     m$pad + .bar_w_mm(g, m) + m$lab_gap + lw
   } else {
     m$pad + .guide_key_d(g, m) + m$lab_gap + lw

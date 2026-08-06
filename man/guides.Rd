@@ -6,6 +6,8 @@
 \alias{guide_legend}
 \alias{guide_colourbar}
 \alias{guide_colorbar}
+\alias{guide_coloursteps}
+\alias{guide_colorsteps}
 \title{Control a scale's legend}
 \usage{
 guides(plot, ...)
@@ -33,6 +35,26 @@ guide_colorbar(
   label.position = NULL,
   reverse = FALSE
 )
+
+guide_coloursteps(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = FALSE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+)
+
+guide_colorsteps(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = FALSE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -56,8 +78,8 @@ drawn from the data.}
 vertical bar (and its thickness on a horizontal one); \code{barwidth} its
 thickness (and the bar length on a horizontal legend). \code{NULL} auto-sizes.}
 
-\item{ticks}{Draw the break ticks on the colour bar? (\code{guide_colourbar()},
-default \code{TRUE}.)}
+\item{ticks}{Draw the break ticks on the colour bar? (Default \code{TRUE} for
+\code{guide_colourbar()}, \code{FALSE} for the segmented \code{guide_coloursteps()}.)}
 
 \item{ticks.colour}{Colour of the break ticks (default \code{"white"}).}
 
@@ -71,9 +93,12 @@ a guide specification for use inside \code{guides()}.
 \description{
 \code{guides()} overrides the legend (guide) for one or more aesthetics without
 respelling the whole \verb{scale_*()}. Pass \code{"none"} (or \code{\link[=guide_none]{guide_none()}}) to hide a
-legend, or \code{\link[=guide_legend]{guide_legend()}} to tweak it (reverse the key order, override the
-title). Applies to the non-position legends (\code{color}/\code{fill}, \code{size}, \code{shape},
-\code{alpha}, \code{linetype}); position axes are unaffected.
+legend, \code{\link[=guide_legend]{guide_legend()}} to tweak a keyed legend (reverse the key order,
+override the title, restyle the keys with \code{override.aes}), \code{guide_colourbar()}
+to size and style a continuous colour bar, or \code{guide_coloursteps()} to draw a
+\strong{binned} colour scale as a segmented bar instead of swatches. Applies to the
+non-position legends (\code{color}/\code{fill}, \code{size}, \code{shape}, \code{alpha}, \code{linetype});
+position axes are unaffected.
 }
 \examples{
 vplot(mtcars) |>
@@ -95,4 +120,10 @@ vplot(mtcars) |>
   guides(color = guide_colourbar(
     barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
   ))
+
+# a binned colour scale as a segmented bar
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  scale_color_binned() |>
+  guides(color = guide_coloursteps())
 }

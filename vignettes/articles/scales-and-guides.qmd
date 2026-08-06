@@ -334,6 +334,17 @@ vplot(mtcars) |>
   ))
 ```
 
+A *binned* colour scale draws as discrete swatches by default;
+`guide_coloursteps()` renders it as a segmented bar instead, labelled at the bin
+boundaries (and it takes the same `barwidth` / `barheight` / `ticks` tunables).
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  scale_color_binned() |>
+  guides(color = guide_coloursteps())
+```
+
 ## Rich titles
 
 Any scale `name` (and any `labs()` title) accepts `md()`, a small markdown
