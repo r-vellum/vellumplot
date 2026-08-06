@@ -14,7 +14,12 @@ guides(plot, ...)
 
 guide_none()
 
-guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
+guide_legend(
+  title = NULL,
+  reverse = FALSE,
+  override.aes = NULL,
+  nested = FALSE
+)
 
 guide_colourbar(
   title = NULL,
@@ -73,6 +78,13 @@ legible in the key" fix. Recognised names: \code{size} (mm), \code{alpha},
 scatter of tiny translucent points. \code{NULL} (default) leaves the keys as
 drawn from the data.}
 
+\item{nested}{For a \strong{size} legend, draw the keys as concentric,
+bottom-aligned circles (a proportional-symbol / "bubble" legend) with a
+leader from each circle to its label, instead of stacked rows. Best with a
+wide size range (e.g. \code{scale_size(range = c(2, 12))}) so the circles are
+large enough to read; ignored by non-size legends. Drawn for a vertical
+legend (a horizontal one keeps the stacked keys).}
+
 \item{barwidth, barheight}{The colour bar's own width and height, in millimetres
 (\code{guide_colourbar()}). \code{barheight} sets the bar's \strong{length} on the default
 vertical bar (and its thickness on a horizontal one); \code{barwidth} its
@@ -126,4 +138,10 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp) |>
   scale_color_binned() |>
   guides(color = guide_coloursteps())
+
+# a proportional-symbol (nested-circle) size legend
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = hp) |>
+  scale_size(range = c(2, 12)) |>
+  guides(size = guide_legend(nested = TRUE))
 }

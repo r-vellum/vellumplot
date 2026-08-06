@@ -256,3 +256,23 @@ test_that("guide_coloursteps() round-trips and is graceful off a binned scale", 
       guides(color = guide_coloursteps())
   ))
 })
+
+test_that("guide_legend(nested = TRUE) draws a size scale as concentric circles", {
+  base <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, size = hp) |>
+    scale_size(range = c(2, 12))
+  p <- base |> guides(size = guide_legend(nested = TRUE))
+  cl <- vellumplot:::.build_panels(p)$scales$size
+  expect_true(isTRUE(cl$nested))
+  # routed to the bubble drawer, not the stacked size keys
+  gl <- vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales)
+  expect_identical(gl[[1]]$kind, "size_nested")
+  expect_no_error(plot_svg(p)) # vertical (nested circles)
+  expect_no_error(plot_svg(p |> theme(legend.position = "bottom"))) # horizontal (stacked fallback)
+  # round-trips; nested is off by default
+  gd <- Filter(function(s) !is.null(s@guide), from_spec(as_spec(p))@scales)[[
+    1
+  ]]@guide
+  expect_true(isTRUE(gd$nested))
+  expect_false(isTRUE(guide_legend()$nested))
+})
