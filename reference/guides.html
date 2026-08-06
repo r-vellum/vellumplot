@@ -94,7 +94,12 @@ position axes are unaffected.</p>
 <span></span>
 <span><span class="fu">guide_none</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">guide_legend</span><span class="op">(</span>title <span class="op">=</span> <span class="cn">NULL</span>, reverse <span class="op">=</span> <span class="cn">FALSE</span>, override.aes <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">guide_legend</span><span class="op">(</span></span>
+<span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reverse <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  override.aes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nested <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">guide_colourbar</span><span class="op">(</span></span>
 <span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -167,6 +172,15 @@ scatter of tiny translucent points. <code>NULL</code> (default) leaves the keys 
 drawn from the data.</p></dd>
 
 
+<dt id="arg-nested">nested<a class="anchor" aria-label="anchor" href="#arg-nested"></a></dt>
+<dd><p>For a <strong>size</strong> legend, draw the keys as concentric,
+bottom-aligned circles (a proportional-symbol / "bubble" legend) with a
+leader from each circle to its label, instead of stacked rows. Best with a
+wide size range (e.g. <code>scale_size(range = c(2, 12))</code>) so the circles are
+large enough to read; ignored by non-size legends. Drawn for a vertical
+legend (a horizontal one keeps the stacked keys).</p></dd>
+
+
 <dt id="arg-barwidth-barheight">barwidth, barheight<a class="anchor" aria-label="anchor" href="#arg-barwidth-barheight"></a></dt>
 <dd><p>The colour bar's own width and height, in millimetres
 (<code>guide_colourbar()</code>). <code>barheight</code> sets the bar's <strong>length</strong> on the default
@@ -226,6 +240,13 @@ a guide specification for use inside <code>guides()</code>.</p>
 <span class="r-in"><span>  <span class="fu"><a href="scale_fill_binned.html">scale_color_binned</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">guides</span><span class="op">(</span>color <span class="op">=</span> <span class="fu">guide_coloursteps</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="guides-5.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a proportional-symbol (nested-circle) size legend</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, size <span class="op">=</span> <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">guides</span><span class="op">(</span>size <span class="op">=</span> <span class="fu">guide_legend</span><span class="op">(</span>nested <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="guides-6.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

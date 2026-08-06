@@ -30,6 +30,12 @@
 
 ### New features
 
+- `guide_legend(nested = TRUE)` draws a **size** legend as a
+  proportional-symbol (“bubble”) legend: concentric, bottom-aligned
+  circles with a leader from each to its label, instead of stacked rows.
+  Best with a wide size range
+  (`scale_size(range = c(2, 12)) |> ... guides(size = guide_legend(nested = TRUE))`).
+
 - [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   (US alias
   [`guide_colorsteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md))

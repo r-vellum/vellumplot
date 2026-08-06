@@ -17,7 +17,12 @@ guides(plot, ...)
 
 guide_none()
 
-guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
+guide_legend(
+  title = NULL,
+  reverse = FALSE,
+  override.aes = NULL,
+  nested = FALSE
+)
 
 guide_colourbar(
   title = NULL,
@@ -90,6 +95,15 @@ guide_colorsteps(
   keys over a scatter of tiny translucent points. `NULL` (default)
   leaves the keys as drawn from the data.
 
+- nested:
+
+  For a **size** legend, draw the keys as concentric, bottom-aligned
+  circles (a proportional-symbol / "bubble" legend) with a leader from
+  each circle to its label, instead of stacked rows. Best with a wide
+  size range (e.g. `scale_size(range = c(2, 12))`) so the circles are
+  large enough to read; ignored by non-size legends. Drawn for a
+  vertical legend (a horizontal one keeps the stacked keys).
+
 - barwidth, barheight:
 
   The colour bar's own width and height, in millimetres
@@ -151,4 +165,11 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = hp) |>
   scale_color_binned() |>
   guides(color = guide_coloursteps())
+
+
+# a proportional-symbol (nested-circle) size legend
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = hp) |>
+  scale_size(range = c(2, 12)) |>
+  guides(size = guide_legend(nested = TRUE))
 ```
