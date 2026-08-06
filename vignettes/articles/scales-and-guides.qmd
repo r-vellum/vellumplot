@@ -345,6 +345,18 @@ vplot(mtcars) |>
   guides(color = guide_coloursteps())
 ```
 
+A *size* legend defaults to stacked keys; `guide_legend(nested = TRUE)` draws it
+as a proportional-symbol legend --- concentric circles sharing a baseline, each
+with a leader to its label. It reads size directly and is compact, and suits a
+wide size range so the circles are large enough to tell apart.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = hp) |>
+  scale_size(range = c(2, 12)) |>
+  guides(size = guide_legend(nested = TRUE))
+```
+
 ## Rich titles
 
 Any scale `name` (and any `labs()` title) accepts `md()`, a small markdown

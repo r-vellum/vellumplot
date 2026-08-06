@@ -25,6 +25,12 @@ NULL
 #' @param ticks.colour Colour of the break ticks (default `"white"`).
 #' @param label.position Which side of a **vertical** colour bar the labels sit,
 #'   `"right"` (default) or `"left"`.
+#' @param nested For a **size** legend, draw the keys as concentric,
+#'   bottom-aligned circles (a proportional-symbol / "bubble" legend) with a
+#'   leader from each circle to its label, instead of stacked rows. Best with a
+#'   wide size range (e.g. `scale_size(range = c(2, 12))`) so the circles are
+#'   large enough to read; ignored by non-size legends. Drawn for a vertical
+#'   legend (a horizontal one keeps the stacked keys).
 #' @param override.aes A named list of aesthetics to force on the legend **keys**,
 #'   independent of the plotted data --- the classic "make faint, small points
 #'   legible in the key" fix. Recognised names: `size` (mm), `alpha`,
@@ -60,6 +66,12 @@ NULL
 #'   mark_point(x = wt, y = mpg, color = hp) |>
 #'   scale_color_binned() |>
 #'   guides(color = guide_coloursteps())
+#'
+#' # a proportional-symbol (nested-circle) size legend
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, size = hp) |>
+#'   scale_size(range = c(2, 12)) |>
+#'   guides(size = guide_legend(nested = TRUE))
 #' @export
 guides <- function(plot, ...) {
   .check_plot(plot)
@@ -80,12 +92,18 @@ guide_none <- function() "none"
 
 #' @rdname guides
 #' @export
-guide_legend <- function(title = NULL, reverse = FALSE, override.aes = NULL) {
+guide_legend <- function(
+  title = NULL,
+  reverse = FALSE,
+  override.aes = NULL,
+  nested = FALSE
+) {
   list(
     kind = "legend",
     title = title,
     reverse = isTRUE(reverse),
-    override.aes = .check_override_aes(override.aes)
+    override.aes = .check_override_aes(override.aes),
+    nested = isTRUE(nested)
   )
 }
 
@@ -251,6 +269,12 @@ guide_colorsteps <- guide_coloursteps
       # Carried to the key drawers (`.key_grob` / `.colour_key_grob`), which force
       # these aesthetics on the swatches only -- the marks are untouched.
       trained$override_aes <- guide[["override.aes"]]
+    }
+    # guide_legend(nested = TRUE) on a size scale draws its keys as concentric,
+    # bottom-aligned circles (a proportional-symbol legend) instead of stacked
+    # rows; flagged here, re-routed to the bubble drawer in .legend_guides().
+    if (isTRUE(guide$nested)) {
+      trained$nested <- TRUE
     }
     # guide_colourbar() / guide_coloursteps(): carry the bar geometry + tick/label
     # options onto the trained colour scale for the continuous-guide drawers to

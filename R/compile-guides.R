@@ -750,7 +750,9 @@ NULL
     }
   }
   if (!is.null(scales$size) && !identical(merged, "size")) {
-    out <- c(out, list(list(kind = "size", sc = scales$size)))
+    # guide_legend(nested = TRUE) draws the size keys as concentric circles.
+    sk <- if (isTRUE(scales$size$nested)) "size_nested" else "size"
+    out <- c(out, list(list(kind = sk, sc = scales$size)))
   }
   if (!is.null(scales$shape) && !identical(merged, "shape")) {
     out <- c(out, list(list(kind = "shape", sc = scales$shape)))
@@ -931,6 +933,7 @@ NULL
       l <- sc$labels %||% sc$levels
       if (isTRUE(sc$na)) c(l, "NA") else l
     },
+    size_nested = ,
     size = {
       l <- sc$legend_labels
       if (isTRUE(sc$na)) c(l, "NA") else l
@@ -951,7 +954,7 @@ NULL
 # column so the largest key never collides with its neighbours. `points_grob`
 # sizes are radii, so a size key of radius r is 2r across.
 .guide_key_d <- function(g, m) {
-  sizes <- if (g$kind == "size") {
+  sizes <- if (g$kind %in% c("size", "size_nested")) {
     g$sc$legend_sizes
   } else if (g$kind == "merged") {
     g$sc$sizes_mm
@@ -998,6 +1001,10 @@ NULL
   if (g$kind %in% c("color_continuous", "color_steps")) {
     na <- if (isTRUE(g$sc$na)) max(m$key, m$text_h) + m$row_gap else 0
     th + .bar_len_mm(g, m) + na
+  } else if (g$kind == "size_nested") {
+    # Concentric circles share one bottom baseline, so the stack is as tall as the
+    # largest diameter, plus headroom for the top circle's label.
+    th + 2 * max(g$sc$legend_sizes) + m$text_h
   } else {
     k <- length(.guide_labels(g))
     pitch <- max(.guide_key_d(g, m), m$text_h) + m$row_gap
@@ -1132,6 +1139,7 @@ NULL
       }
       .colour_key_grob(sc$key_glyph, cols[i], m, sk, ov)
     },
+    size_nested = ,
     size = if (isTRUE(sc$na) && i > length(sc$legend_sizes)) {
       .na_key_grob(m, sk)
     } else {
@@ -1338,6 +1346,9 @@ NULL
   }
   if (g$kind == "color_steps") {
     return(.draw_guide_steps_v(scene, g, m, rt, txt, th))
+  }
+  if (g$kind == "size_nested") {
+    return(.draw_guide_bubbles_v(scene, g, m, rt, txt, th))
   }
   labs <- .guide_labels(g)
   k <- length(labs)
@@ -1610,6 +1621,82 @@ NULL
         x = vellum::vl_unit(lab_x, "mm"),
         y = vellum::vl_unit(frac, "npc"),
         just = lab_just,
+        gp = txt
+      )
+    )
+  }
+  scene <- vellum::pop(scene)
+  vellum::pop(scene)
+}
+
+# A proportional-symbol ("nested circle") size legend: the size keys drawn as
+# concentric, bottom-aligned hollow circles with a leader from each circle's top
+# to its label. Compact -- one big-circle's height rather than a stacked row per
+# break -- and reads size directly. Drawn for a vertical legend; a horizontal one
+# falls back to the stacked size keys.
+.draw_guide_bubbles_v <- function(scene, g, m, rt, txt, th) {
+  cl <- g$sc
+  sizes <- cl$legend_sizes # radii, mm
+  labs <- cl$legend_labels
+  n <- length(sizes)
+  bigr <- max(sizes)
+  h <- 2 * bigr + m$text_h # bubble-area height (mm)
+  xc <- m$pad + bigr # circle centre x (mm)
+  label_x <- m$pad + 2 * bigr + m$lab_gap # label column x (mm)
+  heights <- .c_units(
+    if (m$show_title) vellum::vl_unit(th, "mm"),
+    vellum::vl_unit(h, "mm")
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      layout = vellum::grid_layout(
+        heights = heights,
+        widths = vellum::vl_unit(1, "null")
+      )
+    )
+  )
+  row_bub <- if (m$show_title) 2L else 1L
+  if (m$show_title) {
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
+    scene <- .draw_guide_title(scene, cl$name, rt)
+    scene <- vellum::pop(scene)
+  }
+  scene <- vellum::push(scene, vellum::vl_viewport(row = row_bub, col = 1))
+  # Circles bottom-aligned (centre at radius above the baseline), largest first so
+  # the smaller outlines stay visible on top.
+  for (i in order(sizes, decreasing = TRUE)) {
+    scene <- vellum::draw(
+      scene,
+      vellum::points_grob(
+        vellum::vl_unit(xc, "mm"),
+        vellum::vl_unit(sizes[i] / h, "npc"),
+        size = vellum::vl_unit(sizes[i], "mm"),
+        shape = "circle",
+        gp = vellum::vl_gpar(fill = NA, col = "grey35", lwd = 0.7)
+      )
+    )
+  }
+  # A leader from each circle's top edge out to its label.
+  for (i in seq_len(n)) {
+    top <- 2 * sizes[i] / h
+    scene <- vellum::draw(
+      scene,
+      vellum::segments_grob(
+        vellum::vl_unit(xc, "mm"),
+        vellum::vl_unit(top, "npc"),
+        vellum::vl_unit(label_x - m$lab_gap / 2, "mm"),
+        vellum::vl_unit(top, "npc"),
+        gp = vellum::vl_gpar(col = "grey70", lwd = 0.4)
+      )
+    )
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        labs[i],
+        x = vellum::vl_unit(label_x, "mm"),
+        y = vellum::vl_unit(top, "npc"),
+        just = c("left", "centre"),
         gp = txt
       )
     )
