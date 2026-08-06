@@ -222,3 +222,32 @@ test_that("statistical marks render", {
   )
   expect_gt(file.info(f2)$size, 0)
 })
+
+test_that("an empty facet cell does not crash an after_stat mark (renders blank)", {
+  # facet_grid with a missing a x b combination leaves an empty cell; the stat
+  # short-circuits to an empty layer, and its after_stat channels (count/n/...)
+  # must not be evaluated against the column-less frame.
+  set.seed(1)
+  d <- data.frame(
+    x = rnorm(60),
+    y = rnorm(60),
+    a = rep(c("p", "q"), 30),
+    b = rep(c("m", "n", "o"), each = 20)
+  )
+  d <- d[!(d$a == "p" & d$b == "o"), ] # drop the p x o cell
+  expect_no_error(plot_svg(
+    vplot(d) |> mark_bin2d(x = x, y = y) |> facet_grid(a ~ b)
+  ))
+  expect_no_error(plot_svg(
+    vplot(d) |> mark_count(x = x, y = y) |> facet_grid(a ~ b)
+  ))
+  expect_no_error(plot_svg(
+    vplot(d) |> mark_hex(x = x, y = y) |> facet_grid(a ~ b)
+  ))
+  # an explicit after_stat() on a histogram in an empty cell is fine too
+  expect_no_error(plot_svg(
+    vplot(d) |>
+      mark_histogram(x = x, y = after_stat(density)) |>
+      facet_grid(a ~ b)
+  ))
+})
