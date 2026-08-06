@@ -173,9 +173,9 @@ guide_colorsteps <- guide_coloursteps
   reverse
 ) {
   pos <- label.position %||% "right"
-  if (!pos %in% c("right", "left", "top", "bottom")) {
+  if (!pos %in% c("right", "left")) {
     cli::cli_abort(
-      "{.arg label.position} must be one of {.val {c('right', 'left', 'top', 'bottom')}}."
+      "{.arg label.position} must be {.val right} or {.val left}."
     )
   }
   list(
@@ -288,6 +288,13 @@ guide_colorsteps <- guide_coloursteps
       trained$bar_label_pos <- guide$label_position
       if (identical(guide$kind, "coloursteps")) {
         trained$stepped <- TRUE
+        # `.reverse_guide()` above already flipped the bin colours (the `binned`
+        # branch) but deliberately NOT `breaks` (they would desync a swatch
+        # legend). The stepped bar pairs each break with a segment edge, so flip
+        # the breaks too here to keep colours and boundary labels in step.
+        if (isTRUE(guide$reverse)) {
+          trained$breaks <- rev(trained$breaks)
+        }
       }
     }
   }

@@ -276,3 +276,40 @@ test_that("guide_legend(nested = TRUE) draws a size scale as concentric circles"
   expect_true(isTRUE(gd$nested))
   expect_false(isTRUE(guide_legend()$nested))
 })
+
+test_that("guide fixes: coloursteps reverse, horizontal measurement, NA, label.position", {
+  b <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned()
+  # coloursteps(reverse=TRUE) flips colours AND breaks together (no desync)
+  cl0 <- vellumplot:::.build_panels(b)$scales$color
+  cl <- vellumplot:::.build_panels(
+    b |> guides(color = guide_coloursteps(reverse = TRUE))
+  )$scales$color
+  expect_identical(cl$colors, rev(cl0$colors))
+  expect_identical(cl$breaks, rev(cl0$breaks))
+  # horizontal coloursteps + horizontal colourbar(barheight/barwidth) render
+  expect_no_error(plot_svg(
+    b |>
+      guides(color = guide_coloursteps()) |>
+      theme(legend.position = "bottom")
+  ))
+  cbar <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+  expect_no_error(plot_svg(
+    cbar |>
+      guides(color = guide_colourbar(barheight = 12, barwidth = 80)) |>
+      theme(legend.position = "bottom")
+  ))
+  # a binned colour with NA renders under coloursteps (NA swatch), v + h
+  d <- mtcars
+  d$hp[c(1, 5, 10)] <- NA
+  bn <- vplot(d) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned() |>
+    guides(color = guide_coloursteps())
+  expect_no_error(plot_svg(bn))
+  expect_no_error(plot_svg(bn |> theme(legend.position = "bottom")))
+  # label.position is right/left only (top/bottom never worked)
+  expect_error(guide_colourbar(label.position = "top"), "right.*left|left")
+  expect_no_error(guide_colourbar(label.position = "left"))
+})

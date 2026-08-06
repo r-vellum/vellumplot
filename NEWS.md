@@ -3,6 +3,15 @@
 ## Bug fixes
 
 
+* **Colour-guide fixes** (all in the recently-added `guide_colourbar()` /
+  `guide_coloursteps()`): `guide_coloursteps(reverse = TRUE)` no longer mislabels its
+  segments (colours and boundary labels now flip together); a **horizontal**
+  (`legend.position = "top"`/`"bottom"`) stepped bar or `guide_colourbar(barheight =)`
+  no longer overflows its reserved row; `barwidth` now sets the bar length on a
+  horizontal legend; a binned colour with `NA` shows its NA swatch under
+  `guide_coloursteps()`; and `label.position` is validated as `"right"`/`"left"` (the
+  only positions a vertical bar supports).
+
 * **An empty facet cell no longer crashes a mark with an `after_stat()` channel.**
   A `facet_grid()` layout with an unpopulated cell (or any empty stat input) drawing
   an aggregating mark (`mark_bin2d()`, `mark_count()`, `mark_hex()`, `mark_contour()`,
