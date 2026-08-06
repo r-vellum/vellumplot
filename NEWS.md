@@ -3,6 +3,12 @@
 ## Bug fixes
 
 
+* Clearer errors on a few edge cases: `inset()` validates its 0-1 fractional
+  bounds (rejecting inverted / out-of-range coordinates that rendered a broken
+  inset); `repeat_()` with an empty field vector, `vgraph()` on an empty graph,
+  and a chord diagram with a negative flow now each report the actual problem
+  instead of leaking an internal message.
+
 * **`mark_raster()` fails clearly on input it cannot draw.** A categorical x/y
   aborted with an opaque `'min' not meaningful for factors`, and an
   irregularly-spaced grid (e.g. x = 1, 2, 4) rendered with every cell silently

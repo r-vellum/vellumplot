@@ -1,3 +1,8 @@
+# Symbols that appear unquoted inside `after_stat()` (stat-output columns) and the
+# `.data` pronoun in `vwaffle()` -- non-standard evaluation R CMD check cannot see
+# through. Declared here so it does not flag them as undefined globals.
+utils::globalVariables(c("n", "lab", ".olab", ".data"))
+
 .onLoad <- function(libname, pkgname) {
   # Register S7 classes/methods (the as_vellum_scene method on PlotSpec, the
   # print externals) so dispatch works once the package is installed.

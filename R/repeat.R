@@ -36,6 +36,13 @@ repeat_ <- function(plot, ..., ncol = NULL, nrow = NULL) {
     )
   }
   n <- length(fields[[1]])
+  # A zero-length field vector would build no panels and leak `concat`'s "provide
+  # at least one plot" error, which never mentions `repeat_`.
+  if (n == 0L) {
+    cli::cli_abort(
+      "{.fn repeat_} needs at least one value to repeat over; the field vector is empty."
+    )
+  }
 
   # Set each repeated aesthetic on every layer (adding it when absent, e.g. the
   # canonical `mark_point(y = mpg)` then repeat `x`, or re-pointing it when

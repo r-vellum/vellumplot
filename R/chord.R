@@ -344,6 +344,14 @@ mark_chord <- function(
     cn <- nm[[2]] %||% as.character(seq_len(ncol(data)))
     grid <- expand.grid(i = seq_len(nrow(data)), j = seq_len(ncol(data)))
     v <- data[cbind(grid$i, grid$j)]
+    # A negative flow is invalid; error (as the data-frame path does) rather than
+    # silently dropping it. Zero / NA cells are simply absent flows, so drop them.
+    if (any(v < 0, na.rm = TRUE)) {
+      cli::cli_abort(
+        "Chord {.arg data} values must be finite and non-negative.",
+        call = call
+      )
+    }
     keep <- is.finite(v) & v > 0
     return(data.frame(
       from = rn[grid$i[keep]],
