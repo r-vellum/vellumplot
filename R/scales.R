@@ -191,10 +191,12 @@ NULL
 #'   or `NULL` to compute them.
 #' @param name Axis title, or `NULL` to derive from the encoding.
 #' @param expand Axis padding beyond the data. `NULL` (default) keeps the usual
-#'   5% breathing room; a numeric `c(mult, add)` sets a proportion of the data
-#'   range plus a constant in data units (either may be `0`), applied to both
-#'   ends. Use `expand = c(0, 0)` to clamp the axis exactly to the data (e.g. a
-#'   bar chart's baseline), or `expand = c(0.1, 0)` for a wider margin.
+#'   5% breathing room; a numeric `c(mult, add)` sets a proportion of the range
+#'   plus a constant (either may be `0`), applied to both ends. Both act in the
+#'   scale's *transformed* space, so on a `trans = "log10"` axis `add` is in log
+#'   units (matching how the axis is drawn). Use `expand = c(0, 0)` to clamp the
+#'   axis exactly to the data (e.g. a bar chart's baseline), or `expand = c(0.1,
+#'   0)` for a wider margin.
 #' @param sec.axis A secondary axis from [sec_axis()] / [dup_axis()], drawn on
 #'   the opposite edge, or `NULL` for none. Continuous Cartesian plots only (see
 #'   [sec_axis()] for the current limitations).

@@ -688,8 +688,9 @@ NULL
 #'
 #' @param plot A [PlotSpec].
 #' @param spec A spec list from `as_spec()`.
-#' @param data Optional data frame to attach when `spec` stores its data by
-#'   reference. Ignored when the spec inlines its data.
+#' @param data Optional data frame to render the spec against. Required when the
+#'   spec stores its data by reference; for a spec that inlines its data (or has
+#'   no data block), a supplied `data` takes precedence over the inlined copy.
 #' @param env The environment channel expressions are re-quoted in (default the
 #'   global environment).
 #' @return `as_spec()` returns a named list; `from_spec()` returns a [PlotSpec].

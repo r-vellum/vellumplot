@@ -502,3 +502,18 @@ test_that("mark_sf_label() requires sf data", {
     "requires an .*sf"
   )
 })
+
+test_that("mark_sf_label() drops empty-geometry features and errors without a label", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  # an empty geometry has no interior point -> feature is dropped, not placed at NA
+  nc2 <- nc
+  sf::st_geometry(nc2)[[2]] <- sf::st_polygon()
+  p <- vplot(nc2) |> mark_sf(fill = AREA) |> mark_sf_label(label = NAME)
+  L <- .build_panels(.project_sf_data(p)$spec)$panels[[1]]$resolved[[2]]
+  expect_equal(L$n, nrow(nc) - 1L)
+  expect_false(any(is.na(L$values$x)))
+  expect_no_error(plot_svg(p))
+  # a clear error when no label is mapped
+  expect_error(plot_svg(vplot(nc) |> mark_sf_label()), "needs a .*label")
+})

@@ -93,3 +93,19 @@ test_that("scatter-text repel is unchanged (still avoids marks)", {
       mark_text(x = wt, y = mpg, label = rownames(mtcars), repel = TRUE)
   ))
 })
+
+test_that("mark_series_label() errors clearly on a discrete x", {
+  d <- data.frame(
+    x = rep(c("a", "b", "c"), 3),
+    y = 1:9,
+    g = rep(c("s1", "s2", "s3"), each = 3)
+  )
+  expect_error(
+    plot_svg(
+      vplot(d) |>
+        mark_line(x = x, y = y, color = g) |>
+        mark_series_label(x = x, y = y, color = g)
+    ),
+    "continuous"
+  )
+})

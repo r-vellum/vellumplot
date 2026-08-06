@@ -14,8 +14,9 @@ from_spec(spec, data = NULL, env = globalenv())
 
 \item{spec}{A spec list from \code{as_spec()}.}
 
-\item{data}{Optional data frame to attach when \code{spec} stores its data by
-reference. Ignored when the spec inlines its data.}
+\item{data}{Optional data frame to render the spec against. Required when the
+spec stores its data by reference; for a spec that inlines its data (or has
+no data block), a supplied \code{data} takes precedence over the inlined copy.}
 
 \item{env}{The environment channel expressions are re-quoted in (default the
 global environment).}

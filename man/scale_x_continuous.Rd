@@ -51,10 +51,11 @@ or \code{NULL} to compute them.}
 \item{name}{Axis title, or \code{NULL} to derive from the encoding.}
 
 \item{expand}{Axis padding beyond the data. \code{NULL} (default) keeps the usual
-5\% breathing room; a numeric \code{c(mult, add)} sets a proportion of the data
-range plus a constant in data units (either may be \code{0}), applied to both
-ends. Use \code{expand = c(0, 0)} to clamp the axis exactly to the data (e.g. a
-bar chart's baseline), or \code{expand = c(0.1, 0)} for a wider margin.}
+5\% breathing room; a numeric \code{c(mult, add)} sets a proportion of the range
+plus a constant (either may be \code{0}), applied to both ends. Both act in the
+scale's \emph{transformed} space, so on a \code{trans = "log10"} axis \code{add} is in log
+units (matching how the axis is drawn). Use \code{expand = c(0, 0)} to clamp the
+axis exactly to the data (e.g. a bar chart's baseline), or \code{expand = c(0.1, 0)} for a wider margin.}
 
 \item{sec.axis}{A secondary axis from \code{\link[=sec_axis]{sec_axis()}} / \code{\link[=dup_axis]{dup_axis()}}, drawn on
 the opposite edge, or \code{NULL} for none. Continuous Cartesian plots only (see
