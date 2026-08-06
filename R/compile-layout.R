@@ -177,8 +177,10 @@ NULL
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   h <- 0
   for (g in guides) {
-    gh <- if (g$kind == "color_continuous") {
-      th + m$bar_w + m$text_h + m$lab_gap
+    gh <- if (g$kind %in% c("color_continuous", "color_steps")) {
+      # A horizontal colour bar / stepped bar: title + bar thickness
+      # (guide_colourbar(barheight=) or the theme default) + the label row.
+      th + (g$sc$bar_height %||% m$bar_w) + m$text_h + m$lab_gap
     } else {
       th + max(.guide_key_d(g, m), m$text_h) + m$row_gap
     }

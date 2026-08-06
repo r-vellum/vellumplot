@@ -1027,9 +1027,12 @@ NULL
     } else {
       0
     }
+    # On a horizontal legend the bar length is `barwidth`; without one it auto-
+    # sizes so the boundary labels never touch.
     body <- max(
       .LEGEND_MIN_BAR_MM,
-      sum(vapply(labs, .mm_tw, 0, fs = m$text_fs) + m$lab_gap)
+      g$sc$bar_width %||%
+        sum(vapply(labs, .mm_tw, 0, fs = m$text_fs) + m$lab_gap)
     ) +
       na
   } else {
@@ -1555,9 +1558,12 @@ NULL
   brk <- if (revb) rev(cl$breaks) else cl$breaks
   blabs <- format(brk, trim = TRUE)
   n <- length(cols)
+  has_na <- isTRUE(cl$na)
+  na_h <- max(m$key, m$text_h) + m$row_gap
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
-    vellum::vl_unit(1, "null")
+    vellum::vl_unit(1, "null"),
+    if (has_na) vellum::vl_unit(na_h, "mm")
   )
   scene <- vellum::push(
     scene,
@@ -1626,6 +1632,34 @@ NULL
     )
   }
   scene <- vellum::pop(scene)
+  if (has_na) {
+    # A grey NA swatch below the bar, mirroring the smooth colour bar.
+    scene <- vellum::push(
+      scene,
+      vellum::vl_viewport(row = row_bar + 1L, col = 1)
+    )
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = vellum::vl_unit(x0 + bw / 2, "mm"),
+        y = vellum::vl_unit(0.5, "npc"),
+        width = vellum::vl_unit(m$key, "mm"),
+        height = vellum::vl_unit(m$key, "mm"),
+        gp = vellum::vl_gpar(fill = cl$na_value, col = NA)
+      )
+    )
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        "NA",
+        x = vellum::vl_unit(lab_x, "mm"),
+        y = vellum::vl_unit(0.5, "npc"),
+        just = lab_just,
+        gp = txt
+      )
+    )
+    scene <- vellum::pop(scene)
+  }
   vellum::pop(scene)
 }
 
@@ -1932,17 +1966,27 @@ NULL
   bar_thick <- cl$bar_height %||% m$bar_w
   ticks_on <- cl$bar_ticks %||% FALSE
   tick_col <- cl$bar_ticks_colour %||% "white"
+  has_na <- isTRUE(cl$na)
+  na_w <- if (has_na) max(m$key, .mm_tw("NA", fs = m$text_fs)) else 0
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
     vellum::vl_unit(bar_thick, "mm"),
     vellum::vl_unit(m$text_h + m$lab_gap, "mm")
   )
+  widths <- if (has_na) {
+    .c_units(
+      vellum::vl_unit(1, "null"),
+      vellum::vl_unit(m$spacing + na_w, "mm")
+    )
+  } else {
+    vellum::vl_unit(1, "null")
+  }
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(
       layout = vellum::grid_layout(
         heights = heights,
-        widths = vellum::vl_unit(1, "null")
+        widths = widths
       )
     )
   )
@@ -2000,6 +2044,33 @@ NULL
     )
   }
   scene <- vellum::pop(scene)
+  if (has_na) {
+    cx <- vellum::vl_unit(m$spacing + m$key / 2, "mm")
+    scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 2))
+    scene <- vellum::draw(
+      scene,
+      vellum::rect_grob(
+        x = cx,
+        y = vellum::vl_unit(0.5, "npc"),
+        width = vellum::vl_unit(m$key, "mm"),
+        height = vellum::vl_unit(m$key, "mm"),
+        gp = vellum::vl_gpar(fill = cl$na_value, col = NA)
+      )
+    )
+    scene <- vellum::pop(scene)
+    scene <- vellum::push(scene, vellum::vl_viewport(row = off + 2L, col = 2))
+    scene <- vellum::draw(
+      scene,
+      vellum::text_grob(
+        "NA",
+        x = cx,
+        y = vellum::vl_unit(0.5, "npc"),
+        just = c("centre", "centre"),
+        gp = txt
+      )
+    )
+    scene <- vellum::pop(scene)
+  }
   vellum::pop(scene)
 }
 
