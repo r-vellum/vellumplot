@@ -202,3 +202,39 @@ test_that("marginal distributions round-trip with their field types intact", {
   # an unspecified field falls back to the MarginalSpec default, not a NULL
   expect_equal(m@adjust, 1)
 })
+
+test_that("interactivity/animation are refused (not silently dropped) by as_spec()", {
+  d <- data.frame(x = 1:6, y = 1:6, g = rep(c("a", "b"), 3))
+  base <- vplot(d) |> mark_point(x = x, y = y)
+  expect_error(
+    as_spec(base |> select_point("s")),
+    class = "vellumplot_unserializable"
+  )
+  expect_error(
+    as_spec(base |> select_point("s") |> filter_by("s")),
+    class = "vellumplot_unserializable"
+  )
+  expect_error(
+    as_spec(base |> transition_states(g)),
+    class = "vellumplot_unserializable"
+  )
+  expect_error(
+    as_spec(base |> inspect_source()),
+    class = "vellumplot_unserializable"
+  )
+  # a plain plot still round-trips
+  expect_no_error(from_spec(as_spec(base)))
+})
+
+test_that("ordered factors and POSIXct time zones survive a round-trip", {
+  d <- data.frame(
+    v = ordered(c("lo", "hi", "lo"), levels = c("lo", "hi")),
+    t = as.POSIXct("2020-06-01 12:00:00", tz = "America/New_York"),
+    y = 1:3
+  )
+  q <- from_spec(as_spec(vplot(d) |> mark_point(x = v, y = y)))
+  expect_true(is.ordered(q@data$v)) # ordering preserved (ordinal, not nominal)
+  expect_identical(levels(q@data$v), c("lo", "hi"))
+  expect_identical(attr(q@data$t, "tzone"), "America/New_York") # display zone kept
+  expect_equal(as.numeric(q@data$t), as.numeric(d$t)) # same instant
+})

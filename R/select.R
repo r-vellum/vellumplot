@@ -406,10 +406,16 @@ interaction_model.default <- function(x) {
       if (is.null(cnd)) {
         next
       }
-      fe <- if (!is.null(cnd$if_false)) {
+      # `if_false` is a quosure when authored (`.condition_channel`), but a
+      # deserialized condition (`.channel_from_ir`) keeps a plain constant as-is;
+      # unwrap only the quosure form so `interaction_model()` on a round-tripped
+      # plot does not abort on `quo_get_expr(<string>)`.
+      fe <- if (is.null(cnd$if_false)) {
+        NULL
+      } else if (rlang::is_quosure(cnd$if_false)) {
         rlang::quo_get_expr(cnd$if_false)
       } else {
-        NULL
+        cnd$if_false
       }
       # A constant `if_false` is one that references no data column, i.e. its
       # expression has no free variables: a bare literal, but also a negative
