@@ -15,6 +15,26 @@ guides(plot, ...)
 guide_none()
 
 guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
+
+guide_colourbar(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = TRUE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+)
+
+guide_colorbar(
+  title = NULL,
+  barwidth = NULL,
+  barheight = NULL,
+  ticks = TRUE,
+  ticks.colour = "white",
+  label.position = NULL,
+  reverse = FALSE
+)
 ```
 
 ## Arguments
@@ -35,7 +55,7 @@ guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
 
 - reverse:
 
-  Reverse the order of the legend keys (discrete legends).
+  Reverse the order of the legend keys / the colour bar.
 
 - override.aes:
 
@@ -46,6 +66,28 @@ guide_legend(title = NULL, reverse = FALSE, override.aes = NULL)
   example `override.aes = list(size = 5, alpha = 1)` draws big, opaque
   keys over a scatter of tiny translucent points. `NULL` (default)
   leaves the keys as drawn from the data.
+
+- barwidth, barheight:
+
+  The colour bar's own width and height, in millimetres
+  (`guide_colourbar()`). `barheight` sets the bar's **length** on the
+  default vertical bar (and its thickness on a horizontal one);
+  `barwidth` its thickness (and the bar length on a horizontal legend).
+  `NULL` auto-sizes.
+
+- ticks:
+
+  Draw the break ticks on the colour bar? (`guide_colourbar()`, default
+  `TRUE`.)
+
+- ticks.colour:
+
+  Colour of the break ticks (default `"white"`).
+
+- label.position:
+
+  Which side of a **vertical** colour bar the labels sit, `"right"`
+  (default) or `"left"`.
 
 ## Value
 
@@ -71,4 +113,12 @@ vplot(mtcars) |>
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = factor(cyl), alpha = 0.15, size = 0.6) |>
   guides(color = guide_legend(override.aes = list(size = 5, alpha = 1)))
+
+
+# a taller, wider colour bar with left-side labels and no ticks
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  guides(color = guide_colourbar(
+    barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
+  ))
 ```

@@ -30,6 +30,17 @@
 
 ### New features
 
+- [`guide_colourbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  (and the US alias
+  [`guide_colorbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md))
+  make the continuous colour bar tunable: `barwidth` / `barheight` (bar
+  size in mm), `ticks` / `ticks.colour` (the break ticks), and
+  `label.position` (`"right"` / `"left"` labels on a vertical bar), on
+  top of the `title` / `reverse` that
+  [`guide_legend()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  already offered for a colour bar. For example
+  `guides(color = guide_colourbar(barheight = 60, ticks = FALSE))`.
+
 - [`mark_sf_label()`](https://r-vellum.github.io/vellumplot/reference/mark_sf_label.md)
   labels each `sf` feature at its **interior point**
   ([`sf::st_point_on_surface()`](https://r-spatial.github.io/sf/reference/geos_unary.html),
