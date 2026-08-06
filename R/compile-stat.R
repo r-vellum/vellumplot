@@ -71,8 +71,18 @@ NULL
 # precedence over the stat's default y.
 .merge_stat <- function(L, sdf) {
   after_names <- names(L$after)
+  # An empty stat output (an unpopulated facet cell short-circuits `.apply_stat`
+  # with a column-less `data.frame()`) has none of the columns the `after_stat()`
+  # channels reference, so evaluating them would abort with "object '<col>' not
+  # found". A zero-row layer draws nothing, so a zero-length value is correct --
+  # skip the evaluation and let the empty layer render as a blank panel.
+  empty <- nrow(sdf) == 0L
   for (nm in after_names) {
-    L$values[[nm]] <- rlang::eval_tidy(L$after[[nm]], data = sdf)
+    L$values[[nm]] <- if (empty) {
+      logical(0)
+    } else {
+      rlang::eval_tidy(L$after[[nm]], data = sdf)
+    }
     L$types[[nm]] <- .infer_type(L$values[[nm]])
   }
   # An `after_stat()` bound to x takes precedence over the stat's default x, just

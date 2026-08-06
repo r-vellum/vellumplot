@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+
+* **An empty facet cell no longer crashes a mark with an `after_stat()` channel.**
+  A `facet_grid()` layout with an unpopulated cell (or any empty stat input) drawing
+  an aggregating mark (`mark_bin2d()`, `mark_count()`, `mark_hex()`, `mark_contour()`,
+  a `mark_histogram(y = after_stat(density))`, ...) aborted the whole render with
+  `object 'count' not found`; the empty layer now renders as a blank panel.
 * **`mcp_serve()` now handles more than one request per process.** The stdin
   connection was left unopened, so each `readLines()` reopened it and the loop
   saw end-of-file after the first line — a real MCP client died right after
