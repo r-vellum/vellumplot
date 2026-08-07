@@ -1,5 +1,24 @@
 # vellumplot 0.9.0.9000 (development version)
 
+## Animation
+
+* **`ease_aes()` can now ease each aesthetic on its own curve.** Alongside the
+  positional `ease`, it takes `position`, `color` (or `colour`), `size` and
+  `alpha`, each naming an easing of its own; anything left unset falls back to
+  `ease`, so an existing `ease_aes("cubic-in-out")` renders exactly as before.
+
+  ```r
+  # Bars settle into place gently while the fill crossfades at a steady rate.
+  ease_aes("cubic-in-out", color = "linear")
+  ```
+
+  The classes cover: `position` — x/y and every coordinate-space quantity (bar
+  widths, angles, path vertices, rotation); `color` — colour and fill; `size` —
+  size, linewidth and radii; `alpha` — opacity, **including the fade of marks
+  entering or leaving a state**, so easing `alpha` retimes entrances too.
+  `position` also decides *when* discrete attributes flip, since those snap at
+  the halfway point. x and y share one curve and cannot be split.
+
 ## Bug fixes
 
 

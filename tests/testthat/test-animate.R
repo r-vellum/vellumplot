@@ -37,6 +37,145 @@ test_that("ease_aes() sets and validates the easing", {
   expect_error(ease_aes(p, "cubic-sideways"), "Unknown easing")
 })
 
+test_that("ease_aes() takes per-class easings and validates each", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  e <- ease_aes(p, "cubic-in-out", color = "linear", size = "sine-out")@ease
+  expect_equal(e@default, "cubic-in-out")
+  expect_equal(e@color, "linear")
+  expect_equal(e@size, "sine-out")
+  # Unset classes stay NA and resolve to the default.
+  expect_true(is.na(e@position))
+  expect_true(is.na(e@alpha))
+  cls <- vellumplot:::.ease_classes(e)
+  expect_equal(cls$position, "cubic-in-out")
+  expect_equal(cls$alpha, "cubic-in-out")
+  expect_equal(cls$color, "linear")
+  expect_error(ease_aes(p, "linear", size = "wobble"), "Unknown easing")
+})
+
+test_that("ease_aes() accepts colour as an alias but not both spellings", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_equal(ease_aes(p, colour = "sine-in")@ease@color, "sine-in")
+  expect_error(ease_aes(p, color = "linear", colour = "linear"), "not both")
+})
+
+test_that(".ease_classes() falls back to the default for every class", {
+  cls <- vellumplot:::.ease_classes(EaseSpec(default = "bounce-out"))
+  expect_equal(unname(unlist(cls)), rep("bounce-out", 4))
+  # A NULL spec is the un-eased plot: linear everywhere.
+  expect_equal(
+    unname(unlist(vellumplot:::.ease_classes(NULL))),
+    rep("linear", 4)
+  )
+})
+
+test_that(".anim_schedule emits one fraction vector per class", {
+  # A single easing name (the pre-per-aesthetic call form) must give four
+  # identical schedules -- that is what keeps existing animations unchanged.
+  one <- vellumplot:::.anim_schedule(
+    3,
+    30,
+    "cubic-in-out",
+    c(1, 1),
+    1,
+    wrap = FALSE
+  )
+  expect_equal(one$frac_col, one$frac)
+  expect_equal(one$frac_size, one$frac)
+  expect_equal(one$frac_alpha, one$frac)
+
+  # Split curves: position eased, everything else linear. Same segments and same
+  # endpoints, different interiors.
+  split <- vellumplot:::.anim_schedule(
+    3,
+    30,
+    list(
+      position = "cubic-in-out",
+      color = "linear",
+      size = "linear",
+      alpha = "linear"
+    ),
+    c(1, 1),
+    1,
+    wrap = FALSE
+  )
+  expect_equal(split$seg, one$seg)
+  expect_equal(split$frac, one$frac) # position keeps the cubic curve
+  expect_false(isTRUE(all.equal(split$frac_col, split$frac)))
+  expect_equal(range(split$frac_col), c(0, 1))
+  # A cubic-in-out lags a linear curve over the first half of a transition, so
+  # the difference has a direction, not just a magnitude.
+  mid <- split$frac_col > 0 & split$frac_col < 0.5
+  expect_true(all(split$frac[mid] <= split$frac_col[mid] + 1e-9))
+})
+
+test_that("animate() carries per-class easings onto the animation", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    transition_states(cyl) |>
+    ease_aes("cubic-in-out", alpha = "linear")
+  a <- animate(p, nframes = 6, fps = 10)
+  expect_equal(vellumplot:::.anim_easings(a)$position, "cubic-in-out")
+  expect_equal(vellumplot:::.anim_easings(a)$alpha, "linear")
+})
+
+test_that("an animation with no easing_aes resolves to a single curve", {
+  # `easing_aes` is empty on a hand-built animation (and on any object made
+  # before per-class easing existed); every class falls back to `easing`.
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    transition_states(cyl)
+  a <- animate(p, nframes = 4, fps = 10)
+  a@easing <- "sine-in"
+  a@easing_aes <- list()
+  expect_equal(unname(unlist(vellumplot:::.anim_easings(a))), rep("sine-in", 4))
+})
+
+test_that("a per-class easing changes the rendered frames", {
+  # End to end, through the engine. The fixture matters: every state holds the
+  # same four bars, so the marks *match* across keyframes and genuinely tween.
+  # (With a differing row set per state nothing matches, the tween only snaps at
+  # the halfway point, and every monotone curve crosses that at the same frame --
+  # so the output would be identical no matter how it was eased.)
+  d <- data.frame(
+    g = rep(letters[1:4], 3),
+    t = rep(1:3, each = 4),
+    v = c(1, 3, 2, 4, 4, 1, 3, 2, 2, 4, 1, 3)
+  )
+  base <- vplot(d) |>
+    mark_bar(x = g, y = v, fill = v) |>
+    transition_states(t, state_length = 0)
+  write_gif <- function(p) {
+    f <- withr::local_tempfile(fileext = ".gif", .local_envir = parent.frame())
+    anim_save(f, animate(p, nframes = 20, fps = 10))
+    readBin(f, "raw", 5e6)
+  }
+  uniform <- write_gif(ease_aes(base, "cubic-in-out"))
+  # Bar heights are positional and the fill is a continuous colour, so each of
+  # these two classes moves independently of the other.
+  expect_false(identical(
+    uniform,
+    write_gif(ease_aes(base, "cubic-in-out", position = "linear"))
+  ))
+  expect_false(identical(
+    uniform,
+    write_gif(ease_aes(base, "cubic-in-out", color = "linear"))
+  ))
+  # Back-compat: spelling out the same curve for all four classes must render
+  # byte-identically to the single-curve form.
+  expect_identical(
+    uniform,
+    write_gif(ease_aes(
+      base,
+      "cubic-in-out",
+      position = "cubic-in-out",
+      color = "cubic-in-out",
+      size = "cubic-in-out",
+      alpha = "cubic-in-out"
+    ))
+  )
+})
+
 test_that("easing functions hit their endpoints and stay monotone", {
   for (e in c(
     "linear",

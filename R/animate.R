@@ -133,12 +133,30 @@ transition_reveal <- function(plot, along) {
 #'
 #' `ease_aes()` chooses the easing function that shapes how the interpolation
 #' fraction moves through each transition — e.g. `"cubic-in-out"` starts and ends
-#' gently. Applies to every interpolated aesthetic.
+#' gently. By default it applies to every interpolated aesthetic; the
+#' `position`/`color`/`size`/`alpha` arguments override it for one class each, so
+#' marks can glide into place on a cubic curve while their colour crossfades
+#' evenly.
 #'
 #' @param plot A [PlotSpec] carrying a [transition_states()].
 #' @param ease An easing name: `"linear"`, or a family
 #'   (`quad`/`cubic`/`quart`/`quint`/`sine`/`expo`/`circ`/`back`/`elastic`/`bounce`)
 #'   with a direction suffix (`-in`, `-out`, `-in-out`), e.g. `"cubic-in-out"`.
+#'   Used for any class not given its own easing below.
+#' @param position,color,size,alpha Optional per-class easings, named the same way
+#'   as `ease`. `NULL` (the default) means "use `ease`". Each covers one class of
+#'   drawn property:
+#'
+#'   * `position` — x and y, and every other coordinate-space quantity (bar
+#'     widths, angles, path vertices, text rotation). It also decides *when*
+#'     discrete attributes flip, since those snap at the halfway point.
+#'   * `color` — `color` and `fill`, including per-element fills.
+#'   * `size` — `size`, `linewidth`, and radii.
+#'   * `alpha` — opacity, **and the fade of marks entering or leaving** a state.
+#'
+#'   `position` covers x and y together: the engine has a single positional
+#'   curve, so the two axes cannot be eased apart.
+#' @param colour An alias for `color`; supplying both is an error.
 #' @return The modified [PlotSpec].
 #' @seealso [transition_states()], [animate()]
 #' @examples
@@ -146,13 +164,65 @@ transition_reveal <- function(plot, along) {
 #'   mark_point(x = wt, y = mpg) |>
 #'   transition_states(cyl) |>
 #'   ease_aes("cubic-in-out")
+#'
+#' # Marks settle into place gently, but the colour crossfade stays even.
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = factor(gear)) |>
+#'   transition_states(cyl) |>
+#'   ease_aes("cubic-in-out", color = "linear")
 #' @export
-ease_aes <- function(plot, ease = "linear") {
+ease_aes <- function(
+  plot,
+  ease = "linear",
+  position = NULL,
+  color = NULL,
+  size = NULL,
+  alpha = NULL,
+  colour = NULL
+) {
   .check_plot(plot)
   ease <- ease[[1L]]
   .validate_ease(ease)
-  plot@ease <- EaseSpec(default = ease)
+  if (!is.null(colour)) {
+    if (!is.null(color)) {
+      cli::cli_abort("Supply either {.arg color} or {.arg colour}, not both.")
+    }
+    color <- colour
+  }
+  # `NA` in a class slot means "fall back to `ease`" (see `.ease_classes()`).
+  one <- function(x) {
+    if (is.null(x)) {
+      return(NA_character_)
+    }
+    x <- x[[1L]]
+    .validate_ease(x)
+    x
+  }
+  plot@ease <- EaseSpec(
+    default = ease,
+    position = one(position),
+    color = one(color),
+    size = one(size),
+    alpha = one(alpha)
+  )
   plot
+}
+
+# The four easings an EaseSpec resolves to, one per property class the engine
+# tweens separately. Every unset class falls back to `default`, so a plain
+# `ease_aes("cubic-in-out")` still shapes the whole scene and produces the same
+# schedule the single-curve code produced.
+.ease_classes <- function(ease) {
+  if (is.null(ease)) {
+    ease <- EaseSpec()
+  }
+  pick <- function(x) if (is.na(x)) ease@default else x
+  list(
+    position = pick(ease@position),
+    color = pick(ease@color),
+    size = pick(ease@size),
+    alpha = pick(ease@alpha)
+  )
 }
 
 .pos_num <- function(x, arg) {
@@ -186,6 +256,10 @@ vellum_animation <- S7::new_class(
     state_length = S7::new_property(S7::class_double, default = 1),
     wrap = S7::new_property(S7::class_logical, default = TRUE),
     easing = S7::new_property(S7::class_character, default = "linear"),
+    # Per-class easing overrides (a named list from `.ease_classes()`); an absent
+    # or `NA` entry falls back to `easing`, so an empty list = one curve for
+    # everything, exactly as before per-aesthetic easing existed.
+    easing_aes = S7::new_property(S7::class_list, default = list()),
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
     dpi = S7::new_property(S7::class_double, default = 96)
@@ -231,11 +305,12 @@ animate <- function(plot, nframes = 50, fps = 25) {
   nframes <- .pos_num(nframes, "nframes")
   fps <- .pos_num(fps, "fps")
   easing <- if (is.null(plot@ease)) "linear" else plot@ease@default
+  easing_aes <- .ease_classes(plot@ease)
 
   # A reveal is not a state tween: compile the plot once (two keyframes that
   # differ only in a clip rectangle) and let the tween grow the clip.
   if (identical(tr@kind, "reveal")) {
-    return(.animate_reveal(plot, nframes, fps, easing))
+    return(.animate_reveal(plot, nframes, fps, easing, easing_aes))
   }
 
   # Enumerate the states and per-segment timing. `transition_states` gives equal
@@ -307,6 +382,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
     state_length = en$state_length,
     wrap = en$wrap,
     easing = easing,
+    easing_aes = easing_aes,
     width = plot@width,
     height = plot@height,
     dpi = plot@dpi
@@ -317,7 +393,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
 # same data, same frozen scales, differing only in the clip rectangle — and let
 # the tween grow the clip across the panel. The axes/labels sit outside the panel
 # viewport, so only the marks wipe in.
-.animate_reveal <- function(plot, nframes, fps, easing) {
+.animate_reveal <- function(plot, nframes, fps, easing, easing_aes = list()) {
   base <- plot
   base@transition <- NULL
   base@ease <- NULL
@@ -335,6 +411,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
     state_length = 0,
     wrap = FALSE,
     easing = easing,
+    easing_aes = easing_aes,
     width = plot@width,
     height = plot@height,
     dpi = plot@dpi
@@ -452,7 +529,7 @@ anim_save <- function(filename, animation) {
   sched <- .anim_schedule(
     k,
     animation@nframes,
-    animation@easing,
+    .anim_easings(animation),
     animation@seg_weights,
     animation@state_length,
     animation@wrap
@@ -469,7 +546,27 @@ anim_save <- function(filename, animation) {
     sched$frac,
     filename,
     format = format,
-    fps = animation@fps
+    fps = animation@fps,
+    frac_col = sched$frac_col,
+    frac_size = sched$frac_size,
+    frac_alpha = sched$frac_alpha
+  )
+}
+
+# The four easing names an animation renders with: its per-class overrides where
+# set, its single `easing` everywhere else. An animation built before per-class
+# easing existed (or by hand) has an empty `easing_aes` and resolves to one curve.
+.anim_easings <- function(animation) {
+  cls <- animation@easing_aes
+  pick <- function(nm) {
+    v <- cls[[nm]]
+    if (is.null(v) || is.na(v)) animation@easing else v
+  }
+  list(
+    position = pick("position"),
+    color = pick("color"),
+    size = pick("size"),
+    alpha = pick("alpha")
   )
 }
 
@@ -500,7 +597,11 @@ anim_save <- function(filename, animation) {
 # ---- frame schedule --------------------------------------------------------
 
 # Build the per-frame schedule for K keyframes: for each output frame, the 1-based
-# left-keyframe index (`seg`) and the eased interpolation fraction (`frac`).
+# left-keyframe index (`seg`) and the eased interpolation fraction -- one per
+# property class (`frac` = position, plus `frac_col`/`frac_size`/`frac_alpha`).
+#
+# `easing` is either a single easing name (one curve for everything) or the
+# four-name list `.ease_classes()` returns.
 #
 # The animation is a timeline of weighted intervals -- for each state a
 # `state_length`-weighted pause on its keyframe, then a move to the next weighted
@@ -557,7 +658,7 @@ anim_save <- function(filename, animation) {
     (seq_len(nframes) - 1L) / (nframes - 1L) * total
   }
   seg <- integer(nframes)
-  frac <- numeric(nframes)
+  raw <- numeric(nframes)
   for (f in seq_len(nframes)) {
     i <- which(pos[f] < cw)[1L]
     if (is.na(i)) {
@@ -566,9 +667,23 @@ anim_save <- function(filename, animation) {
     iv <- intervals[[i]]
     local <- if (iv$w > 0) (pos[f] - starts[i]) / iv$w else 0
     seg[f] <- iv$seg
-    frac[f] <- .ease_apply(iv$f0 + (iv$f1 - iv$f0) * local, easing)
+    raw[f] <- iv$f0 + (iv$f1 - iv$f0) * local
   }
-  list(seg = seg, frac = frac)
+  # One un-eased fraction per frame, then each property class's curve applied to
+  # it. Equal curves give four identical vectors -- the single-curve case, which
+  # the engine tweens exactly as it did before per-aesthetic easing.
+  ease <- if (is.list(easing)) {
+    easing
+  } else {
+    .ease_classes(EaseSpec(default = easing))
+  }
+  list(
+    seg = seg,
+    frac = .ease_apply(raw, ease$position),
+    frac_col = .ease_apply(raw, ease$color),
+    frac_size = .ease_apply(raw, ease$size),
+    frac_alpha = .ease_apply(raw, ease$alpha)
+  )
 }
 
 # ---- easing library --------------------------------------------------------
