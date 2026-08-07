@@ -36,8 +36,10 @@ from_spec(spec, data = NULL, env = globalenv())
 
 - data:
 
-  Optional data frame to attach when `spec` stores its data by
-  reference. Ignored when the spec inlines its data.
+  Optional data frame to render the spec against. Required when the spec
+  stores its data by reference; for a spec that inlines its data (or has
+  no data block), a supplied `data` takes precedence over the inlined
+  copy.
 
 - env:
 

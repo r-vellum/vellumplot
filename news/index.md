@@ -2,7 +2,133 @@
 
 ## vellumplot 0.9.0.9000 (development version)
 
+### Animation
+
+- **[`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md)
+  can now ease each aesthetic on its own curve.** Alongside the
+  positional `ease`, it takes `position`, `color` (or `colour`), `size`
+  and `alpha`, each naming an easing of its own; anything left unset
+  falls back to `ease`, so an existing `ease_aes("cubic-in-out")`
+  renders exactly as before.
+
+  ``` r
+
+  # Bars settle into place gently while the fill crossfades at a steady rate.
+  ease_aes("cubic-in-out", color = "linear")
+  ```
+
+  The classes cover: `position` — x/y and every coordinate-space
+  quantity (bar widths, angles, path vertices, rotation); `color` —
+  colour and fill; `size` — size, linewidth and radii; `alpha` —
+  opacity, **including the fade of marks entering or leaving a state**,
+  so easing `alpha` retimes entrances too. `position` also decides
+  *when* discrete attributes flip, since those snap at the halfway
+  point. x and y share one curve and cannot be split.
+
 ### Bug fixes
+
+- Clearer errors on a few edge cases:
+  [`inset()`](https://r-vellum.github.io/vellumplot/reference/inset.md)
+  validates its 0-1 fractional bounds (rejecting inverted / out-of-range
+  coordinates that rendered a broken inset);
+  [`repeat_()`](https://r-vellum.github.io/vellumplot/reference/repeat_.md)
+  with an empty field vector,
+  [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  on an empty graph, and a chord diagram with a negative flow now each
+  report the actual problem instead of leaking an internal message.
+
+- **[`mark_raster()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  fails clearly on input it cannot draw.** A categorical x/y aborted
+  with an opaque `'min' not meaningful for factors`, and an
+  irregularly-spaced grid (e.g. x = 1, 2, 4) rendered with every cell
+  silently misplaced. It now errors with a message pointing to
+  [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  in both cases; numeric and evenly-spaced date/time grids are
+  unaffected.
+
+- **[`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  no longer silently drops declarative interactivity or animation.** A
+  plot carrying `select_*()` /
+  [`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md)
+  /
+  [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md),
+  `transition_*()`, or
+  [`inspect_source()`](https://r-vellum.github.io/vellumplot/reference/inspect_source.md)
+  was serialized as if that state did not exist (leaving, e.g., a
+  [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
+  encoding pointing at a vanished selection). These slots — which hold
+  non-serializable tidy-eval quosures — are now **refused** with the
+  same classed `vellumplot_unserializable` error as the other
+  unsupported state, matching the documented contract.
+
+- **Ordered factors and POSIXct time zones now survive a spec
+  round-trip.** An ordered factor came back unordered (so
+  [`spec_fields()`](https://r-vellum.github.io/vellumplot/reference/spec_fields.md)
+  mislabelled it nominal instead of ordinal); a timestamp’s display zone
+  was forced to UTC. Both are now preserved (the instant was always
+  correct).
+
+- **[`spec_to_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  /
+  [`spec_from_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  no longer crash off the happy path.** Any unmapped mark, aesthetic,
+  layer param, or scale transform (e.g.
+  [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md),
+  a `group` encoding, `trans = "reverse"`) hit a lookup that threw
+  `subscript out of bounds` instead of returning `NULL`, defeating the
+  bridge’s own fallbacks. The translation now degrades as documented —
+  the unsupported feature is dropped and reported in the warning —
+  rather than aborting.
+
+- **Constant text labels now render.** `mark_text(label = "...")` (a
+  literal, not a mapped column) drew invisible `NA` glyphs; the label is
+  now read from the layer params too. A text mark
+  ([`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  /
+  [`mark_sf_label()`](https://r-vellum.github.io/vellumplot/reference/mark_sf_label.md)
+  /
+  [`mark_node_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md))
+  with no `label` at all now errors clearly instead of drawing blanks.
+
+- **[`mark_series_label()`](https://r-vellum.github.io/vellumplot/reference/mark_series_label.md)
+  on a discrete x** now errors with a clear message (it labels each
+  series at its largest x, which a categorical axis has no notion of)
+  instead of a cryptic internal failure.
+
+- **[`mark_sf_label()`](https://r-vellum.github.io/vellumplot/reference/mark_sf_label.md)
+  skips empty-geometry features** (which have no interior point) rather
+  than placing a label at `NA` coordinates.
+
+- `guide_legend(override.aes =)` is now kept when a colour scale’s
+  legend merges with its shape/size partner.
+
+- **Colour-guide fixes** (all in the recently-added
+  [`guide_colourbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  /
+  [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)):
+  `guide_coloursteps(reverse = TRUE)` no longer mislabels its segments
+  (colours and boundary labels now flip together); a **horizontal**
+  (`legend.position = "top"`/`"bottom"`) stepped bar or
+  `guide_colourbar(barheight =)` no longer overflows its reserved row;
+  `barwidth` now sets the bar length on a horizontal legend; a binned
+  colour with `NA` shows its NA swatch under
+  [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md);
+  and `label.position` is validated as `"right"`/`"left"` (the only
+  positions a vertical bar supports).
+
+- **An empty facet cell no longer crashes a mark with an
+  [`after_stat()`](https://r-vellum.github.io/vellumplot/reference/after_stat.md)
+  channel.** A
+  [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+  layout with an unpopulated cell (or any empty stat input) drawing an
+  aggregating mark
+  ([`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md),
+  [`mark_count()`](https://r-vellum.github.io/vellumplot/reference/mark_count.md),
+  [`mark_hex()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md),
+  [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md),
+  a `mark_histogram(y = after_stat(density))`, …) aborted the whole
+  render with `object 'count' not found`; the empty layer now renders as
+  a blank panel.
 
 - **[`mcp_serve()`](https://r-vellum.github.io/vellumplot/reference/mcp_serve.md)
   now handles more than one request per process.** The stdin connection
@@ -11,6 +137,7 @@
   the loop saw end-of-file after the first line — a real MCP client died
   right after `initialize`. The connection is now opened once and held
   across the loop.
+
 - **[`from_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
   /
   [`vplot_from_spec()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
@@ -19,11 +146,13 @@
   be coercible to non-negative integer”. A spec that maps fields but has
   (and is given) no data now errors clearly, naming the missing
   references.
+
 - **[`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md)
   filters a layer’s own `data =` per keyframe.** A layer with its own
   data (e.g. a per-state annotation) was not subset to the current
   state, so every keyframe drew all states’ rows at once. A layer whose
   data lacks the state column still persists across all frames.
+
 - **`labs(x = NULL)` now blanks the axis title** (ggplot2 parity),
   distinct from omitting the argument. Previously only `labs(x = "")`
   blanked it.

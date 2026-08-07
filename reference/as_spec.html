@@ -102,8 +102,9 @@ vplot_from_spec()) and the Vega-Lite bridge (spec_to_vegalite())."><meta propert
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>Optional data frame to attach when <code>spec</code> stores its data by
-reference. Ignored when the spec inlines its data.</p></dd>
+<dd><p>Optional data frame to render the spec against. Required when the
+spec stores its data by reference; for a spec that inlines its data (or has
+no data block), a supplied <code>data</code> takes precedence over the inlined copy.</p></dd>
 
 
 <dt id="arg-env">env<a class="anchor" aria-label="anchor" href="#arg-env"></a></dt>
