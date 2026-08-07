@@ -282,14 +282,20 @@ TransitionSpec <- S7::new_class(
   )
 )
 
-# Easing for a transition's frame schedule: `default` names the easing applied to
-# every interpolated aesthetic (e.g. "cubic-in-out"). Per-aesthetic easing is a
-# later extension. Inert on a static render.
+# Easing for a transition's frame schedule. `default` names the easing applied to
+# every interpolated aesthetic (e.g. "cubic-in-out"); the four class slots
+# override it for one property class each, and `NA` means "use `default`". The
+# classes are the ones the engine tweens separately -- see `.ease_classes()`.
+# Inert on a static render.
 EaseSpec <- S7::new_class(
   "EaseSpec",
   package = "vellumplot",
   properties = list(
-    default = S7::new_property(S7::class_character, default = "linear")
+    default = S7::new_property(S7::class_character, default = "linear"),
+    position = S7::new_property(S7::class_character, default = NA_character_),
+    color = S7::new_property(S7::class_character, default = NA_character_),
+    size = S7::new_property(S7::class_character, default = NA_character_),
+    alpha = S7::new_property(S7::class_character, default = NA_character_)
   )
 )
 

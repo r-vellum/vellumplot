@@ -4,14 +4,40 @@
 \alias{ease_aes}
 \title{Set the easing of an animation's frames}
 \usage{
-ease_aes(plot, ease = "linear")
+ease_aes(
+  plot,
+  ease = "linear",
+  position = NULL,
+  color = NULL,
+  size = NULL,
+  alpha = NULL,
+  colour = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} carrying a \code{\link[=transition_states]{transition_states()}}.}
 
 \item{ease}{An easing name: \code{"linear"}, or a family
 (\code{quad}/\code{cubic}/\code{quart}/\code{quint}/\code{sine}/\code{expo}/\code{circ}/\code{back}/\code{elastic}/\code{bounce})
-with a direction suffix (\verb{-in}, \code{-out}, \verb{-in-out}), e.g. \code{"cubic-in-out"}.}
+with a direction suffix (\verb{-in}, \code{-out}, \verb{-in-out}), e.g. \code{"cubic-in-out"}.
+Used for any class not given its own easing below.}
+
+\item{position, color, size, alpha}{Optional per-class easings, named the same way
+as \code{ease}. \code{NULL} (the default) means "use \code{ease}". Each covers one class of
+drawn property:
+\itemize{
+\item \code{position} — x and y, and every other coordinate-space quantity (bar
+widths, angles, path vertices, text rotation). It also decides \emph{when}
+discrete attributes flip, since those snap at the halfway point.
+\item \code{color} — \code{color} and \code{fill}, including per-element fills.
+\item \code{size} — \code{size}, \code{linewidth}, and radii.
+\item \code{alpha} — opacity, \strong{and the fade of marks entering or leaving} a state.
+}
+
+\code{position} covers x and y together: the engine has a single positional
+curve, so the two axes cannot be eased apart.}
+
+\item{colour}{An alias for \code{color}; supplying both is an error.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -19,13 +45,22 @@ The modified \link{PlotSpec}.
 \description{
 \code{ease_aes()} chooses the easing function that shapes how the interpolation
 fraction moves through each transition — e.g. \code{"cubic-in-out"} starts and ends
-gently. Applies to every interpolated aesthetic.
+gently. By default it applies to every interpolated aesthetic; the
+\code{position}/\code{color}/\code{size}/\code{alpha} arguments override it for one class each, so
+marks can glide into place on a cubic curve while their colour crossfades
+evenly.
 }
 \examples{
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   transition_states(cyl) |>
   ease_aes("cubic-in-out")
+
+# Marks settle into place gently, but the colour crossfade stays even.
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(gear)) |>
+  transition_states(cyl) |>
+  ease_aes("cubic-in-out", color = "linear")
 }
 \seealso{
 \code{\link[=transition_states]{transition_states()}}, \code{\link[=animate]{animate()}}
