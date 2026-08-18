@@ -35,52 +35,48 @@ vellumplot is a declarative, pipe-first grammar of graphics built on the
 plot as an inspectable, serializable *spec*; nothing is drawn until the spec is
 compiled into a vellum scene and rendered.
 
-The compile is a real pipeline (spec → resolve encodings → train scales → measure
-layout → compile guides → compile marks → vellum scene) and it runs without a
-graphics device, because vellum measures text itself. If you already know
-ggplot2 the grammar will feel familiar; the reason to reach for this stack is
-what the retained vector scene underneath makes possible.
+Compiling walks a fixed pipeline: resolve encodings, train scales, measure
+layout, compile guides, compile marks, emit a vellum scene. It needs no graphics
+device, because vellum measures text itself. If you already know ggplot2 the
+grammar will feel familiar; the difference is that the compiled scene is kept
+around afterwards, and a lot follows from that.
 
-### What is a little different here
+### What is different here
 
-Most of these exist somewhere in R; having them in one grammar, from one spec, is
-what is unusual. None of it is a reason to switch on its own — but together they
-cover a few gaps.
+Most of the following exists somewhere in R already. Having it in one grammar,
+from one spec, is the unusual part.
 
-* **One spec, one solved layout, several destinations — including a *tagged*
-  PDF.** `render_plot()` writes PNG, SVG, or PDF from the *same* compiled scene
-  rather than re-solving the layout per device, and the PDF carries a real
-  structure tree and alt text, so a screen reader can navigate it. Accessible
-  (tagged) PDF output is uncommon for R graphics.
-* **Accessibility is checkable, not just aspirational.** Render through a
+* `render_plot()` writes PNG, SVG, or PDF from one compiled scene, so the layout
+  is solved once instead of once per device. The PDF carries a structure tree and
+  alt text, which lets a screen reader navigate it; tagged PDF output is rare for
+  R graphics.
+* Accessibility is something you can check. Render through a
   colour-vision-deficiency simulation (`render(cvd = "deutan")`) to see the figure
-  as a colour-blind reader would, and run `plot_lint()` to be told about tiny
-  text, low contrast, or a single-level legend *before* you publish it.
-* **The interactive widget uses the marks you declared.** A compiled plot *is* a
-  vellum scene, so each element keeps its data key and its resolved device-pixel
-  box (`vellum::scene_model()`).
+  the way a colour-blind reader will, and run `plot_lint()` to catch tiny
+  text, low contrast, or a single-level legend before you publish.
+* A compiled plot is a vellum scene, so every element keeps its data key and its
+  resolved device-pixel box (`vellum::scene_model()`).
   [vellumwidget](https://github.com/r-vellum/vellumwidget)'s `as_widget()` reads
-  those for tooltips, brushing, and linked selection — no `*_interactive()` twins,
-  and no second engine (Vega, plotly) re-drawing the plot in the browser, so the
-  static and interactive figures cannot drift.
-* **Effects and regions stay vector where they can.** `glow()` / `shadow()` are
-  real Gaussian blur (and work on text); Venn/Euler diagrams and merged
-  choropleth regions are computed as boolean *geometry* rather than
-  alpha-composited overlaps, so they stay crisp in a PDF instead of being
-  flattened to pixels.
-* **Texture, not only hue.** `pattern_*()` hatch fills stay legible in greyscale
-  print and under colour-vision deficiency, and render on every backend including
-  PDF.
-* **Animation from the same grammar.** `transition_states()` + `animate()` compile
-  one keyframe per state (scales frozen, so the animation is non-reactive) and
-  `anim_save()` encodes a GIF, an APNG, or a resolution-independent **animated
-  SVG** that honours `prefers-reduced-motion`.
-* **A hand-drawn mode that is exact.** `theme_sketch()` (or a `sketch =` argument)
-  gives a plot a wobbly, hand-drawn look generated *natively* in the engine, so it
-  is identical across PNG, SVG, and PDF rather than a post-hoc filter.
-* **The spec is plain data.** `summary()` shows a plot's structure without drawing
-  it, and the spec round-trips, so a plot is something you can inspect, store, and
-  program against.
+  both for tooltips, brushing, and linked selection. Nothing re-draws the plot in
+  the browser and there are no `*_interactive()` twins to keep in sync, so the
+  static and interactive figures cannot drift apart.
+* Effects and regions stay vector where they can. `glow()` / `shadow()` are real
+  Gaussian blur and work on text; Venn/Euler diagrams and merged choropleth
+  regions are computed as boolean geometry rather than alpha-composited overlaps,
+  so they stay crisp in a PDF instead of being flattened to pixels.
+* `pattern_*()` hatch fills encode a mapping as texture instead of hue, so it
+  survives greyscale print and colour-vision deficiency. They render on every
+  backend, PDF included.
+* `transition_states()` plus `animate()` compile one keyframe per state, with
+  scales frozen so the animation is non-reactive. `anim_save()` encodes a GIF, an
+  APNG, or a resolution-independent animated SVG that honours
+  `prefers-reduced-motion`.
+* `theme_sketch()` (or a `sketch =` argument) gives a plot a wobbly, hand-drawn
+  look. The engine generates it, so it is exact and comes out the same in PNG,
+  SVG, and PDF, unlike a post-hoc filter.
+* The spec is plain data. `summary()` shows a plot's structure without drawing it,
+  and the spec round-trips, so you can inspect a plot, store it, and program
+  against it.
 
 ## Installation
 
@@ -136,8 +132,8 @@ vplot(nc) |>
 ```
 
 Draw a network: `vgraph()` lays out an `igraph` graph (stress majorization by
-default), then `mark_edges()` / `mark_nodes()` draw it — aspect-locked, no axes,
-edges under nodes:
+default), then `mark_edges()` / `mark_nodes()` draw it, aspect-locked and without
+axes, edges under nodes:
 
 ```{r network}
 g <- igraph::make_graph("Zachary")
@@ -153,7 +149,7 @@ vgraph(g, layout = "stress") |>
   scale_size(range = c(2, 8))
 ```
 
-The spec is just data — `summary()` shows its structure without drawing:
+The spec is just data, so `summary()` shows its structure without drawing:
 
 ```{r summary}
 summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
@@ -208,7 +204,7 @@ render_plot(p, "cars.png")
   gradient fills (`linear_gradient()`, `radial_gradient()`).
 * Pattern (hatch) fills: `pattern_stripe()`, `pattern_crosshatch()`,
   `pattern_grid()`, `pattern_dot()`, `pattern_checker()`, mapped via
-  `scale_pattern()` — greyscale- and colour-vision-safe, on every backend.
+  `scale_pattern()`, greyscale- and colour-vision-safe, on every backend.
 * Boolean marks: `vvenn()` draws 2-/3-set Venn/Euler diagrams as solid geometry,
   and `mark_sf(merge = TRUE)` dissolves adjacent same-value regions into one.
 * SVG icon markers (`shape = ` a `d` path string or a `.svg` file) and repelled
@@ -232,11 +228,11 @@ render_plot(p, "cars.png")
 vellumplot is the grammar layer of a small ecosystem of packages that share the
 vellum scene model:
 
-- **[vellum](https://github.com/r-vellum/vellum)** — the parchment: the
-  low-level graphics backend (Rust scene graph, PNG/SVG/PDF renderer).
-- **[vellumplot](https://github.com/r-vellum/vellumplot)** — the pen: this package.
-- **[vellumwidget](https://github.com/r-vellum/vellumwidget)** — the annotation: turns a vellumplot
-  plot (or a raw vellum scene) into a client-side interactive HTML widget via
-  `as_widget()`.
-- **[vellumverse](https://github.com/r-vellum/vellumverse)** — installs and
-  loads the whole ecosystem in one step.
+- **[vellum](https://github.com/r-vellum/vellum)**, the parchment: the low-level
+  graphics backend (Rust scene graph, PNG/SVG/PDF renderer).
+- **[vellumplot](https://github.com/r-vellum/vellumplot)**, the pen: this package.
+- **[vellumwidget](https://github.com/r-vellum/vellumwidget)**, the annotation:
+  turns a vellumplot plot (or a raw vellum scene) into a client-side interactive
+  HTML widget via `as_widget()`.
+- **[vellumverse](https://github.com/r-vellum/vellumverse)** installs and loads
+  the whole ecosystem in one step.
