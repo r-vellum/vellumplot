@@ -28,7 +28,7 @@ Imports:
     scales,
     stats,
     utils,
-    vellum (>= 0.6.8.9000),
+    vellum (>= 0.6.9),
     xml2
 Remotes:
     r-vellum/vellum,
