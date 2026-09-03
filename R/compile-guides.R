@@ -706,6 +706,7 @@ NULL
     "shape",
     "pattern",
     "edge_width",
+    "linewidth",
     "alpha",
     "linetype",
     "edge_color",
@@ -762,6 +763,11 @@ NULL
   }
   if (!is.null(scales$edge_width)) {
     out <- c(out, list(list(kind = "edge_width", sc = scales$edge_width)))
+  }
+  # A mapped `linewidth` on a line/step/segment: same key glyph as the edge-width
+  # guide (a short rule drawn at the break's width), its own scale.
+  if (!is.null(scales$linewidth)) {
+    out <- c(out, list(list(kind = "linewidth", sc = scales$linewidth)))
   }
   if (!is.null(scales$alpha)) {
     out <- c(out, list(list(kind = "alpha", sc = scales$alpha)))
@@ -948,7 +954,8 @@ NULL
       if (isTRUE(sc$na)) c(l, "NA") else l
     },
     pattern = sc$levels,
-    edge_width = sc$legend_labels,
+    edge_width = ,
+    linewidth = sc$legend_labels,
     alpha = sc$legend_labels,
     linetype = sc$levels,
     merged = sc$labels
@@ -1185,7 +1192,8 @@ NULL
       sketch = sk,
       gp = vellum::vl_gpar(fill = sc$patterns[[i]], col = "grey55")
     ),
-    edge_width = vellum::segments_grob(
+    edge_width = ,
+    linewidth = vellum::segments_grob(
       vellum::vl_unit(0.12, "npc"),
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.88, "npc"),

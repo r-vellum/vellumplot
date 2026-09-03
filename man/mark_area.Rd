@@ -32,7 +32,9 @@ mark_step(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x} and \code{y} for area/step; \code{x}, \code{ymin},
-\code{ymax} for ribbon; plus \code{color}/\code{fill}/\code{alpha}.}
+\code{ymax} for ribbon; plus \code{color}/\code{fill}/\code{alpha}. \code{mark_step()} also takes
+\code{linewidth} and \code{linetype}; a mapped \code{linewidth} varies the staircase's
+width per tread (see \code{\link[=scale_linewidth]{scale_linewidth()}}).}
 
 \item{position}{For \code{mark_area()}, how areas sharing an \code{x} combine when
 \code{fill}/\code{color} is mapped: \code{"stack"} (default) stacks them into a band,
@@ -79,4 +81,7 @@ staircase line. All connect points in \code{x} order.
 }
 \examples{
 vplot(pressure) |> mark_area(x = temperature, y = pressure)
+}
+\seealso{
+\code{\link[=scale_linewidth]{scale_linewidth()}}
 }

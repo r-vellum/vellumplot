@@ -568,6 +568,69 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   s
 }
 
+# Resolve a per-row stroke width from a mapped `linewidth` channel, or NULL when
+# the layer sets none (the caller then uses its constant `linewidth` param, and
+# the cheaper single-`lwd` grob that goes with it). `.lwd_add` is the widening an
+# effect copy asked for (`.emit_copies()`), which for a constant width lands in
+# `params$linewidth` instead -- a halo must widen the mapped widths too.
+.mapped_linewidth <- function(L, scales, n) {
+  if (is.null(scales$linewidth) || is.null(L$values$linewidth)) {
+    return(NULL)
+  }
+  w <- as.numeric(scales$linewidth$map(L$values$linewidth))
+  rep_len(w, n) + (L$params$.lwd_add %||% 0)
+}
+
+# Split an ordered polyline into the segments a per-segment width draws it as:
+# each segment carries one width, the mean of its two endpoint values, so the
+# width steps at every vertex (see `scale_linewidth()`). Under polar/trans the
+# segment is munched exactly as `.xy_path()` would munch the whole polyline, and
+# every piece of it inherits that segment's width, so a warped panel bends the
+# same way it does for a constant-width line. Returns grob units plus `row`, the
+# index (into `x`/`y`) of each drawn piece's originating vertex, for provenance.
+.seg_widths_path <- function(scales, x, y, w) {
+  m <- length(x)
+  if (m < 2L) {
+    return(NULL)
+  }
+  lwd <- (w[-m] + w[-1L]) / 2
+  row <- seq_len(m - 1L)
+  if (is.null(scales$polar) && is.null(scales$trans)) {
+    xa <- x[-m]
+    ya <- y[-m]
+    xb <- x[-1L]
+    yb <- y[-1L]
+  } else {
+    parts <- lapply(row, function(i) {
+      j <- c(i, i + 1L)
+      d <- if (!is.null(scales$polar)) {
+        .polar_munch(scales, x[j], y[j])
+      } else {
+        .trans_munch(scales, x[j], y[j])
+      }
+      k <- length(d$x)
+      list(
+        xa = d$x[-k],
+        ya = d$y[-k],
+        xb = d$x[-1L],
+        yb = d$y[-1L],
+        lwd = rep(lwd[i], k - 1L),
+        row = rep(i, k - 1L)
+      )
+    })
+    fld <- function(nm) unlist(lapply(parts, `[[`, nm), use.names = FALSE)
+    xa <- fld("xa")
+    ya <- fld("ya")
+    xb <- fld("xb")
+    yb <- fld("yb")
+    lwd <- fld("lwd")
+    row <- fld("row")
+  }
+  a <- .xy_units(scales, xa, ya)
+  b <- .xy_units(scales, xb, yb)
+  list(x0 = a$x, y0 = a$y, x1 = b$x, y1 = b$y, lwd = lwd, row = row)
+}
+
 # Resolve an edge's width: a mapped linewidth channel via the trained edge-width
 # scale, a constant linewidth param, or the default.
 .edge_width <- function(L, scales, default) {

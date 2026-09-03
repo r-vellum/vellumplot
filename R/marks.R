@@ -410,7 +410,10 @@ after_stat <- function(x) x
 #' @param plot A [PlotSpec] (from [vplot()]).
 #' @param ... Encodings: named channel expressions such as `x`, `y`, `color`,
 #'   `fill`, `size`, `shape`, `alpha`. Stroked marks (line, step, segment, rule,
-#'   linerange) also take `linewidth` and `linetype`.
+#'   linerange) also take `linewidth` and `linetype`. On `mark_line()`,
+#'   `mark_step()` and `mark_segment()`, `linewidth` may be **mapped** as well as
+#'   set: see [scale_linewidth()] for the per-segment width that gives, and what
+#'   it costs. Everywhere else `linewidth` is a constant.
 #' @param size,shape Convenience arguments for the point size (in mm) / shape;
 #'   may be a constant or a mapped expression. A shape is a built-in marker
 #'   (`"circle"`, `"square"`, `"triangle"`, `"diamond"`, `"plus"`, `"cross"`,
@@ -1163,7 +1166,9 @@ mark_datashade <- function(
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
-#'   `ymax` for ribbon; plus `color`/`fill`/`alpha`.
+#'   `ymax` for ribbon; plus `color`/`fill`/`alpha`. `mark_step()` also takes
+#'   `linewidth` and `linetype`; a mapped `linewidth` varies the staircase's
+#'   width per tread (see [scale_linewidth()]).
 #' @param position For `mark_area()`, how areas sharing an `x` combine when
 #'   `fill`/`color` is mapped: `"stack"` (default) stacks them into a band,
 #'   `"fill"` normalises each `x` to 1, `"identity"` overlays them from the zero
@@ -1171,6 +1176,7 @@ mark_datashade <- function(
 #' @param direction For `mark_step()`, `"hv"` (horizontal then vertical, default)
 #'   or `"vh"`.
 #' @return The modified [PlotSpec].
+#' @seealso [scale_linewidth()]
 #' @examples
 #' vplot(pressure) |> mark_area(x = temperature, y = pressure)
 #' @export
@@ -2403,8 +2409,10 @@ mark_count <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
-#'   `linewidth`, `linetype`, `alpha`).
+#'   `linewidth`, `linetype`, `alpha`). A mapped `linewidth` gives each segment
+#'   its own width -- see [scale_linewidth()].
 #' @return The modified [PlotSpec].
+#' @seealso [scale_linewidth()]
 #' @examples
 #' d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
 #' vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend)

@@ -172,6 +172,10 @@ NULL
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1)
+  # A segment is already one element per row, so a mapped `linewidth` is just the
+  # per-element `lwd` vector -- no re-segmenting, and no width steps within a
+  # segment. A constant width keeps the shared `gp` (one combined stroke).
+  lwv <- .mapped_linewidth(L, scales, n)
   lty <- .resolve_lty(L, scales, n)
   sk <- .mark_sketch(L, scales)
 
@@ -192,7 +196,8 @@ NULL
         s$x1,
         s$y1,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_stroke(col, alpha, idx[1], lwd, lty)
+        gp = .gp_stroke(col, alpha, idx[1], lwd, lty),
+        lwd = if (is.null(lwv)) NULL else lwv[idx]
       ),
       rows = idx
     )

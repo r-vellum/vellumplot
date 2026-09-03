@@ -432,6 +432,10 @@ NULL
       L2$params$size <- base + d
     } else {
       L2$params$linewidth <- base + d * .MM_TO_LWD
+      # A mapped `linewidth` ignores `params$linewidth`, so the halo would come
+      # out the width of the mark it is meant to sit behind. Carry the widening
+      # separately for `.mapped_linewidth()` to add to each mapped width.
+      L2$params$.lwd_add <- d * .MM_TO_LWD
     }
     scene <- .emit_layer(scene, L2, scales)
   }
@@ -486,6 +490,7 @@ NULL
       L2$params$size <- base + widen
     } else {
       L2$params$linewidth <- base + widen * .MM_TO_LWD
+      L2$params$.lwd_add <- widen * .MM_TO_LWD
     }
   }
   scene <- .emit_layer(scene, L2, scales)

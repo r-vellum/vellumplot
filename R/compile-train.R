@@ -1051,16 +1051,46 @@ NULL
 # Edge-width output range (lwd multiples) a mapped edge `linewidth` spans.
 .EDGE_WIDTH_RANGE <- c(0.3, 3)
 
+# Line-width output range (lwd units) a mapped `linewidth` spans.
+.LINEWIDTH_RANGE <- c(0.5, 4)
+
+# The marks whose emitter varies stroke width *per element*, and so read the
+# `linewidth` scale. Everywhere else a mapped `linewidth` still belongs to the
+# edge-width scale (`mark_edges()` and friends), which is trained separately --
+# the two share the channel name but not the scale, so a graph can map edge
+# width and a line's width to different variables in one plot.
+.LINEWIDTH_MARKS <- c("line", "step", "segment")
+
+# The layers of `resolved` whose mark is (or, with `invert`, is not) in `marks`.
+.layers_with_mark <- function(resolved, marks, invert = FALSE) {
+  hit <- vapply(resolved, function(L) L$mark %in% marks, logical(1))
+  resolved[if (invert) !hit else hit]
+}
+
 # Train the edge-width scale (if any edge layer maps `linewidth` to data). Mirrors
 # the size scale: rescale the data range to an lwd range; emits its own legend.
 .train_edge_width <- function(spec, resolved) {
   .train_continuous_aes(
     spec,
-    resolved,
+    .layers_with_mark(resolved, .LINEWIDTH_MARKS, invert = TRUE),
     kind = "edge_width",
     channel = "linewidth",
     aes = "edge_width",
     out_default = .EDGE_WIDTH_RANGE,
+    legend_field = "legend_widths"
+  )
+}
+
+# Train the line-width scale (if a line/step/segment layer maps `linewidth`).
+# Same shape as the edge-width scale, on the marks whose emitter can honour it.
+.train_linewidth <- function(spec, resolved) {
+  .train_continuous_aes(
+    spec,
+    .layers_with_mark(resolved, .LINEWIDTH_MARKS),
+    kind = "linewidth",
+    channel = "linewidth",
+    aes = "linewidth",
+    out_default = .LINEWIDTH_RANGE,
     legend_field = "legend_widths"
   )
 }
@@ -1448,6 +1478,7 @@ NULL
     shape = .train_shape(spec, resolved),
     pattern = .train_pattern(spec, resolved),
     edge_width = .train_edge_width(spec, resolved),
+    linewidth = .train_linewidth(spec, resolved),
     alpha = .train_alpha(spec, resolved),
     linetype = .train_linetype(spec, resolved),
     edge_color = .train_edge_colour(spec, resolved),
@@ -1461,6 +1492,7 @@ NULL
     "shape",
     "pattern",
     "edge_width",
+    "linewidth",
     "alpha",
     "linetype",
     "edge_color",

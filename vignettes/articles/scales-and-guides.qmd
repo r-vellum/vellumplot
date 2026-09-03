@@ -128,6 +128,30 @@ vplot(mtcars) |>
   scale_size_area(max_size = 10)
 ```
 
+## Line width
+
+`linewidth` is a mapped aesthetic on `mark_line()`, `mark_step()` and
+`mark_segment()`: `scale_linewidth()` rescales the data onto a width `range` in
+`lwd` units, and draws its own legend.
+
+```{r}
+vplot(pressure) |>
+  mark_line(x = temperature, y = pressure, linewidth = pressure) |>
+  scale_linewidth(range = c(0.5, 6))
+```
+
+Each *segment* is drawn at one width — the mean of its two endpoint values — so
+the width changes in steps at the vertices rather than tapering smoothly, and a
+sharp corner's round join does not quite fill. That is inherent to per-segment
+width. It also means the line becomes one path element per segment in SVG and
+PDF (no backend can stroke one path at several widths in a single call), which
+is worth knowing before mapping `linewidth` over a very dense series. A
+*constant* `linewidth =` is unaffected and still draws as a single stroke.
+
+Network edges keep their own scale: a mapped `linewidth` on `mark_edges()`
+trains `scale_edge_width()`, independently of `scale_linewidth()`, so one plot
+can map edge width and line width to different variables.
+
 ## Opacity and line type
 
 `alpha` and `linetype` are mapped aesthetics too. `scale_alpha()` maps a

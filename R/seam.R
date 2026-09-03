@@ -337,6 +337,7 @@ NULL
       shape = built$scales$shape,
       pattern = built$scales$pattern,
       edge_width = built$scales$edge_width,
+      linewidth = built$scales$linewidth,
       alpha = built$scales$alpha,
       linetype = built$scales$linetype,
       edge_color = built$scales$edge_color,

@@ -18,7 +18,8 @@ mark_segment(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, \code{xend}, \code{yend} (+ \code{color},
-\code{linewidth}, \code{linetype}, \code{alpha}).}
+\code{linewidth}, \code{linetype}, \code{alpha}). A mapped \code{linewidth} gives each segment
+its own width -- see \code{\link[=scale_linewidth]{scale_linewidth()}}.}
 
 \item{auto}{For \code{mark_point()}, \code{mark_line()}, \code{mark_step()},
 \code{mark_segment()}, and \code{mark_edges()}, when \code{TRUE} and the layer has very many
@@ -56,4 +57,7 @@ The modified \link{PlotSpec}.
 \examples{
 d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
 vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend)
+}
+\seealso{
+\code{\link[=scale_linewidth]{scale_linewidth()}}
 }

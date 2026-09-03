@@ -182,8 +182,8 @@ render_plot(p, "cars.png")
   (`scale_x_discrete()`, `scale_y_discrete()`) for categorical axes.
 * Colour scales (`scale_color_continuous()` / `scale_fill_continuous()`,
   `scale_color_discrete()` / `scale_fill_discrete()`, `_gradient()`, `_binned()`,
-  `_manual()`), `scale_shape()`, and a trained `scale_size()`, with stacked
-  legends.
+  `_manual()`), `scale_shape()`, and trained `scale_size()` /
+  `scale_linewidth()`, with stacked legends.
 * Trained axes, a panel with gridlines, and layering on one panel.
 * Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales, via the
   `resolve_scale()` lattice.
