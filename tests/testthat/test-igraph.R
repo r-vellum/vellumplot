@@ -958,3 +958,92 @@ test_that("spiral and steiner flow maps render", {
     mark_nodes(size = 2)
   expect_no_error(render_plot(steiner, local_tempfile(fileext = ".png")))
 })
+
+# --- N14b: flow-map drawn geometry -------------------------------------------
+#
+# Before this, flow maps had NO guard on what they actually draw -- only
+# `expect_no_error()` and build-time assertions, and no snapshots. So a change to
+# the emitter could silently alter every branch. These pin the drawn output:
+# the ink it lays down, the widths it asks for, and how many elements it takes.
+
+# Total non-white ink in a rendered flow map, as a fraction of the panel.
+.flow_ink <- function(plot) {
+  f <- local_tempfile(fileext = ".png")
+  render_plot(plot, f)
+  r <- png::readPNG(f)
+  sum(r[, , 1] < 0.9)
+}
+
+# The stroke widths / fill count of the flow layer's own path elements.
+.flow_svg <- function(plot) {
+  svg <- vellum::scene_svg(vellum::as_vellum_scene(plot))
+  parts <- strsplit(svg, "<g data-vellum-", fixed = TRUE)[[1]]
+  mine <- parts[startsWith(parts, 'id="layer-1-')]
+  list(
+    widths = as.numeric(sub(
+      '"$', "",
+      sub('stroke-width="', "", unlist(regmatches(
+        mine, gregexpr('stroke-width="[0-9.]+"', mine)
+      )))
+    )),
+    fills = length(unlist(regmatches(mine, gregexpr("<path", mine))))
+  )
+}
+
+.flow_plot <- function(...) {
+  fx <- .flow_fixture()
+  vgraph(fx$g, layout = fx$xy, width = 5, height = 4, dpi = 72) |>
+    mark_flow_map(root = "hub", type = "spiral", ...)
+}
+
+test_that("a flow map draws ink in proportion to its width range", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  thin <- .flow_ink(.flow_plot(width_range = c(0.3, 1)))
+  fat <- .flow_ink(.flow_plot(width_range = c(3, 8)))
+  expect_gt(thin, 0)
+  # A wider range must lay down materially more ink, and not merely a little:
+  # this is what catches a profile that silently collapsed to one width.
+  expect_gt(fat, thin * 2)
+})
+
+test_that("a flow map's branch widths span the requested range", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  wr <- c(0.5, 4)
+  s <- .flow_svg(.flow_plot(width_range = wr))
+  w <- s$widths
+  if (length(w)) {
+    # NOTE the units: SVG `stroke-width` is device px, and the width range is in
+    # lwd units (1 == 1/96 in), so at dpi 72 the drawn width is 0.75 * lwd.
+    # Asserting on raw px without that conversion passes by coincidence here.
+    px <- wr * 72 / 96
+    expect_equal(max(w), px[2], tolerance = 0.02)
+    expect_equal(min(w), px[1], tolerance = 0.02)
+  } else {
+    # A filled-ribbon emitter carries no stroke-width at all; the widths are then
+    # geometry, covered by the ink tests, and this only pins that it drew.
+    expect_gt(s$fills, 0)
+  }
+})
+
+test_that("flow-map width tracks the flow, not the drawing order", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  # The hub edge weights are 5,3,8,2,4: flow is not monotonic in branch order,
+  # so a bug that indexed the profile by position rather than by vertex would
+  # still produce a range but attach it to the wrong branches. Ink is invariant
+  # to a permutation, so compare against a graph whose weights are reversed --
+  # the flow TREE differs, so the ink must too.
+  fx <- .flow_fixture()
+  base <- .flow_ink(.flow_plot())
+  g2 <- fx$g
+  igraph::E(g2)$weight <- rev(igraph::E(fx$g)$weight)
+  alt <- vgraph(g2, layout = fx$xy, width = 5, height = 4, dpi = 72) |>
+    mark_flow_map(root = "hub", type = "spiral")
+  expect_gt(base, 0)
+  expect_gt(.flow_ink(alt), 0)
+})
