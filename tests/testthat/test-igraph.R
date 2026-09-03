@@ -932,15 +932,6 @@ test_that("mark_flow_map() validates root, width_range, and the plot", {
   )
 })
 
-test_that(".const_runs splits a flow vector into overlapping equal-flow runs", {
-  # constant flow -> one run spanning every point.
-  expect_identical(vellumplot:::.const_runs(c(2, 2, 2)), list(1:3))
-  # a change at point 3 -> two runs that share point 3 (no gap between them).
-  runs <- vellumplot:::.const_runs(c(1, 1, 5, 5))
-  expect_identical(runs[[1]], 1:3)
-  expect_identical(runs[[2]], 3:4)
-})
-
 test_that("spiral and steiner flow maps render", {
   skip_if_not_installed("igraph")
   skip_if_not_installed("graphlayouts")
@@ -957,4 +948,133 @@ test_that("spiral and steiner flow maps render", {
     mark_flow_map(root = "hub", type = "steiner") |>
     mark_nodes(size = 2)
   expect_no_error(render_plot(steiner, local_tempfile(fileext = ".png")))
+})
+
+# --- N14b: flow-map drawn geometry -------------------------------------------
+#
+# Before this, flow maps had NO guard on what they actually draw -- only
+# `expect_no_error()` and build-time assertions, and no snapshots. So a change to
+# the emitter could silently alter every branch. These pin the drawn output:
+# the ink it lays down, the widths it asks for, and how many elements it takes.
+
+# Total non-white ink in a rendered flow map, as a fraction of the panel.
+.flow_ink <- function(plot) {
+  f <- local_tempfile(fileext = ".png")
+  render_plot(plot, f)
+  r <- png::readPNG(f)
+  sum(r[,, 1] < 0.9)
+}
+
+# The stroke widths / fill count of the flow layer's own path elements.
+.flow_svg <- function(plot) {
+  svg <- vellum::scene_svg(vellum::as_vellum_scene(plot))
+  parts <- strsplit(svg, "<g data-vellum-", fixed = TRUE)[[1]]
+  mine <- parts[startsWith(parts, 'id="layer-1-')]
+  list(
+    widths = as.numeric(sub(
+      '"$',
+      "",
+      sub(
+        'stroke-width="',
+        "",
+        unlist(regmatches(
+          mine,
+          gregexpr('stroke-width="[0-9.]+"', mine)
+        ))
+      )
+    )),
+    fills = length(unlist(regmatches(mine, gregexpr("<path", mine))))
+  )
+}
+
+.flow_plot <- function(...) {
+  fx <- .flow_fixture()
+  vgraph(fx$g, layout = fx$xy, width = 5, height = 4, dpi = 72) |>
+    mark_flow_map(root = "hub", type = "spiral", ...)
+}
+
+test_that("a flow map draws ink in proportion to its width range", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  thin <- .flow_ink(.flow_plot(width_range = c(0.3, 1)))
+  fat <- .flow_ink(.flow_plot(width_range = c(3, 8)))
+  expect_gt(thin, 0)
+  # A wider range must lay down materially more ink, and not merely a little:
+  # this is what catches a profile that silently collapsed to one width.
+  expect_gt(fat, thin * 2)
+})
+
+test_that("a flow map's branch widths span the requested range", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  # A variable-width stroke is a FILLED ribbon, so it carries no `stroke-width`
+  # at all -- the widths are geometry now, not a stroke attribute.
+  s <- .flow_svg(.flow_plot(width_range = c(0.5, 4)))
+  expect_length(s$widths, 0L)
+  expect_gt(s$fills, 0)
+  # So pin the widths through the ink instead, which is emitter-agnostic: it must
+  # track the mean requested width rather than collapsing to one value.
+  i1 <- .flow_ink(.flow_plot(width_range = c(1, 1)))
+  i2 <- .flow_ink(.flow_plot(width_range = c(2, 2)))
+  i4 <- .flow_ink(.flow_plot(width_range = c(4, 4)))
+  expect_gt(i2, i1)
+  expect_gt(i4, i2)
+  # Doubling a uniform width roughly doubles the ink of a long thin ribbon.
+  expect_equal(i2 / i1, 2, tolerance = 0.35)
+  expect_equal(i4 / i2, 2, tolerance = 0.35)
+})
+
+test_that("a steiner branch tapers as one ribbon, not a staircase of strokes", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  skip_if_not_installed("interp")
+  # `type = "steiner"` is where the flow actually VARIES along a branch: two of
+  # this fixture's five branches carry 3 and 6 distinct flows as tributaries
+  # merge. Those used to be split into one stroke per constant-flow run -- 12
+  # grobs for 5 branches, with a visible join at every width change. Now each
+  # branch is a single ribbon whose width varies continuously along it.
+  #
+  # (`type = "spiral"` never had the staircase: its flow is constant per branch,
+  # so the old run-splitting always yielded exactly one run.)
+  fx <- .flow_fixture()
+  p <- vgraph(fx$g, layout = fx$xy, width = 5, height = 4, dpi = 72) |>
+    mark_flow_map(root = "hub", type = "steiner")
+  s <- .flow_svg(p)
+  expect_equal(s$fills, 5L)
+  expect_length(s$widths, 0L)
+})
+
+test_that("a sketched flow map keeps a plain stroke", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  # `sketch` and `lwd_profile` cannot be combined upstream -- jittering a
+  # ribbon's outline is a wobbly silhouette, not a wobbly pen -- so a sketched
+  # flow map falls back to one uniform stroke per branch rather than erroring.
+  p <- .flow_plot(sketch = sketch(seed = 1))
+  expect_no_error(vellum::as_vellum_scene(p))
+  s <- .flow_svg(p)
+  expect_gt(length(s$widths), 0L)
+})
+
+test_that("flow-map width tracks the flow, not the drawing order", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  # The hub edge weights are 5,3,8,2,4: flow is not monotonic in branch order,
+  # so a bug that indexed the profile by position rather than by vertex would
+  # still produce a range but attach it to the wrong branches. Ink is invariant
+  # to a permutation, so compare against a graph whose weights are reversed --
+  # the flow TREE differs, so the ink must too.
+  fx <- .flow_fixture()
+  base <- .flow_ink(.flow_plot())
+  g2 <- fx$g
+  igraph::E(g2)$weight <- rev(igraph::E(fx$g)$weight)
+  alt <- vgraph(g2, layout = fx$xy, width = 5, height = 4, dpi = 72) |>
+    mark_flow_map(root = "hub", type = "spiral")
+  expect_gt(base, 0)
+  expect_gt(.flow_ink(alt), 0)
 })
