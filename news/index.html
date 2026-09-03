@@ -67,6 +67,11 @@
 <div class="section level3">
 <h3 id="new-features-0-9-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0-9000"></a></h3>
 <ul><li>
+<p><strong>A flow map’s branches taper smoothly instead of stepping.</strong> <code><a href="../reference/mark_graph.html">mark_flow_map()</a></code> drew each branch as a series of separate strokes, one per run of equal flow, so every width change landed on a join – round caps softened it but the staircase was there, and a <code>steiner</code> branch gathering tributaries could be a dozen strokes. Each branch is now a single tapering ribbon, built by the engine at render inside the panel viewport (<code>vellum</code>’s new <code>lines_grob(lwd_profile =)</code>), so the width varies continuously and is still a physical width that holds at any figure size.</p>
+<p>This only changes the picture for <code>type = "steiner"</code>, whose flow is per-vertex; a spiral tree’s flow is constant along each branch, so the old run-splitting always produced exactly one stroke there anyway.</p>
+<p>A <code>sketch =</code> flow map keeps one uniform stroke per branch: a sketched ribbon would jitter its outline rather than the pen that drew it, which is a different picture, so the two are not combined.</p>
+</li>
+<li>
 <p><strong><code>linewidth</code> is a mappable aesthetic on <code><a href="../reference/mark_point.html">mark_line()</a></code>, <code><a href="../reference/mark_area.html">mark_step()</a></code> and <code><a href="../reference/mark_segment.html">mark_segment()</a></code>, with a new <code><a href="../reference/scale_linewidth.html">scale_linewidth()</a></code>.</strong> A line whose width follows the data – a river thickening downstream, a weighted flow, a tapering trend – now draws, and gets its own legend.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">pressure</span><span class="op">)</span> <span class="op">|&gt;</span></span>

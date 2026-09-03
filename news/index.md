@@ -4,6 +4,25 @@
 
 ### New features
 
+- **A flow map’s branches taper smoothly instead of stepping.**
+  [`mark_flow_map()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  drew each branch as a series of separate strokes, one per run of equal
+  flow, so every width change landed on a join – round caps softened it
+  but the staircase was there, and a `steiner` branch gathering
+  tributaries could be a dozen strokes. Each branch is now a single
+  tapering ribbon, built by the engine at render inside the panel
+  viewport (`vellum`’s new `lines_grob(lwd_profile =)`), so the width
+  varies continuously and is still a physical width that holds at any
+  figure size.
+
+  This only changes the picture for `type = "steiner"`, whose flow is
+  per-vertex; a spiral tree’s flow is constant along each branch, so the
+  old run-splitting always produced exactly one stroke there anyway.
+
+  A `sketch =` flow map keeps one uniform stroke per branch: a sketched
+  ribbon would jitter its outline rather than the pen that drew it,
+  which is a different picture, so the two are not combined.
+
 - **`linewidth` is a mappable aesthetic on
   [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
   [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
