@@ -55,7 +55,10 @@ mark_bar(
 
 \item{...}{Encodings: named channel expressions such as \code{x}, \code{y}, \code{color},
 \code{fill}, \code{size}, \code{shape}, \code{alpha}. Stroked marks (line, step, segment, rule,
-linerange) also take \code{linewidth} and \code{linetype}.}
+linerange) also take \code{linewidth} and \code{linetype}. On \code{mark_line()},
+\code{mark_step()} and \code{mark_segment()}, \code{linewidth} may be \strong{mapped} as well as
+set: see \code{\link[=scale_linewidth]{scale_linewidth()}} for the per-segment width that gives, and what
+it costs. Everywhere else \code{linewidth} is a constant.}
 
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
 may be a constant or a mapped expression. A shape is a built-in marker

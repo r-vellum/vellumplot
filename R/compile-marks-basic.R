@@ -149,11 +149,28 @@ NULL
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lty <- .resolve_lty(L, scales, n)
   lwd <- .aes_param(L, "linewidth", 1.5)
+  # A mapped `linewidth` draws the group as per-segment-width segments instead of
+  # one uniform stroke; a constant one keeps the single (cheaper) `lines_grob`.
+  lwv <- .mapped_linewidth(L, scales, n)
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
+    if (!is.null(lwv)) {
+      scene <- .draw_var_width_line(
+        scene,
+        scales,
+        xn[o],
+        yn[o],
+        lwv[o],
+        o,
+        .gp_stroke(col, alpha, idx[1], lwd, lty),
+        .sketch_bump(sk, gi)
+      )
+      gi <- gi + 1L
+      next
+    }
     xy <- .xy_path(scales, xn[o], yn[o])
     scene <- .draw(
       scene,
@@ -169,6 +186,31 @@ NULL
     gi <- gi + 1L
   }
   scene
+}
+
+# Draw one polyline whose width varies per segment: `w` is the width at each
+# vertex, `rows` the layer rows those vertices came from. The gpar's own `lwd` is
+# overridden per element by `segments_grob(lwd = )`, so it only carries the
+# colour / alpha / line type the group shares.
+.draw_var_width_line <- function(scene, scales, x, y, w, rows, gp, sketch) {
+  s <- .seg_widths_path(scales, x, y, w)
+  if (is.null(s)) {
+    return(scene)
+  }
+  .draw(
+    scene,
+    vellum::segments_grob(
+      s$x0,
+      s$y0,
+      s$x1,
+      s$y1,
+      sketch = sketch,
+      gp = gp,
+      lwd = s$lwd
+    ),
+    # PROVENANCE: one row per drawn segment -- the vertex it starts at.
+    rows = rows[s$row]
+  )
 }
 
 # A sparkline (vsparkline()): a compact, axis-free chart of one series drawn to
@@ -909,6 +951,7 @@ NULL
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lty <- .resolve_lty(L, scales, n)
   lwd <- .aes_param(L, "linewidth", 1.5)
+  lwv <- .mapped_linewidth(L, scales, n)
   dir <- L$stat_params$direction %||% "hv"
   sk <- .mark_sketch(L, scales)
 
@@ -918,17 +961,39 @@ NULL
     sx <- xn[o]
     sy <- yn[o]
     m <- length(sx)
+    ew <- if (is.null(lwv)) NULL else lwv[o]
     if (m >= 2) {
       if (identical(dir, "vh")) {
         ex <- c(rep(sx[-m], each = 2), sx[m])
         ey <- c(sy[1], rep(sy[-1], each = 2))
+        # The width expands like the coordinate that holds across a tread, so a
+        # tread is drawn at its own datum's width and only the riser blends.
+        er <- c(o[1], rep(o[-1], each = 2))
+        if (!is.null(ew)) ew <- c(ew[1], rep(ew[-1], each = 2))
       } else {
         ex <- c(sx[1], rep(sx[-1], each = 2))
         ey <- c(rep(sy[-m], each = 2), sy[m])
+        er <- c(rep(o[-m], each = 2), o[m])
+        if (!is.null(ew)) ew <- c(rep(ew[-m], each = 2), ew[m])
       }
     } else {
       ex <- sx
       ey <- sy
+      er <- o
+    }
+    if (!is.null(ew)) {
+      scene <- .draw_var_width_line(
+        scene,
+        scales,
+        ex,
+        ey,
+        ew,
+        er,
+        .gp_stroke(col, alpha, idx[1], lwd, lty),
+        .sketch_bump(sk, gi)
+      )
+      gi <- gi + 1L
+      next
     }
     ln <- .xy_path(scales, ex, ey)
     scene <- .draw(

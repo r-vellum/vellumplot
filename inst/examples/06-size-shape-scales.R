@@ -1,4 +1,4 @@
-# The size and shape aesthetics, and their scales.
+# The size, shape and line-width aesthetics, and their scales.
 
 library(vellumplot)
 outdir <- "figures"
@@ -64,6 +64,16 @@ vplot(peng) |>
   labs(title = "SVG icon markers (shape = a path d per species)") |>
   render_plot(file.path(outdir, "06-svg-markers.png"))
 
+# --- line width -------------------------------------------------------------
+# A mapped `linewidth` on a line: each segment is drawn at one width (the mean
+# of its two endpoint values), so the stroke thickens where the value is larger.
+# The width steps at each vertex -- that is inherent to per-segment width.
+vplot(datasets::pressure) |>
+  mark_line(x = temperature, y = pressure, linewidth = pressure) |>
+  scale_linewidth(range = c(0.5, 6), name = "Pressure") |>
+  labs(title = "Variable-width line (linewidth = pressure)") |>
+  render_plot(file.path(outdir, "06-linewidth.png"))
+
 # --- merged legend ----------------------------------------------------------
 # Mapping one variable to two aesthetics draws a single legend whose keys carry
 # both encodings: here `species` drives colour and shape, so the guide shows a
@@ -74,4 +84,4 @@ vplot(peng) |>
   labs(title = "Merged colour + shape legend") |>
   render_plot(file.path(outdir, "06-merged.png"))
 
-message("06-size-shape-scales: wrote 5 figures to ", outdir)
+message("06-size-shape-scales: wrote 6 figures to ", outdir)

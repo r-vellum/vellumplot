@@ -579,7 +579,6 @@ scale_y_time <- function(
     aesthetic,
     colour = "color",
     fill = "color",
-    linewidth = "edge_width",
     aesthetic
   )
 }
@@ -1187,6 +1186,61 @@ scale_size_area <- function(
     )
   )
 }
+
+#' Line-width scale
+#'
+#' Declare the scale for a mapped `linewidth` aesthetic on a stroked mark --
+#' `mark_line()`, `mark_step()`, or `mark_segment()`. Data values are rescaled
+#' linearly onto a line-width `range` (in `lwd` units, as everywhere else in the
+#' package) and a line-width legend is drawn automatically.
+#'
+#' A mapped `linewidth` gives each **segment** one constant width, taken as the
+#' mean of its two endpoint values. So the width changes in visible steps at each
+#' vertex rather than tapering smoothly along the line, and the round joins do
+#' not perfectly fill the corners of a sharp bend. That is inherent to
+#' per-segment width; a constant `linewidth =` is unaffected and still draws the
+#' line as a single stroke.
+#'
+#' No backend can stroke the segments of one path at different widths in a single
+#' call, so a mapped `linewidth` emits one path element per segment in SVG and
+#' PDF. On a long, dense line that is a lot of elements -- worth knowing before
+#' mapping `linewidth` on tens of thousands of rows.
+#'
+#' For edges on a [vgraph()] plot, use [scale_edge_width()] instead: an edge's
+#' width is trained and legended independently of the line-width scale. That also
+#' means `guides(linewidth = )` and `lims(linewidth = )` address *this* scale;
+#' use `guides(edge_width = )` / `lims(edge_width = )` for a graph's edges.
+#'
+#' A missing (`NA`) width takes its segment's width from whichever endpoint is
+#' known, so one missing value thins the line rather than erasing the two
+#' segments that meet at it. A segment missing a width at both ends is dropped.
+#'
+#' @param plot A [PlotSpec].
+#' @param range Output line-width range `c(min, max)`, or `NULL` for the
+#'   default `c(0.5, 4)`.
+#' @param limits Data limits `c(min, max)`, or `NULL` to train from the data.
+#' @param breaks Explicit legend breaks, or `NULL`.
+#' @param name Legend title, or `NULL` to derive from the encoding.
+#' @return The modified [PlotSpec].
+#' @seealso [mark_line()], [mark_step()], [mark_segment()], [scale_edge_width()]
+#' @examples
+#' vplot(pressure) |>
+#'   mark_line(x = temperature, y = pressure, linewidth = pressure) |>
+#'   scale_linewidth(range = c(0.5, 5))
+#' @export
+scale_linewidth <- function(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  name = NULL
+) {
+  .continuous_range_scale(plot, "linewidth", range, limits, breaks, name)
+}
+
+#' @rdname scale_linewidth
+#' @export
+scale_linewidth_continuous <- scale_linewidth
 
 #' Edge-width scale
 #'

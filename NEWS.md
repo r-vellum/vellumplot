@@ -1,5 +1,44 @@
 # vellumplot 0.9.0.9000 (development version)
 
+## New features
+
+* **`linewidth` is a mappable aesthetic on `mark_line()`, `mark_step()` and
+  `mark_segment()`, with a new `scale_linewidth()`.** A line whose width follows
+  the data -- a river thickening downstream, a weighted flow, a tapering trend --
+  now draws, and gets its own legend.
+
+  ```r
+  vplot(pressure) |>
+    mark_line(x = temperature, y = pressure, linewidth = pressure) |>
+    scale_linewidth(range = c(0.5, 5))
+  ```
+
+  Each **segment** gets one constant width, the mean of its two endpoint values,
+  so the width changes in visible steps at the vertices rather than tapering
+  smoothly, and round joins do not perfectly fill a sharp corner. No backend can
+  stroke the segments of one path at different widths in a single call, so a
+  mapped `linewidth` also emits one path element per segment in SVG and PDF --
+  worth knowing before mapping it over tens of thousands of rows. A **constant**
+  `linewidth =` is untouched: still one stroke, byte for byte the same output.
+
+  A missing (`NA`) width takes its segment's width from whichever endpoint is
+  known, so one missing value thins the line rather than erasing the two segments
+  that meet at it; a segment with no known width at either end is dropped.
+
+  Edges keep their own scale: a mapped `linewidth` on `mark_edges()` still trains
+  `scale_edge_width()`, independently of the line-width scale, so one plot can
+  map edge width and line width to different variables. A mapped `linewidth` on a
+  line therefore no longer draws a stray, purely decorative edge-width legend.
+
+* **Breaking, minor: `guides(linewidth = )` and `lims(linewidth = )` now address
+  the line-width scale, not the edge-width one.** `linewidth` previously
+  canonicalised to `edge_width`, so on a `vgraph()` these two shortcuts reached a
+  graph's edges. Now that lines have their own width scale they address that
+  instead, and on a graph they no longer affect the edges -- silently, since a
+  declared scale for an untrained aesthetic is simply unused. Use
+  `guides(edge_width = )` / `lims(edge_width = )` for edges; `scale_edge_width()`
+  was always unambiguous and is unaffected.
+
 ## Animation
 
 * **`ease_aes()` can now ease each aesthetic on its own curve.** Alongside the

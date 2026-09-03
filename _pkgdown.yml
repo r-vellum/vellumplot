@@ -209,6 +209,7 @@ reference:
   - scale_shape
   - scale_pattern
   - scale_size
+  - scale_linewidth
   - scale_alpha
   - scale_linetype
   - scale_color_identity

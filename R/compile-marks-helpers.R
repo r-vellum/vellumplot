@@ -3,9 +3,6 @@ NULL
 
 # Mark emitters: shared aesthetic helpers and coordinate transforms.
 
-#' @include classes.R
-NULL
-
 # Group row indices by the tuple of gpar-borne style fields, mirroring
 # `vellum:::.gv_groups`: a batched grob carries a single gpar, so rows that must
 # differ in fill/col/alpha/lwd have to be emitted as separate grobs. Geometry-
@@ -566,6 +563,95 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   }
   s$seed <- s$seed + offset
   s
+}
+
+# Resolve a per-row stroke width from a mapped `linewidth` channel, or NULL when
+# the layer sets none (the caller then uses its constant `linewidth` param, and
+# the cheaper single-`lwd` grob that goes with it). `.lwd_add` is the widening an
+# effect copy asked for (`.emit_copies()`), which for a constant width lands in
+# `params$linewidth` instead -- a halo must widen the mapped widths too.
+# `.lwd_add` is internal: a dot-prefixed `params` entry is never a user-facing
+# mark argument, only a channel between an effect copy and this resolver.
+.mapped_linewidth <- function(L, scales, n) {
+  if (is.null(scales$linewidth) || is.null(L$values$linewidth)) {
+    return(NULL)
+  }
+  w <- as.numeric(scales$linewidth$map(L$values$linewidth))
+  rep_len(w, n) + (L$params$.lwd_add %||% 0)
+}
+
+# Split an ordered polyline into the segments a per-segment width draws it as:
+# each segment carries one width, the mean of its two endpoint values, so the
+# width steps at every vertex (see `scale_linewidth()`). Under polar/trans the
+# segment is munched exactly as `.xy_path()` would munch the whole polyline, and
+# every piece of it inherits that segment's width, so a warped panel bends the
+# same way it does for a constant-width line. Returns grob units plus `row`, the
+# index (into `x`/`y`) of each drawn piece's originating vertex, for provenance.
+.seg_widths_path <- function(scales, x, y, w) {
+  m <- length(x)
+  if (m < 2L) {
+    return(NULL)
+  }
+  # The mean of the two endpoint widths -- but a missing width must not poison
+  # the mean, or one missing value would erase BOTH segments meeting at that
+  # vertex (a non-finite `lwd` reaches the backend as width 0, i.e. invisible).
+  # Fall back to whichever endpoint is known, so a missing value costs that one
+  # datum's contribution instead and the line stays continuous; only a segment
+  # missing a width at *both* ends is dropped. See `scale_linewidth()`.
+  lwd <- (w[-m] + w[-1L]) / 2
+  if (anyNA(lwd)) {
+    lwd <- rowMeans(cbind(w[-m], w[-1L]), na.rm = TRUE)
+    lwd[!is.finite(lwd)] <- NA_real_
+  }
+  row <- seq_len(m - 1L)
+  if (is.null(scales$polar) && is.null(scales$trans)) {
+    xa <- x[-m]
+    ya <- y[-m]
+    xb <- x[-1L]
+    yb <- y[-1L]
+  } else {
+    parts <- lapply(row, function(i) {
+      j <- c(i, i + 1L)
+      d <- if (!is.null(scales$polar)) {
+        .polar_munch(scales, x[j], y[j])
+      } else {
+        .trans_munch(scales, x[j], y[j])
+      }
+      k <- length(d$x)
+      list(
+        xa = d$x[-k],
+        ya = d$y[-k],
+        xb = d$x[-1L],
+        yb = d$y[-1L],
+        lwd = rep(lwd[i], k - 1L),
+        row = rep(i, k - 1L)
+      )
+    })
+    fld <- function(nm) unlist(lapply(parts, `[[`, nm), use.names = FALSE)
+    xa <- fld("xa")
+    ya <- fld("ya")
+    xb <- fld("xb")
+    yb <- fld("yb")
+    lwd <- fld("lwd")
+    row <- fld("row")
+  }
+  # A segment with no width at either end carries no information: drop it rather
+  # than hand the backend a width-0 element that silently renders as nothing.
+  if (anyNA(lwd)) {
+    keep <- !is.na(lwd)
+    if (!any(keep)) {
+      return(NULL)
+    }
+    xa <- xa[keep]
+    ya <- ya[keep]
+    xb <- xb[keep]
+    yb <- yb[keep]
+    lwd <- lwd[keep]
+    row <- row[keep]
+  }
+  a <- .xy_units(scales, xa, ya)
+  b <- .xy_units(scales, xb, yb)
+  list(x0 = a$x, y0 = a$y, x1 = b$x, y1 = b$y, lwd = lwd, row = row)
 }
 
 # Resolve an edge's width: a mapped linewidth channel via the trained edge-width
