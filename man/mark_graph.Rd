@@ -214,7 +214,8 @@ attribute, or \code{1} if there is none.}
 
 \item{width_range}{For \code{mark_flow_map()}, the drawn branch width range
 \code{c(min, max)} (in \code{linewidth} units) that the computed flow is mapped onto.
-Default \code{c(0.3, 3)}.}
+Default \code{c(0.3, 3)}. The width is resolved at render inside the panel, so it
+is a physical width that holds at any figure size.}
 
 \item{size, shape}{For \code{mark_nodes()}, the node size (mm) / shape; a constant or
 a mapped expression. \code{size} is also the label font size for
@@ -305,7 +306,12 @@ rooted at \code{root}, laid out at fixed coordinates; edge \code{weight} drives 
 \code{type = "spiral"} (default, an angle-restricted spiral tree) needs only
 \pkg{edgebundle}; \code{type = "steiner"} (an approximate Steiner tree) additionally
 needs \pkg{interp}. Branch width is mapped from the computed flow into
-\code{width_range}.
+\code{width_range}, and each branch is drawn as \strong{one tapering ribbon}: where
+tributaries merge and the flow changes along a branch, the width varies
+continuously rather than stepping. (That only arises for \code{type = "steiner"},
+whose flow is per-vertex; a spiral tree's flow is constant along each branch.)
+A \verb{sketch =} flow map falls back to one uniform stroke per branch, since a
+hand-drawn ribbon would jitter its outline rather than the pen.
 
 These are thin over the point / segment / text marks; \code{igraph} need not be
 installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it). \code{mark_edge_bundle()} and

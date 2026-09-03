@@ -2525,7 +2525,12 @@ mark_segment <- function(
 #' `type = "spiral"` (default, an angle-restricted spiral tree) needs only
 #' \pkg{edgebundle}; `type = "steiner"` (an approximate Steiner tree) additionally
 #' needs \pkg{interp}. Branch width is mapped from the computed flow into
-#' `width_range`.
+#' `width_range`, and each branch is drawn as **one tapering ribbon**: where
+#' tributaries merge and the flow changes along a branch, the width varies
+#' continuously rather than stepping. (That only arises for `type = "steiner"`,
+#' whose flow is per-vertex; a spiral tree's flow is constant along each branch.)
+#' A `sketch =` flow map falls back to one uniform stroke per branch, since a
+#' hand-drawn ribbon would jitter its outline rather than the pen.
 #'
 #' These are thin over the point / segment / text marks; `igraph` need not be
 #' installed to use them (only [vgraph()] needs it). `mark_edge_bundle()` and
@@ -2619,7 +2624,8 @@ mark_segment <- function(
 #'   attribute, or `1` if there is none.
 #' @param width_range For `mark_flow_map()`, the drawn branch width range
 #'   `c(min, max)` (in `linewidth` units) that the computed flow is mapped onto.
-#'   Default `c(0.3, 3)`.
+#'   Default `c(0.3, 3)`. The width is resolved at render inside the panel, so it
+#'   is a physical width that holds at any figure size.
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data; overrides the default table.
 #' @param effects A list of layer render effects ([glow()], [outline()],

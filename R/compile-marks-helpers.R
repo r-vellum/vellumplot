@@ -384,7 +384,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   ctx <- scales$trans
   m <- length(x)
   if (m < 2L || (isTRUE(ctx$x_lin) && isTRUE(ctx$y_lin))) {
-    return(list(x = x, y = y))
+    return(list(x = x, y = y, at = seq_along(x)))
   }
   xw <- ctx$x_map(x)
   yw <- ctx$y_map(y)
@@ -394,14 +394,16 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   yr <- if (isTRUE(yr > 0)) yr else 1
   ox <- vector("list", m - 1L)
   oy <- vector("list", m - 1L)
+  oa <- vector("list", m - 1L)
   for (i in seq_len(m - 1L)) {
     frac <- max(abs(xw[i + 1L] - xw[i]) / xr, abs(yw[i + 1L] - yw[i]) / yr)
     steps <- max(1L, min(cap, ceiling(frac * k)))
     t <- seq(0, 1, length.out = steps + 1L)[-(steps + 1L)]
     ox[[i]] <- x[i] + t * (x[i + 1L] - x[i])
     oy[[i]] <- y[i] + t * (y[i + 1L] - y[i])
+    oa[[i]] <- i + t # see `.polar_munch`
   }
-  list(x = c(unlist(ox), x[m]), y = c(unlist(oy), y[m]))
+  list(x = c(unlist(ox), x[m]), y = c(unlist(oy), y[m]), at = c(unlist(oa), m))
 }
 
 .xy_units <- function(scales, x, y) {
@@ -426,19 +428,24 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   ctx <- scales$polar
   m <- length(x)
   if (m < 2L) {
-    return(list(x = x, y = y))
+    return(list(x = x, y = y, at = seq_along(x)))
   }
   tsrc <- if (identical(ctx$theta_aes, "x")) x else y
   ang <- ctx$theta_map(tsrc)
   ox <- vector("list", m - 1L)
   oy <- vector("list", m - 1L)
+  oa <- vector("list", m - 1L)
   for (i in seq_len(m - 1L)) {
     steps <- max(1L, ceiling(abs(ang[i + 1L] - ang[i]) / max_step))
     t <- seq(0, 1, length.out = steps + 1L)[-(steps + 1L)]
     ox[[i]] <- x[i] + t * (x[i + 1L] - x[i])
     oy[[i]] <- y[i] + t * (y[i + 1L] - y[i])
+    # `at` is each output point's position in ORIGINAL vertex-index space, so a
+    # caller carrying a per-vertex quantity (a width profile) can resample it on
+    # the identical parameterisation rather than guessing the expansion.
+    oa[[i]] <- i + t
   }
-  list(x = c(unlist(ox), x[m]), y = c(unlist(oy), y[m]))
+  list(x = c(unlist(ox), x[m]), y = c(unlist(oy), y[m]), at = c(unlist(oa), m))
 }
 
 # Map an ordered polyline to grob units, densifying first under polar/trans.
@@ -452,6 +459,28 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     return(.xy_units(scales, d$x, d$y))
   }
   .xy_units(scales, x, y)
+}
+
+# `.xy_path()`, but carrying a per-vertex weight through the same densification.
+#
+# Under polar/`coord_trans` a polyline is munched into MORE vertices than it went
+# in with, so a per-vertex width profile would desync from the coordinates. Both
+# munchers report `at`, each output vertex's position in original vertex-index
+# space, so the weight is resampled on exactly the parameterisation the geometry
+# used -- linear, matching the munchers' own linear interpolation.
+.xy_path_w <- function(scales, x, y, w) {
+  if (length(x) < 2L || (is.null(scales$polar) && is.null(scales$trans))) {
+    xy <- .xy_path(scales, x, y)
+    return(list(x = xy$x, y = xy$y, w = w))
+  }
+  d <- if (!is.null(scales$polar)) {
+    .polar_munch(scales, x, y)
+  } else {
+    .trans_munch(scales, x, y)
+  }
+  wm <- stats::approx(seq_along(w), w, xout = d$at, rule = 2)$y
+  xy <- .xy_units(scales, d$x, d$y)
+  list(x = xy$x, y = xy$y, w = wm)
 }
 
 # Map a filled outline (forward path a + reversed path b) to polygon units,

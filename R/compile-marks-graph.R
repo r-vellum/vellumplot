@@ -561,11 +561,22 @@ NULL
   a <- sp$alpha %||% 1
   sk <- .mark_sketch(L, scales)
 
+  # One grob per branch, with the width varying smoothly along it. Each branch
+  # used to be split into runs of EQUAL flow and stroked separately, so every
+  # width change landed on a join -- round caps hid the step, but the staircase
+  # was there. `lwd_profile` carries one multiplier per vertex and the engine
+  # builds the ribbon at render, inside the panel viewport, so the taper is
+  # continuous and still tracks a panel measured after axes and legends.
+  #
+  # `lwd = 1` so the profile IS the width in lwd units, exactly what `wmap()`
+  # returns. `sketch` is not passed: it cannot be combined with a profile (it
+  # would jitter the ribbon's outline rather than the pen), so a sketched flow
+  # map keeps the plain stroke below.
   for (idx in split(seq_len(nrow(fm)), fm$grp)) {
-    fv <- fm$flow[idx]
-    for (r in .const_runs(fv)) {
-      sub <- idx[r]
-      xy <- .xy_path(scales, fm$x[sub], fm$y[sub])
+    wv <- wmap(fm$flow[idx])
+    if (!is.null(sk) || !any(wv > 0)) {
+      # Sketched, or a degenerate all-zero width range: stroke it uniformly.
+      xy <- .xy_path(scales, fm$x[idx], fm$y[idx])
       scene <- .draw(
         scene,
         vellum::lines_grob(
@@ -574,14 +585,31 @@ NULL
           sketch = sk,
           gp = vellum::vl_gpar(
             col = col,
-            lwd = wmap(fv[r[1L]]),
+            lwd = mean(wv),
             alpha = gp_alpha(a),
             lineend = "round",
             linejoin = "round"
           )
         )
       )
+      next
     }
+    d <- .xy_path_w(scales, fm$x[idx], fm$y[idx], wv)
+    scene <- .draw(
+      scene,
+      vellum::lines_grob(
+        d$x,
+        d$y,
+        lwd_profile = d$w,
+        gp = vellum::vl_gpar(
+          col = col,
+          lwd = 1,
+          alpha = gp_alpha(a),
+          lineend = "round",
+          linejoin = "round"
+        )
+      )
+    )
   }
   scene
 }
@@ -605,20 +633,6 @@ NULL
     )
     data.frame(x = fm$x, y = fm$y, flow = fm$flow, grp = fm$edge)
   }
-}
-
-# Split an ordered flow vector into maximal runs of equal flow, each run extended
-# to include the first point of the next so consecutive `lines_grob`s meet with no
-# gap (round caps hide the width step). Returns a list of index ranges into `f`.
-.const_runs <- function(f) {
-  n <- length(f)
-  if (n <= 1L) {
-    return(list(seq_len(n)))
-  }
-  brk <- which(f[-1L] != f[-n]) # positions where flow changes
-  starts <- c(1L, brk + 1L)
-  ends <- c(brk, n)
-  Map(function(s, e) s:min(e + 1L, n), starts, ends)
 }
 
 # Pie / donut node glyphs: each vertex is drawn as a pie whose wedges are sized by

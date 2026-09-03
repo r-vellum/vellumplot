@@ -932,15 +932,6 @@ test_that("mark_flow_map() validates root, width_range, and the plot", {
   )
 })
 
-test_that(".const_runs splits a flow vector into overlapping equal-flow runs", {
-  # constant flow -> one run spanning every point.
-  expect_identical(vellumplot:::.const_runs(c(2, 2, 2)), list(1:3))
-  # a change at point 3 -> two runs that share point 3 (no gap between them).
-  runs <- vellumplot:::.const_runs(c(1, 1, 5, 5))
-  expect_identical(runs[[1]], 1:3)
-  expect_identical(runs[[2]], 3:4)
-})
-
 test_that("spiral and steiner flow maps render", {
   skip_if_not_installed("igraph")
   skip_if_not_installed("graphlayouts")
@@ -971,7 +962,7 @@ test_that("spiral and steiner flow maps render", {
   f <- local_tempfile(fileext = ".png")
   render_plot(plot, f)
   r <- png::readPNG(f)
-  sum(r[, , 1] < 0.9)
+  sum(r[,, 1] < 0.9)
 }
 
 # The stroke widths / fill count of the flow layer's own path elements.
@@ -981,10 +972,16 @@ test_that("spiral and steiner flow maps render", {
   mine <- parts[startsWith(parts, 'id="layer-1-')]
   list(
     widths = as.numeric(sub(
-      '"$', "",
-      sub('stroke-width="', "", unlist(regmatches(
-        mine, gregexpr('stroke-width="[0-9.]+"', mine)
-      )))
+      '"$',
+      "",
+      sub(
+        'stroke-width="',
+        "",
+        unlist(regmatches(
+          mine,
+          gregexpr('stroke-width="[0-9.]+"', mine)
+        ))
+      )
     )),
     fills = length(unlist(regmatches(mine, gregexpr("<path", mine))))
   )
@@ -1012,21 +1009,55 @@ test_that("a flow map's branch widths span the requested range", {
   skip_if_not_installed("igraph")
   skip_if_not_installed("graphlayouts")
   skip_if_not_installed("edgebundle")
-  wr <- c(0.5, 4)
-  s <- .flow_svg(.flow_plot(width_range = wr))
-  w <- s$widths
-  if (length(w)) {
-    # NOTE the units: SVG `stroke-width` is device px, and the width range is in
-    # lwd units (1 == 1/96 in), so at dpi 72 the drawn width is 0.75 * lwd.
-    # Asserting on raw px without that conversion passes by coincidence here.
-    px <- wr * 72 / 96
-    expect_equal(max(w), px[2], tolerance = 0.02)
-    expect_equal(min(w), px[1], tolerance = 0.02)
-  } else {
-    # A filled-ribbon emitter carries no stroke-width at all; the widths are then
-    # geometry, covered by the ink tests, and this only pins that it drew.
-    expect_gt(s$fills, 0)
-  }
+  # A variable-width stroke is a FILLED ribbon, so it carries no `stroke-width`
+  # at all -- the widths are geometry now, not a stroke attribute.
+  s <- .flow_svg(.flow_plot(width_range = c(0.5, 4)))
+  expect_length(s$widths, 0L)
+  expect_gt(s$fills, 0)
+  # So pin the widths through the ink instead, which is emitter-agnostic: it must
+  # track the mean requested width rather than collapsing to one value.
+  i1 <- .flow_ink(.flow_plot(width_range = c(1, 1)))
+  i2 <- .flow_ink(.flow_plot(width_range = c(2, 2)))
+  i4 <- .flow_ink(.flow_plot(width_range = c(4, 4)))
+  expect_gt(i2, i1)
+  expect_gt(i4, i2)
+  # Doubling a uniform width roughly doubles the ink of a long thin ribbon.
+  expect_equal(i2 / i1, 2, tolerance = 0.35)
+  expect_equal(i4 / i2, 2, tolerance = 0.35)
+})
+
+test_that("a steiner branch tapers as one ribbon, not a staircase of strokes", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  skip_if_not_installed("interp")
+  # `type = "steiner"` is where the flow actually VARIES along a branch: two of
+  # this fixture's five branches carry 3 and 6 distinct flows as tributaries
+  # merge. Those used to be split into one stroke per constant-flow run -- 12
+  # grobs for 5 branches, with a visible join at every width change. Now each
+  # branch is a single ribbon whose width varies continuously along it.
+  #
+  # (`type = "spiral"` never had the staircase: its flow is constant per branch,
+  # so the old run-splitting always yielded exactly one run.)
+  fx <- .flow_fixture()
+  p <- vgraph(fx$g, layout = fx$xy, width = 5, height = 4, dpi = 72) |>
+    mark_flow_map(root = "hub", type = "steiner")
+  s <- .flow_svg(p)
+  expect_equal(s$fills, 5L)
+  expect_length(s$widths, 0L)
+})
+
+test_that("a sketched flow map keeps a plain stroke", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  skip_if_not_installed("edgebundle")
+  # `sketch` and `lwd_profile` cannot be combined upstream -- jittering a
+  # ribbon's outline is a wobbly silhouette, not a wobbly pen -- so a sketched
+  # flow map falls back to one uniform stroke per branch rather than erroring.
+  p <- .flow_plot(sketch = sketch(seed = 1))
+  expect_no_error(vellum::as_vellum_scene(p))
+  s <- .flow_svg(p)
+  expect_gt(length(s$widths), 0L)
 })
 
 test_that("flow-map width tracks the flow, not the drawing order", {
