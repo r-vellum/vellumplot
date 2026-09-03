@@ -50,7 +50,13 @@ PDF. On a long, dense line that is a lot of elements -- worth knowing before
 mapping \code{linewidth} on tens of thousands of rows.
 
 For edges on a \code{\link[=vgraph]{vgraph()}} plot, use \code{\link[=scale_edge_width]{scale_edge_width()}} instead: an edge's
-width is trained and legended independently of the line-width scale.
+width is trained and legended independently of the line-width scale. That also
+means \code{guides(linewidth = )} and \code{lims(linewidth = )} address \emph{this} scale;
+use \code{guides(edge_width = )} / \code{lims(edge_width = )} for a graph's edges.
+
+A missing (\code{NA}) width takes its segment's width from whichever endpoint is
+known, so one missing value thins the line rather than erasing the two
+segments that meet at it. A segment missing a width at both ends is dropped.
 }
 \examples{
 vplot(pressure) |>

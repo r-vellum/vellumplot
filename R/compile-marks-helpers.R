@@ -573,6 +573,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # the cheaper single-`lwd` grob that goes with it). `.lwd_add` is the widening an
 # effect copy asked for (`.emit_copies()`), which for a constant width lands in
 # `params$linewidth` instead -- a halo must widen the mapped widths too.
+# `.lwd_add` is internal: a dot-prefixed `params` entry is never a user-facing
+# mark argument, only a channel between an effect copy and this resolver.
 .mapped_linewidth <- function(L, scales, n) {
   if (is.null(scales$linewidth) || is.null(L$values$linewidth)) {
     return(NULL)
@@ -593,7 +595,17 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   if (m < 2L) {
     return(NULL)
   }
+  # The mean of the two endpoint widths -- but a missing width must not poison
+  # the mean, or one missing value would erase BOTH segments meeting at that
+  # vertex (a non-finite `lwd` reaches the backend as width 0, i.e. invisible).
+  # Fall back to whichever endpoint is known, so a missing value costs that one
+  # datum's contribution instead and the line stays continuous; only a segment
+  # missing a width at *both* ends is dropped. See `scale_linewidth()`.
   lwd <- (w[-m] + w[-1L]) / 2
+  if (anyNA(lwd)) {
+    lwd <- rowMeans(cbind(w[-m], w[-1L]), na.rm = TRUE)
+    lwd[!is.finite(lwd)] <- NA_real_
+  }
   row <- seq_len(m - 1L)
   if (is.null(scales$polar) && is.null(scales$trans)) {
     xa <- x[-m]
@@ -625,6 +637,20 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     yb <- fld("yb")
     lwd <- fld("lwd")
     row <- fld("row")
+  }
+  # A segment with no width at either end carries no information: drop it rather
+  # than hand the backend a width-0 element that silently renders as nothing.
+  if (anyNA(lwd)) {
+    keep <- !is.na(lwd)
+    if (!any(keep)) {
+      return(NULL)
+    }
+    xa <- xa[keep]
+    ya <- ya[keep]
+    xb <- xb[keep]
+    yb <- yb[keep]
+    lwd <- lwd[keep]
+    row <- row[keep]
   }
   a <- .xy_units(scales, xa, ya)
   b <- .xy_units(scales, xb, yb)

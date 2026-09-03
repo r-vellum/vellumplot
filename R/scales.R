@@ -1207,7 +1207,13 @@ scale_size_area <- function(
 #' mapping `linewidth` on tens of thousands of rows.
 #'
 #' For edges on a [vgraph()] plot, use [scale_edge_width()] instead: an edge's
-#' width is trained and legended independently of the line-width scale.
+#' width is trained and legended independently of the line-width scale. That also
+#' means `guides(linewidth = )` and `lims(linewidth = )` address *this* scale;
+#' use `guides(edge_width = )` / `lims(edge_width = )` for a graph's edges.
+#'
+#' A missing (`NA`) width takes its segment's width from whichever endpoint is
+#' known, so one missing value thins the line rather than erasing the two
+#' segments that meet at it. A segment missing a width at both ends is dropped.
 #'
 #' @param plot A [PlotSpec].
 #' @param range Output line-width range `c(min, max)`, or `NULL` for the

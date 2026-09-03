@@ -149,3 +149,71 @@ test_that("mapped edge width and mapped line width train separately", {
   expect_identical(b$scales$edge_width$kind, "edge_width")
   expect_null(b$scales$linewidth)
 })
+
+test_that("a missing width thins its segments instead of erasing them", {
+  # `w[2]` is missing: the two segments meeting at vertex 2 must still draw,
+  # each taking the width of the endpoint that IS known -- a non-finite lwd
+  # would otherwise reach the backend as width 0 and vanish silently.
+  d <- data.frame(x = 1:4, y = c(1, 2, 1, 2), w = c(0, NA, 10, 0))
+  p <- vplot(d) |>
+    mark_line(x = x, y = y, linewidth = w) |>
+    scale_linewidth(range = c(1, 11))
+  w <- mark_widths(p)
+  expect_length(w, 3L) # no segment dropped
+  # vertices map to 1, NA, 11, 1 -> seg1 from v1 alone, seg2 from v3 alone,
+  # seg3 the ordinary mean of 11 and 1
+  expect_equal(w, c(1, 11, 6), tolerance = 1e-6)
+})
+
+test_that("a missing width costs no ink", {
+  d <- data.frame(
+    x = 1:5,
+    y = rep(c(1, 2), length.out = 5),
+    w = c(5, NA, 5, 5, 5)
+  )
+  full <- data.frame(x = d$x, y = d$y, w = rep(5, 5))
+  gap <- vplot(d) |> mark_line(x = x, y = y, linewidth = w)
+  all <- vplot(full) |> mark_line(x = x, y = y, linewidth = w)
+  expect_identical(length(mark_widths(gap)), length(mark_widths(all)))
+})
+
+test_that("a segment missing a width at both ends is dropped, keeping provenance", {
+  d <- data.frame(
+    x = 1:5,
+    y = rep(c(1, 2), length.out = 5),
+    w = c(5, NA, NA, 5, 5)
+  )
+  p <- vplot(d) |> mark_line(x = x, y = y, linewidth = w)
+  # 4 spans, but the middle one has no known width at either end
+  expect_length(mark_widths(p), 3L)
+  b <- vellumplot:::.build_panels(p)
+  sc <- b$scales
+  r <- vellumplot:::.resolve_layers(p)
+  wv <- vellumplot:::.mapped_linewidth(r[[1]], sc, 5)
+  s <- vellumplot:::.seg_widths_path(sc, d$x, d$y, wv)
+  expect_identical(s$row, c(1L, 3L, 4L)) # the dropped span leaves no stale row
+})
+
+test_that("an all-missing width draws nothing rather than an invisible batch", {
+  d <- data.frame(x = 1:4, y = c(1, 2, 1, 2), w = rep(NA_real_, 4))
+  p <- vplot(d) |> mark_line(x = x, y = y, linewidth = w)
+  expect_length(mark_widths(p), 0L)
+})
+
+test_that("guides()/lims() on `linewidth` address the line-width scale", {
+  skip_if_not_installed("igraph")
+  # The split means `linewidth` no longer canonicalises to `edge_width`: a
+  # graph's edges are addressed as `edge_width`. Locked so the redirection (and
+  # the documented migration) cannot regress unnoticed.
+  expect_identical(vellumplot:::.canonical_lim_aes("linewidth"), "linewidth")
+  g <- igraph::make_ring(5)
+  g <- igraph::set_edge_attr(g, "ew", value = seq_len(igraph::ecount(g)))
+  base <- function() {
+    vgraph(g, layout = "circle") |> mark_edges(linewidth = ew) |> mark_nodes()
+  }
+  # `edge_width` reaches the edge scale's domain; `linewidth` does not touch it
+  b_edge <- vellumplot:::.build_panels(base() |> lims(edge_width = c(0, 40)))
+  expect_equal(b_edge$scales$edge_width$range, c(0, 40))
+  b_line <- vellumplot:::.build_panels(base() |> lims(linewidth = c(0, 40)))
+  expect_false(isTRUE(all.equal(b_line$scales$edge_width$range, c(0, 40))))
+})

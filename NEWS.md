@@ -21,13 +21,23 @@
   worth knowing before mapping it over tens of thousands of rows. A **constant**
   `linewidth =` is untouched: still one stroke, byte for byte the same output.
 
+  A missing (`NA`) width takes its segment's width from whichever endpoint is
+  known, so one missing value thins the line rather than erasing the two segments
+  that meet at it; a segment with no known width at either end is dropped.
+
   Edges keep their own scale: a mapped `linewidth` on `mark_edges()` still trains
   `scale_edge_width()`, independently of the line-width scale, so one plot can
-  map edge width and line width to different variables. Two consequences of that
-  split: `guides(linewidth = )` and `lims(linewidth = )` now address the
-  line-width scale rather than the edge-width one (use `guides(edge_width = )` /
-  `lims(edge_width = )` for edges), and a mapped `linewidth` on a line no longer
-  draws a stray, purely decorative edge-width legend.
+  map edge width and line width to different variables. A mapped `linewidth` on a
+  line therefore no longer draws a stray, purely decorative edge-width legend.
+
+* **Breaking, minor: `guides(linewidth = )` and `lims(linewidth = )` now address
+  the line-width scale, not the edge-width one.** `linewidth` previously
+  canonicalised to `edge_width`, so on a `vgraph()` these two shortcuts reached a
+  graph's edges. Now that lines have their own width scale they address that
+  instead, and on a graph they no longer affect the edges -- silently, since a
+  declared scale for an untrained aesthetic is simply unused. Use
+  `guides(edge_width = )` / `lims(edge_width = )` for edges; `scale_edge_width()`
+  was always unambiguous and is unaffected.
 
 ## Animation
 
