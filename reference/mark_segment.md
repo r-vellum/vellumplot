@@ -29,7 +29,9 @@ mark_segment(
 - ...:
 
   Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
-  `linewidth`, `linetype`, `alpha`).
+  `linewidth`, `linetype`, `alpha`). A mapped `linewidth` gives each
+  segment its own width – see
+  [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md).
 
 - auto:
 
@@ -91,6 +93,10 @@ mark_segment(
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## See also
+
+[`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
 
 ## Examples
 

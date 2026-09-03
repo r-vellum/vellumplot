@@ -249,8 +249,10 @@ render_plot(p, "cars.png")
   [`scale_fill_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
   `_gradient()`, `_binned()`, `_manual()`),
   [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md),
-  and a trained
-  [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+  and trained
+  [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  /
+  [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md),
   with stacked legends.
 - Trained axes, a panel with gridlines, and layering on one panel.
 - Faceting

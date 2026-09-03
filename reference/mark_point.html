@@ -136,7 +136,10 @@ mappings.</p>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Encodings: named channel expressions such as <code>x</code>, <code>y</code>, <code>color</code>,
 <code>fill</code>, <code>size</code>, <code>shape</code>, <code>alpha</code>. Stroked marks (line, step, segment, rule,
-linerange) also take <code>linewidth</code> and <code>linetype</code>.</p></dd>
+linerange) also take <code>linewidth</code> and <code>linetype</code>. On <code>mark_line()</code>,
+<code><a href="mark_area.html">mark_step()</a></code> and <code><a href="mark_segment.html">mark_segment()</a></code>, <code>linewidth</code> may be <strong>mapped</strong> as well as
+set: see <code><a href="scale_linewidth.html">scale_linewidth()</a></code> for the per-segment width that gives, and what
+it costs. Everywhere else <code>linewidth</code> is a constant.</p></dd>
 
 
 <dt id="arg-size-shape">size, shape<a class="anchor" aria-label="anchor" href="#arg-size-shape"></a></dt>

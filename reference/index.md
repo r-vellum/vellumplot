@@ -234,6 +234,9 @@ Map data values to visual properties, with trained domains and guides.
 - [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
   [`scale_size_area()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
   : Size scale
+- [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
+  [`scale_linewidth_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
+  : Line-width scale
 - [`scale_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
   [`scale_alpha_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
   : Alpha (opacity) scale

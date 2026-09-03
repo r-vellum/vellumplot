@@ -67,7 +67,15 @@ mark_bar(
 
   Encodings: named channel expressions such as `x`, `y`, `color`,
   `fill`, `size`, `shape`, `alpha`. Stroked marks (line, step, segment,
-  rule, linerange) also take `linewidth` and `linetype`.
+  rule, linerange) also take `linewidth` and `linetype`. On
+  `mark_line()`,
+  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  and
+  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md),
+  `linewidth` may be **mapped** as well as set: see
+  [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
+  for the per-segment width that gives, and what it costs. Everywhere
+  else `linewidth` is a constant.
 
 - size, shape:
 

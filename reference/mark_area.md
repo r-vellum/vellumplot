@@ -42,7 +42,10 @@ mark_step(
 - ...:
 
   Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`, `ymax`
-  for ribbon; plus `color`/`fill`/`alpha`.
+  for ribbon; plus `color`/`fill`/`alpha`. `mark_step()` also takes
+  `linewidth` and `linetype`; a mapped `linewidth` varies the
+  staircase's width per tread (see
+  [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)).
 
 - position:
 
@@ -118,6 +121,10 @@ mark_step(
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## See also
+
+[`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
 
 ## Examples
 
