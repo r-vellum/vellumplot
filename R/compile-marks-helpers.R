@@ -3,9 +3,6 @@ NULL
 
 # Mark emitters: shared aesthetic helpers and coordinate transforms.
 
-#' @include classes.R
-NULL
-
 # Group row indices by the tuple of gpar-borne style fields, mirroring
 # `vellum:::.gv_groups`: a batched grob carries a single gpar, so rows that must
 # differ in fill/col/alpha/lwd have to be emitted as separate grobs. Geometry-
