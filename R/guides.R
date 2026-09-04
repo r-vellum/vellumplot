@@ -7,7 +7,7 @@ NULL
 #' respelling the whole `scale_*()`. Pass `"none"` (or [guide_none()]) to hide a
 #' legend, [guide_legend()] to tweak a keyed legend (reverse the key order,
 #' override the title, restyle the keys with `override.aes`), `guide_colourbar()`
-#' to size and style a continuous colour bar, or `guide_coloursteps()` to draw a
+#' to size, tick and style a continuous colour bar, or `guide_coloursteps()` to draw a
 #' **binned** colour scale as a segmented bar instead of swatches. Applies to the
 #' non-position legends (`color`/`fill`, `size`, `shape`, `alpha`, `linetype`);
 #' position axes are unaffected.
@@ -25,6 +25,19 @@ NULL
 #' @param ticks.colour Colour of the break ticks (default `"white"`).
 #' @param label.position Which side of a **vertical** colour bar the labels sit,
 #'   `"right"` (default) or `"left"`.
+#' @param n.breaks Roughly how many ticks (and labels) to put on a **continuous**
+#'   colour bar --- a target, not a promise: the break algorithm prefers round
+#'   numbers over the bar's range and returns whatever count reads best near the
+#'   one asked for, so `n.breaks = 4` may draw 3 or 5 rather than tick a value
+#'   like 23.33. `NULL` (default) keeps the automatic count. An explicit
+#'   `breaks =` on the scale names the values that get a tick and outranks this;
+#'   so does `labels =`, which is paired with those breaks.
+#'
+#'   There is deliberately no `nbin` argument (ggplot2's band count for the
+#'   gradient). The bar is drawn as one real gradient fill, not a stack of
+#'   rectangles approximating one, so it has no bands to count; the segmented
+#'   look is [guide_coloursteps()] on a binned scale, where the segments are the
+#'   scale's own bins.
 #' @param nested For a **size** legend, draw the keys as concentric,
 #'   bottom-aligned circles (a proportional-symbol / "bubble" legend) with a
 #'   leader from each circle to its label, instead of stacked rows. Best with a
@@ -60,6 +73,11 @@ NULL
 #'   guides(color = guide_colourbar(
 #'     barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
 #'   ))
+#'
+#' # about four ticks on the bar instead of the automatic count
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = hp) |>
+#'   guides(color = guide_colourbar(n.breaks = 4))
 #'
 #' # a binned colour scale as a segmented bar
 #' vplot(mtcars) |>
@@ -116,6 +134,7 @@ guide_colourbar <- function(
   ticks = TRUE,
   ticks.colour = "white",
   label.position = NULL,
+  n.breaks = NULL,
   reverse = FALSE
 ) {
   .guide_bar(
@@ -126,7 +145,8 @@ guide_colourbar <- function(
     ticks,
     ticks.colour,
     label.position,
-    reverse
+    reverse,
+    n.breaks
   )
 }
 
@@ -170,7 +190,8 @@ guide_colorsteps <- guide_coloursteps
   ticks,
   ticks.colour,
   label.position,
-  reverse
+  reverse,
+  n.breaks = NULL
 ) {
   pos <- label.position %||% "right"
   if (!pos %in% c("right", "left")) {
@@ -186,6 +207,7 @@ guide_colorsteps <- guide_coloursteps
     ticks = isTRUE(ticks),
     ticks_colour = ticks.colour,
     label_position = pos,
+    n_breaks = .check_n_breaks(n.breaks),
     reverse = isTRUE(reverse)
   )
 }
@@ -202,6 +224,26 @@ guide_colorsteps <- guide_coloursteps
     )
   }
   as.numeric(x)
+}
+
+# A requested tick count (`n.breaks`): NULL, or one whole number >= 2. Below two
+# there is no bar left to read -- a single tick names one value and says nothing
+# about the range -- so the floor is a real constraint, not a guard against
+# arithmetic.
+.check_n_breaks <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (
+    !is.numeric(x) ||
+      length(x) != 1L ||
+      !is.finite(x) ||
+      x < 2 ||
+      x != round(x)
+  ) {
+    cli::cli_abort("{.arg n.breaks} must be a single whole number >= 2.")
+  }
+  as.integer(x)
 }
 
 # Validate `override.aes`: NULL, or a fully-named list of aesthetic overrides.
@@ -280,6 +322,9 @@ guide_colorsteps <- guide_coloursteps
     # options onto the trained colour scale for the continuous-guide drawers to
     # read. `coloursteps` also flags a binned scale to render as a segmented bar
     # (re-routed from discrete swatches to the stepped bar in .legend_guides()).
+    if (!is.null(guide$n_breaks)) {
+      trained <- .rebreak_bar(trained, guide$n_breaks)
+    }
     if (guide$kind %in% c("colourbar", "coloursteps")) {
       trained$bar_width <- guide$bar_width
       trained$bar_height <- guide$bar_height
@@ -299,6 +344,43 @@ guide_colorsteps <- guide_coloursteps
     }
   }
   trained
+}
+
+# guide_colourbar(n.breaks = n): re-derive the bar's tick positions for a
+# requested count. The ticks of a continuous bar are the trained legend breaks,
+# so asking for a different number of them means asking `scales` for a different
+# break set over the same range -- not thinning the existing one, which would
+# leave ugly gaps and could drop the end labels that tell you the range.
+#
+# `n` is a *target*: `breaks_extended()` optimises for round numbers over the
+# range and returns whatever count reads best nearby, so `n.breaks = 4` may draw
+# 3 or 5. That is the same contract as `ggplot2::scale_*(n.breaks =)`, and it is
+# the right one -- honouring the count exactly would put ticks on values like
+# 23.33.
+#
+# Silently a no-op unless it applies: only a continuous bar has derived ticks,
+# and an explicit `breaks =` / `labels =` on the scale names the values that get
+# a tick, which outranks a count.
+.rebreak_bar <- function(tr, n) {
+  if (
+    !identical(tr$kind, "continuous") ||
+      isTRUE(tr$breaks_asked) ||
+      isTRUE(tr$labels_asked) ||
+      is.null(tr$range)
+  ) {
+    return(tr)
+  }
+  b <- scales::breaks_extended(n = n)(tr$range)
+  b <- .filter_breaks_labels(b, NULL, tr$range)$breaks
+  # A range `breaks_extended()` cannot place a tick in at this count keeps the
+  # ticks it has: a bar with no labels at all is worse than one labelled at a
+  # count you did not ask for.
+  if (!length(b)) {
+    return(tr)
+  }
+  tr$legend_breaks <- b
+  tr$legend_labels <- .label_number_default(b)
+  tr
 }
 
 # Reverse a legend's key order (display only; the data -> aesthetic mapping is

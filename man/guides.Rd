@@ -28,6 +28,7 @@ guide_colourbar(
   ticks = TRUE,
   ticks.colour = "white",
   label.position = NULL,
+  n.breaks = NULL,
   reverse = FALSE
 )
 
@@ -38,6 +39,7 @@ guide_colorbar(
   ticks = TRUE,
   ticks.colour = "white",
   label.position = NULL,
+  n.breaks = NULL,
   reverse = FALSE
 )
 
@@ -97,6 +99,20 @@ thickness (and the bar length on a horizontal legend). \code{NULL} auto-sizes.}
 
 \item{label.position}{Which side of a \strong{vertical} colour bar the labels sit,
 \code{"right"} (default) or \code{"left"}.}
+
+\item{n.breaks}{Roughly how many ticks (and labels) to put on a \strong{continuous}
+colour bar --- a target, not a promise: the break algorithm prefers round
+numbers over the bar's range and returns whatever count reads best near the
+one asked for, so \code{n.breaks = 4} may draw 3 or 5 rather than tick a value
+like 23.33. \code{NULL} (default) keeps the automatic count. An explicit
+\verb{breaks =} on the scale names the values that get a tick and outranks this;
+so does \verb{labels =}, which is paired with those breaks.
+
+There is deliberately no \code{nbin} argument (ggplot2's band count for the
+gradient). The bar is drawn as one real gradient fill, not a stack of
+rectangles approximating one, so it has no bands to count; the segmented
+look is \code{\link[=guide_coloursteps]{guide_coloursteps()}} on a binned scale, where the segments are the
+scale's own bins.}
 }
 \value{
 \code{guides()}: the modified \link{PlotSpec}. \code{guide_none()} / \code{guide_legend()}:
@@ -107,7 +123,7 @@ a guide specification for use inside \code{guides()}.
 respelling the whole \verb{scale_*()}. Pass \code{"none"} (or \code{\link[=guide_none]{guide_none()}}) to hide a
 legend, \code{\link[=guide_legend]{guide_legend()}} to tweak a keyed legend (reverse the key order,
 override the title, restyle the keys with \code{override.aes}), \code{guide_colourbar()}
-to size and style a continuous colour bar, or \code{guide_coloursteps()} to draw a
+to size, tick and style a continuous colour bar, or \code{guide_coloursteps()} to draw a
 \strong{binned} colour scale as a segmented bar instead of swatches. Applies to the
 non-position legends (\code{color}/\code{fill}, \code{size}, \code{shape}, \code{alpha}, \code{linetype});
 position axes are unaffected.
@@ -132,6 +148,11 @@ vplot(mtcars) |>
   guides(color = guide_colourbar(
     barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
   ))
+
+# about four ticks on the bar instead of the automatic count
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  guides(color = guide_colourbar(n.breaks = 4))
 
 # a binned colour scale as a segmented bar
 vplot(mtcars) |>

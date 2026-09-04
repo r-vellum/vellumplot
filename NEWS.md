@@ -56,6 +56,28 @@
   `guides(edge_width = )` / `lims(edge_width = )` for edges; `scale_edge_width()`
   was always unambiguous and is unaffected.
 
+* **`guide_colourbar(n.breaks = )` sets roughly how many ticks a continuous
+  colour bar carries.** Previously the tick count was whatever the break
+  algorithm chose, and the only way to change it was to name every break by
+  hand.
+
+  ```r
+  vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    guides(color = guide_colourbar(n.breaks = 4))
+  ```
+
+  It is a target, not a promise: the ticks are re-derived over the bar's range
+  and the algorithm prefers round numbers near the count asked for, so
+  `n.breaks = 4` may draw 3 or 5 rather than put a tick on 23.33. An explicit
+  `breaks = ` on the scale names the values that get a tick and still wins, as
+  does `labels = `, which is paired with those breaks.
+
+  There is deliberately no `nbin` argument: the bar is one real gradient fill
+  rather than a stack of rectangles approximating one, so it has no bands to
+  count. A segmented bar is `guide_coloursteps()` on a binned scale, where the
+  segments are the scale's own bins.
+
 ## Animation
 
 * **`ease_aes()` can now ease each aesthetic on its own curve.** Alongside the
