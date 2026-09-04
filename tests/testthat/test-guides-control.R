@@ -198,6 +198,98 @@ test_that("barwidth/barheight resize the colour-bar measurement", {
   )
 })
 
+test_that("guide_colourbar(n.breaks =) re-derives the bar's ticks", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+  ticks <- function(p) vellumplot:::.build_panels(p)$scales$color$legend_breaks
+  auto <- ticks(base)
+  few <- ticks(base |> guides(color = guide_colourbar(n.breaks = 3)))
+  many <- ticks(base |> guides(color = guide_colourbar(n.breaks = 10)))
+  # A target, not a promise -- so assert the ordering, not the exact counts.
+  expect_lt(length(few), length(auto))
+  expect_gt(length(many), length(auto))
+  # Re-derived, not thinned: a higher count is its own round-number set over the
+  # range (60, 90, ...), not a superset of the automatic one -- which thinning
+  # could never produce, and which is the point of asking `scales` again.
+  expect_false(all(many %in% auto))
+  # Every tick still lands inside the bar's range, whatever the count.
+  rng <- vellumplot:::.build_panels(base)$scales$color$range
+  for (t in list(few, many)) {
+    expect_true(all(t >= rng[1] - 1e-9 & t <= rng[2] + 1e-9))
+  }
+  # The floor of two never yields a bar with no labels at all.
+  expect_gt(
+    length(ticks(base |> guides(color = guide_colourbar(n.breaks = 2)))),
+    0L
+  )
+  # The labels follow the breaks; a stale pairing would show as a length mismatch.
+  cl <- vellumplot:::.build_panels(
+    base |> guides(color = guide_colourbar(n.breaks = 3))
+  )$scales$color
+  expect_length(cl$legend_labels, length(cl$legend_breaks))
+  expect_no_error(plot_svg(
+    base |>
+      guides(
+        color = guide_colourbar(n.breaks = 4)
+      )
+  ))
+})
+
+test_that("an explicit breaks= outranks n.breaks", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+  ticks <- function(p) vellumplot:::.build_panels(p)$scales$color$legend_breaks
+  b <- c(100, 200, 300)
+  # Both spellings of "which values get a tick" win over a count: `breaks=` names
+  # them, and `labels=` is paired index-wise with whatever `breaks=` resolved to.
+  expect_equal(
+    ticks(
+      base |>
+        scale_color_continuous(breaks = b) |>
+        guides(color = guide_colourbar(n.breaks = 9))
+    ),
+    b
+  )
+  # `labels=` alone is paired index-wise with the automatic breaks, so it pins
+  # them just as firmly: re-deriving would silently mislabel the bar. The pairing
+  # happens BEFORE the off-range breaks are dropped, so the labels are one per
+  # derived break, not one per drawn tick.
+  rng <- vellumplot:::.build_panels(base)$scales$color$range
+  lab <- paste0(scales::breaks_extended()(rng), "hp")
+  auto <- ticks(base)
+  cl <- vellumplot:::.build_panels(
+    base |>
+      scale_color_continuous(labels = lab) |>
+      guides(color = guide_colourbar(n.breaks = 9))
+  )$scales$color
+  expect_equal(cl$legend_breaks, auto)
+  expect_identical(cl$legend_labels, lab[lab %in% paste0(auto, "hp")])
+})
+
+test_that("n.breaks is ignored where a bar has no derived ticks", {
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp)
+  # A binned colour scale's ticks are its bin boundaries, not a derived break
+  # set; asking for a count there is a no-op rather than an error.
+  b <- base |> scale_color_binned(n = 4)
+  expect_equal(
+    vellumplot:::.build_panels(
+      b |> guides(color = guide_colourbar(n.breaks = 9))
+    )$scales$color$breaks,
+    vellumplot:::.build_panels(b)$scales$color$breaks
+  )
+  expect_no_error(plot_svg(
+    b |> guides(color = guide_coloursteps()) # takes no n.breaks at all
+  ))
+  expect_false("n.breaks" %in% names(formals(guide_coloursteps)))
+})
+
+test_that("n.breaks is validated", {
+  expect_error(guide_colourbar(n.breaks = 1), "whole number")
+  expect_error(guide_colourbar(n.breaks = 3.5), "whole number")
+  expect_error(guide_colourbar(n.breaks = c(3, 4)), "whole number")
+  expect_error(guide_colourbar(n.breaks = "many"), "whole number")
+  expect_null(guide_colourbar()$n_breaks)
+  expect_identical(guide_colourbar(n.breaks = 5)$n_breaks, 5L)
+})
+
 test_that("guide_colourbar() validates and round-trips", {
   expect_error(guide_colourbar(barwidth = -1), "positive")
   expect_error(guide_colourbar(barheight = c(1, 2)), "positive")

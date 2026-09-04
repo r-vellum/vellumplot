@@ -894,6 +894,12 @@ NULL
       midpoint = midpoint,
       legend_breaks = lbrk,
       legend_labels = llab %||% .label_number_default(lbrk),
+      # Whether the breaks/labels above were *asked for* rather than derived.
+      # `guide_colourbar(n.breaks =)` re-derives the tick positions, so it needs
+      # to know when not to: an explicit `breaks =`/`labels =` on the scale is a
+      # statement about which values get a tick, and outranks a count.
+      breaks_asked = !is.null(user_breaks),
+      labels_asked = !is.null(user_labels),
       na = has_na,
       na_value = na_value,
       key_glyph = key_glyph
