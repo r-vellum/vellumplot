@@ -9,14 +9,14 @@
 respelling the whole scale_*(). Pass "none" (or guide_none()) to hide a
 legend, guide_legend() to tweak a keyed legend (reverse the key order,
 override the title, restyle the keys with override.aes), guide_colourbar()
-to size and style a continuous colour bar, or guide_coloursteps() to draw a
+to size, tick and style a continuous colour bar, or guide_coloursteps() to draw a
 binned colour scale as a segmented bar instead of swatches. Applies to the
 non-position legends (color/fill, size, shape, alpha, linetype);
 position axes are unaffected.'><meta property="og:description" content='guides() overrides the legend (guide) for one or more aesthetics without
 respelling the whole scale_*(). Pass "none" (or guide_none()) to hide a
 legend, guide_legend() to tweak a keyed legend (reverse the key order,
 override the title, restyle the keys with override.aes), guide_colourbar()
-to size and style a continuous colour bar, or guide_coloursteps() to draw a
+to size, tick and style a continuous colour bar, or guide_coloursteps() to draw a
 binned colour scale as a segmented bar instead of swatches. Applies to the
 non-position legends (color/fill, size, shape, alpha, linetype);
 position axes are unaffected.'><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
@@ -82,7 +82,7 @@ position axes are unaffected.'><meta property="og:image" content="https://r-vell
 respelling the whole <code>scale_*()</code>. Pass <code>"none"</code> (or <code>guide_none()</code>) to hide a
 legend, <code>guide_legend()</code> to tweak a keyed legend (reverse the key order,
 override the title, restyle the keys with <code>override.aes</code>), <code>guide_colourbar()</code>
-to size and style a continuous colour bar, or <code>guide_coloursteps()</code> to draw a
+to size, tick and style a continuous colour bar, or <code>guide_coloursteps()</code> to draw a
 <strong>binned</strong> colour scale as a segmented bar instead of swatches. Applies to the
 non-position legends (<code>color</code>/<code>fill</code>, <code>size</code>, <code>shape</code>, <code>alpha</code>, <code>linetype</code>);
 position axes are unaffected.</p>
@@ -108,6 +108,7 @@ position axes are unaffected.</p>
 <span>  ticks <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ticks.colour <span class="op">=</span> <span class="st">"white"</span>,</span>
 <span>  label.position <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  reverse <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -118,6 +119,7 @@ position axes are unaffected.</p>
 <span>  ticks <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ticks.colour <span class="op">=</span> <span class="st">"white"</span>,</span>
 <span>  label.position <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  reverse <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -201,6 +203,21 @@ thickness (and the bar length on a horizontal legend). <code>NULL</code> auto-si
 <dd><p>Which side of a <strong>vertical</strong> colour bar the labels sit,
 <code>"right"</code> (default) or <code>"left"</code>.</p></dd>
 
+
+<dt id="arg-n-breaks">n.breaks<a class="anchor" aria-label="anchor" href="#arg-n-breaks"></a></dt>
+<dd><p>Roughly how many ticks (and labels) to put on a <strong>continuous</strong>
+colour bar — a target, not a promise: the break algorithm prefers round
+numbers over the bar's range and returns whatever count reads best near the
+one asked for, so <code>n.breaks = 4</code> may draw 3 or 5 rather than tick a value
+like 23.33. <code>NULL</code> (default) keeps the automatic count. An explicit
+<code>breaks =</code> on the scale names the values that get a tick and outranks this;
+so does <code>labels =</code>, which is paired with those breaks.</p>
+<p>There is deliberately no <code>nbin</code> argument (ggplot2's band count for the
+gradient). The bar is drawn as one real gradient fill, not a stack of
+rectangles approximating one, so it has no bands to count; the segmented
+look is <code>guide_coloursteps()</code> on a binned scale, where the segments are the
+scale's own bins.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -234,19 +251,25 @@ a guide specification for use inside <code>guides()</code>.</p>
 <span class="r-in"><span>  <span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="guides-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># about four ticks on the bar instead of the automatic count</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">guides</span><span class="op">(</span>color <span class="op">=</span> <span class="fu">guide_colourbar</span><span class="op">(</span>n.breaks <span class="op">=</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="guides-5.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a binned colour scale as a segmented bar</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="scale_fill_binned.html">scale_color_binned</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">guides</span><span class="op">(</span>color <span class="op">=</span> <span class="fu">guide_coloursteps</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="guides-5.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="guides-6.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a proportional-symbol (nested-circle) size legend</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, size <span class="op">=</span> <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">guides</span><span class="op">(</span>size <span class="op">=</span> <span class="fu">guide_legend</span><span class="op">(</span>nested <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="guides-6.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="guides-7.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

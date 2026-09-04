@@ -4,11 +4,11 @@
 without respelling the whole `scale_*()`. Pass `"none"` (or
 `guide_none()`) to hide a legend, `guide_legend()` to tweak a keyed
 legend (reverse the key order, override the title, restyle the keys with
-`override.aes`), `guide_colourbar()` to size and style a continuous
-colour bar, or `guide_coloursteps()` to draw a **binned** colour scale
-as a segmented bar instead of swatches. Applies to the non-position
-legends (`color`/`fill`, `size`, `shape`, `alpha`, `linetype`); position
-axes are unaffected.
+`override.aes`), `guide_colourbar()` to size, tick and style a
+continuous colour bar, or `guide_coloursteps()` to draw a **binned**
+colour scale as a segmented bar instead of swatches. Applies to the
+non-position legends (`color`/`fill`, `size`, `shape`, `alpha`,
+`linetype`); position axes are unaffected.
 
 ## Usage
 
@@ -31,6 +31,7 @@ guide_colourbar(
   ticks = TRUE,
   ticks.colour = "white",
   label.position = NULL,
+  n.breaks = NULL,
   reverse = FALSE
 )
 
@@ -41,6 +42,7 @@ guide_colorbar(
   ticks = TRUE,
   ticks.colour = "white",
   label.position = NULL,
+  n.breaks = NULL,
   reverse = FALSE
 )
 
@@ -126,6 +128,23 @@ guide_colorsteps(
   Which side of a **vertical** colour bar the labels sit, `"right"`
   (default) or `"left"`.
 
+- n.breaks:
+
+  Roughly how many ticks (and labels) to put on a **continuous** colour
+  bar — a target, not a promise: the break algorithm prefers round
+  numbers over the bar's range and returns whatever count reads best
+  near the one asked for, so `n.breaks = 4` may draw 3 or 5 rather than
+  tick a value like 23.33. `NULL` (default) keeps the automatic count.
+  An explicit `breaks =` on the scale names the values that get a tick
+  and outranks this; so does `labels =`, which is paired with those
+  breaks.
+
+  There is deliberately no `nbin` argument (ggplot2's band count for the
+  gradient). The bar is drawn as one real gradient fill, not a stack of
+  rectangles approximating one, so it has no bands to count; the
+  segmented look is `guide_coloursteps()` on a binned scale, where the
+  segments are the scale's own bins.
+
 ## Value
 
 `guides()`: the modified
@@ -158,6 +177,12 @@ vplot(mtcars) |>
   guides(color = guide_colourbar(
     barwidth = 8, barheight = 60, ticks = FALSE, label.position = "left"
   ))
+
+
+# about four ticks on the bar instead of the automatic count
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  guides(color = guide_colourbar(n.breaks = 4))
 
 
 # a binned colour scale as a segmented bar
