@@ -64,6 +64,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.0.9000" id="vellumplot-01109000-development-version">vellumplot 0.11.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01109000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-11-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-11-0-9000"></a></h3>
+<ul><li><p><strong>Violins, ridgelines and half-eyes draw cleanly on log and sqrt axes.</strong> The density was estimated on the raw data and its support, which <code><a href="https://rdrr.io/r/stats/density.html" class="external-link">stats::density()</a></code> pads by about three bandwidths, was then mapped through the scale. For data near zero that padding dips to or below zero, so a log10 or sqrt axis produced NaN outline vertices. The density is now estimated on the transformed values, as ggplot2 does, so every vertex is finite and the trained axis still covers the drawn shape. On a transformed axis the shape is now the density of the transformed values; identity axes draw exactly as before.</p></li>
+<li><p><strong>A widened density axis gets ticks over its tails.</strong> The axis is widened to fit a violin’s or ridgeline’s tails, but the breaks had already been picked for the raw data range, so the tails ran past the last labelled tick. The breaks are now re-picked over the widened extent. Breaks you set yourself are left alone.</p></li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.0" id="vellumplot-0110">vellumplot 0.11.0<a class="anchor" aria-label="anchor" href="#vellumplot-0110"></a></h2>
