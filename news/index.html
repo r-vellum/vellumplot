@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,9 +63,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.10.0.9000" id="vellumplot-01009000-development-version">vellumplot 0.10.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01009000-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.11.0" id="vellumplot-0110">vellumplot 0.11.0<a class="anchor" aria-label="anchor" href="#vellumplot-0110"></a></h2>
 <div class="section level3">
-<h3 id="new-features-0-10-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-10-0-9000"></a></h3>
+<h3 id="new-features-0-11-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-11-0"></a></h3>
 <ul><li>
 <p><strong>A <code>group</code> aesthetic.</strong> Every mark now honours <code>group</code>, which says which rows form one series without styling them. It was accepted before but silently ignored, so a spaghetti plot drew one zig-zag through every row:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -75,7 +75,7 @@
 </li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-10-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-10-0-9000"></a></h3>
+<h3 id="bug-fixes-0-11-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-11-0"></a></h3>
 <ul><li><p><strong>Violins, ridgelines and half-eyes fit their axis on transformed scales and free facets.</strong> The panel is widened to fit a density mark’s drawn footprint, but that footprint was measured in data units and merged into a domain that lives in transformed units: a violin on <code>scale_y_continuous(trans = "log10")</code> stretched the axis up to about 10^41, and on <code>trans = "reverse"</code> the axis came out un-reversed. Free facet scales (<code>facet_wrap(scales = "free_y")</code>) skipped the widening entirely and clipped the density tails. The footprint now goes through the scale transform, keeps a reversed axis reversed, and is applied by the same code path for shared and free scales.</p></li>
 <li><p><strong>The colour scale now trains on <code>fill</code> values even when another layer maps <code>color</code>.</strong> <code>color</code> and <code>fill</code> share one colour scale, but <code>fill</code> values only reached it when no layer mapped <code>color</code>. A tile layer filled by <code>z</code> under a point layer coloured by a subset of <code>z</code> trained on the points’ range alone and silently squished every tile below it onto one end of the ramp; a quantitative <code>fill</code> next to a discrete <code>color</code> got grey for every fill. The scale now pools values from every layer mapping either channel, and layers that disagree on whether the variable is quantitative abort with an error explaining that they share one scale (an explicit scale kind, e.g. <code><a href="../reference/scale_color_continuous.html">scale_color_discrete()</a></code>, still settles it).</p></li>
 <li>
