@@ -53,7 +53,9 @@ scale_color_brewer(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = 1
 )
 
 scale_fill_brewer(
@@ -61,7 +63,9 @@ scale_fill_brewer(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = 1
 )
 
 scale_color_distiller(
@@ -69,7 +73,9 @@ scale_color_distiller(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = -1
 )
 
 scale_fill_distiller(
@@ -77,7 +83,9 @@ scale_fill_distiller(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = -1
 )
 
 scale_colour_viridis_c(
@@ -101,7 +109,9 @@ scale_colour_brewer(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = 1
 )
 
 scale_colour_distiller(
@@ -109,7 +119,9 @@ scale_colour_distiller(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = -1
 )
 }
 \arguments{
@@ -119,7 +131,15 @@ scale_colour_distiller(
 
 \item{name, breaks, labels}{As for \code{\link[=scale_color_continuous]{scale_color_continuous()}}.}
 
-\item{palette}{A \code{grDevices::hcl.colors()} palette name.}
+\item{palette}{A ColorBrewer palette name or index (see above), or a
+\code{grDevices::hcl.colors()} palette name.}
+
+\item{type}{When \code{palette} is a number, which ColorBrewer family it indexes:
+\code{"seq"} (sequential), \code{"div"} (diverging) or \code{"qual"} (qualitative).}
+
+\item{direction}{\code{1} keeps a ColorBrewer palette's order, \code{-1} reverses it.
+\verb{scale_*_distiller()} defaults to \code{-1}, as in ggplot2, so high values are
+light. Ignored for non-ColorBrewer palette names.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -136,16 +156,25 @@ ggplot2. They are thin wrappers over the \verb{palette =} argument of
 colour-vision-deficient-safe viridis maps, continuous (\verb{_c}) or discrete
 (\verb{_d}). \code{option} picks the map: \code{"viridis"}, \code{"plasma"}, \code{"inferno"},
 \code{"cividis"}, \code{"rocket"}, or \code{"mako"} (unknown options fall back to viridis).
-\item \verb{scale_*_brewer()} — a discrete ColorBrewer-style qualitative/sequential
-palette; \verb{scale_*_distiller()} — the same ramp interpolated for continuous
-data. \code{palette} is any \code{hcl.colors()} name (e.g. \code{"Blues"}, \code{"Set 2"}).
+\item \verb{scale_*_brewer()} — a discrete ColorBrewer palette (sequential,
+diverging or qualitative, via \code{\link[scales:pal_brewer]{scales::pal_brewer()}});
+\verb{scale_*_distiller()} — the same palette's 7-class ramp interpolated for
+continuous data. \code{palette} is a ColorBrewer name (\code{"Set1"}, \code{"Dark2"},
+\code{"Paired"}, \code{"Blues"}, \code{"RdBu"}, \code{"Spectral"}, ...; matched ignoring case,
+spaces and punctuation, so \code{"Set 2"} is \code{"Set2"}) or an index into the
+palettes of \code{type}. Any other \code{\link[grDevices:hcl.colors]{grDevices::hcl.colors()}} name (e.g.
+\code{"Batlow"}) is passed through unchanged, as by \code{\link[=scale_color_discrete]{scale_color_discrete()}} /
+\code{\link[=scale_color_continuous]{scale_color_continuous()}}.
 }
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp) |> scale_color_viridis_c()
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
-  scale_color_brewer(palette = "Set 2")
+  scale_color_brewer(palette = "Set1")
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  scale_color_distiller(palette = "Spectral")
 }
 \seealso{
 \code{\link[=scale_color_continuous]{scale_color_continuous()}}
