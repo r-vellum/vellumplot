@@ -48,6 +48,15 @@
   collide: an end label justified inward used to sit on top of its neighbour
   ("600800").
 
+* **A continuous fill on an area or ribbon errors clearly.** `mark_area()` and
+  `mark_ribbon()` draw one polygon per series, and a polygon has a single fill.
+  A continuous `fill` (or `color`, or `alpha`) that varied along a series was
+  grouped like a discrete style, so the band shattered into one sliver polygon
+  per vertex and mostly vanished. As in ggplot2 this now aborts, saying to map a
+  discrete variable, set a `group`, or use a constant fill. A continuous value
+  that is constant within each group (one value per `group`) is still drawn,
+  one band per group.
+
 # vellumplot 0.11.0
 
 ## New features
