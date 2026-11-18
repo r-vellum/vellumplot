@@ -10,33 +10,84 @@ spec_diagnose(spec, data = NULL, env = globalenv())
 vplot_from_spec(spec, data = NULL, env = globalenv())
 }
 \arguments{
-\item{spec}{A spec list (from \code{\link[=as_spec]{as_spec()}}), a JSON string, or a \code{.json} path.}
+\item{spec}{A spec list (from \code{\link[=as_spec]{as_spec()}}), a JSON string, a \code{.json} path, or
+a \link{PlotSpec}.}
 
 \item{data}{The data frame the spec is drawn from. Required when the spec
-stores data by reference; optional (for field validation) when inlined.}
+stores data by reference; optional (for field validation) when inlined.
+Ignored for a \link{PlotSpec}, which carries its own data.}
 
 \item{env}{Environment channel expressions are re-quoted in.}
 }
 \value{
-\code{spec_diagnose()} returns a list with \code{ok} (logical), \code{plot} (the
-\link{PlotSpec} or \code{NULL}), and \code{diagnostics} (a list of records with \code{severity},
-\code{field}, \code{message}, \code{hint}). \code{vplot_from_spec()} returns a \link{PlotSpec}.
+\code{spec_diagnose()} returns a list of class \code{vellumplot_diagnosis} with
+\code{ok} (logical), \code{plot} (the \link{PlotSpec} or \code{NULL}), \code{diagnostics} (a list of
+records with \code{severity}, \code{field}, \code{message}, \code{hint}), and \code{report} (a data
+frame with one row per layer: \code{layer}, \code{mark}, \code{rows}, the counts
+\code{missing}, \code{facet}, \code{transform}, \code{limits}, and their total \code{dropped}; \code{NULL}
+when the plot could not be built). Printing it shows a summary.
+\code{vplot_from_spec()} returns a \link{PlotSpec}.
 }
 \description{
-\code{spec_diagnose()} checks a spec (a list, JSON string, or path) without
-throwing: it parses it, validates every referenced field against the data,
-and dry-run compiles it, returning a structured verdict. \code{vplot_from_spec()}
-is the strict form — it returns the \link{PlotSpec} on success and raises a classed
-\code{vellumplot_spec_invalid} error (carrying the same diagnostics) on failure.
+\code{spec_diagnose()} checks a spec (a list, JSON string, or path) or a built
+\link{PlotSpec} without throwing: it parses it, validates every referenced field
+against the data, runs a few pre-compile checks, dry-run compiles it, and
+reports per layer how many rows will not be shown. It returns a structured
+verdict. \code{vplot_from_spec()} is the strict form — it returns the \link{PlotSpec} on
+success and raises a classed \code{vellumplot_spec_invalid} error (carrying the
+same diagnostics) on failure.
 }
 \details{
 This is the agent repair loop: a failure comes back as data an agent can act
 on (which field is unknown, the nearest real field) rather than a traceback.
 }
+\section{Pre-compile checks}{
+
+Before compiling, the plot is checked for mistakes that would compile to a
+wrong plot or fail with an opaque error:
+\itemize{
+\item a \strong{facet variable missing} from the plot data (an error), or from a
+layer's own data (a warning: that layer is then repeated in every panel);
+\item \strong{\code{color} and \code{fill} mapped to variables of different type} (one
+continuous, one discrete) although they share one colour scale and legend
+(an error, or a warning when the scale kind is set explicitly);
+\item a \strong{manual or discrete palette} (\code{scale_color_manual()}, ...) on a
+continuous colour channel, which would make every distinct number its own
+category (a warning).
+}
+}
+
+\section{Compile report}{
+
+vellumplot does not delete rows, but some rows produce no visible mark. The
+\code{report} element counts them per layer, on the layer's input rows, attributing
+each row to the first reason that applies:
+\itemize{
+\item \code{missing}: a position value (\code{x}, \code{y}, \code{xend}, \code{ymin}, ...) is \code{NA};
+\item \code{facet}: a facet variable is \code{NA}, so the row belongs to no panel;
+\item \code{transform}: the axis transform cannot map the value, e.g. a value \verb{<= 0}
+on a log axis;
+\item \code{limits}: the value is outside explicit scale limits (\code{\link[=lims]{lims()}},
+\verb{scale_*(limits = )}), so it is clipped away. Coordinate limits
+(\code{coord_cartesian(xlim = )}) zoom instead and are not counted.
+}
+
+A missing \emph{non-position} value (colour, size, ...) is drawn with the scale's
+\code{NA} value and is not counted. Each layer that loses rows also adds a
+\code{"warning"} diagnostic, so it shows in the printed summary.
+}
+
 \examples{
 spec <- as_spec(vplot(mtcars) |> mark_point(x = wt, y = mpg))
 d <- spec_diagnose(spec, data = mtcars)
 d$ok
+
+# a PlotSpec works too; the report shows rows a log axis cannot draw
+df <- data.frame(x = 1:4, y = c(-1, 1, 10, NA))
+p <- vplot(df) |>
+  mark_point(x = x, y = y) |>
+  scale_y_continuous(trans = "log10")
+spec_diagnose(p)
 }
 \seealso{
 \code{\link[=spec_fields]{spec_fields()}}, \code{\link[=spec_schema]{spec_schema()}}, \code{\link[=vplot_ask]{vplot_ask()}}
