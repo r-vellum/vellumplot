@@ -18,7 +18,7 @@ NULL
   # jitters within the (narrower) slot.
   slot <- band_x
   if (identical(L$position, "jitterdodge")) {
-    grp <- L$values$color %||% L$values$fill
+    grp <- .group_key(L)
     dw <- L$stat_params$dodge_width %||% 0.75
     if (!is.null(grp)) {
       levs <- .cat_levels(grp)
@@ -152,21 +152,29 @@ NULL
   # A mapped `linewidth` draws the group as per-segment-width segments instead of
   # one uniform stroke; a constant one keeps the single (cheaper) `lines_grob`.
   lwv <- .mapped_linewidth(L, scales, n)
+  # A continuous colour varies along a series rather than splitting it: keep it
+  # out of the style key and colour the series per segment instead.
+  cv <- .continuous_colour(L, scales, n)
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
+  for (idx in .series_groups(
+    L,
+    n,
+    list(col = if (is.null(cv)) col, alpha = alpha, lty = lty)
+  )) {
     o <- idx[order(xn[idx])] # a line is drawn in x order
-    if (!is.null(lwv)) {
+    if (!is.null(lwv) || !is.null(cv)) {
       scene <- .draw_var_width_line(
         scene,
         scales,
         xn[o],
         yn[o],
-        lwv[o],
+        if (is.null(lwv)) rep(lwd, length(o)) else lwv[o],
         o,
         .gp_stroke(col, alpha, idx[1], lwd, lty),
-        .sketch_bump(sk, gi)
+        .sketch_bump(sk, gi),
+        cv = if (!is.null(cv)) cv[o]
       )
       gi <- gi + 1L
       next
@@ -191,11 +199,31 @@ NULL
 # Draw one polyline whose width varies per segment: `w` is the width at each
 # vertex, `rows` the layer rows those vertices came from. The gpar's own `lwd` is
 # overridden per element by `segments_grob(lwd = )`, so it only carries the
-# colour / alpha / line type the group shares.
-.draw_var_width_line <- function(scene, scales, x, y, w, rows, gp, sketch) {
+# colour / alpha / line type the group shares. `cv`, when given, is a continuous
+# colour value at each vertex: each segment is then coloured by the mean of its
+# two endpoint values (the same rule as the width), so a line mapped to a
+# continuous colour stays one connected path whose colour shifts along it.
+.draw_var_width_line <- function(
+  scene,
+  scales,
+  x,
+  y,
+  w,
+  rows,
+  gp,
+  sketch,
+  cv = NULL
+) {
   s <- .seg_widths_path(scales, x, y, w)
   if (is.null(s)) {
     return(scene)
+  }
+  seg_col <- NULL
+  if (!is.null(cv)) {
+    m <- length(cv)
+    mid <- rowMeans(cbind(cv[-m], cv[-1L]), na.rm = TRUE)
+    mid[!is.finite(mid)] <- NA_real_
+    seg_col <- scales$color$map(mid)[s$row]
   }
   .draw(
     scene,
@@ -206,6 +234,7 @@ NULL
       s$y1,
       sketch = sketch,
       gp = gp,
+      col = seg_col,
       lwd = s$lwd
     ),
     # PROVENANCE: one row per drawn segment -- the vertex it starts at.
@@ -759,7 +788,7 @@ NULL
   w <- rep_len(L$values$width %||% (0.9 * band), n)
   xc <- xp
   if (identical(L$position, "dodge")) {
-    grp <- L$values$color %||% L$values$fill
+    grp <- .group_key(L)
     if (!is.null(grp)) {
       levs <- .cat_levels(grp)
       G <- length(levs)
@@ -772,7 +801,7 @@ NULL
   } else if (identical(L$position, "dodge2")) {
     d2 <- .dodge2_bars(
       xp,
-      L$values$color %||% L$values$fill,
+      .group_key(L),
       n,
       L$values$width %||% (0.9 * band),
       L$stat_params$dodge2_padding %||% 0.1
@@ -829,7 +858,7 @@ NULL
   ymax <- if (has_se) scales$y$map(L$values$ymax)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, alpha = alpha))) {
+  for (idx in .series_groups(L, n, list(col = col, alpha = alpha))) {
     o <- idx[order(xn[idx])]
     cc <- col[idx[1]]
     a <- alpha[idx[1]]
@@ -893,7 +922,7 @@ NULL
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+  for (idx in .series_groups(L, n, list(fill = fill, alpha = alpha))) {
     o <- idx[order(xn[idx])]
     poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
     scene <- .draw(
@@ -952,16 +981,26 @@ NULL
   lty <- .resolve_lty(L, scales, n)
   lwd <- .aes_param(L, "linewidth", 1.5)
   lwv <- .mapped_linewidth(L, scales, n)
+  cv <- .continuous_colour(L, scales, n)
   dir <- L$stat_params$direction %||% "hv"
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
+  for (idx in .series_groups(
+    L,
+    n,
+    list(col = if (is.null(cv)) col, alpha = alpha, lty = lty)
+  )) {
     o <- idx[order(xn[idx])]
     sx <- xn[o]
     sy <- yn[o]
     m <- length(sx)
-    ew <- if (is.null(lwv)) NULL else lwv[o]
+    ew <- if (!is.null(lwv)) {
+      lwv[o]
+    } else if (!is.null(cv)) {
+      rep(lwd, m)
+    }
+    ec <- if (!is.null(cv)) cv[o]
     if (m >= 2) {
       if (identical(dir, "vh")) {
         ex <- c(rep(sx[-m], each = 2), sx[m])
@@ -969,12 +1008,18 @@ NULL
         # The width expands like the coordinate that holds across a tread, so a
         # tread is drawn at its own datum's width and only the riser blends.
         er <- c(o[1], rep(o[-1], each = 2))
-        if (!is.null(ew)) ew <- c(ew[1], rep(ew[-1], each = 2))
+        if (!is.null(ew)) {
+          ew <- c(ew[1], rep(ew[-1], each = 2))
+        }
+        if (!is.null(ec)) ec <- c(ec[1], rep(ec[-1], each = 2))
       } else {
         ex <- c(sx[1], rep(sx[-1], each = 2))
         ey <- c(rep(sy[-m], each = 2), sy[m])
         er <- c(rep(o[-m], each = 2), o[m])
-        if (!is.null(ew)) ew <- c(rep(ew[-m], each = 2), ew[m])
+        if (!is.null(ew)) {
+          ew <- c(rep(ew[-m], each = 2), ew[m])
+        }
+        if (!is.null(ec)) ec <- c(rep(ec[-m], each = 2), ec[m])
       }
     } else {
       ex <- sx
@@ -990,7 +1035,8 @@ NULL
         ew,
         er,
         .gp_stroke(col, alpha, idx[1], lwd, lty),
-        .sketch_bump(sk, gi)
+        .sketch_bump(sk, gi),
+        cv = ec
       )
       gi <- gi + 1L
       next

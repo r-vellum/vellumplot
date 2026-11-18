@@ -23,6 +23,36 @@
   share one scale (an explicit scale kind, e.g. `scale_color_discrete()`, still
   settles it).
 
+## New features
+
+* **A `group` aesthetic.** Every mark now honours `group`, which says which rows
+  form one series without styling them. It was accepted before but silently
+  ignored, so a spaghetti plot drew one zig-zag through every row:
+
+  ```r
+  d <- data.frame(t = rep(1:5, 3), y = c(1:5, 5:1, rep(3, 5)), id = rep(c("a", "b", "c"), each = 5))
+  vplot(d) |> mark_line(x = t, y = y, group = id)   # three lines
+  ```
+
+  Grouping now has one rule, used by every stat, position and connected mark: an
+  explicit `group` wins (`group = 1` makes the whole layer one group); otherwise
+  the first *discrete* of `color`, `fill` groups. Connected marks (line, step,
+  area, ribbon, smooth, text path) split by group first, then by style within a
+  group. Stats run per group, and a grouped stat's output keeps each group's own
+  colour, so `mark_smooth(group = id, color = treatment)` paints each fit by its
+  treatment. `spec_to_vegalite()` exports `group` as Vega-Lite's `detail`.
+
+## Bug fixes
+
+* **A line or step mapped to a continuous colour draws.** `mark_line(color =
+  pressure)` split the line wherever the colour changed, which for a continuous
+  colour is every vertex, so each piece was a single point and the panel came out
+  empty. A continuous colour no longer splits a series: the line stays connected
+  and each segment takes the colour of the mean of its two endpoint values (the
+  rule a mapped `linewidth` uses). For the same reason a continuous colour no
+  longer groups a stat: `mark_smooth(color = hp)` fits one curve, not one per
+  distinct `hp` value.
+
 # vellumplot 0.10.0
 
 ## New features

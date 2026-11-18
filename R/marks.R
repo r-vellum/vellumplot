@@ -413,7 +413,12 @@ after_stat <- function(x) x
 #'   linerange) also take `linewidth` and `linetype`. On `mark_line()`,
 #'   `mark_step()` and `mark_segment()`, `linewidth` may be **mapped** as well as
 #'   set: see [scale_linewidth()] for the per-segment width that gives, and what
-#'   it costs. Everywhere else `linewidth` is a constant.
+#'   it costs. Everywhere else `linewidth` is a constant. Every mark also takes
+#'   `group`, which says which rows form one series without styling them:
+#'   `mark_line(x = t, y = y, group = id)` draws one line per `id`. Without it,
+#'   a discrete `color` (else `fill`) groups; a continuous colour never does, so
+#'   a line mapped to one stays connected and changes colour along its length.
+#'   `group = 1` makes the whole layer one group.
 #' @param size,shape Convenience arguments for the point size (in mm) / shape;
 #'   may be a constant or a mapped expression. A shape is a built-in marker
 #'   (`"circle"`, `"square"`, `"triangle"`, `"diamond"`, `"plus"`, `"cross"`,

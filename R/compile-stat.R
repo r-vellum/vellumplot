@@ -1,18 +1,50 @@
 #' @include classes.R compile-resolve.R
 NULL
 
-# The optional grouping value for a layer (a mapped colour/fill), or NULL.
-# The grouping vector for a stat (colour, else fill). Recycled to the layer's row
-# count so a grouping aesthetic that resolved shorter than the data (e.g. a
-# constant of length 1) still aligns 1:1 when masked by `is.finite(x)` etc.,
-# matching the defensive `rep_len()` in `.position_stack`.
-.layer_group <- function(L) {
-  g <- L$values$color %||% L$values$fill
+# The grouping key of a layer: which rows belong to the same series / stat group.
+# This is the ONE place grouping is derived; stats, positions and the connected
+# marks all ask it rather than open-coding `color %||% fill`.
+#
+# Semantics (ggplot2's): an explicit `group` wins outright -- mapped (`group =
+# id`) it is the key, set as a constant (`group = 1`) it makes the whole layer one
+# group. Without one, the first *discrete* of `color`, `fill` is the key. A
+# continuous colour never groups: it varies within a series (a line coloured
+# along its length), it does not split it. The key is not an interaction of
+# every discrete aesthetic -- connected marks still split each group by style at
+# draw time (`.series_groups()`), which gives the interaction where it matters
+# visually without changing which rows a stat pools.
+#
+# Returns NULL (ungrouped) or a vector recycled to the layer's row count, so a
+# grouping aesthetic that resolved shorter than the data (a constant) still
+# aligns 1:1 when masked by `is.finite(x)` etc.
+.group_key <- function(L) {
+  g <- L$values$group
+  if (is.null(g) && !is.null(L$params$group)) {
+    g <- L$params$group
+  }
+  if (is.null(g)) {
+    for (aes in c("color", "fill")) {
+      v <- L$values[[aes]]
+      if (!is.null(v) && !.is_continuous_group(v)) {
+        g <- v
+        break
+      }
+    }
+  }
+  if (is.null(g)) {
+    return(NULL)
+  }
   n <- L$n %||% length(g)
-  if (!is.null(g) && length(g) >= 1L && length(g) != n) {
+  if (length(g) >= 1L && length(g) != n) {
     g <- rep_len(g, n)
   }
   g
+}
+
+# A vector that varies continuously (numeric / date-time), which `.group_key()`
+# never splits on. A factor is discrete whatever its levels look like.
+.is_continuous_group <- function(v) {
+  !is.factor(v) && (is.numeric(v) || inherits(v, c("Date", "POSIXt")))
 }
 
 # Apply a layer's statistical transform, producing new `values` (and evaluating
@@ -65,12 +97,68 @@ NULL
   .merge_stat(L, sdf)
 }
 
+# The per-row aesthetics a stat carries through unchanged (it neither computes
+# nor overrides them): colour, fill, group, alpha, linetype, ... Everything the
+# stat output itself supplies, or that `after_stat()` recomputes, is excluded.
+.STAT_OWNED <- c(
+  "x",
+  "y",
+  "xmin",
+  "xmax",
+  "ymin",
+  "ymax",
+  "width",
+  "height",
+  "label",
+  ".piece",
+  ".ring",
+  ".x2",
+  ".blabel"
+)
+
+# Realign every carried per-row aesthetic to a grouped stat's output rows. A
+# grouped stat returns one or more rows per group, tagged by `sgroup` (the
+# `.group_key()` level). The aesthetic that *is* the key takes the stat's group
+# factor directly (keeping its level order for the scale); any other aesthetic
+# takes its value at the group's first input row -- so with `group = id, color =
+# treatment` each fitted curve keeps its own treatment's colour, rather than
+# being painted by the group label or by whatever pre-stat row `rep_len` lands on.
+.realign_by_group <- function(L, g_in, sgroup, after_names) {
+  n_in <- length(g_in)
+  glevs <- if (n_in) .cat_levels(g_in)
+  at <- if (n_in) {
+    match(glevs, as.character(g_in))[match(as.character(sgroup), glevs)]
+  }
+  if (!n_in || anyNA(at)) {
+    # A stat whose groups are not the layer's key levels: tag colour/fill with
+    # the stat's groups, so at least they stay length-consistent.
+    for (nm in setdiff(
+      intersect(c("color", "fill"), names(L$values)),
+      after_names
+    )) {
+      L$values[[nm]] <- sgroup
+    }
+    return(L)
+  }
+  for (nm in setdiff(names(L$values), c(.STAT_OWNED, after_names))) {
+    v <- L$values[[nm]]
+    if (length(v) != n_in || n_in == 1L) {
+      next
+    }
+    L$values[[nm]] <- if (identical(v, g_in)) sgroup else v[at]
+  }
+  L
+}
+
 # Fold a stat's output data frame back into the layer. After a stat, the layer's
 # data IS the stat output: x (and y) come from it, raw stage-1 inputs are
 # replaced. `after_stat()` channels (evaluated against the stat output) take
 # precedence over the stat's default y.
 .merge_stat <- function(L, sdf) {
   after_names <- names(L$after)
+  # The pre-stat grouping, taken before any `after_stat()` channel replaces an
+  # aesthetic with a stat-output-length vector.
+  g_in <- .group_key(L)
   # An empty stat output (an unpopulated facet cell short-circuits `.apply_stat`
   # with a column-less `data.frame()`) has none of the columns the `after_stat()`
   # channels reference, so evaluating them would abort with "object '<col>' not
@@ -90,17 +178,8 @@ NULL
   if (!("x" %in% after_names) && !is.null(sdf$x)) {
     L$values$x <- sdf$x
   }
-  if (!is.null(sdf$group)) {
-    # Realign *both* colour and fill to the aggregated groups. Grouping is taken
-    # from colour %||% fill, so at least one matches the group; setting both keeps
-    # the other aesthetic length-consistent with the reduced row count (a fill
-    # left at its pre-stat, now-wrong-length vector would misalign downstream).
-    if (!is.null(L$values$color)) {
-      L$values$color <- sdf$group
-    }
-    if (!is.null(L$values$fill)) {
-      L$values$fill <- sdf$group
-    }
+  if (!is.null(sdf$group) && !empty) {
+    L <- .realign_by_group(L, g_in, sdf$group, after_names)
   }
   if (!("y" %in% after_names) && !is.null(sdf$y)) {
     L$values$y <- sdf$y
@@ -149,7 +228,7 @@ NULL
 .stat_count <- function(L) {
   xlevs <- .cat_levels(L$values$x)
   x <- factor(as.character(L$values$x), levels = xlevs)
-  grp <- .layer_group(L)
+  grp <- .group_key(L)
   if (is.null(grp)) {
     t <- table(x)
     t <- t[t > 0]
@@ -184,7 +263,7 @@ NULL
 .stat_sum <- function(L) {
   x <- L$values$x
   y <- L$values$y
-  grp <- .layer_group(L)
+  grp <- .group_key(L)
   key <- if (is.null(grp)) {
     paste(as.character(x), as.character(y), sep = "\r")
   } else {
@@ -299,7 +378,7 @@ NULL
       i = "The mapped {.field x} is discrete; use {.fn mark_text} to label a categorical axis."
     ))
   }
-  grp <- L$values$color %||% L$values$fill
+  grp <- .group_key(L)
   if (is.null(grp)) {
     i <- which.max(xn)
     return(data.frame(x = xn[i], y = yn[i], lab = "", stringsAsFactors = FALSE))
@@ -336,7 +415,7 @@ NULL
   x <- as.numeric(rep_len(L$values$x, n))
   method <- L$stat_params$method %||% "iqr"
   k <- L$stat_params$k %||% 1.5
-  grp <- .layer_group(L)
+  grp <- .group_key(L)
   gvec <- if (is.null(grp)) rep_len("", n) else as.character(rep_len(grp, n))
   is_out <- logical(n)
   for (lev in unique(gvec)) {
@@ -382,7 +461,7 @@ NULL
   width <- diff(breaks)[1]
   centers <- (utils::head(breaks, -1L) + breaks[-1L]) / 2
   idx <- findInterval(x, breaks, rightmost.closed = TRUE, all.inside = TRUE)
-  grp <- .layer_group(L)
+  grp <- .group_key(L)
   if (is.null(grp)) {
     count <- tabulate(idx, nbins = bins)
     total <- sum(count)
@@ -734,7 +813,7 @@ NULL
 # NULLs, attaches the `group` factor, aborts with `empty_msg` when every group is
 # dropped, and rbinds the survivors.
 .per_group <- function(L, n, compute, empty_msg) {
-  grp <- .layer_group(L)
+  grp <- .group_key(L)
   g <- .stat_groups(grp, n)
   glevs <- g$levels
   gnames <- names(g$groups)
@@ -819,7 +898,7 @@ NULL
   fun <- match.fun(L$stat_params$fun %||% "mean")
   xlevs <- .cat_levels(x)
   xf <- factor(as.character(x), levels = xlevs)
-  grp <- .layer_group(L)
+  grp <- .group_key(L)
   if (is.null(grp)) {
     yv <- tapply(y, xf, fun)
     keep <- .drop_na_summary(is.na(yv))
@@ -1184,7 +1263,7 @@ NULL
   partial <- L$stat_params$partial %||% TRUE
   x <- as.numeric(L$values$x)
   y <- as.numeric(L$values$y)
-  grp <- .layer_group(L)
+  grp <- .group_key(L)
   g <- .stat_groups(grp, length(x))
   glevs <- g$levels
   gnames <- names(g$groups)

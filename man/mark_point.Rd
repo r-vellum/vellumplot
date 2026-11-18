@@ -58,7 +58,12 @@ mark_bar(
 linerange) also take \code{linewidth} and \code{linetype}. On \code{mark_line()},
 \code{mark_step()} and \code{mark_segment()}, \code{linewidth} may be \strong{mapped} as well as
 set: see \code{\link[=scale_linewidth]{scale_linewidth()}} for the per-segment width that gives, and what
-it costs. Everywhere else \code{linewidth} is a constant.}
+it costs. Everywhere else \code{linewidth} is a constant. Every mark also takes
+\code{group}, which says which rows form one series without styling them:
+\code{mark_line(x = t, y = y, group = id)} draws one line per \code{id}. Without it,
+a discrete \code{color} (else \code{fill}) groups; a continuous colour never does, so
+a line mapped to one stays connected and changes colour along its length.
+\code{group = 1} makes the whole layer one group.}
 
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
 may be a constant or a mapped expression. A shape is a built-in marker

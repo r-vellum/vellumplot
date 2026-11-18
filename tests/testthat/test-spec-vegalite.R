@@ -95,8 +95,8 @@ test_that("spec_to_vegalite() degrades gracefully (never crashes) off the happy 
   )
   expect_equal(vl$mark$type, "point") # unmapped mark falls back to point
   expect_warning(
-    spec_to_vegalite(vplot(df) |> mark_line(x = x, y = y, group = g)),
-    "group"
+    spec_to_vegalite(vplot(df) |> mark_line(x = x, y = y, linetype = g)),
+    "linetype"
   )
   expect_warning(
     spec_to_vegalite(

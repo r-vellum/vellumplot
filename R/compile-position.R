@@ -35,7 +35,7 @@ NULL
 }
 
 # Stack bars sharing an x: assign each a [ymin, ymax] span by cumulating heights
-# within the x group (ordered by colour/fill level). `fill = TRUE` normalises
+# within the x group (ordered by the `.group_key()` level). `fill = TRUE` normalises
 # each x group's total to 1.
 .position_stack <- function(L, fill = FALSE) {
   n <- L$n
@@ -47,7 +47,7 @@ NULL
   # fill, every proportion in the stack). ggplot2 drops NA rows before stacking;
   # treat non-finite as a zero-height contribution so the rest of the stack is sound.
   y[!is.finite(y)] <- 0
-  grp <- L$values$color %||% L$values$fill
+  grp <- .group_key(L)
   if (!is.null(grp)) {
     grp <- rep_len(grp, n)
   }

@@ -326,7 +326,12 @@ NULL
 
   gx <- gy <- grp <- list()
   gi <- 0L
-  for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
+  cv <- .continuous_colour(L, scales, n)
+  for (idx in .series_groups(
+    L,
+    n,
+    list(col = if (is.null(cv)) col, alpha = alpha, lty = lty)
+  )) {
     gi <- gi + 1L
     o <- idx[order(xn[idx])] # each series drawn in x order, as the vector path
     sx <- xn[o]
