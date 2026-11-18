@@ -1,5 +1,17 @@
 # vellumplot 0.11.1.9000 (development version)
 
+* **A mapped `linewidth` tapers smoothly along the line (#165).** `mark_line()`
+  and `mark_step()` drew a mapped `linewidth` as one segment per span, each at the
+  mean of its two endpoint widths, so the width jumped at every vertex and every
+  series became a batch of separate path elements. Each series is now one
+  `lines_grob(lwd_profile =)` stroke from vellum whose width varies linearly
+  between the values at its vertices, so the taper is continuous and the series
+  is a single element in `vellum::scene_model()`, `vellum::element_geometry()` and
+  the SVG, keyed like a constant-width line. A series falls back to the old
+  per-segment drawing where a tapered stroke cannot express it: a continuous
+  colour (each segment keeps its own colour), a dashed or dotted `linetype`, a
+  sketch theme, or a missing width.
+
 
 # vellumplot 0.11.1
 

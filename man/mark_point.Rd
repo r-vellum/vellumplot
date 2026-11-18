@@ -59,8 +59,8 @@ mark_bar(
 \code{fill}, \code{size}, \code{shape}, \code{alpha}. Stroked marks (line, step, segment, rule,
 linerange) also take \code{linewidth} and \code{linetype}. On \code{mark_line()},
 \code{mark_step()} and \code{mark_segment()}, \code{linewidth} may be \strong{mapped} as well as
-set: see \code{\link[=scale_linewidth]{scale_linewidth()}} for the per-segment width that gives, and what
-it costs. Everywhere else \code{linewidth} is a constant. Every mark also takes
+set: see \code{\link[=scale_linewidth]{scale_linewidth()}} for the tapered stroke that gives, and when
+it falls back to per-segment widths. Everywhere else \code{linewidth} is a constant. Every mark also takes
 \code{group}, which says which rows form one series without styling them:
 \code{mark_line(x = t, y = y, group = id)} draws one line per \code{id}. Without it,
 a discrete \code{color} (else \code{fill}) groups; a continuous colour never does, so
