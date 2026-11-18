@@ -55,7 +55,7 @@ NULL
 # The raw per-row values of a *continuous* (or binned) mapped colour, or NULL. A
 # connected mark must not split its series on these -- each vertex would become
 # its own one-point series and the line would vanish -- so it keeps the series
-# whole and colours it per segment instead (`.draw_var_width_line(cv = )`).
+# whole and colours it per segment instead (`.draw_var_width_segments(cv = )`).
 .continuous_colour <- function(L, scales, n) {
   v <- L$values$color %||% L$values$fill
   kind <- scales$color$kind
@@ -653,7 +653,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   rep_len(w, n) + (L$params$.lwd_add %||% 0)
 }
 
-# Split an ordered polyline into the segments a per-segment width draws it as:
+# Split an ordered polyline into the segments a per-segment width draws it as
+# (the fallback of `.draw_var_width_line()` when a `lwd_profile` can't be used):
 # each segment carries one width, the mean of its two endpoint values, so the
 # width steps at every vertex (see `scale_linewidth()`). Under polar/trans the
 # segment is munched exactly as `.xy_path()` would munch the whole polyline, and

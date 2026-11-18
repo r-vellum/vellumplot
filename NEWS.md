@@ -1,5 +1,33 @@
 # vellumplot 0.11.1.9000 (development version)
 
+## New features
+
+* **Bivariate choropleths with a 2-D legend.** `bi_class()` bins two numeric
+  columns into `dim` classes each (quantile by default, or any
+  `scale_fill_binned()` style) and adds one `"x-y"` class column. Mapping a fill
+  or colour to that column colours it from a bivariate palette and draws the
+  legend as a square grid of swatches, with the `x` variable along the bottom,
+  the `y` variable up the side, and an arrow on each axis.
+  `scale_fill_bivariate()` / `scale_color_bivariate()` choose the palette
+  (`bi_pal()`: Stevens' `"DkBlue"`, `"GrPink"`, `"DkViolet"` and `"Brown"`, at
+  2x2, 3x3 or 4x4) and the axis titles, and `guide_bivariate()` retitles the
+  axes or resizes the swatches through `guides()`. It works on `mark_sf()`
+  polygons and on ordinary marks. The classes are computed over the whole table,
+  so facet panels share them. On an interactive plot each swatch is keyed to the
+  features in its class, so hovering a swatch highlights them.
+
+* **A mapped `linewidth` tapers smoothly along the line (#165).** `mark_line()`
+  and `mark_step()` drew a mapped `linewidth` as one segment per span, each at the
+  mean of its two endpoint widths, so the width jumped at every vertex and every
+  series became a batch of separate path elements. Each series is now one
+  `lines_grob(lwd_profile =)` stroke from vellum whose width varies linearly
+  between the values at its vertices, so the taper is continuous and the series
+  is a single element in `vellum::scene_model()`, `vellum::element_geometry()` and
+  the SVG, keyed like a constant-width line. A series falls back to the old
+  per-segment drawing where a tapered stroke cannot express it: a continuous
+  colour (each segment keeps its own colour), a dashed or dotted `linetype`, a
+  sketch theme, or a missing width.
+
 * **`spec_diagnose()` reports rows that will not be shown and catches spec
   mistakes before compiling.** vellumplot never deletes rows, so a row with a
   missing position, a value of zero or less on a log axis, or a value outside
@@ -14,7 +42,6 @@
   failure); and a manual or discrete palette on a continuous colour channel,
   which turns every distinct number into its own category. The result now prints
   as a short summary.
-
 
 # vellumplot 0.11.1
 

@@ -789,6 +789,29 @@ NULL
   has_na <- any(is.na(unlist(values, use.names = FALSE)))
   key_glyph <- .key_glyph_for_aes(resolved, channel)
 
+  # A bivariate scale (scale_fill_bivariate()), or -- with no explicit kind -- a
+  # fill mapped to a bi_class() column or given guide_bivariate(): a discrete
+  # scale over the "x-y" classes with a 2-D legend. See R/bivariate.R.
+  bi_info <- if (identical(aes, "color")) .bivariate_info(spec) else NULL
+  wants_bi <- identical(kind, "bivariate") ||
+    (!explicit_kind &&
+      (!is.null(bi_info) ||
+        (!is.null(scalespec) &&
+          is.list(scalespec@guide) &&
+          identical(scalespec@guide$kind, "bivariate"))))
+  if (wants_bi) {
+    return(.train_bivariate(
+      spec,
+      scalespec,
+      values,
+      bi_info,
+      na_value,
+      has_na,
+      key_glyph,
+      aes
+    ))
+  }
+
   # An identity scale uses the data values verbatim as colours (they must already
   # be valid R/CSS colours) and draws no legend.
   if (identical(kind, "identity")) {

@@ -75,6 +75,7 @@ Collate:
     'animate.R'
     'marks.R'
     'annotate.R'
+    'bivariate.R'
     'vgraph.R'
     'vplot.R'
     'sankey.R'
