@@ -15,6 +15,19 @@
   the scale transform, keeps a reversed axis reversed, and is applied by
   the same code path for shared and free scales.
 
+- **The colour scale now trains on `fill` values even when another layer
+  maps `color`.** `color` and `fill` share one colour scale, but `fill`
+  values only reached it when no layer mapped `color`. A tile layer
+  filled by `z` under a point layer coloured by a subset of `z` trained
+  on the points’ range alone and silently squished every tile below it
+  onto one end of the ramp; a quantitative `fill` next to a discrete
+  `color` got grey for every fill. The scale now pools values from every
+  layer mapping either channel, and layers that disagree on whether the
+  variable is quantitative abort with an error explaining that they
+  share one scale (an explicit scale kind,
+  e.g. [`scale_color_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
+  still settles it).
+
 ## vellumplot 0.10.0
 
 ### New features
