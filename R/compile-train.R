@@ -195,16 +195,19 @@ NULL
 .TRANSFORMS <- list(
   identity = list(
     transform = function(x) x,
+    inverse = function(x) x,
     breaks = function(rng) scales::breaks_extended()(rng),
     format = function(b) .label_number_default(b)
   ),
   log10 = list(
     transform = function(x) log10(x),
+    inverse = function(x) 10^x,
     breaks = function(rng) scales::breaks_log()(rng),
     format = function(b) format(b, trim = TRUE, scientific = FALSE)
   ),
   sqrt = list(
     transform = function(x) sqrt(x),
+    inverse = function(x) x^2,
     breaks = function(rng) scales::breaks_extended()(rng),
     format = function(b) .label_number_default(b)
   ),
@@ -215,6 +218,7 @@ NULL
   # Breaks sit at 0 and signed powers of ten within range.
   symlog = list(
     transform = function(x) sign(x) * log10(1 + abs(x)),
+    inverse = function(x) sign(x) * (10^abs(x) - 1),
     breaks = function(rng) .symlog_breaks(rng),
     format = function(b) .label_number_default(b)
   ),
@@ -223,13 +227,14 @@ NULL
   # Negating the data here as well would double-flip and cancel out.
   reverse = list(
     transform = function(x) x,
+    inverse = function(x) x,
     breaks = function(rng) scales::breaks_extended()(rng),
     format = function(b) .label_number_default(b),
     flip = TRUE
   )
 )
 
-# Resolve a scalespec's transform to a `(transform, breaks, format)` object. A
+# Resolve a scalespec's transform to a `(transform, inverse, breaks, format)` object. A
 # character name indexes the registry; a `scales::transform_*()` object is
 # adapted directly (its `$transform`/`$breaks`/`$format`). Back-compat: the old
 # `scale_*_continuous(trans = "log10")` stored `type = "log10"`.
@@ -259,6 +264,7 @@ NULL
   }
   list(
     transform = tr$transform,
+    inverse = tr$inverse,
     breaks = tr$breaks %||% function(rng) scales::breaks_extended()(rng),
     format = tr$format %||% function(b) .label_number_default(b),
     flip = FALSE
@@ -1424,22 +1430,21 @@ NULL
 # which the raw-data axis pool sees. `sc` is the trained scale of axis `aes`;
 # the result is `c(lo, hi)` in that scale's *native* (transformed) coordinates,
 # or `NULL` when the mark does not extend the axis. The density math mirrors the
-# emitters exactly (shared `.density_by_cat`), including mapping the data-space
-# density support through the scale (`sc$map`), so the trained domain matches
-# what is drawn -- also on a log/sqrt axis.
+# emitters exactly (shared `.density_by_cat`, estimated on the native values from
+# `.native_values()`), so the trained domain matches what is drawn -- also on a
+# log/sqrt axis.
 .mark_footprint <- function(L, aes, sc) {
   adjust <- L$stat_params$adjust %||% 1
   # the density support of `vals` per category of `cats`, mapped to native
   support <- function(vals, cats) {
     dens <- .density_by_cat(
-      as.numeric(vals),
+      .native_values(sc, vals),
       cats,
       .cat_levels(cats),
       adjust,
       .group_key(L)
     )
-    supp <- unlist(lapply(dens, function(d) if (!is.null(d)) d$x))
-    .finite_range(sc$map(supp))
+    .finite_range(unlist(lapply(dens, function(d) if (!is.null(d)) d$x)))
   }
   # category positions on a discrete axis, widened by `lo`/`hi` bands
   cats_extent <- function(cats, lo, hi) {
@@ -1488,7 +1493,10 @@ NULL
 # layer's drawn footprint is not clipped. The widening only ever grows a domain,
 # and is skipped when the user pinned this axis's limits (`coord_*(xlim=/ylim=)`
 # or a scale `limits=`), since explicit limits are intentional cropping that must
-# win. The single entry point for both the shared scales and free facet scales.
+# win. Breaks were picked for the raw data range, so a widened axis is re-broken
+# over the drawn extent (`.rebreak_widened()`) -- else the density tails run past
+# the last labelled tick. The single entry point for both the shared scales and
+# free facet scales.
 .train_axis <- function(
   spec,
   resolved,
@@ -1505,6 +1513,7 @@ NULL
   if (explicit || !is.numeric(sc$domain)) {
     return(sc)
   }
+  drawn <- NULL # native extent of every footprint
   for (L in resolved) {
     if (!L$mark %in% c("violin", "ridgeline", "halfeye")) {
       next
@@ -1512,8 +1521,40 @@ NULL
     ext <- .mark_footprint(L, aes, sc)
     if (!is.null(ext) && all(is.finite(ext))) {
       sc$domain <- .union_domain(sc$domain, ext)
+      drawn <- range(c(drawn, ext))
     }
   }
+  if (!is.null(drawn)) {
+    sc <- .rebreak_widened(sc, drawn, aes, values, scalespec, title)
+  }
+  sc
+}
+
+# Re-pick a continuous axis's breaks (labels, secondary axis) for the extent a
+# density footprint widened it to. `drawn` is that footprint in native units; it
+# goes back to data units through the transform's inverse and is unioned with the
+# data range, then the axis is re-trained over that range as fixed limits, and
+# only its breaks/labels/secondary axis are kept -- the (already widened) domain
+# is left alone. A no-op for user-set `breaks` (taken as given), date/time axes,
+# discrete axes, and a transform without an inverse.
+.rebreak_widened <- function(sc, drawn, aes, values, scalespec, title) {
+  if (
+    isTRUE(sc$discrete) ||
+      !is.null(sc$time_unit) ||
+      (!is.null(scalespec) && !is.null(scalespec@breaks))
+  ) {
+    return(sc)
+  }
+  inv <- .resolve_trans(scalespec)$inverse
+  if (is.null(inv)) {
+    return(sc)
+  }
+  rng <- range(c(sc$data_range, suppressWarnings(inv(drawn))))
+  if (!all(is.finite(rng))) {
+    return(sc)
+  }
+  wide <- .train_position(aes, values, scalespec, title, lim = rng)
+  sc[c("breaks", "labels", "sec")] <- wide[c("breaks", "labels", "sec")]
   sc
 }
 
