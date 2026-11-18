@@ -99,6 +99,13 @@
 
 ## Bug fixes
 
+* **`spec_from_json()` reads back a spec that has a coord.** JSON has no
+  integer type, so a whole number such as a coord's default `start = 0` came
+  back from `jsonlite` as an integer and `CoordSpec` rejected it -- any
+  `coord_*()` plot failed to round-trip through `spec_to_json()`. Coords, the
+  `outline()` / `shadow()` / `motion()` effects, scale limits and breaks, and
+  untagged mark params now decode whole numbers as doubles, and a round-trip
+  renders the same plot.
 
 * Clearer errors on a few edge cases: `inset()` validates its 0-1 fractional
   bounds (rejecting inverted / out-of-range coordinates that rendered a broken
