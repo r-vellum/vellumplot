@@ -116,6 +116,55 @@ test_that("mark_ridgeline() trains y above the top ridge and x over the support"
   expect_gte(sc$x$domain[2], max(supp))
 })
 
+# The footprint lives in data space but the domain in native (transformed)
+# space: it must go through the scale transform, and the union must keep a
+# reversed axis reversed.
+vio_supp <- function() {
+  unlist(lapply(c(4, 6, 8), function(l) {
+    range(stats::density(mtcars$mpg[mtcars$cyl == l])$x)
+  }))
+}
+
+test_that("a log10 violin axis covers the density support in log units", {
+  sc <- train(
+    vplot(mtcars) |>
+      mark_violin(x = factor(cyl), y = mpg) |>
+      scale_y_continuous(trans = "log10")
+  )
+  supp <- log10(vio_supp())
+  expect_lte(sc$y$domain[1], min(supp))
+  expect_gte(sc$y$domain[2], max(supp))
+  # a sane log domain (mpg ~ 10^0.9 .. 10^1.6), not raw values in log space
+  expect_lt(sc$y$domain[2], 2)
+})
+
+test_that("a reversed violin axis stays reversed after the footprint union", {
+  sc <- train(
+    vplot(mtcars) |>
+      mark_violin(x = factor(cyl), y = mpg) |>
+      scale_y_continuous(trans = "reverse")
+  )
+  expect_gt(sc$y$domain[1], sc$y$domain[2])
+  expect_gte(sc$y$domain[1], max(vio_supp()))
+  expect_lte(sc$y$domain[2], min(vio_supp()))
+})
+
+test_that("free facet scales are widened by the density footprint too", {
+  b <- .build_panels(
+    vplot(mtcars) |>
+      mark_violin(x = factor(cyl), y = mpg) |>
+      facet_wrap(~am, scales = "free_y")
+  )
+  for (q in b$panels) {
+    d <- mtcars[q$idx, , drop = FALSE]
+    supp <- unlist(lapply(split(d$mpg, d$cyl), function(v) {
+      if (length(v) >= 2) range(stats::density(v)$x)
+    }))
+    expect_lte(q$y_sc$domain[1], min(supp))
+    expect_gte(q$y_sc$domain[2], max(supp))
+  }
+})
+
 test_that("explicit limits are not widened by the density footprint", {
   vio <- train(
     vplot(iris) |>

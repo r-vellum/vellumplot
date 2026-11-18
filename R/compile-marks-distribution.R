@@ -241,7 +241,7 @@ NULL
 
 # Per-level `stats::density()` of `vals`, grouped by category `cats` over the
 # ordered levels `levs`. Shared by the violin/ridgeline emitters and by scale
-# training (`.expand_position_for_marks`) so the trained domain and the drawn
+# training (`.train_axis`) so the trained domain and the drawn
 # geometry are computed from identical values. A level with fewer than two finite
 # observations yields `NULL` (no density is drawn for it). With a `group` (the
 # layer's `.group_key()`), the list is per (level, sub-group) cell instead.

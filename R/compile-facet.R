@@ -253,13 +253,14 @@ NULL
   co <- .coord_of(spec)
   train_free <- function(aes, intercept, title, inc0, lim) {
     function(res) {
-      .train_position(
+      .train_axis(
+        spec,
+        res,
         aes,
-        .axis_pool(res, aes, intercept),
-        .scale_for(spec, aes),
         title,
         include_zero = inc0,
-        lim = lim
+        lim = lim,
+        values = .axis_pool(res, aes, intercept)
       )
     }
   }
