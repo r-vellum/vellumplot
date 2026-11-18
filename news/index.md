@@ -4,6 +4,28 @@
 
 ### New features
 
+- **[`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md)
+  brushes a data range.** `select_interval(name, encodings = "x")`
+  declares an interval selection that a brush fills;
+  [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
+  and
+  [`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md)
+  react to it the same way they react to a point selection. Membership
+  is by data value: a host such as vellumwidget converts the brushed
+  pixels to a data range through the panel’s scale and tests each
+  element’s own values, so continuous (including log, sqrt and
+  reversed), date, datetime and discrete axes all work, and a brush in
+  one facet selects matching rows in every facet. `encodings` takes
+  `"x"`, `"y"` or `c("x", "y")`. Plots with an interval selection now
+  carry each keyed element’s data values on the brushed channels, and
+  the panel axis descriptors gain `aesthetic` and, for discrete axes,
+  `levels`. The interaction model records the selection as
+  `{name, type: "interval", encodings}`. Static renders are unchanged.
+
+  `encodings` defaults to `c("x", "y")`, the same rectangle brush as
+  before. The old `on = "x" / "y" / "xy"` argument still works as an
+  alias.
+
 - **Bivariate choropleths with a 2-D legend.**
   [`bi_class()`](https://r-vellum.github.io/vellumplot/reference/bi_class.md)
   bins two numeric columns into `dim` classes each (quantile by default,
@@ -1422,7 +1444,7 @@ First tagged release. Everything below is included.
   already did.
 
 - **Stricter validation of interactivity and layout arguments.**
-  [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)/[`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
+  [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)/[`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md)
   reject a non-logical `toggle`/`empty` (it was silently coerced to
   `FALSE`);
   [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
@@ -1507,7 +1529,7 @@ First tagged release. Everything below is included.
   named selection with
   [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
   (click/hover) or
-  [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
+  [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md)
   (brush/lasso), then refer to it from
   [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
   (style an aesthetic by selection membership),

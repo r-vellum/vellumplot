@@ -92,14 +92,6 @@ with it, serialise with it, and are enacted by any capable host
 <span>  group_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  toggle <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  empty <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">select_interval</span><span class="op">(</span></span>
-<span>  <span class="va">plot</span>,</span>
-<span>  <span class="va">name</span>,</span>
-<span>  on <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"xy"</span>, <span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>,</span>
-<span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rect"</span>, <span class="st">"lasso"</span><span class="op">)</span>,</span>
-<span>  empty <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -117,8 +109,7 @@ with it, serialise with it, and are enacted by any capable host
 
 
 <dt id="arg-on">on<a class="anchor" aria-label="anchor" href="#arg-on"></a></dt>
-<dd><p>The gesture. Point: <code>"click"</code> (default) or <code>"hover"</code>. Interval:
-<code>"xy"</code> (default, both axes), <code>"x"</code>, or <code>"y"</code> (a single-axis brush).</p></dd>
+<dd><p>The gesture: <code>"click"</code> (default) or <code>"hover"</code>.</p></dd>
 
 
 <dt id="arg-fields">fields<a class="anchor" aria-label="anchor" href="#arg-fields"></a></dt>
@@ -142,11 +133,6 @@ selects only the clicked element. <code>group_by</code> is an alias.</p></dd>
 default — so an unselected plot shows its full self and selecting <em>narrows</em>)
 or <em>none</em> (<code>FALSE</code>).</p></dd>
 
-
-<dt id="arg-region">region<a class="anchor" aria-label="anchor" href="#arg-region"></a></dt>
-<dd><p>For an interval selection, <code>"rect"</code> (default, a brush rectangle)
-or <code>"lasso"</code> (a freehand polygon).</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -154,16 +140,17 @@ or <code>"lasso"</code> (a freehand polygon).</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>select_point()</code> is driven by a click or hover (or a legend value);
-<code>select_interval()</code> by a drag (a brush rectangle or a lasso), optionally locked
-to an axis.</p>
-<p>Both are <strong>pipe-first</strong> (attach to the plot and return it) <em>or</em> <strong>free-standing</strong>
+    <p><code>select_point()</code> is driven by a click or hover (or a legend value). For a
+selection driven by a drag (a brush over a data range), see
+<code><a href="select_interval.html">select_interval()</a></code>.</p>
+<p>It is <strong>pipe-first</strong> (attach to the plot and return it) <em>or</em> <strong>free-standing</strong>
 (call with the name as the first argument to get a <code>SelectionSpec</code> you can share
 across views, then attach with <code><a href="add_selection.html">add_selection()</a></code>).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="condition.html">condition()</a></code>, <code><a href="filter_by.html">filter_by()</a></code>, <code><a href="add_selection.html">add_selection()</a></code>, <code><a href="bind_scale.html">bind_scale()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="select_interval.html">select_interval()</a></code>, <code><a href="condition.html">condition()</a></code>, <code><a href="filter_by.html">filter_by()</a></code>,
+<code><a href="add_selection.html">add_selection()</a></code>, <code><a href="bind_scale.html">bind_scale()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -177,7 +164,7 @@ across views, then attach with <code><a href="add_selection.html">add_selection(
 <span class="r-plt img"><img src="select_point-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># free-standing, for cross-view use</span></span></span>
-<span class="r-in"><span><span class="va">sel</span> <span class="op">&lt;-</span> <span class="fu">select_interval</span><span class="op">(</span><span class="st">"brush"</span>, on <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sel</span> <span class="op">&lt;-</span> <span class="fu">select_point</span><span class="op">(</span><span class="st">"pick"</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -3,7 +3,7 @@
 Attach a `SelectionSpec` (from the free-standing form of
 [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
 /
-[`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md))
+[`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md))
 to a plot, marking that the selection's gesture is active on this plot's
 marks. Use it when a selection is defined once and shared across views
 in a composition (define + `add_selection()` on one plot,

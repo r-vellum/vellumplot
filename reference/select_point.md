@@ -23,14 +23,6 @@ select_point(
   toggle = TRUE,
   empty = TRUE
 )
-
-select_interval(
-  plot,
-  name,
-  on = c("xy", "x", "y"),
-  region = c("rect", "lasso"),
-  empty = TRUE
-)
 ```
 
 ## Arguments
@@ -47,8 +39,7 @@ select_interval(
 
 - on:
 
-  The gesture. Point: `"click"` (default) or `"hover"`. Interval: `"xy"`
-  (default, both axes), `"x"`, or `"y"` (a single-axis brush).
+  The gesture: `"click"` (default) or `"hover"`.
 
 - fields:
 
@@ -72,11 +63,6 @@ select_interval(
   default — so an unselected plot shows its full self and selecting
   *narrows*) or *none* (`FALSE`).
 
-- region:
-
-  For an interval selection, `"rect"` (default, a brush rectangle) or
-  `"lasso"` (a freehand polygon).
-
 ## Value
 
 A
@@ -85,17 +71,18 @@ A
 
 ## Details
 
-`select_point()` is driven by a click or hover (or a legend value);
-`select_interval()` by a drag (a brush rectangle or a lasso), optionally
-locked to an axis.
+`select_point()` is driven by a click or hover (or a legend value). For
+a selection driven by a drag (a brush over a data range), see
+[`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md).
 
-Both are **pipe-first** (attach to the plot and return it) *or*
+It is **pipe-first** (attach to the plot and return it) *or*
 **free-standing** (call with the name as the first argument to get a
 `SelectionSpec` you can share across views, then attach with
 [`add_selection()`](https://r-vellum.github.io/vellumplot/reference/add_selection.md)).
 
 ## See also
 
+[`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md),
 [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md),
 [`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md),
 [`add_selection()`](https://r-vellum.github.io/vellumplot/reference/add_selection.md),
@@ -113,5 +100,5 @@ vplot(df) |>
 
 
 # free-standing, for cross-view use
-sel <- select_interval("brush", on = "x")
+sel <- select_point("pick")
 ```

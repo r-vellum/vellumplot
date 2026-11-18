@@ -116,7 +116,7 @@ PlotSpec(
   A list of interactive selection declarations (from
   [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
   /
-  [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
+  [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md)
   /
   [`add_selection()`](https://r-vellum.github.io/vellumplot/reference/add_selection.md)).
 

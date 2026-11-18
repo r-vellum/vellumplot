@@ -792,8 +792,9 @@ conditional encodings, filters, and scale-domain binds. Inert on a
 static render; enacted by a host such as vellumwidget.
 
 - [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
-  [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_point.md)
   : Declare an interactive selection
+- [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md)
+  : Declare an interval (brush) selection
 - [`select_neighbours()`](https://r-vellum.github.io/vellumplot/reference/select_neighbours.md)
   : Highlight a node's graph neighbourhood
 - [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
