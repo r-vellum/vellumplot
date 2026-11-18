@@ -131,7 +131,10 @@ test_that("a log10 violin axis covers the density support in log units", {
       mark_violin(x = factor(cyl), y = mpg) |>
       scale_y_continuous(trans = "log10")
   )
-  supp <- log10(vio_supp())
+  # the density is estimated on the transformed values (as ggplot2 does)
+  supp <- unlist(lapply(c(4, 6, 8), function(l) {
+    range(stats::density(log10(mtcars$mpg[mtcars$cyl == l]))$x)
+  }))
   expect_lte(sc$y$domain[1], min(supp))
   expect_gte(sc$y$domain[2], max(supp))
   # a sane log domain (mpg ~ 10^0.9 .. 10^1.6), not raw values in log space
@@ -181,4 +184,115 @@ test_that("explicit limits are not widened by the density footprint", {
   )
   expect_equal(vio$y$domain, ref$y$domain)
   expect_lt(vio$y$domain[2], 8.5)
+})
+
+# VP-29: the density was estimated in data space and its support (padded ~3
+# bandwidths, so below zero for data near 0) mapped through the scale, giving NaN
+# outline vertices on a log/sqrt axis. It is now estimated on the transformed
+# values, so every drawn vertex is finite and training still covers the shape.
+drawn_polygons <- function(p) {
+  cap <- list()
+  local_mocked_bindings(
+    .draw = function(scene, grob, rows = NULL) {
+      if (inherits(grob, "vellum::grob_polygon")) {
+        cap[[length(cap) + 1L]] <<- list(
+          x = vctrs::field(grob@x, "value"),
+          y = vctrs::field(grob@y, "value")
+        )
+      }
+      scene
+    }
+  )
+  vellumplot:::.compile_plot(p)
+  cap
+}
+
+set.seed(29)
+near0 <- data.frame(g = rep(c("a", "b"), 100), v = stats::rexp(200))
+
+test_that("density shapes on log/sqrt axes draw only finite vertices (VP-29)", {
+  plots <- list(
+    vplot(near0) |>
+      mark_violin(x = g, y = v) |>
+      scale_y_continuous(trans = "log10"),
+    vplot(near0) |>
+      mark_violin(x = g, y = v) |>
+      scale_y_continuous(trans = "sqrt"),
+    vplot(near0) |>
+      mark_halfeye(x = g, y = v) |>
+      scale_y_continuous(trans = "log10"),
+    vplot(near0) |>
+      mark_ridgeline(x = v, y = g) |>
+      scale_x_continuous(trans = "log10"),
+    vplot(mtcars) |>
+      mark_violin(x = factor(cyl), y = mpg) |>
+      scale_y_continuous(trans = "log10")
+  )
+  for (p in plots) {
+    polys <- expect_no_warning(drawn_polygons(p))
+    expect_gt(length(polys), 0L)
+    for (pg in polys) {
+      expect_true(all(is.finite(pg$x)) && all(is.finite(pg$y)))
+    }
+  }
+})
+
+test_that("the trained log axis covers the drawn violin outline (VP-29)", {
+  p <- vplot(near0) |>
+    mark_violin(x = g, y = v) |>
+    scale_y_continuous(trans = "log10")
+  sc <- train(p)
+  ys <- unlist(lapply(drawn_polygons(p), `[[`, "y"))
+  expect_lte(sc$y$domain[1], min(ys))
+  expect_gte(sc$y$domain[2], max(ys))
+})
+
+test_that("an identity-scale violin outline is the data-space density (VP-29)", {
+  p <- vplot(iris) |> mark_violin(x = Species, y = Sepal.Length)
+  polys <- drawn_polygons(p)
+  ref <- stats::density(iris$Sepal.Length[iris$Species == "setosa"])
+  expect_equal(polys[[1]]$y, c(ref$x, rev(ref$x)))
+})
+
+# VP-28: the domain was widened for the footprint after breaks were picked for
+# the raw data range, so the tails ran past the last labelled tick.
+test_that("a footprint-widened axis is re-broken over its new extent (VP-28)", {
+  sc <- train(vplot(iris) |> mark_violin(x = Species, y = Sepal.Length))$y
+  step <- min(diff(sc$breaks))
+  expect_lte(sc$domain[2] - max(sc$breaks), step)
+  expect_lte(min(sc$breaks) - sc$domain[1], step)
+  expect_identical(sc$labels, format(sc$breaks, trim = TRUE))
+
+  lg <- train(
+    vplot(mtcars) |>
+      mark_violin(x = factor(cyl), y = mpg) |>
+      scale_y_continuous(trans = "log10")
+  )$y
+  lstep <- min(diff(lg$breaks))
+  expect_lte(lg$domain[2] - max(lg$breaks), lstep)
+  expect_lte(min(lg$breaks) - lg$domain[1], lstep)
+
+  rg <- train(vplot(iris) |> mark_ridgeline(x = Sepal.Length, y = Species))$x
+  expect_lte(rg$domain[2] - max(rg$breaks), min(diff(rg$breaks)))
+})
+
+test_that("explicit breaks survive the footprint widening (VP-28)", {
+  sc <- train(
+    vplot(iris) |>
+      mark_violin(x = Species, y = Sepal.Length) |>
+      scale_y_continuous(breaks = c(5, 6, 7))
+  )$y
+  expect_equal(sc$breaks, c(5, 6, 7))
+})
+
+test_that("free facet axes are re-broken over their footprint too (VP-28)", {
+  b <- .build_panels(
+    vplot(mtcars) |>
+      mark_violin(x = factor(cyl), y = mpg) |>
+      facet_wrap(~am, scales = "free_y")
+  )
+  for (q in b$panels) {
+    sc <- q$y_sc
+    expect_lte(sc$domain[2] - max(sc$breaks), min(diff(sc$breaks)))
+  }
 })

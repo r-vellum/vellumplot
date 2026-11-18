@@ -48,9 +48,11 @@ NULL
 #   it reads and the panel subset's row indices into it. `.provenance_record()`
 #   maps the emitter's indices through that, so a key always names a row of the
 #   whole source table -- correct under facets and for a layer's own `data =`.
-#   When a stat aggregated the rows (histogram, density, smooth, ...) or a layout
-#   mark made its own, there is no per-row mapping and every element keys to the
-#   panel's whole subset.
+#   A row-preserving stat (dot plot, outlier callout, window, series label,
+#   count) records the input row(s) of each output row, so its elements key
+#   their own rows through that. When a stat aggregated the rows (histogram,
+#   density, smooth, ...) or a layout mark made its own, there is no per-row
+#   mapping and every element keys to the panel's whole subset.
 #
 #   REFINED (rows resolve to the actual data rows an element draws): point, bar,
 #   bar-polar, tile, segment, sf, edges (main segments), line, area, ribbon,
@@ -157,6 +159,10 @@ NULL
   }
   if (!isTRUE(src$per_row)) {
     return(src$rows)
+  }
+  if (!is.null(src$members)) {
+    # a row-preserving stat: output rows -> their input rows -> source rows
+    return(src$rows[sort(unique(unlist(src$members[rows])))])
   }
   src$rows[rows]
 }
