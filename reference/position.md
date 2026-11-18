@@ -16,6 +16,10 @@ position_dodge(width = NULL)
 
 position_dodge2(padding = 0.1)
 
+position_stack(vjust = 1)
+
+position_fill(vjust = 1)
+
 position_sina(width = 0.8, seed = NULL)
 
 position_jitterdodge(
@@ -46,6 +50,11 @@ position_jitterdodge(
   `position_dodge2()` gap between dodged elements, as a fraction of the
   element width.
 
+- vjust:
+
+  `position_stack()` / `position_fill()`: where a point, text or label
+  sits inside its stacked span, from `0` (bottom) to `1` (top).
+
 - dodge.width, jitter.width, jitter.height:
 
   `position_jitterdodge()` dodge / jitter extents.
@@ -74,6 +83,13 @@ A `vellumplot_position` object for a mark's `position` argument.
 
 - `position_jitterdodge()` dodges grouped elements, then jitters within
   each dodged slot (points over dodged boxes).
+
+- `position_stack()` / `position_fill()` stack grouped elements sharing
+  an x (`fill` normalises each stack to 1). Bars and areas take the
+  stacked span; a point, text or label moves to a height inside its
+  span: `vjust = 1` (the default) is the top, `0.5` the middle – so
+  `mark_text(position = position_stack(vjust = 0.5))` centres labels on
+  the segments of a stacked bar.
 
 - `position_sina()` spreads each category's points along x by a
   quasirandom offset scaled to the local y-density, so the cloud traces

@@ -16,6 +16,7 @@ to reproject and lock the map aspect ratio.
 mark_sf(
   plot,
   ...,
+  position = "identity",
   fill = NULL,
   color = NULL,
   alpha = NULL,
@@ -43,6 +44,13 @@ mark_sf(
   Encodings mapping feature attributes to aesthetics: `fill`, `color`,
   `alpha`, `linewidth`, `size`. A geometry column is not encoded — it is
   read from the data.
+
+- position:
+
+  Position adjustment; see
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md).
+  A mark errors on a position it does not support, naming the ones it
+  does.
 
 - fill, color, alpha, linewidth, size:
 

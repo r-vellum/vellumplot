@@ -18,6 +18,7 @@ additionally needs MASS.
 mark_contour(
   plot,
   ...,
+  position = "identity",
   bins = 10,
   binwidth = NULL,
   breaks = NULL,
@@ -30,6 +31,7 @@ mark_contour(
 mark_contour_filled(
   plot,
   ...,
+  position = "identity",
   bins = 10,
   binwidth = NULL,
   breaks = NULL,
@@ -53,6 +55,24 @@ mark_contour_filled(
 
   Encodings (tidy-eval): `x`, `y` (+ optional `z` surface, `color` /
   `fill`, `linewidth`, `linetype`).
+
+- position:
+
+  Position adjustment: a string — `"identity"` (default), `"nudge"`,
+  `"stack"`, `"fill"`, `"dodge"`, `"dodge2"`, `"jitter"`,
+  `"jitterdodge"`, `"sina"` — or a parameterised
+  [position](https://r-vellum.github.io/vellumplot/reference/position.md)
+  object such as
+  [`position_dodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  or
+  [`position_stack()`](https://r-vellum.github.io/vellumplot/reference/position.md).
+  Every mark takes `"identity"` and `"nudge"`. `"stack"`/`"fill"` work
+  on bars, areas, points, text and labels (so a label can sit on its
+  stacked bar); `"dodge"`/`"dodge2"` on bars, points, text, labels,
+  error bars, line/point ranges, cross-bars, box plots, violins and
+  slab-intervals (so error bars dodge over dodged bars); `"jitter"` on
+  points, text and labels; `"jitterdodge"` and `"sina"` on points. A
+  position a mark does not support is an error naming the ones it does.
 
 - bins:
 

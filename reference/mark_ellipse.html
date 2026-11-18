@@ -75,6 +75,7 @@ fill is mapped) as a single enclosing region drawn over the raw points."><meta p
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_ellipse</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"t"</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  segments <span class="op">=</span> <span class="fl">51L</span>,</span>
@@ -83,7 +84,15 @@ fill is mapped) as a single enclosing region drawn over the raw points."><meta p
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">mark_hull</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, expand <span class="op">=</span> <span class="fl">0</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">mark_hull</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  expand <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -97,6 +106,20 @@ fill is mapped) as a single enclosing region drawn over the raw points."><meta p
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Encodings (tidy-eval): <code>x</code>, <code>y</code>, and optionally <code>color</code>/<code>fill</code>
 (which also splits the points into per-group regions).</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Position adjustment: a string — <code>"identity"</code> (default),
+<code>"nudge"</code>, <code>"stack"</code>, <code>"fill"</code>, <code>"dodge"</code>, <code>"dodge2"</code>, <code>"jitter"</code>,
+<code>"jitterdodge"</code>, <code>"sina"</code> — or a parameterised <a href="position.html">position</a> object such as
+<code><a href="position.html">position_dodge()</a></code> or <code><a href="position.html">position_stack()</a></code>. Every mark takes <code>"identity"</code> and
+<code>"nudge"</code>. <code>"stack"</code>/<code>"fill"</code> work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); <code>"dodge"</code>/<code>"dodge2"</code> on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+<code>"jitter"</code> on points, text and labels; <code>"jitterdodge"</code> and <code>"sina"</code> on
+points. A position a mark does not support is an error naming the ones it
+does.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>

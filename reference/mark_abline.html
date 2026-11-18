@@ -87,6 +87,7 @@ x/y scales, so add them on top of a data layer. Both assume linear axes.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_abline</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  slope <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  intercept <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -97,6 +98,7 @@ x/y scales, so add them on top of a data layer. Both assume linear axes.</p>
 <span><span class="fu">mark_function</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">fun</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">101</span>,</span>
 <span>  args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -117,6 +119,11 @@ x/y scales, so add them on top of a data layer. Both assume linear axes.</p>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>For <code>mark_abline()</code>/<code>mark_function()</code>, styling passed through as
 constants (e.g. <code>color</code>, <code>linewidth</code>, <code>linetype</code>).</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Position adjustment; see <code><a href="mark_point.html">mark_point()</a></code>. A mark errors
+on a position it does not support, naming the ones it does.</p></dd>
 
 
 <dt id="arg-slope-intercept">slope, intercept<a class="anchor" aria-label="anchor" href="#arg-slope-intercept"></a></dt>

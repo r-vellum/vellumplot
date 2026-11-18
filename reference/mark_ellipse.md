@@ -10,6 +10,7 @@ points.
 mark_ellipse(
   plot,
   ...,
+  position = "identity",
   type = "t",
   level = 0.95,
   segments = 51L,
@@ -18,7 +19,15 @@ mark_ellipse(
   data = NULL
 )
 
-mark_hull(plot, ..., expand = 0, blend = NULL, sketch = NULL, data = NULL)
+mark_hull(
+  plot,
+  ...,
+  position = "identity",
+  expand = 0,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 ```
 
 ## Arguments
@@ -34,6 +43,24 @@ mark_hull(plot, ..., expand = 0, blend = NULL, sketch = NULL, data = NULL)
 
   Encodings (tidy-eval): `x`, `y`, and optionally `color`/`fill` (which
   also splits the points into per-group regions).
+
+- position:
+
+  Position adjustment: a string — `"identity"` (default), `"nudge"`,
+  `"stack"`, `"fill"`, `"dodge"`, `"dodge2"`, `"jitter"`,
+  `"jitterdodge"`, `"sina"` — or a parameterised
+  [position](https://r-vellum.github.io/vellumplot/reference/position.md)
+  object such as
+  [`position_dodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  or
+  [`position_stack()`](https://r-vellum.github.io/vellumplot/reference/position.md).
+  Every mark takes `"identity"` and `"nudge"`. `"stack"`/`"fill"` work
+  on bars, areas, points, text and labels (so a label can sit on its
+  stacked bar); `"dodge"`/`"dodge2"` on bars, points, text, labels,
+  error bars, line/point ranges, cross-bars, box plots, violins and
+  slab-intervals (so error bars dodge over dodged bars); `"jitter"` on
+  points, text and labels; `"jitterdodge"` and `"sina"` on points. A
+  position a mark does not support is an error naming the ones it does.
 
 - type:
 

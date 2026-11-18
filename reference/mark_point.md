@@ -27,6 +27,7 @@ mark_point(
 mark_line(
   plot,
   ...,
+  position = "identity",
   window = NULL,
   auto = FALSE,
   blend = NULL,
@@ -38,6 +39,7 @@ mark_line(
 mark_rule(
   plot,
   ...,
+  position = "identity",
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -94,19 +96,21 @@ mark_bar(
 
 - position:
 
-  Position adjustment: a string — `"identity"` (default), `"jitter"` /
-  `"jitterdodge"` (points), `"stack"` / `"fill"` / `"dodge"` /
-  `"dodge2"` (bars), `"nudge"` — or a parameterised
-  [`position_jitter()`](https://r-vellum.github.io/vellumplot/reference/position.md)
-  /
+  Position adjustment: a string — `"identity"` (default), `"nudge"`,
+  `"stack"`, `"fill"`, `"dodge"`, `"dodge2"`, `"jitter"`,
+  `"jitterdodge"`, `"sina"` — or a parameterised
+  [position](https://r-vellum.github.io/vellumplot/reference/position.md)
+  object such as
   [`position_dodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
-  /
-  [`position_dodge2()`](https://r-vellum.github.io/vellumplot/reference/position.md)
-  /
-  [`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
-  /
-  [`position_nudge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
-  object.
+  or
+  [`position_stack()`](https://r-vellum.github.io/vellumplot/reference/position.md).
+  Every mark takes `"identity"` and `"nudge"`. `"stack"`/`"fill"` work
+  on bars, areas, points, text and labels (so a label can sit on its
+  stacked bar); `"dodge"`/`"dodge2"` on bars, points, text, labels,
+  error bars, line/point ranges, cross-bars, box plots, violins and
+  slab-intervals (so error bars dodge over dodged bars); `"jitter"` on
+  points, text and labels; `"jitterdodge"` and `"sina"` on points. A
+  position a mark does not support is an error naming the ones it does.
 
 - auto:
 

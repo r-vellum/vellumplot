@@ -9,11 +9,20 @@ density of `x` per categorical `y` as overlapping ridges.
 ## Usage
 
 ``` r
-mark_violin(plot, ..., adjust = 1, blend = NULL, sketch = NULL, data = NULL)
+mark_violin(
+  plot,
+  ...,
+  position = "identity",
+  adjust = 1,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
 mark_ridgeline(
   plot,
   ...,
+  position = "identity",
   adjust = 1,
   height = 1.4,
   blend = NULL,
@@ -24,6 +33,7 @@ mark_ridgeline(
 mark_dotplot(
   plot,
   ...,
+  position = "identity",
   binwidth = NULL,
   blend = NULL,
   sketch = NULL,
@@ -44,6 +54,13 @@ mark_dotplot(
   `mark_ridgeline()` needs numeric `x` and categorical `y`;
   `mark_dotplot()` needs `x`. A mapped `color`/`fill` sets the shape
   fill.
+
+- position:
+
+  Position adjustment; see
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md).
+  A mark errors on a position it does not support, naming the ones it
+  does.
 
 - adjust:
 

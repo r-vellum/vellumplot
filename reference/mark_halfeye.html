@@ -81,6 +81,7 @@ categorical <code>x</code>).</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_halfeye</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  .width <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.66</span>, <span class="fl">0.95</span><span class="op">)</span>,</span>
 <span>  point <span class="op">=</span> <span class="st">"median"</span>,</span>
 <span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -93,6 +94,7 @@ categorical <code>x</code>).</p>
 <span><span class="fu">mark_interval</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  .width <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.66</span>, <span class="fl">0.95</span><span class="op">)</span>,</span>
 <span>  point <span class="op">=</span> <span class="st">"median"</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -111,6 +113,20 @@ categorical <code>x</code>).</p>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Encodings (tidy-eval): a categorical <code>x</code> and the sample <code>y</code>
 (+ <code>color</code>/<code>fill</code>).</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Position adjustment: a string — <code>"identity"</code> (default),
+<code>"nudge"</code>, <code>"stack"</code>, <code>"fill"</code>, <code>"dodge"</code>, <code>"dodge2"</code>, <code>"jitter"</code>,
+<code>"jitterdodge"</code>, <code>"sina"</code> — or a parameterised <a href="position.html">position</a> object such as
+<code><a href="position.html">position_dodge()</a></code> or <code><a href="position.html">position_stack()</a></code>. Every mark takes <code>"identity"</code> and
+<code>"nudge"</code>. <code>"stack"</code>/<code>"fill"</code> work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); <code>"dodge"</code>/<code>"dodge2"</code> on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+<code>"jitter"</code> on points, text and labels; <code>"jitterdodge"</code> and <code>"sina"</code> on
+points. A position a mark does not support is an error naming the ones it
+does.</p></dd>
 
 
 <dt id="arg--width">.width<a class="anchor" aria-label="anchor" href="#arg--width"></a></dt>

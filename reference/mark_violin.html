@@ -81,11 +81,20 @@ stacks one dot per observation.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_violin</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, adjust <span class="op">=</span> <span class="fl">1</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_violin</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mark_ridgeline</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  height <span class="op">=</span> <span class="fl">1.4</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -96,6 +105,7 @@ stacks one dot per observation.</p>
 <span><span class="fu">mark_dotplot</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  binwidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -115,6 +125,11 @@ stacks one dot per observation.</p>
 <dd><p>Encodings. <code>mark_violin()</code> needs categorical <code>x</code> and numeric <code>y</code>;
 <code>mark_ridgeline()</code> needs numeric <code>x</code> and categorical <code>y</code>; <code>mark_dotplot()</code>
 needs <code>x</code>. A mapped <code>color</code>/<code>fill</code> sets the shape fill.</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Position adjustment; see <code><a href="mark_point.html">mark_point()</a></code>. A mark errors
+on a position it does not support, naming the ones it does.</p></dd>
 
 
 <dt id="arg-adjust">adjust<a class="anchor" aria-label="anchor" href="#arg-adjust"></a></dt>

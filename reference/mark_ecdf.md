@@ -10,13 +10,29 @@ with `mark_qq_line()` adding the reference line. All respect a mapped
 ## Usage
 
 ``` r
-mark_ecdf(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_ecdf(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_rug(plot, ..., sides = "bl", length = 0.03, blend = NULL, data = NULL)
+mark_rug(
+  plot,
+  ...,
+  position = "identity",
+  sides = "bl",
+  length = 0.03,
+  blend = NULL,
+  data = NULL
+)
 
 mark_qq(
   plot,
   ...,
+  position = "identity",
   distribution = "qnorm",
   blend = NULL,
   sketch = NULL,
@@ -26,6 +42,7 @@ mark_qq(
 mark_qq_line(
   plot,
   ...,
+  position = "identity",
   distribution = "qnorm",
   blend = NULL,
   sketch = NULL,
@@ -45,6 +62,13 @@ mark_qq_line(
   Encodings. `mark_ecdf()` needs `x`; `mark_qq()`/`mark_qq_line()` need
   `sample`; `mark_rug()` takes `x` and/or `y` (+ `color`, `alpha`,
   `linewidth`, `linetype`).
+
+- position:
+
+  Position adjustment; see
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md).
+  A mark errors on a position it does not support, naming the ones it
+  does.
 
 - blend, sketch, data:
 

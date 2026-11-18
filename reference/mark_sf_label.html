@@ -90,6 +90,7 @@ crowded labels apart.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_sf_label</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  repel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  box_padding <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -111,6 +112,20 @@ crowded labels apart.</p>
 <dd><p>Encodings (tidy-eval): the <code>label</code> to draw at each feature, plus an
 optional <code>color</code> / <code>size</code>. The position comes from the geometry, so <code>x</code> / <code>y</code>
 are not mapped.</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Position adjustment: a string — <code>"identity"</code> (default),
+<code>"nudge"</code>, <code>"stack"</code>, <code>"fill"</code>, <code>"dodge"</code>, <code>"dodge2"</code>, <code>"jitter"</code>,
+<code>"jitterdodge"</code>, <code>"sina"</code> — or a parameterised <a href="position.html">position</a> object such as
+<code><a href="position.html">position_dodge()</a></code> or <code><a href="position.html">position_stack()</a></code>. Every mark takes <code>"identity"</code> and
+<code>"nudge"</code>. <code>"stack"</code>/<code>"fill"</code> work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); <code>"dodge"</code>/<code>"dodge2"</code> on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+<code>"jitter"</code> on points, text and labels; <code>"jitterdodge"</code> and <code>"sina"</code> on
+points. A position a mark does not support is an error naming the ones it
+does.</p></dd>
 
 
 <dt id="arg-size">size<a class="anchor" aria-label="anchor" href="#arg-size"></a></dt>

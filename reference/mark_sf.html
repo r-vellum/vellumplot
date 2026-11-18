@@ -90,6 +90,7 @@ attributes as usual, e.g. <code>fill = AREA</code> for a choropleth. Pair with
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_sf</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -115,6 +116,11 @@ attributes as usual, e.g. <code>fill = AREA</code> for a choropleth. Pair with
 <dd><p>Encodings mapping feature attributes to aesthetics: <code>fill</code>,
 <code>color</code>, <code>alpha</code>, <code>linewidth</code>, <code>size</code>. A geometry column is not encoded —
 it is read from the data.</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Position adjustment; see <code><a href="mark_point.html">mark_point()</a></code>. A mark errors
+on a position it does not support, naming the ones it does.</p></dd>
 
 
 <dt id="arg-fill-color-alpha-linewidth-size">fill, color, alpha, linewidth, size<a class="anchor" aria-label="anchor" href="#arg-fill-color-alpha-linewidth-size"></a></dt>

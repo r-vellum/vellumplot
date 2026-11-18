@@ -84,11 +84,19 @@ staircase line. All connect points in <code>x</code> order.</p>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">mark_ribbon</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span>, blend <span class="op">=</span> <span class="cn">NULL</span>, sketch <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">mark_ribbon</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mark_step</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  direction <span class="op">=</span> <span class="st">"hv"</span>,</span>
 <span>  auto <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>

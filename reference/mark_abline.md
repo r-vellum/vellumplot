@@ -15,6 +15,7 @@ top of a data layer. Both assume linear axes.
 mark_abline(
   plot,
   ...,
+  position = "identity",
   slope = 1,
   intercept = 0,
   blend = NULL,
@@ -25,6 +26,7 @@ mark_abline(
 mark_function(
   plot,
   ...,
+  position = "identity",
   fun,
   n = 101,
   args = list(),
@@ -45,6 +47,13 @@ mark_function(
 
   For `mark_abline()`/`mark_function()`, styling passed through as
   constants (e.g. `color`, `linewidth`, `linetype`).
+
+- position:
+
+  Position adjustment; see
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md).
+  A mark errors on a position it does not support, naming the ones it
+  does.
 
 - slope, intercept:
 

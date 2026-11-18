@@ -20,6 +20,7 @@ mapped automatically, so bare `mark_edges() |> mark_nodes()` just works.
 mark_edges(
   plot,
   ...,
+  position = "identity",
   color = NULL,
   linewidth = NULL,
   alpha = NULL,
@@ -39,6 +40,7 @@ mark_edges(
 mark_edge_bundle(
   plot,
   ...,
+  position = "identity",
   type = c("force", "divided", "stub", "path", "hammer", "mingle"),
   color = NULL,
   linewidth = NULL,
@@ -54,6 +56,7 @@ mark_edge_bundle(
 mark_flow_map(
   plot,
   ...,
+  position = "identity",
   root,
   type = c("spiral", "steiner"),
   weight = NULL,
@@ -70,6 +73,7 @@ mark_flow_map(
 mark_nodes(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   shape = NULL,
   fill = NULL,
@@ -84,6 +88,7 @@ mark_nodes(
 mark_node_text(
   plot,
   ...,
+  position = "identity",
   label = NULL,
   color = NULL,
   size = NULL,
@@ -104,6 +109,7 @@ mark_node_text(
 mark_edge_text(
   plot,
   ...,
+  position = "identity",
   label = NULL,
   color = NULL,
   size = NULL,
@@ -117,6 +123,7 @@ mark_edge_text(
 mark_node_hull(
   plot,
   ...,
+  position = "identity",
   fill = NULL,
   color = NULL,
   alpha = 0.25,
@@ -128,6 +135,7 @@ mark_node_pie(
   plot,
   cols,
   ...,
+  position = "identity",
   size = 4,
   inner = 0,
   fill = NULL,
@@ -154,6 +162,13 @@ mark_node_pie(
   `linetype`, `alpha`. The position channels are supplied by
   [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
   and need not be mapped.
+
+- position:
+
+  Position adjustment; see
+  [`mark_point()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md).
+  A mark errors on a position it does not support, naming the ones it
+  does.
 
 - linewidth:
 

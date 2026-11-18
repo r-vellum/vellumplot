@@ -11,6 +11,7 @@ constant.
 mark_text(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   family = NULL,
   fontface = NULL,
@@ -32,6 +33,7 @@ mark_text(
 mark_label(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   family = NULL,
   fontface = NULL,
@@ -65,6 +67,24 @@ mark_label(
 - ...:
 
   Encodings (tidy-eval): `x`, `y`, `label` (+ `color`, `angle`).
+
+- position:
+
+  Position adjustment: a string — `"identity"` (default), `"nudge"`,
+  `"stack"`, `"fill"`, `"dodge"`, `"dodge2"`, `"jitter"`,
+  `"jitterdodge"`, `"sina"` — or a parameterised
+  [position](https://r-vellum.github.io/vellumplot/reference/position.md)
+  object such as
+  [`position_dodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  or
+  [`position_stack()`](https://r-vellum.github.io/vellumplot/reference/position.md).
+  Every mark takes `"identity"` and `"nudge"`. `"stack"`/`"fill"` work
+  on bars, areas, points, text and labels (so a label can sit on its
+  stacked bar); `"dodge"`/`"dodge2"` on bars, points, text, labels,
+  error bars, line/point ranges, cross-bars, box plots, violins and
+  slab-intervals (so error bars dodge over dodged bars); `"jitter"` on
+  points, text and labels; `"jitterdodge"` and `"sina"` on points. A
+  position a mark does not support is an error naming the ones it does.
 
 - size:
 

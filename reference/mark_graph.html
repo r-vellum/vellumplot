@@ -93,6 +93,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_edges</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  linewidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -112,6 +113,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span><span class="fu">mark_edge_bundle</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"force"</span>, <span class="st">"divided"</span>, <span class="st">"stub"</span>, <span class="st">"path"</span>, <span class="st">"hammer"</span>, <span class="st">"mingle"</span><span class="op">)</span>,</span>
 <span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  linewidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -127,6 +129,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span><span class="fu">mark_flow_map</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">root</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"spiral"</span>, <span class="st">"steiner"</span><span class="op">)</span>,</span>
 <span>  weight <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -143,6 +146,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span><span class="fu">mark_nodes</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  shape <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -157,6 +161,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span><span class="fu">mark_node_text</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -177,6 +182,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span><span class="fu">mark_edge_text</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -190,6 +196,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span><span class="fu">mark_node_hull</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.25</span>,</span>
@@ -201,6 +208,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">cols</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  size <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  inner <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -224,6 +232,11 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <code>color</code>/<code>fill</code>, <code>shape</code>, <code>alpha</code>. Edges: <code>color</code>, <code>linewidth</code>, <code>linetype</code>,
 <code>alpha</code>. The position channels are supplied by <code><a href="vgraph.html">vgraph()</a></code> and need not be
 mapped.</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Position adjustment; see <code><a href="mark_point.html">mark_point()</a></code>. A mark errors
+on a position it does not support, naming the ones it does.</p></dd>
 
 
 <dt id="arg-linewidth">linewidth<a class="anchor" aria-label="anchor" href="#arg-linewidth"></a></dt>

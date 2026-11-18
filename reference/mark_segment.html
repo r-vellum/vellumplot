@@ -72,6 +72,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_segment</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  auto <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -92,6 +93,20 @@
 <dd><p>Encodings (tidy-eval): <code>x</code>, <code>y</code>, <code>xend</code>, <code>yend</code> (+ <code>color</code>,
 <code>linewidth</code>, <code>linetype</code>, <code>alpha</code>). A mapped <code>linewidth</code> gives each segment
 its own width – see <code><a href="scale_linewidth.html">scale_linewidth()</a></code>.</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Position adjustment: a string — <code>"identity"</code> (default),
+<code>"nudge"</code>, <code>"stack"</code>, <code>"fill"</code>, <code>"dodge"</code>, <code>"dodge2"</code>, <code>"jitter"</code>,
+<code>"jitterdodge"</code>, <code>"sina"</code> — or a parameterised <a href="position.html">position</a> object such as
+<code><a href="position.html">position_dodge()</a></code> or <code><a href="position.html">position_stack()</a></code>. Every mark takes <code>"identity"</code> and
+<code>"nudge"</code>. <code>"stack"</code>/<code>"fill"</code> work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); <code>"dodge"</code>/<code>"dodge2"</code> on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+<code>"jitter"</code> on points, text and labels; <code>"jitterdodge"</code> and <code>"sina"</code> on
+points. A position a mark does not support is an error naming the ones it
+does.</p></dd>
 
 
 <dt id="arg-auto">auto<a class="anchor" aria-label="anchor" href="#arg-auto"></a></dt>
