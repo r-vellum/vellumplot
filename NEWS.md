@@ -1,5 +1,19 @@
 # vellumplot 0.11.0.9000 (development version)
 
+## Bug fixes
+
+* **`scale_*_brewer()` accepts ColorBrewer palette names.** Only
+  `grDevices::hcl.pals()` names were recognised, so `scale_color_brewer(palette =
+  "Set1")` (or `"Accent"`, `"Paired"`, `"Pastel2"`) aborted with "`palette`/`values`
+  are not colours or a palette name", and names shared with hcl (`"Blues"`,
+  `"RdBu"`) drew hcl approximations. The brewer and distiller scales now draw
+  the real ColorBrewer colours (via `scales::pal_brewer()`) for all 35
+  sequential, diverging and qualitative palettes, sized to the number of levels.
+  As in ggplot2 they also take `type` (to pick a palette by number) and
+  `direction` (`scale_*_distiller()` defaults to `-1`). Other hcl names still
+  pass through, and `scale_color_discrete()` / `scale_color_continuous()` also
+  fall back to ColorBrewer for names hcl does not know.
+
 # vellumplot 0.11.0
 
 ## New features

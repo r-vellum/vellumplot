@@ -904,13 +904,25 @@ scale_fill_gradient2 <- function(
 #'   colour-vision-deficient-safe viridis maps, continuous (`_c`) or discrete
 #'   (`_d`). `option` picks the map: `"viridis"`, `"plasma"`, `"inferno"`,
 #'   `"cividis"`, `"rocket"`, or `"mako"` (unknown options fall back to viridis).
-#' * `scale_*_brewer()` — a discrete ColorBrewer-style qualitative/sequential
-#'   palette; `scale_*_distiller()` — the same ramp interpolated for continuous
-#'   data. `palette` is any `hcl.colors()` name (e.g. `"Blues"`, `"Set 2"`).
+#' * `scale_*_brewer()` — a discrete ColorBrewer palette (sequential,
+#'   diverging or qualitative, via [scales::pal_brewer()]);
+#'   `scale_*_distiller()` — the same palette's 7-class ramp interpolated for
+#'   continuous data. `palette` is a ColorBrewer name (`"Set1"`, `"Dark2"`,
+#'   `"Paired"`, `"Blues"`, `"RdBu"`, `"Spectral"`, ...; matched ignoring case,
+#'   spaces and punctuation, so `"Set 2"` is `"Set2"`) or an index into the
+#'   palettes of `type`. Any other [grDevices::hcl.colors()] name (e.g.
+#'   `"Batlow"`) is passed through unchanged, as by [scale_color_discrete()] /
+#'   [scale_color_continuous()].
 #'
 #' @param plot A [PlotSpec].
 #' @param option Which viridis map (see above).
-#' @param palette A `grDevices::hcl.colors()` palette name.
+#' @param palette A ColorBrewer palette name or index (see above), or a
+#'   `grDevices::hcl.colors()` palette name.
+#' @param type When `palette` is a number, which ColorBrewer family it indexes:
+#'   `"seq"` (sequential), `"div"` (diverging) or `"qual"` (qualitative).
+#' @param direction `1` keeps a ColorBrewer palette's order, `-1` reverses it.
+#'   `scale_*_distiller()` defaults to `-1`, as in ggplot2, so high values are
+#'   light. Ignored for non-ColorBrewer palette names.
 #' @param name,breaks,labels As for [scale_color_continuous()].
 #' @return The modified [PlotSpec].
 #' @seealso [scale_color_continuous()]
@@ -918,7 +930,10 @@ scale_fill_gradient2 <- function(
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp) |> scale_color_viridis_c()
 #' vplot(mtcars) |>
 #'   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
-#'   scale_color_brewer(palette = "Set 2")
+#'   scale_color_brewer(palette = "Set1")
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = hp) |>
+#'   scale_color_distiller(palette = "Spectral")
 #' @name scale_viridis
 NULL
 
@@ -1009,8 +1024,11 @@ scale_color_brewer <- function(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = 1
 ) {
+  palette <- .brewer_scale_palette(palette, type, direction, "discrete")
   .colour_scale(plot, "color", "discrete", palette, breaks, labels, name)
 }
 
@@ -1021,8 +1039,11 @@ scale_fill_brewer <- function(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = 1
 ) {
+  palette <- .brewer_scale_palette(palette, type, direction, "discrete")
   .colour_scale(plot, "fill", "discrete", palette, breaks, labels, name)
 }
 
@@ -1033,8 +1054,11 @@ scale_color_distiller <- function(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = -1
 ) {
+  palette <- .brewer_scale_palette(palette, type, direction, "continuous")
   .colour_scale(plot, "color", "continuous", palette, breaks, labels, name)
 }
 
@@ -1045,9 +1069,171 @@ scale_fill_distiller <- function(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = -1
 ) {
+  palette <- .brewer_scale_palette(palette, type, direction, "continuous")
   .colour_scale(plot, "fill", "continuous", palette, breaks, labels, name)
+}
+
+# ColorBrewer palettes by family, in the order scales::pal_brewer() indexes them
+# (so a numeric `palette` picks the same palette as in ggplot2).
+.BREWER_PALS <- list(
+  seq = c(
+    "Blues",
+    "BuGn",
+    "BuPu",
+    "GnBu",
+    "Greens",
+    "Greys",
+    "Oranges",
+    "OrRd",
+    "PuBu",
+    "PuBuGn",
+    "PuRd",
+    "Purples",
+    "RdPu",
+    "Reds",
+    "YlGn",
+    "YlGnBu",
+    "YlOrBr",
+    "YlOrRd"
+  ),
+  div = c(
+    "BrBG",
+    "PiYG",
+    "PRGn",
+    "PuOr",
+    "RdBu",
+    "RdGy",
+    "RdYlBu",
+    "RdYlGn",
+    "Spectral"
+  ),
+  qual = c(
+    "Accent",
+    "Dark2",
+    "Paired",
+    "Pastel1",
+    "Pastel2",
+    "Set1",
+    "Set2",
+    "Set3"
+  )
+)
+
+# The canonical ColorBrewer name `x` refers to (matched like hcl names: case,
+# spaces and punctuation ignored), or NA when `x` is not one.
+.brewer_name <- function(x) {
+  if (!is.character(x) || length(x) != 1L || is.na(x)) {
+    return(NA_character_)
+  }
+  all <- unlist(.BREWER_PALS, use.names = FALSE)
+  all[match(.norm_pal(x), .norm_pal(all))]
+}
+
+# A discrete ColorBrewer palette is stored on the ScaleSpec as a plain string
+# token, "brewer:<Name>" or "brewer:<Name>:reverse": the colours depend on the
+# trained level count (ColorBrewer's 3-class Blues is not the first three of its
+# 9-class Blues), so they are only drawn at compile time, by .discrete_colours().
+# A string keeps the spec serializable.
+.BREWER_TOKEN <- "^brewer:"
+.is_brewer_pal <- function(x) {
+  is.character(x) &&
+    length(x) == 1L &&
+    !is.na(x) &&
+    (grepl(.BREWER_TOKEN, x) || !is.na(.brewer_name(x)))
+}
+
+# Split a brewer token (or bare ColorBrewer name) into its name and direction.
+.brewer_parts <- function(x) {
+  if (!grepl(.BREWER_TOKEN, x)) {
+    return(list(name = .brewer_name(x), direction = 1))
+  }
+  parts <- strsplit(sub(.BREWER_TOKEN, "", x), ":", fixed = TRUE)[[1L]]
+  name <- .brewer_name(parts[[1L]])
+  if (is.na(name)) {
+    cli::cli_abort("{.val {x}} is not a known ColorBrewer palette.")
+  }
+  rev <- length(parts) > 1L && identical(parts[[2L]], "reverse")
+  list(name = name, direction = if (rev) -1 else 1)
+}
+
+# `k` discrete colours from a ColorBrewer palette. Past the palette's maximum
+# the colours recycle, with a warning (ColorBrewer defines no more classes).
+.brewer_colours <- function(palette, k) {
+  if (k == 0L) {
+    return(character())
+  }
+  bp <- .brewer_parts(palette)
+  pal <- scales::pal_brewer(palette = bp$name, direction = bp$direction)
+  max_k <- scales::palette_nlevels(pal)
+  if (k <= max_k) {
+    return(pal(k))
+  }
+  cli::cli_warn(c(
+    "ColorBrewer palette {.val {bp$name}} has at most {max_k} colours.",
+    i = "Its colours are recycled for the {k} levels."
+  ))
+  rep_len(pal(max_k), k)
+}
+
+# Continuous ramp stops for a ColorBrewer palette: its 7-class colours (as
+# ggplot2's distiller uses), optionally reversed.
+.brewer_stops <- function(palette, direction = NULL) {
+  bp <- .brewer_parts(palette)
+  scales::pal_brewer(
+    palette = bp$name,
+    direction = direction %||% bp$direction
+  )(7L)
+}
+
+# Resolve the `palette` of scale_*_brewer() / scale_*_distiller(): a
+# ColorBrewer name or index becomes a brewer token (discrete) or the 7-class
+# ramp (continuous), honouring `direction`; any other value (an hcl.pals() name,
+# colours) passes through unchanged.
+.brewer_scale_palette <- function(
+  palette,
+  type,
+  direction,
+  scale_type,
+  call = rlang::caller_env()
+) {
+  if (
+    !is.numeric(direction) ||
+      length(direction) != 1L ||
+      !direction %in% c(-1, 1)
+  ) {
+    cli::cli_abort(
+      "{.arg direction} must be {.val {1}} or {.val {-1}}.",
+      call = call
+    )
+  }
+  if (is.numeric(palette)) {
+    type <- rlang::arg_match0(type, names(.BREWER_PALS), error_call = call)
+    pals <- .BREWER_PALS[[type]]
+    if (
+      length(palette) != 1L ||
+        is.na(palette) ||
+        !palette %in% seq_along(pals)
+    ) {
+      cli::cli_abort(
+        "A numeric {.arg palette} must be a whole number from 1 to {length(pals)} for {.code type = {.val {type}}}.",
+        call = call
+      )
+    }
+    name <- pals[[palette]]
+  } else {
+    name <- .brewer_name(palette)
+  }
+  if (is.na(name)) {
+    return(palette)
+  }
+  if (identical(scale_type, "continuous")) {
+    return(.brewer_stops(name, direction))
+  }
+  paste0("brewer:", name, if (direction == -1) ":reverse")
 }
 
 # British-spelling aliases: `colour` is honoured everywhere `color` is (the

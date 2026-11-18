@@ -329,6 +329,9 @@ NULL
   if (.is_hcl_pal(palette)) {
     return(grDevices::hcl.colors(256, .hcl_full(palette)))
   }
+  if (.is_brewer_pal(palette)) {
+    return(.brewer_stops(palette))
+  }
   if (!.are_colours(palette)) {
     cli::cli_abort(
       "{.arg palette} is not a known palette name or colour vector."
@@ -389,6 +392,9 @@ NULL
   }
   if (.is_hcl_pal(palette)) {
     return(grDevices::hcl.colors(k, .hcl_full(palette)))
+  }
+  if (.is_brewer_pal(palette)) {
+    return(.brewer_colours(palette, k))
   }
   if (!.are_colours(palette)) {
     cli::cli_abort(
