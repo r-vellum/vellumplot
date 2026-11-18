@@ -999,6 +999,12 @@ NULL
 # The colourbar's thickness (mm): guide_colourbar(barwidth = ) or the theme default.
 .bar_w_mm <- function(g, m) g$sc$bar_width %||% m$bar_w
 
+# Head/foot room (mm) above and below a vertical colour bar. Break labels are
+# centred on their ticks, so a label at a bar end overhangs it by half a text
+# line -- without this the top label ran into the legend title, and the bottom
+# one into the NA key or whatever follows the legend.
+.bar_end_pad_mm <- function(m) m$text_h / 2
+
 # The N+1 bin boundaries of a stepped colour bar, as trimmed numeric labels.
 .steps_break_labels <- function(sc) format(sc$breaks, trim = TRUE)
 
@@ -1012,7 +1018,7 @@ NULL
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   if (g$kind %in% c("color_continuous", "color_steps")) {
     na <- if (isTRUE(g$sc$na)) max(m$key, m$text_h) + m$row_gap else 0
-    th + .bar_len_mm(g, m) + na
+    th + .bar_len_mm(g, m) + 2 * .bar_end_pad_mm(m) + na
   } else if (g$kind == "size_nested") {
     # Concentric circles share one bottom baseline, so the stack is as tall as the
     # largest diameter, plus headroom for the top circle's label.
@@ -1044,7 +1050,10 @@ NULL
     body <- max(
       .LEGEND_MIN_BAR_MM,
       g$sc$bar_width %||%
-        sum(vapply(labs, .mm_tw, 0, fs = m$text_fs) + m$lab_gap)
+        max(
+          sum(vapply(labs, .mm_tw, 0, fs = m$text_fs) + m$lab_gap),
+          .hbar_min_len_mm(g, m)
+        )
     ) +
       na
   } else {
@@ -1057,6 +1066,42 @@ NULL
     )
   }
   max(tw, body)
+}
+
+# The shortest horizontal colour bar (mm) on which no two adjacent break labels
+# touch. Labels sit at their values' positions along the bar (end labels
+# justified inward, as the drawers do), so unevenly spaced breaks -- or an end
+# label pulled inward next to its neighbour -- need more length than the summed
+# label widths.
+.hbar_min_len_mm <- function(g, m) {
+  sc <- g$sc
+  if (g$kind == "color_steps") {
+    labs <- .steps_break_labels(sc)
+    fr <- seq(0, 1, length.out = length(labs))
+    ends <- c("left", rep("centre", max(length(labs) - 2L, 0L)), "right")
+  } else {
+    labs <- sc$legend_labels
+    fr <- scales::rescale(sc$legend_breaks, from = sc$range)
+    if (isTRUE(sc$reverse_bar)) {
+      fr <- 1 - fr
+    }
+    ends <- ifelse(fr <= 0.01, "left", ifelse(fr >= 0.99, "right", "centre"))
+  }
+  if (length(labs) < 2L) {
+    return(0)
+  }
+  w <- vapply(as.character(labs), .mm_tw, 0, fs = m$text_fs)
+  o <- order(fr)
+  fr <- fr[o]
+  w <- w[o]
+  ends <- ends[o]
+  # Each label's extent either side of its anchor.
+  lo <- ifelse(ends == "left", 0, ifelse(ends == "right", w, w / 2))
+  hi <- w - lo
+  i <- seq_len(length(fr) - 1L)
+  gap <- fr[i + 1L] - fr[i]
+  need <- (hi[i] + lo[i + 1L] + m$lab_gap) / gap
+  max(need[is.finite(need) & gap > 0], 0)
 }
 
 # Title width in mm. A rich md() title is measured through vl_strwidth()'s rich
@@ -1459,9 +1504,12 @@ NULL
   cl <- g$sc
   has_na <- isTRUE(cl$na)
   na_h <- max(m$key, m$text_h) + m$row_gap
+  pad <- vellum::vl_unit(.bar_end_pad_mm(m), "mm")
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
+    pad,
     vellum::vl_unit(1, "null"),
+    pad,
     if (has_na) vellum::vl_unit(na_h, "mm")
   )
   scene <- vellum::push(
@@ -1473,7 +1521,7 @@ NULL
       )
     )
   )
-  row_bar <- if (m$show_title) 2L else 1L
+  row_bar <- if (m$show_title) 3L else 2L
   if (m$show_title) {
     scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
     scene <- .draw_guide_title(scene, cl$name, rt)
@@ -1545,7 +1593,7 @@ NULL
   if (has_na) {
     scene <- vellum::push(
       scene,
-      vellum::vl_viewport(row = row_bar + 1L, col = 1)
+      vellum::vl_viewport(row = row_bar + 2L, col = 1)
     )
     scene <- vellum::draw(
       scene,
@@ -1585,9 +1633,12 @@ NULL
   n <- length(cols)
   has_na <- isTRUE(cl$na)
   na_h <- max(m$key, m$text_h) + m$row_gap
+  pad <- vellum::vl_unit(.bar_end_pad_mm(m), "mm")
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
+    pad,
     vellum::vl_unit(1, "null"),
+    pad,
     if (has_na) vellum::vl_unit(na_h, "mm")
   )
   scene <- vellum::push(
@@ -1599,7 +1650,7 @@ NULL
       )
     )
   )
-  row_bar <- if (m$show_title) 2L else 1L
+  row_bar <- if (m$show_title) 3L else 2L
   if (m$show_title) {
     scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
     scene <- .draw_guide_title(scene, cl$name, rt)
@@ -1661,7 +1712,7 @@ NULL
     # A grey NA swatch below the bar, mirroring the smooth colour bar.
     scene <- vellum::push(
       scene,
-      vellum::vl_viewport(row = row_bar + 1L, col = 1)
+      vellum::vl_viewport(row = row_bar + 2L, col = 1)
     )
     scene <- vellum::draw(
       scene,

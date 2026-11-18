@@ -1,5 +1,18 @@
 # vellumplot 0.11.0.9000 (development version)
 
+## Bug fixes
+
+* **The colourbar title no longer overlaps the top tick label.** Break labels
+  are centred on their ticks, so a label at the end of a vertical colour bar
+  hangs half a text line past it. The title band ended exactly at the bar top,
+  so in `vplot(pressure) |> mark_line(x = temperature, y = pressure, color =
+  pressure)` the title "pressure" ran into the "800" label. Vertical
+  `guide_colourbar()` and `guide_coloursteps()` bars now leave half a label
+  height above and below the bar, which also keeps the bottom label clear of
+  the NA key. A horizontal bar is now long enough that adjacent labels never
+  collide: an end label justified inward used to sit on top of its neighbour
+  ("600800").
+
 # vellumplot 0.11.0
 
 ## New features
