@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,9 +63,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.9.0.9000" id="vellumplot-0909000-development-version">vellumplot 0.9.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-0909000-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.10.0" id="vellumplot-0100">vellumplot 0.10.0<a class="anchor" aria-label="anchor" href="#vellumplot-0100"></a></h2>
 <div class="section level3">
-<h3 id="new-features-0-9-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0-9000"></a></h3>
+<h3 id="new-features-0-10-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-10-0"></a></h3>
 <ul><li>
 <p><strong>A flow map’s branches taper smoothly instead of stepping.</strong> <code><a href="../reference/mark_graph.html">mark_flow_map()</a></code> drew each branch as a series of separate strokes, one per run of equal flow, so every width change landed on a join – round caps softened it but the staircase was there, and a <code>steiner</code> branch gathering tributaries could be a dozen strokes. Each branch is now a single tapering ribbon, built by the engine at render inside the panel viewport (<code>vellum</code>’s new <code>lines_grob(lwd_profile =)</code>), so the width varies continuously and is still a physical width that holds at any figure size.</p>
 <p>This only changes the picture for <code>type = "steiner"</code>, whose flow is per-vertex; a spiral tree’s flow is constant along each branch, so the old run-splitting always produced exactly one stroke there anyway.</p>
@@ -93,7 +93,7 @@
 </li>
 </ul></div>
 <div class="section level3">
-<h3 id="animation-0-9-0-9000">Animation<a class="anchor" aria-label="anchor" href="#animation-0-9-0-9000"></a></h3>
+<h3 id="animation-0-10-0">Animation<a class="anchor" aria-label="anchor" href="#animation-0-10-0"></a></h3>
 <ul><li>
 <p><strong><code><a href="../reference/ease_aes.html">ease_aes()</a></code> can now ease each aesthetic on its own curve.</strong> Alongside the positional <code>ease</code>, it takes <code>position</code>, <code>color</code> (or <code>colour</code>), <code>size</code> and <code>alpha</code>, each naming an easing of its own; anything left unset falls back to <code>ease</code>, so an existing <code>ease_aes("cubic-in-out")</code> renders exactly as before.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -103,7 +103,7 @@
 </li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-9-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-9-0-9000"></a></h3>
+<h3 id="bug-fixes-0-10-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-10-0"></a></h3>
 <ul><li><p><strong><code><a href="../reference/spec_to_json.html">spec_from_json()</a></code> reads back a spec that has a coord.</strong> JSON has no integer type, so a whole number such as a coord’s default <code>start = 0</code> came back from <code>jsonlite</code> as an integer and <code>CoordSpec</code> rejected it – any <code>coord_*()</code> plot failed to round-trip through <code><a href="../reference/spec_to_json.html">spec_to_json()</a></code>. Coords, the <code><a href="../reference/outline.html">outline()</a></code> / <code><a href="../reference/shadow.html">shadow()</a></code> / <code><a href="../reference/motion.html">motion()</a></code> effects, scale limits and breaks, and untagged mark params now decode whole numbers as doubles, and a round-trip renders the same plot.</p></li>
 <li><p><strong>Provenance row keys point at the right rows under facets and for layer data.</strong> <code><a href="../reference/plot_provenance.html">plot_provenance()</a></code>, <code><a href="../reference/provenance_join.html">provenance_join()</a></code> and <code><a href="../reference/provenance_payload.html">provenance_payload()</a></code> numbered rows within each facet panel, so every panel claimed rows <code>1, 2, 3, ...</code>; and a layer with its own <code>data =</code> was keyed into that data while the payload shipped the plot’s data. Rows are now indices into the whole table the layer reads. Each record carries a <code>source</code> (<code>"plot"</code> or <code>"layer:&lt;i&gt;"</code>), and <code><a href="../reference/provenance_payload.html">provenance_payload()</a></code> gains a <code>sources</code> block with the fields (and, with <code>values = TRUE</code>, the rows) of every table an element refers to. Its top-level <code>fields</code> / <code>data</code> still describe the plot data. Aggregating stats still key the whole layer, which under facets now means the panel’s rows.</p></li>
 <li><p>Clearer errors on a few edge cases: <code><a href="../reference/inset.html">inset()</a></code> validates its 0-1 fractional bounds (rejecting inverted / out-of-range coordinates that rendered a broken inset); <code><a href="../reference/repeat_.html">repeat_()</a></code> with an empty field vector, <code><a href="../reference/vgraph.html">vgraph()</a></code> on an empty graph, and a chord diagram with a negative flow now each report the actual problem instead of leaking an internal message.</p></li>
@@ -123,7 +123,7 @@
 <li><p><strong><code>labs(x = NULL)</code> now blanks the axis title</strong> (ggplot2 parity), distinct from omitting the argument. Previously only <code>labs(x = "")</code> blanked it.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="new-features-0-9-0-9000-1">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0-9000-1"></a></h3>
+<h3 id="new-features-0-10-0-1">New features<a class="anchor" aria-label="anchor" href="#new-features-0-10-0-1"></a></h3>
 <ul><li><p><code>guide_legend(nested = TRUE)</code> draws a <strong>size</strong> legend as a proportional-symbol (“bubble”) legend: concentric, bottom-aligned circles with a leader from each to its label, instead of stacked rows. Best with a wide size range (<code>scale_size(range = c(2, 12)) |&gt; ... guides(size = guide_legend(nested = TRUE))</code>).</p></li>
 <li><p><code><a href="../reference/guides.html">guide_coloursteps()</a></code> (US alias <code><a href="../reference/guides.html">guide_colorsteps()</a></code>) draws a <strong>binned</strong> colour scale as a segmented colour bar — the bin colours in order, labelled at the numeric boundaries — instead of the default discrete swatches. Takes the same <code>barwidth</code> / <code>barheight</code> / <code>ticks</code> / <code>label.position</code> tunables as <code><a href="../reference/guides.html">guide_colourbar()</a></code>: <code>scale_color_binned() |&gt; ... guides(color = guide_coloursteps())</code>.</p></li>
 <li><p><code><a href="../reference/guides.html">guide_colourbar()</a></code> (and the US alias <code><a href="../reference/guides.html">guide_colorbar()</a></code>) make the continuous colour bar tunable: <code>barwidth</code> / <code>barheight</code> (bar size in mm), <code>ticks</code> / <code>ticks.colour</code> (the break ticks), and <code>label.position</code> (<code>"right"</code> / <code>"left"</code> labels on a vertical bar), on top of the <code>title</code> / <code>reverse</code> that <code><a href="../reference/guides.html">guide_legend()</a></code> already offered for a colour bar. For example <code>guides(color = guide_colourbar(barheight = 60, ticks = FALSE))</code>.</p></li>
@@ -134,7 +134,7 @@
 <li><p><strong>Tagged-PDF alt text no longer leaks internal identifiers.</strong> A tagged PDF used to make every mark its own <code>Figure</code> whose <code>Alt</code> was the mark’s provenance id (<code>layer-1-line-g1</code>) — or, for a <code>mark_text(repel = TRUE)</code> label, its internal <code>vl_place</code> handle (<code>repel:panel-1-1:2:0</code>) — so a screen reader announced those strings, one per mark. Marks are now tagged as <strong>artifacts</strong> (<code>role = "presentation"</code>), leaving a single <code>Figure</code> that carries the <code><a href="../reference/plot_alt.html">plot_alt()</a></code> description. Provenance (<code>data-vellum-id</code>) and interactivity (<code>data-key</code>) are unchanged. Needs vellum ≥ 0.6.8 (which keeps the figure for an all-artifact described scene). Reported in <a href="https://github.com/r-vellum/vellumplot/issues/145" class="external-link">#145</a>.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="new-features-0-9-0-9000-2">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0-9000-2"></a></h3>
+<h3 id="new-features-0-10-0-2">New features<a class="anchor" aria-label="anchor" href="#new-features-0-10-0-2"></a></h3>
 <ul><li><p><code><a href="../reference/mark_outlier_label.html">mark_outlier_label()</a></code> — label only the <strong>outliers</strong>, not every point. Keeps the rows whose <code>y</code> is an outlier (Tukey’s IQR rule by default, or <code>method = "sd"</code>, detected per colour/fill group) and labels just those, repelled apart. Map a <code>label</code> to name each; with none mapped, the outlier’s <code>y</code> value is the label.</p></li>
 <li><p><code><a href="../reference/mark_series_label.html">mark_series_label()</a></code> — <strong>direct labels</strong>: name each colour series at its line end instead of in a legend (the direct-labels idiom). Maps the same <code>x</code>/<code>y</code>/<code>color</code> as the lines; the label text and colour come from the series, and the labels are pushed apart with the same repel solver as <code><a href="../reference/mark_text.html">mark_text()</a></code>. Give the panel a little x-room (<code><a href="../reference/lims.html">xlim()</a></code>) and drop the legend (<code>guides(color = "none")</code>).</p></li>
 <li><p><code><a href="../reference/mark_signif.html">mark_signif()</a></code> — significance brackets (the ggsignif / ggpubr idiom): run a pairwise test (<code>wilcox.test</code> or <code>t.test</code>) between <code>x</code> groups and draw a bracket with its p-value (or stars) over each comparison. Brackets stack above the data and the y-axis expands to fit them. Add on top of a <code><a href="../reference/mark_boxplot.html">mark_boxplot()</a></code> / <code><a href="../reference/mark_violin.html">mark_violin()</a></code>.</p></li>
@@ -161,11 +161,11 @@
 </ul></li>
 </ul></div>
 <div class="section level3">
-<h3 id="internal-0-9-0-9000">Internal<a class="anchor" aria-label="anchor" href="#internal-0-9-0-9000"></a></h3>
+<h3 id="internal-0-10-0">Internal<a class="anchor" aria-label="anchor" href="#internal-0-10-0"></a></h3>
 <ul><li>Performance and cleanup with no change to rendered output: the boxplot / violin / half-eye emitters group rows by category once instead of rescanning per level; the <code>sf</code> point path and the circle-pack / sunburst hierarchy layouts drop quadratic accumulation and repeated ancestor walks; the horizontal colour-bar computes each break position once.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-9-0-9000-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-9-0-9000-1"></a></h3>
+<h3 id="bug-fixes-0-10-0-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-10-0-1"></a></h3>
 <ul><li><p>Interop round-trip fidelity: an integer stat parameter (e.g. <code>mark_histogram(bins = 20L)</code>) now survives <code><a href="../reference/as_spec.html">as_spec()</a></code>/<code><a href="../reference/as_spec.html">from_spec()</a></code> and JSON as an integer instead of silently widening to a double (which changed the spec hash). And a Vega-Lite export where two aesthetics map onto one channel (e.g. <code>color</code> and <code>fill</code>) now reports the dropped encoding rather than silently overwriting it.</p></li>
 <li><p>Clearer, earlier input validation across several surfaces: <code>scale_*_binned()</code> rejects a non-positive or non-scalar <code>n</code> and a non-scalar <code>style</code>; a numeric scale <code>range</code> rejects a non-finite bound; <code>coord_fixed(ratio=)</code>, <code>coord_polar(start=)</code>, and <code>coord_radial(start=/end=)</code> reject non-scalar or non-finite values; the pattern constructors reject a non-positive <code>spacing</code>/<code>size</code>/<code>linewidth</code>; <code>mark_rug(sides=)</code> and a rolling <code>window</code>’s <code>k</code> are validated; and an MCP <code>tools/call</code> with no tool name returns a clean error. Each previously failed late with an opaque message (or, for <code>set_mask(region=)</code>, silently ignored the argument — now rejected).</p></li>
 <li><p>A discrete position axis no longer draws spurious minor gridlines between and outside its categories.</p></li>
