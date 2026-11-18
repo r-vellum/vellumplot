@@ -343,7 +343,8 @@ NULL
     !is.null(hover_group) ||
     !is.null(hover_color) ||
     !is.null(selected_color)
-  if (is.null(data_id) && present) {
+  default_id <- is.null(data_id) && present
+  if (default_id) {
     data_id <- as.character(seq_len(n0))
   }
   if (is.null(data_id) && !present) {
@@ -355,7 +356,9 @@ NULL
     hover_group = hover_group,
     hover_color = hover_color,
     selected_color = selected_color,
-    n = n0
+    n = n0,
+    # the key is only the row index (renumbered after a summarising stat)
+    default_id = default_id
   )
 }
 
@@ -381,7 +384,10 @@ NULL
   lapply(spec@layers, function(layer) {
     ld <- layer@data %||% data
     res <- .apply_position(.apply_stat(.resolve_layer(layer, ld)))
-    res$selgroup <- .selection_group_values(fsel, ld)
+    res$selgroup <- .realign_row_value(
+      .selection_group_values(fsel, ld),
+      res$stat_map
+    )
     res
   })
 }

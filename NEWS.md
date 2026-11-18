@@ -2,6 +2,52 @@
 
 ## Bug fixes
 
+* **Violins, ridgelines and half-eyes draw cleanly on log and sqrt axes.** The
+  density was estimated on the raw data and its support, which `stats::density()`
+  pads by about three bandwidths, was then mapped through the scale. For data near
+  zero that padding dips to or below zero, so a log10 or sqrt axis produced NaN
+  outline vertices. The density is now estimated on the transformed values, as
+  ggplot2 does, so every vertex is finite and the trained axis still covers the
+  drawn shape. On a transformed axis the shape is now the density of the
+  transformed values; identity axes draw exactly as before.
+
+* **A widened density axis gets ticks over its tails.** The axis is widened to fit
+  a violin's or ridgeline's tails, but the breaks had already been picked for the
+  raw data range, so the tails ran past the last labelled tick. The breaks are now
+  re-picked over the widened extent. Breaks you set yourself are left alone.
+
+* **Tooltips and data keys follow stats that reorder or summarise rows.**
+  `tooltip`, `data_id`, `hover_group`, `hover_color` and `selected_color` were
+  still in pre-stat row order after a stat. A dot plot sorts its dots, so each dot
+  showed another row's tooltip and key. A bin2d or hex layer that happened to
+  have as many cells as input rows keyed every cell with an unrelated row. These
+  values now go through the same realignment as aesthetics. A row-preserving stat
+  (dot plot, outlier label, window, series label, count) gives each element its
+  own row's value. A summarising stat (bin, bin2d, hex, density, smooth, ...)
+  keeps a value only if it is constant within each group (`tooltip = species` on
+  a per-species density) or across the whole layer. Otherwise the value is
+  dropped, because a summary element has no single row to take it from. If the
+  `data_id` itself is dropped the elements stay unkeyed, but a key that was only
+  the default row index is renumbered over the summary elements, so a constant
+  tooltip still shows.
+
+* **Provenance names each element's own rows after a row-preserving stat.** A
+  dot plot, outlier label, window or count layer used to key every element to the
+  whole layer. Elements now map through the stat's row order back to their own
+  source rows, under facets and for a layer's own `data =` too. A count bubble
+  names every coincident row it merges.
+
+* **The colourbar title no longer overlaps the top tick label.** Break labels
+  are centred on their ticks, so a label at the end of a vertical colour bar
+  hangs half a text line past it. The title band ended exactly at the bar top,
+  so in `vplot(pressure) |> mark_line(x = temperature, y = pressure, color =
+  pressure)` the title "pressure" ran into the "800" label. Vertical
+  `guide_colourbar()` and `guide_coloursteps()` bars now leave half a label
+  height above and below the bar, which also keeps the bottom label clear of
+  the NA key. A horizontal bar is now long enough that adjacent labels never
+  collide: an end label justified inward used to sit on top of its neighbour
+  ("600800").
+
 * **A continuous fill on an area or ribbon errors clearly.** `mark_area()` and
   `mark_ribbon()` draw one polygon per series, and a polygon has a single fill.
   A continuous `fill` (or `color`, or `alpha`) that varied along a series was

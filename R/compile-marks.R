@@ -613,10 +613,11 @@ NULL
     .mark_ctx$rows <- seq_len(L$n)
     .mark_ctx$source <- L$source
     .mark_ctx$kind <- "mark"
-    # Per-row interactivity for this layer (NULL when none declared). Used only
-    # when it aligns to the drawn rows: a row-preserving mark keeps `length == n`;
-    # an aggregating stat (bin/count) changes `n`, so we drop it rather than
-    # mis-key (a future phase can re-derive keys from computed columns).
+    # Per-row interactivity for this layer (NULL when none declared). A stat has
+    # already realigned it to its output rows (`.realign_meta()`): a
+    # row-preserving stat follows `.rows`, a summarising one keeps only values
+    # constant per group or drops them. The length check is a last guard that
+    # it aligns to the drawn rows.
     ok <- !is.null(L$meta) &&
       !is.null(L$meta$data_id) &&
       length(L$meta$data_id) == L$n
