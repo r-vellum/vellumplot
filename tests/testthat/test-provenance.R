@@ -9,7 +9,7 @@ test_that("plot_provenance() is exported and returns the record schema", {
   expect_type(prov, "list")
   expect_setequal(
     names(prov[[1]]),
-    c("id", "layer", "mark", "kind", "panel", "channels", "rows")
+    c("id", "layer", "mark", "kind", "panel", "channels", "rows", "source")
   )
 })
 
@@ -116,4 +116,161 @@ test_that("provenance records are serializable (plain data, no closures)", {
   prov <- plot_provenance(p)
   # round-trips through serialize(): fails if any leaf is an environment/closure
   expect_identical(unserialize(serialize(prov, NULL)), prov)
+})
+
+# --- row keys refer to the source table, not the panel subset ----------------
+
+# "<panel>|<rows>" for every mark record, in emission order.
+prov_rows <- function(p) {
+  vapply(
+    Filter(function(e) e$kind == "mark", plot_provenance(p)),
+    function(e) paste0(e$panel, "|", paste(e$rows, collapse = ",")),
+    character(1)
+  )
+}
+
+test_that("facet_wrap row keys are rows of the plot data, per panel", {
+  d <- data.frame(x = 1:6, y = 1:6, f = rep(c("a", "b"), each = 3))
+  p <- vplot(d) |> mark_point(x = x, y = y) |> facet_wrap(~f)
+  expect_identical(prov_rows(p), c("panel-1-1|1,2,3", "panel-1-2|4,5,6"))
+  expect_true(all(vapply(plot_provenance(p), `[[`, "", "source") == "plot"))
+})
+
+test_that("facet_grid row keys are rows of the plot data, per panel", {
+  d <- data.frame(
+    x = 1:8,
+    y = 1:8,
+    r = rep(c("p", "q"), each = 4),
+    c = rep(c("u", "v"), times = 4)
+  )
+  p <- vplot(d) |> mark_point(x = x, y = y) |> facet_grid(r ~ c)
+  expect_identical(
+    prov_rows(p),
+    c("panel-1-1|1,3", "panel-1-2|2,4", "panel-2-1|5,7", "panel-2-2|6,8")
+  )
+})
+
+test_that("grouped emitters under facets key each group's original rows", {
+  d <- data.frame(
+    x = 1:8,
+    y = c(1, 3, 2, 4, 1, 3, 2, 4),
+    g = rep(c("a", "b"), times = 4),
+    f = rep(c("p", "q"), each = 4)
+  )
+  p <- vplot(d) |> mark_line(x = x, y = y, color = g) |> facet_wrap(~f)
+  prov <- Filter(function(e) e$kind == "mark", plot_provenance(p))
+  for (e in prov) {
+    # every row in a line belongs to one colour group and to this panel's facet
+    expect_length(unique(d$g[e$rows]), 1L)
+    expect_length(unique(d$f[e$rows]), 1L)
+  }
+  expect_setequal(unlist(lapply(prov, `[[`, "rows")), seq_len(nrow(d)))
+})
+
+test_that("an aggregating stat keys the whole panel subset under facets", {
+  p <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 5) |> facet_wrap(~am)
+  prov <- Filter(function(e) e$kind == "mark", plot_provenance(p))
+  by_panel <- split(prov, vapply(prov, `[[`, "", "panel"))
+  expect_setequal(by_panel[["panel-1-1"]][[1]]$rows, which(mtcars$am == 0))
+  expect_setequal(by_panel[["panel-1-2"]][[1]]$rows, which(mtcars$am == 1))
+  for (e in prov) {
+    expect_identical(e$source, "plot")
+  }
+})
+
+test_that("a layer's own data keys rows of that data and says so", {
+  d <- data.frame(x = 1:6, y = 1:6)
+  ld <- data.frame(x = c(1.5, 2.5, 3.5), y = c(5, 4, 3), g = c("a", "b", "a"))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_point(data = ld, x = x, y = y, color = g)
+  prov <- plot_provenance(p)
+  l2 <- Filter(function(e) e$layer == 2L, prov)
+  expect_true(all(vapply(l2, `[[`, "", "source") == "layer:2"))
+  expect_setequal(unlist(lapply(l2, `[[`, "rows")), 1:3)
+  for (e in l2) {
+    expect_length(unique(ld$g[e$rows]), 1L)
+  }
+  l1 <- Filter(function(e) e$layer == 1L, prov)
+  expect_identical(l1[[1]]$source, "plot")
+})
+
+test_that("faceted layer data keys rows of that data, per panel", {
+  d <- data.frame(x = 1:4, y = 1:4, f = rep(c("a", "b"), each = 2))
+  ld <- data.frame(x = c(2, 3, 2.5), y = c(2, 3, 1), f = c("b", "a", "b"))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_point(data = ld, x = x, y = y) |>
+    facet_wrap(~f)
+  l2 <- Filter(function(e) e$layer == 2L, plot_provenance(p))
+  rows <- stats::setNames(
+    lapply(l2, `[[`, "rows"),
+    vapply(l2, `[[`, "", "panel")
+  )
+  expect_identical(rows[["panel-1-1"]], 2L)
+  expect_identical(rows[["panel-1-2"]], c(1L, 3L))
+})
+
+test_that("NA rows do not shift the keys of the rows after them", {
+  d <- data.frame(
+    x = c(1, NA, 3, 4, 5, 6),
+    y = c(1, 2, 3, NA, 5, 6),
+    g = c("a", NA, "b", "a", NA, "b"),
+    f = rep(c("p", "q"), each = 3)
+  )
+  p <- vplot(d) |> mark_point(x = x, y = y, color = g) |> facet_wrap(~f)
+  prov <- Filter(function(e) e$kind == "mark", plot_provenance(p))
+  for (e in prov) {
+    # each colour group's rows share one colour (NA included) and one panel
+    expect_length(unique(d$g[e$rows]), 1L)
+    expect_length(unique(d$f[e$rows]), 1L)
+  }
+  q <- Filter(function(e) e$panel == "panel-1-2", prov)
+  expect_setequal(unlist(lapply(q, `[[`, "rows")), 4:6)
+})
+
+test_that("z-reordered layers still name their own data by spec position", {
+  d <- data.frame(x = 1:3, y = 1:3)
+  ld <- data.frame(x = c(1.5, 2.5), y = c(2, 1))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_point(data = ld, x = x, y = y)
+  p@layers[[1]]@z <- 1L # draw the plot-data layer last
+  prov <- plot_provenance(p)
+  srcs <- unique(vapply(prov, `[[`, "", "source"))
+  expect_setequal(srcs, c("plot", "layer:2"))
+  ld_rows <- unlist(lapply(
+    Filter(function(e) e$source == "layer:2", prov),
+    `[[`,
+    "rows"
+  ))
+  expect_setequal(ld_rows, 1:2)
+})
+
+test_that("provenance_payload() ships the table each element's rows refer to", {
+  d <- data.frame(x = 1:4, y = 1:4, f = rep(c("a", "b"), each = 2))
+  ld <- data.frame(x = c(2.5, 3.5), y = c(1, 2), lab = c("p", "q"))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    mark_point(data = ld, x = x, y = y)
+  pl <- provenance_payload(p, values = TRUE)
+  srcs <- vapply(pl$elements, `[[`, "", "source")
+  expect_setequal(srcs, c("plot", "layer:2"))
+  expect_setequal(names(pl$sources), c("plot", "layer:2"))
+  expect_identical(unlist(pl$sources[["layer:2"]]$fields), names(ld))
+  expect_length(pl$sources[["layer:2"]]$data, nrow(ld))
+  expect_identical(pl$sources[["layer:2"]]$data[[2]]$lab, "q")
+  expect_length(pl$sources$plot$data, nrow(d))
+  # the top-level `fields` / `data` stay the plot data for existing hosts
+  expect_identical(unlist(pl$fields), names(d))
+  expect_length(pl$data, nrow(d))
+  # every element's rows index its own source table
+  for (e in pl$elements) {
+    n <- length(pl$sources[[e$source]]$data)
+    expect_true(all(e$rows >= 1L & e$rows <= n))
+  }
+  # without values, sources carry fields only
+  pl0 <- provenance_payload(p)
+  expect_null(pl0$sources[["layer:2"]]$data)
+  expect_null(pl0$data)
 })

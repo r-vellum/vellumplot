@@ -714,6 +714,12 @@ NULL
   # edge labels (2) under nodes (3) under node labels (4) regardless of pipe order.
   zz <- vapply(spec@layers, function(l) l@z, integer(1))
   if (any(zz != 0L)) {
+    # Remember each layer's position in the user's spec: provenance names a
+    # layer's own `data =` by it ("layer:<i>"), and `provenance_payload()` looks
+    # the table up in `x@layers`, which is not z-sorted.
+    for (k in seq_along(spec@layers)) {
+      attr(spec@layers[[k]], "vp_spec_index") <- k
+    }
     spec@layers <- spec@layers[order(zz, seq_along(zz))]
   }
   # Clip the panel unless *every* layer is a boundary mark (a pure graph plot,

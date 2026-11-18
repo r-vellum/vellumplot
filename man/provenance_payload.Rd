@@ -13,9 +13,16 @@ provenance_payload(x, values = FALSE)
 host needs no separate data access. Default \code{FALSE} (ids + row indices only).}
 }
 \value{
-A list with \code{fields} (column names), \code{elements} (a list of
-\code{list(id, rows)} records), and — when \code{values = TRUE} — \code{data} (row-wise
-records of the plot's data).
+A list with
+\describe{
+\item{\code{fields}}{the plot data's column names.}
+\item{\code{elements}}{a list of \code{list(id, rows, source)} records.}
+\item{\code{sources}}{for a \link{PlotSpec}, one record per table an element's rows
+refer to, named by \code{source}: \code{list(fields)}, plus \code{data} (row-wise
+records) when \code{values = TRUE}.}
+\item{\code{data}}{when \code{values = TRUE}, row-wise records of the plot's data
+(the \code{"plot"} source, kept at the top level for existing hosts).}
+}
 }
 \description{
 \code{provenance_payload()} returns a JSON-serializable structure mapping each
@@ -25,10 +32,17 @@ carries) to the source data rows that produced it — the enabler for a host
 without re-running the grammar. With \code{values = TRUE} the referenced data rows
 are inlined so the host can display them directly.
 }
+\details{
+Row indices are 1-based and refer to the table named by the element's
+\code{source}: \code{"plot"} for the plot's data, or \code{"layer:<i>"} for the data passed
+to layer \code{i}'s own \verb{data =} argument. In a faceted plot they are rows of that
+whole table, not of the panel's subset.
+}
 \examples{
 p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
 pl <- provenance_payload(p)
 pl$elements[[1]]$id
+pl$elements[[1]]$source
 }
 \seealso{
 \code{\link[=provenance_join]{provenance_join()}}, \code{\link[=plot_provenance]{plot_provenance()}}

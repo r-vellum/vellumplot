@@ -99,6 +99,16 @@
 
 ## Bug fixes
 
+* **Provenance row keys point at the right rows under facets and for layer
+  data.** `plot_provenance()`, `provenance_join()` and `provenance_payload()`
+  numbered rows within each facet panel, so every panel claimed rows `1, 2, 3,
+  ...`; and a layer with its own `data =` was keyed into that data while the
+  payload shipped the plot's data. Rows are now indices into the whole table the
+  layer reads. Each record carries a `source` (`"plot"` or `"layer:<i>"`), and
+  `provenance_payload()` gains a `sources` block with the fields (and, with
+  `values = TRUE`, the rows) of every table an element refers to. Its top-level
+  `fields` / `data` still describe the plot data. Aggregating stats still key the
+  whole layer, which under facets now means the panel's rows.
 
 * Clearer errors on a few edge cases: `inset()` validates its 0-1 fractional
   bounds (rejecting inverted / out-of-range coordinates that rendered a broken

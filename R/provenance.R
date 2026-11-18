@@ -33,6 +33,8 @@ NULL
 #   panel    chr   facet panel key ("panel-r-c"), or NA for a single panel
 #   channels list  aesthetic -> list(scale=, type=, domain=): the SCALE-REF half
 #   rows     int   original input-data row indices this grob draws: the ROW-KEY half
+#   source   chr   the table `rows` index: "plot" (the plot data) or "layer:<i>"
+#                  (layer i's own `data =`); NA when the layer has no source
 #
 # THE ROW-KEY CONTRACT (this is the "plug it wherever needed" seam)
 #   `.mark_ctx$rows` defaults to *all* rows of the current layer, so every entry
@@ -40,6 +42,15 @@ NULL
 #   rows by resolved style (the `.style_groups()` pattern) should refine it to the
 #   actual rows of each emitted group by passing `rows=` to `.draw()`. Grep for
 #   `PROVENANCE:` to see where this is done.
+#
+#   Emitters index the *resolved layer* (the panel's subset, after the stat).
+#   `.resolve_panel()` records the layer's source (`.layer_source()`): which table
+#   it reads and the panel subset's row indices into it. `.provenance_record()`
+#   maps the emitter's indices through that, so a key always names a row of the
+#   whole source table -- correct under facets and for a layer's own `data =`.
+#   When a stat aggregated the rows (histogram, density, smooth, ...) or a layout
+#   mark made its own, there is no per-row mapping and every element keys to the
+#   panel's whole subset.
 #
 #   REFINED (rows resolve to the actual data rows an element draws): point, bar,
 #   bar-polar, tile, segment, sf, edges (main segments), line, area, ribbon,
@@ -119,6 +130,7 @@ NULL
   seq <- (.mark_ctx$seq %||% 0L) + 1L
   .mark_ctx$seq <- seq
   id <- sprintf("%s-g%d", base, seq)
+  src <- .mark_ctx$source
   entry <- list(
     id = id,
     layer = .mark_ctx$layer,
@@ -126,10 +138,27 @@ NULL
     kind = .mark_ctx$kind %||% "mark",
     panel = .mark_ctx$panel %||% NA_character_,
     channels = .mark_ctx$channels %||% list(),
-    rows = rows %||% .mark_ctx$rows
+    rows = .source_rows(rows %||% .mark_ctx$rows, src),
+    source = src$name %||% NA_character_
   )
   .mark_ctx$provenance <- c(.mark_ctx$provenance, list(entry))
   id
+}
+
+# Map an emitter's row indices (into the resolved layer) to rows of the table
+# the layer was drawn from. A row-preserving layer looks them up in the panel
+# subset's indices, so a facet panel or an NA-dropping emitter keys the original
+# rows; an aggregated layer (a stat, a layout mark) has no per-row mapping and
+# keys the whole panel subset. Without a recorded source (a layer resolved
+# outside `.resolve_panel`), the local indices pass through unchanged.
+.source_rows <- function(rows, src) {
+  if (is.null(src)) {
+    return(rows)
+  }
+  if (!isTRUE(src$per_row)) {
+    return(src$rows)
+  }
+  src$rows[rows]
 }
 
 #' Inspect the compiled-scene provenance of a plot
@@ -150,14 +179,17 @@ NULL
 #'   \item{`kind`}{`"mark"` (the core layer) or `"effect"` (a decorative underlay).}
 #'   \item{`panel`}{facet panel key (`"panel-r-c"`), or `NA` for a single panel.}
 #'   \item{`channels`}{aesthetic → trained-scale reference (`scale`, `type`, `domain`).}
-#'   \item{`rows`}{the original input-data row indices this grob draws.}
+#'   \item{`rows`}{the original input-data row indices this grob draws: rows of
+#'     the whole source table (not of a facet panel's subset).}
+#'   \item{`source`}{the table `rows` refer to: `"plot"` for the plot's data, or
+#'     `"layer:<i>"` for layer `i`'s own `data =`.}
 #' }
 #'
 #' The `rows` field is refined per element for marks that map rows one-to-one to
 #' drawn elements (points, bars, tiles, segments, lines, areas, ribbons, steps,
 #' text, boxplots, sf features, edges); for aggregating marks (histogram,
-#' density, smooth, datashade, …) it is the whole layer, since rows no longer map
-#' to single elements.
+#' density, smooth, datashade, …) it is the whole layer (in a faceted plot, the
+#' panel's rows), since rows no longer map to single elements.
 #'
 #' @param x A [PlotSpec] or plot composition.
 #' @return A list of provenance records (see Details). Empty for a plot that
@@ -184,9 +216,10 @@ plot_provenance <- function(x) {
 #' auditing "which rows made this element?", and linked views.
 #'
 #' @param x A [PlotSpec] or composition.
-#' @return A data frame: `id`, `layer`, `mark`, `kind`, `panel`, the pixel bbox
-#'   (`x0`, `y0`, `x1`, `y1`, `x`, `y`, `w`, `h`), `n_rows`, and `rows` (a list
-#'   column of integer source-row indices). Empty for a plot with no mark grobs.
+#' @return A data frame: `id`, `layer`, `mark`, `kind`, `panel`, `source` (the
+#'   table `rows` refer to, see [plot_provenance()]), the pixel bbox (`x0`, `y0`,
+#'   `x1`, `y1`, `x`, `y`, `w`, `h`), `n_rows`, and `rows` (a list column of
+#'   integer source-row indices). Empty for a plot with no mark grobs.
 #' @seealso [plot_provenance()], [vellum::scene_model()]
 #' @examples
 #' df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, cyl = factor(mtcars$cyl))
@@ -246,6 +279,7 @@ provenance_join <- function(x) {
         mark = p$mark,
         kind = p$kind %||% "mark",
         panel = p$panel %||% NA_character_,
+        source = p$source %||% NA_character_,
         n_rows = length(p$rows %||% integer(0)),
         stringsAsFactors = FALSE
       ),
@@ -265,6 +299,7 @@ provenance_join <- function(x) {
     mark = character(0),
     kind = character(0),
     panel = character(0),
+    source = character(0),
     n_rows = integer(0),
     x0 = numeric(0),
     y0 = numeric(0),
@@ -443,35 +478,86 @@ plot_verify <- function(svg, data) {
 #' without re-running the grammar. With `values = TRUE` the referenced data rows
 #' are inlined so the host can display them directly.
 #'
+#' Row indices are 1-based and refer to the table named by the element's
+#' `source`: `"plot"` for the plot's data, or `"layer:<i>"` for the data passed
+#' to layer `i`'s own `data =` argument. In a faceted plot they are rows of that
+#' whole table, not of the panel's subset.
+#'
 #' @param x A [PlotSpec] or composition.
 #' @param values If `TRUE`, inline the source data rows (row-wise records) so the
 #'   host needs no separate data access. Default `FALSE` (ids + row indices only).
-#' @return A list with `fields` (column names), `elements` (a list of
-#'   `list(id, rows)` records), and — when `values = TRUE` — `data` (row-wise
-#'   records of the plot's data).
+#' @return A list with
+#'   \describe{
+#'     \item{`fields`}{the plot data's column names.}
+#'     \item{`elements`}{a list of `list(id, rows, source)` records.}
+#'     \item{`sources`}{for a [PlotSpec], one record per table an element's rows
+#'       refer to, named by `source`: `list(fields)`, plus `data` (row-wise
+#'       records) when `values = TRUE`.}
+#'     \item{`data`}{when `values = TRUE`, row-wise records of the plot's data
+#'       (the `"plot"` source, kept at the top level for existing hosts).}
+#'   }
 #' @seealso [provenance_join()], [plot_provenance()]
 #' @examples
 #' p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
 #' pl <- provenance_payload(p)
 #' pl$elements[[1]]$id
+#' pl$elements[[1]]$source
 #' @export
 provenance_payload <- function(x, values = FALSE) {
   scene <- vellum::as_vellum_scene(x)
   prov <- attr(scene, "vellumplot_provenance") %||% list()
-  data <- if (S7::S7_inherits(x, PlotSpec)) x@data else NULL
+  is_plot <- S7::S7_inherits(x, PlotSpec)
+  data <- if (is_plot) x@data else NULL
   elements <- lapply(prov, function(p) {
-    list(id = p$id, rows = as.integer(p$rows %||% integer(0)))
+    list(
+      id = p$id,
+      rows = as.integer(p$rows %||% integer(0)),
+      source = p$source %||% NA_character_
+    )
   })
   out <- list(
     fields = as.list(names(data) %||% character(0)),
     elements = elements
   )
+  if (is_plot) {
+    used <- unique(vapply(elements, function(e) e$source, character(1)))
+    used <- used[!is.na(used)]
+    sources <- list()
+    for (nm in used) {
+      tbl <- .provenance_source_table(x, nm)
+      if (is.null(tbl)) {
+        next
+      }
+      rec <- list(fields = as.list(names(tbl)))
+      if (isTRUE(values)) {
+        rec$data <- .row_records(tbl)
+      }
+      sources[[nm]] <- rec
+    }
+    out$sources <- sources
+  }
   if (isTRUE(values) && !is.null(data)) {
-    out$data <- lapply(seq_len(nrow(data)), function(i) {
-      as.list(data[i, , drop = FALSE])
-    })
+    out$data <- .row_records(data)
   }
   out
+}
+
+# The table a provenance `source` name refers to: the plot's data ("plot") or a
+# layer's own `data =` ("layer:<i>", `i` indexing `x@layers`). NULL when absent.
+.provenance_source_table <- function(x, name) {
+  if (identical(name, "plot")) {
+    return(x@data)
+  }
+  i <- suppressWarnings(as.integer(sub("^layer:", "", name)))
+  if (is.na(i) || i < 1L || i > length(x@layers)) {
+    return(NULL)
+  }
+  x@layers[[i]]@data
+}
+
+# A data frame as row-wise records (one named list per row).
+.row_records <- function(df) {
+  lapply(seq_len(nrow(df)), function(i) as.list(df[i, , drop = FALSE]))
 }
 
 # The manifest as a single-line HTML/XML comment for embedding in an SVG. The

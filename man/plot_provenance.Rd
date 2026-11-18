@@ -30,14 +30,17 @@ Each record is a plain, serializable list:
 \item{\code{kind}}{\code{"mark"} (the core layer) or \code{"effect"} (a decorative underlay).}
 \item{\code{panel}}{facet panel key (\code{"panel-r-c"}), or \code{NA} for a single panel.}
 \item{\code{channels}}{aesthetic → trained-scale reference (\code{scale}, \code{type}, \code{domain}).}
-\item{\code{rows}}{the original input-data row indices this grob draws.}
+\item{\code{rows}}{the original input-data row indices this grob draws: rows of
+the whole source table (not of a facet panel's subset).}
+\item{\code{source}}{the table \code{rows} refer to: \code{"plot"} for the plot's data, or
+\code{"layer:<i>"} for layer \code{i}'s own \verb{data =}.}
 }
 
 The \code{rows} field is refined per element for marks that map rows one-to-one to
 drawn elements (points, bars, tiles, segments, lines, areas, ribbons, steps,
 text, boxplots, sf features, edges); for aggregating marks (histogram,
-density, smooth, datashade, …) it is the whole layer, since rows no longer map
-to single elements.
+density, smooth, datashade, …) it is the whole layer (in a faceted plot, the
+panel's rows), since rows no longer map to single elements.
 }
 \examples{
 df <- data.frame(wt = mtcars$wt, mpg = mtcars$mpg, model = rownames(mtcars))

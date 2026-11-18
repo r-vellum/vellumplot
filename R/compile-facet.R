@@ -163,17 +163,52 @@ NULL
     function(s) S7::S7_inherits(s, SelectionSpec) && length(s@fields) > 0L,
     spec@selections
   )
-  lapply(spec@layers, function(layer) {
+  lapply(seq_along(spec@layers), function(i) {
+    layer <- spec@layers[[i]]
     if (is.null(layer@data)) {
-      d <- spec@data[panel$idx, , drop = FALSE]
+      idx <- panel$idx
+      d <- spec@data[idx, , drop = FALSE]
     } else {
       idx <- .layer_panel_idx(spec@facet, layer@data, panel)
       d <- layer@data[idx, , drop = FALSE]
     }
     res <- .apply_position(.apply_stat(.resolve_layer(layer, d)))
     res$selgroup <- .selection_group_values(fsel, d)
+    res$source <- .layer_source(res, layer, i, idx)
     res
   })
+}
+
+# Which table a resolved layer's rows come from, and where they sit in it -- the
+# provenance row-key mapping (see `R/provenance.R`). `idx` is the panel subset's
+# row indices into that table (the plot data, or the layer's own `data =`).
+# Emitters refine provenance with indices *into the resolved layer*; `per_row`
+# says whether those map one-to-one onto `idx` (the layer kept its input rows, in
+# order: identity stat and one element per row) or not (a stat aggregated them,
+# or a layout mark made its own rows), in which case every element keys to the
+# whole panel subset.
+.layer_source <- function(L, layer, i, idx) {
+  list(
+    name = if (is.null(layer@data)) {
+      "plot"
+    } else {
+      paste0("layer:", attr(layer, "vp_spec_index") %||% i)
+    },
+    rows = as.integer(idx),
+    per_row = !isTRUE(L$aggregated) &&
+      !.is_layout_layer(L) &&
+      isTRUE(L$n == length(idx))
+  )
+}
+
+# A layout mark (sankey, chord, hierarchy, venn, waffle) computes its own
+# elements -- nodes, sectors, cells -- from the data, so its rows never map
+# one-to-one onto the input rows, even when the counts happen to agree.
+.is_layout_layer <- function(L) {
+  !is.null(L$sankey) ||
+    !is.null(L$chord) ||
+    !is.null(L$hierarchy) ||
+    L$mark %in% c("venn", "waffle")
 }
 
 # Build the panels with their resolved layers (per-panel data subset), then

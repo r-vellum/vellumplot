@@ -600,10 +600,13 @@ NULL
     # Provenance context for every grob this layer emits (DESIGN §4). Set once
     # per layer: `.draw()` reads it. `rows` defaults to the whole layer -- an
     # emitter that groups rows by style refines it per group (see `PROVENANCE:`).
+    # Those are indices into the resolved layer; `source` maps them back to the
+    # rows of the table the layer was drawn from (see `.provenance_record`).
     .mark_ctx$layer <- li
     .mark_ctx$mark <- L$mark
     .mark_ctx$channels <- .layer_channels(L, scales)
     .mark_ctx$rows <- seq_len(L$n)
+    .mark_ctx$source <- L$source
     .mark_ctx$kind <- "mark"
     # Per-row interactivity for this layer (NULL when none declared). Used only
     # when it aligns to the drawn rows: a row-preserving mark keeps `length == n`;
