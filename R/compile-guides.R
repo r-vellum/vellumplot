@@ -723,7 +723,10 @@ NULL
     # labels, so it reuses the discrete guide -- unless guide_coloursteps() asked
     # for a segmented bar, which routes to its own stepped-bar drawer instead.
     discrete <- gk %in% c("discrete", "binned")
-    if (identical(gk, "binned") && isTRUE(scales$color$stepped)) {
+    if (!is.null(scales$color$bivariate)) {
+      # A bivariate scale draws its 2-D grid and never merges with a partner.
+      out <- c(out, list(list(kind = "color_bivariate", sc = scales$color)))
+    } else if (identical(gk, "binned") && isTRUE(scales$color$stepped)) {
       out <- c(out, list(list(kind = "color_steps", sc = scales$color)))
     } else if (discrete && .can_merge_shape(scales$color, scales$shape)) {
       out <- c(
@@ -958,7 +961,8 @@ NULL
     linewidth = sc$legend_labels,
     alpha = sc$legend_labels,
     linetype = sc$levels,
-    merged = sc$labels
+    merged = sc$labels,
+    color_bivariate = c(sc$bivariate$xlab, sc$bivariate$ylab)
   )
 }
 
@@ -1014,6 +1018,9 @@ NULL
   # A guide only reserves a title band when the theme shows titles AND this guide
   # actually has a name; otherwise a titleless guide would reserve an empty band
   # and its keys would sit lower than a titled sibling's (misaligned legends).
+  if (g$kind == "color_bivariate") {
+    return(.bi_geom(g, m)$height)
+  }
   m$show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   if (g$kind %in% c("color_continuous", "color_steps")) {
@@ -1033,6 +1040,9 @@ NULL
 # Measured width (mm) of a horizontal guide: the wider of its title and its key
 # row (keys packed left-to-right, each followed by its own label).
 .guide_width_mm <- function(g, m) {
+  if (g$kind == "color_bivariate") {
+    return(.bi_geom(g, m)$width)
+  }
   labs <- .guide_labels(g)
   tw <- if (m$show_title && !is.null(g$sc$name)) {
     .mm_tw_any(g$sc$name, m$title_fs)
@@ -1377,6 +1387,7 @@ NULL
   aes <- switch(
     g$kind,
     color_discrete = "color",
+    color_bivariate = "color",
     shape = "shape",
     # A merged colour+shape guide shares one discrete variable, so its swatches
     # join the colour series (marks carry `color:<value>`). A merged colour+size
@@ -1422,6 +1433,9 @@ NULL
   }
   if (g$kind == "size_nested") {
     return(.draw_guide_bubbles_v(scene, g, m, rt, txt, th))
+  }
+  if (g$kind == "color_bivariate") {
+    return(.draw_guide_bivariate(scene, g, m, rt))
   }
   labs <- .guide_labels(g)
   k <- length(labs)
@@ -1828,6 +1842,9 @@ NULL
   }
   if (g$kind == "color_steps") {
     return(.draw_guide_steps_h(scene, g, m, rt, txt, th))
+  }
+  if (g$kind == "color_bivariate") {
+    return(.draw_guide_bivariate(scene, g, m, rt))
   }
   labs <- .guide_labels(g)
   k <- length(labs)
