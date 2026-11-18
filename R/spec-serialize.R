@@ -191,10 +191,15 @@ NULL
     .unserializable("effect", paste0("unknown effect ", rec$effect, "."))
   )
   args <- rec[setdiff(names(rec), "effect")]
-  # integer slots must survive JSON's number->double coercion.
-  for (int_slot in c("layers", "n")) {
-    if (!is.null(args[[int_slot]])) {
-      args[[int_slot]] <- as.integer(args[[int_slot]])
+  # JSON has no integer/double distinction: restore the integer slots, and widen
+  # a whole number that `jsonlite` read back as an integer (`outline()`'s
+  # `size = 1`, `motion()`'s `y = 0`) to the <double> every other numeric slot
+  # expects.
+  for (slot in names(args)) {
+    if (slot %in% c("layers", "n")) {
+      args[[slot]] <- as.integer(args[[slot]])
+    } else if (is.integer(args[[slot]])) {
+      args[[slot]] <- as.double(args[[slot]])
     }
   }
   do.call(ctor, args)
@@ -240,6 +245,10 @@ NULL
       out[[nm]] <- stats::as.formula(v[[".formula"]], env = globalenv())
     } else if (is.list(v) && !is.null(v[[".integer"]])) {
       out[[nm]] <- as.integer(v[[".integer"]])
+    } else if (is.integer(v)) {
+      # A genuine integer arrives tagged (above), so an untagged one is a whole
+      # double (`bins = 10`, `size = 3`) that `jsonlite` read back as integer.
+      out[[nm]] <- as.double(v)
     } else {
       out[[nm]] <- v
     }
@@ -379,8 +388,15 @@ NULL
 
 .scale_from_ir <- function(rec) {
   args <- rec[intersect(names(rec), c("aesthetic", "type", .SCALE_SLOTS))]
-  if (!is.null(args[["n"]])) {
-    args[["n"]] <- as.integer(args[["n"]])
+  # JSON has no integer/double distinction: `n` is a class count, but every
+  # other numeric slot (limits, breaks, range, expand, midpoint) is a double
+  # that `jsonlite` reads back as integer when it holds whole numbers.
+  for (slot in names(args)) {
+    if (identical(slot, "n")) {
+      args[[slot]] <- as.integer(args[[slot]])
+    } else if (is.integer(args[[slot]])) {
+      args[[slot]] <- as.double(args[[slot]])
+    }
   }
   do.call(ScaleSpec, args)
 }
@@ -438,6 +454,15 @@ NULL
 
 .coord_from_ir <- function(rec) {
   args <- rec[intersect(names(rec), c("kind", .COORD_SLOTS))]
+  # JSON has no integer/double distinction, and `jsonlite` reads a whole number
+  # back as an integer -- so every coord's defaults (`start = 0`,
+  # `direction = 1`, `rmin = 0`) fail CoordSpec's <double> props. No coord slot
+  # is integer-typed, so widen every integer back to double.
+  for (slot in names(args)) {
+    if (is.integer(args[[slot]])) {
+      args[[slot]] <- as.double(args[[slot]])
+    }
+  }
   do.call(CoordSpec, args)
 }
 
