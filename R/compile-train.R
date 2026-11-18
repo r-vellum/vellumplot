@@ -734,25 +734,23 @@ NULL
   fill_channel = "fill",
   aes = "color"
 ) {
-  values <- .pool_values(resolved, channel)
-  if (is.null(values) && !is.null(fill_channel)) {
-    values <- .pool_values(resolved, fill_channel)
-  }
-  if (is.null(values)) {
+  # `color` and `fill` share one colour scale, so pool the values of every layer
+  # mapping either channel (not just `fill` when nothing maps `color`).
+  channels <- c(channel, fill_channel)
+  values <- unlist(
+    lapply(channels, function(ch) .pool_values(resolved, ch)),
+    recursive = FALSE
+  )
+  if (!length(values)) {
     return(NULL)
   }
 
   scalespec <- .scale_for(spec, aes)
-  # channel type from the first layer mapping colour
-  chan_type <- NULL
-  for (L in resolved) {
-    chan_type <- L$types[[channel]] %||%
-      (if (!is.null(fill_channel)) L$types[[fill_channel]] else NULL)
-    if (!is.null(chan_type)) break
-  }
-  kind <- if (
-    !is.null(scalespec) && length(scalespec@type) && nzchar(scalespec@type)
-  ) {
+  explicit_kind <- !is.null(scalespec) &&
+    length(scalespec@type) &&
+    nzchar(scalespec@type)
+  chan_type <- .colour_channel_type(resolved, channels, explicit_kind)
+  kind <- if (explicit_kind) {
     scalespec@type
   } else if (identical(chan_type, "quantitative")) {
     "continuous"
@@ -937,6 +935,49 @@ NULL
       key_glyph = key_glyph
     )
   }
+}
+
+# The encoding type driving the shared colour scale, from every layer mapping
+# one of `channels` (`color`/`fill`). Layers that disagree on whether the
+# variable is quantitative cannot share one scale; unless the user fixed the
+# scale's kind explicitly, that is an error rather than a silent squish/grey.
+.colour_channel_type <- function(resolved, channels, explicit_kind = FALSE) {
+  found <- list()
+  fallback <- NULL
+  for (L in resolved) {
+    for (ch in channels) {
+      t <- L$types[[ch]]
+      fallback <- fallback %||% t
+      v <- L$values[[ch]]
+      # An empty (e.g. an empty facet cell) or all-NA layer carries no type
+      # information -- its inferred type is an artefact -- so it never votes.
+      if (!is.null(t) && length(v) && !all(is.na(v))) {
+        found[[length(found) + 1L]] <- list(channel = ch, type = t)
+      }
+    }
+  }
+  if (!length(found)) {
+    return(fallback)
+  }
+  quant <- vapply(
+    found,
+    function(f) identical(f$type, "quantitative"),
+    logical(1)
+  )
+  if (!explicit_kind && any(quant) && !all(quant)) {
+    q <- found[[which(quant)[1]]]
+    d <- found[[which(!quant)[1]]]
+    cli::cli_abort(c(
+      "Layers map {.field color}/{.field fill} to incompatible variable types.",
+      "x" = "One layer maps {.field {q$channel}} to a quantitative variable,
+        another maps {.field {d$channel}} to a {d$type} one.",
+      "i" = "{.field color} and {.field fill} share one colour scale, so every
+        layer mapping either must use the same kind of variable.",
+      "i" = "Convert one of them (e.g. with {.fn factor} or
+        {.fn as.numeric}), or set the scale kind explicitly."
+    ))
+  }
+  found[[1]]$type
 }
 
 # Colour for NA-valued features: a scale's explicit `na_value`, else an sf
@@ -1375,80 +1416,99 @@ NULL
   if (length(vs)) vs else NULL
 }
 
-# Native-coordinate bounding box a density-shape mark (violin/ridgeline) will
-# draw, so scale training can widen the panel to fit it. These marks generate
-# their geometry at emit time from `stats::density()`, which extends past the raw
-# data (the density support is padded ~3 bandwidths), and a ridge additionally
-# rises `scale * band` above its category baseline -- none of which the raw-data
-# axis pool sees. Returns `list(x = c(lo, hi), y = c(lo, hi))`, with `NULL` for an
-# axis it does not extend. The density math mirrors the emitters exactly (shared
-# `.density_by_cat`), so the trained domain matches what is drawn.
-.mark_footprint <- function(L, scales) {
+# Native-coordinate extent a density-shape mark (violin/ridgeline/halfeye) will
+# draw along one axis, so scale training can widen the panel to fit it. These
+# marks generate their geometry at emit time from `stats::density()`, which
+# extends past the raw data (the density support is padded ~3 bandwidths), and a
+# ridge additionally rises `scale * band` above its category baseline -- none of
+# which the raw-data axis pool sees. `sc` is the trained scale of axis `aes`;
+# the result is `c(lo, hi)` in that scale's *native* (transformed) coordinates,
+# or `NULL` when the mark does not extend the axis. The density math mirrors the
+# emitters exactly (shared `.density_by_cat`), including mapping the data-space
+# density support through the scale (`sc$map`), so the trained domain matches
+# what is drawn -- also on a log/sqrt axis.
+.mark_footprint <- function(L, aes, sc) {
   adjust <- L$stat_params$adjust %||% 1
-  if (identical(L$mark, "violin")) {
-    xv <- L$values$x
-    yv <- as.numeric(L$values$y)
-    levs <- .cat_levels(xv)
-    xc <- scales$x$map(levs)
-    band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
-    hw <- .VIOLIN_HALFWIDTH * band
-    dens <- .density_by_cat(yv, xv, levs, adjust)
-    supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
-    list(
-      x = c(min(xc) - hw, max(xc) + hw),
-      y = if (length(supp)) range(supp) else NULL
-    )
+  # the density support of `vals` per category of `cats`, mapped to native
+  support <- function(vals, cats) {
+    dens <- .density_by_cat(as.numeric(vals), cats, .cat_levels(cats), adjust)
+    supp <- unlist(lapply(dens, function(d) if (!is.null(d)) d$x))
+    .finite_range(sc$map(supp))
+  }
+  # category positions on a discrete axis, widened by `lo`/`hi` bands
+  cats_extent <- function(cats, lo, hi) {
+    pos <- sc$map(.cat_levels(cats))
+    band <- sc$band_width %||% .resolution(sc$map(cats))
+    c(min(pos) - lo * band, max(pos) + hi * band)
+  }
+  if (L$mark %in% c("violin", "halfeye")) {
+    if (identical(aes, "y")) {
+      return(support(L$values$y, L$values$x))
+    }
+    if (identical(L$mark, "violin")) {
+      cats_extent(L$values$x, .VIOLIN_HALFWIDTH, .VIOLIN_HALFWIDTH)
+    } else {
+      # one-sided slab: extends to the right of each tick by the slab width
+      cats_extent(L$values$x, 0, L$stat_params$scale %||% .SLAB_WIDTH)
+    }
   } else if (identical(L$mark, "ridgeline")) {
-    xv <- as.numeric(L$values$x)
-    yv <- L$values$y
-    levs <- .cat_levels(yv)
-    ypos <- scales$y$map(levs)
-    band <- scales$y$band_width %||% 1
-    scale_h <- (L$stat_params$height %||% .RIDGE_HEIGHT) * band
-    dens <- .density_by_cat(xv, yv, levs, adjust)
-    supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
-    list(
-      x = if (length(supp)) range(supp) else NULL,
-      y = c(min(ypos), max(ypos) + scale_h)
-    )
-  } else if (identical(L$mark, "halfeye")) {
-    # one-sided density slab: extends x to the right of each tick by the slab
-    # width, and y over the density support (tails past the sample range).
-    xv <- L$values$x
-    yv <- as.numeric(L$values$y)
-    levs <- .cat_levels(xv)
-    xc <- scales$x$map(levs)
-    band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
-    hw <- (L$stat_params$scale %||% .SLAB_WIDTH) * band
-    dens <- .density_by_cat(yv, xv, levs, adjust)
-    supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
-    list(
-      x = c(min(xc), max(xc) + hw),
-      y = if (length(supp)) range(supp) else NULL
-    )
+    if (identical(aes, "x")) {
+      return(support(L$values$x, L$values$y))
+    }
+    # a ridge rises `height * band` above its category baseline
+    pos <- sc$map(.cat_levels(L$values$y))
+    band <- sc$band_width %||% 1
+    c(min(pos), max(pos) + (L$stat_params$height %||% .RIDGE_HEIGHT) * band)
   } else {
-    list(x = NULL, y = NULL)
+    NULL
   }
 }
 
-# Widen the position domains so a violin/ridgeline layer's drawn footprint is not
-# clipped by the panel. Only ever grows a domain (union), and skips an axis whose
-# limits the user set explicitly (`coord_*(xlim=/ylim=)` or a scale `limits=`),
-# since explicit limits are intentional cropping that must win.
-.expand_position_for_marks <- function(resolved, scales, expand_x, expand_y) {
+# The range of the finite values of `x`, or NULL when there are none.
+.finite_range <- function(x) {
+  x <- x[is.finite(x)]
+  if (length(x)) range(x) else NULL
+}
+
+# Grow a native domain to cover `ext`, keeping its orientation: a descending
+# domain (a reversed axis, or explicit `c(hi, lo)` limits) stays descending.
+.union_domain <- function(domain, ext) {
+  out <- range(c(domain, ext))
+  if (length(domain) == 2L && domain[1] > domain[2]) rev(out) else out
+}
+
+# Train one position axis: the data/intercept/extent pool through
+# `.train_position()`, then widen the domain so any violin/ridgeline/halfeye
+# layer's drawn footprint is not clipped. The widening only ever grows a domain,
+# and is skipped when the user pinned this axis's limits (`coord_*(xlim=/ylim=)`
+# or a scale `limits=`), since explicit limits are intentional cropping that must
+# win. The single entry point for both the shared scales and free facet scales.
+.train_axis <- function(
+  spec,
+  resolved,
+  aes,
+  title,
+  include_zero = FALSE,
+  lim = NULL,
+  values = .axis_pool(resolved, aes, paste0(aes, "intercept"))
+) {
+  scalespec <- .scale_for(spec, aes)
+  sc <- .train_position(aes, values, scalespec, title, include_zero, lim)
+  explicit <- !is.null(lim) ||
+    (!is.null(scalespec) && !is.null(scalespec@domain))
+  if (explicit || !is.numeric(sc$domain)) {
+    return(sc)
+  }
   for (L in resolved) {
     if (!L$mark %in% c("violin", "ridgeline", "halfeye")) {
       next
     }
-    fp <- .mark_footprint(L, scales)
-    if (expand_x && !is.null(fp$x) && all(is.finite(fp$x))) {
-      scales$x$domain <- range(c(scales$x$domain, fp$x))
-    }
-    if (expand_y && !is.null(fp$y) && all(is.finite(fp$y))) {
-      scales$y$domain <- range(c(scales$y$domain, fp$y))
+    ext <- .mark_footprint(L, aes, sc)
+    if (!is.null(ext) && all(is.finite(ext))) {
+      sc$domain <- .union_domain(sc$domain, ext)
     }
   }
-  scales
+  sc
 }
 
 # Train all scales the plot needs: x, y (position), colour, and size. Bars force
@@ -1464,20 +1524,22 @@ NULL
     )
   }
   scales <- list(
-    x = .train_position(
+    x = .train_axis(
+      spec,
+      resolved,
       "x",
-      xs,
-      .scale_for(spec, "x"),
       .default_title(spec, "x"),
-      lim = co@xlim
+      lim = co@xlim,
+      values = xs
     ),
-    y = .train_position(
+    y = .train_axis(
+      spec,
+      resolved,
       "y",
-      ys,
-      .scale_for(spec, "y"),
       .y_axis_title(spec, resolved),
       include_zero = zero_base,
-      lim = co@ylim
+      lim = co@ylim,
+      values = ys
     ),
     color = .train_colour(spec, resolved),
     size = .train_size(spec, resolved),
@@ -1511,17 +1573,5 @@ NULL
       scales[[aes]] <- .apply_guide(scales[[aes]], g)
     }
   }
-  # Grow the panel to fit any density-shape mark's drawn footprint, unless the
-  # user pinned that axis's limits.
-  sx <- .scale_for(spec, "x")
-  sy <- .scale_for(spec, "y")
-  x_explicit <- !is.null(co@xlim) || (!is.null(sx) && !is.null(sx@domain))
-  y_explicit <- !is.null(co@ylim) || (!is.null(sy) && !is.null(sy@domain))
-  scales <- .expand_position_for_marks(
-    resolved,
-    scales,
-    expand_x = !x_explicit,
-    expand_y = !y_explicit
-  )
   scales
 }
