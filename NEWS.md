@@ -1,5 +1,21 @@
 # vellumplot 0.11.0.9000 (development version)
 
+## Bug fixes
+
+* **Violins, ridgelines and half-eyes draw cleanly on log and sqrt axes.** The
+  density was estimated on the raw data and its support, which `stats::density()`
+  pads by about three bandwidths, was then mapped through the scale. For data near
+  zero that padding dips to or below zero, so a log10 or sqrt axis produced NaN
+  outline vertices. The density is now estimated on the transformed values, as
+  ggplot2 does, so every vertex is finite and the trained axis still covers the
+  drawn shape. On a transformed axis the shape is now the density of the
+  transformed values; identity axes draw exactly as before.
+
+* **A widened density axis gets ticks over its tails.** The axis is widened to fit
+  a violin's or ridgeline's tails, but the breaks had already been picked for the
+  raw data range, so the tails ran past the last labelled tick. The breaks are now
+  re-picked over the widened extent. Breaks you set yourself are left alone.
+
 # vellumplot 0.11.0
 
 ## New features
