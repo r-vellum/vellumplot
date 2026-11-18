@@ -242,7 +242,11 @@ NULL
 # Per-level `stats::density()` of `vals`, grouped by category `cats` over the
 # ordered levels `levs`. Shared by the violin/ridgeline emitters and by scale
 # training (`.train_axis`) so the trained domain and the drawn
-# geometry are computed from identical values. A level with fewer than two finite
+# geometry are computed from identical values. `vals` are *native* (already
+# through the scale transform, see `.native_values()`): like ggplot2, the density
+# is estimated after the scale transform, so its support is drawn as is. Mapping
+# a data-space support instead would push the ~3-bandwidth padding below zero on
+# a log/sqrt axis and emit NaN vertices. A level with fewer than two finite
 # observations yields `NULL` (no density is drawn for it). With a `group` (the
 # layer's `.group_key()`), the list is per (level, sub-group) cell instead.
 .density_by_cat <- function(vals, cats, levs, adjust, group = NULL) {
@@ -255,6 +259,12 @@ NULL
   }
   lapply(levs, function(l) .density_of(vals[ch == l], adjust))
 }
+
+# The values of a density-shape mark's value axis in native units, as its
+# density is estimated (see `.density_by_cat()`). Values the transform cannot
+# represent (<= 0 on log10, < 0 on sqrt) become non-finite and are dropped by
+# `.density_of()`, as training drops them.
+.native_values <- function(sc, v) suppressWarnings(sc$map(as.numeric(v)))
 
 # The kernel density of one cell's values, or NULL with fewer than two finite
 # observations -- the per-cell form of `.density_by_cat()`.
@@ -311,14 +321,14 @@ NULL
   for (k in seq_along(cells)) {
     cl <- cells[[k]]
     sel <- cl$rows
-    d <- .density_of(yv[sel], adjust)
+    d <- .density_of(.native_values(scales$y, yv[sel]), adjust)
     if (is.null(d)) {
       next
     }
     i0 <- sel[1]
     # up the right side, then down the mirrored left side
     poly <- .density_polygon(
-      scales$y$map(d$x),
+      d$x,
       cl$centre,
       .density_offset(d, hw0 * cl$share),
       "violin"
@@ -363,13 +373,13 @@ NULL
   for (k in rev(seq_along(cells))) {
     cl <- cells[[k]]
     sel <- cl$rows
-    d <- .density_of(xv[sel], adjust)
+    d <- .density_of(.native_values(scales$x, xv[sel]), adjust)
     if (is.null(d)) {
       next
     }
     i0 <- sel[1]
     poly <- .density_polygon(
-      scales$x$map(d$x),
+      d$x,
       cl$centre,
       .density_offset(d, scale_h),
       "ridge"
@@ -441,12 +451,12 @@ NULL
     xc <- cl$centre
     ccol <- colv[sel[1]]
     a <- alpha[sel[1]]
-    d <- if (slab) .density_of(yv[sel], adjust)
+    d <- if (slab) .density_of(.native_values(scales$y, yv[sel]), adjust)
 
     if (!is.null(d)) {
       # up the flat left edge, down the bulge
       poly <- .density_polygon(
-        scales$y$map(d$x),
+        d$x,
         xc,
         .density_offset(d, hw0 * cl$share),
         "slab"

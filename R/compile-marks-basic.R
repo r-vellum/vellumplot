@@ -881,6 +881,7 @@ NULL
     ))
   }
 
+  .check_band_style(L, scales, n)
   fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
 
@@ -902,6 +903,53 @@ NULL
     gi <- gi + 1L
   }
   scene
+}
+
+# A polygon takes a single fill, so a filled connected mark (area, ribbon,
+# density) cannot vary a continuous `fill`/`color` or `alpha` along one series:
+# splitting by the per-row value -- as `.series_groups()` does for a discrete
+# style -- would shatter the band into one sliver polygon per vertex. (A line
+# colours per segment instead; a polygon has no segments to colour.) As ggplot2
+# does, refuse it with a pointer to the fixes. A continuous value that is
+# constant within each series (one value per `group`) is fine and draws as usual.
+.check_band_style <- function(L, scales, n) {
+  cv <- .continuous_colour(L, scales, n)
+  av <- if (!is.null(scales$alpha) && is.numeric(L$values$alpha)) {
+    rep_len(L$values$alpha, n)
+  }
+  if (is.null(cv) && is.null(av)) {
+    return(invisible())
+  }
+  # Series = explicit `group`, then any *discrete* style still in play; the
+  # continuous channels under test must not split the series themselves.
+  fill <- if (is.null(cv)) rep_len(.aes_colour(L, scales, "grey50"), n)
+  alpha <- if (is.null(av)) rep_len(.aes_alpha(L, scales, NA_real_), n)
+  varies <- function(v, idx) length(unique(v[idx])) > 1L
+  for (idx in .series_groups(L, n, list(fill = fill, alpha = alpha))) {
+    bad <- c(
+      if (!is.null(cv) && varies(cv, idx)) {
+        if (!is.null(L$values$color)) "color" else "fill"
+      },
+      if (!is.null(av) && varies(av, idx)) "alpha"
+    )
+    if (length(bad)) {
+      fn <- if (identical(L$stat, "density")) {
+        "mark_density"
+      } else {
+        paste0("mark_", L$mark)
+      }
+      shape <- if (identical(L$mark, "ribbon")) "ribbon" else "area"
+      cli::cli_abort(
+        c(
+          "{.fn {fn}} can't vary {.field {bad[[1]]}} continuously along one {shape}.",
+          i = "A filled {shape} is a single polygon, so it takes one {bad[[1]]} per series.",
+          i = "Map a discrete variable, set a {.field group} with one value per group, or use a constant {bad[[1]]}."
+        ),
+        call = NULL
+      )
+    }
+  }
+  invisible()
 }
 
 # A filled ribbon between ymin and ymax, one polygon per style group.

@@ -173,7 +173,10 @@ NULL
       d <- layer@data[idx, , drop = FALSE]
     }
     res <- .apply_position(.apply_stat(.resolve_layer(layer, d)))
-    res$selgroup <- .selection_group_values(fsel, d)
+    res$selgroup <- .realign_row_value(
+      .selection_group_values(fsel, d),
+      res$stat_map
+    )
     res$source <- .layer_source(res, layer, i, idx)
     res
   })
@@ -186,8 +189,15 @@ NULL
 # says whether those map one-to-one onto `idx` (the layer kept its input rows, in
 # order: identity stat and one element per row) or not (a stat aggregated them,
 # or a layout mark made its own rows), in which case every element keys to the
-# whole panel subset.
+# whole panel subset. A row-preserving stat (dot plot, outlier callout, window,
+# ...) reorders or filters the rows but records which input row(s) each output
+# row stands for (`L$stat_map$members`); `members` carries that through, so each
+# element still names its own source rows.
 .layer_source <- function(L, layer, i, idx) {
+  members <- L$stat_map$members
+  if (!is.null(members) && (.is_layout_layer(L) || length(members) != L$n)) {
+    members <- NULL
+  }
   list(
     name = if (is.null(layer@data)) {
       "plot"
@@ -195,9 +205,11 @@ NULL
       paste0("layer:", attr(layer, "vp_spec_index") %||% i)
     },
     rows = as.integer(idx),
-    per_row = !isTRUE(L$aggregated) &&
-      !.is_layout_layer(L) &&
-      isTRUE(L$n == length(idx))
+    members = members,
+    per_row = !is.null(members) ||
+      (!isTRUE(L$aggregated) &&
+        !.is_layout_layer(L) &&
+        isTRUE(L$n == length(idx)))
   )
 }
 

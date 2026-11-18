@@ -87,6 +87,12 @@ The modified \link{PlotSpec}.
 \code{mark_ribbon()} fills between \code{ymin} and \code{ymax}; \code{mark_step()} draws a
 staircase line. All connect points in \code{x} order.
 }
+\details{
+An area or ribbon is drawn as one polygon per series (per \code{group}, or per
+level of a discrete \code{fill}/\code{color}), and a polygon has a single fill. A
+continuous \code{fill}, \code{color} or \code{alpha} must therefore be constant within each
+series; one that varies along a series is an error.
+}
 \examples{
 vplot(pressure) |> mark_area(x = temperature, y = pressure)
 }
