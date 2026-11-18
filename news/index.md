@@ -2,6 +2,19 @@
 
 ## vellumplot 0.10.0.9000 (development version)
 
+### Bug fixes
+
+- **Violins, ridgelines and half-eyes fit their axis on transformed
+  scales and free facets.** The panel is widened to fit a density mark’s
+  drawn footprint, but that footprint was measured in data units and
+  merged into a domain that lives in transformed units: a violin on
+  `scale_y_continuous(trans = "log10")` stretched the axis up to about
+  10^41, and on `trans = "reverse"` the axis came out un-reversed. Free
+  facet scales (`facet_wrap(scales = "free_y")`) skipped the widening
+  entirely and clipped the density tails. The footprint now goes through
+  the scale transform, keeps a reversed axis reversed, and is applied by
+  the same code path for shared and free scales.
+
 ## vellumplot 0.10.0
 
 ### New features
