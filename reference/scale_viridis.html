@@ -115,7 +115,9 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  palette <span class="op">=</span> <span class="st">"Blues"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_brewer</span><span class="op">(</span></span>
@@ -123,7 +125,9 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  palette <span class="op">=</span> <span class="st">"Blues"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_distiller</span><span class="op">(</span></span>
@@ -131,7 +135,9 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  palette <span class="op">=</span> <span class="st">"Blues"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_distiller</span><span class="op">(</span></span>
@@ -139,7 +145,9 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  palette <span class="op">=</span> <span class="st">"Blues"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_viridis_c</span><span class="op">(</span></span>
@@ -163,7 +171,9 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  palette <span class="op">=</span> <span class="st">"Blues"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_distiller</span><span class="op">(</span></span>
@@ -171,7 +181,9 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  palette <span class="op">=</span> <span class="st">"Blues"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -192,7 +204,19 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
-<dd><p>A <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">grDevices::hcl.colors()</a></code> palette name.</p></dd>
+<dd><p>A ColorBrewer palette name or index (see above), or a
+<code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">grDevices::hcl.colors()</a></code> palette name.</p></dd>
+
+
+<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
+<dd><p>When <code>palette</code> is a number, which ColorBrewer family it indexes:
+<code>"seq"</code> (sequential), <code>"div"</code> (diverging) or <code>"qual"</code> (qualitative).</p></dd>
+
+
+<dt id="arg-direction">direction<a class="anchor" aria-label="anchor" href="#arg-direction"></a></dt>
+<dd><p><code>1</code> keeps a ColorBrewer palette's order, <code>-1</code> reverses it.
+<code>scale_*_distiller()</code> defaults to <code>-1</code>, as in ggplot2, so high values are
+light. Ignored for non-ColorBrewer palette names.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -206,9 +230,15 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 colour-vision-deficient-safe viridis maps, continuous (<code>_c</code>) or discrete
 (<code>_d</code>). <code>option</code> picks the map: <code>"viridis"</code>, <code>"plasma"</code>, <code>"inferno"</code>,
 <code>"cividis"</code>, <code>"rocket"</code>, or <code>"mako"</code> (unknown options fall back to viridis).</p></li>
-<li><p><code>scale_*_brewer()</code> — a discrete ColorBrewer-style qualitative/sequential
-palette; <code>scale_*_distiller()</code> — the same ramp interpolated for continuous
-data. <code>palette</code> is any <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">hcl.colors()</a></code> name (e.g. <code>"Blues"</code>, <code>"Set 2"</code>).</p></li>
+<li><p><code>scale_*_brewer()</code> — a discrete ColorBrewer palette (sequential,
+diverging or qualitative, via <code><a href="https://scales.r-lib.org/reference/pal_brewer.html" class="external-link">scales::pal_brewer()</a></code>);
+<code>scale_*_distiller()</code> — the same palette's 7-class ramp interpolated for
+continuous data. <code>palette</code> is a ColorBrewer name (<code>"Set1"</code>, <code>"Dark2"</code>,
+<code>"Paired"</code>, <code>"Blues"</code>, <code>"RdBu"</code>, <code>"Spectral"</code>, ...; matched ignoring case,
+spaces and punctuation, so <code>"Set 2"</code> is <code>"Set2"</code>) or an index into the
+palettes of <code>type</code>. Any other <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">grDevices::hcl.colors()</a></code> name (e.g.
+<code>"Batlow"</code>) is passed through unchanged, as by <code><a href="scale_color_continuous.html">scale_color_discrete()</a></code> /
+<code><a href="scale_color_continuous.html">scale_color_continuous()</a></code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -221,8 +251,12 @@ data. <code>palette</code> is any <code><a href="https://rdrr.io/r/grDevices/pal
 <span class="r-plt img"><img src="scale_viridis-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">scale_color_brewer</span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"Set 2"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">scale_color_brewer</span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"Set1"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="scale_viridis-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">scale_color_distiller</span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"Spectral"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="scale_viridis-3.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

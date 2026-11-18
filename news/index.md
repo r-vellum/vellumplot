@@ -21,6 +21,73 @@
   last labelled tick. The breaks are now re-picked over the widened
   extent. Breaks you set yourself are left alone.
 
+- **Tooltips and data keys follow stats that reorder or summarise
+  rows.** `tooltip`, `data_id`, `hover_group`, `hover_color` and
+  `selected_color` were still in pre-stat row order after a stat. A dot
+  plot sorts its dots, so each dot showed another row’s tooltip and key.
+  A bin2d or hex layer that happened to have as many cells as input rows
+  keyed every cell with an unrelated row. These values now go through
+  the same realignment as aesthetics. A row-preserving stat (dot plot,
+  outlier label, window, series label, count) gives each element its own
+  row’s value. A summarising stat (bin, bin2d, hex, density, smooth, …)
+  keeps a value only if it is constant within each group
+  (`tooltip = species` on a per-species density) or across the whole
+  layer. Otherwise the value is dropped, because a summary element has
+  no single row to take it from. If the `data_id` itself is dropped the
+  elements stay unkeyed, but a key that was only the default row index
+  is renumbered over the summary elements, so a constant tooltip still
+  shows.
+
+- **Provenance names each element’s own rows after a row-preserving
+  stat.** A dot plot, outlier label, window or count layer used to key
+  every element to the whole layer. Elements now map through the stat’s
+  row order back to their own source rows, under facets and for a
+  layer’s own `data =` too. A count bubble names every coincident row it
+  merges.
+
+- **The colourbar title no longer overlaps the top tick label.** Break
+  labels are centred on their ticks, so a label at the end of a vertical
+  colour bar hangs half a text line past it. The title band ended
+  exactly at the bar top, so in
+  `vplot(pressure) |> mark_line(x = temperature, y = pressure, color = pressure)`
+  the title “pressure” ran into the “800” label. Vertical
+  [`guide_colourbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  and
+  [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  bars now leave half a label height above and below the bar, which also
+  keeps the bottom label clear of the NA key. A horizontal bar is now
+  long enough that adjacent labels never collide: an end label justified
+  inward used to sit on top of its neighbour (“600800”).
+
+- **A continuous fill on an area or ribbon errors clearly.**
+  [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  and
+  [`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  draw one polygon per series, and a polygon has a single fill. A
+  continuous `fill` (or `color`, or `alpha`) that varied along a series
+  was grouped like a discrete style, so the band shattered into one
+  sliver polygon per vertex and mostly vanished. As in ggplot2 this now
+  aborts, saying to map a discrete variable, set a `group`, or use a
+  constant fill. A continuous value that is constant within each group
+  (one value per `group`) is still drawn, one band per group.
+
+- **`scale_*_brewer()` accepts ColorBrewer palette names.** Only
+  [`grDevices::hcl.pals()`](https://rdrr.io/r/grDevices/palettes.html)
+  names were recognised, so `scale_color_brewer(palette = "Set1")` (or
+  `"Accent"`, `"Paired"`, `"Pastel2"`) aborted with “`palette`/`values`
+  are not colours or a palette name”, and names shared with hcl
+  (`"Blues"`, `"RdBu"`) drew hcl approximations. The brewer and
+  distiller scales now draw the real ColorBrewer colours (via
+  [`scales::pal_brewer()`](https://scales.r-lib.org/reference/pal_brewer.html))
+  for all 35 sequential, diverging and qualitative palettes, sized to
+  the number of levels. As in ggplot2 they also take `type` (to pick a
+  palette by number) and `direction` (`scale_*_distiller()` defaults to
+  `-1`). Other hcl names still pass through, and
+  [`scale_color_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  /
+  [`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  also fall back to ColorBrewer for names hcl does not know.
+
 ## vellumplot 0.11.0
 
 ### New features

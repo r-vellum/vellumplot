@@ -49,7 +49,9 @@ scale_color_brewer(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = 1
 )
 
 scale_fill_brewer(
@@ -57,7 +59,9 @@ scale_fill_brewer(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = 1
 )
 
 scale_color_distiller(
@@ -65,7 +69,9 @@ scale_color_distiller(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = -1
 )
 
 scale_fill_distiller(
@@ -73,7 +79,9 @@ scale_fill_distiller(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = -1
 )
 
 scale_colour_viridis_c(
@@ -97,7 +105,9 @@ scale_colour_brewer(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = 1
 )
 
 scale_colour_distiller(
@@ -105,7 +115,9 @@ scale_colour_distiller(
   palette = "Blues",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  type = "seq",
+  direction = -1
 )
 ```
 
@@ -127,9 +139,20 @@ scale_colour_distiller(
 
 - palette:
 
-  A
+  A ColorBrewer palette name or index (see above), or a
   [`grDevices::hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html)
   palette name.
+
+- type:
+
+  When `palette` is a number, which ColorBrewer family it indexes:
+  `"seq"` (sequential), `"div"` (diverging) or `"qual"` (qualitative).
+
+- direction:
+
+  `1` keeps a ColorBrewer palette's order, `-1` reverses it.
+  `scale_*_distiller()` defaults to `-1`, as in ggplot2, so high values
+  are light. Ignored for non-ColorBrewer palette names.
 
 ## Value
 
@@ -144,11 +167,19 @@ The modified
   `"viridis"`, `"plasma"`, `"inferno"`, `"cividis"`, `"rocket"`, or
   `"mako"` (unknown options fall back to viridis).
 
-- `scale_*_brewer()` — a discrete ColorBrewer-style
-  qualitative/sequential palette; `scale_*_distiller()` — the same ramp
-  interpolated for continuous data. `palette` is any
-  [`hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html) name (e.g.
-  `"Blues"`, `"Set 2"`).
+- `scale_*_brewer()` — a discrete ColorBrewer palette (sequential,
+  diverging or qualitative, via
+  [`scales::pal_brewer()`](https://scales.r-lib.org/reference/pal_brewer.html));
+  `scale_*_distiller()` — the same palette's 7-class ramp interpolated
+  for continuous data. `palette` is a ColorBrewer name (`"Set1"`,
+  `"Dark2"`, `"Paired"`, `"Blues"`, `"RdBu"`, `"Spectral"`, ...; matched
+  ignoring case, spaces and punctuation, so `"Set 2"` is `"Set2"`) or an
+  index into the palettes of `type`. Any other
+  [`grDevices::hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html)
+  name (e.g. `"Batlow"`) is passed through unchanged, as by
+  [`scale_color_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  /
+  [`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md).
 
 ## See also
 
@@ -161,5 +192,9 @@ vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp) |> scale_color_viridis_
 
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
-  scale_color_brewer(palette = "Set 2")
+  scale_color_brewer(palette = "Set1")
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  scale_color_distiller(palette = "Spectral")
 ```

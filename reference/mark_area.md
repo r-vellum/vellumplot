@@ -130,6 +130,13 @@ mark_step(
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
 
+## Details
+
+An area or ribbon is drawn as one polygon per series (per `group`, or
+per level of a discrete `fill`/`color`), and a polygon has a single
+fill. A continuous `fill`, `color` or `alpha` must therefore be constant
+within each series; one that varies along a series is an error.
+
 ## See also
 
 [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
