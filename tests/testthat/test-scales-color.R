@@ -238,3 +238,52 @@ test_that("a diverging colorbar reports midpoint in its descriptor", {
   expect_true(isTRUE(cbars[[1]]$colorbar$diverging))
   expect_equal(cbars[[1]]$colorbar$midpoint, 0)
 })
+
+test_that("fill values pool into the colour scale even when a layer maps color", {
+  d <- data.frame(x = rep(1:10, 10), y = rep(1:10, each = 10), z = 1:100)
+  p <- vplot(d) |>
+    mark_tile(x = x, y = y, fill = z) |>
+    mark_point(data = subset(d, z > 50), x = x, y = y, color = z)
+  cl <- train(p)$color
+  expect_identical(cl$kind, "continuous")
+  expect_identical(cl$range, c(1, 100))
+  # the tiles below the points' range get distinct colours, not one squished end
+  expect_false(identical(cl$map(1), cl$map(50)))
+})
+
+test_that("discrete color and fill layers share the union of levels", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    mark_point(x = wt, y = qsec, fill = factor(gear))
+  cl <- train(p)$color
+  expect_identical(cl$kind, "discrete")
+  expect_setequal(cl$levels, c("4", "6", "8", "3", "5"))
+})
+
+test_that("quantitative fill with a discrete color layer is a clear error", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    mark_point(x = wt, y = qsec, fill = hp)
+  expect_error(train(p), "share one colour scale")
+  expect_snapshot(train(p), error = TRUE)
+})
+
+test_that("an explicit colour scale kind settles mixed color/fill types", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    mark_point(x = wt, y = qsec, fill = carb) |>
+    scale_color_discrete()
+  cl <- train(p)$color
+  expect_identical(cl$kind, "discrete")
+  expect_true(all(c("4", "6", "8", "1", "2") %in% cl$levels))
+})
+
+test_that("a mixed color/fill continuous scale renders one legend", {
+  d <- data.frame(x = rep(1:10, 10), y = rep(1:10, each = 10), z = 1:100)
+  p <- vplot(d) |>
+    mark_tile(x = x, y = y, fill = z) |>
+    mark_point(data = subset(d, z > 50), x = x, y = y, color = z)
+  guides <- .legend_guides(.build_panels(p)$scales)
+  expect_length(guides, 1L)
+  expect_no_error(.compile_plot(p))
+})

@@ -19,6 +19,29 @@
   colour, so `mark_smooth(group = id, color = treatment)` paints each fit by its
   treatment. `spec_to_vegalite()` exports `group` as Vega-Lite's `detail`.
 
+## Bug fixes
+
+* **Violins, ridgelines and half-eyes fit their axis on transformed scales and
+  free facets.** The panel is widened to fit a density mark's drawn footprint,
+  but that footprint was measured in data units and merged into a domain that
+  lives in transformed units: a violin on `scale_y_continuous(trans = "log10")`
+  stretched the axis up to about 10^41, and on `trans = "reverse"` the axis came
+  out un-reversed. Free facet scales (`facet_wrap(scales = "free_y")`) skipped
+  the widening entirely and clipped the density tails. The footprint now goes
+  through the scale transform, keeps a reversed axis reversed, and is applied
+  by the same code path for shared and free scales.
+
+* **The colour scale now trains on `fill` values even when another layer maps
+  `color`.** `color` and `fill` share one colour scale, but `fill` values only
+  reached it when no layer mapped `color`. A tile layer filled by `z` under a
+  point layer coloured by a subset of `z` trained on the points' range alone and
+  silently squished every tile below it onto one end of the ramp; a quantitative
+  `fill` next to a discrete `color` got grey for every fill. The scale now pools
+  values from every layer mapping either channel, and layers that disagree on
+  whether the variable is quantitative abort with an error explaining that they
+  share one scale (an explicit scale kind, e.g. `scale_color_discrete()`, still
+  settles it).
+
 * **Dodge and stack work on every mark that can use them.** Positions used to
   apply only to bars and areas (and jitter to points), so
   `mark_errorbar(position = "dodge")` drew every error bar on the category tick,
@@ -50,8 +73,6 @@
   outlined keys. Map `fill` to get the old look. The outline is no longer
   hard-coded: it follows `color` and defaults to `"grey20"`. Violins and ridges
   used to be outlined in `"grey30"`.
-
-## Bug fixes
 
 * **Stats that reorder or summarise rows keep their colours aligned.** A stat
   that changes the row count or order used to hand its output the pre-stat
