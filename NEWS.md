@@ -53,6 +53,32 @@
 
 ## Bug fixes
 
+* **Stats that reorder or summarise rows keep their colours aligned.** A stat
+  that changes the row count or order used to hand its output the pre-stat
+  colour vector, recycled with `rep_len()`. Outputs were then painted from
+  unrelated rows:
+
+  - `mark_dotplot()` sorts x, so its dots took the colours of the unsorted rows.
+    With `x = c(5, 1, 3, 2, 4)` and `g = c("a", "b", "a", "b", "a")`, the dot at
+    `x = 1` came out `"a"`.
+  - `mark_hex()`, `mark_bin2d()` and `mark_contour()` / `mark_contour_filled()`
+    pooled every group into one binning or one kernel density, so
+    `mark_contour(color = Species)` drew one KDE of all the points in
+    arbitrarily coloured rings.
+
+  Hex and 2-D bins are now counted per group on one shared grid, and 2-D
+  densities are estimated per group over a shared window with shared levels. A
+  dot keeps its own row's aesthetics (dots stack by group within a bin). The
+  outlier, series-label, count and window stats also carry aesthetics by row.
+
+  After a stat, an aesthetic that varies *within* a group has no single value
+  for a summarised row. It is now dropped with a warning instead of being drawn
+  wrong, which is what ggplot2 does. `mark_smooth(color = hp)` therefore fits one
+  uncoloured curve, and `mark_bar(x = cyl, fill = hp)` (counted bars with a
+  continuous fill) draws plain bars. A stat that leaves an aesthetic it cannot
+  realign is caught by an internal consistency check rather than silently
+  recycled.
+
 * **A mark given a position it does not support errors.** `position` is now a
   formal argument of every `mark_*()`. On most marks it used to fall into `...`
   and turn into an inert constant aesthetic, so `mark_line(position = "dodge")`

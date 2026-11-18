@@ -116,7 +116,8 @@ test_that("stats run per group and keep each group's own colour", {
   expect_setequal(unique(as.character(L$color)), c("ctl", "drug"))
   per_group <- tapply(as.character(L$color), as.character(L$group), unique)
   expect_equal(as.vector(per_group), c("ctl", "drug", "drug"))
-  # `group = 1` pools a coloured layer into one fit
+  # `group = 1` pools a coloured layer into one fit; the colour, which varies
+  # within that one group, has no single value for the fit and is dropped
   p1 <- vplot(iris) |>
     mark_smooth(
       x = Sepal.Length,
@@ -126,7 +127,7 @@ test_that("stats run per group and keep each group's own colour", {
       method = "lm",
       se = FALSE
     )
-  expect_length(prov_of(p1, "smooth"), 1L)
+  expect_warning(expect_length(prov_of(p1, "smooth"), 1L), "Dropped.*color")
 })
 
 test_that("position = 'stack' stacks by group", {

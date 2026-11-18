@@ -70,7 +70,7 @@ test_that("mark_errorbar honours a mapped cap width without misplacing caps", {
 test_that("mark_hex honours a mapped alpha via the trained scale", {
   set.seed(1)
   d <- data.frame(x = rnorm(200), y = rnorm(200))
-  p <- vplot(d) |> mark_hex(x = x, y = y, alpha = y)
+  p <- vplot(d) |> mark_hex(x = x, y = y, alpha = after_stat(count))
   f <- local_tempfile(fileext = ".png")
   expect_no_error(render_plot(p, f))
 })
