@@ -1215,6 +1215,11 @@ mark_datashade <- function(
 #' `mark_ribbon()` fills between `ymin` and `ymax`; `mark_step()` draws a
 #' staircase line. All connect points in `x` order.
 #'
+#' An area or ribbon is drawn as one polygon per series (per `group`, or per
+#' level of a discrete `fill`/`color`), and a polygon has a single fill. A
+#' continuous `fill`, `color` or `alpha` must therefore be constant within each
+#' series; one that varies along a series is an error.
+#'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
 #'   `ymax` for ribbon; plus `color`/`fill`/`alpha`. `mark_step()` also takes
