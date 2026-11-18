@@ -143,19 +143,16 @@ NULL
 #
 # An aesthetic that varies within a group has no single value for a summary row,
 # so it is dropped with a warning (ggplot2 does the same) rather than drawn wrong.
-.realign_carried <- function(L, g_in, sdf, after_names) {
+.realign_carried <- function(L, g_in, sdf, after_names, map = NULL) {
   carried <- setdiff(intersect(.STAT_CARRIED, names(L$values)), after_names)
   if (!length(carried)) {
     return(L)
   }
-  n_in <- L$n %||% max(lengths(L$values[carried]))
-  rows <- sdf$.rows
-  sgroup <- sdf$group
-  glevs <- if (!is.null(g_in)) .cat_levels(g_in)
-  in_group <- if (!is.null(g_in)) match(as.character(g_in), glevs)
-  out_group <- if (!is.null(sgroup) && !is.null(g_in)) {
-    match(as.character(sgroup), glevs)
-  }
+  map <- map %||% .stat_row_map(L, g_in, sdf)
+  n_in <- map$n_in %||% max(lengths(L$values[carried]))
+  rows <- map$rows
+  sgroup <- map$sgroup
+  out_group <- map$out_group
   dropped <- character(0)
   for (nm in carried) {
     v <- L$values[[nm]]
@@ -171,12 +168,9 @@ NULL
         L$values[[nm]] <- sgroup
         next
       }
-      # constant within every group: one distinct value per group present
-      if (
-        length(unique(paste(in_group, v, sep = "\r"))) ==
-          length(unique(in_group))
-      ) {
-        L$values[[nm]] <- v[match(seq_along(glevs), in_group)[out_group]]
+      per_group <- .per_group_value(v, map)
+      if (!is.null(per_group)) {
+        L$values[[nm]] <- per_group
         next
       }
     } else if (is.null(sgroup) && length(unique(v)) == 1L) {
@@ -198,6 +192,119 @@ NULL
       "Dropped {.field {dropped}}: {?it varies/they vary} within a group, so a summarised row has no single value.",
       i = "Map it to a variable that is constant within each group, or set {.arg group} to match."
     ))
+  }
+  L
+}
+
+# How a stat's output rows relate to its input rows, for realigning anything
+# carried per input row (aesthetics, interactivity, provenance):
+#   `rows`      the input row of each output row (a row-preserving stat's `.rows`);
+#   `members`   the input rows each output row stands for -- `rows` as a list,
+#               or a stat's own `members` attribute when one output row merges
+#               several input rows (`.stat_sum()`'s coincident points);
+#   `sgroup`, `out_group`, `in_group`, `glevs`  a grouped stat's output group
+#               and the layer's `.group_key()` levels it indexes;
+#   `n_in`, `n_out`  input and output row counts.
+.stat_row_map <- function(L, g_in, sdf) {
+  rows <- sdf$.rows
+  sgroup <- sdf$group
+  glevs <- if (!is.null(g_in)) .cat_levels(g_in)
+  members <- attr(sdf, "members") %||% (if (!is.null(rows)) as.list(rows))
+  list(
+    rows = rows,
+    members = members,
+    sgroup = sgroup,
+    glevs = glevs,
+    in_group = if (!is.null(g_in)) match(as.character(g_in), glevs),
+    out_group = if (!is.null(sgroup) && !is.null(g_in)) {
+      match(as.character(sgroup), glevs)
+    },
+    n_in = L$n,
+    n_out = nrow(sdf)
+  )
+}
+
+# The value of a per-input-row vector `v` for each output row of a grouped stat,
+# when `v` is constant within every group (one distinct value per group present);
+# NULL when it varies within a group, so a summary row has no single value.
+.per_group_value <- function(v, map) {
+  in_group <- map$in_group
+  if (
+    length(unique(paste(in_group, v, sep = "\r"))) != length(unique(in_group))
+  ) {
+    return(NULL)
+  }
+  v[match(seq_along(map$glevs), in_group)[map$out_group]]
+}
+
+# Realign one per-input-row interactivity vector (a tooltip, data key, hover
+# group, ...) to a stat's output rows. The rule, shared by every such value:
+#   * a row-preserving stat (`.rows`): each output row takes its own input row's
+#     value -- a dot's tooltip is its own observation's, whatever the stat's order;
+#   * a grouped summarising stat: a value constant within each `.group_key()`
+#     group is kept per group (a `tooltip = species` on a per-species density);
+#   * an ungrouped summarising stat: a value constant across the layer is kept;
+#   * otherwise NULL -- a summary row (a bin, a hexagon, a fitted line) stands
+#     for many rows and has no single per-row value, so it is dropped rather than
+#     drawn against the wrong element.
+# A constant or a vector that is not one value per input row is returned as is.
+.realign_row_value <- function(v, map) {
+  if (is.null(v) || is.null(map) || length(v) != map$n_in) {
+    return(v)
+  }
+  if (!is.null(map$rows)) {
+    return(v[map$rows])
+  }
+  og <- map$out_group
+  if (!is.null(og) && !anyNA(og)) {
+    return(.per_group_value(v, map))
+  }
+  if (is.null(map$sgroup) && length(unique(v)) == 1L) {
+    return(rep(v[1L], map$n_out))
+  }
+  NULL
+}
+
+# Realign a layer's interactivity (`L$meta`, from `.resolve_interactivity()`)
+# and the per-row `if_false` of its conditional encodings to a stat's output rows
+# (see `.realign_row_value()` for the rule). The data key decides: when it cannot
+# be realigned the elements are unkeyed and the whole set is dropped -- except a
+# key that was only the default row index, which is renumbered over the output
+# rows so constant or per-group tooltips still reach the summary elements.
+.realign_meta <- function(L, map) {
+  if (is.null(map)) {
+    return(L) # an empty stat output draws nothing
+  }
+  m <- L$meta
+  if (!is.null(m)) {
+    fields <- c("tooltip", "hover_group", "hover_color", "selected_color")
+    for (nm in fields) {
+      if (!is.null(m[[nm]])) {
+        m[nm] <- list(.realign_row_value(m[[nm]], map))
+      }
+    }
+    id <- if (isTRUE(m$default_id)) {
+      if (is.null(map$rows)) {
+        as.character(seq_len(map$n_out))
+      } else {
+        m$data_id[map$rows]
+      }
+    } else {
+      .realign_row_value(m$data_id, map)
+    }
+    if (is.null(id)) {
+      m <- NULL
+    } else {
+      m$data_id <- id
+      m$n <- map$n_out
+    }
+    L$meta <- m
+  }
+  for (nm in names(L$conditions)) {
+    f <- L$conditions[[nm]]$if_false
+    if (length(f) > 1L) {
+      L$conditions[[nm]]["if_false"] <- list(.realign_row_value(f, map))
+    }
   }
   L
 }
@@ -249,9 +356,11 @@ NULL
   if (!("x" %in% after_names) && !is.null(sdf$x)) {
     L$values$x <- sdf$x
   }
+  map <- if (!empty) .stat_row_map(L, g_in, sdf)
   if (!empty) {
-    L <- .realign_carried(L, g_in, sdf, after_names)
+    L <- .realign_carried(L, g_in, sdf, after_names, map)
   }
+  L <- .realign_meta(L, map)
   if (!("y" %in% after_names) && !is.null(sdf$y)) {
     L$values$y <- sdf$y
     L$types$y <- "quantitative"
@@ -289,10 +398,13 @@ NULL
   if (!empty) {
     .check_stat_lengths(L, L$n, after_names, stat)
   }
-  # The rows are now the stat's output, not the input data: a drawn element no
-  # longer maps to one source row, so provenance keys this layer whole (see
-  # `.layer_source`).
+  # The rows are now the stat's output, not the input data. A summarising stat's
+  # element no longer maps to source rows, so provenance keys the layer whole; a
+  # row-preserving stat's `stat_map` lets provenance and late per-row values
+  # (`selgroup`) follow each output row back to its input row(s) (see
+  # `.layer_source`, `.realign_row_value`).
   L$aggregated <- TRUE
+  L$stat_map <- map
   L
 }
 
@@ -355,7 +467,13 @@ NULL
   if (!is.null(grp)) {
     out$group <- grp[first]
   }
+  # Each bubble keeps its first row for per-row values (`.rows`) and names every
+  # coincident row it merges for provenance (`members`).
   out$.rows <- which(first)
+  attr(out, "members") <- unname(split(
+    seq_along(key),
+    factor(key, levels = key[first])
+  ))
   out
 }
 
