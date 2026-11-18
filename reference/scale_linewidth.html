@@ -120,23 +120,28 @@ default <code>c(0.5, 4)</code>.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A mapped <code>linewidth</code> gives each <strong>segment</strong> one constant width, taken as the
-mean of its two endpoint values. So the width changes in visible steps at each
-vertex rather than tapering smoothly along the line, and the round joins do
-not perfectly fill the corners of a sharp bend. That is inherent to
-per-segment width; a constant <code>linewidth =</code> is unaffected and still draws the
-line as a single stroke.</p>
-<p>No backend can stroke the segments of one path at different widths in a single
-call, so a mapped <code>linewidth</code> emits one path element per segment in SVG and
-PDF. On a long, dense line that is a lot of elements – worth knowing before
-mapping <code>linewidth</code> on tens of thousands of rows.</p>
+    <p>On <code><a href="mark_point.html">mark_line()</a></code> and <code><a href="mark_area.html">mark_step()</a></code>, a mapped <code>linewidth</code> draws each series as
+<strong>one continuous stroke whose width tapers smoothly</strong> between the values at
+its vertices (via vellum's <code>lines_grob(lwd_profile = )</code>). The stroke is built
+as a filled outline at render time, so it looks the same in PNG, SVG and PDF
+and stays one element per series in <code><a href="https://r-vellum.github.io/vellum/reference/scene_model.html" class="external-link">vellum::scene_model()</a></code> and the SVG. A
+constant <code>linewidth =</code> is unaffected and still draws an ordinary stroke.</p>
+<p>A tapered stroke has one colour and no dash pattern, so a series falls back to
+<strong>one segment per span</strong> – each at the mean of its two endpoint widths, so
+the width steps at every vertex – when it also maps a continuous colour (each
+segment then takes its own colour), uses a dashed or dotted <code>linetype</code>, is
+drawn with a sketch theme, or has a missing width. That fallback emits one
+path element per segment, worth knowing before combining those with tens of
+thousands of rows. <code><a href="mark_segment.html">mark_segment()</a></code> is already one element per row and takes
+one width per segment.</p>
 <p>For edges on a <code><a href="vgraph.html">vgraph()</a></code> plot, use <code><a href="scale_edge_width.html">scale_edge_width()</a></code> instead: an edge's
 width is trained and legended independently of the line-width scale. That also
 means <code>guides(linewidth = )</code> and <code>lims(linewidth = )</code> address <em>this</em> scale;
 use <code>guides(edge_width = )</code> / <code>lims(edge_width = )</code> for a graph's edges.</p>
 <p>A missing (<code>NA</code>) width takes its segment's width from whichever endpoint is
 known, so one missing value thins the line rather than erasing the two
-segments that meet at it. A segment missing a width at both ends is dropped.</p>
+segments that meet at it. A segment missing a width at both ends is dropped.
+(A series with a missing width is drawn per segment, as above.)</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

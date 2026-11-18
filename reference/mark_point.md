@@ -76,13 +76,14 @@ mark_bar(
   [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md),
   `linewidth` may be **mapped** as well as set: see
   [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
-  for the per-segment width that gives, and what it costs. Everywhere
-  else `linewidth` is a constant. Every mark also takes `group`, which
-  says which rows form one series without styling them:
-  `mark_line(x = t, y = y, group = id)` draws one line per `id`. Without
-  it, a discrete `color` (else `fill`) groups; a continuous colour never
-  does, so a line mapped to one stays connected and changes colour along
-  its length. `group = 1` makes the whole layer one group.
+  for the tapered stroke that gives, and when it falls back to
+  per-segment widths. Everywhere else `linewidth` is a constant. Every
+  mark also takes `group`, which says which rows form one series without
+  styling them: `mark_line(x = t, y = y, group = id)` draws one line per
+  `id`. Without it, a discrete `color` (else `fill`) groups; a
+  continuous colour never does, so a line mapped to one stays connected
+  and changes colour along its length. `group = 1` makes the whole layer
+  one group.
 
 - size, shape:
 

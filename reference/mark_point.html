@@ -140,8 +140,8 @@ mappings.</p>
 <code>fill</code>, <code>size</code>, <code>shape</code>, <code>alpha</code>. Stroked marks (line, step, segment, rule,
 linerange) also take <code>linewidth</code> and <code>linetype</code>. On <code>mark_line()</code>,
 <code><a href="mark_area.html">mark_step()</a></code> and <code><a href="mark_segment.html">mark_segment()</a></code>, <code>linewidth</code> may be <strong>mapped</strong> as well as
-set: see <code><a href="scale_linewidth.html">scale_linewidth()</a></code> for the per-segment width that gives, and what
-it costs. Everywhere else <code>linewidth</code> is a constant. Every mark also takes
+set: see <code><a href="scale_linewidth.html">scale_linewidth()</a></code> for the tapered stroke that gives, and when
+it falls back to per-segment widths. Everywhere else <code>linewidth</code> is a constant. Every mark also takes
 <code>group</code>, which says which rows form one series without styling them:
 <code>mark_line(x = t, y = y, group = id)</code> draws one line per <code>id</code>. Without it,
 a discrete <code>color</code> (else <code>fill</code>) groups; a continuous colour never does, so

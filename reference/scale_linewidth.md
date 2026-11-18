@@ -54,17 +54,28 @@ The modified
 
 ## Details
 
-A mapped `linewidth` gives each **segment** one constant width, taken as
-the mean of its two endpoint values. So the width changes in visible
-steps at each vertex rather than tapering smoothly along the line, and
-the round joins do not perfectly fill the corners of a sharp bend. That
-is inherent to per-segment width; a constant `linewidth =` is unaffected
-and still draws the line as a single stroke.
+On
+[`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+and
+[`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
+a mapped `linewidth` draws each series as **one continuous stroke whose
+width tapers smoothly** between the values at its vertices (via vellum's
+`lines_grob(lwd_profile = )`). The stroke is built as a filled outline
+at render time, so it looks the same in PNG, SVG and PDF and stays one
+element per series in
+[`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)
+and the SVG. A constant `linewidth =` is unaffected and still draws an
+ordinary stroke.
 
-No backend can stroke the segments of one path at different widths in a
-single call, so a mapped `linewidth` emits one path element per segment
-in SVG and PDF. On a long, dense line that is a lot of elements – worth
-knowing before mapping `linewidth` on tens of thousands of rows.
+A tapered stroke has one colour and no dash pattern, so a series falls
+back to **one segment per span** – each at the mean of its two endpoint
+widths, so the width steps at every vertex – when it also maps a
+continuous colour (each segment then takes its own colour), uses a
+dashed or dotted `linetype`, is drawn with a sketch theme, or has a
+missing width. That fallback emits one path element per segment, worth
+knowing before combining those with tens of thousands of rows.
+[`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
+is already one element per row and takes one width per segment.
 
 For edges on a
 [`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
@@ -78,7 +89,7 @@ line-width scale. That also means `guides(linewidth = )` and
 A missing (`NA`) width takes its segment's width from whichever endpoint
 is known, so one missing value thins the line rather than erasing the
 two segments that meet at it. A segment missing a width at both ends is
-dropped.
+dropped. (A series with a missing width is drawn per segment, as above.)
 
 ## See also
 
