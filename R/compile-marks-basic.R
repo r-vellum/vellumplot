@@ -147,8 +147,9 @@ NULL
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lty <- .resolve_lty(L, scales, n)
   lwd <- .aes_param(L, "linewidth", 1.5)
-  # A mapped `linewidth` draws the group as per-segment-width segments instead of
-  # one uniform stroke; a constant one keeps the single (cheaper) `lines_grob`.
+  # A mapped `linewidth` draws the group as one tapered `lwd_profile` stroke (or
+  # per-segment widths where a profile can't express it, see
+  # `.draw_var_width_line()`); a constant one keeps the plain `lines_grob`.
   lwv <- .mapped_linewidth(L, scales, n)
   # A continuous colour varies along a series rather than splitting it: keep it
   # out of the style key and colour the series per segment instead.
@@ -194,14 +195,85 @@ NULL
   scene
 }
 
-# Draw one polyline whose width varies per segment: `w` is the width at each
-# vertex, `rows` the layer rows those vertices came from. The gpar's own `lwd` is
+# Draw one polyline whose width varies along it: `w` is the width at each
+# vertex, `rows` the layer rows those vertices came from.
+#
+# The default is ONE `lines_grob(lwd_profile = w)`: a single continuous ribbon
+# per series whose width tapers linearly between vertices (#165). The engine
+# builds the ribbon at render, inside the panel viewport, so the taper tracks the
+# laid-out panel. The gpar's `lwd` is set to 1, so the profile IS the width in
+# lwd units -- the same units `segments_grob(lwd = )` takes.
+#
+# A profile is one filled outline in one colour with no dash pattern, so the
+# series falls back to the per-segment drawing (`.draw_var_width_segments()`)
+# when it needs something a profile cannot express:
+# * a continuous colour (`cv`) -- each segment then takes its own colour;
+# * a dashed / dotted `lty` -- a filled ribbon ignores dashing;
+# * a `sketch` -- vellum refuses sketch + profile (a jittered silhouette is not
+#   a hand-drawn line);
+# * a missing width -- a profile has no "unknown" value, while the per-segment
+#   rule lets a missing width cost only that datum's contribution;
+# * a width profile with no positive value (nothing to draw as a ribbon).
+.draw_var_width_line <- function(
+  scene,
+  scales,
+  x,
+  y,
+  w,
+  rows,
+  gp,
+  sketch,
+  cv = NULL
+) {
+  if (length(x) < 2L) {
+    return(scene)
+  }
+  if (!.can_lwd_profile(w, gp, sketch, cv)) {
+    return(.draw_var_width_segments(
+      scene,
+      scales,
+      x,
+      y,
+      w,
+      rows,
+      gp,
+      sketch,
+      cv
+    ))
+  }
+  d <- .xy_path_w(scales, x, y, w)
+  gp@lwd <- 1
+  .draw(
+    scene,
+    vellum::lines_grob(d$x, d$y, lwd_profile = d$w, gp = gp),
+    # PROVENANCE: one ribbon for the series -- every vertex row it passes through.
+    rows = rows
+  )
+}
+
+# Whether a variable-width series can be drawn as one `lwd_profile` ribbon (see
+# `.draw_var_width_line()` for why each case falls back to segments).
+.can_lwd_profile <- function(w, gp, sketch, cv) {
+  lty <- gp@lty
+  solid <- is.null(lty) ||
+    identical(as.character(lty), "solid") ||
+    identical(as.character(lty), "1")
+  is.null(cv) &&
+    is.null(sketch) &&
+    solid &&
+    !anyNA(w) &&
+    all(is.finite(w)) &&
+    all(w >= 0) &&
+    any(w > 0)
+}
+
+# The per-segment fallback for `.draw_var_width_line()`. The gpar's own `lwd` is
 # overridden per element by `segments_grob(lwd = )`, so it only carries the
 # colour / alpha / line type the group shares. `cv`, when given, is a continuous
 # colour value at each vertex: each segment is then coloured by the mean of its
 # two endpoint values (the same rule as the width), so a line mapped to a
 # continuous colour stays one connected path whose colour shifts along it.
-.draw_var_width_line <- function(
+.draw_var_width_segments <- function(
   scene,
   scales,
   x,

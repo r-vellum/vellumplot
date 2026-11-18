@@ -1,5 +1,7 @@
-# A mapped `linewidth` on a line / step / segment: one constant width per
-# segment, via `segments_grob(lwd = <vector>)`.
+# A mapped `linewidth` on a line / step: one tapered stroke per series, via
+# `lines_grob(lwd_profile = <one width per vertex>)` (#165), falling back to one
+# constant width per segment (`segments_grob(lwd = <vector>)`) where a profile
+# can't express the series. On a segment: one width per element.
 
 df <- data.frame(
   x = 1:6,
@@ -18,6 +20,34 @@ mark_widths <- function(plot, layer = "layer-1") {
   mine <- parts[startsWith(parts, paste0('id="', layer, "-"))]
   w <- regmatches(mine, gregexpr('stroke-width="[0-9.]+"', mine))
   as.numeric(sub('"$', "", sub('stroke-width="', "", unlist(w))))
+}
+
+# The grobs a mark layer hands to `.draw()`, with the layer rows each records,
+# captured while the plot compiles. Lets a test read a ribbon's `lwd_profile`
+# (a filled outline in SVG, so it has no `stroke-width` to parse).
+drawn_grobs <- function(plot) {
+  got <- list()
+  draw <- .draw
+  testthat::local_mocked_bindings(
+    .draw = function(scene, grob, rows = NULL) {
+      got[[length(got) + 1L]] <<- list(grob = grob, rows = rows)
+      draw(scene, grob, rows)
+    },
+    .package = "vellumplot"
+  )
+  vellum::as_vellum_scene(plot)
+  got
+}
+
+# The `lwd_profile` ribbons among them.
+profiles <- function(plot) {
+  g <- drawn_grobs(plot)
+  Filter(
+    function(e) {
+      S7::prop_exists(e$grob, "lwd_profile") && !is.null(e$grob@lwd_profile)
+    },
+    g
+  )
 }
 
 # The SVG with its per-render element-id counter normalised away, so two
@@ -56,13 +86,45 @@ test_that("scale_linewidth() sets the output range, limits, breaks and name", {
   expect_identical(scale_linewidth_continuous, scale_linewidth)
 })
 
-test_that("a mapped linewidth draws one segment per span, at the endpoint mean", {
+test_that("a mapped linewidth draws one tapered stroke, one width per vertex", {
   p <- vplot(df) |> mark_line(x = x, y = y, linewidth = w)
-  w <- mark_widths(p)
-  expect_length(w, nrow(df) - 1L)
-  # values 1..6 rescale to 0.5..4 (step 0.7); each segment is the endpoint mean
-  mapped <- scales::rescale(df$w, to = c(0.5, 4))
-  expect_equal(w, (mapped[-6] + mapped[-1]) / 2, tolerance = 1e-6)
+  pr <- profiles(p)
+  expect_length(pr, 1L)
+  g <- pr[[1]]$grob
+  # the profile IS the width: lwd 1, one multiplier per vertex (values 1..6
+  # rescale to 0.5..4), and no per-segment batch alongside it
+  expect_identical(g@gp@lwd, 1)
+  expect_equal(
+    g@lwd_profile,
+    scales::rescale(df$w, to = c(0.5, 4)),
+    tolerance = 1e-6
+  )
+  expect_identical(pr[[1]]$rows, seq_len(nrow(df)))
+  # in SVG it is one filled outline, not a per-segment batch of strokes
+  parts <- strsplit(svg_of(p), "<g data-vellum-", fixed = TRUE)[[1]]
+  mine <- parts[startsWith(parts, 'id="layer-1-')]
+  expect_identical(sum(lengths(regmatches(mine, gregexpr("<path", mine)))), 1L)
+  expect_length(mark_widths(p), 0L)
+})
+
+test_that("a tapered stroke is one element per series in scene_model()", {
+  d <- data.frame(
+    x = rep(1:5, 2),
+    y = c(1:5, 5:1),
+    w = c(1:5, 5:1),
+    g = rep(c("a", "b"), each = 5)
+  )
+  p <- vplot(d) |>
+    mark_line(x = x, y = y, linewidth = w, color = g, data_id = g)
+  sc <- vellum::as_vellum_scene(p)
+  el <- vellum::scene_model(sc)$elements
+  mine <- el[!is.na(el$key) & el$key %in% c("a", "b"), ]
+  expect_identical(sort(mine$key), c("a", "b"))
+  expect_true(all(mine$mark == "line"))
+  geo <- vellum::element_geometry(sc)
+  geo <- geo[!is.na(geo$key) & geo$key %in% c("a", "b"), ]
+  # each series is one polyline through its own five vertices
+  expect_identical(as.vector(table(geo$key)), c(5L, 5L))
 })
 
 test_that("a constant linewidth still emits one lines_grob, byte for byte", {
@@ -79,9 +141,33 @@ test_that("a constant linewidth still emits one lines_grob, byte for byte", {
 })
 
 test_that("a mapped linewidth splits per style group and keeps x order", {
-  p <- vplot(df) |> mark_line(x = x, y = y, color = grp, linewidth = w)
-  # 3 rows per group -> 2 segments per group
-  expect_length(mark_widths(p), 4L)
+  d <- df[c(3, 1, 2, 6, 4, 5), ]
+  p <- vplot(d) |> mark_line(x = x, y = y, color = grp, linewidth = w)
+  pr <- profiles(p)
+  # one ribbon per group, its vertices (and their widths) in x order
+  expect_length(pr, 2L)
+  mapped <- scales::rescale(df$w, to = c(0.5, 4))
+  expect_equal(pr[[1]]$grob@lwd_profile, mapped[1:3], tolerance = 1e-6)
+  expect_equal(pr[[2]]$grob@lwd_profile, mapped[4:6], tolerance = 1e-6)
+  expect_identical(d$x[pr[[1]]$rows], 1:3)
+})
+
+test_that("the segment fallback keeps the endpoint-mean width per span", {
+  # A dashed line can't be a filled ribbon, so it keeps one segment per span,
+  # each at the mean of its two endpoint widths.
+  p <- vplot(df) |>
+    mark_line(x = x, y = y, linewidth = w, linetype = "dashed")
+  expect_length(profiles(p), 0L)
+  w <- mark_widths(p)
+  expect_length(w, nrow(df) - 1L)
+  mapped <- scales::rescale(df$w, to = c(0.5, 4))
+  expect_equal(w, (mapped[-6] + mapped[-1]) / 2, tolerance = 1e-6)
+})
+
+test_that("a continuous colour keeps per-segment colour and width", {
+  p <- vplot(df) |> mark_line(x = x, y = y, linewidth = w, color = y)
+  expect_length(profiles(p), 0L)
+  expect_length(mark_widths(p), nrow(df) - 1L)
 })
 
 test_that("mark_segment() takes a mapped linewidth per element", {
@@ -95,48 +181,56 @@ test_that("mark_segment() takes a mapped linewidth per element", {
   )
 })
 
-test_that("mark_step() varies width per tread and blends across each riser", {
+test_that("mark_step() holds width along each tread and blends across each riser", {
   d <- data.frame(x = 1:3, y = c(1, 2, 3), w = c(1, 2, 3))
   p <- vplot(d) |> mark_step(x = x, y = y, linewidth = w)
   mapped <- scales::rescale(d$w, to = c(0.5, 4))
-  # hv: tread at w1, riser w1->w2, tread at w2, riser w2->w3
+  pr <- profiles(p)
+  expect_length(pr, 1L)
+  # hv vertices: (1,1) (2,1) (2,2) (3,2) (3,3) -- each tread runs at its own
+  # datum's width, each riser tapers from one to the next
   expect_equal(
-    mark_widths(p),
-    c(
-      mapped[1],
-      mean(mapped[1:2]),
-      mapped[2],
-      mean(mapped[2:3])
-    ),
+    pr[[1]]$grob@lwd_profile,
+    mapped[c(1, 1, 2, 2, 3)],
     tolerance = 1e-6
   )
 })
 
 test_that("a mapped linewidth survives flip, polar and a sketch", {
   p <- vplot(df) |> mark_line(x = x, y = y, linewidth = w)
-  expect_length(mark_widths(p |> coord_flip()), nrow(df) - 1L)
-  # polar munches each segment into arcs; every piece keeps that segment's width
-  wp <- mark_widths(p |> coord_polar())
-  expect_gte(length(wp), nrow(df) - 1L)
-  expect_equal(range(wp), range(mark_widths(p)), tolerance = 1e-6)
-  expect_length(mark_widths(p |> theme_sketch()), nrow(df) - 1L)
+  mapped <- scales::rescale(df$w, to = c(0.5, 4))
+  pf <- profiles(p |> coord_flip())
+  expect_length(pf, 1L)
+  expect_equal(pf[[1]]$grob@lwd_profile, mapped, tolerance = 1e-6)
+  # polar munches the series into arcs; the profile is resampled onto the extra
+  # vertices, so it stays one ribbon spanning the same width range
+  pp <- profiles(p |> coord_polar())
+  expect_length(pp, 1L)
+  wp <- pp[[1]]$grob@lwd_profile
+  expect_gt(length(wp), nrow(df))
+  expect_equal(range(wp), range(mapped), tolerance = 1e-6)
+  # vellum refuses sketch + profile, so a sketched line keeps the segments
+  ps <- p |> theme_sketch()
+  expect_length(profiles(ps), 0L)
+  expect_length(mark_widths(ps), nrow(df) - 1L)
 })
 
 test_that("a glow effect widens the mapped widths, not a single constant", {
-  plain <- mark_widths(vplot(df) |> mark_line(x = x, y = y, linewidth = w))
-  both <- mark_widths(
+  plain <- profiles(vplot(df) |> mark_line(x = x, y = y, linewidth = w))
+  both <- profiles(
     vplot(df) |>
       mark_line(x = x, y = y, linewidth = w, effects = list(glow()))
   )
   # the halo copy is drawn first, under the mark, which is unchanged
-  n <- length(plain)
-  expect_length(both, 2L * n)
-  halo <- both[seq_len(n)]
-  expect_equal(both[-seq_len(n)], plain)
-  # each halo stroke is its own segment's width plus one shared widening -- not
-  # a single constant width that would swallow the taper
-  expect_true(all(halo > plain))
-  expect_equal(diff(halo), diff(plain), tolerance = 1e-6)
+  expect_length(plain, 1L)
+  expect_length(both, 2L)
+  pw <- plain[[1]]$grob@lwd_profile
+  halo <- both[[1]]$grob@lwd_profile
+  expect_equal(both[[2]]$grob@lwd_profile, pw)
+  # each halo vertex is its own width plus one shared widening -- not a single
+  # constant width that would swallow the taper
+  expect_true(all(halo > pw))
+  expect_equal(diff(halo), diff(pw), tolerance = 1e-6)
 })
 
 test_that("mapped edge width and mapped line width train separately", {
@@ -158,6 +252,8 @@ test_that("a missing width thins its segments instead of erasing them", {
   p <- vplot(d) |>
     mark_line(x = x, y = y, linewidth = w) |>
     scale_linewidth(range = c(1, 11))
+  # a missing width can't ride a profile: the series keeps the segments
+  expect_length(profiles(p), 0L)
   w <- mark_widths(p)
   expect_length(w, 3L) # no segment dropped
   # vertices map to 1, NA, 11, 1 -> seg1 from v1 alone, seg2 from v3 alone,
@@ -171,10 +267,9 @@ test_that("a missing width costs no ink", {
     y = rep(c(1, 2), length.out = 5),
     w = c(5, NA, 5, 5, 5)
   )
-  full <- data.frame(x = d$x, y = d$y, w = rep(5, 5))
+  # every span still draws: the missing width costs only its own contribution
   gap <- vplot(d) |> mark_line(x = x, y = y, linewidth = w)
-  all <- vplot(full) |> mark_line(x = x, y = y, linewidth = w)
-  expect_identical(length(mark_widths(gap)), length(mark_widths(all)))
+  expect_length(mark_widths(gap), nrow(d) - 1L)
 })
 
 test_that("a segment missing a width at both ends is dropped, keeping provenance", {

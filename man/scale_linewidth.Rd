@@ -37,17 +37,21 @@ linearly onto a line-width \code{range} (in \code{lwd} units, as everywhere else
 package) and a line-width legend is drawn automatically.
 }
 \details{
-A mapped \code{linewidth} gives each \strong{segment} one constant width, taken as the
-mean of its two endpoint values. So the width changes in visible steps at each
-vertex rather than tapering smoothly along the line, and the round joins do
-not perfectly fill the corners of a sharp bend. That is inherent to
-per-segment width; a constant \verb{linewidth =} is unaffected and still draws the
-line as a single stroke.
+On \code{mark_line()} and \code{mark_step()}, a mapped \code{linewidth} draws each series as
+\strong{one continuous stroke whose width tapers smoothly} between the values at
+its vertices (via vellum's \code{lines_grob(lwd_profile = )}). The stroke is built
+as a filled outline at render time, so it looks the same in PNG, SVG and PDF
+and stays one element per series in \code{\link[vellum:scene_model]{vellum::scene_model()}} and the SVG. A
+constant \verb{linewidth =} is unaffected and still draws an ordinary stroke.
 
-No backend can stroke the segments of one path at different widths in a single
-call, so a mapped \code{linewidth} emits one path element per segment in SVG and
-PDF. On a long, dense line that is a lot of elements -- worth knowing before
-mapping \code{linewidth} on tens of thousands of rows.
+A tapered stroke has one colour and no dash pattern, so a series falls back to
+\strong{one segment per span} -- each at the mean of its two endpoint widths, so
+the width steps at every vertex -- when it also maps a continuous colour (each
+segment then takes its own colour), uses a dashed or dotted \code{linetype}, is
+drawn with a sketch theme, or has a missing width. That fallback emits one
+path element per segment, worth knowing before combining those with tens of
+thousands of rows. \code{mark_segment()} is already one element per row and takes
+one width per segment.
 
 For edges on a \code{\link[=vgraph]{vgraph()}} plot, use \code{\link[=scale_edge_width]{scale_edge_width()}} instead: an edge's
 width is trained and legended independently of the line-width scale. That also
@@ -57,6 +61,7 @@ use \code{guides(edge_width = )} / \code{lims(edge_width = )} for a graph's edge
 A missing (\code{NA}) width takes its segment's width from whichever endpoint is
 known, so one missing value thins the line rather than erasing the two
 segments that meet at it. A segment missing a width at both ends is dropped.
+(A series with a missing width is drawn per segment, as above.)
 }
 \examples{
 vplot(pressure) |>
