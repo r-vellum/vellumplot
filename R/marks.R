@@ -274,6 +274,13 @@ after_stat <- function(x) x
     !vapply(interactivity, rlang::quo_is_null, logical(1))
   ]
   quos <- quos[setdiff(names(quos), .INTERACT_ARGS)]
+  # `position` is never an aesthetic. A constructor without a `position` formal
+  # would let it fall into `...` and become an inert constant aesthetic; take it
+  # as the layer's position instead.
+  if ("position" %in% names(quos)) {
+    position <- rlang::eval_tidy(quos$position)
+    quos <- quos[names(quos) != "position"]
+  }
   split <- .split_encodings(quos)
   # Pre-evaluated always-constant params (e.g. mm nudges) bypass encoding
   # splitting, so a negative literal like `nudge_y = -3` is not mistaken for a
@@ -300,6 +307,15 @@ after_stat <- function(x) x
   # A `position_*()` object splits into the type string (stored on the layer)
   # plus parameters merged into `stat_params`, where the emitters read them.
   pos <- .normalize_position(position)
+  .check_position(
+    mark,
+    pos$type,
+    fn = tryCatch(
+      rlang::call_name(rlang::caller_call()),
+      error = function(e) NULL
+    ),
+    call = rlang::caller_env()
+  )
   stat_params <- utils::modifyList(stat_params, pos$args)
   layer <- LayerSpec(
     mark = mark,
@@ -426,10 +442,16 @@ after_stat <- function(x) x
 #'   `.svg` file — drawn as a crisp vector marker. Use a literal string for a
 #'   constant icon, or map `shape` and pass icons to [scale_shape()].
 #' @param position Position adjustment: a string — `"identity"` (default),
-#'   `"jitter"` / `"jitterdodge"` (points), `"stack"` / `"fill"` / `"dodge"` /
-#'   `"dodge2"` (bars), `"nudge"` — or a parameterised [position_jitter()] /
-#'   [position_dodge()] / [position_dodge2()] / [position_jitterdodge()] /
-#'   [position_nudge()] object.
+#'   `"nudge"`, `"stack"`, `"fill"`, `"dodge"`, `"dodge2"`, `"jitter"`,
+#'   `"jitterdodge"`, `"sina"` — or a parameterised [position] object such as
+#'   [position_dodge()] or [position_stack()]. Every mark takes `"identity"` and
+#'   `"nudge"`. `"stack"`/`"fill"` work on bars, areas, points, text and labels
+#'   (so a label can sit on its stacked bar); `"dodge"`/`"dodge2"` on bars,
+#'   points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+#'   violins and slab-intervals (so error bars dodge over dodged bars);
+#'   `"jitter"` on points, text and labels; `"jitterdodge"` and `"sina"` on
+#'   points. A position a mark does not support is an error naming the ones it
+#'   does.
 #' @param auto For `mark_point()`, `mark_line()`, `mark_step()`,
 #'   `mark_segment()`, and `mark_edges()`, when `TRUE` and the layer has very many
 #'   rows, automatically render it as a datashaded density raster (see
@@ -533,6 +555,7 @@ mark_point <- function(
 mark_line <- function(
   plot,
   ...,
+  position = "identity",
   window = NULL,
   auto = FALSE,
   blend = NULL,
@@ -551,7 +574,8 @@ mark_line <- function(
     blend = blend,
     effects = effects,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -583,6 +607,8 @@ mark_line <- function(
 #'   when the layer is interactive (merging would drop the per-feature keys).
 #' @param blend Optional blend mode (see [mark_point()]).
 #' @param data Optional layer data (an `sf` object); overrides the plot data.
+#' @param position Position adjustment; see [mark_point()]. A mark errors
+#'   on a position it does not support, naming the ones it does.
 #' @return The modified [PlotSpec].
 #' @param sketch A [sketch()] spec giving the layer a hand-drawn look, or `NULL`
 #'   (default) to inherit.
@@ -596,6 +622,7 @@ mark_line <- function(
 mark_sf <- function(
   plot,
   ...,
+  position = "identity",
   fill = NULL,
   color = NULL,
   alpha = NULL,
@@ -623,7 +650,8 @@ mark_sf <- function(
     stat_params = list(na_value = na_value, merge = isTRUE(merge)),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -656,6 +684,7 @@ mark_sf <- function(
 mark_sf_label <- function(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   repel = TRUE,
   box_padding = 1,
@@ -683,7 +712,8 @@ mark_sf_label <- function(
       )
     ),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -692,6 +722,7 @@ mark_sf_label <- function(
 mark_rule <- function(
   plot,
   ...,
+  position = "identity",
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -705,7 +736,8 @@ mark_rule <- function(
     blend = blend,
     effects = effects,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -730,6 +762,8 @@ mark_rule <- function(
 #' @param args For `mark_function()`, extra arguments passed to `fun` (e.g.
 #'   `args = list(mean = 5, sd = 2)`).
 #' @param blend,sketch,data See [mark_point()].
+#' @param position Position adjustment; see [mark_point()]. A mark errors
+#'   on a position it does not support, naming the ones it does.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_abline(slope = -5, intercept = 37)
@@ -740,6 +774,7 @@ mark_rule <- function(
 mark_abline <- function(
   plot,
   ...,
+  position = "identity",
   slope = 1,
   intercept = 0,
   blend = NULL,
@@ -754,7 +789,8 @@ mark_abline <- function(
     const_params = list(slope = slope, intercept = intercept),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -763,6 +799,7 @@ mark_abline <- function(
 mark_function <- function(
   plot,
   ...,
+  position = "identity",
   fun,
   n = 101,
   args = list(),
@@ -781,7 +818,8 @@ mark_function <- function(
     const_params = list(fun = match.fun(fun), n = n, args = args),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -979,6 +1017,7 @@ mark_histogram <- function(
 mark_smooth <- function(
   plot,
   ...,
+  position = "identity",
   method = "auto",
   formula = NULL,
   span = 0.75,
@@ -1005,7 +1044,8 @@ mark_smooth <- function(
     ),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1042,6 +1082,7 @@ mark_smooth <- function(
 mark_ellipse <- function(
   plot,
   ...,
+  position = "identity",
   type = "t",
   level = 0.95,
   segments = 51L,
@@ -1058,7 +1099,8 @@ mark_ellipse <- function(
     stat_params = list(type = type, level = level, segments = segments),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1070,6 +1112,7 @@ mark_ellipse <- function(
 mark_hull <- function(
   plot,
   ...,
+  position = "identity",
   expand = 0,
   blend = NULL,
   sketch = NULL,
@@ -1084,7 +1127,8 @@ mark_hull <- function(
     stat_params = list(expand = as.numeric(expand)),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1133,6 +1177,7 @@ mark_hull <- function(
 mark_datashade <- function(
   plot,
   ...,
+  position = "identity",
   width = 400,
   height = 300,
   colors = NULL,
@@ -1159,7 +1204,8 @@ mark_datashade <- function(
       spread = spread
     ),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1207,7 +1253,14 @@ mark_area <- function(
 
 #' @rdname mark_area
 #' @export
-mark_ribbon <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+mark_ribbon <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -1215,7 +1268,8 @@ mark_ribbon <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
     rlang::enquos(...),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1224,6 +1278,7 @@ mark_ribbon <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
 mark_step <- function(
   plot,
   ...,
+  position = "identity",
   direction = "hv",
   auto = FALSE,
   blend = NULL,
@@ -1240,7 +1295,8 @@ mark_step <- function(
     blend = blend,
     effects = effects,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1293,6 +1349,7 @@ mark_step <- function(
 mark_text <- function(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   family = NULL,
   fontface = NULL,
@@ -1338,7 +1395,8 @@ mark_text <- function(
     ),
     effects = effects,
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1347,6 +1405,7 @@ mark_text <- function(
 mark_label <- function(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   family = NULL,
   fontface = NULL,
@@ -1396,7 +1455,8 @@ mark_label <- function(
     effects = effects,
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1431,6 +1491,7 @@ mark_label <- function(
 mark_series_label <- function(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   nudge_x = 2,
   repel = TRUE,
@@ -1463,7 +1524,8 @@ mark_series_label <- function(
       )
     ),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1496,6 +1558,7 @@ mark_series_label <- function(
 mark_outlier_label <- function(
   plot,
   ...,
+  position = "identity",
   method = c("iqr", "sd"),
   k = 1.5,
   size = NULL,
@@ -1522,7 +1585,8 @@ mark_outlier_label <- function(
       repel = .repel_params(repel, box_padding, 1, min_segment_length, NULL)
     ),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1563,6 +1627,7 @@ mark_outlier_label <- function(
 mark_text_path <- function(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   family = NULL,
   fontface = NULL,
@@ -1586,7 +1651,8 @@ mark_text_path <- function(
       offset = offset
     ),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1610,7 +1676,14 @@ mark_text_path <- function(
 #' d$z <- d$x * d$y
 #' vplot(d) |> mark_tile(x = x, y = y, fill = z)
 #' @export
-mark_tile <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+mark_tile <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -1618,15 +1691,29 @@ mark_tile <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
     rlang::enquos(...),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
 #' @rdname mark_tile
 #' @export
-mark_raster <- function(plot, ..., blend = NULL, data = NULL) {
+mark_raster <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
-  .add_layer(plot, "raster", rlang::enquos(...), blend = blend, data = data)
+  .add_layer(
+    plot,
+    "raster",
+    rlang::enquos(...),
+    blend = blend,
+    data = data,
+    position = position
+  )
 }
 
 #' Draw images at data points
@@ -1664,6 +1751,7 @@ mark_raster <- function(plot, ..., blend = NULL, data = NULL) {
 mark_image <- function(
   plot,
   ...,
+  position = "identity",
   src = NULL,
   size = 5,
   nudge_x = 0,
@@ -1684,13 +1772,21 @@ mark_image <- function(
       interpolate = isTRUE(interpolate)
     ),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
 #' @rdname mark_tile
 #' @export
-mark_bin2d <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
+mark_bin2d <- function(
+  plot,
+  ...,
+  position = "identity",
+  bins = 30,
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
   dots <- .default_channel(dots, "fill", rlang::quo(after_stat(count)))
@@ -1701,7 +1797,8 @@ mark_bin2d <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
     stat = "bin2d",
     stat_params = list(bins = bins),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1710,6 +1807,7 @@ mark_bin2d <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
 mark_density <- function(
   plot,
   ...,
+  position = "identity",
   adjust = 1,
   blend = NULL,
   sketch = NULL,
@@ -1724,7 +1822,8 @@ mark_density <- function(
     stat_params = list(adjust = adjust),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1758,6 +1857,7 @@ mark_density <- function(
 mark_contour <- function(
   plot,
   ...,
+  position = "identity",
   bins = 10,
   binwidth = NULL,
   breaks = NULL,
@@ -1782,7 +1882,8 @@ mark_contour <- function(
     ),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1791,6 +1892,7 @@ mark_contour <- function(
 mark_contour_filled <- function(
   plot,
   ...,
+  position = "identity",
   bins = 10,
   binwidth = NULL,
   breaks = NULL,
@@ -1816,7 +1918,8 @@ mark_contour_filled <- function(
     ),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1839,13 +1942,22 @@ mark_contour_filled <- function(
 #' @param distribution Quantile function of the reference distribution for
 #'   `mark_qq()` / `mark_qq_line()` (default [stats::qnorm]).
 #' @param blend,sketch,data Standard layer arguments (see [mark_point()]).
+#' @param position Position adjustment; see [mark_point()]. A mark errors
+#'   on a position it does not support, naming the ones it does.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_ecdf(x = mpg)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_rug()
 #' vplot(mtcars) |> mark_qq(sample = mpg) |> mark_qq_line(sample = mpg)
 #' @export
-mark_ecdf <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+mark_ecdf <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -1854,7 +1966,8 @@ mark_ecdf <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
     stat = "ecdf",
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1863,6 +1976,7 @@ mark_ecdf <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
 mark_rug <- function(
   plot,
   ...,
+  position = "identity",
   sides = "bl",
   length = 0.03,
   blend = NULL,
@@ -1886,7 +2000,8 @@ mark_rug <- function(
     stat = "identity",
     stat_params = list(sides = sides, length = length),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1895,6 +2010,7 @@ mark_rug <- function(
 mark_qq <- function(
   plot,
   ...,
+  position = "identity",
   distribution = "qnorm",
   blend = NULL,
   sketch = NULL,
@@ -1909,7 +2025,8 @@ mark_qq <- function(
     stat_params = list(distribution = distribution),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1918,6 +2035,7 @@ mark_qq <- function(
 mark_qq_line <- function(
   plot,
   ...,
+  position = "identity",
   distribution = "qnorm",
   blend = NULL,
   sketch = NULL,
@@ -1932,7 +2050,8 @@ mark_qq_line <- function(
     stat_params = list(distribution = distribution),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1953,6 +2072,8 @@ mark_qq_line <- function(
 #'   `1.4`, so adjacent ridges overlap slightly).
 #' @param binwidth Dot-plot bin width, or `NULL` to use ~1/30 of the data range.
 #' @param blend,sketch,data Standard layer arguments (see [mark_point()]).
+#' @param position Position adjustment; see [mark_point()]. A mark errors
+#'   on a position it does not support, naming the ones it does.
 #' @return The modified [PlotSpec].
 #' @examples
 #' df <- data.frame(g = rep(letters[1:3], each = 50), v = rnorm(150))
@@ -1963,6 +2084,7 @@ mark_qq_line <- function(
 mark_violin <- function(
   plot,
   ...,
+  position = "identity",
   adjust = 1,
   blend = NULL,
   sketch = NULL,
@@ -1977,7 +2099,8 @@ mark_violin <- function(
     stat_params = list(adjust = adjust),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -1986,6 +2109,7 @@ mark_violin <- function(
 mark_ridgeline <- function(
   plot,
   ...,
+  position = "identity",
   adjust = 1,
   height = 1.4,
   blend = NULL,
@@ -2001,7 +2125,8 @@ mark_ridgeline <- function(
     stat_params = list(adjust = adjust, height = height),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2010,6 +2135,7 @@ mark_ridgeline <- function(
 mark_dotplot <- function(
   plot,
   ...,
+  position = "identity",
   binwidth = NULL,
   blend = NULL,
   sketch = NULL,
@@ -2024,7 +2150,8 @@ mark_dotplot <- function(
     stat_params = list(binwidth = binwidth),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2064,6 +2191,7 @@ mark_dotplot <- function(
 mark_halfeye <- function(
   plot,
   ...,
+  position = "identity",
   .width = c(0.66, 0.95),
   point = "median",
   adjust = 1,
@@ -2087,7 +2215,8 @@ mark_halfeye <- function(
     ),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2096,6 +2225,7 @@ mark_halfeye <- function(
 mark_interval <- function(
   plot,
   ...,
+  position = "identity",
   .width = c(0.66, 0.95),
   point = "median",
   blend = NULL,
@@ -2110,7 +2240,8 @@ mark_interval <- function(
     dots,
     stat_params = list(width = .width, point = point),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2157,7 +2288,14 @@ mark_raincloud <- function(plot, x, y, ..., width = 0.4, alpha = 0.5) {
 
 #' @rdname mark_tile
 #' @export
-mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
+mark_hex <- function(
+  plot,
+  ...,
+  position = "identity",
+  bins = 30,
+  blend = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
   dots <- .default_channel(dots, "fill", rlang::quo(after_stat(count)))
@@ -2168,7 +2306,8 @@ mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
     stat = "hexbin",
     stat_params = list(bins = bins),
     blend = blend,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2190,7 +2329,14 @@ mark_hex <- function(plot, ..., bins = 30, blend = NULL, data = NULL) {
 #' @examples
 #' vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
 #' @export
-mark_boxplot <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+mark_boxplot <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -2198,7 +2344,8 @@ mark_boxplot <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
     rlang::enquos(...),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2234,6 +2381,7 @@ mark_boxplot <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
 mark_signif <- function(
   plot,
   ...,
+  position = "identity",
   comparisons = NULL,
   method = c("wilcox.test", "t.test"),
   label = c("p", "stars"),
@@ -2260,7 +2408,8 @@ mark_signif <- function(
     ),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2269,6 +2418,7 @@ mark_signif <- function(
 mark_errorbar <- function(
   plot,
   ...,
+  position = "identity",
   width = 0.5,
   blend = NULL,
   sketch = NULL,
@@ -2282,7 +2432,8 @@ mark_errorbar <- function(
     rlang::enquos(width = width),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2291,6 +2442,7 @@ mark_errorbar <- function(
 mark_linerange <- function(
   plot,
   ...,
+  position = "identity",
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2302,7 +2454,8 @@ mark_linerange <- function(
     rlang::enquos(...),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2311,6 +2464,7 @@ mark_linerange <- function(
 mark_summary <- function(
   plot,
   ...,
+  position = "identity",
   fun = mean,
   blend = NULL,
   sketch = NULL,
@@ -2325,7 +2479,8 @@ mark_summary <- function(
     stat_params = list(fun = fun),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2340,6 +2495,7 @@ mark_summary <- function(
 mark_pointrange <- function(
   plot,
   ...,
+  position = "identity",
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2351,7 +2507,8 @@ mark_pointrange <- function(
     rlang::enquos(...),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2360,6 +2517,7 @@ mark_pointrange <- function(
 mark_crossbar <- function(
   plot,
   ...,
+  position = "identity",
   width = 0.5,
   blend = NULL,
   sketch = NULL,
@@ -2373,7 +2531,8 @@ mark_crossbar <- function(
     rlang::enquos(width = width),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2393,7 +2552,14 @@ mark_crossbar <- function(
 #' vplot(mpg <- data.frame(cyl = mtcars$cyl, gear = mtcars$gear)) |>
 #'   mark_count(x = cyl, y = gear)
 #' @export
-mark_count <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+mark_count <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   dots <- rlang::enquos(...)
   dots <- .default_channel(dots, "size", rlang::quo(after_stat(n)))
@@ -2404,7 +2570,8 @@ mark_count <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
     stat = "sum",
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2425,6 +2592,7 @@ mark_count <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
 mark_segment <- function(
   plot,
   ...,
+  position = "identity",
   auto = FALSE,
   blend = NULL,
   effects = list(),
@@ -2440,7 +2608,8 @@ mark_segment <- function(
     blend = blend,
     effects = effects,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 
@@ -2638,6 +2807,8 @@ mark_segment <- function(
 #'   (`mark_node_text()` / `mark_edge_text()`) only [shadow()] applies.
 #' @param sketch A [sketch()] spec giving the layer a hand-drawn look,
 #'   `NA`/`FALSE` to force it crisp, or `NULL` (default) to inherit.
+#' @param position Position adjustment; see [mark_point()]. A mark errors
+#'   on a position it does not support, naming the ones it does.
 #' @return The modified [PlotSpec].
 #' @seealso [vgraph()], [scale_edge_width()], [scale_edge_color()]
 #' @name mark_graph
@@ -2655,6 +2826,7 @@ NULL
 mark_edges <- function(
   plot,
   ...,
+  position = "identity",
   color = NULL,
   linewidth = NULL,
   alpha = NULL,
@@ -2708,7 +2880,8 @@ mark_edges <- function(
     effects = effects,
     sketch = sketch,
     data = data %||% plot@edge_data,
-    z = 1L
+    z = 1L,
+    position = position
   )
 }
 
@@ -2717,6 +2890,7 @@ mark_edges <- function(
 mark_edge_bundle <- function(
   plot,
   ...,
+  position = "identity",
   type = c("force", "divided", "stub", "path", "hammer", "mingle"),
   color = NULL,
   linewidth = NULL,
@@ -2755,7 +2929,8 @@ mark_edge_bundle <- function(
     effects = effects,
     sketch = sketch,
     data = data %||% plot@edge_data,
-    z = 1L
+    z = 1L,
+    position = position
   )
 }
 
@@ -2764,6 +2939,7 @@ mark_edge_bundle <- function(
 mark_flow_map <- function(
   plot,
   ...,
+  position = "identity",
   root,
   type = c("spiral", "steiner"),
   weight = NULL,
@@ -2834,7 +3010,8 @@ mark_flow_map <- function(
     effects = effects,
     sketch = sketch,
     data = edges,
-    z = 1L
+    z = 1L,
+    position = position
   )
 }
 
@@ -2843,6 +3020,7 @@ mark_flow_map <- function(
 mark_nodes <- function(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   shape = NULL,
   fill = NULL,
@@ -2870,7 +3048,8 @@ mark_nodes <- function(
     effects = effects,
     sketch = sketch,
     data = data,
-    z = 3L
+    z = 3L,
+    position = position
   )
 }
 
@@ -2879,6 +3058,7 @@ mark_nodes <- function(
 mark_node_text <- function(
   plot,
   ...,
+  position = "identity",
   label = NULL,
   color = NULL,
   size = NULL,
@@ -2955,7 +3135,8 @@ mark_node_text <- function(
     effects = effects,
     blend = blend,
     data = lab,
-    z = 4L
+    z = 4L,
+    position = position
   )
 }
 
@@ -2988,6 +3169,7 @@ mark_node_text <- function(
 mark_edge_text <- function(
   plot,
   ...,
+  position = "identity",
   label = NULL,
   color = NULL,
   size = NULL,
@@ -3033,7 +3215,8 @@ mark_edge_text <- function(
     effects = effects,
     blend = blend,
     data = data %||% plot@edge_data,
-    z = 2L
+    z = 2L,
+    position = position
   )
 }
 
@@ -3042,6 +3225,7 @@ mark_edge_text <- function(
 mark_node_hull <- function(
   plot,
   ...,
+  position = "identity",
   fill = NULL,
   color = NULL,
   alpha = 0.25,
@@ -3067,7 +3251,8 @@ mark_node_hull <- function(
     stat = "hull",
     stat_params = list(expand = as.numeric(expand)),
     data = data %||% plot@data,
-    z = 0L
+    z = 0L,
+    position = position
   )
 }
 
@@ -3077,6 +3262,7 @@ mark_node_pie <- function(
   plot,
   cols,
   ...,
+  position = "identity",
   size = 4,
   inner = 0,
   fill = NULL,
@@ -3121,7 +3307,8 @@ mark_node_pie <- function(
       alpha = as.numeric(alpha)
     ),
     data = d,
-    z = 3L
+    z = 3L,
+    position = position
   )
 }
 

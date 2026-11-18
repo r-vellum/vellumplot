@@ -9,17 +9,62 @@
 \alias{mark_crossbar}
 \title{Boxplot, error bar, and summary marks}
 \usage{
-mark_boxplot(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_boxplot(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_errorbar(plot, ..., width = 0.5, blend = NULL, sketch = NULL, data = NULL)
+mark_errorbar(
+  plot,
+  ...,
+  position = "identity",
+  width = 0.5,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_linerange(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_linerange(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_summary(plot, ..., fun = mean, blend = NULL, sketch = NULL, data = NULL)
+mark_summary(
+  plot,
+  ...,
+  position = "identity",
+  fun = mean,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_pointrange(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_pointrange(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_crossbar(plot, ..., width = 0.5, blend = NULL, sketch = NULL, data = NULL)
+mark_crossbar(
+  plot,
+  ...,
+  position = "identity",
+  width = 0.5,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
@@ -27,6 +72,18 @@ mark_crossbar(plot, ..., width = 0.5, blend = NULL, sketch = NULL, data = NULL)
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y} for boxplot/summary; \code{x}, \code{ymin},
 \code{ymax} for errorbar/linerange; plus \code{color}/\code{fill} (and \code{linetype} for
 errorbar/linerange).}
+
+\item{position}{Position adjustment: a string — \code{"identity"} (default),
+\code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
+\code{"jitterdodge"}, \code{"sina"} — or a parameterised \link{position} object such as
+\code{\link[=position_dodge]{position_dodge()}} or \code{\link[=position_stack]{position_stack()}}. Every mark takes \code{"identity"} and
+\code{"nudge"}. \code{"stack"}/\code{"fill"} work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); \code{"dodge"}/\code{"dodge2"} on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+\code{"jitter"} on points, text and labels; \code{"jitterdodge"} and \code{"sina"} on
+points. A position a mark does not support is an error naming the ones it
+does.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS

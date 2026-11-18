@@ -423,6 +423,10 @@ NULL
   edges = "line"
 )
 
+# Filled marks whose `color` strokes the outline rather than filling (ggplot2's
+# boxplot / violin semantics).
+.OUTLINE_MARKS <- c("boxplot", "violin", "ridgeline")
+
 .key_glyph_for_mark <- function(mark) {
   if (mark %in% names(.MARK_KEY_GLYPH)) .MARK_KEY_GLYPH[[mark]] else "square"
 }
@@ -436,13 +440,26 @@ NULL
   glyphs <- character(0)
   for (L in resolved) {
     if (any(aliases %in% names(L$values))) {
-      glyphs <- c(glyphs, .key_glyph_for_mark(L$mark))
+      glyph <- .key_glyph_for_mark(L$mark)
+      # A distribution mark whose colour reaches it only through `color` draws
+      # coloured outlines over a neutral fill, so its key is an outlined box.
+      if (
+        L$mark %in%
+          .OUTLINE_MARKS &&
+          !is.null(L$values$color) &&
+          is.null(L$values$fill)
+      ) {
+        glyph <- "outline"
+      }
+      glyphs <- c(glyphs, glyph)
     }
   }
   if ("point" %in% glyphs) {
     "point"
   } else if ("line" %in% glyphs) {
     "line"
+  } else if (length(glyphs) && all(glyphs == "outline")) {
+    "outline"
   } else {
     "square"
   }

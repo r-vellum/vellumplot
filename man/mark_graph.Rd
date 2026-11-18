@@ -15,6 +15,7 @@
 mark_edges(
   plot,
   ...,
+  position = "identity",
   color = NULL,
   linewidth = NULL,
   alpha = NULL,
@@ -34,6 +35,7 @@ mark_edges(
 mark_edge_bundle(
   plot,
   ...,
+  position = "identity",
   type = c("force", "divided", "stub", "path", "hammer", "mingle"),
   color = NULL,
   linewidth = NULL,
@@ -49,6 +51,7 @@ mark_edge_bundle(
 mark_flow_map(
   plot,
   ...,
+  position = "identity",
   root,
   type = c("spiral", "steiner"),
   weight = NULL,
@@ -65,6 +68,7 @@ mark_flow_map(
 mark_nodes(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   shape = NULL,
   fill = NULL,
@@ -79,6 +83,7 @@ mark_nodes(
 mark_node_text(
   plot,
   ...,
+  position = "identity",
   label = NULL,
   color = NULL,
   size = NULL,
@@ -99,6 +104,7 @@ mark_node_text(
 mark_edge_text(
   plot,
   ...,
+  position = "identity",
   label = NULL,
   color = NULL,
   size = NULL,
@@ -112,6 +118,7 @@ mark_edge_text(
 mark_node_hull(
   plot,
   ...,
+  position = "identity",
   fill = NULL,
   color = NULL,
   alpha = 0.25,
@@ -123,6 +130,7 @@ mark_node_pie(
   plot,
   cols,
   ...,
+  position = "identity",
   size = 4,
   inner = 0,
   fill = NULL,
@@ -139,6 +147,9 @@ mark_node_pie(
 \code{color}/\code{fill}, \code{shape}, \code{alpha}. Edges: \code{color}, \code{linewidth}, \code{linetype},
 \code{alpha}. The position channels are supplied by \code{vgraph()} and need not be
 mapped.}
+
+\item{position}{Position adjustment; see \code{\link[=mark_point]{mark_point()}}. A mark errors
+on a position it does not support, naming the ones it does.}
 
 \item{linewidth}{For \code{mark_edges()}, the edge width; a constant or (via
 \code{\link[=scale_edge_width]{scale_edge_width()}}) a mapped expression such as \code{linewidth = weight}. For

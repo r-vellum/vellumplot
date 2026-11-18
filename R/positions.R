@@ -27,6 +27,12 @@ NULL
 #'   stay centred and evenly spaced.
 #' * `position_jitterdodge()` dodges grouped elements, then jitters within each
 #'   dodged slot (points over dodged boxes).
+#' * `position_stack()` / `position_fill()` stack grouped elements sharing an
+#'   x (`fill` normalises each stack to 1). Bars and areas take the stacked
+#'   span; a point, text or label moves to a height inside its span: `vjust = 1`
+#'   (the default) is the top, `0.5` the middle -- so
+#'   `mark_text(position = position_stack(vjust = 0.5))` centres labels on the
+#'   segments of a stacked bar.
 #' * `position_sina()` spreads each category's points along x by a quasirandom
 #'   offset scaled to the local y-density, so the cloud traces the distribution's
 #'   shape (ggforce's sina). `width` is the maximum spread as a fraction of the
@@ -40,6 +46,8 @@ NULL
 #' @param padding `position_dodge2()` gap between dodged elements, as a fraction
 #'   of the element width.
 #' @param seed Optional integer seed for the random jitter.
+#' @param vjust `position_stack()` / `position_fill()`: where a point, text or
+#'   label sits inside its stacked span, from `0` (bottom) to `1` (top).
 #' @return A `vellumplot_position` object for a mark's `position` argument.
 #' @examples
 #' vplot(mtcars) |>
@@ -78,6 +86,25 @@ position_dodge <- function(width = NULL) {
 #' @export
 position_dodge2 <- function(padding = 0.1) {
   .new_position("dodge2", dodge2_padding = padding)
+}
+
+#' @rdname position
+#' @export
+position_stack <- function(vjust = 1) {
+  .new_position("stack", stack_vjust = .check_vjust(vjust))
+}
+
+#' @rdname position
+#' @export
+position_fill <- function(vjust = 1) {
+  .new_position("fill", stack_vjust = .check_vjust(vjust))
+}
+
+.check_vjust <- function(vjust, call = rlang::caller_env()) {
+  if (!is.numeric(vjust) || length(vjust) != 1L || !is.finite(vjust)) {
+    cli::cli_abort("{.arg vjust} must be a single finite number.", call = call)
+  }
+  vjust
 }
 
 #' @rdname position

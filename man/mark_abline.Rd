@@ -8,6 +8,7 @@
 mark_abline(
   plot,
   ...,
+  position = "identity",
   slope = 1,
   intercept = 0,
   blend = NULL,
@@ -18,6 +19,7 @@ mark_abline(
 mark_function(
   plot,
   ...,
+  position = "identity",
   fun,
   n = 101,
   args = list(),
@@ -31,6 +33,9 @@ mark_function(
 
 \item{...}{For \code{mark_abline()}/\code{mark_function()}, styling passed through as
 constants (e.g. \code{color}, \code{linewidth}, \code{linetype}).}
+
+\item{position}{Position adjustment; see \code{\link[=mark_point]{mark_point()}}. A mark errors
+on a position it does not support, naming the ones it does.}
 
 \item{slope, intercept}{For \code{mark_abline()}, the line's slope and intercept
 (each may be a vector to draw several lines). Defaults \code{1} and \code{0}.}

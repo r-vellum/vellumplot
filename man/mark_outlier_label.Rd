@@ -7,6 +7,7 @@
 mark_outlier_label(
   plot,
   ...,
+  position = "identity",
   method = c("iqr", "sd"),
   k = 1.5,
   size = NULL,
@@ -23,6 +24,18 @@ mark_outlier_label(
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, an optional \code{label} (what to write
 on each outlier), and optionally \code{color} / \code{fill} to detect outliers within
 each group.}
+
+\item{position}{Position adjustment: a string — \code{"identity"} (default),
+\code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
+\code{"jitterdodge"}, \code{"sina"} — or a parameterised \link{position} object such as
+\code{\link[=position_dodge]{position_dodge()}} or \code{\link[=position_stack]{position_stack()}}. Every mark takes \code{"identity"} and
+\code{"nudge"}. \code{"stack"}/\code{"fill"} work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); \code{"dodge"}/\code{"dodge2"} on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+\code{"jitter"} on points, text and labels; \code{"jitterdodge"} and \code{"sina"} on
+points. A position a mark does not support is an error naming the ones it
+does.}
 
 \item{method}{Outlier rule: \code{"iqr"} (Tukey's, the default) or \code{"sd"}.}
 

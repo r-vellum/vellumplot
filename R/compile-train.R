@@ -1431,7 +1431,13 @@ NULL
   adjust <- L$stat_params$adjust %||% 1
   # the density support of `vals` per category of `cats`, mapped to native
   support <- function(vals, cats) {
-    dens <- .density_by_cat(as.numeric(vals), cats, .cat_levels(cats), adjust)
+    dens <- .density_by_cat(
+      as.numeric(vals),
+      cats,
+      .cat_levels(cats),
+      adjust,
+      .group_key(L)
+    )
     supp <- unlist(lapply(dens, function(d) if (!is.null(d)) d$x))
     .finite_range(sc$map(supp))
   }

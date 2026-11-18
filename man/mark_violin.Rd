@@ -6,11 +6,20 @@
 \alias{mark_dotplot}
 \title{Density-shape marks}
 \usage{
-mark_violin(plot, ..., adjust = 1, blend = NULL, sketch = NULL, data = NULL)
+mark_violin(
+  plot,
+  ...,
+  position = "identity",
+  adjust = 1,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
 mark_ridgeline(
   plot,
   ...,
+  position = "identity",
   adjust = 1,
   height = 1.4,
   blend = NULL,
@@ -21,6 +30,7 @@ mark_ridgeline(
 mark_dotplot(
   plot,
   ...,
+  position = "identity",
   binwidth = NULL,
   blend = NULL,
   sketch = NULL,
@@ -33,6 +43,9 @@ mark_dotplot(
 \item{...}{Encodings. \code{mark_violin()} needs categorical \code{x} and numeric \code{y};
 \code{mark_ridgeline()} needs numeric \code{x} and categorical \code{y}; \code{mark_dotplot()}
 needs \code{x}. A mapped \code{color}/\code{fill} sets the shape fill.}
+
+\item{position}{Position adjustment; see \code{\link[=mark_point]{mark_point()}}. A mark errors
+on a position it does not support, naming the ones it does.}
 
 \item{adjust}{Kernel-density bandwidth multiplier (violin/ridgeline).}
 

@@ -7,6 +7,7 @@
 mark_sf(
   plot,
   ...,
+  position = "identity",
   fill = NULL,
   color = NULL,
   alpha = NULL,
@@ -25,6 +26,9 @@ mark_sf(
 \item{...}{Encodings mapping feature attributes to aesthetics: \code{fill},
 \code{color}, \code{alpha}, \code{linewidth}, \code{size}. A geometry column is not encoded —
 it is read from the data.}
+
+\item{position}{Position adjustment; see \code{\link[=mark_point]{mark_point()}}. A mark errors
+on a position it does not support, naming the ones it does.}
 
 \item{fill, color, alpha, linewidth, size}{Convenience aesthetic arguments; a
 constant or a mapped expression.}
