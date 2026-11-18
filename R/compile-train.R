@@ -734,25 +734,23 @@ NULL
   fill_channel = "fill",
   aes = "color"
 ) {
-  values <- .pool_values(resolved, channel)
-  if (is.null(values) && !is.null(fill_channel)) {
-    values <- .pool_values(resolved, fill_channel)
-  }
-  if (is.null(values)) {
+  # `color` and `fill` share one colour scale, so pool the values of every layer
+  # mapping either channel (not just `fill` when nothing maps `color`).
+  channels <- c(channel, fill_channel)
+  values <- unlist(
+    lapply(channels, function(ch) .pool_values(resolved, ch)),
+    recursive = FALSE
+  )
+  if (!length(values)) {
     return(NULL)
   }
 
   scalespec <- .scale_for(spec, aes)
-  # channel type from the first layer mapping colour
-  chan_type <- NULL
-  for (L in resolved) {
-    chan_type <- L$types[[channel]] %||%
-      (if (!is.null(fill_channel)) L$types[[fill_channel]] else NULL)
-    if (!is.null(chan_type)) break
-  }
-  kind <- if (
-    !is.null(scalespec) && length(scalespec@type) && nzchar(scalespec@type)
-  ) {
+  explicit_kind <- !is.null(scalespec) &&
+    length(scalespec@type) &&
+    nzchar(scalespec@type)
+  chan_type <- .colour_channel_type(resolved, channels, explicit_kind)
+  kind <- if (explicit_kind) {
     scalespec@type
   } else if (identical(chan_type, "quantitative")) {
     "continuous"
@@ -937,6 +935,49 @@ NULL
       key_glyph = key_glyph
     )
   }
+}
+
+# The encoding type driving the shared colour scale, from every layer mapping
+# one of `channels` (`color`/`fill`). Layers that disagree on whether the
+# variable is quantitative cannot share one scale; unless the user fixed the
+# scale's kind explicitly, that is an error rather than a silent squish/grey.
+.colour_channel_type <- function(resolved, channels, explicit_kind = FALSE) {
+  found <- list()
+  fallback <- NULL
+  for (L in resolved) {
+    for (ch in channels) {
+      t <- L$types[[ch]]
+      fallback <- fallback %||% t
+      v <- L$values[[ch]]
+      # An empty (e.g. an empty facet cell) or all-NA layer carries no type
+      # information -- its inferred type is an artefact -- so it never votes.
+      if (!is.null(t) && length(v) && !all(is.na(v))) {
+        found[[length(found) + 1L]] <- list(channel = ch, type = t)
+      }
+    }
+  }
+  if (!length(found)) {
+    return(fallback)
+  }
+  quant <- vapply(
+    found,
+    function(f) identical(f$type, "quantitative"),
+    logical(1)
+  )
+  if (!explicit_kind && any(quant) && !all(quant)) {
+    q <- found[[which(quant)[1]]]
+    d <- found[[which(!quant)[1]]]
+    cli::cli_abort(c(
+      "Layers map {.field color}/{.field fill} to incompatible variable types.",
+      "x" = "One layer maps {.field {q$channel}} to a quantitative variable,
+        another maps {.field {d$channel}} to a {d$type} one.",
+      "i" = "{.field color} and {.field fill} share one colour scale, so every
+        layer mapping either must use the same kind of variable.",
+      "i" = "Convert one of them (e.g. with {.fn factor} or
+        {.fn as.numeric}), or set the scale kind explicitly."
+    ))
+  }
+  found[[1]]$type
 }
 
 # Colour for NA-valued features: a scale's explicit `na_value`, else an sf
