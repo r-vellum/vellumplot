@@ -160,9 +160,9 @@ select_point <- function(
 #' * **discrete**: the element's category is one whose band centre the brush
 #'   covers.
 #'
-#' With `encodings = "x"` (the default) the brush spans the panel's full height
-#' and only the x value is tested; `"y"` is the transpose; `c("x", "y")` brushes
-#' a rectangle and tests both. In a faceted plot the data range applies to every
+#' With `encodings = c("x", "y")` (the default) the brush is a rectangle and both
+#' values are tested; with `"x"` it spans the panel's full height and only the x
+#' value is tested; `"y"` is the transpose. In a faceted plot the data range applies to every
 #' panel, so brushing one facet selects matching rows in all of them.
 #'
 #' The selection lives in the plot spec, so it is **inert on a static render**
@@ -178,8 +178,8 @@ select_point <- function(
 #'   (free-standing form).
 #' @param name The selection name (piped form), referenced by [condition()] and
 #'   [filter_by()].
-#' @param encodings The position channels the brush constrains: `"x"` (default),
-#'   `"y"`, or `c("x", "y")`.
+#' @param encodings The position channels the brush constrains: `c("x", "y")`
+#'   (default, a rectangle), `"x"` or `"y"`.
 #' @param region `"rect"` (default, a brush rectangle) or `"lasso"` (a freehand
 #'   polygon; membership by element position inside the polygon).
 #' @param empty Whether an **empty** selection contains *all* elements (`TRUE`,
@@ -213,7 +213,7 @@ select_point <- function(
 select_interval <- function(
   plot,
   name,
-  encodings = "x",
+  encodings = c("x", "y"),
   region = c("rect", "lasso"),
   empty = TRUE,
   on = NULL

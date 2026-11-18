@@ -7,7 +7,7 @@
 select_interval(
   plot,
   name,
-  encodings = "x",
+  encodings = c("x", "y"),
   region = c("rect", "lasso"),
   empty = TRUE,
   on = NULL
@@ -20,8 +20,8 @@ select_interval(
 \item{name}{The selection name (piped form), referenced by \code{\link[=condition]{condition()}} and
 \code{\link[=filter_by]{filter_by()}}.}
 
-\item{encodings}{The position channels the brush constrains: \code{"x"} (default),
-\code{"y"}, or \code{c("x", "y")}.}
+\item{encodings}{The position channels the brush constrains: \code{c("x", "y")}
+(default, a rectangle), \code{"x"} or \code{"y"}.}
 
 \item{region}{\code{"rect"} (default, a brush rectangle) or \code{"lasso"} (a freehand
 polygon; membership by element position inside the polygon).}
@@ -55,9 +55,9 @@ value lies in the brushed data range;
 covers.
 }
 
-With \code{encodings = "x"} (the default) the brush spans the panel's full height
-and only the x value is tested; \code{"y"} is the transpose; \code{c("x", "y")} brushes
-a rectangle and tests both. In a faceted plot the data range applies to every
+With \code{encodings = c("x", "y")} (the default) the brush is a rectangle and both
+values are tested; with \code{"x"} it spans the panel's full height and only the x
+value is tested; \code{"y"} is the transpose. In a faceted plot the data range applies to every
 panel, so brushing one facet selects matching rows in all of them.
 
 The selection lives in the plot spec, so it is \strong{inert on a static render}

@@ -239,10 +239,11 @@ test_that("bind_scale records a domain bind", {
 
 # --- select_interval(encodings =): spec record + per-element data values -------
 
-test_that("select_interval() takes encodings, defaulting to x", {
+test_that("select_interval() takes encodings, defaulting to x and y", {
   s <- select_interval("b")
   expect_identical(s@kind, "interval")
-  expect_identical(s@encodings, "x")
+  expect_identical(s@encodings, c("x", "y"))
+  expect_identical(select_interval("b", encodings = "x")@encodings, "x")
   expect_identical(select_interval("b", encodings = "y")@encodings, "y")
   # canonical x-then-y order, duplicates dropped
   expect_identical(
@@ -291,7 +292,7 @@ test_that("keyed elements carry their data values on the brushed channels", {
     vplot(d) |>
       mark_point(x = x, y = y) |>
       scale_x_continuous(trans = "log10") |>
-      select_interval("b")
+      select_interval("b", encodings = "x")
   )
   expect_equal(vapply(im$meta, `[[`, numeric(1), "ix"), d$x)
   expect_null(im$meta[[1]]$iy) # x-only: no y values

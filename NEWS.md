@@ -15,9 +15,8 @@
   `levels`. The interaction model records the selection as `{name, type:
   "interval", encodings}`. Static renders are unchanged.
 
-  `encodings` defaults to `"x"`, so `select_interval(p, "b")` is now an x-only
-  brush; before, it brushed both axes. The old `on = "x" / "y" / "xy"` argument
-  still works as an alias.
+  `encodings` defaults to `c("x", "y")`, the same rectangle brush as before. The
+  old `on = "x" / "y" / "xy"` argument still works as an alias.
 
 * **Bivariate choropleths with a 2-D legend.** `bi_class()` bins two numeric
   columns into `dim` classes each (quantile by default, or any
