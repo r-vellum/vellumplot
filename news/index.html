@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,9 +63,12 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.11.0.9000" id="vellumplot-01109000-development-version">vellumplot 0.11.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01109000-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.11.1.9000" id="vellumplot-01119000-development-version">vellumplot 0.11.1.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01119000-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.1" id="vellumplot-0111">vellumplot 0.11.1<a class="anchor" aria-label="anchor" href="#vellumplot-0111"></a></h2>
 <div class="section level3">
-<h3 id="bug-fixes-0-11-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-11-0-9000"></a></h3>
+<h3 id="bug-fixes-0-11-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-11-1"></a></h3>
 <ul><li><p><strong>Violins, ridgelines and half-eyes draw cleanly on log and sqrt axes.</strong> The density was estimated on the raw data and its support, which <code><a href="https://rdrr.io/r/stats/density.html" class="external-link">stats::density()</a></code> pads by about three bandwidths, was then mapped through the scale. For data near zero that padding dips to or below zero, so a log10 or sqrt axis produced NaN outline vertices. The density is now estimated on the transformed values, as ggplot2 does, so every vertex is finite and the trained axis still covers the drawn shape. On a transformed axis the shape is now the density of the transformed values; identity axes draw exactly as before.</p></li>
 <li><p><strong>A widened density axis gets ticks over its tails.</strong> The axis is widened to fit a violin’s or ridgeline’s tails, but the breaks had already been picked for the raw data range, so the tails ran past the last labelled tick. The breaks are now re-picked over the widened extent. Breaks you set yourself are left alone.</p></li>
 <li><p><strong>Tooltips and data keys follow stats that reorder or summarise rows.</strong> <code>tooltip</code>, <code>data_id</code>, <code>hover_group</code>, <code>hover_color</code> and <code>selected_color</code> were still in pre-stat row order after a stat. A dot plot sorts its dots, so each dot showed another row’s tooltip and key. A bin2d or hex layer that happened to have as many cells as input rows keyed every cell with an unrelated row. These values now go through the same realignment as aesthetics. A row-preserving stat (dot plot, outlier label, window, series label, count) gives each element its own row’s value. A summarising stat (bin, bin2d, hex, density, smooth, …) keeps a value only if it is constant within each group (<code>tooltip = species</code> on a per-species density) or across the whole layer. Otherwise the value is dropped, because a summary element has no single row to take it from. If the <code>data_id</code> itself is dropped the elements stay unkeyed, but a key that was only the default row index is renumbered over the summary elements, so a constant tooltip still shows.</p></li>
