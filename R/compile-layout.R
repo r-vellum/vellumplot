@@ -92,6 +92,9 @@ NULL
 # it to a mangled string).
 # The width (mm) one guide needs: the wider of its key+label body and its title.
 .guide_col_width <- function(g, m) {
+  if (g$kind == "color_bivariate") {
+    return(.bi_geom(g, m)$width)
+  }
   labs <- .guide_labels(g)
   lw <- .mm_tw(labs, m$text_fs)
   body <- if (g$kind %in% c("color_continuous", "color_steps")) {
@@ -177,7 +180,9 @@ NULL
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   h <- 0
   for (g in guides) {
-    gh <- if (g$kind %in% c("color_continuous", "color_steps")) {
+    gh <- if (g$kind == "color_bivariate") {
+      .bi_geom(g, m)$height
+    } else if (g$kind %in% c("color_continuous", "color_steps")) {
       # A horizontal colour bar / stepped bar: title + bar thickness
       # (guide_colourbar(barheight=) or the theme default) + the label row.
       th + (g$sc$bar_height %||% m$bar_w) + m$text_h + m$lab_gap

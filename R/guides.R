@@ -301,6 +301,12 @@ guide_colorsteps <- guide_coloursteps
     return(trained)
   }
   if (is.list(guide)) {
+    if (identical(guide$kind, "bivariate")) {
+      trained <- .apply_bivariate_guide(trained, guide)
+    } else if (identical(guide$kind, "legend")) {
+      # guide_legend() on a bivariate scale: the classes as a plain keyed list.
+      trained$bivariate <- NULL
+    }
     if (!is.null(guide$title)) {
       trained$name <- guide$title
     }
