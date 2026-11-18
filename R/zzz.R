@@ -14,4 +14,11 @@ utils::globalVariables(c("n", "lab", ".olab", ".data"))
   .register_lint_rules()
   # Adaptive knit output (crisp inline SVG in HTML; default device elsewhere).
   .register_knit_print()
+  # `print()` for spec_diagnose() results (see `.print_diagnosis()`).
+  registerS3method(
+    "print",
+    "vellumplot_diagnosis",
+    .print_diagnosis,
+    envir = baseenv()
+  )
 }

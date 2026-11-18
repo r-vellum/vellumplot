@@ -129,3 +129,149 @@ test_that("from_spec() uses supplied data when the spec has no data block", {
   # low-level compile error
   expect_error(from_spec(spec), "references data field.*wt.*mpg|no data")
 })
+
+# -- compile report + pre-compile checks (spec_diagnose) ---------------------
+
+diag_msgs <- function(d, severity) {
+  hits <- Filter(function(x) identical(x$severity, severity), d$diagnostics)
+  vapply(hits, function(x) x$message, character(1))
+}
+
+test_that("spec_diagnose accepts a PlotSpec and reports a clean plot", {
+  d <- spec_diagnose(vplot(mtcars) |> mark_point(x = wt, y = mpg))
+  expect_s3_class(d, "vellumplot_diagnosis")
+  expect_true(d$ok)
+  expect_s7_class(d$plot, PlotSpec)
+  expect_length(d$diagnostics, 0)
+  expect_identical(d$report$rows, 32L)
+  expect_identical(d$report$dropped, 0L)
+})
+
+test_that("the report counts rows not shown per layer, and why", {
+  df <- data.frame(
+    x = c(1, 2, 3, NA, 5, 6),
+    y = c(-1, 1, 10, 4, 100, 5)
+  )
+  p <- vplot(df) |>
+    mark_point(x = x, y = y) |>
+    scale_y_continuous(trans = "log10", limits = c(1, 50)) |>
+    mark_line(x = x, y = x)
+  d <- suppressWarnings(spec_diagnose(p))
+  expect_true(d$ok) # rows not shown are a warning, not a failure
+  r <- d$report
+  expect_identical(r$layer, 1:2)
+  expect_identical(r$mark, c("point", "line"))
+  # layer 1: row 4 has no x; row 1 is <= 0 on the log axis; row 5 is above the
+  # limits -- each row counted once, under its first reason
+  expect_identical(r$missing, c(1L, 1L))
+  expect_identical(r$transform, c(1L, 0L))
+  expect_identical(r$limits, c(1L, 0L))
+  expect_identical(r$dropped, c(3L, 1L))
+  w <- diag_msgs(d, "warning")
+  expect_length(w, 2L)
+  expect_match(w[1], "Layer 1 (point): 3 of 6 rows", fixed = TRUE)
+  expect_match(w[1], "1 outside the scale limits", fixed = TRUE)
+})
+
+test_that("partial limits bound only the end they name; coord limits zoom", {
+  df <- data.frame(x = c(-5, 1, 2, 30), y = 1:4)
+  part <- spec_diagnose(vplot(df) |> mark_point(x = x, y = y) |> xlim(0, NA))
+  expect_identical(part$report$limits, 1L)
+  zoom <- spec_diagnose(
+    vplot(df) |> mark_point(x = x, y = y) |> coord_cartesian(xlim = c(0, 3))
+  )
+  expect_identical(zoom$report$dropped, 0L)
+})
+
+test_that("a row with a missing facet value is reported", {
+  df <- data.frame(x = 1:4, y = 1:4, g = c("a", "b", NA, "a"))
+  d <- spec_diagnose(vplot(df) |> mark_point(x = x, y = y) |> facet_wrap(~g))
+  expect_identical(d$report$facet, 1L)
+  expect_identical(d$report$dropped, 1L)
+})
+
+test_that("a missing non-position value is drawn, so it is not counted", {
+  df <- data.frame(x = 1:3, y = 1:3, g = c("a", NA, "b"))
+  d <- spec_diagnose(vplot(df) |> mark_point(x = x, y = y, color = g))
+  expect_identical(d$report$dropped, 0L)
+})
+
+test_that("a facet variable missing from a layer's data is caught", {
+  ann <- data.frame(x = 3, y = 30)
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    mark_text(data = ann, x = x, y = y, label = "note") |>
+    facet_wrap(~cyl)
+  d <- spec_diagnose(p)
+  expect_true(d$ok) # legal (annotation in every panel), but flagged
+  w <- diag_msgs(d, "warning")
+  expect_length(w, 1L)
+  expect_match(w, "Layer 2's data has no facet variable 'cyl'", fixed = TRUE)
+
+  # from the plot data itself it is an error, caught before compiling
+  bad <- spec_diagnose(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~nope)
+  )
+  expect_false(bad$ok)
+  e <- diag_msgs(bad, "error")
+  expect_length(e, 1L)
+  expect_match(e, "Facet variable 'nope'", fixed = TRUE)
+})
+
+test_that("an unknown facet field in a spec is reported once", {
+  spec <- as_spec(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
+  )
+  spec$facet$cols[[1]] <- "cyll"
+  d <- spec_diagnose(spec, data = mtcars)
+  expect_false(d$ok)
+  fields <- vapply(d$diagnostics, function(x) x$field, character(1))
+  expect_identical(sum(fields == "cyll", na.rm = TRUE), 1L)
+})
+
+test_that("color and fill of different types sharing a legend are caught", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    mark_bar(x = wt, y = mpg, fill = hp)
+  d <- spec_diagnose(p)
+  expect_false(d$ok)
+  e <- diag_msgs(d, "error")
+  # one specific finding, not a second generic "Compile failed" for the same
+  expect_length(e, 1L)
+  expect_match(e, "layer 2 maps fill to a continuous variable", fixed = TRUE)
+  expect_match(e, "layer 1 maps color to a nominal one", fixed = TRUE)
+
+  # with the scale kind set explicitly the compile decides; the clash itself is
+  # demoted to a warning (here a discrete scale, so `hp` becomes categories)
+  ex <- spec_diagnose(p |> scale_color_discrete())
+  expect_true(ex$ok)
+  w <- diag_msgs(ex, "warning")
+  expect_true(any(grepl("share one colour scale", w, fixed = TRUE)))
+})
+
+test_that("a manual palette on a continuous channel is caught", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_manual(values = c("red", "blue"))
+  d <- spec_diagnose(p)
+  expect_true(d$ok)
+  w <- diag_msgs(d, "warning")
+  expect_length(w, 1L)
+  expect_match(w, "manual/discrete colour palette", fixed = TRUE)
+  # a manual palette on a discrete channel is what it is for
+  ok <- spec_diagnose(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, color = factor(am)) |>
+      scale_color_manual(values = c("red", "blue"))
+  )
+  expect_length(ok$diagnostics, 0L)
+})
+
+test_that("a diagnosis prints a summary", {
+  df <- data.frame(x = c(1, NA, 3), y = 1:3)
+  d <- spec_diagnose(vplot(df) |> mark_point(x = x, y = y))
+  out <- capture.output(print(d))
+  expect_match(out[1], "<vellumplot diagnosis> ok: 0 errors, 1 warning")
+  expect_true(any(grepl("1 missing a position value", out, fixed = TRUE)))
+  expect_true(any(grepl("Rows not shown, per layer", out, fixed = TRUE)))
+})

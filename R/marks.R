@@ -428,8 +428,8 @@ after_stat <- function(x) x
 #'   `fill`, `size`, `shape`, `alpha`. Stroked marks (line, step, segment, rule,
 #'   linerange) also take `linewidth` and `linetype`. On `mark_line()`,
 #'   `mark_step()` and `mark_segment()`, `linewidth` may be **mapped** as well as
-#'   set: see [scale_linewidth()] for the per-segment width that gives, and what
-#'   it costs. Everywhere else `linewidth` is a constant. Every mark also takes
+#'   set: see [scale_linewidth()] for the tapered stroke that gives, and when
+#'   it falls back to per-segment widths. Everywhere else `linewidth` is a constant. Every mark also takes
 #'   `group`, which says which rows form one series without styling them:
 #'   `mark_line(x = t, y = y, group = id)` draws one line per `id`. Without it,
 #'   a discrete `color` (else `fill`) groups; a continuous colour never does, so
