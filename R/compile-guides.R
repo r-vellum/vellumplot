@@ -1276,6 +1276,18 @@ NULL
         alpha = alpha
       )
     ),
+    # An outlined box: the key of a box plot / violin coloured through `color`.
+    outline = vellum::rect_grob(
+      width = vellum::vl_unit(m$key * 0.8, "mm"),
+      height = vellum::vl_unit(m$key * 0.8, "mm"),
+      sketch = sketch,
+      gp = vellum::vl_gpar(
+        fill = ov$fill %||% "white",
+        col = line_col,
+        lwd = ov$linewidth %||% 1.5,
+        alpha = alpha
+      )
+    ),
     vellum::rect_grob(
       width = vellum::vl_unit(m$key, "mm"),
       height = vellum::vl_unit(m$key, "mm"),

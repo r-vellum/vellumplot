@@ -19,7 +19,45 @@
   colour, so `mark_smooth(group = id, color = treatment)` paints each fit by its
   treatment. `spec_to_vegalite()` exports `group` as Vega-Lite's `detail`.
 
+* **Dodge and stack work on every mark that can use them.** Positions used to
+  apply only to bars and areas (and jitter to points), so
+  `mark_errorbar(position = "dodge")` drew every error bar on the category tick,
+  away from the dodged bars it belonged to, and `mark_text(position = "stack")`
+  left labels at their raw heights. A shared draw-time step now dodges error
+  bars, line/point ranges, cross-bars, text and labels onto exactly the slots
+  dodged bars use, and stacking places points, text and labels inside their
+  stacked bar. The new `position_stack(vjust =)` / `position_fill(vjust =)` pick
+  where in the span a label sits:
+
+  ```r
+  vplot(df) |>
+    mark_bar(x = cat, y = n, fill = g) |>
+    mark_text(x = cat, y = n, label = n, group = g, position = position_stack(vjust = 0.5))
+  ```
+
+* **Box plots, violins and slab-intervals split each category by group.**
+  `vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg, fill = factor(am))`
+  now draws two boxes per cylinder count, side by side, one per `am`. It used
+  to draw one box per category, coloured by its first row, while the legend
+  listed both levels. Sub-groups present at a category share its width (ggplot2's
+  dodge2), or keep a fixed slot each with `position = "dodge"`. Ridgelines
+  overlay their sub-groups on the shared baseline.
+
+* **Breaking: on box plots, violins and ridgelines, `color` strokes the outline
+  and `fill` fills (ggplot2's semantics).** A plot that maps only `color` used to
+  come out filled in that colour. It now draws coloured outlines over the
+  default fill (white boxes, grey violins and ridges), and its legend shows
+  outlined keys. Map `fill` to get the old look. The outline is no longer
+  hard-coded: it follows `color` and defaults to `"grey20"`. Violins and ridges
+  used to be outlined in `"grey30"`.
+
 ## Bug fixes
+
+* **A mark given a position it does not support errors.** `position` is now a
+  formal argument of every `mark_*()`. On most marks it used to fall into `...`
+  and turn into an inert constant aesthetic, so `mark_line(position = "dodge")`
+  silently drew an undodged line. An unsupported position now errors, naming the
+  mark and the positions it does support.
 
 * **A line or step mapped to a continuous colour draws.** `mark_line(color =
   pressure)` split the line wherever the colour changed, which for a continuous

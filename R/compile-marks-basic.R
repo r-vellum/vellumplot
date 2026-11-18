@@ -21,11 +21,9 @@ NULL
     grp <- .group_key(L)
     dw <- L$stat_params$dodge_width %||% 0.75
     if (!is.null(grp)) {
-      levs <- .cat_levels(grp)
-      G <- length(levs)
-      rank <- match(as.character(rep_len(grp, n)), levs)
-      xn <- xn + (rank - (G + 1) / 2) / G * dw * band_x
-      slot <- dw * band_x / G
+      d <- .dodge_offsets(xn, grp, dw * band_x)
+      xn <- xn + d$offset
+      slot <- dw * band_x * d$share[1]
     }
   }
   if (L$position %in% c("jitter", "jitterdodge")) {
@@ -684,33 +682,6 @@ NULL
   scene
 }
 
-# dodge2: at each x, place only the groups actually present, filling the total
-# width `tw` with equal slots separated by `padding` (a fraction of the slot). So
-# a category with fewer groups gets wider bars centred on the tick, rather than
-# leaving gaps for absent groups (plain dodge). Returns per-element centre `xc`
-# and width `w` (native px), aligned to the input row order.
-.dodge2_bars <- function(xp, grp, n, tw, padding) {
-  xc <- rep_len(xp, n)
-  w <- rep_len(tw, n)
-  if (is.null(grp)) {
-    return(list(xc = xc, w = w))
-  }
-  levs <- .cat_levels(grp)
-  g <- as.character(rep_len(grp, n))
-  for (xi in unique(xc)) {
-    rows <- which(xc == xi)
-    rows <- rows[order(match(g[rows], levs))]
-    k <- length(rows)
-    slot <- tw[rows][1] / k
-    for (j in seq_len(k)) {
-      i <- rows[j]
-      w[i] <- slot * (1 - padding)
-      xc[i] <- xi + (j - (k + 1) / 2) * slot
-    }
-  }
-  list(xc = xc, w = w)
-}
-
 # The shared per-style-group rect draw for the filled rectangular marks (bar,
 # tile, rect): group by fill/alpha/pattern, then draw one `rect_grob` per group
 # from the precomputed centre (`xc`, `yc`) and size (`w`, `h`) vectors. `paint` is
@@ -788,26 +759,18 @@ NULL
   w <- rep_len(L$values$width %||% (0.9 * band), n)
   xc <- xp
   if (identical(L$position, "dodge")) {
-    grp <- .group_key(L)
-    if (!is.null(grp)) {
-      levs <- .cat_levels(grp)
-      G <- length(levs)
-      rank <- match(as.character(rep_len(grp, n)), levs)
-      # `dodge_width` (data units) overrides the band as the group's total span.
-      span <- L$stat_params$dodge_width %||% band
-      w <- w / G
-      xc <- xp + (rank - (G + 1) / 2) / G * span
-    }
+    # `dodge_width` (data units) overrides the band as the group's total span.
+    d <- .dodge_offsets(xp, .group_key(L), L$stat_params$dodge_width %||% band)
+    w <- w * d$share
+    xc <- xp + d$offset
   } else if (identical(L$position, "dodge2")) {
-    d2 <- .dodge2_bars(
-      xp,
-      .group_key(L),
-      n,
-      L$values$width %||% (0.9 * band),
-      L$stat_params$dodge2_padding %||% 0.1
-    )
-    xc <- d2$xc
-    w <- d2$w
+    # dodge2: only the groups present at each x share its full width `tw`, as
+    # equal slots separated by `padding` (a fraction of the slot) -- so a ragged
+    # category gets wider bars centred on the tick, not gaps for absent groups.
+    tw <- rep_len(L$values$width %||% (0.9 * band), n)
+    d <- .dodge_offsets(xp, .group_key(L), tw, ragged = TRUE)
+    xc <- xp + d$offset
+    w <- tw * d$share * (1 - (L$stat_params$dodge2_padding %||% 0.1))
   }
 
   # A gradient fill paints every bar as one rect grob sharing the paint.

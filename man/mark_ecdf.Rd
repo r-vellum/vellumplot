@@ -7,13 +7,29 @@
 \alias{mark_qq_line}
 \title{Distribution marks}
 \usage{
-mark_ecdf(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_ecdf(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_rug(plot, ..., sides = "bl", length = 0.03, blend = NULL, data = NULL)
+mark_rug(
+  plot,
+  ...,
+  position = "identity",
+  sides = "bl",
+  length = 0.03,
+  blend = NULL,
+  data = NULL
+)
 
 mark_qq(
   plot,
   ...,
+  position = "identity",
   distribution = "qnorm",
   blend = NULL,
   sketch = NULL,
@@ -23,6 +39,7 @@ mark_qq(
 mark_qq_line(
   plot,
   ...,
+  position = "identity",
   distribution = "qnorm",
   blend = NULL,
   sketch = NULL,
@@ -35,6 +52,9 @@ mark_qq_line(
 \item{...}{Encodings. \code{mark_ecdf()} needs \code{x}; \code{mark_qq()}/\code{mark_qq_line()}
 need \code{sample}; \code{mark_rug()} takes \code{x} and/or \code{y} (+ \code{color}, \code{alpha},
 \code{linewidth}, \code{linetype}).}
+
+\item{position}{Position adjustment; see \code{\link[=mark_point]{mark_point()}}. A mark errors
+on a position it does not support, naming the ones it does.}
 
 \item{blend, sketch, data}{Standard layer arguments (see \code{\link[=mark_point]{mark_point()}}).}
 

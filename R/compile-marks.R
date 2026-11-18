@@ -16,6 +16,11 @@ NULL
       i = "It works on the filled marks: {.val {(.PAINT_MARKS)}}."
     ))
   }
+  # The generic draw-time position step (dodge / jitter for marks that do not
+  # lay them out themselves); a no-op for every other layer.
+  pos <- .position_native(L, scales)
+  L <- pos$L
+  scales <- pos$scales
   switch(
     L$mark,
     point = .emit_point(scene, L, scales),

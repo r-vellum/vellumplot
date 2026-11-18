@@ -8,21 +8,62 @@
 \alias{mark_hex}
 \title{Heatmap marks}
 \usage{
-mark_tile(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_tile(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_raster(plot, ..., blend = NULL, data = NULL)
+mark_raster(plot, ..., position = "identity", blend = NULL, data = NULL)
 
-mark_bin2d(plot, ..., bins = 30, blend = NULL, data = NULL)
+mark_bin2d(
+  plot,
+  ...,
+  position = "identity",
+  bins = 30,
+  blend = NULL,
+  data = NULL
+)
 
-mark_density(plot, ..., adjust = 1, blend = NULL, sketch = NULL, data = NULL)
+mark_density(
+  plot,
+  ...,
+  position = "identity",
+  adjust = 1,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
-mark_hex(plot, ..., bins = 30, blend = NULL, data = NULL)
+mark_hex(
+  plot,
+  ...,
+  position = "identity",
+  bins = 30,
+  blend = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, \code{fill} for tile/raster; \code{x}, \code{y}
 for bin2d; \code{x} (+ \code{fill}/\code{color}) for density.}
+
+\item{position}{Position adjustment: a string — \code{"identity"} (default),
+\code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
+\code{"jitterdodge"}, \code{"sina"} — or a parameterised \link{position} object such as
+\code{\link[=position_dodge]{position_dodge()}} or \code{\link[=position_stack]{position_stack()}}. Every mark takes \code{"identity"} and
+\code{"nudge"}. \code{"stack"}/\code{"fill"} work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); \code{"dodge"}/\code{"dodge2"} on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+\code{"jitter"} on points, text and labels; \code{"jitterdodge"} and \code{"sina"} on
+points. A position a mark does not support is an error naming the ones it
+does.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS

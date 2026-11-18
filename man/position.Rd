@@ -6,6 +6,8 @@
 \alias{position_jitter}
 \alias{position_dodge}
 \alias{position_dodge2}
+\alias{position_stack}
+\alias{position_fill}
 \alias{position_sina}
 \alias{position_jitterdodge}
 \title{Position adjustments}
@@ -17,6 +19,10 @@ position_jitter(width = NULL, height = NULL, seed = NULL)
 position_dodge(width = NULL)
 
 position_dodge2(padding = 0.1)
+
+position_stack(vjust = 1)
+
+position_fill(vjust = 1)
 
 position_sina(width = 0.8, seed = NULL)
 
@@ -37,6 +43,9 @@ position_jitterdodge(
 
 \item{padding}{\code{position_dodge2()} gap between dodged elements, as a fraction
 of the element width.}
+
+\item{vjust}{\code{position_stack()} / \code{position_fill()}: where a point, text or
+label sits inside its stacked span, from \code{0} (bottom) to \code{1} (top).}
 
 \item{dodge.width, jitter.width, jitter.height}{\code{position_jitterdodge()}
 dodge / jitter extents.}
@@ -64,6 +73,12 @@ splits the band between them with a \code{padding} gap — so ragged groupings
 stay centred and evenly spaced.
 \item \code{position_jitterdodge()} dodges grouped elements, then jitters within each
 dodged slot (points over dodged boxes).
+\item \code{position_stack()} / \code{position_fill()} stack grouped elements sharing an
+x (\code{fill} normalises each stack to 1). Bars and areas take the stacked
+span; a point, text or label moves to a height inside its span: \code{vjust = 1}
+(the default) is the top, \code{0.5} the middle -- so
+\code{mark_text(position = position_stack(vjust = 0.5))} centres labels on the
+segments of a stacked bar.
 \item \code{position_sina()} spreads each category's points along x by a quasirandom
 offset scaled to the local y-density, so the cloud traces the distribution's
 shape (ggforce's sina). \code{width} is the maximum spread as a fraction of the

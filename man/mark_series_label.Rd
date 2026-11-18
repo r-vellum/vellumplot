@@ -7,6 +7,7 @@
 mark_series_label(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   nudge_x = 2,
   repel = TRUE,
@@ -21,6 +22,18 @@ mark_series_label(
 
 \item{...}{Encodings (tidy-eval): the same \code{x}, \code{y}, and \code{color}/\code{fill} as the
 series being labelled.}
+
+\item{position}{Position adjustment: a string — \code{"identity"} (default),
+\code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
+\code{"jitterdodge"}, \code{"sina"} — or a parameterised \link{position} object such as
+\code{\link[=position_dodge]{position_dodge()}} or \code{\link[=position_stack]{position_stack()}}. Every mark takes \code{"identity"} and
+\code{"nudge"}. \code{"stack"}/\code{"fill"} work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); \code{"dodge"}/\code{"dodge2"} on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+\code{"jitter"} on points, text and labels; \code{"jitterdodge"} and \code{"sina"} on
+points. A position a mark does not support is an error naming the ones it
+does.}
 
 \item{size}{Font size in points.}
 

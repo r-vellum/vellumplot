@@ -8,6 +8,7 @@
 mark_ellipse(
   plot,
   ...,
+  position = "identity",
   type = "t",
   level = 0.95,
   segments = 51L,
@@ -16,13 +17,33 @@ mark_ellipse(
   data = NULL
 )
 
-mark_hull(plot, ..., expand = 0, blend = NULL, sketch = NULL, data = NULL)
+mark_hull(
+  plot,
+  ...,
+  position = "identity",
+  expand = 0,
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, and optionally \code{color}/\code{fill}
 (which also splits the points into per-group regions).}
+
+\item{position}{Position adjustment: a string — \code{"identity"} (default),
+\code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
+\code{"jitterdodge"}, \code{"sina"} — or a parameterised \link{position} object such as
+\code{\link[=position_dodge]{position_dodge()}} or \code{\link[=position_stack]{position_stack()}}. Every mark takes \code{"identity"} and
+\code{"nudge"}. \code{"stack"}/\code{"fill"} work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); \code{"dodge"}/\code{"dodge2"} on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+\code{"jitter"} on points, text and labels; \code{"jitterdodge"} and \code{"sina"} on
+points. A position a mark does not support is an error naming the ones it
+does.}
 
 \item{type}{Ellipse type: \code{"t"}, \code{"norm"}, or \code{"euclid"}.}
 

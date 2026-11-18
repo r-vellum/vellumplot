@@ -12,6 +12,82 @@ NULL
   split(seq_along(xchar), factor(xchar, levels = levs))
 }
 
+# The drawing cells of a distribution mark (boxplot, violin, ridgeline,
+# slab-interval): one per category level on `axis`, each split into one cell per
+# `.group_key()` sub-group present there. Sub-groups are dodged across `span`
+# (native units -- the mark's full width at one category) with `.dodge_offsets()`
+# -- the groups present at each category share it (ggplot2's dodge2 for boxes),
+# or with `position = "dodge"` every category keeps a slot for every group. A
+# `dodge = FALSE` mark (ridgeline) overlays its sub-groups on the shared baseline
+# instead. Each cell carries its rows (provenance keys), its native `centre`, and
+# `share`, the fraction of the mark's usual width it may take.
+.DIST_DODGE_PAD <- 0.1 # gap between dodged sub-groups, as a fraction of a slot
+
+.by_category <- function(L, scales, axis = "x", span = 1, dodge = TRUE) {
+  n <- L$n
+  cv <- rep_len(L$values[[axis]], n)
+  levs <- .cat_levels(cv)
+  centres <- scales[[axis]]$map(levs)
+  cchar <- as.character(cv)
+  by_level <- .idx_by_level(cchar, levs)
+  g <- .group_key(L)
+  d <- NULL
+  if (!is.null(g)) {
+    gch <- as.character(g)
+    glevs <- .cat_levels(g)
+    if (dodge) {
+      d <- .dodge_offsets(
+        cchar,
+        g,
+        span,
+        ragged = !identical(L$position, "dodge")
+      )
+    }
+  }
+  cells <- list()
+  for (j in seq_along(levs)) {
+    sel <- by_level[[j]]
+    if (!length(sel)) {
+      next
+    }
+    parts <- if (is.null(g)) {
+      list(sel)
+    } else {
+      Filter(length, split(sel, factor(gch[sel], levels = glevs)))
+    }
+    for (rows in parts) {
+      i0 <- rows[1]
+      cells[[length(cells) + 1L]] <- list(
+        level = j,
+        label = levs[j],
+        rows = rows,
+        centre = centres[j] + if (is.null(d)) 0 else d$offset[i0],
+        share = if (is.null(d)) 1 else d$share[i0] * (1 - .DIST_DODGE_PAD)
+      )
+    }
+  }
+  cells
+}
+
+# Fill and outline of a filled distribution mark, with ggplot2's semantics:
+# `fill` fills, `color` strokes. A mapped `fill` goes through the colour scale,
+# else a constant (non-paint) `fill`, else `fill_default`; the outline is a
+# mapped or constant `color`, else `col_default`. Neither falls back to the other
+# channel, so `color = g` outlines the shapes in g's colours over the default
+# fill. Returns per-row vectors.
+.dist_paint <- function(L, scales, fill_default, col_default = "grey20") {
+  n <- L$n
+  fill <- if (!is.null(scales$color) && !is.null(L$values$fill)) {
+    scales$color$map(L$values$fill)
+  } else {
+    (if (.is_paint(L$params$fill)) NULL else L$params$fill) %||% fill_default
+  }
+  list(
+    fill = rep_len(fill, n),
+    col = rep_len(.aes_colour(L, scales, col_default, fill_fallback = FALSE), n)
+  )
+}
+
 # Significance brackets (ggsignif/ggpubr style): for each precomputed bracket row
 # draw a ┌──┐ over the two groups it spans (`x` .. `.x2` at height `y`, short
 # down-ticks of `tip_length` of the y span) and its p-value label above.
@@ -57,24 +133,18 @@ NULL
 }
 
 .emit_boxplot <- function(scene, L, scales) {
-  xv <- L$values$x
-  yv <- as.numeric(L$values$y)
-  colv <- rep_len(.aes_colour(L, scales, "white"), length(yv))
-  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(yv))
+  yv <- rep_len(as.numeric(L$values$y), L$n)
+  pt <- .dist_paint(L, scales, "white")
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), L$n)
   sk <- .mark_sketch(L, scales)
-  levs <- .cat_levels(xv)
-  xc_all <- scales$x$map(levs)
-  band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
-  hw <- 0.375 * band
-  xchar <- as.character(xv)
-  idx_by_level <- .idx_by_level(xchar, levs)
+  band <- scales$x$band_width %||% .resolution(scales$x$map(L$values$x))
+  hw0 <- 0.375 * band
   my <- function(v) scales$y$map(v)
+  cells <- .by_category(L, scales, "x", span = 2 * hw0)
 
-  for (j in seq_along(levs)) {
-    sel <- idx_by_level[[j]]
-    if (!length(sel)) {
-      next
-    }
+  for (k in seq_along(cells)) {
+    cl <- cells[[k]]
+    sel <- cl$rows
     yy <- yv[sel]
     yy <- yy[is.finite(yy)]
     if (!length(yy)) {
@@ -88,11 +158,13 @@ NULL
     lo <- min(yy[yy >= q1 - 1.5 * iqr])
     hi <- max(yy[yy <= q3 + 1.5 * iqr])
     out <- yy[yy < lo | yy > hi]
-    xc <- xc_all[j]
-    fillc <- colv[sel[1]]
-    a <- alpha[sel[1]]
-    line_gp <- vellum::vl_gpar(col = "grey20", lwd = 1)
-    skj <- .sketch_bump(sk, j)
+    xc <- cl$centre
+    hw <- hw0 * cl$share
+    i0 <- sel[1]
+    a <- alpha[i0]
+    stroke <- pt$col[i0]
+    line_gp <- vellum::vl_gpar(col = stroke, lwd = 1, alpha = gp_alpha(a))
+    skj <- .sketch_bump(sk, k)
 
     r <- .rect_units(
       scales,
@@ -110,13 +182,13 @@ NULL
         height = r$height,
         sketch = skj,
         gp = vellum::vl_gpar(
-          fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, fillc),
-          col = "grey20",
+          fill = .pattern_at(L, scales, i0) %||% .paint_or(L, pt$fill[i0]),
+          col = stroke,
           lwd = 1,
           alpha = gp_alpha(a)
         )
       ),
-      # PROVENANCE: a box summarises all rows of its category.
+      # PROVENANCE: a box summarises all rows of its category (and sub-group).
       rows = sel
     )
     for (seg in list(
@@ -141,7 +213,7 @@ NULL
           sketch = skj,
           gp = line_gp
         ),
-        # PROVENANCE: median/whisker summarise the category's rows.
+        # PROVENANCE: median/whisker summarise the cell's rows.
         rows = sel
       )
     }
@@ -158,7 +230,7 @@ NULL
           size = vellum::vl_unit(1.2, "mm"),
           shape = "circle",
           sketch = skj,
-          gp = vellum::vl_gpar(fill = "grey20", col = "grey20")
+          gp = vellum::vl_gpar(fill = stroke, col = stroke, alpha = gp_alpha(a))
         ),
         rows = out_rows
       )
@@ -171,14 +243,24 @@ NULL
 # ordered levels `levs`. Shared by the violin/ridgeline emitters and by scale
 # training (`.expand_position_for_marks`) so the trained domain and the drawn
 # geometry are computed from identical values. A level with fewer than two finite
-# observations yields `NULL` (no density is drawn for it).
-.density_by_cat <- function(vals, cats, levs, adjust) {
+# observations yields `NULL` (no density is drawn for it). With a `group` (the
+# layer's `.group_key()`), the list is per (level, sub-group) cell instead.
+.density_by_cat <- function(vals, cats, levs, adjust, group = NULL) {
   ch <- as.character(cats)
-  lapply(levs, function(l) {
-    v <- vals[ch == l]
-    v <- v[is.finite(v)]
-    if (length(v) < 2) NULL else stats::density(v, adjust = adjust)
-  })
+  if (!is.null(group)) {
+    # One density per (level, sub-group) cell, as the emitters draw them; the
+    # footprint only needs their supports, so the flat list is enough.
+    key <- paste(ch, as.character(group), sep = "\r")
+    return(lapply(unique(key), function(k) .density_of(vals[key == k], adjust)))
+  }
+  lapply(levs, function(l) .density_of(vals[ch == l], adjust))
+}
+
+# The kernel density of one cell's values, or NULL with fewer than two finite
+# observations -- the per-cell form of `.density_by_cat()`.
+.density_of <- function(v, adjust) {
+  v <- v[is.finite(v)]
+  if (length(v) < 2) NULL else stats::density(v, adjust = adjust)
 }
 
 # Default extents (fractions/multiples of the category band) of the density-shape
@@ -218,31 +300,27 @@ NULL
 # polygon whose half-width is the density scaled to the category band. Mirrors
 # the boxplot layout (categorical x, value y).
 .emit_violin <- function(scene, L, scales) {
-  xv <- L$values$x
-  yv <- as.numeric(L$values$y)
-  colv <- rep_len(.aes_colour(L, scales, "grey70"), length(yv))
-  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(yv))
+  yv <- rep_len(as.numeric(L$values$y), L$n)
+  pt <- .dist_paint(L, scales, "grey70")
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), L$n)
   adjust <- L$stat_params$adjust %||% 1
-  levs <- .cat_levels(xv)
-  xc_all <- scales$x$map(levs)
-  band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
-  hw <- .VIOLIN_HALFWIDTH * band
-  xchar <- as.character(xv)
-  idx_by_level <- .idx_by_level(xchar, levs)
-  dens <- .density_by_cat(yv, xv, levs, adjust)
+  band <- scales$x$band_width %||% .resolution(scales$x$map(L$values$x))
+  hw0 <- .VIOLIN_HALFWIDTH * band
   sk <- .mark_sketch(L, scales)
-  for (j in seq_along(levs)) {
-    d <- dens[[j]]
+  cells <- .by_category(L, scales, "x", span = 2 * hw0)
+  for (k in seq_along(cells)) {
+    cl <- cells[[k]]
+    sel <- cl$rows
+    d <- .density_of(yv[sel], adjust)
     if (is.null(d)) {
       next
     }
-    sel <- idx_by_level[[j]]
-    a <- alpha[sel[1]]
+    i0 <- sel[1]
     # up the right side, then down the mirrored left side
     poly <- .density_polygon(
       scales$y$map(d$x),
-      xc_all[j],
-      .density_offset(d, hw),
+      cl$centre,
+      .density_offset(d, hw0 * cl$share),
       "violin"
     )
     xy <- .xy_units(scales, poly$perp, poly$supp)
@@ -251,15 +329,15 @@ NULL
       vellum::polygon_grob(
         xy$x,
         xy$y,
-        sketch = .sketch_bump(sk, j),
+        sketch = .sketch_bump(sk, k),
         gp = vellum::vl_gpar(
-          fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, colv[sel[1]]),
-          col = "grey30",
+          fill = .pattern_at(L, scales, i0) %||% .paint_or(L, pt$fill[i0]),
+          col = pt$col[i0],
           lwd = 1,
-          alpha = gp_alpha(a)
+          alpha = gp_alpha(alpha[i0])
         )
       ),
-      # PROVENANCE: a violin summarises all rows of its category.
+      # PROVENANCE: a violin summarises all rows of its category (and sub-group).
       rows = sel
     )
   }
@@ -271,28 +349,28 @@ NULL
 # is the density scaled to (a multiple of) the band. Drawn back-to-front so
 # nearer ridges overlap farther ones.
 .emit_ridgeline <- function(scene, L, scales) {
-  xv <- as.numeric(L$values$x)
-  yv <- L$values$y
-  colv <- rep_len(.aes_colour(L, scales, "grey70"), length(xv))
+  xv <- rep_len(as.numeric(L$values$x), L$n)
+  pt <- .dist_paint(L, scales, "grey70")
   adjust <- L$stat_params$adjust %||% 1
-  levs <- .cat_levels(yv)
-  ypos <- scales$y$map(levs)
   band <- scales$y$band_width %||% 1
   scale_h <- (L$stat_params$height %||% .RIDGE_HEIGHT) * band
-  ychar <- as.character(yv)
-  dens <- .density_by_cat(xv, yv, levs, adjust)
-  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(xv))
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), L$n)
   sk <- .mark_sketch(L, scales)
-  for (j in rev(seq_along(levs))) {
-    d <- dens[[j]]
+  # Sub-groups share their category's baseline and overlap (ridges are compared
+  # by outline, not set side by side).
+  cells <- .by_category(L, scales, "y", dodge = FALSE)
+  # back-to-front, so nearer (lower) ridges overlap farther ones
+  for (k in rev(seq_along(cells))) {
+    cl <- cells[[k]]
+    sel <- cl$rows
+    d <- .density_of(xv[sel], adjust)
     if (is.null(d)) {
       next
     }
-    sel <- which(ychar == levs[j])
-    a <- alpha[sel[1]]
+    i0 <- sel[1]
     poly <- .density_polygon(
       scales$x$map(d$x),
-      ypos[j],
+      cl$centre,
       .density_offset(d, scale_h),
       "ridge"
     )
@@ -302,15 +380,15 @@ NULL
       vellum::polygon_grob(
         xy$x,
         xy$y,
-        sketch = .sketch_bump(sk, j),
+        sketch = .sketch_bump(sk, k),
         gp = vellum::vl_gpar(
-          fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, colv[sel[1]]),
-          col = "grey30",
+          fill = .pattern_at(L, scales, i0) %||% .paint_or(L, pt$fill[i0]),
+          col = pt$col[i0],
           lwd = 1,
-          alpha = gp_alpha(a)
+          alpha = gp_alpha(alpha[i0])
         )
       ),
-      # PROVENANCE: a ridge summarises all rows of its category.
+      # PROVENANCE: a ridge summarises all rows of its category (and sub-group).
       rows = sel
     )
   }
@@ -334,47 +412,43 @@ NULL
 # also draws a one-sided density "slab" (half violin) to the right of the tick.
 # Aimed at sample/posterior input: many `y` rows per category.
 .emit_slabinterval <- function(scene, L, scales, slab) {
-  xv <- L$values$x
-  yv <- as.numeric(L$values$y)
-  levs <- .cat_levels(xv)
-  xc_all <- scales$x$map(levs)
-  band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
+  yv <- rep_len(as.numeric(L$values$y), L$n)
+  band <- scales$x$band_width %||% .resolution(scales$x$map(L$values$x))
   widths <- sort(L$stat_params$width %||% c(0.66, 0.95))
   point <- L$stat_params$point %||% "median"
-  colv <- rep_len(.aes_colour(L, scales, "grey30"), length(yv))
-  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), length(yv))
+  colv <- rep_len(.aes_colour(L, scales, "grey30"), L$n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), L$n)
   adjust <- L$stat_params$adjust %||% 1
-  hw <- (L$stat_params$scale %||% .SLAB_WIDTH) * band
-  xchar <- as.character(xv)
-  idx_by_level <- .idx_by_level(xchar, levs)
-  dens <- if (slab) .density_by_cat(yv, xv, levs, adjust) else NULL
+  hw0 <- (L$stat_params$scale %||% .SLAB_WIDTH) * band
   sk <- .mark_sketch(L, scales)
   mrk <- if (slab) "mark_halfeye" else "mark_interval"
   # inner intervals thick, outer thin; drawn widest-first so the thick bar is on top
   lwd_by_width <- seq(4, 1.5, length.out = length(widths))
+  cells <- .by_category(L, scales, "x", span = .SLAB_WIDTH * band)
 
-  for (j in seq_along(levs)) {
-    sel <- idx_by_level[[j]]
-    # A point-interval summarises a distribution: skip a category with fewer than
-    # 2 finite observations (a single/absent value has no interval and would
+  for (k in seq_along(cells)) {
+    cl <- cells[[k]]
+    sel <- cl$rows
+    # A point-interval summarises a distribution: skip a cell with fewer than 2
+    # finite observations (a single/absent value has no interval and would
     # otherwise feed NA coordinates into the grobs), matching `.stat_density`.
     if (sum(is.finite(yv[sel])) < 2L) {
       cli::cli_warn(
-        "Skipping {.field {levs[j]}}: {.fn {mrk}} needs at least 2 points."
+        "Skipping {.field {cl$label}}: {.fn {mrk}} needs at least 2 points."
       )
       next
     }
-    xc <- xc_all[j]
+    xc <- cl$centre
     ccol <- colv[sel[1]]
     a <- alpha[sel[1]]
+    d <- if (slab) .density_of(yv[sel], adjust)
 
-    if (slab && !is.null(dens[[j]])) {
-      d <- dens[[j]]
+    if (!is.null(d)) {
       # up the flat left edge, down the bulge
       poly <- .density_polygon(
         scales$y$map(d$x),
         xc,
-        .density_offset(d, hw),
+        .density_offset(d, hw0 * cl$share),
         "slab"
       )
       xy <- .xy_units(scales, poly$perp, poly$supp)
@@ -383,7 +457,7 @@ NULL
         vellum::polygon_grob(
           xy$x,
           xy$y,
-          sketch = .sketch_bump(sk, j),
+          sketch = .sketch_bump(sk, k),
           gp = vellum::vl_gpar(
             fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, ccol),
             col = NA,

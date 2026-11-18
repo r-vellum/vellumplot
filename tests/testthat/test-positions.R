@@ -39,18 +39,21 @@ test_that("nudge shifts numeric x/y and leaves a discrete axis alone", {
 
 test_that("dodge2 fills the band by the groups present at each x", {
   # x = 1 has one group; x = 2 has two — so x=1's bar is wider and centred.
-  d2 <- vellumplot:::.dodge2_bars(
-    xp = c(1, 2, 2),
+  d2 <- vellumplot:::.dodge_offsets(
+    x = c(1, 2, 2),
     grp = c("x", "x", "y"),
-    n = 3,
-    tw = rep(0.9, 3),
-    padding = 0.1
+    span = rep(0.9, 3),
+    ragged = TRUE
   )
-  expect_equal(d2$xc[1], 1) # lone group stays centred on the tick
-  expect_equal(d2$w[1], 0.9 * 0.9) # and fills the whole band (minus padding)
-  # the paired group splits the band in two, each half-width, symmetric
-  expect_equal(d2$w[2], 0.45 * 0.9)
-  expect_equal(d2$xc[2] + d2$xc[3], 4) # symmetric about x = 2
+  expect_equal(d2$offset[1], 0) # lone group stays centred on the tick
+  expect_equal(d2$share[1], 1) # and fills the whole band
+  # the paired group splits the band in two, symmetric about the tick
+  expect_equal(d2$share[2:3], c(0.5, 0.5))
+  expect_equal(d2$offset[2] + d2$offset[3], 0)
+  # plain dodge keeps a slot for every level, so x = 1's lone group is off-centre
+  d1 <- vellumplot:::.dodge_offsets(c(1, 2, 2), c("x", "x", "y"), 0.9)
+  expect_equal(d1$offset, c(-0.225, -0.225, 0.225))
+  expect_equal(d1$share, rep(0.5, 3))
 })
 
 test_that("dodge width widens the group span", {

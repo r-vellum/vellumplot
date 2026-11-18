@@ -1392,7 +1392,7 @@ NULL
     xc <- scales$x$map(levs)
     band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
     hw <- .VIOLIN_HALFWIDTH * band
-    dens <- .density_by_cat(yv, xv, levs, adjust)
+    dens <- .density_by_cat(yv, xv, levs, adjust, .group_key(L))
     supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
     list(
       x = c(min(xc) - hw, max(xc) + hw),
@@ -1405,7 +1405,7 @@ NULL
     ypos <- scales$y$map(levs)
     band <- scales$y$band_width %||% 1
     scale_h <- (L$stat_params$height %||% .RIDGE_HEIGHT) * band
-    dens <- .density_by_cat(xv, yv, levs, adjust)
+    dens <- .density_by_cat(xv, yv, levs, adjust, .group_key(L))
     supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
     list(
       x = if (length(supp)) range(supp) else NULL,
@@ -1420,7 +1420,7 @@ NULL
     xc <- scales$x$map(levs)
     band <- scales$x$band_width %||% .resolution(scales$x$map(xv))
     hw <- (L$stat_params$scale %||% .SLAB_WIDTH) * band
-    dens <- .density_by_cat(yv, xv, levs, adjust)
+    dens <- .density_by_cat(yv, xv, levs, adjust, .group_key(L))
     supp <- unlist(lapply(dens, function(d) if (!is.null(d)) range(d$x)))
     list(
       x = c(min(xc), max(xc) + hw),

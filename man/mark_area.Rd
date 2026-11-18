@@ -15,11 +15,19 @@ mark_area(
   data = NULL
 )
 
-mark_ribbon(plot, ..., blend = NULL, sketch = NULL, data = NULL)
+mark_ribbon(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
 
 mark_step(
   plot,
   ...,
+  position = "identity",
   direction = "hv",
   auto = FALSE,
   blend = NULL,

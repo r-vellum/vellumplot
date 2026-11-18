@@ -24,6 +24,7 @@ mark_point(
 mark_line(
   plot,
   ...,
+  position = "identity",
   window = NULL,
   auto = FALSE,
   blend = NULL,
@@ -35,6 +36,7 @@ mark_line(
 mark_rule(
   plot,
   ...,
+  position = "identity",
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -73,10 +75,16 @@ may be a constant or a mapped expression. A shape is a built-in marker
 constant icon, or map \code{shape} and pass icons to \code{\link[=scale_shape]{scale_shape()}}.}
 
 \item{position}{Position adjustment: a string — \code{"identity"} (default),
-\code{"jitter"} / \code{"jitterdodge"} (points), \code{"stack"} / \code{"fill"} / \code{"dodge"} /
-\code{"dodge2"} (bars), \code{"nudge"} — or a parameterised \code{\link[=position_jitter]{position_jitter()}} /
-\code{\link[=position_dodge]{position_dodge()}} / \code{\link[=position_dodge2]{position_dodge2()}} / \code{\link[=position_jitterdodge]{position_jitterdodge()}} /
-\code{\link[=position_nudge]{position_nudge()}} object.}
+\code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
+\code{"jitterdodge"}, \code{"sina"} — or a parameterised \link{position} object such as
+\code{\link[=position_dodge]{position_dodge()}} or \code{\link[=position_stack]{position_stack()}}. Every mark takes \code{"identity"} and
+\code{"nudge"}. \code{"stack"}/\code{"fill"} work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); \code{"dodge"}/\code{"dodge2"} on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+\code{"jitter"} on points, text and labels; \code{"jitterdodge"} and \code{"sina"} on
+points. A position a mark does not support is an error naming the ones it
+does.}
 
 \item{auto}{For \code{mark_point()}, \code{mark_line()}, \code{mark_step()},
 \code{mark_segment()}, and \code{mark_edges()}, when \code{TRUE} and the layer has very many

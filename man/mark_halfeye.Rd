@@ -8,6 +8,7 @@
 mark_halfeye(
   plot,
   ...,
+  position = "identity",
   .width = c(0.66, 0.95),
   point = "median",
   adjust = 1,
@@ -20,6 +21,7 @@ mark_halfeye(
 mark_interval(
   plot,
   ...,
+  position = "identity",
   .width = c(0.66, 0.95),
   point = "median",
   blend = NULL,
@@ -31,6 +33,18 @@ mark_interval(
 
 \item{...}{Encodings (tidy-eval): a categorical \code{x} and the sample \code{y}
 (+ \code{color}/\code{fill}).}
+
+\item{position}{Position adjustment: a string — \code{"identity"} (default),
+\code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
+\code{"jitterdodge"}, \code{"sina"} — or a parameterised \link{position} object such as
+\code{\link[=position_dodge]{position_dodge()}} or \code{\link[=position_stack]{position_stack()}}. Every mark takes \code{"identity"} and
+\code{"nudge"}. \code{"stack"}/\code{"fill"} work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); \code{"dodge"}/\code{"dodge2"} on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+\code{"jitter"} on points, text and labels; \code{"jitterdodge"} and \code{"sina"} on
+points. A position a mark does not support is an error naming the ones it
+does.}
 
 \item{.width}{Interval probabilities, widest last (default
 \code{c(0.66, 0.95)}).}

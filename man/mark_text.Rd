@@ -8,6 +8,7 @@
 mark_text(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   family = NULL,
   fontface = NULL,
@@ -29,6 +30,7 @@ mark_text(
 mark_label(
   plot,
   ...,
+  position = "identity",
   size = NULL,
   family = NULL,
   fontface = NULL,
@@ -53,6 +55,18 @@ mark_label(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, \code{label} (+ \code{color}, \code{angle}).}
+
+\item{position}{Position adjustment: a string — \code{"identity"} (default),
+\code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
+\code{"jitterdodge"}, \code{"sina"} — or a parameterised \link{position} object such as
+\code{\link[=position_dodge]{position_dodge()}} or \code{\link[=position_stack]{position_stack()}}. Every mark takes \code{"identity"} and
+\code{"nudge"}. \code{"stack"}/\code{"fill"} work on bars, areas, points, text and labels
+(so a label can sit on its stacked bar); \code{"dodge"}/\code{"dodge2"} on bars,
+points, text, labels, error bars, line/point ranges, cross-bars, box plots,
+violins and slab-intervals (so error bars dodge over dodged bars);
+\code{"jitter"} on points, text and labels; \code{"jitterdodge"} and \code{"sina"} on
+points. A position a mark does not support is an error naming the ones it
+does.}
 
 \item{size}{Font size in points.}
 

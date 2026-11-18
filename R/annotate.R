@@ -151,7 +151,14 @@ annotate <- function(
 # entry point is `annotate("rect", ...)`. Unlike `mark_tile()` (centre + size),
 # this keeps the corner bounds so a `-Inf`/`Inf` bound can be resolved to the
 # panel edge at emit time.
-mark_rect <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
+mark_rect <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
   .check_plot(plot)
   .add_layer(
     plot,
@@ -159,7 +166,8 @@ mark_rect <- function(plot, ..., blend = NULL, sketch = NULL, data = NULL) {
     rlang::enquos(...),
     blend = blend,
     sketch = sketch,
-    data = data
+    data = data,
+    position = position
   )
 }
 

@@ -18,6 +18,7 @@ mark_histogram(
 mark_smooth(
   plot,
   ...,
+  position = "identity",
   method = "auto",
   formula = NULL,
   span = 0.75,
