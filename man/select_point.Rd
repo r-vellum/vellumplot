@@ -2,7 +2,6 @@
 % Please edit documentation in R/select.R
 \name{select_point}
 \alias{select_point}
-\alias{select_interval}
 \title{Declare an interactive selection}
 \usage{
 select_point(
@@ -14,14 +13,6 @@ select_point(
   toggle = TRUE,
   empty = TRUE
 )
-
-select_interval(
-  plot,
-  name,
-  on = c("xy", "x", "y"),
-  region = c("rect", "lasso"),
-  empty = TRUE
-)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (piped form), or a selection \strong{name} string
@@ -29,8 +20,7 @@ select_interval(
 
 \item{name}{The selection name (piped form) — a string other nodes reference.}
 
-\item{on}{The gesture. Point: \code{"click"} (default) or \code{"hover"}. Interval:
-\code{"xy"} (default, both axes), \code{"x"}, or \code{"y"} (a single-axis brush).}
+\item{on}{The gesture: \code{"click"} (default) or \code{"hover"}.}
 
 \item{fields}{For a point selection, the column name(s) whose match extends
 membership: clicking one element selects every row equal to it on these
@@ -45,9 +35,6 @@ selects only the clicked element. \code{group_by} is an alias.}
 \item{empty}{Whether an \strong{empty} selection contains \emph{all} elements (\code{TRUE},
 default — so an unselected plot shows its full self and selecting \emph{narrows})
 or \emph{none} (\code{FALSE}).}
-
-\item{region}{For an interval selection, \code{"rect"} (default, a brush rectangle)
-or \code{"lasso"} (a freehand polygon).}
 }
 \value{
 A \link{PlotSpec} (piped form) or a \code{SelectionSpec} (free-standing form).
@@ -61,11 +48,11 @@ with it, serialise with it, and are enacted by any capable host
 (\code{vellumwidget}). They are inert on a static render.
 }
 \details{
-\code{select_point()} is driven by a click or hover (or a legend value);
-\code{select_interval()} by a drag (a brush rectangle or a lasso), optionally locked
-to an axis.
+\code{select_point()} is driven by a click or hover (or a legend value). For a
+selection driven by a drag (a brush over a data range), see
+\code{\link[=select_interval]{select_interval()}}.
 
-Both are \strong{pipe-first} (attach to the plot and return it) \emph{or} \strong{free-standing}
+It is \strong{pipe-first} (attach to the plot and return it) \emph{or} \strong{free-standing}
 (call with the name as the first argument to get a \code{SelectionSpec} you can share
 across views, then attach with \code{\link[=add_selection]{add_selection()}}).
 }
@@ -78,8 +65,9 @@ vplot(df) |>
   select_point("hi", on = "hover")
 
 # free-standing, for cross-view use
-sel <- select_interval("brush", on = "x")
+sel <- select_point("pick")
 }
 \seealso{
-\code{\link[=condition]{condition()}}, \code{\link[=filter_by]{filter_by()}}, \code{\link[=add_selection]{add_selection()}}, \code{\link[=bind_scale]{bind_scale()}}
+\code{\link[=select_interval]{select_interval()}}, \code{\link[=condition]{condition()}}, \code{\link[=filter_by]{filter_by()}},
+\code{\link[=add_selection]{add_selection()}}, \code{\link[=bind_scale]{bind_scale()}}
 }

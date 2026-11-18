@@ -673,6 +673,7 @@ NULL
     domain = c(0.5, k + 0.5),
     breaks = seq_len(k),
     labels = levs,
+    levels = levs, # stays the data levels even if `labels` is relabelled later
     map = function(x) match(as.character(x), levs),
     name = name,
     transform = "identity",

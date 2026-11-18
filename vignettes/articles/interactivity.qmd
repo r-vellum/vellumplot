@@ -34,17 +34,17 @@ the static renders). The interaction comes alive only when a host such as
 
 A **selection** is a named set of data elements defined by a user gesture. On its
 own it does nothing; you refer to it elsewhere. Declare one with `select_point()`
-(a click or hover, or a legend value) or `select_interval()` (a brush or lasso,
-optionally locked to an axis):
+(a click or hover, or a legend value) or `select_interval()` (a brush over a
+data range):
 
 ```{r}
 #| label: selection
 #| eval: false
 p |> select_point("hi", on = "hover") # hover a mark
-p |> select_interval("brush", on = "x") # drag an x-range
+p |> select_interval("brush", encodings = "x") # drag an x-range
 ```
 
-`on` sets the gesture; `empty = TRUE` (the default) means an *empty* selection
+`on` sets a point selection's gesture; `empty = TRUE` (the default) means an *empty* selection
 contains everything — so an untouched plot shows its full self and interacting
 *narrows* it.
 
@@ -75,6 +75,41 @@ Omit `if_false` to fall back to the theme's dim appearance:
 mark_point(x = x, y = y, color = condition("hi", cyl)) # non-members just dim
 ```
 
+## Brushing a range: `select_interval()`
+
+`select_interval()` fills a selection by dragging a brush. The host converts
+the brushed pixels to a **data range** through the panel's scale, and every
+element whose data value falls in that range is a member. `encodings` picks the
+channels the brush constrains: `"x"` (the default, a full-height band), `"y"`, or
+`c("x", "y")` for a rectangle.
+
+```{r}
+#| label: interval
+econ <- data.frame(
+  date = as.Date("2000-01-01") + seq(0, by = 30, length.out = 60),
+  value = cumsum(sin(seq_len(60) / 4)) + 10
+)
+econ$year <- format(econ$date, "%Y")
+vplot(econ) |>
+  mark_point(x = date, y = value, color = condition("when", year, "grey80")) |>
+  select_interval("when", encodings = "x")
+```
+
+Because membership is by value, the brush follows the scale rather than the drawn
+shapes:
+
+- on a **continuous** axis (log, sqrt and reversed axes too) an element is a
+  member when its value lies in the brushed range;
+- on a **date** or **datetime** axis the same test runs on the date's numeric
+  value;
+- on a **discrete** axis a category is selected when the brush covers the centre
+  of its band.
+
+In a faceted plot the range applies to every panel, so brushing one facet picks
+out the matching rows in all of them. Clicking empty space (or pressing `Escape`)
+clears the brush and empties the selection. Under Shiny, the members arrive in
+`input$<id>_selected` and the brushed data range in `input$<id>_brush`.
+
 ## Filtering: `filter_by()`
 
 `filter_by()` shows only the selection's members, hiding the rest:
@@ -84,7 +119,7 @@ mark_point(x = x, y = y, color = condition("hi", cyl)) # non-members just dim
 #| eval: false
 vplot(df) |>
   mark_point(x = x, y = y) |>
-  select_interval("brush", on = "xy") |>
+  select_interval("brush", encodings = c("x", "y")) |>
   filter_by("brush")
 ```
 
@@ -97,7 +132,7 @@ full. Define the selection once, `add_selection()` it on the source, and
 
 ```{r}
 #| label: crossfilter
-sel <- select_interval("brush", on = "xy")
+sel <- select_interval("brush", encodings = c("x", "y"))
 hconcat(
   vplot(df) |> mark_point(x = x, y = y) |> add_selection(sel),
   vplot(df) |> mark_point(x = y, y = x) |> filter_by(sel)

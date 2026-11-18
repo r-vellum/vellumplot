@@ -1,5 +1,24 @@
 # vellumplot 0.11.1.9000 (development version)
 
+## New features
+
+* **`select_interval()` brushes a data range.** `select_interval(name, encodings
+  = "x")` declares an interval selection that a brush fills; `condition()` and
+  `filter_by()` react to it the same way they react to a point selection.
+  Membership is by data value: a host such as vellumwidget converts the brushed
+  pixels to a data range through the panel's scale and tests each element's own
+  values, so continuous (including log, sqrt and reversed), date, datetime and
+  discrete axes all work, and a brush in one facet selects matching rows in every
+  facet. `encodings` takes `"x"`, `"y"` or `c("x", "y")`. Plots with an interval
+  selection now carry each keyed element's data values on the brushed channels,
+  and the panel axis descriptors gain `aesthetic` and, for discrete axes,
+  `levels`. The interaction model records the selection as `{name, type:
+  "interval", encodings}`. Static renders are unchanged.
+
+  `encodings` defaults to `"x"`, so `select_interval(p, "b")` is now an x-only
+  brush; before, it brushed both axes. The old `on = "x" / "y" / "xy"` argument
+  still works as an alias.
+
 
 # vellumplot 0.11.1
 

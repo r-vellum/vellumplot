@@ -16,8 +16,9 @@ NULL
 # back to data), `data_lo`/`data_hi` (data-space extent), `native_lo`/`native_hi`
 # (the expanded native domain == the panel viewport's xscale/yscale), `breaks` +
 # `labels` (native tick positions and their formatted strings), `discrete`,
-# `band_width`, and `time_unit` (NULL | "day" | "second" — the epoch unit for a
-# date/datetime axis, so a host round-trips `as.numeric()` values back to R dates).
+# `band_width`, `time_unit` (NULL | "day" | "second" — the epoch unit for a
+# date/datetime axis, so a host round-trips `as.numeric()` values back to R dates),
+# `aesthetic` (the channel the axis shows) and, for a discrete axis, `levels`.
 .axis_scale_desc <- function(sc) {
   if (is.null(sc)) {
     return(NULL)
@@ -42,8 +43,32 @@ NULL
     labels = as.character(sc$labels),
     discrete = isTRUE(sc$discrete),
     band_width = sc$band_width,
-    time_unit = sc$time_unit
+    time_unit = sc$time_unit,
+    # The aesthetic this axis shows ("x" or "y"; swapped under coord_flip), so a
+    # host maps an interval selection's encoding to the right panel axis.
+    aesthetic = sc$aesthetic,
+    # A discrete axis's levels in position order (level i sits at native i), so
+    # a host turns a brushed native range into the categories it covers.
+    levels = if (isTRUE(sc$discrete)) .discrete_levels(sc) else NULL
   )
+}
+
+# The levels of a trained discrete position scale, in position order: level i is
+# drawn at native position i. A scale trained here carries them as `levels`; for
+# any other, fall back to the labels when the scale's own `map` confirms they are
+# the data values (a relabelled axis would not, and yields NULL).
+.discrete_levels <- function(sc) {
+  if (!is.null(sc$levels)) {
+    return(as.character(sc$levels))
+  }
+  labs <- as.character(sc$labels)
+  if (is.function(sc$map) && length(labs)) {
+    pos <- suppressWarnings(sc$map(labs))
+    if (identical(as.numeric(pos), as.numeric(seq_along(labs)))) {
+      return(labs)
+    }
+  }
+  NULL
 }
 
 # The `meta` list for a cartesian panel viewport: per-axis scale descriptors plus

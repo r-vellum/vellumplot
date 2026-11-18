@@ -236,3 +236,140 @@ test_that("bind_scale records a domain bind", {
   expect_identical(p@binds[[1]]@aes, "x")
   expect_identical(p@binds[[1]]@selection, "ov")
 })
+
+# --- select_interval(encodings =): spec record + per-element data values -------
+
+test_that("select_interval() takes encodings, defaulting to x", {
+  s <- select_interval("b")
+  expect_identical(s@kind, "interval")
+  expect_identical(s@encodings, "x")
+  expect_identical(select_interval("b", encodings = "y")@encodings, "y")
+  # canonical x-then-y order, duplicates dropped
+  expect_identical(
+    select_interval("b", encodings = c("y", "x", "y"))@encodings,
+    c("x", "y")
+  )
+  # legacy `on` still works
+  expect_identical(select_interval("b", on = "xy")@encodings, c("x", "y"))
+  expect_identical(select_interval("b", on = "y")@encodings, "y")
+  expect_error(select_interval("b", encodings = "z"), "encodings")
+  expect_error(select_interval("b", encodings = character()), "encodings")
+})
+
+test_that("an interval selection serialises as {name, type, encodings}", {
+  p <- vplot(df) |>
+    mark_point(x = x, y = y, color = condition("br", g, "grey80")) |>
+    select_interval("br", encodings = "x")
+  rec <- interaction_model(p)$selections[[1]]
+  expect_identical(rec$name, "br")
+  expect_identical(rec$type, "interval")
+  # a list, so a single encoding stays a JSON array
+  expect_identical(rec$encodings, list("x"))
+  expect_identical(rec$on, "x")
+  json <- jsonlite::toJSON(rec, auto_unbox = TRUE)
+  expect_match(json, '"encodings":["x"]', fixed = TRUE)
+  # point selections carry no encodings
+  pp <- vplot(df) |> mark_point(x = x, y = y) |> select_point("p")
+  expect_null(interaction_model(pp)$selections[[1]]$encodings)
+})
+
+interval_meta <- function(p) {
+  m <- vellum::scene_model(vellum::as_vellum_scene(p))
+  keyed <- !is.na(m$elements$key)
+  list(meta = m$elements$meta[keyed], panels = m$panels)
+}
+
+test_that("keyed elements carry their data values on the brushed channels", {
+  d <- data.frame(
+    x = c(1, 10, 100),
+    y = c(2, 3, 4),
+    g = c("b", "a", "c"),
+    day = as.Date("2020-01-01") + c(0, 10, 20)
+  )
+  # continuous (log axis): raw data values, not transformed ones
+  im <- interval_meta(
+    vplot(d) |>
+      mark_point(x = x, y = y) |>
+      scale_x_continuous(trans = "log10") |>
+      select_interval("b")
+  )
+  expect_equal(vapply(im$meta, `[[`, numeric(1), "ix"), d$x)
+  expect_null(im$meta[[1]]$iy) # x-only: no y values
+  # date: the epoch number
+  im <- interval_meta(
+    vplot(d) |> mark_point(x = day, y = y) |> select_interval("b")
+  )
+  expect_equal(vapply(im$meta, `[[`, numeric(1), "ix"), as.numeric(d$day))
+  # discrete: the category label; both channels for an xy selection
+  im <- interval_meta(
+    vplot(d) |>
+      mark_bar(x = g, y = y) |>
+      select_interval("b", encodings = c("x", "y"))
+  )
+  expect_setequal(vapply(im$meta, `[[`, character(1), "ixd"), d$g)
+  expect_setequal(vapply(im$meta, `[[`, numeric(1), "iy"), d$y)
+})
+
+test_that("a series element spans the range of its rows", {
+  d <- data.frame(x = c(3, 1, 7), y = c(1, 2, 3))
+  im <- interval_meta(
+    vplot(d) |>
+      mark_line(x = x, y = y, data_id = "s") |>
+      select_interval("b")
+  )
+  expect_length(im$meta, 1L)
+  expect_identical(im$meta[[1]]$ix, 1)
+  expect_identical(im$meta[[1]]$ixh, 7)
+})
+
+test_that("panel axis descriptors name their aesthetic and discrete levels", {
+  d <- data.frame(g = c("b", "a", "c"), y = 1:3)
+  im <- interval_meta(
+    vplot(d) |> mark_bar(x = g, y = y) |> select_interval("b")
+  )
+  sc <- Filter(Negate(is.null), lapply(im$panels$meta, `[[`, "scales"))[[1]]
+  expect_identical(sc$x$aesthetic, "x")
+  expect_identical(sc$x$levels, c("a", "b", "c"))
+  expect_null(sc$y$levels)
+  # coord_flip: the horizontal axis shows the y aesthetic
+  imf <- interval_meta(
+    vplot(d) |> mark_bar(x = g, y = y) |> coord_flip() |> select_interval("b")
+  )
+  scf <- Filter(Negate(is.null), lapply(imf$panels$meta, `[[`, "scales"))[[1]]
+  expect_identical(scf$x$aesthetic, "y")
+  expect_identical(scf$y$aesthetic, "x")
+})
+
+test_that("data values are emitted only for plots with an interval selection", {
+  m <- vellum::scene_model(vellum::as_vellum_scene(
+    vplot(df) |> mark_point(x = x, y = y) |> select_point("p")
+  ))
+  meta <- m$elements$meta[!is.na(m$elements$key)]
+  expect_false(any(vapply(meta, function(r) "ix" %in% names(r), logical(1))))
+})
+
+test_that("select_interval() leaves the static render unchanged", {
+  r <- function(p) {
+    f <- withr::local_tempfile(fileext = ".png")
+    render_plot(p, f)
+    readBin(f, "raw", 1e7)
+  }
+  plain <- r(vplot(df) |> mark_point(x = x, y = y, color = g))
+  brushed <- r(
+    vplot(df) |>
+      mark_point(x = x, y = y, color = condition("br", g, "grey80")) |>
+      select_interval("br", encodings = c("x", "y"))
+  )
+  expect_identical(plain, brushed)
+})
+
+test_that("range marks carry the span of their extent", {
+  d <- data.frame(a = c(1, 5), b = c(3, 4), c = c(0, 0), e = c(1, 1))
+  im <- interval_meta(
+    vplot(d) |>
+      mark_rect(xmin = a, xmax = b, ymin = c, ymax = e) |>
+      select_interval("b")
+  )
+  expect_identical(vapply(im$meta, `[[`, numeric(1), "ix"), c(1, 4))
+  expect_identical(vapply(im$meta, `[[`, numeric(1), "ixh"), c(3, 5))
+})
