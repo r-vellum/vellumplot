@@ -64,6 +64,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.1.9000" id="vellumplot-01119000-development-version">vellumplot 0.11.1.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01119000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-11-1-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-11-1-9000"></a></h3>
+<ul><li>
+<strong>Bivariate choropleths with a 2-D legend.</strong> <code><a href="../reference/bi_class.html">bi_class()</a></code> bins two numeric columns into <code>dim</code> classes each (quantile by default, or any <code><a href="../reference/scale_fill_binned.html">scale_fill_binned()</a></code> style) and adds one <code>"x-y"</code> class column. Mapping a fill or colour to that column colours it from a bivariate palette and draws the legend as a square grid of swatches, with the <code>x</code> variable along the bottom, the <code>y</code> variable up the side, and an arrow on each axis. <code><a href="../reference/scale_fill_bivariate.html">scale_fill_bivariate()</a></code> / <code><a href="../reference/scale_fill_bivariate.html">scale_color_bivariate()</a></code> choose the palette (<code><a href="../reference/bi_pal.html">bi_pal()</a></code>: Stevens’ <code>"DkBlue"</code>, <code>"GrPink"</code>, <code>"DkViolet"</code> and <code>"Brown"</code>, at 2x2, 3x3 or 4x4) and the axis titles, and <code><a href="../reference/guide_bivariate.html">guide_bivariate()</a></code> retitles the axes or resizes the swatches through <code><a href="../reference/guides.html">guides()</a></code>. It works on <code><a href="../reference/mark_sf.html">mark_sf()</a></code> polygons and on ordinary marks. The classes are computed over the whole table, so facet panels share them. On an interactive plot each swatch is keyed to the features in its class, so hovering a swatch highlights them.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.1" id="vellumplot-0111">vellumplot 0.11.1<a class="anchor" aria-label="anchor" href="#vellumplot-0111"></a></h2>

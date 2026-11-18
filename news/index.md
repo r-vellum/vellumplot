@@ -2,6 +2,34 @@
 
 ## vellumplot 0.11.1.9000 (development version)
 
+### New features
+
+- **Bivariate choropleths with a 2-D legend.**
+  [`bi_class()`](https://r-vellum.github.io/vellumplot/reference/bi_class.md)
+  bins two numeric columns into `dim` classes each (quantile by default,
+  or any
+  [`scale_fill_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  style) and adds one `"x-y"` class column. Mapping a fill or colour to
+  that column colours it from a bivariate palette and draws the legend
+  as a square grid of swatches, with the `x` variable along the bottom,
+  the `y` variable up the side, and an arrow on each axis.
+  [`scale_fill_bivariate()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_bivariate.md)
+  /
+  [`scale_color_bivariate()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_bivariate.md)
+  choose the palette
+  ([`bi_pal()`](https://r-vellum.github.io/vellumplot/reference/bi_pal.md):
+  Stevens’ `"DkBlue"`, `"GrPink"`, `"DkViolet"` and `"Brown"`, at 2x2,
+  3x3 or 4x4) and the axis titles, and
+  [`guide_bivariate()`](https://r-vellum.github.io/vellumplot/reference/guide_bivariate.md)
+  retitles the axes or resizes the swatches through
+  [`guides()`](https://r-vellum.github.io/vellumplot/reference/guides.md).
+  It works on
+  [`mark_sf()`](https://r-vellum.github.io/vellumplot/reference/mark_sf.md)
+  polygons and on ordinary marks. The classes are computed over the
+  whole table, so facet panels share them. On an interactive plot each
+  swatch is keyed to the features in its class, so hovering a swatch
+  highlights them.
+
 ## vellumplot 0.11.1
 
 ### Bug fixes

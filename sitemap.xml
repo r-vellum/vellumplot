@@ -29,6 +29,8 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/annotate.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/area.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/as_spec.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/bi_class.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/bi_pal.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/bind_scale.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/clip.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/compose_annotation.html</loc></url>
@@ -45,6 +47,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/glow.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/gradients.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/gt_vsparkline.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/guide_bivariate.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/guides.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/index.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/inset.html</loc></url>
@@ -106,6 +109,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/scale_edge.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/scale_edge_width.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/scale_fill_bivariate.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/scale_linetype.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/scale_linewidth.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/scale_pattern.html</loc></url>

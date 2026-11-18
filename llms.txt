@@ -614,6 +614,14 @@ Map data values to visual properties, with trained domains and guides.
   [`scale_colour_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   [`scale_fill_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   : Binned (classed) colour scales
+- [`scale_fill_bivariate()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_bivariate.md)
+  [`scale_color_bivariate()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_bivariate.md)
+  [`scale_colour_bivariate()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_bivariate.md)
+  : Bivariate colour scales
+- [`bi_class()`](https://r-vellum.github.io/vellumplot/reference/bi_class.md)
+  : Classify two variables for a bivariate map
+- [`bi_pal()`](https://r-vellum.github.io/vellumplot/reference/bi_pal.md)
+  : Bivariate palettes
 - [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
   : Shape scale
 - [`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
@@ -653,6 +661,8 @@ Map data values to visual properties, with trained domains and guides.
   [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   [`guide_colorsteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
   : Control a scale's legend
+- [`guide_bivariate()`](https://r-vellum.github.io/vellumplot/reference/guide_bivariate.md)
+  : A 2-D legend for a bivariate scale
 - [`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md)
   : Resolve scales as shared or independent across panels
 - [`after_stat()`](https://r-vellum.github.io/vellumplot/reference/after_stat.md)
