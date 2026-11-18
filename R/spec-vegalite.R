@@ -55,6 +55,7 @@ NULL
   shape = "shape",
   alpha = "opacity",
   label = "text",
+  group = "detail",
   xmin = "x",
   xmax = "x2",
   ymin = "y",
@@ -69,7 +70,8 @@ NULL
   size = "size",
   shape = "shape",
   opacity = "alpha",
-  text = "label"
+  text = "label",
+  detail = "group"
 )
 
 # transform name <-> Vega-Lite scale type.

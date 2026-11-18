@@ -26,6 +26,50 @@ NULL
   unname(split(seq_len(n), do.call(paste, c(codes, sep = "\036"))))
 }
 
+# Row groups for a *connected* mark (line, step, area, ribbon, smooth, text
+# path): one series per `.group_key()` level when the layer declares an explicit
+# `group`, each then split by style tuple exactly as `.style_groups()` would --
+# so `group = id` draws one polyline per id even when every id shares a colour,
+# and a discrete colour varying within an id still breaks it into styled runs.
+# Without an explicit `group` the key is the discrete colour/fill, which the
+# style split already separates, so this is `.style_groups()` unchanged (same
+# groups, same order, same output).
+.series_groups <- function(L, n, fields) {
+  if (is.null(L$values$group) && is.null(L$params$group)) {
+    return(.style_groups(n, fields))
+  }
+  g <- rep_len(.group_key(L), n)
+  fields <- fields[!vapply(fields, is.null, logical(1))]
+  out <- list()
+  for (idx in unname(split(seq_len(n), match(g, unique(g))))) {
+    sub <- lapply(fields, function(v) {
+      if (length(v) > 1L) rep_len(v, n)[idx] else v
+    })
+    for (j in .style_groups(length(idx), sub)) {
+      out[[length(out) + 1L]] <- idx[j]
+    }
+  }
+  out
+}
+
+# The raw per-row values of a *continuous* (or binned) mapped colour, or NULL. A
+# connected mark must not split its series on these -- each vertex would become
+# its own one-point series and the line would vanish -- so it keeps the series
+# whole and colours it per segment instead (`.draw_var_width_line(cv = )`).
+.continuous_colour <- function(L, scales, n) {
+  v <- L$values$color %||% L$values$fill
+  kind <- scales$color$kind
+  if (
+    is.null(v) ||
+      is.null(kind) ||
+      !kind %in% c("continuous", "binned") ||
+      !is.numeric(v)
+  ) {
+    return(NULL)
+  }
+  rep_len(as.numeric(v), n)
+}
+
 # Resolve a layer's mark colour: a mapped colour channel (via the trained colour
 # scale), a constant colour param, or the supplied default. `fill_fallback` lets
 # `fill` stand in for `color` (true for fill-based marks; false for text/label,

@@ -117,10 +117,10 @@ test_that("grouped and ungrouped aggregate treat NA identically", {
 
 # --- B15: a grouping aesthetic shorter than the data is recycled ------------
 
-test_that(".layer_group recycles a constant grouping to the row count", {
+test_that(".group_key recycles a constant grouping to the row count", {
   L <- list(values = list(x = c(1, 2, 3), color = "red"), n = 3)
-  expect_length(vellumplot:::.layer_group(L), 3L)
+  expect_length(vellumplot:::.group_key(L), 3L)
   # an already-full-length group is untouched
   L2 <- list(values = list(x = 1:3, fill = c("a", "b", "c")), n = 3)
-  expect_equal(vellumplot:::.layer_group(L2), c("a", "b", "c"))
+  expect_equal(vellumplot:::.group_key(L2), c("a", "b", "c"))
 })

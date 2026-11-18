@@ -221,7 +221,8 @@ NULL
   offset <- .aes_param(L, "offset", 0)
   fam <- .aes_param(L, "family", NULL)
   face <- .aes_param(L, "fontface", NULL)
-  for (idx in .style_groups(
+  for (idx in .series_groups(
+    L,
     n,
     list(col = col, alpha = alpha, lab = label, size = fs)
   )) {
