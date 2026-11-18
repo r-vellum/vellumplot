@@ -10,9 +10,10 @@ provenance_join(x)
 \item{x}{A \link{PlotSpec} or composition.}
 }
 \value{
-A data frame: \code{id}, \code{layer}, \code{mark}, \code{kind}, \code{panel}, the pixel bbox
-(\code{x0}, \code{y0}, \code{x1}, \code{y1}, \code{x}, \code{y}, \code{w}, \code{h}), \code{n_rows}, and \code{rows} (a list
-column of integer source-row indices). Empty for a plot with no mark grobs.
+A data frame: \code{id}, \code{layer}, \code{mark}, \code{kind}, \code{panel}, \code{source} (the
+table \code{rows} refer to, see \code{\link[=plot_provenance]{plot_provenance()}}), the pixel bbox (\code{x0}, \code{y0},
+\code{x1}, \code{y1}, \code{x}, \code{y}, \code{w}, \code{h}), \code{n_rows}, and \code{rows} (a list column of
+integer source-row indices). Empty for a plot with no mark grobs.
 }
 \description{
 \code{provenance_join()} compiles \code{x} once and returns a tidy table with one row

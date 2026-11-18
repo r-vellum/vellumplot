@@ -136,6 +136,10 @@ NULL
     L$types$label <- .infer_type(sdf$label)
   }
   L$n <- nrow(sdf)
+  # The rows are now the stat's output, not the input data: a drawn element no
+  # longer maps to one source row, so provenance keys this layer whole (see
+  # `.layer_source`).
+  L$aggregated <- TRUE
   L
 }
 
