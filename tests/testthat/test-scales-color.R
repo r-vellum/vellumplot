@@ -72,7 +72,7 @@ test_that("explicit colour breaks/labels are honoured", {
 })
 
 test_that("scale_fill_continuous applies a palette to a fill aesthetic", {
-  base <- vplot(mtcars) |> mark_bar(x = factor(cyl), fill = hp)
+  base <- vplot(mtcars) |> mark_bar(x = factor(cyl), y = mpg, fill = hp)
   def <- train(base)$color$pal256
   blues <- train(base |> scale_fill_continuous(palette = "Blues"))$color$pal256
   expect_length(blues, 256)
@@ -80,7 +80,7 @@ test_that("scale_fill_continuous applies a palette to a fill aesthetic", {
 })
 
 test_that("scale_fill_gradient sets a two-point fill ramp", {
-  base <- vplot(mtcars) |> mark_bar(x = factor(cyl), fill = hp)
+  base <- vplot(mtcars) |> mark_bar(x = factor(cyl), y = mpg, fill = hp)
   pal <- train(
     base |> scale_fill_gradient(low = "white", high = "black")
   )$color$pal256

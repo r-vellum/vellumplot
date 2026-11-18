@@ -94,12 +94,24 @@ NULL
     window = .stat_window(L),
     cli::cli_abort("Unknown stat {.val {stat}}.")
   )
-  .merge_stat(L, sdf)
+  .merge_stat(L, sdf, stat)
 }
 
-# The per-row aesthetics a stat carries through unchanged (it neither computes
-# nor overrides them): colour, fill, group, alpha, linetype, ... Everything the
-# stat output itself supplies, or that `after_stat()` recomputes, is excluded.
+# The per-row styling aesthetics a stat carries through: it neither computes
+# them nor consumes them as input (unlike `z` or `sample`), so after the stat
+# they must be realigned to its output rows. `.STAT_OWNED` lists what the stat
+# output itself supplies.
+.STAT_CARRIED <- c(
+  "color",
+  "fill",
+  "group",
+  "alpha",
+  "size",
+  "shape",
+  "linetype",
+  "linewidth",
+  "pattern"
+)
 .STAT_OWNED <- c(
   "x",
   "y",
@@ -116,45 +128,104 @@ NULL
   ".blabel"
 )
 
-# Realign every carried per-row aesthetic to a grouped stat's output rows. A
-# grouped stat returns one or more rows per group, tagged by `sgroup` (the
-# `.group_key()` level). The aesthetic that *is* the key takes the stat's group
-# factor directly (keeping its level order for the scale); any other aesthetic
-# takes its value at the group's first input row -- so with `group = id, color =
-# treatment` each fitted curve keeps its own treatment's colour, rather than
-# being painted by the group label or by whatever pre-stat row `rep_len` lands on.
-.realign_by_group <- function(L, g_in, sgroup, after_names) {
-  n_in <- length(g_in)
-  glevs <- if (n_in) .cat_levels(g_in)
-  at <- if (n_in) {
-    match(glevs, as.character(g_in))[match(as.character(sgroup), glevs)]
-  }
-  if (!n_in || anyNA(at)) {
-    # A stat whose groups are not the layer's key levels: tag colour/fill with
-    # the stat's groups, so at least they stay length-consistent.
-    for (nm in setdiff(
-      intersect(c("color", "fill"), names(L$values)),
-      after_names
-    )) {
-      L$values[[nm]] <- sgroup
-    }
+# Realign every carried aesthetic to the stat's output rows, so a stat that
+# changes the row count or order never leaves a pre-stat vector for `rep_len` to
+# smear across its output (painting each output row from an arbitrary input row).
+#
+#   * A row-preserving stat (one output row per surviving input row -- dot plot,
+#     outlier callout, count, window) returns `.rows`, the input row of each
+#     output row: every carried aesthetic is indexed by it.
+#   * A grouped stat returns `group`, the `.group_key()` level of each output
+#     row. The aesthetic that *is* the key takes that factor (keeping its level
+#     order for the scale); one constant within every group takes its group's
+#     value, so `group = id, color = treatment` keeps each fit's own treatment.
+#   * An ungrouped stat keeps an aesthetic only if it is constant.
+#
+# An aesthetic that varies within a group has no single value for a summary row,
+# so it is dropped with a warning (ggplot2 does the same) rather than drawn wrong.
+.realign_carried <- function(L, g_in, sdf, after_names) {
+  carried <- setdiff(intersect(.STAT_CARRIED, names(L$values)), after_names)
+  if (!length(carried)) {
     return(L)
   }
-  for (nm in setdiff(names(L$values), c(.STAT_OWNED, after_names))) {
+  n_in <- L$n %||% max(lengths(L$values[carried]))
+  rows <- sdf$.rows
+  sgroup <- sdf$group
+  glevs <- if (!is.null(g_in)) .cat_levels(g_in)
+  in_group <- if (!is.null(g_in)) match(as.character(g_in), glevs)
+  out_group <- if (!is.null(sgroup) && !is.null(g_in)) {
+    match(as.character(sgroup), glevs)
+  }
+  dropped <- character(0)
+  for (nm in carried) {
     v <- L$values[[nm]]
-    if (length(v) != n_in || n_in == 1L) {
+    if (length(v) <= 1L || length(v) != n_in) {
+      next # a constant, or not a per-input-row vector (the guard checks)
+    }
+    if (!is.null(rows)) {
+      L$values[[nm]] <- v[rows]
       next
     }
-    L$values[[nm]] <- if (identical(v, g_in)) sgroup else v[at]
+    if (!is.null(out_group) && !anyNA(out_group)) {
+      if (identical(v, g_in)) {
+        L$values[[nm]] <- sgroup
+        next
+      }
+      # constant within every group: one distinct value per group present
+      if (
+        length(unique(paste(in_group, v, sep = "\r"))) ==
+          length(unique(in_group))
+      ) {
+        L$values[[nm]] <- v[match(seq_along(glevs), in_group)[out_group]]
+        next
+      }
+    } else if (is.null(sgroup) && length(unique(v)) == 1L) {
+      L$values[[nm]] <- v[1L]
+      next
+    } else if (!is.null(sgroup)) {
+      # A stat whose groups are not the layer's key levels: tag colour/fill with
+      # the stat's groups, so at least they stay length-consistent.
+      if (nm %in% c("color", "fill")) {
+        L$values[[nm]] <- sgroup
+        next
+      }
+    }
+    L$values[[nm]] <- NULL
+    dropped <- c(dropped, nm)
+  }
+  if (length(dropped)) {
+    cli::cli_warn(c(
+      "Dropped {.field {dropped}}: {?it varies/they vary} within a group, so a summarised row has no single value.",
+      i = "Map it to a variable that is constant within each group, or set {.arg group} to match."
+    ))
   }
   L
+}
+
+# The internal-consistency guard after a stat: every carried aesthetic is now a
+# constant or one value per output row. Anything else would be recycled with
+# `rep_len()` and silently paint output rows from unrelated input rows.
+.check_stat_lengths <- function(L, nrow_out, after_names, stat) {
+  for (nm in setdiff(intersect(.STAT_CARRIED, names(L$values)), after_names)) {
+    len <- length(L$values[[nm]])
+    if (len != 1L && len != nrow_out) {
+      cli::cli_abort(
+        c(
+          "The {.val {stat}} stat left {.field {nm}} with {len} value{?s} for {nrow_out} output row{?s}.",
+          i = "A stat that changes the rows must return {.field group} or {.field .rows} so its aesthetics can be realigned."
+        ),
+        .internal = TRUE
+      )
+    }
+  }
+  invisible(L)
 }
 
 # Fold a stat's output data frame back into the layer. After a stat, the layer's
 # data IS the stat output: x (and y) come from it, raw stage-1 inputs are
 # replaced. `after_stat()` channels (evaluated against the stat output) take
 # precedence over the stat's default y.
-.merge_stat <- function(L, sdf) {
+.merge_stat <- function(L, sdf, stat = L$stat) {
   after_names <- names(L$after)
   # The pre-stat grouping, taken before any `after_stat()` channel replaces an
   # aesthetic with a stat-output-length vector.
@@ -178,8 +249,8 @@ NULL
   if (!("x" %in% after_names) && !is.null(sdf$x)) {
     L$values$x <- sdf$x
   }
-  if (!is.null(sdf$group) && !empty) {
-    L <- .realign_by_group(L, g_in, sdf$group, after_names)
+  if (!empty) {
+    L <- .realign_carried(L, g_in, sdf, after_names)
   }
   if (!("y" %in% after_names) && !is.null(sdf$y)) {
     L$values$y <- sdf$y
@@ -215,6 +286,9 @@ NULL
     L$types$label <- .infer_type(sdf$label)
   }
   L$n <- nrow(sdf)
+  if (!empty) {
+    .check_stat_lengths(L, L$n, after_names, stat)
+  }
   # The rows are now the stat's output, not the input data: a drawn element no
   # longer maps to one source row, so provenance keys this layer whole (see
   # `.layer_source`).
@@ -281,6 +355,7 @@ NULL
   if (!is.null(grp)) {
     out$group <- grp[first]
   }
+  out$.rows <- which(first)
   out
 }
 
@@ -381,7 +456,13 @@ NULL
   grp <- .group_key(L)
   if (is.null(grp)) {
     i <- which.max(xn)
-    return(data.frame(x = xn[i], y = yn[i], lab = "", stringsAsFactors = FALSE))
+    return(data.frame(
+      x = xn[i],
+      y = yn[i],
+      lab = "",
+      .rows = i,
+      stringsAsFactors = FALSE
+    ))
   }
   g <- as.character(rep_len(grp, n))
   keep <- vapply(
@@ -400,6 +481,7 @@ NULL
     y = yn[keep],
     group = g[keep],
     lab = g[keep],
+    .rows = keep,
     stringsAsFactors = FALSE
   )
 }
@@ -444,6 +526,7 @@ NULL
     out$label <- rep_len(lab, n)[keep]
   }
   out$.olab <- format(y[keep], trim = TRUE)
+  out$.rows <- keep
   out
 }
 
@@ -502,11 +585,15 @@ NULL
 
 # Bin a continuous (x, y) into a `bins x bins` grid; one row per non-empty cell
 # with its centre, count, and cell width/height (for tile rendering).
+#
+# Per group (`.group_key()`): every group is counted on the one grid laid over
+# all the layer's points, so the groups' cells coincide and each cell row
+# carries its group (and so its colour) instead of all groups being pooled.
 .stat_bin2d <- function(L) {
-  xy <- .finite_xy(as.numeric(L$values$x), as.numeric(L$values$y))
-  x <- xy$x
-  y <- xy$y
-  if (!length(x)) {
+  x0 <- as.numeric(L$values$x)
+  y0 <- as.numeric(L$values$y)
+  xy <- .finite_xy(x0, y0)
+  if (!length(xy$x)) {
     cli::cli_abort("{.fn mark_bin2d} needs at least one finite (x, y) pair.")
   }
   bins <- L$stat_params$bins %||% 30L
@@ -514,23 +601,34 @@ NULL
     rng <- .pad_degenerate_range(range(v))
     seq(rng[1], rng[2], length.out = bins + 1L)
   }
-  xb <- edges(x)
-  yb <- edges(y)
+  xb <- edges(xy$x)
+  yb <- edges(xy$y)
   xc <- (utils::head(xb, -1L) + xb[-1L]) / 2
   yc <- (utils::head(yb, -1L) + yb[-1L]) / 2
-  xi <- findInterval(x, xb, rightmost.closed = TRUE, all.inside = TRUE)
-  yi <- findInterval(y, yb, rightmost.closed = TRUE, all.inside = TRUE)
-  tab <- table(
-    factor(xi, levels = seq_len(bins)),
-    factor(yi, levels = seq_len(bins))
-  )
-  cells <- which(tab > 0, arr.ind = TRUE)
-  data.frame(
-    x = xc[cells[, 1]],
-    y = yc[cells[, 2]],
-    count = as.numeric(tab[cells]),
-    width = diff(xb)[1],
-    height = diff(yb)[1]
+  .per_group(
+    L,
+    length(x0),
+    function(idx, gn, grouped, k) {
+      g <- .finite_xy(x0[idx], y0[idx])
+      if (!length(g$x)) {
+        return(NULL)
+      }
+      xi <- findInterval(g$x, xb, rightmost.closed = TRUE, all.inside = TRUE)
+      yi <- findInterval(g$y, yb, rightmost.closed = TRUE, all.inside = TRUE)
+      tab <- table(
+        factor(xi, levels = seq_len(bins)),
+        factor(yi, levels = seq_len(bins))
+      )
+      cells <- which(tab > 0, arr.ind = TRUE)
+      data.frame(
+        x = xc[cells[, 1]],
+        y = yc[cells[, 2]],
+        count = as.numeric(tab[cells]),
+        width = diff(xb)[1],
+        height = diff(yb)[1]
+      )
+    },
+    "{.fn mark_bin2d} needs at least one finite (x, y) pair."
   )
 }
 
@@ -539,7 +637,11 @@ NULL
 # Returns the grid coords `gx`/`gy` and a matrix `gz` with **rows = x, cols = y**
 # -- the base-R convention `vl_contour()` uses (`dim(z) == c(length(x),
 # length(y))`, as `image()`/`contour()`/`outer(xs, ys, f)` do).
-.contour_field <- function(L) {
+#
+# `lims` (`c(xmin, xmax, ymin, ymax)`) fixes the KDE grid; a grouped contour
+# passes the whole layer's range so every group is estimated over the same
+# window and its rings close inside it rather than at its own points' edge.
+.contour_field <- function(L, lims = NULL) {
   x <- as.numeric(L$values$x)
   y <- as.numeric(L$values$y)
   z <- L$values$z
@@ -570,7 +672,7 @@ NULL
       cli::cli_abort("A 2-D density contour needs at least 3 finite points.")
     }
     ng <- L$stat_params$n %||% 100L
-    kd <- MASS::kde2d(x, y, n = ng)
+    kd <- MASS::kde2d(x, y, n = ng, lims = lims %||% c(range(x), range(y)))
     # kde2d's z is already [x, y] (rows = x) -- exactly what vl_contour() wants.
     list(gx = kd$x, gy = kd$y, gz = kd$z)
   }
@@ -708,28 +810,59 @@ NULL
 # iso-rings) of the 2-D field with the engine's marching-squares
 # `vellum::vl_contour()`. Output is an ordered vertex table consumed by
 # .emit_contour / .emit_contour_filled. Needs no `isoband`.
+#
+# Per group (`.group_key()`): each group gets its own field -- its own KDE, so
+# `mark_contour(color = Species)` draws one set of rings per species rather than
+# one KDE of every point pooled. The break levels are shared, computed over all
+# the groups' fields, so a level means the same density in every group.
 .stat_density_2d <- function(L) {
-  fld <- .contour_field(L)
-  brks <- .contour_breaks(fld$gz, L$stat_params)
+  grp <- .group_key(L)
+  g <- .stat_groups(grp, L$n %||% length(L$values$x))
+  lims <- NULL
+  if (!is.null(grp) && is.null(L$values$z)) {
+    xy <- .finite_xy(as.numeric(L$values$x), as.numeric(L$values$y))
+    if (length(xy$x)) {
+      lims <- c(range(xy$x), range(xy$y))
+    }
+  }
+  fields <- lapply(g$groups, function(idx) {
+    Lg <- L
+    Lg$values <- lapply(L$values, function(v) {
+      if (length(v) > 1L) v[idx] else v
+    })
+    Lg$n <- length(idx)
+    .contour_field(Lg, lims)
+  })
+  brks <- .contour_breaks(
+    unlist(lapply(fields, `[[`, "gz"), use.names = FALSE),
+    L$stat_params
+  )
   if (!length(brks)) {
     cli::cli_abort(c(
       "No contour levels fall inside the data range.",
       i = "Set {.arg breaks} or {.arg binwidth} explicitly."
     ))
   }
-  xlim <- range(fld$gx)
-  ylim <- range(fld$gy)
-  cc <- vellum::vl_contour(
-    fld$gz,
-    levels = brks,
-    xlim = xlim,
-    ylim = ylim
-  )
-  if (isTRUE(L$stat_params$filled)) {
-    .vl_contour_bands_df(cc, xlim, ylim)
-  } else {
-    .vl_contour_lines_df(cc)
-  }
+  pieces <- 0L
+  parts <- lapply(names(fields), function(gn) {
+    fld <- fields[[gn]]
+    xlim <- range(fld$gx)
+    ylim <- range(fld$gy)
+    cc <- vellum::vl_contour(fld$gz, levels = brks, xlim = xlim, ylim = ylim)
+    df <- if (isTRUE(L$stat_params$filled)) {
+      .vl_contour_bands_df(cc, xlim, ylim)
+    } else {
+      .vl_contour_lines_df(cc)
+    }
+    # pieces numbered across groups, so no two groups share a polyline / ring
+    df$.piece <- df$.piece + pieces
+    pieces <<- pieces + length(unique(df$.piece))
+    if (!is.null(grp)) {
+      df$group <- factor(rep(gn, nrow(df)), levels = g$levels)
+    }
+    df
+  })
+  do.call(rbind, parts)
 }
 
 # Round axial hex coordinates (q, r) to the nearest hex centre via cube rounding
@@ -756,38 +889,53 @@ NULL
 # count, and circumradius `width` (in x-data units) used to size the hexagon.
 # Binning is done in an isotropic space (y scaled to the x range) so hexes are
 # regular there; they render geometrically exact under coord_fixed().
+#
+# Per group (`.group_key()`): the lattice is laid over all the layer's points,
+# then each group is counted on it, so groups share hex centres and every hex
+# row carries its own group's colour.
 .stat_hexbin <- function(L) {
-  xy <- .finite_xy(as.numeric(L$values$x), as.numeric(L$values$y))
-  x <- xy$x
-  y <- xy$y
-  if (!length(x)) {
+  x0 <- as.numeric(L$values$x)
+  y0 <- as.numeric(L$values$y)
+  xy <- .finite_xy(x0, y0)
+  if (!length(xy$x)) {
     cli::cli_abort("{.fn mark_hex} needs at least one finite (x, y) pair.")
   }
   bins <- L$stat_params$bins %||% 30L
-  xr <- .pad_degenerate_range(range(x))
-  yr <- .pad_degenerate_range(range(y))
+  xr <- .pad_degenerate_range(range(xy$x))
+  yr <- .pad_degenerate_range(range(xy$y))
   r <- diff(xr) / (bins * 1.5) # circumradius in x-units (flat-top columns at 1.5r)
   asp <- diff(xr) / diff(yr)
-  px <- x - xr[1]
-  py <- (y - yr[1]) * asp # isotropic y in x-units
-  ax <- .hex_round((2 / 3 * px) / r, (-1 / 3 * px + sqrt(3) / 3 * py) / r)
-  key <- paste(ax$q, ax$r, sep = ",")
-  tab <- table(key)
-  qr <- do.call(rbind, lapply(strsplit(names(tab), ","), as.numeric))
-  qi <- qr[, 1]
-  ri <- qr[, 2]
-  cx <- r * 1.5 * qi + xr[1]
-  cy_iso <- r * sqrt(3) * (ri + qi / 2)
-  cy <- cy_iso / asp + yr[1]
-  # `width` is the x-data circumradius; `height` the full y-data extent of a hex
-  # (the isotropic r*sqrt(3) un-scaled back to y-data units). The emitter draws
-  # each hex from these so they tile data space at any panel aspect.
-  data.frame(
-    x = cx,
-    y = cy,
-    count = as.numeric(tab),
-    width = r,
-    height = r * sqrt(3) / asp
+  .per_group(
+    L,
+    length(x0),
+    function(idx, gn, grouped, k) {
+      g <- .finite_xy(x0[idx], y0[idx])
+      if (!length(g$x)) {
+        return(NULL)
+      }
+      px <- g$x - xr[1]
+      py <- (g$y - yr[1]) * asp # isotropic y in x-units
+      ax <- .hex_round((2 / 3 * px) / r, (-1 / 3 * px + sqrt(3) / 3 * py) / r)
+      key <- paste(ax$q, ax$r, sep = ",")
+      tab <- table(key)
+      qr <- do.call(rbind, lapply(strsplit(names(tab), ","), as.numeric))
+      qi <- qr[, 1]
+      ri <- qr[, 2]
+      cx <- r * 1.5 * qi + xr[1]
+      cy_iso <- r * sqrt(3) * (ri + qi / 2)
+      cy <- cy_iso / asp + yr[1]
+      # `width` is the x-data circumradius; `height` the full y-data extent of a
+      # hex (the isotropic r*sqrt(3) un-scaled back to y-data units). The emitter
+      # draws each hex from these so they tile data space at any panel aspect.
+      data.frame(
+        x = cx,
+        y = cy,
+        count = as.numeric(tab),
+        width = r,
+        height = r * sqrt(3) / asp
+      )
+    },
+    "{.fn mark_hex} needs at least one finite (x, y) pair."
   )
 }
 
@@ -1157,8 +1305,21 @@ NULL
 # within its bin. Returns one row per observation with x = bin centre and
 # y = stack height (0.5, 1.5, ...), for the point emitter.
 .stat_dotplot <- function(L) {
-  x <- as.numeric(L$values$x)
-  x <- sort(x[is.finite(x)])
+  x0 <- as.numeric(L$values$x)
+  # Each dot is one observation, so it keeps its input row (`.rows`): colour and
+  # the other carried aesthetics follow their own row through the sort, instead
+  # of being recycled in input order over the sorted dots.
+  grp <- .group_key(L)
+  ok <- which(is.finite(x0))
+  # Within a bin the dots stack grouped (by `.group_key()` level, then x), so a
+  # coloured stack reads as bands rather than an interleaved mix.
+  gk <- if (is.null(grp)) {
+    integer(length(x0))
+  } else {
+    match(as.character(grp), .cat_levels(grp))
+  }
+  rows <- ok[order(x0[ok], gk[ok])]
+  x <- x0[rows]
   if (!length(x)) {
     cli::cli_abort("{.fn mark_dotplot} needs at least one finite value.")
   }
@@ -1168,11 +1329,18 @@ NULL
     bw <- 1
   }
   bin <- floor((x - min(x)) / bw)
+  if (!is.null(grp)) {
+    o <- order(bin, gk[rows])
+    rows <- rows[o]
+    x <- x[o]
+    bin <- bin[o]
+  }
   stack <- stats::ave(seq_along(bin), bin, FUN = seq_along)
   data.frame(
     x = min(x) + (bin + 0.5) * bw,
     y = stack - 0.5,
-    count = 1
+    count = 1,
+    .rows = rows
   )
 }
 
@@ -1273,7 +1441,7 @@ NULL
     xi <- x[i][o]
     yi <- y[i][o]
     yo <- .window_apply(yi, op, k, align, partial)
-    df <- data.frame(x = xi, y = yo)
+    df <- data.frame(x = xi, y = yo, .rows = i[o])
     if (!is.null(grp)) {
       df$group <- factor(gn, levels = glevs)
     }
