@@ -1,5 +1,20 @@
 # vellumplot 0.11.1.9000 (development version)
 
+* **`spec_diagnose()` reports rows that will not be shown and catches spec
+  mistakes before compiling.** vellumplot never deletes rows, so a row with a
+  missing position, a value of zero or less on a log axis, or a value outside
+  explicit scale limits used to disappear without a word. `spec_diagnose()` now
+  also takes a `PlotSpec`, and its result carries a `report` data frame with one
+  row per layer counting those rows by reason (`missing`, `facet`, `transform`,
+  `limits`). Each layer that loses rows adds a warning. Three checks now run
+  before the dry-run compile: a facet variable missing from the plot data (an
+  error) or from a layer's own data (a warning, since that layer repeats in every
+  panel); `color` and `fill` mapped to a continuous and a discrete variable
+  although they share one legend (a named error in place of the generic compile
+  failure); and a manual or discrete palette on a continuous colour channel,
+  which turns every distinct number into its own category. The result now prints
+  as a short summary.
+
 
 # vellumplot 0.11.1
 

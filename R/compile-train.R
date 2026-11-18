@@ -954,31 +954,14 @@ NULL
 # variable is quantitative cannot share one scale; unless the user fixed the
 # scale's kind explicitly, that is an error rather than a silent squish/grey.
 .colour_channel_type <- function(resolved, channels, explicit_kind = FALSE) {
-  found <- list()
-  fallback <- NULL
-  for (L in resolved) {
-    for (ch in channels) {
-      t <- L$types[[ch]]
-      fallback <- fallback %||% t
-      v <- L$values[[ch]]
-      # An empty (e.g. an empty facet cell) or all-NA layer carries no type
-      # information -- its inferred type is an artefact -- so it never votes.
-      if (!is.null(t) && length(v) && !all(is.na(v))) {
-        found[[length(found) + 1L]] <- list(channel = ch, type = t)
-      }
-    }
+  found <- .colour_channel_votes(resolved, channels)
+  if (!length(found$votes)) {
+    return(found$fallback)
   }
-  if (!length(found)) {
-    return(fallback)
-  }
-  quant <- vapply(
-    found,
-    function(f) identical(f$type, "quantitative"),
-    logical(1)
-  )
-  if (!explicit_kind && any(quant) && !all(quant)) {
-    q <- found[[which(quant)[1]]]
-    d <- found[[which(!quant)[1]]]
+  clash <- .colour_type_clash(found$votes)
+  if (!explicit_kind && !is.null(clash)) {
+    q <- clash$quantitative
+    d <- clash$discrete
     cli::cli_abort(c(
       "Layers map {.field color}/{.field fill} to incompatible variable types.",
       "x" = "One layer maps {.field {q$channel}} to a quantitative variable,
@@ -989,7 +972,47 @@ NULL
         {.fn as.numeric}), or set the scale kind explicitly."
     ))
   }
-  found[[1]]$type
+  found$votes[[1]]$type
+}
+
+# Each layer's encoding type for the colour `channels`, as a list of
+# `list(layer, channel, type)` votes, plus the first type seen at all (the
+# fallback when no layer votes). Shared by `.colour_channel_type()` and the
+# pre-compile check in `spec_diagnose()`, so the two agree on what clashes.
+.colour_channel_votes <- function(resolved, channels) {
+  votes <- list()
+  fallback <- NULL
+  for (i in seq_along(resolved)) {
+    L <- resolved[[i]]
+    for (ch in channels) {
+      t <- L$types[[ch]]
+      fallback <- fallback %||% t
+      v <- L$values[[ch]]
+      # An empty (e.g. an empty facet cell) or all-NA layer carries no type
+      # information -- its inferred type is an artefact -- so it never votes.
+      if (!is.null(t) && length(v) && !all(is.na(v))) {
+        votes[[length(votes) + 1L]] <- list(layer = i, channel = ch, type = t)
+      }
+    }
+  }
+  list(votes = votes, fallback = fallback)
+}
+
+# The first quantitative and first non-quantitative vote when the colour votes
+# disagree, or NULL when they agree.
+.colour_type_clash <- function(votes) {
+  quant <- vapply(
+    votes,
+    function(f) identical(f$type, "quantitative"),
+    logical(1)
+  )
+  if (!any(quant) || all(quant)) {
+    return(NULL)
+  }
+  list(
+    quantitative = votes[[which(quant)[1]]],
+    discrete = votes[[which(!quant)[1]]]
+  )
 }
 
 # Colour for NA-valued features: a scale's explicit `na_value`, else an sf
