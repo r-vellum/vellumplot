@@ -206,6 +206,9 @@ reference:
   - scale_color_continuous
   - scale_viridis
   - scale_fill_binned
+  - scale_fill_bivariate
+  - bi_class
+  - bi_pal
   - scale_shape
   - scale_pattern
   - scale_size
@@ -216,6 +219,7 @@ reference:
   - lims
   - sec_axis
   - guides
+  - guide_bivariate
   - resolve_scale
   - after_stat
 
