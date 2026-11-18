@@ -74,6 +74,7 @@
   hard-coded: it follows `color` and defaults to `"grey20"`. Violins and ridges
   used to be outlined in `"grey30"`.
 
+
 * **Stats that reorder or summarise rows keep their colours aligned.** A stat
   that changes the row count or order used to hand its output the pre-stat
   colour vector, recycled with `rep_len()`. Outputs were then painted from
