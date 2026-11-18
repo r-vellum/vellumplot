@@ -121,14 +121,19 @@ emits no mark grobs.</p>
 <dd><p>aesthetic → trained-scale reference (<code>scale</code>, <code>type</code>, <code>domain</code>).</p></dd>
 
 <dt><code>rows</code></dt>
-<dd><p>the original input-data row indices this grob draws.</p></dd>
+<dd><p>the original input-data row indices this grob draws: rows of
+the whole source table (not of a facet panel's subset).</p></dd>
+
+<dt><code>source</code></dt>
+<dd><p>the table <code>rows</code> refer to: <code>"plot"</code> for the plot's data, or
+<code>"layer:&lt;i&gt;"</code> for layer <code>i</code>'s own <code>data =</code>.</p></dd>
 
 
 </dl><p>The <code>rows</code> field is refined per element for marks that map rows one-to-one to
 drawn elements (points, bars, tiles, segments, lines, areas, ribbons, steps,
 text, boxplots, sf features, edges); for aggregating marks (histogram,
-density, smooth, datashade, …) it is the whole layer, since rows no longer map
-to single elements.</p>
+density, smooth, datashade, …) it is the whole layer (in a faceted plot, the
+panel's rows), since rows no longer map to single elements.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

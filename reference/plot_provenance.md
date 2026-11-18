@@ -57,13 +57,20 @@ Each record is a plain, serializable list:
 
 - `rows`:
 
-  the original input-data row indices this grob draws.
+  the original input-data row indices this grob draws: rows of the whole
+  source table (not of a facet panel's subset).
+
+- `source`:
+
+  the table `rows` refer to: `"plot"` for the plot's data, or
+  `"layer:<i>"` for layer `i`'s own `data =`.
 
 The `rows` field is refined per element for marks that map rows
 one-to-one to drawn elements (points, bars, tiles, segments, lines,
 areas, ribbons, steps, text, boxplots, sf features, edges); for
 aggregating marks (histogram, density, smooth, datashade, …) it is the
-whole layer, since rows no longer map to single elements.
+whole layer (in a faceted plot, the panel's rows), since rows no longer
+map to single elements.
 
 ## See also
 

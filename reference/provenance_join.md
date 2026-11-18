@@ -26,10 +26,12 @@ provenance_join(x)
 
 ## Value
 
-A data frame: `id`, `layer`, `mark`, `kind`, `panel`, the pixel bbox
-(`x0`, `y0`, `x1`, `y1`, `x`, `y`, `w`, `h`), `n_rows`, and `rows` (a
-list column of integer source-row indices). Empty for a plot with no
-mark grobs.
+A data frame: `id`, `layer`, `mark`, `kind`, `panel`, `source` (the
+table `rows` refer to, see
+[`plot_provenance()`](https://r-vellum.github.io/vellumplot/reference/plot_provenance.md)),
+the pixel bbox (`x0`, `y0`, `x1`, `y1`, `x`, `y`, `w`, `h`), `n_rows`,
+and `rows` (a list column of integer source-row indices). Empty for a
+plot with no mark grobs.
 
 ## See also
 

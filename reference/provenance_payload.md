@@ -29,9 +29,34 @@ provenance_payload(x, values = FALSE)
 
 ## Value
 
-A list with `fields` (column names), `elements` (a list of
-`list(id, rows)` records), and — when `values = TRUE` — `data` (row-wise
-records of the plot's data).
+A list with
+
+- `fields`:
+
+  the plot data's column names.
+
+- `elements`:
+
+  a list of `list(id, rows, source)` records.
+
+- `sources`:
+
+  for a
+  [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md),
+  one record per table an element's rows refer to, named by `source`:
+  `list(fields)`, plus `data` (row-wise records) when `values = TRUE`.
+
+- `data`:
+
+  when `values = TRUE`, row-wise records of the plot's data (the
+  `"plot"` source, kept at the top level for existing hosts).
+
+## Details
+
+Row indices are 1-based and refer to the table named by the element's
+`source`: `"plot"` for the plot's data, or `"layer:<i>"` for the data
+passed to layer `i`'s own `data =` argument. In a faceted plot they are
+rows of that whole table, not of the panel's subset.
 
 ## See also
 
@@ -45,4 +70,6 @@ p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
 pl <- provenance_payload(p)
 pl$elements[[1]]$id
 #> [1] "layer-1-point-g1"
+pl$elements[[1]]$source
+#> [1] "plot"
 ```

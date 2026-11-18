@@ -102,9 +102,29 @@ host needs no separate data access. Default <code>FALSE</code> (ids + row indice
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>fields</code> (column names), <code>elements</code> (a list of
-<code>list(id, rows)</code> records), and — when <code>values = TRUE</code> — <code>data</code> (row-wise
-records of the plot's data).</p>
+    <p>A list with</p><dl><dt><code>fields</code></dt>
+<dd><p>the plot data's column names.</p></dd>
+
+<dt><code>elements</code></dt>
+<dd><p>a list of <code>list(id, rows, source)</code> records.</p></dd>
+
+<dt><code>sources</code></dt>
+<dd><p>for a <a href="PlotSpec.html">PlotSpec</a>, one record per table an element's rows
+refer to, named by <code>source</code>: <code>list(fields)</code>, plus <code>data</code> (row-wise
+records) when <code>values = TRUE</code>.</p></dd>
+
+<dt><code>data</code></dt>
+<dd><p>when <code>values = TRUE</code>, row-wise records of the plot's data
+(the <code>"plot"</code> source, kept at the top level for existing hosts).</p></dd>
+
+
+</dl></div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Row indices are 1-based and refer to the table named by the element's
+<code>source</code>: <code>"plot"</code> for the plot's data, or <code>"layer:&lt;i&gt;"</code> for the data passed
+to layer <code>i</code>'s own <code>data =</code> argument. In a faceted plot they are rows of that
+whole table, not of the panel's subset.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -117,6 +137,8 @@ records of the plot's data).</p>
 <span class="r-in"><span><span class="va">pl</span> <span class="op">&lt;-</span> <span class="fu">provenance_payload</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">pl</span><span class="op">$</span><span class="va">elements</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">id</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "layer-1-point-g1"</span>
+<span class="r-in"><span><span class="va">pl</span><span class="op">$</span><span class="va">elements</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">source</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "plot"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
