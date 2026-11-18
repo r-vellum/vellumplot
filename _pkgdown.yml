@@ -273,6 +273,7 @@ reference:
     render; enacted by a host such as vellumwidget.
   contents:
   - select_point
+  - select_interval
   - select_neighbours
   - condition
   - add_selection

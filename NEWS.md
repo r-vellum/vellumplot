@@ -2,6 +2,22 @@
 
 ## New features
 
+* **`select_interval()` brushes a data range.** `select_interval(name, encodings
+  = "x")` declares an interval selection that a brush fills; `condition()` and
+  `filter_by()` react to it the same way they react to a point selection.
+  Membership is by data value: a host such as vellumwidget converts the brushed
+  pixels to a data range through the panel's scale and tests each element's own
+  values, so continuous (including log, sqrt and reversed), date, datetime and
+  discrete axes all work, and a brush in one facet selects matching rows in every
+  facet. `encodings` takes `"x"`, `"y"` or `c("x", "y")`. Plots with an interval
+  selection now carry each keyed element's data values on the brushed channels,
+  and the panel axis descriptors gain `aesthetic` and, for discrete axes,
+  `levels`. The interaction model records the selection as `{name, type:
+  "interval", encodings}`. Static renders are unchanged.
+
+  `encodings` defaults to `c("x", "y")`, the same rectangle brush as before. The
+  old `on = "x" / "y" / "xy"` argument still works as an alias.
+
 * **Bivariate choropleths with a 2-D legend.** `bi_class()` bins two numeric
   columns into `dim` classes each (quantile by default, or any
   `scale_fill_binned()` style) and adds one `"x-y"` class column. Mapping a fill

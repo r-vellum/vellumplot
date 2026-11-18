@@ -203,7 +203,12 @@ SelectionSpec <- S7::new_class(
     # applied, e.g. `list(mode = "neighbours", degree, edges)` from
     # `select_neighbours()` (a hovered graph node -> its incident edges +
     # neighbour nodes). NULL for an ordinary selection. Enacted host-side.
-    expand = S7::new_property(S7::class_any, default = NULL)
+    expand = S7::new_property(S7::class_any, default = NULL),
+    # The position channels an interval selection constrains: "x", "y", or
+    # both. A brush becomes a data-value range on each, and an element is a
+    # member when its data values fall inside every range. NULL for a point
+    # selection.
+    encodings = S7::new_property(S7::class_any, default = NULL)
   )
 )
 

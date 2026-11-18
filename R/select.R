@@ -35,6 +35,7 @@ NULL
   toggle,
   empty,
   expand = NULL,
+  encodings = NULL,
   call = rlang::caller_env()
 ) {
   inline <- S7::S7_inherits(x, PlotSpec)
@@ -62,7 +63,8 @@ NULL
     fields = fields,
     toggle = toggle,
     empty = empty,
-    expand = expand
+    expand = expand,
+    encodings = encodings
   )
   if (inline) add_selection(x, sel) else sel
 }
@@ -76,19 +78,18 @@ NULL
 #' with it, serialise with it, and are enacted by any capable host
 #' (`vellumwidget`). They are inert on a static render.
 #'
-#' `select_point()` is driven by a click or hover (or a legend value);
-#' `select_interval()` by a drag (a brush rectangle or a lasso), optionally locked
-#' to an axis.
+#' `select_point()` is driven by a click or hover (or a legend value). For a
+#' selection driven by a drag (a brush over a data range), see
+#' [select_interval()].
 #'
-#' Both are **pipe-first** (attach to the plot and return it) *or* **free-standing**
+#' It is **pipe-first** (attach to the plot and return it) *or* **free-standing**
 #' (call with the name as the first argument to get a `SelectionSpec` you can share
 #' across views, then attach with [add_selection()]).
 #'
 #' @param plot A [PlotSpec] (piped form), or a selection **name** string
 #'   (free-standing form).
 #' @param name The selection name (piped form) — a string other nodes reference.
-#' @param on The gesture. Point: `"click"` (default) or `"hover"`. Interval:
-#'   `"xy"` (default, both axes), `"x"`, or `"y"` (a single-axis brush).
+#' @param on The gesture: `"click"` (default) or `"hover"`.
 #' @param fields For a point selection, the column name(s) whose match extends
 #'   membership: clicking one element selects every row equal to it on these
 #'   fields (e.g. `fields = "grp"` selects the whole group). `NULL` (default)
@@ -96,14 +97,13 @@ NULL
 #' @param group_by Alias for `fields`.
 #' @param toggle For a point selection, whether clicking toggles membership
 #'   (`TRUE`, default) or replaces it (`FALSE`, single-select).
-#' @param region For an interval selection, `"rect"` (default, a brush rectangle)
-#'   or `"lasso"` (a freehand polygon).
 #' @param empty Whether an **empty** selection contains *all* elements (`TRUE`,
 #'   default — so an unselected plot shows its full self and selecting *narrows*)
 #'   or *none* (`FALSE`).
 #'
 #' @return A [PlotSpec] (piped form) or a `SelectionSpec` (free-standing form).
-#' @seealso [condition()], [filter_by()], [add_selection()], [bind_scale()]
+#' @seealso [select_interval()], [condition()], [filter_by()],
+#'   [add_selection()], [bind_scale()]
 #' @examples
 #' df <- data.frame(x = 1:10, y = runif(10), g = rep(c("a", "b"), 5))
 #'
@@ -113,7 +113,7 @@ NULL
 #'   select_point("hi", on = "hover")
 #'
 #' # free-standing, for cross-view use
-#' sel <- select_interval("brush", on = "x")
+#' sel <- select_point("pick")
 #' @export
 select_point <- function(
   plot,
@@ -141,27 +141,116 @@ select_point <- function(
   )
 }
 
-#' @rdname select_point
+#' Declare an interval (brush) selection
+#'
+#' An **interval selection** is filled by dragging a brush over the plot. The
+#' brushed pixel range is converted to a *data-value* range on each of the
+#' `encodings` (through the panel's scale), and every element whose data values
+#' fall inside that range is a member. [condition()] and [filter_by()] react to it
+#' exactly as they do to a [select_point()] selection: highlight/dim members, or
+#' show only them. Clearing the brush (a click on empty space, or `Escape`)
+#' empties the selection.
+#'
+#' Membership is by data value, so it follows the scale rather than the drawn
+#' shapes:
+#'
+#' * **continuous** (including `log10`, `sqrt` and `reverse` axes): the element's
+#'   value lies in the brushed data range;
+#' * **date / datetime**: the same test on the date's numeric value;
+#' * **discrete**: the element's category is one whose band centre the brush
+#'   covers.
+#'
+#' With `encodings = c("x", "y")` (the default) the brush is a rectangle and both
+#' values are tested; with `"x"` it spans the panel's full height and only the x
+#' value is tested; `"y"` is the transpose. In a faceted plot the data range applies to every
+#' panel, so brushing one facet selects matching rows in all of them.
+#'
+#' The selection lives in the plot spec, so it is **inert on a static render**
+#' and is enacted by a capable host (`vellumwidget::as_widget()`) without Shiny.
+#' Under Shiny the members are reported in `input$<id>_selected` and the brushed
+#' data range in `input$<id>_brush`.
+#'
+#' Like [select_point()], it is pipe-first (attach to the plot and return it) or
+#' free-standing (call with the name as the first argument, then share it across
+#' views with [add_selection()] / [filter_by()]).
+#'
+#' @param plot A [PlotSpec] (piped form), or a selection **name** string
+#'   (free-standing form).
+#' @param name The selection name (piped form), referenced by [condition()] and
+#'   [filter_by()].
+#' @param encodings The position channels the brush constrains: `c("x", "y")`
+#'   (default, a rectangle), `"x"` or `"y"`.
+#' @param region `"rect"` (default, a brush rectangle) or `"lasso"` (a freehand
+#'   polygon; membership by element position inside the polygon).
+#' @param empty Whether an **empty** selection contains *all* elements (`TRUE`,
+#'   default, so an untouched plot shows its full self and brushing narrows it)
+#'   or *none* (`FALSE`).
+#' @param on Deprecated alias for `encodings`: `"x"`, `"y"` or `"xy"`.
+#' @return A [PlotSpec] (piped form) or a `SelectionSpec` (free-standing form).
+#' @seealso [select_point()], [condition()], [filter_by()], [add_selection()],
+#'   [bind_scale()]
+#' @examples
+#' df <- data.frame(x = 1:20, y = sqrt(1:20), g = rep(c("a", "b"), 10))
+#'
+#' # brush an x range: points outside it fade to grey
+#' vplot(df) |>
+#'   mark_point(x = x, y = y, color = condition("brush", g, "grey80")) |>
+#'   select_interval("brush", encodings = "x")
+#'
+#' # brush a rectangle and show only the rows inside it
+#' vplot(df) |>
+#'   mark_point(x = x, y = y) |>
+#'   select_interval("box", encodings = c("x", "y")) |>
+#'   filter_by("box")
+#'
+#' # free-standing: brush one view, filter another
+#' sel <- select_interval("brush", encodings = "x")
+#' hconcat(
+#'   vplot(df) |> mark_point(x = x, y = y) |> add_selection(sel),
+#'   vplot(df) |> mark_bar(x = g, y = y) |> filter_by(sel)
+#' )
 #' @export
 select_interval <- function(
   plot,
   name,
-  on = c("xy", "x", "y"),
+  encodings = c("x", "y"),
   region = c("rect", "lasso"),
-  empty = TRUE
+  empty = TRUE,
+  on = NULL
 ) {
-  on <- match.arg(on)
+  if (!is.null(on)) {
+    on <- match.arg(on, c("xy", "x", "y"))
+    encodings <- if (identical(on, "xy")) c("x", "y") else on
+  }
+  encodings <- .check_encodings(encodings)
   region <- match.arg(region)
   .selection(
     plot,
     name,
     kind = "interval",
-    on = on,
+    on = paste(encodings, collapse = ""),
     region = region,
     fields = NULL,
     toggle = TRUE,
-    empty = empty
+    empty = empty,
+    encodings = encodings
   )
+}
+
+# Validate + normalise an interval selection's `encodings`: a non-empty subset of
+# c("x", "y"), returned in canonical x-then-y order without duplicates.
+.check_encodings <- function(encodings, call = rlang::caller_env()) {
+  ok <- is.character(encodings) &&
+    length(encodings) >= 1L &&
+    !anyNA(encodings) &&
+    all(encodings %in% c("x", "y"))
+  if (!ok) {
+    cli::cli_abort(
+      '{.arg encodings} must be {.val x}, {.val y}, or {.code c("x", "y")}.',
+      call = call
+    )
+  }
+  intersect(c("x", "y"), encodings)
 }
 
 #' Highlight a node's graph neighbourhood
@@ -459,6 +548,7 @@ interaction_model.default <- function(x) {
 .selection_record <- function(sel) {
   rec <- list(
     name = sel@name,
+    type = sel@kind,
     kind = sel@kind,
     on = sel@on,
     region = sel@region,
@@ -469,7 +559,18 @@ interaction_model.default <- function(x) {
   if (!is.null(sel@expand)) {
     rec$expand <- sel@expand
   }
+  # An interval selection names the position channels its brush constrains.
+  # Always a list so a single encoding still serialises as a JSON array.
+  if (identical(sel@kind, "interval")) {
+    rec$encodings <- as.list(sel@encodings %||% .on_encodings(sel@on))
+  }
   rec
+}
+
+# The encodings implied by a legacy interval `on` ("x" / "y" / "xy"), for a
+# SelectionSpec built before `encodings` existed.
+.on_encodings <- function(on) {
+  switch(on %||% "xy", x = "x", y = "y", c("x", "y"))
 }
 
 # Collect a single plot's interaction declarations into the plain block form,

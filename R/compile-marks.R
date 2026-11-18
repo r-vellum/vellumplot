@@ -166,6 +166,7 @@ NULL
   if (!S7::S7_inherits(spec, PlotSpec)) {
     .mark_ctx$plot_interactive <- FALSE
     .mark_ctx$plot_filters <- NULL
+    .mark_ctx$plot_interval_aes <- NULL
     return(invisible())
   }
   .mark_ctx$page <- c(w = spec@width, h = spec@height)
@@ -174,7 +175,70 @@ NULL
     length(filt_names) > 0L ||
     length(spec@binds) > 0L
   .mark_ctx$plot_filters <- if (length(filt_names)) unique(filt_names) else NULL
+  .mark_ctx$plot_interval_aes <- .interval_encodings(spec@selections)
   invisible()
+}
+
+# The position channels ("x" / "y") any interval selection on this plot brushes,
+# or NULL when it declares none. Their per-element data values are emitted so a
+# host can test interval membership by data value (see `.interval_values`).
+.interval_encodings <- function(selections) {
+  enc <- unlist(lapply(selections, function(s) {
+    if (!identical(s@kind, "interval")) {
+      return(NULL)
+    }
+    s@encodings %||% .on_encodings(s@on)
+  }))
+  if (length(enc)) intersect(c("x", "y"), enc) else NULL
+}
+
+# Per-row data values of a layer on the brushed position channels, for interval
+# membership. A named list of vectors aligned to the layer's rows: `x` / `y`
+# hold the value -- numeric for a continuous / date / datetime / binned scale (a
+# date as its epoch number, the same units the host inverts a pixel to), the
+# category label for a discrete scale (the host matches it against the brushed
+# levels). A mark that spans a numeric range on the channel (`xmin`/`xmax` of a
+# rect, `x`/`xend` of a segment) also gets `xh` / `yh`, the upper end, so the
+# host tests overlap. A channel the layer does not map is omitted. NULL when
+# there is nothing to carry.
+.interval_values <- function(L, scales, aes) {
+  val <- function(nm) {
+    v <- L$values[[nm]]
+    if (is.null(v) || !length(v)) {
+      return(NULL)
+    }
+    v <- rep_len(v, L$n)
+    if (is.numeric(v) || inherits(v, c("Date", "POSIXt"))) as.numeric(v)
+  }
+  out <- list()
+  for (a in aes) {
+    v <- L$values[[a]]
+    if (isTRUE(scales[[a]]$discrete)) {
+      if (!is.null(v) && length(v)) {
+        out[[a]] <- as.character(rep_len(v, L$n))
+      }
+      next
+    }
+    lo <- val(a)
+    hi <- NULL
+    if (is.null(lo)) {
+      lo <- val(paste0(a, "min"))
+      hi <- val(paste0(a, "max"))
+    } else {
+      hi <- val(paste0(a, "end"))
+    }
+    if (is.null(lo)) {
+      next
+    }
+    if (!is.null(hi)) {
+      # order each row's pair so `a` <= `ah` (a segment may run backwards)
+      out[[a]] <- pmin(lo, hi)
+      out[[paste0(a, "h")]] <- pmax(lo, hi)
+    } else {
+      out[[a]] <- lo
+    }
+  }
+  if (length(out)) out else NULL
 }
 
 # Stamp every emitted grob with its stable, globally-unique node id (surfaced as
@@ -217,11 +281,43 @@ NULL
   ) {
     grob@keys <- .mark_ctx$data_id[rows]
     m <- .elem_meta(rows)
+    if (!is.null(m) && length(rows) > 1L && .is_single_shape(grob)) {
+      m[[1L]] <- .interval_series_span(m[[1L]], rows)
+    }
     if (!is.null(m)) {
       grob@meta <- m
     }
   }
   vellum::draw(scene, grob)
+}
+
+# A grob vellum treats as ONE element however many rows it draws (a line,
+# path, or polygon series): `scene_model()` keeps only its first meta record.
+.is_single_shape <- function(grob) {
+  inherits(
+    grob,
+    c("vellum::grob_lines", "vellum::grob_path", "vellum::grob_polygon")
+  )
+}
+
+# For a single-shape element drawn from several rows, widen its numeric interval
+# values to the span of all those rows (`ix` = min, `ixh` = max; likewise y), so
+# a host counts the series a member when any part of it lies in the brushed
+# range rather than only its first vertex. A discrete value stays the first row's.
+.interval_series_span <- function(rec, rows) {
+  iv <- .mark_ctx$interval_values
+  for (a in intersect(c("x", "y"), names(iv))) {
+    v <- iv[[a]]
+    if (!is.numeric(v)) {
+      next
+    }
+    r <- suppressWarnings(range(v[rows], iv[[paste0(a, "h")]][rows], na.rm = TRUE))
+    if (all(is.finite(r))) {
+      rec[[paste0("i", a)]] <- r[[1L]]
+      rec[[paste0("i", a, "h")]] <- r[[2L]]
+    }
+  }
+  rec
 }
 
 # Build the per-element `meta` list (one record per drawn element) from the layer
@@ -239,6 +335,8 @@ NULL
   # can relate edges to nodes for neighbour highlighting. NULL for non-edge marks.
   esrc <- .mark_ctx$edge_source
   etgt <- .mark_ctx$edge_target
+  # Data values on the brushed channels (interval selections), per row.
+  iv <- .mark_ctx$interval_values
   # The "<sel>:<aes>" tags this layer's elements participate in (same for every
   # row of the layer, since a condition applies to the whole layer). A per-row
   # `if_false` column is carried per element as `cond_value`; a constant one lives
@@ -281,7 +379,8 @@ NULL
       is.null(filt_tags) &&
       is.null(join) &&
       is.null(esrc) &&
-      is.null(etgt)
+      is.null(etgt) &&
+      is.null(iv)
   ) {
     return(NULL)
   }
@@ -329,6 +428,17 @@ NULL
     # `join`: cross-view identity (per-cell key prefixing keeps it separate).
     if (!is.null(join)) {
       rec$join <- as.character(join[[i]])
+    }
+    # `ix` / `iy`: the element's data value on a brushed position channel
+    # (numeric), or `ixd` / `iyd` for a discrete channel (the category label).
+    # (`ixh` / `iyh` is the upper end when the element spans a range.)
+    for (a in names(iv)) {
+      v <- iv[[a]][[i]]
+      if (is.character(v)) {
+        rec[[paste0("i", a, "d")]] <- v
+      } else {
+        rec[[paste0("i", a)]] <- v
+      }
     }
     rec
   })
@@ -685,6 +795,13 @@ NULL
       } else if (is.null(.mark_ctx$tooltip)) {
         .mark_ctx$tooltip <- gi$key
       }
+    }
+    # Interval selections test membership by data value: carry each keyed
+    # element's value on the brushed channel(s).
+    .mark_ctx$interval_values <- if (
+      !is.null(.mark_ctx$data_id) && length(.mark_ctx$plot_interval_aes)
+    ) {
+      .interval_values(L, scales, .mark_ctx$plot_interval_aes)
     }
     # In a composition, each cell is a separate plot compiled independently, so
     # cells share row-index keys that would collide in one host runtime (hiding one
