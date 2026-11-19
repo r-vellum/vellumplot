@@ -15,6 +15,10 @@
 #' A named character vector or a plain function can also be passed straight to
 #' `labeller =`; it goes through `as_labeller()`.
 #'
+#' The declarative labellers (`label_value`, `label_both`, `label_wrap_gen()`
+#' and lookup tables over one of those) survive [as_spec()]; an arbitrary
+#' function does not.
+#'
 #' A labeller is a function of one argument, `labels`: a data frame with one
 #' character column per facet variable (named after it) and one row per strip.
 #' It returns a list of character vectors, one per line of the strip. With
@@ -70,6 +74,7 @@ label_value <- function(labels, multi_line = TRUE) {
   }
 }
 class(label_value) <- c("function", "labeller")
+attr(label_value, "vp_spec") <- list(type = "value")
 
 #' @rdname labellers
 #' @export
@@ -83,6 +88,7 @@ label_both <- function(labels, multi_line = TRUE, sep = ": ") {
   }
 }
 class(label_both) <- c("function", "labeller")
+attr(label_both, "vp_spec") <- list(type = "both")
 
 #' @rdname labellers
 #' @export
@@ -91,16 +97,23 @@ label_wrap_gen <- function(width = 25, multi_line = TRUE) {
     cli::cli_abort("{.arg width} must be a positive number.")
   }
   force(multi_line)
-  .new_labeller(function(labels) {
-    lapply(label_value(labels, multi_line = multi_line), function(v) {
-      vapply(
-        strwrap(v, width = width, simplify = FALSE),
-        paste,
-        character(1),
-        collapse = "\n"
-      )
-    })
-  })
+  .new_labeller(
+    function(labels) {
+      lapply(label_value(labels, multi_line = multi_line), function(v) {
+        vapply(
+          strwrap(v, width = width, simplify = FALSE),
+          paste,
+          character(1),
+          collapse = "\n"
+        )
+      })
+    },
+    spec = list(
+      type = "wrap",
+      width = as.double(width),
+      multi_line = isTRUE(multi_line)
+    )
+  )
 }
 
 #' @rdname labellers
@@ -111,9 +124,21 @@ as_labeller <- function(x, default = label_value, multi_line = TRUE) {
   }
   default <- as_labeller(default)
   force(multi_line)
+  spec <- NULL
   per_value <- if (is.function(x)) {
     function(v, fallback) as.character(x(v))
   } else if (is.character(x) && !is.null(names(x))) {
+    # A lookup table over a declarative default is itself declarative, so the
+    # spec serializer can carry it (VP-44).
+    default_spec <- .labeller_spec(default)
+    if (!is.null(default_spec)) {
+      spec <- list(
+        type = "lookup",
+        values = as.list(x),
+        default = default_spec,
+        multi_line = isTRUE(multi_line)
+      )
+    }
     function(v, fallback) {
       hit <- unname(x[v])
       ifelse(is.na(hit) | !v %in% names(x), fallback, hit)
@@ -133,14 +158,51 @@ as_labeller <- function(x, default = label_value, multi_line = TRUE) {
     }
     out <- Map(per_value, vals, fallback)
     if (isTRUE(multi_line)) out else list(.join_labels(out))
-  })
+  }, spec = spec)
 }
 
 # Mark a function as a labeller (takes the facet-values data frame), so
 # `as_labeller()` passes it through instead of wrapping it as a value mapper.
-.new_labeller <- function(f) {
+# `spec`, when given, is the labeller's declarative description (a plain list
+# with a `type`), which lets `as_spec()` serialize it; arbitrary functions
+# have none.
+.new_labeller <- function(f, spec = NULL) {
   class(f) <- c("function", "labeller")
+  attr(f, "vp_spec") <- spec
   f
+}
+
+# The declarative description of a labeller (see `.new_labeller()`), or NULL
+# for an arbitrary function.
+.labeller_spec <- function(labeller) {
+  if (!.is_labeller(labeller)) {
+    return(NULL)
+  }
+  attr(labeller, "vp_spec", exact = TRUE)
+}
+
+# Rebuild a labeller from its declarative description (the inverse of
+# `.labeller_spec()`), as read back from a spec.
+.labeller_from_spec <- function(spec) {
+  type <- spec$type %||% ""
+  multi_line <- !isFALSE(spec$multi_line)
+  switch(
+    type,
+    value = label_value,
+    both = label_both,
+    wrap = label_wrap_gen(as.double(spec$width), multi_line = multi_line),
+    lookup = {
+      vals <- spec$values
+      lookup <- vapply(vals, function(v) as.character(v)[[1]], character(1))
+      names(lookup) <- names(vals)
+      as_labeller(
+        lookup,
+        default = .labeller_from_spec(spec$default %||% list(type = "value")),
+        multi_line = multi_line
+      )
+    },
+    cli::cli_abort("Unknown facet labeller type {.val {type}} in spec.")
+  )
 }
 
 .is_labeller <- function(x) is.function(x) && inherits(x, "labeller")
