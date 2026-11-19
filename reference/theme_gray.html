@@ -84,23 +84,23 @@ neon theme (see Details).</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">theme_gray</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">theme_gray</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">theme_minimal</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+<span><span class="fu">theme_minimal</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">theme_bw</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+<span><span class="fu">theme_bw</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">theme_classic</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+<span><span class="fu">theme_classic</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">theme_void</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+<span><span class="fu">theme_void</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">theme_light</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+<span><span class="fu">theme_light</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">theme_dark</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+<span><span class="fu">theme_dark</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">theme_linedraw</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+<span><span class="fu">theme_linedraw</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">theme_cyberpunk</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span>
+<span><span class="fu">theme_cyberpunk</span><span class="op">(</span><span class="va">plot</span>, base_size <span class="op">=</span> <span class="fl">11</span>, base_family <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">theme</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
@@ -120,6 +120,17 @@ neon theme (see Details).</p>
 <dl><dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
 <dd><p>A <a href="PlotSpec.html">PlotSpec</a>. <code>theme()</code> also accepts a <code>PlotComposition</code>, setting
 the figure-level chrome (title bands, collected legend, panel spacing, tags).</p></dd>
+
+
+<dt id="arg-base-size">base_size<a class="anchor" aria-label="anchor" href="#arg-base-size"></a></dt>
+<dd><p>Base text size in points (default 11). Every text element
+is sized relative to it, so <code>theme_gray(base_size = 14)</code> scales titles,
+axis text, legend text and strips together.</p></dd>
+
+
+<dt id="arg-base-family">base_family<a class="anchor" aria-label="anchor" href="#arg-base-family"></a></dt>
+<dd><p>Base font family for all text; <code>""</code> (default) keeps the
+system default.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

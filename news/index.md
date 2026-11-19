@@ -98,6 +98,18 @@
   be a finite number”; the axis draws with no ticks, as in ggplot2
   (VP-8).
 
+- **Theme text sizes cascade from `text`.**
+  `theme(text = element_text(size = 20))` resized only the axis titles;
+  axis text, legend text, strips and the plot title kept their own fixed
+  sizes. The complete themes now size every text element relative to the
+  `text` root, so the change reaches all of them. New
+  [`rel()`](https://r-vellum.github.io/vellumplot/reference/rel.md)
+  gives a size as a multiple of the inherited one
+  (`theme(axis.text = element_text(size = rel(0.8)))`), and every
+  complete theme takes `base_size` and `base_family`, as in ggplot2.
+  Default sizes are unchanged. Colours set by a preset (grey axis text,
+  for example) still win over a `text` colour, as in ggplot2 (VP-10).
+
 - **A layer’s own data is faceted on the variables it has.** In
   `facet_grid(am ~ cyl)`, an annotation layer whose data had `am` but
   not `cyl` was drawn in all six panels. It now appears only in its `am`
@@ -178,6 +190,18 @@
   bar) draw their segments in the opposite order. A stacked label with
   `vjust = 1` on a negative bar now sits at its far (lower) end, as in
   ggplot2.
+
+- **Legends merge on title and keys, as in ggplot2.** A colour and a
+  size legend merged whenever their titles matched, so two variables
+  under one
+  [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md)
+  title drew one legend with the size keys painted in the wrong colours.
+  Meanwhile colour and linetype mapped to the same variable drew two
+  legends. Legends now merge only when they share the title and the same
+  keys and labels, and any pair of keyed legends can merge: colour,
+  shape, linetype, size, alpha and linewidth. A merged key draws a line
+  when a linetype or line width is involved, a point for shape or size,
+  or both (VP-7).
 
 - **Provenance carries every trained scale.**
   [`plot_provenance()`](https://r-vellum.github.io/vellumplot/reference/plot_provenance.md)

@@ -357,6 +357,8 @@ Combine plots into a single figure, or repeat one over a variable.
   [`element_rect()`](https://r-vellum.github.io/vellumplot/reference/element.md)
   [`element_blank()`](https://r-vellum.github.io/vellumplot/reference/element.md)
   : Theme elements
+- [`rel()`](https://r-vellum.github.io/vellumplot/reference/rel.md) :
+  Relative sizing
 - [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md) :
   Set plot titles and axis/legend labels
 - [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md)
