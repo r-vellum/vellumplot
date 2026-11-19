@@ -18,8 +18,9 @@ test_that(".shape_svg_d distinguishes built-in markers from SVG icons", {
 
 test_that("a literal `d` shape is a constant that draws a vector path per point", {
   d <- data.frame(x = 1:5, y = 1:5)
-  base <- n_paths(vplot(d) |> mark_point(x = x, y = y)) # built-in circles: 0 <path>
-  icons <- n_paths(vplot(d) |> mark_point(x = x, y = y, shape = star))
+  base <- n_paths(vplot(d) |> mark_point(x = x, y = y)) # built-in circles: no icon paths
+  # `!!` injects the string; a bare `shape = star` would be a mapping.
+  icons <- n_paths(vplot(d) |> mark_point(x = x, y = y, shape = !!star))
   expect_gt(icons, base) # icons are drawn as <path>
 })
 
