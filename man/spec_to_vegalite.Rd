@@ -34,6 +34,13 @@ scales (domain / log-sqrt type / categorical range / title), \code{bin} +
 \code{count}, faceting, inline data, and the plot title.
 }
 \details{
+Free facet scales and \code{\link[=resolve_scale]{resolve_scale()}} map to the facet's Vega-Lite
+\code{resolve}: an independent scale becomes \code{resolve.scale}, with its axis
+(\code{x}/\code{y}) or legend made independent too. On import, a facet-level
+\code{resolve.scale} comes back as the resolve lattice; an independent axis or
+legend over a shared scale, and a resolve between the layers of one view
+(e.g. a dual axis), have no vellumplot equivalent and are reported.
+
 The bridge covers a \strong{documented subset} (see the "Specs, agents, and
 interoperability" article). Anything it cannot map — polar/flipped
 coordinates, layer effects, patterns, statistical marks without a Vega-Lite

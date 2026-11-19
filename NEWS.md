@@ -35,6 +35,12 @@
   position scales: `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the
   month labels (VP-45).
 
+* `spec_to_vegalite()` exports free facet scales and `resolve_scale()` as the
+  facet's Vega-Lite `resolve` (`resolve.scale`, with `resolve.axis` for x / y
+  and `resolve.legend` for the other aesthetics), and `spec_from_vegalite()`
+  reads a facet-level `resolve.scale` back. Before, the exporter ignored
+  resolution, so free scales came out shared (VP-47).
+
 * `guide_bins()` draws the legend of a binned scale as ggplot2's does: one key
   per bin, edge to edge, with the bin boundaries (not interval labels) on a
   small axis beside them; `show.limits = TRUE` also labels the outer limits.
