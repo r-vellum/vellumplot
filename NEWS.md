@@ -2,6 +2,23 @@
 
 ## New features
 
+* New `guide_axis()` for the position axes, used as `guides(x = )` /
+  `guides(y = )` or the new `guide` argument of `scale_x_continuous()`,
+  `scale_y_continuous()`, `scale_x_discrete()` and `scale_y_discrete()`:
+  `n.dodge` staggers crowded labels over rows (or columns), `angle` rotates
+  them, `check.overlap` drops labels that would collide, `minor.ticks` adds
+  minor ticks and `cap` ends the axis line at the outermost breaks. The label
+  gutter is measured with the dodging and rotation, so nothing clips.
+  `guides(x = "none")` draws an axis without labels or ticks (F-17).
+
+## Bug fixes
+
+* Wrapped x tick labels reserve the height of the label that wraps to the most
+  lines, not of the longest one, so a short-worded label no longer runs into
+  the axis title (F-17).
+
+## New features
+
 * `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
   box plots and violins: a discrete `y` with a continuous `x` draws horizontal
   intervals, with the slab above each one (VP-42).

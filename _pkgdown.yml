@@ -220,6 +220,7 @@ reference:
   - lims
   - sec_axis
   - guides
+  - guide_axis
   - guide_bivariate
   - resolve_scale
   - after_stat

@@ -113,7 +113,24 @@ NULL
     scene <- .hlines(scene, yb, .el_gpar_line(gy), .el_sketch(gy, 5L))
   }
   tlen <- rt[["axis.ticks.length"]]
+  # `guides(x = "none")` drops the ticks; `guide_axis(minor.ticks = TRUE)` adds
+  # shorter ones between the breaks.
+  gxa <- .axis_guide_of(x_sc)
+  gya <- .axis_guide_of(y_sc)
+  if (identical(gxa$kind, "none")) {
+    xb <- numeric(0)
+  }
+  if (identical(gya$kind, "none")) {
+    yb <- numeric(0)
+  }
   tx <- rt[["axis.ticks.x"]]
+  if (!.is_blank(tx) && isTRUE(gxa$minor.ticks) && !isTRUE(x_sc$discrete)) {
+    scene <- .minor_ticks(scene, x_sc, tlen, tx, "x")
+  }
+  ty0 <- rt[["axis.ticks.y"]]
+  if (!.is_blank(ty0) && isTRUE(gya$minor.ticks) && !isTRUE(y_sc$discrete)) {
+    scene <- .minor_ticks(scene, y_sc, tlen, ty0, "y")
+  }
   if (!.is_blank(tx) && length(xb)) {
     b <- xb
     k <- length(b)
@@ -148,6 +165,42 @@ NULL
     )
   }
   scene
+}
+
+# Minor axis ticks (`guide_axis(minor.ticks = TRUE)`): three quarters of the
+# major tick length, halfway between the breaks, inside the panel like the
+# major ones.
+.minor_ticks <- function(scene, sc, tlen, el, axis) {
+  m <- .minor_breaks(sc$breaks)
+  dom <- range(sc$domain)
+  m <- m[m >= dom[1] & m <= dom[2]]
+  k <- length(m)
+  if (!k) {
+    return(scene)
+  }
+  len <- vellum::vl_unit(rep(0.75 * tlen, k), "mm")
+  pos <- vellum::vl_unit(m, "native")
+  zero <- vellum::vl_unit(rep(0, k), "npc")
+  g <- if (axis == "x") {
+    vellum::segments_grob(
+      pos,
+      zero,
+      pos,
+      len,
+      gp = .el_gpar_line(el),
+      role = "presentation"
+    )
+  } else {
+    vellum::segments_grob(
+      zero,
+      pos,
+      len,
+      pos,
+      gp = .el_gpar_line(el),
+      role = "presentation"
+    )
+  }
+  vellum::draw(scene, g)
 }
 
 # Points around a circle of radius `r` (closed; native units), for polar
@@ -368,8 +421,12 @@ NULL
   rt,
   axis,
   sec = FALSE,
-  wrap_mm = NA_real_
+  wrap_mm = NA_real_,
+  keep = NULL
 ) {
+  # A secondary axis keeps the plain guide; the primary one honours its
+  # `guide_axis()` (angle, dodging, overlap, cap) or `guide_none()`.
+  guide <- if (sec) .axis_guide_of(list()) else .axis_guide_of(sc)
   is_y <- identical(axis, "y")
   el <- rt[[if (is_y) "axis.text.y" else "axis.text.x"]]
   aline <- rt[[if (is_y) "axis.line.y" else "axis.line.x"]]
@@ -430,36 +487,59 @@ NULL
   }
   scene <- vellum::push(scene, vp)
   if (!.is_blank(aline)) {
-    s <- geom$seg
+    s <- .axis_line_seg(geom$seg, sc, guide$cap, is_y)
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
-        vellum::vl_unit(s[1], "npc"),
-        vellum::vl_unit(s[2], "npc"),
-        vellum::vl_unit(s[3], "npc"),
-        vellum::vl_unit(s[4], "npc"),
+        s[[1]],
+        s[[2]],
+        s[[3]],
+        s[[4]],
         sketch = .el_sketch(aline, geom$seed),
         gp = .el_gpar_line(aline)
       )
     )
   }
-  if (!.is_blank(el)) {
-    rot <- .el_rot(el)
-    just <- .axis_text_just(geom, el, rot)
+  if (!.is_blank(el) && !identical(guide$kind, "none")) {
+    rot <- guide$angle %||% .el_rot(el)
+    # A guide's angle sets the justification itself (the label's end meets the
+    # tick), as ggplot2's guide_axis(angle =) does, rather than the element's.
+    just <- if (is.null(guide$angle)) {
+      .axis_text_just(geom, el, rot)
+    } else {
+      .axis_text_just(geom, .el_unjust(el), rot)
+    }
+    nd <- guide$n.dodge %||% 1L
+    # Staggered rows / columns: row k sits (k - 1) label extents further from
+    # the panel, measured as the layout measured the gutter.
+    step_mm <- 0
+    base_mm <- 0
+    if (nd > 1L) {
+      tick <- rt[["axis.ticks.length"]]
+      probe <- .axis_text_grob(.longest(sc$labels), el, just, rot = rot)
+      ext <- vellum::vl_convert(
+        if (is_y) vellum::grobwidth(probe) else vellum::grobheight(probe),
+        "mm"
+      )
+      step_mm <- ext + .DODGE_GAP_MM
+      # the single-row gutter the default anchor fraction is relative to
+      base_mm <- ext + tick + .PAD_MM
+    }
     for (i in seq_along(sc$breaks)) {
       if (!is.finite(sc$breaks[i])) {
         next # a non-finite break has no position to anchor its label
       }
-      x <- if (is_y) {
-        vellum::vl_unit(geom$lx, "npc")
-      } else {
-        vellum::vl_unit(sc$breaks[i], "native")
+      if (!is.null(keep) && !isTRUE(keep[i])) {
+        next # dropped by check.overlap
       }
-      y <- if (is_y) {
-        vellum::vl_unit(sc$breaks[i], "native")
+      k <- (i - 1L) %% nd
+      off <- if (is_y) {
+        .axis_dodge_pos(geom$lx, k, base_mm, step_mm)
       } else {
-        vellum::vl_unit(geom$ly, "npc")
+        .axis_dodge_pos(geom$ly, k, base_mm, step_mm)
       }
+      x <- if (is_y) off else vellum::vl_unit(sc$breaks[i], "native")
+      y <- if (is_y) vellum::vl_unit(sc$breaks[i], "native") else off
       scene <- vellum::draw(
         scene,
         .axis_text_grob(
@@ -477,17 +557,72 @@ NULL
   vellum::pop(scene)
 }
 
+# The anchor of a tick label in staggered row / column `k` (0-based) of a
+# gutter whose labels sit at npc fraction `a`: `a` itself for the first row (the
+# undodged position, unchanged), else measured in mm from the gutter edge the
+# labels hang from (the high edge when `a > 0.5`), `k` steps further out.
+.axis_dodge_pos <- function(a, k, base_mm, step_mm) {
+  if (k == 0L || step_mm == 0) {
+    return(vellum::vl_unit(a, "npc"))
+  }
+  if (a > 0.5) {
+    vellum::vl_unit(1, "npc") -
+      vellum::vl_unit((1 - a) * base_mm + k * step_mm, "mm")
+  } else {
+    vellum::vl_unit(a * base_mm + k * step_mm, "mm")
+  }
+}
+
+# The axis line's endpoints (npc, or native along the axis when capped at the
+# outermost breaks by `guide_axis(cap =)`).
+.axis_line_seg <- function(seg, sc, cap, is_y) {
+  u <- lapply(seg, vellum::vl_unit, units = "npc")
+  b <- sc$breaks[is.finite(sc$breaks)]
+  if (is.null(cap) || identical(cap, "none") || !length(b)) {
+    return(u)
+  }
+  # the coordinate that runs along the axis: y (2, 4) on a y axis, else x (1, 3)
+  lo_i <- if (is_y) 2L else 1L
+  hi_i <- if (is_y) 4L else 3L
+  dom <- sc$domain
+  rev_dom <- length(dom) == 2L && is.numeric(dom) && dom[1] > dom[2]
+  lo <- if (rev_dom) max(b) else min(b)
+  hi <- if (rev_dom) min(b) else max(b)
+  if (cap %in% c("both", "lower")) {
+    u[[lo_i]] <- vellum::vl_unit(lo, "native")
+  }
+  if (cap %in% c("both", "upper")) {
+    u[[hi_i]] <- vellum::vl_unit(hi, "native")
+  }
+  u
+}
+
+# A copy of a text element without its own hjust / vjust.
+.el_unjust <- function(el) {
+  el@hjust <- NULL
+  el@vjust <- NULL
+  el
+}
+
 # y-axis labels for `y_sc`, right-justified against each gridline.
-.draw_y_axis <- function(scene, row, col, y_sc, rt) {
-  .draw_axis(scene, row, col, y_sc, rt, "y")
+.draw_y_axis <- function(scene, row, col, y_sc, rt, keep = NULL) {
+  .draw_axis(scene, row, col, y_sc, rt, "y", keep = keep)
 }
 
 # x-axis labels for `x_sc`, centred under each gridline. `wrap_mm` is the mm
 # width one tick gets, so a long label wraps to its column instead of colliding
 # with its neighbour; `NA` (the default, and every unknown-width path) keeps
 # single-line labels.
-.draw_x_axis <- function(scene, row, col, x_sc, rt, wrap_mm = NA_real_) {
-  .draw_axis(scene, row, col, x_sc, rt, "x", wrap_mm = wrap_mm)
+.draw_x_axis <- function(
+  scene,
+  row,
+  col,
+  x_sc,
+  rt,
+  wrap_mm = NA_real_,
+  keep = NULL
+) {
+  .draw_axis(scene, row, col, x_sc, rt, "x", wrap_mm = wrap_mm, keep = keep)
 }
 
 # A facet strip: an optional filled background plus a centred label. `rot = 90`

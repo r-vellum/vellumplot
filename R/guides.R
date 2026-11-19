@@ -10,7 +10,7 @@ NULL
 #' to size, tick and style a continuous colour bar, or `guide_coloursteps()` to draw a
 #' **binned** colour scale as a segmented bar instead of swatches. Applies to the
 #' non-position legends (`color`/`fill`, `size`, `shape`, `alpha`, `linetype`);
-#' position axes are unaffected.
+#' for the position axes, pass [guide_axis()] (or `"none"`) as `x` / `y`.
 #'
 #' @param plot A [PlotSpec].
 #' @param ... Named by aesthetic, e.g. `guides(color = "none", shape = guide_legend(reverse = TRUE))`.
@@ -180,6 +180,91 @@ guide_coloursteps <- function(
 #' @rdname guides
 #' @export
 guide_colorsteps <- guide_coloursteps
+
+#' Axis guide
+#'
+#' `guide_axis()` controls how a position axis draws its tick labels and line:
+#' pass it as `guides(x = guide_axis(...))` (or `y`), or as the `guide` of a
+#' position scale (`scale_x_continuous(guide = guide_axis(...))`). As in
+#' ggplot2, it can stagger crowded labels over several rows (`n.dodge`), rotate
+#' them (`angle`), drop the ones that would overlap (`check.overlap`), add minor
+#' ticks, and cap the axis line at the outermost breaks. The gutter that holds
+#' the labels is measured with the dodging and rotation applied, so nothing is
+#' clipped. `guides(x = "none")` draws the axis without labels or ticks.
+#'
+#' @param title The axis title, or `NULL` to keep the scale's.
+#' @param check.overlap If `TRUE`, leave out labels that would overlap one
+#'   already drawn, keeping the first, the last and then those in the middle
+#'   first (ggplot2's priority). Needs the panel's size, so it applies to a
+#'   plot with a set page size and shared (not free) scales.
+#' @param angle The rotation of the labels in degrees (overrides the theme's
+#'   `axis.text.x`/`axis.text.y` angle), or `NULL` to keep the theme's. The
+#'   labels are justified so their ends meet the ticks.
+#' @param n.dodge The number of rows (x) or columns (y) to stagger the labels
+#'   over, so neighbours alternate between them (default `1`).
+#' @param minor.ticks If `TRUE`, also draw shorter ticks halfway between the
+#'   breaks (on a continuous scale).
+#' @param cap Cap the axis line (theme element `axis.line`) at the outermost
+#'   breaks: `"none"` (default; the line spans the panel), `"both"`, `"upper"`
+#'   or `"lower"`. `TRUE` / `FALSE` mean `"both"` / `"none"`.
+#' @return A guide specification for [guides()] or a scale's `guide`.
+#' @examples
+#' cars <- data.frame(model = rownames(mtcars), mpg = mtcars$mpg)
+#' vplot(cars) |>
+#'   mark_bar(x = model, y = mpg) |>
+#'   guides(x = guide_axis(n.dodge = 2))
+#'
+#' vplot(cars) |>
+#'   mark_bar(x = model, y = mpg) |>
+#'   guides(x = guide_axis(angle = 45))
+#'
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg) |>
+#'   scale_y_continuous(guide = guide_axis(minor.ticks = TRUE)) |>
+#'   theme(axis.line = element_line()) |>
+#'   guides(x = guide_axis(cap = "both"))
+#' @export
+guide_axis <- function(
+  title = NULL,
+  check.overlap = FALSE,
+  angle = NULL,
+  n.dodge = 1,
+  minor.ticks = FALSE,
+  cap = "none"
+) {
+  if (
+    !is.null(angle) &&
+      (!is.numeric(angle) || length(angle) != 1L || !is.finite(angle))
+  ) {
+    cli::cli_abort(
+      "{.arg angle} must be a single number of degrees or {.code NULL}."
+    )
+  }
+  if (
+    !is.numeric(n.dodge) ||
+      length(n.dodge) != 1L ||
+      !is.finite(n.dodge) ||
+      n.dodge < 1 ||
+      n.dodge != round(n.dodge)
+  ) {
+    cli::cli_abort("{.arg n.dodge} must be a whole number of at least 1.")
+  }
+  if (isTRUE(cap)) {
+    cap <- "both"
+  } else if (isFALSE(cap)) {
+    cap <- "none"
+  }
+  cap <- rlang::arg_match0(cap, c("none", "both", "upper", "lower"), "cap")
+  list(
+    kind = "axis",
+    title = title,
+    check.overlap = isTRUE(check.overlap),
+    angle = angle,
+    n.dodge = as.integer(n.dodge),
+    minor.ticks = isTRUE(minor.ticks),
+    cap = cap
+  )
+}
 
 # Shared builder + validation for guide_colourbar() / guide_coloursteps().
 .guide_bar <- function(
@@ -444,4 +529,108 @@ guide_colorsteps <- guide_coloursteps
       )
     )
   )
+}
+
+# Carry a position scale's axis guide (`guide_axis()`, or `"none"`) onto its
+# trained scale as `axis_guide`, where the layout (gutter sizes, overlap) and the
+# axis drawers read it; a `title` renames the axis.
+.attach_axis_guide <- function(sc, scalespec) {
+  g <- if (!is.null(scalespec)) scalespec@guide
+  if (identical(g, "none")) {
+    return(.scale_set(sc, axis_guide = list(kind = "none")))
+  }
+  if (!is.list(g) || !identical(g$kind, "axis")) {
+    return(sc)
+  }
+  sc <- .scale_set(sc, axis_guide = g)
+  if (!is.null(g$title)) {
+    sc <- .scale_set(sc, name = g$title)
+  }
+  sc
+}
+
+# The axis guide of a trained position scale, or the default (plain) one.
+.axis_guide_of <- function(sc) {
+  g <- sc$axis_guide
+  if (is.null(g)) {
+    list(kind = "axis", n.dodge = 1L, cap = "none")
+  } else {
+    g
+  }
+}
+
+# The rotation of an axis's tick labels: the guide's `angle`, else the theme
+# element's.
+.axis_rot <- function(sc, el) {
+  .axis_guide_of(sc)$angle %||% .el_rot(el)
+}
+
+# The labels an axis draws: all of them, or none under `guide_none()`.
+.axis_shows_labels <- function(sc) !identical(.axis_guide_of(sc)$kind, "none")
+
+# Which of `n` labels to keep so none overlaps a kept one (ggplot2's
+# `check.overlap`): first, last, then recursively the middle of each remaining
+# run take priority. `centre`/`size` are each label's centre and extent along
+# the axis (same units).
+.overlap_keep <- function(centre, size) {
+  n <- length(centre)
+  keep <- rep(FALSE, n)
+  if (!n) {
+    return(keep)
+  }
+  prio <- .axis_label_priority(n)
+  lo <- centre - size / 2
+  hi <- centre + size / 2
+  for (i in prio) {
+    if (!is.finite(centre[i])) {
+      next
+    }
+    k <- which(keep)
+    if (!length(k) || !any(lo[i] < hi[k] & hi[i] > lo[k])) {
+      keep[i] <- TRUE
+    }
+  }
+  keep
+}
+
+# ggplot2's label priority order: the ends, then bisect.
+.axis_label_priority <- function(n) {
+  if (n <= 0L) {
+    return(integer(0))
+  }
+  if (n == 1L) {
+    return(1L)
+  }
+  out <- as.integer(c(1L, n))
+  runs <- list(c(1L, n))
+  while (length(runs)) {
+    nxt <- list()
+    for (r in runs) {
+      if (r[2] - r[1] > 1L) {
+        m <- (r[1] + r[2]) %/% 2L
+        out <- c(out, m)
+        nxt <- c(nxt, list(c(r[1], m), c(m, r[2])))
+      }
+    }
+    runs <- nxt
+  }
+  out
+}
+
+# Set a position scale's `guide` from a scale constructor's `guide =` argument
+# (validated as `guides()` would take it). NULL leaves it alone.
+.with_axis_guide <- function(plot, aesthetic, guide) {
+  if (is.null(guide)) {
+    return(plot)
+  }
+  if (
+    !identical(guide, "none") &&
+      !(is.list(guide) && identical(guide$kind, "axis"))
+  ) {
+    cli::cli_abort(
+      "{.arg guide} of a position scale must be {.fn guide_axis} or {.val none}.",
+      call = rlang::caller_env()
+    )
+  }
+  .set_guide(plot, aesthetic, guide)
 }
