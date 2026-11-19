@@ -54,6 +54,82 @@ test_that("dodged error bars sit over dodged bars", {
   }
 })
 
+test_that("horizontal range marks dodge along y, their category axis", {
+  # native positions after the draw-time step: each category's two groups sit
+  # a quarter band either side of it (as a horizontal dodged box plot's do);
+  # the value axis is untouched
+  native <- function(p) {
+    L <- vellumplot:::.resolve_layers(p)[[1]]
+    sc <- vellumplot:::.build_panels(p)$scales
+    vellumplot:::.position_native(L, sc)
+  }
+  for (mk in c(mark_errorbar, mark_linerange, mark_pointrange)) {
+    p <- vplot(summ) |>
+      mk(
+        y = cat,
+        x = m,
+        xmin = m - se,
+        xmax = m + se,
+        color = g,
+        orientation = "y",
+        position = "dodge"
+      )
+    out <- native(p)
+    expect_equal(out$L$values$y, c(0.75, 1.25, 1.75, 2.25))
+    expect_equal(out$L$values$xmin, summ$m - summ$se)
+    expect_equal(out$L$values$xmax, summ$m + summ$se)
+    expect_identical(
+      out$scales$x$map,
+      vellumplot:::.build_panels(p)$scales$x$map
+    )
+  }
+  # the drawn bars: four distinct y positions, and a cap narrowed to its slot
+  p <- vplot(summ) |>
+    mark_errorbar(
+      y = cat,
+      xmin = m - se,
+      xmax = m + se,
+      group = g,
+      orientation = "y",
+      position = "dodge",
+      width = 0.3
+    )
+  el <- vellum::scene_model(as_vellum_scene(p))$elements
+  el <- el[!is.na(el$id) & startsWith(el$id, "layer-1-errorbar"), ]
+  bar <- el[el$h == 0, ]
+  cap <- el[el$w == 0, ]
+  expect_length(unique(round(bar$y, 3)), 4L)
+  # with the box plot's dodge width, the same centres as a horizontal dodged
+  # box plot
+  raw <- data.frame(
+    cat = rep(summ$cat, each = 5),
+    g = rep(summ$g, each = 5),
+    v = rep(summ$m, each = 5) + rep(-2:2, 4) * 0.1
+  )
+  bx <- vplot(raw) |>
+    mark_boxplot(y = cat, x = v, fill = g, position = "dodge")
+  q <- vplot(raw) |>
+    mark_errorbar(
+      y = cat,
+      xmin = v - 1,
+      xmax = v + 1,
+      group = g,
+      orientation = "y",
+      position = position_dodge(width = 0.75)
+    )
+  dy <- function(p) {
+    L <- vellumplot:::.resolve_layers(p)[[1]]
+    sc <- vellumplot:::.build_panels(p)$scales
+    list(L = L, sc = sc)
+  }
+  b <- dy(bx)
+  cells <- vellumplot:::.by_category(b$L, b$sc, "y", span = 0.75)
+  centres <- sort(unique(vapply(cells, function(cl) cl$centre, 1)))
+  expect_equal(sort(unique(native(q)$L$values$y)), centres)
+  # each cap fits inside its slot
+  expect_true(all(cap$h < min(diff(sort(unique(bar$y))))))
+})
+
 test_that("text stacks onto stacked bars, at position_stack(vjust =)", {
   base <- vplot(summ) |> mark_bar(x = cat, y = m, fill = g)
   top <- vellumplot:::.resolve_layers(

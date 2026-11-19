@@ -52,6 +52,12 @@
   position scales: `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the
   month labels (VP-45).
 
+* `spec_to_vegalite()` exports free facet scales and `resolve_scale()` as the
+  facet's Vega-Lite `resolve` (`resolve.scale`, with `resolve.axis` for x / y
+  and `resolve.legend` for the other aesthetics), and `spec_from_vegalite()`
+  reads a facet-level `resolve.scale` back. Before, the exporter ignored
+  resolution, so free scales came out shared (VP-47).
+
 ## Bug fixes
 
 * A merged legend (colour + shape, size, alpha, ...) of a filled mark now
@@ -65,6 +71,12 @@
   scales (panel by panel), fixed-aspect plots (`coord_fixed()`, `coord_sf()`,
   `aspect.ratio`) and marginal plots; before, it silently kept every label
   there. Polar axes still keep every label (VP-45).
+
+* `position_dodge()` / `position_dodge2()` on a horizontal `mark_errorbar()`,
+  `mark_linerange()` or `mark_pointrange()` (`orientation = "y"`) now dodge the
+  groups along y, the category axis, as a horizontal box plot does and as in
+  ggplot2. Before, horizontal error bars were not dodged at all and a
+  horizontal point-range's points were shifted along the value axis (VP-45).
 
 # vellumplot 0.14.1
 
