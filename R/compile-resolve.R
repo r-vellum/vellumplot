@@ -533,20 +533,6 @@ NULL
   ))
 }
 
-# The default y-axis title: "count" when bars count rows (no y encoding on any
-# layer), otherwise the first y encoding's label.
-.y_axis_title <- function(spec, resolved) {
-  if (!is.null(spec@labels[["y"]])) {
-    return(spec@labels[["y"]])
-  }
-  y_mapped <- any(vapply(
-    spec@layers,
-    function(L) "y" %in% names(L@encoding),
-    logical(1)
-  ))
-  if (.has_bar(resolved) && !y_mapped) "count" else .default_title(spec, "y")
-}
-
 # Pool the resolved values of an aesthetic across all layers that map it. For
 # position channels this is x or y; returns NULL if no layer maps it.
 .pool_values <- function(resolved, aesthetic) {
@@ -558,33 +544,3 @@ NULL
   vs
 }
 
-# Derive a default axis/legend title for an aesthetic from the first layer that
-# maps it (its channel expression as text).
-.default_title <- function(spec, aesthetic) {
-  match_aes <- .aes_aliases(aesthetic)
-  for (a in match_aes) {
-    lab <- spec@labels[[a]]
-    if (!is.null(lab)) {
-      return(lab)
-    }
-  }
-  for (layer in spec@layers) {
-    for (a in match_aes) {
-      ch <- layer@encoding[[a]]
-      if (!is.null(ch)) return(rlang::as_label(rlang::quo_get_expr(ch@expr)))
-    }
-  }
-  aesthetic
-}
-
-# The resolved title for a scale: the user's `scale_*(name = )` if set, else
-# `default`. `default` is a lazily-evaluated fallback (only computed when no name
-# is given), so passing e.g. `.default_title(spec, "color")` costs nothing when a
-# name is present. The single choke point every per-kind trainer routes through.
-.scale_title <- function(scalespec, default) {
-  if (!is.null(scalespec) && !is.null(scalespec@name)) {
-    scalespec@name
-  } else {
-    default
-  }
-}

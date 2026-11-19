@@ -24,14 +24,20 @@ NULL
 # summary rather than the scales themselves and emphatically not the spec: the
 # levels of the legend-bearing scales come to a couple of kilobytes, where a
 # `PlotSpec` for 50k rows is well over a megabyte and would keep the whole data
-# frame alive for as long as anyone held the scene.
-.lint_scales_summary <- function(scales) {
+# frame alive for as long as anyone held the scene. `title` is the scale's
+# plain-text title from the plot's titles record (.plot_titles), so a rule that
+# names the encoding names it as the legend does.
+.lint_scales_summary <- function(scales, titles = NULL) {
   out <- lapply(.LINT_LEGEND_AES, function(a) {
     sc <- scales[[a]]
     if (is.null(sc) || !identical(sc$kind, "discrete")) {
       return(NULL)
     }
-    list(kind = sc$kind, levels = as.character(sc$levels))
+    list(
+      kind = sc$kind,
+      levels = as.character(sc$levels),
+      title = titles$text[[a]] %||% a
+    )
   })
   names(out) <- .LINT_LEGEND_AES
   out[!vapply(out, is.null, logical(1))]

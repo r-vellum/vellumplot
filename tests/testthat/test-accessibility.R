@@ -119,8 +119,10 @@ test_that("the scales summary carries levels, not the plot's data", {
     exact = TRUE
   )
   expect_named(summ, "color")
-  expect_named(summ$color, c("kind", "levels"))
+  expect_named(summ$color, c("kind", "levels", "title"))
   expect_equal(summ$color$levels, letters[1:4])
+  # The title comes from the plot's titles record, as the legend draws it.
+  expect_identical(summ$color$title, "g")
   # Kilobytes, not the megabyte-plus the spec for this data would cost.
   expect_lt(as.numeric(object.size(summ)), 20000)
 })

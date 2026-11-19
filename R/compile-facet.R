@@ -236,7 +236,9 @@ NULL
 
   all_res <- unlist(lapply(panels, function(p) p$resolved), recursive = FALSE)
   has_bar <- .needs_zero(all_res)
-  y_title <- .y_axis_title(spec, all_res)
+  # Every axis/legend title, resolved once (scale name > labs > mapping), and
+  # read by the trainers, the alt text and the lint summary. See .plot_titles().
+  titles <- .plot_titles(spec, all_res)
 
   free_x <- .resolve_for(spec, "x") == "independent"
   free_y <- .resolve_for(spec, "y") == "independent"
@@ -248,7 +250,7 @@ NULL
   # every aesthetic is shared (a frozen animation never has free/independent
   # scales) so axis breaks don't move between frames -- the non-reactive contract.
   if (is.null(frozen_scales)) {
-    shared <- .train_scales(spec, all_res)
+    shared <- .train_scales(spec, all_res, titles = titles)
   } else {
     shared <- frozen_scales
     free_x <- FALSE
@@ -276,8 +278,8 @@ NULL
       )
     }
   }
-  tx <- train_free("x", "xintercept", .default_title(spec, "x"), FALSE, co@xlim)
-  ty <- train_free("y", "yintercept", y_title, has_bar, co@ylim)
+  tx <- train_free("x", "xintercept", titles$title[["x"]], FALSE, co@xlim)
+  ty <- train_free("y", "yintercept", titles$title[["y"]], has_bar, co@ylim)
 
   # A grid free scale is shared down a column (x) / across a row (y), so train it
   # once per column/row and reuse it rather than retraining for every panel.
@@ -322,6 +324,7 @@ NULL
     fa = fa,
     panels = panels,
     scales = shared,
+    titles = titles,
     free_x = free_x,
     free_y = free_y
   )
