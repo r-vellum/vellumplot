@@ -174,6 +174,40 @@ NULL
   )
 }
 
+# Shared builder for the named continuous colour scales (gradient, gradient2,
+# gradientn, viridis_c, distiller): validates `limits` and `oob`.
+.continuous_colour_scale <- function(
+  plot,
+  aesthetic,
+  palette,
+  name,
+  breaks,
+  labels,
+  limits,
+  na.value,
+  oob,
+  midpoint = NULL,
+  call = rlang::caller_env()
+) {
+  .check_plot(plot)
+  .check_continuous_limits(limits, "limits", numeric = TRUE, call = call)
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = aesthetic,
+      type = "continuous",
+      palette = palette,
+      breaks = breaks,
+      labels = labels,
+      name = name,
+      midpoint = midpoint,
+      domain = limits,
+      na_value = na.value,
+      oob = .check_oob(oob, call = call)
+    )
+  )
+}
+
 #' Position scales
 #'
 #' Declare a position scale to override the trained default. `scale_x_continuous()`
@@ -410,6 +444,43 @@ scale_y_reverse <- function(plot, ...) {
     )
   }
   rlang::arg_match0(oob, c("censor", "squish", "keep"), "oob", call)
+}
+
+# Logical per row of `data`: does a position scale with `oob` set (to
+# "censor" or a function) map one of `layer`'s continuous position channels
+# outside its numeric limits to NA? Such rows are removed before the stat and
+# counted into the "Removed n rows" warning, as for missing positions (see
+# `.missing_position_rows()`); only the marks that draw one element per row
+# drop them (a path keeps its gap).
+.censored_position_rows <- function(spec, layer, data) {
+  n <- nrow(data)
+  out <- rep(FALSE, n)
+  if (!n || !layer@mark %in% .NA_REMOVE_MARKS) {
+    return(out)
+  }
+  is_num <- function(v) is.numeric(v) || inherits(v, c("Date", "POSIXt"))
+  for (axis in names(.DIAG_POS_CHANNELS)) {
+    sc <- .scale_for(spec, axis)
+    if (is.null(sc) || is.null(sc@oob) || identical(sc@oob, "keep")) {
+      next
+    }
+    dom <- sc@domain
+    if (length(dom) != 2L || !is_num(dom)) {
+      next
+    }
+    chans <- intersect(.DIAG_POS_CHANNELS[[axis]], names(layer@encoding))
+    for (nm in chans) {
+      ch <- layer@encoding[[nm]]
+      if (isTRUE(ch@after)) {
+        next
+      }
+      v <- rlang::eval_tidy(ch@expr, data = data)
+      if (length(v) == n && is_num(v)) {
+        out <- out | .diag_oob(sc, as.numeric(v), as.numeric(dom))$gone
+      }
+    }
+  }
+  out
 }
 
 #' Secondary axes
@@ -812,9 +883,10 @@ ylim <- function(plot, ...) {
 #'   data levels by name (unmatched levels draw grey).
 #' @param colours For `scale_*_gradientn()`, an n-stop vector of colours the
 #'   continuous ramp interpolates through.
-#' @param limits For the continuous colour scales, a length-2 numeric
-#'   `c(min, max)` fixing the mapped data range (the direct form of
-#'   `lims(color = ...)`). For `scale_*_manual()`, the levels the scale covers.
+#' @param limits For the continuous colour scales (including the gradient
+#'   ones), a length-2 numeric `c(min, max)` fixing the mapped data range (the
+#'   direct form of `lims(color = ...)`). For `scale_*_manual()`, the levels
+#'   the scale covers.
 #' @param low,high For `scale_*_gradient()`/`scale_*_gradient2()`, the endpoint
 #'   colours.
 #' @param mid For `scale_*_gradient2()`, the midpoint colour.
@@ -822,12 +894,14 @@ ylim <- function(plot, ...) {
 #'   (default `0`); values above and below diverge to `high` and `low`.
 #' @param breaks,labels Explicit legend breaks / labels, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
-#' @param na.value For `scale_*_manual()`, the colour of missing values and
-#'   of levels outside `limits` (default grey).
-#' @param oob For `scale_*_continuous()`, what to do with values outside
-#'   `limits`: `"censor"` gives them the NA colour, `"squish"` the colour of the
-#'   nearest limit, `"keep"` the same (a ramp cannot extend past its ends), or
-#'   a `function(x, range)`. `NULL` (default) squishes.
+#' @param oob For the continuous scales (`scale_*_continuous()`,
+#'   `_gradient()`, `_gradient2()`, `_gradientn()`), what to do with values
+#'   outside `limits`: `"censor"` gives them the NA colour, `"squish"` the
+#'   colour of the nearest limit, `"keep"` the same (a ramp cannot extend past
+#'   its ends), or a `function(x, range)`. `NULL` (default) squishes.
+#' @param na.value For the gradient scales, the colour of missing (and
+#'   censored) values; for `scale_*_manual()`, also of levels outside
+#'   `limits`. `NULL` keeps the default grey.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |>
@@ -908,9 +982,24 @@ scale_color_gradient <- function(
   plot,
   low = "#132B43",
   high = "#56B1F7",
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 ) {
-  .colour_scale(plot, "color", "continuous", c(low, high), NULL, NULL, name)
+  .continuous_colour_scale(
+    plot,
+    "color",
+    c(low, high),
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    oob
+  )
 }
 
 #' @rdname scale_color_continuous
@@ -921,16 +1010,23 @@ scale_color_gradient2 <- function(
   mid = "#FFFFFF",
   high = "#3A3A98",
   midpoint = 0,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 ) {
-  .colour_scale(
+  .continuous_colour_scale(
     plot,
     "color",
-    "continuous",
     c(low, mid, high),
-    NULL,
-    NULL,
     name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    oob,
     midpoint = midpoint
   )
 }
@@ -962,16 +1058,54 @@ scale_fill_continuous <- function(
 
 #' @rdname scale_color_continuous
 #' @export
-scale_color_gradientn <- function(plot, colours, name = NULL) {
+scale_color_gradientn <- function(
+  plot,
+  colours,
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+) {
   .check_manual_values(colours, "colours")
-  .colour_scale(plot, "color", "continuous", colours, NULL, NULL, name)
+  .continuous_colour_scale(
+    plot,
+    "color",
+    colours,
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    oob
+  )
 }
 
 #' @rdname scale_color_continuous
 #' @export
-scale_fill_gradientn <- function(plot, colours, name = NULL) {
+scale_fill_gradientn <- function(
+  plot,
+  colours,
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+) {
   .check_manual_values(colours, "colours")
-  .colour_scale(plot, "fill", "continuous", colours, NULL, NULL, name)
+  .continuous_colour_scale(
+    plot,
+    "fill",
+    colours,
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    oob
+  )
 }
 
 #' @rdname scale_color_continuous
@@ -1020,9 +1154,24 @@ scale_fill_gradient <- function(
   plot,
   low = "#132B43",
   high = "#56B1F7",
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 ) {
-  .colour_scale(plot, "fill", "continuous", c(low, high), NULL, NULL, name)
+  .continuous_colour_scale(
+    plot,
+    "fill",
+    c(low, high),
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    oob
+  )
 }
 
 #' @rdname scale_color_continuous
@@ -1033,16 +1182,23 @@ scale_fill_gradient2 <- function(
   mid = "#FFFFFF",
   high = "#3A3A98",
   midpoint = 0,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 ) {
-  .colour_scale(
+  .continuous_colour_scale(
     plot,
     "fill",
-    "continuous",
     c(low, mid, high),
-    NULL,
-    NULL,
     name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    oob,
     midpoint = midpoint
   )
 }
@@ -1396,6 +1552,11 @@ scale_fill_ordinal <- function(
 #'   `scale_*_distiller()` defaults to `-1`, as in ggplot2, so high values are
 #'   light. Ignored for non-ColorBrewer palette names.
 #' @param name,breaks,labels As for [scale_color_continuous()].
+#' @param limits,oob,na.value For the continuous scales (`_viridis_c()`,
+#'   `_distiller()`), the mapped data range `c(min, max)`, what to do with
+#'   values outside it (`"censor"`, `"squish"`, `"keep"` or a function; `NULL`,
+#'   the default, squishes) and the colour of missing values, as for
+#'   [scale_color_continuous()].
 #' @return The modified [PlotSpec].
 #' @seealso [scale_color_continuous()]
 #' @examples
@@ -1416,16 +1577,21 @@ scale_color_viridis_c <- function(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 ) {
-  .colour_scale(
+  .continuous_colour_scale(
     plot,
     "color",
-    "continuous",
     .viridis_pal(option),
+    name,
     breaks,
     labels,
-    name
+    limits,
+    na.value,
+    oob
   )
 }
 
@@ -1456,16 +1622,21 @@ scale_fill_viridis_c <- function(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 ) {
-  .colour_scale(
+  .continuous_colour_scale(
     plot,
     "fill",
-    "continuous",
     .viridis_pal(option),
+    name,
     breaks,
     labels,
-    name
+    limits,
+    na.value,
+    oob
   )
 }
 
@@ -1528,10 +1699,23 @@ scale_color_distiller <- function(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = -1
+  direction = -1,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 ) {
   palette <- .brewer_scale_palette(palette, type, direction, "continuous")
-  .colour_scale(plot, "color", "continuous", palette, breaks, labels, name)
+  .continuous_colour_scale(
+    plot,
+    "color",
+    palette,
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    oob
+  )
 }
 
 #' @rdname scale_viridis
@@ -1543,10 +1727,23 @@ scale_fill_distiller <- function(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = -1
+  direction = -1,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 ) {
   palette <- .brewer_scale_palette(palette, type, direction, "continuous")
-  .colour_scale(plot, "fill", "continuous", palette, breaks, labels, name)
+  .continuous_colour_scale(
+    plot,
+    "fill",
+    palette,
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    oob
+  )
 }
 
 # ColorBrewer palettes by family, in the order scales::pal_brewer() indexes them

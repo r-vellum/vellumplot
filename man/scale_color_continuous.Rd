@@ -49,7 +49,17 @@ scale_color_manual(
   na.value = NULL
 )
 
-scale_color_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+scale_color_gradient(
+  plot,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
 scale_color_gradient2(
   plot,
@@ -57,7 +67,12 @@ scale_color_gradient2(
   mid = "#FFFFFF",
   high = "#3A3A98",
   midpoint = 0,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_fill_continuous(
@@ -70,11 +85,38 @@ scale_fill_continuous(
   oob = NULL
 )
 
-scale_color_gradientn(plot, colours, name = NULL)
+scale_color_gradientn(
+  plot,
+  colours,
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
-scale_fill_gradientn(plot, colours, name = NULL)
+scale_fill_gradientn(
+  plot,
+  colours,
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
-scale_colour_gradientn(plot, colours, name = NULL)
+scale_colour_gradientn(
+  plot,
+  colours,
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
 scale_fill_discrete(
   plot,
@@ -94,7 +136,17 @@ scale_fill_manual(
   na.value = NULL
 )
 
-scale_fill_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+scale_fill_gradient(
+  plot,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
 scale_fill_gradient2(
   plot,
@@ -102,7 +154,12 @@ scale_fill_gradient2(
   mid = "#FFFFFF",
   high = "#3A3A98",
   midpoint = 0,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_colour_continuous(
@@ -133,7 +190,17 @@ scale_colour_manual(
   na.value = NULL
 )
 
-scale_colour_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+scale_colour_gradient(
+  plot,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
 scale_colour_gradient2(
   plot,
@@ -141,7 +208,12 @@ scale_colour_gradient2(
   mid = "#FFFFFF",
   high = "#3A3A98",
   midpoint = 0,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 }
 \arguments{
@@ -151,24 +223,27 @@ scale_colour_gradient2(
 \code{\link[grDevices:hcl.colors]{grDevices::hcl.colors()}} (e.g. \code{"Batlow"}, \code{"Blues"}, \code{"Set 2"}; matched
 case/space-insensitively). \code{NULL} uses a sensible default.}
 
-\item{limits}{For the continuous colour scales, a length-2 numeric
-\code{c(min, max)} fixing the mapped data range (the direct form of
-\code{lims(color = ...)}). For \verb{scale_*_manual()}, the levels the scale covers.}
+\item{limits}{For the continuous colour scales (including the gradient
+ones), a length-2 numeric \code{c(min, max)} fixing the mapped data range (the
+direct form of \code{lims(color = ...)}). For \verb{scale_*_manual()}, the levels
+the scale covers.}
 
 \item{breaks, labels}{Explicit legend breaks / labels, or \code{NULL}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
 
-\item{oob}{For \verb{scale_*_continuous()}, what to do with values outside
-\code{limits}: \code{"censor"} gives them the NA colour, \code{"squish"} the colour of the
-nearest limit, \code{"keep"} the same (a ramp cannot extend past its ends), or
-a \verb{function(x, range)}. \code{NULL} (default) squishes.}
+\item{oob}{For the continuous scales (\verb{scale_*_continuous()},
+\verb{_gradient()}, \verb{_gradient2()}, \verb{_gradientn()}), what to do with values
+outside \code{limits}: \code{"censor"} gives them the NA colour, \code{"squish"} the
+colour of the nearest limit, \code{"keep"} the same (a ramp cannot extend past
+its ends), or a \verb{function(x, range)}. \code{NULL} (default) squishes.}
 
 \item{values}{For \verb{scale_*_manual()}, a vector of colours; if named, matched to
 data levels by name (unmatched levels draw grey).}
 
-\item{na.value}{For \verb{scale_*_manual()}, the colour of missing values and
-of levels outside \code{limits} (default grey).}
+\item{na.value}{For the gradient scales, the colour of missing (and
+censored) values; for \verb{scale_*_manual()}, also of levels outside
+\code{limits}. \code{NULL} keeps the default grey.}
 
 \item{low, high}{For \verb{scale_*_gradient()}/\verb{scale_*_gradient2()}, the endpoint
 colours.}
