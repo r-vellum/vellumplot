@@ -114,8 +114,9 @@ test_that("area position = 'fill' normalises each x to 1 (H14)", {
 })
 
 test_that("an area with no fill mapping is unaffected by the stack default (H14)", {
-  # grp = NULL -> ymin = 0, ymax = y, identical to the historical behaviour.
-  p <- vplot(area_df) |> mark_area(x = x, y = y)
+  # One row per x and no group -> ymin = 0, ymax = y. (Rows sharing an x stack
+  # even when ungrouped, as in ggplot2; see the VP-17 tests.)
+  p <- vplot(area_df[area_df$g == "a", ]) |> mark_area(x = x, y = y)
   r <- vellumplot:::.resolve_layers(p)[[1]]
   expect_equal(r$values$ymin, rep(0, r$n))
   expect_equal(r$values$ymax, r$values$y)
@@ -156,7 +157,109 @@ test_that("stack/dodge order follow factor levels, not alphabetical", {
   )
   p <- vplot(d) |> mark_bar(x = x, fill = g)
   r <- vellumplot:::.resolve_layers(p)[[1]]
-  # bottom-to-top stacking should follow lo, mid, hi (the factor order)
+  # As ggplot2: the first level on top, the last at the bottom (legend order
+  # read top-down), so bottom-to-top runs hi, mid, lo.
   ord <- order(r$values$ymin)
-  expect_equal(as.character(r$values$fill)[ord], c("lo", "mid", "hi"))
+  expect_equal(as.character(r$values$fill)[ord], c("hi", "mid", "lo"))
+})
+
+# --- VP-17: signed stacks, ungrouped duplicates, mismatched-x areas ----------
+
+stack_of <- function(p) {
+  r <- vellumplot:::.resolve_layers(p)[[1]]
+  as.data.frame(r$values[c("x", "y", "ymin", "ymax")])
+}
+
+test_that("positive and negative heights stack separately (VP-17)", {
+  d <- data.frame(x = "a", y = c(2, -1, 3))
+  s <- stack_of(vplot(d) |> mark_bar(x = x, y = y))
+  expect_equal(s$ymin, c(0, -1, 2))
+  expect_equal(s$ymax, c(2, 0, 5))
+  # grouped too: negatives pile downward in the same group order
+  d <- data.frame(
+    x = "a",
+    y = c(2, -1, 3, -2),
+    g = factor(c("p", "p", "q", "q"))
+  )
+  s <- stack_of(vplot(d) |> mark_bar(x = x, y = y, fill = g))
+  expect_equal(s$ymin, c(3, -3, 0, -2))
+  expect_equal(s$ymax, c(5, -2, 3, 0))
+})
+
+test_that("position_fill() fills [0, 1] and [-1, 0] by sign (VP-17)", {
+  d <- data.frame(
+    x = "a",
+    y = c(2, -1, 3, -2),
+    g = factor(c("p", "p", "q", "q"))
+  )
+  s <- stack_of(vplot(d) |> mark_bar(x = x, y = y, fill = g, position = "fill"))
+  expect_equal(range(s$ymin, s$ymax), c(-1, 1))
+  expect_equal(s$ymax - s$ymin, c(0.4, 1 / 3, 0.6, 2 / 3))
+})
+
+test_that("ungrouped rows sharing an x stack in data order (VP-17)", {
+  d <- data.frame(x = c("a", "a", "b"), y = c(1, 2, 4))
+  s <- stack_of(vplot(d) |> mark_bar(x = x, y = y))
+  expect_equal(s$ymin, c(0, 1, 0))
+  expect_equal(s$ymax, c(1, 3, 4))
+})
+
+test_that("a stacked label sits inside its signed span (VP-17)", {
+  d <- data.frame(x = "a", y = c(2, -1), lab = c("u", "d"))
+  r <- vellumplot:::.resolve_layers(
+    vplot(d) |>
+      mark_text(x = x, y = y, label = lab, position = position_stack(0.5))
+  )[[1]]
+  expect_equal(r$values$y, c(1, -0.5))
+})
+
+test_that("areas at different x are interpolated onto the union and stack (VP-17)", {
+  d <- data.frame(
+    x = c(1, 2, 3, 1.5, 2.5),
+    y = c(1, 2, 3, 4, 4),
+    g = factor(c("a", "a", "a", "b", "b"))
+  )
+  r <- vellumplot:::.resolve_layers(
+    vplot(d) |> mark_area(x = x, y = y, fill = g, tooltip = y)
+  )[[1]]
+  v <- as.data.frame(r$values[c("x", "y", "fill", "ymin", "ymax")])
+  # a (first level) sits on b at every x where b exists
+  a <- v[v$fill == "a", ]
+  b <- v[v$fill == "b", ]
+  at <- function(df, xx) df[abs(df$x - xx) < 1e-9, ]
+  expect_equal(at(a, 2)$ymin, at(b, 2)$ymax)
+  expect_equal(at(b, 2)$ymax, 4) # b interpolated at a's x
+  expect_equal(at(a, 1.5)$ymin, 4)
+  expect_equal(at(a, 1.5)$ymax, 4 + 1.5) # a interpolated at b's x
+  expect_equal(at(a, 1)$ymin, 0) # outside b's range: on the baseline
+  # b drops to zero just outside its edges
+  expect_true(all(b$y[b$x < 1.5 | b$x > 2.5] == 0))
+  # every added row is keyed back to source rows, and styles follow the group
+  expect_length(r$stat_map$members, r$n)
+  expect_true(all(lengths(r$values[c("x", "y", "fill")]) == r$n))
+  expect_length(r$meta$data_id, r$n)
+})
+
+test_that("areas sharing their x values are not re-gridded (VP-17)", {
+  r <- vellumplot:::.resolve_layers(
+    vplot(area_df) |> mark_area(x = x, y = y, fill = g)
+  )[[1]]
+  expect_equal(r$n, nrow(area_df))
+  expect_null(r$stat_map)
+})
+
+test_that("mismatched-x date areas keep their date x (VP-17)", {
+  d <- data.frame(
+    x = as.Date("2024-01-01") + c(0, 2, 4, 1, 3),
+    y = 1,
+    g = factor(c("a", "a", "a", "b", "b"))
+  )
+  r <- vellumplot:::.resolve_layers(
+    vplot(d) |> mark_area(x = x, y = y, fill = g)
+  )[[1]]
+  expect_s3_class(r$values$x, "Date")
+  expect_gt(r$n, nrow(d))
+  f <- local_tempfile(fileext = ".png")
+  render_plot(vplot(d) |> mark_area(x = x, y = y, fill = g), f)
+  expect_gt(file.info(f)$size, 0)
 })

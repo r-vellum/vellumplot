@@ -90,6 +90,29 @@
     report loses the `facet` column, since a missing facet value is now
     drawn, and it no longer repeats the compile warning.
 
+* **An inset plot no longer resets the outer plot's interaction context.** A
+  sub-plot drawn inside a plot (`annotate("sparkline")`, or `annotate("grob")`
+  with a plot) set the shared mark context for itself and left it that way, so
+  the outer plot's later panels lost their selection keys, `filter_by()` tags
+  and page size. Each plot now saves the context it was called with and
+  restores it when it returns (VP-12).
+
+* **`position_stack()` and `position_fill()` stack like ggplot2.** Positive and
+  negative heights now stack separately, away from zero, so `y = c(2, -1, 3)` at
+  one x no longer draws overlapping spans. Every row at an x stacks, so bars or
+  areas with no `fill`/`group` mapped pile up instead of all starting at zero.
+  Grouped areas sampled at different x values are interpolated onto the union of
+  their x values (as ggplot2's `stat_align()` does) and stack; before, they were
+  never stacked and overlapped. Under `position_fill()` the negative stack fills
+  `[-1, 0]`.
+
+  **Behaviour change:** the stack order is reversed to match ggplot2. The first
+  group level now sits on top and the last at the bottom, so the stack reads in
+  the same order as the legend. Plots that relied on the old bottom-up order
+  (including pie slices built from a stacked bar) draw their segments in the
+  opposite order. A stacked label with `vjust = 1` on a negative bar now sits at
+  its far (lower) end, as in ggplot2.
+
 * **Provenance carries every trained scale.** `plot_provenance()` records
   listed scale-refs only for `x`, `y`, colour/fill, `size` and `shape`. A
   mapped `alpha`, `linetype`, `linewidth` or `pattern` now carries its

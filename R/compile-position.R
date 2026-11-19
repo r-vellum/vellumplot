@@ -105,9 +105,9 @@ NULL
     # A located mark takes a height inside its stacked span: `vjust = 1` (the
     # default) its top, `0.5` its middle -- where a label over a stacked bar
     # segment belongs. The span itself is not kept: these marks have no extent.
-    S <- .position_stack(L, fill = identical(L$position, "fill"))
+    S <- .stack_spans(L, fill = identical(L$position, "fill"))
     vj <- L$stat_params$stack_vjust %||% 1
-    L$values$y <- S$values$ymin + vj * (S$values$ymax - S$values$ymin)
+    L$values$y <- S$start + vj * (S$end - S$start)
     return(L)
   }
   L
@@ -231,46 +231,187 @@ NULL
   L
 }
 
-# Stack bars sharing an x: assign each a [ymin, ymax] span by cumulating heights
-# within the x group (ordered by the `.group_key()` level). `fill = TRUE` normalises
-# each x group's total to 1.
+# Stack the rows sharing an x: give each a `[ymin, ymax]` span, as ggplot2's
+# `position_stack()` does.
+#   * Every row at an x stacks -- grouped or not, so ungrouped duplicates pile up
+#     rather than all starting at zero.
+#   * Positive and negative heights stack separately, away from zero, so mixed
+#     signs never overlap.
+#   * The order is ggplot2's: the last `.group_key()` level sits at the bottom and
+#     the first on top, matching the legend read top-down; rows of one group keep
+#     data order, the first lowest.
+# `fill = TRUE` normalises each x's positive stack to `[0, 1]` and its negative
+# stack to `[-1, 0]`. Areas are first interpolated onto a common x grid
+# (`.align_area()`), so groups sampled at different x still stack.
 .position_stack <- function(L, fill = FALSE) {
+  if (identical(L$mark, "area")) {
+    L <- .align_area(L)
+  }
+  S <- .stack_spans(L, fill)
+  L$values$ymin <- pmin(S$start, S$end)
+  L$values$ymax <- pmax(S$start, S$end)
+  L$values$y <- S$end # the far end, for any y reference / training
+  L
+}
+
+# The stacked extent of every row: `start` is the end nearer zero, `end` the far
+# end (below `start` for a negative height). See `.position_stack()`.
+.stack_spans <- function(L, fill = FALSE) {
   n <- L$n
   # Recycle to n: a constant x (e.g. a pie's `x = factor(1)`) resolves to length
-  # one, but stacking groups by row, so every value must be n long.
-  x <- as.character(rep_len(L$values$x, n))
+  # one, but stacking runs by row, so every value must be n long.
+  x <- rep_len(L$values$x, n)
+  if (is.factor(x)) {
+    x <- as.character(x)
+  }
   y <- as.numeric(rep_len(L$values$y, n))
-  # A non-finite height would poison the whole x-group's cumulative sum (and, under
-  # fill, every proportion in the stack). ggplot2 drops NA rows before stacking;
-  # treat non-finite as a zero-height contribution so the rest of the stack is sound.
+  # A non-finite height would poison the whole stack's cumulative sum (and, under
+  # fill, every proportion in it). ggplot2 drops NA rows before stacking; treat
+  # non-finite as a zero-height contribution so the rest of the stack is sound.
   y[!is.finite(y)] <- 0
   grp <- .group_key(L)
-  if (!is.null(grp)) {
-    grp <- rep_len(grp, n)
-  }
-  ymin <- numeric(n)
-  ymax <- numeric(n)
-  if (is.null(grp)) {
-    ymin[] <- 0
-    ymax <- y
+  rank <- if (is.null(grp)) {
+    rep(1L, n)
   } else {
-    order_levels <- .cat_levels(grp)
-    g <- as.character(grp)
-    for (xi in unique(x)) {
-      rows <- which(x == xi)
-      rows <- rows[order(match(g[rows], order_levels))]
-      total <- sum(y[rows])
-      cum <- 0
-      for (i in rows) {
-        h <- if (fill && total != 0) y[i] / total else y[i]
-        ymin[i] <- cum
-        ymax[i] <- cum + h
-        cum <- cum + h
+    match(as.character(grp), .cat_levels(grp))
+  }
+  start <- numeric(n)
+  end <- numeric(n)
+  for (rows in split(seq_len(n), match(x, unique(x)))) {
+    rows <- rows[order(-rank[rows], rows)]
+    for (neg in c(FALSE, TRUE)) {
+      r <- rows[(y[rows] < 0) == neg]
+      if (!length(r)) {
+        next
       }
+      h <- y[r]
+      cum <- cumsum(h)
+      total <- abs(cum[length(cum)])
+      if (fill && total > 0) {
+        h <- h / total
+        cum <- cum / total
+      }
+      end[r] <- cum
+      start[r] <- cum - h
     }
   }
-  L$values$ymin <- ymin
-  L$values$ymax <- ymax
-  L$values$y <- ymax # the top, for any y reference / training
+  list(start = start, end = end)
+}
+
+# Interpolate a grouped area onto the union of its groups' x values, as
+# ggplot2's `stat_align()` does, so groups sampled at different x still stack:
+# each group gains a row at every other group's x inside its own range (y
+# linearly interpolated), and drops to zero just outside an edge that ends
+# inside the layer's range. A layer whose groups already share their x values,
+# or whose x is not continuous, is returned unchanged. Added rows copy the
+# style of their group's nearest earlier row, and provenance keys them to the
+# rows they were interpolated between.
+.align_area <- function(L) {
+  n <- L$n
+  grp <- .group_key(L)
+  x0 <- L$values$x
+  if (is.null(grp) || n < 2L || length(x0) != n) {
+    return(L)
+  }
+  if (!is.numeric(x0) && !inherits(x0, c("Date", "POSIXct"))) {
+    return(L)
+  }
+  x <- as.numeric(x0)
+  y <- as.numeric(rep_len(L$values$y, n))
+  ok <- is.finite(x) & is.finite(y)
+  g <- as.character(grp)
+  series <- split(which(ok), factor(g[ok], levels = unique(g[ok])))
+  if (length(series) < 2L) {
+    return(L)
+  }
+  ux <- sort(unique(x[ok]))
+  shared <- vapply(
+    series,
+    function(idx) identical(sort(unique(x[idx])), ux),
+    logical(1)
+  )
+  if (all(shared)) {
+    return(L)
+  }
+  lo <- ux[1L]
+  hi <- ux[length(ux)]
+  adj <- min(diff(range(ux)) * 0.001, min(diff(ux)) / 3)
+  # An edge inside the layer's range drops to zero a hair outside it.
+  pads <- unlist(lapply(series, function(idx) {
+    r <- range(x[idx])
+    c(if (r[1] > lo) r[1] - adj, if (r[2] < hi) r[2] + adj)
+  }))
+  grid <- sort(unique(c(ux, pads)))
+
+  new_x <- numeric(0)
+  new_y <- numeric(0)
+  new_src <- integer(0)
+  new_members <- list()
+  for (idx in series) {
+    idx <- idx[order(x[idx])]
+    xs <- x[idx]
+    r <- range(xs)
+    pad <- c(if (r[1] > lo) r[1] - adj, if (r[2] < hi) r[2] + adj)
+    inside <- grid[grid > r[1] & grid < r[2] & !grid %in% xs]
+    yi <- if (length(inside)) {
+      stats::approx(xs, y[idx], xout = inside, ties = mean)$y
+    } else {
+      numeric(0)
+    }
+    gx <- c(inside, pad)
+    if (!length(gx)) {
+      next
+    }
+    # The group's nearest row at or left of each added x (its first row for a
+    # left pad); the right neighbour too, for provenance.
+    left <- findInterval(gx, xs)
+    right <- pmin(left + 1L, length(xs))
+    left[left < 1L] <- 1L
+    new_x <- c(new_x, gx)
+    new_y <- c(new_y, yi, rep(0, length(pad)))
+    new_src <- c(new_src, idx[left])
+    new_members <- c(
+      new_members,
+      Map(function(a, b) unique(c(a, b)), idx[left], idx[right])
+    )
+  }
+  if (!length(new_x)) {
+    return(L)
+  }
+  rows <- c(seq_len(n), new_src)
+  for (nm in setdiff(names(L$values), c("x", "y"))) {
+    v <- L$values[[nm]]
+    if (length(v) == n) {
+      L$values[[nm]] <- v[rows]
+    }
+  }
+  xx <- c(x, new_x)
+  L$values$x <- if (inherits(x0, "Date")) {
+    structure(xx, class = "Date")
+  } else if (inherits(x0, "POSIXct")) {
+    .POSIXct(xx, tz = attr(x0, "tzone"))
+  } else {
+    xx
+  }
+  L$values$y <- c(y, new_y)
+  members <- c(as.list(seq_len(n)), new_members)
+  # Realign the interactivity to the new rows, then compose the row map with any
+  # an earlier stat left, so provenance and selection still reach input rows.
+  local_map <- list(rows = rows, n_in = n, n_out = length(rows))
+  L <- .realign_meta(L, local_map)
+  old <- L$stat_map
+  L$stat_map <- if (is.null(old)) {
+    list(rows = rows, members = members, n_in = n, n_out = length(rows))
+  } else {
+    old$members <- if (!is.null(old$members)) {
+      lapply(members, function(m) unique(unlist(old$members[m])))
+    }
+    old$rows <- old$rows[rows]
+    old$sgroup <- old$sgroup[rows]
+    old$out_group <- old$out_group[rows]
+    old$n_out <- length(rows)
+    old
+  }
+  L$n <- length(rows)
   L
 }

@@ -734,6 +734,12 @@ NULL
       "Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}."
     )
   }
+  # `.mark_ctx` is shared, and a plot can be drawn inside another one (an inset
+  # sub-plot via `.emit_grob`). Save the caller's context and restore it on exit,
+  # so the outer plot keeps its own interaction context, page and per-layer state
+  # for whatever it draws after the inset. Provenance keeps accumulating.
+  ctx <- .mark_ctx_save()
+  on.exit(.mark_ctx_restore(ctx), add = TRUE)
   # Interaction context for the mark emitter (single-plot path; the aligned
   # composition path sets it per cell). See `.set_interaction_ctx`.
   .set_interaction_ctx(spec)
