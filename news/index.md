@@ -4,6 +4,41 @@
 
 ### New features
 
+- More ggplot2 scale constructors, with ggplot2’s argument names
+  (VP-43):
+  [`scale_shape_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md),
+  [`scale_linetype_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md),
+  [`scale_size_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  and
+  [`scale_alpha_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  (with `breaks`, `labels`, `limits` and `na.value`; shape and line-type
+  `values` also take ggplot2’s numeric codes); `scale_*_hue()`,
+  `scale_*_grey()` and `scale_*_ordinal()`; the binned
+  `scale_*_steps2()`, `scale_*_stepsn()`, `scale_*_fermenter()` and
+  `scale_*_viridis_b()`, which bin with ggplot2’s breaks (nice
+  boundaries, right-closed classes) and take `oob`;
+  [`scale_size_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+  [`scale_radius()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+  [`scale_size_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+  [`scale_size_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  /
+  [`scale_size_ordinal()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+  [`scale_alpha_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  /
+  [`scale_alpha_ordinal()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md),
+  [`scale_shape_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md);
+  and the position shortcuts
+  [`scale_x_log10()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_x_sqrt()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_x_reverse()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  and their `y` forms. Each `colour` scale also has its `color` and
+  `fill` spellings. `scale_*_manual()` for colour gains `breaks`,
+  `labels`, `limits` and `na.value`, and
+  [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
+  /
+  [`scale_linetype()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md)
+  gain `breaks`, `labels`, `limits` and `na.value`.
+
 - New
   [`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
   for the position axes, used as `guides(x = )` / `guides(y = )` or the
@@ -74,6 +109,13 @@
   default (everything shared) is unchanged (F-8).
 
 ### Behaviour changes
+
+- **Behaviour change:** a discrete colour scale now honours character
+  `limits` (e.g. `lims(color = c("a", "b"))`): it covers just those
+  levels, in that order, and other levels draw in the NA colour. Before,
+  the limits of a discrete colour scale were ignored. Legend `labels` on
+  a discrete colour scale may now be a function of the levels or a
+  vector named by level (VP-43).
 
 - **Behaviour change:** rows a position scale’s `oob = "censor"` puts
   outside its limits are now counted in the “Removed n rows containing
@@ -303,10 +345,11 @@
 - **[`mark_summary()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
   draws ranges.** With `fun.data` (`"mean_se"`, `"mean_cl_normal"`,
   `"mean_sdl"`, `"median_hilow"`, or a function such as
-  `ggplot2::mean_se()`), or with `fun.min` / `fun.max`, it summarises
-  each category into a point and a range and draws a point range, like
-  ggplot2’s `stat_summary()`. `fun.args` passes extra arguments. Without
-  them it draws points as before (F-10).
+  [`ggplot2::mean_se()`](https://ggplot2.tidyverse.org/reference/mean_se.html)),
+  or with `fun.min` / `fun.max`, it summarises each category into a
+  point and a range and draws a point range, like ggplot2’s
+  `stat_summary()`. `fun.args` passes extra arguments. Without them it
+  draws points as before (F-10).
 
 - **Horizontal box plots and violins.**
   [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)

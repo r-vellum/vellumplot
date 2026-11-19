@@ -8,10 +8,16 @@
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Position scales — scale_x_continuous"><meta name="description" content="Declare a position scale to override the trained default. scale_x_continuous()
 / scale_y_continuous() handle numeric (and date/time) axes;
 scale_x_discrete() / scale_y_discrete() handle categorical (band) axes and
-let you set the level order via limits."><meta property="og:description" content="Declare a position scale to override the trained default. scale_x_continuous()
+let you set the level order via limits.
+scale_x_log10(), scale_x_sqrt() and scale_x_reverse() (and their y
+forms) are shortcuts for scale_x_continuous(trans = &quot;log10&quot;) and so on,
+as in ggplot2; ... takes the other arguments of scale_x_continuous()."><meta property="og:description" content="Declare a position scale to override the trained default. scale_x_continuous()
 / scale_y_continuous() handle numeric (and date/time) axes;
 scale_x_discrete() / scale_y_discrete() handle categorical (band) axes and
-let you set the level order via limits."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+let you set the level order via limits.
+scale_x_log10(), scale_x_sqrt() and scale_x_reverse() (and their y
+forms) are shortcuts for scale_x_continuous(trans = &quot;log10&quot;) and so on,
+as in ggplot2; ... takes the other arguments of scale_x_continuous()."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -74,6 +80,9 @@ let you set the level order via limits."><meta property="og:image" content="http
 / <code>scale_y_continuous()</code> handle numeric (and date/time) axes;
 <code>scale_x_discrete()</code> / <code>scale_y_discrete()</code> handle categorical (band) axes and
 let you set the level order via <code>limits</code>.</p>
+<p><code>scale_x_log10()</code>, <code>scale_x_sqrt()</code> and <code>scale_x_reverse()</code> (and their <code>y</code>
+forms) are shortcuts for <code>scale_x_continuous(trans = "log10")</code> and so on,
+as in ggplot2; <code>...</code> takes the other arguments of <code>scale_x_continuous()</code>.</p>
     </div>
 
     <div class="section level2">
@@ -103,6 +112,18 @@ let you set the level order via <code>limits</code>.</p>
 <span>  oob <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  guide <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_x_log10</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_x_sqrt</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_x_reverse</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_y_log10</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_y_sqrt</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_y_reverse</span><span class="op">(</span><span class="va">plot</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_x_discrete</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -186,6 +207,11 @@ of bounds: <code>x = Inf</code> sits on the panel edge.</p></dd>
 <dd><p>The axis guide: <code><a href="guide_axis.html">guide_axis()</a></code> to stagger, rotate or thin the
 labels, <code>"none"</code> for no labels or ticks, or <code>NULL</code> (default) for the plain
 axis. Same as <code>guides(x = )</code> / <code>guides(y = )</code>.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>For the transform shortcuts, further arguments to
+<code>scale_x_continuous()</code> / <code>scale_y_continuous()</code> (not <code>trans</code>).</p></dd>
 
 
 <dt id="arg-drop">drop<a class="anchor" aria-label="anchor" href="#arg-drop"></a></dt>

@@ -5,6 +5,11 @@ Declare a position scale to override the trained default.
 date/time) axes; `scale_x_discrete()` / `scale_y_discrete()` handle
 categorical (band) axes and let you set the level order via `limits`.
 
+`scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` (and their
+`y` forms) are shortcuts for `scale_x_continuous(trans = "log10")` and
+so on, as in ggplot2; `...` takes the other arguments of
+`scale_x_continuous()`.
+
 ## Usage
 
 ``` r
@@ -33,6 +38,18 @@ scale_y_continuous(
   oob = NULL,
   guide = NULL
 )
+
+scale_x_log10(plot, ...)
+
+scale_x_sqrt(plot, ...)
+
+scale_x_reverse(plot, ...)
+
+scale_y_log10(plot, ...)
+
+scale_y_sqrt(plot, ...)
+
+scale_y_reverse(plot, ...)
 
 scale_x_discrete(
   plot,
@@ -128,6 +145,11 @@ scale_y_discrete(
   to stagger, rotate or thin the labels, `"none"` for no labels or
   ticks, or `NULL` (default) for the plain axis. Same as `guides(x = )`
   / `guides(y = )`.
+
+- ...:
+
+  For the transform shortcuts, further arguments to
+  `scale_x_continuous()` / `scale_y_continuous()` (not `trans`).
 
 - drop:
 

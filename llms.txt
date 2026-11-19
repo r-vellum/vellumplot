@@ -576,6 +576,12 @@ Map data values to visual properties, with trained domains and guides.
 
 - [`scale_x_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
   [`scale_y_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_x_log10()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_x_sqrt()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_x_reverse()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_y_log10()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_y_sqrt()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  [`scale_y_reverse()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
   [`scale_x_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
   [`scale_y_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
   : Position scales
@@ -621,11 +627,33 @@ Map data values to visual properties, with trained domains and guides.
   [`scale_colour_brewer()`](https://r-vellum.github.io/vellumplot/reference/scale_viridis.md)
   [`scale_colour_distiller()`](https://r-vellum.github.io/vellumplot/reference/scale_viridis.md)
   : Viridis and ColorBrewer scales
+- [`scale_color_hue()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  [`scale_colour_hue()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  [`scale_fill_hue()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  [`scale_color_grey()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  [`scale_colour_grey()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  [`scale_fill_grey()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  [`scale_color_ordinal()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  [`scale_colour_ordinal()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  [`scale_fill_ordinal()`](https://r-vellum.github.io/vellumplot/reference/scale_hue.md)
+  : Hue, grey and ordinal colour scales
 - [`scale_fill_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   [`scale_color_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   [`scale_color_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   [`scale_colour_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   [`scale_fill_steps()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_color_steps2()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_color_stepsn()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_color_fermenter()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_color_viridis_b()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_fill_steps2()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_fill_stepsn()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_fill_fermenter()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_fill_viridis_b()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_colour_steps2()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_colour_stepsn()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_colour_fermenter()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
+  [`scale_colour_viridis_b()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md)
   : Binned (classed) colour scales
 - [`scale_fill_bivariate()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_bivariate.md)
   [`scale_color_bivariate()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_bivariate.md)
@@ -636,19 +664,31 @@ Map data values to visual properties, with trained domains and guides.
 - [`bi_pal()`](https://r-vellum.github.io/vellumplot/reference/bi_pal.md)
   : Bivariate palettes
 - [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
+  [`scale_shape_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
+  [`scale_shape_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
   : Shape scale
 - [`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
   : Pattern (texture) scale
 - [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
   [`scale_size_area()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  [`scale_size_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  [`scale_radius()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  [`scale_size_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  [`scale_size_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  [`scale_size_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  [`scale_size_ordinal()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
   : Size scale
 - [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
   [`scale_linewidth_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)
   : Line-width scale
 - [`scale_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
   [`scale_alpha_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  [`scale_alpha_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  [`scale_alpha_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  [`scale_alpha_ordinal()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
   : Alpha (opacity) scale
 - [`scale_linetype()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md)
+  [`scale_linetype_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md)
   [`scale_linetype_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md)
   : Line-type scale
 - [`scale_color_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)

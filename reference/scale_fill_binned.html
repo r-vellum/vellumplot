@@ -10,12 +10,38 @@ classes and colour each class with one step of a sequential palette — the
 standard choropleth scale. Class breaks are chosen by a classification
 style. quantile, equal, and pretty need no extra packages; other
 styles (e.g. &quot;jenks&quot;, &quot;fisher&quot;, &quot;kmeans&quot;, &quot;headtails&quot;) delegate to the
-optional classInt package (in Suggests) and error if it is absent."><meta property="og:description" content="scale_fill_binned() / scale_color_binned() cut a continuous aesthetic into
+optional classInt package (in Suggests) and error if it is absent.
+The ggplot2-named binned colour scales follow ggplot2's binning: without
+breaks, about n.breaks &quot;nice&quot; class boundaries inside the data range,
+the outer classes widened to whole bins (with limits, the limits are the
+outer boundaries); classes close on the right, (a, b].
+scale_*_steps2() — a diverging low–mid–high ramp centred on
+midpoint, each class taking the ramp's colour at its centre.
+scale_*_stepsn() — an n-colour ramp colours, sampled at each class
+centre.
+scale_*_fermenter() — a ColorBrewer palette's k-class colours (as
+scale_color_distiller(), but binned).
+scale_*_viridis_b() — k evenly spaced viridis colours.
+
+"><meta property="og:description" content="scale_fill_binned() / scale_color_binned() cut a continuous aesthetic into
 classes and colour each class with one step of a sequential palette — the
 standard choropleth scale. Class breaks are chosen by a classification
 style. quantile, equal, and pretty need no extra packages; other
 styles (e.g. &quot;jenks&quot;, &quot;fisher&quot;, &quot;kmeans&quot;, &quot;headtails&quot;) delegate to the
-optional classInt package (in Suggests) and error if it is absent."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+optional classInt package (in Suggests) and error if it is absent.
+The ggplot2-named binned colour scales follow ggplot2's binning: without
+breaks, about n.breaks &quot;nice&quot; class boundaries inside the data range,
+the outer classes widened to whole bins (with limits, the limits are the
+outer boundaries); classes close on the right, (a, b].
+scale_*_steps2() — a diverging low–mid–high ramp centred on
+midpoint, each class taking the ramp's colour at its centre.
+scale_*_stepsn() — an n-colour ramp colours, sampled at each class
+centre.
+scale_*_fermenter() — a ColorBrewer palette's k-class colours (as
+scale_color_distiller(), but binned).
+scale_*_viridis_b() — k evenly spaced viridis colours.
+
+"><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -80,7 +106,17 @@ standard choropleth scale. Class breaks are chosen by a classification
 <code>style</code>. <code>quantile</code>, <code>equal</code>, and <code>pretty</code> need no extra packages; other
 styles (e.g. <code>"jenks"</code>, <code>"fisher"</code>, <code>"kmeans"</code>, <code>"headtails"</code>) delegate to the
 optional <code>classInt</code> package (in <code>Suggests</code>) and error if it is absent.</p>
-    </div>
+<p>The ggplot2-named binned colour scales follow ggplot2's binning: without
+<code>breaks</code>, about <code>n.breaks</code> "nice" class boundaries inside the data range,
+the outer classes widened to whole bins (with <code>limits</code>, the limits are the
+outer boundaries); classes close on the right, <code>(a, b]</code>.</p><ul><li><p><code>scale_*_steps2()</code> — a diverging <code>low</code>–<code>mid</code>–<code>high</code> ramp centred on
+<code>midpoint</code>, each class taking the ramp's colour at its centre.</p></li>
+<li><p><code>scale_*_stepsn()</code> — an n-colour ramp <code>colours</code>, sampled at each class
+centre.</p></li>
+<li><p><code>scale_*_fermenter()</code> — a ColorBrewer palette's k-class colours (as
+<code><a href="scale_viridis.html">scale_color_distiller()</a></code>, but binned).</p></li>
+<li><p><code>scale_*_viridis_b()</code> — k evenly spaced viridis colours.</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
@@ -137,6 +173,168 @@ optional <code>classInt</code> package (in <code>Suggests</code>) and error if i
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_color_steps2</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#832424"</span>,</span>
+<span>  mid <span class="op">=</span> <span class="st">"#FFFFFF"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#3A3A98"</span>,</span>
+<span>  midpoint <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_color_stepsn</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">colours</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_color_fermenter</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  palette <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_color_viridis_b</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  option <span class="op">=</span> <span class="st">"viridis"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_fill_steps2</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#832424"</span>,</span>
+<span>  mid <span class="op">=</span> <span class="st">"#FFFFFF"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#3A3A98"</span>,</span>
+<span>  midpoint <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_fill_stepsn</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">colours</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_fill_fermenter</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  palette <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_fill_viridis_b</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  option <span class="op">=</span> <span class="st">"viridis"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_colour_steps2</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#832424"</span>,</span>
+<span>  mid <span class="op">=</span> <span class="st">"#FFFFFF"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#3A3A98"</span>,</span>
+<span>  midpoint <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_colour_stepsn</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">colours</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_colour_fermenter</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  palette <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_colour_viridis_b</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  option <span class="op">=</span> <span class="st">"viridis"</span>,</span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -180,6 +378,46 @@ swatch). Default <code>"grey80"</code>.</p></dd>
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Legend title, or <code>NULL</code> to derive from the encoding.</p></dd>
 
+
+<dt id="arg-low-mid-high-midpoint">low, mid, high, midpoint<a class="anchor" aria-label="anchor" href="#arg-low-mid-high-midpoint"></a></dt>
+<dd><p>For <code>scale_*_steps2()</code>, the end and midpoint
+colours and the data value at <code>mid</code>.</p></dd>
+
+
+<dt id="arg-limits">limits<a class="anchor" aria-label="anchor" href="#arg-limits"></a></dt>
+<dd><p>For the ggplot2-named scales, a length-2 numeric
+<code>c(min, max)</code>: the outer class boundaries.</p></dd>
+
+
+<dt id="arg-n-breaks">n.breaks<a class="anchor" aria-label="anchor" href="#arg-n-breaks"></a></dt>
+<dd><p>For the ggplot2-named scales, the approximate number of
+class boundaries when <code>breaks</code> is <code>NULL</code> (default 5).</p></dd>
+
+
+<dt id="arg-na-value">na.value<a class="anchor" aria-label="anchor" href="#arg-na-value"></a></dt>
+<dd><p>For the ggplot2-named scales, the colour of missing values.</p></dd>
+
+
+<dt id="arg-oob">oob<a class="anchor" aria-label="anchor" href="#arg-oob"></a></dt>
+<dd><p>For the ggplot2-named scales, what to do with values outside the
+outer boundaries: <code>"squish"</code> (the default, as in ggplot2) colours them as
+the outer class, <code>"censor"</code> with <code>na.value</code>; or a <code>function(x, range)</code>.</p></dd>
+
+
+<dt id="arg-colours">colours<a class="anchor" aria-label="anchor" href="#arg-colours"></a></dt>
+<dd><p>For <code>scale_*_stepsn()</code>, the colours of the ramp.</p></dd>
+
+
+<dt id="arg-type-direction">type, direction<a class="anchor" aria-label="anchor" href="#arg-type-direction"></a></dt>
+<dd><p>For <code>scale_*_fermenter()</code>, the ColorBrewer family a
+numeric <code>palette</code> indexes and its order (see <code><a href="scale_viridis.html">scale_color_brewer()</a></code>); for
+<code>scale_*_viridis_b()</code>, <code>direction = -1</code> reverses the map.</p></dd>
+
+
+<dt id="arg-option">option<a class="anchor" aria-label="anchor" href="#arg-option"></a></dt>
+<dd><p>For <code>scale_*_viridis_b()</code>, the viridis map (see
+<code><a href="scale_viridis.html">scale_color_viridis_c()</a></code>).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -205,6 +443,10 @@ variable cut into steps with an interval-key legend.</p>
 <span class="r-in"><span>  <span class="fu">scale_fill_binned</span><span class="op">(</span>style <span class="op">=</span> <span class="st">"quantile"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="coord_sf.html">coord_sf</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span>, y <span class="op">=</span> <span class="va">waiting</span>, color <span class="op">=</span> <span class="va">waiting</span> <span class="op">-</span> <span class="fl">70</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">scale_color_steps2</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="scale_fill_binned-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

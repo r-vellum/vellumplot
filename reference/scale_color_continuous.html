@@ -105,7 +105,15 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_color_manual</span><span class="op">(</span><span class="va">plot</span>, <span class="va">values</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_color_manual</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">values</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_gradient</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -184,7 +192,15 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_fill_manual</span><span class="op">(</span><span class="va">plot</span>, <span class="va">values</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_fill_manual</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">values</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_gradient</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -230,7 +246,15 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_colour_manual</span><span class="op">(</span><span class="va">plot</span>, <span class="va">values</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_colour_manual</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">values</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_gradient</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -276,7 +300,8 @@ case/space-insensitively). <code>NULL</code> uses a sensible default.</p></dd>
 <dt id="arg-limits">limits<a class="anchor" aria-label="anchor" href="#arg-limits"></a></dt>
 <dd><p>For the continuous colour scales (including the gradient
 ones), a length-2 numeric <code>c(min, max)</code> fixing the mapped data range (the
-direct form of <code>lims(color = ...)</code>).</p></dd>
+direct form of <code>lims(color = ...)</code>). For <code>scale_*_manual()</code>, the levels
+the scale covers.</p></dd>
 
 
 <dt id="arg-breaks-labels">breaks, labels<a class="anchor" aria-label="anchor" href="#arg-breaks-labels"></a></dt>
@@ -300,14 +325,15 @@ its ends), or a <code>function(x, range)</code>. <code>NULL</code> (default) squ
 data levels by name (unmatched levels draw grey).</p></dd>
 
 
+<dt id="arg-na-value">na.value<a class="anchor" aria-label="anchor" href="#arg-na-value"></a></dt>
+<dd><p>For the gradient scales, the colour of missing (and
+censored) values; for <code>scale_*_manual()</code>, also of levels outside
+<code>limits</code>. <code>NULL</code> keeps the default grey.</p></dd>
+
+
 <dt id="arg-low-high">low, high<a class="anchor" aria-label="anchor" href="#arg-low-high"></a></dt>
 <dd><p>For <code>scale_*_gradient()</code>/<code>scale_*_gradient2()</code>, the endpoint
 colours.</p></dd>
-
-
-<dt id="arg-na-value">na.value<a class="anchor" aria-label="anchor" href="#arg-na-value"></a></dt>
-<dd><p>For the gradient scales, the colour of missing (and
-censored) values; <code>NULL</code> keeps the default grey.</p></dd>
 
 
 <dt id="arg-mid">mid<a class="anchor" aria-label="anchor" href="#arg-mid"></a></dt>

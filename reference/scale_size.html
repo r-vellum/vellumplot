@@ -10,12 +10,38 @@ point-size range (in mm). A size legend is drawn automatically.
 scale_size_area() maps the data value to the marker's area rather than
 its radius, with value 0 at size 0 — the perceptually honest default for
 bubble charts (a value twice as large looks twice as big in ink). max_size
-is the size (mm) of the largest value."><meta property="og:description" content="Declare the scale for a mapped size aesthetic: data values map linearly to a
+is the size (mm) of the largest value.
+scale_radius() is ggplot2's radius-proportional size scale. vellumplot's
+scale_size() already maps the value linearly to the marker size, so it
+is scale_size() with ggplot2's default range = c(1, 6).
+scale_size_binned() cuts the variable into classes and gives each class
+one size, the size of its centre on an area scale (as ggplot2's
+scale_size_binned()); the legend keys the classes. Without breaks the
+class boundaries are n.breaks &quot;nice&quot; values inside the data range, and the
+outer classes are widened to whole bins, as in ggplot2.
+scale_size_manual() sets the size (mm) of each level of a discrete
+variable directly via values (named values match levels by name).
+scale_size_discrete() / scale_size_ordinal() spread the levels evenly
+(by area) over range; the discrete form warns that size is not advised for
+an unordered variable, the ordinal form does not."><meta property="og:description" content="Declare the scale for a mapped size aesthetic: data values map linearly to a
 point-size range (in mm). A size legend is drawn automatically.
 scale_size_area() maps the data value to the marker's area rather than
 its radius, with value 0 at size 0 — the perceptually honest default for
 bubble charts (a value twice as large looks twice as big in ink). max_size
-is the size (mm) of the largest value."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+is the size (mm) of the largest value.
+scale_radius() is ggplot2's radius-proportional size scale. vellumplot's
+scale_size() already maps the value linearly to the marker size, so it
+is scale_size() with ggplot2's default range = c(1, 6).
+scale_size_binned() cuts the variable into classes and gives each class
+one size, the size of its centre on an area scale (as ggplot2's
+scale_size_binned()); the legend keys the classes. Without breaks the
+class boundaries are n.breaks &quot;nice&quot; values inside the data range, and the
+outer classes are widened to whole bins, as in ggplot2.
+scale_size_manual() sets the size (mm) of each level of a discrete
+variable directly via values (named values match levels by name).
+scale_size_discrete() / scale_size_ordinal() spread the levels evenly
+(by area) over range; the discrete form warns that size is not advised for
+an unordered variable, the ordinal form does not."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -80,6 +106,19 @@ point-size <code>range</code> (in mm). A size legend is drawn automatically.</p>
 its radius, with value <code>0</code> at size <code>0</code> — the perceptually honest default for
 bubble charts (a value twice as large looks twice as big in ink). <code>max_size</code>
 is the size (mm) of the largest value.</p>
+<p><code>scale_radius()</code> is ggplot2's radius-proportional size scale. vellumplot's
+<code>scale_size()</code> already maps the value linearly to the marker size, so it
+is <code>scale_size()</code> with ggplot2's default <code>range = c(1, 6)</code>.</p>
+<p><code>scale_size_binned()</code> cuts the variable into classes and gives each class
+one size, the size of its centre on an area scale (as ggplot2's
+<code>scale_size_binned()</code>); the legend keys the classes. Without <code>breaks</code> the
+class boundaries are <code>n.breaks</code> "nice" values inside the data range, and the
+outer classes are widened to whole bins, as in ggplot2.</p>
+<p><code>scale_size_manual()</code> sets the size (mm) of each level of a discrete
+variable directly via <code>values</code> (named values match levels by name).
+<code>scale_size_discrete()</code> / <code>scale_size_ordinal()</code> spread the levels evenly
+(by area) over <code>range</code>; the discrete form warns that size is not advised for
+an unordered variable, the ordinal form does not.</p>
     </div>
 
     <div class="section level2">
@@ -93,7 +132,65 @@ is the size (mm) of the largest value.</p>
 <span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_size_area</span><span class="op">(</span><span class="va">plot</span>, max_size <span class="op">=</span> <span class="fl">6</span>, limits <span class="op">=</span> <span class="cn">NULL</span>, breaks <span class="op">=</span> <span class="cn">NULL</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">scale_size_area</span><span class="op">(</span><span class="va">plot</span>, max_size <span class="op">=</span> <span class="fl">6</span>, limits <span class="op">=</span> <span class="cn">NULL</span>, breaks <span class="op">=</span> <span class="cn">NULL</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_size_continuous</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  range <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_radius</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">6</span><span class="op">)</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_size_binned</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  range <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_size_manual</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">values</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_size_discrete</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  range <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">scale_size_ordinal</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  range <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -132,6 +229,26 @@ nearest limit), <code>"keep"</code> (extrapolated past the range), or a
 <dd><p>For <code>scale_size_area()</code>, the point size (mm) of the largest
 value.</p></dd>
 
+
+<dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
+<dd><p>For <code>scale_size_binned()</code> and the discrete forms, legend
+labels (one per key, or a function), or <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-n-breaks">n.breaks<a class="anchor" aria-label="anchor" href="#arg-n-breaks"></a></dt>
+<dd><p>For <code>scale_size_binned()</code>, the approximate number of class
+boundaries (default 5) when <code>breaks</code> is <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-values">values<a class="anchor" aria-label="anchor" href="#arg-values"></a></dt>
+<dd><p>For <code>scale_size_manual()</code>, the sizes in mm, one per level (or
+named by level).</p></dd>
+
+
+<dt id="arg-na-value">na.value<a class="anchor" aria-label="anchor" href="#arg-na-value"></a></dt>
+<dd><p>For the discrete forms, the size drawn for missing values,
+or <code>NULL</code> to drop them.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -153,6 +270,10 @@ variable warns that size is not advised for it; an ordered factor does not.</p>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, size <span class="op">=</span> <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">scale_size_area</span><span class="op">(</span>max_size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="scale_size-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">scale_size_manual</span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="scale_size-3.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

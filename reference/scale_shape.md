@@ -7,7 +7,35 @@ shape legend is drawn automatically.
 ## Usage
 
 ``` r
-scale_shape(plot, values = NULL, name = NULL)
+scale_shape(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_shape_manual(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_shape_discrete(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 ```
 
 ## Arguments
@@ -27,9 +55,33 @@ scale_shape(plot, values = NULL, name = NULL)
   [`vellum::svg_grob()`](https://r-vellum.github.io/vellum/reference/vl_svg_path.html))
   and the legend shows the icon; the `size` aesthetic scales them.
 
+  For `scale_shape_manual()` `values` is required, and may also be
+  ggplot2's numeric shape codes (`16`, `17`, ...), which map to the
+  nearest marker (open, filled and bordered variants of a shape draw
+  alike). Named values are matched to levels by name.
+
 - name:
 
   Legend title, or `NULL` to derive from the encoding.
+
+- breaks:
+
+  The levels the legend shows (and their order), or `NULL` for all of
+  them.
+
+- labels:
+
+  Legend labels: one per shown level, a vector named by level, or a
+  function of the levels; `NULL` keeps the levels.
+
+- limits:
+
+  The levels the scale covers (a character vector), or `NULL` for the
+  levels in the data. Data outside `limits` draws as `na.value`.
+
+- na.value:
+
+  The shape drawn for missing values (default a circle).
 
 ## Value
 
@@ -46,4 +98,8 @@ star <- "M12 2l3 7h7l-5.5 4.5 2 7-6.5-4.5-6.5 4.5 2-7L2 9h7z"
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
   scale_shape(values = c(star, star, star))
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
+  scale_shape_manual(values = c("4" = 16, "6" = 17, "8" = 15))
 ```

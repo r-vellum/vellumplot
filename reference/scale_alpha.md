@@ -3,6 +3,12 @@
 Declare the scale for a mapped `alpha` aesthetic: data values map to an
 opacity `range` in `[0, 1]`. An alpha legend is drawn automatically.
 
+`scale_alpha_manual()` sets the opacity of each level of a discrete
+variable directly via `values` (named values match levels by name).
+`scale_alpha_discrete()` / `scale_alpha_ordinal()` spread the levels
+evenly over `range`; the discrete form warns that alpha is not advised
+for an unordered variable, the ordinal form does not.
+
 ## Usage
 
 ``` r
@@ -22,6 +28,36 @@ scale_alpha_continuous(
   breaks = NULL,
   name = NULL,
   oob = NULL
+)
+
+scale_alpha_manual(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_alpha_discrete(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_alpha_ordinal(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
 )
 ```
 
@@ -56,6 +92,21 @@ scale_alpha_continuous(
   nearest limit), `"keep"` (extrapolated past the range), or a
   `function(x, range)`. `NULL` (default) keeps them.
 
+- values:
+
+  For `scale_alpha_manual()`, opacities in `[0, 1]`, one per level (or
+  named by level).
+
+- labels:
+
+  For the discrete forms, legend labels (one per key, a vector named by
+  level, or a function), or `NULL`.
+
+- na.value:
+
+  For the discrete forms, the opacity drawn for missing values, or
+  `NULL` to drop them.
+
 ## Value
 
 The modified
@@ -71,4 +122,8 @@ variable (as in ggplot2).
 
 ``` r
 vplot(mtcars) |> mark_point(x = wt, y = mpg, alpha = hp) |> scale_alpha(range = c(0.2, 1))
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, alpha = factor(cyl)) |>
+  scale_alpha_manual(values = c(0.2, 0.5, 1))
 ```

@@ -9,9 +9,35 @@ line-type legend is drawn automatically. Applies to line-like marks
 ## Usage
 
 ``` r
-scale_linetype(plot, values = NULL, name = NULL)
+scale_linetype(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 
-scale_linetype_discrete(plot, values = NULL, name = NULL)
+scale_linetype_manual(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_linetype_discrete(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 ```
 
 ## Arguments
@@ -25,11 +51,22 @@ scale_linetype_discrete(plot, values = NULL, name = NULL)
 
   Character vector of line types (each one of `"solid"`, `"dashed"`,
   `"dotted"`, `"dotdash"`, `"longdash"`, `"twodash"`), or `NULL` for the
-  default set.
+  default set. For `scale_linetype_manual()` `values` is required, and
+  may also be ggplot2's numeric line types (`1` solid, `2` dashed, ...
+  `6` twodash). Named values are matched to levels by name.
 
 - name:
 
   Legend title, or `NULL` to derive from the encoding.
+
+- breaks, labels, limits:
+
+  As for
+  [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md).
+
+- na.value:
+
+  The line type drawn for missing values, or `NULL`.
 
 ## Value
 
@@ -41,4 +78,8 @@ The modified
 ``` r
 df <- data.frame(x = rep(1:10, 2), y = rnorm(20), g = rep(c("a", "b"), each = 10))
 vplot(df) |> mark_line(x = x, y = y, linetype = g)
+
+vplot(df) |>
+  mark_line(x = x, y = y, linetype = g) |>
+  scale_linetype_manual(values = c(a = "dotted", b = "solid"))
 ```

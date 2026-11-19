@@ -30,7 +30,15 @@ scale_color_discrete(
   name = NULL
 )
 
-scale_color_manual(plot, values, name = NULL)
+scale_color_manual(
+  plot,
+  values,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 
 scale_color_gradient(
   plot,
@@ -109,7 +117,15 @@ scale_fill_discrete(
   name = NULL
 )
 
-scale_fill_manual(plot, values, name = NULL)
+scale_fill_manual(
+  plot,
+  values,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 
 scale_fill_gradient(
   plot,
@@ -155,7 +171,15 @@ scale_colour_discrete(
   name = NULL
 )
 
-scale_colour_manual(plot, values, name = NULL)
+scale_colour_manual(
+  plot,
+  values,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 
 scale_colour_gradient(
   plot,
@@ -202,7 +226,8 @@ scale_colour_gradient2(
 
   For the continuous colour scales (including the gradient ones), a
   length-2 numeric `c(min, max)` fixing the mapped data range (the
-  direct form of `lims(color = ...)`).
+  direct form of `lims(color = ...)`). For `scale_*_manual()`, the
+  levels the scale covers.
 
 - breaks, labels:
 
@@ -225,14 +250,15 @@ scale_colour_gradient2(
   For `scale_*_manual()`, a vector of colours; if named, matched to data
   levels by name (unmatched levels draw grey).
 
-- low, high:
-
-  For `scale_*_gradient()`/`scale_*_gradient2()`, the endpoint colours.
-
 - na.value:
 
   For the gradient scales, the colour of missing (and censored) values;
-  `NULL` keeps the default grey.
+  for `scale_*_manual()`, also of levels outside `limits`. `NULL` keeps
+  the default grey.
+
+- low, high:
+
+  For `scale_*_gradient()`/`scale_*_gradient2()`, the endpoint colours.
 
 - mid:
 
