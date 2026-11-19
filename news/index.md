@@ -83,6 +83,40 @@
   smooth – they are removed before the layer’s statistic, as in ggplot2
   (VP-41).
 
+- **Behaviour change:** on the filled marks a `color` given alongside a
+  `fill` now outlines the shapes instead of overriding the fill, as in
+  ggplot2: `mark_histogram(fill = "#3182bd", color = "white")` draws
+  blue bars with white edges, where it used to draw white bars. This
+  covers
+  [`mark_bar()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_histogram()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md),
+  [`mark_count()`](https://r-vellum.github.io/vellumplot/reference/mark_count.md),
+  [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
+  [`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  (top edge only),
+  [`mark_ribbon()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  (both edges),
+  [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md),
+  [`mark_bin2d()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md),
+  [`mark_hex()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md),
+  [`mark_crossbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  (box and middle line),
+  [`mark_dotplot()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md),
+  [`mark_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md)
+  and
+  [`mark_donut()`](https://r-vellum.github.io/vellumplot/reference/mark_pie.md),
+  matching
+  [`mark_rect()`](https://r-vellum.github.io/vellumplot/reference/mark_rect.md)
+  and
+  [`mark_polygon()`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md);
+  the slab of
+  [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  takes the `fill` and leaves `color` to the point-interval. A mapped
+  `color` beside a constant `fill` outlines in the mapped colours. A
+  lone `color` still fills, as before. Legend keys draw the constant
+  outline (or the constant fill inside an outlined box) too, also for
+  box plots, violins and ridgelines (VP-46).
+
 ### Bug fixes
 
 - Wrapped x tick labels reserve the height of the label that wraps to

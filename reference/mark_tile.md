@@ -4,7 +4,10 @@
 `fill`; `mark_raster()` draws the same as one raster image (a fast path
 requiring a complete regular grid). `mark_bin2d()` bins continuous
 `x`/`y` into a grid and colours each cell by count. `mark_density()`
-draws a 1-D kernel density of `x` as a filled curve.
+draws a 1-D kernel density of `x` as a filled curve. On all of them a
+`color` given alongside a `fill` (or the default count fill of
+`mark_bin2d()` / `mark_hex()`) outlines the shapes; a `color` alone
+fills them.
 
 ## Usage
 

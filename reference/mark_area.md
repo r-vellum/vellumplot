@@ -135,7 +135,9 @@ The modified
 An area or ribbon is drawn as one polygon per series (per `group`, or
 per level of a discrete `fill`/`color`), and a polygon has a single
 fill. A continuous `fill`, `color` or `alpha` must therefore be constant
-within each series; one that varies along a series is an error.
+within each series; one that varies along a series is an error. A
+`color` given alongside a `fill` outlines the band: an area along its
+top, a ribbon along both edges. A `color` alone fills it.
 
 ## See also
 

@@ -198,7 +198,9 @@ The modified
 uses the `y` values as heights; with no `y` it counts rows per category
 (the `"count"` stat). When `color`/`fill` is mapped, grouped bars are
 stacked by default; use `position = "dodge"` for side-by-side bars or
-`"fill"` to normalise to 1. The count stat computes `count` and `prop`,
+`"fill"` to normalise to 1. `fill` fills the bars and a `color` given
+alongside it outlines them (`fill = "steelblue", color = "white"`); a
+`color` alone fills them. The count stat computes `count` and `prop`,
 the share of its group (or of the layer, ungrouped), for use with
 [`after_stat()`](https://r-vellum.github.io/vellumplot/reference/after_stat.md),
 e.g. `y = after_stat(prop)`. `density` is an older name for `prop`.
