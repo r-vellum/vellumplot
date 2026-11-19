@@ -100,10 +100,15 @@ spec_fields <- function(data, n_examples = 3L) {
 # Rows a stat leaves out itself (a non-finite value, a group too small for a
 # density or a fit) are read back from the stat: every stat that drops input
 # rows records them (`.stat_dropped()` in compile-stat.R), and the report
-# resolves each panel the way the compile does to collect them. A value outside
-# a colour/size/alpha/linewidth scale's limits is still drawn -- colour clamps
-# to the end of its palette, size, alpha and linewidth extrapolate -- so it is
-# reported in its own `oob` column, not in `dropped`.
+# resolves each panel the way the compile does to collect them.
+#
+# Scale limits follow each scale's `oob` handler, as the compile does. A
+# position outside its limits is clipped (the default) or censored, so it is not
+# shown; a squished one is drawn on the panel edge. A non-position value outside
+# its limits is still drawn (colour clamps or takes the NA colour, size, alpha
+# and linewidth extrapolate), except a censored size, which draws no mark. Rows
+# drawn at a changed value are reported in their own `oob` column, not in
+# `dropped`.
 # ---------------------------------------------------------------------------
 
 # Position channels, by axis, whose value places a row. A missing continuous
@@ -186,31 +191,51 @@ spec_fields <- function(data, n_examples = 3L) {
   }
   stat_rows <- stat_rows[stat_rows >= 1L & stat_rows <= n]
   flag(seq_len(n) %in% stat_rows, "stat")
+  # Outside the limits: clipped (oob "keep", the default) or censored to NA,
+  # either way not shown; a squished value is drawn on the edge, so it is only
+  # reported in `oob` (the "shown_oob" attribute).
+  shown_oob <- rep(FALSE, n)
   for (a in axes) {
     sc <- a$sc
     dom <- if (!is.null(sc)) sc@domain
-    lims <- if (length(dom) == 2L && is_num(dom)) as.numeric(dom)
+    if (length(dom) != 2L || !is_num(dom)) {
+      next
+    }
     for (v in a$vals) {
       if (!is_num(v)) {
         next
       }
-      num <- as.numeric(v)
-      fin <- is.finite(num)
-      if (!is.null(lims)) {
-        lo <- suppressWarnings(min(lims, na.rm = TRUE))
-        hi <- suppressWarnings(max(lims, na.rm = TRUE))
-        out <- fin & ((is.finite(lo) & num < lo) | (is.finite(hi) & num > hi))
-        # A partial limit (`ylim(0, NA)`) bounds only the end it names.
-        if (anyNA(lims)) {
-          out <- fin &
-            ((!is.na(lims[1]) & num < lims[1]) |
-              (!is.na(lims[2]) & num > lims[2]))
-        }
-        flag(out, "limits")
-      }
+      o <- .diag_oob(sc, as.numeric(v), as.numeric(dom))
+      flag(o$out & !o$shown, "limits")
+      shown_oob <- shown_oob | (o$out & o$shown)
     }
   }
+  attr(why, "shown_oob") <- shown_oob
   why
+}
+
+# Rows of `num` outside a scale's limits `lims` (`out`), and what the scale's
+# `oob` handler (`.oob_fun()`: censor, squish, keep or a function; none means
+# keep) makes of them: `shown` -- mapped to a finite value inside the limits
+# (squished) -- or `gone` -- censored to `NA`. A partial limit (an `NA` end,
+# `ylim(0, NA)`) bounds only the end it names.
+.diag_oob <- function(sc, num, lims) {
+  rng <- sort(c(
+    if (is.na(lims[1])) -Inf else lims[1],
+    if (is.na(lims[2])) Inf else lims[2]
+  ))
+  out <- is.finite(num) & (num < rng[1] | num > rng[2])
+  oob <- .oob_fun(sc)
+  ov <- if (is.null(oob) || !any(out)) {
+    num
+  } else {
+    suppressWarnings(as.numeric(oob(num, range = rng)))
+  }
+  list(
+    out = out,
+    shown = out & is.finite(ov) & ov >= rng[1] & ov <= rng[2],
+    gone = out & !is.finite(ov)
+  )
 }
 
 # Per layer, the rows of its input data (`layer@data %||% plot@data`) that its
@@ -239,16 +264,17 @@ spec_fields <- function(data, n_examples = 3L) {
   lapply(out, function(r) sort(unique(r[!is.na(r)])))
 }
 
-# Per row of `ld`: does a non-position channel (colour, fill, size, alpha,
-# linewidth) carry a finite value outside its scale's explicit numeric limits?
-# The compile still draws such a row (see the note above), so it is counted
-# apart from the rows not shown.
+# Per row of `ld`, for the non-position channels (colour, fill, size, alpha,
+# linewidth) whose scale has explicit numeric limits: `oob` -- a value outside
+# the limits that is still drawn (colour clamps or takes the NA colour, size,
+# alpha and linewidth extrapolate) -- and `gone` -- a size censored to `NA`
+# (`scale_size(oob = "censor")`), which draws no mark.
 .layer_oob_rows <- function(plot, layer, ld) {
   n <- nrow(ld)
-  out <- rep(FALSE, n)
+  oob <- gone <- rep(FALSE, n)
   L <- tryCatch(.resolve_layer(layer, ld), error = function(e) NULL)
   if (is.null(L)) {
-    return(out)
+    return(list(oob = oob, gone = gone))
   }
   for (ch in .DIAG_OOB_CHANNELS) {
     v <- L$values[[ch]]
@@ -264,12 +290,12 @@ spec_fields <- function(data, n_examples = 3L) {
     ) {
       next
     }
-    lo <- suppressWarnings(min(dom, na.rm = TRUE))
-    hi <- suppressWarnings(max(dom, na.rm = TRUE))
-    out <- out |
-      (is.finite(v) & ((is.finite(lo) & v < lo) | (is.finite(hi) & v > hi)))
+    o <- .diag_oob(sc, as.numeric(v), as.numeric(dom))
+    lost <- if (ch == "size") o$gone else rep(FALSE, n)
+    gone <- gone | lost
+    oob <- oob | (o$out & !lost)
   }
-  out
+  list(oob = oob, gone = gone)
 }
 
 # The per-layer compile report: one row per layer with its input row count, how
@@ -286,10 +312,11 @@ spec_fields <- function(data, n_examples = 3L) {
     } else {
       character(0)
     }
-    oob <- if (is.data.frame(ld)) {
-      sum(.layer_oob_rows(plot, layer, ld) & is.na(why))
-    } else {
-      0L
+    oob <- 0L
+    if (is.data.frame(ld)) {
+      o <- .layer_oob_rows(plot, layer, ld)
+      why[is.na(why) & o$gone] <- "limits"
+      oob <- sum((o$oob | (attr(why, "shown_oob") %||% FALSE)) & is.na(why))
     }
     counts <- vapply(
       names(.DIAG_DROP_REASONS),
@@ -335,7 +362,7 @@ spec_fields <- function(data, n_examples = 3L) {
         severity = "warning",
         field = NA_character_,
         message = sprintf(
-          "Layer %d (%s): %d of %d rows have a colour, size, alpha or linewidth value outside its scale limits. They are drawn at the nearest end of the colour palette, or at an extrapolated size, alpha or linewidth.",
+          "Layer %d (%s): %d of %d rows have a value outside a scale's limits but are still drawn: squished to the edge, clamped to the end of the colour palette or given its NA colour, or at an extrapolated size, alpha or linewidth.",
           r$layer,
           r$mark,
           r$oob,
@@ -533,11 +560,13 @@ spec_fields <- function(data, n_examples = 3L) {
 #'   `scale_*(limits = )`), so it is clipped away. Coordinate limits
 #'   (`coord_cartesian(xlim = )`) zoom instead and are not counted.
 #'
-#' Their total is `dropped`. A separate column, `oob`, counts the rows that
-#' are shown but have a colour, fill, size, alpha or linewidth value outside
-#' that scale's explicit `limits`. The compile draws them at the nearest end of
-#' the colour palette, or at a size, alpha or linewidth extrapolated past the
-#' scale's range, so they are not part of `dropped`.
+#' Their total is `dropped`. Limits follow each scale's `oob` handler: a
+#' position outside its limits counts under `limits` when it is clipped (the
+#' default) or censored, and so does a censored size. A separate column, `oob`,
+#' counts rows that are outside a scale's `limits` but still drawn: a squished
+#' position, or a colour, fill, size, alpha or linewidth value (clamped to the
+#' end of the palette, given the NA colour, or extrapolated). They are not part
+#' of `dropped`.
 #'
 #' A missing *non-position* value (colour, size, ...) is drawn with the scale's
 #' `NA` value, a missing discrete position as a trailing `"NA"` category, and a
@@ -556,7 +585,7 @@ spec_fields <- function(data, n_examples = 3L) {
 #'   records with `severity`, `field`, `message`, `hint`), and `report` (a data
 #'   frame with one row per layer: `layer`, `mark`, `rows`, the counts
 #'   `missing`, `transform`, `stat`, `limits`, their total `dropped`, and
-#'   `oob`, the shown rows outside a non-position scale's limits; `NULL`
+#'   `oob`, the rows outside a scale's limits that are still drawn; `NULL`
 #'   when the plot could not be built). Printing it shows a summary.
 #'   `vplot_from_spec()` returns a [PlotSpec].
 #' @seealso [spec_fields()], [spec_schema()], [vplot_ask()]
@@ -715,7 +744,7 @@ spec_diagnose <- function(spec, data = NULL, env = globalenv()) {
   rep <- x$report
   if (!is.null(rep) && nrow(rep)) {
     cat(
-      "\nRows not shown, per layer (`oob`: shown, outside a colour/size scale's limits):\n"
+      "\nRows not shown, per layer (`oob`: drawn, outside a scale's limits):\n"
     )
     print(rep, row.names = FALSE)
   }

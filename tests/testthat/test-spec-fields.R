@@ -264,7 +264,11 @@ test_that("values outside colour / size limits are counted as oob, not dropped",
   expect_identical(d$report$dropped, 0L)
   w <- diag_msgs(d, "warning")
   expect_length(w, 1L)
-  expect_match(w, "2 of 6 rows have a colour, size", fixed = TRUE)
+  expect_match(
+    w,
+    "2 of 6 rows have a value outside a scale's limits",
+    fixed = TRUE
+  )
 
   s <- spec_diagnose(
     vplot(df) |>
@@ -281,6 +285,43 @@ test_that("values outside colour / size limits are counted as oob, not dropped",
   ))
   expect_identical(m$report$missing, 1L)
   expect_identical(m$report$oob, 2L)
+})
+
+test_that("limits counts follow each scale's oob handler", {
+  df <- data.frame(x = 1:6, y = 1:6, v = c(0, 50, 100, 150, 200, 300))
+  rep_for <- function(p) suppressWarnings(spec_diagnose(p))$report
+  # a position: clipped by default, censored -> not shown; squished -> drawn
+  keep <- rep_for(
+    vplot(df) |>
+      mark_point(x = v, y = y) |>
+      scale_x_continuous(limits = c(50, 250))
+  )
+  expect_identical(c(keep$limits, keep$oob), c(2L, 0L))
+  cen <- rep_for(
+    vplot(df) |>
+      mark_point(x = v, y = y) |>
+      scale_x_continuous(limits = c(50, 250), oob = "censor")
+  )
+  expect_identical(c(cen$limits, cen$oob), c(2L, 0L))
+  sq <- rep_for(
+    vplot(df) |>
+      mark_point(x = v, y = y) |>
+      scale_x_continuous(limits = c(50, 250), oob = "squish")
+  )
+  expect_identical(c(sq$limits, sq$dropped, sq$oob), c(0L, 0L, 2L))
+  # a censored size draws no mark; a censored colour takes the NA colour
+  sz <- rep_for(
+    vplot(df) |>
+      mark_point(x = x, y = y, size = v) |>
+      scale_size(limits = c(50, 250), oob = "censor")
+  )
+  expect_identical(c(sz$limits, sz$oob), c(2L, 0L))
+  col <- rep_for(
+    vplot(df) |>
+      mark_point(x = x, y = y, color = v) |>
+      scale_color_continuous(limits = c(50, 250), oob = "censor")
+  )
+  expect_identical(c(col$dropped, col$oob), c(0L, 2L))
 })
 
 test_that("a facet variable missing from a layer's data is caught", {

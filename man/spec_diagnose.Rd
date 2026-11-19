@@ -25,7 +25,7 @@ Ignored for a \link{PlotSpec}, which carries its own data.}
 records with \code{severity}, \code{field}, \code{message}, \code{hint}), and \code{report} (a data
 frame with one row per layer: \code{layer}, \code{mark}, \code{rows}, the counts
 \code{missing}, \code{transform}, \code{stat}, \code{limits}, their total \code{dropped}, and
-\code{oob}, the shown rows outside a non-position scale's limits; \code{NULL}
+\code{oob}, the rows outside a scale's limits that are still drawn; \code{NULL}
 when the plot could not be built). Printing it shows a summary.
 \code{vplot_from_spec()} returns a \link{PlotSpec}.
 }
@@ -78,11 +78,13 @@ a smooth or an ellipse;
 (\code{coord_cartesian(xlim = )}) zoom instead and are not counted.
 }
 
-Their total is \code{dropped}. A separate column, \code{oob}, counts the rows that
-are shown but have a colour, fill, size, alpha or linewidth value outside
-that scale's explicit \code{limits}. The compile draws them at the nearest end of
-the colour palette, or at a size, alpha or linewidth extrapolated past the
-scale's range, so they are not part of \code{dropped}.
+Their total is \code{dropped}. Limits follow each scale's \code{oob} handler: a
+position outside its limits counts under \code{limits} when it is clipped (the
+default) or censored, and so does a censored size. A separate column, \code{oob},
+counts rows that are outside a scale's \code{limits} but still drawn: a squished
+position, or a colour, fill, size, alpha or linewidth value (clamped to the
+end of the palette, given the NA colour, or extrapolated). They are not part
+of \code{dropped}.
 
 A missing \emph{non-position} value (colour, size, ...) is drawn with the scale's
 \code{NA} value, a missing discrete position as a trailing \code{"NA"} category, and a
