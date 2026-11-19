@@ -68,6 +68,25 @@
   An all-`NA` Date column no longer aborts with "'from' must be a finite
   number"; the axis draws with no ticks, as in ggplot2 (VP-8).
 
+* **Missing values are shown or reported, never dropped silently.** They
+  now follow ggplot2 (VP-6):
+  - A missing category on a discrete position is a trailing `"NA"` level, so
+    its rows are drawn and `mark_bar()` counts them as an `NA` bar. Before,
+    `sort()` dropped the level and the rows were emitted at `NaN`. Explicit
+    discrete `limits` still decide what is shown. Colour, shape and the other
+    discrete scales already drew `NA` in their `na_value` with an "NA" legend
+    key, and still do.
+  - A missing facet value gets its own trailing `"NA"` panel (last on each
+    dimension of a grid). Before, its rows vanished: `facet_wrap(~cyl)` on data
+    with three missing `cyl` values drew 29 of 32 rows.
+  - A row missing a continuous position (`x`, `y`, `xend`, `ymin`, ...) is
+    removed before the stat, with one warning per layer, "Removed n rows
+    containing missing values". Provenance no longer lists it as drawn. Lines,
+    steps, areas and ribbons keep such rows as a gap, as before.
+  - `spec_diagnose()` counts exactly those removed rows as `missing`. Its
+    report loses the `facet` column, since a missing facet value is now
+    drawn, and it no longer repeats the compile warning.
+
 * **An inset plot no longer resets the outer plot's interaction context.** A
   sub-plot drawn inside a plot (`annotate("sparkline")`, or `annotate("grob")`
   with a plot) set the shared mark context for itself and left it that way, so

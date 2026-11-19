@@ -87,7 +87,8 @@ test_that("a boxplot tolerates NA in y", {
   )
   p <- vplot(d) |> mark_boxplot(x = g, y = y)
   f <- local_tempfile(fileext = ".png")
-  expect_no_error(render_plot(p, f))
+  # the NA rows are removed (with ggplot2's warning) before the stat
+  expect_warning(render_plot(p, f), "Removed 2 rows")
 })
 
 test_that("ragged and mis-counted design layouts error clearly", {

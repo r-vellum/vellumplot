@@ -674,18 +674,32 @@ NULL
 
 # A discrete (band) position scale: levels map to integer positions 1..k, each
 # occupying a unit-width band; the domain pads half a band each side. A user
-# `limits` (in `scalespec@domain`) sets/reorders/subsets the levels.
+# `limits` (in `scalespec@domain`) sets/reorders/subsets the levels. Missing
+# values get a trailing "NA" band (ggplot2's `na.translate = TRUE`) unless the
+# user set the limits, which then decide exactly what is shown.
 .train_position_discrete <- function(aesthetic, values, scalespec, name) {
-  levs <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
+  user_limits <- !is.null(scalespec) && !is.null(scalespec@domain)
+  levs <- if (user_limits) {
     as.character(scalespec@domain)
   } else {
     .cat_levels(values)
+  }
+  na_pos <- NULL
+  if (!user_limits && anyNA(unlist(values, use.names = FALSE))) {
+    levs <- c(levs, "NA")
+    na_pos <- length(levs)
   }
   k <- length(levs)
   trained_scale(
     aesthetic,
     "discrete",
-    map = function(x) match(as.character(x), levs),
+    map = function(x) {
+      i <- match(as.character(x), levs)
+      if (!is.null(na_pos)) {
+        i[is.na(x)] <- na_pos
+      }
+      i
+    },
     name = name,
     discrete = TRUE,
     band_width = 1,
