@@ -208,6 +208,14 @@
   continuous variable is now an error, matching the compile, which refuses it
   (VP-36, #208).
 
+* `facet_wrap()` and `facet_grid()` take a `labeller` argument for the strip
+  text, with ggplot2's labellers: `label_value()`, `label_both()`
+  (`"cyl: 4"`), `label_wrap_gen(width)` for long values, and
+  `as_labeller()` for a lookup table (`c("0" = "automatic")`) or a function
+  of the values. A named character vector or a plain function can be passed
+  to `labeller =` directly. With several facet variables a strip shows one
+  line per variable, centred, and the strip grows to fit (F-10).
+
 # vellumplot 0.12.0
 
 ## New features

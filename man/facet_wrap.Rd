@@ -10,10 +10,16 @@ facet_wrap(
   facets,
   ncol = NULL,
   nrow = NULL,
-  scales = c("fixed", "free_x", "free_y", "free")
+  scales = c("fixed", "free_x", "free_y", "free"),
+  labeller = NULL
 )
 
-facet_grid(plot, facets, scales = c("fixed", "free_x", "free_y", "free"))
+facet_grid(
+  plot,
+  facets,
+  scales = c("fixed", "free_x", "free_y", "free"),
+  labeller = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -25,6 +31,12 @@ two-sided \code{rows ~ cols} (use \code{.} for no faceting on a side).}
 \item{ncol, nrow}{Number of columns/rows for \code{facet_wrap()}.}
 
 \item{scales}{One of \code{"fixed"} (default), \code{"free_x"}, \code{"free_y"}, \code{"free"}.}
+
+\item{labeller}{How to label the facet strips: a labeller such as
+\code{\link[=label_both]{label_both()}}, \code{\link[=label_value]{label_value()}} or \code{\link[=label_wrap_gen]{label_wrap_gen()}}, a named character
+vector looking values up (\code{c("4" = "Four")}), or a function from values to
+labels (see \code{\link[=as_labeller]{as_labeller()}}). The default, \code{NULL}, shows the values,
+several variables on one side joined by \code{", "}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -39,4 +51,10 @@ Colour and size scales (and their legends) are always shared in this version.
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_grid(am ~ cyl)
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  facet_grid(am ~ cyl, labeller = label_both)
+}
+\seealso{
+\link{labellers}
 }

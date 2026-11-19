@@ -12,7 +12,8 @@ FacetSpec <- S7::new_class(
     rows = S7::new_property(S7::class_list, default = list()),
     cols = S7::new_property(S7::class_list, default = list()),
     ncol = S7::new_property(S7::class_any, default = NULL),
-    nrow = S7::new_property(S7::class_any, default = NULL)
+    nrow = S7::new_property(S7::class_any, default = NULL),
+    labeller = S7::new_property(S7::class_any, default = NULL) # labeller | NULL
   )
 )
 
@@ -58,20 +59,31 @@ FacetSpec <- S7::new_class(
 #'   two-sided `rows ~ cols` (use `.` for no faceting on a side).
 #' @param ncol,nrow Number of columns/rows for `facet_wrap()`.
 #' @param scales One of `"fixed"` (default), `"free_x"`, `"free_y"`, `"free"`.
+#' @param labeller How to label the facet strips: a labeller such as
+#'   [label_both()], [label_value()] or [label_wrap_gen()], a named character
+#'   vector looking values up (`c("4" = "Four")`), or a function from values to
+#'   labels (see [as_labeller()]). The default, `NULL`, shows the values,
+#'   several variables on one side joined by `", "`.
 #' @return The modified [PlotSpec].
+#' @seealso [labellers]
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_grid(am ~ cyl)
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg) |>
+#'   facet_grid(am ~ cyl, labeller = label_both)
 #' @export
 facet_wrap <- function(
   plot,
   facets,
   ncol = NULL,
   nrow = NULL,
-  scales = c("fixed", "free_x", "free_y", "free")
+  scales = c("fixed", "free_x", "free_y", "free"),
+  labeller = NULL
 ) {
   .check_plot(plot)
   scales <- match.arg(scales)
+  labeller <- .as_facet_labeller(labeller)
   if (!rlang::is_formula(facets)) {
     cli::cli_abort("{.arg facets} must be a formula like {.code ~ cyl}.")
   }
@@ -81,7 +93,13 @@ facet_wrap <- function(
       "{.fn facet_wrap} needs at least one variable, e.g. {.code ~ cyl}."
     )
   }
-  plot@facet <- FacetSpec(type = "wrap", cols = cols, ncol = ncol, nrow = nrow)
+  plot@facet <- FacetSpec(
+    type = "wrap",
+    cols = cols,
+    ncol = ncol,
+    nrow = nrow,
+    labeller = labeller
+  )
   .apply_free(plot, scales)
 }
 
@@ -90,10 +108,12 @@ facet_wrap <- function(
 facet_grid <- function(
   plot,
   facets,
-  scales = c("fixed", "free_x", "free_y", "free")
+  scales = c("fixed", "free_x", "free_y", "free"),
+  labeller = NULL
 ) {
   .check_plot(plot)
   scales <- match.arg(scales)
+  labeller <- .as_facet_labeller(labeller)
   if (!rlang::is_formula(facets)) {
     cli::cli_abort("{.arg facets} must be a formula like {.code rows ~ cols}.")
   }
@@ -105,7 +125,12 @@ facet_grid <- function(
       "{.fn facet_grid} needs a variable on at least one side of the formula."
     )
   }
-  plot@facet <- FacetSpec(type = "grid", rows = rows, cols = cols)
+  plot@facet <- FacetSpec(
+    type = "grid",
+    rows = rows,
+    cols = cols,
+    labeller = labeller
+  )
   .apply_free(plot, scales)
 }
 

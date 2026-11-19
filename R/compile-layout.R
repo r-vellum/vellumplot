@@ -368,7 +368,18 @@ NULL
     yt <- yl <- xl <- xt <- vellum::vl_unit(0, "mm")
     has_y_sec <- has_x_sec <- FALSE
   }
-  strip <- .track_h(rt[["strip.text"]], "Ag", 2 * .PAD_MM)
+  # Strip tracks fit their tallest label (a labeller can make several lines):
+  # `strip` for the wrap / column strips, `row_strip` for the rotated row strips.
+  strip <- .track_h(
+    rt[["strip.text"]],
+    .strip_probe(c(fa$wrap_labels, fa$col_labels)),
+    2 * .PAD_MM
+  )
+  row_strip <- .track_h(
+    rt[["strip.text"]],
+    .strip_probe(fa$row_labels),
+    2 * .PAD_MM
+  )
   gap <- vellum::vl_unit(rt[["panel.spacing"]], "mm")
 
   # Only grid facets get a dedicated column-strip row here (wrap strips flow
@@ -416,7 +427,7 @@ NULL
     }
     side <- c(
       list(yt, yl, leg_w),
-      if (has_row_strip) list(strip),
+      if (has_row_strip) list(row_strip),
       if (has_y_sec) list(y2l, y2t)
     )
     side_mm <- sum(vapply(
@@ -487,7 +498,7 @@ NULL
     y2labels_col <- .tk_add(W, y2l)
     y2title_col <- .tk_add(W, y2t)
   }
-  rowstrip_col <- if (has_row_strip) .tk_add(W, strip) else NA_integer_
+  rowstrip_col <- if (has_row_strip) .tk_add(W, row_strip) else NA_integer_
   if (legend_vert && pos == "right") {
     legend_col <- .tk_add(W, .legend_width(guides, rt, legend_avail_h))
   }

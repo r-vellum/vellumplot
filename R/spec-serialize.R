@@ -475,6 +475,12 @@ NULL
 }
 
 .facet_to_ir <- function(f) {
+  if (!is.null(f@labeller)) {
+    .unserializable(
+      "facet labeller",
+      "A facet labeller is an R function, which the spec cannot carry."
+    )
+  }
   out <- list(type = f@type)
   rows <- .facet_side_to_ir(f@rows)
   cols <- .facet_side_to_ir(f@cols)

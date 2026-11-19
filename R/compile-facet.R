@@ -167,7 +167,7 @@ NULL
       panels = panels,
       col_labels = NULL,
       row_labels = NULL,
-      wrap_labels = levs
+      wrap_labels = .strip_labels(facet@labeller, facet@cols, dim$parts, levs)
     )
   } else {
     keys <- .facet_keys(facet, data)
@@ -201,8 +201,12 @@ NULL
       R = R,
       C = C,
       panels = panels,
-      col_labels = if (length(facet@cols)) clevs else NULL,
-      row_labels = if (length(facet@rows)) rlevs else NULL,
+      col_labels = if (length(facet@cols)) {
+        .strip_labels(facet@labeller, facet@cols, cdim$parts, clevs)
+      },
+      row_labels = if (length(facet@rows)) {
+        .strip_labels(facet@labeller, facet@rows, rdim$parts, rlevs)
+      },
       wrap_labels = NULL
     )
   }

@@ -102,6 +102,7 @@ Collate:
     'guides.R'
     'hierarchy-pack.R'
     'hierarchy.R'
+    'labeller.R'
     'labs.R'
     'lint.R'
     'spec-serialize.R'
