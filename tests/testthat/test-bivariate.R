@@ -211,3 +211,52 @@ test_that("bivariate choropleth structure snapshot", {
     scale_fill_bivariate(xlab = "Births", ylab = "SIDS")
   expect_snapshot(scene_digest(p))
 })
+
+# --- VP-35: break labels and the rotated grid ---------------------------------
+
+test_that("guide_bivariate labels both edges with bi_class's breaks", {
+  d <- bi_class(mtcars, hp, wt)
+  p <- vplot(d) |> mark_point(x = hp, y = wt, color = bi_class)
+  g <- .legend_guides(.build_panels(p)$scales)[[1]]
+  ticks <- .bi_tick_labels(g$sc$bivariate)
+  info <- attr(d$bi_class, "vellum_bivariate")
+  expect_length(ticks$x, 4L)
+  expect_identical(ticks$x, .steps_break_labels(list(breaks = info$x_breaks)))
+  expect_identical(ticks$y, .steps_break_labels(list(breaks = info$y_breaks)))
+  svg <- plot_svg(p)
+  for (lab in c(ticks$x, ticks$y)) {
+    expect_match(svg, paste0(">", lab, "<"), fixed = TRUE)
+  }
+  # labels = FALSE drops them, and the guide gets narrower
+  m <- .legend_metrics(.resolve_theme(p@theme))
+  off <- g
+  off$sc$bivariate$labels <- FALSE
+  expect_null(.bi_tick_labels(off$sc$bivariate)$x)
+  expect_lt(.bi_geom(off, m)$width, .bi_geom(g, m)$width)
+  # a hand-made class column has no breaks to show
+  hand <- data.frame(x = 1:4, y = 1:4, k = c("1-1", "2-1", "1-2", "3-3"))
+  ph <- vplot(hand) |>
+    mark_point(x = x, y = y, color = k) |>
+    scale_color_bivariate(dim = 3)
+  gh <- .legend_guides(.build_panels(ph)$scales)[[1]]
+  expect_null(.bi_tick_labels(gh$sc$bivariate)$x)
+  expect_no_error(plot_svg(ph))
+})
+
+test_that("guide_bivariate(rotate = TRUE) draws a diamond in a square cell", {
+  d <- bi_class(mtcars, hp, wt)
+  p <- vplot(d) |>
+    mark_point(x = hp, y = wt, color = bi_class) |>
+    guides(color = guide_bivariate(rotate = TRUE))
+  g <- .legend_guides(.build_panels(p)$scales)[[1]]
+  expect_true(g$sc$bivariate$rotate)
+  m <- .legend_metrics(.resolve_theme(p@theme))
+  geo <- .bi_geom(g, m)
+  expect_equal(geo$cell[1], geo$cell[2])
+  expect_equal(geo$cell[1], (geo$block_w + geo$block_h) / sqrt(2))
+  for (pos in c("right", "bottom", "left", "top")) {
+    expect_no_error(plot_svg(p |> theme(legend.position = pos)))
+  }
+  expect_error(guide_bivariate(rotate = NA), "rotate")
+  expect_error(guide_bivariate(labels = "yes"), "labels")
+})

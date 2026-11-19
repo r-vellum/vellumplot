@@ -4,7 +4,14 @@
 \alias{guide_bivariate}
 \title{A 2-D legend for a bivariate scale}
 \usage{
-guide_bivariate(title = NULL, xlab = NULL, ylab = NULL, key.size = NULL)
+guide_bivariate(
+  title = NULL,
+  xlab = NULL,
+  ylab = NULL,
+  key.size = NULL,
+  labels = TRUE,
+  rotate = FALSE
+)
 }
 \arguments{
 \item{title}{A title above the grid, or \code{NULL} (default) for none.}
@@ -13,7 +20,14 @@ guide_bivariate(title = NULL, xlab = NULL, ylab = NULL, key.size = NULL)
 variable names recorded by \code{\link[=bi_class]{bi_class()}}).}
 
 \item{key.size}{Side of one swatch, in millimetres. \code{NULL} (default) uses
-1.5 x the theme's \code{legend.key.size}.}
+1.5 x the theme's \code{legend.key.size}, widened to fit the break labels.}
+
+\item{labels}{Label the swatch edges with the class breaks \code{\link[=bi_class]{bi_class()}}
+recorded (default \code{TRUE}). A scale without recorded breaks (a hand-made
+class column) has none to show.}
+
+\item{rotate}{Turn the grid 45 degrees, so the classes read as a diamond
+with high-high at the top (default \code{FALSE}).}
 }
 \value{
 A guide specification for \code{\link[=guides]{guides()}}.
@@ -22,7 +36,10 @@ A guide specification for \code{\link[=guides]{guides()}}.
 \code{guide_bivariate()} draws a bivariate colour scale as a square grid of
 swatches: the \code{x} variable's classes run left to right along the bottom, the
 \code{y} variable's classes bottom to top up the side, each axis with its title
-and an arrow pointing towards "more". It is the default guide of
+and an arrow pointing towards "more". When the classes come from
+\code{\link[=bi_class]{bi_class()}}, each axis is labelled with its class breaks at the swatch
+edges. \code{rotate = TRUE} turns the grid 45 degrees into a diamond, low-low at
+the bottom and high-high at the top. It is the default guide of
 \code{\link[=scale_fill_bivariate]{scale_fill_bivariate()}}; use it through \code{\link[=guides]{guides()}} to retitle the axes or
 resize the swatches without respelling the scale. Asking for it on a fill that
 maps a \code{\link[=bi_class]{bi_class()}}-style column makes that scale bivariate.
@@ -32,6 +49,11 @@ d <- bi_class(mtcars, hp, wt)
 vplot(d) |>
   mark_point(x = hp, y = wt, color = bi_class, size = 2) |>
   guides(color = guide_bivariate(xlab = "More power", ylab = "More weight"))
+
+# the diamond form
+vplot(d) |>
+  mark_point(x = hp, y = wt, color = bi_class, size = 2) |>
+  guides(color = guide_bivariate(rotate = TRUE))
 }
 \seealso{
 \code{\link[=scale_fill_bivariate]{scale_fill_bivariate()}}
