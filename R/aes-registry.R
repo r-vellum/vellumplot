@@ -10,9 +10,8 @@ NULL
 #
 # Fields (one record per scale key, in legend order):
 #   name        the scale key (`scales[[name]]`, `scale_*()` aesthetic)
-#   aliases     the resolved-data channels that feed the scale (`color` and
-#               `fill` share one colour scale; edge width and line width both
-#               read the `linewidth` channel)
+#   aliases     the resolved-data channels that feed the scale (edge width and
+#               line width both read the `linewidth` channel)
 #   marks       for a channel two scales share: the marks whose layers this
 #               scale serves (`include`) or does not (`exclude`); NULL = all
 #   title       the channel whose labs() entry / mapped expression supplies the
@@ -83,13 +82,23 @@ NULL
   y = .aes_entry("y", types = .POSITION_TYPES),
   color = .aes_entry(
     "color",
-    aliases = c("color", "fill"),
     trainer = ".train_colour",
     guide = "color",
     types = .COLOUR_TYPES,
-    # A discrete colour legend merges with any other discrete legend (shape,
-    # linetype, ...) of the same title and keys; a continuous colour bar turns
-    # into keys when it merges with a size/alpha/linewidth legend.
+    # A discrete colour legend merges with any other discrete legend (fill,
+    # shape, linetype, ...) of the same title and keys; a continuous colour bar
+    # turns into keys when it merges with a size/alpha/linewidth legend.
+    legend_merge = TRUE
+  ),
+  # `fill` is a scale of its own, as in ggplot2: `scale_fill_*()` and
+  # `scale_color_*()` set the two independently, and a plot mapping both draws
+  # two legends -- one, when they map the same variable under the same title
+  # and keys (the legend merge).
+  fill = .aes_entry(
+    "fill",
+    trainer = ".train_fill",
+    guide = "color",
+    types = .COLOUR_TYPES,
     legend_merge = TRUE
   ),
   size = .aes_entry(

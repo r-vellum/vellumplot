@@ -122,9 +122,15 @@ NULL
   }
 
   col <- titles$text[["color"]]
+  fill <- titles$text[["fill"]]
   sz <- titles$text[["size"]]
+  # a lone fill reads as colour; a fill beside a different colour is named
+  if (is.null(col)) {
+    col <- fill
+  }
   extras <- c(
     if (!is.null(col)) paste0("colour shows ", col),
+    if (!is.null(fill) && !identical(fill, col)) paste0("fill shows ", fill),
     if (!is.null(sz)) paste0("size shows ", sz)
   )
 

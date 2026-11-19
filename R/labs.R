@@ -4,7 +4,8 @@ NULL
 #' Set plot titles and axis/legend labels
 #'
 #' Add plot-level text — a `title`, `subtitle`, `caption`, and `tag` — and
-#' override the titles of individual axes and legends (`x`, `y`, `color`, `size`).
+#' override the titles of individual axes and legends (`x`, `y`, `color`,
+#' `fill`, `size`).
 #' The title, subtitle, and tag are drawn in a band above the panels; the caption
 #' in a band below. Repeated `labs()` calls merge, with later values winning.
 #'
@@ -15,8 +16,11 @@ NULL
 #' @param plot A [PlotSpec].
 #' @param title,subtitle,caption,tag Plot-level text (or `NULL` to leave unset).
 #' @param x,y,size Axis / legend title overrides for those aesthetics.
-#' @param color,colour,fill Colour-scale title override; `colour` and `fill` are
-#'   aliases for `color`.
+#' @param color,colour Colour-scale title override; `colour` is an alias for
+#'   `color`.
+#' @param fill Fill-scale title override. `color` and `fill` are separate
+#'   scales, so each takes its own title; give both the same title (and map the
+#'   same variable) to draw them as one legend.
 #' @param alt A text alternative (alt text) describing the plot for screen
 #'   readers and other assistive technology. Overrides the description vellumplot
 #'   generates automatically; see [plot_alt()]. Emitted into the accessible SVG
@@ -50,8 +54,8 @@ labs <- function(
   # which is distinct from not passing the argument at all -- so a bare default of
   # NULL cannot carry that intent and we consult the call.
   passed <- names(match.call())[-1L]
-  color <- color %||% colour %||% fill
-  color_passed <- any(c("color", "colour", "fill") %in% passed)
+  color <- color %||% colour
+  color_passed <- any(c("color", "colour") %in% passed)
   candidates <- list(
     title = title,
     subtitle = subtitle,
@@ -60,6 +64,7 @@ labs <- function(
     x = x,
     y = y,
     color = color,
+    fill = fill,
     size = size,
     alt = alt
   )

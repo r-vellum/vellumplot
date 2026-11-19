@@ -4,9 +4,8 @@ NULL
 # ---------------------------------------------------------------------------
 # The titles record: every axis / legend title of a plot, resolved once.
 #
-# A title is the user's `scale_*(name = )` if set, else a `labs()` entry (under
-# any alias of the aesthetic: `labs(fill = )` titles the colour scale), else the
-# mapped expression of the first layer that maps it, else the aesthetic's name.
+# A title is the user's `scale_*(name = )` if set, else its `labs()` entry, else
+# the mapped expression of the first layer that maps it, else the aesthetic's name.
 # An unmapped `y` on a bar chart reads "count". `.build_panels()` computes the
 # record once and the scale trainers (so the axes and legends), the alt text and
 # the lint summary all read it, so they cannot disagree about what a scale is
@@ -19,31 +18,20 @@ NULL
   if (is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)) x else NULL
 }
 
-# The mapped expression of the first layer (in layer order) that maps `channel`
-# or one of its aliases, as text; NULL when no layer maps it.
+# The mapped expression of the first layer (in layer order) that maps
+# `channel`, as text; NULL when no layer maps it.
 .mapped_title <- function(spec, channel) {
-  match_aes <- .aes_aliases(channel)
   for (layer in spec@layers) {
-    for (a in match_aes) {
-      ch <- layer@encoding[[a]]
-      if (!is.null(ch)) {
-        return(.channel_label(ch))
-      }
+    ch <- layer@encoding[[channel]]
+    if (!is.null(ch)) {
+      return(.channel_label(ch))
     }
   }
   NULL
 }
 
-# The labs() entry for `channel` under its first alias that has one, or NULL.
-.labs_title <- function(spec, channel) {
-  for (a in .aes_aliases(channel)) {
-    lab <- spec@labels[[a]]
-    if (!is.null(lab)) {
-      return(lab)
-    }
-  }
-  NULL
-}
+# The labs() entry for `channel`, or NULL.
+.labs_title <- function(spec, channel) spec@labels[[channel]]
 
 # Does an unmapped y read "count"? True when a bar layer counts rows (no layer
 # maps y). From the resolved layers when the caller has them, else from the spec

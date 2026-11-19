@@ -465,55 +465,63 @@ spec_fields <- function(data, n_examples = 3L) {
     tryCatch(.resolve_layer(layer, ld), error = function(e) NULL)
   })
   resolved <- Filter(Negate(is.null), resolved)
-  votes <- .colour_channel_votes(resolved, c("color", "fill"))$votes
-  scalespec <- .scale_for(plot, "color")
-  explicit_kind <- !is.null(scalespec) &&
-    length(scalespec@type) &&
-    nzchar(scalespec@type)
+  # `color` and `fill` are separate scales; each gets the two checks.
+  for (channel in c("color", "fill")) {
+    votes <- .colour_channel_votes(resolved, channel)$votes
+    scalespec <- .scale_for(plot, channel)
+    explicit_kind <- !is.null(scalespec) &&
+      length(scalespec@type) &&
+      nzchar(scalespec@type)
 
-  # 2. color and fill (one shared scale, one legend) mapped to a continuous and
-  # a discrete variable. Without an explicit scale kind the compile aborts; with
-  # one, one of the two variables is forced onto a scale of the wrong kind.
-  clash <- .colour_type_clash(votes)
-  if (!is.null(clash)) {
-    q <- clash$quantitative
-    d <- clash$discrete
-    add(
-      if (explicit_kind) "warning" else "error",
-      sprintf(
-        "color and fill share one colour scale and legend, but layer %d maps %s to a continuous variable and layer %d maps %s to a %s one.",
-        q$layer,
-        q$channel,
-        d$layer,
-        d$channel,
-        d$type
-      ),
-      field = d$channel,
-      hint = "Map both to the same kind of variable (convert one with factor() or as.numeric())."
-    )
-  }
+    # 2. One channel (one scale, one legend) mapped to a continuous variable
+    # in one layer and a discrete one in another. Without an explicit scale
+    # kind the compile aborts; with one, one of the two variables is forced
+    # onto a scale of the wrong kind.
+    clash <- .colour_type_clash(votes)
+    if (!is.null(clash)) {
+      q <- clash$quantitative
+      d <- clash$discrete
+      add(
+        if (explicit_kind) "warning" else "error",
+        sprintf(
+          "Layers share one %s scale and legend, but layer %d maps %s to a continuous variable and layer %d maps it to a %s one.",
+          channel,
+          q$layer,
+          channel,
+          d$layer,
+          d$type
+        ),
+        field = channel,
+        hint = "Map both to the same kind of variable (convert one with factor() or as.numeric())."
+      )
+    }
 
-  # 3. A manual (discrete) palette on a continuous colour channel. The compile
-  # refuses it, as ggplot2 does ("Continuous values supplied to a discrete
-  # scale"), so it is an error here too, caught before compiling.
-  quant <- Filter(function(v) identical(v$type, "quantitative"), votes)
-  if (
-    length(quant) &&
-      !is.null(scalespec) &&
-      identical(scalespec@type, "discrete") &&
-      !is.null(scalespec@palette)
-  ) {
-    v <- quant[[1]]
-    add(
-      "error",
-      sprintf(
-        "A manual/discrete colour palette is set, but layer %d maps %s to a continuous variable: continuous values cannot go on a discrete colour scale.",
-        v$layer,
-        v$channel
-      ),
-      field = v$channel,
-      hint = "Use a continuous colour scale (scale_color_gradient(), scale_color_viridis_c(), scale_color_binned()), or convert the variable with factor()."
-    )
+    # 3. A manual (discrete) palette on a continuous colour channel. The
+    # compile refuses it, as ggplot2 does ("Continuous values supplied to a
+    # discrete scale"), so it is an error here too, caught before compiling.
+    quant <- Filter(function(v) identical(v$type, "quantitative"), votes)
+    if (
+      length(quant) &&
+        !is.null(scalespec) &&
+        identical(scalespec@type, "discrete") &&
+        !is.null(scalespec@palette)
+    ) {
+      v <- quant[[1]]
+      add(
+        "error",
+        sprintf(
+          "A manual/discrete palette is set on the %s scale, but layer %d maps %s to a continuous variable: continuous values cannot go on a discrete colour scale.",
+          channel,
+          v$layer,
+          v$channel
+        ),
+        field = v$channel,
+        hint = sprintf(
+          "Use a continuous colour scale (scale_%1$s_gradient(), scale_%1$s_viridis_c(), scale_%1$s_binned()), or convert the variable with factor().",
+          channel
+        )
+      )
+    }
   }
   out
 }
@@ -537,9 +545,9 @@ spec_fields <- function(data, n_examples = 3L) {
 #' * a **facet variable missing** from the plot data (an error), or from a
 #'   layer's own data (a warning: that layer is then repeated across that
 #'   variable's panels);
-#' * **`color` and `fill` mapped to variables of different type** (one
-#'   continuous, one discrete) although they share one colour scale and legend
-#'   (an error, or a warning when the scale kind is set explicitly);
+#' * **`color` (or `fill`) mapped to variables of different type** in two
+#'   layers (one continuous, one discrete), although the layers share one scale
+#'   and legend (an error, or a warning when the scale kind is set explicitly);
 #' * a **manual or discrete palette** (`scale_color_manual()`, ...) on a
 #'   continuous colour channel, which the compile refuses (an error).
 #'

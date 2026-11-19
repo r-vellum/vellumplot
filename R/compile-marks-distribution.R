@@ -106,15 +106,15 @@ NULL
 }
 
 # Fill and outline of a filled distribution mark, with ggplot2's semantics:
-# `fill` fills, `color` strokes. A mapped `fill` goes through the colour scale,
+# `fill` fills, `color` strokes. A mapped `fill` goes through the fill scale,
 # else a constant (non-paint) `fill`, else `fill_default`; the outline is a
 # mapped or constant `color`, else `col_default`. Neither falls back to the other
 # channel, so `color = g` outlines the shapes in g's colours over the default
 # fill. Returns per-row vectors.
 .dist_paint <- function(L, scales, fill_default, col_default = "grey20") {
   n <- L$n
-  fill <- if (!is.null(scales$color) && !is.null(L$values$fill)) {
-    scales$color$map(L$values$fill)
+  fill <- if (!is.null(scales$fill) && !is.null(L$values$fill)) {
+    scales$fill$map(L$values$fill)
   } else {
     (if (.is_paint(L$params$fill)) NULL else L$params$fill) %||% fill_default
   }

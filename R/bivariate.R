@@ -452,28 +452,27 @@ guide_bivariate <- function(
 # --- training ---------------------------------------------------------------
 
 # The `bi_class()` record (dim, axis names, breaks) for the column a layer maps
-# to color/fill, or NULL. Looked up on the plot/layer data by column name,
-# since resolved values may be per-panel subsets that lost the attribute.
-.bivariate_info <- function(spec) {
+# to `channel` (color or fill), or NULL. Looked up on the plot/layer data by
+# column name, since resolved values may be per-panel subsets that lost the
+# attribute.
+.bivariate_info <- function(spec, channel) {
   for (layer in spec@layers) {
-    for (a in c("fill", "color")) {
-      ch <- layer@encoding[[a]]
-      if (is.null(ch)) {
-        next
-      }
-      e <- rlang::quo_get_expr(ch@expr)
-      if (!is.symbol(e)) {
-        next
-      }
-      d <- layer@data %||% spec@data
-      if (!is.data.frame(d)) {
-        next
-      }
-      col <- d[[as.character(e)]]
-      info <- attr(col, "vellum_bivariate", exact = TRUE)
-      if (!is.null(info)) {
-        return(info)
-      }
+    ch <- layer@encoding[[channel]]
+    if (is.null(ch)) {
+      next
+    }
+    e <- rlang::quo_get_expr(ch@expr)
+    if (!is.symbol(e)) {
+      next
+    }
+    d <- layer@data %||% spec@data
+    if (!is.data.frame(d)) {
+      next
+    }
+    col <- d[[as.character(e)]]
+    info <- attr(col, "vellum_bivariate", exact = TRUE)
+    if (!is.null(info)) {
+      return(info)
     }
   }
   NULL

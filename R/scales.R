@@ -810,13 +810,11 @@ scale_y_time <- function(
   )
 }
 
-# Canonicalise an aesthetic name for a limits shortcut (British spelling, `fill`
-# shares the colour scale).
+# Canonicalise an aesthetic name for a limits shortcut (British spelling).
 .canonical_lim_aes <- function(aesthetic) {
   switch(
     aesthetic,
     colour = "color",
-    fill = "color",
     aesthetic
   )
 }
@@ -893,13 +891,15 @@ ylim <- function(plot, ...) {
 
 #' Colour scales
 #'
-#' Declare a colour scale for the `color`/`fill` channel. Continuous data get a
+#' Declare the scale for the `color` or the `fill` channel. Continuous data get a
 #' perceptual ramp; discrete data get a qualitative palette. `scale_*_manual()`
 #' sets exact colours, `scale_*_gradient()` a two-point ramp, and
 #' `scale_*_gradient2()` a diverging three-point ramp (`low`--`mid`--`high`)
 #' centred on `midpoint` --- for signed or anomaly data where a meaningful zero
-#' should sit at the neutral colour. The `fill` variants are identical (colour and
-#' fill share one scale). A legend is drawn automatically when colour is mapped.
+#' should sit at the neutral colour. The `fill` variants set the fill scale the
+#' same way: `color` and `fill` are separate scales with separate legends, as in
+#' ggplot2, drawn as one legend when they show the same title and keys. A
+#' legend is drawn automatically when colour or fill is mapped.
 #'
 #' Continuous and binned ramps built from a plain colour vector are interpolated
 #' in the perceptually-uniform **Oklab** space, so they avoid the muddy, over-dark
@@ -2856,7 +2856,7 @@ scale_color_identity <- function(plot) {
 #' @export
 scale_fill_identity <- function(plot) {
   .check_plot(plot)
-  .add_scale(plot, ScaleSpec(aesthetic = "color", type = "identity"))
+  .add_scale(plot, ScaleSpec(aesthetic = "fill", type = "identity"))
 }
 
 #' @rdname scale_color_identity

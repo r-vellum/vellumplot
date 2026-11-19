@@ -571,11 +571,10 @@ mark_hierarchy <- function(
   channels <- rlang::enquos(id = id, parent = parent, value = value)
   if (!rlang::quo_is_null(fill_q)) {
     channels$fill <- fill_q
-  } else if (is.null(plot@labels$color) && is.null(plot@labels$fill)) {
+  } else if (is.null(plot@labels$fill)) {
     # Default branch-fill legend title (the synthesised fill has no expression to
-    # name it). Stored under the canonical `color` key; a later labs()/scale name
-    # still wins.
-    plot@labels$color <- "branch"
+    # name it). A later labs()/scale name still wins.
+    plot@labels$fill <- "branch"
   }
   .add_layer(
     plot,

@@ -305,7 +305,8 @@ NULL
     m <- length(cv)
     mid <- rowMeans(cbind(cv[-m], cv[-1L]), na.rm = TRUE)
     mid[!is.finite(mid)] <- NA_real_
-    seg_col <- scales$color$map(mid)[s$row]
+    # `cv` is the layer's `color`, or its `fill` when it maps no colour
+    seg_col <- (scales$color %||% scales$fill)$map(mid)[s$row]
   }
   .draw(
     scene,
@@ -1329,7 +1330,7 @@ NULL
   # carried in the per-row colour vector (which `rep_len` would corrupt).
   paint <- .paint_fill(L)
   fillv <- if (!is.null(L$values$fill)) {
-    scales$color$map(L$values$fill)
+    scales$fill$map(L$values$fill)
   } else if (!is.null(L$params$fill) && is.null(paint)) {
     L$params$fill
   } else {

@@ -320,11 +320,11 @@ test_that("mapped fill trains on the column, realigned to the layout rows", {
 })
 
 test_that("branch mode sets a 'branch' legend title; mapped and labs() override", {
-  # labs(fill=) and the branch default both live under the canonical `color` key
-  expect_identical(vhierarchy(hf, id, parent, value)@labels$color, "branch")
-  expect_null(vhierarchy(hf, id, parent, value, fill = region)@labels$color)
+  # labs(fill=) and the branch default both title the fill scale
+  expect_identical(vhierarchy(hf, id, parent, value)@labels$fill, "branch")
+  expect_null(vhierarchy(hf, id, parent, value, fill = region)@labels$fill)
   p <- vhierarchy(hf, id, parent, value) |> labs(fill = "Division")
-  expect_identical(p@labels$color, "Division")
+  expect_identical(p@labels$fill, "Division")
 })
 
 test_that("lighten is validated", {

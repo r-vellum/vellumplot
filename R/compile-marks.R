@@ -508,14 +508,22 @@ NULL
 # Per-row legend membership: for each discrete colour/fill/shape scale the layer
 # maps, the element's series key(s) "<aes>:<value>". Returns a list (one entry per
 # row, each a character vector), or NULL when the layer maps no discrete legend
-# aesthetic. Matches the `legend_for` a discrete legend swatch carries.
+# aesthetic. Matches the `legend_for` a discrete legend swatch carries. A fill
+# key reads "color:<value>" unless the fill legend stands beside a separate
+# colour legend (`.fill_series_aes()`).
 .legend_membership <- function(L, scales) {
   n <- L$n
   cols <- list()
-  if (!is.null(scales$color) && identical(scales$color$type, "discrete")) {
-    cv <- L$values$color %||% L$values$fill
-    if (!is.null(cv)) {
-      cols[["color"]] <- paste0("color:", as.character(rep_len(cv, n)))
+  for (ch in c("color", "fill")) {
+    sc <- scales[[ch]]
+    v <- L$values[[ch]]
+    if (!is.null(sc) && identical(sc$type, "discrete") && !is.null(v)) {
+      ns <- if (ch == "fill") sc$series_aes %||% "color" else "color"
+      key <- paste0(ns, ":", as.character(rep_len(v, n)))
+      # a layer mapping both to one variable keys each element once
+      if (!identical(cols[["color"]], key)) {
+        cols[[ch]] <- key
+      }
     }
   }
   if (!is.null(scales$shape) && !is.null(L$values$shape)) {
@@ -802,15 +810,19 @@ NULL
     .mark_ctx$legend <- if (ok) .legend_membership(L, scales) else NULL
     # Per-mark value on a continuous colour scale, for the interactive colorbar
     # filter (a host hides marks whose value is outside the dragged range). Only
-    # for keyed marks (addressable) with a continuous colour scale; the raw data
-    # value is `L$values$color` (fallback `fill`), recycled to the row count.
+    # for keyed marks (addressable) with a continuous colour (else fill) scale;
+    # the raw data value is the layer's `color` (else `fill`), recycled to the
+    # row count.
     .mark_ctx$filter_value <- local({
-      cc <- scales$color
-      if (!ok || is.null(cc) || !identical(cc$type, "continuous")) {
-        return(NULL)
+      v <- NULL
+      for (ch in c("color", "fill")) {
+        cc <- scales[[ch]]
+        if (!is.null(cc) && identical(cc$type, "continuous")) {
+          v <- L$values[[ch]]
+          if (!is.null(v)) break
+        }
       }
-      v <- L$values$color %||% L$values$fill
-      if (is.null(v)) NULL else as.numeric(rep_len(v, L$n))
+      if (!ok || is.null(v)) NULL else as.numeric(rep_len(v, L$n))
     })
     # Conditional encodings (from `condition()`): a layer bearing one is
     # interactive, so its elements need addressable keys even if no `data_id` was

@@ -367,6 +367,7 @@ NULL
       x = p$x_sc,
       y = p$y_sc,
       color = aes_sc("color"),
+      fill = aes_sc("fill"),
       size = aes_sc("size"),
       shape = aes_sc("shape"),
       pattern = aes_sc("pattern"),
@@ -890,7 +891,7 @@ NULL
       lay,
       hscale(p1),
       vscale(p1),
-      built$scales$color,
+      built$scales[[src$channel]],
       rt,
       plot_sketch
     )

@@ -301,6 +301,7 @@ NULL
     x = panel$x_sc,
     y = panel$y_sc,
     color = built$scales$color,
+    fill = built$scales$fill,
     size = built$scales$size,
     shape = built$scales$shape,
     pattern = built$scales$pattern,

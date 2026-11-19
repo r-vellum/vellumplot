@@ -128,7 +128,9 @@ add_marginal <- function(
     if (!clean(vx, nx) || !clean(vy, ny)) {
       next
     }
-    return(list(x = nx, y = ny, color = L$values$color %||% L$values$fill))
+    # the grouping channel, whose scale colours the grouped marginals
+    channel <- if (!is.null(L$values$color)) "color" else "fill"
+    return(list(x = nx, y = ny, color = L$values[[channel]], channel = channel))
   }
   cli::cli_abort(c(
     "{.fn add_marginal} needs a layer mapping numeric {.field x} and {.field y}.",

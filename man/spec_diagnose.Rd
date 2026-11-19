@@ -50,9 +50,9 @@ wrong plot or fail with an opaque error:
 \item a \strong{facet variable missing} from the plot data (an error), or from a
 layer's own data (a warning: that layer is then repeated across that
 variable's panels);
-\item \strong{\code{color} and \code{fill} mapped to variables of different type} (one
-continuous, one discrete) although they share one colour scale and legend
-(an error, or a warning when the scale kind is set explicitly);
+\item \strong{\code{color} (or \code{fill}) mapped to variables of different type} in two
+layers (one continuous, one discrete), although the layers share one scale
+and legend (an error, or a warning when the scale kind is set explicitly);
 \item a \strong{manual or discrete palette} (\code{scale_color_manual()}, ...) on a
 continuous colour channel, which the compile refuses (an error).
 }
