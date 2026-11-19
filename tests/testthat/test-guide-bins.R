@@ -71,6 +71,15 @@ test_that("binned colour scales take guide_bins() too", {
   expect_true(sc$bins)
   expect_equal(sc$bin_breaks, sort(as.numeric(sc$breaks)))
   expect_length(legend_texts(p), length(sc$breaks))
+  # and the fill scale, with its square swatches
+  f <- vplot(data.frame(x = 1:6, y = 1, v = c(1, 3, 5, 7, 9, 11))) |>
+    mark_tile(x = x, y = y, fill = v) |>
+    scale_fill_binned(breaks = c(0, 4, 8, 12)) |>
+    guides(fill = guide_bins())
+  sf <- vellumplot:::.build_panels(f)$scales$fill
+  expect_true(sf$bins)
+  expect_equal(sf$bin_breaks, c(0, 4, 8, 12))
+  expect_identical(legend_texts(f), c("4", "8"))
 })
 
 test_that("bins legends lay out vertically and horizontally", {
