@@ -1,6 +1,27 @@
 #' @include classes.R
 NULL
 
+# --- living beside ggplot2 ----------------------------------------------------
+#
+# ggplot2 looks two kinds of constructor up *by name* from the plot's
+# environment, i.e. along the search path: the default scale of each mapped
+# aesthetic (`scale_colour_continuous()`, `scale_x_discrete()`, ...) and a guide
+# given as a string (`guide = "legend"`, the default of every discrete scale).
+# With vellumplot attached after ggplot2 that lookup finds vellumplot's
+# constructor of the same name and calls it with no arguments, which breaks the
+# ggplot. Each constructor ggplot2 can reach this way therefore starts with
+# `if (.ggplot2_asks()) return(.ggplot2_own("<name>"))`: called from inside
+# ggplot2's namespace, it hands back ggplot2's own scale or guide.
+
+# Is the caller of the calling constructor ggplot2's own code?
+.ggplot2_asks <- function(env = parent.frame(2)) {
+  top <- topenv(env)
+  isNamespace(top) && identical(getNamespaceName(top), c(name = "ggplot2"))
+}
+
+# ggplot2's constructor `name`, called with its defaults.
+.ggplot2_own <- function(name) getExportedValue("ggplot2", name)()
+
 # Append a scale, replacing any existing scale for the same aesthetic
 # (last-one-wins).
 .add_scale <- function(plot, scale) {
@@ -273,6 +294,7 @@ scale_x_continuous <- function(
   oob = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_x_continuous"))
   plot <- .continuous_position_scale(
     plot,
     "x",
@@ -302,6 +324,7 @@ scale_y_continuous <- function(
   oob = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_y_continuous"))
   plot <- .continuous_position_scale(
     plot,
     "y",
@@ -581,6 +604,7 @@ scale_x_discrete <- function(
   drop = TRUE,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_x_discrete"))
   plot <- .discrete_position_scale(
     plot,
     "x",
@@ -604,6 +628,7 @@ scale_y_discrete <- function(
   drop = TRUE,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_y_discrete"))
   plot <- .discrete_position_scale(
     plot,
     "y",
@@ -654,6 +679,7 @@ scale_x_date <- function(
   name = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_x_date"))
   .date_scale(
     plot,
     "x",
@@ -680,6 +706,7 @@ scale_y_date <- function(
   name = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_y_date"))
   .date_scale(
     plot,
     "y",
@@ -706,6 +733,7 @@ scale_x_datetime <- function(
   name = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_x_datetime"))
   .date_scale(
     plot,
     "x",
@@ -732,6 +760,7 @@ scale_y_datetime <- function(
   name = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_y_datetime"))
   .date_scale(
     plot,
     "y",
@@ -758,6 +787,7 @@ scale_x_time <- function(
   name = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_x_time"))
   .date_scale(
     plot,
     "x",
@@ -784,6 +814,7 @@ scale_y_time <- function(
   name = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_y_time"))
   .date_scale(
     plot,
     "y",
@@ -967,6 +998,7 @@ scale_color_continuous <- function(
   name = NULL,
   oob = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_color_continuous"))
   .check_continuous_limits(limits, "limits", numeric = TRUE)
   .colour_scale(
     plot,
@@ -990,6 +1022,7 @@ scale_color_discrete <- function(
   labels = NULL,
   name = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_color_discrete"))
   .colour_scale(plot, "color", "discrete", palette, breaks, labels, name)
 }
 
@@ -1092,6 +1125,7 @@ scale_fill_continuous <- function(
   name = NULL,
   oob = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_fill_continuous"))
   .check_continuous_limits(limits, "limits", numeric = TRUE)
   .colour_scale(
     plot,
@@ -1171,6 +1205,7 @@ scale_fill_discrete <- function(
   labels = NULL,
   name = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_fill_discrete"))
   .colour_scale(plot, "fill", "discrete", palette, breaks, labels, name)
 }
 
@@ -1547,6 +1582,7 @@ scale_color_ordinal <- function(
   limits = NULL,
   na.value = "grey50"
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_color_ordinal"))
   .discrete_colour_scale(
     plot,
     "color",
@@ -1574,6 +1610,7 @@ scale_fill_ordinal <- function(
   limits = NULL,
   na.value = "grey50"
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_fill_ordinal"))
   .discrete_colour_scale(
     plot,
     "fill",
@@ -2102,6 +2139,7 @@ scale_size <- function(
   name = NULL,
   oob = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_size"))
   .continuous_range_scale(plot, "size", range, limits, breaks, name, oob = oob)
 }
 
@@ -2195,6 +2233,7 @@ scale_size_binned <- function(
   name = NULL,
   n.breaks = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_size_binned"))
   .check_plot(plot)
   .check_continuous_limits(limits, "limits", numeric = TRUE)
   .check_continuous_limits(range, "range", numeric = TRUE, lower = 0)
@@ -2267,6 +2306,7 @@ scale_size_discrete <- function(
   limits = NULL,
   na.value = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_size_discrete"))
   .discrete_range_scale(
     plot,
     "size",
@@ -2291,6 +2331,7 @@ scale_size_ordinal <- function(
   limits = NULL,
   na.value = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_size_ordinal"))
   .discrete_range_scale(
     plot,
     "size",
@@ -2434,6 +2475,7 @@ scale_linewidth <- function(
   breaks = NULL,
   name = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_linewidth"))
   .continuous_range_scale(plot, "linewidth", range, limits, breaks, name)
 }
 
@@ -2808,6 +2850,7 @@ scale_shape <- function(
   limits = NULL,
   na.value = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_shape"))
   .discrete_palette_scale(
     plot,
     "shape",
@@ -2906,6 +2949,7 @@ scale_pattern <- function(plot, values = NULL, name = NULL) {
 #' vplot(df) |> mark_point(x = x, y = y, color = col) |> scale_color_identity()
 #' @export
 scale_color_identity <- function(plot) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_color_identity"))
   .check_plot(plot)
   .add_scale(plot, ScaleSpec(aesthetic = "color", type = "identity"))
 }
@@ -2913,6 +2957,7 @@ scale_color_identity <- function(plot) {
 #' @rdname scale_color_identity
 #' @export
 scale_fill_identity <- function(plot) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_fill_identity"))
   .check_plot(plot)
   .add_scale(plot, ScaleSpec(aesthetic = "fill", type = "identity"))
 }
@@ -2924,6 +2969,7 @@ scale_colour_identity <- scale_color_identity
 #' @rdname scale_color_identity
 #' @export
 scale_size_identity <- function(plot) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_size_identity"))
   .check_plot(plot)
   .add_scale(plot, ScaleSpec(aesthetic = "size", type = "identity"))
 }
@@ -2931,6 +2977,7 @@ scale_size_identity <- function(plot) {
 #' @rdname scale_color_identity
 #' @export
 scale_shape_identity <- function(plot) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_shape_identity"))
   .check_plot(plot)
   .add_scale(plot, ScaleSpec(aesthetic = "shape", type = "identity"))
 }
@@ -2938,6 +2985,7 @@ scale_shape_identity <- function(plot) {
 #' @rdname scale_color_identity
 #' @export
 scale_alpha_identity <- function(plot) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_alpha_identity"))
   .check_plot(plot)
   .add_scale(plot, ScaleSpec(aesthetic = "alpha", type = "identity"))
 }
@@ -2945,6 +2993,7 @@ scale_alpha_identity <- function(plot) {
 #' @rdname scale_color_identity
 #' @export
 scale_linetype_identity <- function(plot) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_linetype_identity"))
   .check_plot(plot)
   .add_scale(plot, ScaleSpec(aesthetic = "linetype", type = "identity"))
 }
@@ -2980,6 +3029,7 @@ scale_alpha <- function(
   name = NULL,
   oob = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_alpha"))
   .continuous_range_scale(
     plot,
     "alpha",
@@ -3051,6 +3101,7 @@ scale_alpha_discrete <- function(
   limits = NULL,
   na.value = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_alpha_discrete"))
   .discrete_range_scale(
     plot,
     "alpha",
@@ -3076,6 +3127,7 @@ scale_alpha_ordinal <- function(
   limits = NULL,
   na.value = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_alpha_ordinal"))
   .discrete_range_scale(
     plot,
     "alpha",
@@ -3124,6 +3176,7 @@ scale_linetype <- function(
   limits = NULL,
   na.value = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_linetype"))
   .discrete_palette_scale(
     plot,
     "linetype",

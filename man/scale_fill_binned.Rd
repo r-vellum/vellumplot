@@ -22,8 +22,8 @@
 \usage{
 scale_fill_binned(
   plot,
-  style = "quantile",
-  n = 5,
+  style = "extended",
+  n = NULL,
   breaks = NULL,
   palette = NULL,
   labels = NULL,
@@ -33,8 +33,8 @@ scale_fill_binned(
 
 scale_color_binned(
   plot,
-  style = "quantile",
-  n = 5,
+  style = "extended",
+  n = NULL,
   breaks = NULL,
   palette = NULL,
   labels = NULL,
@@ -44,35 +44,41 @@ scale_color_binned(
 
 scale_color_steps(
   plot,
-  style = "quantile",
-  n = 5,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
   breaks = NULL,
-  palette = NULL,
   labels = NULL,
-  na_value = "grey80",
-  name = NULL
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
 )
 
 scale_colour_steps(
   plot,
-  style = "quantile",
-  n = 5,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
   breaks = NULL,
-  palette = NULL,
   labels = NULL,
-  na_value = "grey80",
-  name = NULL
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
 )
 
 scale_fill_steps(
   plot,
-  style = "quantile",
-  n = 5,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
   breaks = NULL,
-  palette = NULL,
   labels = NULL,
-  na_value = "grey80",
-  name = NULL
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
 )
 
 scale_color_steps2(
@@ -93,6 +99,7 @@ scale_color_steps2(
 scale_color_stepsn(
   plot,
   colours,
+  values = NULL,
   name = NULL,
   breaks = NULL,
   labels = NULL,
@@ -147,6 +154,7 @@ scale_fill_steps2(
 scale_fill_stepsn(
   plot,
   colours,
+  values = NULL,
   name = NULL,
   breaks = NULL,
   labels = NULL,
@@ -201,6 +209,7 @@ scale_colour_steps2(
 scale_colour_stepsn(
   plot,
   colours,
+  values = NULL,
   name = NULL,
   breaks = NULL,
   labels = NULL,
@@ -240,27 +249,33 @@ scale_colour_viridis_b(
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{style}{Classification style: one of \code{"quantile"}, \code{"equal"}, \code{"pretty"}
-(base R), or any \code{classInt::classIntervals()} style. Default \code{"quantile"}.}
+\item{style}{Classification style: \code{"extended"} (the default, ggplot2's
+breaks), \code{"quantile"}, \code{"equal"}, \code{"pretty"} (base R), or any
+\code{classInt::classIntervals()} style.}
 
-\item{n}{Number of classes (default \code{5}). Ignored when \code{breaks} is supplied.}
+\item{n}{For \code{"extended"}, the approximate number of class boundaries
+(default 5); for the other styles, the number of classes (default 5).
+Ignored when \code{breaks} is supplied.}
 
-\item{breaks}{Explicit class boundaries (length = number of classes + 1),
-overriding \code{style}/\code{n}.}
+\item{breaks}{Explicit class boundaries, overriding \code{style}/\code{n}. Under
+\code{"extended"} the data range is added as the outer boundaries (as ggplot2
+adds its limits); under the other styles they are every boundary (length =
+number of classes + 1).}
 
 \item{palette}{A sequential palette: \code{NULL} (batlow), an \code{grDevices::hcl.pals()}
 name, or a vector of colours interpolated across the classes.}
 
 \item{labels}{Optional class labels (one per class); defaults to interval
-ranges like \code{"[0, 10)"}.}
+ranges like \code{"(0, 10]"}.}
 
 \item{na_value}{Fill colour for \code{NA} values (shown as a distinct legend
 swatch). Default \code{"grey80"}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
 
-\item{low, mid, high, midpoint}{For \verb{scale_*_steps2()}, the end and midpoint
-colours and the data value at \code{mid}.}
+\item{low, mid, high, midpoint}{For \verb{scale_*_steps()}, the end colours \code{low}
+and \code{high}; for \verb{scale_*_steps2()}, the end and midpoint colours and the
+data value at \code{mid}.}
 
 \item{limits}{For the ggplot2-named scales, a length-2 numeric
 \code{c(min, max)}: the outer class boundaries.}
@@ -276,6 +291,10 @@ the outer class, \code{"censor"} with \code{na.value}; or a \verb{function(x, ra
 
 \item{colours}{For \verb{scale_*_stepsn()}, the colours of the ramp.}
 
+\item{values}{For \verb{scale_*_stepsn()}, the positions (between 0 and 1, one
+per colour, increasing) of \code{colours} along the ramp, or \code{NULL} to space
+them evenly.}
+
 \item{type, direction}{For \verb{scale_*_fermenter()}, the ColorBrewer family a
 numeric \code{palette} indexes and its order (see \code{\link[=scale_color_brewer]{scale_color_brewer()}}); for
 \verb{scale_*_viridis_b()}, \code{direction = -1} reverses the map.}
@@ -289,16 +308,22 @@ The modified \link{PlotSpec}.
 \description{
 \code{scale_fill_binned()} / \code{scale_color_binned()} cut a continuous aesthetic into
 classes and colour each class with one step of a sequential palette — the
-standard choropleth scale. Class breaks are chosen by a classification
-\code{style}. \code{quantile}, \code{equal}, and \code{pretty} need no extra packages; other
-styles (e.g. \code{"jenks"}, \code{"fisher"}, \code{"kmeans"}, \code{"headtails"}) delegate to the
-optional \code{classInt} package (in \code{Suggests}) and error if it is absent.
+standard choropleth scale. By default the classes follow ggplot2's binning
+(\code{style = "extended"}): about \code{n} "nice" class boundaries inside the data
+range, the outer classes widened to whole bins, and classes closed on the
+right, \verb{(a, b]}. A classification \code{style} chooses other breaks: \code{quantile},
+\code{equal}, and \code{pretty} need no extra packages; other styles (e.g. \code{"jenks"},
+\code{"fisher"}, \code{"kmeans"}, \code{"headtails"}) delegate to the optional \code{classInt}
+package (in \code{Suggests}) and error if it is absent. Those classes close on
+the left, \verb{[a, b)}.
 
 The ggplot2-named binned colour scales follow ggplot2's binning: without
 \code{breaks}, about \code{n.breaks} "nice" class boundaries inside the data range,
 the outer classes widened to whole bins (with \code{limits}, the limits are the
 outer boundaries); classes close on the right, \verb{(a, b]}.
 \itemize{
+\item \verb{scale_*_steps()} --- a two-colour \code{low}--\code{high} ramp, each class taking
+the ramp's colour at its centre.
 \item \verb{scale_*_steps2()} --- a diverging \code{low}--\code{mid}--\code{high} ramp centred on
 \code{midpoint}, each class taking the ramp's colour at its centre.
 \item \verb{scale_*_stepsn()} --- an n-colour ramp \code{colours}, sampled at each class
@@ -309,11 +334,14 @@ centre.
 }
 }
 \details{
-\code{scale_color_steps()} / \code{scale_fill_steps()} are aliases of the binned colour
-scales, for ggplot2 users who reach for the \verb{_steps} name — a continuous
-variable cut into steps with an interval-key legend.
+A colour vector \code{palette} is a ramp, sampled at each class's centre as in
+ggplot2; a named palette (and the default) gives one evenly spaced colour
+per class.
 }
 \examples{
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting, color = waiting) |>
+  scale_color_binned()
 \dontrun{
 nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 vplot(nc) |>

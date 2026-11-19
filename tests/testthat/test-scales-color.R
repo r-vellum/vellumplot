@@ -102,11 +102,11 @@ test_that("a binned colour scale with too-few breaks errors clearly (H43)", {
   # in colorRampPalette(...)(0).
   p1 <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>
-    scale_color_binned(breaks = 100)
+    scale_color_binned(style = "quantile", breaks = 100)
   expect_error(train(p1), "at least 2 breaks")
   p0 <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>
-    scale_color_binned(breaks = numeric(0))
+    scale_color_binned(style = "quantile", breaks = numeric(0))
   expect_error(train(p0), "at least 2 breaks")
   # two breaks (one class) is the minimum and still trains
   p2 <- vplot(mtcars) |>

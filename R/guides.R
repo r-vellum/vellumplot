@@ -106,7 +106,10 @@ guides <- function(plot, ...) {
 
 #' @rdname guides
 #' @export
-guide_none <- function() "none"
+guide_none <- function() {
+  if (.ggplot2_asks()) return(.ggplot2_own("guide_none"))
+  "none"
+}
 
 #' @rdname guides
 #' @export
@@ -116,6 +119,7 @@ guide_legend <- function(
   override.aes = NULL,
   nested = FALSE
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("guide_legend"))
   list(
     kind = "legend",
     title = title,
@@ -137,6 +141,7 @@ guide_colourbar <- function(
   n.breaks = NULL,
   reverse = FALSE
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("guide_colourbar"))
   .guide_bar(
     "colourbar",
     title,
@@ -165,6 +170,7 @@ guide_coloursteps <- function(
   label.position = NULL,
   reverse = FALSE
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("guide_coloursteps"))
   .guide_bar(
     "coloursteps",
     title,
@@ -234,6 +240,7 @@ guide_axis <- function(
   minor.ticks = FALSE,
   cap = "none"
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("guide_axis"))
   if (
     !is.null(angle) &&
       (!is.numeric(angle) || length(angle) != 1L || !is.finite(angle))
@@ -288,6 +295,7 @@ guide_axis_logticks <- function(
   cap = "none",
   title = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("guide_axis_logticks"))
   for (nm in c("long", "mid", "short")) {
     v <- get(nm)
     if (!is.numeric(v) || length(v) != 1L || !is.finite(v) || v < 0) {
