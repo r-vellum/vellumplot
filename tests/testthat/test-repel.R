@@ -145,3 +145,49 @@ test_that("repelled text and label marks render", {
   )
   expect_gt(file.info(f2)$size, 0)
 })
+
+test_that("repel survives NA positions and labels (VP-20)", {
+  d <- data.frame(
+    x = c(1, 1.02, 1.04, NA, 2, 3),
+    y = c(1, 1, 1, 2, NA, 3),
+    lab = c("aaaa", "bbbb", NA, "dddd", "eeee", "ffff")
+  )
+  for (mk in c(mark_text, mark_label)) {
+    p <- vplot(d) |>
+      mark_point(x = x, y = y) |>
+      mk(x = x, y = y, label = lab, repel = TRUE)
+    f <- local_tempfile(fileext = ".png")
+    expect_no_error(render_plot(p, f))
+    # the incomplete rows are dropped before emitting; the rest are placed
+    b <- repel_boxes(p)
+    expect_identical(nrow(b), 3L)
+    expect_identical(overlapping_pairs(b), 0L)
+  }
+})
+
+test_that("solved offsets are scattered onto the node by index (VP-20)", {
+  sc <- vellum::vl_scene(width = 4, height = 3)
+  sc <- vellum::draw(
+    sc,
+    vellum::text_grob(
+      c("a", "b", "c"),
+      vellum::vl_unit(c(10, 20, 30), "mm"),
+      vellum::vl_unit(c(10, 20, 30), "mm"),
+      name = "repel:p:1:0"
+    )
+  )
+  # the solver reported elements 1 and 3 only (it skipped element 2)
+  out <- .repel_move_node(
+    sc,
+    "repel:p:1:0",
+    dx = c(1, 3),
+    dy = c(-1, -3),
+    present = vellum::node_names(sc),
+    index = c(1L, 3L)
+  )
+  node <- vellum::get_node(out, "repel:p:1:0")
+  expect_length(node@x, 3L)
+  ref <- vellum::get_node(sc, "repel:p:1:0")
+  expect_identical(format(node@x[2]), format(ref@x[2])) # untouched
+  expect_false(identical(format(node@x[3]), format(ref@x[3])))
+})

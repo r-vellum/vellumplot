@@ -61,6 +61,18 @@
 
 ## Bug fixes
 
+* **`mark_rule()` draws each rule in its own colour.** A mapped `color`,
+  `alpha` or `linetype` used to collapse to the first row, so every rule took
+  one colour while the legend showed several. The rules are now split into style
+  groups, as `mark_abline()` styles each line.
+
+* **Repelled labels survive missing values.** `mark_text(repel = TRUE)` and
+  `mark_label(repel = TRUE)` crashed when any row had an `NA` position or label:
+  the solver skips such labels, so its solution had fewer rows than the label
+  grob and the offsets were recycled to the wrong length. Incomplete rows are now
+  dropped before the labels are drawn, and the solved offsets are applied by
+  element index.
+
 * **Provenance carries every trained scale.** `plot_provenance()` records
   listed scale-refs only for `x`, `y`, colour/fill, `size` and `shape`. A
   mapped `alpha`, `linetype`, `linewidth` or `pattern` now carries its
