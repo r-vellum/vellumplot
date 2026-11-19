@@ -195,12 +195,11 @@ NULL
 # aesthetic constant within every shape (one value per category) is kept.
 .drop_varying_shape_style <- function(L) {
   n <- L$n %||% max(lengths(L$values))
-  cat_axis <- switch(
-    L$mark,
-    violin = .dist_axes(.dist_orient(L))[["cat"]],
-    ridgeline = "y",
-    "x"
-  )
+  cat_axis <- if (identical(L$mark, "ridgeline")) {
+    "y"
+  } else {
+    .dist_axes(.dist_orient(L))[["cat"]]
+  }
   cats <- L$values[[cat_axis]]
   if (!n || length(cats) != n) {
     return(L)

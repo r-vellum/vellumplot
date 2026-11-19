@@ -69,7 +69,7 @@ NULL
   cells
 }
 
-# The orientation of a box plot / violin: `"x"` when the categories run along
+# The orientation of a box plot / violin / slab-interval: `"x"` when the categories run along
 # x (vertical shapes), `"y"` when they run along y (horizontal shapes). An
 # explicit `orientation` wins; otherwise, as in ggplot2, a discrete y with a
 # continuous x is horizontal and everything else vertical.
@@ -493,13 +493,20 @@ NULL
   list(point = ctr, ints = ints)
 }
 
-# ggdist-style slab + interval, per `x` category. Always draws a point-interval
+# ggdist-style slab + interval, per category. Always draws a point-interval
 # (median/mean point, thick inner + thin outer quantile bars); with `slab = TRUE`
-# also draws a one-sided density "slab" (half violin) to the right of the tick.
+# also draws a one-sided density "slab" (half violin) to the right of the tick,
+# or above it when horizontal (categories on y, `orientation = "y"`).
 # Aimed at sample/posterior input: many `y` rows per category.
 .emit_slabinterval <- function(scene, L, scales, slab) {
-  yv <- rep_len(as.numeric(L$values$y), L$n)
-  band <- scales$x$band_width %||% .resolution(scales$x$map(L$values$x))
+  orient <- .dist_orient(L)
+  ax <- .dist_axes(orient)
+  ca <- ax[["cat"]]
+  va <- ax[["val"]]
+  yv <- rep_len(as.numeric(L$values[[va]]), L$n)
+  my <- function(v) scales[[va]]$map(v)
+  band <- scales[[ca]]$band_width %||%
+    .resolution(scales[[ca]]$map(L$values[[ca]]))
   widths <- sort(L$stat_params$width %||% c(0.66, 0.95))
   point <- L$stat_params$point %||% "median"
   colv <- rep_len(.aes_colour(L, scales, "grey30"), L$n)
@@ -510,7 +517,7 @@ NULL
   mrk <- if (slab) "mark_halfeye" else "mark_interval"
   # inner intervals thick, outer thin; drawn widest-first so the thick bar is on top
   lwd_by_width <- seq(4, 1.5, length.out = length(widths))
-  cells <- .by_category(L, scales, "x", span = .SLAB_WIDTH * band)
+  cells <- .by_category(L, scales, ca, span = .SLAB_WIDTH * band)
 
   for (k in seq_along(cells)) {
     cl <- cells[[k]]
@@ -527,7 +534,7 @@ NULL
     xc <- cl$centre
     ccol <- colv[sel[1]]
     a <- alpha[sel[1]]
-    d <- if (slab) .density_of(.native_values(scales$y, yv[sel]), adjust)
+    d <- if (slab) .density_of(.native_values(scales[[va]], yv[sel]), adjust)
 
     if (!is.null(d)) {
       # up the flat left edge, down the bulge
@@ -537,7 +544,7 @@ NULL
         .density_offset(d, hw0 * cl$share),
         "slab"
       )
-      xy <- .xy_units(scales, poly$perp, poly$supp)
+      xy <- .dist_xy(scales, orient, poly$perp, poly$supp)
       scene <- .draw(
         scene,
         vellum::polygon_grob(
@@ -558,9 +565,9 @@ NULL
     pit <- .point_interval(yv[sel], widths, point)
     # widest first (widths is sorted ascending) so the thick inner bar draws last
     for (wi in rev(seq_along(widths))) {
-      lo <- scales$y$map(pit$ints[[wi]][1])
-      hi <- scales$y$map(pit$ints[[wi]][2])
-      ab <- .xy_units(scales, c(xc, xc), c(lo, hi))
+      lo <- my(pit$ints[[wi]][1])
+      hi <- my(pit$ints[[wi]][2])
+      ab <- .dist_xy(scales, orient, c(xc, xc), c(lo, hi))
       scene <- .draw(
         scene,
         vellum::segments_grob(
@@ -579,7 +586,7 @@ NULL
         rows = sel
       )
     }
-    pt <- .xy_units(scales, xc, scales$y$map(pit$point))
+    pt <- .dist_xy(scales, orient, xc, my(pit$point))
     scene <- .draw(
       scene,
       vellum::points_grob(

@@ -8,6 +8,10 @@
   `scale_*_continuous()` has; the default `oob = NULL` keeps today's
   behaviour (VP-41).
 
+* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
+  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
+  intervals, with the slab above each one (VP-42).
+
 ## Behaviour changes
 
 * **Behaviour change:** rows a position scale's `oob = "censor"` puts

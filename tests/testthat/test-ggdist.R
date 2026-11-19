@@ -88,3 +88,44 @@ test_that("a category with < 2 finite observations is skipped with a warning", {
   )
   expect_gt(file.info(f)$size, 0) # group a still draws
 })
+
+test_that("halfeye and interval infer and honour orientation (VP-42)", {
+  set.seed(1)
+  d <- data.frame(g = rep(c("a", "b", "c"), each = 200), v = rnorm(600))
+  h <- vplot(d) |> mark_halfeye(x = v, y = g)
+  expect_identical(
+    vellumplot:::.dist_orient(vellumplot:::.resolve_layers(h)[[1]]),
+    "y"
+  )
+  # the slab widens the discrete y axis upwards, the value axis is x
+  sc <- vellumplot:::.build_panels(h)$scales
+  expect_gt(sc$y$domain[2], 3)
+  expect_lt(sc$x$domain[1], min(d$v))
+  iv <- vplot(d) |> mark_interval(x = v, y = g)
+  expect_identical(
+    vellumplot:::.dist_orient(vellumplot:::.resolve_layers(iv)[[1]]),
+    "y"
+  )
+  forced <- vplot(d) |> mark_interval(x = g, y = v, orientation = "x")
+  expect_identical(
+    vellumplot:::.dist_orient(vellumplot:::.resolve_layers(forced)[[1]]),
+    "x"
+  )
+  expect_error(mark_halfeye(vplot(d), orientation = "z"), "orientation")
+  expect_error(mark_interval(vplot(d), orientation = "z"), "orientation")
+  for (p in list(h, iv, vplot(d) |> mark_halfeye(x = v, y = g, fill = g))) {
+    expect_no_error(vellum::as_vellum_scene(p))
+  }
+})
+
+test_that("a horizontal interval draws its bars along x (VP-42)", {
+  set.seed(1)
+  d <- data.frame(g = rep(c("a", "b"), each = 200), v = rnorm(400))
+  el <- vellum::scene_model(
+    vellum::as_vellum_scene(vplot(d) |> mark_interval(x = v, y = g))
+  )$elements
+  bars <- el[grepl("interval", el$id) & el$mark == "segment", ]
+  # two categories x two widths, each a horizontal bar
+  expect_identical(nrow(bars), 4L)
+  expect_true(all(bars$h < 1e-6 & bars$w > 0))
+})

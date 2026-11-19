@@ -13,6 +13,7 @@ mark_halfeye(
   point = "median",
   adjust = 1,
   scale = 0.9,
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -24,6 +25,7 @@ mark_interval(
   position = "identity",
   .width = c(0.66, 0.95),
   point = "median",
+  orientation = NA,
   blend = NULL,
   data = NULL
 )
@@ -32,7 +34,8 @@ mark_interval(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): a categorical \code{x} and the sample \code{y}
-(+ \code{color}/\code{fill}).}
+(+ \code{color}/\code{fill}), or a categorical \code{y} and the sample \code{x} for horizontal
+intervals.}
 
 \item{position}{Position adjustment: a string — \code{"identity"} (default),
 \code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
@@ -54,6 +57,11 @@ does.}
 \item{adjust}{\code{mark_halfeye()} density bandwidth multiplier.}
 
 \item{scale}{Slab width as a fraction of the category band (\code{mark_halfeye()}).}
+
+\item{orientation}{\code{NA} (default) to infer it from the data (horizontal when
+\code{y} is discrete and \code{x} is not, as in ggplot2), \code{"x"} for vertical intervals
+along a discrete \code{x} (the slab to the right of each), or \code{"y"} for
+horizontal intervals along \code{y} (the slab above each).}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
@@ -78,7 +86,7 @@ categorical \code{x}).
 }
 \details{
 \itemize{
-\item \code{mark_halfeye()} draws, per \code{x} category, a one-sided density "slab" (a half
+\item \code{mark_halfeye()} draws, per category, a one-sided density "slab" (a half
 violin) with a \strong{point-interval} at its base: the median (or mean) as a
 point, a thick bar for the inner interval and a thin bar for the outer one.
 \item \code{mark_interval()} draws the point-interval alone (no slab).
@@ -95,4 +103,6 @@ draws <- data.frame(
 )
 vplot(draws) |> mark_halfeye(x = grp, y = val)
 vplot(draws) |> mark_interval(x = grp, y = val)
+# horizontal: the discrete variable on y
+vplot(draws) |> mark_halfeye(x = val, y = grp)
 }
