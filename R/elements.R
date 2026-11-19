@@ -152,6 +152,54 @@ element_blank <- S7::new_class(
   package = "vellumplot"
 )
 
+#' Relative sizing
+#'
+#' `rel()` gives a theme element size as a multiple of the size it inherits,
+#' as in ggplot2. `theme(axis.text = element_text(size = rel(0.8)))` draws the
+#' axis text at 80% of the base text size, so it follows a later
+#' `theme(text = element_text(size = ...))` or a preset's `base_size`.
+#'
+#' A `rel()` size is resolved against the parent element in the theme tree
+#' (`text` -> `axis.text` -> `axis.text.x` and so on). Set on a slot that
+#' already holds an absolute size, such as the `text` root, it scales that
+#' size instead: `theme(text = element_text(size = rel(2)))` doubles every
+#' text size.
+#'
+#' @param x A single positive number, the multiplier.
+#' @return A number of class `rel`, for the `size` of [element_text()].
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg) |>
+#'   theme(axis.text = element_text(size = rel(1.2)))
+#' @export
+rel <- function(x) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x <= 0) {
+    cli::cli_abort("{.arg x} must be a single positive number.")
+  }
+  structure(as.double(x), class = "rel")
+}
+
+#' @export
+print.rel <- function(x, ...) {
+  cat("<rel> ", format(unclass(x)), "\n", sep = "")
+  invisible(x)
+}
+
+.is_rel <- function(x) inherits(x, "rel")
+
+# Combine a child size with the size it inherits: a `rel()` child multiplies
+# an absolute parent (giving points) or another `rel()` (giving a `rel()`); an
+# absolute child, or one with nothing to scale, is returned as is.
+.combine_size <- function(parent, child) {
+  if (!.is_rel(child) || is.null(parent)) {
+    child
+  } else if (.is_rel(parent)) {
+    rel(unclass(parent) * unclass(child))
+  } else {
+    parent * unclass(child)
+  }
+}
+
 # --- helpers ----------------------------------------------------------------
 
 # Is `x` an element_blank (draw nothing)?
@@ -165,6 +213,17 @@ element_blank <- S7::new_class(
   cp <- S7::props(child)
   merged <- Map(function(c, p) c %||% p, cp, pp[names(cp)])
   do.call(cls, merged)
+}
+
+# Inherit a child element from its resolved parent in the theme tree: the
+# property fallback of `.merge_element()`, plus a `rel()` text size resolved
+# against the parent's size.
+.inherit_element <- function(parent, child) {
+  merged <- .merge_element(parent, child)
+  if (S7::S7_inherits(child, .element_text) && .is_rel(child@size)) {
+    merged@size <- .combine_size(parent@size, child@size)
+  }
+  merged
 }
 
 # Build a vellum gpar from a resolved element (NULL fields stay NULL = inherit).

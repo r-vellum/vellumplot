@@ -248,6 +248,7 @@ reference:
   - theme_gray
   - theme_sketch
   - element
+  - rel
   - labs
   - annotate
   - md
