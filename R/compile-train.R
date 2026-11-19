@@ -847,24 +847,19 @@ NULL
   )
 }
 
-# Train the colour scale (if any layer maps `color`/`fill`). Returns NULL when
-# colour is not mapped, else a trained-scale list carrying a values->colour
-# mapping plus the data the legend needs.
+# Train a colour scale -- `color`, `fill` or `edge_color`, each from every
+# layer mapping its own channel (as ggplot2, a fill scale trains on all the
+# fill values even when another layer maps a subset to `color`). Returns NULL
+# when the channel is not mapped, else a trained-scale list carrying a
+# values->colour mapping plus the data the legend needs.
 .train_colour <- function(
   spec,
   resolved,
   channel = "color",
-  fill_channel = "fill",
-  aes = "color",
+  aes = channel,
   titles = .plot_titles(spec, resolved)
 ) {
-  # `color` and `fill` share one colour scale, so pool the values of every layer
-  # mapping either channel (not just `fill` when nothing maps `color`).
-  channels <- c(channel, fill_channel)
-  values <- unlist(
-    lapply(channels, function(ch) .pool_values(resolved, ch)),
-    recursive = FALSE
-  )
+  values <- .pool_values(resolved, channel)
   if (!length(values)) {
     return(NULL)
   }
@@ -873,7 +868,7 @@ NULL
   explicit_type <- !is.null(scalespec) &&
     length(scalespec@type) &&
     nzchar(scalespec@type)
-  chan_type <- .colour_channel_type(resolved, channels, explicit_type)
+  chan_type <- .colour_channel_type(resolved, channel, explicit_type)
   type <- if (explicit_type) {
     scalespec@type
   } else if (identical(chan_type, "quantitative")) {
@@ -885,7 +880,7 @@ NULL
   # numeric variable: ggplot2 refuses it, rather than giving every distinct
   # number its own colour.
   if (explicit_type && identical(type, "discrete")) {
-    .check_discrete_colour(resolved, channels, aes)
+    .check_discrete_colour(resolved, channel, aes)
   }
   title <- titles$title[[aes]]
 
@@ -911,7 +906,7 @@ NULL
   # A bivariate scale (scale_fill_bivariate()), or -- with no explicit type -- a
   # fill mapped to a bi_class() column or given guide_bivariate(): a discrete
   # scale over the "x-y" classes with a 2-D legend. See R/bivariate.R.
-  bi_info <- if (identical(aes, "color")) .bivariate_info(spec) else NULL
+  bi_info <- if (aes %in% c("color", "fill")) .bivariate_info(spec, aes)
   wants_bi <- identical(type, "bivariate") ||
     (!explicit_type &&
       (!is.null(bi_info) ||
@@ -1121,10 +1116,10 @@ NULL
   invisible()
 }
 
-# The encoding type driving the shared colour scale, from every layer mapping
-# one of `channels` (`color`/`fill`). Layers that disagree on whether the
-# variable is quantitative cannot share one scale; unless the user fixed the
-# scale type explicitly, that is an error rather than a silent squish/grey.
+# The encoding type driving a colour scale, from every layer mapping one of
+# `channels`. Layers that disagree on whether the variable is quantitative
+# cannot share one scale; unless the user fixed the scale type explicitly, that
+# is an error rather than a silent squish/grey.
 .colour_channel_type <- function(resolved, channels, explicit_type = FALSE) {
   found <- .colour_channel_votes(resolved, channels)
   if (!length(found$votes)) {
@@ -1135,11 +1130,11 @@ NULL
     q <- clash$quantitative
     d <- clash$discrete
     cli::cli_abort(c(
-      "Layers map {.field color}/{.field fill} to incompatible variable types.",
-      "x" = "One layer maps {.field {q$channel}} to a quantitative variable,
-        another maps {.field {d$channel}} to a {d$type} one.",
-      "i" = "{.field color} and {.field fill} share one colour scale, so every
-        layer mapping either must use the same kind of variable.",
+      "Layers map {.field {q$channel}} to incompatible variable types.",
+      "x" = "One layer maps it to a quantitative variable, another to a
+        {d$type} one.",
+      "i" = "Layers share one {.field {q$channel}} scale, so every layer
+        mapping it must use the same kind of variable.",
       "i" = "Convert one of them (e.g. with {.fn factor} or
         {.fn as.numeric}), or set the scale type explicitly."
     ))
@@ -1742,14 +1737,11 @@ NULL
   resolved,
   titles = .plot_titles(spec, resolved)
 ) {
-  .train_colour(
-    spec,
-    resolved,
-    channel = "edge_color",
-    fill_channel = NULL,
-    aes = "edge_color",
-    titles = titles
-  )
+  .train_colour(spec, resolved, channel = "edge_color", titles = titles)
+}
+
+.train_fill <- function(spec, resolved, titles = .plot_titles(spec, resolved)) {
+  .train_colour(spec, resolved, channel = "fill", titles = titles)
 }
 
 .train_edge_alpha <- function(
@@ -2051,7 +2043,28 @@ NULL
     }
     scales[e$name] <- list(sc)
   }
+  if (identical(.fill_series_aes(scales), "fill")) {
+    scales$fill$series_aes <- "fill"
+  }
   scales
+}
+
+# The namespace of a discrete fill legend's interactive series keys
+# ("<aes>:<level>", see `.legend_series_key()`): "color", as when colour and
+# fill shared one scale, unless a separate discrete colour legend -- one that
+# does not merge with it (another title or other keys) -- would claim the same
+# keys, when the fill keys read "fill:<level>".
+.fill_series_aes <- function(scales) {
+  cs <- scales$color
+  fs <- scales$fill
+  apart <- !is.null(cs) &&
+    !is.null(fs) &&
+    identical(cs$type, "discrete") &&
+    identical(fs$type, "discrete") &&
+    !(identical(cs$name, fs$name) &&
+      identical(cs$levels, fs$levels) &&
+      identical(cs$labels, fs$labels))
+  if (apart) "fill" else "color"
 }
 
 # Did a continuous legend scale see no finite value, and no limits to show

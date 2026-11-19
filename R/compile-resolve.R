@@ -233,13 +233,16 @@ NULL
     }
     # Categorical (count_cat) shading: a mapped colour/fill is the aggregation
     # category. Keep the full-length vector in `ds$cat` for the emitter, but hand
-    # colour training only its unique levels -- the discrete colour scale (and its
-    # legend) trains from the levels, never the full cloud.
-    cat <- values$color %||% values$fill
+    # colour training only its unique levels -- the discrete colour (or fill)
+    # scale (and its legend) trains from the levels, never the full cloud.
+    ch <- if (!is.null(values$color)) "color" else "fill"
+    cat <- values[[ch]]
     if (!is.null(cat)) {
       ds$cat <- cat
-      values$color <- unique(cat)
+      ds$cat_channel <- ch
+      values$color <- NULL
       values$fill <- NULL
+      values[[ch]] <- unique(cat)
     }
   }
 
@@ -407,12 +410,6 @@ NULL
 # Resolve every layer of a spec against its full data.
 .resolve_layers <- function(spec) .resolve_on(spec, spec@data)
 
-# The aesthetic name(s) that share one scale: `color` and `fill` are aliases for
-# a single colour scale.
-.aes_aliases <- function(aesthetic) {
-  if (aesthetic %in% c("color", "fill")) c("color", "fill") else aesthetic
-}
-
 # The legend key glyph a mark draws with: a filled point, a short line, or a
 # filled square swatch (the fallback for area/bar/tile/polygon-like marks).
 .MARK_KEY_GLYPH <- c(
@@ -467,9 +464,8 @@ NULL
 # inside outlines coloured by a mapped `color`. NULL otherwise (the swatch is
 # the mapped colour alone). Read from the first filled layer mapping the scale.
 .key_style_for_aes <- function(resolved, aesthetic) {
-  aliases <- .aes_aliases(aesthetic)
   for (L in resolved) {
-    if (!any(aliases %in% names(L$values))) {
+    if (!aesthetic %in% names(L$values)) {
       next
     }
     if (!.fills_and_outlines(L) && !L$mark %in% .OUTLINE_MARKS) {
@@ -492,29 +488,26 @@ NULL
   if (mark %in% names(.MARK_KEY_GLYPH)) .MARK_KEY_GLYPH[[mark]] else "square"
 }
 
-# The key glyph for a scale, from the marks of the layers that map `aesthetic`
-# (colour aliases to fill). A point-drawing layer wins (the common scatter case),
-# then a line-drawing layer, else the square swatch -- so a legend key matches
-# what the plot actually draws (e.g. circles for a point layer, not squares).
+# The key glyph for a scale, from the marks of the layers that map `aesthetic`.
+# A point-drawing layer wins (the common scatter case), then a line-drawing
+# layer, else the square swatch -- so a legend key matches what the plot
+# actually draws (e.g. circles for a point layer, not squares).
 .key_glyph_for_aes <- function(resolved, aesthetic) {
-  aliases <- .aes_aliases(aesthetic)
   glyphs <- character(0)
   for (L in resolved) {
-    if (any(aliases %in% names(L$values))) {
+    if (aesthetic %in% names(L$values)) {
       glyph <- .key_glyph_for_mark(L$mark)
-      # A distribution mark whose colour reaches it only through `color` draws
-      # coloured outlines over a neutral fill, so its key is an outlined box.
-      # So does a filled mark (bar, tile, area, ...) whose mapped `color`
-      # outlines a constant `fill` (VP-46).
-      colour_only <- !is.null(L$values$color) && is.null(L$values$fill)
-      if (
-        colour_only &&
+      # A distribution mark whose `color` is mapped draws coloured outlines, so
+      # the colour key is an outlined box. So does a filled mark (bar, tile,
+      # area, ...) whose mapped `color` outlines a fill -- a constant one
+      # (VP-46) or a mapped one, which the fill scale keys (VP-48).
+      outlines <- identical(aesthetic, "color") &&
+        (L$mark %in%
+          .OUTLINE_MARKS ||
           (L$mark %in%
-            .OUTLINE_MARKS ||
-            (L$mark %in%
-              .FILL_OUTLINE_MARKS &&
-              !is.null(.plain_fill_param(L))))
-      ) {
+            .FILL_OUTLINE_MARKS &&
+            (!is.null(L$values$fill) || !is.null(.plain_fill_param(L)))))
+      if (outlines) {
         glyph <- "outline"
       }
       glyphs <- c(glyphs, glyph)
@@ -531,12 +524,10 @@ NULL
   }
 }
 
-# The user-declared scale for an aesthetic, or NULL. `color` and `fill` share a
-# colour scale; either declaration applies.
+# The user-declared scale for an aesthetic (the last one declared), or NULL.
 .scale_for <- function(spec, aesthetic) {
-  match_aes <- .aes_aliases(aesthetic)
   for (s in rev(spec@scales)) {
-    if (s@aesthetic %in% match_aes) return(s)
+    if (identical(s@aesthetic, aesthetic)) return(s)
   }
   NULL
 }

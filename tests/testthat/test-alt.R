@@ -141,14 +141,14 @@ test_that("auto-alt names the drawn axes under coord_flip() (VP-11)", {
   )
 })
 
-test_that("auto-alt and the legend share one title, labs() aliases included", {
+test_that("auto-alt and the legend share one title, a lone fill included", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, fill = factor(cyl)) |>
     labs(fill = "Cylinders")
   expect_match(plot_alt(p), "colour shows Cylinders", fixed = TRUE)
   built <- vellumplot:::.build_panels(p)
-  expect_identical(built$scales$color$name, "Cylinders")
-  expect_identical(built$titles$text[["color"]], "Cylinders")
+  expect_identical(built$scales$fill$name, "Cylinders")
+  expect_identical(built$titles$text[["fill"]], "Cylinders")
 })
 
 test_that("the titles record resolves scale name > labs > mapping", {

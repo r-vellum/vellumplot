@@ -22,14 +22,14 @@ Every scale defaults to \code{"shared"}; \code{facet_*(scales = "free_*")} is su
 for setting \code{x}/\code{y} to \code{"independent"}.
 }
 \details{
-A non-position aesthetic (\code{color}, \code{size}, \code{alpha}, \code{shape}, \code{linetype},
+A non-position aesthetic (\code{color}, \code{fill}, \code{size}, \code{alpha}, \code{shape}, \code{linetype},
 \code{linewidth}, \code{pattern}, ...) set to \code{"independent"} is trained in each panel
 from that panel's data alone, so each panel spends the whole palette or
 range on its own values, and each panel gets its own legend. The legends
 are collected in the legend area, titled with the scale title and the
 panel's strip text (\code{"hp (cyl: 4)"}). Scales left shared keep their single
-legend. \code{colour} and \code{fill} both name the colour scale. A plot with a single
-panel ignores the setting.
+legend. \code{colour} is an alias for \code{color}; \code{fill} is its own scale. A plot
+with a single panel ignores the setting.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl) |>

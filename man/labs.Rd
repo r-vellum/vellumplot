@@ -27,8 +27,12 @@ labs(
 
 \item{x, y, size}{Axis / legend title overrides for those aesthetics.}
 
-\item{color, colour, fill}{Colour-scale title override; \code{colour} and \code{fill} are
-aliases for \code{color}.}
+\item{color, colour}{Colour-scale title override; \code{colour} is an alias for
+\code{color}.}
+
+\item{fill}{Fill-scale title override. \code{color} and \code{fill} are separate
+scales, so each takes its own title; give both the same title (and map the
+same variable) to draw them as one legend.}
 
 \item{alt}{A text alternative (alt text) describing the plot for screen
 readers and other assistive technology. Overrides the description vellumplot
@@ -42,7 +46,8 @@ The modified \link{PlotSpec}.
 }
 \description{
 Add plot-level text — a \code{title}, \code{subtitle}, \code{caption}, and \code{tag} — and
-override the titles of individual axes and legends (\code{x}, \code{y}, \code{color}, \code{size}).
+override the titles of individual axes and legends (\code{x}, \code{y}, \code{color},
+\code{fill}, \code{size}).
 The title, subtitle, and tag are drawn in a band above the panels; the caption
 in a band below. Repeated \code{labs()} calls merge, with later values winning.
 }

@@ -142,14 +142,14 @@ facet_grid <- function(
 #' Every scale defaults to `"shared"`; `facet_*(scales = "free_*")` is sugar
 #' for setting `x`/`y` to `"independent"`.
 #'
-#' A non-position aesthetic (`color`, `size`, `alpha`, `shape`, `linetype`,
+#' A non-position aesthetic (`color`, `fill`, `size`, `alpha`, `shape`, `linetype`,
 #' `linewidth`, `pattern`, ...) set to `"independent"` is trained in each panel
 #' from that panel's data alone, so each panel spends the whole palette or
 #' range on its own values, and each panel gets its own legend. The legends
 #' are collected in the legend area, titled with the scale title and the
 #' panel's strip text (`"hp (cyl: 4)"`). Scales left shared keep their single
-#' legend. `colour` and `fill` both name the colour scale. A plot with a single
-#' panel ignores the setting.
+#' legend. `colour` is an alias for `color`; `fill` is its own scale. A plot
+#' with a single panel ignores the setting.
 #'
 #' @param plot A [PlotSpec].
 #' @param ... Named arguments mapping an aesthetic (`x`, `y`, `color`, `size`,
@@ -174,7 +174,7 @@ resolve_scale <- function(plot, ...) {
       "All arguments to {.fn resolve_scale} must be named, e.g. {.code resolve_scale(y = \"independent\")}."
     )
   }
-  # `colour` / `fill` name the colour scale, as everywhere else.
+  # British spellings name the same scales.
   nms <- .resolve_aes_names(nms)
   valid <- c("x", "y", .aes_legend_keys())
   bad <- setdiff(nms, valid)
@@ -196,7 +196,6 @@ resolve_scale <- function(plot, ...) {
 .resolve_aes_names <- function(nms) {
   alias <- c(
     colour = "color",
-    fill = "color",
     edge_colour = "edge_color"
   )
   hit <- nms %in% names(alias)

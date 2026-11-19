@@ -2,6 +2,23 @@
 
 ## Behaviour changes
 
+* **Behaviour change:** `color` and `fill` are now separate scales, as in
+  ggplot2. Each trains on its own channel's values and draws its own legend;
+  `scale_fill_*()` sets only the fill scale and `scale_color_*()` only the
+  colour scale, so the two can be styled independently when both are mapped
+  (before, both channels fed one pooled colour scale and the last scale
+  declared won). The two legends merge into one when they show the same title
+  and the same keys (one variable under one title), each key then filled by
+  the fill scale and outlined by the colour scale; a colour bar and a fill bar
+  of one variable fold into one bar when their palettes also match. In
+  consequence: `labs(fill =)`, `guides(fill =)`, `lims(fill =)` and
+  `resolve_scale(fill =)` address the fill scale only; a `scale_fill_*()` no
+  longer recolours a `color` mapping (or the reverse); two layers mapping
+  `color` and `fill` to variables of different type no longer clash; and a
+  fill legend beside a separate colour legend tags its interactive keys
+  `"fill:<level>"` (a lone fill legend keeps `"color:<level>"`). Plots that
+  map only `color` or only `fill` render exactly as before (VP-48).
+
 * **Behaviour change:** `mark_contour_filled()` and `mark_density_2d_filled()`
   now draw ggplot2's lowest band, from the highest break at or below the
   field's minimum (`0` for a density) to the first contour level, so the whole
@@ -42,6 +59,13 @@
   resolution, so free scales came out shared (VP-47).
 
 ## Bug fixes
+
+* A merged legend (colour + shape, size, alpha, ...) of a filled mark now
+  draws the mark's constant outline or fill in its keys, as a lone colour
+  legend has since 0.14.0 (VP-48).
+
+* `scale_fill_identity()` declared a colour scale instead of a fill scale
+  (VP-48).
 
 * `guide_axis(check.overlap = TRUE)` now also thins the labels of free facet
   scales (panel by panel), fixed-aspect plots (`coord_fixed()`, `coord_sf()`,

@@ -65,7 +65,7 @@ NULL
 
 # Which trained scale resolves each aesthetic channel (the scale-ref lookup) is
 # the aesthetic registry's (`.AES_REGISTRY`, R/aes-registry.R): a channel routes
-# to the scale whose `aliases` list it (color/fill share the colour scale), and a
+# to the scale whose `aliases` list it, and a
 # `linewidth` channel to the line-width or the edge-width scale by the layer's
 # mark. See `.aes_scale_for_channel()`.
 

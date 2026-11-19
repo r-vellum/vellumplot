@@ -146,10 +146,11 @@ test_that("a mapped fill and a mapped color stroke and fill separately", {
   d <- data.frame(k = c("a", "b"), n = c(1, 2), h = c("x", "x"))
   p <- vplot(d) |> mark_bar(x = k, y = n, fill = k, color = h)
   pt <- fo_layer_paint(p)
-  # the bars are filled by k's two colours, stroked by h's one colour
+  # the bars are filled by k's two colours, stroked by h's one colour -- from
+  # separate scales, so h's single level takes the palette's first colour
   expect_length(pt$stroke, 1L)
-  expect_false(pt$stroke %in% pt$fill)
   expect_length(pt$fill, 2L)
+  expect_identical(pt$stroke, pt$fill[[1]])
 })
 
 test_that("legend keys show the constant outline / fill of a filled mark", {
@@ -179,7 +180,7 @@ test_that("key style resolves from the first filled layer", {
   ks <- vellumplot:::.key_style_for_aes
   expect_identical(
     ks(rl(vplot(fo_cnt) |> mark_bar(x = k, y = n, fill = k, color = "red")),
-      "color"),
+      "fill"),
     list(col = "red")
   )
   expect_identical(
@@ -187,7 +188,7 @@ test_that("key style resolves from the first filled layer", {
       "color"),
     list(fill = "red")
   )
-  expect_null(ks(rl(vplot(fo_cnt) |> mark_bar(x = k, y = n, fill = k)), "color"))
+  expect_null(ks(rl(vplot(fo_cnt) |> mark_bar(x = k, y = n, fill = k)), "fill"))
   expect_null(
     ks(rl(vplot(fo_cnt) |> mark_point(x = k, y = n, color = k, fill = "red")),
       "color")

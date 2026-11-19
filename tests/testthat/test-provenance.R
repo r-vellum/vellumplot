@@ -114,10 +114,10 @@ test_that("every consumer reads the one aesthetic registry", {
       expect_true(is.function(vellumplot:::.aes_trainer(e)))
     }
   }
-  # channel routing: fill shares colour; linewidth splits by mark
+  # channel routing: fill has its own scale (VP-48); linewidth splits by mark
   expect_identical(
     vellumplot:::.aes_scale_for_channel("fill", "point"),
-    "color"
+    "fill"
   )
   expect_identical(
     vellumplot:::.aes_scale_for_channel("linewidth", "edges"),
@@ -137,7 +137,7 @@ test_that("legend merge rules come from the registry", {
   ))
   expect_setequal(
     merging,
-    c("color", "size", "shape", "linewidth", "alpha", "linetype")
+    c("color", "fill", "size", "shape", "linewidth", "alpha", "linetype")
   )
   # the edge colour guide folds into the node one on the registry's fields
   col <- list(type = "discrete", name = "g", levels = c("a", "b"), colors = 1:2)

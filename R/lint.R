@@ -6,9 +6,10 @@ NULL
 
 # Legend-bearing aesthetics whose *discrete* trained scales get grammar-level
 # lint (position scales are not legends; continuous ones get a colour bar, not a
-# per-level key). `fill` folds into `color` upstream, so it is covered here.
+# per-level key).
 .LINT_LEGEND_AES <- c(
   "color",
+  "fill",
   "shape",
   "pattern",
   "linetype",

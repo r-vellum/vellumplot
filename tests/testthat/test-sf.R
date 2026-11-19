@@ -123,7 +123,7 @@ test_that("a binned colour scale maps to classes and flags NA", {
   nc$SID74[1] <- NA
   spec <- vplot(nc) |> mark_sf(fill = SID74) |> scale_fill_binned(n = 4)
   built <- .build_panels(.project_sf_data(spec)$spec)
-  cl <- built$scales$color
+  cl <- built$scales$fill
   expect_identical(cl$type, "binned")
   expect_length(cl$colors, 4L)
   expect_true(cl$na)

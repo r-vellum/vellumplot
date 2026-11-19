@@ -292,7 +292,6 @@ spec_to_vegalite <- function(plot, json = FALSE) {
   for (sc in spec$scales %||% list()) {
     scales_by_aes[[sc$aesthetic]] <- sc
   }
-  colour_scale <- scales_by_aes[["color"]] %||% scales_by_aes[["fill"]]
 
   layer_to_vl <- function(L) {
     mk <- .vl_get(.VL_MARK, L$mark)
@@ -314,11 +313,8 @@ spec_to_vegalite <- function(plot, json = FALSE) {
         .vl_note(notes, paste0("encoding '", aes, "'"))
         next
       }
-      sc <- if (aes %in% c("color", "fill")) {
-        colour_scale
-      } else {
-        scales_by_aes[[aes]]
-      }
+      # fill has its own scale (VP-48), though both land on Vega-Lite's colour
+      sc <- scales_by_aes[[aes]]
       # Several vellumplot aesthetics map onto one Vega-Lite channel (color + fill
       # -> "color"; y + ymin -> "y"). If two of them are set, the second would
       # silently overwrite the first; report the collision as a dropped encoding

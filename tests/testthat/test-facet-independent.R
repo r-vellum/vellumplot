@@ -19,7 +19,7 @@ test_that("resolve_scale() accepts non-position aesthetics and aliases", {
   expect_identical(vellumplot:::.resolve_for(p, "color"), "independent")
   expect_identical(vellumplot:::.resolve_for(p, "size"), "independent")
   expect_identical(
-    vellumplot:::.resolve_for(resolve_scale(base, fill = "independent"), "color"),
+    vellumplot:::.resolve_for(resolve_scale(base, fill = "independent"), "fill"),
     "independent"
   )
   expect_identical(vellumplot:::.resolve_for(base, "color"), "shared")

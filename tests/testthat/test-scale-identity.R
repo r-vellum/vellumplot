@@ -23,7 +23,7 @@ test_that("scale_fill_identity() behaves like the colour identity", {
     mark_point(x = x, y = y, fill = col) |>
     scale_fill_identity()
   b <- vellumplot:::.build_panels(p)
-  expect_identical(b$scales$color$type, "identity")
+  expect_identical(b$scales$fill$type, "identity")
 })
 
 test_that("scale_size_identity() uses raw sizes and draws no legend", {
