@@ -87,9 +87,11 @@ NULL
     "45" = list(x = c(0, 1), y = c(0, 1)),
     "135" = list(x = c(0, 1), y = c(1, 0))
   )
+  # Explicit units: a bare numeric means "native" in older vellum and "npc" in
+  # newer, and the tile must draw the same under both.
   vellum::lines_grob(
-    seg$x,
-    seg$y,
+    vellum::vl_unit(seg$x, "native"),
+    vellum::vl_unit(seg$y, "native"),
     gp = vellum::vl_gpar(col = color, lwd = linewidth)
   )
 }
