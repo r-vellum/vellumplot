@@ -225,3 +225,23 @@ test_that("marginal render smoke: density / histogram / single sides / grouped",
     f
   ))
 })
+
+test_that("grouped marginals are filled by the group colour, not grey (VP-46)", {
+  svg_fills <- function(p) {
+    f <- local_tempfile(fileext = ".svg")
+    render_plot(p, f)
+    s <- paste(readLines(f, warn = FALSE), collapse = "")
+    tolower(unique(regmatches(s, gregexpr('fill="#[0-9A-Fa-f]{6}', s))[[1]]))
+  }
+  grey35 <- 'fill="#595959'
+  for (type in c("histogram", "density")) {
+    grouped <- vplot(iris) |>
+      mark_point(x = Sepal.Length, y = Sepal.Width, color = Species) |>
+      add_marginal(type = type, group = TRUE)
+    expect_false(grey35 %in% svg_fills(grouped))
+    plain <- vplot(iris) |>
+      mark_point(x = Sepal.Length, y = Sepal.Width) |>
+      add_marginal(type = type)
+    expect_true(grey35 %in% svg_fills(plain))
+  }
+})
