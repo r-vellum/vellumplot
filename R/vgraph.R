@@ -325,6 +325,11 @@ NULL
     )
   }
   .need_pkg(reg$pkg, sprintf("layout = \"%s\"", layout), call = call)
+  # graphlayouts' 2-vertex stress branch builds its fixed 2 x 2 layout from a
+  # length-3 vector and warns about recycling. Return the same layout directly.
+  if (identical(reg$fn, "layout_with_stress") && n == 2L) {
+    return(matrix(c(0, 0, 1, 0), 2L, 2L, byrow = TRUE))
+  }
   fn <- getExportedValue(reg$pkg, reg$fn)
   # sparse stress needs a pivot count; pick a sensible default if unset.
   if (
