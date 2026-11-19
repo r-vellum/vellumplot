@@ -61,6 +61,16 @@
 
 ## Bug fixes
 
+* **Legends merge on title and keys, as in ggplot2.** A colour and a size
+  legend merged whenever their titles matched, so two variables under one
+  `labs()` title drew one legend with the size keys painted in the wrong
+  colours. Meanwhile colour and linetype mapped to the same variable drew
+  two legends. Legends now merge only when they share the title and the same
+  keys and labels, and any pair of keyed legends can merge: colour, shape,
+  linetype, size, alpha and linewidth. A merged key draws a line when a
+  linetype or line width is involved, a point for shape or size, or both
+  (VP-7).
+
 * **Provenance carries every trained scale.** `plot_provenance()` records
   listed scale-refs only for `x`, `y`, colour/fill, `size` and `shape`. A
   mapped `alpha`, `linetype`, `linewidth` or `pattern` now carries its

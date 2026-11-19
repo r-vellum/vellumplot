@@ -22,9 +22,14 @@ NULL
 #   guide       the legend kind it draws, NULL for an axis. `"color"` is
 #               resolved per scale kind (bar, steps, swatches, bivariate) by
 #               `.legend_guides()`
-#   merge       the partners its legend may fold into, each with the trained
-#               fields that must be identical for the fold. A field set may be
-#               keyed by the scale's `kind`, with `.default` for the rest
+#   merge       the partners its legend may fold into *and disappear*, each
+#               with the trained fields that must be identical for the fold. A
+#               field set may be keyed by the scale's `kind`, with `.default`
+#               for the rest (the edge colour guide folding into the node one)
+#   legend_merge TRUE when its legend joins ggplot2's legend merge: any two
+#               such legends with the same title and the same keys (values and
+#               labels) draw as one legend whose keys carry every encoding
+#               (see `.merge_legend_guides()`, R/compile-guides.R)
 #   provenance  TRUE when an element's provenance carries a scale-ref for it
 #   kinds       the `kind`s a trained scale under this key may have (checked by
 #               `trained_scale()`, R/trained-scale.R); defaults to the key
@@ -38,6 +43,7 @@ NULL
   trainer = NULL,
   guide = NULL,
   merge = list(),
+  legend_merge = FALSE,
   provenance = TRUE,
   kinds = name
 ) {
@@ -49,6 +55,7 @@ NULL
     trainer = trainer,
     guide = guide,
     merge = merge,
+    legend_merge = legend_merge,
     provenance = provenance,
     kinds = kinds
   )
@@ -74,15 +81,23 @@ NULL
     trainer = ".train_colour",
     guide = "color",
     kinds = .COLOUR_KINDS,
-    # A discrete colour legend folds a shape legend of the same variable into
-    # one keyed list; a continuous one folds a size legend into its bar.
-    merge = list(
-      shape = c("name", "levels"),
-      size = "name"
-    )
+    # A discrete colour legend merges with any other discrete legend (shape,
+    # linetype, ...) of the same title and keys; a continuous colour bar turns
+    # into keys when it merges with a size/alpha/linewidth legend.
+    legend_merge = TRUE
   ),
-  size = .aes_entry("size", trainer = ".train_size", guide = "size"),
-  shape = .aes_entry("shape", trainer = ".train_shape", guide = "shape"),
+  size = .aes_entry(
+    "size",
+    trainer = ".train_size",
+    guide = "size",
+    legend_merge = TRUE
+  ),
+  shape = .aes_entry(
+    "shape",
+    trainer = ".train_shape",
+    guide = "shape",
+    legend_merge = TRUE
+  ),
   pattern = .aes_entry(
     "pattern",
     trainer = ".train_pattern",
@@ -99,13 +114,20 @@ NULL
     "linewidth",
     marks = list(include = .LINEWIDTH_MARKS),
     trainer = ".train_linewidth",
-    guide = "linewidth"
+    guide = "linewidth",
+    legend_merge = TRUE
   ),
-  alpha = .aes_entry("alpha", trainer = ".train_alpha", guide = "alpha"),
+  alpha = .aes_entry(
+    "alpha",
+    trainer = ".train_alpha",
+    guide = "alpha",
+    legend_merge = TRUE
+  ),
   linetype = .aes_entry(
     "linetype",
     trainer = ".train_linetype",
-    guide = "linetype"
+    guide = "linetype",
+    legend_merge = TRUE
   ),
   edge_color = .aes_entry(
     "edge_color",
