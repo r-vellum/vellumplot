@@ -36,6 +36,12 @@ its radius, with value \code{0} at size \code{0} — the perceptually honest def
 bubble charts (a value twice as large looks twice as big in ink). \code{max_size}
 is the size (mm) of the largest value.
 }
+\details{
+A factor, character or logical mapped to \code{size} gets a discrete scale: the
+levels spread evenly (by area) over \code{range}, the legend keys are the levels,
+and \code{breaks} picks which of them it shows. As in ggplot2, an unordered
+variable warns that size is not advised for it; an ordered factor does not.
+}
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp) |> scale_size(range = c(1, 8))
 vplot(mtcars) |>

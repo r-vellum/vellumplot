@@ -11,6 +11,23 @@
   others extrapolate). Those rows are not part of `dropped`, and each layer
   with any adds its own warning (VP-36, #208).
 
+* **Behaviour change:** a factor, character or logical mapped to `size` or
+  `alpha` now trains a discrete scale, as in ggplot2. Before, a factor was
+  trained as its integer codes (the legend read 1.0, 1.5, ... 3.0, never merged
+  with a `colour` legend of the same variable, and the marks failed to draw) and a
+  character failed outright. The levels now spread evenly over the output range
+  (by area for size), the legend keys are the levels, and a discrete size or
+  alpha legend merges with a colour or shape legend of the same title and levels
+  (#220). As in ggplot2, an unordered variable warns that size or alpha "for a
+  discrete variable is not advised"; an ordered factor does not. `scale_size()`
+  and `scale_alpha()` `breaks` pick the levels the legend shows, and `range`
+  sets the spread (VP-39).
+
+* **Behaviour change:** `guide_coloursteps()` labels each bin boundary on its
+  own, in the colourbar's plain number style, so quantile breaks that span
+  orders of magnitude read `0.0002, 0.066, 2.32, 193, 806` instead of all
+  padded to the smallest one's precision (`0.0002 ... 806.0000`) (VP-33).
+
 * **Behaviour change:** the grammar lint rules (`single_level_scale`,
   `legend_overflow`) now check discrete shape, linetype and pattern scales as
   well as colour ones. They were meant to all along, but only a colour scale

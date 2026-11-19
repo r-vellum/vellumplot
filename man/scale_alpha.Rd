@@ -34,6 +34,11 @@ The modified \link{PlotSpec}.
 Declare the scale for a mapped \code{alpha} aesthetic: data values map to an
 opacity \code{range} in \verb{[0, 1]}. An alpha legend is drawn automatically.
 }
+\details{
+A factor, character or logical mapped to \code{alpha} gets a discrete scale, its
+levels spread evenly over \code{range}, with a warning for an unordered variable
+(as in ggplot2).
+}
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, alpha = hp) |> scale_alpha(range = c(0.2, 1))
 }

@@ -322,7 +322,7 @@ test_that("guide_coloursteps() renders a binned scale as a segmented bar", {
   # the bar labels the numeric bin boundaries (breaks), not the interval strings
   expect_equal(
     vellumplot:::.guide_labels(guides_list[[1]]),
-    format(cl$breaks, trim = TRUE)
+    .steps_break_labels(cl)
   )
   expect_no_error(plot_svg(p)) # vertical
   expect_no_error(plot_svg(p |> theme(legend.position = "bottom"))) # horizontal
@@ -415,4 +415,27 @@ test_that("override.aes survives a merged colour+shape guide", {
   gl <- vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales)
   expect_identical(gl[[1]]$kind, "merged")
   expect_equal(gl[[1]]$sc$override_aes, list(size = 6))
+})
+
+test_that("guide_coloursteps() labels each break on its own (VP-33)", {
+  sc <- list(breaks = c(0.0002, 0.066, 2.32, 193, 806))
+  expect_identical(
+    .steps_break_labels(sc),
+    c("0.0002", "0.066", "2.32", "193", "806")
+  )
+  # equal-interval breaks keep their plain values
+  expect_identical(
+    .steps_break_labels(list(breaks = c(0, 25, 50, 75, 100))),
+    c("0", "25", "50", "75", "100")
+  )
+  # more digits only where two labels would read the same
+  expect_identical(
+    .steps_break_labels(list(breaks = c(1.2341, 1.2349, 2))),
+    c("1.234", "1.235", "2")
+  )
+  # no big mark or scientific notation, as on the colourbar
+  expect_identical(
+    .steps_break_labels(list(breaks = c(1, 1e6))),
+    c("1", "1000000")
+  )
 })
