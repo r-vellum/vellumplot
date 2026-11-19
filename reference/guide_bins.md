@@ -1,0 +1,73 @@
+# Binned legend
+
+`guide_bins()` draws the legend of a **binned** scale the way ggplot2's
+`guide_bins()` does: one key per bin, stacked edge to edge, with a small
+axis beside them whose ticks and labels mark the bin **boundaries**
+rather than naming each bin as an interval. Use it for
+[`scale_size_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
+[`scale_alpha_binned()`](https://ggplot2.tidyverse.org/reference/scale_alpha.html)
+and the binned colour scales
+([`scale_color_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md),
+`scale_*_steps()`, `scale_*_fermenter()`, ...). It follows the legend's
+direction: keys run top to bottom (smallest first) in a left / right
+legend and left to right in a top / bottom one.
+
+## Usage
+
+``` r
+guide_bins(title = NULL, show.limits = FALSE, reverse = FALSE, axis = TRUE)
+```
+
+## Arguments
+
+- title:
+
+  The legend title, or `NULL` to keep the scale's.
+
+- show.limits:
+
+  Also label the outer limits of the first and last bins (default
+  `FALSE`: only the boundaries between bins are labelled).
+
+- reverse:
+
+  Reverse the order of the keys.
+
+- axis:
+
+  Draw the axis line and ticks beside the keys (default `TRUE`).
+
+## Value
+
+A guide specification for
+[`guides()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+or a scale's `guide`.
+
+## Details
+
+A bins legend is drawn on its own: it does not merge with another legend
+of the same variable, and it shows no key for missing values. On a scale
+that is not binned it is ignored, with a warning, and the scale keeps
+its usual legend.
+
+## See also
+
+[`guides()`](https://r-vellum.github.io/vellumplot/reference/guides.md),
+[`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+for a binned colour scale as a segmented bar.
+
+## Examples
+
+``` r
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = hp) |>
+  scale_size_binned() |>
+  guides(size = guide_bins())
+
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = qsec) |>
+  scale_color_binned(n = 4) |>
+  guides(color = guide_bins(show.limits = TRUE)) |>
+  theme(legend.position = "bottom")
+```

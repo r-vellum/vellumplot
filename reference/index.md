@@ -330,6 +330,8 @@ Map data values to visual properties, with trained domains and guides.
 - [`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
   [`guide_axis_logticks()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
   : Axis guide
+- [`guide_bins()`](https://r-vellum.github.io/vellumplot/reference/guide_bins.md)
+  : Binned legend
 - [`guide_bivariate()`](https://r-vellum.github.io/vellumplot/reference/guide_bivariate.md)
   : A 2-D legend for a bivariate scale
 - [`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md)

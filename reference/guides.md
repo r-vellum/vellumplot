@@ -6,9 +6,11 @@ without respelling the whole `scale_*()`. Pass `"none"` (or
 legend (reverse the key order, override the title, restyle the keys with
 `override.aes`), `guide_colourbar()` to size, tick and style a
 continuous colour bar, or `guide_coloursteps()` to draw a **binned**
-colour scale as a segmented bar instead of swatches. Applies to the
-non-position legends (`color`/`fill`, `size`, `shape`, `alpha`,
-`linetype`); for the position axes, pass
+colour scale as a segmented bar instead of swatches;
+[`guide_bins()`](https://ggplot2.tidyverse.org/reference/guide_bins.html)
+draws any binned scale's keys with the bin boundaries on an axis.
+Applies to the non-position legends (`color`/`fill`, `size`, `shape`,
+`alpha`, `linetype`); for the position axes, pass
 [`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
 (or `"none"`) as `x` / `y`.
 
