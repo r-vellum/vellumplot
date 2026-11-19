@@ -22,6 +22,20 @@
   `scale_*_continuous()` has; the default `oob = NULL` keeps today's
   behaviour (VP-41).
 
+* `mark_density_2d()` and `mark_density_2d_filled()`: 2-D kernel density
+  contours with ggplot2's `geom_density_2d()` semantics (`h`, `adjust`,
+  `contour_var`, one estimate per group); `mark_quantile()` draws quantile
+  regression lines like `geom_quantile()` (needs quantreg); `mark_errorbar()`,
+  `mark_linerange()` and `mark_pointrange()` gain `orientation` and draw
+  horizontally when given `xmin`/`xmax` but no `ymin`/`ymax`, like
+  `geom_errorbarh()` (F-16).
+
+* New geometry marks matching ggplot2's (F-16): `mark_rect()` (corner bounds,
+  now a documented layer mark rather than only `annotate("rect")`; `color`
+  outlines alongside a `fill`), `mark_polygon()` (one polygon per group, holes
+  via `subgroup`), `mark_path()` (connects rows in data order), `mark_curve()`
+  (`curvature`, `angle`, `ncp`) and `mark_spoke()` (`angle` + `radius`).
+
 ## Behaviour changes
 
 * **Behaviour change:** rows a position scale's `oob = "censor"` puts
@@ -42,6 +56,23 @@
   over its panel instead of in a right-hand band, and `legend.position =
   "none"` hides that sub-plot's legend. With `guides = "collect"` only the
   legends placed outside their panels are collected (VP-41).
+
+* Filled contour bands (`mark_contour_filled()`, `mark_density_2d_filled()`)
+  no longer flood the panel when a band spans two peaks: every band now closes
+  along the edge of the density grid. Groups with too few points for a 2-D
+  density (e.g. in a facet panel holding other groups) are skipped instead of
+  failing the plot (F-16).
+
+* A literal `xend`, `yend`, `xmin`, `xmax`, `ymin` or `ymax` (e.g.
+  `mark_segment(xend = 5)`) is a coordinate again: it trains its axis and is
+  drawn, rather than being taken for a constant style setting (F-16).
+
+* `as_spec()` (and `spec_to_json()`) serialize a facet's declarative labeller:
+  `label_value`, `label_both`, `label_wrap_gen(width)`, a named character
+  vector, and `as_labeller()` over a lookup table with one of those as its
+  default. They round-trip through `from_spec()` / `spec_from_json()` and render
+  the same strips. Only an arbitrary labeller function still raises the classed
+  `vellumplot_unserializable` error (VP-44).
 
 # vellumplot 0.13.0
 

@@ -161,6 +161,7 @@ NULL
     "node_text",
     "tile",
     "rect",
+    "polygon",
     "bar",
     "violin",
     "ridgeline",

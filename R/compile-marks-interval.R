@@ -3,17 +3,37 @@ NULL
 
 # Mark emitters: interval marks (errorbar, linerange, segment).
 
-# Vertical error bars from ymin to ymax (with optional horizontal caps).
+# The orientation of a range mark (errorbar / linerange / pointrange): `"x"`
+# for vertical ranges at each `x` (`ymin`..`ymax`), `"y"` for horizontal ones at
+# each `y` (`xmin`..`xmax`, ggplot2's `geom_errorbarh()`). An explicit
+# `orientation` wins; otherwise, as in ggplot2, a layer with an `xmin`/`xmax`
+# range and no `ymin`/`ymax` is horizontal.
+.range_orient <- function(L) {
+  o <- L$stat_params$orientation
+  if (length(o) == 1L && !is.na(o)) {
+    return(o)
+  }
+  v <- L$values
+  has_x <- !is.null(v$xmin) || !is.null(v$xmax)
+  has_y <- !is.null(v$ymin) || !is.null(v$ymax)
+  if (has_x && !has_y) "y" else "x"
+}
+
+# Error bars from ymin to ymax at each x (with caps across the band), or from
+# xmin to xmax at each y when horizontal (see `.range_orient()`).
 .emit_errorbar <- function(scene, L, scales, caps = TRUE) {
   n <- L$n
-  xn <- rep_len(scales$x$map(L$values$x), n)
-  ymin <- rep_len(scales$y$map(L$values$ymin), n)
-  ymax <- rep_len(scales$y$map(L$values$ymax), n)
+  orient <- .range_orient(L)
+  ca <- if (identical(orient, "y")) "y" else "x"
+  va <- if (identical(orient, "y")) "x" else "y"
+  xn <- rep_len(scales[[ca]]$map(L$values[[ca]]), n)
+  ymin <- rep_len(scales[[va]]$map(L$values[[paste0(va, "min")]]), n)
+  ymax <- rep_len(scales[[va]]$map(L$values[[paste0(va, "max")]]), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1)
   lty <- .resolve_lty(L, scales, n)
-  band <- scales$x$band_width %||% .resolution(xn)
+  band <- scales[[ca]]$band_width %||% .resolution(xn)
   # A mapped `width` lands in values (a constant one in params); read values first
   # so a per-row cap width is honoured, not silently ignored.
   width <- rep_len(L$values$width %||% .aes_param(L, "width", 0.5), n)
@@ -22,6 +42,7 @@ NULL
 
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
+    # (category position, value) endpoints, swapped below when horizontal
     x0 <- xn[idx]
     y0 <- ymin[idx]
     x1 <- xn[idx]
@@ -31,6 +52,13 @@ NULL
       x1 <- c(x1, xn[idx] + half[idx], xn[idx] + half[idx])
       y0 <- c(y0, ymin[idx], ymax[idx])
       y1 <- c(y1, ymin[idx], ymax[idx])
+    }
+    if (identical(orient, "y")) {
+      sw <- list(x0 = y0, y0 = x0, x1 = y1, y1 = x1)
+      x0 <- sw$x0
+      y0 <- sw$y0
+      x1 <- sw$x1
+      y1 <- sw$y1
     }
     s <- .seg_units(
       scales,
@@ -178,6 +206,10 @@ NULL
   lwv <- .mapped_linewidth(L, scales, n)
   lty <- .resolve_lty(L, scales, n)
   sk <- .mark_sketch(L, scales)
+  curv <- L$stat_params$curvature %||% 0
+  if (curv != 0) {
+    return(.emit_curve(scene, L, scales, x0, y0, x1, y1, col, alpha, lwd, lty))
+  }
 
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
@@ -204,4 +236,90 @@ NULL
     gi <- gi + 1L
   }
   scene
+}
+
+# Curved segments (`mark_curve()`): one polyline per row from (x0, y0) to
+# (x1, y1), bent by `.curve_points()` in the panel's normalised frame. Native
+# coordinates in, drawn through `.xy_path()` so polar / coord_trans bend them
+# further.
+.emit_curve <- function(
+  scene,
+  L,
+  scales,
+  x0,
+  y0,
+  x1,
+  y1,
+  col,
+  alpha,
+  lwd,
+  lty
+) {
+  sp <- L$stat_params
+  sk <- .mark_sketch(L, scales)
+  lwv <- .mapped_linewidth(L, scales, L$n)
+  span <- function(sc) {
+    d <- suppressWarnings(as.numeric(sc$domain))
+    w <- if (length(d) >= 2L) abs(diff(range(d, na.rm = TRUE))) else NA
+    if (is.finite(w) && w > 0) w else 1
+  }
+  sx <- span(scales$x)
+  sy <- span(scales$y)
+  for (i in seq_len(L$n)) {
+    if (!all(is.finite(c(x0[i], y0[i], x1[i], y1[i])))) {
+      next
+    }
+    pts <- .curve_points(
+      x0[i] / sx,
+      y0[i] / sy,
+      x1[i] / sx,
+      y1[i] / sy,
+      sp$curvature,
+      sp$angle %||% 90,
+      sp$ncp %||% 5L
+    )
+    xy <- .xy_path(scales, pts$x * sx, pts$y * sy)
+    gp <- .gp_stroke(col, alpha, i, if (is.null(lwv)) lwd else lwv[i], lty)
+    scene <- .draw(
+      scene,
+      vellum::lines_grob(xy$x, xy$y, sketch = .sketch_bump(sk, i), gp = gp),
+      rows = i
+    )
+  }
+  scene
+}
+
+# Vertices of a curve from (x0, y0) to (x1, y1) with ggplot2's `geom_curve()`
+# parameters. With `angle = 90` the curve is the circular arc whose sagitta is
+# `curvature` times the half-chord (grid's `curveGrob()` arc: `1` is a half
+# circle); the sign picks the side, positive bending right of the direction of
+# travel. Another `angle` slides the apex along the chord to where grid puts the
+# corner of its control triangle (towards the start below 90, the end above).
+# `ncp` sets the resolution.
+.curve_points <- function(x0, y0, x1, y1, curvature, angle = 90, ncp = 5L) {
+  dx <- x1 - x0
+  dy <- y1 - y0
+  len <- sqrt(dx^2 + dy^2)
+  if (!is.finite(len) || len == 0 || curvature == 0) {
+    return(list(x = c(x0, x1), y = c(y0, y1)))
+  }
+  ex <- dx / len
+  ey <- dy / len
+  # right-hand normal of the direction of travel
+  nx <- ey
+  ny <- -ex
+  h <- len / 2
+  theta <- 2 * atan(abs(curvature))
+  r <- h / sin(theta)
+  phi <- seq(-theta, theta, length.out = max(8L, 8L * (ncp + 1L)))
+  f <- (1 + sin(phi) / sin(theta)) / 2 # fraction along the chord
+  v <- r * (cos(phi) - cos(theta)) # height above it
+  # slide the apex (f = 0.5) to the corner fraction, linearly on each side
+  ac <- (1 - cos(angle * pi / 180)) / 2
+  f <- ifelse(f <= 0.5, f * 2 * ac, ac + (f - 0.5) * 2 * (1 - ac))
+  side <- sign(curvature)
+  list(
+    x = x0 + ex * f * len + side * nx * v,
+    y = y0 + ey * f * len + side * ny * v
+  )
 }

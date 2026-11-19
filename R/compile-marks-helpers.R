@@ -35,10 +35,17 @@ NULL
 # style split already separates, so this is `.style_groups()` unchanged (same
 # groups, same order, same output).
 .series_groups <- function(L, n, fields) {
-  if (is.null(L$values$group) && is.null(L$params$group)) {
+  piece <- L$values$.piece
+  if (is.null(L$values$group) && is.null(L$params$group) && is.null(piece)) {
     return(.style_groups(n, fields))
   }
-  g <- rep_len(.group_key(L), n)
+  g <- .group_key(L)
+  g <- if (is.null(g)) rep("", n) else rep_len(as.character(g), n)
+  # A stat that fits several lines per group (`mark_quantile()`) marks each
+  # with a `.piece`: one series per (group, piece).
+  if (!is.null(piece)) {
+    g <- paste(g, rep_len(piece, n), sep = "\r")
+  }
   fields <- fields[!vapply(fields, is.null, logical(1))]
   out <- list()
   for (idx in unname(split(seq_len(n), match(g, unique(g))))) {
@@ -110,6 +117,34 @@ NULL
   }
   fillp <- if (.is_paint(L$params$fill)) NULL else L$params$fill
   fillp %||% default
+}
+
+# Per-row fill and outline of a mark with ggplot2's rect / polygon semantics:
+# `fill` fills and `color` outlines (no outline unless a `color` is given). A
+# `color` with no `fill` at all fills the shape instead, as on the other filled
+# marks (tile, bar), so `color = g` alone still paints the shapes. A paint
+# `fill` (gradient/pattern) counts as a fill; the emitter substitutes it at the
+# gp via `.paint_or()`. Returns `fill` and `col` vectors of length `n`.
+.fill_and_outline <- function(L, scales, default, n = L$n) {
+  has_fill <- !is.null(L$values$fill) || !is.null(L$params$fill)
+  has_col <- !is.null(L$values$color) || !is.null(L$params$color)
+  if (!has_fill) {
+    return(list(
+      fill = rep_len(.aes_colour(L, scales, default), n),
+      col = rep_len(NA_character_, n)
+    ))
+  }
+  col <- if (!has_col) {
+    NA_character_
+  } else if (!is.null(L$values$color) && !is.null(scales$color)) {
+    scales$color$map(L$values$color)
+  } else {
+    L$params$color %||% NA_character_
+  }
+  list(
+    fill = rep_len(.aes_fill_colour(L, scales, default), n),
+    col = rep_len(col, n)
+  )
 }
 
 # A fill value can be a constant *paint* (gradient or pattern), not just a colour.
@@ -234,6 +269,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   "halfeye",
   "hull",
   "ellipse",
+  "polygon",
   "sf"
 )
 

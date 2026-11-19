@@ -51,7 +51,11 @@ NULL
 # own space; a constant width already works through that path. Promoting them to
 # a channel here would force one global meaning and misroute the physical-size
 # case, so the `params` path is the intended design (vellumplot#3).
-.POSITION_AES <- c(
+#
+# (Named apart from trained-scale.R's `.POSITION_AES`, the two position scales:
+# sharing the name let that later definition shadow this one, so a literal
+# `xend`/`ymin` became a style param that trained nothing.)
+.COORD_AES <- c(
   "x",
   "y",
   "xend",
@@ -98,7 +102,7 @@ NULL
       # as a channel so it populates `values`, recycles per row, and trains the
       # position scale. Every other literal (e.g. `size = 3`) is a constant
       # aesthetic.
-      if (nm %in% .POSITION_AES) {
+      if (nm %in% .COORD_AES) {
         encoding[[nm]] <- channel(expr = q)
       } else {
         params[[nm]] <- rlang::eval_tidy(q)
@@ -2172,6 +2176,247 @@ mark_contour_filled <- function(
   )
 }
 
+#' Quantile regression lines
+#'
+#' `mark_quantile()` fits a quantile regression of `y` on `x` per group for
+#' each of `quantiles` and draws the fitted lines (ggplot2's
+#' `geom_quantile()`). The fit is [quantreg::rq()] of `formula` (default
+#' `y ~ x`), predicted on 100 points across the group's range of `x`. Map
+#' `color = after_stat(factor(quantile))` (or `linetype`) to tell the lines
+#' apart. Needs the \pkg{quantreg} package.
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): `x`, `y` (+ `color`, `group`,
+#'   `linewidth`, `linetype`, `alpha`).
+#' @param quantiles The conditional quantiles to fit (default
+#'   `c(0.25, 0.5, 0.75)`).
+#' @param formula The model formula in `x` and `y` (default `y ~ x`), e.g.
+#'   `y ~ splines::ns(x, 3)` for a curve.
+#' @param method.args A list of further arguments to [quantreg::rq()].
+#' @return The modified [PlotSpec].
+#' @seealso [mark_smooth()] with `method = "rq"` for one quantile with the
+#'   smoother's options.
+#' @examples
+#' \donttest{
+#' if (requireNamespace("quantreg", quietly = TRUE)) {
+#'   vplot(mtcars) |>
+#'     mark_point(x = disp, y = mpg) |>
+#'     mark_quantile(x = disp, y = mpg)
+#' }
+#' }
+#' @export
+mark_quantile <- function(
+  plot,
+  ...,
+  quantiles = c(0.25, 0.5, 0.75),
+  formula = NULL,
+  method.args = list(),
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  if (
+    !is.numeric(quantiles) ||
+      !length(quantiles) ||
+      any(!is.finite(quantiles) | quantiles <= 0 | quantiles >= 1)
+  ) {
+    cli::cli_abort("{.arg quantiles} must be probabilities between 0 and 1.")
+  }
+  if (!is.null(formula) && !inherits(formula, "formula")) {
+    cli::cli_abort("{.arg formula} must be a formula, like {.code y ~ x}.")
+  }
+  if (!is.list(method.args)) {
+    cli::cli_abort("{.arg method.args} must be a list.")
+  }
+  dots <- rlang::enquos(...)
+  if (!any(c("color", "colour") %in% names(dots))) {
+    dots$color <- rlang::quo("#3366CC")
+  }
+  .add_layer(
+    plot,
+    "line",
+    dots,
+    stat = "quantile",
+    stat_params = list(
+      quantiles = quantiles,
+      formula = formula,
+      method.args = method.args
+    ),
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' 2-D density estimate
+#'
+#' `mark_density_2d()` draws the contour lines of a 2-D kernel density estimate
+#' of (`x`, `y`) and `mark_density_2d_filled()` fills the bands between them,
+#' with the semantics of ggplot2's `geom_density_2d()` and
+#' `geom_density_2d_filled()`: the density is [MASS::kde2d()] on an `n` x `n`
+#' grid over the data range with bandwidths `h` (default
+#' [MASS::bandwidth.nrd()] per axis) times `adjust`, and the levels are ~`bins`
+#' pretty breaks of the density over every group. Unlike [mark_contour()], the
+#' lines are not coloured by level unless you map `color = after_stat(level)`;
+#' the filled bands map `fill = after_stat(level)`. A discrete `color`/`fill`
+#' (or `group`) estimates one density per group. Needs the \pkg{MASS} package.
+#'
+#' @inheritParams mark_contour
+#' @param ... Encodings (tidy-eval): `x`, `y` (+ `color`/`fill`, `group`,
+#'   `linewidth`, `linetype`, `alpha`).
+#' @param contour_var The variable to contour: `"density"` (default),
+#'   `"ndensity"` (density scaled to a maximum of 1 per group) or `"count"`
+#'   (density times the number of observations in the group).
+#' @param n Number of grid points per axis.
+#' @param h Bandwidth (the standard deviation of the kernel) per axis: a
+#'   number or a pair; `NULL` (default) uses [MASS::bandwidth.nrd()].
+#' @param adjust Multiplier(s) for the bandwidth, a number or a pair (default
+#'   `c(1, 1)`).
+#' @return The modified [PlotSpec].
+#' @seealso [mark_contour()] to contour a supplied `z` surface.
+#' @examples
+#' vplot(faithful) |>
+#'   mark_point(x = eruptions, y = waiting) |>
+#'   mark_density_2d(x = eruptions, y = waiting)
+#' vplot(faithful) |> mark_density_2d_filled(x = eruptions, y = waiting)
+#' @export
+mark_density_2d <- function(
+  plot,
+  ...,
+  position = "identity",
+  contour_var = "density",
+  bins = NULL,
+  binwidth = NULL,
+  breaks = NULL,
+  n = 100,
+  h = NULL,
+  adjust = c(1, 1),
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .density_2d_layer(
+    plot,
+    rlang::enquos(...),
+    "contour",
+    position = position,
+    contour_var = contour_var,
+    bins = bins,
+    binwidth = binwidth,
+    breaks = breaks,
+    n = n,
+    h = h,
+    adjust = adjust,
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+#' @rdname mark_density_2d
+#' @export
+mark_density_2d_filled <- function(
+  plot,
+  ...,
+  position = "identity",
+  contour_var = "density",
+  bins = NULL,
+  binwidth = NULL,
+  breaks = NULL,
+  n = 100,
+  h = NULL,
+  adjust = c(1, 1),
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  dots <- rlang::enquos(...)
+  dots <- .default_channel(dots, "fill", rlang::quo(after_stat(level)))
+  .density_2d_layer(
+    plot,
+    dots,
+    "contour_filled",
+    position = position,
+    contour_var = contour_var,
+    bins = bins,
+    binwidth = binwidth,
+    breaks = breaks,
+    n = n,
+    h = h,
+    adjust = adjust,
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+# The shared constructor of the two 2-D density marks.
+.density_2d_layer <- function(
+  plot,
+  dots,
+  mark,
+  position,
+  contour_var,
+  bins,
+  binwidth,
+  breaks,
+  n,
+  h,
+  adjust,
+  blend,
+  sketch,
+  data,
+  call = rlang::caller_env()
+) {
+  .check_plot(plot, call = call)
+  .check_count(bins, null_ok = TRUE, call = call)
+  .check_positive(binwidth, null_ok = TRUE, call = call)
+  .check_count(n, min = 2L, call = call)
+  for (nm in c("h", "adjust")) {
+    v <- if (nm == "h") h else adjust
+    if (
+      !is.null(v) &&
+        (!is.numeric(v) || !length(v) %in% 1:2 || any(!is.finite(v) | v <= 0))
+    ) {
+      cli::cli_abort(
+        "{.arg {nm}} must be one or two positive numbers.",
+        call = call
+      )
+    }
+  }
+  contour_var <- rlang::arg_match0(
+    contour_var,
+    c("density", "ndensity", "count"),
+    arg_nm = "contour_var",
+    error_call = call
+  )
+  .add_layer(
+    plot,
+    mark,
+    dots,
+    stat = "density_2d",
+    stat_params = list(
+      bins = bins,
+      binwidth = binwidth,
+      breaks = breaks,
+      n = n,
+      h = h,
+      adjust = adjust,
+      contour_var = contour_var,
+      filled = if (identical(mark, "contour_filled")) TRUE
+    ),
+    blend = blend,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
 #' Distribution marks
 #'
 #' Marks that summarise the distribution of a variable.
@@ -2608,10 +2853,12 @@ mark_hex <- function(
 #' A box plot is vertical when `x` is the discrete axis. When `y` is discrete
 #' and `x` continuous (`mark_boxplot(x = mpg, y = factor(cyl))`) it is drawn
 #' horizontally, as in ggplot2; `orientation` forces either.
+#' Error bars and ranges are horizontal when they map `xmin`/`xmax` at each `y`
+#' instead: `mark_errorbar(y = g, xmin = lo, xmax = hi)`.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
-#'   `ymax` for errorbar/linerange; plus `color`/`fill` (and `linetype` for
+#'   `ymax` (or `y`, `xmin`, `xmax`) for errorbar/linerange; plus `color`/`fill` (and `linetype` for
 #'   errorbar/linerange).
 #' @param width For `mark_errorbar()`, the cap width as a fraction of the band.
 #' @param fun For `mark_summary()`, the aggregation function (default `mean`).
@@ -2629,7 +2876,11 @@ mark_hex <- function(
 #'   `list(conf.int = 0.9)` for `"mean_cl_normal"`.
 #' @param orientation For `mark_boxplot()`, `NA` (default) to infer it from the
 #'   data (horizontal when `y` is discrete and `x` is not), `"x"` for vertical
-#'   boxes along a discrete `x`, or `"y"` for horizontal boxes along `y`.
+#'   boxes along a discrete `x`, or `"y"` for horizontal boxes along `y`. For
+#'   `mark_errorbar()`, `mark_linerange()` and `mark_pointrange()`, `NA`
+#'   (default) draws horizontal ranges when the layer maps `xmin`/`xmax` and no
+#'   `ymin`/`ymax` (ggplot2's `geom_errorbarh()`), vertical ones otherwise;
+#'   `"x"` / `"y"` force either.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
@@ -2637,6 +2888,9 @@ mark_hex <- function(
 #' vplot(mtcars) |> mark_boxplot(x = mpg, y = factor(cyl))
 #' # mean and standard error per category
 #' vplot(mtcars) |> mark_summary(x = factor(cyl), y = mpg, fun.data = "mean_se")
+#' # horizontal error bars
+#' est <- data.frame(term = c("a", "b", "c"), lo = c(-1, 0.2, 1), hi = c(1, 1.5, 2.4))
+#' vplot(est) |> mark_errorbar(y = term, xmin = lo, xmax = hi, width = 0.3)
 #' @export
 mark_boxplot <- function(
   plot,
@@ -2730,6 +2984,7 @@ mark_errorbar <- function(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   width = 0.5,
   blend = NULL,
   sketch = NULL,
@@ -2741,6 +2996,7 @@ mark_errorbar <- function(
     "errorbar",
     rlang::enquos(...),
     rlang::enquos(width = width),
+    stat_params = list(orientation = .check_orientation(orientation)),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -2754,6 +3010,7 @@ mark_linerange <- function(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2763,6 +3020,7 @@ mark_linerange <- function(
     plot,
     "linerange",
     rlang::enquos(...),
+    stat_params = list(orientation = .check_orientation(orientation)),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -2832,6 +3090,7 @@ mark_pointrange <- function(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2841,6 +3100,7 @@ mark_pointrange <- function(
     plot,
     "pointrange",
     rlang::enquos(...),
+    stat_params = list(orientation = .check_orientation(orientation)),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -2911,19 +3171,34 @@ mark_count <- function(
   )
 }
 
-#' Segment mark
+#' Segment, curve and spoke marks
 #'
 #' `mark_segment()` draws a straight line from `(x, y)` to `(xend, yend)` per row.
+#' `mark_curve()` bends that line into an arc (ggplot2's `geom_curve()`).
+#' `mark_spoke()` draws a segment from `(x, y)` in the direction `angle`
+#' (radians) with length `radius`, both in data units (ggplot2's
+#' `geom_spoke()`): a vector field.
+#'
+#' A curve bends in the panel's own frame (its x and y spans scaled to the
+#' same length), so on a panel that is not square the arc stretches with the
+#' panel; ggplot2 bends in device space instead.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
-#'   `linewidth`, `linetype`, `alpha`). A mapped `linewidth` gives each segment
+#'   `linewidth`, `linetype`, `alpha`); `mark_spoke()` takes `angle` and
+#'   `radius` in place of `xend`, `yend`. A mapped `linewidth` gives each segment
 #'   its own width -- see [scale_linewidth()].
 #' @return The modified [PlotSpec].
 #' @seealso [scale_linewidth()]
 #' @examples
 #' d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
 #' vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend)
+#' vplot(d) |> mark_curve(x = x, y = y, xend = xend, yend = yend)
+#'
+#' # a vector field
+#' g <- expand.grid(x = 1:8, y = 1:8)
+#' g$angle <- atan2(g$y - 4.5, g$x - 4.5)
+#' vplot(g) |> mark_spoke(x = x, y = y, angle = angle, radius = 0.4)
 #' @export
 mark_segment <- function(
   plot,
@@ -2941,6 +3216,185 @@ mark_segment <- function(
     "segment",
     rlang::enquos(...),
     stat_params = list(auto = isTRUE(auto)),
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' @rdname mark_segment
+#' @param curvature For `mark_curve()`, the amount of bend: `0` is straight,
+#'   `1` a half circle; negative values bend the other way (ggplot2's
+#'   convention: positive bends to the right, travelling from start to end).
+#' @param angle For `mark_curve()`, where the apex of the bend sits, in degrees
+#'   between 0 and 180: `90` (default) is symmetric, smaller values move it
+#'   towards the start and larger towards the end.
+#' @param ncp For `mark_curve()`, the number of control points (more give a
+#'   smoother curve; default `5`).
+#' @export
+mark_curve <- function(
+  plot,
+  ...,
+  curvature = 0.5,
+  angle = 90,
+  ncp = 5,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  if (
+    !is.numeric(curvature) || length(curvature) != 1L || !is.finite(curvature)
+  ) {
+    cli::cli_abort("{.arg curvature} must be a single finite number.")
+  }
+  if (
+    !is.numeric(angle) ||
+      length(angle) != 1L ||
+      !is.finite(angle) ||
+      angle <= 0 ||
+      angle >= 180
+  ) {
+    cli::cli_abort("{.arg angle} must be a single number between 0 and 180.")
+  }
+  .check_count(ncp)
+  .add_layer(
+    plot,
+    "segment",
+    rlang::enquos(...),
+    stat_params = list(curvature = curvature, angle = angle, ncp = ncp),
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' @rdname mark_segment
+#' @export
+mark_spoke <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  dots <- rlang::enquos(...)
+  names(dots) <- sub("colour", "color", names(dots), fixed = TRUE)
+  need <- c("x", "y", "angle", "radius")
+  miss <- setdiff(need, names(dots))
+  if (length(miss)) {
+    cli::cli_abort("{.fn mark_spoke} needs {.arg {miss}}.")
+  }
+  # The end point is a per-row expression of the start, the angle and the
+  # radius (ggplot2's `stat_identity` + `xend = x + cos(angle) * radius`), so
+  # every row stays its own element (keys and provenance follow the data).
+  ex <- lapply(dots[need], rlang::quo_get_expr)
+  env <- rlang::quo_get_env(dots$x)
+  dots$xend <- rlang::new_quosure(
+    rlang::expr(!!ex$x + cos(!!ex$angle) * !!ex$radius),
+    env
+  )
+  dots$yend <- rlang::new_quosure(
+    rlang::expr(!!ex$y + sin(!!ex$angle) * !!ex$radius),
+    env
+  )
+  dots <- dots[setdiff(names(dots), c("angle", "radius"))]
+  .add_layer(
+    plot,
+    "segment",
+    dots,
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' Polygon and path marks
+#'
+#' `mark_polygon()` draws one filled polygon per `group`, its vertices in data
+#' order (ggplot2's `geom_polygon()`). A `subgroup` cuts holes: within a group,
+#' each subgroup is a ring, filled with the even-odd rule so an inner ring is a
+#' hole. `mark_path()` connects the observations in the order they appear in the
+#' data, unlike [mark_line()], which sorts them by `x` (ggplot2's
+#' `geom_path()`).
+#'
+#' As in ggplot2, `fill` fills a polygon (default `"grey20"`) and `color`
+#' outlines it (no outline by default); a `color` given without any `fill` fills
+#' the polygon instead, as it does for the other filled marks.
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): `x`, `y`, `group` (one polygon / path per
+#'   group), `subgroup` (`mark_polygon()` holes), `fill`, `color`, `alpha`,
+#'   `linewidth`, `linetype`.
+#' @return The modified [PlotSpec].
+#' @examples
+#' tri <- data.frame(
+#'   id = rep(c("a", "b"), each = 3),
+#'   x = c(0, 1, 0.5, 2, 3, 2.5),
+#'   y = c(0, 0, 1, 0, 0, 1)
+#' )
+#' vplot(tri) |> mark_polygon(x = x, y = y, group = id, fill = id)
+#'
+#' # a square with a square hole
+#' sq <- data.frame(
+#'   x = c(0, 4, 4, 0, 1, 3, 3, 1),
+#'   y = c(0, 0, 4, 4, 1, 1, 3, 3),
+#'   ring = rep(1:2, each = 4)
+#' )
+#' vplot(sq) |> mark_polygon(x = x, y = y, subgroup = ring)
+#'
+#' # a path follows the data order
+#' t <- seq(0, 4 * pi, length.out = 200)
+#' vplot(data.frame(x = t * cos(t), y = t * sin(t))) |> mark_path(x = x, y = y)
+#' @export
+mark_polygon <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "polygon",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' @rdname mark_polygon
+#' @export
+mark_path <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "line",
+    rlang::enquos(...),
+    stat_params = list(sort = FALSE),
     blend = blend,
     effects = effects,
     sketch = sketch,
