@@ -683,170 +683,114 @@ NULL
 
 # --- legend -----------------------------------------------------------------
 
-# The list of guides a plot needs, in draw order: colour, size, shape, edge
-# width, alpha, then linetype. Each guide is `list(kind, sc)` where `sc` is the
-# trained scale (or, for a merged guide, a synthesized pseudo-scale).
+# The list of guides a plot needs, in draw order -- the order of the legend rows
+# of `.AES_REGISTRY` (colour, size, shape, pattern, edge width, line width,
+# alpha, linetype, then the edge colour / alpha / linetype). Each guide is
+# `list(kind, sc)` where `sc` is the trained scale (or, for a merged guide, a
+# synthesized pseudo-scale); `kind` is the registry row's `guide`, resolved per
+# scale kind for the colour guides.
 #
 # When one variable drives two aesthetics, the colour guide merges with its
 # partner into a single guide whose keys carry both encodings (ggplot2's rule):
 # a discrete colour scale merges with `shape`; a continuous colour scale merges
-# with `size`. They merge only when the two scales share a title *and* a
-# compatible break/level set -- give one scale a different `name=` to keep them
-# apart. `merged` marks which partner (if any) was folded into the colour guide.
+# with `size`. Which trained fields must agree for a merge is the registry row's
+# `merge` (see `.aes_can_merge()`) -- give one scale a different `name=` to keep
+# them apart. `merged` marks which partner (if any) was folded into the colour
+# guide.
 .legend_guides <- function(scales) {
   out <- list()
   merged <- NULL
+  keys <- .aes_legend_keys()
   # A scale can opt out of its legend (an identity scale, or `guide = "none"`):
   # the mapping still applies to the marks, but no guide is drawn. Drop it here
   # so neither the standalone nor the merge path picks it up. This is a local
   # copy, so the emitters' own scales are unaffected.
-  for (k in c(
-    "color",
-    "size",
-    "shape",
-    "pattern",
-    "edge_width",
-    "linewidth",
-    "alpha",
-    "linetype",
-    "edge_color",
-    "edge_alpha",
-    "edge_linetype"
-  )) {
+  for (k in keys) {
     if (!is.null(scales[[k]]) && isTRUE(scales[[k]]$no_guide)) {
-      scales[[k]] <- NULL
+      scales[k] <- list(NULL)
     }
   }
-  if (!is.null(scales$color)) {
-    gk <- scales$color$kind
-    # A binned (classed) colour scale draws as discrete swatches with interval
-    # labels, so it reuses the discrete guide -- unless guide_coloursteps() asked
-    # for a segmented bar, which routes to its own stepped-bar drawer instead.
-    discrete <- gk %in% c("discrete", "binned")
-    if (!is.null(scales$color$bivariate)) {
-      # A bivariate scale draws its 2-D grid and never merges with a partner.
-      out <- c(out, list(list(kind = "color_bivariate", sc = scales$color)))
-    } else if (identical(gk, "binned") && isTRUE(scales$color$stepped)) {
-      out <- c(out, list(list(kind = "color_steps", sc = scales$color)))
-    } else if (discrete && .can_merge_shape(scales$color, scales$shape)) {
-      out <- c(
-        out,
-        list(list(
-          kind = "merged",
-          sc = .merged_color_shape(scales$color, scales$shape)
-        ))
+  add <- function(kind, sc) out <<- c(out, list(list(kind = kind, sc = sc)))
+  for (k in keys) {
+    sc <- scales[[k]]
+    if (is.null(sc)) {
+      next
+    }
+    guide <- .AES_REGISTRY[[k]]$guide
+    if (k == "color") {
+      gk <- sc$kind
+      # A binned (classed) colour scale draws as discrete swatches with interval
+      # labels, so it reuses the discrete guide -- unless guide_coloursteps()
+      # asked for a segmented bar, which routes to its own stepped-bar drawer.
+      discrete <- gk %in% c("discrete", "binned")
+      if (!is.null(sc$bivariate)) {
+        # A bivariate scale draws its 2-D grid and never merges with a partner.
+        add("color_bivariate", sc)
+      } else if (identical(gk, "binned") && isTRUE(sc$stepped)) {
+        add("color_steps", sc)
+      } else if (discrete && .can_merge_shape(sc, scales$shape)) {
+        add("merged", .merged_color_shape(sc, scales$shape))
+        merged <- "shape"
+      } else if (
+        identical(gk, "continuous") && .can_merge_size(sc, scales$size)
+      ) {
+        add("merged", .merged_color_size(sc, scales$size))
+        merged <- "size"
+      } else {
+        add(paste0("color_", if (discrete) "discrete" else gk), sc)
+      }
+    } else if (identical(merged, k)) {
+      next # folded into the colour guide above
+    } else if (k == "size" && isTRUE(sc$nested)) {
+      # guide_legend(nested = TRUE) draws the size keys as concentric circles.
+      add("size_nested", sc)
+    } else if (identical(guide, "color")) {
+      # Edge colour reuses the node colour renderers (the scale objects are
+      # structurally identical) but never merges with shape/size -- it belongs to
+      # the edge layer, whose key glyph is a line. When it is the same encoding
+      # as the node colour scale (one variable colouring both), its guide would
+      # duplicate the node swatch, so it folds into the node guide instead.
+      if (.can_merge_edge_color(scales$color, sc)) {
+        next
+      }
+      gk <- sc$kind
+      add(
+        paste0(
+          "color_",
+          if (gk %in% c("discrete", "binned")) "discrete" else gk
+        ),
+        sc
       )
-      merged <- "shape"
-    } else if (
-      identical(gk, "continuous") && .can_merge_size(scales$color, scales$size)
-    ) {
-      out <- c(
-        out,
-        list(list(
-          kind = "merged",
-          sc = .merged_color_size(scales$color, scales$size)
-        ))
-      )
-      merged <- "size"
     } else {
-      k <- if (discrete) "discrete" else gk
-      out <- c(out, list(list(kind = paste0("color_", k), sc = scales$color)))
+      add(guide, sc)
     }
-  }
-  if (!is.null(scales$size) && !identical(merged, "size")) {
-    # guide_legend(nested = TRUE) draws the size keys as concentric circles.
-    sk <- if (isTRUE(scales$size$nested)) "size_nested" else "size"
-    out <- c(out, list(list(kind = sk, sc = scales$size)))
-  }
-  if (!is.null(scales$shape) && !identical(merged, "shape")) {
-    out <- c(out, list(list(kind = "shape", sc = scales$shape)))
-  }
-  if (!is.null(scales$pattern)) {
-    out <- c(out, list(list(kind = "pattern", sc = scales$pattern)))
-  }
-  if (!is.null(scales$edge_width)) {
-    out <- c(out, list(list(kind = "edge_width", sc = scales$edge_width)))
-  }
-  # A mapped `linewidth` on a line/step/segment: same key glyph as the edge-width
-  # guide (a short rule drawn at the break's width), its own scale.
-  if (!is.null(scales$linewidth)) {
-    out <- c(out, list(list(kind = "linewidth", sc = scales$linewidth)))
-  }
-  if (!is.null(scales$alpha)) {
-    out <- c(out, list(list(kind = "alpha", sc = scales$alpha)))
-  }
-  if (!is.null(scales$linetype)) {
-    out <- c(out, list(list(kind = "linetype", sc = scales$linetype)))
-  }
-  # Edge colour / alpha / linetype guides reuse the node guide renderers (the
-  # scale objects are structurally identical), but never merge with shape/size --
-  # they belong to the edge layer, whose key glyph is a line. A discrete edge
-  # colour scale draws as swatches; a continuous one as a colourbar. When the
-  # edge colour scale is the same encoding as the node colour scale (one variable
-  # colouring both), its guide would duplicate the node swatch, so it folds into
-  # the node guide instead of drawing a second, redundant legend.
-  if (
-    !is.null(scales$edge_color) &&
-      !.can_merge_edge_color(scales$color, scales$edge_color)
-  ) {
-    gk <- scales$edge_color$kind
-    k <- if (gk %in% c("discrete", "binned")) "discrete" else gk
-    out <- c(
-      out,
-      list(list(kind = paste0("color_", k), sc = scales$edge_color))
-    )
-  }
-  if (!is.null(scales$edge_alpha)) {
-    out <- c(out, list(list(kind = "alpha", sc = scales$edge_alpha)))
-  }
-  if (!is.null(scales$edge_linetype)) {
-    out <- c(out, list(list(kind = "linetype", sc = scales$edge_linetype)))
   }
   out
 }
 
-# A discrete colour scale and a shape scale merge when they carry the same title
-# and the identical set of levels (so the same variable, encoded the same way).
+# A discrete colour scale and a shape scale merge when the registry's merge
+# fields for the pair agree (title and the identical set of levels: the same
+# variable, encoded the same way).
 .can_merge_shape <- function(color, shape) {
-  !is.null(color) &&
-    !is.null(shape) &&
-    identical(color$name, shape$name) &&
-    identical(color$levels, shape$levels)
+  .aes_can_merge(color, shape, "color", "shape")
 }
 
-# A continuous colour scale and a size scale merge when they carry the same
-# title (they then share the variable, hence its data range and breaks).
+# A continuous colour scale and a size scale merge when the registry's merge
+# fields for the pair agree (the title: they then share the variable, hence its
+# data range and breaks).
 .can_merge_size <- function(color, size) {
-  !is.null(color) && !is.null(size) && identical(color$name, size$name)
+  .aes_can_merge(color, size, "color", "size")
 }
 
 # A node colour scale and an edge colour scale describe the same encoding when
 # one variable colours both nodes/text and edges (e.g. `vdendrogram(k=)`). Both
 # come from the same `.train_colour`, so their palette-defining fields are
-# directly comparable -- they match when title, kind, and the fields that fix
-# the palette and its breaks agree. `key_glyph` (a swatch for nodes, a line for
-# edges) and `map` (a closure) are expected to differ and are not compared. When
-# they match, the node colour guide already carries the whole encoding, so the
-# edge guide is dropped rather than drawn as a redundant twin.
+# directly comparable; the registry names them (title, kind, and the fields that
+# fix the palette and its breaks). When they match, the node colour guide
+# already carries the whole encoding, so the edge guide is dropped rather than
+# drawn as a redundant twin.
 .can_merge_edge_color <- function(color, edge_color) {
-  if (is.null(color) || is.null(edge_color)) {
-    return(FALSE)
-  }
-  if (
-    !identical(color$kind, edge_color$kind) ||
-      !identical(color$name, edge_color$name)
-  ) {
-    return(FALSE)
-  }
-  if (identical(color$kind, "continuous")) {
-    identical(color$range, edge_color$range) &&
-      identical(color$pal256, edge_color$pal256) &&
-      identical(color$midpoint, edge_color$midpoint)
-  } else {
-    # discrete / binned: same shown levels drawn in the same colours.
-    identical(color$levels, edge_color$levels) &&
-      identical(color$colors, edge_color$colors)
-  }
+  .aes_can_merge(edge_color, color, "edge_color", "color")
 }
 
 # Pseudo-scale for a merged colour+shape guide: one row per shared level, each a

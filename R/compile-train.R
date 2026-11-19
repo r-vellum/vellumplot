@@ -1163,12 +1163,8 @@ NULL
 # Line-width output range (lwd units) a mapped `linewidth` spans.
 .LINEWIDTH_RANGE <- c(0.5, 4)
 
-# The marks whose emitter varies stroke width *per element*, and so read the
-# `linewidth` scale. Everywhere else a mapped `linewidth` still belongs to the
-# edge-width scale (`mark_edges()` and friends), which is trained separately --
-# the two share the channel name but not the scale, so a graph can map edge
-# width and a line's width to different variables in one plot.
-.LINEWIDTH_MARKS <- c("line", "step", "segment")
+# `.LINEWIDTH_MARKS` (the marks that read the line-width scale rather than the
+# edge-width one) lives with the aesthetic registry, R/aes-registry.R.
 
 # The layers of `resolved` whose mark is (or, with `invert`, is not) in `marks`.
 .layers_with_mark <- function(resolved, marks, invert = FALSE) {
@@ -1682,38 +1678,22 @@ NULL
       include_zero = zero_base,
       lim = co@ylim,
       values = ys
-    ),
-    color = .train_colour(spec, resolved, titles = titles),
-    size = .train_size(spec, resolved, titles = titles),
-    shape = .train_shape(spec, resolved, titles = titles),
-    pattern = .train_pattern(spec, resolved, titles = titles),
-    edge_width = .train_edge_width(spec, resolved, titles = titles),
-    linewidth = .train_linewidth(spec, resolved, titles = titles),
-    alpha = .train_alpha(spec, resolved, titles = titles),
-    linetype = .train_linetype(spec, resolved, titles = titles),
-    edge_color = .train_edge_colour(spec, resolved, titles = titles),
-    edge_alpha = .train_edge_alpha(spec, resolved, titles = titles),
-    edge_linetype = .train_edge_linetype(spec, resolved, titles = titles)
+    )
   )
-  # Apply per-scale guide overrides (guides(): guide = "none" / guide_legend()).
-  for (aes in c(
-    "color",
-    "size",
-    "shape",
-    "pattern",
-    "edge_width",
-    "linewidth",
-    "alpha",
-    "linetype",
-    "edge_color",
-    "edge_alpha",
-    "edge_linetype"
-  )) {
-    ss <- .scale_for(spec, aes)
-    g <- if (!is.null(ss)) ss@guide else NULL
-    if (!is.null(scales[[aes]]) && !is.null(g)) {
-      scales[[aes]] <- .apply_guide(scales[[aes]], g)
+  # Every other registered scale, in registry (legend) order, by its trainer;
+  # then its guides() override (guide = "none" / guide_legend()). An untrained
+  # scale stays as a NULL entry so every key is always present.
+  for (e in .AES_REGISTRY) {
+    if (is.null(e$trainer)) {
+      next
     }
+    sc <- .aes_trainer(e)(spec, resolved, titles = titles)
+    ss <- .scale_for(spec, e$name)
+    g <- if (!is.null(ss)) ss@guide else NULL
+    if (!is.null(sc) && !is.null(g)) {
+      sc <- .apply_guide(sc, g)
+    }
+    scales[e$name] <- list(sc)
   }
   scales
 }

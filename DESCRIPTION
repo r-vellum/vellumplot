@@ -57,6 +57,7 @@ Config/testthat/edition: 3
 Collate:
     'vellumplot-package.R'
     'classes.R'
+    'aes-registry.R'
     'print.R'
     'alt.R'
     'compile-resolve.R'

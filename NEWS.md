@@ -61,6 +61,15 @@
 
 ## Bug fixes
 
+* **Provenance carries every trained scale.** `plot_provenance()` records
+  listed scale-refs only for `x`, `y`, colour/fill, `size` and `shape`. A
+  mapped `alpha`, `linetype`, `linewidth` or `pattern` now carries its
+  scale-ref too, as do the edge colour, alpha and linetype channels of a
+  graph. `linewidth` names the line-width scale on a line, step or segment
+  and the edge-width scale elsewhere. The aesthetics that the scale trainer,
+  the legend builder and provenance each listed separately now come from
+  one internal registry.
+
 * **Alt text names the drawn axes under `coord_flip()`.** The automatic
   description said "It plots y (vertical axis) against x (horizontal axis)"
   even when `coord_flip()` drew x up the side. It now names the scale on each

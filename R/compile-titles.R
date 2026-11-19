@@ -1,4 +1,4 @@
-#' @include classes.R coord.R compile-resolve.R print.R
+#' @include classes.R coord.R compile-resolve.R print.R aes-registry.R
 NULL
 
 # ---------------------------------------------------------------------------
@@ -12,25 +12,6 @@ NULL
 # the lint summary all read it, so they cannot disagree about what a scale is
 # called -- or, under `coord_flip()`, about which title sits on which axis.
 # ---------------------------------------------------------------------------
-
-# Scale key -> the channel whose labs() entry / mapped expression supplies the
-# default title. Edge width shares the `linewidth` channel with the line-width
-# scale (they differ by the marks that read them, not by the channel).
-.TITLE_KEYS <- c(
-  x = "x",
-  y = "y",
-  color = "color",
-  size = "size",
-  shape = "shape",
-  pattern = "pattern",
-  edge_width = "linewidth",
-  linewidth = "linewidth",
-  alpha = "alpha",
-  linetype = "linetype",
-  edge_color = "edge_color",
-  edge_alpha = "edge_alpha",
-  edge_linetype = "edge_linetype"
-)
 
 # A single non-empty plain string (a rich md() title has no reliable plain-text
 # form, so it never stands in for a description), else NULL.
@@ -94,13 +75,15 @@ NULL
 #   flip     -- TRUE under coord_flip()
 #   h, v     -- the scale key drawn on the horizontal / vertical axis
 .plot_titles <- function(spec, resolved = NULL) {
-  keys <- names(.TITLE_KEYS)
+  keys <- names(.AES_REGISTRY)
   counts <- .y_counts(spec, resolved)
   default <- list()
   title <- list()
   text <- list()
   for (key in keys) {
-    channel <- .TITLE_KEYS[[key]]
+    # The channel whose labs() entry / mapped expression supplies the default
+    # (edge width reads the `linewidth` channel). See .AES_REGISTRY.
+    channel <- .AES_REGISTRY[[key]]$title
     lab <- .labs_title(spec, channel)
     mapped <- .mapped_title(spec, channel)
     fallback <- if (key == "y" && counts) "count" else mapped %||% channel
