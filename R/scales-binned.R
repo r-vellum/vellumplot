@@ -226,6 +226,7 @@ NULL
     na = has_na,
     legend_breaks = labels,
     legend_labels = labels,
+    bin_breaks = brks,
     !!!rlang::set_names(list(outs), legend_field)
   )
 }

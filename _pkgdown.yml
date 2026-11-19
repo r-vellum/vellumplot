@@ -226,6 +226,7 @@ reference:
   - sec_axis
   - guides
   - guide_axis
+  - guide_bins
   - guide_bivariate
   - resolve_scale
   - after_stat

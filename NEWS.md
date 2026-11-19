@@ -2,6 +2,14 @@
 
 ## New features
 
+* `guide_bins()` draws the legend of a binned scale as ggplot2's does: one key
+  per bin, edge to edge, with the bin boundaries (not interval labels) on a
+  small axis beside them; `show.limits = TRUE` also labels the outer limits.
+  It works on `scale_size_binned()`, `scale_alpha_binned()` and the binned
+  colour scales, vertically and in a top / bottom legend (VP-45).
+
+## New features
+
 * `scale_x_date()`, `scale_x_datetime()`, `scale_x_time()`, `scale_x_binned()`
   and their `y` counterparts take `guide =`, like the continuous and discrete
   position scales: `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the

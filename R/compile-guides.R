@@ -980,7 +980,8 @@ NULL
 .legend_merge_sig <- function(g) {
   if (
     !isTRUE(.AES_REGISTRY[[g$key]]$legend_merge) ||
-      !g$kind %in% .MERGEABLE_GUIDE_KINDS
+      !g$kind %in% .MERGEABLE_GUIDE_KINDS ||
+      isTRUE(g$sc$bins)
   ) {
     return(NULL)
   }
@@ -1284,6 +1285,9 @@ NULL
   if (g$kind == "color_bivariate") {
     return(.bi_geom(g, m)$height)
   }
+  if (isTRUE(g$sc$bins)) {
+    return(.bins_geom(g, m)$height)
+  }
   m$show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   th <- if (m$show_title) m$title_h + m$title_gap else 0
   if (g$kind %in% c("color_continuous", "color_steps")) {
@@ -1305,6 +1309,9 @@ NULL
 .guide_width_mm <- function(g, m) {
   if (g$kind == "color_bivariate") {
     return(.bi_geom(g, m)$width)
+  }
+  if (isTRUE(g$sc$bins)) {
+    return(.bins_geom(g, m, horizontal = TRUE)$width)
   }
   labs <- .guide_labels(g)
   tw <- if (m$show_title && !is.null(g$sc$name)) {
@@ -1766,6 +1773,9 @@ NULL
   m$show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   txt <- .el_gpar_text(rt[["legend.text"]])
   th <- if (m$show_title) m$title_h + m$title_gap else 0
+  if (isTRUE(g$sc$bins)) {
+    return(.draw_guide_bins_v(scene, g, m, rt))
+  }
   if (g$kind == "color_continuous") {
     return(.draw_guide_continuous_v(scene, g, m, rt, txt, th))
   }
@@ -2169,6 +2179,9 @@ NULL
   m$show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   txt <- .el_gpar_text(rt[["legend.text"]])
   th <- if (m$show_title) m$title_h + m$title_gap else 0
+  if (isTRUE(g$sc$bins)) {
+    return(.draw_guide_bins_h(scene, g, m, rt))
+  }
   if (g$kind == "color_continuous") {
     return(.draw_guide_continuous_h(scene, g, m, rt, txt, th))
   }

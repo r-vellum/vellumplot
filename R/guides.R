@@ -8,7 +8,8 @@ NULL
 #' legend, [guide_legend()] to tweak a keyed legend (reverse the key order,
 #' override the title, restyle the keys with `override.aes`), `guide_colourbar()`
 #' to size, tick and style a continuous colour bar, or `guide_coloursteps()` to draw a
-#' **binned** colour scale as a segmented bar instead of swatches. Applies to the
+#' **binned** colour scale as a segmented bar instead of swatches; [guide_bins()]
+#' draws any binned scale's keys with the bin boundaries on an axis. Applies to the
 #' non-position legends (`color`/`fill`, `size`, `shape`, `alpha`, `linetype`);
 #' for the position axes, pass [guide_axis()] (or `"none"`) as `x` / `y`.
 #'
@@ -480,6 +481,11 @@ guide_axis_logticks <- function(
     }
     if (isTRUE(guide$reverse)) {
       trained <- .reverse_guide(trained)
+    }
+    # guide_bins(): keys per bin with the bin boundaries on an axis (drawn by
+    # the bins drawers, R/guide-bins.R)
+    if (identical(guide$kind, "bins")) {
+      trained <- .apply_bins_guide(trained, guide)
     }
     if (!is.null(guide[["override.aes"]])) {
       # Carried to the key drawers (`.key_grob` / `.colour_key_grob`), which force

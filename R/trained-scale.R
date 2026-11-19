@@ -43,7 +43,8 @@ NULL
 # Flags: `identity` (data values pass through verbatim; TRUE exactly for type
 #   "identity", and implies `no_guide`), and the guide flags `.apply_guide()`
 #   sets on a legend scale -- `no_guide`, `nested` (size only), `stepped`
-#   (binned colour only), `reverse_bar` -- plus `na`, `breaks_asked`,
+#   (binned colour only), `reverse_bar`, `bins` / `bins_limits` / `bins_axis`
+#   (guide_bins(), with the boundaries in `bin_breaks`) -- plus `na`, `breaks_asked`,
 #   `labels_asked`. Every flag is a single TRUE/FALSE. Position scales carry no
 #   guide flags (guides() never reaches an axis).
 # ---------------------------------------------------------------------------
@@ -56,13 +57,24 @@ NULL
   "nested",
   "stepped",
   "reverse_bar",
+  "bins",
+  "bins_limits",
+  "bins_axis",
   "na",
   "breaks_asked",
   "labels_asked",
   "discrete"
 )
 
-.GUIDE_FLAGS <- c("no_guide", "nested", "stepped", "reverse_bar")
+.GUIDE_FLAGS <- c(
+  "no_guide",
+  "nested",
+  "stepped",
+  "reverse_bar",
+  "bins",
+  "bins_limits",
+  "bins_axis"
+)
 
 # Build a trained scale from its common fields plus the per-type fields in
 # `...`, and check it. Field order is the order given (common fields first).
@@ -237,6 +249,9 @@ trained_scale <- function(aesthetic, type, map, name = NULL, ...) {
   }
   if (isTRUE(sc$stepped) && !identical(sc$type, "binned")) {
     bad("only a binned scale can be `stepped`")
+  }
+  if (isTRUE(sc$bins) && length(sc$bin_breaks) < 2L) {
+    bad("a `bins` legend needs its `bin_breaks`")
   }
   if (identical(guide, "color")) {
     switch(
