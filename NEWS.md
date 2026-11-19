@@ -8,6 +8,10 @@
   via `subgroup`), `mark_path()` (connects rows in data order), `mark_curve()`
   (`curvature`, `angle`, `ncp`) and `mark_spoke()` (`angle` + `radius`).
 
+* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
+  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
+  intervals, with the slab above each one (VP-42).
+
 ## Bug fixes
 
 * A literal `xend`, `yend`, `xmin`, `xmax`, `ymin` or `ymax` (e.g.

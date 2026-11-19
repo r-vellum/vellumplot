@@ -1815,11 +1815,16 @@ NULL
       .VIOLIN_HALFWIDTH
     )
   } else if (identical(L$mark, "halfeye")) {
-    if (identical(aes, "y")) {
-      return(support(L$values$y, L$values$x))
+    ax <- .dist_axes(.dist_orient(L))
+    if (identical(aes, ax[["val"]])) {
+      return(support(L$values[[ax[["val"]]]], L$values[[ax[["cat"]]]]))
     }
-    # one-sided slab: extends to the right of each tick by the slab width
-    cats_extent(L$values$x, 0, L$stat_params$scale %||% .SLAB_WIDTH)
+    # one-sided slab: extends to the right of (or above) each tick by its width
+    cats_extent(
+      L$values[[ax[["cat"]]]],
+      0,
+      L$stat_params$scale %||% .SLAB_WIDTH
+    )
   } else if (identical(L$mark, "ridgeline")) {
     if (identical(aes, "x")) {
       return(support(L$values$x, L$values$y))
