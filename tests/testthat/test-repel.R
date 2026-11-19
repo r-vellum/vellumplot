@@ -152,14 +152,26 @@ test_that("repel survives NA positions and labels (VP-20)", {
     y = c(1, 1, 1, 2, NA, 3),
     lab = c("aaaa", "bbbb", NA, "dddd", "eeee", "ffff")
   )
+  # Missing positions are removed (with a warning) when the layer resolves; a
+  # missing label is dropped by the repel emitter itself.
+  quiet <- function(expr) {
+    withCallingHandlers(
+      expr,
+      warning = function(w) {
+        if (grepl("missing values", conditionMessage(w))) {
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+  }
   for (mk in c(mark_text, mark_label)) {
     p <- vplot(d) |>
       mark_point(x = x, y = y) |>
       mk(x = x, y = y, label = lab, repel = TRUE)
     f <- local_tempfile(fileext = ".png")
-    expect_no_error(render_plot(p, f))
+    expect_no_error(quiet(render_plot(p, f)))
     # the incomplete rows are dropped before emitting; the rest are placed
-    b <- repel_boxes(p)
+    b <- quiet(repel_boxes(p))
     expect_identical(nrow(b), 3L)
     expect_identical(overlapping_pairs(b), 0L)
   }
