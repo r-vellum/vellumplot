@@ -1124,6 +1124,24 @@ NULL
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
     return(.identity_scale(aes, as.numeric, titles$default[[aes]]))
   }
+  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
+    as.numeric(scalespec@range)
+  } else {
+    out_default
+  }
+  # A factor, character or logical mapped to size or alpha trains a discrete
+  # scale (ggplot2's scale_size_discrete() / scale_alpha_discrete()), so its
+  # legend keys are the levels, not the factor's integer codes.
+  if (aes %in% .DISCRETE_SIZED_AES && .discrete_values(values)) {
+    return(.train_discrete_aes(
+      scalespec,
+      values,
+      aes,
+      out_range,
+      legend_field,
+      titles
+    ))
+  }
   v <- as.numeric(unlist(values, use.names = FALSE))
   has_na <- anyNA(v) # detect before dropping non-finite, for the NA legend key
   v <- v[is.finite(v)]
@@ -1136,11 +1154,6 @@ NULL
   }
   if (diff(rng) == 0) {
     rng <- rng + c(-0.5, 0.5)
-  }
-  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
-    as.numeric(scalespec@range)
-  } else {
-    out_default
   }
   # `scale_size_area()` (type "area") maps value -> marker *area*: size 0 at
   # value 0, and size = max_size * sqrt(value / data_max), so area is
@@ -1178,6 +1191,83 @@ NULL
     legend_breaks = lbrk,
     legend_labels = llab %||% .label_number_default(lbrk),
     !!!rlang::set_names(list(map(lbrk)), legend_field)
+  )
+}
+
+# The sized aesthetics that train a discrete scale for categorical data. The
+# widths stay continuous: a categorical line width is a linetype's job.
+.DISCRETE_SIZED_AES <- c("size", "alpha")
+
+# Is a pooled channel categorical (any layer maps a factor, character or
+# logical)? An empty or all-NA layer (an empty facet cell) carries no type
+# information -- a bare NA is logical -- so it never votes.
+.discrete_values <- function(values) {
+  any(vapply(
+    values,
+    function(v) {
+      length(v) > 0L &&
+        !all(is.na(v)) &&
+        (is.factor(v) || is.character(v) || is.logical(v))
+    },
+    logical(1)
+  ))
+}
+
+# Train a discrete size / alpha scale: one key per level, the levels spread
+# evenly over the output range -- in area for size (so the marks grow
+# perceptually evenly), linearly for alpha -- as ggplot2's
+# scale_size_ordinal() / scale_alpha_ordinal() do. Like ggplot2 it warns for an
+# unordered variable, where size or alpha implies an order the data lacks.
+# `breaks` picks the levels the legend shows; `labels` relabels them.
+.train_discrete_aes <- function(
+  scalespec,
+  values,
+  aes,
+  out_range,
+  legend_field,
+  titles
+) {
+  all_levels <- .cat_levels(values)
+  voting <- Filter(function(v) length(v) > 0L && !all(is.na(v)), values)
+  ordered <- all(vapply(voting, is.ordered, logical(1)))
+  if (!ordered) {
+    cli::cli_warn(
+      "Using {.field {aes}} for a discrete variable is not advised.",
+      class = "vellumplot_discrete_sized_aes"
+    )
+  }
+  n <- length(all_levels)
+  out <- if (identical(aes, "size")) {
+    sqrt(seq(out_range[1]^2, out_range[2]^2, length.out = n))
+  } else {
+    seq(out_range[1], out_range[2], length.out = n)
+  }
+  names(out) <- all_levels
+  map <- function(x) unname(out[as.character(x)])
+  user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
+  levels <- if (!is.null(user_breaks)) {
+    ub <- as.character(user_breaks)
+    ub[ub %in% all_levels]
+  } else {
+    all_levels
+  }
+  labels <- .match_labels(
+    if (!is.null(scalespec)) scalespec@labels else NULL,
+    levels,
+    aes
+  ) %||%
+    levels
+  rlang::exec(
+    trained_scale,
+    aes,
+    "discrete",
+    map = map,
+    name = titles$title[[aes]],
+    levels = levels,
+    na = anyNA(unlist(values, use.names = FALSE)),
+    legend_breaks = levels,
+    legend_labels = labels,
+    !!!rlang::set_names(list(map(levels)), legend_field)
   )
 }
 
