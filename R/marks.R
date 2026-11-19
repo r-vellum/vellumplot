@@ -2429,7 +2429,7 @@ mark_dotplot <- function(
 #' posterior draws or bootstrap samples (one row per draw, grouped by a
 #' categorical `x`).
 #'
-#' * `mark_halfeye()` draws, per `x` category, a one-sided density "slab" (a half
+#' * `mark_halfeye()` draws, per category, a one-sided density "slab" (a half
 #'   violin) with a **point-interval** at its base: the median (or mean) as a
 #'   point, a thick bar for the inner interval and a thin bar for the outer one.
 #' * `mark_interval()` draws the point-interval alone (no slab).
@@ -2439,12 +2439,17 @@ mark_dotplot <- function(
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): a categorical `x` and the sample `y`
-#'   (+ `color`/`fill`).
+#'   (+ `color`/`fill`), or a categorical `y` and the sample `x` for horizontal
+#'   intervals.
 #' @param .width Interval probabilities, widest last (default
 #'   `c(0.66, 0.95)`).
 #' @param point Central summary: `"median"` (default) or `"mean"`.
 #' @param adjust `mark_halfeye()` density bandwidth multiplier.
 #' @param scale Slab width as a fraction of the category band (`mark_halfeye()`).
+#' @param orientation `NA` (default) to infer it from the data (horizontal when
+#'   `y` is discrete and `x` is not, as in ggplot2), `"x"` for vertical intervals
+#'   along a discrete `x` (the slab to the right of each), or `"y"` for
+#'   horizontal intervals along `y` (the slab above each).
 #' @return The modified [PlotSpec].
 #' @examples
 #' set.seed(1)
@@ -2454,6 +2459,8 @@ mark_dotplot <- function(
 #' )
 #' vplot(draws) |> mark_halfeye(x = grp, y = val)
 #' vplot(draws) |> mark_interval(x = grp, y = val)
+#' # horizontal: the discrete variable on y
+#' vplot(draws) |> mark_halfeye(x = val, y = grp)
 #' @export
 mark_halfeye <- function(
   plot,
@@ -2463,6 +2470,7 @@ mark_halfeye <- function(
   point = "median",
   adjust = 1,
   scale = 0.9,
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2480,7 +2488,8 @@ mark_halfeye <- function(
       width = .width,
       point = point,
       adjust = adjust,
-      scale = scale
+      scale = scale,
+      orientation = .check_orientation(orientation)
     ),
     blend = blend,
     sketch = sketch,
@@ -2497,6 +2506,7 @@ mark_interval <- function(
   position = "identity",
   .width = c(0.66, 0.95),
   point = "median",
+  orientation = NA,
   blend = NULL,
   data = NULL
 ) {
@@ -2507,7 +2517,11 @@ mark_interval <- function(
     plot,
     "interval",
     dots,
-    stat_params = list(width = .width, point = point),
+    stat_params = list(
+      width = .width,
+      point = point,
+      orientation = .check_orientation(orientation)
+    ),
     blend = blend,
     data = data,
     position = position
