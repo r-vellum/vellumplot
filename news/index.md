@@ -4,6 +4,24 @@
 
 ### Behaviour changes
 
+- **Behaviour change:** `scale_*_binned()` now bins like ggplot2 by
+  default (`style = "extended"`): about `n` “nice” class boundaries
+  inside the data range, the outer classes widened to whole bins,
+  classes closed on the right (`(a, b]`), and a colour-vector `palette`
+  sampled at each class’s centre. Before, it cut the data at quantiles
+  and spread the colours evenly; that is still `style = "quantile"`.
+  `scale_*_steps()` is now ggplot2’s two-colour binned scale (`low`,
+  `high`, `n.breaks`, `limits`, …) rather than an alias of
+  `scale_*_binned()`, and matches ggplot2’s breaks and colours (VP-49).
+
+- **Behaviour change:**
+  [`scale_size_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  and
+  [`scale_alpha_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  on a numeric variable now error, as in ggplot2 (“Continuous values
+  supplied to a discrete scale”), instead of keying every distinct
+  number (VP-49).
+
 - **Behaviour change:** `color` and `fill` are now separate scales, as
   in ggplot2. Each trains on its own channel’s values and draws its own
   legend; `scale_fill_*()` sets only the fill scale and
@@ -35,6 +53,9 @@
   level (VP-45).
 
 ### New features
+
+- `scale_*_stepsn()` gains `values =`, the positions of its `colours`
+  along the ramp, as in ggplot2 (VP-49).
 
 - [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)
   is now enacted by vellumwidget: brushing an overview view zooms every
@@ -86,6 +107,14 @@
   resolution, so free scales came out shared (VP-47).
 
 ### Bug fixes
+
+- ggplot2 plots no longer break when vellumplot is attached after
+  ggplot2. ggplot2 looks default scales
+  ([`scale_colour_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
+  …) and guides given by name (`guide = "legend"`) up along the search
+  path, where it found vellumplot’s constructors of the same name. Those
+  constructors now hand a call coming from ggplot2 back to ggplot2’s own
+  (VP-49).
 
 - A merged legend (colour + shape, size, alpha, …) of a filled mark now
   draws the mark’s constant outline or fill in its keys, as a lone

@@ -7,14 +7,20 @@
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Binned (classed) colour scales — scale_fill_binned"><meta name="description" content="scale_fill_binned() / scale_color_binned() cut a continuous aesthetic into
 classes and colour each class with one step of a sequential palette — the
-standard choropleth scale. Class breaks are chosen by a classification
-style. quantile, equal, and pretty need no extra packages; other
-styles (e.g. &quot;jenks&quot;, &quot;fisher&quot;, &quot;kmeans&quot;, &quot;headtails&quot;) delegate to the
-optional classInt package (in Suggests) and error if it is absent.
+standard choropleth scale. By default the classes follow ggplot2's binning
+(style = &quot;extended&quot;): about n &quot;nice&quot; class boundaries inside the data
+range, the outer classes widened to whole bins, and classes closed on the
+right, (a, b]. A classification style chooses other breaks: quantile,
+equal, and pretty need no extra packages; other styles (e.g. &quot;jenks&quot;,
+&quot;fisher&quot;, &quot;kmeans&quot;, &quot;headtails&quot;) delegate to the optional classInt
+package (in Suggests) and error if it is absent. Those classes close on
+the left, [a, b).
 The ggplot2-named binned colour scales follow ggplot2's binning: without
 breaks, about n.breaks &quot;nice&quot; class boundaries inside the data range,
 the outer classes widened to whole bins (with limits, the limits are the
 outer boundaries); classes close on the right, (a, b].
+scale_*_steps() — a two-colour low–high ramp, each class taking
+the ramp's colour at its centre.
 scale_*_steps2() — a diverging low–mid–high ramp centred on
 midpoint, each class taking the ramp's colour at its centre.
 scale_*_stepsn() — an n-colour ramp colours, sampled at each class
@@ -25,14 +31,20 @@ scale_*_viridis_b() — k evenly spaced viridis colours.
 
 "><meta property="og:description" content="scale_fill_binned() / scale_color_binned() cut a continuous aesthetic into
 classes and colour each class with one step of a sequential palette — the
-standard choropleth scale. Class breaks are chosen by a classification
-style. quantile, equal, and pretty need no extra packages; other
-styles (e.g. &quot;jenks&quot;, &quot;fisher&quot;, &quot;kmeans&quot;, &quot;headtails&quot;) delegate to the
-optional classInt package (in Suggests) and error if it is absent.
+standard choropleth scale. By default the classes follow ggplot2's binning
+(style = &quot;extended&quot;): about n &quot;nice&quot; class boundaries inside the data
+range, the outer classes widened to whole bins, and classes closed on the
+right, (a, b]. A classification style chooses other breaks: quantile,
+equal, and pretty need no extra packages; other styles (e.g. &quot;jenks&quot;,
+&quot;fisher&quot;, &quot;kmeans&quot;, &quot;headtails&quot;) delegate to the optional classInt
+package (in Suggests) and error if it is absent. Those classes close on
+the left, [a, b).
 The ggplot2-named binned colour scales follow ggplot2's binning: without
 breaks, about n.breaks &quot;nice&quot; class boundaries inside the data range,
 the outer classes widened to whole bins (with limits, the limits are the
 outer boundaries); classes close on the right, (a, b].
+scale_*_steps() — a two-colour low–high ramp, each class taking
+the ramp's colour at its centre.
 scale_*_steps2() — a diverging low–mid–high ramp centred on
 midpoint, each class taking the ramp's colour at its centre.
 scale_*_stepsn() — an n-colour ramp colours, sampled at each class
@@ -102,14 +114,20 @@ scale_*_viridis_b() — k evenly spaced viridis colours.
     <div class="ref-description section level2">
     <p><code>scale_fill_binned()</code> / <code>scale_color_binned()</code> cut a continuous aesthetic into
 classes and colour each class with one step of a sequential palette — the
-standard choropleth scale. Class breaks are chosen by a classification
-<code>style</code>. <code>quantile</code>, <code>equal</code>, and <code>pretty</code> need no extra packages; other
-styles (e.g. <code>"jenks"</code>, <code>"fisher"</code>, <code>"kmeans"</code>, <code>"headtails"</code>) delegate to the
-optional <code>classInt</code> package (in <code>Suggests</code>) and error if it is absent.</p>
+standard choropleth scale. By default the classes follow ggplot2's binning
+(<code>style = "extended"</code>): about <code>n</code> "nice" class boundaries inside the data
+range, the outer classes widened to whole bins, and classes closed on the
+right, <code>(a, b]</code>. A classification <code>style</code> chooses other breaks: <code>quantile</code>,
+<code>equal</code>, and <code>pretty</code> need no extra packages; other styles (e.g. <code>"jenks"</code>,
+<code>"fisher"</code>, <code>"kmeans"</code>, <code>"headtails"</code>) delegate to the optional <code>classInt</code>
+package (in <code>Suggests</code>) and error if it is absent. Those classes close on
+the left, <code>[a, b)</code>.</p>
 <p>The ggplot2-named binned colour scales follow ggplot2's binning: without
 <code>breaks</code>, about <code>n.breaks</code> "nice" class boundaries inside the data range,
 the outer classes widened to whole bins (with <code>limits</code>, the limits are the
-outer boundaries); classes close on the right, <code>(a, b]</code>.</p><ul><li><p><code>scale_*_steps2()</code> — a diverging <code>low</code>–<code>mid</code>–<code>high</code> ramp centred on
+outer boundaries); classes close on the right, <code>(a, b]</code>.</p><ul><li><p><code>scale_*_steps()</code> — a two-colour <code>low</code>–<code>high</code> ramp, each class taking
+the ramp's colour at its centre.</p></li>
+<li><p><code>scale_*_steps2()</code> — a diverging <code>low</code>–<code>mid</code>–<code>high</code> ramp centred on
 <code>midpoint</code>, each class taking the ramp's colour at its centre.</p></li>
 <li><p><code>scale_*_stepsn()</code> — an n-colour ramp <code>colours</code>, sampled at each class
 centre.</p></li>
@@ -122,8 +140,8 @@ centre.</p></li>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">scale_fill_binned</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
-<span>  style <span class="op">=</span> <span class="st">"quantile"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  style <span class="op">=</span> <span class="st">"extended"</span>,</span>
+<span>  n <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -133,8 +151,8 @@ centre.</p></li>
 <span></span>
 <span><span class="fu">scale_color_binned</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
-<span>  style <span class="op">=</span> <span class="st">"quantile"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  style <span class="op">=</span> <span class="st">"extended"</span>,</span>
+<span>  n <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -144,35 +162,41 @@ centre.</p></li>
 <span></span>
 <span><span class="fu">scale_color_steps</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
-<span>  style <span class="op">=</span> <span class="st">"quantile"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#132B43"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#56B1F7"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_steps</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
-<span>  style <span class="op">=</span> <span class="st">"quantile"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#132B43"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#56B1F7"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_steps</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
-<span>  style <span class="op">=</span> <span class="st">"quantile"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#132B43"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#56B1F7"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na_value <span class="op">=</span> <span class="st">"grey80"</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_steps2</span><span class="op">(</span></span>
@@ -193,6 +217,7 @@ centre.</p></li>
 <span><span class="fu">scale_color_stepsn</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">colours</span>,</span>
+<span>  values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -247,6 +272,7 @@ centre.</p></li>
 <span><span class="fu">scale_fill_stepsn</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">colours</span>,</span>
+<span>  values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -301,6 +327,7 @@ centre.</p></li>
 <span><span class="fu">scale_colour_stepsn</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">colours</span>,</span>
+<span>  values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -347,17 +374,22 @@ centre.</p></li>
 
 
 <dt id="arg-style">style<a class="anchor" aria-label="anchor" href="#arg-style"></a></dt>
-<dd><p>Classification style: one of <code>"quantile"</code>, <code>"equal"</code>, <code>"pretty"</code>
-(base R), or any <code><a href="https://r-spatial.github.io/classInt/reference/classIntervals.html" class="external-link">classInt::classIntervals()</a></code> style. Default <code>"quantile"</code>.</p></dd>
+<dd><p>Classification style: <code>"extended"</code> (the default, ggplot2's
+breaks), <code>"quantile"</code>, <code>"equal"</code>, <code>"pretty"</code> (base R), or any
+<code><a href="https://r-spatial.github.io/classInt/reference/classIntervals.html" class="external-link">classInt::classIntervals()</a></code> style.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Number of classes (default <code>5</code>). Ignored when <code>breaks</code> is supplied.</p></dd>
+<dd><p>For <code>"extended"</code>, the approximate number of class boundaries
+(default 5); for the other styles, the number of classes (default 5).
+Ignored when <code>breaks</code> is supplied.</p></dd>
 
 
 <dt id="arg-breaks">breaks<a class="anchor" aria-label="anchor" href="#arg-breaks"></a></dt>
-<dd><p>Explicit class boundaries (length = number of classes + 1),
-overriding <code>style</code>/<code>n</code>.</p></dd>
+<dd><p>Explicit class boundaries, overriding <code>style</code>/<code>n</code>. Under
+<code>"extended"</code> the data range is added as the outer boundaries (as ggplot2
+adds its limits); under the other styles they are every boundary (length =
+number of classes + 1).</p></dd>
 
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
@@ -367,7 +399,7 @@ name, or a vector of colours interpolated across the classes.</p></dd>
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
 <dd><p>Optional class labels (one per class); defaults to interval
-ranges like <code>"[0, 10)"</code>.</p></dd>
+ranges like <code>"(0, 10]"</code>.</p></dd>
 
 
 <dt id="arg-na-value">na_value<a class="anchor" aria-label="anchor" href="#arg-na-value"></a></dt>
@@ -380,8 +412,9 @@ swatch). Default <code>"grey80"</code>.</p></dd>
 
 
 <dt id="arg-low-mid-high-midpoint">low, mid, high, midpoint<a class="anchor" aria-label="anchor" href="#arg-low-mid-high-midpoint"></a></dt>
-<dd><p>For <code>scale_*_steps2()</code>, the end and midpoint
-colours and the data value at <code>mid</code>.</p></dd>
+<dd><p>For <code>scale_*_steps()</code>, the end colours <code>low</code>
+and <code>high</code>; for <code>scale_*_steps2()</code>, the end and midpoint colours and the
+data value at <code>mid</code>.</p></dd>
 
 
 <dt id="arg-limits">limits<a class="anchor" aria-label="anchor" href="#arg-limits"></a></dt>
@@ -408,6 +441,12 @@ the outer class, <code>"censor"</code> with <code>na.value</code>; or a <code>fu
 <dd><p>For <code>scale_*_stepsn()</code>, the colours of the ramp.</p></dd>
 
 
+<dt id="arg-values">values<a class="anchor" aria-label="anchor" href="#arg-values"></a></dt>
+<dd><p>For <code>scale_*_stepsn()</code>, the positions (between 0 and 1, one
+per colour, increasing) of <code>colours</code> along the ramp, or <code>NULL</code> to space
+them evenly.</p></dd>
+
+
 <dt id="arg-type-direction">type, direction<a class="anchor" aria-label="anchor" href="#arg-type-direction"></a></dt>
 <dd><p>For <code>scale_*_fermenter()</code>, the ColorBrewer family a
 numeric <code>palette</code> indexes and its order (see <code><a href="scale_viridis.html">scale_color_brewer()</a></code>); for
@@ -425,9 +464,9 @@ numeric <code>palette</code> indexes and its order (see <code><a href="scale_vir
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>scale_color_steps()</code> / <code>scale_fill_steps()</code> are aliases of the binned colour
-scales, for ggplot2 users who reach for the <code>_steps</code> name — a continuous
-variable cut into steps with an interval-key legend.</p>
+    <p>A colour vector <code>palette</code> is a ramp, sampled at each class's centre as in
+ggplot2; a named palette (and the default) gives one evenly spaced colour
+per class.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -436,7 +475,11 @@ variable cut into steps with an interval-key legend.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span>, y <span class="op">=</span> <span class="va">waiting</span>, color <span class="op">=</span> <span class="va">waiting</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">scale_color_binned</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="scale_fill_binned-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">nc</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"shape/nc.shp"</span>, package <span class="op">=</span> <span class="st">"sf"</span><span class="op">)</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">nc</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_sf.html">mark_sf</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">SID74</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
@@ -446,7 +489,7 @@ variable cut into steps with an interval-key legend.</p>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">faithful</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span>, y <span class="op">=</span> <span class="va">waiting</span>, color <span class="op">=</span> <span class="va">waiting</span> <span class="op">-</span> <span class="fl">70</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">scale_color_steps2</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="scale_fill_binned-1.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="scale_fill_binned-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
