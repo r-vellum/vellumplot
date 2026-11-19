@@ -90,6 +90,25 @@
 
 ### Bug fixes
 
+- **Date axes take their breaks from the limits.** Default date and
+  datetime breaks were picked from the data, so a month of data under
+  `limits` of 2019 to 2022 crammed weekly ticks into that month and left
+  the rest of the axis bare. Breaks now span the trained range, limits
+  included. An all-`NA` Date column no longer aborts with “‘from’ must
+  be a finite number”; the axis draws with no ticks, as in ggplot2
+  (VP-8).
+
+- **A layer’s own data is faceted on the variables it has.** In
+  `facet_grid(am ~ cyl)`, an annotation layer whose data had `am` but
+  not `cyl` was drawn in all six panels. It now appears only in its `am`
+  row, repeated across the `cyl` columns, as in ggplot2. A layer without
+  any facet variable is still drawn in every panel. Facet levels are now
+  the union over the plot data and every layer’s data, so a level that
+  only a layer has gets its own panel instead of being dropped. The
+  [`spec_diagnose()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
+  warning for a missing facet variable now says which panels the layer
+  is repeated in (VP-9).
+
 - **[`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
   draws each rule in its own colour.** A mapped `color`, `alpha` or
   `linetype` used to collapse to the first row, so every rule took one
