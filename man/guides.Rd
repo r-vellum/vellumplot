@@ -126,7 +126,7 @@ override the title, restyle the keys with \code{override.aes}), \code{guide_colo
 to size, tick and style a continuous colour bar, or \code{guide_coloursteps()} to draw a
 \strong{binned} colour scale as a segmented bar instead of swatches. Applies to the
 non-position legends (\code{color}/\code{fill}, \code{size}, \code{shape}, \code{alpha}, \code{linetype});
-position axes are unaffected.
+for the position axes, pass \code{\link[=guide_axis]{guide_axis()}} (or \code{"none"}) as \code{x} / \code{y}.
 }
 \examples{
 vplot(mtcars) |>

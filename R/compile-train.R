@@ -1885,7 +1885,7 @@ NULL
   if (!isTRUE(sc$discrete)) {
     sc <- .scale_set(sc, map = .inf_to_edge(sc$map, sc$domain))
   }
-  sc
+  .attach_axis_guide(sc, scalespec)
 }
 
 # The footprint widening of `.train_axis()` (see there).
