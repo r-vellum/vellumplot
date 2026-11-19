@@ -107,7 +107,11 @@ test_that("oob censors, squishes or keeps out-of-limits positions", {
   base <- vplot(data.frame(x = c(1, 5, 10), y = 1:3)) |>
     mark_point(x = x, y = y)
   map_x <- function(oob) {
-    panels(base |> scale_x_continuous(limits = c(2, 8), oob = oob))$scales$x$map
+    # (censoring warns about the removed rows; tested below)
+    suppressWarnings(
+      panels(base |> scale_x_continuous(limits = c(2, 8), oob = oob)),
+      classes = "vellumplot_missing_rows"
+    )$scales$x$map
   }
   expect_equal(map_x("censor")(c(1, 5, 10)), c(NA, 5, NA))
   expect_equal(map_x("squish")(c(1, 5, 10)), c(2, 5, 8))
@@ -125,7 +129,59 @@ test_that("oob censors, squishes or keeps out-of-limits positions", {
   )
   expect_error(scale_x_continuous(base, oob = "clip"), "oob")
   censored <- base |> scale_x_continuous(limits = c(2, 8), oob = "censor")
-  expect_no_error(vellum::as_vellum_scene(censored))
+  expect_warning(
+    vellum::as_vellum_scene(censored),
+    "Removed 2 rows containing missing values or values outside the scale range (layer 1, `mark_point()`)",
+    fixed = TRUE
+  )
+})
+
+test_that("censored positions count into the one removed-rows warning (VP-41)", {
+  d <- data.frame(x = c(1, 5, 10, NA), y = c(1, 2, 3, 4))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    scale_x_continuous(limits = c(2, 8), oob = "censor")
+  w <- character()
+  b <- withCallingHandlers(
+    .build_panels(p),
+    warning = function(cnd) {
+      w <<- c(w, conditionMessage(cnd))
+      invokeRestart("muffleWarning")
+    }
+  )
+  # one warning, counting the missing row and the two censored ones
+  expect_length(w, 1L)
+  expect_match(w, "Removed 3 rows containing missing values or values outside")
+  # the censored rows are gone before the stat, as in ggplot2
+  expect_equal(b$panels[[1]]$resolved[[1]]$n, 1L)
+  # a censoring function counts too; squish and keep drop nothing
+  fun <- vplot(d[1:3, ]) |>
+    mark_point(x = x, y = y) |>
+    scale_y_continuous(limits = c(0, 2.5), oob = scales::oob_censor)
+  expect_warning(.build_panels(fun), "Removed 1 row containing")
+  for (oob in c("squish", "keep")) {
+    expect_no_warning(
+      .build_panels(
+        vplot(d[1:3, ]) |>
+          mark_point(x = x, y = y) |>
+          scale_x_continuous(limits = c(2, 8), oob = oob)
+      )
+    )
+  }
+  # without limits nothing is out of bounds
+  expect_no_warning(
+    .build_panels(
+      vplot(d[1:3, ]) |>
+        mark_point(x = x, y = y) |>
+        scale_x_continuous(oob = "censor")
+    )
+  )
+  # a stat layer summarises only the rows inside the limits
+  bx <- vplot(data.frame(g = "a", v = c(1:9, 100))) |>
+    mark_boxplot(x = g, y = v) |>
+    scale_y_continuous(limits = c(0, 50), oob = "censor")
+  expect_warning(bb <- .build_panels(bx), "Removed 1 row")
+  expect_equal(max(bb$panels[[1]]$resolved[[1]]$values$y), 9)
 })
 
 test_that("oob on colour and size scales", {
@@ -155,6 +211,43 @@ test_that("oob on colour and size scales", {
   expect_true(is.na(sz("censor")$map(0)))
   expect_equal(sz("squish")$map(10), 4)
   expect_equal(sz(NULL)$map(10), 5) # extrapolated, as before
+})
+
+test_that("the named continuous colour scales take limits and oob (VP-41)", {
+  d <- data.frame(x = 1:3, y = 1:3, v = c(0, 5, 10))
+  ctors <- list(
+    gradient = function(p, ...) scale_color_gradient(p, ...),
+    gradient2 = function(p, ...) scale_fill_gradient2(p, midpoint = 5, ...),
+    gradientn = function(p, ...) {
+      scale_colour_gradientn(p, colours = c("red", "white", "blue"), ...)
+    },
+    viridis_c = function(p, ...) scale_fill_viridis_c(p, ...),
+    distiller = function(p, ...) scale_color_distiller(p, ...)
+  )
+  for (nm in names(ctors)) {
+    sc <- function(...) {
+      panels(
+        ctors[[nm]](vplot(d) |> mark_point(x = x, y = y, color = v), ...)
+      )$scales$color
+    }
+    # the default is unchanged: no limits, the data range, nothing out of bounds
+    expect_equal(sc()$range, c(0, 10), info = nm)
+    cens <- sc(limits = c(2, 8), oob = "censor", na.value = "magenta")
+    expect_equal(cens$range, c(2, 8), info = nm)
+    expect_identical(cens$map(c(0, 10)), c("magenta", "magenta"), info = nm)
+    sq <- sc(limits = c(2, 8), oob = "squish")
+    expect_identical(sq$map(0), sq$map(2), info = nm)
+    # NULL oob keeps the old behaviour: out-of-range values take the end colour
+    expect_identical(sc(limits = c(2, 8))$map(10), sq$map(8), info = nm)
+  }
+  expect_error(
+    vplot(d) |> scale_color_gradient(oob = "clip"),
+    "oob"
+  )
+  expect_error(
+    vplot(d) |> scale_color_gradient(limits = 1),
+    "limits"
+  )
 })
 
 test_that("oob round-trips through the spec serializer", {
@@ -196,4 +289,45 @@ test_that("legend.position = 'inside' / c(x, y) places the legend over the panel
   expect_match(svg, "legend-inside", fixed = TRUE)
   expect_error(theme(base, legend.position = c(2, NA)), "legend.position")
   expect_error(theme(base, legend.justification = "middle"), "justification")
+})
+
+test_that("each composition cell honours its own legend position (VP-41)", {
+  mt <- transform(mtcars, fcyl = factor(cyl), fam = factor(am))
+  inside <- function(p, at) {
+    theme(p, legend.position = "inside", legend.position.inside = at)
+  }
+  p1 <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, color = fcyl) |>
+    inside(c(1, 1))
+  p2 <- vplot(mt) |>
+    mark_point(x = hp, y = qsec, color = fam) |>
+    inside(c(0, 0))
+  p3 <- vplot(mt) |> mark_point(x = disp, y = mpg, shape = fam)
+  p4 <- vplot(mt) |>
+    mark_point(x = drat, y = mpg, color = fcyl) |>
+    theme(legend.position = "none")
+  plans <- lapply(list(p1, p2, p3, p4), .plan_plot)
+  expect_identical(
+    vapply(plans, .subplot_legend_mode, ""),
+    c("inside", "inside", "side", "none")
+  )
+  # only an outside legend takes a right-side band
+  bands <- lapply(plans, .plot_bands, collect = FALSE)
+  zero <- vapply(
+    bands,
+    function(b) vellum::vl_convert(b$R_legend, "mm") == 0,
+    logical(1)
+  )
+  expect_identical(zero, c(TRUE, TRUE, FALSE, TRUE))
+  # collecting pools only the outside legends; inside ones stay in their cell
+  pooled <- .pool_guides(plans)
+  expect_length(pooled, 1L)
+  expect_identical(pooled[[1]]$kind, "shape")
+  count_inside <- function(svg) {
+    lengths(regmatches(svg, gregexpr("legend-inside", svg, fixed = TRUE)))
+  }
+  for (guides in c("keep", "collect")) {
+    comp <- wrap_plots(list(p1, p2, p3, p4), ncol = 2, guides = guides)
+    expect_identical(count_inside(plot_svg(comp)), 2L, info = guides)
+  }
 })

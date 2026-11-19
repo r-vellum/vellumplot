@@ -88,13 +88,34 @@ NULL
   }
 }
 
+# Where a sub-plot's own legend goes in the aligned path, from its theme (as
+# resolved into its layout): "inside" its panel (`legend.position = "inside"`
+# / `c(x, y)`), "none" (`legend.position = "none"`, or no guides), or "side"
+# -- any outside position, normalised to a right-side band, or pooled into
+# the figure's legend when guides are collected. An inside legend stays in its
+# cell even when collecting, and a "none" one contributes nothing to the pool.
+.subplot_legend_mode <- function(plan) {
+  lay <- plan$lay
+  if (!length(plan$guides)) {
+    return("none")
+  }
+  if (!is.null(lay$legend_inside)) {
+    return("inside")
+  }
+  if (is.na(lay$legend_col) && is.na(lay$legend_row)) {
+    return("none")
+  }
+  "side"
+}
+
 # Decompose a single-panel plan into canonical decoration bands + the panel.
 # In the aligned path a sub-plot legend is normalised to a right-side band (or
-# zero when guides are collected at the figure level).
+# zero when guides are collected at the figure level, or when the legend sits
+# inside the panel or is off).
 .plot_bands <- function(plan, collect) {
   lay <- plan$lay
   z <- vellum::vl_unit(0, "mm")
-  legw <- if (length(plan$guides) && !collect) {
+  legw <- if (identical(.subplot_legend_mode(plan), "side") && !collect) {
     .legend_width(plan$guides, plan$rt)
   } else {
     z
@@ -241,11 +262,16 @@ NULL
   )
 }
 
-# Pool guides across sub-plots, keeping the first of each distinct key.
+# Pool guides across sub-plots, keeping the first of each distinct key. Only
+# sub-plots whose legend sits outside the panel contribute (see
+# `.subplot_legend_mode()`).
 .pool_guides <- function(plans) {
   out <- list()
   seen <- character(0)
   for (p in plans) {
+    if (!identical(.subplot_legend_mode(p), "side")) {
+      next
+    }
     for (g in p$guides) {
       k <- .guide_key(g)
       if (!k %in% seen) {
@@ -337,8 +363,23 @@ NULL
   )
   scene <- .draw_y_title(scene, gm$panel_row, gm$ytitle_col, vsc$name, rt)
   scene <- .draw_x_title(scene, gm$xtitle_row, gm$panel_col, hsc$name, rt)
-  # per-sub-plot legend (only when not collecting)
-  if (!collect && length(plan$guides)) {
+  # per-sub-plot legend: inside its own panel cell, or (only when not
+  # collecting) in its right-side band
+  mode <- .subplot_legend_mode(plan)
+  if (identical(mode, "inside")) {
+    scene <- .draw_legend_inside(
+      scene,
+      list(
+        legend_inside = plan$lay$legend_inside,
+        panel_row = gm$panel_row,
+        panel_col = gm$panel_col,
+        R = 1L,
+        C = 1L
+      ),
+      plan$guides,
+      rt
+    )
+  } else if (identical(mode, "side") && !collect) {
     scene <- .draw_legends(
       scene,
       list(row = gm$panel_row, col = gm$legend_col),
