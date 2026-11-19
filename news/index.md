@@ -4,6 +4,37 @@
 
 ### New features
 
+- New
+  [`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
+  for the position axes, used as `guides(x = )` / `guides(y = )` or the
+  new `guide` argument of
+  [`scale_x_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_y_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_x_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  and
+  [`scale_y_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md):
+  `n.dodge` staggers crowded labels over rows (or columns), `angle`
+  rotates them, `check.overlap` drops labels that would collide,
+  `minor.ticks` adds minor ticks and `cap` ends the axis line at the
+  outermost breaks. The label gutter is measured with the dodging and
+  rotation, so nothing clips. `guides(x = "none")` draws an axis without
+  labels or ticks.
+  [`guide_axis_logticks()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
+  draws long, middle and short log10 ticks (F-17).
+
+- [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  and
+  [`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
+  gain `orientation`, inferred as for box plots and violins: a discrete
+  `y` with a continuous `x` draws horizontal intervals, with the slab
+  above each one (VP-42).
+
+- `scale_*_gradient()`, `scale_*_gradient2()`, `scale_*_gradientn()`,
+  `scale_*_viridis_c()` and `scale_*_distiller()` gain `limits`, `oob`
+  and `na.value` (and the gradients `breaks` / `labels`), as
+  `scale_*_continuous()` has; the default `oob = NULL` keeps today’s
+  behaviour (VP-41).
+
 - [`mark_density_2d()`](https://r-vellum.github.io/vellumplot/reference/mark_density_2d.md)
   and
   [`mark_density_2d_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_density_2d.md):
@@ -19,13 +50,6 @@
   gain `orientation` and draw horizontally when given `xmin`/`xmax` but
   no `ymin`/`ymax`, like `geom_errorbarh()` (F-16).
 
-- [`mark_halfeye()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
-  and
-  [`mark_interval()`](https://r-vellum.github.io/vellumplot/reference/mark_halfeye.md)
-  gain `orientation`, inferred as for box plots and violins: a discrete
-  `y` with a continuous `x` draws horizontal intervals, with the slab
-  above each one (VP-42).
-
 - New geometry marks matching ggplot2’s (F-16):
   [`mark_rect()`](https://r-vellum.github.io/vellumplot/reference/mark_rect.md)
   (corner bounds, now a documented layer mark rather than only
@@ -39,12 +63,6 @@
   [`mark_spoke()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
   (`angle` + `radius`).
 
-- `scale_*_gradient()`, `scale_*_gradient2()`, `scale_*_gradientn()`,
-  `scale_*_viridis_c()` and `scale_*_distiller()` gain `limits`, `oob`
-  and `na.value` (and the gradients `breaks` / `labels`), as
-  `scale_*_continuous()` has; the default `oob = NULL` keeps today’s
-  behaviour (VP-41).
-
 ### Behaviour changes
 
 - **Behaviour change:** rows a position scale’s `oob = "censor"` puts
@@ -56,6 +74,18 @@
   (VP-41).
 
 ### Bug fixes
+
+- Wrapped x tick labels reserve the height of the label that wraps to
+  the most lines, not of the longest one, so a short-worded label no
+  longer runs into the axis title (F-17).
+
+- In a composition (`|`, `/`,
+  [`wrap_plots()`](https://r-vellum.github.io/vellumplot/reference/concat.md)),
+  each sub-plot now honours its own `theme(legend.position = "inside")`
+  (or `c(x, y)`), drawing its legend over its panel instead of in a
+  right-hand band, and `legend.position = "none"` hides that sub-plot’s
+  legend. With `guides = "collect"` only the legends placed outside
+  their panels are collected (VP-41).
 
 - Filled contour bands
   ([`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md),
@@ -69,14 +99,6 @@
   `mark_segment(xend = 5)`) is a coordinate again: it trains its axis
   and is drawn, rather than being taken for a constant style setting
   (F-16).
-
-- In a composition (`|`, `/`,
-  [`wrap_plots()`](https://r-vellum.github.io/vellumplot/reference/concat.md)),
-  each sub-plot now honours its own `theme(legend.position = "inside")`
-  (or `c(x, y)`), drawing its legend over its panel instead of in a
-  right-hand band, and `legend.position = "none"` hides that sub-plot’s
-  legend. With `guides = "collect"` only the legends placed outside
-  their panels are collected (VP-41).
 
 - [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
   (and

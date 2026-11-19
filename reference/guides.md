@@ -8,7 +8,9 @@ legend (reverse the key order, override the title, restyle the keys with
 continuous colour bar, or `guide_coloursteps()` to draw a **binned**
 colour scale as a segmented bar instead of swatches. Applies to the
 non-position legends (`color`/`fill`, `size`, `shape`, `alpha`,
-`linetype`); position axes are unaffected.
+`linetype`); for the position axes, pass
+[`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
+(or `"none"`) as `x` / `y`.
 
 ## Usage
 

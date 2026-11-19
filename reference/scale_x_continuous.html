@@ -87,7 +87,8 @@ let you set the level order via <code>limits</code>.</p>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  expand <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  guide <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_y_continuous</span><span class="op">(</span></span>
@@ -99,7 +100,8 @@ let you set the level order via <code>limits</code>.</p>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  expand <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  guide <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_x_discrete</span><span class="op">(</span></span>
@@ -108,7 +110,8 @@ let you set the level order via <code>limits</code>.</p>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  guide <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_y_discrete</span><span class="op">(</span></span>
@@ -117,7 +120,8 @@ let you set the level order via <code>limits</code>.</p>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  guide <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -176,6 +180,12 @@ the opposite edge, or <code>NULL</code> for none. Continuous Cartesian plots onl
 <code>function(x, range)</code> such as <code><a href="https://scales.r-lib.org/reference/oob.html" class="external-link">scales::oob_squish_any()</a></code> also works. <code>NULL</code>
 (default) is <code>"keep"</code> on a position axis. Infinite values are never out
 of bounds: <code>x = Inf</code> sits on the panel edge.</p></dd>
+
+
+<dt id="arg-guide">guide<a class="anchor" aria-label="anchor" href="#arg-guide"></a></dt>
+<dd><p>The axis guide: <code><a href="guide_axis.html">guide_axis()</a></code> to stagger, rotate or thin the
+labels, <code>"none"</code> for no labels or ticks, or <code>NULL</code> (default) for the plain
+axis. Same as <code>guides(x = )</code> / <code>guides(y = )</code>.</p></dd>
 
 
 <dt id="arg-drop">drop<a class="anchor" aria-label="anchor" href="#arg-drop"></a></dt>

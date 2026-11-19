@@ -17,7 +17,8 @@ scale_x_continuous(
   name = NULL,
   expand = NULL,
   sec.axis = NULL,
-  oob = NULL
+  oob = NULL,
+  guide = NULL
 )
 
 scale_y_continuous(
@@ -29,7 +30,8 @@ scale_y_continuous(
   name = NULL,
   expand = NULL,
   sec.axis = NULL,
-  oob = NULL
+  oob = NULL,
+  guide = NULL
 )
 
 scale_x_discrete(
@@ -38,7 +40,8 @@ scale_x_discrete(
   name = NULL,
   breaks = NULL,
   labels = NULL,
-  drop = TRUE
+  drop = TRUE,
+  guide = NULL
 )
 
 scale_y_discrete(
@@ -47,7 +50,8 @@ scale_y_discrete(
   name = NULL,
   breaks = NULL,
   labels = NULL,
-  drop = TRUE
+  drop = TRUE,
+  guide = NULL
 )
 ```
 
@@ -116,6 +120,14 @@ scale_y_discrete(
   [`scales::oob_squish_any()`](https://scales.r-lib.org/reference/oob.html)
   also works. `NULL` (default) is `"keep"` on a position axis. Infinite
   values are never out of bounds: `x = Inf` sits on the panel edge.
+
+- guide:
+
+  The axis guide:
+  [`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
+  to stagger, rotate or thin the labels, `"none"` for no labels or
+  ticks, or `NULL` (default) for the plain axis. Same as `guides(x = )`
+  / `guides(y = )`.
 
 - drop:
 
