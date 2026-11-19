@@ -33,6 +33,7 @@ mark_density(
   ...,
   position = "identity",
   adjust = 1,
+  trim = FALSE,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -81,6 +82,11 @@ accept it; text, raster, hex and datashade marks do not.}
 \code{mark_hex()}.}
 
 \item{adjust}{Bandwidth multiplier for \code{mark_density()}.}
+
+\item{trim}{For \code{mark_density()}, \code{FALSE} (default) estimates every group's
+density over the range of the whole layer's \code{x}, as ggplot2 does; \code{TRUE}
+trims each group's curve to the range of its own data. The curve never runs
+past the data, so the axis is not padded by the kernel's tails.}
 }
 \value{
 The modified \link{PlotSpec}.
