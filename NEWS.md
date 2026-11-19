@@ -11,6 +11,11 @@
   others extrapolate). Those rows are not part of `dropped`, and each layer
   with any adds its own warning (VP-36, #208).
 
+* A two-vertex graph on the default stress layout no longer warns
+  "data length [3] is not a sub-multiple or multiple of the number of rows
+  [2]". The warning came from graphlayouts' fixed two-vertex branch;
+  `vgraph()` now returns that same layout itself (VP-40).
+
 * Faceted interactive plots without a `data_id` no longer link marks across
   panels by accident. Their default element keys were row positions within each
   panel's layer, so they repeated from panel to panel, and a hover, click or

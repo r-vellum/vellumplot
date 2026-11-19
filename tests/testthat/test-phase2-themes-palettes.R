@@ -40,7 +40,8 @@ test_that("limits= fixes the continuous colour domain", {
 
 test_that("the widened layout registry resolves the new igraph layouts", {
   skip_if_not_installed("igraph")
-  g <- igraph::sample_gnp(25, 0.15)
+  # a fixed connected graph: LGL warns on disconnected input
+  g <- igraph::make_graph("Zachary")
   for (lay in c("gem", "graphopt", "dh", "lgl")) {
     expect_no_error(svg(
       vgraph(g, layout = lay) |> mark_edges() |> mark_nodes()
