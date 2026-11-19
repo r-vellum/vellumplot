@@ -72,6 +72,7 @@
   grob and the offsets were recycled to the wrong length. Incomplete rows are now
   dropped before the labels are drawn, and the solved offsets are applied by
   element index.
+
 * **`position_stack()` and `position_fill()` stack like ggplot2.** Positive and
   negative heights now stack separately, away from zero, so `y = c(2, -1, 3)` at
   one x no longer draws overlapping spans. Every row at an x stacks, so bars or
