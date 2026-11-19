@@ -2,21 +2,55 @@
 % Please edit documentation in R/scales.R
 \name{scale_linetype}
 \alias{scale_linetype}
+\alias{scale_linetype_manual}
 \alias{scale_linetype_discrete}
 \title{Line-type scale}
 \usage{
-scale_linetype(plot, values = NULL, name = NULL)
+scale_linetype(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 
-scale_linetype_discrete(plot, values = NULL, name = NULL)
+scale_linetype_manual(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_linetype_discrete(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
 \item{values}{Character vector of line types (each one of \code{"solid"},
 \code{"dashed"}, \code{"dotted"}, \code{"dotdash"}, \code{"longdash"}, \code{"twodash"}), or \code{NULL}
-for the default set.}
+for the default set.
+For \code{scale_linetype_manual()} \code{values} is required, and may also be
+ggplot2's numeric line types (\code{1} solid, \code{2} dashed, ... \code{6} twodash).
+Named values are matched to levels by name.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{breaks, labels, limits}{As for \code{\link[=scale_shape]{scale_shape()}}.}
+
+\item{na.value}{The line type drawn for missing values, or \code{NULL}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -30,4 +64,7 @@ legend is drawn automatically. Applies to line-like marks (\code{mark_line()},
 \examples{
 df <- data.frame(x = rep(1:10, 2), y = rnorm(20), g = rep(c("a", "b"), each = 10))
 vplot(df) |> mark_line(x = x, y = y, linetype = g)
+vplot(df) |>
+  mark_line(x = x, y = y, linetype = g) |>
+  scale_linetype_manual(values = c(a = "dotted", b = "solid"))
 }

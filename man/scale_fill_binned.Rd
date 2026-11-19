@@ -6,6 +6,18 @@
 \alias{scale_color_steps}
 \alias{scale_colour_steps}
 \alias{scale_fill_steps}
+\alias{scale_color_steps2}
+\alias{scale_color_stepsn}
+\alias{scale_color_fermenter}
+\alias{scale_color_viridis_b}
+\alias{scale_fill_steps2}
+\alias{scale_fill_stepsn}
+\alias{scale_fill_fermenter}
+\alias{scale_fill_viridis_b}
+\alias{scale_colour_steps2}
+\alias{scale_colour_stepsn}
+\alias{scale_colour_fermenter}
+\alias{scale_colour_viridis_b}
 \title{Binned (classed) colour scales}
 \usage{
 scale_fill_binned(
@@ -62,6 +74,168 @@ scale_fill_steps(
   na_value = "grey80",
   name = NULL
 )
+
+scale_color_steps2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_color_stepsn(
+  plot,
+  colours,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_color_fermenter(
+  plot,
+  palette = 1,
+  type = "seq",
+  direction = -1,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_color_viridis_b(
+  plot,
+  option = "viridis",
+  direction = 1,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_fill_steps2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_fill_stepsn(
+  plot,
+  colours,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_fill_fermenter(
+  plot,
+  palette = 1,
+  type = "seq",
+  direction = -1,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_fill_viridis_b(
+  plot,
+  option = "viridis",
+  direction = 1,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_colour_steps2(
+  plot,
+  low = "#832424",
+  mid = "#FFFFFF",
+  high = "#3A3A98",
+  midpoint = 0,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_colour_stepsn(
+  plot,
+  colours,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_colour_fermenter(
+  plot,
+  palette = 1,
+  type = "seq",
+  direction = -1,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
+
+scale_colour_viridis_b(
+  plot,
+  option = "viridis",
+  direction = 1,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -84,6 +258,30 @@ ranges like \code{"[0, 10)"}.}
 swatch). Default \code{"grey80"}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{low, mid, high, midpoint}{For \verb{scale_*_steps2()}, the end and midpoint
+colours and the data value at \code{mid}.}
+
+\item{limits}{For the ggplot2-named scales, a length-2 numeric
+\code{c(min, max)}: the outer class boundaries.}
+
+\item{n.breaks}{For the ggplot2-named scales, the approximate number of
+class boundaries when \code{breaks} is \code{NULL} (default 5).}
+
+\item{na.value}{For the ggplot2-named scales, the colour of missing values.}
+
+\item{oob}{For the ggplot2-named scales, what to do with values outside the
+outer boundaries: \code{"squish"} (the default, as in ggplot2) colours them as
+the outer class, \code{"censor"} with \code{na.value}; or a \verb{function(x, range)}.}
+
+\item{colours}{For \verb{scale_*_stepsn()}, the colours of the ramp.}
+
+\item{type, direction}{For \verb{scale_*_fermenter()}, the ColorBrewer family a
+numeric \code{palette} indexes and its order (see \code{\link[=scale_color_brewer]{scale_color_brewer()}}); for
+\verb{scale_*_viridis_b()}, \code{direction = -1} reverses the map.}
+
+\item{option}{For \verb{scale_*_viridis_b()}, the viridis map (see
+\code{\link[=scale_color_viridis_c]{scale_color_viridis_c()}}).}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -95,6 +293,20 @@ standard choropleth scale. Class breaks are chosen by a classification
 \code{style}. \code{quantile}, \code{equal}, and \code{pretty} need no extra packages; other
 styles (e.g. \code{"jenks"}, \code{"fisher"}, \code{"kmeans"}, \code{"headtails"}) delegate to the
 optional \code{classInt} package (in \code{Suggests}) and error if it is absent.
+
+The ggplot2-named binned colour scales follow ggplot2's binning: without
+\code{breaks}, about \code{n.breaks} "nice" class boundaries inside the data range,
+the outer classes widened to whole bins (with \code{limits}, the limits are the
+outer boundaries); classes close on the right, \verb{(a, b]}.
+\itemize{
+\item \verb{scale_*_steps2()} --- a diverging \code{low}--\code{mid}--\code{high} ramp centred on
+\code{midpoint}, each class taking the ramp's colour at its centre.
+\item \verb{scale_*_stepsn()} --- an n-colour ramp \code{colours}, sampled at each class
+centre.
+\item \verb{scale_*_fermenter()} --- a ColorBrewer palette's k-class colours (as
+\code{\link[=scale_color_distiller]{scale_color_distiller()}}, but binned).
+\item \verb{scale_*_viridis_b()} --- k evenly spaced viridis colours.
+}
 }
 \details{
 \code{scale_color_steps()} / \code{scale_fill_steps()} are aliases of the binned colour
@@ -109,6 +321,9 @@ vplot(nc) |>
   scale_fill_binned(style = "quantile", n = 5) |>
   coord_sf()
 }
+vplot(faithful) |>
+  mark_point(x = eruptions, y = waiting, color = waiting - 70) |>
+  scale_color_steps2()
 }
 \seealso{
 \code{\link[=mark_sf]{mark_sf()}}, \code{\link[=scale_fill_continuous]{scale_fill_continuous()}}

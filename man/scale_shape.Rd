@@ -2,9 +2,39 @@
 % Please edit documentation in R/scales.R
 \name{scale_shape}
 \alias{scale_shape}
+\alias{scale_shape_manual}
+\alias{scale_shape_discrete}
 \title{Shape scale}
 \usage{
-scale_shape(plot, values = NULL, name = NULL)
+scale_shape(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_shape_manual(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_shape_discrete(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -15,9 +45,25 @@ either a built-in marker (\code{"circle"}, \code{"square"}, \code{"triangle"},
 icon} — a path \code{d} string (what icon sets ship) or a path to a \code{.svg}
 file. SVG values are drawn as crisp vector markers (via
 \code{\link[vellum:svg_grob]{vellum::svg_grob()}}) and the legend shows the icon; the \code{size} aesthetic
-scales them.}
+scales them.
+
+For \code{scale_shape_manual()} \code{values} is required, and may also be
+ggplot2's numeric shape codes (\code{16}, \code{17}, ...), which map to the nearest
+marker (open, filled and bordered variants of a shape draw alike). Named
+values are matched to levels by name.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{breaks}{The levels the legend shows (and their order), or \code{NULL} for
+all of them.}
+
+\item{labels}{Legend labels: one per shown level, a vector named by level,
+or a function of the levels; \code{NULL} keeps the levels.}
+
+\item{limits}{The levels the scale covers (a character vector), or \code{NULL}
+for the levels in the data. Data outside \code{limits} draws as \code{na.value}.}
+
+\item{na.value}{The shape drawn for missing values (default a circle).}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -34,4 +80,7 @@ star <- "M12 2l3 7h7l-5.5 4.5 2 7-6.5-4.5-6.5 4.5 2-7L2 9h7z"
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
   scale_shape(values = c(star, star, star))
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
+  scale_shape_manual(values = c("4" = 16, "6" = 17, "8" = 15))
 }

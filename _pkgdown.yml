@@ -206,6 +206,7 @@ reference:
   - scale_x_date
   - scale_color_continuous
   - scale_viridis
+  - scale_hue
   - scale_fill_binned
   - scale_fill_bivariate
   - bi_class

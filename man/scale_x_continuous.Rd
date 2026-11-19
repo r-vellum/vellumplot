@@ -3,6 +3,12 @@
 \name{scale_x_continuous}
 \alias{scale_x_continuous}
 \alias{scale_y_continuous}
+\alias{scale_x_log10}
+\alias{scale_x_sqrt}
+\alias{scale_x_reverse}
+\alias{scale_y_log10}
+\alias{scale_y_sqrt}
+\alias{scale_y_reverse}
 \alias{scale_x_discrete}
 \alias{scale_y_discrete}
 \title{Position scales}
@@ -30,6 +36,18 @@ scale_y_continuous(
   sec.axis = NULL,
   oob = NULL
 )
+
+scale_x_log10(plot, ...)
+
+scale_x_sqrt(plot, ...)
+
+scale_x_reverse(plot, ...)
+
+scale_y_log10(plot, ...)
+
+scale_y_sqrt(plot, ...)
+
+scale_y_reverse(plot, ...)
 
 scale_x_discrete(
   plot,
@@ -87,6 +105,9 @@ the opposite edge, or \code{NULL} for none. Continuous Cartesian plots only (see
 (default) is \code{"keep"} on a position axis. Infinite values are never out
 of bounds: \code{x = Inf} sits on the panel edge.}
 
+\item{...}{For the transform shortcuts, further arguments to
+\code{scale_x_continuous()} / \code{scale_y_continuous()} (not \code{trans}).}
+
 \item{drop}{For discrete scales, drop factor levels that do not occur in
 the data (default \code{TRUE}, as in ggplot2). \code{limits} overrides it.}
 }
@@ -98,6 +119,10 @@ Declare a position scale to override the trained default. \code{scale_x_continuo
 / \code{scale_y_continuous()} handle numeric (and date/time) axes;
 \code{scale_x_discrete()} / \code{scale_y_discrete()} handle categorical (band) axes and
 let you set the level order via \code{limits}.
+
+\code{scale_x_log10()}, \code{scale_x_sqrt()} and \code{scale_x_reverse()} (and their \code{y}
+forms) are shortcuts for \code{scale_x_continuous(trans = "log10")} and so on,
+as in ggplot2; \code{...} takes the other arguments of \code{scale_x_continuous()}.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_continuous(limits = c(0, 6))

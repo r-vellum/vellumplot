@@ -39,7 +39,15 @@ scale_color_discrete(
   name = NULL
 )
 
-scale_color_manual(plot, values, name = NULL)
+scale_color_manual(
+  plot,
+  values,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 
 scale_color_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 
@@ -76,7 +84,15 @@ scale_fill_discrete(
   name = NULL
 )
 
-scale_fill_manual(plot, values, name = NULL)
+scale_fill_manual(
+  plot,
+  values,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 
 scale_fill_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 
@@ -107,7 +123,15 @@ scale_colour_discrete(
   name = NULL
 )
 
-scale_colour_manual(plot, values, name = NULL)
+scale_colour_manual(
+  plot,
+  values,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 
 scale_colour_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
 
@@ -129,7 +153,7 @@ case/space-insensitively). \code{NULL} uses a sensible default.}
 
 \item{limits}{For the continuous colour scales, a length-2 numeric
 \code{c(min, max)} fixing the mapped data range (the direct form of
-\code{lims(color = ...)}).}
+\code{lims(color = ...)}). For \verb{scale_*_manual()}, the levels the scale covers.}
 
 \item{breaks, labels}{Explicit legend breaks / labels, or \code{NULL}.}
 
@@ -142,6 +166,9 @@ a \verb{function(x, range)}. \code{NULL} (default) squishes.}
 
 \item{values}{For \verb{scale_*_manual()}, a vector of colours; if named, matched to
 data levels by name (unmatched levels draw grey).}
+
+\item{na.value}{For \verb{scale_*_manual()}, the colour of missing values and
+of levels outside \code{limits} (default grey).}
 
 \item{low, high}{For \verb{scale_*_gradient()}/\verb{scale_*_gradient2()}, the endpoint
 colours.}
