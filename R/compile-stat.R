@@ -88,7 +88,10 @@ NULL
     signif = .stat_signif(L),
     series_label = .stat_series_label(L),
     outlier = .stat_outlier(L),
-    bin = .stat_bin(L),
+    bin = .stat_dropped(
+      .stat_bin(L),
+      which(!is.finite(as.numeric(L$values$x)))
+    ),
     bin2d = .stat_bin2d(L),
     density_2d = .stat_density_2d(L),
     hexbin = .stat_hexbin(L),
@@ -499,6 +502,10 @@ NULL
     L$values$x <- sdf$x
   }
   map <- if (!empty) .stat_row_map(L, g_in, sdf)
+  # Input rows the stat left out; a stat that dropped the whole layer (an
+  # empty result from non-empty input) left out every row.
+  L$stat_dropped <- attr(sdf, "dropped") %||%
+    (if (empty && length(L$values)) seq_len(max(lengths(L$values))))
   if (!empty) {
     L <- .realign_carried(L, g_in, sdf, after_names, map)
   }
@@ -997,7 +1004,8 @@ NULL
         height = diff(yb)[1]
       )
     },
-    "{.fn mark_bin2d} needs at least one finite (x, y) pair."
+    "{.fn mark_bin2d} needs at least one finite (x, y) pair.",
+    usable = is.finite(x0) & is.finite(y0)
   )
 }
 
@@ -1306,7 +1314,8 @@ NULL
         height = r * sqrt(3) / asp
       )
     },
-    "{.fn mark_hex} needs at least one finite (x, y) pair."
+    "{.fn mark_hex} needs at least one finite (x, y) pair.",
+    usable = is.finite(x0) & is.finite(y0)
   )
 }
 
@@ -1331,7 +1340,12 @@ NULL
 # column) or NULL to drop the group. The scaffold splits by group, drops the
 # NULLs, attaches the `group` factor, warns with `empty_msg` and drops the layer
 # when every group is dropped, and rbinds the survivors.
-.per_group <- function(L, n, compute, empty_msg) {
+#
+# `usable` (a logical per input row, e.g. `is.finite(x)`) marks the rows the stat
+# can use. The input rows the stat leaves out -- unusable rows, and every row of
+# a dropped group -- are recorded as the result's "dropped" attribute (see
+# `.stat_dropped()`).
+.per_group <- function(L, n, compute, empty_msg, usable = NULL) {
   grp <- .group_key(L)
   g <- .stat_groups(grp, n)
   glevs <- g$levels
@@ -1347,11 +1361,25 @@ NULL
     }
     df
   })
-  parts <- parts[!vapply(parts, is.null, logical(1))]
+  kept <- !vapply(parts, is.null, logical(1))
+  parts <- parts[kept]
   if (!length(parts)) {
     return(.stat_drop_layer(empty_msg))
   }
-  do.call(rbind, parts)
+  dropped <- c(
+    unlist(g$groups[!kept], use.names = FALSE),
+    if (!is.null(usable)) which(!usable)
+  )
+  .stat_dropped(do.call(rbind, parts), dropped)
+}
+
+# Record which input rows (indices into the layer's rows) a stat left out of its
+# computation -- a non-finite value, or a group too small to summarise -- as the
+# output's "dropped" attribute. `.merge_stat()` keeps it as `L$stat_dropped`;
+# `spec_diagnose()`'s report counts these rows.
+.stat_dropped <- function(sdf, rows) {
+  attr(sdf, "dropped") <- sort(unique(as.integer(rows)))
+  sdf
 }
 
 # A stat with nothing to compute (too few points, no finite values) warns and
@@ -1410,7 +1438,8 @@ NULL
       d <- stats::density(xi, adjust = adjust, from = rng[1], to = rng[2])
       data.frame(x = d$x, y = d$y, density = d$y)
     },
-    "{.fn mark_density} needs at least 2 finite points."
+    "{.fn mark_density} needs at least 2 finite points.",
+    usable = is.finite(x)
   )
 }
 
@@ -1737,7 +1766,8 @@ NULL
       xg <- seq(min(xi), max(xi), length.out = 80)
       .smooth_fit(m, xi, yi, xg, se, level, span, formula, method.args)
     },
-    "{.fn mark_smooth} needs at least 2 distinct x values to fit."
+    "{.fn mark_smooth} needs at least 2 distinct x values to fit.",
+    usable = is.finite(x) & is.finite(y)
   )
 }
 
@@ -1758,7 +1788,8 @@ NULL
       y <- seq_len(n) / n
       data.frame(x = xi, y = y, ecdf = y)
     },
-    "{.fn mark_ecdf} needs at least one finite value."
+    "{.fn mark_ecdf} needs at least one finite value.",
+    usable = is.finite(x)
   )
 }
 
@@ -1780,7 +1811,8 @@ NULL
       theo <- dist(stats::ppoints(length(s)))
       data.frame(x = theo, y = s, sample = s, theoretical = theo)
     },
-    "{.fn mark_qq} needs at least one finite sample value."
+    "{.fn mark_qq} needs at least one finite sample value.",
+    usable = is.finite(s0)
   )
 }
 
@@ -1808,7 +1840,8 @@ NULL
       xr <- range(theo)
       data.frame(x = xr, y = intercept + slope * xr)
     },
-    "{.fn mark_qq_line} needs at least 2 finite sample values."
+    "{.fn mark_qq_line} needs at least 2 finite sample values.",
+    usable = is.finite(s0)
   )
 }
 
@@ -1849,12 +1882,13 @@ NULL
     bin <- bin[o]
   }
   stack <- stats::ave(seq_along(bin), bin, FUN = seq_along)
-  data.frame(
+  out <- data.frame(
     x = min(x) + (bin + 0.5) * bw,
     y = stack - 0.5,
     count = 1,
     .rows = rows
   )
+  .stat_dropped(out, which(!is.finite(x0)))
 }
 
 # Window (rolling / cumulative / offset) operations on an x-ordered y series.
@@ -1964,7 +1998,8 @@ NULL
   if (!length(parts)) {
     cli::cli_abort("{.fn mark_line} {.arg window} produced no finite values.")
   }
-  do.call(rbind, parts)
+  out <- do.call(rbind, parts)
+  .stat_dropped(out, setdiff(seq_along(x), out$.rows))
 }
 
 # Require x and y for the region stats (ellipse/hull), with a clear message.
@@ -2038,7 +2073,8 @@ NULL
       pts <- .ellipse_points(xi, yi, type, level, segments)
       data.frame(x = pts[, 1], y = pts[, 2], .piece = k)
     },
-    "{.fn mark_ellipse} needs at least 3 points to fit."
+    "{.fn mark_ellipse} needs at least 3 points to fit.",
+    usable = is.finite(x) & is.finite(y)
   )
 }
 
@@ -2081,7 +2117,8 @@ NULL
       }
       data.frame(x = hx, y = hy, .piece = k)
     },
-    "{.fn mark_hull} needs at least 3 points."
+    "{.fn mark_hull} needs at least 3 points.",
+    usable = is.finite(x) & is.finite(y)
   )
 }
 
