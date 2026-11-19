@@ -67,15 +67,11 @@ test_that("a grouped hull yields one piece per group", {
   expect_equal(length(unique(r$values$.piece)), 3)
 })
 
-test_that("regions need at least 3 points per group", {
-  expect_error(
-    suppressWarnings(
-      vellumplot:::.resolve_layers(
-        vplot(data.frame(x = 1:2, y = 1:2)) |> mark_hull(x = x, y = y)
-      )
-    ),
-    "3 points"
-  )
+test_that("regions need at least 3 points: too few drops the layer (VP-22)", {
+  p <- vplot(data.frame(x = 1:2, y = 1:2)) |> mark_hull(x = x, y = y)
+  expect_warning(vellumplot:::.resolve_layers(p), "3 points")
+  r <- suppressWarnings(vellumplot:::.resolve_layers(p))[[1]]
+  expect_identical(r$n, 0L)
 })
 
 test_that("mark_ellipse / mark_hull need x and y", {

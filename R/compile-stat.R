@@ -71,6 +71,7 @@ NULL
   if (n_in == 0L) {
     return(.merge_stat(L, data.frame()))
   }
+  .warn_nonfinite(L, stat)
   sdf <- switch(
     stat,
     count = .stat_count(L),
@@ -98,6 +99,70 @@ NULL
     cli::cli_abort("Unknown stat {.val {stat}}.")
   )
   .merge_stat(L, sdf, stat)
+}
+
+# The continuous inputs each numeric stat reads. These stats compute only from
+# finite values, so a row whose input is infinite (or missing, for marks whose
+# missing rows are not removed up front) is left out of the computation.
+.STAT_FINITE_INPUTS <- list(
+  bin = "x",
+  bin2d = c("x", "y"),
+  hexbin = c("x", "y"),
+  density = "x",
+  density_2d = c("x", "y"),
+  smooth = c("x", "y"),
+  ecdf = "x",
+  qq = "sample",
+  qq_line = "sample",
+  dotplot = "x",
+  ellipse = c("x", "y"),
+  hull = c("x", "y")
+)
+
+# The constructor behind each of those stats, for messages.
+.STAT_FN <- c(
+  bin = "mark_histogram",
+  bin2d = "mark_bin2d",
+  hexbin = "mark_hex",
+  density = "mark_density",
+  density_2d = "mark_contour",
+  smooth = "mark_smooth",
+  ecdf = "mark_ecdf",
+  qq = "mark_qq",
+  qq_line = "mark_qq_line",
+  dotplot = "mark_dotplot",
+  ellipse = "mark_ellipse",
+  hull = "mark_hull"
+)
+
+# Say how many rows a stat leaves out for a non-finite input, in ggplot2's
+# wording ("Removed n rows containing non-finite values"), rather than dropping
+# them silently. An `Inf` cannot be binned, smoothed or estimated, so ggplot2's
+# stats remove such rows with this warning too.
+.warn_nonfinite <- function(L, stat) {
+  chans <- .STAT_FINITE_INPUTS[[stat]]
+  if (is.null(chans)) {
+    return(invisible())
+  }
+  if (stat %in% c("qq", "qq_line") && is.null(L$values$sample)) {
+    chans <- if (!is.null(L$values$y)) "y" else "x"
+  }
+  n <- L$n %||% max(lengths(L$values))
+  bad <- rep(FALSE, n)
+  for (ch in chans) {
+    v <- L$values[[ch]]
+    if (is.numeric(v) && length(v) == n) {
+      bad <- bad | !is.finite(v)
+    }
+  }
+  if (any(bad)) {
+    fn <- .STAT_FN[[stat]]
+    cli::cli_warn(
+      "Removed {sum(bad)} row{?s} containing non-finite values ({.fn {fn}}).",
+      class = "vellumplot_nonfinite_rows"
+    )
+  }
+  invisible()
 }
 
 # The per-row styling aesthetics a stat carries through: it neither computes
@@ -360,13 +425,23 @@ NULL
     L$values$x <- sdf$x
   }
   map <- if (!empty) .stat_row_map(L, g_in, sdf)
-  L$stat_dropped <- attr(sdf, "dropped")
+  # Input rows the stat left out; a stat that dropped the whole layer (an
+  # empty result from non-empty input) left out every row.
+  L$stat_dropped <- attr(sdf, "dropped") %||%
+    (if (empty && length(L$values)) seq_len(max(lengths(L$values))))
   if (!empty) {
     L <- .realign_carried(L, g_in, sdf, after_names, map)
   }
   L <- .realign_meta(L, map)
   if (!("y" %in% after_names) && !is.null(sdf$y)) {
     L$values$y <- sdf$y
+    L$types$y <- "quantitative"
+  }
+  # An empty layer still has the y axis its stat would have produced (a count,
+  # a density), so a plot of zero rows trains an empty panel instead of failing
+  # for want of a y encoding.
+  if (empty && is.null(L$values$y)) {
+    L$values$y <- numeric(0)
     L$types$y <- "quantitative"
   }
   if (!is.null(sdf$ymin)) {
@@ -665,7 +740,9 @@ NULL
   ok <- is.finite(x)
   x <- x[ok]
   if (!length(x)) {
-    cli::cli_abort("{.fn mark_histogram} needs at least one finite value.")
+    return(.stat_drop_layer(
+      "{.fn mark_histogram} needs at least one finite value."
+    ))
   }
   bins <- L$stat_params$bins %||% 30L
   rng <- .pad_degenerate_range(range(x))
@@ -723,7 +800,9 @@ NULL
   y0 <- as.numeric(L$values$y)
   xy <- .finite_xy(x0, y0)
   if (!length(xy$x)) {
-    cli::cli_abort("{.fn mark_bin2d} needs at least one finite (x, y) pair.")
+    return(.stat_drop_layer(
+      "{.fn mark_bin2d} needs at least one finite (x, y) pair."
+    ))
   }
   bins <- L$stat_params$bins %||% 30L
   edges <- function(v) {
@@ -1028,7 +1107,9 @@ NULL
   y0 <- as.numeric(L$values$y)
   xy <- .finite_xy(x0, y0)
   if (!length(xy$x)) {
-    cli::cli_abort("{.fn mark_hex} needs at least one finite (x, y) pair.")
+    return(.stat_drop_layer(
+      "{.fn mark_hex} needs at least one finite (x, y) pair."
+    ))
   }
   bins <- L$stat_params$bins %||% 30L
   xr <- .pad_degenerate_range(range(xy$x))
@@ -1089,8 +1170,8 @@ NULL
 # its level name, whether the layer is grouped, and the group's 1-based index
 # (for a `.piece`); it returns that group's stat rows (without the `group`
 # column) or NULL to drop the group. The scaffold splits by group, drops the
-# NULLs, attaches the `group` factor, aborts with `empty_msg` when every group is
-# dropped, and rbinds the survivors.
+# NULLs, attaches the `group` factor, warns with `empty_msg` and drops the layer
+# when every group is dropped, and rbinds the survivors.
 #
 # `usable` (a logical per input row, e.g. `is.finite(x)`) marks the rows the stat
 # can use. The input rows the stat leaves out -- unusable rows, and every row of
@@ -1115,7 +1196,7 @@ NULL
   kept <- !vapply(parts, is.null, logical(1))
   parts <- parts[kept]
   if (!length(parts)) {
-    cli::cli_abort(empty_msg)
+    return(.stat_drop_layer(empty_msg))
   }
   dropped <- c(
     unlist(g$groups[!kept], use.names = FALSE),
@@ -1131,6 +1212,19 @@ NULL
 .stat_dropped <- function(sdf, rows) {
   attr(sdf, "dropped") <- sort(unique(as.integer(rows)))
   sdf
+}
+
+# A stat with nothing to compute (too few points, no finite values) warns and
+# returns an empty result, so its layer draws nothing while the rest of the plot
+# renders -- ggplot2's behaviour, and the same whether or not the layer is
+# grouped. `.merge_stat()` turns the zero-row result into an empty layer.
+.stat_drop_layer <- function(msg, env = parent.frame()) {
+  cli::cli_warn(
+    c(msg, i = "The layer is dropped."),
+    class = "vellumplot_stat_dropped",
+    .envir = env
+  )
+  data.frame()
 }
 
 # Keep only the positions where both x and y are finite (a common pre-filter for
@@ -1476,7 +1570,9 @@ NULL
   rows <- ok[order(x0[ok], gk[ok])]
   x <- x0[rows]
   if (!length(x)) {
-    cli::cli_abort("{.fn mark_dotplot} needs at least one finite value.")
+    return(.stat_drop_layer(
+      "{.fn mark_dotplot} needs at least one finite value."
+    ))
   }
   span <- diff(range(x))
   bw <- L$stat_params$binwidth %||% (if (span > 0) span / 30 else 1)
@@ -1672,9 +1768,11 @@ NULL
       xi <- f$x
       yi <- f$y
       if (length(xi) < 3) {
-        cli::cli_warn(
-          "Skipping {.field {gn}}: {.fn mark_ellipse} needs at least 3 points."
-        )
+        if (grouped) {
+          cli::cli_warn(
+            "Skipping {.field {gn}}: {.fn mark_ellipse} needs at least 3 points."
+          )
+        }
         return(NULL)
       }
       pts <- .ellipse_points(xi, yi, type, level, segments)
@@ -1700,9 +1798,11 @@ NULL
       xi <- f$x
       yi <- f$y
       if (length(xi) < 3) {
-        cli::cli_warn(
-          "Skipping {.field {gn}}: {.fn mark_hull} needs at least 3 points."
-        )
+        if (grouped) {
+          cli::cli_warn(
+            "Skipping {.field {gn}}: {.fn mark_hull} needs at least 3 points."
+          )
+        }
         return(NULL)
       }
       h <- grDevices::chull(xi, yi)

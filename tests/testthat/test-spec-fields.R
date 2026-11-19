@@ -244,6 +244,13 @@ test_that("stat drops are mapped back to source rows across facet panels", {
   expect_identical(d$report$missing, 1L)
   expect_identical(d$report$stat, 2L)
   expect_identical(.stat_dropped_rows(p)[[1]], c(3L, 8L))
+  # a panel whose stat drops the whole layer loses every one of its rows
+  df2 <- data.frame(x = c(1, 2, 3, 4, 10), f = c("p", "p", "p", "p", "q"))
+  d2 <- suppressWarnings(spec_diagnose(
+    vplot(df2) |> mark_density(x = x) |> facet_wrap(~f)
+  ))
+  expect_true(d2$ok)
+  expect_identical(d2$report$stat, 1L)
 })
 
 test_that("values outside colour / size limits are counted as oob, not dropped", {

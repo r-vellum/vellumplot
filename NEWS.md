@@ -34,6 +34,29 @@
   plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
   their docs now say how they differ (VV-2).
 
+* **Stat parameters are checked where you write them.** `bins`, `binwidth`,
+  `adjust`, `span`, `level`, `height`, `segments` and `n` in `mark_histogram()`,
+  `mark_hex()`, `mark_bin2d()`, `mark_dotplot()`, `mark_density()`,
+  `mark_violin()`, `mark_ridgeline()`, `mark_halfeye()`, `mark_smooth()`,
+  `mark_ellipse()` and `mark_contour()` are validated by the constructor, with an
+  error naming the argument. Before, `bins = 0` crashed with "arguments imply
+  differing number of rows", `adjust = 0` with "'bw' is not positive", and
+  `level = 2` or `binwidth = -1` drew a wrong plot without complaint (VP-21).
+
+* **Stat edge cases follow ggplot2 (VP-22).**
+  - **Behaviour change:** a stat layer with too few points (a density of one
+    value, a smooth through one x, a hull of two points) or no finite values now
+    warns and draws nothing, whether or not it is grouped. Before, an ungrouped
+    layer aborted the whole plot while a grouped one only warned.
+  - A plot whose data has zero rows draws an empty panel instead of reporting
+    that it "needs an x and y encoding". A plot that really maps no `x` (or no
+    `y`) now says which axis is missing.
+  - `mark_rug(x = )` (or `y = `) works on its own, with a blank axis for the
+    unmapped direction.
+  - The numeric stats (histogram, density, smooth, ...) warn "Removed n rows
+    containing non-finite values" for rows they leave out because an input is
+    `Inf` or missing, as ggplot2's stats do, instead of dropping them silently.
+
 # vellumplot 0.12.0
 
 ## New features
