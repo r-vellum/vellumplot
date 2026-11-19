@@ -1315,6 +1315,11 @@ scale_colour_distiller <- scale_color_distiller
 #' Declare the scale for a mapped `size` aesthetic: data values map linearly to a
 #' point-size `range` (in mm). A size legend is drawn automatically.
 #'
+#' A factor, character or logical mapped to `size` gets a discrete scale: the
+#' levels spread evenly (by area) over `range`, the legend keys are the levels,
+#' and `breaks` picks which of them it shows. As in ggplot2, an unordered
+#' variable warns that size is not advised for it; an ordered factor does not.
+#'
 #' @param plot A [PlotSpec].
 #' @param range Numeric length-2 output size range in mm, or `NULL` for the
 #'   default `c(1, 4)`.
@@ -1741,6 +1746,10 @@ scale_linetype_identity <- function(plot) {
 #'
 #' Declare the scale for a mapped `alpha` aesthetic: data values map to an
 #' opacity `range` in `[0, 1]`. An alpha legend is drawn automatically.
+#'
+#' A factor, character or logical mapped to `alpha` gets a discrete scale, its
+#' levels spread evenly over `range`, with a warning for an unordered variable
+#' (as in ggplot2).
 #'
 #' @param plot A [PlotSpec].
 #' @param range Numeric length-2 output opacity range, or `NULL` for the
