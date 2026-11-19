@@ -181,3 +181,17 @@ test_that("box plots and violins turn horizontal for a discrete y", {
     vplot(mtcars) |> mark_boxplot(x = mpg, y = factor(cyl), fill = factor(am))
   ))
 })
+
+test_that("a violin on a binned axis is estimated from the data, not the bin centres (VP-30)", {
+  p <- vplot(iris) |>
+    mark_violin(x = Species, y = Sepal.Length) |>
+    scale_y_binned(n = 5)
+  sc <- .train_scales(p, .resolve_layers(p))
+  expect_identical(sc$y$type, "binned")
+  # trimmed to each species' real range, not to its outer bin centres
+  v <- iris$Sepal.Length[iris$Species == "setosa"]
+  expect_equal(range(.native_values(sc$y, v)), range(v))
+  d <- .density_of(.native_values(sc$y, v), 1, trim = TRUE)
+  expect_equal(range(d$x), range(v))
+  expect_no_error(vellum::as_vellum_scene(p))
+})

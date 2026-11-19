@@ -1,5 +1,12 @@
 # vellumplot 0.12.0.9000 (development version)
 
+* `guide_bivariate()` labels the swatch edges with the class breaks
+  `bi_class()` chose, along both axes, so the legend says which range each
+  colour stands for (`labels = FALSE` turns them off; the swatches widen to fit
+  them unless `key.size` is set). `guide_bivariate(rotate = TRUE)` turns the
+  grid 45 degrees into a diamond, low-low at the bottom and high-high at the
+  top. The "Scales and guides" article has a new bivariate section (VP-35).
+
 * **Behaviour change:** a discrete colour scale (`scale_*_manual()`,
   `scale_*_discrete()`, `scale_*_brewer()`, ...) on a numeric variable now
   errors ("Continuous values supplied to a discrete colour scale"), as in
@@ -88,6 +95,30 @@
   conflicts. `pdf_pages()` and `render_all()` differ from vellum's (they take
   plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
   their docs now say how they differ (VV-2).
+
+* **Stacks follow the group key, whatever aesthetic defines it (VP-38).**
+  Without `group`, `color` or `fill`, a discrete `pattern`, `linetype` or
+  `shape` now groups the layer. **Behaviour change:**
+  `mark_bar(pattern = category, position = "stack")` now stacks in legend
+  order (first level on top), as stacks grouped by `fill` have since the stack
+  order change above. Before, a pattern-only layer was one group, so its stack
+  ran in data order. Stats and dodges group by such an aesthetic too, as in
+  ggplot2 (for example `mark_density(linetype = g)` draws one curve per `g`).
+
+* **A violin or ridgeline fill that varies within a shape is dropped with a
+  warning (VP-37).** Each violin (ridge, slab) is one polygon with one fill, so
+  `mark_violin(fill = <continuous>)` painted every shape with its first row's
+  fill while the legend showed a gradient. As in ggplot2, whose violins are
+  computed by a stat that drops such aesthetics, the varying `fill` (or
+  `color`, `alpha`, ...) is now dropped with a warning, and no legend is drawn
+  for it. A continuous fill that is constant within each category is kept.
+  (Areas and ribbons error instead, as ggplot2's do.)
+
+* **Violins on a binned axis keep their shape (VP-30).** With
+  `scale_y_binned()`, a violin's density (and the axis room made for it) was
+  estimated from the values snapped to their bin centres, giving a lumpy
+  outline cut off at the outer centres. The density now uses the continuous
+  values.
 
 * **`mark_histogram()` bins like ggplot2.** It gains `binwidth`, `breaks`,
   `boundary`, `center` and `closed`, with ggplot2's meaning: `breaks` gives the

@@ -316,8 +316,16 @@ NULL
 # The values of a density-shape mark's value axis in native units, as its
 # density is estimated (see `.density_by_cat()`). Values the transform cannot
 # represent (<= 0 on log10, < 0 on sqrt) become non-finite and are dropped by
-# `.density_of()`, as training drops them.
-.native_values <- function(sc, v) suppressWarnings(sc$map(as.numeric(v)))
+# `.density_of()`, as training drops them. A binned axis's `map()` snaps a
+# value to its bin centre, which would estimate the density of the bin centres
+# (a lumpy shape cut off at the outer centres); its native space is the data
+# space, so the continuous values are used as they are (VP-30).
+.native_values <- function(sc, v) {
+  if (identical(sc$type, "binned")) {
+    return(as.numeric(v))
+  }
+  suppressWarnings(sc$map(as.numeric(v)))
+}
 
 # The kernel density of one cell's values, or NULL with fewer than two finite
 # observations -- the per-cell form of `.density_by_cat()`. `trim = TRUE` ends
