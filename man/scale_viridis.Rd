@@ -21,7 +21,10 @@ scale_color_viridis_c(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_color_viridis_d(
@@ -37,7 +40,10 @@ scale_fill_viridis_c(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_fill_viridis_d(
@@ -75,7 +81,10 @@ scale_color_distiller(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = -1
+  direction = -1,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_fill_distiller(
@@ -85,7 +94,10 @@ scale_fill_distiller(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = -1
+  direction = -1,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_colour_viridis_c(
@@ -93,7 +105,10 @@ scale_colour_viridis_c(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_colour_viridis_d(
@@ -121,7 +136,10 @@ scale_colour_distiller(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = -1
+  direction = -1,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 }
 \arguments{
@@ -130,6 +148,12 @@ scale_colour_distiller(
 \item{option}{Which viridis map (see above).}
 
 \item{name, breaks, labels}{As for \code{\link[=scale_color_continuous]{scale_color_continuous()}}.}
+
+\item{limits, oob, na.value}{For the continuous scales (\verb{_viridis_c()},
+\verb{_distiller()}), the mapped data range \code{c(min, max)}, what to do with
+values outside it (\code{"censor"}, \code{"squish"}, \code{"keep"} or a function; \code{NULL},
+the default, squishes) and the colour of missing values, as for
+\code{\link[=scale_color_continuous]{scale_color_continuous()}}.}
 
 \item{palette}{A ColorBrewer palette name or index (see above), or a
 \code{grDevices::hcl.colors()} palette name.}

@@ -119,6 +119,34 @@ NULL
   fillp %||% default
 }
 
+# Per-row fill and outline of a mark with ggplot2's rect / polygon semantics:
+# `fill` fills and `color` outlines (no outline unless a `color` is given). A
+# `color` with no `fill` at all fills the shape instead, as on the other filled
+# marks (tile, bar), so `color = g` alone still paints the shapes. A paint
+# `fill` (gradient/pattern) counts as a fill; the emitter substitutes it at the
+# gp via `.paint_or()`. Returns `fill` and `col` vectors of length `n`.
+.fill_and_outline <- function(L, scales, default, n = L$n) {
+  has_fill <- !is.null(L$values$fill) || !is.null(L$params$fill)
+  has_col <- !is.null(L$values$color) || !is.null(L$params$color)
+  if (!has_fill) {
+    return(list(
+      fill = rep_len(.aes_colour(L, scales, default), n),
+      col = rep_len(NA_character_, n)
+    ))
+  }
+  col <- if (!has_col) {
+    NA_character_
+  } else if (!is.null(L$values$color) && !is.null(scales$color)) {
+    scales$color$map(L$values$color)
+  } else {
+    L$params$color %||% NA_character_
+  }
+  list(
+    fill = rep_len(.aes_fill_colour(L, scales, default), n),
+    col = rep_len(col, n)
+  )
+}
+
 # A fill value can be a constant *paint* (gradient or pattern), not just a colour.
 .is_paint <- function(x) inherits(x, c("vellum_gradient", "vellum_pattern"))
 
@@ -241,6 +269,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   "halfeye",
   "hull",
   "ellipse",
+  "polygon",
   "sf"
 )
 

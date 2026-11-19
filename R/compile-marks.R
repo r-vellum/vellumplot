@@ -69,6 +69,7 @@ NULL
     contour_filled = .emit_contour_filled(scene, L, scales),
     ellipse = .emit_region(scene, L, scales),
     hull = .emit_region(scene, L, scales),
+    polygon = .emit_polygon(scene, L, scales),
     sankey = .emit_sankey(scene, L, scales),
     venn = .emit_venn(scene, L, scales),
     waffle = .emit_waffle(scene, L, scales),
