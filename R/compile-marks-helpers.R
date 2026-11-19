@@ -35,10 +35,17 @@ NULL
 # style split already separates, so this is `.style_groups()` unchanged (same
 # groups, same order, same output).
 .series_groups <- function(L, n, fields) {
-  if (is.null(L$values$group) && is.null(L$params$group)) {
+  piece <- L$values$.piece
+  if (is.null(L$values$group) && is.null(L$params$group) && is.null(piece)) {
     return(.style_groups(n, fields))
   }
-  g <- rep_len(.group_key(L), n)
+  g <- .group_key(L)
+  g <- if (is.null(g)) rep("", n) else rep_len(as.character(g), n)
+  # A stat that fits several lines per group (`mark_quantile()`) marks each
+  # with a `.piece`: one series per (group, piece).
+  if (!is.null(piece)) {
+    g <- paste(g, rep_len(piece, n), sep = "\r")
+  }
   fields <- fields[!vapply(fields, is.null, logical(1))]
   out <- list()
   for (idx in unname(split(seq_len(n), match(g, unique(g))))) {

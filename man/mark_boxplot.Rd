@@ -23,6 +23,7 @@ mark_errorbar(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   width = 0.5,
   blend = NULL,
   sketch = NULL,
@@ -33,6 +34,7 @@ mark_linerange(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -56,6 +58,7 @@ mark_pointrange(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -75,7 +78,7 @@ mark_crossbar(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y} for boxplot/summary; \code{x}, \code{ymin},
-\code{ymax} for errorbar/linerange; plus \code{color}/\code{fill} (and \code{linetype} for
+\code{ymax} (or \code{y}, \code{xmin}, \code{xmax}) for errorbar/linerange; plus \code{color}/\code{fill} (and \code{linetype} for
 errorbar/linerange).}
 
 \item{position}{Position adjustment: a string — \code{"identity"} (default),
@@ -92,7 +95,11 @@ does.}
 
 \item{orientation}{For \code{mark_boxplot()}, \code{NA} (default) to infer it from the
 data (horizontal when \code{y} is discrete and \code{x} is not), \code{"x"} for vertical
-boxes along a discrete \code{x}, or \code{"y"} for horizontal boxes along \code{y}.}
+boxes along a discrete \code{x}, or \code{"y"} for horizontal boxes along \code{y}. For
+\code{mark_errorbar()}, \code{mark_linerange()} and \code{mark_pointrange()}, \code{NA}
+(default) draws horizontal ranges when the layer maps \code{xmin}/\code{xmax} and no
+\code{ymin}/\code{ymax} (ggplot2's \code{geom_errorbarh()}), vertical ones otherwise;
+\code{"x"} / \code{"y"} force either.}
 
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
@@ -141,6 +148,8 @@ with a range instead, like ggplot2's \code{stat_summary()}.
 A box plot is vertical when \code{x} is the discrete axis. When \code{y} is discrete
 and \code{x} continuous (\code{mark_boxplot(x = mpg, y = factor(cyl))}) it is drawn
 horizontally, as in ggplot2; \code{orientation} forces either.
+Error bars and ranges are horizontal when they map \code{xmin}/\code{xmax} at each \code{y}
+instead: \code{mark_errorbar(y = g, xmin = lo, xmax = hi)}.
 
 \code{mark_pointrange()} draws a point at \verb{(x, y)} with a vertical line from \code{ymin}
 to \code{ymax} (an identity mark — supply the summary values yourself, e.g. from a
@@ -154,4 +163,7 @@ vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
 vplot(mtcars) |> mark_boxplot(x = mpg, y = factor(cyl))
 # mean and standard error per category
 vplot(mtcars) |> mark_summary(x = factor(cyl), y = mpg, fun.data = "mean_se")
+# horizontal error bars
+est <- data.frame(term = c("a", "b", "c"), lo = c(-1, 0.2, 1), hi = c(1, 1.5, 2.4))
+vplot(est) |> mark_errorbar(y = term, xmin = lo, xmax = hi, width = 0.3)
 }

@@ -99,6 +99,7 @@ NULL
     aggregate = .stat_aggregate(L),
     summary = .stat_summary(L),
     smooth = .stat_smooth(L),
+    quantile = .stat_quantile(L),
     ecdf = .stat_ecdf(L),
     qq = .stat_qq(L),
     qq_line = .stat_qq_line(L),
@@ -121,6 +122,7 @@ NULL
   density = "x",
   density_2d = c("x", "y"),
   smooth = c("x", "y"),
+  quantile = c("x", "y"),
   ecdf = "x",
   qq = "sample",
   qq_line = "sample",
@@ -137,6 +139,7 @@ NULL
   density = "mark_density",
   density_2d = "mark_contour",
   smooth = "mark_smooth",
+  quantile = "mark_quantile",
   ecdf = "mark_ecdf",
   qq = "mark_qq",
   qq_line = "mark_qq_line",
@@ -1047,10 +1050,37 @@ NULL
     if (length(x) < 3L) {
       cli::cli_abort("A 2-D density contour needs at least 3 finite points.")
     }
-    ng <- L$stat_params$n %||% 100L
-    kd <- MASS::kde2d(x, y, n = ng, lims = lims %||% c(range(x), range(y)))
+    sp <- L$stat_params
+    ng <- sp$n %||% 100L
+    # Bandwidths as ggplot2's stat_density_2d(): `h` (default MASS's normal
+    # reference `bandwidth.nrd()` per axis, also kde2d's own default) times
+    # `adjust`.
+    h <- rep_len(
+      sp$h %||% c(MASS::bandwidth.nrd(x), MASS::bandwidth.nrd(y)),
+      2L
+    ) *
+      rep_len(sp$adjust %||% 1, 2L)
+    if (any(!is.finite(h) | h <= 0)) {
+      cli::cli_abort(c(
+        "A 2-D density needs a positive bandwidth on both axes.",
+        i = "Do {.arg x} and {.arg y} both vary? Otherwise set {.arg h}."
+      ))
+    }
+    kd <- MASS::kde2d(
+      x,
+      y,
+      h = h,
+      n = ng,
+      lims = lims %||% c(range(x), range(y))
+    )
     # kde2d's z is already [x, y] (rows = x) -- exactly what vl_contour() wants.
-    list(gx = kd$x, gy = kd$y, gz = kd$z)
+    z <- switch(
+      sp$contour_var %||% "density",
+      density = kd$z,
+      ndensity = kd$z / max(kd$z, na.rm = TRUE),
+      count = kd$z * length(x)
+    )
+    list(gx = kd$x, gy = kd$y, gz = z)
   }
 }
 
@@ -1066,6 +1096,27 @@ NULL
     pretty(rng, n = sp$bins %||% 10L)
   }
   br[br > rng[1] & br < rng[2]]
+}
+
+# Pad a contour field with a border far below every level, so each filled
+# band's contour closes on itself along the edge of the data grid. Closing an
+# open contour along the grid boundary (`.close_contour_ring()`) has to guess
+# which side holds the band, and for a band that spans two peaks (faithful's
+# lowest level) it guessed the outside, flooding the panel. The padded rows sit
+# a hair outside the grid: the iso-lines meet the original boundary to within
+# 1e-6 of a cell, as the border value is ~1e6 ranges below the field.
+.pad_field <- function(fld) {
+  gz <- fld$gz
+  rng <- range(gz, na.rm = TRUE)
+  low <- rng[1] - 1e6 * max(diff(rng), abs(rng[1]), 1)
+  step <- function(g) {
+    if (length(g) > 1L) diff(range(g)) / (length(g) - 1L) else 1
+  }
+  pad <- function(g) c(g[1] - step(g), g, g[length(g)] + step(g))
+  m <- matrix(low, nrow(gz) + 2L, ncol(gz) + 2L)
+  m[2:(nrow(gz) + 1L), 2:(ncol(gz) + 1L)] <- gz
+  m[is.na(m)] <- low
+  list(gx = pad(fld$gx), gy = pad(fld$gy), gz = m)
 }
 
 # Empty contour vertex table (the shape .emit_contour / .emit_contour_filled read).
@@ -1201,14 +1252,35 @@ NULL
       lims <- c(range(xy$x), range(xy$y))
     }
   }
-  fields <- lapply(g$groups, function(idx) {
+  fields <- lapply(names(g$groups), function(gn) {
+    idx <- g$groups[[gn]]
     Lg <- L
     Lg$values <- lapply(L$values, function(v) {
       if (length(v) > 1L) v[idx] else v
     })
     Lg$n <- length(idx)
+    if (!is.null(grp) && is.null(L$values$z)) {
+      # A group with too few points for a density (or none: a facet panel
+      # holds only some groups) is left out, as ggplot2 drops it.
+      nfin <- length(
+        .finite_xy(as.numeric(Lg$values$x), as.numeric(Lg$values$y))$x
+      )
+      if (nfin < 3L) {
+        if (nfin > 0L) {
+          cli::cli_warn(
+            "Skipping {.field {gn}}: a 2-D density needs at least 3 points."
+          )
+        }
+        return(NULL)
+      }
+    }
     .contour_field(Lg, lims)
   })
+  names(fields) <- names(g$groups)
+  fields <- fields[!vapply(fields, is.null, logical(1))]
+  if (!length(fields)) {
+    return(.stat_drop_layer("A 2-D density needs at least 3 points per group."))
+  }
   brks <- .contour_breaks(
     unlist(lapply(fields, `[[`, "gz"), use.names = FALSE),
     L$stat_params
@@ -1220,12 +1292,16 @@ NULL
     ))
   }
   pieces <- 0L
+  filled <- isTRUE(L$stat_params$filled)
   parts <- lapply(names(fields), function(gn) {
     fld <- fields[[gn]]
+    if (filled) {
+      fld <- .pad_field(fld)
+    }
     xlim <- range(fld$gx)
     ylim <- range(fld$gy)
     cc <- vellum::vl_contour(fld$gz, levels = brks, xlim = xlim, ylim = ylim)
-    df <- if (isTRUE(L$stat_params$filled)) {
+    df <- if (filled) {
       .vl_contour_bands_df(cc, xlim, ylim)
     } else {
       .vl_contour_lines_df(cc)
@@ -1766,6 +1842,54 @@ NULL
       .smooth_fit(m, xi, yi, xg, se, level, span, formula, method.args)
     },
     "{.fn mark_smooth} needs at least 2 distinct x values to fit.",
+    usable = is.finite(x) & is.finite(y)
+  )
+}
+
+# Quantile regression lines (ggplot2's stat_quantile()): per group, one
+# `quantreg::rq()` fit of `formula` (default `y ~ x`) per quantile, predicted on
+# 100 points across the group's x range (or `xseq`). Each fitted line is its own
+# `.piece`, numbered across groups, so the line emitter draws one polyline per
+# (group, quantile); `quantile` is available to `after_stat()`.
+.stat_quantile <- function(L) {
+  .need_pkg("quantreg", "{.fn mark_quantile}")
+  sp <- L$stat_params
+  qs <- sp$quantiles %||% c(0.25, 0.5, 0.75)
+  fo <- sp$formula %||% (y ~ x)
+  margs <- sp$method.args %||% list()
+  x <- as.numeric(L$values$x)
+  y <- as.numeric(L$values$y)
+  .per_group(
+    L,
+    length(x),
+    function(idx, gn, grouped, k) {
+      f <- .finite_xy(x[idx], y[idx])
+      if (length(unique(f$x)) < 2L) {
+        if (grouped) {
+          cli::cli_warn(
+            "Skipping {.field {gn}}: {.fn mark_quantile} needs at least 2 distinct x values."
+          )
+        }
+        return(NULL)
+      }
+      d <- data.frame(x = f$x, y = f$y)
+      xg <- sp$xseq %||% seq(min(f$x), max(f$x), length.out = 100)
+      nd <- data.frame(x = xg)
+      parts <- lapply(seq_along(qs), function(j) {
+        fit <- do.call(
+          quantreg::rq,
+          c(list(formula = fo, tau = qs[j], data = d), margs)
+        )
+        data.frame(
+          x = xg,
+          y = as.numeric(stats::predict(fit, newdata = nd)),
+          quantile = qs[j],
+          .piece = (k - 1L) * length(qs) + j
+        )
+      })
+      do.call(rbind, parts)
+    },
+    "{.fn mark_quantile} needs at least 2 distinct x values to fit.",
     usable = is.finite(x) & is.finite(y)
   )
 }

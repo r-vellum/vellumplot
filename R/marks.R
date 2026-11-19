@@ -2172,6 +2172,247 @@ mark_contour_filled <- function(
   )
 }
 
+#' Quantile regression lines
+#'
+#' `mark_quantile()` fits a quantile regression of `y` on `x` per group for
+#' each of `quantiles` and draws the fitted lines (ggplot2's
+#' `geom_quantile()`). The fit is [quantreg::rq()] of `formula` (default
+#' `y ~ x`), predicted on 100 points across the group's range of `x`. Map
+#' `color = after_stat(factor(quantile))` (or `linetype`) to tell the lines
+#' apart. Needs the \pkg{quantreg} package.
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): `x`, `y` (+ `color`, `group`,
+#'   `linewidth`, `linetype`, `alpha`).
+#' @param quantiles The conditional quantiles to fit (default
+#'   `c(0.25, 0.5, 0.75)`).
+#' @param formula The model formula in `x` and `y` (default `y ~ x`), e.g.
+#'   `y ~ splines::ns(x, 3)` for a curve.
+#' @param method.args A list of further arguments to [quantreg::rq()].
+#' @return The modified [PlotSpec].
+#' @seealso [mark_smooth()] with `method = "rq"` for one quantile with the
+#'   smoother's options.
+#' @examples
+#' \donttest{
+#' if (requireNamespace("quantreg", quietly = TRUE)) {
+#'   vplot(mtcars) |>
+#'     mark_point(x = disp, y = mpg) |>
+#'     mark_quantile(x = disp, y = mpg)
+#' }
+#' }
+#' @export
+mark_quantile <- function(
+  plot,
+  ...,
+  quantiles = c(0.25, 0.5, 0.75),
+  formula = NULL,
+  method.args = list(),
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  if (
+    !is.numeric(quantiles) ||
+      !length(quantiles) ||
+      any(!is.finite(quantiles) | quantiles <= 0 | quantiles >= 1)
+  ) {
+    cli::cli_abort("{.arg quantiles} must be probabilities between 0 and 1.")
+  }
+  if (!is.null(formula) && !inherits(formula, "formula")) {
+    cli::cli_abort("{.arg formula} must be a formula, like {.code y ~ x}.")
+  }
+  if (!is.list(method.args)) {
+    cli::cli_abort("{.arg method.args} must be a list.")
+  }
+  dots <- rlang::enquos(...)
+  if (!any(c("color", "colour") %in% names(dots))) {
+    dots$color <- rlang::quo("#3366CC")
+  }
+  .add_layer(
+    plot,
+    "line",
+    dots,
+    stat = "quantile",
+    stat_params = list(
+      quantiles = quantiles,
+      formula = formula,
+      method.args = method.args
+    ),
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' 2-D density estimate
+#'
+#' `mark_density_2d()` draws the contour lines of a 2-D kernel density estimate
+#' of (`x`, `y`) and `mark_density_2d_filled()` fills the bands between them,
+#' with the semantics of ggplot2's `geom_density_2d()` and
+#' `geom_density_2d_filled()`: the density is [MASS::kde2d()] on an `n` x `n`
+#' grid over the data range with bandwidths `h` (default
+#' [MASS::bandwidth.nrd()] per axis) times `adjust`, and the levels are ~`bins`
+#' pretty breaks of the density over every group. Unlike [mark_contour()], the
+#' lines are not coloured by level unless you map `color = after_stat(level)`;
+#' the filled bands map `fill = after_stat(level)`. A discrete `color`/`fill`
+#' (or `group`) estimates one density per group. Needs the \pkg{MASS} package.
+#'
+#' @inheritParams mark_contour
+#' @param ... Encodings (tidy-eval): `x`, `y` (+ `color`/`fill`, `group`,
+#'   `linewidth`, `linetype`, `alpha`).
+#' @param contour_var The variable to contour: `"density"` (default),
+#'   `"ndensity"` (density scaled to a maximum of 1 per group) or `"count"`
+#'   (density times the number of observations in the group).
+#' @param n Number of grid points per axis.
+#' @param h Bandwidth (the standard deviation of the kernel) per axis: a
+#'   number or a pair; `NULL` (default) uses [MASS::bandwidth.nrd()].
+#' @param adjust Multiplier(s) for the bandwidth, a number or a pair (default
+#'   `c(1, 1)`).
+#' @return The modified [PlotSpec].
+#' @seealso [mark_contour()] to contour a supplied `z` surface.
+#' @examples
+#' vplot(faithful) |>
+#'   mark_point(x = eruptions, y = waiting) |>
+#'   mark_density_2d(x = eruptions, y = waiting)
+#' vplot(faithful) |> mark_density_2d_filled(x = eruptions, y = waiting)
+#' @export
+mark_density_2d <- function(
+  plot,
+  ...,
+  position = "identity",
+  contour_var = "density",
+  bins = NULL,
+  binwidth = NULL,
+  breaks = NULL,
+  n = 100,
+  h = NULL,
+  adjust = c(1, 1),
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .density_2d_layer(
+    plot,
+    rlang::enquos(...),
+    "contour",
+    position = position,
+    contour_var = contour_var,
+    bins = bins,
+    binwidth = binwidth,
+    breaks = breaks,
+    n = n,
+    h = h,
+    adjust = adjust,
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+#' @rdname mark_density_2d
+#' @export
+mark_density_2d_filled <- function(
+  plot,
+  ...,
+  position = "identity",
+  contour_var = "density",
+  bins = NULL,
+  binwidth = NULL,
+  breaks = NULL,
+  n = 100,
+  h = NULL,
+  adjust = c(1, 1),
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  dots <- rlang::enquos(...)
+  dots <- .default_channel(dots, "fill", rlang::quo(after_stat(level)))
+  .density_2d_layer(
+    plot,
+    dots,
+    "contour_filled",
+    position = position,
+    contour_var = contour_var,
+    bins = bins,
+    binwidth = binwidth,
+    breaks = breaks,
+    n = n,
+    h = h,
+    adjust = adjust,
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+# The shared constructor of the two 2-D density marks.
+.density_2d_layer <- function(
+  plot,
+  dots,
+  mark,
+  position,
+  contour_var,
+  bins,
+  binwidth,
+  breaks,
+  n,
+  h,
+  adjust,
+  blend,
+  sketch,
+  data,
+  call = rlang::caller_env()
+) {
+  .check_plot(plot, call = call)
+  .check_count(bins, null_ok = TRUE, call = call)
+  .check_positive(binwidth, null_ok = TRUE, call = call)
+  .check_count(n, min = 2L, call = call)
+  for (nm in c("h", "adjust")) {
+    v <- if (nm == "h") h else adjust
+    if (
+      !is.null(v) &&
+        (!is.numeric(v) || !length(v) %in% 1:2 || any(!is.finite(v) | v <= 0))
+    ) {
+      cli::cli_abort(
+        "{.arg {nm}} must be one or two positive numbers.",
+        call = call
+      )
+    }
+  }
+  contour_var <- rlang::arg_match0(
+    contour_var,
+    c("density", "ndensity", "count"),
+    arg_nm = "contour_var",
+    error_call = call
+  )
+  .add_layer(
+    plot,
+    mark,
+    dots,
+    stat = "density_2d",
+    stat_params = list(
+      bins = bins,
+      binwidth = binwidth,
+      breaks = breaks,
+      n = n,
+      h = h,
+      adjust = adjust,
+      contour_var = contour_var,
+      filled = if (identical(mark, "contour_filled")) TRUE
+    ),
+    blend = blend,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
 #' Distribution marks
 #'
 #' Marks that summarise the distribution of a variable.
@@ -2608,10 +2849,12 @@ mark_hex <- function(
 #' A box plot is vertical when `x` is the discrete axis. When `y` is discrete
 #' and `x` continuous (`mark_boxplot(x = mpg, y = factor(cyl))`) it is drawn
 #' horizontally, as in ggplot2; `orientation` forces either.
+#' Error bars and ranges are horizontal when they map `xmin`/`xmax` at each `y`
+#' instead: `mark_errorbar(y = g, xmin = lo, xmax = hi)`.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
-#'   `ymax` for errorbar/linerange; plus `color`/`fill` (and `linetype` for
+#'   `ymax` (or `y`, `xmin`, `xmax`) for errorbar/linerange; plus `color`/`fill` (and `linetype` for
 #'   errorbar/linerange).
 #' @param width For `mark_errorbar()`, the cap width as a fraction of the band.
 #' @param fun For `mark_summary()`, the aggregation function (default `mean`).
@@ -2629,7 +2872,11 @@ mark_hex <- function(
 #'   `list(conf.int = 0.9)` for `"mean_cl_normal"`.
 #' @param orientation For `mark_boxplot()`, `NA` (default) to infer it from the
 #'   data (horizontal when `y` is discrete and `x` is not), `"x"` for vertical
-#'   boxes along a discrete `x`, or `"y"` for horizontal boxes along `y`.
+#'   boxes along a discrete `x`, or `"y"` for horizontal boxes along `y`. For
+#'   `mark_errorbar()`, `mark_linerange()` and `mark_pointrange()`, `NA`
+#'   (default) draws horizontal ranges when the layer maps `xmin`/`xmax` and no
+#'   `ymin`/`ymax` (ggplot2's `geom_errorbarh()`), vertical ones otherwise;
+#'   `"x"` / `"y"` force either.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
@@ -2637,6 +2884,9 @@ mark_hex <- function(
 #' vplot(mtcars) |> mark_boxplot(x = mpg, y = factor(cyl))
 #' # mean and standard error per category
 #' vplot(mtcars) |> mark_summary(x = factor(cyl), y = mpg, fun.data = "mean_se")
+#' # horizontal error bars
+#' est <- data.frame(term = c("a", "b", "c"), lo = c(-1, 0.2, 1), hi = c(1, 1.5, 2.4))
+#' vplot(est) |> mark_errorbar(y = term, xmin = lo, xmax = hi, width = 0.3)
 #' @export
 mark_boxplot <- function(
   plot,
@@ -2730,6 +2980,7 @@ mark_errorbar <- function(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   width = 0.5,
   blend = NULL,
   sketch = NULL,
@@ -2741,6 +2992,7 @@ mark_errorbar <- function(
     "errorbar",
     rlang::enquos(...),
     rlang::enquos(width = width),
+    stat_params = list(orientation = .check_orientation(orientation)),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -2754,6 +3006,7 @@ mark_linerange <- function(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2763,6 +3016,7 @@ mark_linerange <- function(
     plot,
     "linerange",
     rlang::enquos(...),
+    stat_params = list(orientation = .check_orientation(orientation)),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -2832,6 +3086,7 @@ mark_pointrange <- function(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2841,6 +3096,7 @@ mark_pointrange <- function(
     plot,
     "pointrange",
     rlang::enquos(...),
+    stat_params = list(orientation = .check_orientation(orientation)),
     blend = blend,
     sketch = sketch,
     data = data,
