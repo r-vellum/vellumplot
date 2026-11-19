@@ -10,15 +10,23 @@
   strip text (`"hp (cyl: 4)"`). Shared scales keep their single legend, and the
   default (everything shared) is unchanged (F-8).
 
+* `mark_density_2d()` and `mark_density_2d_filled()`: 2-D kernel density
+  contours with ggplot2's `geom_density_2d()` semantics (`h`, `adjust`,
+  `contour_var`, one estimate per group); `mark_quantile()` draws quantile
+  regression lines like `geom_quantile()` (needs quantreg); `mark_errorbar()`,
+  `mark_linerange()` and `mark_pointrange()` gain `orientation` and draw
+  horizontally when given `xmin`/`xmax` but no `ymin`/`ymax`, like
+  `geom_errorbarh()` (F-16).
+
+* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
+  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
+  intervals, with the slab above each one (VP-42).
+
 * New geometry marks matching ggplot2's (F-16): `mark_rect()` (corner bounds,
   now a documented layer mark rather than only `annotate("rect")`; `color`
   outlines alongside a `fill`), `mark_polygon()` (one polygon per group, holes
   via `subgroup`), `mark_path()` (connects rows in data order), `mark_curve()`
   (`curvature`, `angle`, `ncp`) and `mark_spoke()` (`angle` + `radius`).
-
-* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
-  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
-  intervals, with the slab above each one (VP-42).
 
 * `scale_*_gradient()`, `scale_*_gradient2()`, `scale_*_gradientn()`,
   `scale_*_viridis_c()` and `scale_*_distiller()` gain `limits`, `oob` and
@@ -36,6 +44,12 @@
   layer's statistic, as in ggplot2 (VP-41).
 
 ## Bug fixes
+
+* Filled contour bands (`mark_contour_filled()`, `mark_density_2d_filled()`)
+  no longer flood the panel when a band spans two peaks: every band now closes
+  along the edge of the density grid. Groups with too few points for a 2-D
+  density (e.g. in a facet panel holding other groups) are skipped instead of
+  failing the plot (F-16).
 
 * A literal `xend`, `yend`, `xmin`, `xmax`, `ymin` or `ymax` (e.g.
   `mark_segment(xend = 5)`) is a coordinate again: it trains its axis and is

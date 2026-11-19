@@ -70,9 +70,11 @@ test_that(".close_contour_ring closes an open contour along the domain boundary"
 
 test_that("filled density bands close along the grid edge (no straight-chord wedges)", {
   skip_if_no_contour()
-  # faithful's low-level contours exit the KDE grid; closing them with a chord
-  # left triangular wedges across the panel. Closed along the boundary, the
-  # outermost (lowest) band sweeps every grid corner instead.
+  # faithful's low-level contours exit the KDE grid. Closing them with a chord
+  # left triangular wedges across the panel; closing them along the boundary
+  # guessed the wrong side for the band spanning both modes and flooded the
+  # panel. Padding the field closes every band on the grid edge itself, so a
+  # corner whose density is below the lowest level stays uncovered (F-16).
   Lf <- list(
     values = list(x = faithful$eruptions, y = faithful$waiting),
     stat_params = list(filled = TRUE),
@@ -81,13 +83,14 @@ test_that("filled density bands close along the grid edge (no straight-chord wed
   )
   bf <- .stat_density_2d(Lf)
   kd <- MASS::kde2d(faithful$eruptions, faithful$waiting, n = 100)
-  corners <- expand.grid(x = range(kd$x), y = range(kd$y))
-  hit <- mapply(
-    function(cx, cy) any(abs(bf$x - cx) < 1e-6 & abs(bf$y - cy) < 1e-6),
-    corners$x,
-    corners$y
-  )
-  expect_true(all(hit))
+  expect_equal(range(bf$x), range(kd$x), tolerance = 1e-6)
+  expect_equal(range(bf$y), range(kd$y), tolerance = 1e-6)
+  lowest <- bf[bf$level == min(bf$level), ]
+  expect_lt(kd$z[1, 100], min(bf$level)) # the top-left corner is below it
+  near <- abs(lowest$x - min(kd$x)) < 0.05 & abs(lowest$y - max(kd$y)) < 1
+  expect_false(any(near))
+  # the band runs along the bottom-left edge, where the density is high
+  expect_true(any(abs(lowest$x - min(kd$x)) < 1e-6))
 })
 
 test_that("a z surface is contoured in the right orientation (not transposed)", {
