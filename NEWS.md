@@ -61,6 +61,16 @@
 
 ## Bug fixes
 
+* **A layer's own data is faceted on the variables it has.** In
+  `facet_grid(am ~ cyl)`, an annotation layer whose data had `am` but not
+  `cyl` was drawn in all six panels. It now appears only in its `am` row,
+  repeated across the `cyl` columns, as in ggplot2. A layer without any facet
+  variable is still drawn in every panel. Facet levels are now the union over
+  the plot data and every layer's data, so a level that only a layer has gets
+  its own panel instead of being dropped. The `spec_diagnose()` warning for a
+  missing facet variable now says which panels the layer is repeated in
+  (VP-9).
+
 * **`mark_rule()` draws each rule in its own colour.** A mapped `color`,
   `alpha` or `linetype` used to collapse to the first row, so every rule took
   one colour while the legend showed several. The rules are now split into style
