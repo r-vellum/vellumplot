@@ -59,6 +59,10 @@ does not name keep the \code{default} labeller's text.
 A named character vector or a plain function can also be passed straight to
 \verb{labeller =}; it goes through \code{as_labeller()}.
 
+The declarative labellers (\code{label_value}, \code{label_both}, \code{label_wrap_gen()}
+and lookup tables over one of those) survive \code{\link[=as_spec]{as_spec()}}; an arbitrary
+function does not.
+
 A labeller is a function of one argument, \code{labels}: a data frame with one
 character column per facet variable (named after it) and one row per strip.
 It returns a list of character vectors, one per line of the strip. With
