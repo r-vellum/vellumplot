@@ -3,6 +3,9 @@
 \name{scale_alpha}
 \alias{scale_alpha}
 \alias{scale_alpha_continuous}
+\alias{scale_alpha_manual}
+\alias{scale_alpha_discrete}
+\alias{scale_alpha_ordinal}
 \title{Alpha (opacity) scale}
 \usage{
 scale_alpha(
@@ -22,6 +25,36 @@ scale_alpha_continuous(
   name = NULL,
   oob = NULL
 )
+
+scale_alpha_manual(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_alpha_discrete(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_alpha_ordinal(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -39,6 +72,15 @@ default \code{c(0.1, 1)}.}
 no opacity, so the mark is not drawn), \code{"squish"} (the opacity of the
 nearest limit), \code{"keep"} (extrapolated past the range), or a
 \verb{function(x, range)}. \code{NULL} (default) keeps them.}
+
+\item{values}{For \code{scale_alpha_manual()}, opacities in \verb{[0, 1]}, one per
+level (or named by level).}
+
+\item{labels}{For the discrete forms, legend labels (one per key, a vector
+named by level, or a function), or \code{NULL}.}
+
+\item{na.value}{For the discrete forms, the opacity drawn for missing
+values, or \code{NULL} to drop them.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -46,6 +88,12 @@ The modified \link{PlotSpec}.
 \description{
 Declare the scale for a mapped \code{alpha} aesthetic: data values map to an
 opacity \code{range} in \verb{[0, 1]}. An alpha legend is drawn automatically.
+
+\code{scale_alpha_manual()} sets the opacity of each level of a discrete
+variable directly via \code{values} (named values match levels by name).
+\code{scale_alpha_discrete()} / \code{scale_alpha_ordinal()} spread the levels evenly
+over \code{range}; the discrete form warns that alpha is not advised for an
+unordered variable, the ordinal form does not.
 }
 \details{
 A factor, character or logical mapped to \code{alpha} gets a discrete scale, its
@@ -54,4 +102,7 @@ levels spread evenly over \code{range}, with a warning for an unordered variable
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, alpha = hp) |> scale_alpha(range = c(0.2, 1))
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, alpha = factor(cyl)) |>
+  scale_alpha_manual(values = c(0.2, 0.5, 1))
 }

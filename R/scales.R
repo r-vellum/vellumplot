@@ -317,6 +317,48 @@ scale_y_continuous <- function(
   .with_axis_guide(plot, "y", guide)
 }
 
+#' @rdname scale_x_continuous
+#' @description
+#' `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` (and their `y`
+#' forms) are shortcuts for `scale_x_continuous(trans = "log10")` and so on,
+#' as in ggplot2; `...` takes the other arguments of `scale_x_continuous()`.
+#' @param ... For the transform shortcuts, further arguments to
+#'   `scale_x_continuous()` / `scale_y_continuous()` (not `trans`).
+#' @export
+scale_x_log10 <- function(plot, ...) {
+  scale_x_continuous(plot, ..., trans = "log10")
+}
+
+#' @rdname scale_x_continuous
+#' @export
+scale_x_sqrt <- function(plot, ...) {
+  scale_x_continuous(plot, ..., trans = "sqrt")
+}
+
+#' @rdname scale_x_continuous
+#' @export
+scale_x_reverse <- function(plot, ...) {
+  scale_x_continuous(plot, ..., trans = "reverse")
+}
+
+#' @rdname scale_x_continuous
+#' @export
+scale_y_log10 <- function(plot, ...) {
+  scale_y_continuous(plot, ..., trans = "log10")
+}
+
+#' @rdname scale_x_continuous
+#' @export
+scale_y_sqrt <- function(plot, ...) {
+  scale_y_continuous(plot, ..., trans = "sqrt")
+}
+
+#' @rdname scale_x_continuous
+#' @export
+scale_y_reverse <- function(plot, ...) {
+  scale_y_continuous(plot, ..., trans = "reverse")
+}
+
 # Shared body of scale_x_continuous() / scale_y_continuous() (identical but for
 # the aesthetic).
 .continuous_position_scale <- function(
@@ -876,7 +918,8 @@ ylim <- function(plot, ...) {
 #'   continuous ramp interpolates through.
 #' @param limits For the continuous colour scales (including the gradient
 #'   ones), a length-2 numeric `c(min, max)` fixing the mapped data range (the
-#'   direct form of `lims(color = ...)`).
+#'   direct form of `lims(color = ...)`). For `scale_*_manual()`, the levels
+#'   the scale covers.
 #' @param low,high For `scale_*_gradient()`/`scale_*_gradient2()`, the endpoint
 #'   colours.
 #' @param mid For `scale_*_gradient2()`, the midpoint colour.
@@ -890,7 +933,8 @@ ylim <- function(plot, ...) {
 #'   colour of the nearest limit, `"keep"` the same (a ramp cannot extend past
 #'   its ends), or a `function(x, range)`. `NULL` (default) squishes.
 #' @param na.value For the gradient scales, the colour of missing (and
-#'   censored) values; `NULL` keeps the default grey.
+#'   censored) values; for `scale_*_manual()`, also of levels outside
+#'   `limits`. `NULL` keeps the default grey.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |>
@@ -943,9 +987,26 @@ scale_color_discrete <- function(
 
 #' @rdname scale_color_continuous
 #' @export
-scale_color_manual <- function(plot, values, name = NULL) {
+scale_color_manual <- function(
+  plot,
+  values,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
   .check_manual_values(values)
-  .colour_scale(plot, "color", "discrete", values, NULL, NULL, name)
+  .discrete_colour_scale(
+    plot,
+    "color",
+    values,
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value
+  )
 }
 
 #' @rdname scale_color_continuous
@@ -1098,9 +1159,26 @@ scale_fill_discrete <- function(
 
 #' @rdname scale_color_continuous
 #' @export
-scale_fill_manual <- function(plot, values, name = NULL) {
+scale_fill_manual <- function(
+  plot,
+  values,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
   .check_manual_values(values)
-  .colour_scale(plot, "fill", "discrete", values, NULL, NULL, name)
+  .discrete_colour_scale(
+    plot,
+    "fill",
+    values,
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value
+  )
 }
 
 #' @rdname scale_color_continuous
@@ -1155,6 +1233,300 @@ scale_fill_gradient2 <- function(
     na.value,
     oob,
     midpoint = midpoint
+  )
+}
+
+#' Hue, grey and ordinal colour scales
+#'
+#' ggplot2's other discrete colour scales, for code migrating from it.
+#'
+#' * `scale_*_hue()` --- evenly spaced hues around the HCL colour wheel
+#'   (ggplot2's default discrete palette, via [scales::pal_hue()]).
+#' * `scale_*_grey()` --- a grey ramp from `start` to `end` (0 is black, 1
+#'   white), via [scales::pal_grey()].
+#' * `scale_*_ordinal()` --- the viridis palette ggplot2 uses for an ordered
+#'   factor (as [scale_color_viridis_d()]).
+#'
+#' The colours depend on the number of levels, so they are drawn when the plot
+#' is compiled.
+#'
+#' @param plot A [PlotSpec].
+#' @param h Range of hues, in degrees on the colour wheel.
+#' @param c,l Chroma and luminance of the hues.
+#' @param h.start Hue to start at.
+#' @param direction `1` runs clockwise round the wheel, `-1` anticlockwise.
+#' @param start,end Grey levels of the first and last colour, in `[0, 1]`.
+#' @param option For `scale_*_ordinal()`, the viridis map (see
+#'   [scale_color_viridis_d()]).
+#' @param name Legend title, or `NULL` to derive from the encoding.
+#' @param breaks,labels The levels the legend shows and their labels (one per
+#'   shown level, a vector named by level, or a function), or `NULL`.
+#' @param limits The levels the scale covers, or `NULL` for those in the data.
+#' @param na.value Colour for missing values (and levels outside `limits`).
+#' @return The modified [PlotSpec].
+#' @seealso [scale_color_discrete()], [scale_viridis]
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+#'   scale_color_hue(l = 45)
+#' vplot(mtcars) |>
+#'   mark_bar(x = factor(gear), fill = factor(cyl)) |>
+#'   scale_fill_grey()
+#' @name scale_hue
+NULL
+
+# A discrete palette built from a palette *function* of the level count
+# (pal_hue(), pal_grey()) is stored on the ScaleSpec as a string token,
+# "<kind>:<arg>:<arg>...", like the brewer tokens: the colours depend on the
+# trained level count, and a string keeps the spec serializable.
+.PALETTE_TOKEN <- "^(hue|grey):"
+
+.palette_token <- function(kind, ...) {
+  args <- c(...)
+  paste0(kind, ":", paste(format(args, digits = 15, trim = TRUE), collapse = ":"))
+}
+
+# `k` colours from a hue/grey palette token, or NULL when `x` is not one.
+.token_colours <- function(x, k) {
+  if (!is.character(x) || length(x) != 1L || !grepl(.PALETTE_TOKEN, x)) {
+    return(NULL)
+  }
+  parts <- strsplit(x, ":", fixed = TRUE)[[1L]]
+  a <- as.numeric(parts[-1L])
+  switch(
+    parts[[1L]],
+    hue = scales::pal_hue(
+      h = a[1:2],
+      c = a[3],
+      l = a[4],
+      h.start = a[5],
+      direction = a[6]
+    )(k),
+    grey = scales::pal_grey(start = a[1], end = a[2])(k)
+  )
+}
+
+.check_unit_interval <- function(x, arg, call = rlang::caller_env()) {
+  if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 0 || x > 1) {
+    cli::cli_abort("{.arg {arg}} must be a number in [0, 1].", call = call)
+  }
+}
+
+.discrete_colour_scale <- function(
+  plot,
+  aesthetic,
+  palette,
+  name,
+  breaks,
+  labels,
+  limits,
+  na.value,
+  call = rlang::caller_env()
+) {
+  .check_plot(plot)
+  .check_manual_labels(labels, call = call)
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = aesthetic,
+      type = "discrete",
+      palette = palette,
+      name = name,
+      breaks = breaks,
+      labels = labels,
+      domain = .check_discrete_limits(limits, call = call),
+      na_value = na.value
+    )
+  )
+}
+
+.hue_scale <- function(
+  plot,
+  aesthetic,
+  h,
+  c,
+  l,
+  h.start,
+  direction,
+  name,
+  breaks,
+  labels,
+  limits,
+  na.value,
+  call = rlang::caller_env()
+) {
+  if (!is.numeric(h) || length(h) != 2L || anyNA(h)) {
+    cli::cli_abort("{.arg h} must be a numeric range {.code c(from, to)}.", call = call)
+  }
+  for (a in list(list(c, "c"), list(l, "l"), list(h.start, "h.start"))) {
+    if (!is.numeric(a[[1]]) || length(a[[1]]) != 1L || is.na(a[[1]])) {
+      cli::cli_abort("{.arg {a[[2]]}} must be a single number.", call = call)
+    }
+  }
+  if (!identical(as.numeric(direction), 1) && !identical(as.numeric(direction), -1)) {
+    cli::cli_abort("{.arg direction} must be {.val {1}} or {.val {-1}}.", call = call)
+  }
+  .discrete_colour_scale(
+    plot,
+    aesthetic,
+    .palette_token("hue", h, c, l, h.start, direction),
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    call = call
+  )
+}
+
+#' @rdname scale_hue
+#' @export
+scale_color_hue <- function(
+  plot,
+  h = c(0, 360) + 15,
+  c = 100,
+  l = 65,
+  h.start = 0,
+  direction = 1,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = "grey50"
+) {
+  .hue_scale(plot, "color", h, c, l, h.start, direction, name, breaks, labels, limits, na.value)
+}
+
+#' @rdname scale_hue
+#' @export
+scale_colour_hue <- scale_color_hue
+
+#' @rdname scale_hue
+#' @export
+scale_fill_hue <- function(
+  plot,
+  h = c(0, 360) + 15,
+  c = 100,
+  l = 65,
+  h.start = 0,
+  direction = 1,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = "grey50"
+) {
+  .hue_scale(plot, "fill", h, c, l, h.start, direction, name, breaks, labels, limits, na.value)
+}
+
+.grey_scale <- function(
+  plot,
+  aesthetic,
+  start,
+  end,
+  name,
+  breaks,
+  labels,
+  limits,
+  na.value,
+  call = rlang::caller_env()
+) {
+  .check_unit_interval(start, "start", call = call)
+  .check_unit_interval(end, "end", call = call)
+  .discrete_colour_scale(
+    plot,
+    aesthetic,
+    .palette_token("grey", start, end),
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value,
+    call = call
+  )
+}
+
+#' @rdname scale_hue
+#' @export
+scale_color_grey <- function(
+  plot,
+  start = 0.2,
+  end = 0.8,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = "red"
+) {
+  .grey_scale(plot, "color", start, end, name, breaks, labels, limits, na.value)
+}
+
+#' @rdname scale_hue
+#' @export
+scale_colour_grey <- scale_color_grey
+
+#' @rdname scale_hue
+#' @export
+scale_fill_grey <- function(
+  plot,
+  start = 0.2,
+  end = 0.8,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = "red"
+) {
+  .grey_scale(plot, "fill", start, end, name, breaks, labels, limits, na.value)
+}
+
+#' @rdname scale_hue
+#' @export
+scale_color_ordinal <- function(
+  plot,
+  option = "viridis",
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = "grey50"
+) {
+  .discrete_colour_scale(
+    plot,
+    "color",
+    .viridis_pal(option),
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value
+  )
+}
+
+#' @rdname scale_hue
+#' @export
+scale_colour_ordinal <- scale_color_ordinal
+
+#' @rdname scale_hue
+#' @export
+scale_fill_ordinal <- function(
+  plot,
+  option = "viridis",
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = "grey50"
+) {
+  .discrete_colour_scale(
+    plot,
+    "fill",
+    .viridis_pal(option),
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value
   )
 }
 
@@ -1715,6 +2087,242 @@ scale_size_area <- function(
   )
 }
 
+#' @rdname scale_size
+#' @export
+scale_size_continuous <- scale_size
+
+#' @rdname scale_size
+#'
+#' @description
+#' `scale_radius()` is ggplot2's radius-proportional size scale. vellumplot's
+#' `scale_size()` already maps the value linearly to the marker size, so it
+#' is `scale_size()` with ggplot2's default `range = c(1, 6)`.
+#' @export
+scale_radius <- function(
+  plot,
+  range = c(1, 6),
+  limits = NULL,
+  breaks = NULL,
+  name = NULL,
+  oob = NULL
+) {
+  scale_size(
+    plot,
+    range = range,
+    limits = limits,
+    breaks = breaks,
+    name = name,
+    oob = oob
+  )
+}
+
+#' @rdname scale_size
+#'
+#' @description
+#' `scale_size_binned()` cuts the variable into classes and gives each class
+#' one size, the size of its centre on an area scale (as ggplot2's
+#' `scale_size_binned()`); the legend keys the classes. Without `breaks` the
+#' class boundaries are `n.breaks` "nice" values inside the data range, and the
+#' outer classes are widened to whole bins, as in ggplot2.
+#'
+#' @param n.breaks For `scale_size_binned()`, the approximate number of class
+#'   boundaries (default 5) when `breaks` is `NULL`.
+#' @param labels For `scale_size_binned()` and the discrete forms, legend
+#'   labels (one per key, or a function), or `NULL`.
+#' @export
+scale_size_binned <- function(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  n.breaks = NULL
+) {
+  .check_plot(plot)
+  .check_continuous_limits(limits, "limits", numeric = TRUE)
+  .check_continuous_limits(range, "range", numeric = TRUE, lower = 0)
+  .check_binned_args(n.breaks, "extended")
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = "size",
+      type = "binned",
+      domain = limits,
+      range = range,
+      breaks = breaks,
+      labels = labels,
+      style = "extended",
+      n = n.breaks,
+      name = name
+    )
+  )
+}
+
+#' @rdname scale_size
+#'
+#' @description
+#' `scale_size_manual()` sets the size (mm) of each level of a discrete
+#' variable directly via `values` (named values match levels by name).
+#' `scale_size_discrete()` / `scale_size_ordinal()` spread the levels evenly
+#' (by area) over `range`; the discrete form warns that size is not advised for
+#' an unordered variable, the ordinal form does not.
+#'
+#' @param values For `scale_size_manual()`, the sizes in mm, one per level (or
+#'   named by level).
+#' @param na.value For the discrete forms, the size drawn for missing values,
+#'   or `NULL` to drop them.
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, size = factor(cyl)) |>
+#'   scale_size_manual(values = c(2, 4, 8))
+#' @export
+scale_size_manual <- function(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
+  .check_manual_present(values)
+  .discrete_range_scale(
+    plot,
+    "size",
+    "discrete",
+    values = .check_manual_numbers(values, lower = 0),
+    breaks = breaks,
+    labels = labels,
+    name = name,
+    limits = limits,
+    na_value = na.value
+  )
+}
+
+#' @rdname scale_size
+#' @export
+scale_size_discrete <- function(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
+  .discrete_range_scale(
+    plot,
+    "size",
+    "discrete",
+    range = range,
+    breaks = breaks,
+    labels = labels,
+    name = name,
+    limits = limits,
+    na_value = na.value
+  )
+}
+
+#' @rdname scale_size
+#' @export
+scale_size_ordinal <- function(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
+  .discrete_range_scale(
+    plot,
+    "size",
+    "ordinal",
+    range = range,
+    breaks = breaks,
+    labels = labels,
+    name = name,
+    limits = limits,
+    na_value = na.value
+  )
+}
+
+# The shared engine behind the discrete size / alpha scales: manual `values`,
+# or levels spread over an output `range`; `type` "ordinal" never warns that
+# the aesthetic implies an order.
+.discrete_range_scale <- function(
+  plot,
+  aesthetic,
+  type,
+  values = NULL,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na_value = NULL,
+  upper = NULL,
+  call = rlang::caller_env()
+) {
+  .check_plot(plot)
+  .check_manual_labels(labels, call = call)
+  .check_continuous_limits(
+    range,
+    "range",
+    numeric = TRUE,
+    lower = 0,
+    upper = upper,
+    call = call
+  )
+  if (!is.null(na_value)) {
+    na_value <- .check_manual_numbers(
+      na_value,
+      "na.value",
+      lower = 0,
+      upper = upper,
+      call = call
+    )
+  }
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = aesthetic,
+      type = type,
+      palette = values,
+      range = range,
+      breaks = breaks,
+      labels = labels,
+      name = name,
+      domain = .check_discrete_limits(limits, call = call),
+      na_value = na_value
+    )
+  )
+}
+
+# Numeric manual values (sizes, opacities), each within [lower, upper].
+.check_manual_numbers <- function(
+  x,
+  arg = "values",
+  lower = NULL,
+  upper = NULL,
+  call = rlang::caller_env()
+) {
+  if (!is.numeric(x) || anyNA(x)) {
+    cli::cli_abort(
+      "{.arg {arg}} must be numeric, without missing values.",
+      call = call
+    )
+  }
+  if ((!is.null(lower) && any(x < lower)) || (!is.null(upper) && any(x > upper))) {
+    cli::cli_abort(
+      "{.arg {arg}} must lie in [{lower %||% -Inf}, {upper %||% Inf}].",
+      call = call
+    )
+  }
+  x
+}
+
 #' Line-width scale
 #'
 #' Declare the scale for a mapped `linewidth` aesthetic on a stroked mark --
@@ -1895,9 +2503,11 @@ scale_edge_alpha <- function(
 }
 
 # The shared engine behind the discrete-palette scales (shape / linetype /
-# edge_linetype): validate `values` against the aesthetic's fixed palette, then
-# declare a discrete scale. `{qty(bad)}` keeps the count (not `noun`) governing
-# the `{?s}` pluralisation.
+# edge_linetype, and their `_manual()` forms): validate `values` against the
+# aesthetic's fixed palette, then declare a discrete scale. `breaks` picks the
+# levels the legend shows, `labels` relabels them, `limits` fixes the level set
+# (data outside it draws as `na.value`) and `na_value` is the value drawn for
+# missing data. Named `values` are matched to levels by name.
 .discrete_palette_scale <- function(
   plot,
   aesthetic,
@@ -1905,11 +2515,20 @@ scale_edge_alpha <- function(
   valid,
   noun,
   name,
-  svg_ok = FALSE
+  svg_ok = FALSE,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na_value = NULL,
+  call = rlang::caller_env()
 ) {
   .check_plot(plot)
-  if (!is.null(values)) {
-    bad <- setdiff(as.character(values), valid)
+  .check_manual_labels(labels, call = call)
+  for (v in list(values, na_value)) {
+    if (is.null(v)) {
+      next
+    }
+    bad <- setdiff(as.character(v), valid)
     # For `shape`, a value that is not a built-in marker is an SVG icon -- a
     # `.svg` file, or a path `d` (which begins with a moveto). Both are
     # legitimate, so don't reject them; a genuine typo still errors.
@@ -1922,10 +2541,13 @@ scale_edge_alpha <- function(
       # Pluralise the noun in R (the count governs, not cli's `{?s}` which would
       # attach to the length-1 `{noun}` interpolation before it).
       label <- if (length(bad) > 1L) paste0(noun, "s") else noun
-      cli::cli_abort(c(
-        "Unknown {label} in {.arg values}: {.val {bad}}.",
-        i = "Use {.or {.val {valid}}}."
-      ))
+      cli::cli_abort(
+        c(
+          "Unknown {label} in {.arg values}: {.val {bad}}.",
+          i = "Use {.or {.val {valid}}}."
+        ),
+        call = call
+      )
     }
   }
   .add_scale(
@@ -1934,9 +2556,137 @@ scale_edge_alpha <- function(
       aesthetic = aesthetic,
       type = "discrete",
       palette = values,
-      name = name
+      name = name,
+      breaks = breaks,
+      labels = labels,
+      domain = .check_discrete_limits(limits, call = call),
+      na_value = na_value
     )
   )
+}
+
+# `labels` of a discrete (manual) scale: NULL, a vector (one per shown break,
+# or named by level), or a function of the shown levels.
+.check_manual_labels <- function(labels, call = rlang::caller_env()) {
+  if (
+    !is.null(labels) &&
+      !is.function(labels) &&
+      !is.character(labels) &&
+      !is.numeric(labels)
+  ) {
+    cli::cli_abort(
+      "{.arg labels} must be a character vector, a function, or {.code NULL}.",
+      call = call
+    )
+  }
+  invisible(labels)
+}
+
+# `limits` of a discrete scale: NULL or the levels (a character vector or a
+# factor, whose levels are taken in order).
+.check_discrete_limits <- function(limits, call = rlang::caller_env()) {
+  if (is.null(limits)) {
+    return(NULL)
+  }
+  if (is.factor(limits)) {
+    limits <- levels(limits)
+  }
+  if (!is.atomic(limits) || !length(limits)) {
+    cli::cli_abort(
+      "{.arg limits} must be a vector of levels or {.code NULL}.",
+      call = call
+    )
+  }
+  as.character(limits)
+}
+
+# The levels a discrete legend scale trains: its `limits` when set, else every
+# level in the data.
+.discrete_scale_levels <- function(scalespec, values) {
+  dom <- if (!is.null(scalespec)) scalespec@domain else NULL
+  if (is.character(dom) || is.factor(dom)) {
+    return(as.character(dom))
+  }
+  .cat_levels(values)
+}
+
+# The legend keys of a discrete scale: the levels `breaks` selects (unknown
+# breaks dropped; all levels by default) and their labels -- from a function of
+# the levels, a vector named by level (unnamed levels keep their name), or a
+# plain vector with one entry per shown key.
+.discrete_legend_keys <- function(scalespec, all_levels, aes) {
+  ub <- if (!is.null(scalespec)) scalespec@breaks else NULL
+  levels <- if (is.null(ub)) {
+    all_levels
+  } else {
+    ub <- as.character(ub)
+    ub[ub %in% all_levels]
+  }
+  ul <- if (!is.null(scalespec)) scalespec@labels else NULL
+  if (is.function(ul)) {
+    ul <- ul(levels)
+  } else if (!is.null(names(ul))) {
+    lab <- levels
+    hit <- levels %in% names(ul)
+    lab[hit] <- as.character(ul[levels[hit]])
+    ul <- lab
+  }
+  list(levels = levels, labels = .match_labels(ul, levels, aes) %||% levels)
+}
+
+# Palette values for `levels`: a vector named by level is looked up by name
+# (an unmatched level gets NA, drawn as the scale's `na.value`); an unnamed one
+# is taken in order. The caller has already checked there are enough values.
+.palette_for_levels <- function(pal, levels) {
+  if (!is.null(names(pal)) && all(nzchar(names(pal)))) {
+    return(unname(pal[levels]))
+  }
+  rep_len(unname(pal), length(levels))
+}
+
+# ggplot2's numeric shape codes (R `pch`) as vellum marker names. vellum draws
+# one solid style per marker, so the open, filled and bordered variants of a
+# shape (1/16/19/21 ...) all become that marker; unknown codes are circles.
+.pch_to_shape <- function(x) {
+  if (!is.numeric(x)) {
+    return(x)
+  }
+  map <- c(
+    "0" = "square",
+    "15" = "square",
+    "22" = "square",
+    "1" = "circle",
+    "16" = "circle",
+    "19" = "circle",
+    "20" = "circle",
+    "21" = "circle",
+    "2" = "triangle",
+    "17" = "triangle",
+    "24" = "triangle",
+    "6" = "triangle_down",
+    "25" = "triangle_down",
+    "5" = "diamond",
+    "18" = "diamond",
+    "23" = "diamond",
+    "3" = "plus",
+    "4" = "cross",
+    "8" = "star"
+  )
+  out <- unname(map[as.character(x)])
+  out[is.na(out)] <- "circle"
+  names(out) <- names(x)
+  out
+}
+
+# ggplot2's numeric line types (0 = blank, 1 = solid, 2 = dashed, ...) as names.
+# vellum has no blank line, so 0 is solid.
+.lty_to_linetype <- function(x) {
+  if (!is.numeric(x)) {
+    return(x)
+  }
+  out <- c("solid", .LINETYPE_PALETTE)[pmin(pmax(as.integer(x), 0L), 6L) + 1L]
+  names(out) <- names(x)
+  out
 }
 
 #' @rdname scale_edge
@@ -1966,7 +2716,19 @@ scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
 #'   file. SVG values are drawn as crisp vector markers (via
 #'   [vellum::svg_grob()]) and the legend shows the icon; the `size` aesthetic
 #'   scales them.
+#'
+#'   For `scale_shape_manual()` `values` is required, and may also be
+#'   ggplot2's numeric shape codes (`16`, `17`, ...), which map to the nearest
+#'   marker (open, filled and bordered variants of a shape draw alike). Named
+#'   values are matched to levels by name.
 #' @param name Legend title, or `NULL` to derive from the encoding.
+#' @param breaks The levels the legend shows (and their order), or `NULL` for
+#'   all of them.
+#' @param labels Legend labels: one per shown level, a vector named by level,
+#'   or a function of the levels; `NULL` keeps the levels.
+#' @param limits The levels the scale covers (a character vector), or `NULL`
+#'   for the levels in the data. Data outside `limits` draws as `na.value`.
+#' @param na.value The shape drawn for missing values (default a circle).
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = factor(cyl))
@@ -1975,17 +2737,67 @@ scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
 #' vplot(mtcars) |>
 #'   mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
 #'   scale_shape(values = c(star, star, star))
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, shape = factor(cyl)) |>
+#'   scale_shape_manual(values = c("4" = 16, "6" = 17, "8" = 15))
 #' @export
-scale_shape <- function(plot, values = NULL, name = NULL) {
+scale_shape <- function(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
   .discrete_palette_scale(
     plot,
     "shape",
-    values,
+    .pch_to_shape(values),
     .SHAPE_PALETTE,
     "shape",
     name,
-    svg_ok = TRUE
+    svg_ok = TRUE,
+    breaks = breaks,
+    labels = labels,
+    limits = limits,
+    na_value = .pch_to_shape(na.value)
   )
+}
+
+#' @rdname scale_shape
+#' @export
+scale_shape_manual <- function(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
+  .check_manual_present(values)
+  scale_shape(
+    plot,
+    values = values,
+    name = name,
+    breaks = breaks,
+    labels = labels,
+    limits = limits,
+    na.value = na.value
+  )
+}
+
+#' @rdname scale_shape
+#' @export
+scale_shape_discrete <- scale_shape
+
+# A `_manual()` scale needs its `values`.
+.check_manual_present <- function(values, call = rlang::caller_env()) {
+  if (missing(values) || is.null(values) || !length(values)) {
+    cli::cli_abort("{.arg values} must be a non-empty vector.", call = call)
+  }
+  invisible(values)
 }
 
 #' Pattern (texture) scale
@@ -2126,6 +2938,100 @@ scale_alpha <- function(
 #' @export
 scale_alpha_continuous <- scale_alpha
 
+#' @rdname scale_alpha
+#'
+#' @description
+#' `scale_alpha_manual()` sets the opacity of each level of a discrete
+#' variable directly via `values` (named values match levels by name).
+#' `scale_alpha_discrete()` / `scale_alpha_ordinal()` spread the levels evenly
+#' over `range`; the discrete form warns that alpha is not advised for an
+#' unordered variable, the ordinal form does not.
+#'
+#' @param values For `scale_alpha_manual()`, opacities in `[0, 1]`, one per
+#'   level (or named by level).
+#' @param labels For the discrete forms, legend labels (one per key, a vector
+#'   named by level, or a function), or `NULL`.
+#' @param na.value For the discrete forms, the opacity drawn for missing
+#'   values, or `NULL` to drop them.
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, alpha = factor(cyl)) |>
+#'   scale_alpha_manual(values = c(0.2, 0.5, 1))
+#' @export
+scale_alpha_manual <- function(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
+  .check_manual_present(values)
+  .discrete_range_scale(
+    plot,
+    "alpha",
+    "discrete",
+    values = .check_manual_numbers(values, lower = 0, upper = 1),
+    breaks = breaks,
+    labels = labels,
+    name = name,
+    limits = limits,
+    na_value = na.value,
+    upper = 1
+  )
+}
+
+#' @rdname scale_alpha
+#' @export
+scale_alpha_discrete <- function(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
+  .discrete_range_scale(
+    plot,
+    "alpha",
+    "discrete",
+    range = range,
+    breaks = breaks,
+    labels = labels,
+    name = name,
+    limits = limits,
+    na_value = na.value,
+    upper = 1
+  )
+}
+
+#' @rdname scale_alpha
+#' @export
+scale_alpha_ordinal <- function(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
+  .discrete_range_scale(
+    plot,
+    "alpha",
+    "ordinal",
+    range = range,
+    breaks = breaks,
+    labels = labels,
+    name = name,
+    limits = limits,
+    na_value = na.value,
+    upper = 1
+  )
+}
+
 #' Line-type scale
 #'
 #' Declare the scale for a mapped (discrete) `linetype` aesthetic. Levels cycle
@@ -2137,20 +3043,63 @@ scale_alpha_continuous <- scale_alpha
 #' @param values Character vector of line types (each one of `"solid"`,
 #'   `"dashed"`, `"dotted"`, `"dotdash"`, `"longdash"`, `"twodash"`), or `NULL`
 #'   for the default set.
+#'   For `scale_linetype_manual()` `values` is required, and may also be
+#'   ggplot2's numeric line types (`1` solid, `2` dashed, ... `6` twodash).
+#'   Named values are matched to levels by name.
 #' @param name Legend title, or `NULL` to derive from the encoding.
+#' @param breaks,labels,limits As for [scale_shape()].
+#' @param na.value The line type drawn for missing values, or `NULL`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' df <- data.frame(x = rep(1:10, 2), y = rnorm(20), g = rep(c("a", "b"), each = 10))
 #' vplot(df) |> mark_line(x = x, y = y, linetype = g)
+#' vplot(df) |>
+#'   mark_line(x = x, y = y, linetype = g) |>
+#'   scale_linetype_manual(values = c(a = "dotted", b = "solid"))
 #' @export
-scale_linetype <- function(plot, values = NULL, name = NULL) {
+scale_linetype <- function(
+  plot,
+  values = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
   .discrete_palette_scale(
     plot,
     "linetype",
-    values,
+    .lty_to_linetype(values),
     .LINETYPE_PALETTE,
     "line type",
-    name
+    name,
+    breaks = breaks,
+    labels = labels,
+    limits = limits,
+    na_value = .lty_to_linetype(na.value)
+  )
+}
+
+#' @rdname scale_linetype
+#' @export
+scale_linetype_manual <- function(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+) {
+  .check_manual_present(values)
+  scale_linetype(
+    plot,
+    values = values,
+    name = name,
+    breaks = breaks,
+    labels = labels,
+    limits = limits,
+    na.value = na.value
   )
 }
 

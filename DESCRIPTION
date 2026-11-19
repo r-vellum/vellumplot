@@ -38,6 +38,7 @@ Suggests:
     classInt,
     edgebundle (>= 1.0.0),
     gapminder,
+    ggplot2,
     graphlayouts (>= 1.2.5),
     gt,
     igraph,

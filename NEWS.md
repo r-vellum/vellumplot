@@ -2,6 +2,22 @@
 
 ## New features
 
+* More ggplot2 scale constructors, with ggplot2's argument names (VP-43):
+  `scale_shape_manual()`, `scale_linetype_manual()`, `scale_size_manual()` and
+  `scale_alpha_manual()` (with `breaks`, `labels`, `limits` and `na.value`;
+  shape and line-type `values` also take ggplot2's numeric codes);
+  `scale_*_hue()`, `scale_*_grey()` and `scale_*_ordinal()`; the binned
+  `scale_*_steps2()`, `scale_*_stepsn()`, `scale_*_fermenter()` and
+  `scale_*_viridis_b()`, which bin with ggplot2's breaks (nice boundaries,
+  right-closed classes) and take `oob`; `scale_size_binned()`,
+  `scale_radius()`, `scale_size_continuous()`, `scale_size_discrete()` /
+  `scale_size_ordinal()`, `scale_alpha_discrete()` / `scale_alpha_ordinal()`,
+  `scale_shape_discrete()`; and the position shortcuts `scale_x_log10()`,
+  `scale_x_sqrt()`, `scale_x_reverse()` and their `y` forms. Each `colour`
+  scale also has its `color` and `fill` spellings. `scale_*_manual()` for
+  colour gains `breaks`, `labels`, `limits` and `na.value`, and `scale_shape()`
+  / `scale_linetype()` gain `breaks`, `labels`, `limits` and `na.value`.
+
 * New `guide_axis()` for the position axes, used as `guides(x = )` /
   `guides(y = )` or the new `guide` argument of `scale_x_continuous()`,
   `scale_y_continuous()`, `scale_x_discrete()` and `scale_y_discrete()`:
@@ -45,6 +61,13 @@
   default (everything shared) is unchanged (F-8).
 
 ## Behaviour changes
+
+* **Behaviour change:** a discrete colour scale now honours character
+  `limits` (e.g. `lims(color = c("a", "b"))`): it covers just those levels,
+  in that order, and other levels draw in the NA colour. Before, the limits of
+  a discrete colour scale were ignored. Legend `labels` on a discrete colour
+  scale may now be a function of the levels or a vector named by level
+  (VP-43).
 
 * **Behaviour change:** rows a position scale's `oob = "censor"` puts
   outside its limits are now counted in the "Removed n rows containing missing

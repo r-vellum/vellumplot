@@ -3,6 +3,12 @@
 \name{scale_size}
 \alias{scale_size}
 \alias{scale_size_area}
+\alias{scale_size_continuous}
+\alias{scale_radius}
+\alias{scale_size_binned}
+\alias{scale_size_manual}
+\alias{scale_size_discrete}
+\alias{scale_size_ordinal}
 \title{Size scale}
 \usage{
 scale_size(
@@ -15,6 +21,64 @@ scale_size(
 )
 
 scale_size_area(plot, max_size = 6, limits = NULL, breaks = NULL, name = NULL)
+
+scale_size_continuous(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  name = NULL,
+  oob = NULL
+)
+
+scale_radius(
+  plot,
+  range = c(1, 6),
+  limits = NULL,
+  breaks = NULL,
+  name = NULL,
+  oob = NULL
+)
+
+scale_size_binned(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  n.breaks = NULL
+)
+
+scale_size_manual(
+  plot,
+  values,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_size_discrete(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
+
+scale_size_ordinal(
+  plot,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  name = NULL,
+  limits = NULL,
+  na.value = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -35,6 +99,18 @@ nearest limit), \code{"keep"} (extrapolated past the range), or a
 
 \item{max_size}{For \code{scale_size_area()}, the point size (mm) of the largest
 value.}
+
+\item{labels}{For \code{scale_size_binned()} and the discrete forms, legend
+labels (one per key, or a function), or \code{NULL}.}
+
+\item{n.breaks}{For \code{scale_size_binned()}, the approximate number of class
+boundaries (default 5) when \code{breaks} is \code{NULL}.}
+
+\item{values}{For \code{scale_size_manual()}, the sizes in mm, one per level (or
+named by level).}
+
+\item{na.value}{For the discrete forms, the size drawn for missing values,
+or \code{NULL} to drop them.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -47,6 +123,22 @@ point-size \code{range} (in mm). A size legend is drawn automatically.
 its radius, with value \code{0} at size \code{0} — the perceptually honest default for
 bubble charts (a value twice as large looks twice as big in ink). \code{max_size}
 is the size (mm) of the largest value.
+
+\code{scale_radius()} is ggplot2's radius-proportional size scale. vellumplot's
+\code{scale_size()} already maps the value linearly to the marker size, so it
+is \code{scale_size()} with ggplot2's default \code{range = c(1, 6)}.
+
+\code{scale_size_binned()} cuts the variable into classes and gives each class
+one size, the size of its centre on an area scale (as ggplot2's
+\code{scale_size_binned()}); the legend keys the classes. Without \code{breaks} the
+class boundaries are \code{n.breaks} "nice" values inside the data range, and the
+outer classes are widened to whole bins, as in ggplot2.
+
+\code{scale_size_manual()} sets the size (mm) of each level of a discrete
+variable directly via \code{values} (named values match levels by name).
+\code{scale_size_discrete()} / \code{scale_size_ordinal()} spread the levels evenly
+(by area) over \code{range}; the discrete form warns that size is not advised for
+an unordered variable, the ordinal form does not.
 }
 \details{
 A factor, character or logical mapped to \code{size} gets a discrete scale: the
@@ -59,4 +151,7 @@ vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp) |> scale_size(range = c(
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, size = hp) |>
   scale_size_area(max_size = 10)
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = factor(cyl)) |>
+  scale_size_manual(values = c(2, 4, 8))
 }

@@ -405,6 +405,10 @@ NULL
   if (is.null(palette)) {
     return(.qual_palette(k))
   }
+  tok <- .token_colours(palette, k)
+  if (!is.null(tok)) {
+    return(tok)
+  }
   if (.is_hcl_pal(palette)) {
     return(grDevices::hcl.colors(k, .hcl_full(palette)))
   }
@@ -943,19 +947,9 @@ NULL
   if (identical(type, "binned")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
     v <- v[is.finite(v)]
-    # A user-set `limits` (domain) restricts the data the scale bins over, so the
-    # classes cover the requested range rather than the observed data extent.
-    if (!is.null(scalespec) && !is.null(scalespec@domain)) {
-      dom <- as.numeric(scalespec@domain)
-      v <- v[v >= min(dom) & v <= max(dom)]
-    }
-    nclass <- as.integer(scalespec@n %||% 5L)
-    style <- scalespec@style %||% "quantile"
-    brks <- if (!is.null(user_breaks)) {
-      sort(as.numeric(user_breaks))
-    } else {
-      .binned_breaks(v, nclass, style)
-    }
+    brks <- .binned_class_breaks(v, scalespec, user_breaks)
+    # The ggplot2-named binned scales close classes on the right, as ggplot2.
+    right <- identical(scalespec@style, "extended")
     k <- length(brks) - 1L
     # A binned scale needs >= 1 class, i.e. >= 2 breaks. User breaks skip
     # `.binned_breaks` (which self-guards), so a length-1 breaks would reach
@@ -967,15 +961,18 @@ NULL
         i = "{.arg breaks} has {length(brks)} value{?s}."
       ))
     }
-    cols <- .ramp_pal(.continuous_stops(pal), k)
+    cols <- .binned_colours(pal, brks, midpoint, scalespec@style)
+    # `oob` acts on values past the outer boundaries; by default they squish
+    # onto the outer classes.
+    oob <- .oob_fun(scalespec) %||% scales::oob_squish
     map <- function(x) {
-      i <- findInterval(x, brks, rightmost.closed = TRUE, all.inside = TRUE)
-      out <- cols[i]
+      x <- oob(as.numeric(x), range = range(brks))
+      out <- cols[.class_index(x, brks, right)]
       out[!is.finite(x)] <- na_value
       out
     }
     labels <- .match_labels(user_labels, seq_len(k), aes) %||%
-      .interval_labels(brks)
+      .interval_labels(brks, right = right)
     trained_scale(
       aes,
       "binned",
@@ -1065,7 +1062,7 @@ NULL
       key_glyph = key_glyph
     )
   } else {
-    all_levels <- .cat_levels(values)
+    all_levels <- .discrete_scale_levels(scalespec, values)
     cols <- .discrete_colours(pal, all_levels)
     names(cols) <- all_levels
     map <- function(x) {
@@ -1078,13 +1075,9 @@ NULL
     # `breaks` selects which levels appear in the legend (and their order); the
     # colour mapping itself always covers every data level. Unknown breaks are
     # dropped. Labels (if given) must match the shown levels one-to-one.
-    levels <- if (!is.null(user_breaks)) {
-      ub <- as.character(user_breaks)
-      ub[ub %in% all_levels]
-    } else {
-      all_levels
-    }
-    labels <- .match_labels(user_labels, levels, aes) %||% levels
+    keys <- .discrete_legend_keys(scalespec, all_levels, aes)
+    levels <- keys$levels
+    labels <- keys$labels
     trained_scale(
       aes,
       "discrete",
@@ -1244,10 +1237,26 @@ NULL
   } else {
     out_default
   }
+  stype <- if (!is.null(scalespec)) scalespec@type else ""
+  # scale_size_binned(): classes of the data, one size per class.
+  if (identical(stype, "binned")) {
+    return(.train_binned_aes(
+      scalespec,
+      values,
+      aes,
+      out_range,
+      legend_field,
+      titles
+    ))
+  }
   # A factor, character or logical mapped to size or alpha trains a discrete
   # scale (ggplot2's scale_size_discrete() / scale_alpha_discrete()), so its
-  # legend keys are the levels, not the factor's integer codes.
-  if (aes %in% .DISCRETE_SIZED_AES && .discrete_values(values)) {
+  # legend keys are the levels, not the factor's integer codes. So does an
+  # explicit discrete scale (scale_size_manual(), scale_alpha_ordinal(), ...).
+  if (
+    aes %in% .DISCRETE_SIZED_AES &&
+      (.discrete_values(values) || stype %in% c("discrete", "ordinal"))
+  ) {
     return(.train_discrete_aes(
       scalespec,
       values,
@@ -1357,36 +1366,48 @@ NULL
   legend_field,
   titles
 ) {
-  all_levels <- .cat_levels(values)
+  all_levels <- .discrete_scale_levels(scalespec, values)
+  # Manual values (scale_size_manual(), scale_alpha_manual()) set each level's
+  # output directly, so they imply no order and never warn.
+  pal <- if (!is.null(scalespec)) scalespec@palette else NULL
   voting <- Filter(function(v) length(v) > 0L && !all(is.na(v)), values)
-  ordered <- all(vapply(voting, is.ordered, logical(1)))
-  if (!ordered) {
+  ordered <- all(vapply(voting, is.ordered, logical(1))) ||
+    (!is.null(scalespec) && identical(scalespec@type, "ordinal"))
+  if (!ordered && is.null(pal)) {
     cli::cli_warn(
       "Using {.field {aes}} for a discrete variable is not advised.",
       class = "vellumplot_discrete_sized_aes"
     )
   }
   n <- length(all_levels)
-  out <- if (identical(aes, "size")) {
+  out <- if (!is.null(pal)) {
+    if (is.null(names(pal)) && n > length(pal)) {
+      .not_enough_abort(
+        "values",
+        aes,
+        paste0("scale_", aes, "_manual(values=)"),
+        n,
+        length(pal)
+      )
+    }
+    as.numeric(.palette_for_levels(pal, all_levels))
+  } else if (identical(aes, "size")) {
     sqrt(seq(out_range[1]^2, out_range[2]^2, length.out = n))
   } else {
     seq(out_range[1], out_range[2], length.out = n)
   }
   names(out) <- all_levels
-  map <- function(x) unname(out[as.character(x)])
-  user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
-  levels <- if (!is.null(user_breaks)) {
-    ub <- as.character(user_breaks)
-    ub[ub %in% all_levels]
-  } else {
-    all_levels
+  na_out <- if (!is.null(scalespec)) scalespec@na_value else NULL
+  map <- function(x) {
+    o <- unname(out[as.character(x)])
+    if (!is.null(na_out)) {
+      o[is.na(o)] <- na_out
+    }
+    o
   }
-  labels <- .match_labels(
-    if (!is.null(scalespec)) scalespec@labels else NULL,
-    levels,
-    aes
-  ) %||%
-    levels
+  keys <- .discrete_legend_keys(scalespec, all_levels, aes)
+  levels <- keys$levels
+  labels <- keys$labels
   rlang::exec(
     trained_scale,
     aes,
@@ -1486,14 +1507,14 @@ NULL
       titles$default[["shape"]]
     ))
   }
-  levels <- .cat_levels(values)
+  levels <- .discrete_scale_levels(scalespec, values)
   has_na <- anyNA(unlist(values, use.names = FALSE))
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
     scalespec@palette
   } else {
     .SHAPE_PALETTE
   }
-  if (length(levels) > length(pal)) {
+  if (is.null(names(pal)) && length(levels) > length(pal)) {
     .not_enough_abort(
       "shapes",
       "shape",
@@ -1502,23 +1523,27 @@ NULL
       length(pal)
     )
   }
-  shapes <- rep_len(pal, length(levels))
+  shapes <- .palette_for_levels(pal, levels)
   names(shapes) <- levels
-  name <- titles$title[["shape"]]
+  na_shape <- (if (!is.null(scalespec)) scalespec@na_value) %||% .SHAPE_NA
+  # NA values (and levels outside `limits`) map to the NA shape (a neutral
+  # circle) rather than to NA, which would otherwise reach points_grob and
+  # error; the legend shows an NA key.
+  map <- function(x) {
+    s <- unname(shapes[as.character(x)])
+    s[is.na(s)] <- na_shape
+    s
+  }
+  keys <- .discrete_legend_keys(scalespec, levels, "shape")
   trained_scale(
     "shape",
     "discrete",
-    # NA values map to the NA shape (a neutral circle) rather than to NA, which
-    # would otherwise reach points_grob and error; the legend shows an NA key.
-    map = function(x) {
-      s <- unname(shapes[as.character(x)])
-      s[is.na(s)] <- .SHAPE_NA
-      s
-    },
-    name = name,
-    levels = levels,
+    map = map,
+    name = titles$title[["shape"]],
+    levels = keys$levels,
+    labels = keys$labels,
     na = has_na,
-    shapes = unname(shapes)
+    shapes = map(keys$levels)
   )
 }
 
@@ -1666,13 +1691,13 @@ NULL
       titles$default[[aes]]
     ))
   }
-  levels <- .cat_levels(values)
+  levels <- .discrete_scale_levels(scalespec, values)
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
     scalespec@palette
   } else {
     .LINETYPE_PALETTE
   }
-  if (length(levels) > length(pal)) {
+  if (is.null(names(pal)) && length(levels) > length(pal)) {
     .not_enough_abort(
       "line types",
       "linetype",
@@ -1681,16 +1706,25 @@ NULL
       length(pal)
     )
   }
-  ltys <- rep_len(pal, length(levels))
+  ltys <- .palette_for_levels(pal, levels)
   names(ltys) <- levels
-  name <- titles$title[[aes]]
+  na_lty <- if (!is.null(scalespec)) scalespec@na_value else NULL
+  map <- function(x) {
+    out <- unname(ltys[as.character(x)])
+    if (!is.null(na_lty)) {
+      out[is.na(out)] <- na_lty
+    }
+    out
+  }
+  keys <- .discrete_legend_keys(scalespec, levels, aes)
   trained_scale(
     aes,
     "discrete",
-    map = function(x) unname(ltys[as.character(x)]),
-    name = name,
-    levels = levels,
-    linetypes = unname(ltys)
+    map = map,
+    name = titles$title[[aes]],
+    levels = keys$levels,
+    labels = keys$labels,
+    linetypes = map(keys$levels)
   )
 }
 

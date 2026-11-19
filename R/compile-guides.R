@@ -1192,14 +1192,14 @@ NULL
       if (isTRUE(sc$na)) c(l, "NA") else l
     },
     shape = {
-      l <- sc$levels
+      l <- sc$labels %||% sc$levels
       if (isTRUE(sc$na)) c(l, "NA") else l
     },
     pattern = sc$levels,
     edge_width = ,
     linewidth = sc$legend_labels,
     alpha = sc$legend_labels,
-    linetype = sc$levels,
+    linetype = sc$labels %||% sc$levels,
     merged = sc$labels,
     color_bivariate = c(sc$bivariate$xlab, sc$bivariate$ylab)
   )
