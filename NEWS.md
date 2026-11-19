@@ -1,5 +1,11 @@
 # vellumplot 0.13.0.9000 (development version)
 
+## New features
+
+* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
+  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
+  intervals, with the slab above each one (VP-42).
+
 # vellumplot 0.13.0
 
 ## Behaviour changes
