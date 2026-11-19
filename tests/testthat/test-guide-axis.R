@@ -211,3 +211,51 @@ test_that("guide_axis_logticks() draws long, mid and short log10 ticks", {
   expect_error(guide_axis_logticks(long = -1), "long")
   expect_error(guide_axis_logticks(prescale.base = 1), "prescale")
 })
+
+test_that("date, datetime, time and binned position scales take guide =", {
+  days <- data.frame(day = as.Date("2020-01-01") + 0:364, y = sin(1:365 / 30))
+  base <- vplot(days) |> mark_line(x = day, y = y)
+  p <- base |>
+    scale_x_date(
+      date_breaks = "1 month",
+      date_labels = "%B",
+      guide = guide_axis(n.dodge = 2, title = "Day")
+    )
+  sc <- vellumplot:::.build_panels(p)$scales
+  expect_identical(sc$x$axis_guide$n.dodge, 2L)
+  expect_identical(sc$x$name, "Day")
+  tx <- axis_text(p)
+  expect_length(unique(tx$off), 2L)
+  expect_gt(x_row_mm(p), x_row_mm(base) * 1.4)
+
+  stamps <- data.frame(
+    t = as.POSIXct("2020-01-01", tz = "UTC") + 3600 * 0:47,
+    y = 1:48
+  )
+  q <- vplot(stamps) |>
+    mark_point(x = t, y = y) |>
+    scale_x_datetime(guide = guide_axis(angle = 90))
+  expect_true(all(axis_text(q)$rot == 90))
+  r <- vplot(stamps) |>
+    mark_point(y = t, x = y) |>
+    scale_y_datetime(guide = "none")
+  expect_identical(nrow(axis_text(r, "y")), 0L)
+
+  tod <- data.frame(t = as.difftime(seq(0, 86400, by = 3600), units = "secs"))
+  tod$y <- seq_along(tod$t)
+  s <- vplot(tod) |>
+    mark_point(x = t, y = y) |>
+    scale_x_time(guide = guide_axis(angle = 45))
+  expect_identical(vellumplot:::.build_panels(s)$scales$x$axis_guide$angle, 45)
+
+  b <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    scale_x_binned(n = 6, guide = guide_axis(angle = 90)) |>
+    scale_y_binned(guide = guide_axis(minor.ticks = TRUE))
+  sb <- vellumplot:::.build_panels(b)$scales
+  expect_identical(sb$x$axis_guide$angle, 90)
+  expect_true(sb$y$axis_guide$minor.ticks)
+  expect_true(all(axis_text(b)$rot == 90))
+  expect_error(scale_x_date(base, guide = guide_legend()), "guide")
+  expect_error(scale_y_binned(base, guide = "legend"), "guide")
+})
