@@ -48,9 +48,9 @@ vplot_from_spec(spec, data = NULL, env = globalenv())
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
 or `NULL`), `diagnostics` (a list of records with `severity`, `field`,
 `message`, `hint`), and `report` (a data frame with one row per layer:
-`layer`, `mark`, `rows`, the counts `missing`, `facet`, `transform`,
-`limits`, and their total `dropped`; `NULL` when the plot could not be
-built). Printing it shows a summary. `vplot_from_spec()` returns a
+`layer`, `mark`, `rows`, the counts `missing`, `transform`, `limits`,
+and their total `dropped`; `NULL` when the plot could not be built).
+Printing it shows a summary. `vplot_from_spec()` returns a
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
 
 ## Details
@@ -79,13 +79,13 @@ a wrong plot or fail with an opaque error:
 
 ## Compile report
 
-vellumplot does not delete rows, but some rows produce no visible mark.
-The `report` element counts them per layer, on the layer's input rows,
-attributing each row to the first reason that applies:
+Some rows produce no visible mark. The `report` element counts them per
+layer, on the layer's input rows, attributing each row to the first
+reason that applies:
 
-- `missing`: a position value (`x`, `y`, `xend`, `ymin`, ...) is `NA`;
-
-- `facet`: a facet variable is `NA`, so the row belongs to no panel;
+- `missing`: a continuous position value (`x`, `y`, `xend`, `ymin`, ...)
+  is `NA`. Such a row is removed from the plot with a warning, or leaves
+  a gap in a line, step or area;
 
 - `transform`: the axis transform cannot map the value, e.g. a value
   `<= 0` on a log axis;
@@ -96,8 +96,10 @@ attributing each row to the first reason that applies:
   (`coord_cartesian(xlim = )`) zoom instead and are not counted.
 
 A missing *non-position* value (colour, size, ...) is drawn with the
-scale's `NA` value and is not counted. Each layer that loses rows also
-adds a `"warning"` diagnostic, so it shows in the printed summary.
+scale's `NA` value, a missing discrete position as a trailing `"NA"`
+category, and a missing facet value in a trailing `"NA"` panel, so none
+of them is counted. Each layer that loses rows also adds a `"warning"`
+diagnostic, so it shows in the printed summary.
 
 ## See also
 
@@ -126,6 +128,6 @@ spec_diagnose(p)
 #>     See `$report` for the per-layer counts.
 #> 
 #> Rows not shown, per layer:
-#>  layer  mark rows missing facet transform limits dropped
-#>      1 point    4       1     0         1      0       2
+#>  layer  mark rows missing transform limits dropped
+#>      1 point    4       1         1      0       2
 ```

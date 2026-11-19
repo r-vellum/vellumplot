@@ -117,7 +117,7 @@ Ignored for a <a href="PlotSpec.html">PlotSpec</a>, which carries its own data.<
 <code>ok</code> (logical), <code>plot</code> (the <a href="PlotSpec.html">PlotSpec</a> or <code>NULL</code>), <code>diagnostics</code> (a list of
 records with <code>severity</code>, <code>field</code>, <code>message</code>, <code>hint</code>), and <code>report</code> (a data
 frame with one row per layer: <code>layer</code>, <code>mark</code>, <code>rows</code>, the counts
-<code>missing</code>, <code>facet</code>, <code>transform</code>, <code>limits</code>, and their total <code>dropped</code>; <code>NULL</code>
+<code>missing</code>, <code>transform</code>, <code>limits</code>, and their total <code>dropped</code>; <code>NULL</code>
 when the plot could not be built). Printing it shows a summary.
 <code>vplot_from_spec()</code> returns a <a href="PlotSpec.html">PlotSpec</a>.</p>
     </div>
@@ -144,18 +144,21 @@ category (a warning).</p></li>
     <h2 id="compile-report">Compile report<a class="anchor" aria-label="anchor" href="#compile-report"></a></h2>
 
 
-<p>vellumplot does not delete rows, but some rows produce no visible mark. The
-<code>report</code> element counts them per layer, on the layer's input rows, attributing
-each row to the first reason that applies:</p><ul><li><p><code>missing</code>: a position value (<code>x</code>, <code>y</code>, <code>xend</code>, <code>ymin</code>, ...) is <code>NA</code>;</p></li>
-<li><p><code>facet</code>: a facet variable is <code>NA</code>, so the row belongs to no panel;</p></li>
+<p>Some rows produce no visible mark. The <code>report</code> element counts them per
+layer, on the layer's input rows, attributing each row to the first reason
+that applies:</p><ul><li><p><code>missing</code>: a continuous position value (<code>x</code>, <code>y</code>, <code>xend</code>, <code>ymin</code>, ...) is
+<code>NA</code>. Such a row is removed from the plot with a warning, or leaves a gap
+in a line, step or area;</p></li>
 <li><p><code>transform</code>: the axis transform cannot map the value, e.g. a value <code>&lt;= 0</code>
 on a log axis;</p></li>
 <li><p><code>limits</code>: the value is outside explicit scale limits (<code><a href="lims.html">lims()</a></code>,
 <code>scale_*(limits = )</code>), so it is clipped away. Coordinate limits
 (<code>coord_cartesian(xlim = )</code>) zoom instead and are not counted.</p></li>
 </ul><p>A missing <em>non-position</em> value (colour, size, ...) is drawn with the scale's
-<code>NA</code> value and is not counted. Each layer that loses rows also adds a
-<code>"warning"</code> diagnostic, so it shows in the printed summary.</p>
+<code>NA</code> value, a missing discrete position as a trailing <code>"NA"</code> category, and a
+missing facet value in a trailing <code>"NA"</code> panel, so none of them is counted.
+Each layer that loses rows also adds a <code>"warning"</code> diagnostic, so it shows in
+the printed summary.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -182,8 +185,8 @@ on a log axis;</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     See `$report` for the per-layer counts.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Rows not shown, per layer:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  layer  mark rows missing facet transform limits dropped</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      1 point    4       1     0         1      0       2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  layer  mark rows missing transform limits dropped</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      1 point    4       1         1      0       2</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
