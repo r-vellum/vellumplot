@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,9 +63,12 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.11.1.9000" id="vellumplot-01119000-development-version">vellumplot 0.11.1.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01119000-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.12.0.9000" id="vellumplot-01209000-development-version">vellumplot 0.12.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01209000-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.12.0" id="vellumplot-0120">vellumplot 0.12.0<a class="anchor" aria-label="anchor" href="#vellumplot-0120"></a></h2>
 <div class="section level3">
-<h3 id="new-features-0-11-1-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-11-1-9000"></a></h3>
+<h3 id="new-features-0-12-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-12-0"></a></h3>
 <ul><li>
 <p><strong><code><a href="../reference/select_interval.html">select_interval()</a></code> brushes a data range.</strong> <code>select_interval(name, encodings = "x")</code> declares an interval selection that a brush fills; <code><a href="../reference/condition.html">condition()</a></code> and <code><a href="../reference/filter_by.html">filter_by()</a></code> react to it the same way they react to a point selection. Membership is by data value: a host such as vellumwidget converts the brushed pixels to a data range through the panel’s scale and tests each element’s own values, so continuous (including log, sqrt and reversed), date, datetime and discrete axes all work, and a brush in one facet selects matching rows in every facet. <code>encodings</code> takes <code>"x"</code>, <code>"y"</code> or <code>c("x", "y")</code>. Plots with an interval selection now carry each keyed element’s data values on the brushed channels, and the panel axis descriptors gain <code>aesthetic</code> and, for discrete axes, <code>levels</code>. The interaction model records the selection as <code>{name, type: "interval", encodings}</code>. Static renders are unchanged.</p>
 <p><code>encodings</code> defaults to <code>c("x", "y")</code>, the same rectangle brush as before. The old <code>on = "x" / "y" / "xy"</code> argument still works as an alias.</p>
@@ -75,7 +78,7 @@
 <li><p><strong><code><a href="../reference/spec_diagnose.html">spec_diagnose()</a></code> reports rows that will not be shown and catches spec mistakes before compiling.</strong> vellumplot never deletes rows, so a row with a missing position, a value of zero or less on a log axis, or a value outside explicit scale limits used to disappear without a word. <code><a href="../reference/spec_diagnose.html">spec_diagnose()</a></code> now also takes a <code>PlotSpec</code>, and its result carries a <code>report</code> data frame with one row per layer counting those rows by reason (<code>missing</code>, <code>facet</code>, <code>transform</code>, <code>limits</code>). Each layer that loses rows adds a warning. Three checks now run before the dry-run compile: a facet variable missing from the plot data (an error) or from a layer’s own data (a warning, since that layer repeats in every panel); <code>color</code> and <code>fill</code> mapped to a continuous and a discrete variable although they share one legend (a named error in place of the generic compile failure); and a manual or discrete palette on a continuous colour channel, which turns every distinct number into its own category. The result now prints as a short summary.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-11-1-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-11-1-9000"></a></h3>
+<h3 id="bug-fixes-0-12-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-12-0"></a></h3>
 <ul><li><p><strong>Date axes take their breaks from the limits.</strong> Default date and datetime breaks were picked from the data, so a month of data under <code>limits</code> of 2019 to 2022 crammed weekly ticks into that month and left the rest of the axis bare. Breaks now span the trained range, limits included. An all-<code>NA</code> Date column no longer aborts with “‘from’ must be a finite number”; the axis draws with no ticks, as in ggplot2 (VP-8).</p></li>
 <li><p><strong>Theme text sizes cascade from <code>text</code>.</strong> <code>theme(text = element_text(size = 20))</code> resized only the axis titles; axis text, legend text, strips and the plot title kept their own fixed sizes. The complete themes now size every text element relative to the <code>text</code> root, so the change reaches all of them. New <code><a href="../reference/rel.html">rel()</a></code> gives a size as a multiple of the inherited one (<code>theme(axis.text = element_text(size = rel(0.8)))</code>), and every complete theme takes <code>base_size</code> and <code>base_family</code>, as in ggplot2. Default sizes are unchanged. Colours set by a preset (grey axis text, for example) still win over a <code>text</code> colour, as in ggplot2 (VP-10).</p></li>
 <li><p><strong>A layer’s own data is faceted on the variables it has.</strong> In <code>facet_grid(am ~ cyl)</code>, an annotation layer whose data had <code>am</code> but not <code>cyl</code> was drawn in all six panels. It now appears only in its <code>am</code> row, repeated across the <code>cyl</code> columns, as in ggplot2. A layer without any facet variable is still drawn in every panel. Facet levels are now the union over the plot data and every layer’s data, so a level that only a layer has gets its own panel instead of being dropped. The <code><a href="../reference/spec_diagnose.html">spec_diagnose()</a></code> warning for a missing facet variable now says which panels the layer is repeated in (VP-9).</p></li>
