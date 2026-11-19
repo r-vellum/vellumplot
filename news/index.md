@@ -4,6 +4,36 @@
 
 ### New features
 
+- [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)
+  is now enacted by vellumwidget: brushing an overview view zooms every
+  view bound to the brush to the brushed range, and clearing the brush
+  resets the zoom (overview + detail, Vega-Lite’s
+  `scale = list(domain = list(param = ...))`). It now checks that it
+  names an interval selection that constrains the bound axis (F-15).
+
+- [`select_interval()`](https://r-vellum.github.io/vellumplot/reference/select_interval.md)
+  gains `bind = "scales"` (Vega-Lite’s `bind: "scales"`): the selection
+  is the view’s own pan/zoom domain instead of a drawn brush, so zooming
+  one view can drive
+  [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)
+  on another (linked zoom) or a
+  [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
+  /
+  [`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md)
+  (F-15).
+
+- Compositions
+  ([`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`wrap_plots()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  `|`, `/`) now give each cell’s panels a unique name
+  (`"cell-2-panel-1-1"`) and record the cell id in the panel `meta`. The
+  panels of an aligned composition also carry the scale descriptors and
+  pan group a single plot’s panel has, so a host can map their pixels to
+  data and zoom them (axis-aware zoom, re-ticked axes). The interaction
+  model tags each bind with its `cell`, and each selection with the
+  `cells` that register it (F-15).
+
 - [`scale_x_date()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md),
   [`scale_x_datetime()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md),
   [`scale_x_time()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md),

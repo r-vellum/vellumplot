@@ -21,7 +21,8 @@ select_interval(
   encodings = c("x", "y"),
   region = c("rect", "lasso"),
   empty = TRUE,
-  on = NULL
+  on = NULL,
+  bind = NULL
 )
 ```
 
@@ -59,6 +60,12 @@ select_interval(
 - on:
 
   Deprecated alias for `encodings`: `"x"`, `"y"` or `"xy"`.
+
+- bind:
+
+  `NULL` (default) for a brush, or `"scales"` to bind the selection to
+  the view's own pan/zoom domain (Vega-Lite's `bind: "scales"`; see the
+  section below). A `"scales"` selection must use `region = "rect"`.
 
 ## Value
 
@@ -99,6 +106,27 @@ with
 /
 [`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md)).
 
+## Driving another view's zoom (overview + detail)
+
+An interval selection can set the visible range of another view: give
+the *detail* view a
+[`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)
+that names the selection, and brushing the *overview* zooms the detail
+to the brushed range (clearing the brush resets it). This is Vega-Lite's
+`scale = list(domain = list(param = "brush"))`.
+
+`bind = "scales"` is Vega-Lite's other half: the selection is bound to
+the *scales of the view it is registered on*. No brush is drawn; panning
+and zooming that view (wheel, pinch, drag in pan mode, the navigator)
+**is** the selection, its interval the visible data range on
+`encodings`, and resetting the zoom empties it. Pair it with
+[`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)
+on another view for linked zoom, or with
+[`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
+/
+[`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md)
+to react to the visible window.
+
 ## See also
 
 [`select_point()`](https://r-vellum.github.io/vellumplot/reference/select_point.md),
@@ -130,5 +158,21 @@ sel <- select_interval("brush", encodings = "x")
 hconcat(
   vplot(df) |> mark_point(x = x, y = y) |> add_selection(sel),
   vplot(df) |> mark_bar(x = g, y = y) |> filter_by(sel)
+)
+
+
+# overview + detail: brushing the overview zooms the detail
+brush <- select_interval("brush", encodings = "x")
+vconcat(
+  vplot(df) |> mark_line(x = x, y = y) |> add_selection(brush),
+  vplot(df) |> mark_line(x = x, y = y) |> bind_scale(brush)
+)
+
+
+# linked zoom: zooming the left view zooms the right one along x
+zoom <- select_interval("zoom", encodings = "x", bind = "scales")
+hconcat(
+  vplot(df) |> mark_point(x = x, y = y) |> add_selection(zoom),
+  vplot(df) |> mark_point(x = x, y = y) |> bind_scale(zoom)
 )
 ```

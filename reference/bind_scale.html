@@ -5,13 +5,21 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Bind a panel's view to a selection (overview + detail) — bind_scale"><meta name="description" content="Make the aes view of this plot's panel follow an interval
-selection defined on another (overview) plot: dragging the
-overview brush pans and zooms this (detail) panel to the selected range. This
-is a display-tier view change (pan/zoom), not a scale retrain."><meta property="og:description" content="Make the aes view of this plot's panel follow an interval
-selection defined on another (overview) plot: dragging the
-overview brush pans and zooms this (detail) panel to the selected range. This
-is a display-tier view change (pan/zoom), not a scale retrain."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Bind a panel's view to a selection (overview + detail) — bind_scale"><meta name="description" content="Make the aes view of this plot's panel(s) follow an interval
+selection defined on another (overview) plot: brushing the
+overview zooms this (detail) view to the brushed range, and clearing the
+brush resets its zoom. It is Vega-Lite's
+scale = list(domain = list(param = &quot;brush&quot;)): the selection names the
+detail view's domain. This is a display-tier view change (pan/zoom), not a
+scale retrain, so the detail keeps its own scales and its axes re-tick for
+the visible range."><meta property="og:description" content="Make the aes view of this plot's panel(s) follow an interval
+selection defined on another (overview) plot: brushing the
+overview zooms this (detail) view to the brushed range, and clearing the
+brush resets its zoom. It is Vega-Lite's
+scale = list(domain = list(param = &quot;brush&quot;)): the selection names the
+detail view's domain. This is a display-tier view change (pan/zoom), not a
+scale retrain, so the detail keeps its own scales and its axes re-tick for
+the visible range."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -70,10 +78,14 @@ is a display-tier view change (pan/zoom), not a scale retrain."><meta property="
     </div>
 
     <div class="ref-description section level2">
-    <p>Make the <code>aes</code> view of this plot's panel follow an interval
-<a href="select_interval.html">selection</a> defined on another (overview) plot: dragging the
-overview brush pans and zooms this (detail) panel to the selected range. This
-is a display-tier view change (pan/zoom), not a scale retrain.</p>
+    <p>Make the <code>aes</code> view of this plot's panel(s) follow an interval
+<a href="select_interval.html">selection</a> defined on another (overview) plot: brushing the
+overview zooms this (detail) view to the brushed range, and clearing the
+brush resets its zoom. It is Vega-Lite's
+<code>scale = list(domain = list(param = "brush"))</code>: the selection names the
+detail view's domain. This is a display-tier view change (pan/zoom), not a
+scale retrain, so the detail keeps its own scales and its axes re-tick for
+the visible range.</p>
     </div>
 
     <div class="section level2">
@@ -102,10 +114,33 @@ is a display-tier view change (pan/zoom), not a scale retrain.</p>
     <p>The <a href="PlotSpec.html">PlotSpec</a>, with the bind registered.</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The selection may be a brush or a <code>bind = "scales"</code> selection (then zooming
+the overview zooms the detail: linked zoom). <code>aes</code> must be one of the
+selection's <code>encodings</code>. Bind as many views as you like to one selection, and
+call <code>bind_scale()</code> twice (<code>"x"</code> and <code>"y"</code>) to follow a rectangular brush on
+both axes. The panel the brush is drawn in never zooms itself.</p>
+<p>Enacted by <code>vellumwidget::as_widget()</code> in SVG mode; under Shiny the detail's
+visible range is reported in <code>input$&lt;id&gt;_zoom$panels</code>. A composition names
+its panels per cell (<code>"cell-2-panel-1-1"</code>, ...), so each cell's range is
+addressable.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="select_interval.html">select_interval()</a></code></p></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">200</span>, v <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">brush</span> <span class="op">&lt;-</span> <span class="fu"><a href="select_interval.html">select_interval</a></span><span class="op">(</span><span class="st">"brush"</span>, encodings <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="concat.html">vconcat</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span>, height <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_line</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">t</span>, y <span class="op">=</span> <span class="va">v</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="add_selection.html">add_selection</a></span><span class="op">(</span><span class="va">brush</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_line</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">t</span>, y <span class="op">=</span> <span class="va">v</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">bind_scale</span><span class="op">(</span><span class="va">brush</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="bind_scale-1.png" alt="" width="700" height="433"></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

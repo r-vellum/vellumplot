@@ -93,7 +93,8 @@ empties the selection.</p>
 <span>  encodings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>,</span>
 <span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rect"</span>, <span class="st">"lasso"</span><span class="op">)</span>,</span>
 <span>  empty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  on <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  on <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  bind <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -130,6 +131,12 @@ or <em>none</em> (<code>FALSE</code>).</p></dd>
 <dt id="arg-on">on<a class="anchor" aria-label="anchor" href="#arg-on"></a></dt>
 <dd><p>Deprecated alias for <code>encodings</code>: <code>"x"</code>, <code>"y"</code> or <code>"xy"</code>.</p></dd>
 
+
+<dt id="arg-bind">bind<a class="anchor" aria-label="anchor" href="#arg-bind"></a></dt>
+<dd><p><code>NULL</code> (default) for a brush, or <code>"scales"</code> to bind the selection
+to the view's own pan/zoom domain (Vega-Lite's <code>bind: "scales"</code>; see the
+section below). A <code>"scales"</code> selection must use <code>region = "rect"</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -154,6 +161,19 @@ data range in <code>input$&lt;id&gt;_brush</code>.</p>
 <p>Like <code><a href="select_point.html">select_point()</a></code>, it is pipe-first (attach to the plot and return it) or
 free-standing (call with the name as the first argument, then share it across
 views with <code><a href="add_selection.html">add_selection()</a></code> / <code><a href="filter_by.html">filter_by()</a></code>).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="driving-another-view-s-zoom-overview-detail-">Driving another view's zoom (overview + detail)<a class="anchor" aria-label="anchor" href="#driving-another-view-s-zoom-overview-detail-"></a></h2>
+    <p>An interval selection can set the visible range of another view: give the
+<em>detail</em> view a <code><a href="bind_scale.html">bind_scale()</a></code> that names the selection, and brushing the
+<em>overview</em> zooms the detail to the brushed range (clearing the brush resets
+it). This is Vega-Lite's <code>scale = list(domain = list(param = "brush"))</code>.</p>
+<p><code>bind = "scales"</code> is Vega-Lite's other half: the selection is bound to the
+<em>scales of the view it is registered on</em>. No brush is drawn; panning and
+zooming that view (wheel, pinch, drag in pan mode, the navigator) <strong>is</strong> the
+selection, its interval the visible data range on <code>encodings</code>, and resetting
+the zoom empties it. Pair it with <code><a href="bind_scale.html">bind_scale()</a></code> on another view for linked
+zoom, or with <code><a href="condition.html">condition()</a></code> / <code><a href="filter_by.html">filter_by()</a></code> to react to the visible window.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -185,6 +205,22 @@ views with <code><a href="add_selection.html">add_selection()</a></code> / <code
 <span class="r-in"><span>  <span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">g</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="filter_by.html">filter_by</a></span><span class="op">(</span><span class="va">sel</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="select_interval-3.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># overview + detail: brushing the overview zooms the detail</span></span></span>
+<span class="r-in"><span><span class="va">brush</span> <span class="op">&lt;-</span> <span class="fu">select_interval</span><span class="op">(</span><span class="st">"brush"</span>, encodings <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="concat.html">vconcat</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_line</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="add_selection.html">add_selection</a></span><span class="op">(</span><span class="va">brush</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_line</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="bind_scale.html">bind_scale</a></span><span class="op">(</span><span class="va">brush</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="select_interval-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># linked zoom: zooming the left view zooms the right one along x</span></span></span>
+<span class="r-in"><span><span class="va">zoom</span> <span class="op">&lt;-</span> <span class="fu">select_interval</span><span class="op">(</span><span class="st">"zoom"</span>, encodings <span class="op">=</span> <span class="st">"x"</span>, bind <span class="op">=</span> <span class="st">"scales"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="concat.html">hconcat</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="add_selection.html">add_selection</a></span><span class="op">(</span><span class="va">zoom</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="bind_scale.html">bind_scale</a></span><span class="op">(</span><span class="va">zoom</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="select_interval-5.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
