@@ -184,6 +184,13 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>As in ggplot2, each filled band is coloured by its lower level, and the
+lowest band – from the highest break at or below the field's minimum (e.g.
+<code>0</code> for a density) up to the first inner level – covers the whole grid, so
+the field's low-lying parts are painted rather than left as background.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

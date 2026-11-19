@@ -86,7 +86,7 @@ render_plot(p, f)
 svg <- paste(readLines(f), collapse = "\n")
 # the opening <svg> tag plus its <title>/<desc>
 regmatches(svg, regexpr("<svg[^>]*>.*?</desc>", svg, perl = TRUE))
-#> [1] "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"576\" height=\"384\" viewBox=\"0 0 576 384\" role=\"img\" aria-labelledby=\"vledd10f39-t vledd10f39-d\"><title id=\"vledd10f39-t\">Heavier cars use more fuel</title><desc id=\"vledd10f39-d\">Scatter plot of fuel economy against weight for 32 cars. Fuel economy falls roughly linearly as weight rises, from about 34 mpg at 1.5 tons to about 10 mpg at 5 tons.</desc>"
+#> [1] "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"576\" height=\"384\" viewBox=\"0 0 576 384\" role=\"img\" aria-labelledby=\"vl8abe9a1e-t vl8abe9a1e-d\"><title id=\"vl8abe9a1e-t\">Heavier cars use more fuel</title><desc id=\"vl8abe9a1e-d\">Scatter plot of fuel economy against weight for 32 cars. Fuel economy falls roughly linearly as weight rises, from about 34 mpg at 1.5 tons to about 10 mpg at 5 tons.</desc>"
 ```
 
 A screen reader announces the title as the image’s name and the

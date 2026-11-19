@@ -117,6 +117,14 @@ mark_contour_filled(
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
 
+## Details
+
+As in ggplot2, each filled band is coloured by its lower level, and the
+lowest band – from the highest break at or below the field's minimum
+(e.g. `0` for a density) up to the first inner level – covers the whole
+grid, so the field's low-lying parts are painted rather than left as
+background.
+
 ## Examples
 
 ``` r

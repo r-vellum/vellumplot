@@ -2,6 +2,19 @@
 
 ## vellumplot 0.14.1.9000 (development version)
 
+### Behaviour changes
+
+- **Behaviour change:**
+  [`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
+  and
+  [`mark_density_2d_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_density_2d.md)
+  now draw ggplot2’s lowest band, from the highest break at or below the
+  field’s minimum (`0` for a density) to the first contour level, so the
+  whole data grid is painted in the lowest colour as in
+  `geom_contour_filled()`. Before, the region below the first level was
+  left as panel background, and the fill scale started at the first
+  level (VP-45).
+
 ### New features
 
 - [`bind_scale()`](https://r-vellum.github.io/vellumplot/reference/bind_scale.md)
@@ -42,6 +55,15 @@
   discrete position scales:
   `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the month
   labels (VP-45).
+
+### Bug fixes
+
+- `guide_axis(check.overlap = TRUE)` now also thins the labels of free
+  facet scales (panel by panel), fixed-aspect plots
+  ([`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),
+  [`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md),
+  `aspect.ratio`) and marginal plots; before, it silently kept every
+  label there. Polar axes still keep every label (VP-45).
 
 ## vellumplot 0.14.1
 

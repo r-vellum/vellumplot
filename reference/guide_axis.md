@@ -50,7 +50,9 @@ guide_axis_logticks(
   If `TRUE`, leave out labels that would overlap one already drawn,
   keeping the first, the last and then those in the middle first
   (ggplot2's priority). Needs the panel's size, so it applies to a plot
-  with a set page size and shared (not free) scales.
+  with a set page size; free facet scales are thinned panel by panel,
+  and fixed-aspect and marginal plots use their laid-out panel size.
+  Polar axes keep every label.
 
 - angle:
 
