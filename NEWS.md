@@ -61,6 +61,13 @@
 
 ## Bug fixes
 
+* **Date axes take their breaks from the limits.** Default date and
+  datetime breaks were picked from the data, so a month of data under
+  `limits` of 2019 to 2022 crammed weekly ticks into that month and left the
+  rest of the axis bare. Breaks now span the trained range, limits included.
+  An all-`NA` Date column no longer aborts with "'from' must be a finite
+  number"; the axis draws with no ticks, as in ggplot2 (VP-8).
+
 * **A layer's own data is faceted on the variables it has.** In
   `facet_grid(am ~ cyl)`, an annotation layer whose data had `am` but not
   `cyl` was drawn in all six panels. It now appears only in its `am` row,
