@@ -90,6 +90,15 @@
 
 ### Bug fixes
 
+- **An inset plot no longer resets the outer plot’s interaction
+  context.** A sub-plot drawn inside a plot (`annotate("sparkline")`, or
+  `annotate("grob")` with a plot) set the shared mark context for itself
+  and left it that way, so the outer plot’s later panels lost their
+  selection keys,
+  [`filter_by()`](https://r-vellum.github.io/vellumplot/reference/filter_by.md)
+  tags and page size. Each plot now saves the context it was called with
+  and restores it when it returns (VP-12).
+
 - **[`position_stack()`](https://r-vellum.github.io/vellumplot/reference/position.md)
   and
   [`position_fill()`](https://r-vellum.github.io/vellumplot/reference/position.md)
