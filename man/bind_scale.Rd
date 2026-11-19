@@ -17,10 +17,34 @@ bind_scale(plot, selection, aes = c("x", "y"))
 The \link{PlotSpec}, with the bind registered.
 }
 \description{
-Make the \code{aes} view of this plot's panel follow an interval
-\link[=select_interval]{selection} defined on another (overview) plot: dragging the
-overview brush pans and zooms this (detail) panel to the selected range. This
-is a display-tier view change (pan/zoom), not a scale retrain.
+Make the \code{aes} view of this plot's panel(s) follow an interval
+\link[=select_interval]{selection} defined on another (overview) plot: brushing the
+overview zooms this (detail) view to the brushed range, and clearing the
+brush resets its zoom. It is Vega-Lite's
+\code{scale = list(domain = list(param = "brush"))}: the selection names the
+detail view's domain. This is a display-tier view change (pan/zoom), not a
+scale retrain, so the detail keeps its own scales and its axes re-tick for
+the visible range.
+}
+\details{
+The selection may be a brush or a \code{bind = "scales"} selection (then zooming
+the overview zooms the detail: linked zoom). \code{aes} must be one of the
+selection's \code{encodings}. Bind as many views as you like to one selection, and
+call \code{bind_scale()} twice (\code{"x"} and \code{"y"}) to follow a rectangular brush on
+both axes. The panel the brush is drawn in never zooms itself.
+
+Enacted by \code{vellumwidget::as_widget()} in SVG mode; under Shiny the detail's
+visible range is reported in \verb{input$<id>_zoom$panels}. A composition names
+its panels per cell (\code{"cell-2-panel-1-1"}, ...), so each cell's range is
+addressable.
+}
+\examples{
+df <- data.frame(t = 1:200, v = cumsum(rnorm(200)))
+brush <- select_interval("brush", encodings = "x")
+vconcat(
+  vplot(df, height = 2) |> mark_line(x = t, y = v) |> add_selection(brush),
+  vplot(df) |> mark_line(x = t, y = v) |> bind_scale(brush)
+)
 }
 \seealso{
 \code{\link[=select_interval]{select_interval()}}

@@ -2091,6 +2091,11 @@ mark_density <- function(
 #' tracing is done by the engine (`vellum::vl_contour()`), so no extra package is
 #' needed for the lines; a density field additionally needs \pkg{MASS}.
 #'
+#' As in ggplot2, each filled band is coloured by its lower level, and the
+#' lowest band -- from the highest break at or below the field's minimum (e.g.
+#' `0` for a density) up to the first inner level -- covers the whole grid, so
+#' the field's low-lying parts are painted rather than left as background.
+#'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y` (+ optional `z` surface, `color` /
 #'   `fill`, `linewidth`, `linetype`).

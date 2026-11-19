@@ -316,7 +316,12 @@ NULL
     sf_geographic = isTRUE(built$sf_geographic),
     sf_crs = built$sf_crs
   )
-  # panel: background + marks
+  # panel: background + marks. Named per cell and, like a single plot's cartesian
+  # panel, carrying the scale descriptors + a clip-stable pan group, so a host can
+  # map its pixels to data and zoom it on its own (axis-aware zoom, bind_scale()).
+  cell <- .comp_cell_take()
+  co_g <- .coord_of(plan$spec)
+  linear <- !identical(co_g@kind, "trans")
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(
@@ -324,11 +329,13 @@ NULL
       col = gm$panel_col,
       xscale = hsc$domain,
       yscale = vsc$domain,
-      clip = TRUE
+      clip = TRUE,
+      name = .cell_panel_name("panel-1-1", cell),
+      meta = if (linear) .panel_meta(hsc, vsc, cell),
+      pannable = linear
     )
   )
   scene <- .draw_panel_bg(scene, hsc, vsc, rt)
-  co_g <- .coord_of(plan$spec)
   if (
     identical(co_g@kind, "sf") &&
       !is.null(co_g@graticule) &&
@@ -454,6 +461,7 @@ NULL
     )
   }
   for (i in seq_along(plans)) {
+    .comp_cell_next()
     scene <- .draw_subplot_aligned(
       scene,
       plans[[i]],

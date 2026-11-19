@@ -1085,8 +1085,11 @@ NULL
 }
 
 # Contour break levels: explicit `breaks`, else a `binwidth` grid, else ~`bins`
-# pretty cuts. Only levels strictly inside the field range are kept.
-.contour_breaks <- function(gz, sp) {
+# pretty cuts. Only levels strictly inside the field range are kept -- except,
+# with `lowest = TRUE` (filled bands), the highest break at or below the field's
+# minimum too: it bounds ggplot2's lowest band, `(b0, b1]`, which covers the
+# whole field below the first inner level (VP-45).
+.contour_breaks <- function(gz, sp, lowest = FALSE) {
   rng <- range(gz, na.rm = TRUE)
   br <- if (!is.null(sp$breaks)) {
     sort(unique(as.numeric(sp$breaks)))
@@ -1095,7 +1098,12 @@ NULL
   } else {
     pretty(rng, n = sp$bins %||% 10L)
   }
-  br[br > rng[1] & br < rng[2]]
+  inner <- br[br > rng[1] & br < rng[2]]
+  below <- br[br <= rng[1]]
+  if (lowest && length(inner) && length(below)) {
+    inner <- c(max(below), inner)
+  }
+  inner
 }
 
 # Pad a contour field with a border far below every level, so each filled
@@ -1214,6 +1222,12 @@ NULL
   }
   ids <- unique(cc$id)
   pieces <- lapply(ids, function(i) cc[cc$id == i, , drop = FALSE])
+  # a sliver traced where the padded border meets a grid corner (fewer than
+  # three vertices) encloses nothing
+  pieces <- pieces[vapply(pieces, nrow, integer(1)) >= 3L]
+  if (!length(pieces)) {
+    return(.empty_contour_df())
+  }
   pieces <- pieces[order(vapply(pieces, function(e) e$level[1], numeric(1)))]
   parts <- lapply(seq_along(pieces), function(k) {
     e <- pieces[[k]]
@@ -1281,10 +1295,11 @@ NULL
   if (!length(fields)) {
     return(.stat_drop_layer("A 2-D density needs at least 3 points per group."))
   }
-  brks <- .contour_breaks(
-    unlist(lapply(fields, `[[`, "gz"), use.names = FALSE),
-    L$stat_params
-  )
+  filled <- isTRUE(L$stat_params$filled)
+  gz_all <- unlist(lapply(fields, `[[`, "gz"), use.names = FALSE)
+  brks <- .contour_breaks(gz_all, L$stat_params, lowest = filled)
+  # whether the first level bounds the lowest band (at or below every field)
+  has_lowest <- filled && length(brks) && brks[1] <= min(gz_all, na.rm = TRUE)
   if (!length(brks)) {
     cli::cli_abort(c(
       "No contour levels fall inside the data range.",
@@ -1292,15 +1307,23 @@ NULL
     ))
   }
   pieces <- 0L
-  filled <- isTRUE(L$stat_params$filled)
   parts <- lapply(names(fields), function(gn) {
     fld <- fields[[gn]]
+    levels <- brks
     if (filled) {
+      # The lowest band's level can sit at (or below) the field's minimum: trace
+      # it a hair below, so cells exactly at the level are inside the band and
+      # it covers the whole field, then label it with its break.
+      zr <- range(fld$gz, na.rm = TRUE)
+      if (has_lowest && levels[1] >= zr[1]) {
+        levels[1] <- zr[1] - 1e-9 * max(diff(zr), abs(zr[1]), 1)
+      }
       fld <- .pad_field(fld)
     }
     xlim <- range(fld$gx)
     ylim <- range(fld$gy)
-    cc <- vellum::vl_contour(fld$gz, levels = brks, xlim = xlim, ylim = ylim)
+    cc <- vellum::vl_contour(fld$gz, levels = levels, xlim = xlim, ylim = ylim)
+    cc$level <- brks[match(cc$level, levels)]
     df <- if (filled) {
       .vl_contour_bands_df(cc, xlim, ylim)
     } else {

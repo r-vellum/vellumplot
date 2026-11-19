@@ -29,7 +29,9 @@ guide_axis_logticks(
 \item{check.overlap}{If \code{TRUE}, leave out labels that would overlap one
 already drawn, keeping the first, the last and then those in the middle
 first (ggplot2's priority). Needs the panel's size, so it applies to a
-plot with a set page size and shared (not free) scales.}
+plot with a set page size; free facet scales are thinned panel by panel,
+and fixed-aspect and marginal plots use their laid-out panel size. Polar
+axes keep every label.}
 
 \item{angle}{The rotation of the labels in degrees (overrides the theme's
 \code{axis.text.x}/\code{axis.text.y} angle), or \code{NULL} to keep the theme's. The
