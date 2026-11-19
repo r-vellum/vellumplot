@@ -163,6 +163,58 @@ test_that("different variables do not merge", {
   expect_identical(kinds(p), c("color_discrete", "shape"))
 })
 
+test_that("same title but different variables keep colour and size apart (VP-7)", {
+  # Two variables under one labs() title: the size breaks are not the colour
+  # breaks, so a merged legend would paint the size keys in the wrong colours.
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = hp, size = disp) |>
+    labs(color = "Engine", size = "Engine")
+  expect_identical(kinds(p), c("color_continuous", "size"))
+})
+
+test_that("colour + linetype on one variable merge into one line legend (VP-7)", {
+  d <- data.frame(
+    t = rep(1:5, 3),
+    v = c(1:5, 2:6, 3:7),
+    g = rep(c("a", "b", "c"), each = 5)
+  )
+  p <- vplot(d) |> mark_line(x = t, y = v, color = g, linetype = g)
+  expect_identical(kinds(p), "merged")
+  g <- .legend_guides(train(p))[[1]]$sc
+  expect_identical(g$glyph, "line")
+  expect_identical(g$linetypes, c("solid", "dashed", "dotted"))
+  expect_length(g$cols, 3)
+  expect_identical(g$series_aes, "color")
+  f <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, f))
+})
+
+test_that("any discrete legends sharing title and keys merge (VP-7)", {
+  d <- data.frame(
+    t = rep(1:5, 2),
+    v = c(1:5, 2:6),
+    g = rep(c("a", "b"), each = 5)
+  )
+  # shape + linetype, no colour: a line-and-point key
+  p <- vplot(d) |>
+    mark_line(x = t, y = v, linetype = g) |>
+    mark_point(x = t, y = v, shape = g)
+  expect_identical(kinds(p), "merged")
+  sc <- .legend_guides(train(p))[[1]]$sc
+  expect_identical(sc$glyph, "line+point")
+  expect_identical(sc$series_aes, "shape")
+  f <- local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, f))
+  # the same title over different keys keeps them apart, as in ggplot2
+  d$h <- rep(c("x", "y"), 5)
+  p2 <- vplot(d) |>
+    mark_line(x = t, y = v, linetype = h) |>
+    mark_point(x = t, y = v, shape = g) |>
+    scale_linetype(name = "group") |>
+    scale_shape(name = "group")
+  expect_identical(kinds(p2), c("shape", "linetype"))
+})
+
 test_that("a merged legend still renders in every position", {
   for (pos in c("right", "left", "top", "bottom")) {
     p <- vplot(mtcars) |>

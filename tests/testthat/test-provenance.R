@@ -129,14 +129,24 @@ test_that("every consumer reads the one aesthetic registry", {
   )
 })
 
-test_that("legend merge fields come from the registry", {
-  col <- list(kind = "discrete", name = "g", levels = c("a", "b"))
-  shp <- list(kind = "shape", name = "g", levels = c("a", "b"))
-  expect_true(vellumplot:::.aes_can_merge(col, shp, "color", "shape"))
-  shp$levels <- c("a", "c")
-  expect_false(vellumplot:::.aes_can_merge(col, shp, "color", "shape"))
-  # no registered partner, no merge
-  expect_false(vellumplot:::.aes_can_merge(col, shp, "shape", "color"))
+test_that("legend merge rules come from the registry", {
+  # the keyed legends join ggplot2's title-and-keys merge (VP-7)
+  merging <- names(Filter(
+    function(e) isTRUE(e$legend_merge),
+    .AES_REGISTRY
+  ))
+  expect_setequal(
+    merging,
+    c("color", "size", "shape", "linewidth", "alpha", "linetype")
+  )
+  # the edge colour guide folds into the node one on the registry's fields
+  col <- list(kind = "discrete", name = "g", levels = c("a", "b"), colors = 1:2)
+  edge <- col
+  expect_true(.aes_can_merge(edge, col, "edge_color", "color"))
+  edge$levels <- c("a", "c")
+  expect_false(.aes_can_merge(edge, col, "edge_color", "color"))
+  # no registered partner, no fold
+  expect_false(.aes_can_merge(col, edge, "color", "edge_color"))
 })
 
 test_that("row-keys partition the layer across style groups", {

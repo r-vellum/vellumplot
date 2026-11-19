@@ -686,20 +686,16 @@ NULL
 # The list of guides a plot needs, in draw order -- the order of the legend rows
 # of `.AES_REGISTRY` (colour, size, shape, pattern, edge width, line width,
 # alpha, linetype, then the edge colour / alpha / linetype). Each guide is
-# `list(kind, sc)` where `sc` is the trained scale (or, for a merged guide, a
-# synthesized pseudo-scale); `kind` is the registry row's `guide`, resolved per
-# scale kind for the colour guides.
+# `list(kind, sc, key)` where `sc` is the trained scale (or, for a merged guide,
+# a synthesized pseudo-scale), `kind` is the registry row's `guide`, resolved
+# per scale kind for the colour guides, and `key` the registry row.
 #
-# When one variable drives two aesthetics, the colour guide merges with its
-# partner into a single guide whose keys carry both encodings (ggplot2's rule):
-# a discrete colour scale merges with `shape`; a continuous colour scale merges
-# with `size`. Which trained fields must agree for a merge is the registry row's
-# `merge` (see `.aes_can_merge()`) -- give one scale a different `name=` to keep
-# them apart. `merged` marks which partner (if any) was folded into the colour
-# guide.
+# Legends then merge as in ggplot2 (`.merge_legend_guides()`): two legends of
+# registry rows marked `legend_merge` that share a title and identical keys
+# draw as one legend whose keys carry every encoding. Give one scale a
+# different `name=` to keep them apart.
 .legend_guides <- function(scales) {
   out <- list()
-  merged <- NULL
   keys <- .aes_legend_keys()
   # A scale can opt out of its legend (an identity scale, or `guide = "none"`):
   # the mapping still applies to the marks, but no guide is drawn. Drop it here
@@ -710,7 +706,9 @@ NULL
       scales[k] <- list(NULL)
     }
   }
-  add <- function(kind, sc) out <<- c(out, list(list(kind = kind, sc = sc)))
+  add <- function(kind, sc, key) {
+    out <<- c(out, list(list(kind = kind, sc = sc, key = key)))
+  }
   for (k in keys) {
     sc <- scales[[k]]
     if (is.null(sc)) {
@@ -725,25 +723,15 @@ NULL
       discrete <- gk %in% c("discrete", "binned")
       if (!is.null(sc$bivariate)) {
         # A bivariate scale draws its 2-D grid and never merges with a partner.
-        add("color_bivariate", sc)
+        add("color_bivariate", sc, k)
       } else if (identical(gk, "binned") && isTRUE(sc$stepped)) {
-        add("color_steps", sc)
-      } else if (discrete && .can_merge_shape(sc, scales$shape)) {
-        add("merged", .merged_color_shape(sc, scales$shape))
-        merged <- "shape"
-      } else if (
-        identical(gk, "continuous") && .can_merge_size(sc, scales$size)
-      ) {
-        add("merged", .merged_color_size(sc, scales$size))
-        merged <- "size"
+        add("color_steps", sc, k)
       } else {
-        add(paste0("color_", if (discrete) "discrete" else gk), sc)
+        add(paste0("color_", if (discrete) "discrete" else gk), sc, k)
       }
-    } else if (identical(merged, k)) {
-      next # folded into the colour guide above
     } else if (k == "size" && isTRUE(sc$nested)) {
       # guide_legend(nested = TRUE) draws the size keys as concentric circles.
-      add("size_nested", sc)
+      add("size_nested", sc, k)
     } else if (identical(guide, "color")) {
       # Edge colour reuses the node colour renderers (the scale objects are
       # structurally identical) but never merges with shape/size -- it belongs to
@@ -759,27 +747,14 @@ NULL
           "color_",
           if (gk %in% c("discrete", "binned")) "discrete" else gk
         ),
-        sc
+        sc,
+        k
       )
     } else {
-      add(guide, sc)
+      add(guide, sc, k)
     }
   }
-  out
-}
-
-# A discrete colour scale and a shape scale merge when the registry's merge
-# fields for the pair agree (title and the identical set of levels: the same
-# variable, encoded the same way).
-.can_merge_shape <- function(color, shape) {
-  .aes_can_merge(color, shape, "color", "shape")
-}
-
-# A continuous colour scale and a size scale merge when the registry's merge
-# fields for the pair agree (the title: they then share the variable, hence its
-# data range and breaks).
-.can_merge_size <- function(color, size) {
-  .aes_can_merge(color, size, "color", "size")
+  .merge_legend_guides(out)
 }
 
 # A node colour scale and an edge colour scale describe the same encoding when
@@ -793,43 +768,171 @@ NULL
   .aes_can_merge(edge_color, color, "edge_color", "color")
 }
 
-# Pseudo-scale for a merged colour+shape guide: one row per shared level, each a
-# point drawn in the level's colour with the level's shape. `fill` and `col` are
-# both set so stroke-only shapes (plus/cross) still take the colour.
-.merged_color_shape <- function(color, shape) {
-  cols <- color$colors
+# The guide kinds that can join a merged legend: keyed legends drawn one key
+# per row (a stepped bar, bubble stack or bivariate grid never merges). A
+# continuous colour bar only finds a partner among the continuous keyed
+# legends, since its keys are numeric breaks.
+.MERGEABLE_GUIDE_KINDS <- c(
+  "color_discrete",
+  "color_continuous",
+  "shape",
+  "linetype",
+  "size",
+  "alpha",
+  "linewidth"
+)
+
+# What two legends must share to merge (ggplot2's rule): the title, the key
+# values (discrete levels or numeric breaks) and the labels shown, NA row
+# included. NULL for a guide that cannot merge.
+.legend_merge_sig <- function(g) {
+  if (
+    !isTRUE(.AES_REGISTRY[[g$key]]$legend_merge) ||
+      !g$kind %in% .MERGEABLE_GUIDE_KINDS
+  ) {
+    return(NULL)
+  }
+  sc <- g$sc
+  labels <- .guide_labels(g)
+  if (identical(g$kind, "color_continuous") && isTRUE(sc$na)) {
+    labels <- c(labels, "NA")
+  }
   list(
-    name = color$name,
-    # `levels` is the shared discrete key; it lets `.legend_series_key` tag the
-    # merged swatches for interactive highlight (marks carry `color:<level>`).
-    levels = color$levels,
-    labels = color$labels %||% color$levels,
-    fills = cols,
-    cols = cols,
-    shapes = shape$shapes,
-    sizes_mm = NULL,
-    # Keep a colour scale's guide_legend(override.aes=) when it merges with shape.
-    override_aes = color$override_aes
+    name = sc$name,
+    values = sc$levels %||% sc$legend_breaks,
+    labels = labels
   )
 }
 
-# Pseudo-scale for a merged colour+size guide: the size scale drives the rows
-# (breaks -> radii), and each key is coloured by mapping its break through the
-# continuous colour scale. Same variable, so the size breaks lie in the colour
-# scale's data range.
-.merged_color_size <- function(color, size) {
-  cols <- color$map(size$legend_breaks)
-  # Sized keys are drawn as circles (the colour scale's own key glyph may be a
-  # line/square, which are not point shapes).
+# Merge legends that share a title and identical keys into one guide, placed
+# where the first of them would have been drawn. Legends that differ only in
+# title stay apart, and so do legends that share a title but not their keys
+# (two variables given the same `labs()` title).
+.merge_legend_guides <- function(guides) {
+  sigs <- lapply(guides, .legend_merge_sig)
+  used <- logical(length(guides))
+  out <- list()
+  for (i in seq_along(guides)) {
+    if (used[i]) {
+      next
+    }
+    members <- i
+    if (!is.null(sigs[[i]])) {
+      for (j in seq_along(guides)[-seq_len(i)]) {
+        if (!used[j] && identical(sigs[[i]], sigs[[j]])) {
+          members <- c(members, j)
+        }
+      }
+    }
+    used[members] <- TRUE
+    out <- c(
+      out,
+      if (length(members) == 1L) {
+        guides[i]
+      } else {
+        list(list(
+          kind = "merged",
+          sc = .merged_legend(guides[members], sigs[[i]]),
+          key = guides[[i]]$key
+        ))
+      }
+    )
+  }
+  out
+}
+
+# Pseudo-scale for a merged legend: one row per shared key, carrying each
+# member's per-key style -- `cols`/`fills` (colour), `shapes`, `sizes_mm`,
+# `linetypes`, `alphas`, `linewidths` -- aligned to `labels` (NA rows padded
+# with neutral values). A member that does not set a style leaves it NULL.
+# `glyph` picks the key drawing: a point, a line, both, or the colour scale's
+# own swatch when nothing asks for a point or a line.
+.merged_legend <- function(members, sig) {
+  labels <- sig$labels
+  k <- length(labels)
+  pad <- function(v, fill) c(v, rep(fill, k - length(v)))
+  style <- list()
+  colour_glyph <- NULL
+  series_aes <- NULL
+  levels <- NULL
+  override <- list()
+  for (g in members) {
+    sc <- g$sc
+    switch(
+      g$kind,
+      color_discrete = {
+        style$cols <- pad(
+          c(sc$colors, if (isTRUE(sc$na)) sc$na_value),
+          "grey50"
+        )
+        colour_glyph <- sc$key_glyph
+        series_aes <- "color"
+      },
+      color_continuous = {
+        style$cols <- pad(
+          c(sc$map(sig$values), if (isTRUE(sc$na)) sc$na_value),
+          "grey50"
+        )
+        colour_glyph <- "point"
+      },
+      shape = {
+        style$shapes <- pad(sc$shapes, "circle")
+        series_aes <- series_aes %||% "shape"
+      },
+      linetype = {
+        style$linetypes <- pad(sc$linetypes, "solid")
+      },
+      size = {
+        style$sizes_mm <- pad(sc$legend_sizes, NA)
+      },
+      alpha = {
+        style$alphas <- pad(sc$legend_alphas, NA)
+      },
+      linewidth = {
+        style$linewidths <- pad(sc$legend_widths, NA)
+      }
+    )
+    if (is.character(sc$levels)) {
+      levels <- levels %||% sc$levels
+    }
+    # guide_legend(override.aes=) of every member applies; the first to name
+    # an aesthetic wins (the colour legend comes first).
+    ov <- sc$override_aes %||% list()
+    override <- c(override, ov[setdiff(names(ov), names(override))])
+  }
+  has_line <- !is.null(style$linetypes) ||
+    !is.null(style$linewidths) ||
+    identical(colour_glyph, "line")
+  has_point <- !is.null(style$shapes) ||
+    !is.null(style$sizes_mm) ||
+    colour_glyph %in% c("point", "circle") ||
+    (is.null(colour_glyph) && !has_line)
+  glyph <- if (has_line && has_point) {
+    "line+point"
+  } else if (has_line) {
+    "line"
+  } else if (has_point) {
+    "point"
+  } else {
+    colour_glyph
+  }
+  cols <- style$cols %||% rep_len("grey35", k)
   list(
-    name = color$name,
-    labels = size$legend_labels,
+    name = sig$name,
+    # The shared discrete key: `.legend_series_key()` tags the merged swatches
+    # for interactive highlight (marks carry `color:<level>`/`shape:<level>`).
+    levels = if (!is.null(series_aes)) levels,
+    series_aes = series_aes,
+    labels = labels,
     fills = cols,
     cols = cols,
-    shapes = rep_len("circle", length(cols)),
-    sizes_mm = size$legend_sizes,
-    # Keep a colour scale's guide_legend(override.aes=) when it merges with size.
-    override_aes = color$override_aes
+    shapes = style$shapes,
+    sizes_mm = style$sizes_mm,
+    linetypes = style$linetypes,
+    alphas = style$alphas,
+    linewidths = style$linewidths,
+    glyph = glyph,
+    override_aes = if (length(override)) override
   )
 }
 
@@ -1229,15 +1332,57 @@ NULL
         alpha = ov$alpha
       )
     ),
-    # A merged guide's key carries both encodings in one point: the shared
-    # variable's colour (fill + stroke) and shape, sized when size is merged in.
-    merged = .shape_key_grob(
-      ov$shape %||% sc$shapes[i] %||% "circle",
-      ov$size %||% sc$sizes_mm[i] %||% (m$key / 2),
+    merged = .merged_key_grob(sc, i, m, sk, ov)
+  )
+}
+
+# The key of a merged legend row: every member's encoding in one key, drawn as
+# a point (colour, shape, size), a line (colour, linetype, linewidth), both
+# stacked, or the colour scale's own swatch. Alpha applies to whichever is
+# drawn. Returns one grob, or a list of grobs for a line-and-point key.
+.merged_key_grob <- function(sc, i, m, sk, ov) {
+  pick <- function(v, default) {
+    x <- if (length(v) >= i) v[[i]] else NULL
+    if (is.null(x) || is.na(x)) default else x
+  }
+  alpha <- ov$alpha %||% pick(sc$alphas, NULL)
+  col <- ov$color %||% sc$cols[i]
+  point <- function() {
+    .shape_key_grob(
+      ov$shape %||% pick(sc$shapes, "circle"),
+      ov$size %||% pick(sc$sizes_mm, m$key / 2),
       ov$fill %||% ov$color %||% sc$fills[i],
-      ov$color %||% sc$cols[i],
+      col,
       sk,
-      ov$alpha
+      alpha
+    )
+  }
+  line <- function() {
+    vellum::segments_grob(
+      vellum::vl_unit(0.12, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.88, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      sketch = sk,
+      gp = vellum::vl_gpar(
+        col = col,
+        lwd = ov$linewidth %||% pick(sc$linewidths, 1.5),
+        lty = ov$linetype %||% pick(sc$linetypes, "solid"),
+        alpha = alpha
+      )
+    )
+  }
+  switch(
+    sc$glyph %||% "point",
+    point = point(),
+    line = line(),
+    `line+point` = list(line(), point()),
+    .colour_key_grob(
+      sc$glyph,
+      sc$cols[i],
+      m,
+      sk,
+      utils::modifyList(ov, list(alpha = alpha))
     )
   )
 }
@@ -1333,10 +1478,10 @@ NULL
     color_discrete = "color",
     color_bivariate = "color",
     shape = "shape",
-    # A merged colour+shape guide shares one discrete variable, so its swatches
-    # join the colour series (marks carry `color:<value>`). A merged colour+size
-    # guide has no discrete series (`levels` is NULL) and stays untagged.
-    merged = if (!is.null(g$sc$levels)) "color" else NULL,
+    # A merged legend over a discrete colour or shape scale joins that series
+    # (marks carry `color:<value>`/`shape:<value>`); one with neither (say,
+    # continuous colour + size) has no discrete series and stays untagged.
+    merged = g$sc$series_aes,
     NULL
   )
   if (is.null(aes)) {
@@ -1361,6 +1506,22 @@ NULL
   swatch@keys <- paste0("legend:", key)
   swatch@meta <- list(list(legend_for = key, tooltip = as.character(label)))
   swatch
+}
+
+# Draw legend key `i` of guide `g` into the current viewport, tagging each of
+# its grobs (a merged key may be a line and a point) for interactive highlight.
+.draw_key <- function(scene, g, i, m, rt, label) {
+  grobs <- .key_grob(g, i, m, rt[[".sketch"]])
+  if (S7::S7_inherits(grobs)) {
+    grobs <- list(grobs)
+  }
+  for (grob in grobs) {
+    scene <- vellum::draw(
+      scene,
+      .tag_legend_swatch(grob, g, i, label, rt[[".interactive"]])
+    )
+  }
+  scene
 }
 
 .draw_guide_v <- function(scene, g, m, rt) {
@@ -1410,16 +1571,7 @@ NULL
   }
   for (i in seq_len(k)) {
     scene <- vellum::push(scene, vellum::vl_viewport(row = off + i, col = 1))
-    scene <- vellum::draw(
-      scene,
-      .tag_legend_swatch(
-        .key_grob(g, i, m, rt[[".sketch"]]),
-        g,
-        i,
-        labs[i],
-        rt[[".interactive"]]
-      )
-    )
+    scene <- .draw_key(scene, g, i, m, rt, labs[i])
     scene <- vellum::pop(scene)
     scene <- vellum::push(scene, vellum::vl_viewport(row = off + i, col = 2))
     scene <- vellum::draw(
@@ -1837,16 +1989,7 @@ NULL
         width = vellum::vl_unit(key_d, "mm")
       )
     )
-    scene <- vellum::draw(
-      scene,
-      .tag_legend_swatch(
-        .key_grob(g, i, m, rt[[".sketch"]]),
-        g,
-        i,
-        labs[i],
-        rt[[".interactive"]]
-      )
-    )
+    scene <- .draw_key(scene, g, i, m, rt, labs[i])
     scene <- vellum::pop(scene)
     scene <- vellum::draw(
       scene,
