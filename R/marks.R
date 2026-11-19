@@ -51,7 +51,11 @@ NULL
 # own space; a constant width already works through that path. Promoting them to
 # a channel here would force one global meaning and misroute the physical-size
 # case, so the `params` path is the intended design (vellumplot#3).
-.POSITION_AES <- c(
+#
+# (Named apart from trained-scale.R's `.POSITION_AES`, the two position scales:
+# sharing the name let that later definition shadow this one, so a literal
+# `xend`/`ymin` became a style param that trained nothing.)
+.COORD_AES <- c(
   "x",
   "y",
   "xend",
@@ -98,7 +102,7 @@ NULL
       # as a channel so it populates `values`, recycles per row, and trains the
       # position scale. Every other literal (e.g. `size = 3`) is a constant
       # aesthetic.
-      if (nm %in% .POSITION_AES) {
+      if (nm %in% .COORD_AES) {
         encoding[[nm]] <- channel(expr = q)
       } else {
         params[[nm]] <- rlang::eval_tidy(q)
@@ -2911,19 +2915,34 @@ mark_count <- function(
   )
 }
 
-#' Segment mark
+#' Segment, curve and spoke marks
 #'
 #' `mark_segment()` draws a straight line from `(x, y)` to `(xend, yend)` per row.
+#' `mark_curve()` bends that line into an arc (ggplot2's `geom_curve()`).
+#' `mark_spoke()` draws a segment from `(x, y)` in the direction `angle`
+#' (radians) with length `radius`, both in data units (ggplot2's
+#' `geom_spoke()`): a vector field.
+#'
+#' A curve bends in the panel's own frame (its x and y spans scaled to the
+#' same length), so on a panel that is not square the arc stretches with the
+#' panel; ggplot2 bends in device space instead.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
-#'   `linewidth`, `linetype`, `alpha`). A mapped `linewidth` gives each segment
+#'   `linewidth`, `linetype`, `alpha`); `mark_spoke()` takes `angle` and
+#'   `radius` in place of `xend`, `yend`. A mapped `linewidth` gives each segment
 #'   its own width -- see [scale_linewidth()].
 #' @return The modified [PlotSpec].
 #' @seealso [scale_linewidth()]
 #' @examples
 #' d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
 #' vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend)
+#' vplot(d) |> mark_curve(x = x, y = y, xend = xend, yend = yend)
+#'
+#' # a vector field
+#' g <- expand.grid(x = 1:8, y = 1:8)
+#' g$angle <- atan2(g$y - 4.5, g$x - 4.5)
+#' vplot(g) |> mark_spoke(x = x, y = y, angle = angle, radius = 0.4)
 #' @export
 mark_segment <- function(
   plot,
@@ -2941,6 +2960,185 @@ mark_segment <- function(
     "segment",
     rlang::enquos(...),
     stat_params = list(auto = isTRUE(auto)),
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' @rdname mark_segment
+#' @param curvature For `mark_curve()`, the amount of bend: `0` is straight,
+#'   `1` a half circle; negative values bend the other way (ggplot2's
+#'   convention: positive bends to the right, travelling from start to end).
+#' @param angle For `mark_curve()`, where the apex of the bend sits, in degrees
+#'   between 0 and 180: `90` (default) is symmetric, smaller values move it
+#'   towards the start and larger towards the end.
+#' @param ncp For `mark_curve()`, the number of control points (more give a
+#'   smoother curve; default `5`).
+#' @export
+mark_curve <- function(
+  plot,
+  ...,
+  curvature = 0.5,
+  angle = 90,
+  ncp = 5,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  if (
+    !is.numeric(curvature) || length(curvature) != 1L || !is.finite(curvature)
+  ) {
+    cli::cli_abort("{.arg curvature} must be a single finite number.")
+  }
+  if (
+    !is.numeric(angle) ||
+      length(angle) != 1L ||
+      !is.finite(angle) ||
+      angle <= 0 ||
+      angle >= 180
+  ) {
+    cli::cli_abort("{.arg angle} must be a single number between 0 and 180.")
+  }
+  .check_count(ncp)
+  .add_layer(
+    plot,
+    "segment",
+    rlang::enquos(...),
+    stat_params = list(curvature = curvature, angle = angle, ncp = ncp),
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' @rdname mark_segment
+#' @export
+mark_spoke <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  dots <- rlang::enquos(...)
+  names(dots) <- sub("colour", "color", names(dots), fixed = TRUE)
+  need <- c("x", "y", "angle", "radius")
+  miss <- setdiff(need, names(dots))
+  if (length(miss)) {
+    cli::cli_abort("{.fn mark_spoke} needs {.arg {miss}}.")
+  }
+  # The end point is a per-row expression of the start, the angle and the
+  # radius (ggplot2's `stat_identity` + `xend = x + cos(angle) * radius`), so
+  # every row stays its own element (keys and provenance follow the data).
+  ex <- lapply(dots[need], rlang::quo_get_expr)
+  env <- rlang::quo_get_env(dots$x)
+  dots$xend <- rlang::new_quosure(
+    rlang::expr(!!ex$x + cos(!!ex$angle) * !!ex$radius),
+    env
+  )
+  dots$yend <- rlang::new_quosure(
+    rlang::expr(!!ex$y + sin(!!ex$angle) * !!ex$radius),
+    env
+  )
+  dots <- dots[setdiff(names(dots), c("angle", "radius"))]
+  .add_layer(
+    plot,
+    "segment",
+    dots,
+    blend = blend,
+    effects = effects,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' Polygon and path marks
+#'
+#' `mark_polygon()` draws one filled polygon per `group`, its vertices in data
+#' order (ggplot2's `geom_polygon()`). A `subgroup` cuts holes: within a group,
+#' each subgroup is a ring, filled with the even-odd rule so an inner ring is a
+#' hole. `mark_path()` connects the observations in the order they appear in the
+#' data, unlike [mark_line()], which sorts them by `x` (ggplot2's
+#' `geom_path()`).
+#'
+#' As in ggplot2, `fill` fills a polygon (default `"grey20"`) and `color`
+#' outlines it (no outline by default); a `color` given without any `fill` fills
+#' the polygon instead, as it does for the other filled marks.
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): `x`, `y`, `group` (one polygon / path per
+#'   group), `subgroup` (`mark_polygon()` holes), `fill`, `color`, `alpha`,
+#'   `linewidth`, `linetype`.
+#' @return The modified [PlotSpec].
+#' @examples
+#' tri <- data.frame(
+#'   id = rep(c("a", "b"), each = 3),
+#'   x = c(0, 1, 0.5, 2, 3, 2.5),
+#'   y = c(0, 0, 1, 0, 0, 1)
+#' )
+#' vplot(tri) |> mark_polygon(x = x, y = y, group = id, fill = id)
+#'
+#' # a square with a square hole
+#' sq <- data.frame(
+#'   x = c(0, 4, 4, 0, 1, 3, 3, 1),
+#'   y = c(0, 0, 4, 4, 1, 1, 3, 3),
+#'   ring = rep(1:2, each = 4)
+#' )
+#' vplot(sq) |> mark_polygon(x = x, y = y, subgroup = ring)
+#'
+#' # a path follows the data order
+#' t <- seq(0, 4 * pi, length.out = 200)
+#' vplot(data.frame(x = t * cos(t), y = t * sin(t))) |> mark_path(x = x, y = y)
+#' @export
+mark_polygon <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "polygon",
+    rlang::enquos(...),
+    blend = blend,
+    sketch = sketch,
+    data = data,
+    position = position
+  )
+}
+
+#' @rdname mark_polygon
+#' @export
+mark_path <- function(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  .add_layer(
+    plot,
+    "line",
+    rlang::enquos(...),
+    stat_params = list(sort = FALSE),
     blend = blend,
     effects = effects,
     sketch = sketch,

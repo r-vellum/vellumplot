@@ -31,7 +31,8 @@ NULL
   )
 }
 
-# A filled rectangle spanning [xmin, xmax] x [ymin, ymax] (from annotate("rect")).
+# A filled rectangle spanning [xmin, xmax] x [ymin, ymax] (`mark_rect()`, and
+# `annotate("rect")`), outlined by a `color` given alongside a `fill`.
 # Unlike a tile, the corner bounds are kept so an infinite bound resolves to the
 # panel edge via `.bound_native`. Bounds are mapped to native, then rebuilt into
 # a centre + size for `.rect_units` (which handles flip / coord_trans).
@@ -46,7 +47,7 @@ NULL
   yc <- (y0 + y1) / 2
   w <- abs(x1 - x0)
   h <- abs(y1 - y0)
-  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  fo <- .fill_and_outline(L, scales, "grey35", n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   sk <- .mark_sketch(L, scales)
 
@@ -58,10 +59,12 @@ NULL
     yc,
     w,
     h,
-    fill,
+    fo$fill,
     alpha,
     sk,
-    paint = paint
+    paint = paint,
+    col = if (!all(is.na(fo$col))) fo$col,
+    lwd = .aes_param(L, "linewidth", 0.5)
   )
 }
 
