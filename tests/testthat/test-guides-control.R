@@ -322,7 +322,7 @@ test_that("guide_coloursteps() renders a binned scale as a segmented bar", {
   # the bar labels the numeric bin boundaries (breaks), not the interval strings
   expect_equal(
     vellumplot:::.guide_labels(guides_list[[1]]),
-    vellumplot:::.steps_break_labels(cl)
+    .steps_break_labels(cl)
   )
   expect_no_error(plot_svg(p)) # vertical
   expect_no_error(plot_svg(p |> theme(legend.position = "bottom"))) # horizontal

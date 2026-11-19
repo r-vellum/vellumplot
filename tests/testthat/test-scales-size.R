@@ -58,9 +58,10 @@ test_that("a factor mapped to size trains a discrete scale keyed by its levels",
   d <- transform(mtcars, cyl = factor(cyl))
   p <- vplot(d) |> mark_point(x = wt, y = mpg, size = cyl)
   expect_warning(
-    sc <- .build_panels(p)$scales$size,
+    .build_panels(p),
     class = "vellumplot_discrete_sized_aes"
   )
+  sc <- suppressWarnings(.build_panels(p)$scales$size)
   expect_identical(sc$type, "discrete")
   expect_identical(sc$levels, c("4", "6", "8"))
   expect_identical(sc$legend_labels, c("4", "6", "8"))
@@ -83,10 +84,12 @@ test_that("an ordered factor or a character trains discrete too", {
   )
   p <- vplot(d) |> mark_point(x = x, y = y, size = o)
   # ordered: an order the size can show, so no warning (ggplot2's ordinal scale)
-  expect_no_warning(sc <- .build_panels(p)$scales$size)
+  expect_no_warning(.build_panels(p))
+  sc <- .build_panels(p)$scales$size
   expect_identical(sc$levels, c("lo", "mid", "hi"))
   p2 <- vplot(d) |> mark_point(x = x, y = y, alpha = ch)
-  expect_warning(sc2 <- .build_panels(p2)$scales$alpha, "alpha")
+  expect_warning(.build_panels(p2), "alpha")
+  sc2 <- suppressWarnings(.build_panels(p2)$scales$alpha)
   expect_identical(sc2$type, "discrete")
   expect_identical(sc2$levels, c("a", "b", "c"))
   expect_equal(sc2$legend_alphas, c(0.1, 0.55, 1))
