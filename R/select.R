@@ -36,6 +36,7 @@ NULL
   empty,
   expand = NULL,
   encodings = NULL,
+  bind = NULL,
   call = rlang::caller_env()
 ) {
   inline <- S7::S7_inherits(x, PlotSpec)
@@ -64,7 +65,8 @@ NULL
     toggle = toggle,
     empty = empty,
     expand = expand,
-    encodings = encodings
+    encodings = encodings,
+    bind = bind
   )
   if (inline) add_selection(x, sel) else sel
 }
@@ -174,6 +176,20 @@ select_point <- function(
 #' free-standing (call with the name as the first argument, then share it across
 #' views with [add_selection()] / [filter_by()]).
 #'
+#' # Driving another view's zoom (overview + detail)
+#'
+#' An interval selection can set the visible range of another view: give the
+#' *detail* view a [bind_scale()] that names the selection, and brushing the
+#' *overview* zooms the detail to the brushed range (clearing the brush resets
+#' it). This is Vega-Lite's `scale = list(domain = list(param = "brush"))`.
+#'
+#' `bind = "scales"` is Vega-Lite's other half: the selection is bound to the
+#' *scales of the view it is registered on*. No brush is drawn; panning and
+#' zooming that view (wheel, pinch, drag in pan mode, the navigator) **is** the
+#' selection, its interval the visible data range on `encodings`, and resetting
+#' the zoom empties it. Pair it with [bind_scale()] on another view for linked
+#' zoom, or with [condition()] / [filter_by()] to react to the visible window.
+#'
 #' @param plot A [PlotSpec] (piped form), or a selection **name** string
 #'   (free-standing form).
 #' @param name The selection name (piped form), referenced by [condition()] and
@@ -186,6 +202,9 @@ select_point <- function(
 #'   default, so an untouched plot shows its full self and brushing narrows it)
 #'   or *none* (`FALSE`).
 #' @param on Deprecated alias for `encodings`: `"x"`, `"y"` or `"xy"`.
+#' @param bind `NULL` (default) for a brush, or `"scales"` to bind the selection
+#'   to the view's own pan/zoom domain (Vega-Lite's `bind: "scales"`; see the
+#'   section below). A `"scales"` selection must use `region = "rect"`.
 #' @return A [PlotSpec] (piped form) or a `SelectionSpec` (free-standing form).
 #' @seealso [select_point()], [condition()], [filter_by()], [add_selection()],
 #'   [bind_scale()]
@@ -209,6 +228,20 @@ select_point <- function(
 #'   vplot(df) |> mark_point(x = x, y = y) |> add_selection(sel),
 #'   vplot(df) |> mark_bar(x = g, y = y) |> filter_by(sel)
 #' )
+#'
+#' # overview + detail: brushing the overview zooms the detail
+#' brush <- select_interval("brush", encodings = "x")
+#' vconcat(
+#'   vplot(df) |> mark_line(x = x, y = y) |> add_selection(brush),
+#'   vplot(df) |> mark_line(x = x, y = y) |> bind_scale(brush)
+#' )
+#'
+#' # linked zoom: zooming the left view zooms the right one along x
+#' zoom <- select_interval("zoom", encodings = "x", bind = "scales")
+#' hconcat(
+#'   vplot(df) |> mark_point(x = x, y = y) |> add_selection(zoom),
+#'   vplot(df) |> mark_point(x = x, y = y) |> bind_scale(zoom)
+#' )
 #' @export
 select_interval <- function(
   plot,
@@ -216,7 +249,8 @@ select_interval <- function(
   encodings = c("x", "y"),
   region = c("rect", "lasso"),
   empty = TRUE,
-  on = NULL
+  on = NULL,
+  bind = NULL
 ) {
   if (!is.null(on)) {
     on <- match.arg(on, c("xy", "x", "y"))
@@ -224,6 +258,7 @@ select_interval <- function(
   }
   encodings <- .check_encodings(encodings)
   region <- match.arg(region)
+  bind <- .check_interval_bind(bind, region)
   .selection(
     plot,
     name,
@@ -233,8 +268,30 @@ select_interval <- function(
     fields = NULL,
     toggle = TRUE,
     empty = empty,
-    encodings = encodings
+    encodings = encodings,
+    bind = bind
   )
+}
+
+# Validate an interval selection's `bind`: NULL (a drawn brush) or "scales"
+# (bound to the view's own pan/zoom domain), which has no lasso form.
+.check_interval_bind <- function(bind, region, call = rlang::caller_env()) {
+  if (is.null(bind)) {
+    return(NULL)
+  }
+  if (!identical(bind, "scales")) {
+    cli::cli_abort(
+      '{.arg bind} must be {.code NULL} or {.val scales}.',
+      call = call
+    )
+  }
+  if (!identical(region, "rect")) {
+    cli::cli_abort(
+      '{.code bind = "scales"} needs {.code region = "rect"}.',
+      call = call
+    )
+  }
+  bind
 }
 
 # Validate + normalise an interval selection's `encodings`: a non-empty subset of
@@ -389,16 +446,38 @@ filter_by <- function(plot, selection) {
 
 #' Bind a panel's view to a selection (overview + detail)
 #'
-#' Make the `aes` view of this plot's panel follow an interval
-#' [selection][select_interval] defined on another (overview) plot: dragging the
-#' overview brush pans and zooms this (detail) panel to the selected range. This
-#' is a display-tier view change (pan/zoom), not a scale retrain.
+#' Make the `aes` view of this plot's panel(s) follow an interval
+#' [selection][select_interval] defined on another (overview) plot: brushing the
+#' overview zooms this (detail) view to the brushed range, and clearing the
+#' brush resets its zoom. It is Vega-Lite's
+#' `scale = list(domain = list(param = "brush"))`: the selection names the
+#' detail view's domain. This is a display-tier view change (pan/zoom), not a
+#' scale retrain, so the detail keeps its own scales and its axes re-tick for
+#' the visible range.
+#'
+#' The selection may be a brush or a `bind = "scales"` selection (then zooming
+#' the overview zooms the detail: linked zoom). `aes` must be one of the
+#' selection's `encodings`. Bind as many views as you like to one selection, and
+#' call `bind_scale()` twice (`"x"` and `"y"`) to follow a rectangular brush on
+#' both axes. The panel the brush is drawn in never zooms itself.
+#'
+#' Enacted by `vellumwidget::as_widget()` in SVG mode; under Shiny the detail's
+#' visible range is reported in `input$<id>_zoom$panels`. A composition names
+#' its panels per cell (`"cell-2-panel-1-1"`, ...), so each cell's range is
+#' addressable.
 #'
 #' @param plot A [PlotSpec] (the detail view).
 #' @param selection A `SelectionSpec` (an interval selection), or a name string.
 #' @param aes The axis to bind, `"x"` (default) or `"y"`.
 #' @return The [PlotSpec], with the bind registered.
 #' @seealso [select_interval()]
+#' @examples
+#' df <- data.frame(t = 1:200, v = cumsum(rnorm(200)))
+#' brush <- select_interval("brush", encodings = "x")
+#' vconcat(
+#'   vplot(df, height = 2) |> mark_line(x = t, y = v) |> add_selection(brush),
+#'   vplot(df) |> mark_line(x = t, y = v) |> bind_scale(brush)
+#' )
 #' @export
 bind_scale <- function(plot, selection, aes = c("x", "y")) {
   .check_plot(plot)
@@ -564,6 +643,11 @@ interaction_model.default <- function(x) {
   if (identical(sel@kind, "interval")) {
     rec$encodings <- as.list(sel@encodings %||% .on_encodings(sel@on))
   }
+  # Emitted only when set, so an ordinary selection's record (and an older
+  # host reading it) is unchanged.
+  if (!is.null(sel@bind)) {
+    rec$bind <- sel@bind
+  }
   rec
 }
 
@@ -576,13 +660,27 @@ interaction_model.default <- function(x) {
 # Collect a single plot's interaction declarations into the plain block form,
 # WITHOUT cross-reference validation (a composition validates once across all
 # cells, since a selection may be defined in one cell and referenced in another).
-.plot_interaction_parts <- function(plot) {
+# `cell` is the composition cell id ("cell-<k>", NULL for a lone plot): it scopes
+# a bind to the panels of its own cell (the host matches it against each panel's
+# `cell`, see `.comp_cell_id()`), and records which cells register a selection.
+.plot_interaction_parts <- function(plot, cell = NULL) {
+  sels <- lapply(plot@selections, .selection_record)
+  if (!is.null(cell)) {
+    sels <- lapply(sels, function(s) {
+      s$cells <- list(cell)
+      s
+    })
+  }
   parts <- list(
-    selections = lapply(plot@selections, .selection_record),
+    selections = sels,
     conditions = .plot_conditions(plot),
     filters = lapply(plot@filters, function(f) list(selection = f@selection)),
     binds = lapply(plot@binds, function(b) {
-      list(selection = b@selection, aes = b@aes)
+      out <- list(selection = b@selection, aes = b@aes)
+      if (!is.null(cell)) {
+        out$cell <- cell
+      }
+      out
     })
   )
   if (!is.null(plot@source)) {
@@ -609,6 +707,36 @@ interaction_model.default <- function(x) {
     vapply(parts$binds, function(b) b$selection, character(1))
   )
   .validate_selection_refs(defined, refs)
+  .validate_binds(parts)
+}
+
+# A scale bind follows an interval: it must name an interval selection, and an
+# axis that selection constrains (a y bind on an x-only brush would never move).
+.validate_binds <- function(parts, call = rlang::caller_env()) {
+  sels <- parts$selections
+  names(sels) <- vapply(sels, function(s) s$name, character(1))
+  for (b in parts$binds) {
+    s <- sels[[b$selection]]
+    if (!identical(s$kind, "interval")) {
+      cli::cli_abort(
+        c(
+          "{.fn bind_scale} needs an interval selection; {.val {b$selection}} is a {s$kind} selection.",
+          i = "Declare it with {.fn select_interval}."
+        ),
+        call = call
+      )
+    }
+    if (!b$aes %in% unlist(s$encodings)) {
+      cli::cli_abort(
+        c(
+          "{.code bind_scale(aes = \"{b$aes}\")} follows an axis {.val {b$selection}} does not constrain.",
+          i = "Add {.val {b$aes}} to the selection's {.arg encodings}."
+        ),
+        call = call
+      )
+    }
+  }
+  invisible()
 }
 
 .interaction_model_plot <- function(plot) {
@@ -627,7 +755,13 @@ interaction_model.default <- function(x) {
 # runtime resolve references by name across the whole composition.
 .interaction_model_composition <- function(comp) {
   cells <- .composition_leaf_plots(comp)
-  parts <- lapply(cells, .plot_interaction_parts) # collect, DON'T validate per cell
+  # collect, DON'T validate per cell; cell ids follow the leaf order the compiler
+  # numbers panels by (`.comp_cell_id()`)
+  parts <- Map(
+    function(p, k) .plot_interaction_parts(p, cell = .comp_cell_id(k)),
+    cells,
+    seq_along(cells)
+  )
   merged <- list(
     selections = list(),
     conditions = list(),
@@ -647,19 +781,16 @@ interaction_model.default <- function(x) {
     return(NULL)
   }
   # A selection may be registered on more than one cell (same object, same name);
-  # keep one record per name.
-  seen <- character(0)
-  merged$selections <- Filter(
-    function(s) {
-      if (s$name %in% seen) {
-        FALSE
-      } else {
-        seen <<- c(seen, s$name)
-        TRUE
-      }
-    },
-    merged$selections
-  )
+  # keep one record per name, listing every cell that registers it.
+  uniq <- list()
+  for (s in merged$selections) {
+    if (is.null(uniq[[s$name]])) {
+      uniq[[s$name]] <- s
+    } else {
+      uniq[[s$name]]$cells <- c(uniq[[s$name]]$cells, s$cells)
+    }
+  }
+  merged$selections <- unname(uniq)
   .validate_parts(merged)
   merged
 }

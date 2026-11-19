@@ -491,8 +491,49 @@ compose_annotation <- function(
 # line up and legends collect; it handles the common case (single-panel sub-plots
 # on a regular grid). Anything it can't align yet (faceted/polar sub-plots) falls
 # back to the independent per-cell layout.
+# --- composition cell ids ----------------------------------------------------
+# Every leaf plot of a composition is a *cell*, numbered depth-first in the order
+# `.composition_leaf_plots()` walks them ("cell-1", "cell-2", ...; spacers and
+# insets are not cells). The compiler prefixes each cell's panel viewport names
+# with its id and records it in the panel `meta` (`cell`), so the panels stay
+# unique across the figure and a host (vellumwidget) can tell which cell a panel
+# belongs to -- e.g. to zoom the detail cell a `bind_scale()` names. The
+# interaction model tags binds/selections with the same ids.
+.comp_cell_ctx <- new.env(parent = emptyenv())
+
+.comp_cell_id <- function(k) sprintf("cell-%d", k)
+
+# Advance to the next cell; the next panel draw claims it (`.comp_cell_take()`).
+.comp_cell_next <- function() {
+  n <- (.comp_cell_ctx$n %||% 0L) + 1L
+  .comp_cell_ctx$n <- n
+  .comp_cell_ctx$current <- .comp_cell_id(n)
+  invisible(.comp_cell_ctx$current)
+}
+
+# Claim the pending cell id (NULL outside a composition). Claiming clears it, so
+# a plot drawn *inside* a cell's marks (an inset grob) is not mistaken for it.
+.comp_cell_take <- function() {
+  cur <- .comp_cell_ctx$current
+  .comp_cell_ctx$current <- NULL
+  cur
+}
+
+.comp_cell_reset <- function() {
+  .comp_cell_ctx$n <- 0L
+  .comp_cell_ctx$current <- NULL
+}
+
+# A panel viewport's name inside cell `cell` ("cell-2-panel-1-1"); unchanged
+# outside a composition.
+.cell_panel_name <- function(pname, cell) {
+  if (is.null(cell)) pname else paste0(cell, "-", pname)
+}
+
 .compile_composition <- function(comp) {
   .provenance_reset()
+  .comp_cell_reset()
+  on.exit(.comp_cell_reset(), add = TRUE)
   scene <- vellum::vl_scene(
     width = comp@width,
     height = comp@height,
@@ -570,6 +611,9 @@ compose_annotation <- function(
         scene <- .compile_composition_independent(scene, p)
       }
     } else {
+      if (S7::S7_inherits(p, PlotSpec)) {
+        .comp_cell_next()
+      }
       scene <- .draw_plot(scene, p)
     }
     scene <- vellum::pop(scene)
