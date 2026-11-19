@@ -363,6 +363,7 @@ scale_fill_steps <- scale_fill_binned
 #' vplot(faithful) |>
 #'   mark_point(x = eruptions, y = waiting, color = waiting - 70) |>
 #'   scale_color_steps2()
+#' @export
 scale_color_steps2 <- function(
   plot,
   low = "#832424",
