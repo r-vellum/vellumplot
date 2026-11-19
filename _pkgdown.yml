@@ -166,6 +166,8 @@ reference:
   - mark_count
   - mark_area
   - mark_segment
+  - mark_polygon
+  - mark_rect
   - mark_abline
 - subtitle: Distributions and intervals
   contents:

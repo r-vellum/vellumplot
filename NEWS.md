@@ -2,15 +2,21 @@
 
 ## New features
 
+* New geometry marks matching ggplot2's (F-16): `mark_rect()` (corner bounds,
+  now a documented layer mark rather than only `annotate("rect")`; `color`
+  outlines alongside a `fill`), `mark_polygon()` (one polygon per group, holes
+  via `subgroup`), `mark_path()` (connects rows in data order), `mark_curve()`
+  (`curvature`, `angle`, `ncp`) and `mark_spoke()` (`angle` + `radius`).
+
+* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
+  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
+  intervals, with the slab above each one (VP-42).
+
 * `scale_*_gradient()`, `scale_*_gradient2()`, `scale_*_gradientn()`,
   `scale_*_viridis_c()` and `scale_*_distiller()` gain `limits`, `oob` and
   `na.value` (and the gradients `breaks` / `labels`), as
   `scale_*_continuous()` has; the default `oob = NULL` keeps today's
   behaviour (VP-41).
-
-* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
-  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
-  intervals, with the slab above each one (VP-42).
 
 ## Behaviour changes
 
@@ -22,6 +28,10 @@
   layer's statistic, as in ggplot2 (VP-41).
 
 ## Bug fixes
+
+* A literal `xend`, `yend`, `xmin`, `xmax`, `ymin` or `ymax` (e.g.
+  `mark_segment(xend = 5)`) is a coordinate again: it trains its axis and is
+  drawn, rather than being taken for a constant style setting (F-16).
 
 * In a composition (`|`, `/`, `wrap_plots()`), each sub-plot now honours its
   own `theme(legend.position = "inside")` (or `c(x, y)`), drawing its legend
