@@ -1,5 +1,13 @@
 # vellumplot 0.12.0.9000 (development version)
 
+* `facet_wrap()` and `facet_grid()` take a `labeller` argument for the strip
+  text, with ggplot2's labellers: `label_value()`, `label_both()`
+  (`"cyl: 4"`), `label_wrap_gen(width)` for long values, and
+  `as_labeller()` for a lookup table (`c("0" = "automatic")`) or a function
+  of the values. A named character vector or a plain function can be passed
+  to `labeller =` directly. With several facet variables a strip shows one
+  line per variable, centred, and the strip grows to fit (F-10).
+
 * A two-vertex graph on the default stress layout no longer warns
   "data length [3] is not a sub-multiple or multiple of the number of rows
   [2]". The warning came from graphlayouts' fixed two-vertex branch;

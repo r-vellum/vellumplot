@@ -230,6 +230,7 @@ reference:
   - coord_polar
   - coord_sf
   - facet_wrap
+  - labellers
   - add_marginal
   - position
 

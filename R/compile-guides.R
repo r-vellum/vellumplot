@@ -524,10 +524,21 @@ NULL
   if (!.is_blank(st)) {
     scene <- vellum::draw(
       scene,
-      vellum::text_grob(label, rot = rot, gp = .el_gpar_text(st))
+      .strip_text_grob(label, rot, .el_gpar_text(st))
     )
   }
   vellum::pop(scene)
+}
+
+# Strip text. A multi-line label (from a labeller) centres each line: lines
+# align within a text box, so the box is the label's own measured width (no
+# re-wrapping).
+.strip_text_grob <- function(label, rot, gp) {
+  if (!grepl("\n", label, fixed = TRUE)) {
+    return(vellum::text_grob(label, rot = rot, gp = gp))
+  }
+  w <- vellum::grobwidth(vellum::text_grob(label, gp = gp))
+  vellum::text_grob(label, rot = rot, width = w, align = "centre", gp = gp)
 }
 
 # One axis-title band. `axis` is "x"/"y"; `sec = TRUE` is the secondary variant
