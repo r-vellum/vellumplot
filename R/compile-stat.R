@@ -7,8 +7,10 @@ NULL
 #
 # Semantics (ggplot2's): an explicit `group` wins outright -- mapped (`group =
 # id`) it is the key, set as a constant (`group = 1`) it makes the whole layer one
-# group. Without one, the first *discrete* of `color`, `fill` is the key. A
-# continuous colour never groups: it varies within a series (a line coloured
+# group. Without one, the first *discrete* of `color`, `fill`, `pattern`,
+# `linetype`, `shape` (`.GROUP_AES`) is the key, so a layer split only by a
+# pattern or a linetype groups -- and stacks, in legend order -- as one split by
+# fill does (VP-38). A continuous colour never groups: it varies within a series (a line coloured
 # along its length), it does not split it. The key is not an interaction of
 # every discrete aesthetic -- connected marks still split each group by style at
 # draw time (`.series_groups()`), which gives the interaction where it matters
@@ -23,7 +25,7 @@ NULL
     g <- L$params$group
   }
   if (is.null(g)) {
-    for (aes in c("color", "fill")) {
+    for (aes in .GROUP_AES) {
       v <- L$values[[aes]]
       if (!is.null(v) && !.is_continuous_group(v)) {
         g <- v
@@ -41,6 +43,10 @@ NULL
   g
 }
 
+# The aesthetics a layer without `group` takes its grouping key from; the first
+# discrete one wins.
+.GROUP_AES <- c("color", "fill", "pattern", "linetype", "shape")
+
 # A vector that varies continuously (numeric / date-time), which `.group_key()`
 # never splits on. A factor is discrete whatever its levels look like.
 .is_continuous_group <- function(v) {
@@ -54,6 +60,9 @@ NULL
   stat <- L$stat
   if (identical(L$mark, "bar") && stat == "identity" && is.null(L$values$y)) {
     stat <- "count"
+  }
+  if (L$mark %in% c("violin", "ridgeline", "halfeye")) {
+    L <- .drop_varying_shape_style(L)
   }
   if (stat == "identity") {
     if (length(L$after)) {
@@ -171,6 +180,63 @@ NULL
     )
   }
   invisible()
+}
+
+# A violin, ridge or slab is one polygon per category (and group), so it has
+# one fill, colour and alpha. A per-row aesthetic that varies within one shape
+# -- typically a continuous `fill` mapped to the value itself -- has no single
+# value to paint it with. ggplot2 computes these shapes with a stat
+# (`stat_ydensity()`), which drops such an aesthetic with a warning; so do we,
+# before training, so no legend promises a gradient the shapes cannot show
+# (VP-37). Before, each shape silently took the fill of its first row. An
+# aesthetic constant within every shape (one value per category) is kept.
+.drop_varying_shape_style <- function(L) {
+  n <- L$n %||% max(lengths(L$values))
+  cat_axis <- switch(
+    L$mark,
+    violin = .dist_axes(.dist_orient(L))[["cat"]],
+    ridgeline = "y",
+    "x"
+  )
+  cats <- L$values[[cat_axis]]
+  if (!n || length(cats) != n) {
+    return(L)
+  }
+  grp <- .group_key(L)
+  key <- paste(
+    as.character(cats),
+    if (is.null(grp)) "" else as.character(grp),
+    sep = "\r"
+  )
+  cells <- split(seq_len(n), key)
+  dropped <- character(0)
+  for (nm in intersect(.STAT_CARRIED, names(L$values))) {
+    v <- L$values[[nm]]
+    if (length(v) != n || nm == "group") {
+      next
+    }
+    varies <- any(vapply(
+      cells,
+      function(i) length(unique(v[i])) > 1L,
+      logical(1)
+    ))
+    if (varies) {
+      L$values[[nm]] <- NULL
+      L$types[[nm]] <- NULL
+      dropped <- c(dropped, nm)
+    }
+  }
+  if (length(dropped)) {
+    fn <- paste0("mark_", L$mark)
+    cli::cli_warn(
+      c(
+        "{.fn {fn}} dropped {.field {dropped}}: {?it varies/they vary} within one shape.",
+        i = "Each {L$mark} is a single polygon with one {dropped[[1]]}. Map a variable that is constant within each category, or a discrete one."
+      ),
+      class = "vellumplot_dropped_aes"
+    )
+  }
+  L
 }
 
 # The per-row styling aesthetics a stat carries through: it neither computes
