@@ -76,6 +76,9 @@ NULL
   "strip.background"
 )
 
+# The default base text size (points) of the complete themes.
+.BASE_SIZE <- 11
+
 # Non-element scalar settings + defaults.
 .SETTINGS_DEFAULTS <- list(
   legend.position = "right",
@@ -143,8 +146,14 @@ NULL
   el <- theme[[slot]]
   parent <- .ELEMENT_PARENTS[[slot]]
   resolved <- if (is.na(parent)) {
-    # root: a complete theme defines it; fall back to an empty element
-    if (.is_blank(el)) el else (el %||% .empty_element(slot))
+    # root: a complete theme defines it; fall back to an empty element. A
+    # root text size left relative has no parent to scale; read it against
+    # the default base size so drawers always get points.
+    root <- if (.is_blank(el)) el else (el %||% .empty_element(slot))
+    if (S7::S7_inherits(root, .element_text) && .is_rel(root@size)) {
+      root@size <- .combine_size(.BASE_SIZE, root@size)
+    }
+    root
   } else {
     presolved <- .resolve_slot(parent, theme, cache)
     if (.is_blank(presolved) || .is_blank(el)) {
@@ -152,7 +161,7 @@ NULL
     } else if (is.null(el)) {
       presolved
     } else {
-      .merge_element(presolved, el)
+      .inherit_element(presolved, el)
     }
   }
   cache[[slot]] <- resolved
@@ -184,7 +193,20 @@ NULL
     } else if (.is_blank(val) || is.null(base[[nm]]) || .is_blank(base[[nm]])) {
       base[[nm]] <- val
     } else {
-      base[[nm]] <- .merge_element(base[[nm]], val)
+      merged <- .merge_element(base[[nm]], val)
+      # A `rel()` size laid over an absolute one scales it (so
+      # `theme(text = element_text(size = rel(2)))` doubles the base size);
+      # over a relative or unset size it replaces, and is resolved against
+      # the parent element later, as in ggplot2.
+      if (
+        S7::S7_inherits(val, .element_text) &&
+          .is_rel(val@size) &&
+          is.numeric(base[[nm]]@size) &&
+          !.is_rel(base[[nm]]@size)
+      ) {
+        merged@size <- .combine_size(base[[nm]]@size, val@size)
+      }
+      base[[nm]] <- merged
     }
   }
   base

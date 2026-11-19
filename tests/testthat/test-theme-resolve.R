@@ -71,3 +71,90 @@ test_that("presets resolve every drawn leaf to blank or the right element", {
     }
   }
 })
+
+# VP-10: text size cascades through the tree via rel().
+text_sizes <- function(rt) {
+  leaves <- c(
+    "plot.title",
+    "plot.subtitle",
+    "plot.caption",
+    "plot.tag",
+    "axis.title.x",
+    "axis.title.y",
+    "legend.title",
+    "axis.text.x",
+    "axis.text.y",
+    "legend.text",
+    "strip.text"
+  )
+  vapply(leaves, function(s) rt[[s]]@size, numeric(1))
+}
+
+test_that("default text sizes are unchanged by the rel() cascade (VP-10)", {
+  expect_identical(
+    text_sizes(resolve(gray())),
+    c(
+      plot.title = 14,
+      plot.subtitle = 11,
+      plot.caption = 9,
+      plot.tag = 12,
+      axis.title.x = 11,
+      axis.title.y = 11,
+      legend.title = 10,
+      axis.text.x = 9,
+      axis.text.y = 9,
+      legend.text = 9,
+      strip.text = 9
+    )
+  )
+})
+
+test_that("theme(text = size) scales every text element (VP-10)", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    theme(text = element_text(size = 22))
+  sz <- text_sizes(resolve(p@theme))
+  expect_equal(sz, text_sizes(resolve(gray())) * 2)
+})
+
+test_that("base_size scales a complete theme (VP-10)", {
+  for (preset in list(theme_gray, theme_minimal, theme_bw, theme_cyberpunk)) {
+    p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> preset(base_size = 22)
+    expect_equal(text_sizes(resolve(p@theme)), text_sizes(resolve(gray())) * 2)
+  }
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    theme_bw(base_family = "serif")
+  expect_identical(resolve(p@theme)[["axis.text.x"]]@family, "serif")
+  expect_snapshot(error = TRUE, theme_gray(vplot(mtcars), base_size = -1))
+})
+
+test_that("rel() resolves against the parent element (VP-10)", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    theme(
+      text = element_text(size = 20),
+      axis.text = element_text(size = rel(0.5)),
+      axis.text.x = element_text(size = rel(2))
+    )
+  rt <- resolve(p@theme)
+  expect_equal(rt[["axis.text.y"]]@size, 10)
+  expect_equal(rt[["axis.text.x"]]@size, 20) # rel(2) of axis.text's 10
+  expect_equal(rt[["plot.title"]]@size, 20 * 14 / 11) # title still cascades
+  # rel() over an absolute size scales it
+  p2 <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    theme(text = element_text(size = rel(2)))
+  expect_equal(resolve(p2@theme)[["axis.title.x"]]@size, 22)
+  expect_s3_class(rel(1.5), "rel")
+  expect_snapshot(error = TRUE, rel("a"))
+})
+
+test_that("a text colour still inherits where no preset colour is set (VP-10)", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    theme(text = element_text(colour = "red"))
+  rt <- resolve(p@theme)
+  expect_identical(rt[["axis.title.x"]]@colour, "red")
+  expect_identical(rt[["legend.title"]]@colour, "red")
+})

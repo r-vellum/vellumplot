@@ -61,6 +61,16 @@
 
 ## Bug fixes
 
+* **Theme text sizes cascade from `text`.** `theme(text = element_text(size
+  = 20))` resized only the axis titles; axis text, legend text, strips and
+  the plot title kept their own fixed sizes. The complete themes now size
+  every text element relative to the `text` root, so the change reaches all
+  of them. New `rel()` gives a size as a multiple of the inherited one
+  (`theme(axis.text = element_text(size = rel(0.8)))`), and every complete
+  theme takes `base_size` and `base_family`, as in ggplot2. Default sizes are
+  unchanged. Colours set by a preset (grey axis text, for example) still win
+  over a `text` colour, as in ggplot2 (VP-10).
+
 * **Provenance carries every trained scale.** `plot_provenance()` records
   listed scale-refs only for `x`, `y`, colour/fill, `size` and `shape`. A
   mapped `alpha`, `linetype`, `linewidth` or `pattern` now carries its
