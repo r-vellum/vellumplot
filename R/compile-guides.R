@@ -1056,8 +1056,32 @@ NULL
 # one into the NA key or whatever follows the legend.
 .bar_end_pad_mm <- function(m) m$text_h / 2
 
-# The N+1 bin boundaries of a stepped colour bar, as trimmed numeric labels.
-.steps_break_labels <- function(sc) format(sc$breaks, trim = TRUE)
+# The N+1 bin boundaries of a stepped colour bar, as labels. Each break is
+# formatted on its own, in the colourbar's plain number style (no big mark, no
+# scientific notation), so quantile breaks spanning orders of magnitude read
+# "0.0002, 0.066, 2.32, 193, 806" rather than all padded to the smallest one's
+# precision. Three significant digits, more only where two labels would
+# otherwise read the same.
+.steps_break_labels <- function(sc) {
+  b <- as.numeric(sc$breaks)
+  fmt <- function(digits) {
+    vapply(
+      b,
+      function(x) {
+        format(x, digits = digits, scientific = FALSE, trim = TRUE)
+      },
+      character(1)
+    )
+  }
+  labs <- fmt(3L)
+  for (d in 4:15) {
+    if (!anyDuplicated(labs[!is.na(b)])) {
+      break
+    }
+    labs <- fmt(d)
+  }
+  labs
+}
 
 # Measured height (mm) of a vertical guide: title line + key rows (uniform pitch
 # = max(key diameter, text height) + gap), or title + colour bar (+ NA row).
@@ -1739,7 +1763,7 @@ NULL
   revb <- isTRUE(cl$reverse_bar)
   cols <- if (revb) rev(cl$colors) else cl$colors
   brk <- if (revb) rev(cl$breaks) else cl$breaks
-  blabs <- format(brk, trim = TRUE)
+  blabs <- .steps_break_labels(list(breaks = brk))
   n <- length(cols)
   has_na <- isTRUE(cl$na)
   na_h <- max(m$key, m$text_h) + m$row_gap
@@ -2141,7 +2165,7 @@ NULL
   revb <- isTRUE(cl$reverse_bar)
   cols <- if (revb) rev(cl$colors) else cl$colors
   brk <- if (revb) rev(cl$breaks) else cl$breaks
-  blabs <- format(brk, trim = TRUE)
+  blabs <- .steps_break_labels(list(breaks = brk))
   n <- length(cols)
   bar_thick <- cl$bar_height %||% m$bar_w
   ticks_on <- cl$bar_ticks %||% FALSE
