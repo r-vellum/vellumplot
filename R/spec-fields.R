@@ -493,9 +493,9 @@ spec_fields <- function(data, n_examples = 3L) {
     )
   }
 
-  # 3. A manual (discrete) palette on a continuous colour channel. It compiles,
-  # but every distinct number becomes its own category, recycling the palette;
-  # ggplot2 refuses it ("Continuous values supplied to discrete scale").
+  # 3. A manual (discrete) palette on a continuous colour channel. The compile
+  # refuses it, as ggplot2 does ("Continuous values supplied to a discrete
+  # scale"), so it is an error here too, caught before compiling.
   quant <- Filter(function(v) identical(v$type, "quantitative"), votes)
   if (
     length(quant) &&
@@ -505,9 +505,9 @@ spec_fields <- function(data, n_examples = 3L) {
   ) {
     v <- quant[[1]]
     add(
-      "warning",
+      "error",
       sprintf(
-        "A manual/discrete colour palette is set, but layer %d maps %s to a continuous variable: each distinct value becomes its own category.",
+        "A manual/discrete colour palette is set, but layer %d maps %s to a continuous variable: continuous values cannot go on a discrete colour scale.",
         v$layer,
         v$channel
       ),
@@ -541,8 +541,7 @@ spec_fields <- function(data, n_examples = 3L) {
 #'   continuous, one discrete) although they share one colour scale and legend
 #'   (an error, or a warning when the scale kind is set explicitly);
 #' * a **manual or discrete palette** (`scale_color_manual()`, ...) on a
-#'   continuous colour channel, which would make every distinct number its own
-#'   category (a warning).
+#'   continuous colour channel, which the compile refuses (an error).
 #'
 #' @section Compile report:
 #' Some rows produce no visible mark. The `report` element counts them per

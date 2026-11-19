@@ -173,7 +173,9 @@
   but still drawn (a squished position, or a colour, fill, size, alpha or
   linewidth value that is clamped, given the NA colour or extrapolated).
   Those rows are not part of `dropped`, and each layer with any adds its own
-  warning (VP-36, #208).
+  warning. The pre-compile check for a manual or discrete colour palette on a
+  continuous variable is now an error, matching the compile, which refuses it
+  (VP-36, #208).
 
 # vellumplot 0.12.0
 

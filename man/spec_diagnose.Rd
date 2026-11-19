@@ -54,8 +54,7 @@ variable's panels);
 continuous, one discrete) although they share one colour scale and legend
 (an error, or a warning when the scale kind is set explicitly);
 \item a \strong{manual or discrete palette} (\code{scale_color_manual()}, ...) on a
-continuous colour channel, which would make every distinct number its own
-category (a warning).
+continuous colour channel, which the compile refuses (an error).
 }
 }
 
