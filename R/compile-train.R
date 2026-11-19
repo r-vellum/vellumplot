@@ -1574,7 +1574,8 @@ NULL
       cats,
       .cat_levels(cats),
       adjust,
-      .group_key(L)
+      .group_key(L),
+      trim = isTRUE(L$stat_params$trim)
     )
     .finite_range(unlist(lapply(dens, function(d) if (!is.null(d)) d$x)))
   }

@@ -164,8 +164,10 @@ test_that(".marg_layer reuses the density / bin stats (identical to the marks)",
 
   # density
   md <- vellumplot:::.marg_layer(list(x = x), MS(type = "density", adjust = 1))
-  expect_equal(md$L$values$y, stats::density(x, adjust = 1)$y)
-  expect_equal(md$maxd, max(stats::density(x, adjust = 1)$y))
+  # (evaluated over the data range, as `mark_density()` is)
+  ref <- stats::density(x, adjust = 1, from = min(x), to = max(x))
+  expect_equal(md$L$values$y, ref$y)
+  expect_equal(md$maxd, max(ref$y))
 
   # histogram: compare to mark_histogram's own resolved stat
   df <- data.frame(v = x)

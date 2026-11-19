@@ -58,6 +58,27 @@
     containing non-finite values" for rows they leave out because an input is
     `Inf` or missing, as ggplot2's stats do, instead of dropping them silently.
 
+* **Small stat differences from ggplot2 are fixed (VP-23).**
+  - **Behaviour change:** `mark_count()`'s `after_stat(prop)` is the share of
+    the point's group, so each colour's bubbles sum to 1 (ggplot2's
+    `stat_sum()`). Before, it was the share of the whole layer.
+  - The count stat behind `mark_bar()` now names its proportion `prop`, as
+    ggplot2 does. `after_stat(density)` still works as an alias.
+  - **Behaviour change:** `mark_density()` evaluates the curve over the range
+    of the layer's data, as ggplot2 does, instead of running on ~3 bandwidths
+    past it. The x axis is no longer padded by the kernel's tails, and every
+    group's curve spans the same x. The new `trim = TRUE` ends each group's
+    curve at its own data.
+  - **Behaviour change:** `mark_violin()` trims each violin to the range of
+    its data by default, as ggplot2's `geom_violin()` does. Use
+    `trim = FALSE` for the old untrimmed outline.
+  - **Behaviour change:** `mark_hull(expand =)` and `mark_node_hull(expand =)`
+    grow each hull by a uniform margin with rounded corners, a fraction of the
+    layer's range on each axis, instead of scaling it about its centroid. A
+    long thin hull now gets the same margin as a round one, and every hull in
+    a layer gets the same margin whatever its size. `mark_node_hull()`'s default
+    `expand` is now `0.04`.
+
 # vellumplot 0.12.0
 
 ## New features

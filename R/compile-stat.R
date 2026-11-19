@@ -497,6 +497,8 @@ NULL
       x = factor(names(t), levels = xlevs),
       count = n,
       y = n,
+      prop = n / sum(n),
+      # `density` is the old name of `prop`, kept as an alias.
       density = n / sum(n),
       stringsAsFactors = FALSE
     )
@@ -508,17 +510,20 @@ NULL
       stringsAsFactors = FALSE
     )
     agg <- agg[agg$Freq > 0, , drop = FALSE]
-    data.frame(
+    out <- data.frame(
       x = factor(agg$x, levels = xlevs),
       group = factor(agg$group, levels = glevs),
       count = agg$Freq,
       y = agg$Freq,
       # proportion within each group (each group sums to 1), matching ggplot2
-      # (an NA group is a group of its own; `ave()` would skip it)
-      density = agg$Freq /
+      # (an NA group is a group of its own; `ave()` would skip it). ggplot2
+      # calls it `prop`; `density` is kept as an alias.
+      prop = agg$Freq /
         stats::ave(agg$Freq, addNA(factor(agg$group)), FUN = sum),
       stringsAsFactors = FALSE
     )
+    out$density <- out$prop
+    out
   }
 }
 
@@ -542,9 +547,14 @@ NULL
     n = cnt,
     stringsAsFactors = FALSE
   )
-  out$prop <- out$n / sum(out$n)
-  if (!is.null(grp)) {
+  # `prop` is the share of the point's group (ggplot2's `stat_sum()`), so each
+  # group's bubbles sum to 1; ungrouped, the group is the whole layer.
+  if (is.null(grp)) {
+    out$prop <- out$n / sum(out$n)
+  } else {
     out$group <- grp[first]
+    out$prop <- out$n /
+      stats::ave(out$n, addNA(factor(as.character(out$group))), FUN = sum)
   }
   # Each bubble keeps its first row for per-row values (`.rows`) and names every
   # coincident row it merges for provenance (`members`).
@@ -1214,9 +1224,16 @@ NULL
 
 # A 1-D kernel density of x (per group): a dense (x, density) curve. Groups with
 # fewer than 2 finite points are skipped with a warning (a density needs >= 2).
+#
+# As in ggplot2, the curve is evaluated over the data's range only, never the
+# ~3-bandwidth tails `stats::density()` pads by default: over the whole layer's
+# x range (`trim = FALSE`, the default, so every group's curve spans the same
+# x), or over each group's own range (`trim = TRUE`).
 .stat_density <- function(L) {
   x <- as.numeric(L$values$x)
   adjust <- L$stat_params$adjust %||% 1
+  trim <- isTRUE(L$stat_params$trim)
+  layer_rng <- .finite_range(x)
   .per_group(
     L,
     length(x),
@@ -1231,7 +1248,8 @@ NULL
         }
         return(NULL)
       }
-      d <- stats::density(xi, adjust = adjust)
+      rng <- if (trim) range(xi) else layer_rng
+      d <- stats::density(xi, adjust = adjust, from = rng[1], to = rng[2])
       data.frame(x = d$x, y = d$y, density = d$y)
     },
     "{.fn mark_density} needs at least 2 finite points."
@@ -1754,6 +1772,10 @@ NULL
   x <- as.numeric(L$values$x)
   y <- as.numeric(L$values$y)
   expand <- L$stat_params$expand %||% 0
+  # The margin is measured against the whole layer's extent, so every group's
+  # hull grows by the same amount.
+  xspan <- diff(.finite_range(x) %||% c(0, 1))
+  yspan <- diff(.finite_range(y) %||% c(0, 1))
   .per_group(
     L,
     length(x),
@@ -1769,19 +1791,52 @@ NULL
         }
         return(NULL)
       }
-      h <- grDevices::chull(xi, yi)
+      # chull() lists the hull clockwise; reverse to counter-clockwise.
+      h <- rev(grDevices::chull(xi, yi))
       hx <- xi[h]
       hy <- yi[h]
-      # `expand` grows the hull outward from its centroid so it encloses the node
-      # markers (whose centres the raw hull passes through). 0 = the tight hull.
-      if (expand != 0) {
-        cx <- mean(hx)
-        cy <- mean(hy)
-        hx <- cx + (hx - cx) * (1 + expand)
-        hy <- cy + (hy - cy) * (1 + expand)
+      # `expand` grows the hull outward so it encloses the node markers (whose
+      # centres the raw hull passes through). 0 = the tight hull.
+      if (expand > 0) {
+        off <- .offset_hull(hx, hy, expand, xspan, yspan)
+        hx <- off$x
+        hy <- off$y
       }
       data.frame(x = hx, y = hy, .piece = k)
     },
     "{.fn mark_hull} needs at least 3 points."
   )
+}
+
+# Grow a convex polygon (counter-clockwise vertices `x`, `y`) outward by a
+# uniform margin with rounded corners: its Minkowski sum with a disc, the
+# outline ggforce's hull marks draw. The margin is `expand` of the layer's span
+# on each axis (`xspan`, `yspan`), so the offset is done in coordinates where
+# both spans are 1 and is the same on every side however long, thin or small
+# the hull is. (Scaling about the centroid, as before, barely thickened a long
+# thin hull and grew a large one more than a small one.) Each vertex becomes an
+# arc between the outward normals of its two edges, with a point every
+# `step` radians at most.
+.offset_hull <- function(x, y, expand, xspan, yspan, step = pi / 18) {
+  sx <- if (isTRUE(xspan > 0)) xspan else 1
+  sy <- if (isTRUE(yspan > 0)) yspan else 1
+  u <- x / sx
+  v <- y / sy
+  m <- length(u)
+  nxt <- c(seq_len(m)[-1L], 1L)
+  # outward normal angle of each edge i -> nxt[i] (counter-clockwise ring)
+  ang <- atan2(-(u[nxt] - u), v[nxt] - v)
+  ox <- list()
+  oy <- list()
+  for (i in seq_len(m)) {
+    a0 <- ang[c(m, seq_len(m - 1L))][i] # the edge arriving at vertex i
+    a1 <- ang[i] # the edge leaving it
+    while (a1 < a0) {
+      a1 <- a1 + 2 * pi
+    }
+    a <- seq(a0, a1, length.out = max(2L, ceiling((a1 - a0) / step) + 1L))
+    ox[[i]] <- u[i] + expand * cos(a)
+    oy[[i]] <- v[i] + expand * sin(a)
+  }
+  list(x = unlist(ox) * sx, y = unlist(oy) * sy)
 }
