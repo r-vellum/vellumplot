@@ -798,6 +798,17 @@ test_that("elbow edges are keyed; self-loops stay unkeyed but render", {
   expect_true(file.exists(png))
 })
 
+test_that("a two-vertex graph lays out without a recycling warning", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("graphlayouts")
+  # graphlayouts' n == 2 stress branch warns about recycling; vgraph bypasses it
+  d <- igraph::graph_from_edgelist(matrix(c(1, 2), ncol = 2))
+  expect_no_warning(.graph_layout(d))
+  expect_equal(.graph_layout(d), matrix(c(0, 0, 1, 0), 2, 2, byrow = TRUE))
+  p <- vgraph(d) |> mark_edges() |> mark_nodes()
+  expect_no_warning(vellum::scene_svg(vellum::as_vellum_scene(p)))
+})
+
 # --- N8: select_neighbours() preset ------------------------------------------
 
 test_that("select_neighbours() builds a point selection carrying an expand spec", {
