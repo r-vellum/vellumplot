@@ -57,6 +57,10 @@ test_that("every constructor ggplot2 can look up by name defers to ggplot2", {
     grep("^guide_", clash, value = TRUE)
   )
   expect_gt(length(reachable), 40L)
+  # ggplot2's time scales need hms
+  if (!rlang::is_installed("hms")) {
+    reachable <- grep("_time$", reachable, value = TRUE, invert = TRUE)
+  }
   # call each one from a frame inside ggplot2's namespace, as ggplot2 does
   from_ggplot2 <- new.env(parent = asNamespace("ggplot2"))
   for (nm in reachable) {
