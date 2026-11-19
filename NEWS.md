@@ -35,6 +35,35 @@
   plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
   their docs now say how they differ (VV-2).
 
+* **`mark_histogram()` bins like ggplot2.** It gains `binwidth`, `breaks`,
+  `boundary`, `center` and `closed`, with ggplot2's meaning: `breaks` gives the
+  bin edges (bins may differ in width), `binwidth` the width, and `boundary` /
+  `center` where the bins are aligned. The bin stat also computes `ncount` and
+  `ndensity`, and the x axis now covers the outer bars' edges (F-10).
+
+  **Behaviour change:** the default `bins = 30` now places bins as ggplot2
+  does, with the outer bins centred on the smallest and largest values (width
+  `range / (bins - 1)`), instead of 30 bins from the minimum to the maximum.
+  Counts now match `geom_histogram()` for the same `bins`.
+
+* **New `mark_freqpoly()`** draws the bin counts as a frequency polygon, one
+  line per group, padded with an empty bin at each end like ggplot2's
+  `geom_freqpoly()`. It takes the same binning arguments as
+  `mark_histogram()` (F-10).
+
+* **`mark_summary()` draws ranges.** With `fun.data` (`"mean_se"`,
+  `"mean_cl_normal"`, `"mean_sdl"`, `"median_hilow"`, or a function such as
+  `ggplot2::mean_se()`), or with `fun.min` / `fun.max`, it summarises each
+  category into a point and a range and draws a point range, like ggplot2's
+  `stat_summary()`. `fun.args` passes extra arguments. Without them it draws
+  points as before (F-10).
+
+* **Horizontal box plots and violins.** `mark_boxplot()` and `mark_violin()`
+  gain `orientation`. By default it is inferred as in ggplot2: a discrete `y`
+  with a continuous `x` (`mark_boxplot(x = mpg, y = factor(cyl))`) draws
+  horizontal boxes / violins, and the axis is widened for the violin outline as
+  for vertical ones. `orientation = "x"` or `"y"` forces either (F-10).
+
 * **Stat parameters are checked where you write them.** `bins`, `binwidth`,
   `adjust`, `span`, `level`, `height`, `segments` and `n` in `mark_histogram()`,
   `mark_hex()`, `mark_bin2d()`, `mark_dotplot()`, `mark_density()`,

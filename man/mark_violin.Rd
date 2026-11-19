@@ -12,6 +12,7 @@ mark_violin(
   position = "identity",
   adjust = 1,
   trim = TRUE,
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -54,6 +55,11 @@ on a position it does not support, naming the ones it does.}
 at the smallest and largest value of its data; \code{FALSE} lets the kernel's
 tails run on past them.}
 
+\item{orientation}{For \code{mark_violin()}, \code{NA} (default) to infer it from the
+data (horizontal when \code{y} is discrete and \code{x} is not, as in ggplot2), \code{"x"}
+for vertical violins along a discrete \code{x}, or \code{"y"} for horizontal violins
+along \code{y}.}
+
 \item{blend, sketch, data}{Standard layer arguments (see \code{\link[=mark_point]{mark_point()}}).}
 
 \item{height}{Ridge height as a multiple of the row band (ridgeline; default
@@ -74,6 +80,7 @@ stacks one dot per observation.
 \examples{
 df <- data.frame(g = rep(letters[1:3], each = 50), v = rnorm(150))
 vplot(df) |> mark_violin(x = g, y = v)
+vplot(df) |> mark_violin(x = v, y = g) # horizontal
 vplot(df) |> mark_ridgeline(x = v, y = g)
 vplot(df) |> mark_dotplot(x = v)
 }
