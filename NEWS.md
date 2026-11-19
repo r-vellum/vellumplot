@@ -193,6 +193,21 @@
     a layer gets the same margin whatever its size. `mark_node_hull()`'s default
     `expand` is now `0.04`.
 
+* `spec_diagnose()`'s `$report` now also counts the rows a stat leaves out
+  itself, in a new `stat` column: an infinite value in a histogram, density,
+  smooth or 2-D bin, or every row of a group too small for a density, smooth,
+  ellipse or hull. The stats record which input rows they skip, and the report
+  maps those back to the layer's data across facet panels, so the count
+  matches what the compile draws. Limits now follow each scale's `oob`: a
+  clipped or censored position, or a censored size, counts under `limits`.
+  A second new column, `oob`, counts rows that are outside a scale's `limits`
+  but still drawn (a squished position, or a colour, fill, size, alpha or
+  linewidth value that is clamped, given the NA colour or extrapolated).
+  Those rows are not part of `dropped`, and each layer with any adds its own
+  warning. The pre-compile check for a manual or discrete colour palette on a
+  continuous variable is now an error, matching the compile, which refuses it
+  (VP-36, #208).
+
 # vellumplot 0.12.0
 
 ## New features
