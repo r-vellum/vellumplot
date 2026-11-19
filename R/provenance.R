@@ -69,14 +69,14 @@ NULL
 # `linewidth` channel to the line-width or the edge-width scale by the layer's
 # mark. See `.aes_scale_for_channel()`.
 
-# Normalise a trained scale (whose field names differ by kind: position scales
-# carry `type`/`domain`, colour/size carry `kind`/`levels`/`range`) to a compact,
-# serializable reference. Best-effort and defensive -- a missing field is NA/NULL,
+# Normalise a trained scale (R/trained-scale.R) to a compact, serializable
+# reference: its `kind`, and its domain -- `domain` for an axis, `levels` for a
+# keyed legend scale. Best-effort and defensive -- a missing field is NA/NULL,
 # never an error.
 .scale_ref <- function(key, sc) {
   list(
     scale = key,
-    type = sc$type %||% sc$kind %||% NA_character_,
+    type = sc$kind %||% NA_character_,
     domain = sc$domain %||% sc$levels
   )
 }

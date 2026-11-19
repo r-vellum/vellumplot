@@ -141,17 +141,17 @@ add_marginal <- function(
 # shape of a trained position scale (see .train_position in compile-train.R) so
 # the mark emitters can read $map / $band_width / $domain.
 .marg_density_scale <- function(maxd) {
-  list(
-    aesthetic = "y",
-    type = "continuous",
+  trained_scale(
+    "y",
+    "continuous",
+    map = function(v) as.numeric(v),
+    name = NULL,
     discrete = FALSE,
     band_width = NULL,
     data_range = c(0, maxd),
     domain = c(0, maxd),
     breaks = numeric(0),
-    labels = character(0),
-    map = function(v) as.numeric(v),
-    name = NULL
+    labels = character(0)
   )
 }
 

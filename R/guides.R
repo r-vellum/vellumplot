@@ -291,24 +291,25 @@ guide_colorsteps <- guide_coloursteps
 }
 
 # Apply a guide spec to a trained (non-position) scale: `"none"` drops the
-# legend; `guide_legend()` can rename it or reverse the key order.
+# legend; `guide_legend()` can rename it or reverse the key order. Fields are set
+# through `.scale_set()` and the result is re-checked (R/trained-scale.R), so a
+# guide cannot leave the scale breaking its invariants.
 .apply_guide <- function(trained, guide) {
   if (is.null(guide) || is.null(trained)) {
     return(trained)
   }
   if (identical(guide, "none")) {
-    trained$no_guide <- TRUE
-    return(trained)
+    return(.scale_set(trained, no_guide = TRUE))
   }
   if (is.list(guide)) {
     if (identical(guide$kind, "bivariate")) {
       trained <- .apply_bivariate_guide(trained, guide)
     } else if (identical(guide$kind, "legend")) {
       # guide_legend() on a bivariate scale: the classes as a plain keyed list.
-      trained$bivariate <- NULL
+      trained <- .scale_set(trained, bivariate = NULL)
     }
     if (!is.null(guide$title)) {
-      trained$name <- guide$title
+      trained <- .scale_set(trained, name = guide$title)
     }
     if (isTRUE(guide$reverse)) {
       trained <- .reverse_guide(trained)
@@ -316,13 +317,13 @@ guide_colorsteps <- guide_coloursteps
     if (!is.null(guide[["override.aes"]])) {
       # Carried to the key drawers (`.key_grob` / `.colour_key_grob`), which force
       # these aesthetics on the swatches only -- the marks are untouched.
-      trained$override_aes <- guide[["override.aes"]]
+      trained <- .scale_set(trained, override_aes = guide[["override.aes"]])
     }
     # guide_legend(nested = TRUE) on a size scale draws its keys as concentric,
     # bottom-aligned circles (a proportional-symbol legend) instead of stacked
     # rows; flagged here, re-routed to the bubble drawer in .legend_guides().
     if (isTRUE(guide$nested)) {
-      trained$nested <- TRUE
+      trained <- .scale_set(trained, nested = TRUE)
     }
     # guide_colourbar() / guide_coloursteps(): carry the bar geometry + tick/label
     # options onto the trained colour scale for the continuous-guide drawers to
@@ -332,24 +333,34 @@ guide_colorsteps <- guide_coloursteps
       trained <- .rebreak_bar(trained, guide$n_breaks)
     }
     if (guide$kind %in% c("colourbar", "coloursteps")) {
-      trained$bar_width <- guide$bar_width
-      trained$bar_height <- guide$bar_height
-      trained$bar_ticks <- guide$ticks
-      trained$bar_ticks_colour <- guide$ticks_colour
-      trained$bar_label_pos <- guide$label_position
+      trained <- .scale_set(
+        trained,
+        bar_width = guide$bar_width,
+        bar_height = guide$bar_height,
+        bar_ticks = guide$ticks,
+        bar_ticks_colour = guide$ticks_colour,
+        bar_label_pos = guide$label_position
+      )
       if (identical(guide$kind, "coloursteps")) {
-        trained$stepped <- TRUE
         # `.reverse_guide()` above already flipped the bin colours (the `binned`
         # branch) but deliberately NOT `breaks` (they would desync a swatch
         # legend). The stepped bar pairs each break with a segment edge, so flip
         # the breaks too here to keep colours and boundary labels in step.
-        if (isTRUE(guide$reverse)) {
-          trained$breaks <- rev(trained$breaks)
-        }
+        trained <- .scale_set(
+          trained,
+          stepped = TRUE,
+          breaks = if (isTRUE(guide$reverse)) {
+            rev(trained$breaks)
+          } else {
+            trained$breaks
+          }
+        )
       }
     }
   }
-  trained
+  # `.reverse_guide()`, `.rebreak_bar()` and the bivariate guide edit fields
+  # directly; re-check what they leave.
+  .validate_trained_scale(trained)
 }
 
 # guide_colourbar(n.breaks = n): re-derive the bar's tick positions for a

@@ -23,14 +23,14 @@ NULL
   if (is.null(sc)) {
     return(NULL)
   }
-  # Report date/datetime as the axis type (vellumplot keeps the internal `type`
+  # Report date/datetime as the axis type (vellumplot keeps the internal `kind`
   # as "continuous"); `time_unit` disambiguates and gives the numeric epoch unit.
   rtype <- if (identical(sc$time_unit, "second")) {
     "datetime"
   } else if (identical(sc$time_unit, "day")) {
     "date"
   } else {
-    sc$type
+    sc$kind
   }
   list(
     type = rtype,
