@@ -11,7 +11,8 @@ scale_x_binned(
   n = 10,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_y_binned(
@@ -20,7 +21,8 @@ scale_y_binned(
   n = 10,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 }
 \arguments{
@@ -36,6 +38,10 @@ scale_y_binned(
 \item{labels}{Explicit boundary labels, or \code{NULL} to format the boundaries.}
 
 \item{name}{Axis title, or \code{NULL} to derive from the encoding.}
+
+\item{guide}{The axis guide: \code{\link[=guide_axis]{guide_axis()}} to stagger, rotate or thin the
+labels, \code{"none"} for no labels or ticks, or \code{NULL} (default) for the plain
+axis. Same as \code{guides(x = )} / \code{guides(y = )}.}
 }
 \value{
 The modified \link{PlotSpec}.

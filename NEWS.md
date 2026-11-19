@@ -1,5 +1,12 @@
 # vellumplot 0.14.1.9000 (development version)
 
+## New features
+
+* `scale_x_date()`, `scale_x_datetime()`, `scale_x_time()`, `scale_x_binned()`
+  and their `y` counterparts take `guide =`, like the continuous and discrete
+  position scales: `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the
+  month labels (VP-45).
+
 ## Bug fixes
 
 * `guide_axis(check.overlap = TRUE)` now also thins the labels of free facet
