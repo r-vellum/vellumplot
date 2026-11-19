@@ -341,10 +341,17 @@ test_that("a manual palette on a continuous channel is caught", {
     mark_point(x = wt, y = mpg, color = hp) |>
     scale_color_manual(values = c("red", "blue"))
   d <- spec_diagnose(p)
-  expect_true(d$ok)
+  # the compile now refuses it, as ggplot2 does (VP-11); the pre-compile check
+  # still explains why
+  expect_false(d$ok)
   w <- diag_msgs(d, "warning")
   expect_length(w, 1L)
   expect_match(w, "manual/discrete colour palette", fixed = TRUE)
+  expect_match(
+    diag_msgs(d, "error"),
+    "Continuous values supplied to a discrete",
+    fixed = TRUE
+  )
   # a manual palette on a discrete channel is what it is for
   ok <- spec_diagnose(
     vplot(mtcars) |>

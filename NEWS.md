@@ -1,15 +1,41 @@
 # vellumplot 0.12.0.9000 (development version)
 
-* `spec_diagnose()`'s `$report` now also counts the rows a stat leaves out
-  itself, in a new `stat` column: an infinite value in a histogram, density,
-  smooth or 2-D bin, or every row of a group too small for a density, smooth,
-  ellipse or hull. The stats record which input rows they skip, and the report
-  maps those back to the layer's data across facet panels, so the count
-  matches what the compile draws. A second new column, `oob`, counts rows that
-  are drawn but have a colour, fill, size, alpha or linewidth value outside
-  that scale's `limits` (colour is clamped to the end of the palette, the
-  others extrapolate). Those rows are not part of `dropped`, and each layer
-  with any adds its own warning (VP-36, #208).
+* **Behaviour change:** a discrete colour scale (`scale_*_manual()`,
+  `scale_*_discrete()`, `scale_*_brewer()`, ...) on a numeric variable now
+  errors ("Continuous values supplied to a discrete colour scale"), as in
+  ggplot2, instead of giving every distinct number its own colour (VP-11).
+
+* **Behaviour change:** discrete position axes drop factor levels no row uses,
+  as ggplot2 does by default; `scale_x_discrete(drop = FALSE)` keeps them
+  (F-10).
+
+* **Behaviour change:** `x = Inf` / `-Inf` (and `y`) on a continuous axis now
+  sits on the panel edge, as in ggplot2, rather than being lost (VP-11).
+
+* An aesthetic whose values are all missing no longer draws a 0-1 colourbar or
+  size legend; a continuous scale with no data and no limits draws no legend
+  (VP-11).
+
+* `coord_cartesian(xlim =, ylim =)` (and the other coords' limits) now zoom a
+  discrete axis too, in level positions as in ggplot2: `xlim = c(2, 4)` shows
+  the second to fourth levels (VP-11).
+
+* `scale_x_discrete()` / `scale_y_discrete()` gain `breaks` (the levels that
+  get a tick), `labels` (a vector, a vector named by level, or a function) and
+  `drop` (F-10).
+
+* `scale_x_continuous()`, `scale_y_continuous()`, `scale_color_continuous()`,
+  `scale_fill_continuous()`, `scale_size()` and `scale_alpha()` gain `oob`:
+  `"censor"`, `"squish"`, `"keep"` or a `function(x, range)` such as
+  `scales::oob_squish_any()`, with `scales::oob_*()` semantics. The defaults
+  are unchanged: positions and sizes keep out-of-limits values, colours squish
+  them (F-10).
+
+* Legends can sit inside the panels: `theme(legend.position = "inside")` with
+  `legend.position.inside = c(x, y)` and `legend.justification`, or the older
+  `legend.position = c(x, y)`. Positions are fractions of the panel area; the
+  justification (a `c(x, y)` or words such as `c("right", "top")`) defaults to
+  the position, so `c(1, 1)` tucks the legend into the top-right corner (F-10).
 
 * **Behaviour change:** a factor, character or logical mapped to `size` or
   `alpha` now trains a discrete scale, as in ggplot2. Before, a factor was
@@ -62,6 +88,35 @@
   conflicts. `pdf_pages()` and `render_all()` differ from vellum's (they take
   plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
   their docs now say how they differ (VV-2).
+
+* **`mark_histogram()` bins like ggplot2.** It gains `binwidth`, `breaks`,
+  `boundary`, `center` and `closed`, with ggplot2's meaning: `breaks` gives the
+  bin edges (bins may differ in width), `binwidth` the width, and `boundary` /
+  `center` where the bins are aligned. The bin stat also computes `ncount` and
+  `ndensity`, and the x axis now covers the outer bars' edges (F-10).
+
+  **Behaviour change:** the default `bins = 30` now places bins as ggplot2
+  does, with the outer bins centred on the smallest and largest values (width
+  `range / (bins - 1)`), instead of 30 bins from the minimum to the maximum.
+  Counts now match `geom_histogram()` for the same `bins`.
+
+* **New `mark_freqpoly()`** draws the bin counts as a frequency polygon, one
+  line per group, padded with an empty bin at each end like ggplot2's
+  `geom_freqpoly()`. It takes the same binning arguments as
+  `mark_histogram()` (F-10).
+
+* **`mark_summary()` draws ranges.** With `fun.data` (`"mean_se"`,
+  `"mean_cl_normal"`, `"mean_sdl"`, `"median_hilow"`, or a function such as
+  `ggplot2::mean_se()`), or with `fun.min` / `fun.max`, it summarises each
+  category into a point and a range and draws a point range, like ggplot2's
+  `stat_summary()`. `fun.args` passes extra arguments. Without them it draws
+  points as before (F-10).
+
+* **Horizontal box plots and violins.** `mark_boxplot()` and `mark_violin()`
+  gain `orientation`. By default it is inferred as in ggplot2: a discrete `y`
+  with a continuous `x` (`mark_boxplot(x = mpg, y = factor(cyl))`) draws
+  horizontal boxes / violins, and the axis is widened for the violin outline as
+  for vertical ones. `orientation = "x"` or `"y"` forces either (F-10).
 
 * **Stat parameters are checked where you write them.** `bins`, `binwidth`,
   `adjust`, `span`, `level`, `height`, `segments` and `n` in `mark_histogram()`,

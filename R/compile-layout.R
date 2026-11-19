@@ -172,6 +172,15 @@ NULL
   vellum::vl_unit(total + m$margin[2] + m$margin[4], "mm")
 }
 
+# Height (mm) of a vertical legend drawn as one column: its guides stacked
+# with their spacing, plus the legend margins. What an inside legend's box
+# needs.
+.legend_stack_height <- function(guides, rt) {
+  m <- .legend_metrics(rt)
+  hs <- vapply(guides, .guide_height_mm, 0, m = m)
+  sum(hs) + (length(hs) - 1L) * m$spacing + m$margin[1] + m$margin[3]
+}
+
 # Height of a horizontal legend row (top/bottom): the tallest guide, each a title
 # line above its keys (or above bar + labels for a colour bar). Independent of the
 # guide count, which spreads across the row's width.
@@ -370,7 +379,13 @@ NULL
   # Legend placement. "right"/"left" take a column beside the panels (vertical
   # guide stack); "top"/"bottom" take a row spanning the panel columns
   # (horizontal guide flow); "none" suppresses it.
+  # "inside" / c(x, y) overlays the panels and takes no track
+  # (`.legend_inside()`).
   pos <- rt[["legend.position"]]
+  inside <- .legend_inside(rt)
+  if (!is.null(inside)) {
+    pos <- "inside"
+  }
   show_legend <- length(guides) && !identical(pos, "none")
   legend_vert <- show_legend && pos %in% c("left", "right")
   legend_horiz <- show_legend && pos %in% c("top", "bottom")
@@ -581,6 +596,7 @@ NULL
     legend_col = legend_col,
     legend_row = legend_row,
     legend_pos = pos,
+    legend_inside = if (show_legend) inside,
     legend_avail_h = legend_avail_h,
     title_row = title_row,
     subtitle_row = subtitle_row,

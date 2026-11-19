@@ -15,7 +15,8 @@ scale_x_continuous(
   labels = NULL,
   name = NULL,
   expand = NULL,
-  sec.axis = NULL
+  sec.axis = NULL,
+  oob = NULL
 )
 
 scale_y_continuous(
@@ -26,12 +27,27 @@ scale_y_continuous(
   labels = NULL,
   name = NULL,
   expand = NULL,
-  sec.axis = NULL
+  sec.axis = NULL,
+  oob = NULL
 )
 
-scale_x_discrete(plot, limits = NULL, name = NULL)
+scale_x_discrete(
+  plot,
+  limits = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  drop = TRUE
+)
 
-scale_y_discrete(plot, limits = NULL, name = NULL)
+scale_y_discrete(
+  plot,
+  limits = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  drop = TRUE
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
@@ -46,7 +62,9 @@ so signed data and zero/negatives read on one axis), \code{"reverse"}, or a
 \code{\link[scales:transform_log10]{scales::transform_log10()}}-style transform object.}
 
 \item{breaks, labels}{Explicit break positions (data units) and their labels,
-or \code{NULL} to compute them.}
+or \code{NULL} to compute them. On a discrete scale \code{breaks} is the levels that
+get a tick, and \code{labels} a character vector (one per break, or named by
+level) or a function of the levels.}
 
 \item{name}{Axis title, or \code{NULL} to derive from the encoding.}
 
@@ -60,6 +78,17 @@ axis exactly to the data (e.g. a bar chart's baseline), or \code{expand = c(0.1,
 \item{sec.axis}{A secondary axis from \code{\link[=sec_axis]{sec_axis()}} / \code{\link[=dup_axis]{dup_axis()}}, drawn on
 the opposite edge, or \code{NULL} for none. Continuous Cartesian plots only (see
 \code{\link[=sec_axis]{sec_axis()}} for the current limitations).}
+
+\item{oob}{What to do with values outside \code{limits}, as in
+\code{\link[scales:oob_censor]{scales::oob_censor()}} and friends: \code{"censor"} drops them (they become
+\code{NA} and are not drawn), \code{"squish"} moves them onto the nearest limit,
+\code{"keep"} draws them where they fall, clipped by the panel. A function
+\verb{function(x, range)} such as \code{\link[scales:oob_squish_any]{scales::oob_squish_any()}} also works. \code{NULL}
+(default) is \code{"keep"} on a position axis. Infinite values are never out
+of bounds: \code{x = Inf} sits on the panel edge.}
+
+\item{drop}{For discrete scales, drop factor levels that do not occur in
+the data (default \code{TRUE}, as in ggplot2). \code{limits} overrides it.}
 }
 \value{
 The modified \link{PlotSpec}.

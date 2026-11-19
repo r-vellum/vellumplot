@@ -69,6 +69,42 @@ NULL
   cells
 }
 
+# The orientation of a box plot / violin: `"x"` when the categories run along
+# x (vertical shapes), `"y"` when they run along y (horizontal shapes). An
+# explicit `orientation` wins; otherwise, as in ggplot2, a discrete y with a
+# continuous x is horizontal and everything else vertical.
+.dist_orient <- function(L) {
+  o <- L$stat_params$orientation
+  if (length(o) == 1L && !is.na(o)) {
+    return(o)
+  }
+  continuous <- function(v) {
+    !is.null(v) &&
+      !is.factor(v) &&
+      (is.numeric(v) || inherits(v, c("Date", "POSIXt")))
+  }
+  if (!continuous(L$values$y) && continuous(L$values$x)) "y" else "x"
+}
+
+# The category axis and value axis of an oriented distribution mark.
+.dist_axes <- function(orient) {
+  if (identical(orient, "y")) {
+    c(cat = "y", val = "x")
+  } else {
+    c(cat = "x", val = "y")
+  }
+}
+
+# Native (category-position, value) coordinates to grob units, swapping them
+# for a horizontal mark.
+.dist_xy <- function(scales, orient, cpos, val) {
+  if (identical(orient, "y")) {
+    .xy_units(scales, val, cpos)
+  } else {
+    .xy_units(scales, cpos, val)
+  }
+}
+
 # Fill and outline of a filled distribution mark, with ggplot2's semantics:
 # `fill` fills, `color` strokes. A mapped `fill` goes through the colour scale,
 # else a constant (non-paint) `fill`, else `fill_default`; the outline is a
@@ -133,14 +169,18 @@ NULL
 }
 
 .emit_boxplot <- function(scene, L, scales) {
-  yv <- rep_len(as.numeric(L$values$y), L$n)
+  orient <- .dist_orient(L)
+  ax <- .dist_axes(orient)
+  ca <- ax[["cat"]]
+  yv <- rep_len(as.numeric(L$values[[ax[["val"]]]]), L$n)
   pt <- .dist_paint(L, scales, "white")
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), L$n)
   sk <- .mark_sketch(L, scales)
-  band <- scales$x$band_width %||% .resolution(scales$x$map(L$values$x))
+  band <- scales[[ca]]$band_width %||%
+    .resolution(scales[[ca]]$map(L$values[[ca]]))
   hw0 <- 0.375 * band
-  my <- function(v) scales$y$map(v)
-  cells <- .by_category(L, scales, "x", span = 2 * hw0)
+  my <- function(v) scales[[ax[["val"]]]]$map(v)
+  cells <- .by_category(L, scales, ca, span = 2 * hw0)
 
   for (k in seq_along(cells)) {
     cl <- cells[[k]]
@@ -166,13 +206,13 @@ NULL
     line_gp <- vellum::vl_gpar(col = stroke, lwd = 1, alpha = gp_alpha(a))
     skj <- .sketch_bump(sk, k)
 
-    r <- .rect_units(
-      scales,
-      xc,
-      (my(q1) + my(q3)) / 2,
-      2 * hw,
-      abs(my(q3) - my(q1))
-    )
+    vc <- (my(q1) + my(q3)) / 2
+    vh <- abs(my(q3) - my(q1))
+    r <- if (identical(orient, "y")) {
+      .rect_units(scales, vc, xc, vh, 2 * hw)
+    } else {
+      .rect_units(scales, xc, vc, 2 * hw, vh)
+    }
     scene <- .draw(
       scene,
       vellum::rect_grob(
@@ -191,11 +231,15 @@ NULL
       # PROVENANCE: a box summarises all rows of its category (and sub-group).
       rows = sel
     )
+    # each segment as (category position, value) endpoints
     for (seg in list(
       c(xc - hw, my(med), xc + hw, my(med)), # median
       c(xc, my(q3), xc, my(hi)), # upper whisker
       c(xc, my(q1), xc, my(lo)) # lower whisker
     )) {
+      if (identical(orient, "y")) {
+        seg <- seg[c(2L, 1L, 4L, 3L)]
+      }
       s <- .seg_units(
         scales,
         vellum::vl_unit(seg[1], "native"),
@@ -221,7 +265,7 @@ NULL
       # The outlier points map 1:1 to their originating rows.
       sel_fin <- sel[is.finite(yv[sel])]
       out_rows <- sel_fin[yv[sel_fin] < lo | yv[sel_fin] > hi]
-      xy <- .xy_units(scales, rep(xc, length(out)), my(out))
+      xy <- .dist_xy(scales, orient, rep(xc, length(out)), my(out))
       scene <- .draw(
         scene,
         vellum::points_grob(
@@ -328,19 +372,24 @@ NULL
 # polygon whose half-width is the density scaled to the category band. Mirrors
 # the boxplot layout (categorical x, value y).
 .emit_violin <- function(scene, L, scales) {
-  yv <- rep_len(as.numeric(L$values$y), L$n)
+  orient <- .dist_orient(L)
+  ax <- .dist_axes(orient)
+  ca <- ax[["cat"]]
+  va <- ax[["val"]]
+  yv <- rep_len(as.numeric(L$values[[va]]), L$n)
   pt <- .dist_paint(L, scales, "grey70")
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), L$n)
   adjust <- L$stat_params$adjust %||% 1
   trim <- isTRUE(L$stat_params$trim)
-  band <- scales$x$band_width %||% .resolution(scales$x$map(L$values$x))
+  band <- scales[[ca]]$band_width %||%
+    .resolution(scales[[ca]]$map(L$values[[ca]]))
   hw0 <- .VIOLIN_HALFWIDTH * band
   sk <- .mark_sketch(L, scales)
-  cells <- .by_category(L, scales, "x", span = 2 * hw0)
+  cells <- .by_category(L, scales, ca, span = 2 * hw0)
   for (k in seq_along(cells)) {
     cl <- cells[[k]]
     sel <- cl$rows
-    d <- .density_of(.native_values(scales$y, yv[sel]), adjust, trim)
+    d <- .density_of(.native_values(scales[[va]], yv[sel]), adjust, trim)
     if (is.null(d)) {
       next
     }
@@ -352,7 +401,7 @@ NULL
       .density_offset(d, hw0 * cl$share),
       "violin"
     )
-    xy <- .xy_units(scales, poly$perp, poly$supp)
+    xy <- .dist_xy(scales, orient, poly$perp, poly$supp)
     scene <- .draw(
       scene,
       vellum::polygon_grob(
