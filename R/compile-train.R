@@ -1709,9 +1709,18 @@ NULL
   co <- .coord_of(spec)
   xs <- .axis_pool(resolved, "x", "xintercept")
   ys <- .axis_pool(resolved, "y", "yintercept")
+  # A rug draws on whichever axes it has, so `mark_rug(x = )` alone trains an
+  # empty y axis (as ggplot2 does) instead of asking for a y encoding.
+  has_rug <- any(vapply(resolved, function(L) identical(L$mark, "rug"), NA))
+  blank <- NULL
+  if (has_rug && xor(is.null(xs), is.null(ys))) {
+    blank <- if (is.null(xs)) "x" else "y"
+    if (is.null(xs)) xs <- list(numeric(0)) else ys <- list(numeric(0))
+  }
   if (is.null(xs) || is.null(ys)) {
+    miss <- c("x", "y")[c(is.null(xs), is.null(ys))]
     cli::cli_abort(
-      "Every layer needs an {.field x} and {.field y} encoding."
+      "No layer maps {.field {miss}}; every plot needs an {.field x} and a {.field y} position."
     )
   }
   scales <- list(
@@ -1733,6 +1742,14 @@ NULL
       values = ys
     )
   )
+  if (!is.null(blank)) {
+    scales[[blank]] <- .scale_set(
+      scales[[blank]],
+      breaks = numeric(0),
+      labels = character(0),
+      name = NULL
+    )
+  }
   # Every other registered scale, in registry (legend) order, by its trainer;
   # then its guides() override (guide = "none" / guide_legend()). An untrained
   # scale stays as a NULL entry so every key is always present.

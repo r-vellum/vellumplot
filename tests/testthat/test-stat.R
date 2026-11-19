@@ -66,20 +66,22 @@ test_that("grouped histogram density integrates to 1 per group (H26)", {
   }
 })
 
-test_that("binning stats abort cleanly on all-NA / empty input (H25)", {
+test_that("binning stats drop the layer with a warning on all-NA input (H25, VP-22)", {
   na_df <- data.frame(v = rep(NA_real_, 5), w = rep(NA_real_, 5))
-  expect_error(
-    vellumplot:::.resolve_layers(vplot(na_df) |> mark_histogram(x = v)),
-    "finite"
-  )
-  expect_error(
-    vellumplot:::.resolve_layers(vplot(na_df) |> mark_bin2d(x = v, y = w)),
-    "finite"
-  )
-  expect_error(
-    vellumplot:::.resolve_layers(vplot(na_df) |> mark_hex(x = v, y = w)),
-    "finite"
-  )
+  drops <- function(p) {
+    r <- suppressWarnings(vellumplot:::.resolve_layers(p))[[1]]
+    expect_identical(r$n, 0L)
+    expect_warning(
+      withCallingHandlers(
+        vellumplot:::.resolve_layers(p),
+        vellumplot_nonfinite_rows = function(w) invokeRestart("muffleWarning")
+      ),
+      class = "vellumplot_stat_dropped"
+    )
+  }
+  drops(vplot(na_df) |> mark_histogram(x = v))
+  drops(vplot(na_df) |> mark_bin2d(x = v, y = w))
+  drops(vplot(na_df) |> mark_hex(x = v, y = w))
 })
 
 test_that("the count stat preserves a custom factor level order on x", {
