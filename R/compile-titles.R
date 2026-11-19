@@ -57,10 +57,17 @@ NULL
   if (y_mapped) {
     return(FALSE)
   }
+  # a frequency polygon (`mark_freqpoly()`) counts too
+  counts_bins <- any(vapply(
+    spec@layers,
+    function(L) identical(L@stat, "bin"),
+    logical(1)
+  ))
   if (!is.null(resolved)) {
-    .has_bar(resolved)
+    .has_bar(resolved) || counts_bins
   } else {
-    any(vapply(spec@layers, function(L) identical(L@mark, "bar"), logical(1)))
+    counts_bins ||
+      any(vapply(spec@layers, function(L) identical(L@mark, "bar"), logical(1)))
   }
 }
 

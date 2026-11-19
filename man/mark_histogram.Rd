@@ -2,6 +2,7 @@
 % Please edit documentation in R/marks.R
 \name{mark_histogram}
 \alias{mark_histogram}
+\alias{mark_freqpoly}
 \alias{mark_smooth}
 \title{Statistical marks}
 \usage{
@@ -9,7 +10,27 @@ mark_histogram(
   plot,
   ...,
   bins = 30,
+  binwidth = NULL,
+  breaks = NULL,
+  boundary = NULL,
+  center = NULL,
+  closed = c("right", "left"),
   position = "stack",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
+
+mark_freqpoly(
+  plot,
+  ...,
+  bins = 30,
+  binwidth = NULL,
+  breaks = NULL,
+  boundary = NULL,
+  center = NULL,
+  closed = c("right", "left"),
+  position = "identity",
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -35,7 +56,24 @@ mark_smooth(
 
 \item{...}{Encodings (tidy-eval), e.g. \code{x}, \code{y}, \code{color}/\code{fill}.}
 
-\item{bins}{Number of histogram bins.}
+\item{bins}{Number of histogram bins (default 30), used when neither
+\code{binwidth} nor \code{breaks} is given. As in ggplot2, the outer bins are centred
+on the smallest and largest values unless \code{boundary} or \code{center} is set.}
+
+\item{binwidth}{Width of each bin, overriding \code{bins}.}
+
+\item{breaks}{A numeric vector of bin edges, overriding \code{bins} and
+\code{binwidth}. Bins may have different widths; values outside the edges are
+not counted.}
+
+\item{boundary, center}{Where the bins are aligned: \code{boundary} is a position
+that falls on an edge between two bins, \code{center} one that falls on a bin's
+centre (give at most one). Either may lie outside the data. For example
+\verb{binwidth = 1, boundary = 0} makes bins \verb{(0, 1]}, \verb{(1, 2]}, .... With
+neither, bins of a given \code{binwidth} are aligned on \code{binwidth / 2}.}
+
+\item{closed}{Which side of each bin is closed: \code{"right"} (default, \verb{(a, b]})
+or \code{"left"} (\verb{[a, b)}). The outermost edges always count.}
 
 \item{position}{Position adjustment for the histogram bars (\code{"stack"},
 \code{"dodge"}, \code{"fill"}).}
@@ -72,9 +110,11 @@ The modified \link{PlotSpec}.
 }
 \description{
 Marks that apply a statistical transform before drawing. \code{mark_histogram()}
-bins a continuous \code{x} and draws the per-bin counts as bars. \code{mark_smooth()}
-fits a model of \code{y} on \code{x} (per group) and draws the fitted line, with a
-confidence ribbon when \code{se = TRUE}.
+bins a continuous \code{x} and draws the per-bin counts as bars. The bin stat
+computes \code{count}, \code{density} (each group integrates to 1), \code{ncount} and
+\code{ndensity} (scaled to a maximum of 1), and \code{width}, for \code{\link[=after_stat]{after_stat()}}.
+\code{mark_smooth()} fits a model of \code{y} on \code{x} (per group) and draws the fitted
+line, with a confidence ribbon when \code{se = TRUE}.
 }
 \details{
 \code{mark_smooth()} supports several \code{method}s:
@@ -90,9 +130,18 @@ confidence ribbon when \code{se = TRUE}.
 median); needs the \pkg{quantreg} package and draws the fitted line only
 (no confidence ribbon). For several quantiles, add one layer per \code{tau}.
 }
+
+\code{mark_freqpoly()} draws the same bin counts as a line through the bin
+centres (a frequency polygon), one line per group. Like ggplot2's
+\code{geom_freqpoly()} it adds an empty bin at each end, so each line starts and
+ends at zero. It takes the same binning arguments as \code{mark_histogram()}, and
+\code{y = after_stat(density)} draws densities instead of counts.
 }
 \examples{
 vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
+# bins of width 2 with an edge at 10: (10, 12], (12, 14], ...
+vplot(mtcars) |> mark_histogram(x = mpg, binwidth = 2, boundary = 10)
+vplot(mtcars) |> mark_freqpoly(x = mpg, color = factor(cyl), binwidth = 2)
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg)
 # local regression with a wider neighbourhood
 vplot(mtcars) |>

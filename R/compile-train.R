@@ -1803,16 +1803,23 @@ NULL
     band <- sc$band_width %||% .resolution(sc$map(cats))
     c(min(pos) - lo * band, max(pos) + hi * band)
   }
-  if (L$mark %in% c("violin", "halfeye")) {
+  if (identical(L$mark, "violin")) {
+    # a violin's value axis is y, or x when it is horizontal
+    ax <- .dist_axes(.dist_orient(L))
+    if (identical(aes, ax[["val"]])) {
+      return(support(L$values[[ax[["val"]]]], L$values[[ax[["cat"]]]]))
+    }
+    cats_extent(
+      L$values[[ax[["cat"]]]],
+      .VIOLIN_HALFWIDTH,
+      .VIOLIN_HALFWIDTH
+    )
+  } else if (identical(L$mark, "halfeye")) {
     if (identical(aes, "y")) {
       return(support(L$values$y, L$values$x))
     }
-    if (identical(L$mark, "violin")) {
-      cats_extent(L$values$x, .VIOLIN_HALFWIDTH, .VIOLIN_HALFWIDTH)
-    } else {
-      # one-sided slab: extends to the right of each tick by the slab width
-      cats_extent(L$values$x, 0, L$stat_params$scale %||% .SLAB_WIDTH)
-    }
+    # one-sided slab: extends to the right of each tick by the slab width
+    cats_extent(L$values$x, 0, L$stat_params$scale %||% .SLAB_WIDTH)
   } else if (identical(L$mark, "ridgeline")) {
     if (identical(aes, "x")) {
       return(support(L$values$x, L$values$y))

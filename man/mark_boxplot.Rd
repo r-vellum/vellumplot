@@ -13,6 +13,7 @@ mark_boxplot(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -42,6 +43,10 @@ mark_summary(
   ...,
   position = "identity",
   fun = mean,
+  fun.data = NULL,
+  fun.min = NULL,
+  fun.max = NULL,
+  fun.args = list(),
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -85,6 +90,10 @@ violins and slab-intervals (so error bars dodge over dodged bars);
 points. A position a mark does not support is an error naming the ones it
 does.}
 
+\item{orientation}{For \code{mark_boxplot()}, \code{NA} (default) to infer it from the
+data (horizontal when \code{y} is discrete and \code{x} is not), \code{"x"} for vertical
+boxes along a discrete \code{x}, or \code{"y"} for horizontal boxes along \code{y}.}
+
 \item{blend}{Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
@@ -99,7 +108,22 @@ accept it; text, raster, hex and datashade marks do not.}
 
 \item{width}{For \code{mark_errorbar()}, the cap width as a fraction of the band.}
 
-\item{fun}{For \code{mark_summary()}, the aggregation function (default \code{mean}).}
+\item{fun}{For \code{mark_summary()}, the aggregation function (default \code{mean}).
+With \code{fun.min} / \code{fun.max} it gives the point of the range.}
+
+\item{fun.data}{For \code{mark_summary()}, a summary giving a point and a range
+per category: \code{"mean_se"} (mean +/- one standard error), \code{"mean_cl_normal"}
+(mean with a t-based confidence interval), \code{"mean_sdl"} (mean +/- two
+standard deviations), \code{"median_hilow"} (median with the central 95\% of the
+data), or a function of the values that returns \code{y}, \code{ymin} and \code{ymax}
+(such as ggplot2's \code{mean_se()}). Overrides \code{fun}, \code{fun.min} and \code{fun.max}.}
+
+\item{fun.min, fun.max}{For \code{mark_summary()}, functions giving the bottom and
+top of each category's range (e.g. \verb{fun.min = min, fun.max = max}).}
+
+\item{fun.args}{For \code{mark_summary()}, a list of extra arguments to the
+summary functions, e.g. \code{list(mult = 2)} for \code{"mean_se"} or
+\code{list(conf.int = 0.9)} for \code{"mean_cl_normal"}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -109,9 +133,15 @@ The modified \link{PlotSpec}.
 values (box = Q1-Q3, median line, 1.5*IQR whiskers, outlier points).
 \code{mark_errorbar()} draws vertical bars from \code{ymin} to \code{ymax} with horizontal
 caps; \code{mark_linerange()} omits the caps. \code{mark_summary()} aggregates \code{y} per
-\code{x} with \code{fun} (default mean) and draws the result as points.
+\code{x} with \code{fun} (default mean) and draws the result as points; give it
+\code{fun.data} (or \code{fun.min} / \code{fun.max}) and it draws each summary as a point
+with a range instead, like ggplot2's \code{stat_summary()}.
 }
 \details{
+A box plot is vertical when \code{x} is the discrete axis. When \code{y} is discrete
+and \code{x} continuous (\code{mark_boxplot(x = mpg, y = factor(cyl))}) it is drawn
+horizontally, as in ggplot2; \code{orientation} forces either.
+
 \code{mark_pointrange()} draws a point at \verb{(x, y)} with a vertical line from \code{ymin}
 to \code{ymax} (an identity mark — supply the summary values yourself, e.g. from a
 model). \code{mark_crossbar()} draws a box spanning \code{ymin}..\code{ymax} with a
@@ -120,4 +150,8 @@ horizontal line at \code{y}. Both are the identity counterparts of the aggregati
 }
 \examples{
 vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
+# horizontal: the discrete variable on y
+vplot(mtcars) |> mark_boxplot(x = mpg, y = factor(cyl))
+# mean and standard error per category
+vplot(mtcars) |> mark_summary(x = factor(cyl), y = mpg, fun.data = "mean_se")
 }
