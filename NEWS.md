@@ -48,6 +48,12 @@
   `aspect.ratio`) and marginal plots; before, it silently kept every label
   there. Polar axes still keep every label (VP-45).
 
+* `position_dodge()` / `position_dodge2()` on a horizontal `mark_errorbar()`,
+  `mark_linerange()` or `mark_pointrange()` (`orientation = "y"`) now dodge the
+  groups along y, the category axis, as a horizontal box plot does and as in
+  ggplot2. Before, horizontal error bars were not dodged at all and a
+  horizontal point-range's points were shifted along the value axis (VP-45).
+
 # vellumplot 0.14.1
 
 ## Bug fixes
