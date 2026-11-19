@@ -1,5 +1,14 @@
 # vellumplot 0.13.0.9000 (development version)
 
+## Bug fixes
+
+* `as_spec()` (and `spec_to_json()`) serialize a facet's declarative labeller:
+  `label_value`, `label_both`, `label_wrap_gen(width)`, a named character
+  vector, and `as_labeller()` over a lookup table with one of those as its
+  default. They round-trip through `from_spec()` / `spec_from_json()` and render
+  the same strips. Only an arbitrary labeller function still raises the classed
+  `vellumplot_unserializable` error (VP-44).
+
 # vellumplot 0.13.0
 
 ## Behaviour changes

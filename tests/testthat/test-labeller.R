@@ -103,11 +103,69 @@ test_that("a multi-line strip gets a taller strip track", {
   ))
 })
 
-test_that("a bad labeller is refused; a labeller is not serialized", {
+test_that("a bad labeller is refused; a custom function is not serialized", {
   expect_error(facet_wrap(p, ~cyl, labeller = 1), "labeller")
   expect_error(facet_grid(p, am ~ cyl, labeller = "x"), "labeller")
   expect_error(
-    as_spec(p |> facet_wrap(~cyl, labeller = label_both)),
+    as_spec(p |> facet_wrap(~cyl, labeller = toupper)),
     class = "vellumplot_unserializable"
+  )
+  expect_error(
+    as_spec(p |> facet_wrap(~cyl, labeller = function(labels) labels)),
+    class = "vellumplot_unserializable"
+  )
+  # a lookup over a custom default cannot be described either
+  expect_error(
+    as_spec(
+      p |> facet_wrap(~am, labeller = as_labeller(c(`0` = "a"), toupper))
+    ),
+    class = "vellumplot_unserializable"
+  )
+})
+
+test_that("declarative labellers round-trip through the spec (VP-44)", {
+  skip_if_not_installed("jsonlite")
+  strip_svg <- function(q) {
+    gsub("vl[0-9]+", "vl", vellum::scene_svg(vellum::as_vellum_scene(q)))
+  }
+  df <- data.frame(
+    x = 1:4,
+    y = 1:4,
+    g = rep(c("a rather long group name", "short"), 2)
+  )
+  q <- vplot(df) |> mark_point(x = x, y = y)
+  cases <- list(
+    value = p |> facet_wrap(~cyl, labeller = label_value),
+    both = p |> facet_grid(am ~ cyl, labeller = label_both),
+    wrap = q |> facet_wrap(~g, labeller = label_wrap_gen(10)),
+    wrap_single = q |>
+      facet_wrap(~g, labeller = label_wrap_gen(8, multi_line = FALSE)),
+    named_vector = p |>
+      facet_wrap(~am, labeller = c(`0` = "automatic", `1` = "manual")),
+    lookup_both = p |>
+      facet_wrap(~am, labeller = as_labeller(c(`0` = "automatic"), label_both)),
+    lookup_wrap = q |>
+      facet_wrap(
+        ~g,
+        labeller = as_labeller(c(short = "S"), label_wrap_gen(10))
+      )
+  )
+  for (nm in names(cases)) {
+    p1 <- cases[[nm]]
+    s <- as_spec(p1)
+    expect_false(is.null(s$facet$labeller), label = nm)
+    p2 <- from_spec(s)
+    expect_identical(strip_svg(p2), strip_svg(p1), label = nm)
+    p3 <- spec_from_json(spec_to_json(p1))
+    expect_identical(strip_svg(p3), strip_svg(p1), label = nm)
+    expect_identical(as_spec(p3)$facet, s$facet, label = nm)
+  }
+  s <- as_spec(cases$lookup_both)
+  expect_identical(s$facet$labeller$type, "lookup")
+  expect_identical(s$facet$labeller$values, list(`0` = "automatic"))
+  expect_identical(s$facet$labeller$default, list(type = "both"))
+  expect_identical(
+    as_spec(cases$wrap)$facet$labeller,
+    list(type = "wrap", width = 10, multi_line = TRUE)
   )
 })
