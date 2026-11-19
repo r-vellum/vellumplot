@@ -167,10 +167,13 @@ add_marginal <- function(
     values = values,
     types = list(),
     after = list(),
-    params = list(
-      fill = "grey35",
-      alpha = if (ms@group) 0.5 else NA_real_
-    ),
+    # Grouped marginals take their fill from the mapped colour (a lone colour
+    # fills); a constant fill would turn that colour into an outline (VP-46).
+    params = if (ms@group) {
+      list(alpha = 0.5)
+    } else {
+      list(fill = "grey35", alpha = NA_real_)
+    },
     n = length(values$x),
     stat = if (hist) "bin" else "density",
     stat_params = if (hist) list(bins = ms@bins) else list(adjust = ms@adjust),
