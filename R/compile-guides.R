@@ -1470,7 +1470,7 @@ NULL
       if (isTRUE(sc$na)) {
         cols <- c(cols, sc$na_value)
       }
-      .colour_key_grob(sc$key_glyph, cols[i], m, sk, ov)
+      .colour_key_grob(sc$key_glyph, cols[i], m, sk, ov, sc$key_style)
     },
     size_nested = ,
     size = if (isTRUE(sc$na) && i > length(sc$legend_sizes)) {
@@ -1605,12 +1605,24 @@ NULL
 
 # A discrete-colour key drawn as the mark's glyph: a filled point for point/glyph
 # marks, a short line for line marks, else the default filled square swatch.
-.colour_key_grob <- function(glyph, col, m, sketch = NULL, ov = list()) {
+# `ks` (`.key_style_for_aes()`) is a filled mark's constant other half: a
+# `col` outlines the square / point swatch, a `fill` fills the outlined box.
+.colour_key_grob <- function(
+  glyph,
+  col,
+  m,
+  sketch = NULL,
+  ov = list(),
+  ks = NULL
+) {
   # `override.aes` forces key aesthetics: fill/stroke take the overridden colour,
   # a point key its overridden size/shape/alpha, a line key its linewidth. The
   # colour itself defaults to the data-driven `col`.
-  fill <- ov$fill %||% ov$color %||% col
+  fill <- ov$fill %||% ov$color %||% ks$fill %||% col
   line_col <- ov$color %||% col
+  # the swatch outline: a constant `color` around a mapped fill, or the mapped
+  # colour around a constant fill (a point key; the square becomes "outline")
+  edge <- ov$color %||% ks$col %||% (if (!is.null(ks$fill)) col)
   alpha <- ov$alpha
   glyph <- if (!is.null(ov$shape)) "point" else (glyph %||% "square")
   switch(
@@ -1622,7 +1634,11 @@ NULL
       size = vellum::vl_unit(ov$size %||% (m$key / 2), "mm"),
       shape = ov$shape %||% "circle",
       sketch = sketch,
-      gp = vellum::vl_gpar(fill = fill, col = NA, alpha = alpha)
+      gp = vellum::vl_gpar(
+        fill = fill,
+        col = if (is.null(ks)) NA else edge,
+        alpha = alpha
+      )
     ),
     line = vellum::segments_grob(
       vellum::vl_unit(0.12, "npc"),
@@ -1642,7 +1658,7 @@ NULL
       height = vellum::vl_unit(m$key * 0.8, "mm"),
       sketch = sketch,
       gp = vellum::vl_gpar(
-        fill = ov$fill %||% "white",
+        fill = ov$fill %||% ks$fill %||% "white",
         col = line_col,
         lwd = ov$linewidth %||% 1.5,
         alpha = alpha
@@ -1652,7 +1668,11 @@ NULL
       width = vellum::vl_unit(m$key, "mm"),
       height = vellum::vl_unit(m$key, "mm"),
       sketch = sketch,
-      gp = vellum::vl_gpar(fill = fill, col = NA, alpha = alpha)
+      gp = if (is.null(ks$col)) {
+        vellum::vl_gpar(fill = fill, col = NA, alpha = alpha)
+      } else {
+        vellum::vl_gpar(fill = fill, col = edge, lwd = 1, alpha = alpha)
+      }
     )
   )
 }

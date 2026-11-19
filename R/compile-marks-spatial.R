@@ -10,7 +10,7 @@ NULL
   paint <- .paint_fill(L)
   xp <- rep_len(scales$x$map(L$values$x), n)
   yp <- rep_len(scales$y$map(L$values$y), n)
-  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  fo <- .fill_and_outline(L, scales, "grey50", n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   w <- rep_len(L$values$width %||% .resolution(xp), n)
   h <- rep_len(L$values$height %||% .resolution(yp), n)
@@ -24,10 +24,12 @@ NULL
     yp,
     w,
     h,
-    fill,
+    fo$fill,
     alpha,
     sk,
-    paint = paint
+    paint = paint,
+    col = .outline_or_null(fo$col),
+    lwd = .aes_param(L, "linewidth", 0.5)
   )
 }
 
@@ -63,7 +65,7 @@ NULL
     alpha,
     sk,
     paint = paint,
-    col = if (!all(is.na(fo$col))) fo$col,
+    col = .outline_or_null(fo$col),
     lwd = .aes_param(L, "linewidth", 0.5)
   )
 }
@@ -214,7 +216,9 @@ NULL
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
-  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  fo <- .fill_and_outline(L, scales, "grey50", n)
+  fill <- fo$fill
+  lwd <- .aes_param(L, "linewidth", 0.5)
   # One batched hexagon_grob carries a single scalar alpha, so a mapped alpha can
   # only apply as a representative (its first value), but honour the trained alpha
   # scale rather than reading the constant param alone (which ignored it entirely).
@@ -222,21 +226,30 @@ NULL
   r <- (L$values$width %||% 1)[1]
   w_full <- 2 * r # full x extent (width is the x circumradius)
   h_full <- (L$values$height %||% (r * sqrt(3)))[1] # full y extent
-  xy <- .xy_units(scales, xn, yn)
   flip <- .flipped(scales)
-  .draw(
-    scene,
-    vellum::hexagon_grob(
-      xy$x,
-      xy$y,
-      width = vellum::vl_unit(if (flip) h_full else w_full, "native"),
-      height = vellum::vl_unit(if (flip) w_full else h_full, "native"),
-      fill = fill,
-      orientation = "flat",
-      gp = vellum::vl_gpar(alpha = gp_alpha(a))
-    ),
-    rows = seq_len(n)
-  )
+  # one batch per outline colour (a single batch when nothing is outlined)
+  for (idx in .style_groups(n, list(col = fo$col))) {
+    cc <- fo$col[idx[1]]
+    xy <- .xy_units(scales, xn[idx], yn[idx])
+    scene <- .draw(
+      scene,
+      vellum::hexagon_grob(
+        xy$x,
+        xy$y,
+        width = vellum::vl_unit(if (flip) h_full else w_full, "native"),
+        height = vellum::vl_unit(if (flip) w_full else h_full, "native"),
+        fill = fill[idx],
+        orientation = "flat",
+        gp = if (is.na(cc)) {
+          vellum::vl_gpar(alpha = gp_alpha(a))
+        } else {
+          vellum::vl_gpar(col = cc, lwd = lwd, alpha = gp_alpha(a))
+        }
+      ),
+      rows = idx
+    )
+  }
+  scene
 }
 
 # Datashade: aggregate the points into a density raster filling the panel. The

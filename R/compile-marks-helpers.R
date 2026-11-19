@@ -119,12 +119,14 @@ NULL
   fillp %||% default
 }
 
-# Per-row fill and outline of a mark with ggplot2's rect / polygon semantics:
-# `fill` fills and `color` outlines (no outline unless a `color` is given). A
-# `color` with no `fill` at all fills the shape instead, as on the other filled
-# marks (tile, bar), so `color = g` alone still paints the shapes. A paint
-# `fill` (gradient/pattern) counts as a fill; the emitter substitutes it at the
-# gp via `.paint_or()`. Returns `fill` and `col` vectors of length `n`.
+# Per-row fill and outline of a filled mark (bar, histogram, tile, rect, area,
+# ribbon, density, polygon, hex, crossbar, pie) with ggplot2's semantics: `fill`
+# fills and `color` outlines (no outline unless a `color` is given). A `color`
+# with no `fill` at all fills the shape instead -- vellumplot's long-standing
+# shorthand, kept for back-compat -- so `color = g` alone still paints the
+# shapes (VP-46). A paint `fill` (gradient/pattern) counts as a fill; the
+# emitter substitutes it at the gp via `.paint_or()`. Returns `fill` and `col`
+# vectors of length `n` (`col` is NA where there is no outline).
 .fill_and_outline <- function(L, scales, default, n = L$n) {
   has_fill <- !is.null(L$values$fill) || !is.null(L$params$fill)
   has_col <- !is.null(L$values$color) || !is.null(L$params$color)
@@ -141,11 +143,22 @@ NULL
   } else {
     L$params$color %||% NA_character_
   }
+  # the fill comes from `fill` alone: a mapped `color` beside a constant `fill`
+  # outlines, it never leaks into the fill
+  fill <- if (!is.null(L$values$fill) && !is.null(scales$color)) {
+    scales$color$map(L$values$fill)
+  } else {
+    .plain_fill_param(L) %||% default
+  }
   list(
-    fill = rep_len(.aes_fill_colour(L, scales, default), n),
+    fill = rep_len(fill, n),
     col = rep_len(col, n)
   )
 }
+
+# The outline vector for `.emit_rect_groups(col = )`: NULL when nothing is
+# outlined, so an unoutlined mark keeps its plain fill-only gp.
+.outline_or_null <- function(col) if (!all(is.na(col))) col
 
 # A fill value can be a constant *paint* (gradient or pattern), not just a colour.
 .is_paint <- function(x) inherits(x, c("vellum_gradient", "vellum_pattern"))

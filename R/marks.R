@@ -932,6 +932,8 @@ mark_function <- function(
 #' `y` values as heights; with no `y` it counts rows per category (the `"count"`
 #' stat). When `color`/`fill` is mapped, grouped bars are stacked by default; use
 #' `position = "dodge"` for side-by-side bars or `"fill"` to normalise to 1.
+#' `fill` fills the bars and a `color` given alongside it outlines them
+#' (`fill = "steelblue", color = "white"`); a `color` alone fills them.
 #' The count stat computes `count` and `prop`, the share of its group (or of the
 #' layer, ungrouped), for use with [after_stat()], e.g.
 #' `y = after_stat(prop)`. `density` is an older name for `prop`.
@@ -1453,7 +1455,9 @@ mark_datashade <- function(
 #' An area or ribbon is drawn as one polygon per series (per `group`, or per
 #' level of a discrete `fill`/`color`), and a polygon has a single fill. A
 #' continuous `fill`, `color` or `alpha` must therefore be constant within each
-#' series; one that varies along a series is an error.
+#' series; one that varies along a series is an error. A `color` given
+#' alongside a `fill` outlines the band: an area along its top, a ribbon along
+#' both edges. A `color` alone fills it.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
@@ -1902,7 +1906,9 @@ mark_text_path <- function(
 #' `mark_raster()` draws the same as one raster image (a fast path requiring a
 #' complete regular grid). `mark_bin2d()` bins continuous `x`/`y` into a grid and
 #' colours each cell by count. `mark_density()` draws a 1-D kernel density of `x`
-#' as a filled curve.
+#' as a filled curve. On all of them a `color` given alongside a `fill` (or the
+#' default count fill of `mark_bin2d()` / `mark_hex()`) outlines the shapes; a
+#' `color` alone fills them.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `fill` for tile/raster; `x`, `y`
