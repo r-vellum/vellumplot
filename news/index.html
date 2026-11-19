@@ -79,8 +79,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-14-1-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-14-1-9000"></a></h3>
-<ul><li>
-<code>guide_axis(check.overlap = TRUE)</code> now also thins the labels of free facet scales (panel by panel), fixed-aspect plots (<code><a href="../reference/coord_cartesian.html">coord_fixed()</a></code>, <code><a href="../reference/coord_sf.html">coord_sf()</a></code>, <code>aspect.ratio</code>) and marginal plots; before, it silently kept every label there. Polar axes still keep every label (VP-45).</li>
+<ul><li><p><code>guide_axis(check.overlap = TRUE)</code> now also thins the labels of free facet scales (panel by panel), fixed-aspect plots (<code><a href="../reference/coord_cartesian.html">coord_fixed()</a></code>, <code><a href="../reference/coord_sf.html">coord_sf()</a></code>, <code>aspect.ratio</code>) and marginal plots; before, it silently kept every label there. Polar axes still keep every label (VP-45).</p></li>
+<li><p><code><a href="../reference/position.html">position_dodge()</a></code> / <code><a href="../reference/position.html">position_dodge2()</a></code> on a horizontal <code><a href="../reference/mark_boxplot.html">mark_errorbar()</a></code>, <code><a href="../reference/mark_boxplot.html">mark_linerange()</a></code> or <code><a href="../reference/mark_boxplot.html">mark_pointrange()</a></code> (<code>orientation = "y"</code>) now dodge the groups along y, the category axis, as a horizontal box plot does and as in ggplot2. Before, horizontal error bars were not dodged at all and a horizontal point-range’s points were shifted along the value axis (VP-45).</p></li>
 </ul></div>
 </div>
     <div class="section level2">
