@@ -154,6 +154,7 @@ reported (a warning), never silently diverged.
 | `scale_*` domain, `trans` (log/sqrt), categorical range, `name` | `encoding.scale.{domain,type,range}`, `.title` | ✅ |
 | `mark_histogram` (`stat="bin"`) | `bin` + `aggregate:"count"` | ✅ both ways |
 | `facet_wrap` / `facet_grid` | `facet` / `row` + `column` | ✅ |
+| free facet scales, `resolve_scale(... = "independent")` | `resolve.scale` + `resolve.axis` (x/y) / `resolve.legend` | ✅ both ways (facets only) |
 | inline data, plot title | `data.values`, `title` | ✅ |
 | layer effects, patterns, sketch | — | ⚠ dropped (reported) |
 | polar / flipped coordinates | — | ⚠ dropped (reported) |

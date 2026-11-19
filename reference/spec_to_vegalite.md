@@ -48,6 +48,15 @@ spec_from_vegalite(vl, data = NULL, env = globalenv())
 
 ## Details
 
+Free facet scales and
+[`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md)
+map to the facet's Vega-Lite `resolve`: an independent scale becomes
+`resolve.scale`, with its axis (`x`/`y`) or legend made independent too.
+On import, a facet-level `resolve.scale` comes back as the resolve
+lattice; an independent axis or legend over a shared scale, and a
+resolve between the layers of one view (e.g. a dual axis), have no
+vellumplot equivalent and are reported.
+
 The bridge covers a **documented subset** (see the "Specs, agents, and
 interoperability" article). Anything it cannot map — polar/flipped
 coordinates, layer effects, patterns, statistical marks without a

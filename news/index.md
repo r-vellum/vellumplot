@@ -56,6 +56,16 @@
   `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the month
   labels (VP-45).
 
+- [`spec_to_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  exports free facet scales and
+  [`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md)
+  as the facet’s Vega-Lite `resolve` (`resolve.scale`, with
+  `resolve.axis` for x / y and `resolve.legend` for the other
+  aesthetics), and
+  [`spec_from_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  reads a facet-level `resolve.scale` back. Before, the exporter ignored
+  resolution, so free scales came out shared (VP-47).
+
 ### Bug fixes
 
 - `guide_axis(check.overlap = TRUE)` now also thins the labels of free

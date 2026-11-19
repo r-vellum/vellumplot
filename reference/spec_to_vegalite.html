@@ -121,7 +121,13 @@ if <code>json = TRUE</code>); <code>spec_from_vegalite()</code> returns a <a hre
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The bridge covers a <strong>documented subset</strong> (see the "Specs, agents, and
+    <p>Free facet scales and <code><a href="resolve_scale.html">resolve_scale()</a></code> map to the facet's Vega-Lite
+<code>resolve</code>: an independent scale becomes <code>resolve.scale</code>, with its axis
+(<code>x</code>/<code>y</code>) or legend made independent too. On import, a facet-level
+<code>resolve.scale</code> comes back as the resolve lattice; an independent axis or
+legend over a shared scale, and a resolve between the layers of one view
+(e.g. a dual axis), have no vellumplot equivalent and are reported.</p>
+<p>The bridge covers a <strong>documented subset</strong> (see the "Specs, agents, and
 interoperability" article). Anything it cannot map — polar/flipped
 coordinates, layer effects, patterns, statistical marks without a Vega-Lite
 equivalent — is <strong>reported</strong> via a warning listing the dropped features, never
