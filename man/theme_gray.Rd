@@ -55,7 +55,12 @@ system default.}
 
 \item{...}{Named theme elements, e.g. \code{plot.title = element_text(size = 16)},
 \code{panel.grid.minor = element_blank()}, or settings like \code{legend.position},
-one of \code{"right"} (default), \code{"left"}, \code{"top"}, \code{"bottom"}, or \code{"none"}.
+one of \code{"right"} (default), \code{"left"}, \code{"top"}, \code{"bottom"}, \code{"none"}, or
+\code{"inside"}. An inside legend sits over the panels at
+\code{legend.position.inside = c(x, y)} (fractions of the panel area; the older
+\code{legend.position = c(x, y)} works too), its \code{legend.justification} point
+(\code{c(x, y)} or words such as \code{c("right", "top")}, defaulting to the
+position) on that spot.
 Legend geometry is tunable via \code{legend.key.size} (key/swatch side, mm),
 \code{legend.spacing} (gap between stacked guides, mm), and \code{legend.margin}
 (inset around the legend block, one or four millimetres, \verb{t, r, b, l}).}
@@ -91,4 +96,9 @@ vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_minimal()
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   theme(panel.grid.minor = element_blank(), legend.position = "none")
+
+# a legend tucked into the top-right corner of the panel
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+  theme(legend.position = "inside", legend.justification = c(1, 1))
 }
