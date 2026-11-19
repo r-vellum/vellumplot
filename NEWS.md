@@ -1,5 +1,12 @@
 # vellumplot 0.14.1.9000 (development version)
 
+## Bug fixes
+
+* `guide_axis(check.overlap = TRUE)` now also thins the labels of free facet
+  scales (panel by panel), fixed-aspect plots (`coord_fixed()`, `coord_sf()`,
+  `aspect.ratio`) and marginal plots; before, it silently kept every label
+  there. Polar axes still keep every label (VP-45).
+
 # vellumplot 0.14.1
 
 ## Bug fixes

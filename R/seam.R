@@ -542,13 +542,15 @@ NULL
   hshared <- dp$hshared
   vshared <- dp$vshared
   if (built$free_y) {
-    for (p in built$panels) {
+    for (i in seq_along(built$panels)) {
+      p <- built$panels[[i]]
       scene <- .draw_y_axis(
         scene,
         lay$panel_row[p$r],
         lay$ylabels_col[p$c],
         warp_v(vscale(p)),
-        rt
+        rt,
+        keep = lay$y_keep_panels[[i]]
       )
     }
   } else {
@@ -564,13 +566,15 @@ NULL
     }
   }
   if (built$free_x) {
-    for (p in built$panels) {
+    for (i in seq_along(built$panels)) {
+      p <- built$panels[[i]]
       scene <- .draw_x_axis(
         scene,
         lay$xlabels_row[p$r],
         lay$panel_col[p$c],
         warp_h(hscale(p)),
-        rt
+        rt,
+        keep = lay$x_keep_panels[[i]]
       )
     }
   } else {
