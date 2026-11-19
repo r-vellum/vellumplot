@@ -81,7 +81,9 @@ NULL
 
 # Non-element scalar settings + defaults.
 .SETTINGS_DEFAULTS <- list(
-  legend.position = "right",
+  legend.position = "right", # or "inside" / c(x, y): over the panels
+  legend.position.inside = NULL, # c(x, y) panel npc for "inside"
+  legend.justification = "center", # anchor point of an inside legend
   legend.key.size = 4, # mm; default legend key / swatch side
   legend.spacing = 3.5, # mm; gap between stacked guides
   legend.margin = c(2, 2, 2, 2), # mm (t, r, b, l) inset around the legend block
@@ -223,11 +225,31 @@ NULL
   for (nm in nms) {
     if (nm %in% .theme_setting_names) {
       if (nm == "legend.position") {
-        ok <- c("right", "left", "top", "bottom", "none")
+        ok <- c("right", "left", "top", "bottom", "none", "inside")
         val <- args[[nm]]
-        if (!is.character(val) || length(val) != 1L || !val %in% ok) {
+        if (
+          !.is_npc_pair(val) &&
+            (!is.character(val) || length(val) != 1L || !val %in% ok)
+        ) {
           cli::cli_abort(
-            "{.field legend.position} must be one of {.val {ok}}.",
+            "{.field legend.position} must be one of {.val {ok}}, or a numeric
+            {.code c(x, y)} inside the panel (0-1).",
+            call = call
+          )
+        }
+      } else if (nm == "legend.position.inside") {
+        if (!is.null(args[[nm]]) && !.is_npc_pair(args[[nm]])) {
+          cli::cli_abort(
+            "{.field legend.position.inside} must be a numeric {.code c(x, y)} (0-1).",
+            call = call
+          )
+        }
+      } else if (nm == "legend.justification") {
+        if (is.null(.legend_just(args[[nm]]))) {
+          cli::cli_abort(
+            "{.field legend.justification} must be a numeric {.code c(x, y)}
+            (0-1), or {.val center}, {.val left}, {.val right}, {.val top},
+            {.val bottom} (or a pair such as {.code c(\"right\", \"top\")}).",
             call = call
           )
         }
@@ -294,4 +316,60 @@ NULL
     }
   }
   invisible(args)
+}
+
+# A numeric c(x, y) pair of finite panel fractions.
+.is_npc_pair <- function(x) {
+  is.numeric(x) && length(x) == 2L && all(is.finite(x))
+}
+
+# A legend.justification value as numeric c(x, y), or NULL when it is not
+# one. Words name a side ("left" = c(0, 0.5)); two words name a corner
+# (c("right", "top") = c(1, 1)).
+.legend_just <- function(x) {
+  if (.is_npc_pair(x)) {
+    return(as.numeric(x))
+  }
+  if (!is.character(x) || !length(x) %in% 1:2 || anyNA(x)) {
+    return(NULL)
+  }
+  h <- c(left = 0, center = 0.5, centre = 0.5, right = 1)
+  v <- c(bottom = 0, center = 0.5, centre = 0.5, top = 1)
+  if (length(x) == 1L) {
+    out <- switch(
+      x,
+      center = ,
+      centre = c(0.5, 0.5),
+      left = c(0, 0.5),
+      right = c(1, 0.5),
+      top = c(0.5, 1),
+      bottom = c(0.5, 0)
+    )
+    return(out)
+  }
+  if (!x[1] %in% names(h) || !x[2] %in% names(v)) {
+    return(NULL)
+  }
+  unname(c(h[[x[1]]], v[[x[2]]]))
+}
+
+# Where an inside legend sits, from the resolved theme: list(pos, just), both
+# numeric c(x, y) in panel fractions, or NULL when the legend is outside the
+# panels (or off). `legend.position = c(x, y)` (the old ggplot2 form) places
+# it there; "inside" uses `legend.position.inside`, else the justification.
+# The justification defaults to the position, so c(1, 1) is the top-right
+# corner with the legend inside it.
+.legend_inside <- function(rt) {
+  pos <- rt[["legend.position"]]
+  just <- rt[["legend.justification"]]
+  explicit_just <- !identical(just, "center")
+  just <- .legend_just(just) %||% c(0.5, 0.5)
+  at <- if (.is_npc_pair(pos)) {
+    as.numeric(pos)
+  } else if (identical(pos, "inside")) {
+    rt[["legend.position.inside"]] %||% just
+  } else {
+    return(NULL)
+  }
+  list(pos = at, just = if (explicit_just) just else at)
 }

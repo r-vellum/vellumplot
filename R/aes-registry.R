@@ -69,12 +69,14 @@ NULL
 .LINEWIDTH_MARKS <- c("line", "step", "segment")
 
 # The types a trained scale comes in, by aesthetic family. A keyed aesthetic
-# (shape, linetype, pattern) is always discrete; a sized one (size, alpha, the
-# widths) is continuous; colour and position take more.
+# (shape, linetype, pattern) is always discrete; a sized one is continuous, or
+# discrete for categorical data on size and alpha; colour and position take
+# more.
 .POSITION_TYPES <- c("continuous", "log10", "discrete", "binned")
 .COLOUR_TYPES <- c("continuous", "discrete", "binned", "identity")
 .CONTINUOUS_TYPES <- c("continuous", "identity")
 .DISCRETE_TYPES <- c("discrete", "identity")
+.SIZED_TYPES <- c("continuous", "discrete", "identity")
 
 .AES_REGISTRY <- list(
   x = .aes_entry("x", types = .POSITION_TYPES),
@@ -94,7 +96,8 @@ NULL
     "size",
     trainer = ".train_size",
     guide = "size",
-    legend_merge = TRUE
+    legend_merge = TRUE,
+    types = .SIZED_TYPES
   ),
   shape = .aes_entry(
     "shape",
@@ -127,7 +130,8 @@ NULL
     "alpha",
     trainer = ".train_alpha",
     guide = "alpha",
-    legend_merge = TRUE
+    legend_merge = TRUE,
+    types = .SIZED_TYPES
   ),
   linetype = .aes_entry(
     "linetype",

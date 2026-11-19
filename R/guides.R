@@ -435,6 +435,7 @@ guide_colorsteps <- guide_coloursteps
     rev_fields(
       tr,
       c(
+        "levels",
         "legend_breaks",
         "legend_labels",
         "legend_sizes",

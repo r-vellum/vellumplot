@@ -267,6 +267,20 @@ after_stat <- function(x) x
   invisible(x)
 }
 
+# The `orientation` of a distribution mark: `NA` (infer from the data), `"x"`
+# (categories along x, the default look) or `"y"` (categories along y).
+.check_orientation <- function(orientation, call = rlang::caller_env()) {
+  if (length(orientation) == 1L && is.na(orientation)) {
+    return(NA_character_)
+  }
+  rlang::arg_match(
+    orientation,
+    c("x", "y"),
+    error_arg = "orientation",
+    error_call = call
+  )
+}
+
 # Normalise a `mark_line(window=)` argument into window stat params, or NULL for
 # no window. Accepts a bare op string (`"mean"`) or a list `(op, k, align,
 # partial)`. Validates the op and alignment; leaves `k` defaulting per-op to the
@@ -1038,9 +1052,11 @@ mark_donut <- function(
 #' Statistical marks
 #'
 #' Marks that apply a statistical transform before drawing. `mark_histogram()`
-#' bins a continuous `x` and draws the per-bin counts as bars. `mark_smooth()`
-#' fits a model of `y` on `x` (per group) and draws the fitted line, with a
-#' confidence ribbon when `se = TRUE`.
+#' bins a continuous `x` and draws the per-bin counts as bars. The bin stat
+#' computes `count`, `density` (each group integrates to 1), `ncount` and
+#' `ndensity` (scaled to a maximum of 1), and `width`, for [after_stat()].
+#' `mark_smooth()` fits a model of `y` on `x` (per group) and draws the fitted
+#' line, with a confidence ribbon when `se = TRUE`.
 #'
 #' `mark_smooth()` supports several `method`s:
 #' * `"auto"` (default) picks `"loess"` for small groups (< 1000 points) and
@@ -1056,7 +1072,20 @@ mark_donut <- function(
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval), e.g. `x`, `y`, `color`/`fill`.
-#' @param bins Number of histogram bins.
+#' @param bins Number of histogram bins (default 30), used when neither
+#'   `binwidth` nor `breaks` is given. As in ggplot2, the outer bins are centred
+#'   on the smallest and largest values unless `boundary` or `center` is set.
+#' @param binwidth Width of each bin, overriding `bins`.
+#' @param breaks A numeric vector of bin edges, overriding `bins` and
+#'   `binwidth`. Bins may have different widths; values outside the edges are
+#'   not counted.
+#' @param boundary,center Where the bins are aligned: `boundary` is a position
+#'   that falls on an edge between two bins, `center` one that falls on a bin's
+#'   centre (give at most one). Either may lie outside the data. For example
+#'   `binwidth = 1, boundary = 0` makes bins `(0, 1]`, `(1, 2]`, .... With
+#'   neither, bins of a given `binwidth` are aligned on `binwidth / 2`.
+#' @param closed Which side of each bin is closed: `"right"` (default, `(a, b]`)
+#'   or `"left"` (`[a, b)`). The outermost edges always count.
 #' @param method Smoothing method: one of `"auto"`, `"lm"`, `"loess"`, `"glm"`,
 #'   `"gam"`, `"rq"`.
 #' @param formula Model formula in terms of `x` and `y` (e.g. `y ~ poly(x, 2)`,
@@ -1071,6 +1100,9 @@ mark_donut <- function(
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
+#' # bins of width 2 with an edge at 10: (10, 12], (12, 14], ...
+#' vplot(mtcars) |> mark_histogram(x = mpg, binwidth = 2, boundary = 10)
+#' vplot(mtcars) |> mark_freqpoly(x = mpg, color = factor(cyl), binwidth = 2)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg)
 #' # local regression with a wider neighbourhood
 #' vplot(mtcars) |>
@@ -1081,23 +1113,119 @@ mark_histogram <- function(
   plot,
   ...,
   bins = 30,
+  binwidth = NULL,
+  breaks = NULL,
+  boundary = NULL,
+  center = NULL,
+  closed = c("right", "left"),
   position = "stack",
   blend = NULL,
   sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
-  .check_count(bins)
+  sp <- .bin_params(bins, binwidth, breaks, boundary, center, closed)
   .add_layer(
     plot,
     "bar",
     rlang::enquos(...),
     stat = "bin",
-    stat_params = list(bins = bins),
+    stat_params = sp,
     position = position,
     blend = blend,
     sketch = sketch,
     data = data
+  )
+}
+
+#' @rdname mark_histogram
+#' @details
+#' `mark_freqpoly()` draws the same bin counts as a line through the bin
+#' centres (a frequency polygon), one line per group. Like ggplot2's
+#' `geom_freqpoly()` it adds an empty bin at each end, so each line starts and
+#' ends at zero. It takes the same binning arguments as `mark_histogram()`, and
+#' `y = after_stat(density)` draws densities instead of counts.
+#' @export
+mark_freqpoly <- function(
+  plot,
+  ...,
+  bins = 30,
+  binwidth = NULL,
+  breaks = NULL,
+  boundary = NULL,
+  center = NULL,
+  closed = c("right", "left"),
+  position = "identity",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+) {
+  .check_plot(plot)
+  sp <- .bin_params(bins, binwidth, breaks, boundary, center, closed)
+  sp$pad <- TRUE
+  .add_layer(
+    plot,
+    "line",
+    rlang::enquos(...),
+    stat = "bin",
+    stat_params = sp,
+    position = position,
+    blend = blend,
+    sketch = sketch,
+    data = data
+  )
+}
+
+# Validate the binning arguments shared by `mark_histogram()` and
+# `mark_freqpoly()` and return them as stat params (ggplot2's rules: `breaks`
+# overrides `binwidth`, which overrides `bins`; `boundary` and `center` are
+# alternatives).
+.bin_params <- function(
+  bins,
+  binwidth,
+  breaks,
+  boundary,
+  center,
+  closed,
+  call = rlang::caller_env()
+) {
+  .check_count(bins, call = call)
+  .check_positive(binwidth, null_ok = TRUE, call = call)
+  if (!is.null(breaks)) {
+    if (!is.numeric(breaks) || sum(is.finite(unique(breaks))) < 2L) {
+      cli::cli_abort(
+        c(
+          "{.arg breaks} must be a numeric vector of at least two bin edges.",
+          x = .stat_arg_got(breaks)
+        ),
+        call = call
+      )
+    }
+    breaks <- breaks[is.finite(breaks)]
+  }
+  for (nm in c("boundary", "center")) {
+    v <- list(boundary = boundary, center = center)[[nm]]
+    if (!is.null(v) && (!is.numeric(v) || length(v) != 1L || !is.finite(v))) {
+      cli::cli_abort(
+        c("{.arg {nm}} must be a single number.", x = .stat_arg_got(v)),
+        call = call
+      )
+    }
+  }
+  if (!is.null(boundary) && !is.null(center)) {
+    cli::cli_abort(
+      "Give only one of {.arg boundary} and {.arg center}.",
+      call = call
+    )
+  }
+  closed <- rlang::arg_match(closed, c("right", "left"), error_call = call)
+  list(
+    bins = bins,
+    binwidth = binwidth,
+    breaks = breaks,
+    boundary = boundary,
+    center = center,
+    closed = closed
   )
 }
 
@@ -2189,6 +2317,10 @@ mark_qq_line <- function(
 #'   `mark_ridgeline()` needs numeric `x` and categorical `y`; `mark_dotplot()`
 #'   needs `x`. A mapped `color`/`fill` sets the shape fill.
 #' @param adjust Kernel-density bandwidth multiplier (violin/ridgeline).
+#' @param orientation For `mark_violin()`, `NA` (default) to infer it from the
+#'   data (horizontal when `y` is discrete and `x` is not, as in ggplot2), `"x"`
+#'   for vertical violins along a discrete `x`, or `"y"` for horizontal violins
+#'   along `y`.
 #' @param trim For `mark_violin()`, `TRUE` (default, as ggplot2) ends each violin
 #'   at the smallest and largest value of its data; `FALSE` lets the kernel's
 #'   tails run on past them.
@@ -2202,6 +2334,7 @@ mark_qq_line <- function(
 #' @examples
 #' df <- data.frame(g = rep(letters[1:3], each = 50), v = rnorm(150))
 #' vplot(df) |> mark_violin(x = g, y = v)
+#' vplot(df) |> mark_violin(x = v, y = g) # horizontal
 #' vplot(df) |> mark_ridgeline(x = v, y = g)
 #' vplot(df) |> mark_dotplot(x = v)
 #' @export
@@ -2211,6 +2344,7 @@ mark_violin <- function(
   position = "identity",
   adjust = 1,
   trim = TRUE,
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2222,7 +2356,11 @@ mark_violin <- function(
     "violin",
     rlang::enquos(...),
     stat = "identity",
-    stat_params = list(adjust = adjust, trim = isTRUE(trim)),
+    stat_params = list(
+      adjust = adjust,
+      trim = isTRUE(trim),
+      orientation = .check_orientation(orientation)
+    ),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -2449,7 +2587,13 @@ mark_hex <- function(
 #' values (box = Q1-Q3, median line, 1.5*IQR whiskers, outlier points).
 #' `mark_errorbar()` draws vertical bars from `ymin` to `ymax` with horizontal
 #' caps; `mark_linerange()` omits the caps. `mark_summary()` aggregates `y` per
-#' `x` with `fun` (default mean) and draws the result as points.
+#' `x` with `fun` (default mean) and draws the result as points; give it
+#' `fun.data` (or `fun.min` / `fun.max`) and it draws each summary as a point
+#' with a range instead, like ggplot2's `stat_summary()`.
+#'
+#' A box plot is vertical when `x` is the discrete axis. When `y` is discrete
+#' and `x` continuous (`mark_boxplot(x = mpg, y = factor(cyl))`) it is drawn
+#' horizontally, as in ggplot2; `orientation` forces either.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
@@ -2457,14 +2601,34 @@ mark_hex <- function(
 #'   errorbar/linerange).
 #' @param width For `mark_errorbar()`, the cap width as a fraction of the band.
 #' @param fun For `mark_summary()`, the aggregation function (default `mean`).
+#'   With `fun.min` / `fun.max` it gives the point of the range.
+#' @param fun.data For `mark_summary()`, a summary giving a point and a range
+#'   per category: `"mean_se"` (mean +/- one standard error), `"mean_cl_normal"`
+#'   (mean with a t-based confidence interval), `"mean_sdl"` (mean +/- two
+#'   standard deviations), `"median_hilow"` (median with the central 95% of the
+#'   data), or a function of the values that returns `y`, `ymin` and `ymax`
+#'   (such as ggplot2's `mean_se()`). Overrides `fun`, `fun.min` and `fun.max`.
+#' @param fun.min,fun.max For `mark_summary()`, functions giving the bottom and
+#'   top of each category's range (e.g. `fun.min = min, fun.max = max`).
+#' @param fun.args For `mark_summary()`, a list of extra arguments to the
+#'   summary functions, e.g. `list(mult = 2)` for `"mean_se"` or
+#'   `list(conf.int = 0.9)` for `"mean_cl_normal"`.
+#' @param orientation For `mark_boxplot()`, `NA` (default) to infer it from the
+#'   data (horizontal when `y` is discrete and `x` is not), `"x"` for vertical
+#'   boxes along a discrete `x`, or `"y"` for horizontal boxes along `y`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
+#' # horizontal: the discrete variable on y
+#' vplot(mtcars) |> mark_boxplot(x = mpg, y = factor(cyl))
+#' # mean and standard error per category
+#' vplot(mtcars) |> mark_summary(x = factor(cyl), y = mpg, fun.data = "mean_se")
 #' @export
 mark_boxplot <- function(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -2474,6 +2638,7 @@ mark_boxplot <- function(
     plot,
     "boxplot",
     rlang::enquos(...),
+    stat_params = list(orientation = .check_orientation(orientation)),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -2598,17 +2763,42 @@ mark_summary <- function(
   ...,
   position = "identity",
   fun = mean,
+  fun.data = NULL,
+  fun.min = NULL,
+  fun.max = NULL,
+  fun.args = list(),
   blend = NULL,
   sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
+  if (is.character(fun.data)) {
+    fun.data <- rlang::arg_match(
+      fun.data,
+      names(.SUMMARY_FUNS),
+      error_arg = "fun.data"
+    )
+  } else if (!is.null(fun.data) && !is.function(fun.data)) {
+    cli::cli_abort(
+      "{.arg fun.data} must be a function or one of {.or {.val {names(.SUMMARY_FUNS)}}}."
+    )
+  }
+  if (!is.list(fun.args)) {
+    cli::cli_abort("{.arg fun.args} must be a list.")
+  }
+  ranged <- !is.null(fun.data) || !is.null(fun.min) || !is.null(fun.max)
   .add_layer(
     plot,
-    "point",
+    if (ranged) "pointrange" else "point",
     rlang::enquos(...),
-    stat = "aggregate",
-    stat_params = list(fun = fun),
+    stat = if (ranged) "summary" else "aggregate",
+    stat_params = list(
+      fun = fun,
+      fun.data = fun.data,
+      fun.min = fun.min,
+      fun.max = fun.max,
+      fun.args = fun.args
+    ),
     blend = blend,
     sketch = sketch,
     data = data,

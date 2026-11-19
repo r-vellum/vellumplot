@@ -15,7 +15,8 @@ NULL
 #   type       the scale type, one of the registry row's `types`:
 #                x / y              continuous, log10, discrete, binned
 #                color / edge_color continuous, discrete, binned, identity
-#                size / alpha       continuous, discrete, identity
+#                size / alpha       continuous, discrete (categorical data),
+#                                   identity
 #                widths, edge_alpha continuous, identity
 #                shape / linetype   discrete, identity
 #                pattern            discrete
@@ -36,6 +37,7 @@ NULL
 #   continuous colour         range, pal256, legend_breaks, legend_labels
 #   continuous size / alpha / widths
 #                             range, legend_breaks, legend_labels
+#   discrete size / alpha     levels, legend_breaks (= levels), legend_labels
 #   shape / linetype /pattern levels plus shapes / linetypes / patterns
 #
 # Flags: `identity` (data values pass through verbatim; TRUE exactly for type
@@ -263,9 +265,16 @@ trained_scale <- function(aesthetic, type, map, name = NULL, ...) {
     linetype = same_len(c("levels", "linetypes")),
     pattern = same_len(c("levels", "patterns")),
     {
-      # size / alpha / edge_width / linewidth
+      # size / alpha / edge_width / linewidth: a continuous one rescales a
+      # range; a discrete size / alpha one keys its levels
       same_len(c("legend_breaks", "legend_labels"))
-      if (length(sc$range) != 2L) {
+      if (identical(sc$type, "discrete")) {
+        if (
+          !identical(as.character(sc$levels), as.character(sc$legend_breaks))
+        ) {
+          bad(paste0("a discrete ", guide, " scale keys its `levels`"))
+        }
+      } else if (length(sc$range) != 2L) {
         bad(paste0("a ", guide, " scale needs a length-2 `range`"))
       }
     }

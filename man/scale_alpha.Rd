@@ -5,14 +5,22 @@
 \alias{scale_alpha_continuous}
 \title{Alpha (opacity) scale}
 \usage{
-scale_alpha(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
+scale_alpha(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  name = NULL,
+  oob = NULL
+)
 
 scale_alpha_continuous(
   plot,
   range = NULL,
   limits = NULL,
   breaks = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 }
 \arguments{
@@ -26,6 +34,11 @@ default \code{c(0.1, 1)}.}
 \item{breaks}{Explicit legend breaks, or \code{NULL}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{oob}{What to do with values outside \code{limits}: \code{"censor"} (they get
+no opacity, so the mark is not drawn), \code{"squish"} (the opacity of the
+nearest limit), \code{"keep"} (extrapolated past the range), or a
+\verb{function(x, range)}. \code{NULL} (default) keeps them.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -33,6 +46,11 @@ The modified \link{PlotSpec}.
 \description{
 Declare the scale for a mapped \code{alpha} aesthetic: data values map to an
 opacity \code{range} in \verb{[0, 1]}. An alpha legend is drawn automatically.
+}
+\details{
+A factor, character or logical mapped to \code{alpha} gets a discrete scale, its
+levels spread evenly over \code{range}, with a warning for an unordered variable
+(as in ggplot2).
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, alpha = hp) |> scale_alpha(range = c(0.2, 1))

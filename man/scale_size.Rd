@@ -5,7 +5,14 @@
 \alias{scale_size_area}
 \title{Size scale}
 \usage{
-scale_size(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
+scale_size(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  name = NULL,
+  oob = NULL
+)
 
 scale_size_area(plot, max_size = 6, limits = NULL, breaks = NULL, name = NULL)
 }
@@ -21,6 +28,11 @@ default \code{c(1, 4)}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
 
+\item{oob}{What to do with values outside \code{limits}: \code{"censor"} (they get
+no size, so the mark is not drawn), \code{"squish"} (the size of the
+nearest limit), \code{"keep"} (extrapolated past the range), or a
+\verb{function(x, range)}. \code{NULL} (default) keeps them.}
+
 \item{max_size}{For \code{scale_size_area()}, the point size (mm) of the largest
 value.}
 }
@@ -35,6 +47,12 @@ point-size \code{range} (in mm). A size legend is drawn automatically.
 its radius, with value \code{0} at size \code{0} — the perceptually honest default for
 bubble charts (a value twice as large looks twice as big in ink). \code{max_size}
 is the size (mm) of the largest value.
+}
+\details{
+A factor, character or logical mapped to \code{size} gets a discrete scale: the
+levels spread evenly (by area) over \code{range}, the legend keys are the levels,
+and \code{breaks} picks which of them it shows. As in ggplot2, an unordered
+variable warns that size is not advised for it; an ordered factor does not.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp) |> scale_size(range = c(1, 8))

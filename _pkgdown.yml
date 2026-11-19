@@ -173,6 +173,7 @@ reference:
   - mark_signif
   - mark_violin
   - mark_histogram
+  - mark_freqpoly
   - mark_ecdf
   - mark_ellipse
   - mark_halfeye

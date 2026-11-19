@@ -1,12 +1,65 @@
 # vellumplot 0.12.0.9000 (development version)
 
-* `facet_wrap()` and `facet_grid()` take a `labeller` argument for the strip
-  text, with ggplot2's labellers: `label_value()`, `label_both()`
-  (`"cyl: 4"`), `label_wrap_gen(width)` for long values, and
-  `as_labeller()` for a lookup table (`c("0" = "automatic")`) or a function
-  of the values. A named character vector or a plain function can be passed
-  to `labeller =` directly. With several facet variables a strip shows one
-  line per variable, centred, and the strip grows to fit (F-10).
+* `guide_bivariate()` labels the swatch edges with the class breaks
+  `bi_class()` chose, along both axes, so the legend says which range each
+  colour stands for (`labels = FALSE` turns them off; the swatches widen to fit
+  them unless `key.size` is set). `guide_bivariate(rotate = TRUE)` turns the
+  grid 45 degrees into a diamond, low-low at the bottom and high-high at the
+  top. The "Scales and guides" article has a new bivariate section (VP-35).
+
+* **Behaviour change:** a discrete colour scale (`scale_*_manual()`,
+  `scale_*_discrete()`, `scale_*_brewer()`, ...) on a numeric variable now
+  errors ("Continuous values supplied to a discrete colour scale"), as in
+  ggplot2, instead of giving every distinct number its own colour (VP-11).
+
+* **Behaviour change:** discrete position axes drop factor levels no row uses,
+  as ggplot2 does by default; `scale_x_discrete(drop = FALSE)` keeps them
+  (F-10).
+
+* **Behaviour change:** `x = Inf` / `-Inf` (and `y`) on a continuous axis now
+  sits on the panel edge, as in ggplot2, rather than being lost (VP-11).
+
+* An aesthetic whose values are all missing no longer draws a 0-1 colourbar or
+  size legend; a continuous scale with no data and no limits draws no legend
+  (VP-11).
+
+* `coord_cartesian(xlim =, ylim =)` (and the other coords' limits) now zoom a
+  discrete axis too, in level positions as in ggplot2: `xlim = c(2, 4)` shows
+  the second to fourth levels (VP-11).
+
+* `scale_x_discrete()` / `scale_y_discrete()` gain `breaks` (the levels that
+  get a tick), `labels` (a vector, a vector named by level, or a function) and
+  `drop` (F-10).
+
+* `scale_x_continuous()`, `scale_y_continuous()`, `scale_color_continuous()`,
+  `scale_fill_continuous()`, `scale_size()` and `scale_alpha()` gain `oob`:
+  `"censor"`, `"squish"`, `"keep"` or a `function(x, range)` such as
+  `scales::oob_squish_any()`, with `scales::oob_*()` semantics. The defaults
+  are unchanged: positions and sizes keep out-of-limits values, colours squish
+  them (F-10).
+
+* Legends can sit inside the panels: `theme(legend.position = "inside")` with
+  `legend.position.inside = c(x, y)` and `legend.justification`, or the older
+  `legend.position = c(x, y)`. Positions are fractions of the panel area; the
+  justification (a `c(x, y)` or words such as `c("right", "top")`) defaults to
+  the position, so `c(1, 1)` tucks the legend into the top-right corner (F-10).
+
+* **Behaviour change:** a factor, character or logical mapped to `size` or
+  `alpha` now trains a discrete scale, as in ggplot2. Before, a factor was
+  trained as its integer codes (the legend read 1.0, 1.5, ... 3.0, never merged
+  with a `colour` legend of the same variable, and the marks failed to draw) and a
+  character failed outright. The levels now spread evenly over the output range
+  (by area for size), the legend keys are the levels, and a discrete size or
+  alpha legend merges with a colour or shape legend of the same title and levels
+  (#220). As in ggplot2, an unordered variable warns that size or alpha "for a
+  discrete variable is not advised"; an ordered factor does not. `scale_size()`
+  and `scale_alpha()` `breaks` pick the levels the legend shows, and `range`
+  sets the spread (VP-39).
+
+* **Behaviour change:** `guide_coloursteps()` labels each bin boundary on its
+  own, in the colourbar's plain number style, so quantile breaks that span
+  orders of magnitude read `0.0002, 0.066, 2.32, 193, 806` instead of all
+  padded to the smallest one's precision (`0.0002 ... 806.0000`) (VP-33).
 
 * **Behaviour change:** the grammar lint rules (`single_level_scale`,
   `legend_overflow`) now check discrete shape, linetype and pattern scales as
@@ -42,6 +95,59 @@
   conflicts. `pdf_pages()` and `render_all()` differ from vellum's (they take
   plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
   their docs now say how they differ (VV-2).
+
+* **Stacks follow the group key, whatever aesthetic defines it (VP-38).**
+  Without `group`, `color` or `fill`, a discrete `pattern`, `linetype` or
+  `shape` now groups the layer. **Behaviour change:**
+  `mark_bar(pattern = category, position = "stack")` now stacks in legend
+  order (first level on top), as stacks grouped by `fill` have since the stack
+  order change above. Before, a pattern-only layer was one group, so its stack
+  ran in data order. Stats and dodges group by such an aesthetic too, as in
+  ggplot2 (for example `mark_density(linetype = g)` draws one curve per `g`).
+
+* **A violin or ridgeline fill that varies within a shape is dropped with a
+  warning (VP-37).** Each violin (ridge, slab) is one polygon with one fill, so
+  `mark_violin(fill = <continuous>)` painted every shape with its first row's
+  fill while the legend showed a gradient. As in ggplot2, whose violins are
+  computed by a stat that drops such aesthetics, the varying `fill` (or
+  `color`, `alpha`, ...) is now dropped with a warning, and no legend is drawn
+  for it. A continuous fill that is constant within each category is kept.
+  (Areas and ribbons error instead, as ggplot2's do.)
+
+* **Violins on a binned axis keep their shape (VP-30).** With
+  `scale_y_binned()`, a violin's density (and the axis room made for it) was
+  estimated from the values snapped to their bin centres, giving a lumpy
+  outline cut off at the outer centres. The density now uses the continuous
+  values.
+
+* **`mark_histogram()` bins like ggplot2.** It gains `binwidth`, `breaks`,
+  `boundary`, `center` and `closed`, with ggplot2's meaning: `breaks` gives the
+  bin edges (bins may differ in width), `binwidth` the width, and `boundary` /
+  `center` where the bins are aligned. The bin stat also computes `ncount` and
+  `ndensity`, and the x axis now covers the outer bars' edges (F-10).
+
+  **Behaviour change:** the default `bins = 30` now places bins as ggplot2
+  does, with the outer bins centred on the smallest and largest values (width
+  `range / (bins - 1)`), instead of 30 bins from the minimum to the maximum.
+  Counts now match `geom_histogram()` for the same `bins`.
+
+* **New `mark_freqpoly()`** draws the bin counts as a frequency polygon, one
+  line per group, padded with an empty bin at each end like ggplot2's
+  `geom_freqpoly()`. It takes the same binning arguments as
+  `mark_histogram()` (F-10).
+
+* **`mark_summary()` draws ranges.** With `fun.data` (`"mean_se"`,
+  `"mean_cl_normal"`, `"mean_sdl"`, `"median_hilow"`, or a function such as
+  `ggplot2::mean_se()`), or with `fun.min` / `fun.max`, it summarises each
+  category into a point and a range and draws a point range, like ggplot2's
+  `stat_summary()`. `fun.args` passes extra arguments. Without them it draws
+  points as before (F-10).
+
+* **Horizontal box plots and violins.** `mark_boxplot()` and `mark_violin()`
+  gain `orientation`. By default it is inferred as in ggplot2: a discrete `y`
+  with a continuous `x` (`mark_boxplot(x = mpg, y = factor(cyl))`) draws
+  horizontal boxes / violins, and the axis is widened for the violin outline as
+  for vertical ones. `orientation = "x"` or `"y"` forces either (F-10).
 
 * **Stat parameters are checked where you write them.** `bins`, `binwidth`,
   `adjust`, `span`, `level`, `height`, `segments` and `n` in `mark_histogram()`,
@@ -86,6 +192,14 @@
     long thin hull now gets the same margin as a round one, and every hull in
     a layer gets the same margin whatever its size. `mark_node_hull()`'s default
     `expand` is now `0.04`.
+
+* `facet_wrap()` and `facet_grid()` take a `labeller` argument for the strip
+  text, with ggplot2's labellers: `label_value()`, `label_both()`
+  (`"cyl: 4"`), `label_wrap_gen(width)` for long values, and
+  `as_labeller()` for a lookup table (`c("0" = "automatic")`) or a function
+  of the values. A named character vector or a plain function can be passed
+  to `labeller =` directly. With several facet variables a strip shows one
+  line per variable, centred, and the strip grows to fit (F-10).
 
 # vellumplot 0.12.0
 

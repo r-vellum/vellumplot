@@ -7,8 +7,10 @@ NULL
 #
 # Semantics (ggplot2's): an explicit `group` wins outright -- mapped (`group =
 # id`) it is the key, set as a constant (`group = 1`) it makes the whole layer one
-# group. Without one, the first *discrete* of `color`, `fill` is the key. A
-# continuous colour never groups: it varies within a series (a line coloured
+# group. Without one, the first *discrete* of `color`, `fill`, `pattern`,
+# `linetype`, `shape` (`.GROUP_AES`) is the key, so a layer split only by a
+# pattern or a linetype groups -- and stacks, in legend order -- as one split by
+# fill does (VP-38). A continuous colour never groups: it varies within a series (a line coloured
 # along its length), it does not split it. The key is not an interaction of
 # every discrete aesthetic -- connected marks still split each group by style at
 # draw time (`.series_groups()`), which gives the interaction where it matters
@@ -23,7 +25,7 @@ NULL
     g <- L$params$group
   }
   if (is.null(g)) {
-    for (aes in c("color", "fill")) {
+    for (aes in .GROUP_AES) {
       v <- L$values[[aes]]
       if (!is.null(v) && !.is_continuous_group(v)) {
         g <- v
@@ -41,6 +43,10 @@ NULL
   g
 }
 
+# The aesthetics a layer without `group` takes its grouping key from; the first
+# discrete one wins.
+.GROUP_AES <- c("color", "fill", "pattern", "linetype", "shape")
+
 # A vector that varies continuously (numeric / date-time), which `.group_key()`
 # never splits on. A factor is discrete whatever its levels look like.
 .is_continuous_group <- function(v) {
@@ -54,6 +60,9 @@ NULL
   stat <- L$stat
   if (identical(L$mark, "bar") && stat == "identity" && is.null(L$values$y)) {
     stat <- "count"
+  }
+  if (L$mark %in% c("violin", "ridgeline", "halfeye")) {
+    L <- .drop_varying_shape_style(L)
   }
   if (stat == "identity") {
     if (length(L$after)) {
@@ -85,6 +94,7 @@ NULL
     hexbin = .stat_hexbin(L),
     density = .stat_density(L),
     aggregate = .stat_aggregate(L),
+    summary = .stat_summary(L),
     smooth = .stat_smooth(L),
     ecdf = .stat_ecdf(L),
     qq = .stat_qq(L),
@@ -132,6 +142,16 @@ NULL
   hull = "mark_hull"
 )
 
+# The constructor to name in a stat's message: `.STAT_FN`, except where two
+# constructors share a stat (the bin stat draws both histograms and frequency
+# polygons).
+.stat_fn <- function(L, stat) {
+  if (identical(stat, "bin") && identical(L$mark, "line")) {
+    return("mark_freqpoly")
+  }
+  .STAT_FN[[stat]]
+}
+
 # Say how many rows a stat leaves out for a non-finite input, in ggplot2's
 # wording ("Removed n rows containing non-finite values"), rather than dropping
 # them silently. An `Inf` cannot be binned, smoothed or estimated, so ggplot2's
@@ -153,13 +173,70 @@ NULL
     }
   }
   if (any(bad)) {
-    fn <- .STAT_FN[[stat]]
+    fn <- .stat_fn(L, stat)
     cli::cli_warn(
       "Removed {sum(bad)} row{?s} containing non-finite values ({.fn {fn}}).",
       class = "vellumplot_nonfinite_rows"
     )
   }
   invisible()
+}
+
+# A violin, ridge or slab is one polygon per category (and group), so it has
+# one fill, colour and alpha. A per-row aesthetic that varies within one shape
+# -- typically a continuous `fill` mapped to the value itself -- has no single
+# value to paint it with. ggplot2 computes these shapes with a stat
+# (`stat_ydensity()`), which drops such an aesthetic with a warning; so do we,
+# before training, so no legend promises a gradient the shapes cannot show
+# (VP-37). Before, each shape silently took the fill of its first row. An
+# aesthetic constant within every shape (one value per category) is kept.
+.drop_varying_shape_style <- function(L) {
+  n <- L$n %||% max(lengths(L$values))
+  cat_axis <- switch(
+    L$mark,
+    violin = .dist_axes(.dist_orient(L))[["cat"]],
+    ridgeline = "y",
+    "x"
+  )
+  cats <- L$values[[cat_axis]]
+  if (!n || length(cats) != n) {
+    return(L)
+  }
+  grp <- .group_key(L)
+  key <- paste(
+    as.character(cats),
+    if (is.null(grp)) "" else as.character(grp),
+    sep = "\r"
+  )
+  cells <- split(seq_len(n), key)
+  dropped <- character(0)
+  for (nm in intersect(.STAT_CARRIED, names(L$values))) {
+    v <- L$values[[nm]]
+    if (length(v) != n || nm == "group") {
+      next
+    }
+    varies <- any(vapply(
+      cells,
+      function(i) length(unique(v[i])) > 1L,
+      logical(1)
+    ))
+    if (varies) {
+      L$values[[nm]] <- NULL
+      L$types[[nm]] <- NULL
+      dropped <- c(dropped, nm)
+    }
+  }
+  if (length(dropped)) {
+    fn <- paste0("mark_", L$mark)
+    cli::cli_warn(
+      c(
+        "{.fn {fn}} dropped {.field {dropped}}: {?it varies/they vary} within one shape.",
+        i = "Each {L$mark} is a single polygon with one {dropped[[1]]}. Map a variable that is constant within each category, or a discrete one."
+      ),
+      class = "vellumplot_dropped_aes"
+    )
+  }
+  L
 }
 
 # The per-row styling aesthetics a stat carries through: it neither computes
@@ -440,6 +517,10 @@ NULL
   if (!is.null(sdf$ymin)) {
     L$values$ymin <- sdf$ymin
     L$values$ymax <- sdf$ymax
+  }
+  if (!is.null(sdf$xmin)) {
+    L$values$xmin <- sdf$xmin
+    L$values$xmax <- sdf$xmax
   }
   if (!is.null(sdf$width)) {
     L$values$width <- sdf$width
@@ -737,59 +818,136 @@ NULL
   out
 }
 
-# Bin a continuous x into `bins` equal-width bins; count per bin (per group).
-.stat_bin <- function(L) {
-  x <- as.numeric(L$values$x)
-  ok <- is.finite(x)
-  x <- x[ok]
-  if (!length(x)) {
-    return(.stat_drop_layer(
-      "{.fn mark_histogram} needs at least one finite value."
+# The bin edges of a histogram over the finite values `x`, with ggplot2's
+# semantics (`bin_breaks_bins()` / `bin_breaks_width()`):
+#   * `breaks` -- used as given (sorted);
+#   * `binwidth` -- bins of that width, aligned so one edge falls on `boundary`
+#     (or one centre on `center`); with neither, on `binwidth / 2`, which puts
+#     the data's ends in the outer halves of their bins;
+#   * else `bins` -- `bins` bins whose width is `range / (bins - 1)`, so the
+#     outer bins are centred on the smallest and largest values, unless a
+#     `boundary` or `center` is given to align them. One bin spans the range.
+.bin_breaks <- function(x, sp) {
+  if (!is.null(sp$breaks)) {
+    return(sort(unique(as.numeric(sp$breaks))))
+  }
+  rng <- range(x)
+  boundary <- sp$boundary
+  center <- sp$center
+  width <- sp$binwidth
+  if (is.null(width)) {
+    bins <- sp$bins %||% 30L
+    if (diff(rng) == 0) {
+      width <- 0.1
+    } else if (bins == 1L) {
+      return(rng)
+    } else {
+      width <- diff(rng) / (bins - 1)
+      if (is.null(boundary) && is.null(center)) {
+        center <- rng[1]
+      }
+    }
+  }
+  if (is.null(boundary)) {
+    boundary <- if (is.null(center)) width / 2 else center - width / 2
+  }
+  origin <- boundary + floor((rng[1] - boundary) / width) * width
+  # the small correction keeps a maximum that sits on an edge from opening an
+  # empty extra bin (ggplot2's `1 - 1e-08`)
+  max_x <- rng[2] + (1 - 1e-08) * width
+  if ((max_x - origin) / width > 1e6) {
+    cli::cli_abort(c(
+      "{.fn mark_histogram} would make more than a million bins.",
+      i = "Use a larger {.arg binwidth} or fewer {.arg bins}."
     ))
   }
-  bins <- L$stat_params$bins %||% 30L
-  rng <- .pad_degenerate_range(range(x))
-  breaks <- seq(rng[1], rng[2], length.out = bins + 1L)
-  width <- diff(breaks)[1]
+  breaks <- seq(origin, max_x, by = width)
+  if (length(breaks) == 1L) {
+    breaks <- c(breaks, breaks + width)
+  }
+  breaks
+}
+
+# The bin index of each value of `x` for `breaks`, ggplot2's way: bins are
+# closed on the right (`(a, b]`, the first also taking its left edge) or on the
+# left, with the edges nudged by a tiny fuzz so a value that sits on an edge
+# after floating-point error still lands in the bin it belongs to. A value
+# outside the breaks gets NA.
+.bin_index <- function(x, breaks, closed = "right") {
+  fuzz <- 1e-08 * stats::median(diff(breaks))
+  nb <- length(breaks)
+  fuzzy <- if (identical(closed, "left")) {
+    breaks + c(rep(-fuzz, nb - 1L), fuzz)
+  } else {
+    breaks + c(-fuzz, rep(fuzz, nb - 1L))
+  }
+  cut(
+    x,
+    fuzzy,
+    right = !identical(closed, "left"),
+    include.lowest = TRUE,
+    labels = FALSE
+  )
+}
+
+# Bin a continuous x (per group) and count per bin. The breaks (`.bin_breaks()`)
+# are shared by every group. Per bin: its centre `x`, `width`, `count`,
+# `density` (count / (total * width), so each group integrates to 1),
+# `ncount` / `ndensity` (scaled to a maximum of 1). `pad = TRUE` (the frequency
+# polygon) adds an empty bin at each end so the polygon starts and ends at 0.
+.stat_bin <- function(L) {
+  x0 <- as.numeric(L$values$x)
+  ok <- is.finite(x0)
+  x <- x0[ok]
+  fn <- .stat_fn(L, "bin")
+  if (!length(x)) {
+    return(.stat_drop_layer("{.fn {fn}} needs at least one finite value."))
+  }
+  sp <- L$stat_params
+  breaks <- .bin_breaks(x, sp)
+  nb <- length(breaks) - 1L
+  idx <- .bin_index(x, breaks, sp$closed %||% "right")
   centers <- (utils::head(breaks, -1L) + breaks[-1L]) / 2
-  idx <- findInterval(x, breaks, rightmost.closed = TRUE, all.inside = TRUE)
+  widths <- diff(breaks)
   grp <- .group_key(L)
-  if (is.null(grp)) {
-    count <- tabulate(idx, nbins = bins)
+  glevs <- if (is.null(grp)) "" else .cat_levels(grp)
+  g <- if (is.null(grp)) {
+    factor(rep("", length(x)), levels = "")
+  } else {
+    factor(as.character(grp)[ok], levels = glevs)
+  }
+  tab <- table(factor(idx, levels = seq_len(nb)), g)
+  parts <- lapply(seq_along(glevs), function(k) {
+    count <- as.numeric(tab[, k])
+    xc <- centers
+    w <- widths
+    if (isTRUE(sp$pad)) {
+      count <- c(0, count, 0)
+      xc <- c(xc[1] - w[1], xc, xc[nb] + w[nb])
+      w <- c(w[1], w, w[nb])
+    }
     total <- sum(count)
-    data.frame(
-      x = centers,
+    dens <- if (total > 0) count / (total * w) else count
+    df <- data.frame(
+      x = xc,
       count = count,
       y = count,
-      width = width,
-      density = count / (total * width)
+      width = w,
+      density = dens,
+      ncount = if (max(count) > 0) count / max(count) else count,
+      ndensity = if (max(dens) > 0) dens / max(dens) else dens
     )
-  } else {
-    glevs <- .cat_levels(grp)
-    g <- factor(as.character(grp)[ok], levels = glevs)
-    tab <- table(factor(idx, levels = seq_len(bins)), g)
-    out <- expand.grid(
-      bin = seq_len(bins),
-      group = colnames(tab),
-      KEEP.OUT.ATTRS = FALSE,
-      stringsAsFactors = FALSE
-    )
-    out$count <- as.numeric(tab[cbind(
-      out$bin,
-      match(out$group, colnames(tab))
-    )])
-    # Normalise density per group (each group integrates to 1), matching
-    # ggplot2 -- not by the grand total across all groups.
-    gtot <- stats::ave(out$count, out$group, FUN = sum)
-    data.frame(
-      x = centers[out$bin],
-      group = factor(out$group, levels = glevs),
-      count = out$count,
-      y = out$count,
-      width = width,
-      density = out$count / (gtot * width)
-    )
-  }
+    if (!isTRUE(sp$pad)) {
+      # the bar edges, so the x axis is trained to cover the outer bars
+      df$xmin <- xc - w / 2
+      df$xmax <- xc + w / 2
+    }
+    if (!is.null(grp)) {
+      df$group <- factor(glevs[k], levels = glevs)
+    }
+    df
+  })
+  do.call(rbind, parts)
 }
 
 # Bin a continuous (x, y) into a `bins x bins` grid; one row per non-empty cell
@@ -1299,6 +1457,125 @@ NULL
       y = agg$y[keep]
     )
   }
+}
+
+# The built-in `fun.data` summaries of `mark_summary()`, by name: ggplot2's
+# `mean_se()`, and base-R versions of its Hmisc wrappers `mean_cl_normal()`,
+# `mean_sdl()` and `median_hilow()`. Each takes the finite values of one
+# category and returns `c(y, ymin, ymax)`; `mult` / `conf.int` follow ggplot2.
+.SUMMARY_FUNS <- list(
+  mean_se = function(v, mult = 1) {
+    m <- mean(v)
+    se <- if (length(v) > 1L) stats::sd(v) / sqrt(length(v)) else NA_real_
+    c(y = m, ymin = m - mult * se, ymax = m + mult * se)
+  },
+  mean_cl_normal = function(v, conf.int = 0.95) {
+    m <- mean(v)
+    n <- length(v)
+    h <- if (n > 1L) {
+      stats::qt((1 + conf.int) / 2, n - 1L) * stats::sd(v) / sqrt(n)
+    } else {
+      NA_real_
+    }
+    c(y = m, ymin = m - h, ymax = m + h)
+  },
+  mean_sdl = function(v, mult = 2) {
+    m <- mean(v)
+    s <- if (length(v) > 1L) stats::sd(v) else NA_real_
+    c(y = m, ymin = m - mult * s, ymax = m + mult * s)
+  },
+  median_hilow = function(v, conf.int = 0.95) {
+    q <- stats::quantile(v, c(0.5, (1 - conf.int) / 2, (1 + conf.int) / 2))
+    c(y = q[[1]], ymin = q[[2]], ymax = q[[3]])
+  }
+)
+
+# Turn `fun.data` (a name from `.SUMMARY_FUNS` or a function) into a function of
+# one category's values returning `c(y, ymin, ymax)`. A user function may
+# return a data frame or a named vector with those names (what ggplot2's
+# `mean_se()` and the Hmisc wrappers return), so ggplot2's own helpers work.
+.summary_fun_data <- function(fun.data, args) {
+  f <- if (is.character(fun.data)) .SUMMARY_FUNS[[fun.data]] else fun.data
+  function(v) {
+    out <- do.call(f, c(list(v), args))
+    out <- unlist(as.list(out)[c("y", "ymin", "ymax")])
+    if (length(out) != 3L) {
+      cli::cli_abort(c(
+        "{.arg fun.data} must return {.field y}, {.field ymin} and {.field ymax}.",
+        i = "For example {.code fun.data = \"mean_se\"}."
+      ))
+    }
+    out
+  }
+}
+
+# Summarise y per x category (per group) into a point and a range, for
+# `mark_summary(fun.data = )` (or `fun.min` / `fun.max`), drawn as a point
+# range: ggplot2's `stat_summary()`. Missing values are left out; a category
+# with no finite value is dropped.
+.stat_summary <- function(L) {
+  x <- L$values$x
+  y <- as.numeric(L$values$y)
+  sp <- L$stat_params
+  args <- sp$fun.args %||% list()
+  summ <- if (!is.null(sp$fun.data)) {
+    .summary_fun_data(sp$fun.data, args)
+  } else {
+    centre <- match.fun(sp$fun %||% "mean")
+    lo <- if (!is.null(sp$fun.min)) match.fun(sp$fun.min)
+    hi <- if (!is.null(sp$fun.max)) match.fun(sp$fun.max)
+    function(v) {
+      yc <- do.call(centre, c(list(v), args))
+      c(
+        y = yc,
+        ymin = if (is.null(lo)) yc else do.call(lo, c(list(v), args)),
+        ymax = if (is.null(hi)) yc else do.call(hi, c(list(v), args))
+      )
+    }
+  }
+  xlevs <- .cat_levels(x)
+  xc <- as.character(x)
+  grp <- .group_key(L)
+  gc <- if (is.null(grp)) rep("", length(y)) else as.character(grp)
+  key <- paste(xc, gc, sep = "\r")
+  cells <- split(seq_along(y), factor(key, levels = unique(key)))
+  rows <- lapply(cells, function(idx) {
+    v <- y[idx]
+    v <- v[is.finite(v)]
+    if (!length(v)) {
+      return(NULL)
+    }
+    s <- summ(v)
+    data.frame(
+      x = xc[idx[1]],
+      g = gc[idx[1]],
+      y = s[["y"]],
+      ymin = s[["ymin"]],
+      ymax = s[["ymax"]],
+      stringsAsFactors = FALSE
+    )
+  })
+  out <- do.call(rbind, rows)
+  if (is.null(out)) {
+    return(.stat_drop_layer(
+      "{.fn mark_summary} needs finite {.field y} values."
+    ))
+  }
+  # a numeric x stays numeric (a continuous axis); a discrete x keeps its levels
+  out$x <- if (is.numeric(x)) {
+    as.numeric(out$x)
+  } else {
+    factor(out$x, levels = xlevs)
+  }
+  if (!is.null(grp)) {
+    out$group <- factor(out$g, levels = .cat_levels(grp))
+  }
+  out$g <- NULL
+  # one row per category in axis order (then group order), as ggplot2's
+  o <- if (is.null(grp)) order(out$x) else order(out$x, out$group)
+  out <- out[o, , drop = FALSE]
+  rownames(out) <- NULL
+  out
 }
 
 # Supported smoothing methods. "auto" resolves per group by point count

@@ -73,13 +73,13 @@
       scene_digest(p)
     Output
       $n_elements
-      [1] 61
+      [1] 64
       
       $marks
-      $marks$segment
-      [1] 29
-      
       $marks$rect
+      [1] 32
+      
+      $marks$segment
       [1] 32
       
       
@@ -92,7 +92,7 @@
       [1] "panel-1-1"
       
       $scales[[1]]$x
-      [1]  9.656 34.644
+      [1]  8.779 35.521
       
       $scales[[1]]$y
       [1] -0.2  4.2

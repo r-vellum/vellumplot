@@ -388,7 +388,10 @@ scale_colour_bivariate <- scale_color_bivariate
 #' `guide_bivariate()` draws a bivariate colour scale as a square grid of
 #' swatches: the `x` variable's classes run left to right along the bottom, the
 #' `y` variable's classes bottom to top up the side, each axis with its title
-#' and an arrow pointing towards "more". It is the default guide of
+#' and an arrow pointing towards "more". When the classes come from
+#' [bi_class()], each axis is labelled with its class breaks at the swatch
+#' edges. `rotate = TRUE` turns the grid 45 degrees into a diamond, low-low at
+#' the bottom and high-high at the top. It is the default guide of
 #' [scale_fill_bivariate()]; use it through [guides()] to retitle the axes or
 #' resize the swatches without respelling the scale. Asking for it on a fill that
 #' maps a [bi_class()]-style column makes that scale bivariate.
@@ -397,7 +400,12 @@ scale_colour_bivariate <- scale_color_bivariate
 #' @param xlab,ylab The axis titles, or `NULL` to keep the scale's (or the
 #'   variable names recorded by [bi_class()]).
 #' @param key.size Side of one swatch, in millimetres. `NULL` (default) uses
-#'   1.5 x the theme's `legend.key.size`.
+#'   1.5 x the theme's `legend.key.size`, widened to fit the break labels.
+#' @param labels Label the swatch edges with the class breaks [bi_class()]
+#'   recorded (default `TRUE`). A scale without recorded breaks (a hand-made
+#'   class column) has none to show.
+#' @param rotate Turn the grid 45 degrees, so the classes read as a diamond
+#'   with high-high at the top (default `FALSE`).
 #' @return A guide specification for [guides()].
 #' @seealso [scale_fill_bivariate()]
 #' @family bivariate
@@ -407,12 +415,24 @@ scale_colour_bivariate <- scale_color_bivariate
 #' vplot(d) |>
 #'   mark_point(x = hp, y = wt, color = bi_class, size = 2) |>
 #'   guides(color = guide_bivariate(xlab = "More power", ylab = "More weight"))
+#'
+#' # the diamond form
+#' vplot(d) |>
+#'   mark_point(x = hp, y = wt, color = bi_class, size = 2) |>
+#'   guides(color = guide_bivariate(rotate = TRUE))
 guide_bivariate <- function(
   title = NULL,
   xlab = NULL,
   ylab = NULL,
-  key.size = NULL
+  key.size = NULL,
+  labels = TRUE,
+  rotate = FALSE
 ) {
+  for (a in list(list(labels, "labels"), list(rotate, "rotate"))) {
+    if (!is.logical(a[[1]]) || length(a[[1]]) != 1L || is.na(a[[1]])) {
+      cli::cli_abort("{.arg {a[[2]]}} must be {.code TRUE} or {.code FALSE}.")
+    }
+  }
   for (a in list(list(xlab, "xlab"), list(ylab, "ylab"))) {
     if (!is.null(a[[1]]) && !(is.character(a[[1]]) && length(a[[1]]) == 1L)) {
       cli::cli_abort("{.arg {a[[2]]}} must be a single string or {.code NULL}.")
@@ -423,7 +443,9 @@ guide_bivariate <- function(
     title = title,
     xlab = xlab,
     ylab = ylab,
-    key_size = .check_bar_dim(key.size, "key.size")
+    key_size = .check_bar_dim(key.size, "key.size"),
+    labels = labels,
+    rotate = rotate
   )
 }
 
@@ -512,7 +534,9 @@ guide_bivariate <- function(
       ylab = info$y %||% "y",
       x_breaks = if (identical(info$dim, dim)) info$x_breaks,
       y_breaks = if (identical(info$dim, dim)) info$y_breaks,
-      key_size = NULL
+      key_size = NULL,
+      labels = TRUE,
+      rotate = FALSE
     )
   )
 }
@@ -525,7 +549,7 @@ guide_bivariate <- function(
       i = "Map the fill to a {.fn bi_class} column, or add {.fn scale_fill_bivariate}."
     ))
   }
-  for (f in c("xlab", "ylab", "key_size")) {
+  for (f in c("xlab", "ylab", "key_size", "labels", "rotate")) {
     if (!is.null(guide[[f]])) {
       trained$bivariate[[f]] <- guide[[f]]
     }
@@ -536,22 +560,43 @@ guide_bivariate <- function(
 # --- the 2-D legend ---------------------------------------------------------
 
 # Geometry (mm) of a bivariate guide, shared by the measurers and the drawer.
-# The grid sits right of a band for the rotated y title and an arrow, above an
-# arrow row and an x-title row. Both titles start at the grid's low-low corner,
-# so a title longer than the grid side grows the guide instead of colliding.
+# The body is a block of four columns -- the rotated y title, the y arrow, the
+# y break labels, the grid -- over four rows -- the grid, the x break labels,
+# the x arrow, the x title. Both titles start at the grid's low-low corner, so
+# a title longer than the grid side grows the guide instead of colliding. A
+# rotated guide turns that block 45 degrees, inside a square cell as wide as
+# its diagonal extent.
 .bi_geom <- function(g, m) {
   bi <- g$sc$bivariate
-  s <- bi$key_size %||% (1.5 * m$key)
-  side <- bi$dim * s
   arrow <- 2.4
+  lab_fs <- 0.8 * m$text_fs
+  ticks <- .bi_tick_labels(bi)
+  lab_gap <- 0.6
+  s <- bi$key_size %||%
+    max(
+      1.5 * m$key,
+      if (!is.null(ticks$x)) .mm_tw(ticks$x, lab_fs) + 1
+    )
+  side <- bi$dim * s
   xw <- .mm_tw(bi$xlab, m$text_fs)
   yw <- .mm_tw(bi$ylab, m$text_fs)
+  xlab_h <- if (!is.null(ticks$x)) .mm_th(lab_fs) + lab_gap else 0
+  ylab_w <- if (!is.null(ticks$y)) .mm_tw(ticks$y, lab_fs) + lab_gap else 0
   show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   # The y arrowhead reaches the grid's top edge, so a title gets a row gap more
   # clearance than a keyed legend's.
   th <- if (show_title) m$title_h + m$title_gap + m$row_gap else 0
   body_h <- max(side, yw)
   body_w <- max(side, xw)
+  block_w <- m$text_h + arrow + ylab_w + body_w
+  block_h <- body_h + xlab_h + arrow + m$text_h
+  rotate <- isTRUE(bi$rotate)
+  cell <- if (rotate) {
+    d <- (block_w + block_h) / sqrt(2)
+    c(d, d)
+  } else {
+    c(block_w, block_h)
+  }
   list(
     s = s,
     side = side,
@@ -560,12 +605,34 @@ guide_bivariate <- function(
     show_title = show_title,
     body_h = body_h,
     body_w = body_w,
+    ticks = ticks,
+    lab_fs = lab_fs,
+    lab_gap = lab_gap,
+    xlab_h = xlab_h,
+    ylab_w = ylab_w,
+    block_w = block_w,
+    block_h = block_h,
+    rotate = rotate,
+    cell = cell,
     width = max(
-      m$pad + m$text_h + arrow + body_w,
+      m$pad + cell[1],
       if (show_title) .mm_tw_any(g$sc$name, m$title_fs) else 0
     ),
-    height = th + body_h + arrow + m$text_h + m$row_gap
+    height = th + cell[2] + m$row_gap
   )
+}
+
+# The class-break labels of each axis (one per swatch edge, dim + 1), or NULL
+# for an axis whose breaks bi_class() did not record or when the guide turns
+# them off.
+.bi_tick_labels <- function(bi) {
+  lab <- function(b) {
+    if (!isTRUE(bi$labels %||% TRUE) || length(b) != bi$dim + 1L) {
+      return(NULL)
+    }
+    .steps_break_labels(list(breaks = b))
+  }
+  list(x = lab(bi$x_breaks), y = lab(bi$y_breaks))
 }
 
 # Hover text for the swatch of class (i, j): the class ranges when bi_class()
@@ -602,16 +669,12 @@ guide_bivariate <- function(
       layout = vellum::grid_layout(
         heights = .c_units(
           if (geo$show_title) mm(geo$th),
-          mm(geo$body_h),
-          mm(geo$arrow),
-          mm(m$text_h),
+          mm(geo$cell[2]),
           vellum::vl_unit(1, "null")
         ),
         widths = .c_units(
           mm(m$pad),
-          mm(m$text_h),
-          mm(geo$arrow),
-          mm(geo$body_w),
+          mm(geo$cell[1]),
           vellum::vl_unit(1, "null")
         )
       )
@@ -621,14 +684,50 @@ guide_bivariate <- function(
   if (geo$show_title) {
     scene <- vellum::push(
       scene,
-      vellum::vl_viewport(row = 1, col = 1, colspan = 5)
+      vellum::vl_viewport(row = 1, col = 1, colspan = 3)
     )
     scene <- .draw_guide_title(scene, sc$name, rt)
     scene <- vellum::pop(scene)
   }
-  r_body <- off + 1L
+  scene <- vellum::push(scene, vellum::vl_viewport(row = off + 1L, col = 2))
+  # The body block: the whole cell, or turned 45 degrees about the cell's
+  # centre for the diamond.
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      width = mm(geo$block_w),
+      height = mm(geo$block_h),
+      angle = if (geo$rotate) 45 else 0,
+      layout = vellum::grid_layout(
+        heights = .c_units(
+          mm(geo$body_h),
+          mm(geo$xlab_h),
+          mm(geo$arrow),
+          mm(m$text_h)
+        ),
+        widths = .c_units(
+          mm(m$text_h),
+          mm(geo$arrow),
+          mm(geo$ylab_w),
+          mm(geo$body_w)
+        )
+      )
+    )
+  )
+  scene <- .draw_bi_body(scene, g, geo, m, rt, txt)
+  scene <- vellum::pop(scene) # body block
+  scene <- vellum::pop(scene) # body cell
+  vellum::pop(scene)
+}
+
+# The body of a bivariate guide, in its 4 x 4 block layout (see `.bi_geom()`):
+# the swatch grid, the break labels, the two arrows and the two titles.
+.draw_bi_body <- function(scene, g, geo, m, rt, txt) {
+  sc <- g$sc
+  bi <- sc$bivariate
+  mm <- function(v) vellum::vl_unit(v, "mm")
   # The swatch grid, bottom-left aligned in the body cell.
-  scene <- vellum::push(scene, vellum::vl_viewport(row = r_body, col = 4))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 4))
   cols <- matrix(sc$colors, nrow = bi$dim)
   interactive <- rt[[".interactive"]]
   for (j in seq_len(bi$dim)) {
@@ -654,18 +753,59 @@ guide_bivariate <- function(
     }
   }
   scene <- vellum::pop(scene)
+  # The class breaks, one at each swatch edge: x under the grid, y beside it.
+  lab_el <- rt[["legend.text"]]
+  lab_el@size <- geo$lab_fs
+  lab_gp <- .el_gpar_text(lab_el)
+  # The two labels at the low-low corner would meet there, so the first x
+  # label starts at its edge and the first y label sits on its edge.
+  edges <- (seq_len(bi$dim + 1L) - 1) * geo$s
+  first <- c(TRUE, rep(FALSE, bi$dim))
+  if (!is.null(geo$ticks$x)) {
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 2, col = 4))
+    for (k in c(TRUE, FALSE)) {
+      scene <- vellum::draw(
+        scene,
+        vellum::text_grob(
+          geo$ticks$x[first == k],
+          x = mm(edges[first == k]),
+          y = vellum::vl_unit(1, "npc"),
+          just = c(if (k) "left" else "centre", "top"),
+          gp = lab_gp
+        )
+      )
+    }
+    scene <- vellum::pop(scene)
+  }
+  if (!is.null(geo$ticks$y)) {
+    scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 3))
+    for (k in c(TRUE, FALSE)) {
+      scene <- vellum::draw(
+        scene,
+        vellum::text_grob(
+          geo$ticks$y[first == k],
+          x = mm(geo$ylab_w - geo$lab_gap),
+          y = mm(edges[first == k]),
+          just = c("right", if (k) "bottom" else "centre"),
+          gp = lab_gp
+        )
+      )
+    }
+    scene <- vellum::pop(scene)
+  }
   ink <- rt[["legend.text"]]@colour %||% "grey20"
   agp <- vellum::vl_gpar(col = ink, fill = ink, lwd = 0.8)
   arr <- vellum::vl_arrow(type = "closed", length = mm(1.3), angle = 25)
-  # The two arrows start from a shared corner just outside the grid's low-low
-  # swatch and run along its left and bottom edges towards "more".
+  # The two arrows start from a shared corner outside the grid's low-low
+  # swatch (beyond the break labels) and run along its left and bottom edges
+  # towards "more".
   # y arrow, up the grid's left edge.
-  scene <- vellum::push(scene, vellum::vl_viewport(row = r_body, col = 3))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 2))
   scene <- vellum::draw(
     scene,
     vellum::segments_grob(
       mm(geo$arrow / 2),
-      mm(-geo$arrow / 2),
+      mm(-geo$xlab_h - geo$arrow / 2),
       mm(geo$arrow / 2),
       mm(geo$side),
       arrow = arr,
@@ -673,26 +813,27 @@ guide_bivariate <- function(
     )
   )
   scene <- vellum::pop(scene)
-  # y title, rotated, reading upward from the grid's bottom edge.
-  scene <- vellum::push(scene, vellum::vl_viewport(row = r_body, col = 2))
+  # y title, rotated, reading upward from the grid's bottom edge. In the
+  # diamond that would read upside down, so it reads downward to the corner.
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 1, col = 1))
   scene <- vellum::draw(
     scene,
     vellum::text_grob(
       bi$ylab,
       x = vellum::vl_unit(0.5, "npc"),
       y = mm(0),
-      just = c("left", "centre"),
-      rot = 90,
+      just = c(if (geo$rotate) "right" else "left", "centre"),
+      rot = if (geo$rotate) -90 else 90,
       gp = txt
     )
   )
   scene <- vellum::pop(scene)
   # x arrow, along the grid's bottom edge.
-  scene <- vellum::push(scene, vellum::vl_viewport(row = r_body + 1L, col = 4))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 3, col = 4))
   scene <- vellum::draw(
     scene,
     vellum::segments_grob(
-      mm(-geo$arrow / 2),
+      mm(-geo$ylab_w - geo$arrow / 2),
       mm(geo$arrow / 2),
       mm(geo$side),
       mm(geo$arrow / 2),
@@ -702,7 +843,7 @@ guide_bivariate <- function(
   )
   scene <- vellum::pop(scene)
   # x title, starting at the grid's left edge.
-  scene <- vellum::push(scene, vellum::vl_viewport(row = r_body + 2L, col = 4))
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 4, col = 4))
   scene <- vellum::draw(
     scene,
     vellum::text_grob(
@@ -713,6 +854,5 @@ guide_bivariate <- function(
       gp = txt
     )
   )
-  scene <- vellum::pop(scene)
   vellum::pop(scene)
 }

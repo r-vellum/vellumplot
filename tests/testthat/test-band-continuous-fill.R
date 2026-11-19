@@ -90,12 +90,53 @@ test_that("violins and ridgelines never split on a continuous fill (VP-34)", {
     pr <- attr(compile(p), "vellumplot_provenance")
     Filter(function(e) identical(e$mark, mark), pr)
   }
+  # (the varying fill itself is dropped with a warning, VP-37)
   expect_length(
-    grobs(vplot(dd) |> mark_violin(x = g, y = y, fill = z), "violin"),
+    suppressWarnings(
+      grobs(vplot(dd) |> mark_violin(x = g, y = y, fill = z), "violin")
+    ),
     2L
   )
   expect_length(
-    grobs(vplot(dd) |> mark_ridgeline(x = y, y = g, fill = z), "ridgeline"),
+    suppressWarnings(
+      grobs(vplot(dd) |> mark_ridgeline(x = y, y = g, fill = z), "ridgeline")
+    ),
     2L
   )
+})
+
+test_that("a fill varying within a violin or ridge is dropped, as ggplot2 does (VP-37)", {
+  set.seed(1)
+  dd <- data.frame(
+    g = rep(c("a", "b"), each = 30),
+    y = stats::rnorm(60),
+    z = stats::runif(60),
+    m = rep(c(1, 5), each = 30)
+  )
+  expect_warning(
+    r <- .resolve_layers(
+      vplot(dd) |> mark_violin(x = g, y = y, fill = z)
+    )[[1]],
+    class = "vellumplot_dropped_aes"
+  )
+  expect_null(r$values$fill)
+  # no colour scale (and so no gradient legend) is trained for it
+  p <- vplot(dd) |> mark_ridgeline(x = y, y = g, fill = z)
+  sc <- suppressWarnings(
+    .train_scales(p, .resolve_layers(p))
+  )
+  expect_null(sc$color)
+  # a horizontal violin checks its cells along y
+  expect_warning(
+    .resolve_layers(
+      vplot(dd) |> mark_violin(x = y, y = g, alpha = z)
+    ),
+    "alpha"
+  )
+  # a continuous fill constant within each category is kept, with its legend
+  expect_no_warning(
+    .resolve_layers(vplot(dd) |> mark_violin(x = g, y = y, fill = m))
+  )
+  r2 <- .resolve_layers(vplot(dd) |> mark_violin(x = g, y = y, fill = m))[[1]]
+  expect_equal(unique(r2$values$fill), c(1, 5))
 })

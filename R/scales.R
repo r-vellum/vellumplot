@@ -154,7 +154,8 @@ NULL
   labels,
   name,
   midpoint = NULL,
-  domain = NULL
+  domain = NULL,
+  oob = NULL
 ) {
   .check_plot(plot)
   .add_scale(
@@ -167,7 +168,8 @@ NULL
       labels = labels,
       name = name,
       midpoint = midpoint,
-      domain = domain
+      domain = domain,
+      oob = oob
     )
   )
 }
@@ -188,7 +190,9 @@ NULL
 #'   so signed data and zero/negatives read on one axis), `"reverse"`, or a
 #'   [scales::transform_log10()]-style transform object.
 #' @param breaks,labels Explicit break positions (data units) and their labels,
-#'   or `NULL` to compute them.
+#'   or `NULL` to compute them. On a discrete scale `breaks` is the levels that
+#'   get a tick, and `labels` a character vector (one per break, or named by
+#'   level) or a function of the levels.
 #' @param name Axis title, or `NULL` to derive from the encoding.
 #' @param expand Axis padding beyond the data. `NULL` (default) keeps the usual
 #'   5% breathing room; a numeric `c(mult, add)` sets a proportion of the range
@@ -200,6 +204,15 @@ NULL
 #' @param sec.axis A secondary axis from [sec_axis()] / [dup_axis()], drawn on
 #'   the opposite edge, or `NULL` for none. Continuous Cartesian plots only (see
 #'   [sec_axis()] for the current limitations).
+#' @param oob What to do with values outside `limits`, as in
+#'   [scales::oob_censor()] and friends: `"censor"` drops them (they become
+#'   `NA` and are not drawn), `"squish"` moves them onto the nearest limit,
+#'   `"keep"` draws them where they fall, clipped by the panel. A function
+#'   `function(x, range)` such as [scales::oob_squish_any()] also works. `NULL`
+#'   (default) is `"keep"` on a position axis. Infinite values are never out
+#'   of bounds: `x = Inf` sits on the panel edge.
+#' @param drop For discrete scales, drop factor levels that do not occur in
+#'   the data (default `TRUE`, as in ggplot2). `limits` overrides it.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_continuous(limits = c(0, 6))
@@ -213,7 +226,8 @@ scale_x_continuous <- function(
   labels = NULL,
   name = NULL,
   expand = NULL,
-  sec.axis = NULL
+  sec.axis = NULL,
+  oob = NULL
 ) {
   .continuous_position_scale(
     plot,
@@ -224,7 +238,8 @@ scale_x_continuous <- function(
     labels,
     name,
     expand,
-    sec.axis
+    sec.axis,
+    oob
   )
 }
 
@@ -238,7 +253,8 @@ scale_y_continuous <- function(
   labels = NULL,
   name = NULL,
   expand = NULL,
-  sec.axis = NULL
+  sec.axis = NULL,
+  oob = NULL
 ) {
   .continuous_position_scale(
     plot,
@@ -249,7 +265,8 @@ scale_y_continuous <- function(
     labels,
     name,
     expand,
-    sec.axis
+    sec.axis,
+    oob
   )
 }
 
@@ -264,7 +281,8 @@ scale_y_continuous <- function(
   labels,
   name,
   expand,
-  sec.axis
+  sec.axis,
+  oob = NULL
 ) {
   .check_plot(plot)
   .check_continuous_limits(limits, "limits")
@@ -279,9 +297,77 @@ scale_y_continuous <- function(
       labels = labels,
       name = name,
       expand = .check_expand(expand),
-      sec_axis = .check_sec_axis(sec.axis)
+      sec_axis = .check_sec_axis(sec.axis),
+      oob = .check_oob(oob)
     )
   )
+}
+
+# Shared body of scale_x_discrete() / scale_y_discrete().
+.discrete_position_scale <- function(
+  plot,
+  aesthetic,
+  limits,
+  name,
+  breaks,
+  labels,
+  drop
+) {
+  .check_plot(plot)
+  if (!is.logical(drop) || length(drop) != 1L || is.na(drop)) {
+    cli::cli_abort("{.arg drop} must be {.code TRUE} or {.code FALSE}.")
+  }
+  if (
+    !is.null(labels) &&
+      !is.function(labels) &&
+      !is.character(labels) &&
+      !is.numeric(labels)
+  ) {
+    cli::cli_abort(
+      "{.arg labels} must be a character vector, a function, or {.code NULL}."
+    )
+  }
+  .add_scale(
+    plot,
+    ScaleSpec(
+      aesthetic = aesthetic,
+      type = "discrete",
+      domain = limits,
+      name = name,
+      breaks = breaks,
+      labels = labels,
+      drop = drop
+    )
+  )
+}
+
+# Check a scale's `oob` argument: NULL, one of the handler names, or a
+# `function(x, range)`. scales' own handlers are stored by name, so a spec that
+# uses them still serializes.
+.check_oob <- function(oob, call = rlang::caller_env()) {
+  if (is.null(oob)) {
+    return(NULL)
+  }
+  if (is.function(oob)) {
+    known <- list(
+      censor = scales::oob_censor,
+      squish = scales::oob_squish,
+      keep = scales::oob_keep
+    )
+    for (nm in names(known)) {
+      if (identical(oob, known[[nm]])) {
+        return(nm)
+      }
+    }
+    return(oob)
+  }
+  if (!is.character(oob) || length(oob) != 1L) {
+    cli::cli_abort(
+      "{.arg oob} must be {.val censor}, {.val squish}, {.val keep}, or a function.",
+      call = call
+    )
+  }
+  rlang::arg_match0(oob, c("censor", "squish", "keep"), "oob", call)
 }
 
 #' Secondary axes
@@ -360,22 +446,28 @@ dup_axis <- function(
 
 #' @rdname scale_x_continuous
 #' @export
-scale_x_discrete <- function(plot, limits = NULL, name = NULL) {
-  .check_plot(plot)
-  .add_scale(
-    plot,
-    ScaleSpec(aesthetic = "x", type = "discrete", domain = limits, name = name)
-  )
+scale_x_discrete <- function(
+  plot,
+  limits = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  drop = TRUE
+) {
+  .discrete_position_scale(plot, "x", limits, name, breaks, labels, drop)
 }
 
 #' @rdname scale_x_continuous
 #' @export
-scale_y_discrete <- function(plot, limits = NULL, name = NULL) {
-  .check_plot(plot)
-  .add_scale(
-    plot,
-    ScaleSpec(aesthetic = "y", type = "discrete", domain = limits, name = name)
-  )
+scale_y_discrete <- function(
+  plot,
+  limits = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  drop = TRUE
+) {
+  .discrete_position_scale(plot, "y", limits, name, breaks, labels, drop)
 }
 
 #' Date and time position scales
@@ -688,6 +780,10 @@ ylim <- function(plot, ...) {
 #'   (default `0`); values above and below diverge to `high` and `low`.
 #' @param breaks,labels Explicit legend breaks / labels, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
+#' @param oob For `scale_*_continuous()`, what to do with values outside
+#'   `limits`: `"censor"` gives them the NA colour, `"squish"` the colour of the
+#'   nearest limit, `"keep"` the same (a ramp cannot extend past its ends), or
+#'   a `function(x, range)`. `NULL` (default) squishes.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |>
@@ -700,7 +796,8 @@ scale_color_continuous <- function(
   limits = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 ) {
   .check_continuous_limits(limits, "limits", numeric = TRUE)
   .colour_scale(
@@ -711,7 +808,8 @@ scale_color_continuous <- function(
     breaks,
     labels,
     name,
-    domain = limits
+    domain = limits,
+    oob = .check_oob(oob)
   )
 }
 
@@ -784,7 +882,8 @@ scale_fill_continuous <- function(
   limits = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 ) {
   .check_continuous_limits(limits, "limits", numeric = TRUE)
   .colour_scale(
@@ -795,7 +894,8 @@ scale_fill_continuous <- function(
     breaks,
     labels,
     name,
-    domain = limits
+    domain = limits,
+    oob = .check_oob(oob)
   )
 }
 
@@ -1286,7 +1386,8 @@ scale_colour_distiller <- scale_color_distiller
   limits,
   breaks,
   name,
-  upper = NULL
+  upper = NULL,
+  oob = NULL
 ) {
   .check_plot(plot)
   .check_continuous_limits(limits, "limits", numeric = TRUE)
@@ -1305,7 +1406,8 @@ scale_colour_distiller <- scale_color_distiller
       domain = limits,
       range = range,
       breaks = breaks,
-      name = name
+      name = name,
+      oob = .check_oob(oob)
     )
   )
 }
@@ -1315,12 +1417,21 @@ scale_colour_distiller <- scale_color_distiller
 #' Declare the scale for a mapped `size` aesthetic: data values map linearly to a
 #' point-size `range` (in mm). A size legend is drawn automatically.
 #'
+#' A factor, character or logical mapped to `size` gets a discrete scale: the
+#' levels spread evenly (by area) over `range`, the legend keys are the levels,
+#' and `breaks` picks which of them it shows. As in ggplot2, an unordered
+#' variable warns that size is not advised for it; an ordered factor does not.
+#'
 #' @param plot A [PlotSpec].
 #' @param range Numeric length-2 output size range in mm, or `NULL` for the
 #'   default `c(1, 4)`.
 #' @param limits Numeric length-2 data domain, or `NULL` to train from the data.
 #' @param breaks Explicit legend breaks, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
+#' @param oob What to do with values outside `limits`: `"censor"` (they get
+#'   no size, so the mark is not drawn), `"squish"` (the size of the
+#'   nearest limit), `"keep"` (extrapolated past the range), or a
+#'   `function(x, range)`. `NULL` (default) keeps them.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp) |> scale_size(range = c(1, 8))
@@ -1330,9 +1441,10 @@ scale_size <- function(
   range = NULL,
   limits = NULL,
   breaks = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 ) {
-  .continuous_range_scale(plot, "size", range, limits, breaks, name)
+  .continuous_range_scale(plot, "size", range, limits, breaks, name, oob = oob)
 }
 
 #' @rdname scale_size
@@ -1742,12 +1854,20 @@ scale_linetype_identity <- function(plot) {
 #' Declare the scale for a mapped `alpha` aesthetic: data values map to an
 #' opacity `range` in `[0, 1]`. An alpha legend is drawn automatically.
 #'
+#' A factor, character or logical mapped to `alpha` gets a discrete scale, its
+#' levels spread evenly over `range`, with a warning for an unordered variable
+#' (as in ggplot2).
+#'
 #' @param plot A [PlotSpec].
 #' @param range Numeric length-2 output opacity range, or `NULL` for the
 #'   default `c(0.1, 1)`.
 #' @param limits Numeric length-2 data domain, or `NULL` to train from the data.
 #' @param breaks Explicit legend breaks, or `NULL`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
+#' @param oob What to do with values outside `limits`: `"censor"` (they get
+#'   no opacity, so the mark is not drawn), `"squish"` (the opacity of the
+#'   nearest limit), `"keep"` (extrapolated past the range), or a
+#'   `function(x, range)`. `NULL` (default) keeps them.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, alpha = hp) |> scale_alpha(range = c(0.2, 1))
@@ -1757,9 +1877,19 @@ scale_alpha <- function(
   range = NULL,
   limits = NULL,
   breaks = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 ) {
-  .continuous_range_scale(plot, "alpha", range, limits, breaks, name, upper = 1)
+  .continuous_range_scale(
+    plot,
+    "alpha",
+    range,
+    limits,
+    breaks,
+    name,
+    upper = 1,
+    oob = oob
+  )
 }
 
 #' @rdname scale_alpha

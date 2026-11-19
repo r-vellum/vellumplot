@@ -476,7 +476,7 @@ NULL
       lim
     )
   } else {
-    .train_position_discrete(aesthetic, values, scalespec, name)
+    .train_position_discrete(aesthetic, values, scalespec, name, lim)
   }
 }
 
@@ -564,7 +564,7 @@ NULL
     dbreaks <- if (!is.null(scalespec)) scalespec@date_breaks else NULL
     dlabels <- if (!is.null(scalespec)) scalespec@date_labels else NULL
     is_classed <- inherits(raw, c("Date", "POSIXct"))
-    tfun <- function(v) as.numeric(v)
+    tfun <- .oob_wrap(function(v) as.numeric(v), scalespec, user_lim, rng)
     domain <- .expand_domain(rng, scalespec)
     # Breaks span the trained range `rng` (which honours explicit limits), not
     # the raw data: a month of data under 2019-2022 limits gets yearly ticks,
@@ -612,7 +612,12 @@ NULL
   } else {
     trans_name <- .trans_name(scalespec)
     time_unit <- NULL
-    tfun <- function(v) tr$transform(as.numeric(v))
+    tfun <- .oob_wrap(
+      function(v) tr$transform(as.numeric(v)),
+      scalespec,
+      user_lim,
+      rng
+    )
     tdom <- tr$transform(rng)
     if (!all(is.finite(tdom))) {
       cli::cli_abort(c(
@@ -677,12 +682,32 @@ NULL
 # `limits` (in `scalespec@domain`) sets/reorders/subsets the levels. Missing
 # values get a trailing "NA" band (ggplot2's `na.translate = TRUE`) unless the
 # user set the limits, which then decide exactly what is shown.
-.train_position_discrete <- function(aesthetic, values, scalespec, name) {
+#
+# `lim` (coord_cartesian(xlim =) and friends) zooms the view as on a continuous
+# axis: it is in the axis's native positions (level i sits at i), as in ggplot2,
+# and pads half a band each side. Levels stay; ticks outside the view drop.
+.train_position_discrete <- function(
+  aesthetic,
+  values,
+  scalespec,
+  name,
+  lim = NULL
+) {
   user_limits <- !is.null(scalespec) && !is.null(scalespec@domain)
   levs <- if (user_limits) {
     as.character(scalespec@domain)
   } else {
     .cat_levels(values)
+  }
+  # scale_*_discrete(drop = TRUE), the default as in ggplot2: a factor level no
+  # row uses gets no band. Explicit limits decide the levels themselves.
+  drop <- is.null(scalespec) || !isFALSE(scalespec@drop)
+  if (!user_limits && drop) {
+    seen <- unique(as.character(unlist(
+      lapply(values, as.character),
+      use.names = FALSE
+    )))
+    levs <- levs[levs %in% seen]
   }
   na_pos <- NULL
   if (!user_limits && anyNA(unlist(values, use.names = FALSE))) {
@@ -690,6 +715,25 @@ NULL
     na_pos <- length(levs)
   }
   k <- length(levs)
+  domain <- c(0.5, k + 0.5)
+  breaks <- seq_len(k)
+  labels <- .discrete_axis_labels(levs, scalespec, aesthetic)
+  # scale_*_discrete(breaks =): only these levels get a tick (in level order).
+  ub <- if (!is.null(scalespec)) scalespec@breaks else NULL
+  if (!is.null(ub)) {
+    shown <- levs %in% as.character(ub)
+    breaks <- breaks[shown]
+    labels <- labels[shown]
+  }
+  if (!is.null(lim)) {
+    lim <- as.numeric(lim)
+    lim[is.na(lim)] <- c(1, k)[is.na(lim)]
+    pad <- if (lim[1] > lim[2]) c(0.5, -0.5) else c(-0.5, 0.5)
+    domain <- lim + pad
+    shown <- breaks >= min(domain) & breaks <= max(domain)
+    breaks <- breaks[shown]
+    labels <- labels[shown]
+  }
   trained_scale(
     aesthetic,
     "discrete",
@@ -704,13 +748,43 @@ NULL
     discrete = TRUE,
     band_width = 1,
     data_range = c(1, k),
-    domain = c(0.5, k + 0.5),
-    breaks = seq_len(k),
-    labels = levs,
+    domain = domain,
+    breaks = breaks,
+    labels = labels,
     levels = levs, # stays the data levels even if `labels` is relabelled later
     transform = "identity",
     time_unit = NULL
   )
+}
+
+# The tick labels of a discrete axis, one per level: the levels themselves, or
+# scale_*_discrete(labels =) -- a function of the levels, a vector named by
+# level (unnamed levels keep their own text), or an unnamed vector with one
+# label per level that gets a tick (`breaks`, else every level).
+.discrete_axis_labels <- function(levs, scalespec, aesthetic) {
+  ul <- if (!is.null(scalespec)) scalespec@labels else NULL
+  if (is.null(ul)) {
+    return(levs)
+  }
+  if (is.function(ul)) {
+    return(as.character(ul(levs)))
+  }
+  if (!is.null(names(ul))) {
+    out <- levs
+    hit <- levs %in% names(ul)
+    out[hit] <- as.character(ul[levs[hit]])
+    return(out)
+  }
+  ub <- if (!is.null(scalespec)) scalespec@breaks else NULL
+  ticked <- if (!is.null(ub)) {
+    levs %in% as.character(ub)
+  } else {
+    rep(TRUE, length(levs))
+  }
+  lab <- .match_labels(ul, levs[ticked], aesthetic)
+  out <- levs
+  out[ticked] <- lab
+  out
 }
 
 # A binned position scale: bin the continuous data, tick at bin boundaries, and
@@ -802,6 +876,12 @@ NULL
     "continuous"
   } else {
     "discrete"
+  }
+  # A discrete scale (scale_*_manual(), _discrete(), _brewer(), ...) on a
+  # numeric variable: ggplot2 refuses it, rather than giving every distinct
+  # number its own colour.
+  if (explicit_type && identical(type, "discrete")) {
+    .check_discrete_colour(resolved, channels, aes)
   }
   title <- titles$title[[aes]]
 
@@ -943,7 +1023,11 @@ NULL
         pmin(pmax(i, 1L), 256L)
       }
     }
+    # `oob` (scale_*_continuous(oob =)) acts on values outside the range; the
+    # default squishes them onto the ramp's ends (`bin()` clamps).
+    oob <- .oob_fun(scalespec) %||% scales::oob_keep
     map <- function(x) {
+      x <- oob(as.numeric(x), range = sort(rng))
       out <- pal256[bin(x)]
       out[!is.finite(x)] <- na_value
       out
@@ -974,6 +1058,8 @@ NULL
       breaks_asked = !is.null(user_breaks),
       labels_asked = !is.null(user_labels),
       na = has_na,
+      # Only missing values (and no limits): no colourbar, as in ggplot2.
+      no_guide = if (.all_missing(v, scalespec)) TRUE,
       na_value = na_value,
       key_glyph = key_glyph
     )
@@ -1011,6 +1097,33 @@ NULL
       key_glyph = key_glyph
     )
   }
+}
+
+# Abort when every layer that maps a colour channel maps a quantitative
+# variable to a discrete colour scale.
+.check_discrete_colour <- function(resolved, channels, aes) {
+  votes <- .colour_channel_votes(resolved, channels)$votes
+  if (!length(votes)) {
+    return(invisible())
+  }
+  quant <- vapply(
+    votes,
+    function(f) identical(f$type, "quantitative"),
+    logical(1)
+  )
+  if (all(quant)) {
+    ch <- votes[[1]]$channel
+    cli::cli_abort(
+      c(
+        "Continuous values supplied to a discrete {.field {aes}} scale.",
+        x = "{.field {ch}} is mapped to a numeric variable.",
+        i = "Map a factor (e.g. {.code {ch} = factor(...)}), or use a continuous
+          scale such as {.fn scale_{aes}_continuous}."
+      ),
+      call = NULL
+    )
+  }
+  invisible()
 }
 
 # The encoding type driving the shared colour scale, from every layer mapping
@@ -1124,6 +1237,24 @@ NULL
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
     return(.identity_scale(aes, as.numeric, titles$default[[aes]]))
   }
+  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
+    as.numeric(scalespec@range)
+  } else {
+    out_default
+  }
+  # A factor, character or logical mapped to size or alpha trains a discrete
+  # scale (ggplot2's scale_size_discrete() / scale_alpha_discrete()), so its
+  # legend keys are the levels, not the factor's integer codes.
+  if (aes %in% .DISCRETE_SIZED_AES && .discrete_values(values)) {
+    return(.train_discrete_aes(
+      scalespec,
+      values,
+      aes,
+      out_range,
+      legend_field,
+      titles
+    ))
+  }
   v <- as.numeric(unlist(values, use.names = FALSE))
   has_na <- anyNA(v) # detect before dropping non-finite, for the NA legend key
   v <- v[is.finite(v)]
@@ -1137,21 +1268,28 @@ NULL
   if (diff(rng) == 0) {
     rng <- rng + c(-0.5, 0.5)
   }
-  out_range <- if (!is.null(scalespec) && !is.null(scalespec@range)) {
-    as.numeric(scalespec@range)
-  } else {
-    out_default
-  }
   # `scale_size_area()` (type "area") maps value -> marker *area*: size 0 at
   # value 0, and size = max_size * sqrt(value / data_max), so area is
   # proportional to the value. Otherwise the aesthetic rescales linearly.
   area_mode <- !is.null(scalespec) && identical(scalespec@type, "area")
+  # `oob` (scale_size(oob =) and friends) acts on values outside the range
+  # before they are mapped; by default they extrapolate (oob_keep).
+  oob <- .oob_fun(scalespec) %||% scales::oob_keep
   map <- if (area_mode) {
     max_size <- out_range[2]
     denom <- max(rng[2], .Machine$double.eps)
-    function(x) max_size * sqrt(pmax(as.numeric(x), 0) / denom)
+    function(x) {
+      x <- oob(as.numeric(x), range = sort(rng))
+      max_size * sqrt(pmax(x, 0) / denom)
+    }
   } else {
-    function(x) scales::rescale(x, to = out_range, from = rng)
+    function(x) {
+      scales::rescale(
+        oob(as.numeric(x), range = sort(rng)),
+        to = out_range,
+        from = rng
+      )
+    }
   }
   name <- titles$title[[aes]]
   lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
@@ -1175,9 +1313,89 @@ NULL
     name = name,
     range = rng,
     na = has_na,
+    # Only missing values (and no limits): nothing to key, so no legend, as
+    # in ggplot2 -- not a 0-1 legend for a range the data never had.
+    no_guide = if (.all_missing(v, scalespec)) TRUE,
     legend_breaks = lbrk,
     legend_labels = llab %||% .label_number_default(lbrk),
     !!!rlang::set_names(list(map(lbrk)), legend_field)
+  )
+}
+
+# The sized aesthetics that train a discrete scale for categorical data. The
+# widths stay continuous: a categorical line width is a linetype's job.
+.DISCRETE_SIZED_AES <- c("size", "alpha")
+
+# Is a pooled channel categorical (any layer maps a factor, character or
+# logical)? An empty or all-NA layer (an empty facet cell) carries no type
+# information -- a bare NA is logical -- so it never votes.
+.discrete_values <- function(values) {
+  any(vapply(
+    values,
+    function(v) {
+      length(v) > 0L &&
+        !all(is.na(v)) &&
+        (is.factor(v) || is.character(v) || is.logical(v))
+    },
+    logical(1)
+  ))
+}
+
+# Train a discrete size / alpha scale: one key per level, the levels spread
+# evenly over the output range -- in area for size (so the marks grow
+# perceptually evenly), linearly for alpha -- as ggplot2's
+# scale_size_ordinal() / scale_alpha_ordinal() do. Like ggplot2 it warns for an
+# unordered variable, where size or alpha implies an order the data lacks.
+# `breaks` picks the levels the legend shows; `labels` relabels them.
+.train_discrete_aes <- function(
+  scalespec,
+  values,
+  aes,
+  out_range,
+  legend_field,
+  titles
+) {
+  all_levels <- .cat_levels(values)
+  voting <- Filter(function(v) length(v) > 0L && !all(is.na(v)), values)
+  ordered <- all(vapply(voting, is.ordered, logical(1)))
+  if (!ordered) {
+    cli::cli_warn(
+      "Using {.field {aes}} for a discrete variable is not advised.",
+      class = "vellumplot_discrete_sized_aes"
+    )
+  }
+  n <- length(all_levels)
+  out <- if (identical(aes, "size")) {
+    sqrt(seq(out_range[1]^2, out_range[2]^2, length.out = n))
+  } else {
+    seq(out_range[1], out_range[2], length.out = n)
+  }
+  names(out) <- all_levels
+  map <- function(x) unname(out[as.character(x)])
+  user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
+  levels <- if (!is.null(user_breaks)) {
+    ub <- as.character(user_breaks)
+    ub[ub %in% all_levels]
+  } else {
+    all_levels
+  }
+  labels <- .match_labels(
+    if (!is.null(scalespec)) scalespec@labels else NULL,
+    levels,
+    aes
+  ) %||%
+    levels
+  rlang::exec(
+    trained_scale,
+    aes,
+    "discrete",
+    map = map,
+    name = titles$title[[aes]],
+    levels = levels,
+    na = anyNA(unlist(values, use.names = FALSE)),
+    legend_breaks = levels,
+    legend_labels = labels,
+    !!!rlang::set_names(list(map(levels)), legend_field)
   )
 }
 
@@ -1585,16 +1803,23 @@ NULL
     band <- sc$band_width %||% .resolution(sc$map(cats))
     c(min(pos) - lo * band, max(pos) + hi * band)
   }
-  if (L$mark %in% c("violin", "halfeye")) {
+  if (identical(L$mark, "violin")) {
+    # a violin's value axis is y, or x when it is horizontal
+    ax <- .dist_axes(.dist_orient(L))
+    if (identical(aes, ax[["val"]])) {
+      return(support(L$values[[ax[["val"]]]], L$values[[ax[["cat"]]]]))
+    }
+    cats_extent(
+      L$values[[ax[["cat"]]]],
+      .VIOLIN_HALFWIDTH,
+      .VIOLIN_HALFWIDTH
+    )
+  } else if (identical(L$mark, "halfeye")) {
     if (identical(aes, "y")) {
       return(support(L$values$y, L$values$x))
     }
-    if (identical(L$mark, "violin")) {
-      cats_extent(L$values$x, .VIOLIN_HALFWIDTH, .VIOLIN_HALFWIDTH)
-    } else {
-      # one-sided slab: extends to the right of each tick by the slab width
-      cats_extent(L$values$x, 0, L$stat_params$scale %||% .SLAB_WIDTH)
-    }
+    # one-sided slab: extends to the right of each tick by the slab width
+    cats_extent(L$values$x, 0, L$stat_params$scale %||% .SLAB_WIDTH)
   } else if (identical(L$mark, "ridgeline")) {
     if (identical(aes, "x")) {
       return(support(L$values$x, L$values$y))
@@ -1641,6 +1866,34 @@ NULL
 ) {
   scalespec <- .scale_for(spec, aes)
   sc <- .train_position(aes, values, scalespec, title, include_zero, lim)
+  sc <- .widen_for_footprints(
+    sc,
+    spec,
+    resolved,
+    aes,
+    values,
+    scalespec,
+    title,
+    lim
+  )
+  # Infinite positions land on the (final) panel edge.
+  if (!isTRUE(sc$discrete)) {
+    sc <- .scale_set(sc, map = .inf_to_edge(sc$map, sc$domain))
+  }
+  sc
+}
+
+# The footprint widening of `.train_axis()` (see there).
+.widen_for_footprints <- function(
+  sc,
+  spec,
+  resolved,
+  aes,
+  values,
+  scalespec,
+  title,
+  lim
+) {
   explicit <- !is.null(lim) ||
     (!is.null(scalespec) && !is.null(scalespec@domain))
   if (explicit || !is.numeric(sc$domain)) {
@@ -1758,4 +2011,62 @@ NULL
     scales[e$name] <- list(sc)
   }
   scales
+}
+
+# Did a continuous legend scale see no finite value, and no limits to show
+# instead? `v` is the pooled values with the non-finite ones dropped.
+.all_missing <- function(v, scalespec) {
+  !length(v) && (is.null(scalespec) || is.null(scalespec@domain))
+}
+
+# A scale's `oob` (out-of-bounds) handler as a `function(x, range)`, or NULL
+# when the scale keeps its default. The strings name scales' handlers:
+# "censor" (outside values become NA), "squish" (clamped to the limits),
+# "keep" (left alone). Infinite values pass all three, as in scales.
+.oob_fun <- function(scalespec) {
+  oob <- if (!is.null(scalespec)) scalespec@oob else NULL
+  if (is.null(oob) || is.function(oob)) {
+    return(oob)
+  }
+  switch(
+    oob,
+    censor = scales::oob_censor,
+    squish = scales::oob_squish,
+    keep = scales::oob_keep
+  )
+}
+
+# Wrap a position scale's data -> native map with its `oob` handler, applied
+# in data space against the user's limits. Without limits nothing is out of
+# bounds, and without `oob` an axis keeps its default: values past the limits
+# are drawn where they fall and clipped by the panel (oob_keep).
+.oob_wrap <- function(map, scalespec, user_lim, rng) {
+  force(map)
+  oob <- .oob_fun(scalespec)
+  if (is.null(oob) || is.null(user_lim)) {
+    return(map)
+  }
+  lims <- sort(as.numeric(rng))
+  function(v) map(oob(as.numeric(v), range = lims))
+}
+
+# A continuous position map that puts an infinite data position on the panel
+# edge, as ggplot2 does: `x = Inf` is the right edge, `-Inf` the left (under a
+# reverse transform, mirrored). Only infinite *data* moves: a finite value a
+# transform cannot represent (0 on a log axis) stays non-finite, so the marks
+# and density estimates that drop it still do. `domain` is the final native
+# domain.
+.inf_to_edge <- function(map, domain) {
+  force(map)
+  lo <- min(domain)
+  hi <- max(domain)
+  function(x) {
+    out <- map(x)
+    inf <- is.numeric(x) & !is.na(x) & is.infinite(x)
+    if (any(inf) && is.numeric(out)) {
+      out[inf & out > 0] <- hi
+      out[inf & out < 0] <- lo
+    }
+    out
+  }
 }
