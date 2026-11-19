@@ -59,7 +59,8 @@ test_that("text stacks onto stacked bars, at position_stack(vjust =)", {
   top <- vellumplot:::.resolve_layers(
     base |> mark_text(x = cat, y = m, label = m, group = g, position = "stack")
   )[[2]]
-  expect_equal(top$values$y, c(3, 8, 4, 6))
+  # ggplot2 order: the last group (y) at the bottom, the first (x) on top
+  expect_equal(top$values$y, c(8, 5, 6, 2))
   mid <- vellumplot:::.resolve_layers(
     base |>
       mark_text(
@@ -70,13 +71,13 @@ test_that("text stacks onto stacked bars, at position_stack(vjust =)", {
         position = position_stack(vjust = 0.5)
       )
   )[[2]]
-  expect_equal(mid$values$y, c(1.5, 5.5, 2, 5))
+  expect_equal(mid$values$y, c(6.5, 2.5, 4, 1))
   # fill normalises the stack to 1, like the bars
   fl <- vellumplot:::.resolve_layers(
     vplot(summ) |>
       mark_text(x = cat, y = m, label = m, fill = g, position = "fill")
   )[[1]]
-  expect_equal(fl$values$y, c(3 / 8, 1, 4 / 6, 1))
+  expect_equal(fl$values$y, c(1, 5 / 8, 1, 2 / 6))
 })
 
 test_that("text and labels dodge with the bars they annotate", {

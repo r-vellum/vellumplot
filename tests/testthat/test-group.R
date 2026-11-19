@@ -137,5 +137,6 @@ test_that("position = 'stack' stacks by group", {
     g = c(1, 2, 1, 2)
   )
   L <- layer_values(vplot(d) |> mark_bar(x = x, y = y, group = factor(g)))
-  expect_equal(L$ymax, c(1, 3, 3, 7))
+  # ggplot2 order: the last group at the bottom, the first on top
+  expect_equal(L$ymax, c(3, 2, 7, 4))
 })
