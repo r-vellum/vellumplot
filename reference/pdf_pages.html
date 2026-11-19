@@ -107,6 +107,13 @@ filtered per page; each page trains its own scales).</p></dd>
     <p><code>path</code>, invisibly.</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>This is not <code><a href="https://r-vellum.github.io/vellum/reference/pdf_pages.html" class="external-link">vellum::pdf_pages()</a></code>, which it masks when both packages are
+attached: vellum's takes a list of scenes and can return the PDF as bytes,
+while this one takes plots, splits a faceted plot into pages, and always
+writes to <code>path</code>. It draws through vellum's.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="render_plot.html">render_plot()</a></code>, <code><a href="render_all.html">render_all()</a></code></p></div>
     </div>

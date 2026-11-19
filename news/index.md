@@ -13,6 +13,24 @@
   datum wherever it is drawn. Single-panel plots and declared `data_id`s
   are unchanged (VW-11).
 
+- [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md),
+  [`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md),
+  [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md),
+  [`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
+  and
+  [`radial_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
+  are now vellum’s own functions re-exported, not wrappers around them.
+  They behave the same, but attaching vellum and vellumplot together (as
+  [`library(vellumverse)`](https://rdrr.io/r/base/library.html) does) no
+  longer reports them as conflicts.
+  [`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
+  and
+  [`render_all()`](https://r-vellum.github.io/vellumplot/reference/render_all.md)
+  differ from vellum’s (they take plots, and
+  [`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
+  splits a faceted plot into pages), so they stay, and their docs now
+  say how they differ (VV-2).
+
 ## vellumplot 0.12.0
 
 ### New features

@@ -1,35 +1,16 @@
 # Hand-drawn ("sketch") rendering
 
-A re-export of
-[`vellum::sketch()`](https://r-vellum.github.io/vellum/reference/sketch.html)
-— the one vocabulary vellumplot speaks for the hand-drawn look (wobbly
-outlines, hachure fills, à la [Rough.js](https://roughjs.com)). Pass a
-`sketch()` value to any mark's `sketch =` argument, to an
+`sketch()` is
+[`vellum::sketch()`](https://r-vellum.github.io/vellum/reference/sketch.html),
+re-exported — the one vocabulary vellumplot speaks for the hand-drawn
+look (wobbly outlines, hachure fills, à la
+[Rough.js](https://roughjs.com)). Pass a `sketch()` value to any mark's
+`sketch =` argument, to an
 [`element_line()`](https://r-vellum.github.io/vellumplot/reference/element.md)
 /
 [`element_rect()`](https://r-vellum.github.io/vellumplot/reference/element.md)
 `sketch =` slot, or set it plot-wide with
 [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md):
-
-## Usage
-
-``` r
-sketch(...)
-```
-
-## Arguments
-
-- ...:
-
-  Sketch parameters passed straight to
-  [`vellum::sketch()`](https://r-vellum.github.io/vellum/reference/sketch.html)
-  — `roughness`, `bowing`, `fill_style`, `fill_weight`, `hachure_angle`,
-  `hachure_gap`, `curve_tightness`, `disable_multi_stroke`,
-  `preserve_vertices`, `seed`. See there for defaults.
-
-## Value
-
-A `vellum_sketch` object.
 
 ## Details
 
@@ -47,6 +28,13 @@ slot, which beats the plot-wide
 [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
 default. At any level `sketch = NA` (or `FALSE`) forces that element
 crisp, overriding a broader default; `sketch = NULL` inherits.
+
+Its arguments are the sketch parameters of
+[`vellum::sketch()`](https://r-vellum.github.io/vellum/reference/sketch.html)
+— `roughness`, `bowing`, `fill_style`, `fill_weight`, `hachure_angle`,
+`hachure_gap`, `curve_tightness`, `disable_multi_stroke`,
+`preserve_vertices`, `seed`; see there for defaults. It returns a
+`vellum_sketch` object.
 
 ## See also
 

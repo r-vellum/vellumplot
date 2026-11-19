@@ -34,6 +34,15 @@ pdf_pages(x, path)
 
 `path`, invisibly.
 
+## Details
+
+This is not
+[`vellum::pdf_pages()`](https://r-vellum.github.io/vellum/reference/pdf_pages.html),
+which it masks when both packages are attached: vellum's takes a list of
+scenes and can return the PDF as bytes, while this one takes plots,
+splits a faceted plot into pages, and always writes to `path`. It draws
+through vellum's.
+
 ## See also
 
 [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md),

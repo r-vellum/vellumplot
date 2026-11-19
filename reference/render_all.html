@@ -116,6 +116,13 @@ cores. <code>1</code> forces sequential.</p></dd>
     <p><code>paths</code> (the resolved file paths), invisibly.</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>This wraps <code><a href="https://r-vellum.github.io/vellum/reference/render_all.html" class="external-link">vellum::render_all()</a></code>, which it masks when both packages are
+attached. It takes <code>plots</code> rather than <code>scenes</code> and checks that every entry
+is a vellumplot plot before rendering; vellum's accepts anything
+<code><a href="https://r-vellum.github.io/vellum/reference/as_vellum_scene.html" class="external-link">vellum::as_vellum_scene()</a></code> can convert.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="render_plot.html">render_plot()</a></code>, <code><a href="pdf_pages.html">pdf_pages()</a></code>, <code><a href="repeat_.html">repeat_()</a></code></p></div>
     </div>

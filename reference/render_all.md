@@ -44,6 +44,16 @@ render_all(plots, paths, workers = NULL, ...)
 
 `paths` (the resolved file paths), invisibly.
 
+## Details
+
+This wraps
+[`vellum::render_all()`](https://r-vellum.github.io/vellum/reference/render_all.html),
+which it masks when both packages are attached. It takes `plots` rather
+than `scenes` and checks that every entry is a vellumplot plot before
+rendering; vellum's accepts anything
+[`vellum::as_vellum_scene()`](https://r-vellum.github.io/vellum/reference/as_vellum_scene.html)
+can convert.
+
 ## See also
 
 [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md),

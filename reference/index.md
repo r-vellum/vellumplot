@@ -363,7 +363,7 @@ Combine plots into a single figure, or repeat one over a variable.
   Set plot titles and axis/legend labels
 - [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md)
   : Add a one-off annotation
-- [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) :
+- [`md`](https://r-vellum.github.io/vellumplot/reference/md.md) :
   Rich-text labels
 
 ## Layer effects
@@ -380,10 +380,11 @@ Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient
 - [`motion()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
   [`echo()`](https://r-vellum.github.io/vellumplot/reference/motion.md)
   : Motion-trail layer effects
-- [`sketch()`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
+- [`sketch`](https://r-vellum.github.io/vellumplot/reference/sketch.md)
   : Hand-drawn ("sketch") rendering
-- [`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
-  [`radial_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
+- [`gradients`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
+  [`linear_gradient`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
+  [`radial_gradient`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
   : Gradient fill paints
 - [`pattern_stripe()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
   [`pattern_crosshatch()`](https://r-vellum.github.io/vellumplot/reference/patterns.md)
@@ -393,7 +394,7 @@ Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient
   : Pattern (hatch) fills
 - [`pattern_hatch()`](https://r-vellum.github.io/vellumplot/reference/pattern_hatch.md)
   : Crisp vector hatch fill
-- [`vl_pattern()`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md)
+- [`vl_pattern`](https://r-vellum.github.io/vellumplot/reference/vl_pattern.md)
   : Custom tiling-pattern fill
 - [`clip_to()`](https://r-vellum.github.io/vellumplot/reference/clip.md)
   [`clip_layer()`](https://r-vellum.github.io/vellumplot/reference/clip.md)

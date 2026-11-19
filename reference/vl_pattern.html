@@ -5,11 +5,17 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Custom tiling-pattern fill — vl_pattern"><meta name="description" content="A thin re-export of vellum::vl_pattern() for building a pattern fill from an
-arbitrary tile grob, when the ready-made pattern_stripe() family does not fit.
-Like a gradient, the result is an unscaled fill value."><meta property="og:description" content="A thin re-export of vellum::vl_pattern() for building a pattern fill from an
-arbitrary tile grob, when the ready-made pattern_stripe() family does not fit.
-Like a gradient, the result is an unscaled fill value."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Custom tiling-pattern fill — vl_pattern"><meta name="description" content="vl_pattern() is vellum::vl_pattern(), re-exported, for building a
+pattern fill from an arbitrary tile grob when the ready-made
+pattern_stripe() family does not fit. Like a gradient, the result (a
+vellum_pattern object) is an unscaled fill value. It takes the tile
+grob, the tile width / height and anchor x / y in units, and
+extend; see vellum::vl_pattern() for the full reference."><meta property="og:description" content="vl_pattern() is vellum::vl_pattern(), re-exported, for building a
+pattern fill from an arbitrary tile grob when the ready-made
+pattern_stripe() family does not fit. Like a gradient, the result (a
+vellum_pattern object) is an unscaled fill value. It takes the tile
+grob, the tile width / height and anchor x / y in units, and
+extend; see vellum::vl_pattern() for the full reference."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -68,36 +74,15 @@ Like a gradient, the result is an unscaled fill value."><meta property="og:image
     </div>
 
     <div class="ref-description section level2">
-    <p>A thin re-export of <code><a href="https://r-vellum.github.io/vellum/reference/vl_pattern.html" class="external-link">vellum::vl_pattern()</a></code> for building a pattern fill from an
-arbitrary tile grob, when the ready-made <code><a href="patterns.html">pattern_stripe()</a></code> family does not fit.
-Like a gradient, the result is an unscaled <code>fill</code> <em>value</em>.</p>
+    <p><code>vl_pattern()</code> is <code><a href="https://r-vellum.github.io/vellum/reference/vl_pattern.html" class="external-link">vellum::vl_pattern()</a></code>, re-exported, for building a
+pattern fill from an arbitrary tile grob when the ready-made
+<code><a href="patterns.html">pattern_stripe()</a></code> family does not fit. Like a gradient, the result (a
+<code>vellum_pattern</code> object) is an unscaled <code>fill</code> <em>value</em>. It takes the tile
+<code>grob</code>, the tile <code>width</code> / <code>height</code> and anchor <code>x</code> / <code>y</code> in <code>units</code>, and
+<code>extend</code>; see <code><a href="https://r-vellum.github.io/vellum/reference/vl_pattern.html" class="external-link">vellum::vl_pattern()</a></code> for the full reference.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vl_pattern</span><span class="op">(</span></span>
-<span>  <span class="va">grob</span>,</span>
-<span>  width <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  height <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  x <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  y <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  units <span class="op">=</span> <span class="st">"npc"</span>,</span>
-<span>  extend <span class="op">=</span> <span class="st">"repeat"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-    </div>
 
-    <div class="section level2">
-    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
-
-
-<dl><dt id="arg-grob-width-height-x-y-units-extend">grob, width, height, x, y, units, extend<a class="anchor" aria-label="anchor" href="#arg-grob-width-height-x-y-units-extend"></a></dt>
-<dd><p>See <code><a href="https://r-vellum.github.io/vellum/reference/vl_pattern.html" class="external-link">vellum::vl_pattern()</a></code>.</p></dd>
-
-</dl></div>
-    <div class="section level2">
-    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>vellum_pattern</code> object usable as a <code>fill</code> value.</p>
-    </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="patterns.html">pattern_stripe()</a></code>, <code><a href="gradients.html">linear_gradient()</a></code></p></div>
