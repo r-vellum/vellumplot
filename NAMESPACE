@@ -314,34 +314,30 @@ export(vwaffle)
 export(wrap_plots)
 export(xlim)
 export(ylim)
-importFrom(rlang,
-  `%||%`,
-  enquos,
-  eval_tidy,
-  quo_get_expr,
-  quo_is_null
-)
-importFrom(vellum,
-  as_vellum_scene,
-  draw,
-  grid_layout,
-  grobheight,
-  grobwidth,
-  linear_gradient,
-  lines_grob,
-  md,
-  points_grob,
-  pop,
-  push,
-  radial_gradient,
-  rect_grob,
-  render,
-  segments_grob,
-  sketch,
-  text_grob,
-  vl_gpar,
-  vl_pattern,
-  vl_scene,
-  vl_unit,
-  vl_viewport
-)
+importFrom(rlang,`%||%`)
+importFrom(rlang,enquos)
+importFrom(rlang,eval_tidy)
+importFrom(rlang,quo_get_expr)
+importFrom(rlang,quo_is_null)
+importFrom(vellum,as_vellum_scene)
+importFrom(vellum,draw)
+importFrom(vellum,grid_layout)
+importFrom(vellum,grobheight)
+importFrom(vellum,grobwidth)
+importFrom(vellum,linear_gradient)
+importFrom(vellum,lines_grob)
+importFrom(vellum,md)
+importFrom(vellum,points_grob)
+importFrom(vellum,pop)
+importFrom(vellum,push)
+importFrom(vellum,radial_gradient)
+importFrom(vellum,rect_grob)
+importFrom(vellum,render)
+importFrom(vellum,segments_grob)
+importFrom(vellum,sketch)
+importFrom(vellum,text_grob)
+importFrom(vellum,vl_gpar)
+importFrom(vellum,vl_pattern)
+importFrom(vellum,vl_scene)
+importFrom(vellum,vl_unit)
+importFrom(vellum,vl_viewport)
