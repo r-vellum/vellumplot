@@ -26,6 +26,7 @@ mark_errorbar(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   width = 0.5,
   blend = NULL,
   sketch = NULL,
@@ -36,6 +37,7 @@ mark_linerange(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -59,6 +61,7 @@ mark_pointrange(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -87,8 +90,8 @@ mark_crossbar(
 - ...:
 
   Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
-  `ymax` for errorbar/linerange; plus `color`/`fill` (and `linetype` for
-  errorbar/linerange).
+  `ymax` (or `y`, `xmin`, `xmax`) for errorbar/linerange; plus
+  `color`/`fill` (and `linetype` for errorbar/linerange).
 
 - position:
 
@@ -113,6 +116,10 @@ mark_crossbar(
   For `mark_boxplot()`, `NA` (default) to infer it from the data
   (horizontal when `y` is discrete and `x` is not), `"x"` for vertical
   boxes along a discrete `x`, or `"y"` for horizontal boxes along `y`.
+  For `mark_errorbar()`, `mark_linerange()` and `mark_pointrange()`,
+  `NA` (default) draws horizontal ranges when the layer maps
+  `xmin`/`xmax` and no `ymin`/`ymax` (ggplot2's `geom_errorbarh()`),
+  vertical ones otherwise; `"x"` / `"y"` force either.
 
 - blend:
 
@@ -175,6 +182,8 @@ The modified
 A box plot is vertical when `x` is the discrete axis. When `y` is
 discrete and `x` continuous (`mark_boxplot(x = mpg, y = factor(cyl))`)
 it is drawn horizontally, as in ggplot2; `orientation` forces either.
+Error bars and ranges are horizontal when they map `xmin`/`xmax` at each
+`y` instead: `mark_errorbar(y = g, xmin = lo, xmax = hi)`.
 
 `mark_pointrange()` draws a point at `(x, y)` with a vertical line from
 `ymin` to `ymax` (an identity mark — supply the summary values yourself,
@@ -193,4 +202,8 @@ vplot(mtcars) |> mark_boxplot(x = mpg, y = factor(cyl))
 
 # mean and standard error per category
 vplot(mtcars) |> mark_summary(x = factor(cyl), y = mpg, fun.data = "mean_se")
+
+# horizontal error bars
+est <- data.frame(term = c("a", "b", "c"), lo = c(-1, 0.2, 1), hi = c(1, 1.5, 2.4))
+vplot(est) |> mark_errorbar(y = term, xmin = lo, xmax = hi, width = 0.3)
 ```

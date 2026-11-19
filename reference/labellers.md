@@ -70,6 +70,11 @@ as_labeller(x, default = label_value, multi_line = TRUE)
 A named character vector or a plain function can also be passed straight
 to `labeller =`; it goes through `as_labeller()`.
 
+The declarative labellers (`label_value`, `label_both`,
+`label_wrap_gen()` and lookup tables over one of those) survive
+[`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md);
+an arbitrary function does not.
+
 A labeller is a function of one argument, `labels`: a data frame with
 one character column per facet variable (named after it) and one row per
 strip. It returns a list of character vectors, one per line of the

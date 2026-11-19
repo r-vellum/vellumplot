@@ -63,6 +63,7 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_contour.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_count.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_datashade.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/mark_density_2d.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_ecdf.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_ellipse.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_graph.html</loc></url>
@@ -72,7 +73,10 @@
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_outlier_label.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_pie.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_point.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/mark_polygon.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/mark_quantile.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_raincloud.html</loc></url>
+<url><loc>https://r-vellum.github.io/vellumplot/reference/mark_rect.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_segment.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_series_label.html</loc></url>
 <url><loc>https://r-vellum.github.io/vellumplot/reference/mark_sf.html</loc></url>

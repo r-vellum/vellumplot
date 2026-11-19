@@ -1,7 +1,10 @@
-# Segment mark
+# Segment, curve and spoke marks
 
 `mark_segment()` draws a straight line from `(x, y)` to `(xend, yend)`
-per row.
+per row. `mark_curve()` bends that line into an arc (ggplot2's
+`geom_curve()`). `mark_spoke()` draws a segment from `(x, y)` in the
+direction `angle` (radians) with length `radius`, both in data units
+(ggplot2's `geom_spoke()`): a vector field.
 
 ## Usage
 
@@ -11,6 +14,29 @@ mark_segment(
   ...,
   position = "identity",
   auto = FALSE,
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
+
+mark_curve(
+  plot,
+  ...,
+  curvature = 0.5,
+  angle = 90,
+  ncp = 5,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
+
+mark_spoke(
+  plot,
+  ...,
+  position = "identity",
   blend = NULL,
   effects = list(),
   sketch = NULL,
@@ -30,7 +56,8 @@ mark_segment(
 - ...:
 
   Encodings (tidy-eval): `x`, `y`, `xend`, `yend` (+ `color`,
-  `linewidth`, `linetype`, `alpha`). A mapped `linewidth` gives each
+  `linewidth`, `linetype`, `alpha`); `mark_spoke()` takes `angle` and
+  `radius` in place of `xend`, `yend`. A mapped `linewidth` gives each
   segment its own width – see
   [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md).
 
@@ -108,10 +135,33 @@ mark_segment(
 
   Optional layer data frame; overrides the plot data for this layer.
 
+- curvature:
+
+  For `mark_curve()`, the amount of bend: `0` is straight, `1` a half
+  circle; negative values bend the other way (ggplot2's convention:
+  positive bends to the right, travelling from start to end).
+
+- angle:
+
+  For `mark_curve()`, where the apex of the bend sits, in degrees
+  between 0 and 180: `90` (default) is symmetric, smaller values move it
+  towards the start and larger towards the end.
+
+- ncp:
+
+  For `mark_curve()`, the number of control points (more give a smoother
+  curve; default `5`).
+
 ## Value
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## Details
+
+A curve bends in the panel's own frame (its x and y spans scaled to the
+same length), so on a panel that is not square the arc stretches with
+the panel; ggplot2 bends in device space instead.
 
 ## See also
 
@@ -122,4 +172,12 @@ The modified
 ``` r
 d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
 vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend)
+
+vplot(d) |> mark_curve(x = x, y = y, xend = xend, yend = yend)
+
+
+# a vector field
+g <- expand.grid(x = 1:8, y = 1:8)
+g$angle <- atan2(g$y - 4.5, g$x - 4.5)
+vplot(g) |> mark_spoke(x = x, y = y, angle = angle, radius = 0.4)
 ```

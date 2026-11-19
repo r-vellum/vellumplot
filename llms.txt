@@ -466,7 +466,14 @@ Layers that draw data. Scales train across every mark on the panel.
   [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
   : Area, ribbon, and step marks
 - [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
-  : Segment mark
+  [`mark_curve()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
+  [`mark_spoke()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
+  : Segment, curve and spoke marks
+- [`mark_polygon()`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md)
+  [`mark_path()`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md)
+  : Polygon and path marks
+- [`mark_rect()`](https://r-vellum.github.io/vellumplot/reference/mark_rect.md)
+  : Rectangle mark
 - [`mark_abline()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
   [`mark_function()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md)
   : Reference lines and function curves
@@ -512,6 +519,11 @@ Layers that draw data. Scales train across every mark on the panel.
 - [`mark_contour()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
   [`mark_contour_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_contour.md)
   : 2-D density contours
+- [`mark_density_2d()`](https://r-vellum.github.io/vellumplot/reference/mark_density_2d.md)
+  [`mark_density_2d_filled()`](https://r-vellum.github.io/vellumplot/reference/mark_density_2d.md)
+  : 2-D density estimate
+- [`mark_quantile()`](https://r-vellum.github.io/vellumplot/reference/mark_quantile.md)
+  : Quantile regression lines
 
 ### Text, pie, and large data
 
