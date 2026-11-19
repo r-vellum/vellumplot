@@ -1,5 +1,15 @@
 # vellumplot 0.13.0.9000 (development version)
 
+## New features
+
+* Independent non-position scales across facet panels: `resolve_scale()` now
+  accepts `color` (`colour`, `fill`), `size`, `alpha`, `shape`, `linetype`,
+  `linewidth`, `pattern` and the edge scales. `"independent"` trains that scale
+  in each panel from the panel's own data, and each panel gets its own legend,
+  collected in the legend area and titled with the scale title and the panel's
+  strip text (`"hp (cyl: 4)"`). Shared scales keep their single legend, and the
+  default (everything shared) is unchanged (F-8).
+
 # vellumplot 0.13.0
 
 ## Behaviour changes

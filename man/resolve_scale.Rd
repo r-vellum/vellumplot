@@ -9,8 +9,8 @@ resolve_scale(plot, ...)
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{...}{Named arguments mapping an aesthetic (\code{x}, \code{y}, ...) to \code{"shared"}
-or \code{"independent"}.}
+\item{...}{Named arguments mapping an aesthetic (\code{x}, \code{y}, \code{color}, \code{size},
+...) to \code{"shared"} or \code{"independent"}.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -18,10 +18,26 @@ The modified \link{PlotSpec}.
 \description{
 The scale-resolution lattice (after Vega-Lite): for each aesthetic, choose
 whether faceted panels share one trained scale or train independent ones.
-Position scales default to \code{"shared"}; \code{facet_*(scales = "free_*")} is sugar
+Every scale defaults to \code{"shared"}; \code{facet_*(scales = "free_*")} is sugar
 for setting \code{x}/\code{y} to \code{"independent"}.
+}
+\details{
+A non-position aesthetic (\code{color}, \code{size}, \code{alpha}, \code{shape}, \code{linetype},
+\code{linewidth}, \code{pattern}, ...) set to \code{"independent"} is trained in each panel
+from that panel's data alone, so each panel spends the whole palette or
+range on its own values, and each panel gets its own legend. The legends
+are collected in the legend area, titled with the scale title and the
+panel's strip text (\code{"hp (cyl: 4)"}). Scales left shared keep their single
+legend. \code{colour} and \code{fill} both name the colour scale. A plot with a single
+panel ignores the setting.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl) |>
   resolve_scale(y = "independent")
+
+# one colour legend per panel
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(gear)) |>
+  facet_wrap(~cyl) |>
+  resolve_scale(color = "independent")
 }

@@ -410,9 +410,10 @@ NULL
 }
 
 # Build the panels with their resolved layers (per-panel data subset), then
-# train scales honouring the resolve lattice: colour/size always shared;
-# position shared by default, or independent per panel (wrap) / per column-row
-# (grid) when free.
+# train scales honouring the resolve lattice: every scale is shared by default;
+# position is independent per panel (wrap) / per column-row (grid) when free,
+# and a non-position scale set to "independent" (`resolve_scale(color = )`) is
+# trained per panel, into `p$aes_sc` (F-8).
 .build_panels <- function(spec, frozen_scales = NULL) {
   fa <- .facet_assign(spec)
   panels <- lapply(fa$panels, function(p) {
@@ -507,12 +508,127 @@ NULL
     panels[[i]] <- p
   }
 
+  # Independent non-position scales: each panel trains its own from its own
+  # layers. Only with several panels, and never for a frozen (animation)
+  # compile, whose frames must share every scale.
+  independent <- if (is.null(frozen_scales) && length(panels) > 1L) {
+    .independent_aes(spec)
+  } else {
+    character(0)
+  }
+  if (length(independent)) {
+    for (i in seq_along(panels)) {
+      panels[[i]]$aes_sc <- .train_panel_aes(
+        spec,
+        panels[[i]]$resolved,
+        independent,
+        titles
+      )
+    }
+  }
+
   list(
     fa = fa,
     panels = panels,
     scales = shared,
     titles = titles,
     free_x = free_x,
-    free_y = free_y
+    free_y = free_y,
+    independent = independent
   )
+}
+
+# The non-position aesthetics (registry scale names, e.g. "color", "size")
+# whose scale the spec resolves as independent across panels.
+.independent_aes <- function(spec) {
+  keys <- .aes_legend_keys()
+  keys[vapply(
+    keys,
+    function(k) identical(.resolve_for(spec, k), "independent"),
+    logical(1)
+  )]
+}
+
+# Train the `keys` scales on one panel's resolved layers, as `.train_scales()`
+# does for the pooled data (the registry trainer, then any guides() override).
+# A scale the panel gives no value to stays out of the result, so the panel
+# falls back to the shared scale (and shows no legend of its own for it).
+.train_panel_aes <- function(spec, resolved, keys, titles) {
+  out <- list()
+  for (k in keys) {
+    e <- .AES_REGISTRY[[k]]
+    sc <- .aes_trainer(e)(spec, resolved, titles = titles)
+    if (is.null(sc)) {
+      next
+    }
+    ss <- .scale_for(spec, k)
+    if (!is.null(ss) && !is.null(ss@guide)) {
+      sc <- .apply_guide(sc, ss@guide)
+    }
+    out[[k]] <- sc
+  }
+  out
+}
+
+# The scale a panel's marks use for non-position aesthetic `key`: its own when
+# the aesthetic is independent (see `.train_panel_aes()`), else the shared one.
+.panel_scale <- function(built, panel, key) {
+  panel$aes_sc[[key]] %||% built$scales[[key]]
+}
+
+# The strip text of panel `i` on one line, for titling its own legends: the
+# wrap strip, or a grid's column and row strips joined by ", ".
+.panel_label <- function(fa, i) {
+  panel <- fa$panels[[i]]
+  lab <- switch(
+    fa$type,
+    wrap = fa$wrap_labels[[i]],
+    grid = paste(
+      c(fa$col_labels[panel$c], fa$row_labels[panel$r]),
+      collapse = ", "
+    ),
+    ""
+  )
+  gsub("\n", " ", lab %||% "")
+}
+
+.is_plain_title <- function(x) {
+  is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+}
+
+# The legend guides of a faceted plot: the shared scales' guides (as
+# `.legend_guides()` builds them), then each panel's guides for the
+# aesthetics resolved as independent, titled with the panel's strip text --
+# "title (panel)", or the panel alone for an untitled scale. Guides merge
+# within one panel (a colour and a size legend of one variable), never across
+# panels, whose titles differ. With no independent aesthetic this is exactly
+# `.legend_guides(built$scales)`.
+.facet_legend_guides <- function(built) {
+  indep <- built$independent %||% character(0)
+  if (!length(indep)) {
+    return(.legend_guides(built$scales))
+  }
+  shared <- built$scales
+  shared[indep] <- list(NULL)
+  out <- .legend_guides(shared)
+  for (i in seq_along(built$panels)) {
+    p <- built$panels[[i]]
+    own <- p$aes_sc[intersect(indep, names(p$aes_sc))]
+    if (!length(own)) {
+      next
+    }
+    label <- .panel_label(built$fa, i)
+    own <- lapply(own, function(sc) {
+      # A plain-text title gains the panel; a rich-text or empty one gives way
+      # to the panel label, which is what tells the legends apart.
+      sc$name <- if (.is_plain_title(sc$name)) {
+        paste0(sc$name, " (", label, ")")
+      } else {
+        label
+      }
+      sc
+    })
+    out <- c(out, .legend_guides(own))
+  }
+  out
 }

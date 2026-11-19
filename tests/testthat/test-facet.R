@@ -76,7 +76,7 @@ test_that("resolve_scale() sets resolutions and defaults to shared", {
 
 test_that("resolve_scale() rejects unknown aesthetics", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  expect_error(resolve_scale(p, color = "independent"), "aesthetic")
+  expect_error(resolve_scale(p, label = "independent"), "aesthetic")
   expect_error(resolve_scale(p, Y = "shared"), "aesthetic")
 })
 
