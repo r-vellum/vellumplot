@@ -2,9 +2,9 @@
 
 Add plot-level text — a `title`, `subtitle`, `caption`, and `tag` — and
 override the titles of individual axes and legends (`x`, `y`, `color`,
-`size`). The title, subtitle, and tag are drawn in a band above the
-panels; the caption in a band below. Repeated `labs()` calls merge, with
-later values winning.
+`fill`, `size`). The title, subtitle, and tag are drawn in a band above
+the panels; the caption in a band below. Repeated `labs()` calls merge,
+with later values winning.
 
 ## Usage
 
@@ -41,10 +41,15 @@ labs(
 
   Axis / legend title overrides for those aesthetics.
 
-- color, colour, fill:
+- color, colour:
 
-  Colour-scale title override; `colour` and `fill` are aliases for
-  `color`.
+  Colour-scale title override; `colour` is an alias for `color`.
+
+- fill:
+
+  Fill-scale title override. `color` and `fill` are separate scales, so
+  each takes its own title; give both the same title (and map the same
+  variable) to draw them as one legend.
 
 - alt:
 

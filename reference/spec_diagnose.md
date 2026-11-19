@@ -69,9 +69,10 @@ a wrong plot or fail with an opaque error:
   layer's own data (a warning: that layer is then repeated across that
   variable's panels);
 
-- **`color` and `fill` mapped to variables of different type** (one
-  continuous, one discrete) although they share one colour scale and
-  legend (an error, or a warning when the scale kind is set explicitly);
+- **`color` (or `fill`) mapped to variables of different type** in two
+  layers (one continuous, one discrete), although the layers share one
+  scale and legend (an error, or a warning when the scale kind is set
+  explicitly);
 
 - a **manual or discrete palette**
   ([`scale_color_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),

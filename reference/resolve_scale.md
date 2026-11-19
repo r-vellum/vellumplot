@@ -31,14 +31,14 @@ The modified
 
 ## Details
 
-A non-position aesthetic (`color`, `size`, `alpha`, `shape`, `linetype`,
-`linewidth`, `pattern`, ...) set to `"independent"` is trained in each
-panel from that panel's data alone, so each panel spends the whole
-palette or range on its own values, and each panel gets its own legend.
-The legends are collected in the legend area, titled with the scale
-title and the panel's strip text (`"hp (cyl: 4)"`). Scales left shared
-keep their single legend. `colour` and `fill` both name the colour
-scale. A plot with a single panel ignores the setting.
+A non-position aesthetic (`color`, `fill`, `size`, `alpha`, `shape`,
+`linetype`, `linewidth`, `pattern`, ...) set to `"independent"` is
+trained in each panel from that panel's data alone, so each panel spends
+the whole palette or range on its own values, and each panel gets its
+own legend. The legends are collected in the legend area, titled with
+the scale title and the panel's strip text (`"hp (cyl: 4)"`). Scales
+left shared keep their single legend. `colour` is an alias for `color`;
+`fill` is its own scale. A plot with a single panel ignores the setting.
 
 ## Examples
 

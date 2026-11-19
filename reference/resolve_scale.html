@@ -100,14 +100,14 @@ for setting <code>x</code>/<code>y</code> to <code>"independent"</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A non-position aesthetic (<code>color</code>, <code>size</code>, <code>alpha</code>, <code>shape</code>, <code>linetype</code>,
+    <p>A non-position aesthetic (<code>color</code>, <code>fill</code>, <code>size</code>, <code>alpha</code>, <code>shape</code>, <code>linetype</code>,
 <code>linewidth</code>, <code>pattern</code>, ...) set to <code>"independent"</code> is trained in each panel
 from that panel's data alone, so each panel spends the whole palette or
 range on its own values, and each panel gets its own legend. The legends
 are collected in the legend area, titled with the scale title and the
 panel's strip text (<code>"hp (cyl: 4)"</code>). Scales left shared keep their single
-legend. <code>colour</code> and <code>fill</code> both name the colour scale. A plot with a single
-panel ignores the setting.</p>
+legend. <code>colour</code> is an alias for <code>color</code>; <code>fill</code> is its own scale. A plot
+with a single panel ignores the setting.</p>
     </div>
 
     <div class="section level2">
