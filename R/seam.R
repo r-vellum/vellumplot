@@ -84,6 +84,16 @@ NULL
   list(scales = list(cartesian = TRUE, x = x, y = y))
 }
 
+# The panel viewport `meta`: the scale descriptors plus, inside a composition,
+# the `cell` id the panel belongs to (see `.comp_cell_id()`).
+.panel_meta <- function(hsc, vsc, cell = NULL) {
+  meta <- .panel_scales_meta(hsc, vsc)
+  if (!is.null(cell)) {
+    meta$cell <- cell
+  }
+  meta
+}
+
 # --- .draw_plot() compatibility guards --------------------------------------
 # Each aborts on an unsupported combination up front (before drawing), with a
 # clear message rather than a low-level failure deeper in the pipeline. Split out
@@ -392,6 +402,8 @@ NULL
       psc
     )
     pname <- sprintf("panel-%d-%d", p$r, p$c)
+    # The viewport name: unique per composition cell. Mark keys keep `pname`.
+    vname <- .cell_panel_name(pname, .mark_ctx$panel_cell)
     # Overlay descriptor (scales + clip flag) for the unclipped boundary-mark
     # sibling, filled per branch below and used by the shared tail.
     this_clip <- panel_clip
@@ -411,7 +423,7 @@ NULL
           xscale = c(-1, 1),
           yscale = c(-1, 1),
           clip = TRUE,
-          name = pname
+          name = vname
         )
       )
       scene <- .draw_panel_polar(scene, ctx, rt)
@@ -430,7 +442,7 @@ NULL
           xscale = ctx$x_dom,
           yscale = ctx$y_dom,
           clip = panel_clip,
-          name = pname,
+          name = vname,
           # A linear (e.g. identity) coord_trans is effectively cartesian, so it
           # stays pannable and byte-identical to the plain plot; a nonlinear warp is
           # not (a linear pan/zoom wouldn't be axis-aware there).
@@ -455,8 +467,8 @@ NULL
           # A clip_to()/set_mask() geometry mask, built in this panel's native
           # coords (NULL when none is set, leaving the common path untouched).
           mask = .clip_mask(spec@clip, hsc$domain, vsc$domain),
-          name = pname,
-          meta = .panel_scales_meta(hsc, vsc),
+          name = vname,
+          meta = .panel_meta(hsc, vsc, .mark_ctx$panel_cell),
           # Clip-stable pan group so a host (vellumwidget) can pan/zoom this panel's
           # marks while its clip + the axes stay fixed (axis-aware zoom). Inert for
           # static rendering. This cartesian branch (incl. coord_flip) is pannable;
@@ -504,7 +516,7 @@ NULL
           xscale = ov_xscale,
           yscale = ov_yscale,
           clip = FALSE,
-          name = paste0(pname, "-overlay")
+          name = paste0(vname, "-overlay")
         )
       )
       scene <- .compile_marks(
@@ -543,13 +555,15 @@ NULL
   hshared <- dp$hshared
   vshared <- dp$vshared
   if (built$free_y) {
-    for (p in built$panels) {
+    for (i in seq_along(built$panels)) {
+      p <- built$panels[[i]]
       scene <- .draw_y_axis(
         scene,
         lay$panel_row[p$r],
         lay$ylabels_col[p$c],
         warp_v(vscale(p)),
-        rt
+        rt,
+        keep = lay$y_keep_panels[[i]]
       )
     }
   } else {
@@ -565,13 +579,15 @@ NULL
     }
   }
   if (built$free_x) {
-    for (p in built$panels) {
+    for (i in seq_along(built$panels)) {
+      p <- built$panels[[i]]
       scene <- .draw_x_axis(
         scene,
         lay$xlabels_row[p$r],
         lay$panel_col[p$c],
         warp_h(hscale(p)),
-        rt
+        rt,
+        keep = lay$x_keep_panels[[i]]
       )
     }
   } else {
@@ -757,6 +773,9 @@ NULL
   # Interaction context for the mark emitter (single-plot path; the aligned
   # composition path sets it per cell). See `.set_interaction_ctx`.
   .set_interaction_ctx(spec)
+  # The composition cell this plot is drawn as (NULL for a lone plot or an
+  # inset), for per-cell panel names. Restored with the rest of `.mark_ctx`.
+  .mark_ctx$panel_cell <- .comp_cell_take()
   # Draw-order bands: layers sort by `z` (stable — insertion order within a band).
   # Ordinary marks all sit at z = 0 (unchanged); graph marks fix edges (1) under
   # edge labels (2) under nodes (3) under node labels (4) regardless of pipe order.

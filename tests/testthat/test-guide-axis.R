@@ -211,3 +211,123 @@ test_that("guide_axis_logticks() draws long, mid and short log10 ticks", {
   expect_error(guide_axis_logticks(long = -1), "long")
   expect_error(guide_axis_logticks(prescale.base = 1), "prescale")
 })
+
+test_that("date, datetime, time and binned position scales take guide =", {
+  days <- data.frame(day = as.Date("2020-01-01") + 0:364, y = sin(1:365 / 30))
+  base <- vplot(days) |> mark_line(x = day, y = y)
+  p <- base |>
+    scale_x_date(
+      date_breaks = "1 month",
+      date_labels = "%B",
+      guide = guide_axis(n.dodge = 2, title = "Day")
+    )
+  sc <- vellumplot:::.build_panels(p)$scales
+  expect_identical(sc$x$axis_guide$n.dodge, 2L)
+  expect_identical(sc$x$name, "Day")
+  tx <- axis_text(p)
+  expect_length(unique(tx$off), 2L)
+  expect_gt(x_row_mm(p), x_row_mm(base) * 1.4)
+
+  stamps <- data.frame(
+    t = as.POSIXct("2020-01-01", tz = "UTC") + 3600 * 0:47,
+    y = 1:48
+  )
+  q <- vplot(stamps) |>
+    mark_point(x = t, y = y) |>
+    scale_x_datetime(guide = guide_axis(angle = 90))
+  expect_true(all(axis_text(q)$rot == 90))
+  r <- vplot(stamps) |>
+    mark_point(y = t, x = y) |>
+    scale_y_datetime(guide = "none")
+  expect_identical(nrow(axis_text(r, "y")), 0L)
+
+  tod <- data.frame(t = as.difftime(seq(0, 86400, by = 3600), units = "secs"))
+  tod$y <- seq_along(tod$t)
+  s <- vplot(tod) |>
+    mark_point(x = t, y = y) |>
+    scale_x_time(guide = guide_axis(angle = 45))
+  expect_identical(vellumplot:::.build_panels(s)$scales$x$axis_guide$angle, 45)
+
+  b <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    scale_x_binned(n = 6, guide = guide_axis(angle = 90)) |>
+    scale_y_binned(guide = guide_axis(minor.ticks = TRUE))
+  sb <- vellumplot:::.build_panels(b)$scales
+  expect_identical(sb$x$axis_guide$angle, 90)
+  expect_true(sb$y$axis_guide$minor.ticks)
+  expect_true(all(axis_text(b)$rot == 90))
+  expect_error(scale_x_date(base, guide = guide_legend()), "guide")
+  expect_error(scale_y_binned(base, guide = "legend"), "guide")
+})
+
+test_that("check.overlap thins free facet scales, fixed aspect and marginals", {
+  labs <- sprintf("category %02d", 1:30)
+  df <- data.frame(
+    g = rep(c("a", "b"), each = 30),
+    lab = rep(labs, 2),
+    y = rep(1:30, 2)
+  )
+  # free scales: each panel's axis is thinned on its own
+  free <- vplot(df) |>
+    mark_point(x = lab, y = y) |>
+    facet_wrap(~g, scales = "free_x") |>
+    guides(x = guide_axis(check.overlap = TRUE))
+  lay <- layout_of(free)
+  expect_null(lay$x_keep)
+  expect_length(lay$x_keep_panels, 2L)
+  for (k in lay$x_keep_panels) {
+    expect_lt(sum(k), 30L)
+    expect_true(k[1] && k[30])
+  }
+  tx <- axis_text(free)
+  expect_lt(nrow(tx), 60L)
+  expect_gt(nrow(tx), 4L)
+  # free y too
+  fy <- vplot(df) |>
+    mark_point(y = lab, x = y) |>
+    facet_wrap(~g, scales = "free_y") |>
+    guides(y = guide_axis(check.overlap = TRUE)) |>
+    theme(axis.text.y = element_text(size = 30))
+  expect_true(all(vapply(layout_of(fy)$y_keep_panels, sum, 1) < 30))
+
+  # fixed aspect: the panel's mm width comes from the aspect-locked track
+  one <- df[df$g == "a", ]
+  fixed <- vplot(one) |>
+    mark_point(x = lab, y = y) |>
+    coord_fixed() |>
+    guides(x = guide_axis(check.overlap = TRUE))
+  k <- layout_of(fixed)$x_keep
+  expect_length(k, 30L)
+  expect_lt(sum(k), 30L)
+  # a square panel is narrower than the free-aspect one, so it keeps fewer
+  wide <- vplot(one) |>
+    mark_point(x = lab, y = y) |>
+    guides(x = guide_axis(check.overlap = TRUE))
+  expect_lt(sum(k), sum(layout_of(wide)$x_keep))
+
+  # marginal plots
+  marg <- vplot(one) |>
+    mark_point(x = y, y = y) |>
+    add_marginal(sides = "tr") |>
+    scale_x_continuous(breaks = 1:30, labels = labs) |>
+    guides(x = guide_axis(check.overlap = TRUE))
+  km <- layout_of(marg)$x_keep
+  expect_length(km, 30L)
+  expect_lt(sum(km), 30L)
+})
+
+test_that(".panel_mm() shares the free space by null weight and respects aspect", {
+  u <- list(vellum::vl_unit(10, "mm"), vellum::vl_unit(1, "null"))
+  rt <- list(plot.margin = 0)
+  mm <- vellumplot:::.panel_mm(u, u, 110 / 25.4, 60 / 25.4, rt)
+  expect_equal(unname(mm), c(100, 50))
+  mm <- vellumplot:::.panel_mm(u, u, 110 / 25.4, 60 / 25.4, rt, respect = TRUE)
+  expect_equal(unname(mm), c(50, 50))
+  w <- list(vellum::vl_unit(1, "null"), vellum::vl_unit(3, "null"))
+  expect_equal(
+    unname(vellumplot:::.panel_mm(w, u, 100 / 25.4, 60 / 25.4, rt)[["w"]]),
+    25
+  )
+  expect_identical(vellumplot:::.null_weight(vellum::vl_unit(2.5, "null")), 2.5)
+  expect_identical(vellumplot:::.null_weight(vellum::vl_unit(2, "mm")), 0)
+})
