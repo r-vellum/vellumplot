@@ -5,20 +5,34 @@ NULL
 # for a single factor and ordering by each variable's natural type otherwise
 # (numeric numerically, factor by level, character lexicographically) -- so a
 # numeric facet reads 1, 2, 10 rather than the lexicographic 1, 10, 2.
-.facet_key <- function(quos, data) {
+#
+# A missing facet value is a level of its own, labelled "NA" and placed last,
+# as in ggplot2: its rows get their own trailing panel rather than vanishing.
+# With several variables each one's NA sorts last within that variable.
+# `na_level = FALSE` gives such a row an NA key instead (no level), for callers
+# that drop it, such as the animation states.
+.facet_key <- function(quos, data, na_level = TRUE) {
   vals <- lapply(quos, function(q) rlang::eval_tidy(q, data))
   if (length(vals) == 1 && is.factor(vals[[1]])) {
-    return(droplevels(vals[[1]]))
+    f <- droplevels(vals[[1]])
+    if (!anyNA(f) || !na_level) {
+      return(f)
+    }
+    chr <- as.character(f)
+    chr[is.na(chr)] <- "NA"
+    return(factor(chr, levels = unique(c(levels(f), "NA"))))
   }
-  parts <- lapply(vals, as.character)
+  parts <- lapply(vals, function(v) {
+    v <- as.character(v)
+    v[is.na(v)] <- "NA"
+    v
+  })
   combined <- do.call(paste, c(parts, sep = ", "))
-  # A row with an NA in any facet variable is dropped (given no panel), matching
-  # the single-factor `droplevels()` path above and ggplot2's default. Without
-  # this, `paste(NA)` would coerce to the string "NA" and create a spurious panel.
-  na_row <- Reduce(`|`, lapply(vals, is.na))
-  combined[na_row] <- NA_character_
+  if (!na_level) {
+    combined[Reduce(`|`, lapply(vals, is.na))] <- NA_character_
+  }
   # Order rows by each variable in turn (factors by level code, everything else
-  # by its own type), then take the level order from that ordering.
+  # by its own type; `order()` puts NA last), then take the level order from it.
   ord <- do.call(
     order,
     lapply(vals, function(v) if (is.factor(v)) as.integer(v) else v)
@@ -172,14 +186,102 @@ NULL
       idx <- .layer_panel_idx(spec@facet, layer@data, panel)
       d <- layer@data[idx, , drop = FALSE]
     }
+    # Rows missing a continuous position are removed before the stat, so they
+    # are neither drawn nor counted as drawn by provenance. `.build_panels()`
+    # sums the per-panel counts into one warning per layer.
+    miss <- .missing_position_rows(layer, d)
+    if (any(miss)) {
+      d <- d[!miss, , drop = FALSE]
+      idx <- idx[!miss]
+    }
     res <- .apply_position(.apply_stat(.resolve_layer(layer, d)))
     res$selgroup <- .realign_row_value(
       .selection_group_values(fsel, d),
       res$stat_map
     )
     res$source <- .layer_source(res, layer, i, idx)
+    res$n_missing <- sum(miss)
     res
   })
+}
+
+# Marks that draw one element per row and simply leave out a row whose
+# position is missing. Their missing rows are removed (with a warning) rather
+# than reaching the emitter at NaN. Paths (line, step, area, ribbon) keep theirs:
+# an interior NA breaks the path into a gap, as in ggplot2. Layout and graph
+# marks compute their own positions.
+.NA_REMOVE_MARKS <- c(
+  "point",
+  "bar",
+  "text",
+  "label",
+  "tile",
+  "rect",
+  "segment",
+  "errorbar",
+  "linerange",
+  "pointrange",
+  "crossbar",
+  "rug",
+  "boxplot",
+  "violin",
+  "ridgeline",
+  "halfeye",
+  "interval",
+  "hex",
+  "smooth"
+)
+
+# Is `v` a continuous position value (numeric, date or date-time)? A discrete
+# one keeps its NA, which the trained scale draws as a trailing "NA" level.
+.is_continuous_position <- function(v) {
+  is.numeric(v) || inherits(v, c("Date", "POSIXt"))
+}
+
+# Logical per row of `data`: is a continuous position channel (`x`, `y`, `xend`,
+# `ymin`, ...; see `.DIAG_POS_CHANNELS`) of `layer` missing? Only per-row data
+# channels count: a constant, or an `after_stat()` channel, describes no row.
+.missing_position_rows <- function(layer, data) {
+  n <- nrow(data)
+  miss <- rep(FALSE, n)
+  if (!n || !layer@mark %in% .NA_REMOVE_MARKS) {
+    return(miss)
+  }
+  chans <- intersect(
+    unlist(.DIAG_POS_CHANNELS, use.names = FALSE),
+    names(layer@encoding)
+  )
+  for (nm in chans) {
+    ch <- layer@encoding[[nm]]
+    if (isTRUE(ch@after)) {
+      next
+    }
+    v <- rlang::eval_tidy(ch@expr, data = data)
+    if (length(v) == n && .is_continuous_position(v)) {
+      miss <- miss | is.na(v)
+    }
+  }
+  miss
+}
+
+# One warning per layer for the rows `.resolve_panel()` removed, summed over
+# every panel, in ggplot2's wording.
+.warn_missing_positions <- function(spec, panels) {
+  for (i in seq_along(spec@layers)) {
+    n <- sum(vapply(
+      panels,
+      function(p) p$resolved[[i]]$n_missing %||% 0L,
+      integer(1)
+    ))
+    if (n > 0L) {
+      mark <- spec@layers[[i]]@mark
+      cli::cli_warn(
+        "Removed {n} row{?s} containing missing values (layer {i}, {.fn mark_{mark}}).",
+        class = "vellumplot_missing_rows"
+      )
+    }
+  }
+  invisible()
 }
 
 # Which table a resolved layer's rows come from, and where they sit in it -- the
@@ -233,6 +335,7 @@ NULL
     p$resolved <- .resolve_panel(spec, p)
     p
   })
+  .warn_missing_positions(spec, panels)
 
   all_res <- unlist(lapply(panels, function(p) p$resolved), recursive = FALSE)
   has_bar <- .needs_zero(all_res)

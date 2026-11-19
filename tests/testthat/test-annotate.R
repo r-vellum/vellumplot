@@ -188,3 +188,35 @@ test_that("grob and sparkline annotations render", {
     expect_gt(file.info(f)$size, 0)
   }
 })
+
+test_that("a nested plot does not leak its context into the outer layers (VP-12)", {
+  # An inset sub-plot is drawn through `.draw_plot()`, which sets the interaction
+  # context for itself. Panel 1's inset is drawn before panel 2's points, which
+  # must keep the outer plot's context: the outer plot filters on "br", so every
+  # point stays keyed and tagged `filt`.
+  df <- data.frame(x = 1:6, y = c(2, 4, 3, 5, 1, 2), g = rep(c("a", "b"), 3))
+  p <- vplot(df) |>
+    mark_point(x = x, y = y) |>
+    annotate("sparkline", x = 2, y = 3, values = 1:10) |>
+    facet_wrap(~g) |>
+    add_selection(select_interval("br", on = "x")) |>
+    filter_by("br")
+  scene <- vellum::as_vellum_scene(p)
+  m <- vellum::scene_model(scene)
+  keyed <- m$elements[!is.na(m$elements$key), , drop = FALSE]
+  expect_equal(nrow(keyed), nrow(df))
+  expect_setequal(keyed$panel, c("panel-1-1", "panel-1-2"))
+  has_filt <- vapply(
+    keyed$meta,
+    function(mm) "br" %in% mm[["filt"]],
+    logical(1)
+  )
+  expect_true(all(has_filt))
+  # the outer point layer's provenance names the outer panels
+  prov <- attr(scene, "vellumplot_provenance")
+  pts <- Filter(function(e) startsWith(e$id, "layer-1-point"), prov)
+  expect_setequal(
+    vapply(pts, function(e) e$panel, character(1)),
+    c("panel-1-1", "panel-1-2")
+  )
+})

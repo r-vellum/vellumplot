@@ -488,6 +488,11 @@ NULL
 # a declared factor ordering survives -- pooling one factor per panel (each
 # carrying only its panel's level) must still recover every level, not just the
 # first panel's. Otherwise: sorted unique character values.
+#
+# NA is never a level here, whichever branch runs. A scale that shows missing
+# values adds them as its own trailing level (ggplot2's `na.translate`): the
+# discrete position trainer as an "NA" band, the colour / shape / ... trainers
+# as an "NA" legend key drawn in the scale's `na_value`.
 .cat_levels <- function(x) {
   vals <- if (is.list(x)) x else list(x)
   facs <- Filter(is.factor, vals)
@@ -501,12 +506,14 @@ NULL
       lapply(Filter(Negate(is.factor), vals), as.character),
       use.names = FALSE
     )))
+    others <- others[!is.na(others)]
     return(unique(c(fac_levs, others[!others %in% fac_levs])))
   }
   chr <- unique(as.character(unlist(
     lapply(vals, as.character),
     use.names = FALSE
   )))
+  chr <- chr[!is.na(chr)]
   # Categories that are all numeric-looking (e.g. a numeric column drawn discretely
   # by mark_bar) order numerically, so bars run 1, 2, 10 rather than lexicographic
   # 1, 10, 2. Otherwise fall back to alphabetical order.
