@@ -61,6 +61,13 @@
 
 ## Bug fixes
 
+* **Date axes take their breaks from the limits.** Default date and
+  datetime breaks were picked from the data, so a month of data under
+  `limits` of 2019 to 2022 crammed weekly ticks into that month and left the
+  rest of the axis bare. Breaks now span the trained range, limits included.
+  An all-`NA` Date column no longer aborts with "'from' must be a finite
+  number"; the axis draws with no ticks, as in ggplot2 (VP-8).
+
 * **Theme text sizes cascade from `text`.** `theme(text = element_text(size
   = 20))` resized only the axis titles; axis text, legend text, strips and
   the plot title kept their own fixed sizes. The complete themes now size
