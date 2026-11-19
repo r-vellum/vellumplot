@@ -475,11 +475,21 @@ NULL
 }
 
 .facet_to_ir <- function(f) {
+  labeller <- NULL
   if (!is.null(f@labeller)) {
-    .unserializable(
-      "facet labeller",
-      "A facet labeller is an R function, which the spec cannot carry."
-    )
+    # The declarative labellers (label_value, label_both, label_wrap_gen(),
+    # as_labeller() over a lookup table) carry a description; an arbitrary
+    # function does not (VP-44).
+    labeller <- .labeller_spec(f@labeller)
+    if (is.null(labeller)) {
+      .unserializable(
+        "facet labeller",
+        paste(
+          "A custom labeller function cannot be carried by the spec; use",
+          "label_value, label_both, label_wrap_gen() or a lookup table."
+        )
+      )
+    }
   }
   out <- list(type = f@type)
   rows <- .facet_side_to_ir(f@rows)
@@ -495,6 +505,9 @@ NULL
   }
   if (!is.null(f@nrow)) {
     out$nrow <- f@nrow
+  }
+  if (!is.null(labeller)) {
+    out$labeller <- labeller
   }
   out
 }
@@ -518,7 +531,8 @@ NULL
     rows = .facet_side_from_ir(rec$rows, env),
     cols = .facet_side_from_ir(rec$cols, env),
     ncol = if (!is.null(rec$ncol)) as.integer(rec$ncol) else NULL,
-    nrow = if (!is.null(rec$nrow)) as.integer(rec$nrow) else NULL
+    nrow = if (!is.null(rec$nrow)) as.integer(rec$nrow) else NULL,
+    labeller = if (!is.null(rec$labeller)) .labeller_from_spec(rec$labeller)
   )
 }
 

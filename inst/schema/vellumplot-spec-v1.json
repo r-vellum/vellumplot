@@ -157,7 +157,20 @@
         "rows": { "type": "array", "items": { "type": "string" } },
         "cols": { "type": "array", "items": { "type": "string" } },
         "ncol": { "type": "integer" },
-        "nrow": { "type": "integer" }
+        "nrow": { "type": "integer" },
+        "labeller": { "$ref": "#/$defs/labeller" }
+      }
+    },
+    "labeller": {
+      "type": "object",
+      "description": "A declarative facet strip labeller: value (label_value), both (label_both), wrap (label_wrap_gen(width)), or lookup (as_labeller() over a named character vector, with a default labeller for unnamed values).",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["value", "both", "wrap", "lookup"] },
+        "width": { "type": "number" },
+        "multi_line": { "type": "boolean" },
+        "values": { "type": "object", "additionalProperties": { "type": "string" } },
+        "default": { "$ref": "#/$defs/labeller" }
       }
     },
     "marginal": {
