@@ -566,12 +566,21 @@ NULL
     is_classed <- inherits(raw, c("Date", "POSIXct"))
     tfun <- function(v) as.numeric(v)
     domain <- .expand_domain(rng, scalespec)
+    # Breaks span the trained range `rng` (which honours explicit limits), not
+    # the raw data: a month of data under 2019-2022 limits gets yearly ticks,
+    # not weekly ones crammed into that month. An axis with no finite data and
+    # no limits has nothing to tick (ggplot2 draws it bare); `rng` is then
+    # only a placeholder window.
+    no_data <- is.null(user_lim) &&
+      !any(is.finite(suppressWarnings(as.numeric(raw))))
     braw <- if (!is.null(user_breaks)) {
       user_breaks
+    } else if (no_data) {
+      .as_like_time(numeric(0), raw)
     } else if (!is.null(dbreaks) && is_classed) {
       scales::breaks_width(dbreaks)(.as_like_time(rng, raw))
     } else {
-      pretty(raw)
+      pretty(.as_like_time(rng, raw))
     }
     lab <- .match_labels(user_labels, braw, aesthetic)
     keep <- as.numeric(braw) >= min(rng) & as.numeric(braw) <= max(rng)

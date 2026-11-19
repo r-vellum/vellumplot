@@ -52,3 +52,30 @@ test_that("date scales render", {
     )
   )
 })
+
+test_that("date breaks span the limits, not just the data (VP-8)", {
+  df <- data.frame(
+    day = seq(as.Date("2020-03-01"), as.Date("2020-03-31"), by = "day"),
+    y = 1:31
+  )
+  p <- vplot(df) |>
+    mark_line(x = day, y = y) |>
+    scale_x_date(limits = as.Date(c("2019-01-01", "2022-12-31")))
+  b <- .build_panels(p)
+  br <- as.Date(b$scales$x$breaks)
+  # yearly ticks across the whole limits window, not weekly ticks in March 2020
+  expect_gte(length(br), 3)
+  expect_lte(length(br), 10)
+  expect_lt(min(br), as.Date("2020-01-01"))
+  expect_gt(max(br), as.Date("2021-01-01"))
+})
+
+test_that("an all-NA Date column renders a bare axis (VP-8)", {
+  df <- data.frame(day = as.Date(c(NA, NA)), y = 1:2)
+  p <- vplot(df) |> mark_point(x = day, y = y)
+  b <- .build_panels(p)
+  expect_length(b$scales$x$breaks, 0)
+  expect_length(b$scales$x$labels, 0)
+  f <- withr::local_tempfile(fileext = ".png")
+  expect_no_error(render_plot(p, f))
+})
