@@ -1,5 +1,14 @@
 # vellumplot 0.14.1.9000 (development version)
 
+## Behaviour changes
+
+* **Behaviour change:** `mark_contour_filled()` and `mark_density_2d_filled()`
+  now draw ggplot2's lowest band, from the highest break at or below the
+  field's minimum (`0` for a density) to the first contour level, so the whole
+  data grid is painted in the lowest colour as in `geom_contour_filled()`.
+  Before, the region below the first level was left as panel background, and
+  the fill scale started at the first level (VP-45).
+
 ## New features
 
 * `bind_scale()` is now enacted by vellumwidget: brushing an overview view zooms

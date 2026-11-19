@@ -95,12 +95,13 @@ test_that("filled 2-D density bands close inside the data grid", {
   # within the data range (the padded border is not drawn)
   expect_equal(range(v$x), range(faithful$eruptions), tolerance = 1e-4)
   expect_equal(range(v$y), range(faithful$waiting), tolerance = 1e-4)
-  # the lowest band joins the two modes and leaves the empty corners unfilled:
-  # top-left (eruptions 1.8, waiting 90) shows the panel background
+  # the empty top-left corner (eruptions 1.8, waiting 90) is painted by
+  # ggplot2's lowest band, (0, b1], in the darkest colour -- not left as the
+  # light panel background (VP-45)
   img <- render_px(p)
-  expect_gt(
+  expect_lt(
     mean(img[round(dim(img)[1] * 0.12), round(dim(img)[2] * 0.2), 1:3]),
-    0.8
+    0.3
   )
 })
 
