@@ -687,6 +687,8 @@ NULL
       rt,
       orient = "horizontal"
     )
+  } else if (!is.null(lay$legend_inside) && length(guides)) {
+    scene <- .draw_legend_inside(scene, lay, guides, rt)
   }
 
   # plot title / subtitle / caption bands + tag overlay (full width)
@@ -1022,6 +1024,60 @@ S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
     scene <- .repel_scene(scene, x)
   }
   scene
+}
+
+# An inside legend (theme(legend.position = "inside" / c(x, y))): a vertical
+# legend box over the panel area, its justification point at the position
+# (both in fractions of the panel area). A 1 mm anchor viewport sits at the
+# position and the box is offset from it in mm, since the panel's own size is
+# only known at render time.
+.draw_legend_inside <- function(scene, lay, guides, rt) {
+  at <- lay$legend_inside$pos
+  just <- lay$legend_inside$just
+  w <- vellum::vl_convert(.legend_width(guides, rt), "mm")
+  h <- .legend_stack_height(guides, rt)
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      row = lay$panel_row[1],
+      col = lay$panel_col[1],
+      rowspan = lay$panel_row[lay$R] - lay$panel_row[1] + 1,
+      colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1,
+      name = "legend-inside"
+    )
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      x = vellum::vl_unit(at[1], "npc"),
+      y = vellum::vl_unit(at[2], "npc"),
+      width = vellum::vl_unit(1, "mm"),
+      height = vellum::vl_unit(1, "mm")
+    )
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      x = vellum::vl_unit(0.5 + (0.5 - just[1]) * w, "mm"),
+      y = vellum::vl_unit(0.5 + (0.5 - just[2]) * h, "mm"),
+      width = vellum::vl_unit(w, "mm"),
+      height = vellum::vl_unit(h, "mm"),
+      layout = vellum::grid_layout(
+        widths = vellum::vl_unit(1, "null"),
+        heights = vellum::vl_unit(1, "null")
+      )
+    )
+  )
+  scene <- .draw_legends(
+    scene,
+    list(row = 1, col = 1),
+    guides,
+    rt,
+    orient = "vertical"
+  )
+  scene <- vellum::pop(scene)
+  scene <- vellum::pop(scene)
+  vellum::pop(scene)
 }
 
 #' Render a plot to a file

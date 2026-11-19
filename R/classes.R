@@ -172,7 +172,9 @@ ScaleSpec <- S7::new_class(
     date_labels = S7::new_property(S7::class_any, default = NULL), # date/time: format string
     guide = S7::new_property(S7::class_any, default = NULL), # "none"/guide spec (legend control)
     sec_axis = S7::new_property(S7::class_any, default = NULL), # SecAxisSpec | NULL (secondary axis)
-    expand = S7::new_property(S7::class_any, default = NULL) # continuous position: c(mult, add) axis padding; NULL = default 5%
+    expand = S7::new_property(S7::class_any, default = NULL), # continuous position: c(mult, add) axis padding; NULL = default 5%
+    drop = S7::new_property(S7::class_any, default = NULL), # discrete position: drop unused factor levels (NULL = TRUE)
+    oob = S7::new_property(S7::class_any, default = NULL) # continuous: out-of-limits handling ("censor"/"squish"/"keep" or a function); NULL = the scale's default
   )
 )
 

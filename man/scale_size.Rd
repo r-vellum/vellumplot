@@ -5,7 +5,14 @@
 \alias{scale_size_area}
 \title{Size scale}
 \usage{
-scale_size(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
+scale_size(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  name = NULL,
+  oob = NULL
+)
 
 scale_size_area(plot, max_size = 6, limits = NULL, breaks = NULL, name = NULL)
 }
@@ -20,6 +27,11 @@ default \code{c(1, 4)}.}
 \item{breaks}{Explicit legend breaks, or \code{NULL}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{oob}{What to do with values outside \code{limits}: \code{"censor"} (they get
+no size, so the mark is not drawn), \code{"squish"} (the size of the
+nearest limit), \code{"keep"} (extrapolated past the range), or a
+\verb{function(x, range)}. \code{NULL} (default) keeps them.}
 
 \item{max_size}{For \code{scale_size_area()}, the point size (mm) of the largest
 value.}

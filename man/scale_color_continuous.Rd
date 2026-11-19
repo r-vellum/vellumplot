@@ -27,7 +27,8 @@ scale_color_continuous(
   limits = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 
 scale_color_discrete(
@@ -57,7 +58,8 @@ scale_fill_continuous(
   limits = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 
 scale_color_gradientn(plot, colours, name = NULL)
@@ -93,7 +95,8 @@ scale_colour_continuous(
   limits = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 
 scale_colour_discrete(
@@ -131,6 +134,11 @@ case/space-insensitively). \code{NULL} uses a sensible default.}
 \item{breaks, labels}{Explicit legend breaks / labels, or \code{NULL}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{oob}{For \verb{scale_*_continuous()}, what to do with values outside
+\code{limits}: \code{"censor"} gives them the NA colour, \code{"squish"} the colour of the
+nearest limit, \code{"keep"} the same (a ramp cannot extend past its ends), or
+a \verb{function(x, range)}. \code{NULL} (default) squishes.}
 
 \item{values}{For \verb{scale_*_manual()}, a vector of colours; if named, matched to
 data levels by name (unmatched levels draw grey).}

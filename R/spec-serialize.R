@@ -355,7 +355,9 @@ NULL
   "date_breaks",
   "date_labels",
   "guide",
-  "expand"
+  "expand",
+  "drop",
+  "oob"
 )
 
 .scale_to_ir <- function(s) {
