@@ -3,17 +3,37 @@ NULL
 
 # Mark emitters: interval marks (errorbar, linerange, segment).
 
-# Vertical error bars from ymin to ymax (with optional horizontal caps).
+# The orientation of a range mark (errorbar / linerange / pointrange): `"x"`
+# for vertical ranges at each `x` (`ymin`..`ymax`), `"y"` for horizontal ones at
+# each `y` (`xmin`..`xmax`, ggplot2's `geom_errorbarh()`). An explicit
+# `orientation` wins; otherwise, as in ggplot2, a layer with an `xmin`/`xmax`
+# range and no `ymin`/`ymax` is horizontal.
+.range_orient <- function(L) {
+  o <- L$stat_params$orientation
+  if (length(o) == 1L && !is.na(o)) {
+    return(o)
+  }
+  v <- L$values
+  has_x <- !is.null(v$xmin) || !is.null(v$xmax)
+  has_y <- !is.null(v$ymin) || !is.null(v$ymax)
+  if (has_x && !has_y) "y" else "x"
+}
+
+# Error bars from ymin to ymax at each x (with caps across the band), or from
+# xmin to xmax at each y when horizontal (see `.range_orient()`).
 .emit_errorbar <- function(scene, L, scales, caps = TRUE) {
   n <- L$n
-  xn <- rep_len(scales$x$map(L$values$x), n)
-  ymin <- rep_len(scales$y$map(L$values$ymin), n)
-  ymax <- rep_len(scales$y$map(L$values$ymax), n)
+  orient <- .range_orient(L)
+  ca <- if (identical(orient, "y")) "y" else "x"
+  va <- if (identical(orient, "y")) "x" else "y"
+  xn <- rep_len(scales[[ca]]$map(L$values[[ca]]), n)
+  ymin <- rep_len(scales[[va]]$map(L$values[[paste0(va, "min")]]), n)
+  ymax <- rep_len(scales[[va]]$map(L$values[[paste0(va, "max")]]), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1)
   lty <- .resolve_lty(L, scales, n)
-  band <- scales$x$band_width %||% .resolution(xn)
+  band <- scales[[ca]]$band_width %||% .resolution(xn)
   # A mapped `width` lands in values (a constant one in params); read values first
   # so a per-row cap width is honoured, not silently ignored.
   width <- rep_len(L$values$width %||% .aes_param(L, "width", 0.5), n)
@@ -22,6 +42,7 @@ NULL
 
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
+    # (category position, value) endpoints, swapped below when horizontal
     x0 <- xn[idx]
     y0 <- ymin[idx]
     x1 <- xn[idx]
@@ -31,6 +52,13 @@ NULL
       x1 <- c(x1, xn[idx] + half[idx], xn[idx] + half[idx])
       y0 <- c(y0, ymin[idx], ymax[idx])
       y1 <- c(y1, ymin[idx], ymax[idx])
+    }
+    if (identical(orient, "y")) {
+      sw <- list(x0 = y0, y0 = x0, x1 = y1, y1 = x1)
+      x0 <- sw$x0
+      y0 <- sw$y0
+      x1 <- sw$x1
+      y1 <- sw$y1
     }
     s <- .seg_units(
       scales,
