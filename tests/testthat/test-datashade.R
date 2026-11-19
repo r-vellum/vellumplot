@@ -111,7 +111,7 @@ test_that("mark_datashade(color=) trains a discrete colour scale with a square-k
   b <- vellumplot:::.build_panels(
     vplot(df) |> mark_datashade(x = x, y = y, color = g)
   )
-  expect_identical(b$scales$color$kind, "discrete")
+  expect_identical(b$scales$color$type, "discrete")
   expect_setequal(b$scales$color$levels, c("a", "b"))
   expect_identical(b$scales$color$key_glyph, "square")
 })

@@ -249,15 +249,24 @@ NULL
 # a log/sqrt axis and emit NaN vertices. A level with fewer than two finite
 # observations yields `NULL` (no density is drawn for it). With a `group` (the
 # layer's `.group_key()`), the list is per (level, sub-group) cell instead.
-.density_by_cat <- function(vals, cats, levs, adjust, group = NULL) {
+.density_by_cat <- function(
+  vals,
+  cats,
+  levs,
+  adjust,
+  group = NULL,
+  trim = FALSE
+) {
   ch <- as.character(cats)
   if (!is.null(group)) {
     # One density per (level, sub-group) cell, as the emitters draw them; the
     # footprint only needs their supports, so the flat list is enough.
     key <- paste(ch, as.character(group), sep = "\r")
-    return(lapply(unique(key), function(k) .density_of(vals[key == k], adjust)))
+    return(lapply(unique(key), function(k) {
+      .density_of(vals[key == k], adjust, trim)
+    }))
   }
-  lapply(levs, function(l) .density_of(vals[ch == l], adjust))
+  lapply(levs, function(l) .density_of(vals[ch == l], adjust, trim))
 }
 
 # The values of a density-shape mark's value axis in native units, as its
@@ -267,10 +276,19 @@ NULL
 .native_values <- function(sc, v) suppressWarnings(sc$map(as.numeric(v)))
 
 # The kernel density of one cell's values, or NULL with fewer than two finite
-# observations -- the per-cell form of `.density_by_cat()`.
-.density_of <- function(v, adjust) {
+# observations -- the per-cell form of `.density_by_cat()`. `trim = TRUE` ends
+# the curve at the cell's smallest and largest value (ggplot2's violin default)
+# instead of running on into the kernel's tails.
+.density_of <- function(v, adjust, trim = FALSE) {
   v <- v[is.finite(v)]
-  if (length(v) < 2) NULL else stats::density(v, adjust = adjust)
+  if (length(v) < 2) {
+    return(NULL)
+  }
+  if (trim) {
+    stats::density(v, adjust = adjust, from = min(v), to = max(v))
+  } else {
+    stats::density(v, adjust = adjust)
+  }
 }
 
 # Default extents (fractions/multiples of the category band) of the density-shape
@@ -314,6 +332,7 @@ NULL
   pt <- .dist_paint(L, scales, "grey70")
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), L$n)
   adjust <- L$stat_params$adjust %||% 1
+  trim <- isTRUE(L$stat_params$trim)
   band <- scales$x$band_width %||% .resolution(scales$x$map(L$values$x))
   hw0 <- .VIOLIN_HALFWIDTH * band
   sk <- .mark_sketch(L, scales)
@@ -321,7 +340,7 @@ NULL
   for (k in seq_along(cells)) {
     cl <- cells[[k]]
     sel <- cl$rows
-    d <- .density_of(.native_values(scales$y, yv[sel]), adjust)
+    d <- .density_of(.native_values(scales$y, yv[sel]), adjust, trim)
     if (is.null(d)) {
       next
     }

@@ -182,6 +182,91 @@ after_stat <- function(x) x
   )
 }
 
+# Shared checks for the numeric stat parameters of the mark constructors
+# (`bins`, `binwidth`, `adjust`, `level`, ...), so a bad value fails where it is
+# written, naming the argument, instead of deep inside the stat as a cryptic
+# crash or a silently wrong plot. `NULL` passes when `null_ok` (a parameter whose
+# default is derived from the data).
+.stat_arg_bad <- function(x, null_ok) {
+  if (is.null(x)) {
+    return(!null_ok)
+  }
+  !is.numeric(x) || length(x) != 1L || !is.finite(x)
+}
+
+# The "Got ..." bullet of a stat-parameter error: the value itself when it is a
+# single number, else its type.
+.stat_arg_got <- function(x) {
+  if (is.numeric(x) && length(x) == 1L) {
+    cli::format_inline("Got {.val {x}}.")
+  } else {
+    cli::format_inline("Got {.obj_type_friendly {x}}.")
+  }
+}
+
+# A count: a single whole number >= `min` (e.g. `bins`).
+.check_count <- function(
+  x,
+  arg = rlang::caller_arg(x),
+  min = 1L,
+  null_ok = FALSE,
+  call = rlang::caller_env()
+) {
+  if (is.null(x) && null_ok) {
+    return(invisible(x))
+  }
+  if (.stat_arg_bad(x, null_ok) || x < min || x != round(x)) {
+    cli::cli_abort(
+      c(
+        "{.arg {arg}} must be a whole number of at least {min}.",
+        x = .stat_arg_got(x)
+      ),
+      call = call
+    )
+  }
+  invisible(x)
+}
+
+# A strictly positive, finite number (e.g. `binwidth`, `adjust`, `span`).
+.check_positive <- function(
+  x,
+  arg = rlang::caller_arg(x),
+  null_ok = FALSE,
+  call = rlang::caller_env()
+) {
+  if (is.null(x) && null_ok) {
+    return(invisible(x))
+  }
+  if (.stat_arg_bad(x, null_ok) || x <= 0) {
+    cli::cli_abort(
+      c(
+        "{.arg {arg}} must be a single positive number.",
+        x = .stat_arg_got(x)
+      ),
+      call = call
+    )
+  }
+  invisible(x)
+}
+
+# A probability strictly between 0 and 1 (e.g. a confidence `level`).
+.check_prob <- function(
+  x,
+  arg = rlang::caller_arg(x),
+  call = rlang::caller_env()
+) {
+  if (.stat_arg_bad(x, FALSE) || x <= 0 || x >= 1) {
+    cli::cli_abort(
+      c(
+        "{.arg {arg}} must be a single number between 0 and 1.",
+        x = .stat_arg_got(x)
+      ),
+      call = call
+    )
+  }
+  invisible(x)
+}
+
 # Normalise a `mark_line(window=)` argument into window stat params, or NULL for
 # no window. Accepts a bare op string (`"mean"`) or a list `(op, k, align,
 # partial)`. Validates the op and alignment; leaves `k` defaulting per-op to the
@@ -829,6 +914,9 @@ mark_function <- function(
 #' `y` values as heights; with no `y` it counts rows per category (the `"count"`
 #' stat). When `color`/`fill` is mapped, grouped bars are stacked by default; use
 #' `position = "dodge"` for side-by-side bars or `"fill"` to normalise to 1.
+#' The count stat computes `count` and `prop`, the share of its group (or of the
+#' layer, ungrouped), for use with [after_stat()], e.g.
+#' `y = after_stat(prop)`. `density` is an older name for `prop`.
 #' @export
 mark_bar <- function(
   plot,
@@ -999,6 +1087,7 @@ mark_histogram <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_count(bins)
   .add_layer(
     plot,
     "bar",
@@ -1029,6 +1118,8 @@ mark_smooth <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_positive(span)
+  .check_prob(level)
   .add_layer(
     plot,
     "smooth",
@@ -1091,6 +1182,12 @@ mark_ellipse <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_count(segments, min = 3L)
+  if (identical(type, "euclid")) {
+    .check_positive(level)
+  } else {
+    .check_prob(level)
+  }
   .add_layer(
     plot,
     "ellipse",
@@ -1105,9 +1202,12 @@ mark_ellipse <- function(
 }
 
 #' @rdname mark_ellipse
-#' @param expand For `mark_hull()`, grow each hull outward from its centroid by
-#'   this fraction (e.g. `0.1` = 10% larger), so it encloses the markers it wraps
-#'   rather than passing through their centres. `0` (default) is the tight hull.
+#' @param expand For `mark_hull()`, a margin to grow each hull outward by, as a
+#'   fraction of the layer's data range on each axis (e.g. `0.05` = 5% of the
+#'   width and height), so it encloses the markers it wraps rather than passing
+#'   through their centres. Every hull grows by the same margin on every side,
+#'   with rounded corners, whatever its size or shape. `0` (default) is the
+#'   tight hull.
 #' @export
 mark_hull <- function(
   plot,
@@ -1119,6 +1219,9 @@ mark_hull <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  if (!isTRUE(all.equal(expand, 0))) {
+    .check_positive(expand)
+  }
   .add_layer(
     plot,
     "hull",
@@ -1675,6 +1778,10 @@ mark_text_path <- function(
 #' @param bins Number of bins per axis for `mark_bin2d()` / hex columns for
 #'   `mark_hex()`.
 #' @param adjust Bandwidth multiplier for `mark_density()`.
+#' @param trim For `mark_density()`, `FALSE` (default) estimates every group's
+#'   density over the range of the whole layer's `x`, as ggplot2 does; `TRUE`
+#'   trims each group's curve to the range of its own data. The curve never runs
+#'   past the data, so the axis is not padded by the kernel's tails.
 #' @return The modified [PlotSpec].
 #' @examples
 #' d <- expand.grid(x = 1:5, y = 1:5)
@@ -1793,6 +1900,7 @@ mark_bin2d <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_count(bins)
   dots <- rlang::enquos(...)
   dots <- .default_channel(dots, "fill", rlang::quo(after_stat(count)))
   .add_layer(
@@ -1814,17 +1922,19 @@ mark_density <- function(
   ...,
   position = "identity",
   adjust = 1,
+  trim = FALSE,
   blend = NULL,
   sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
+  .check_positive(adjust)
   .add_layer(
     plot,
     "area",
     rlang::enquos(...),
     stat = "density",
-    stat_params = list(adjust = adjust),
+    stat_params = list(adjust = adjust, trim = isTRUE(trim)),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -1872,6 +1982,9 @@ mark_contour <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_count(bins)
+  .check_positive(binwidth, null_ok = TRUE)
+  .check_count(n, min = 2L)
   dots <- rlang::enquos(...)
   dots <- .default_channel(dots, "color", rlang::quo(after_stat(level)))
   .add_layer(
@@ -1907,6 +2020,9 @@ mark_contour_filled <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_count(bins)
+  .check_positive(binwidth, null_ok = TRUE)
+  .check_count(n, min = 2L)
   dots <- rlang::enquos(...)
   dots <- .default_channel(dots, "fill", rlang::quo(after_stat(level)))
   .add_layer(
@@ -2073,6 +2189,9 @@ mark_qq_line <- function(
 #'   `mark_ridgeline()` needs numeric `x` and categorical `y`; `mark_dotplot()`
 #'   needs `x`. A mapped `color`/`fill` sets the shape fill.
 #' @param adjust Kernel-density bandwidth multiplier (violin/ridgeline).
+#' @param trim For `mark_violin()`, `TRUE` (default, as ggplot2) ends each violin
+#'   at the smallest and largest value of its data; `FALSE` lets the kernel's
+#'   tails run on past them.
 #' @param height Ridge height as a multiple of the row band (ridgeline; default
 #'   `1.4`, so adjacent ridges overlap slightly).
 #' @param binwidth Dot-plot bin width, or `NULL` to use ~1/30 of the data range.
@@ -2091,17 +2210,19 @@ mark_violin <- function(
   ...,
   position = "identity",
   adjust = 1,
+  trim = TRUE,
   blend = NULL,
   sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
+  .check_positive(adjust)
   .add_layer(
     plot,
     "violin",
     rlang::enquos(...),
     stat = "identity",
-    stat_params = list(adjust = adjust),
+    stat_params = list(adjust = adjust, trim = isTRUE(trim)),
     blend = blend,
     sketch = sketch,
     data = data,
@@ -2122,6 +2243,8 @@ mark_ridgeline <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_positive(adjust)
+  .check_positive(height)
   .add_layer(
     plot,
     "ridgeline",
@@ -2147,6 +2270,7 @@ mark_dotplot <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_positive(binwidth, null_ok = TRUE)
   .add_layer(
     plot,
     "point",
@@ -2206,6 +2330,8 @@ mark_halfeye <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_positive(adjust)
+  .check_positive(scale)
   dots <- rlang::enquos(...)
   .reject_width_arg(dots)
   .add_layer(
@@ -2302,6 +2428,7 @@ mark_hex <- function(
   data = NULL
 ) {
   .check_plot(plot)
+  .check_count(bins)
   dots <- rlang::enquos(...)
   dots <- .default_channel(dots, "fill", rlang::quo(after_stat(count)))
   .add_layer(
@@ -2780,8 +2907,9 @@ mark_segment <- function(
 #'   node's wedges.
 #' @param inner For `mark_node_pie()`, the inner-radius fraction: `0` (default)
 #'   draws a pie, `> 0` a donut (e.g. `0.5`).
-#' @param expand For `mark_node_hull()`, the fraction to grow each hull outward
-#'   from its centroid so it encloses the node markers (default `0.08`).
+#' @param expand For `mark_node_hull()`, the margin to grow each hull outward by
+#'   so it encloses the node markers, as a fraction of the layout's range on each
+#'   axis (default `0.04`). Every hull gets the same rounded margin.
 #' @param type For `mark_edge_bundle()`, the bundling algorithm:
 #'   `"force"` (default, force-directed / FDEB), `"divided"` (force-directed with
 #'   direction-split bundles), `"stub"` (short stubs at each endpoint), `"path"`
@@ -3234,10 +3362,13 @@ mark_node_hull <- function(
   fill = NULL,
   color = NULL,
   alpha = 0.25,
-  expand = 0.08,
+  expand = 0.04,
   data = NULL
 ) {
   .check_plot(plot)
+  if (!isTRUE(all.equal(expand, 0))) {
+    .check_positive(expand)
+  }
   # A convex hull per group (the mapped `fill`) drawn *behind* the graph (z = 0),
   # to shade communities. The outline defaults to the fill's group colour so it
   # matches the shading. Reuses the general hull mark/stat (with `expand`).

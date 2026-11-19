@@ -8,6 +8,18 @@
   to `labeller =` directly. With several facet variables a strip shows one
   line per variable, centred, and the strip grows to fit (F-10).
 
+* **Behaviour change:** the grammar lint rules (`single_level_scale`,
+  `legend_overflow`) now check discrete shape, linetype and pattern scales as
+  well as colour ones. They were meant to all along, but only a colour scale
+  reported itself as discrete, so a one-level shape went unflagged.
+  `guide_legend(reverse = TRUE)` now also reverses a pattern legend (R-14).
+
+* Internal: a trained scale now records its scale type (`continuous`,
+  `discrete`, `binned`, `identity`, ...) in `type` for every aesthetic, where
+  `kind` held the type for colour and position scales and the aesthetic name
+  for the rest. The provenance scale-refs report the same `type` values as
+  before (R-14).
+
 * A two-vertex graph on the default stress layout no longer warns
   "data length [3] is not a sub-multiple or multiple of the number of rows
   [2]". The warning came from graphlayouts' fixed two-vertex branch;
@@ -30,6 +42,50 @@
   conflicts. `pdf_pages()` and `render_all()` differ from vellum's (they take
   plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
   their docs now say how they differ (VV-2).
+
+* **Stat parameters are checked where you write them.** `bins`, `binwidth`,
+  `adjust`, `span`, `level`, `height`, `segments` and `n` in `mark_histogram()`,
+  `mark_hex()`, `mark_bin2d()`, `mark_dotplot()`, `mark_density()`,
+  `mark_violin()`, `mark_ridgeline()`, `mark_halfeye()`, `mark_smooth()`,
+  `mark_ellipse()` and `mark_contour()` are validated by the constructor, with an
+  error naming the argument. Before, `bins = 0` crashed with "arguments imply
+  differing number of rows", `adjust = 0` with "'bw' is not positive", and
+  `level = 2` or `binwidth = -1` drew a wrong plot without complaint (VP-21).
+
+* **Stat edge cases follow ggplot2 (VP-22).**
+  - **Behaviour change:** a stat layer with too few points (a density of one
+    value, a smooth through one x, a hull of two points) or no finite values now
+    warns and draws nothing, whether or not it is grouped. Before, an ungrouped
+    layer aborted the whole plot while a grouped one only warned.
+  - A plot whose data has zero rows draws an empty panel instead of reporting
+    that it "needs an x and y encoding". A plot that really maps no `x` (or no
+    `y`) now says which axis is missing.
+  - `mark_rug(x = )` (or `y = `) works on its own, with a blank axis for the
+    unmapped direction.
+  - The numeric stats (histogram, density, smooth, ...) warn "Removed n rows
+    containing non-finite values" for rows they leave out because an input is
+    `Inf` or missing, as ggplot2's stats do, instead of dropping them silently.
+
+* **Small stat differences from ggplot2 are fixed (VP-23).**
+  - **Behaviour change:** `mark_count()`'s `after_stat(prop)` is the share of
+    the point's group, so each colour's bubbles sum to 1 (ggplot2's
+    `stat_sum()`). Before, it was the share of the whole layer.
+  - The count stat behind `mark_bar()` now names its proportion `prop`, as
+    ggplot2 does. `after_stat(density)` still works as an alias.
+  - **Behaviour change:** `mark_density()` evaluates the curve over the range
+    of the layer's data, as ggplot2 does, instead of running on ~3 bandwidths
+    past it. The x axis is no longer padded by the kernel's tails, and every
+    group's curve spans the same x. The new `trim = TRUE` ends each group's
+    curve at its own data.
+  - **Behaviour change:** `mark_violin()` trims each violin to the range of
+    its data by default, as ggplot2's `geom_violin()` does. Use
+    `trim = FALSE` for the old untrimmed outline.
+  - **Behaviour change:** `mark_hull(expand =)` and `mark_node_hull(expand =)`
+    grow each hull by a uniform margin with rounded corners, a fraction of the
+    layer's range on each axis, instead of scaling it about its centroid. A
+    long thin hull now gets the same margin as a round one, and every hull in
+    a layer gets the same margin whatever its size. `mark_node_hull()`'s default
+    `expand` is now `0.04`.
 
 # vellumplot 0.12.0
 

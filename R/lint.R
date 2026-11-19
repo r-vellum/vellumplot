@@ -30,11 +30,11 @@ NULL
 .lint_scales_summary <- function(scales, titles = NULL) {
   out <- lapply(.LINT_LEGEND_AES, function(a) {
     sc <- scales[[a]]
-    if (is.null(sc) || !identical(sc$kind, "discrete")) {
+    if (is.null(sc) || !identical(sc$type, "discrete")) {
       return(NULL)
     }
     list(
-      kind = sc$kind,
+      type = sc$type,
       levels = as.character(sc$levels),
       title = titles$text[[a]] %||% a
     )

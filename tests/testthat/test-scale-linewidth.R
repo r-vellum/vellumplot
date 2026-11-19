@@ -57,7 +57,7 @@ stable_svg <- function(plot) gsub("vl[0-9]+-", "vl-", svg_of(plot))
 test_that("a mapped linewidth trains a linewidth scale with a legend", {
   p <- vplot(df) |> mark_line(x = x, y = y, linewidth = w)
   b <- vellumplot:::.build_panels(p)
-  expect_identical(b$scales$linewidth$kind, "linewidth")
+  expect_identical(b$scales$linewidth$type, "continuous")
   # the data range spans the default output range, in lwd units
   expect_equal(b$scales$linewidth$map(range(df$w)), c(0.5, 4))
   # the edge-width scale is untouched: a line is not an edge
@@ -240,7 +240,7 @@ test_that("mapped edge width and mapped line width train separately", {
   b <- vellumplot:::.build_panels(
     vgraph(g, layout = "circle") |> mark_edges(linewidth = ew) |> mark_nodes()
   )
-  expect_identical(b$scales$edge_width$kind, "edge_width")
+  expect_identical(b$scales$edge_width$type, "continuous")
   expect_null(b$scales$linewidth)
 })
 
