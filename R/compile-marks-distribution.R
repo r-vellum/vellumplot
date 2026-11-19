@@ -510,6 +510,9 @@ NULL
   widths <- sort(L$stat_params$width %||% c(0.66, 0.95))
   point <- L$stat_params$point %||% "median"
   colv <- rep_len(.aes_colour(L, scales, "grey30"), L$n)
+  # the slab takes `fill` (ggdist's slab fill); `color` then paints only the
+  # point-interval, while a lone `color` still colours both (VP-46)
+  slabv <- .fill_and_outline(L, scales, "grey30", L$n)$fill
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), L$n)
   adjust <- L$stat_params$adjust %||% 1
   hw0 <- (L$stat_params$scale %||% .SLAB_WIDTH) * band
@@ -552,7 +555,8 @@ NULL
           xy$y,
           sketch = .sketch_bump(sk, k),
           gp = vellum::vl_gpar(
-            fill = .pattern_at(L, scales, sel[1]) %||% .paint_or(L, ccol),
+            fill = .pattern_at(L, scales, sel[1]) %||%
+              .paint_or(L, slabv[sel[1]]),
             col = NA,
             # honour a mapped/constant alpha; fall back to the slab's native 0.5
             alpha = gp_alpha(if (is.na(a)) 0.5 else a)

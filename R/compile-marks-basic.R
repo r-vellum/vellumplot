@@ -66,6 +66,14 @@ NULL
     xn <- xn + off
   }
   col <- rep_len(.aes_colour(L, scales, "black"), n)
+  fillv <- col
+  # A dot plot's dots are filled marks: `fill` fills and a `color` given with
+  # it outlines them; a lone `color` still paints the whole dot (VP-46).
+  if (identical(L$stat, "dotplot")) {
+    fo <- .fill_and_outline(L, scales, "black", n)
+    fillv <- fo$fill
+    col <- ifelse(is.na(fo$col), fillv, fo$col)
+  }
   size <- rep_len(.aes_size(L, scales, 1), n)
   shape <- rep_len(.aes_shape(L, scales, "circle"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
@@ -77,7 +85,10 @@ NULL
   svg_i <- which(!is.na(dsvg))
   pt_ok <- is.na(dsvg)
 
-  for (idx0 in .style_groups(n, list(col = col, alpha = alpha))) {
+  for (idx0 in .style_groups(
+    n,
+    list(col = col, fill = fillv, alpha = alpha)
+  )) {
     idx <- idx0[pt_ok[idx0]] # built-in markers in this style group
     if (!length(idx)) {
       next
@@ -96,7 +107,7 @@ NULL
         shape = shape[idx],
         sketch = sk,
         gp = vellum::vl_gpar(
-          fill = col[idx[1]],
+          fill = fillv[idx[1]],
           col = col[idx[1]],
           alpha = gp_alpha(a)
         )
@@ -783,8 +794,10 @@ NULL
   ctx <- scales$polar
   n <- L$n
   xp <- rep_len(scales$x$map(L$values$x), n)
-  fill <- rep_len(.aes_colour(L, scales, "grey35"), n)
+  fo <- .fill_and_outline(L, scales, "grey35", n)
+  fill <- fo$fill
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  lwd <- .aes_param(L, "linewidth", 0.5)
   band <- scales$x$band_width %||% .resolution(xp)
   w <- rep_len(L$values$width %||% band, n)
 
@@ -818,8 +831,12 @@ NULL
   theta1 <- pmax(a0, a1)
   sk <- .mark_sketch(L, scales)
 
-  for (idx in .style_groups(n, list(fill = fill, alpha = alpha))) {
+  for (idx in .style_groups(
+    n,
+    list(fill = fill, alpha = alpha, col = fo$col)
+  )) {
     a <- alpha[idx[1]]
+    cc <- fo$col[idx[1]]
     scene <- .draw(
       scene,
       vellum::sector_grob(
@@ -831,7 +848,11 @@ NULL
         theta1 = theta1[idx],
         fill = fill[idx],
         sketch = sk,
-        gp = vellum::vl_gpar(col = NA, alpha = gp_alpha(a))
+        gp = vellum::vl_gpar(
+          col = cc,
+          lwd = if (!is.na(cc)) lwd,
+          alpha = gp_alpha(a)
+        )
       ),
       rows = idx
     )
@@ -915,7 +936,10 @@ NULL
   n <- L$n
   sk <- .mark_sketch(L, scales)
   xp <- rep_len(scales$x$map(L$values$x), n)
-  fill <- if (is.null(grad)) rep_len(.aes_colour(L, scales, "grey35"), n)
+  # `fill` fills and `color` outlines; a lone `color` still fills (VP-46)
+  fo <- .fill_and_outline(L, scales, "grey35", n)
+  fill <- if (is.null(grad)) fo$fill
+  lwd <- .aes_param(L, "linewidth", 0.5)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   band <- scales$x$band_width %||% .resolution(xp)
 
@@ -957,7 +981,11 @@ NULL
         width = r$width,
         height = r$height,
         sketch = sk,
-        gp = vellum::vl_gpar(fill = grad, col = NA)
+        gp = vellum::vl_gpar(
+          fill = grad,
+          col = fo$col[1],
+          lwd = if (!is.na(fo$col[1])) lwd
+        )
       ),
       rows = seq_len(n)
     ))
@@ -973,7 +1001,9 @@ NULL
     abs(y1 - y0),
     fill,
     alpha,
-    sk
+    sk,
+    col = .outline_or_null(fo$col),
+    lwd = lwd
   )
 }
 
@@ -1031,17 +1061,42 @@ NULL
 
 # A filled band between two y boundaries `ya`/`yb` (already mapped to native y),
 # drawn as one x-ordered polygon per style group -- the shared body of the ribbon
-# and area marks. A gradient fill paints the whole band as one polygon.
-.emit_band <- function(scene, L, scales, ya, yb) {
+# and area marks. A gradient fill paints the whole band as one polygon. A `color`
+# given alongside a `fill` outlines the band as ggplot2's `outline.type` default
+# does: along `ya` only for `outline = "upper"` (area, density), along both
+# boundaries for `"both"` (ribbon) -- never down the closing sides.
+.emit_band <- function(scene, L, scales, ya, yb, outline = "upper") {
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
   sk <- .mark_sketch(L, scales)
+  fo <- .fill_and_outline(L, scales, "grey50", n)
+  lwd <- .aes_param(L, "linewidth", 0.5)
+  # the boundary line(s) of the rows `o` (x-ordered), stroked in colour `cc`
+  stroke <- function(scene, o, cc, a, gi) {
+    if (is.na(cc)) {
+      return(scene)
+    }
+    for (yy in if (identical(outline, "both")) list(ya, yb) else list(ya)) {
+      ln <- .xy_path(scales, xn[o], yy[o])
+      scene <- .draw(
+        scene,
+        vellum::lines_grob(
+          ln$x,
+          ln$y,
+          sketch = .sketch_bump(sk, gi + 50L),
+          gp = vellum::vl_gpar(col = cc, lwd = lwd, alpha = gp_alpha(a))
+        ),
+        rows = o
+      )
+    }
+    scene
+  }
 
   grad <- .paint_fill(L)
   if (!is.null(grad)) {
     o <- order(xn)
     poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
-    return(.draw(
+    scene <- .draw(
       scene,
       vellum::polygon_grob(
         poly$x,
@@ -1051,15 +1106,20 @@ NULL
       ),
       # PROVENANCE: one polygon over the whole layer, in x order.
       rows = o
-    ))
+    )
+    return(stroke(scene, o, fo$col[1], NA_real_, 0L))
   }
 
   .check_band_style(L, scales, n)
-  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  fill <- fo$fill
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
 
   gi <- 0L
-  for (idx in .series_groups(L, n, list(fill = fill, alpha = alpha))) {
+  for (idx in .series_groups(
+    L,
+    n,
+    list(fill = fill, alpha = alpha, col = fo$col)
+  )) {
     o <- idx[order(xn[idx])]
     poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
     scene <- .draw(
@@ -1073,6 +1133,7 @@ NULL
       # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
       rows = o
     )
+    scene <- stroke(scene, o, fo$col[idx[1]], alpha[idx[1]], gi)
     gi <- gi + 1L
   }
   scene
@@ -1130,7 +1191,7 @@ NULL
   n <- L$n
   ymin <- rep_len(scales$y$map(L$values$ymin), n)
   ymax <- rep_len(scales$y$map(L$values$ymax), n)
-  .emit_band(scene, L, scales, ymin, ymax)
+  .emit_band(scene, L, scales, ymin, ymax, outline = "both")
 }
 
 # An area mark: the region between `y` and the zero baseline, or between a

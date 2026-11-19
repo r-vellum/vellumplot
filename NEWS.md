@@ -53,6 +53,20 @@
   row, including boxplot, violin and smooth -- they are removed before the
   layer's statistic, as in ggplot2 (VP-41).
 
+* **Behaviour change:** on the filled marks a `color` given alongside a `fill`
+  now outlines the shapes instead of overriding the fill, as in ggplot2:
+  `mark_histogram(fill = "#3182bd", color = "white")` draws blue bars with
+  white edges, where it used to draw white bars. This covers `mark_bar()`,
+  `mark_histogram()`, `mark_count()`, `mark_area()`, `mark_density()` (top
+  edge only), `mark_ribbon()` (both edges), `mark_tile()`, `mark_bin2d()`,
+  `mark_hex()`, `mark_crossbar()` (box and middle line), `mark_dotplot()`,
+  `mark_pie()` and `mark_donut()`, matching `mark_rect()` and
+  `mark_polygon()`; the slab of `mark_halfeye()` takes the `fill` and leaves
+  `color` to the point-interval. A mapped `color` beside a constant `fill`
+  outlines in the mapped colours. A lone `color` still fills, as before.
+  Legend keys draw the constant outline (or the constant fill inside an
+  outlined box) too, also for box plots, violins and ridgelines (VP-46).
+
 ## Bug fixes
 
 * Wrapped x tick labels reserve the height of the label that wraps to the most
