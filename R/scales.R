@@ -634,6 +634,9 @@ scale_y_discrete <- function(
 #' @param breaks,labels Explicit break positions / labels (override
 #'   `date_breaks`/`date_labels`), or `NULL`.
 #' @param name Axis title, or `NULL` to derive from the encoding.
+#' @param guide The axis guide: [guide_axis()] to stagger, rotate or thin the
+#'   labels, `"none"` for no labels or ticks, or `NULL` (default) for the plain
+#'   axis. Same as `guides(x = )` / `guides(y = )`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' df <- data.frame(day = as.Date("2020-01-01") + 0:364, y = cumsum(rnorm(365)))
@@ -648,7 +651,8 @@ scale_x_date <- function(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 ) {
   .date_scale(
     plot,
@@ -659,7 +663,8 @@ scale_x_date <- function(
     date_labels,
     breaks,
     labels,
-    name
+    name,
+    guide
   )
 }
 
@@ -672,7 +677,8 @@ scale_y_date <- function(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 ) {
   .date_scale(
     plot,
@@ -683,7 +689,8 @@ scale_y_date <- function(
     date_labels,
     breaks,
     labels,
-    name
+    name,
+    guide
   )
 }
 
@@ -696,7 +703,8 @@ scale_x_datetime <- function(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 ) {
   .date_scale(
     plot,
@@ -707,7 +715,8 @@ scale_x_datetime <- function(
     date_labels,
     breaks,
     labels,
-    name
+    name,
+    guide
   )
 }
 
@@ -720,7 +729,8 @@ scale_y_datetime <- function(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 ) {
   .date_scale(
     plot,
@@ -731,7 +741,8 @@ scale_y_datetime <- function(
     date_labels,
     breaks,
     labels,
-    name
+    name,
+    guide
   )
 }
 
@@ -744,7 +755,8 @@ scale_x_time <- function(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 ) {
   .date_scale(
     plot,
@@ -755,7 +767,8 @@ scale_x_time <- function(
     date_labels,
     breaks,
     labels,
-    name
+    name,
+    guide
   )
 }
 
@@ -768,7 +781,8 @@ scale_y_time <- function(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 ) {
   .date_scale(
     plot,
@@ -779,7 +793,8 @@ scale_y_time <- function(
     date_labels,
     breaks,
     labels,
-    name
+    name,
+    guide
   )
 }
 
@@ -792,10 +807,11 @@ scale_y_time <- function(
   date_labels,
   breaks,
   labels,
-  name
+  name,
+  guide = NULL
 ) {
   .check_plot(plot)
-  .add_scale(
+  plot <- .add_scale(
     plot,
     ScaleSpec(
       aesthetic = aesthetic,
@@ -808,6 +824,7 @@ scale_y_time <- function(
       name = name
     )
   )
+  .with_axis_guide(plot, aesthetic, guide)
 }
 
 # Canonicalise an aesthetic name for a limits shortcut (British spelling, `fill`
@@ -1283,7 +1300,11 @@ NULL
 
 .palette_token <- function(kind, ...) {
   args <- c(...)
-  paste0(kind, ":", paste(format(args, digits = 15, trim = TRUE), collapse = ":"))
+  paste0(
+    kind,
+    ":",
+    paste(format(args, digits = 15, trim = TRUE), collapse = ":")
+  )
 }
 
 # `k` colours from a hue/grey palette token, or NULL when `x` is not one.
@@ -1356,15 +1377,24 @@ NULL
   call = rlang::caller_env()
 ) {
   if (!is.numeric(h) || length(h) != 2L || anyNA(h)) {
-    cli::cli_abort("{.arg h} must be a numeric range {.code c(from, to)}.", call = call)
+    cli::cli_abort(
+      "{.arg h} must be a numeric range {.code c(from, to)}.",
+      call = call
+    )
   }
   for (a in list(list(c, "c"), list(l, "l"), list(h.start, "h.start"))) {
     if (!is.numeric(a[[1]]) || length(a[[1]]) != 1L || is.na(a[[1]])) {
       cli::cli_abort("{.arg {a[[2]]}} must be a single number.", call = call)
     }
   }
-  if (!identical(as.numeric(direction), 1) && !identical(as.numeric(direction), -1)) {
-    cli::cli_abort("{.arg direction} must be {.val {1}} or {.val {-1}}.", call = call)
+  if (
+    !identical(as.numeric(direction), 1) &&
+      !identical(as.numeric(direction), -1)
+  ) {
+    cli::cli_abort(
+      "{.arg direction} must be {.val {1}} or {.val {-1}}.",
+      call = call
+    )
   }
   .discrete_colour_scale(
     plot,
@@ -1394,7 +1424,20 @@ scale_color_hue <- function(
   limits = NULL,
   na.value = "grey50"
 ) {
-  .hue_scale(plot, "color", h, c, l, h.start, direction, name, breaks, labels, limits, na.value)
+  .hue_scale(
+    plot,
+    "color",
+    h,
+    c,
+    l,
+    h.start,
+    direction,
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value
+  )
 }
 
 #' @rdname scale_hue
@@ -1416,7 +1459,20 @@ scale_fill_hue <- function(
   limits = NULL,
   na.value = "grey50"
 ) {
-  .hue_scale(plot, "fill", h, c, l, h.start, direction, name, breaks, labels, limits, na.value)
+  .hue_scale(
+    plot,
+    "fill",
+    h,
+    c,
+    l,
+    h.start,
+    direction,
+    name,
+    breaks,
+    labels,
+    limits,
+    na.value
+  )
 }
 
 .grey_scale <- function(
@@ -2314,7 +2370,9 @@ scale_size_ordinal <- function(
       call = call
     )
   }
-  if ((!is.null(lower) && any(x < lower)) || (!is.null(upper) && any(x > upper))) {
+  if (
+    (!is.null(lower) && any(x < lower)) || (!is.null(upper) && any(x > upper))
+  ) {
     cli::cli_abort(
       "{.arg {arg}} must lie in [{lower %||% -Inf}, {upper %||% Inf}].",
       call = call

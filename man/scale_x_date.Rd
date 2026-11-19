@@ -16,7 +16,8 @@ scale_x_date(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_y_date(
@@ -26,7 +27,8 @@ scale_y_date(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_x_datetime(
@@ -36,7 +38,8 @@ scale_x_datetime(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_y_datetime(
@@ -46,7 +49,8 @@ scale_y_datetime(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_x_time(
@@ -56,7 +60,8 @@ scale_x_time(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_y_time(
@@ -66,7 +71,8 @@ scale_y_time(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 }
 \arguments{
@@ -85,6 +91,10 @@ or \code{NULL} to train from the data.}
 \code{date_breaks}/\code{date_labels}), or \code{NULL}.}
 
 \item{name}{Axis title, or \code{NULL} to derive from the encoding.}
+
+\item{guide}{The axis guide: \code{\link[=guide_axis]{guide_axis()}} to stagger, rotate or thin the
+labels, \code{"none"} for no labels or ticks, or \code{NULL} (default) for the plain
+axis. Same as \code{guides(x = )} / \code{guides(y = )}.}
 }
 \value{
 The modified \link{PlotSpec}.

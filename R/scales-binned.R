@@ -83,7 +83,10 @@ NULL
     brks <- brks[!brks %in% lim]
     nb <- length(brks)
     if (nb >= 2L) {
-      lim <- c(brks[1] - (brks[2] - brks[1]), brks[nb] + (brks[nb] - brks[nb - 1L]))
+      lim <- c(
+        brks[1] - (brks[2] - brks[1]),
+        brks[nb] + (brks[nb] - brks[nb - 1L])
+      )
     } else if (nb == 1L) {
       bin <- max(brks - lim[1], lim[2] - brks)
       lim <- brks + c(-bin, bin)
@@ -104,7 +107,11 @@ NULL
   style <- scalespec@style %||% "quantile"
   if (identical(style, "extended")) {
     if (!is.null(user_breaks)) {
-      lim <- if (!is.null(dom)) sort(dom) else if (length(v)) range(v)
+      lim <- if (!is.null(dom)) {
+        sort(dom)
+      } else if (length(v)) {
+        range(v)
+      }
       ub <- sort(as.numeric(user_breaks))
       ub <- ub[is.null(lim) | (ub >= min(lim) & ub <= max(lim))]
       return(sort(unique(c(lim, ub))))
@@ -651,8 +658,14 @@ scale_colour_viridis_b <- scale_color_viridis_b
 # The palette of scale_*_viridis_b(): the hcl.colors() viridis map, or (for
 # `direction = -1`) the brewer-style reversed ramp as a colour vector.
 .viridis_binned_pal <- function(option, direction, call = rlang::caller_env()) {
-  if (!identical(as.numeric(direction), 1) && !identical(as.numeric(direction), -1)) {
-    cli::cli_abort("{.arg direction} must be {.val {1}} or {.val {-1}}.", call = call)
+  if (
+    !identical(as.numeric(direction), 1) &&
+      !identical(as.numeric(direction), -1)
+  ) {
+    cli::cli_abort(
+      "{.arg direction} must be {.val {1}} or {.val {-1}}.",
+      call = call
+    )
   }
   pal <- .viridis_pal(option)
   if (direction == 1) {
@@ -676,6 +689,9 @@ scale_colour_viridis_b <- scale_color_viridis_b
 #' @param breaks Explicit bin boundaries (overrides `style`/`n`), or `NULL`.
 #' @param labels Explicit boundary labels, or `NULL` to format the boundaries.
 #' @param name Axis title, or `NULL` to derive from the encoding.
+#' @param guide The axis guide: [guide_axis()] to stagger, rotate or thin the
+#'   labels, `"none"` for no labels or ticks, or `NULL` (default) for the plain
+#'   axis. Same as `guides(x = )` / `guides(y = )`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_binned(n = 6)
@@ -686,9 +702,10 @@ scale_x_binned <- function(
   n = 10,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 ) {
-  .binned_position_scale(plot, "x", style, n, breaks, labels, name)
+  .binned_position_scale(plot, "x", style, n, breaks, labels, name, guide)
 }
 
 #' @rdname scale_x_binned
@@ -699,9 +716,10 @@ scale_y_binned <- function(
   n = 10,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 ) {
-  .binned_position_scale(plot, "y", style, n, breaks, labels, name)
+  .binned_position_scale(plot, "y", style, n, breaks, labels, name, guide)
 }
 
 .binned_position_scale <- function(
@@ -711,11 +729,12 @@ scale_y_binned <- function(
   n,
   breaks,
   labels,
-  name
+  name,
+  guide = NULL
 ) {
   .check_plot(plot)
   .check_binned_args(n, style)
-  .add_scale(
+  plot <- .add_scale(
     plot,
     ScaleSpec(
       aesthetic = aesthetic,
@@ -727,6 +746,7 @@ scale_y_binned <- function(
       name = name
     )
   )
+  .with_axis_guide(plot, aesthetic, guide)
 }
 
 .binned_scale <- function(
