@@ -141,6 +141,8 @@ mappings.
 \code{y} values as heights; with no \code{y} it counts rows per category (the \code{"count"}
 stat). When \code{color}/\code{fill} is mapped, grouped bars are stacked by default; use
 \code{position = "dodge"} for side-by-side bars or \code{"fill"} to normalise to 1.
+\code{fill} fills the bars and a \code{color} given alongside it outlines them
+(\verb{fill = "steelblue", color = "white"}); a \code{color} alone fills them.
 The count stat computes \code{count} and \code{prop}, the share of its group (or of the
 layer, ungrouped), for use with \code{\link[=after_stat]{after_stat()}}, e.g.
 \code{y = after_stat(prop)}. \code{density} is an older name for \code{prop}.

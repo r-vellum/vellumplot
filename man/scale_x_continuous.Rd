@@ -22,7 +22,8 @@ scale_x_continuous(
   name = NULL,
   expand = NULL,
   sec.axis = NULL,
-  oob = NULL
+  oob = NULL,
+  guide = NULL
 )
 
 scale_y_continuous(
@@ -34,7 +35,8 @@ scale_y_continuous(
   name = NULL,
   expand = NULL,
   sec.axis = NULL,
-  oob = NULL
+  oob = NULL,
+  guide = NULL
 )
 
 scale_x_log10(plot, ...)
@@ -55,7 +57,8 @@ scale_x_discrete(
   name = NULL,
   breaks = NULL,
   labels = NULL,
-  drop = TRUE
+  drop = TRUE,
+  guide = NULL
 )
 
 scale_y_discrete(
@@ -64,7 +67,8 @@ scale_y_discrete(
   name = NULL,
   breaks = NULL,
   labels = NULL,
-  drop = TRUE
+  drop = TRUE,
+  guide = NULL
 )
 }
 \arguments{
@@ -104,6 +108,10 @@ the opposite edge, or \code{NULL} for none. Continuous Cartesian plots only (see
 \verb{function(x, range)} such as \code{\link[scales:oob_squish_any]{scales::oob_squish_any()}} also works. \code{NULL}
 (default) is \code{"keep"} on a position axis. Infinite values are never out
 of bounds: \code{x = Inf} sits on the panel edge.}
+
+\item{guide}{The axis guide: \code{\link[=guide_axis]{guide_axis()}} to stagger, rotate or thin the
+labels, \code{"none"} for no labels or ticks, or \code{NULL} (default) for the plain
+axis. Same as \code{guides(x = )} / \code{guides(y = )}.}
 
 \item{...}{For the transform shortcuts, further arguments to
 \code{scale_x_continuous()} / \code{scale_y_continuous()} (not \code{trans}).}

@@ -96,7 +96,9 @@ The modified \link{PlotSpec}.
 \code{mark_raster()} draws the same as one raster image (a fast path requiring a
 complete regular grid). \code{mark_bin2d()} bins continuous \code{x}/\code{y} into a grid and
 colours each cell by count. \code{mark_density()} draws a 1-D kernel density of \code{x}
-as a filled curve.
+as a filled curve. On all of them a \code{color} given alongside a \code{fill} (or the
+default count fill of \code{mark_bin2d()} / \code{mark_hex()}) outlines the shapes; a
+\code{color} alone fills them.
 }
 \examples{
 d <- expand.grid(x = 1:5, y = 1:5)

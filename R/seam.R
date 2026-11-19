@@ -161,6 +161,7 @@ NULL
     "node_text",
     "tile",
     "rect",
+    "polygon",
     "bar",
     "violin",
     "ridgeline",
@@ -359,20 +360,23 @@ NULL
   for (p in built$panels) {
     hsc <- hscale(p)
     vsc <- vscale(p)
+    # Non-position scales: the shared ones, or the panel's own for an
+    # aesthetic resolved as independent (see `.panel_scale()`).
+    aes_sc <- function(k) .panel_scale(built, p, k)
     psc <- list(
       x = p$x_sc,
       y = p$y_sc,
-      color = built$scales$color,
-      size = built$scales$size,
-      shape = built$scales$shape,
-      pattern = built$scales$pattern,
-      edge_width = built$scales$edge_width,
-      linewidth = built$scales$linewidth,
-      alpha = built$scales$alpha,
-      linetype = built$scales$linetype,
-      edge_color = built$scales$edge_color,
-      edge_alpha = built$scales$edge_alpha,
-      edge_linetype = built$scales$edge_linetype,
+      color = aes_sc("color"),
+      size = aes_sc("size"),
+      shape = aes_sc("shape"),
+      pattern = aes_sc("pattern"),
+      edge_width = aes_sc("edge_width"),
+      linewidth = aes_sc("linewidth"),
+      alpha = aes_sc("alpha"),
+      linetype = aes_sc("linetype"),
+      edge_color = aes_sc("edge_color"),
+      edge_alpha = aes_sc("edge_alpha"),
+      edge_linetype = aes_sc("edge_linetype"),
       flip = flip,
       polar = NULL,
       trans = NULL,
@@ -554,7 +558,8 @@ NULL
         lay$panel_row[r],
         lay$ylabels_col[1],
         warp_v(vshared),
-        rt
+        rt,
+        keep = lay$y_keep
       )
     }
   }
@@ -576,7 +581,8 @@ NULL
         lay$panel_col[cc],
         warp_h(hshared),
         rt,
-        lay$xwrap_mm
+        lay$xwrap_mm,
+        keep = lay$x_keep
       )
     }
   }
@@ -805,7 +811,7 @@ NULL
   # (a keyed, hoverable element per series) so a host can highlight/select a whole
   # series from the legend. Read by the guide drawers (see `.tag_legend_swatch`).
   rt[[".interactive"]] <- .spec_interactive(spec)
-  guides <- .legend_guides(built$scales)
+  guides <- .facet_legend_guides(built)
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
   flip <- identical(co@kind, "flip")
   polar <- identical(co@kind, "polar")

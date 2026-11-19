@@ -433,6 +433,61 @@ NULL
 # boxplot / violin semantics).
 .OUTLINE_MARKS <- c("boxplot", "violin", "ridgeline")
 
+# Filled marks where `fill` fills and a `color` given alongside it outlines,
+# while a lone `color` still fills (`.fill_and_outline()`, VP-46).
+.FILL_OUTLINE_MARKS <- c(
+  "bar",
+  "tile",
+  "rect",
+  "polygon",
+  "area",
+  "ribbon",
+  "hex",
+  "crossbar"
+)
+
+# Does layer `L` draw with `.fill_and_outline()` semantics? A dot plot is a
+# point layer whose dots are filled shapes.
+.fills_and_outlines <- function(L) {
+  L$mark %in%
+    .FILL_OUTLINE_MARKS ||
+    (identical(L$mark, "point") && identical(L$stat, "dotplot"))
+}
+
+# A constant plain-colour `fill` param of `L` (not a gradient/pattern paint), or
+# NULL.
+.plain_fill_param <- function(L) {
+  f <- L$params$fill
+  if (.is_string(f) && !.is_paint(f)) f
+}
+
+# The constant half of a filled mark's legend key when the other half is mapped
+# (ggplot2 draws both into the key): `list(col = )` -- a constant outline around
+# swatches coloured by a mapped `fill` -- or `list(fill = )` -- a constant fill
+# inside outlines coloured by a mapped `color`. NULL otherwise (the swatch is
+# the mapped colour alone). Read from the first filled layer mapping the scale.
+.key_style_for_aes <- function(resolved, aesthetic) {
+  aliases <- .aes_aliases(aesthetic)
+  for (L in resolved) {
+    if (!any(aliases %in% names(L$values))) {
+      next
+    }
+    if (!.fills_and_outlines(L) && !L$mark %in% .OUTLINE_MARKS) {
+      next
+    }
+    has_fill <- !is.null(L$values$fill)
+    has_col <- !is.null(L$values$color)
+    if (has_fill && !has_col && .is_string(L$params$color)) {
+      return(list(col = L$params$color))
+    }
+    if (has_col && !has_fill && !is.null(.plain_fill_param(L))) {
+      return(list(fill = .plain_fill_param(L)))
+    }
+    return(NULL)
+  }
+  NULL
+}
+
 .key_glyph_for_mark <- function(mark) {
   if (mark %in% names(.MARK_KEY_GLYPH)) .MARK_KEY_GLYPH[[mark]] else "square"
 }
@@ -449,11 +504,16 @@ NULL
       glyph <- .key_glyph_for_mark(L$mark)
       # A distribution mark whose colour reaches it only through `color` draws
       # coloured outlines over a neutral fill, so its key is an outlined box.
+      # So does a filled mark (bar, tile, area, ...) whose mapped `color`
+      # outlines a constant `fill` (VP-46).
+      colour_only <- !is.null(L$values$color) && is.null(L$values$fill)
       if (
-        L$mark %in%
-          .OUTLINE_MARKS &&
-          !is.null(L$values$color) &&
-          is.null(L$values$fill)
+        colour_only &&
+          (L$mark %in%
+            .OUTLINE_MARKS ||
+            (L$mark %in%
+              .FILL_OUTLINE_MARKS &&
+              !is.null(.plain_fill_param(L))))
       ) {
         glyph <- "outline"
       }

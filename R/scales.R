@@ -9,6 +9,12 @@ NULL
     function(s) identical(s@aesthetic, scale@aesthetic),
     logical(1)
   )
+  # A guide set earlier with `guides()` survives a later scale declaration
+  # that does not set its own (as ggplot2 keeps `guides()` apart from scales).
+  if (is.null(scale@guide) && !all(keep)) {
+    old <- plot@scales[!keep]
+    scale@guide <- old[[length(old)]]@guide
+  }
   plot@scales <- c(plot@scales[keep], list(scale))
   plot
 }
@@ -247,6 +253,9 @@ NULL
 #'   of bounds: `x = Inf` sits on the panel edge.
 #' @param drop For discrete scales, drop factor levels that do not occur in
 #'   the data (default `TRUE`, as in ggplot2). `limits` overrides it.
+#' @param guide The axis guide: [guide_axis()] to stagger, rotate or thin the
+#'   labels, `"none"` for no labels or ticks, or `NULL` (default) for the plain
+#'   axis. Same as `guides(x = )` / `guides(y = )`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> scale_x_continuous(limits = c(0, 6))
@@ -261,9 +270,10 @@ scale_x_continuous <- function(
   name = NULL,
   expand = NULL,
   sec.axis = NULL,
-  oob = NULL
+  oob = NULL,
+  guide = NULL
 ) {
-  .continuous_position_scale(
+  plot <- .continuous_position_scale(
     plot,
     "x",
     limits,
@@ -275,6 +285,7 @@ scale_x_continuous <- function(
     sec.axis,
     oob
   )
+  .with_axis_guide(plot, "x", guide)
 }
 
 #' @rdname scale_x_continuous
@@ -288,9 +299,10 @@ scale_y_continuous <- function(
   name = NULL,
   expand = NULL,
   sec.axis = NULL,
-  oob = NULL
+  oob = NULL,
+  guide = NULL
 ) {
-  .continuous_position_scale(
+  plot <- .continuous_position_scale(
     plot,
     "y",
     limits,
@@ -302,6 +314,7 @@ scale_y_continuous <- function(
     sec.axis,
     oob
   )
+  .with_axis_guide(plot, "y", guide)
 }
 
 #' @rdname scale_x_continuous
@@ -565,9 +578,19 @@ scale_x_discrete <- function(
   name = NULL,
   breaks = NULL,
   labels = NULL,
-  drop = TRUE
+  drop = TRUE,
+  guide = NULL
 ) {
-  .discrete_position_scale(plot, "x", limits, name, breaks, labels, drop)
+  plot <- .discrete_position_scale(
+    plot,
+    "x",
+    limits,
+    name,
+    breaks,
+    labels,
+    drop
+  )
+  .with_axis_guide(plot, "x", guide)
 }
 
 #' @rdname scale_x_continuous
@@ -578,9 +601,19 @@ scale_y_discrete <- function(
   name = NULL,
   breaks = NULL,
   labels = NULL,
-  drop = TRUE
+  drop = TRUE,
+  guide = NULL
 ) {
-  .discrete_position_scale(plot, "y", limits, name, breaks, labels, drop)
+  plot <- .discrete_position_scale(
+    plot,
+    "y",
+    limits,
+    name,
+    breaks,
+    labels,
+    drop
+  )
+  .with_axis_guide(plot, "y", guide)
 }
 
 #' Date and time position scales

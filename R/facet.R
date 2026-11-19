@@ -51,7 +51,8 @@ FacetSpec <- S7::new_class(
 #' `facet_grid()` arranges them on a 2-D grid defined by a `rows ~ cols`
 #' formula. Position scales are shared across panels by default (so axes align);
 #' pass `scales = "free_x"`, `"free_y"`, or `"free"` to train them per panel.
-#' Colour and size scales (and their legends) are always shared in this version.
+#' Colour, size and the other non-position scales are shared too (one legend);
+#' `resolve_scale(color = "independent")` gives each panel its own.
 #'
 #' @param plot A [PlotSpec].
 #' @param facets A faceting formula. For `facet_wrap()`, one-sided such as
@@ -138,16 +139,31 @@ facet_grid <- function(
 #'
 #' The scale-resolution lattice (after Vega-Lite): for each aesthetic, choose
 #' whether faceted panels share one trained scale or train independent ones.
-#' Position scales default to `"shared"`; `facet_*(scales = "free_*")` is sugar
+#' Every scale defaults to `"shared"`; `facet_*(scales = "free_*")` is sugar
 #' for setting `x`/`y` to `"independent"`.
 #'
+#' A non-position aesthetic (`color`, `size`, `alpha`, `shape`, `linetype`,
+#' `linewidth`, `pattern`, ...) set to `"independent"` is trained in each panel
+#' from that panel's data alone, so each panel spends the whole palette or
+#' range on its own values, and each panel gets its own legend. The legends
+#' are collected in the legend area, titled with the scale title and the
+#' panel's strip text (`"hp (cyl: 4)"`). Scales left shared keep their single
+#' legend. `colour` and `fill` both name the colour scale. A plot with a single
+#' panel ignores the setting.
+#'
 #' @param plot A [PlotSpec].
-#' @param ... Named arguments mapping an aesthetic (`x`, `y`, ...) to `"shared"`
-#'   or `"independent"`.
+#' @param ... Named arguments mapping an aesthetic (`x`, `y`, `color`, `size`,
+#'   ...) to `"shared"` or `"independent"`.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl) |>
 #'   resolve_scale(y = "independent")
+#'
+#' # one colour legend per panel
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = factor(gear)) |>
+#'   facet_wrap(~cyl) |>
+#'   resolve_scale(color = "independent")
 #' @export
 resolve_scale <- function(plot, ...) {
   .check_plot(plot)
@@ -158,7 +174,9 @@ resolve_scale <- function(plot, ...) {
       "All arguments to {.fn resolve_scale} must be named, e.g. {.code resolve_scale(y = \"independent\")}."
     )
   }
-  valid <- c("x", "y")
+  # `colour` / `fill` name the colour scale, as everywhere else.
+  nms <- .resolve_aes_names(nms)
+  valid <- c("x", "y", .aes_legend_keys())
   bad <- setdiff(nms, valid)
   if (length(bad)) {
     cli::cli_abort(c(
@@ -166,10 +184,24 @@ resolve_scale <- function(plot, ...) {
       i = "Unknown aesthetic{?s}: {.val {bad}}."
     ))
   }
-  for (nm in nms) {
-    plot@resolve[[nm]] <- match.arg(args[[nm]], c("shared", "independent"))
+  for (k in seq_along(nms)) {
+    plot@resolve[[nms[[k]]]] <- match.arg(
+      args[[k]],
+      c("shared", "independent")
+    )
   }
   plot
+}
+
+.resolve_aes_names <- function(nms) {
+  alias <- c(
+    colour = "color",
+    fill = "color",
+    edge_colour = "edge_color"
+  )
+  hit <- nms %in% names(alias)
+  nms[hit] <- unname(alias[nms[hit]])
+  nms
 }
 
 # The resolution for an aesthetic ("shared" unless set otherwise).

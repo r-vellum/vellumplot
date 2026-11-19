@@ -906,6 +906,7 @@ NULL
   na_value <- .colour_na_value(spec, scalespec, resolved)
   has_na <- any(is.na(unlist(values, use.names = FALSE)))
   key_glyph <- .key_glyph_for_aes(resolved, channel)
+  key_style <- .key_style_for_aes(resolved, channel)
 
   # A bivariate scale (scale_fill_bivariate()), or -- with no explicit type -- a
   # fill mapped to a bi_class() column or given guide_bivariate(): a discrete
@@ -1087,7 +1088,8 @@ NULL
       colors = unname(cols[levels]),
       na = has_na,
       na_value = na_value,
-      key_glyph = key_glyph
+      key_glyph = key_glyph,
+      key_style = key_style
     )
   }
 }
@@ -1919,7 +1921,7 @@ NULL
   if (!isTRUE(sc$discrete)) {
     sc <- .scale_set(sc, map = .inf_to_edge(sc$map, sc$domain))
   }
-  sc
+  .attach_axis_guide(sc, scalespec)
 }
 
 # The footprint widening of `.train_axis()` (see there).

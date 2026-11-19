@@ -2,7 +2,9 @@
 % Please edit documentation in R/marks.R
 \name{mark_segment}
 \alias{mark_segment}
-\title{Segment mark}
+\alias{mark_curve}
+\alias{mark_spoke}
+\title{Segment, curve and spoke marks}
 \usage{
 mark_segment(
   plot,
@@ -14,12 +16,36 @@ mark_segment(
   sketch = NULL,
   data = NULL
 )
+
+mark_curve(
+  plot,
+  ...,
+  curvature = 0.5,
+  angle = 90,
+  ncp = 5,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
+
+mark_spoke(
+  plot,
+  ...,
+  position = "identity",
+  blend = NULL,
+  effects = list(),
+  sketch = NULL,
+  data = NULL
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, \code{xend}, \code{yend} (+ \code{color},
-\code{linewidth}, \code{linetype}, \code{alpha}). A mapped \code{linewidth} gives each segment
+\code{linewidth}, \code{linetype}, \code{alpha}); \code{mark_spoke()} takes \code{angle} and
+\code{radius} in place of \code{xend}, \code{yend}. A mapped \code{linewidth} gives each segment
 its own width -- see \code{\link[=scale_linewidth]{scale_linewidth()}}.}
 
 \item{position}{Position adjustment: a string — \code{"identity"} (default),
@@ -60,16 +86,42 @@ plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default)
 accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
+
+\item{curvature}{For \code{mark_curve()}, the amount of bend: \code{0} is straight,
+\code{1} a half circle; negative values bend the other way (ggplot2's
+convention: positive bends to the right, travelling from start to end).}
+
+\item{angle}{For \code{mark_curve()}, where the apex of the bend sits, in degrees
+between 0 and 180: \code{90} (default) is symmetric, smaller values move it
+towards the start and larger towards the end.}
+
+\item{ncp}{For \code{mark_curve()}, the number of control points (more give a
+smoother curve; default \code{5}).}
 }
 \value{
 The modified \link{PlotSpec}.
 }
 \description{
 \code{mark_segment()} draws a straight line from \verb{(x, y)} to \verb{(xend, yend)} per row.
+\code{mark_curve()} bends that line into an arc (ggplot2's \code{geom_curve()}).
+\code{mark_spoke()} draws a segment from \verb{(x, y)} in the direction \code{angle}
+(radians) with length \code{radius}, both in data units (ggplot2's
+\code{geom_spoke()}): a vector field.
+}
+\details{
+A curve bends in the panel's own frame (its x and y spans scaled to the
+same length), so on a panel that is not square the arc stretches with the
+panel; ggplot2 bends in device space instead.
 }
 \examples{
 d <- data.frame(x = 1, y = 1, xend = 5, yend = 4)
 vplot(d) |> mark_segment(x = x, y = y, xend = xend, yend = yend)
+vplot(d) |> mark_curve(x = x, y = y, xend = xend, yend = yend)
+
+# a vector field
+g <- expand.grid(x = 1:8, y = 1:8)
+g$angle <- atan2(g$y - 4.5, g$x - 4.5)
+vplot(g) |> mark_spoke(x = x, y = y, angle = angle, radius = 0.4)
 }
 \seealso{
 \code{\link[=scale_linewidth]{scale_linewidth()}}

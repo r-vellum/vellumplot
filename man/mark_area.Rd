@@ -91,7 +91,9 @@ staircase line. All connect points in \code{x} order.
 An area or ribbon is drawn as one polygon per series (per \code{group}, or per
 level of a discrete \code{fill}/\code{color}), and a polygon has a single fill. A
 continuous \code{fill}, \code{color} or \code{alpha} must therefore be constant within each
-series; one that varies along a series is an error.
+series; one that varies along a series is an error. A \code{color} given
+alongside a \code{fill} outlines the band: an area along its top, a ribbon along
+both edges. A \code{color} alone fills it.
 }
 \examples{
 vplot(pressure) |> mark_area(x = temperature, y = pressure)

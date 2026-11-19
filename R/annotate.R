@@ -147,10 +147,28 @@ annotate <- function(
   )
 }
 
-# A filled rectangle spanning [xmin, xmax] x [ymin, ymax]. Internal: the only
-# entry point is `annotate("rect", ...)`. Unlike `mark_tile()` (centre + size),
-# this keeps the corner bounds so a `-Inf`/`Inf` bound can be resolved to the
-# panel edge at emit time.
+#' Rectangle mark
+#'
+#' `mark_rect()` draws one rectangle per row, spanning `xmin`..`xmax` by
+#' `ymin`..`ymax` (ggplot2's `geom_rect()`). Unlike [mark_tile()] (a centre and
+#' a size), it takes the corner bounds, so an infinite bound reaches the panel
+#' edge: `xmin = -Inf, xmax = Inf` shades a full-width band. `fill` fills
+#' (default `"grey35"`) and `color` outlines; a `color` given without any
+#' `fill` fills the rectangle instead, as for [mark_tile()].
+#' [annotate()]`("rect", ...)` draws a one-off rectangle.
+#'
+#' @inheritParams mark_point
+#' @param ... Encodings (tidy-eval): `xmin`, `xmax`, `ymin`, `ymax` (+ `fill`,
+#'   `color`, `alpha`, `linewidth`, `pattern`).
+#' @return The modified [PlotSpec].
+#' @examples
+#' recs <- data.frame(
+#'   start = c(1, 4, 7), end = c(3, 5, 10),
+#'   party = c("A", "B", "A")
+#' )
+#' vplot(recs) |>
+#'   mark_rect(xmin = start, xmax = end, ymin = 0, ymax = 1, fill = party)
+#' @export
 mark_rect <- function(
   plot,
   ...,
