@@ -411,12 +411,14 @@ NULL
 # Count rows per x (per x and group, if a colour/fill is mapped). x (and the
 # group) are kept as factors so a custom factor level order survives into the
 # trained position/colour scales rather than being re-sorted alphabetically.
+# A missing x (or group) is counted too, as an NA category: the trained scales
+# draw it as their trailing "NA" level, as ggplot2 does.
 .stat_count <- function(L) {
   xlevs <- .cat_levels(L$values$x)
   x <- factor(as.character(L$values$x), levels = xlevs)
   grp <- .group_key(L)
   if (is.null(grp)) {
-    t <- table(x)
+    t <- table(x, useNA = "ifany")
     t <- t[t > 0]
     n <- as.numeric(t)
     data.frame(
@@ -429,7 +431,10 @@ NULL
   } else {
     glevs <- .cat_levels(grp)
     g <- factor(as.character(grp), levels = glevs)
-    agg <- as.data.frame(table(x = x, group = g), stringsAsFactors = FALSE)
+    agg <- as.data.frame(
+      table(x = x, group = g, useNA = "ifany"),
+      stringsAsFactors = FALSE
+    )
     agg <- agg[agg$Freq > 0, , drop = FALSE]
     data.frame(
       x = factor(agg$x, levels = xlevs),
@@ -437,7 +442,9 @@ NULL
       count = agg$Freq,
       y = agg$Freq,
       # proportion within each group (each group sums to 1), matching ggplot2
-      density = agg$Freq / stats::ave(agg$Freq, agg$group, FUN = sum),
+      # (an NA group is a group of its own; `ave()` would skip it)
+      density = agg$Freq /
+        stats::ave(agg$Freq, addNA(factor(agg$group)), FUN = sum),
       stringsAsFactors = FALSE
     )
   }

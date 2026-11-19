@@ -77,13 +77,14 @@ test_that("mark_rug validates sides and a rolling window validates k", {
 })
 
 # CP4 / CP6 -----------------------------------------------------------------
-test_that("an NA facet value drops the row rather than making an NA panel", {
+test_that("an NA facet value gets its own trailing panel (VP-6)", {
   df <- data.frame(x = 1:6, y = 1:6, f = c("a", "b", "a", "b", NA, "a"))
   fa <- vellumplot:::.facet_assign(
     vplot(df) |> mark_point(x = x, y = y) |> facet_wrap(~f)
   )
-  levs <- unlist(lapply(fa$panels, function(p) p$lvl))
-  expect_setequal(levs, c("a", "b"))
+  levs <- unlist(lapply(fa$panels, function(p) p$lvl), use.names = FALSE)
+  expect_identical(levs, c("a", "b", "NA"))
+  expect_identical(fa$panels[[3]]$idx, 5L)
 })
 
 test_that("position stack tolerates an NA height", {
@@ -92,7 +93,10 @@ test_that("position stack tolerates an NA height", {
     y = c(1, NA, 2, 3),
     g = c("p", "q", "p", "q")
   )
-  expect_no_error(svg(vplot(df) |> mark_bar(x = x, y = y, fill = g)))
+  expect_warning(
+    svg(vplot(df) |> mark_bar(x = x, y = y, fill = g)),
+    "Removed 1 row"
+  )
 })
 
 # SR2 -----------------------------------------------------------------------

@@ -85,19 +85,21 @@ spec_fields <- function(data, n_examples = 3L) {
 # ---------------------------------------------------------------------------
 # Compile report + pre-compile checks for `spec_diagnose()`.
 #
-# vellumplot never deletes rows: a row whose position is missing, or that a log
-# axis cannot map, reaches the emitter and simply produces no ink, and a row
-# outside explicit scale limits is drawn and clipped away (the trainer's own
-# comment in `.train_position_continuous()`). That is quiet by design, so the
-# report is the place to see it: per layer, how many input rows will not show
-# and why. It evaluates the layer's own encodings with the compiler's
-# `.resolve_layer()`, asks the same `.scale_for()` / `.resolve_trans()` the
-# trainer asks, and assigns panels with the same `.facet_keys()`, so it counts
-# exactly what the compile will do rather than re-deriving the rules.
+# A row missing a continuous position is removed with a warning (or, on a path,
+# leaves a gap); a row a log axis cannot map reaches the emitter and simply
+# produces no ink; a row outside explicit scale limits is drawn and clipped away
+# (the trainer's own comment in `.train_position_continuous()`). The report is
+# the place to see all of it: per layer, how many input rows will not show and
+# why. It evaluates the layer's own encodings with the compiler's
+# `.resolve_layer()`, tests missingness with the compiler's
+# `.is_continuous_position()`, and asks the same `.scale_for()` /
+# `.resolve_trans()` the trainer asks, so it counts exactly what the compile
+# will do rather than re-deriving the rules. A missing discrete position or
+# facet value is drawn (as a trailing "NA" level or panel), so it is not counted.
 # ---------------------------------------------------------------------------
 
-# Position channels, by axis, whose value places a row. A missing one, or one
-# the axis transform cannot map, leaves the row undrawn.
+# Position channels, by axis, whose value places a row. A missing continuous
+# one, or one the axis transform cannot map, leaves the row undrawn.
 .DIAG_POS_CHANNELS <- list(
   x = c("x", "xend", "xmin", "xmax"),
   y = c("y", "yend", "ymin", "ymax")
@@ -107,7 +109,6 @@ spec_fields <- function(data, n_examples = 3L) {
 # missing `x` AND outside the `y` limits counts once, as missing).
 .DIAG_DROP_REASONS <- c(
   missing = "missing a position value",
-  facet = "missing a facet value",
   transform = "not mappable on a transformed axis (e.g. <= 0 on a log scale)",
   limits = "outside the scale limits"
 )
@@ -148,14 +149,10 @@ spec_fields <- function(data, n_examples = 3L) {
   })
   for (a in axes) {
     for (v in a$vals) {
-      flag(is.na(v), "missing")
+      if (.is_continuous_position(v)) {
+        flag(is.na(v), "missing")
+      }
     }
-  }
-  facet <- plot@facet
-  fv <- .facet_vars(facet)
-  if (length(fv) && all(fv %in% names(ld))) {
-    keys <- .facet_keys(facet, ld)
-    flag(Reduce(`|`, lapply(keys, is.na)), "facet")
   }
   for (a in axes) {
     sc <- a$sc
@@ -217,7 +214,6 @@ spec_fields <- function(data, n_examples = 3L) {
       mark = layer@mark,
       rows = as.integer(n),
       missing = counts[["missing"]],
-      facet = counts[["facet"]],
       transform = counts[["transform"]],
       limits = counts[["limits"]],
       dropped = sum(counts),
@@ -230,7 +226,6 @@ spec_fields <- function(data, n_examples = 3L) {
       mark = character(0),
       rows = integer(0),
       missing = integer(0),
-      facet = integer(0),
       transform = integer(0),
       limits = integer(0),
       dropped = integer(0)
@@ -415,11 +410,12 @@ spec_fields <- function(data, n_examples = 3L) {
 #'   category (a warning).
 #'
 #' @section Compile report:
-#' vellumplot does not delete rows, but some rows produce no visible mark. The
-#' `report` element counts them per layer, on the layer's input rows, attributing
-#' each row to the first reason that applies:
-#' * `missing`: a position value (`x`, `y`, `xend`, `ymin`, ...) is `NA`;
-#' * `facet`: a facet variable is `NA`, so the row belongs to no panel;
+#' Some rows produce no visible mark. The `report` element counts them per
+#' layer, on the layer's input rows, attributing each row to the first reason
+#' that applies:
+#' * `missing`: a continuous position value (`x`, `y`, `xend`, `ymin`, ...) is
+#'   `NA`. Such a row is removed from the plot with a warning, or leaves a gap
+#'   in a line, step or area;
 #' * `transform`: the axis transform cannot map the value, e.g. a value `<= 0`
 #'   on a log axis;
 #' * `limits`: the value is outside explicit scale limits ([lims()],
@@ -427,8 +423,10 @@ spec_fields <- function(data, n_examples = 3L) {
 #'   (`coord_cartesian(xlim = )`) zoom instead and are not counted.
 #'
 #' A missing *non-position* value (colour, size, ...) is drawn with the scale's
-#' `NA` value and is not counted. Each layer that loses rows also adds a
-#' `"warning"` diagnostic, so it shows in the printed summary.
+#' `NA` value, a missing discrete position as a trailing `"NA"` category, and a
+#' missing facet value in a trailing `"NA"` panel, so none of them is counted.
+#' Each layer that loses rows also adds a `"warning"` diagnostic, so it shows in
+#' the printed summary.
 #'
 #' @param spec A spec list (from [as_spec()]), a JSON string, a `.json` path, or
 #'   a [PlotSpec].
@@ -440,7 +438,7 @@ spec_fields <- function(data, n_examples = 3L) {
 #'   `ok` (logical), `plot` (the [PlotSpec] or `NULL`), `diagnostics` (a list of
 #'   records with `severity`, `field`, `message`, `hint`), and `report` (a data
 #'   frame with one row per layer: `layer`, `mark`, `rows`, the counts
-#'   `missing`, `facet`, `transform`, `limits`, and their total `dropped`; `NULL`
+#'   `missing`, `transform`, `limits`, and their total `dropped`; `NULL`
 #'   when the plot could not be built). Printing it shows a summary.
 #'   `vplot_from_spec()` returns a [PlotSpec].
 #' @seealso [spec_fields()], [spec_schema()], [vplot_ask()]
@@ -537,7 +535,14 @@ spec_diagnose <- function(spec, data = NULL, env = globalenv()) {
   ) {
     ok_compile <- tryCatch(
       {
-        vellum::as_vellum_scene(plot)
+        # Rows removed for a missing position are counted in the report below,
+        # so the compile's own warning about them would only repeat it.
+        withCallingHandlers(
+          vellum::as_vellum_scene(plot),
+          vellumplot_missing_rows = function(cnd) {
+            invokeRestart("muffleWarning")
+          }
+        )
         TRUE
       },
       error = function(e) {

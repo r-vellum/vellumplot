@@ -183,11 +183,13 @@ test_that("partial limits bound only the end they name; coord limits zoom", {
   expect_identical(zoom$report$dropped, 0L)
 })
 
-test_that("a row with a missing facet value is reported", {
+test_that("a missing facet or discrete position value is drawn, so not counted", {
   df <- data.frame(x = 1:4, y = 1:4, g = c("a", "b", NA, "a"))
   d <- spec_diagnose(vplot(df) |> mark_point(x = x, y = y) |> facet_wrap(~g))
-  expect_identical(d$report$facet, 1L)
-  expect_identical(d$report$dropped, 1L)
+  expect_identical(d$report$dropped, 0L)
+  expect_false("facet" %in% names(d$report))
+  d2 <- spec_diagnose(vplot(df) |> mark_point(x = g, y = y))
+  expect_identical(d2$report$missing, 0L)
 })
 
 test_that("a missing non-position value is drawn, so it is not counted", {
