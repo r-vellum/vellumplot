@@ -1,5 +1,12 @@
 # vellumplot 0.12.0.9000 (development version)
 
+* `guide_bivariate()` labels the swatch edges with the class breaks
+  `bi_class()` chose, along both axes, so the legend says which range each
+  colour stands for (`labels = FALSE` turns them off; the swatches widen to fit
+  them unless `key.size` is set). `guide_bivariate(rotate = TRUE)` turns the
+  grid 45 degrees into a diamond, low-low at the bottom and high-high at the
+  top. The "Scales and guides" article has a new bivariate section (VP-35).
+
 * **Behaviour change:** a factor, character or logical mapped to `size` or
   `alpha` now trains a discrete scale, as in ggplot2. Before, a factor was
   trained as its integer codes (the legend read 1.0, 1.5, ... 3.0, never merged

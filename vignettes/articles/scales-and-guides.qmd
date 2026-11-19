@@ -99,6 +99,32 @@ vplot(grid) |>
   scale_fill_binned(style = "quantile", n = 5, palette = "Mako")
 ```
 
+## Two variables on one colour
+
+A bivariate map colours each feature by two variables at once. `bi_class()`
+bins both over the whole table and writes one `"x-y"` class column; map a fill
+or colour to it and the scale and its 2-D legend follow. The legend is a grid
+of swatches, the first variable along the bottom and the second up the side,
+and each edge is labelled with the class breaks `bi_class()` chose, so you can
+read which range a colour stands for.
+
+```{r}
+d <- bi_class(mtcars, hp, wt)
+vplot(d) |>
+  mark_point(x = hp, y = wt, color = bi_class, size = 3) |>
+  scale_color_bivariate(palette = "GrPink", xlab = "Power", ylab = "Weight")
+```
+
+`guide_bivariate(rotate = TRUE)` turns the grid 45 degrees into a diamond, with
+low-low at the bottom and high-high at the top, the form many bivariate maps
+use. `labels = FALSE` drops the break labels.
+
+```{r}
+vplot(d) |>
+  mark_point(x = hp, y = wt, color = bi_class, size = 3) |>
+  guides(color = guide_bivariate(rotate = TRUE))
+```
+
 ## Size, shape, and edge width
 
 Non-colour aesthetics have scales too. `scale_size()` maps values linearly to a
