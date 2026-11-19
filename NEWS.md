@@ -68,6 +68,13 @@
   An all-`NA` Date column no longer aborts with "'from' must be a finite
   number"; the axis draws with no ticks, as in ggplot2 (VP-8).
 
+* **An inset plot no longer resets the outer plot's interaction context.** A
+  sub-plot drawn inside a plot (`annotate("sparkline")`, or `annotate("grob")`
+  with a plot) set the shared mark context for itself and left it that way, so
+  the outer plot's later panels lost their selection keys, `filter_by()` tags
+  and page size. Each plot now saves the context it was called with and
+  restores it when it returns (VP-12).
+
 * **`position_stack()` and `position_fill()` stack like ggplot2.** Positive and
   negative heights now stack separately, away from zero, so `y = c(2, -1, 3)` at
   one x no longer draws overlapping spans. Every row at an x stacks, so bars or
