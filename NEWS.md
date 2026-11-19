@@ -1,5 +1,19 @@
 # vellumplot 0.13.0.9000 (development version)
 
+## New features
+
+* New geometry marks matching ggplot2's (F-16): `mark_rect()` (corner bounds,
+  now a documented layer mark rather than only `annotate("rect")`; `color`
+  outlines alongside a `fill`), `mark_polygon()` (one polygon per group, holes
+  via `subgroup`), `mark_path()` (connects rows in data order), `mark_curve()`
+  (`curvature`, `angle`, `ncp`) and `mark_spoke()` (`angle` + `radius`).
+
+## Bug fixes
+
+* A literal `xend`, `yend`, `xmin`, `xmax`, `ymin` or `ymax` (e.g.
+  `mark_segment(xend = 5)`) is a coordinate again: it trains its axis and is
+  drawn, rather than being taken for a constant style setting (F-16).
+
 # vellumplot 0.13.0
 
 ## Behaviour changes

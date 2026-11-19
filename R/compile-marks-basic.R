@@ -162,7 +162,8 @@ NULL
     n,
     list(col = if (is.null(cv)) col, alpha = alpha, lty = lty)
   )) {
-    o <- idx[order(xn[idx])] # a line is drawn in x order
+    # a line is drawn in x order; a path (`sort = FALSE`) in data order
+    o <- if (isFALSE(L$stat_params$sort)) idx else idx[order(xn[idx])]
     if (!is.null(lwv) || !is.null(cv)) {
       scene <- .draw_var_width_line(
         scene,
@@ -460,6 +461,64 @@ NULL
     )
     scene <- if (is_plot) .draw_plot(scene, g) else vellum::draw(scene, g)
     scene <- vellum::pop(scene)
+  }
+  scene
+}
+
+# Polygons (`mark_polygon()`): one filled shape per series group, vertices in
+# data order. A `subgroup` splits a group into rings drawn as one even-odd path,
+# so an inner ring cuts a hole. `fill` fills and `color` outlines (see
+# `.fill_and_outline()`).
+.emit_polygon <- function(scene, L, scales) {
+  n <- L$n
+  if (!n) {
+    return(scene)
+  }
+  xn <- rep_len(scales$x$map(L$values$x), n)
+  yn <- rep_len(scales$y$map(L$values$y), n)
+  fo <- .fill_and_outline(L, scales, "grey20", n)
+  alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  lwd <- .aes_param(L, "linewidth", 0.5)
+  lty <- .resolve_lty(L, scales, n)
+  sub <- L$values$subgroup
+  sub <- if (is.null(sub)) rep(1L, n) else rep_len(sub, n)
+  sk <- .mark_sketch(L, scales)
+  gi <- 0L
+  for (idx in .series_groups(
+    L,
+    n,
+    list(fill = fo$fill, col = fo$col, alpha = alpha, lty = lty)
+  )) {
+    i0 <- idx[1]
+    ring <- match(sub[idx], unique(sub[idx]))
+    # each ring densified on its own (polar / coord_trans), keeping its id
+    parts <- lapply(unname(split(seq_along(idx), ring)), function(j) {
+      d <- .xy_path(scales, xn[idx[j]], yn[idx[j]])
+      list(d = d, id = rep(ring[j[1]], length(d$x)))
+    })
+    px <- do.call(c, lapply(parts, function(p) p$d$x))
+    py <- do.call(c, lapply(parts, function(p) p$d$y))
+    pid <- unlist(lapply(parts, `[[`, "id"), use.names = FALSE)
+    scene <- .draw(
+      scene,
+      vellum::path_grob(
+        px,
+        py,
+        id = pid,
+        rule = "evenodd",
+        sketch = .sketch_bump(sk, gi),
+        gp = vellum::vl_gpar(
+          fill = .pattern_at(L, scales, i0) %||% .paint_or(L, fo$fill[i0]),
+          col = fo$col[i0],
+          lwd = lwd,
+          lty = if (is.null(lty)) NULL else lty[i0],
+          alpha = gp_alpha(alpha[i0])
+        )
+      ),
+      # PROVENANCE: a polygon is drawn from all of its group's rows.
+      rows = idx
+    )
+    gi <- gi + 1L
   }
   scene
 }
@@ -784,6 +843,7 @@ NULL
 # tile, rect): group by fill/alpha/pattern, then draw one `rect_grob` per group
 # from the precomputed centre (`xc`, `yc`) and size (`w`, `h`) vectors. `paint` is
 # a constant fill (e.g. a gradient) that overrides the per-group pattern object.
+# `col` (per row, or NULL for no outline) strokes the rects at width `lwd`.
 .emit_rect_groups <- function(
   scene,
   L,
@@ -795,15 +855,35 @@ NULL
   fill,
   alpha,
   sk,
-  paint = NULL
+  paint = NULL,
+  col = NULL,
+  lwd = 0.5
 ) {
   n <- L$n
   gi <- 0L
   pkey <- .aes_pattern_key(L, scales, n)
   for (idx in .style_groups(
     n,
-    c(list(fill = fill, alpha = alpha), if (!is.null(pkey)) list(pat = pkey))
+    c(
+      list(fill = fill, alpha = alpha),
+      if (!is.null(pkey)) list(pat = pkey),
+      if (!is.null(col)) list(col = col)
+    )
   )) {
+    gp <- .gp_fill(
+      fill,
+      alpha,
+      idx[1],
+      paint %||% .pattern_obj(scales, pkey, idx[1])
+    )
+    if (!is.null(col)) {
+      gp <- vellum::vl_gpar(
+        fill = gp@fill,
+        col = col[idx[1]],
+        lwd = lwd,
+        alpha = gp_alpha(alpha[idx[1]])
+      )
+    }
     r <- .rect_units(scales, xc[idx], yc[idx], w[idx], h[idx])
     scene <- .draw(
       scene,
@@ -813,12 +893,7 @@ NULL
         width = r$width,
         height = r$height,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(
-          fill,
-          alpha,
-          idx[1],
-          paint %||% .pattern_obj(scales, pkey, idx[1])
-        )
+        gp = gp
       ),
       rows = idx
     )
