@@ -2,6 +2,26 @@
 
 ## New features
 
+* New `guide_axis()` for the position axes, used as `guides(x = )` /
+  `guides(y = )` or the new `guide` argument of `scale_x_continuous()`,
+  `scale_y_continuous()`, `scale_x_discrete()` and `scale_y_discrete()`:
+  `n.dodge` staggers crowded labels over rows (or columns), `angle` rotates
+  them, `check.overlap` drops labels that would collide, `minor.ticks` adds
+  minor ticks and `cap` ends the axis line at the outermost breaks. The label
+  gutter is measured with the dodging and rotation, so nothing clips.
+  `guides(x = "none")` draws an axis without labels or ticks.
+  `guide_axis_logticks()` draws long, middle and short log10 ticks (F-17).
+
+* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
+  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
+  intervals, with the slab above each one (VP-42).
+
+* `scale_*_gradient()`, `scale_*_gradient2()`, `scale_*_gradientn()`,
+  `scale_*_viridis_c()` and `scale_*_distiller()` gain `limits`, `oob` and
+  `na.value` (and the gradients `breaks` / `labels`), as
+  `scale_*_continuous()` has; the default `oob = NULL` keeps today's
+  behaviour (VP-41).
+
 * `mark_density_2d()` and `mark_density_2d_filled()`: 2-D kernel density
   contours with ggplot2's `geom_density_2d()` semantics (`h`, `adjust`,
   `contour_var`, one estimate per group); `mark_quantile()` draws quantile
@@ -10,21 +30,11 @@
   horizontally when given `xmin`/`xmax` but no `ymin`/`ymax`, like
   `geom_errorbarh()` (F-16).
 
-* `mark_halfeye()` and `mark_interval()` gain `orientation`, inferred as for
-  box plots and violins: a discrete `y` with a continuous `x` draws horizontal
-  intervals, with the slab above each one (VP-42).
-
 * New geometry marks matching ggplot2's (F-16): `mark_rect()` (corner bounds,
   now a documented layer mark rather than only `annotate("rect")`; `color`
   outlines alongside a `fill`), `mark_polygon()` (one polygon per group, holes
   via `subgroup`), `mark_path()` (connects rows in data order), `mark_curve()`
   (`curvature`, `angle`, `ncp`) and `mark_spoke()` (`angle` + `radius`).
-
-* `scale_*_gradient()`, `scale_*_gradient2()`, `scale_*_gradientn()`,
-  `scale_*_viridis_c()` and `scale_*_distiller()` gain `limits`, `oob` and
-  `na.value` (and the gradients `breaks` / `labels`), as
-  `scale_*_continuous()` has; the default `oob = NULL` keeps today's
-  behaviour (VP-41).
 
 ## Behaviour changes
 
@@ -37,6 +47,16 @@
 
 ## Bug fixes
 
+* Wrapped x tick labels reserve the height of the label that wraps to the most
+  lines, not of the longest one, so a short-worded label no longer runs into
+  the axis title (F-17).
+
+* In a composition (`|`, `/`, `wrap_plots()`), each sub-plot now honours its
+  own `theme(legend.position = "inside")` (or `c(x, y)`), drawing its legend
+  over its panel instead of in a right-hand band, and `legend.position =
+  "none"` hides that sub-plot's legend. With `guides = "collect"` only the
+  legends placed outside their panels are collected (VP-41).
+
 * Filled contour bands (`mark_contour_filled()`, `mark_density_2d_filled()`)
   no longer flood the panel when a band spans two peaks: every band now closes
   along the edge of the density grid. Groups with too few points for a 2-D
@@ -46,12 +66,6 @@
 * A literal `xend`, `yend`, `xmin`, `xmax`, `ymin` or `ymax` (e.g.
   `mark_segment(xend = 5)`) is a coordinate again: it trains its axis and is
   drawn, rather than being taken for a constant style setting (F-16).
-
-* In a composition (`|`, `/`, `wrap_plots()`), each sub-plot now honours its
-  own `theme(legend.position = "inside")` (or `c(x, y)`), drawing its legend
-  over its panel instead of in a right-hand band, and `legend.position =
-  "none"` hides that sub-plot's legend. With `guides = "collect"` only the
-  legends placed outside their panels are collected (VP-41).
 
 * `as_spec()` (and `spec_to_json()`) serialize a facet's declarative labeller:
   `label_value`, `label_both`, `label_wrap_gen(width)`, a named character

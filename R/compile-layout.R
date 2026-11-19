@@ -65,19 +65,61 @@ NULL
 # Height (mm) of the x tick-label row. Measured through the *same* grob the axis
 # drawer builds (`.axis_text_grob`), so a rotated or wrapped label reserves the
 # height it actually draws at. `wrap_mm` is the per-tick mm budget (NA = no wrap).
-.track_h_axis <- function(el, label, pad_mm, rot = 0, wrap_mm = NA_real_) {
+# `n_dodge` stacks that many label rows (`guide_axis(n.dodge =)`), each the
+# label's own height apart. `label` may be several labels: the tallest counts.
+.track_h_axis <- function(
+  el,
+  label,
+  pad_mm,
+  rot = 0,
+  wrap_mm = NA_real_,
+  n_dodge = 1L
+) {
   if (.is_blank(el)) {
     return(vellum::vl_unit(0, "mm"))
   }
-  g <- .axis_text_grob(
+  hs <- vapply(
     label,
-    el,
-    c("centre", "top"),
-    rot = rot,
-    wrap_mm = wrap_mm
+    function(l) {
+      g <- .axis_text_grob(
+        l,
+        el,
+        c("centre", "top"),
+        rot = rot,
+        wrap_mm = wrap_mm
+      )
+      vellum::vl_convert(vellum::grobheight(g), "mm")
+    },
+    numeric(1)
   )
-  vellum::grobheight(g) + vellum::vl_unit(pad_mm, "mm")
+  h <- vellum::vl_unit(max(hs), "mm")
+  if (n_dodge > 1L) {
+    h <- vellum::vl_unit(
+      n_dodge * vellum::vl_convert(h, "mm") + (n_dodge - 1L) * .DODGE_GAP_MM,
+      "mm"
+    )
+  }
+  h + vellum::vl_unit(pad_mm, "mm")
 }
+
+# Width (mm) of the y tick-label gutter: the widest label (rotated as drawn),
+# times `n_dodge` staggered columns.
+.track_w_axis <- function(el, label, pad_mm, rot = 0, n_dodge = 1L) {
+  if (.is_blank(el)) {
+    return(vellum::vl_unit(0, "mm"))
+  }
+  w <- vellum::grobwidth(.txt(label, el@size, rot))
+  if (n_dodge > 1L) {
+    w <- vellum::vl_unit(
+      n_dodge * vellum::vl_convert(w, "mm") + (n_dodge - 1L) * .DODGE_GAP_MM,
+      "mm"
+    )
+  }
+  w + vellum::vl_unit(pad_mm, "mm")
+}
+
+# Gap (mm) between staggered rows / columns of dodged axis labels.
+.DODGE_GAP_MM <- 0.8
 
 # Build the panel + gutter layout. In the simplest single-panel case the columns
 # are [ y-title | y-labels | panel(null) ] and the rows [ panel(null) | x-labels
@@ -325,15 +367,24 @@ NULL
   # gutter/row is sized from the *rotated* extent. The x tick-label row height is
   # deferred to below (it also depends on the wrap budget, which needs the legend
   # placement resolved first).
-  xrot <- .el_rot(rt[["axis.text.x"]])
-  yrot <- .el_rot(rt[["axis.text.y"]])
+  # A `guide_axis()` can override the rotation and stagger the labels over
+  # `n.dodge` rows / columns; `guides(x = "none")` collapses the labels.
+  xrot <- .axis_rot(hsc, rt[["axis.text.x"]])
+  yrot <- .axis_rot(vsc, rt[["axis.text.y"]])
+  xdodge <- .axis_guide_of(hsc)$n.dodge %||% 1L
+  ydodge <- .axis_guide_of(vsc)$n.dodge %||% 1L
   yt <- .track_w(rt[["axis.title.y"]], vsc$name, .PAD_MM, rot = 90)
-  yl <- .track_w(
-    rt[["axis.text.y"]],
-    .longest(v_labs),
-    tick + .PAD_MM,
-    rot = yrot
-  )
+  yl <- if (.axis_shows_labels(vsc)) {
+    .track_w_axis(
+      rt[["axis.text.y"]],
+      .longest(v_labs),
+      tick + .PAD_MM,
+      rot = yrot,
+      n_dodge = ydodge
+    )
+  } else {
+    vellum::vl_unit(0, "mm")
+  }
   xt <- .track_h(rt[["axis.title.x"]], hsc$name, .PAD_MM)
   # Secondary axes (opposite edge): a right-column pair for the vertical scale's
   # sec axis, a top-row pair for the horizontal scale's. Only sized when present,
@@ -413,6 +464,7 @@ NULL
   xwrap_mm <- NA_real_
   can_wrap_x <- is.finite(band_w) &&
     xrot == 0 &&
+    xdodge == 1L &&
     !respect &&
     !polar &&
     is.null(marginal) &&
@@ -461,13 +513,20 @@ NULL
   # The x tick-label row height, now that the wrap budget is known (deferred from
   # the gutter block above). Polar keeps the collapsed zero set earlier.
   if (!polar) {
-    xl <- .track_h_axis(
-      rt[["axis.text.x"]],
-      .longest(h_labs),
-      tick + .PAD_MM,
-      rot = xrot,
-      wrap_mm = xwrap_mm
-    )
+    xl <- if (.axis_shows_labels(hsc)) {
+      .track_h_axis(
+        rt[["axis.text.x"]],
+        # wrapped labels: the one with the most lines need not be the longest
+        # (short words wrap more), so measure them all
+        if (is.finite(xwrap_mm)) unique(h_labs) else .longest(h_labs),
+        tick + .PAD_MM,
+        rot = xrot,
+        wrap_mm = xwrap_mm,
+        n_dodge = xdodge
+      )
+    } else {
+      vellum::vl_unit(0, "mm")
+    }
   }
 
   # --- columns: [ legend(left)? | ytitle | (ylabels panel gap)xC |
@@ -584,6 +643,17 @@ NULL
     NA_integer_
   }
 
+  # `guide_axis(check.overlap = TRUE)`: which tick labels survive, from the
+  # panel's laid-out mm size (NULL keeps them all).
+  pmm <- .panel_mm(W$u, H$u, page_width, page_height, rt, R, C)
+  overlap_ok <- !respect && !polar && is.null(marginal)
+  x_keep <- if (overlap_ok && !free_x) {
+    .axis_keep(hsc, rt[["axis.text.x"]], xrot, pmm[["w"]], "x")
+  }
+  y_keep <- if (overlap_ok && !free_y) {
+    .axis_keep(vsc, rt[["axis.text.y"]], yrot, pmm[["h"]], "y")
+  }
+
   list(
     widths = .tk_units(W),
     heights = .tk_units(H),
@@ -617,6 +687,83 @@ NULL
     nrow_total = length(H$u),
     band_w = band_w,
     xwrap_mm = xwrap_mm,
+    x_keep = x_keep,
+    y_keep = y_keep,
     respect = respect
   )
+}
+
+# The mm width and height of one panel, from the solved tracks: the page content
+# box less every fixed track, shared among the panel (`null`) tracks of each
+# direction (`C` columns, `R` rows). NA when the page size is unknown or a track
+# cannot be converted.
+.panel_mm <- function(wu, hu, page_width, page_height, rt, R, C) {
+  pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  free <- function(units, total, n) {
+    if (is.null(total) || !is.finite(total)) {
+      return(NA_real_)
+    }
+    fixed <- vapply(
+      units,
+      function(u) {
+        if (grepl("null", format(u), fixed = TRUE)) {
+          0
+        } else {
+          tryCatch(vellum::vl_convert(u, "mm"), error = function(e) NA_real_)
+        }
+      },
+      numeric(1)
+    )
+    out <- (total - sum(fixed)) / n
+    if (is.finite(out) && out > 0) out else NA_real_
+  }
+  c(
+    w = free(
+      wu,
+      if (!is.null(page_width)) page_width * 25.4 - pm[2] - pm[4],
+      C
+    ),
+    h = free(
+      hu,
+      if (!is.null(page_height)) page_height * 25.4 - pm[1] - pm[3],
+      R
+    )
+  )
+}
+
+# The `check.overlap` keep mask of a position scale's labels, or NULL to keep
+# them all (no `check.overlap`, or an unknown panel size). Each label's extent
+# along the axis is measured through the grob the drawer builds; dodged rows are
+# checked row by row, as only labels in one row can collide.
+.axis_keep <- function(sc, el, rot, panel_mm, axis) {
+  g <- .axis_guide_of(sc)
+  if (!isTRUE(g$check.overlap) || !is.finite(panel_mm) || .is_blank(el)) {
+    return(NULL)
+  }
+  b <- sc$breaks
+  n <- length(b)
+  if (!n) {
+    return(NULL)
+  }
+  dom <- range(sc$domain)
+  centre <- (as.numeric(b) - dom[1]) / diff(dom) * panel_mm
+  size <- vapply(
+    seq_len(n),
+    function(i) {
+      t <- .axis_text_grob(sc$labels[i], el, c("centre", "centre"), rot = rot)
+      vellum::vl_convert(
+        if (axis == "x") vellum::grobwidth(t) else vellum::grobheight(t),
+        "mm"
+      )
+    },
+    numeric(1)
+  )
+  nd <- g$n.dodge %||% 1L
+  row <- (seq_len(n) - 1L) %% nd
+  keep <- rep(FALSE, n)
+  for (r in unique(row)) {
+    i <- which(row == r)
+    keep[i] <- .overlap_keep(centre[i], size[i])
+  }
+  keep
 }

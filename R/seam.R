@@ -555,7 +555,8 @@ NULL
         lay$panel_row[r],
         lay$ylabels_col[1],
         warp_v(vshared),
-        rt
+        rt,
+        keep = lay$y_keep
       )
     }
   }
@@ -577,7 +578,8 @@ NULL
         lay$panel_col[cc],
         warp_h(hshared),
         rt,
-        lay$xwrap_mm
+        lay$xwrap_mm,
+        keep = lay$x_keep
       )
     }
   }
