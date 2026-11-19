@@ -46,7 +46,8 @@ The modified \link{PlotSpec}.
 \code{facet_grid()} arranges them on a 2-D grid defined by a \code{rows ~ cols}
 formula. Position scales are shared across panels by default (so axes align);
 pass \code{scales = "free_x"}, \code{"free_y"}, or \code{"free"} to train them per panel.
-Colour and size scales (and their legends) are always shared in this version.
+Colour, size and the other non-position scales are shared too (one legend);
+\code{resolve_scale(color = "independent")} gives each panel its own.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)

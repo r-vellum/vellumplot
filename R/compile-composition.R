@@ -47,7 +47,7 @@ NULL
 .plan_plot <- function(spec) {
   rt <- .resolve_theme(.theme_of(spec))
   built <- .build_panels(spec)
-  guides <- .legend_guides(built$scales)
+  guides <- .facet_legend_guides(built)
   co <- .coord_of(spec)
   flip <- identical(co@kind, "flip")
   lay <- .build_layout(built, guides, spec@labels, rt, flip, co)

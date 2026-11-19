@@ -68,8 +68,41 @@ vplot(mtcars) |> mark_point(x = wt, y = mpg) |>
   facet_wrap(~cyl) |> resolve_scale(y = "independent")
 ```
 
-Colour and size scales (and their legends) stay shared across panels, so one
-legend describes the whole figure.
+### Independent colour, size and other legends
+
+Colour, size and the other non-position scales are shared across panels by
+default, so one legend describes the whole figure and a colour means the same
+thing in every panel. When each panel has its own set of categories, or values
+on very different ranges, a shared scale can waste most of the palette.
+`resolve_scale()` takes those aesthetics too: `"independent"` trains the scale
+in each panel from that panel's data alone, and each panel gets its own legend.
+The legends are collected in the legend area, each titled with the scale title
+and the panel's strip text.
+
+```{r}
+#| fig-width: 8
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(gear)) |>
+  facet_wrap(~cyl, labeller = label_both) |>
+  resolve_scale(color = "independent")
+```
+
+`colour =` and `fill =` both name the colour scale; `size`, `alpha`, `shape`,
+`linetype`, `linewidth` and `pattern` work the same way. Independent and shared
+scales mix freely: here `hp` keeps one size legend while each panel rescales its
+own colours.
+
+```{r}
+#| fig-width: 8
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp, size = qsec) |>
+  facet_wrap(~am, labeller = label_both) |>
+  resolve_scale(color = "independent")
+```
+
+Because colours are no longer comparable between panels, an independent scale
+suits panels that are read one at a time. An unfaceted plot has a single panel
+and ignores the setting.
 
 ## Composition
 
