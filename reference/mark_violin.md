@@ -14,6 +14,7 @@ mark_violin(
   ...,
   position = "identity",
   adjust = 1,
+  trim = TRUE,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -65,6 +66,12 @@ mark_dotplot(
 - adjust:
 
   Kernel-density bandwidth multiplier (violin/ridgeline).
+
+- trim:
+
+  For `mark_violin()`, `TRUE` (default, as ggplot2) ends each violin at
+  the smallest and largest value of its data; `FALSE` lets the kernel's
+  tails run on past them.
 
 - blend, sketch, data:
 

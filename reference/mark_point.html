@@ -235,7 +235,10 @@ example <code>window = list(op = "mean", k = 7)</code> is a 7-point trailing ave
     <p><code>mark_bar()</code> draws bars from a zero baseline. With an explicit <code>y</code> it uses the
 <code>y</code> values as heights; with no <code>y</code> it counts rows per category (the <code>"count"</code>
 stat). When <code>color</code>/<code>fill</code> is mapped, grouped bars are stacked by default; use
-<code>position = "dodge"</code> for side-by-side bars or <code>"fill"</code> to normalise to 1.</p>
+<code>position = "dodge"</code> for side-by-side bars or <code>"fill"</code> to normalise to 1.
+The count stat computes <code>count</code> and <code>prop</code>, the share of its group (or of the
+layer, ungrouped), for use with <code><a href="after_stat.html">after_stat()</a></code>, e.g.
+<code>y = after_stat(prop)</code>. <code>density</code> is an older name for <code>prop</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="interactivity">Interactivity<a class="anchor" aria-label="anchor" href="#interactivity"></a></h2>

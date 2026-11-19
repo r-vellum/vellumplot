@@ -127,7 +127,7 @@ mark_node_hull(
   fill = NULL,
   color = NULL,
   alpha = 0.25,
-  expand = 0.08,
+  expand = 0.04,
   data = NULL
 )
 
@@ -351,8 +351,9 @@ mark_node_pie(
 
 - expand:
 
-  For `mark_node_hull()`, the fraction to grow each hull outward from
-  its centroid so it encloses the node markers (default `0.08`).
+  For `mark_node_hull()`, the margin to grow each hull outward by so it
+  encloses the node markers, as a fraction of the layout's range on each
+  axis (default `0.04`). Every hull gets the same rounded margin.
 
 - cols:
 

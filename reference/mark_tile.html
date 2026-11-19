@@ -106,6 +106,7 @@ as a filled curve.</p>
 <span>  <span class="va">...</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  trim <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -173,6 +174,13 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
 
 <dt id="arg-adjust">adjust<a class="anchor" aria-label="anchor" href="#arg-adjust"></a></dt>
 <dd><p>Bandwidth multiplier for <code>mark_density()</code>.</p></dd>
+
+
+<dt id="arg-trim">trim<a class="anchor" aria-label="anchor" href="#arg-trim"></a></dt>
+<dd><p>For <code>mark_density()</code>, <code>FALSE</code> (default) estimates every group's
+density over the range of the whole layer's <code>x</code>, as ggplot2 does; <code>TRUE</code>
+trims each group's curve to the range of its own data. The curve never runs
+past the data, so the axis is not padded by the kernel's tails.</p></dd>
 
 </dl></div>
     <div class="section level2">

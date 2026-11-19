@@ -34,6 +34,7 @@ mark_density(
   ...,
   position = "identity",
   adjust = 1,
+  trim = FALSE,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -110,6 +111,14 @@ mark_hex(
 - adjust:
 
   Bandwidth multiplier for `mark_density()`.
+
+- trim:
+
+  For `mark_density()`, `FALSE` (default) estimates every group's
+  density over the range of the whole layer's `x`, as ggplot2 does;
+  `TRUE` trims each group's curve to the range of its own data. The
+  curve never runs past the data, so the axis is not padded by the
+  kernel's tails.
 
 ## Value
 

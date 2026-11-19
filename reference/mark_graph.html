@@ -200,7 +200,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.25</span>,</span>
-<span>  expand <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  expand <span class="op">=</span> <span class="fl">0.04</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -397,8 +397,9 @@ horizontal labels.</p></dd>
 
 
 <dt id="arg-expand">expand<a class="anchor" aria-label="anchor" href="#arg-expand"></a></dt>
-<dd><p>For <code>mark_node_hull()</code>, the fraction to grow each hull outward
-from its centroid so it encloses the node markers (default <code>0.08</code>).</p></dd>
+<dd><p>For <code>mark_node_hull()</code>, the margin to grow each hull outward by
+so it encloses the node markers, as a fraction of the layout's range on each
+axis (default <code>0.04</code>). Every hull gets the same rounded margin.</p></dd>
 
 
 <dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>

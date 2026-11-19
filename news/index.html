@@ -79,6 +79,18 @@
 <code>mark_rug(x = )</code> (or <code>y =</code>) works on its own, with a blank axis for the unmapped direction.</li>
 <li>The numeric stats (histogram, density, smooth, …) warn “Removed n rows containing non-finite values” for rows they leave out because an input is <code>Inf</code> or missing, as ggplot2’s stats do, instead of dropping them silently.</li>
 </ul></li>
+<li>
+<p><strong>Small stat differences from ggplot2 are fixed (VP-23).</strong></p>
+<ul><li>
+<strong>Behaviour change:</strong> <code><a href="../reference/mark_count.html">mark_count()</a></code>’s <code>after_stat(prop)</code> is the share of the point’s group, so each colour’s bubbles sum to 1 (ggplot2’s <code>stat_sum()</code>). Before, it was the share of the whole layer.</li>
+<li>The count stat behind <code><a href="../reference/mark_point.html">mark_bar()</a></code> now names its proportion <code>prop</code>, as ggplot2 does. <code>after_stat(density)</code> still works as an alias.</li>
+<li>
+<strong>Behaviour change:</strong> <code><a href="../reference/mark_tile.html">mark_density()</a></code> evaluates the curve over the range of the layer’s data, as ggplot2 does, instead of running on ~3 bandwidths past it. The x axis is no longer padded by the kernel’s tails, and every group’s curve spans the same x. The new <code>trim = TRUE</code> ends each group’s curve at its own data.</li>
+<li>
+<strong>Behaviour change:</strong> <code><a href="../reference/mark_violin.html">mark_violin()</a></code> trims each violin to the range of its data by default, as ggplot2’s <code>geom_violin()</code> does. Use <code>trim = FALSE</code> for the old untrimmed outline.</li>
+<li>
+<strong>Behaviour change:</strong> <code>mark_hull(expand =)</code> and <code>mark_node_hull(expand =)</code> grow each hull by a uniform margin with rounded corners, a fraction of the layer’s range on each axis, instead of scaling it about its centroid. A long thin hull now gets the same margin as a round one, and every hull in a layer gets the same margin whatever its size. <code><a href="../reference/mark_graph.html">mark_node_hull()</a></code>’s default <code>expand</code> is now <code>0.04</code>.</li>
+</ul></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.12.0" id="vellumplot-0120">vellumplot 0.12.0<a class="anchor" aria-label="anchor" href="#vellumplot-0120"></a></h2>
