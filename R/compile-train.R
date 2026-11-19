@@ -1252,6 +1252,20 @@ NULL
     aes %in% .DISCRETE_SIZED_AES &&
       (.discrete_values(values) || stype %in% c("discrete", "ordinal"))
   ) {
+    # Manual values on a numeric variable: ggplot2 refuses it, rather than
+    # giving every distinct number its own size.
+    manual <- !is.null(scalespec) && !is.null(scalespec@palette)
+    if (manual && !.discrete_values(values)) {
+      cli::cli_abort(
+        c(
+          "Continuous values supplied to a discrete {.field {aes}} scale.",
+          x = "{.field {channel}} is mapped to a numeric variable.",
+          i = "Map a factor (e.g. {.code {channel} = factor(...)}), or use a
+            continuous scale such as {.fn scale_{aes}_continuous}."
+        ),
+        call = NULL
+      )
+    }
     return(.train_discrete_aes(
       scalespec,
       values,

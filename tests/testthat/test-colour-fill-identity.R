@@ -38,7 +38,7 @@ test_that("single-channel colour / fill plots are unchanged by VP-48", {
       scale_fill_viridis_c(),
     tile_binned = vplot(tiles) |>
       mark_tile(x = a, y = b, fill = v) |>
-      scale_fill_binned(),
+      scale_fill_binned(style = "quantile", n = 5),
     box_fill = vplot(df) |> mark_boxplot(x = x, y = y, fill = x),
     box_colour = vplot(df) |> mark_boxplot(x = x, y = y, color = x),
     bar_brewer = vplot(df) |>

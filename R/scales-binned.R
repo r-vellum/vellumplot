@@ -252,27 +252,43 @@ NULL
 #'
 #' `scale_fill_binned()` / `scale_color_binned()` cut a continuous aesthetic into
 #' classes and colour each class with one step of a sequential palette — the
-#' standard choropleth scale. Class breaks are chosen by a classification
-#' `style`. `quantile`, `equal`, and `pretty` need no extra packages; other
-#' styles (e.g. `"jenks"`, `"fisher"`, `"kmeans"`, `"headtails"`) delegate to the
-#' optional `classInt` package (in `Suggests`) and error if it is absent.
+#' standard choropleth scale. By default the classes follow ggplot2's binning
+#' (`style = "extended"`): about `n` "nice" class boundaries inside the data
+#' range, the outer classes widened to whole bins, and classes closed on the
+#' right, `(a, b]`. A classification `style` chooses other breaks: `quantile`,
+#' `equal`, and `pretty` need no extra packages; other styles (e.g. `"jenks"`,
+#' `"fisher"`, `"kmeans"`, `"headtails"`) delegate to the optional `classInt`
+#' package (in `Suggests`) and error if it is absent. Those classes close on
+#' the left, `[a, b)`.
+#'
+#' A colour vector `palette` is a ramp, sampled at each class's centre as in
+#' ggplot2; a named palette (and the default) gives one evenly spaced colour
+#' per class.
 #'
 #' @param plot A [PlotSpec].
-#' @param style Classification style: one of `"quantile"`, `"equal"`, `"pretty"`
-#'   (base R), or any `classInt::classIntervals()` style. Default `"quantile"`.
-#' @param n Number of classes (default `5`). Ignored when `breaks` is supplied.
-#' @param breaks Explicit class boundaries (length = number of classes + 1),
-#'   overriding `style`/`n`.
+#' @param style Classification style: `"extended"` (the default, ggplot2's
+#'   breaks), `"quantile"`, `"equal"`, `"pretty"` (base R), or any
+#'   `classInt::classIntervals()` style.
+#' @param n For `"extended"`, the approximate number of class boundaries
+#'   (default 5); for the other styles, the number of classes (default 5).
+#'   Ignored when `breaks` is supplied.
+#' @param breaks Explicit class boundaries, overriding `style`/`n`. Under
+#'   `"extended"` the data range is added as the outer boundaries (as ggplot2
+#'   adds its limits); under the other styles they are every boundary (length =
+#'   number of classes + 1).
 #' @param palette A sequential palette: `NULL` (batlow), an `grDevices::hcl.pals()`
 #'   name, or a vector of colours interpolated across the classes.
 #' @param labels Optional class labels (one per class); defaults to interval
-#'   ranges like `"[0, 10)"`.
+#'   ranges like `"(0, 10]"`.
 #' @param na_value Fill colour for `NA` values (shown as a distinct legend
 #'   swatch). Default `"grey80"`.
 #' @param name Legend title, or `NULL` to derive from the encoding.
 #' @return The modified [PlotSpec].
 #' @seealso [mark_sf()], [scale_fill_continuous()]
 #' @examples
+#' vplot(faithful) |>
+#'   mark_point(x = eruptions, y = waiting, color = waiting) |>
+#'   scale_color_binned()
 #' \dontrun{
 #' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 #' vplot(nc) |>
@@ -283,14 +299,15 @@ NULL
 #' @export
 scale_fill_binned <- function(
   plot,
-  style = "quantile",
-  n = 5,
+  style = "extended",
+  n = NULL,
   breaks = NULL,
   palette = NULL,
   labels = NULL,
   na_value = "grey80",
   name = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_fill_binned"))
   .binned_scale(plot, "fill", style, n, breaks, palette, labels, na_value, name)
 }
 
@@ -298,14 +315,15 @@ scale_fill_binned <- function(
 #' @export
 scale_color_binned <- function(
   plot,
-  style = "quantile",
-  n = 5,
+  style = "extended",
+  n = NULL,
   breaks = NULL,
   palette = NULL,
   labels = NULL,
   na_value = "grey80",
   name = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_color_binned"))
   .binned_scale(
     plot,
     "color",
@@ -320,28 +338,14 @@ scale_color_binned <- function(
 }
 
 #' @rdname scale_fill_binned
-#' @details
-#' `scale_color_steps()` / `scale_fill_steps()` are aliases of the binned colour
-#' scales, for ggplot2 users who reach for the `_steps` name — a continuous
-#' variable cut into steps with an interval-key legend.
-#' @export
-scale_color_steps <- scale_color_binned
-
-#' @rdname scale_fill_binned
-#' @export
-scale_colour_steps <- scale_color_binned
-
-#' @rdname scale_fill_binned
-#' @export
-scale_fill_steps <- scale_fill_binned
-
-#' @rdname scale_fill_binned
 #' @description
 #' The ggplot2-named binned colour scales follow ggplot2's binning: without
 #' `breaks`, about `n.breaks` "nice" class boundaries inside the data range,
 #' the outer classes widened to whole bins (with `limits`, the limits are the
 #' outer boundaries); classes close on the right, `(a, b]`.
 #'
+#' * `scale_*_steps()` --- a two-colour `low`--`high` ramp, each class taking
+#'   the ramp's colour at its centre.
 #' * `scale_*_steps2()` --- a diverging `low`--`mid`--`high` ramp centred on
 #'   `midpoint`, each class taking the ramp's colour at its centre.
 #' * `scale_*_stepsn()` --- an n-colour ramp `colours`, sampled at each class
@@ -350,9 +354,13 @@ scale_fill_steps <- scale_fill_binned
 #'   [scale_color_distiller()], but binned).
 #' * `scale_*_viridis_b()` --- k evenly spaced viridis colours.
 #'
-#' @param low,mid,high,midpoint For `scale_*_steps2()`, the end and midpoint
-#'   colours and the data value at `mid`.
+#' @param low,mid,high,midpoint For `scale_*_steps()`, the end colours `low`
+#'   and `high`; for `scale_*_steps2()`, the end and midpoint colours and the
+#'   data value at `mid`.
 #' @param colours For `scale_*_stepsn()`, the colours of the ramp.
+#' @param values For `scale_*_stepsn()`, the positions (between 0 and 1, one
+#'   per colour, increasing) of `colours` along the ramp, or `NULL` to space
+#'   them evenly.
 #' @param type,direction For `scale_*_fermenter()`, the ColorBrewer family a
 #'   numeric `palette` indexes and its order (see [scale_color_brewer()]); for
 #'   `scale_*_viridis_b()`, `direction = -1` reverses the map.
@@ -370,6 +378,66 @@ scale_fill_steps <- scale_fill_binned
 #' vplot(faithful) |>
 #'   mark_point(x = eruptions, y = waiting, color = waiting - 70) |>
 #'   scale_color_steps2()
+#' @export
+scale_color_steps <- function(
+  plot,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+) {
+  .gg_binned_scale(
+    plot,
+    "color",
+    c(low, high),
+    name = name,
+    breaks = breaks,
+    labels = labels,
+    limits = limits,
+    n.breaks = n.breaks,
+    na.value = na.value,
+    oob = oob
+  )
+}
+
+#' @rdname scale_fill_binned
+#' @export
+scale_colour_steps <- scale_color_steps
+
+#' @rdname scale_fill_binned
+#' @export
+scale_fill_steps <- function(
+  plot,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  limits = NULL,
+  n.breaks = NULL,
+  na.value = "grey50",
+  oob = NULL
+) {
+  .gg_binned_scale(
+    plot,
+    "fill",
+    c(low, high),
+    name = name,
+    breaks = breaks,
+    labels = labels,
+    limits = limits,
+    n.breaks = n.breaks,
+    na.value = na.value,
+    oob = oob
+  )
+}
+
+#' @rdname scale_fill_binned
 #' @export
 scale_color_steps2 <- function(
   plot,
@@ -405,6 +473,7 @@ scale_color_steps2 <- function(
 scale_color_stepsn <- function(
   plot,
   colours,
+  values = NULL,
   name = NULL,
   breaks = NULL,
   labels = NULL,
@@ -417,7 +486,7 @@ scale_color_stepsn <- function(
   .gg_binned_scale(
     plot,
     "color",
-    colours,
+    .positioned_ramp(colours, values),
     name = name,
     breaks = breaks,
     labels = labels,
@@ -521,6 +590,7 @@ scale_fill_steps2 <- function(
 scale_fill_stepsn <- function(
   plot,
   colours,
+  values = NULL,
   name = NULL,
   breaks = NULL,
   labels = NULL,
@@ -533,7 +603,7 @@ scale_fill_stepsn <- function(
   .gg_binned_scale(
     plot,
     "fill",
-    colours,
+    .positioned_ramp(colours, values),
     name = name,
     breaks = breaks,
     labels = labels,
@@ -655,6 +725,35 @@ scale_colour_viridis_b <- scale_color_viridis_b
   )
 }
 
+# A colour ramp whose `colours` sit at `values` (positions in [0, 1], one per
+# colour, increasing; scale_*_stepsn(values =)), as 256 evenly spaced stops --
+# the form every ramp consumer reads. NULL `values` keeps `colours` as given.
+.positioned_ramp <- function(colours, values, call = rlang::caller_env()) {
+  if (is.null(values)) {
+    return(colours)
+  }
+  ok <- is.numeric(values) &&
+    length(values) == length(colours) &&
+    all(is.finite(values)) &&
+    all(values >= 0 & values <= 1) &&
+    !is.unsorted(values, strictly = TRUE)
+  if (!ok) {
+    cli::cli_abort(
+      "{.arg values} must be increasing numbers in [0, 1], one per colour.",
+      call = call
+    )
+  }
+  # each output stop's position on the evenly spaced ramp through `colours`
+  at <- stats::approx(
+    values,
+    seq(0, 1, length.out = length(colours)),
+    xout = seq(0, 1, length.out = 256L),
+    rule = 2
+  )$y
+  ramp <- .ramp_pal(colours, 1001L)
+  ramp[round(at * 1000) + 1L]
+}
+
 # The palette of scale_*_viridis_b(): the hcl.colors() viridis map, or (for
 # `direction = -1`) the brewer-style reversed ramp as a colour vector.
 .viridis_binned_pal <- function(option, direction, call = rlang::caller_env()) {
@@ -705,6 +804,7 @@ scale_x_binned <- function(
   name = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_x_binned"))
   .binned_position_scale(plot, "x", style, n, breaks, labels, name, guide)
 }
 
@@ -719,6 +819,7 @@ scale_y_binned <- function(
   name = NULL,
   guide = NULL
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("scale_y_binned"))
   .binned_position_scale(plot, "y", style, n, breaks, labels, name, guide)
 }
 

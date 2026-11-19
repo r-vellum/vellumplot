@@ -435,3 +435,101 @@ test_that("scale_x_reverse() / scale_y_reverse() flip the axis like ggplot2", {
     sc$x$domain
   )
 })
+
+# --- the older binned scales, aligned with ggplot2 (VP-49) ---------------------
+
+test_that("scale_*_steps() matches ggplot2's breaks and colours", {
+  skip_if_not_installed("ggplot2")
+  p <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_steps()
+  sc <- train(p)$color
+  g <- gg_binned("colour", ggplot2::scale_colour_steps())
+  expect_equal(sc$breaks, g$breaks)
+  expect_identical(hex(sc$map(mt$hp)), hex(g$data$colour))
+  pf <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, fill = hp) |>
+    scale_fill_steps(low = "white", high = "darkred", n.breaks = 3)
+  gf <- gg_binned(
+    "fill",
+    ggplot2::scale_fill_steps(low = "white", high = "darkred", n.breaks = 3)
+  )
+  expect_equal(train(pf)$fill$breaks, gf$breaks)
+  expect_lt(max_colour_diff(train(pf)$fill$map(mt$hp), gf$data$fill), 10)
+  expect_identical(scale_colour_steps, scale_color_steps)
+})
+
+test_that("scale_*_binned() bins like ggplot2 by default", {
+  skip_if_not_installed("ggplot2")
+  p <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_binned(palette = c("#132B43", "#56B1F7"))
+  sc <- train(p)$color
+  g <- gg_binned("colour", ggplot2::scale_colour_binned())
+  expect_equal(sc$breaks, g$breaks)
+  expect_identical(hex(sc$map(mt$hp)), hex(g$data$colour))
+  expect_identical(sc$labels[1:2], c("[50, 100]", "(100, 150]"))
+  # the classic classification styles are still there
+  q <- train(
+    vplot(mt) |>
+      mark_point(x = wt, y = mpg, fill = hp) |>
+      scale_fill_binned(style = "quantile", n = 4)
+  )$fill
+  expect_equal(q$breaks, unname(stats::quantile(mt$hp, 0:4 / 4)))
+  expect_match(q$labels[1], "^\\[")
+})
+
+test_that("scale_*_stepsn() takes the colours' positions in values", {
+  skip_if_not_installed("ggplot2")
+  cols <- c("#2166AC", "#F7F7F7", "#B2182B")
+  p <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, color = hp) |>
+    scale_color_stepsn(colours = cols, values = c(0, 0.3, 1))
+  sc <- train(p)$color
+  g <- gg_binned(
+    "colour",
+    ggplot2::scale_colour_stepsn(colours = cols, values = c(0, 0.3, 1))
+  )
+  expect_equal(sc$breaks, g$breaks)
+  expect_lt(max_colour_diff(sc$map(mt$hp), g$data$colour), 6)
+  even <- train(
+    vplot(mt) |>
+      mark_point(x = wt, y = mpg, fill = hp) |>
+      scale_fill_stepsn(colours = cols)
+  )$fill
+  expect_false(identical(even$colors, sc$colors))
+  expect_error(
+    vplot(mt) |> scale_fill_stepsn(colours = cols, values = c(0, 1)),
+    "values"
+  )
+  expect_error(
+    vplot(mt) |> scale_color_stepsn(colours = cols, values = c(0, 0.8, 0.5)),
+    "values"
+  )
+})
+
+test_that("manual size and alpha scales refuse a numeric variable", {
+  p <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, size = cyl) |>
+    scale_size_manual(values = c(1, 2, 3))
+  expect_error(train(p), "Continuous values supplied to a discrete")
+  pa <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, alpha = cyl) |>
+    scale_alpha_manual(values = c(0.2, 0.5, 1))
+  expect_error(train(pa), "Continuous values supplied to a discrete")
+  if (rlang::is_installed("ggplot2")) {
+    expect_error(
+      ggplot2::layer_data(gg(
+        ggplot2::ggplot(mt, ggplot2::aes(wt, mpg, size = cyl)) +
+          ggplot2::geom_point() +
+          ggplot2::scale_size_manual(values = c(1, 2, 3))
+      )),
+      "Continuous value"
+    )
+  }
+  # a factor is what they are for
+  ok <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, size = fcyl) |>
+    scale_size_manual(values = c(1, 2, 3))
+  expect_identical(train(ok)$size$legend_sizes, c(1, 2, 3))
+})

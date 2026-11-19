@@ -121,7 +121,7 @@ test_that("a binned colour scale maps to classes and flags NA", {
   skip_if_not_installed("sf")
   nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   nc$SID74[1] <- NA
-  spec <- vplot(nc) |> mark_sf(fill = SID74) |> scale_fill_binned(n = 4)
+  spec <- vplot(nc) |> mark_sf(fill = SID74) |> scale_fill_binned(style = "quantile", n = 4)
   built <- .build_panels(.project_sf_data(spec)$spec)
   cl <- built$scales$fill
   expect_identical(cl$type, "binned")
