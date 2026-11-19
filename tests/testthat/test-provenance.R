@@ -286,14 +286,19 @@ test_that("NA rows do not shift the keys of the rows after them", {
     f = rep(c("p", "q"), each = 3)
   )
   p <- vplot(d) |> mark_point(x = x, y = y, color = g) |> facet_wrap(~f)
-  prov <- Filter(function(e) e$kind == "mark", plot_provenance(p))
+  # rows 2 and 4 miss a position: removed, so no element keys them (VP-6)
+  expect_warning(
+    prov <- Filter(function(e) e$kind == "mark", plot_provenance(p)),
+    "Removed 2 rows"
+  )
   for (e in prov) {
     # each colour group's rows share one colour (NA included) and one panel
     expect_length(unique(d$g[e$rows]), 1L)
     expect_length(unique(d$f[e$rows]), 1L)
   }
   q <- Filter(function(e) e$panel == "panel-1-2", prov)
-  expect_setequal(unlist(lapply(q, `[[`, "rows")), 4:6)
+  expect_setequal(unlist(lapply(q, `[[`, "rows")), 5:6)
+  expect_false(any(c(2L, 4L) %in% unlist(lapply(prov, `[[`, "rows"))))
 })
 
 test_that("z-reordered layers still name their own data by spec position", {

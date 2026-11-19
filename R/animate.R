@@ -450,7 +450,8 @@ animate <- function(plot, nframes = 50, fps = 25) {
       wrap = FALSE
     )
   } else {
-    key <- .facet_key(list(tr@var), data)
+    # A missing state value belongs to no state (it is not animated).
+    key <- .facet_key(list(tr@var), data, na_level = FALSE)
     states <- levels(key)
     segs <- if (tr@wrap) length(states) else length(states) - 1L
     list(

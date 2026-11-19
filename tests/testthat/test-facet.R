@@ -169,3 +169,73 @@ test_that("a discrete colour scale keeps every level when the faceting variable 
   expect_equal(cs$levels, unfaceted$levels)
   expect_equal(cs$colors, unfaceted$colors)
 })
+
+# VP-9: a layer's own data is split on whichever facet variables it carries,
+# and facet levels are the union over the plot data and every layer's data.
+
+test_that("a layer with only some facet variables draws in its own row (VP-9)", {
+  ann <- data.frame(am = c(0, 1), wt = 4, mpg = 30, lab = c("auto", "manual"))
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    mark_text(data = ann, x = wt, y = mpg, label = lab) |>
+    facet_grid(am ~ cyl)
+  b <- .build_panels(p)
+  # one label per panel: am = 0 in row 1, am = 1 in row 2, across all columns
+  labs <- vapply(
+    b$panels,
+    function(pn) paste(pn$resolved[[2]]$values$label, collapse = "|"),
+    character(1)
+  )
+  rows <- vapply(b$panels, function(pn) pn$r, integer(1))
+  expect_identical(labs[rows == 1L], rep("auto", 3))
+  expect_identical(labs[rows == 2L], rep("manual", 3))
+})
+
+test_that("a layer with only some wrap variables repeats across the rest (VP-9)", {
+  ann <- data.frame(am = 1, wt = 4, mpg = 30)
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    mark_point(data = ann, x = wt, y = mpg) |>
+    facet_wrap(~ cyl + am)
+  b <- .build_panels(p)
+  n <- vapply(b$panels, function(pn) pn$resolved[[2]]$n, integer(1))
+  expect_identical(b$fa$wrap_labels[n == 1L], c("4, 1", "6, 1", "8, 1"))
+  expect_true(all(n[!grepl(", 1$", b$fa$wrap_labels)] == 0L))
+})
+
+test_that("a facet level only a layer's data has gets its own panel (VP-9)", {
+  extra <- data.frame(cyl = c(5, 10), wt = 3, mpg = 20)
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    mark_point(data = extra, x = wt, y = mpg) |>
+    facet_wrap(~cyl)
+  b <- .build_panels(p)
+  # pooled levels sort numerically, as one table's would
+  expect_identical(b$fa$wrap_labels, c("4", "5", "6", "8", "10"))
+  n1 <- vapply(b$panels, function(pn) pn$resolved[[1]]$n, integer(1))
+  n2 <- vapply(b$panels, function(pn) pn$resolved[[2]]$n, integer(1))
+  expect_identical(n1, c(11L, 0L, 7L, 14L, 0L))
+  expect_identical(n2, c(0L, 1L, 0L, 0L, 1L))
+  expect_no_error(vellum::as_vellum_scene(p))
+  # a grid unions each dimension on its own
+  g <- .facet_assign(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg) |>
+      mark_point(data = data.frame(am = 2, wt = 3, mpg = 20), x = wt, y = mpg) |>
+      facet_grid(am ~ cyl)
+  )
+  expect_identical(g$row_labels, c("0", "1", "2"))
+  expect_identical(g$col_labels, c("4", "6", "8"))
+})
+
+test_that("factor facet levels union across tables in level order (VP-9)", {
+  d <- data.frame(x = 1:2, y = 1:2, g = factor(c("b", "a"), levels = c("b", "a")))
+  ld <- data.frame(x = 1, y = 1, g = factor("c", levels = c("c", "b")))
+  fa <- .facet_assign(
+    vplot(d) |>
+      mark_point(x = x, y = y) |>
+      mark_point(data = ld, x = x, y = y) |>
+      facet_wrap(~g)
+  )
+  expect_identical(fa$wrap_labels, c("b", "a", "c"))
+})

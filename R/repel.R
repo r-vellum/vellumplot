@@ -153,9 +153,9 @@ NULL
   for (nm in unique(sol$name)) {
     s <- sol[sol$name == nm, , drop = FALSE]
     s <- s[order(s$index), , drop = FALSE]
-    scene <- .repel_move_node(scene, nm, s$dx, s$dy, present)
+    scene <- .repel_move_node(scene, nm, s$dx, s$dy, present, s$index)
     bg <- sub("^repel:", "repelbg:", nm)
-    scene <- .repel_move_node(scene, bg, s$dx, s$dy, present)
+    scene <- .repel_move_node(scene, bg, s$dx, s$dy, present, s$index)
   }
   scene
 }
@@ -163,18 +163,29 @@ NULL
 # Add an absolute (mm) offset to a named node's anchor. A text label has no
 # background, so the "repelbg:" name is skipped when it is not in `present`
 # (`get_node()` aborts on an unknown name rather than returning NULL).
-.repel_move_node <- function(scene, name, dx, dy, present) {
+#
+# `vl_place()` reports only the elements it could place -- it skips a label
+# whose box is not finite -- so `dx`/`dy` can be shorter than the node. They are
+# scattered onto the node's elements by `index` (1-based); an element the solver
+# skipped stays where it is.
+.repel_move_node <- function(scene, name, dx, dy, present, index = NULL) {
   if (!name %in% present) {
     return(scene)
   }
   node <- vellum::get_node(scene, name)
-  nx <- vctrs::vec_recycle(node@x, length(dx))
-  ny <- vctrs::vec_recycle(node@y, length(dy))
+  m <- max(length(node@x), length(node@y), index, length(dx))
+  ox <- numeric(m)
+  oy <- numeric(m)
+  index <- index %||% seq_along(dx)
+  ox[index] <- dx
+  oy[index] <- dy
+  nx <- vctrs::vec_recycle(node@x, m)
+  ny <- vctrs::vec_recycle(node@y, m)
   vellum::edit_node(
     scene,
     name,
-    x = nx + vellum::vl_unit(dx, "mm"),
-    y = ny + vellum::vl_unit(dy, "mm")
+    x = nx + vellum::vl_unit(ox, "mm"),
+    y = ny + vellum::vl_unit(oy, "mm")
   )
 }
 

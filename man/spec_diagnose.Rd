@@ -24,7 +24,7 @@ Ignored for a \link{PlotSpec}, which carries its own data.}
 \code{ok} (logical), \code{plot} (the \link{PlotSpec} or \code{NULL}), \code{diagnostics} (a list of
 records with \code{severity}, \code{field}, \code{message}, \code{hint}), and \code{report} (a data
 frame with one row per layer: \code{layer}, \code{mark}, \code{rows}, the counts
-\code{missing}, \code{facet}, \code{transform}, \code{limits}, and their total \code{dropped}; \code{NULL}
+\code{missing}, \code{transform}, \code{limits}, and their total \code{dropped}; \code{NULL}
 when the plot could not be built). Printing it shows a summary.
 \code{vplot_from_spec()} returns a \link{PlotSpec}.
 }
@@ -59,12 +59,13 @@ category (a warning).
 
 \section{Compile report}{
 
-vellumplot does not delete rows, but some rows produce no visible mark. The
-\code{report} element counts them per layer, on the layer's input rows, attributing
-each row to the first reason that applies:
+Some rows produce no visible mark. The \code{report} element counts them per
+layer, on the layer's input rows, attributing each row to the first reason
+that applies:
 \itemize{
-\item \code{missing}: a position value (\code{x}, \code{y}, \code{xend}, \code{ymin}, ...) is \code{NA};
-\item \code{facet}: a facet variable is \code{NA}, so the row belongs to no panel;
+\item \code{missing}: a continuous position value (\code{x}, \code{y}, \code{xend}, \code{ymin}, ...) is
+\code{NA}. Such a row is removed from the plot with a warning, or leaves a gap
+in a line, step or area;
 \item \code{transform}: the axis transform cannot map the value, e.g. a value \verb{<= 0}
 on a log axis;
 \item \code{limits}: the value is outside explicit scale limits (\code{\link[=lims]{lims()}},
@@ -73,8 +74,10 @@ on a log axis;
 }
 
 A missing \emph{non-position} value (colour, size, ...) is drawn with the scale's
-\code{NA} value and is not counted. Each layer that loses rows also adds a
-\code{"warning"} diagnostic, so it shows in the printed summary.
+\code{NA} value, a missing discrete position as a trailing \code{"NA"} category, and a
+missing facet value in a trailing \code{"NA"} panel, so none of them is counted.
+Each layer that loses rows also adds a \code{"warning"} diagnostic, so it shows in
+the printed summary.
 }
 
 \examples{
