@@ -124,10 +124,23 @@ NULL
     yb <- numeric(0)
   }
   tx <- rt[["axis.ticks.x"]]
+  ty0 <- rt[["axis.ticks.y"]]
+  # guide_axis_logticks(): log10 ticks replace the plain major ticks.
+  if (!is.null(gxa$logticks) && !isTRUE(x_sc$discrete)) {
+    if (!.is_blank(tx)) {
+      scene <- .draw_log_ticks(scene, x_sc, gxa$logticks, tlen, tx, "x")
+    }
+    xb <- numeric(0)
+  }
+  if (!is.null(gya$logticks) && !isTRUE(y_sc$discrete)) {
+    if (!.is_blank(ty0)) {
+      scene <- .draw_log_ticks(scene, y_sc, gya$logticks, tlen, ty0, "y")
+    }
+    yb <- numeric(0)
+  }
   if (!.is_blank(tx) && isTRUE(gxa$minor.ticks) && !isTRUE(x_sc$discrete)) {
     scene <- .minor_ticks(scene, x_sc, tlen, tx, "x")
   }
-  ty0 <- rt[["axis.ticks.y"]]
   if (!.is_blank(ty0) && isTRUE(gya$minor.ticks) && !isTRUE(y_sc$discrete)) {
     scene <- .minor_ticks(scene, y_sc, tlen, ty0, "y")
   }
@@ -180,6 +193,39 @@ NULL
   }
   len <- vellum::vl_unit(rep(0.75 * tlen, k), "mm")
   pos <- vellum::vl_unit(m, "native")
+  zero <- vellum::vl_unit(rep(0, k), "npc")
+  g <- if (axis == "x") {
+    vellum::segments_grob(
+      pos,
+      zero,
+      pos,
+      len,
+      gp = .el_gpar_line(el),
+      role = "presentation"
+    )
+  } else {
+    vellum::segments_grob(
+      zero,
+      pos,
+      len,
+      pos,
+      gp = .el_gpar_line(el),
+      role = "presentation"
+    )
+  }
+  vellum::draw(scene, g)
+}
+
+# Log10 axis ticks (`guide_axis_logticks()`), each `len` x the theme tick
+# length, inside the panel like the plain ticks.
+.draw_log_ticks <- function(scene, sc, lt, tlen, el, axis) {
+  t <- .log_ticks(sc, lt)
+  k <- length(t$pos)
+  if (!k) {
+    return(scene)
+  }
+  len <- vellum::vl_unit(t$len * tlen, "mm")
+  pos <- vellum::vl_unit(t$pos, "native")
   zero <- vellum::vl_unit(rep(0, k), "npc")
   g <- if (axis == "x") {
     vellum::segments_grob(

@@ -95,7 +95,8 @@ test_that("guides(x =) and scale_*(guide =) reach the trained scale", {
 })
 
 test_that("n.dodge staggers the labels and the gutter grows to fit", {
-  short <- vplot(data.frame(k = letters[1:5], v = 1:5)) |> mark_bar(x = k, y = v)
+  short <- vplot(data.frame(k = letters[1:5], v = 1:5)) |>
+    mark_bar(x = k, y = v)
   one <- x_row_mm(short)
   two <- x_row_mm(short |> guides(x = guide_axis(n.dodge = 2)))
   expect_gt(two, one * 1.4)
@@ -183,4 +184,30 @@ test_that("wrapped tick labels reserve the height of the tallest wrap", {
   tallest <- max(vapply(cars$model, h, numeric(1)))
   row_mm <- vellum::vl_convert(lay$heights[lay$xlabels_row[1]], "mm")
   expect_gte(row_mm, tallest)
+})
+
+test_that("guide_axis_logticks() draws long, mid and short log10 ticks", {
+  d <- data.frame(x = c(1, 1000), y = 1:2)
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    scale_x_continuous(trans = "log10", guide = guide_axis_logticks())
+  sc <- vellumplot:::.build_panels(p)$scales$x
+  expect_false(is.null(sc$axis_guide$logticks))
+  t <- vellumplot:::.log_ticks(sc, sc$axis_guide$logticks)
+  # every 1..9 x 10^k inside the (expanded) domain
+  v <- as.vector(outer(1:9, 10^(-1:3)))
+  expect_equal(10^t$pos, v[v >= 10^sc$domain[1] & v <= 10^sc$domain[2]])
+  expect_equal(t$len[10^t$pos %in% c(1, 10, 100, 1000)], rep(2.25, 4))
+  expect_equal(unique(t$len[round(10^t$pos) %in% c(5, 50, 500)]), 1.5)
+  expect_equal(unique(t$len[round(10^t$pos) %in% c(2, 30, 700)]), 0.75)
+  # pre-transformed data
+  q <- vplot(data.frame(x = log10(c(1, 1000)), y = 1:2)) |>
+    mark_point(x = x, y = y) |>
+    guides(x = guide_axis_logticks(prescale.base = 10))
+  sq <- vellumplot:::.build_panels(q)$scales$x
+  tq <- vellumplot:::.log_ticks(sq, sq$axis_guide$logticks)
+  expect_true(all(c(1, 10, 100, 1000) %in% round(10^tq$pos, 6)))
+  expect_no_error(vellum::as_vellum_scene(p))
+  expect_error(guide_axis_logticks(long = -1), "long")
+  expect_error(guide_axis_logticks(prescale.base = 1), "prescale")
 })

@@ -266,6 +266,88 @@ guide_axis <- function(
   )
 }
 
+#' @rdname guide_axis
+#' @description `guide_axis_logticks()` draws log10 ticks: long ones at the
+#'   powers of ten, middle ones at 5 x 10^k and short ones at the other
+#'   integer multiples (ggplot2's `guide_axis_logticks()`). Use it on a
+#'   `trans = "log10"` axis, or with `prescale.base = 10` on an axis whose data
+#'   are already log10 values.
+#' @param long,mid,short Lengths of the ticks at 10^k, 5 x 10^k and the other
+#'   multiples, relative to the theme's `axis.ticks.length`.
+#' @param prescale.base The base the data were already log-transformed with
+#'   (e.g. `10` for `log10(x)` plotted on a linear axis), or `NULL` (default)
+#'   when the axis itself transforms (or the data are on their own scale).
+#' @export
+guide_axis_logticks <- function(
+  long = 2.25,
+  mid = 1.5,
+  short = 0.75,
+  prescale.base = NULL,
+  cap = "none",
+  title = NULL
+) {
+  for (nm in c("long", "mid", "short")) {
+    v <- get(nm)
+    if (!is.numeric(v) || length(v) != 1L || !is.finite(v) || v < 0) {
+      cli::cli_abort("{.arg {nm}} must be a single non-negative number.")
+    }
+  }
+  if (
+    !is.null(prescale.base) &&
+      (!is.numeric(prescale.base) ||
+        length(prescale.base) != 1L ||
+        !is.finite(prescale.base) ||
+        prescale.base <= 1)
+  ) {
+    cli::cli_abort(
+      "{.arg prescale.base} must be a number above 1, or {.code NULL}."
+    )
+  }
+  g <- guide_axis(title = title, cap = cap)
+  g$logticks <- list(
+    long = long,
+    mid = mid,
+    short = short,
+    base = prescale.base
+  )
+  g
+}
+
+# The log ticks of a trained position scale under `guide_axis_logticks()`:
+# native positions and relative lengths of every 1..9 x 10^k inside its domain.
+.log_ticks <- function(sc, lt) {
+  dom <- range(sc$domain)
+  log_axis <- identical(sc$transform, "log10")
+  base <- lt$base
+  # the axis's data range
+  rng <- if (log_axis) {
+    10^dom
+  } else if (!is.null(base)) {
+    base^dom
+  } else {
+    dom
+  }
+  rng[1] <- max(rng[1], .Machine$double.xmin)
+  if (!all(is.finite(rng)) || rng[2] <= 0) {
+    return(list(pos = numeric(0), len = numeric(0)))
+  }
+  k <- seq(floor(log10(rng[1])), ceiling(log10(rng[2])))
+  v <- as.vector(outer(1:9, 10^k))
+  mult <- rep(1:9, length(k))
+  inside <- v >= rng[1] & v <= rng[2]
+  v <- v[inside]
+  mult <- mult[inside]
+  pos <- if (log_axis) {
+    log10(v)
+  } else if (!is.null(base)) {
+    log(v, base)
+  } else {
+    v
+  }
+  len <- ifelse(mult == 1, lt$long, ifelse(mult == 5, lt$mid, lt$short))
+  list(pos = pos, len = len)
+}
+
 # Shared builder + validation for guide_colourbar() / guide_coloursteps().
 .guide_bar <- function(
   kind,

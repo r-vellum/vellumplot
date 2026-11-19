@@ -2,6 +2,7 @@
 % Please edit documentation in R/guides.R
 \name{guide_axis}
 \alias{guide_axis}
+\alias{guide_axis_logticks}
 \title{Axis guide}
 \usage{
 guide_axis(
@@ -11,6 +12,15 @@ guide_axis(
   n.dodge = 1,
   minor.ticks = FALSE,
   cap = "none"
+)
+
+guide_axis_logticks(
+  long = 2.25,
+  mid = 1.5,
+  short = 0.75,
+  prescale.base = NULL,
+  cap = "none",
+  title = NULL
 )
 }
 \arguments{
@@ -34,6 +44,13 @@ breaks (on a continuous scale).}
 \item{cap}{Cap the axis line (theme element \code{axis.line}) at the outermost
 breaks: \code{"none"} (default; the line spans the panel), \code{"both"}, \code{"upper"}
 or \code{"lower"}. \code{TRUE} / \code{FALSE} mean \code{"both"} / \code{"none"}.}
+
+\item{long, mid, short}{Lengths of the ticks at 10^k, 5 x 10^k and the other
+multiples, relative to the theme's \code{axis.ticks.length}.}
+
+\item{prescale.base}{The base the data were already log-transformed with
+(e.g. \code{10} for \code{log10(x)} plotted on a linear axis), or \code{NULL} (default)
+when the axis itself transforms (or the data are on their own scale).}
 }
 \value{
 A guide specification for \code{\link[=guides]{guides()}} or a scale's \code{guide}.
@@ -47,6 +64,12 @@ them (\code{angle}), drop the ones that would overlap (\code{check.overlap}), ad
 ticks, and cap the axis line at the outermost breaks. The gutter that holds
 the labels is measured with the dodging and rotation applied, so nothing is
 clipped. \code{guides(x = "none")} draws the axis without labels or ticks.
+
+\code{guide_axis_logticks()} draws log10 ticks: long ones at the
+powers of ten, middle ones at 5 x 10^k and short ones at the other
+integer multiples (ggplot2's \code{guide_axis_logticks()}). Use it on a
+\code{trans = "log10"} axis, or with \code{prescale.base = 10} on an axis whose data
+are already log10 values.
 }
 \examples{
 cars <- data.frame(model = rownames(mtcars), mpg = mtcars$mpg)

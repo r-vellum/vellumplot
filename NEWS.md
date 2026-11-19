@@ -9,7 +9,8 @@
   them, `check.overlap` drops labels that would collide, `minor.ticks` adds
   minor ticks and `cap` ends the axis line at the outermost breaks. The label
   gutter is measured with the dodging and rotation, so nothing clips.
-  `guides(x = "none")` draws an axis without labels or ticks (F-17).
+  `guides(x = "none")` draws an axis without labels or ticks.
+  `guide_axis_logticks()` draws long, middle and short log10 ticks (F-17).
 
 ## Bug fixes
 
