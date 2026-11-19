@@ -198,6 +198,84 @@ test_that("a missing non-position value is drawn, so it is not counted", {
   expect_identical(d$report$dropped, 0L)
 })
 
+test_that("the report counts rows a stat leaves out itself", {
+  # an infinite x is binned by no histogram bar
+  df <- data.frame(x = c(1, 2, 3, Inf, NA, 6))
+  d <- suppressWarnings(spec_diagnose(vplot(df) |> mark_histogram(x = x)))
+  expect_identical(d$report$missing, 1L) # the NA, counted once, as missing
+  expect_identical(d$report$stat, 1L)
+  expect_identical(d$report$dropped, 2L)
+  # consistent with the compile: the bars count exactly the rows not dropped
+  b <- suppressWarnings(.build_panels(vplot(df) |> mark_histogram(x = x)))
+  expect_identical(
+    sum(b$panels[[1]]$resolved[[1]]$values$y),
+    as.numeric(d$report$rows - d$report$dropped)
+  )
+
+  # a group too small for a density loses all its rows; an Inf in a kept group
+  # loses just that row
+  df2 <- data.frame(
+    x = c(1, 2, 3, Inf, 5, 6, 7),
+    g = c("a", "a", "a", "a", "b", "c", "c")
+  )
+  d2 <- suppressWarnings(spec_diagnose(
+    vplot(df2) |> mark_density(x = x, color = g)
+  ))
+  expect_true(d2$ok)
+  expect_identical(d2$report$stat, 2L) # the Inf in "a", the lone "b"
+  w <- diag_msgs(d2, "warning")
+  expect_match(
+    w,
+    "2 left out by the layer's statistic",
+    fixed = TRUE,
+    all = FALSE
+  )
+})
+
+test_that("stat drops are mapped back to source rows across facet panels", {
+  df <- data.frame(
+    x = c(1, 2, Inf, 4, 5, 6, NA, 8),
+    y = c(1, 3, 2, 4, 6, 5, 7, Inf),
+    f = rep(c("p", "q"), each = 4)
+  )
+  p <- vplot(df) |> mark_smooth(x = x, y = y, method = "lm") |> facet_wrap(~f)
+  d <- suppressWarnings(spec_diagnose(p))
+  # row 7 (NA x) is removed before the stat; rows 3 and 8 are infinite
+  expect_identical(d$report$missing, 1L)
+  expect_identical(d$report$stat, 2L)
+  expect_identical(.stat_dropped_rows(p)[[1]], c(3L, 8L))
+})
+
+test_that("values outside colour / size limits are counted as oob, not dropped", {
+  df <- data.frame(x = 1:6, y = 1:6, v = c(0, 50, 100, 150, 200, 300))
+  p <- vplot(df) |>
+    mark_point(x = x, y = y, color = v) |>
+    scale_color_continuous(limits = c(50, 250))
+  d <- spec_diagnose(p)
+  expect_true(d$ok)
+  expect_identical(d$report$oob, 2L)
+  expect_identical(d$report$dropped, 0L)
+  w <- diag_msgs(d, "warning")
+  expect_length(w, 1L)
+  expect_match(w, "2 of 6 rows have a colour, size", fixed = TRUE)
+
+  s <- spec_diagnose(
+    vplot(df) |>
+      mark_point(x = x, y = y, size = v) |>
+      scale_size(limits = c(0, 100))
+  )
+  expect_identical(s$report$oob, 3L)
+  # a row already not shown is not counted again as oob
+  df$y[6] <- NA
+  m <- suppressWarnings(spec_diagnose(
+    vplot(df) |>
+      mark_point(x = x, y = y, size = v) |>
+      scale_size(limits = c(0, 100))
+  ))
+  expect_identical(m$report$missing, 1L)
+  expect_identical(m$report$oob, 2L)
+})
+
 test_that("a facet variable missing from a layer's data is caught", {
   ann <- data.frame(x = 3, y = 30)
   p <- vplot(mtcars) |>

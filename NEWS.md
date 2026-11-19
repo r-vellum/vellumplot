@@ -1,5 +1,16 @@
 # vellumplot 0.12.0.9000 (development version)
 
+* `spec_diagnose()`'s `$report` now also counts the rows a stat leaves out
+  itself, in a new `stat` column: an infinite value in a histogram, density,
+  smooth or 2-D bin, or every row of a group too small for a density, smooth,
+  ellipse or hull. The stats record which input rows they skip, and the report
+  maps those back to the layer's data across facet panels, so the count
+  matches what the compile draws. A second new column, `oob`, counts rows that
+  are drawn but have a colour, fill, size, alpha or linewidth value outside
+  that scale's `limits` (colour is clamped to the end of the palette, the
+  others extrapolate). Those rows are not part of `dropped`, and each layer
+  with any adds its own warning (VP-36, #208).
+
 * Faceted interactive plots without a `data_id` no longer link marks across
   panels by accident. Their default element keys were row positions within each
   panel's layer, so they repeated from panel to panel, and a hover, click or

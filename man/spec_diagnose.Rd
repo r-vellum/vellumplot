@@ -24,7 +24,8 @@ Ignored for a \link{PlotSpec}, which carries its own data.}
 \code{ok} (logical), \code{plot} (the \link{PlotSpec} or \code{NULL}), \code{diagnostics} (a list of
 records with \code{severity}, \code{field}, \code{message}, \code{hint}), and \code{report} (a data
 frame with one row per layer: \code{layer}, \code{mark}, \code{rows}, the counts
-\code{missing}, \code{transform}, \code{limits}, and their total \code{dropped}; \code{NULL}
+\code{missing}, \code{transform}, \code{stat}, \code{limits}, their total \code{dropped}, and
+\code{oob}, the shown rows outside a non-position scale's limits; \code{NULL}
 when the plot could not be built). Printing it shows a summary.
 \code{vplot_from_spec()} returns a \link{PlotSpec}.
 }
@@ -47,7 +48,8 @@ Before compiling, the plot is checked for mistakes that would compile to a
 wrong plot or fail with an opaque error:
 \itemize{
 \item a \strong{facet variable missing} from the plot data (an error), or from a
-layer's own data (a warning: that layer is then repeated in every panel);
+layer's own data (a warning: that layer is then repeated across that
+variable's panels);
 \item \strong{\code{color} and \code{fill} mapped to variables of different type} (one
 continuous, one discrete) although they share one colour scale and legend
 (an error, or a warning when the scale kind is set explicitly);
@@ -68,10 +70,19 @@ that applies:
 in a line, step or area;
 \item \code{transform}: the axis transform cannot map the value, e.g. a value \verb{<= 0}
 on a log axis;
+\item \code{stat}: the layer's statistic leaves the row out, e.g. an infinite value
+in a histogram or density, or a group with too few points for a density,
+a smooth or an ellipse;
 \item \code{limits}: the value is outside explicit scale limits (\code{\link[=lims]{lims()}},
 \verb{scale_*(limits = )}), so it is clipped away. Coordinate limits
 (\code{coord_cartesian(xlim = )}) zoom instead and are not counted.
 }
+
+Their total is \code{dropped}. A separate column, \code{oob}, counts the rows that
+are shown but have a colour, fill, size, alpha or linewidth value outside
+that scale's explicit \code{limits}. The compile draws them at the nearest end of
+the colour palette, or at a size, alpha or linewidth extrapolated past the
+scale's range, so they are not part of \code{dropped}.
 
 A missing \emph{non-position} value (colour, size, ...) is drawn with the scale's
 \code{NA} value, a missing discrete position as a trailing \code{"NA"} category, and a

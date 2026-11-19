@@ -96,6 +96,14 @@ spec_fields <- function(data, n_examples = 3L) {
 # `.resolve_trans()` the trainer asks, so it counts exactly what the compile
 # will do rather than re-deriving the rules. A missing discrete position or
 # facet value is drawn (as a trailing "NA" level or panel), so it is not counted.
+#
+# Rows a stat leaves out itself (a non-finite value, a group too small for a
+# density or a fit) are read back from the stat: every stat that drops input
+# rows records them (`.stat_dropped()` in compile-stat.R), and the report
+# resolves each panel the way the compile does to collect them. A value outside
+# a colour/size/alpha/linewidth scale's limits is still drawn -- colour clamps
+# to the end of its palette, size, alpha and linewidth extrapolate -- so it is
+# reported in its own `oob` column, not in `dropped`.
 # ---------------------------------------------------------------------------
 
 # Position channels, by axis, whose value places a row. A missing continuous
@@ -110,8 +118,12 @@ spec_fields <- function(data, n_examples = 3L) {
 .DIAG_DROP_REASONS <- c(
   missing = "missing a position value",
   transform = "not mappable on a transformed axis (e.g. <= 0 on a log scale)",
+  stat = "left out by the layer's statistic (a non-finite value, or a group too small to summarise)",
   limits = "outside the scale limits"
 )
+
+# Non-position channels whose scale can carry explicit numeric `limits`.
+.DIAG_OOB_CHANNELS <- c("color", "fill", "size", "alpha", "linewidth")
 
 # Variables the plot's facet reads.
 .facet_vars <- function(facet) {
@@ -125,7 +137,9 @@ spec_fields <- function(data, n_examples = 3L) {
 }
 
 # One layer's per-row drop reason (NA = shown), on its pre-stat data `ld`.
-.layer_drop_reasons <- function(plot, layer, ld) {
+# `stat_rows` are the rows of `ld` the layer's stat left out (see
+# `.stat_dropped_rows()`).
+.layer_drop_reasons <- function(plot, layer, ld, stat_rows = integer(0)) {
   n <- nrow(ld)
   why <- rep(NA_character_, n)
   flag <- function(mask, reason) {
@@ -154,27 +168,34 @@ spec_fields <- function(data, n_examples = 3L) {
       }
     }
   }
+  is_num <- function(v) is.numeric(v) || inherits(v, c("Date", "POSIXct"))
   for (a in axes) {
     sc <- a$sc
     is_time_scale <- !is.null(sc) && sc@type %in% c("date", "datetime", "time")
     tr <- if (is_time_scale) NULL else .resolve_trans(sc)
-    dom <- if (!is.null(sc)) sc@domain
-    lims <- if (
-      length(dom) == 2L &&
-        (is.numeric(dom) || inherits(dom, c("Date", "POSIXct")))
-    ) {
-      as.numeric(dom)
+    if (is.null(tr)) {
+      next
     }
     for (v in a$vals) {
-      if (!is.numeric(v) && !inherits(v, c("Date", "POSIXct"))) {
+      if (is.numeric(v) && !inherits(v, c("Date", "POSIXct"))) {
+        num <- as.numeric(v)
+        tv <- suppressWarnings(tr$transform(num))
+        flag(is.finite(num) & !is.finite(tv), "transform")
+      }
+    }
+  }
+  stat_rows <- stat_rows[stat_rows >= 1L & stat_rows <= n]
+  flag(seq_len(n) %in% stat_rows, "stat")
+  for (a in axes) {
+    sc <- a$sc
+    dom <- if (!is.null(sc)) sc@domain
+    lims <- if (length(dom) == 2L && is_num(dom)) as.numeric(dom)
+    for (v in a$vals) {
+      if (!is_num(v)) {
         next
       }
       num <- as.numeric(v)
       fin <- is.finite(num)
-      if (!is.null(tr) && !inherits(v, c("Date", "POSIXct"))) {
-        tv <- suppressWarnings(tr$transform(num))
-        flag(fin & !is.finite(tv), "transform")
-      }
       if (!is.null(lims)) {
         lo <- suppressWarnings(min(lims, na.rm = TRUE))
         hi <- suppressWarnings(max(lims, na.rm = TRUE))
@@ -192,17 +213,83 @@ spec_fields <- function(data, n_examples = 3L) {
   why
 }
 
+# Per layer, the rows of its input data (`layer@data %||% plot@data`) that its
+# stat left out, collected by resolving every facet panel as the compile does
+# (`.resolve_panel()`: missing positions removed, then the stat) and mapping
+# each panel's `L$stat_dropped` back through its source rows. A panel that
+# cannot be resolved reports none here; the dry-run compile reports its error.
+.stat_dropped_rows <- function(plot) {
+  out <- rep(list(integer(0)), length(plot@layers))
+  fa <- tryCatch(.facet_assign(plot), error = function(e) NULL)
+  panels <- lapply(fa$panels, function(p) {
+    tryCatch(
+      suppressWarnings(.resolve_panel(plot, p)),
+      error = function(e) NULL
+    )
+  })
+  for (res in panels) {
+    for (i in seq_along(res)) {
+      L <- res[[i]]
+      drop <- L$stat_dropped
+      if (length(drop)) {
+        out[[i]] <- c(out[[i]], L$source$rows[drop])
+      }
+    }
+  }
+  lapply(out, function(r) sort(unique(r[!is.na(r)])))
+}
+
+# Per row of `ld`: does a non-position channel (colour, fill, size, alpha,
+# linewidth) carry a finite value outside its scale's explicit numeric limits?
+# The compile still draws such a row (see the note above), so it is counted
+# apart from the rows not shown.
+.layer_oob_rows <- function(plot, layer, ld) {
+  n <- nrow(ld)
+  out <- rep(FALSE, n)
+  L <- tryCatch(.resolve_layer(layer, ld), error = function(e) NULL)
+  if (is.null(L)) {
+    return(out)
+  }
+  for (ch in .DIAG_OOB_CHANNELS) {
+    v <- L$values[[ch]]
+    sc <- .scale_for(plot, ch)
+    dom <- if (!is.null(sc)) sc@domain
+    if (
+      is.null(sc) ||
+        length(v) != n ||
+        !is.numeric(v) ||
+        identical(sc@type, "identity") ||
+        length(dom) != 2L ||
+        !is.numeric(dom)
+    ) {
+      next
+    }
+    lo <- suppressWarnings(min(dom, na.rm = TRUE))
+    hi <- suppressWarnings(max(dom, na.rm = TRUE))
+    out <- out |
+      (is.finite(v) & ((is.finite(lo) & v < lo) | (is.finite(hi) & v > hi)))
+  }
+  out
+}
+
 # The per-layer compile report: one row per layer with its input row count, how
-# many rows will not be shown for each reason, and the total.
+# many rows will not be shown for each reason, the total, and how many shown
+# rows have a non-position value outside its scale limits (`oob`).
 .compile_report <- function(plot) {
+  stat_rows <- .stat_dropped_rows(plot)
   rows <- lapply(seq_along(plot@layers), function(i) {
     layer <- plot@layers[[i]]
     ld <- layer@data %||% plot@data
     n <- if (is.data.frame(ld)) nrow(ld) else NA_integer_
     why <- if (is.data.frame(ld)) {
-      .layer_drop_reasons(plot, layer, ld)
+      .layer_drop_reasons(plot, layer, ld, stat_rows[[i]])
     } else {
       character(0)
+    }
+    oob <- if (is.data.frame(ld)) {
+      sum(.layer_oob_rows(plot, layer, ld) & is.na(why))
+    } else {
+      0L
     }
     counts <- vapply(
       names(.DIAG_DROP_REASONS),
@@ -215,8 +302,10 @@ spec_fields <- function(data, n_examples = 3L) {
       rows = as.integer(n),
       missing = counts[["missing"]],
       transform = counts[["transform"]],
+      stat = counts[["stat"]],
       limits = counts[["limits"]],
       dropped = sum(counts),
+      oob = as.integer(oob),
       stringsAsFactors = FALSE
     )
   })
@@ -227,8 +316,10 @@ spec_fields <- function(data, n_examples = 3L) {
       rows = integer(0),
       missing = integer(0),
       transform = integer(0),
+      stat = integer(0),
       limits = integer(0),
-      dropped = integer(0)
+      dropped = integer(0),
+      oob = integer(0)
     ))
   }
   do.call(rbind, rows)
@@ -239,6 +330,20 @@ spec_fields <- function(data, n_examples = 3L) {
   out <- list()
   for (k in seq_len(nrow(report))) {
     r <- report[k, ]
+    if (isTRUE(r$oob > 0L)) {
+      out[[length(out) + 1L]] <- list(
+        severity = "warning",
+        field = NA_character_,
+        message = sprintf(
+          "Layer %d (%s): %d of %d rows have a colour, size, alpha or linewidth value outside its scale limits. They are drawn at the nearest end of the colour palette, or at an extrapolated size, alpha or linewidth.",
+          r$layer,
+          r$mark,
+          r$oob,
+          r$rows
+        ),
+        hint = "Widen the scale `limits`, or filter the data. See `$report` (column `oob`)."
+      )
+    }
     if (r$dropped == 0L) {
       next
     }
@@ -421,9 +526,18 @@ spec_fields <- function(data, n_examples = 3L) {
 #'   in a line, step or area;
 #' * `transform`: the axis transform cannot map the value, e.g. a value `<= 0`
 #'   on a log axis;
+#' * `stat`: the layer's statistic leaves the row out, e.g. an infinite value
+#'   in a histogram or density, or a group with too few points for a density,
+#'   a smooth or an ellipse;
 #' * `limits`: the value is outside explicit scale limits ([lims()],
 #'   `scale_*(limits = )`), so it is clipped away. Coordinate limits
 #'   (`coord_cartesian(xlim = )`) zoom instead and are not counted.
+#'
+#' Their total is `dropped`. A separate column, `oob`, counts the rows that
+#' are shown but have a colour, fill, size, alpha or linewidth value outside
+#' that scale's explicit `limits`. The compile draws them at the nearest end of
+#' the colour palette, or at a size, alpha or linewidth extrapolated past the
+#' scale's range, so they are not part of `dropped`.
 #'
 #' A missing *non-position* value (colour, size, ...) is drawn with the scale's
 #' `NA` value, a missing discrete position as a trailing `"NA"` category, and a
@@ -441,7 +555,8 @@ spec_fields <- function(data, n_examples = 3L) {
 #'   `ok` (logical), `plot` (the [PlotSpec] or `NULL`), `diagnostics` (a list of
 #'   records with `severity`, `field`, `message`, `hint`), and `report` (a data
 #'   frame with one row per layer: `layer`, `mark`, `rows`, the counts
-#'   `missing`, `transform`, `limits`, and their total `dropped`; `NULL`
+#'   `missing`, `transform`, `stat`, `limits`, their total `dropped`, and
+#'   `oob`, the shown rows outside a non-position scale's limits; `NULL`
 #'   when the plot could not be built). Printing it shows a summary.
 #'   `vplot_from_spec()` returns a [PlotSpec].
 #' @seealso [spec_fields()], [spec_schema()], [vplot_ask()]
@@ -599,7 +714,9 @@ spec_diagnose <- function(spec, data = NULL, env = globalenv()) {
   }
   rep <- x$report
   if (!is.null(rep) && nrow(rep)) {
-    cat("\nRows not shown, per layer:\n")
+    cat(
+      "\nRows not shown, per layer (`oob`: shown, outside a colour/size scale's limits):\n"
+    )
     print(rep, row.names = FALSE)
   }
   invisible(x)
