@@ -63,9 +63,12 @@ accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
-\item{expand}{For \code{mark_hull()}, grow each hull outward from its centroid by
-this fraction (e.g. \code{0.1} = 10\% larger), so it encloses the markers it wraps
-rather than passing through their centres. \code{0} (default) is the tight hull.}
+\item{expand}{For \code{mark_hull()}, a margin to grow each hull outward by, as a
+fraction of the layer's data range on each axis (e.g. \code{0.05} = 5\% of the
+width and height), so it encloses the markers it wraps rather than passing
+through their centres. Every hull grows by the same margin on every side,
+with rounded corners, whatever its size or shape. \code{0} (default) is the
+tight hull.}
 }
 \value{
 The modified \link{PlotSpec}.

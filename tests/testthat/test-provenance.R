@@ -140,7 +140,7 @@ test_that("legend merge rules come from the registry", {
     c("color", "size", "shape", "linewidth", "alpha", "linetype")
   )
   # the edge colour guide folds into the node one on the registry's fields
-  col <- list(kind = "discrete", name = "g", levels = c("a", "b"), colors = 1:2)
+  col <- list(type = "discrete", name = "g", levels = c("a", "b"), colors = 1:2)
   edge <- col
   expect_true(.aes_can_merge(edge, col, "edge_color", "color"))
   edge$levels <- c("a", "c")

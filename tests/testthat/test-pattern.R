@@ -95,7 +95,7 @@ test_that("mapping the pattern aesthetic trains a discrete pattern scale", {
     vplot(bars) |> mark_bar(x = g, y = n, pattern = g),
     list(list(mark = "bar", values = list(pattern = bars$g)))
   )
-  expect_identical(sc$kind, "pattern")
+  expect_identical(sc$type, "discrete")
   expect_setequal(sc$levels, c("a", "b", "c"))
   expect_length(sc$patterns, 3L)
   expect_s3_class(sc$patterns[[1]], "vellum_pattern")

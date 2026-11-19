@@ -96,7 +96,9 @@ train <- function(p) {
 }
 
 test_that("mark_violin() trains y to cover the full density support", {
-  sc <- train(vplot(iris) |> mark_violin(x = Species, y = Sepal.Length))
+  sc <- train(
+    vplot(iris) |> mark_violin(x = Species, y = Sepal.Length, trim = FALSE)
+  )
   supp <- unlist(lapply(levels(iris$Species), function(l) {
     range(stats::density(iris$Sepal.Length[iris$Species == l])$x)
   }))
@@ -128,7 +130,7 @@ vio_supp <- function() {
 test_that("a log10 violin axis covers the density support in log units", {
   sc <- train(
     vplot(mtcars) |>
-      mark_violin(x = factor(cyl), y = mpg) |>
+      mark_violin(x = factor(cyl), y = mpg, trim = FALSE) |>
       scale_y_continuous(trans = "log10")
   )
   # the density is estimated on the transformed values (as ggplot2 does)
@@ -144,7 +146,7 @@ test_that("a log10 violin axis covers the density support in log units", {
 test_that("a reversed violin axis stays reversed after the footprint union", {
   sc <- train(
     vplot(mtcars) |>
-      mark_violin(x = factor(cyl), y = mpg) |>
+      mark_violin(x = factor(cyl), y = mpg, trim = FALSE) |>
       scale_y_continuous(trans = "reverse")
   )
   expect_gt(sc$y$domain[1], sc$y$domain[2])
@@ -155,7 +157,7 @@ test_that("a reversed violin axis stays reversed after the footprint union", {
 test_that("free facet scales are widened by the density footprint too", {
   b <- .build_panels(
     vplot(mtcars) |>
-      mark_violin(x = factor(cyl), y = mpg) |>
+      mark_violin(x = factor(cyl), y = mpg, trim = FALSE) |>
       facet_wrap(~am, scales = "free_y")
   )
   for (q in b$panels) {
@@ -225,7 +227,7 @@ test_that("density shapes on log/sqrt axes draw only finite vertices (VP-29)", {
       mark_ridgeline(x = v, y = g) |>
       scale_x_continuous(trans = "log10"),
     vplot(mtcars) |>
-      mark_violin(x = factor(cyl), y = mpg) |>
+      mark_violin(x = factor(cyl), y = mpg, trim = FALSE) |>
       scale_y_continuous(trans = "log10")
   )
   for (p in plots) {
@@ -248,7 +250,7 @@ test_that("the trained log axis covers the drawn violin outline (VP-29)", {
 })
 
 test_that("an identity-scale violin outline is the data-space density (VP-29)", {
-  p <- vplot(iris) |> mark_violin(x = Species, y = Sepal.Length)
+  p <- vplot(iris) |> mark_violin(x = Species, y = Sepal.Length, trim = FALSE)
   polys <- drawn_polygons(p)
   ref <- stats::density(iris$Sepal.Length[iris$Species == "setosa"])
   expect_equal(polys[[1]]$y, c(ref$x, rev(ref$x)))
@@ -257,7 +259,9 @@ test_that("an identity-scale violin outline is the data-space density (VP-29)", 
 # VP-28: the domain was widened for the footprint after breaks were picked for
 # the raw data range, so the tails ran past the last labelled tick.
 test_that("a footprint-widened axis is re-broken over its new extent (VP-28)", {
-  sc <- train(vplot(iris) |> mark_violin(x = Species, y = Sepal.Length))$y
+  sc <- train(
+    vplot(iris) |> mark_violin(x = Species, y = Sepal.Length, trim = FALSE)
+  )$y
   step <- min(diff(sc$breaks))
   expect_lte(sc$domain[2] - max(sc$breaks), step)
   expect_lte(min(sc$breaks) - sc$domain[1], step)
@@ -265,7 +269,7 @@ test_that("a footprint-widened axis is re-broken over its new extent (VP-28)", {
 
   lg <- train(
     vplot(mtcars) |>
-      mark_violin(x = factor(cyl), y = mpg) |>
+      mark_violin(x = factor(cyl), y = mpg, trim = FALSE) |>
       scale_y_continuous(trans = "log10")
   )$y
   lstep <- min(diff(lg$breaks))
@@ -288,11 +292,23 @@ test_that("explicit breaks survive the footprint widening (VP-28)", {
 test_that("free facet axes are re-broken over their footprint too (VP-28)", {
   b <- .build_panels(
     vplot(mtcars) |>
-      mark_violin(x = factor(cyl), y = mpg) |>
+      mark_violin(x = factor(cyl), y = mpg, trim = FALSE) |>
       facet_wrap(~am, scales = "free_y")
   )
   for (q in b$panels) {
     sc <- q$y_sc
     expect_lte(sc$domain[2] - max(sc$breaks), min(diff(sc$breaks)))
   }
+})
+
+test_that("mark_violin() trims each violin to its data range by default (VP-23)", {
+  p <- vplot(iris) |> mark_violin(x = Species, y = Sepal.Length)
+  polys <- drawn_polygons(p)
+  v <- iris$Sepal.Length[iris$Species == "setosa"]
+  expect_equal(range(polys[[1]]$y), range(v))
+  ref <- stats::density(v, from = min(v), to = max(v))
+  expect_equal(polys[[1]]$y, c(ref$x, rev(ref$x)))
+  # the trained axis is not padded past the data
+  sc <- train(p)
+  expect_lte(sc$y$domain[2], max(iris$Sepal.Length) + 0.5)
 })

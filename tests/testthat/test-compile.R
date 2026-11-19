@@ -52,7 +52,7 @@ test_that("a continuous colour scale quantizes to <=256 style groups", {
     mark_point(x = wt, y = mpg, color = hp) |>
     scale_color_continuous()
   sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
-  expect_identical(sc$color$kind, "continuous")
+  expect_identical(sc$color$type, "continuous")
   many <- sc$color$map(seq(min(mtcars$hp), max(mtcars$hp), length.out = 1000))
   expect_lte(length(unique(many)), 256)
 })
@@ -60,7 +60,7 @@ test_that("a continuous colour scale quantizes to <=256 style groups", {
 test_that("a discrete colour scale maps each level to a distinct colour", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
   sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
-  expect_identical(sc$color$kind, "discrete")
+  expect_identical(sc$color$type, "discrete")
   expect_length(sc$color$levels, 3)
   expect_length(unique(sc$color$colors), 3)
 })

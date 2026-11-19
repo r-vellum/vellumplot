@@ -11,6 +11,7 @@ mark_violin(
   ...,
   position = "identity",
   adjust = 1,
+  trim = TRUE,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -48,6 +49,10 @@ needs \code{x}. A mapped \code{color}/\code{fill} sets the shape fill.}
 on a position it does not support, naming the ones it does.}
 
 \item{adjust}{Kernel-density bandwidth multiplier (violin/ridgeline).}
+
+\item{trim}{For \code{mark_violin()}, \code{TRUE} (default, as ggplot2) ends each violin
+at the smallest and largest value of its data; \code{FALSE} lets the kernel's
+tails run on past them.}
 
 \item{blend, sketch, data}{Standard layer arguments (see \code{\link[=mark_point]{mark_point()}}).}
 

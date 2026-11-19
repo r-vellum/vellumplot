@@ -119,7 +119,7 @@ test_that("the scales summary carries levels, not the plot's data", {
     exact = TRUE
   )
   expect_named(summ, "color")
-  expect_named(summ$color, c("kind", "levels", "title"))
+  expect_named(summ$color, c("type", "levels", "title"))
   expect_equal(summ$color$levels, letters[1:4])
   # The title comes from the plot's titles record, as the legend draws it.
   expect_identical(summ$color$title, "g")
@@ -277,4 +277,13 @@ test_that("plot_verify() reports a font mismatch distinctly from a data mismatch
   expect_false(v2$ok)
   expect_false(v2$data_ok)
   expect_true(v2$fonts_ok)
+})
+
+test_that("grammar lint covers discrete shape and linetype scales too", {
+  # Before the trained scale had a `type`, only a colour scale reported itself
+  # as discrete, so a single-level shape went unflagged.
+  d <- data.frame(x = 1:3, y = 1:3, g = "one")
+  p <- vplot(d) |> mark_point(x = x, y = y, shape = g)
+  found <- plot_lint(p, rules = "single_level_scale")
+  expect_true("scale:shape" %in% found$node)
 })

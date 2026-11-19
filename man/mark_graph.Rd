@@ -122,7 +122,7 @@ mark_node_hull(
   fill = NULL,
   color = NULL,
   alpha = 0.25,
-  expand = 0.08,
+  expand = 0.04,
   data = NULL
 )
 
@@ -260,8 +260,9 @@ tuning for \code{mark_node_text(repel = TRUE)}; see \code{\link[=mark_text]{mark
 or \code{"along"} to rotate each label along its edge. \code{NULL} (default) draws
 horizontal labels.}
 
-\item{expand}{For \code{mark_node_hull()}, the fraction to grow each hull outward
-from its centroid so it encloses the node markers (default \code{0.08}).}
+\item{expand}{For \code{mark_node_hull()}, the margin to grow each hull outward by
+so it encloses the node markers, as a fraction of the layout's range on each
+axis (default \code{0.04}). Every hull gets the same rounded margin.}
 
 \item{cols}{For \code{mark_node_pie()}, the compositional columns (a character
 vector of node-table column names, at least two) whose values size each

@@ -511,7 +511,7 @@ NULL
 .legend_membership <- function(L, scales) {
   n <- L$n
   cols <- list()
-  if (!is.null(scales$color) && identical(scales$color$kind, "discrete")) {
+  if (!is.null(scales$color) && identical(scales$color$type, "discrete")) {
     cv <- L$values$color %||% L$values$fill
     if (!is.null(cv)) {
       cols[["color"]] <- paste0("color:", as.character(rep_len(cv, n)))
@@ -805,7 +805,7 @@ NULL
     # value is `L$values$color` (fallback `fill`), recycled to the row count.
     .mark_ctx$filter_value <- local({
       cc <- scales$color
-      if (!ok || is.null(cc) || !identical(cc$kind, "continuous")) {
+      if (!ok || is.null(cc) || !identical(cc$type, "continuous")) {
         return(NULL)
       }
       v <- L$values$color %||% L$values$fill
