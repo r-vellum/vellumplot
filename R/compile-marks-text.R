@@ -18,6 +18,17 @@ NULL
   }
 }
 
+# Which rows a text / label layer draws. A repel layer drops rows with a missing
+# position or label before emitting: the solver skips such a label, and an
+# element it cannot place has nothing to repel. (A plain layer keeps them; they
+# draw nothing.) `label` is NULL for rich labels, which are never missing.
+.repel_keep <- function(repel_on, xn, yn, label = NULL) {
+  if (!repel_on) {
+    return(rep(TRUE, length(xn)))
+  }
+  is.finite(xn) & is.finite(yn) & (if (is.null(label)) TRUE else !is.na(label))
+}
+
 .emit_text <- function(scene, L, scales) {
   n <- L$n
   # The `label` is a mapped column (`L$values$label`) or a constant (a literal
@@ -80,9 +91,14 @@ NULL
   hj <- L$values$hjust %||% .aes_param(L, "hjust", "centre")
   vj <- L$values$vjust %||% .aes_param(L, "vjust", "centre")
   just <- c(hj[[1]], vj[[1]])
+  keep <- .repel_keep(repel_on, xn, yn, if (!rich_single && !rich_list) label)
 
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha, size = fs))) {
+    idx <- idx[keep[idx]]
+    if (!length(idx)) {
+      next
+    }
     a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
     scene <- .draw(
@@ -141,12 +157,17 @@ NULL
   txts <- lapply(seq_len(n), function(i) .txt(label[i], fs[i]))
   ws <- do.call(c, lapply(txts, function(t) vellum::grobwidth(t) + pad))
   hs <- do.call(c, lapply(txts, function(t) vellum::grobheight(t) + pad))
+  keep <- .repel_keep(repel_on, xn, yn, label)
 
   gi <- 0L
   for (idx in .style_groups(
     n,
     list(col = col, fill = bg, alpha = alpha, size = fs)
   )) {
+    idx <- idx[keep[idx]]
+    if (!length(idx)) {
+      next
+    }
     a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
     # Key the background box, not the text on top: the rounded rect is the whole

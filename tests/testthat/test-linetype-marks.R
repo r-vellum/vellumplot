@@ -127,3 +127,39 @@ test_that("every touched stroked mark renders with a linetype set (#30)", {
       mark_contour(x = eruptions, y = waiting, linetype = "dashed")
   ))
 })
+
+test_that("a mapped colour / alpha styles each rule, not just the first (VP-19)", {
+  r <- data.frame(yi = c(1, 2, 3), xi = c(1, 2, 3), g = c("a", "b", "a"))
+  rule_grobs <- function(p) {
+    pr <- attr(vellum::as_vellum_scene(p), "vellumplot_provenance")
+    Filter(function(e) identical(e$mark, "rule"), pr)
+  }
+  base <- vplot(data.frame(x = 0:4, y = 0:4)) |> mark_point(x = x, y = y)
+  # one grob per colour, each drawing that colour's rows
+  h <- rule_grobs(base |> mark_rule(data = r, yintercept = yi, color = g))
+  expect_length(h, 2L)
+  expect_setequal(lapply(h, function(e) sort(e$rows)), list(c(1L, 3L), 2L))
+  v <- rule_grobs(base |> mark_rule(data = r, xintercept = xi, alpha = xi))
+  expect_length(v, 3L)
+  # a constant style stays one batched grob
+  expect_length(
+    rule_grobs(base |> mark_rule(data = r, yintercept = yi, color = "red")),
+    1L
+  )
+  # and the colours drawn are the two the legend shows
+  p <- base |> mark_rule(data = r, yintercept = yi, color = g)
+  cols <- character()
+  draw <- .draw
+  local_mocked_bindings(
+    .draw = function(scene, grob, rows = NULL) {
+      if (inherits(grob, "vellum::grob_segments")) {
+        cols <<- c(cols, grob@gp@col)
+      }
+      draw(scene, grob, rows)
+    },
+    .package = "vellumplot"
+  )
+  vellum::as_vellum_scene(p)
+  sc <- vellumplot:::.build_panels(p)$scales$color
+  expect_setequal(unique(cols), sc$map(c("a", "b")))
+})
