@@ -1,11 +1,6 @@
-# vellumplot 0.12.0.9000 (development version)
+# vellumplot 0.13.0
 
-* `guide_bivariate()` labels the swatch edges with the class breaks
-  `bi_class()` chose, along both axes, so the legend says which range each
-  colour stands for (`labels = FALSE` turns them off; the swatches widen to fit
-  them unless `key.size` is set). `guide_bivariate(rotate = TRUE)` turns the
-  grid 45 degrees into a diamond, low-low at the bottom and high-high at the
-  top. The "Scales and guides" article has a new bivariate section (VP-35).
+## Behaviour changes
 
 * **Behaviour change:** a discrete colour scale (`scale_*_manual()`,
   `scale_*_discrete()`, `scale_*_brewer()`, ...) on a numeric variable now
@@ -18,31 +13,6 @@
 
 * **Behaviour change:** `x = Inf` / `-Inf` (and `y`) on a continuous axis now
   sits on the panel edge, as in ggplot2, rather than being lost (VP-11).
-
-* An aesthetic whose values are all missing no longer draws a 0-1 colourbar or
-  size legend; a continuous scale with no data and no limits draws no legend
-  (VP-11).
-
-* `coord_cartesian(xlim =, ylim =)` (and the other coords' limits) now zoom a
-  discrete axis too, in level positions as in ggplot2: `xlim = c(2, 4)` shows
-  the second to fourth levels (VP-11).
-
-* `scale_x_discrete()` / `scale_y_discrete()` gain `breaks` (the levels that
-  get a tick), `labels` (a vector, a vector named by level, or a function) and
-  `drop` (F-10).
-
-* `scale_x_continuous()`, `scale_y_continuous()`, `scale_color_continuous()`,
-  `scale_fill_continuous()`, `scale_size()` and `scale_alpha()` gain `oob`:
-  `"censor"`, `"squish"`, `"keep"` or a `function(x, range)` such as
-  `scales::oob_squish_any()`, with `scales::oob_*()` semantics. The defaults
-  are unchanged: positions and sizes keep out-of-limits values, colours squish
-  them (F-10).
-
-* Legends can sit inside the panels: `theme(legend.position = "inside")` with
-  `legend.position.inside = c(x, y)` and `legend.justification`, or the older
-  `legend.position = c(x, y)`. Positions are fractions of the panel area; the
-  justification (a `c(x, y)` or words such as `c("right", "top")`) defaults to
-  the position, so `c(1, 1)` tucks the legend into the top-right corner (F-10).
 
 * **Behaviour change:** a factor, character or logical mapped to `size` or
   `alpha` now trains a discrete scale, as in ggplot2. Before, a factor was
@@ -67,35 +37,6 @@
   reported itself as discrete, so a one-level shape went unflagged.
   `guide_legend(reverse = TRUE)` now also reverses a pattern legend (R-14).
 
-* Internal: a trained scale now records its scale type (`continuous`,
-  `discrete`, `binned`, `identity`, ...) in `type` for every aesthetic, where
-  `kind` held the type for colour and position scales and the aesthetic name
-  for the rest. The provenance scale-refs report the same `type` values as
-  before (R-14).
-
-* A two-vertex graph on the default stress layout no longer warns
-  "data length [3] is not a sub-multiple or multiple of the number of rows
-  [2]". The warning came from graphlayouts' fixed two-vertex branch;
-  `vgraph()` now returns that same layout itself (VP-40).
-
-* Faceted interactive plots without a `data_id` no longer link marks across
-  panels by accident. Their default element keys were row positions within each
-  panel's layer, so they repeated from panel to panel, and a hover, click or
-  brush in one panel also lit up the marks at the same positions in the others.
-  Default keys in a faceted plot are now `"<panel>:<row>"`, using the source
-  row when the layer draws one element per input row, and that source row is
-  carried as the element's `join` id so a declarative selection still matches
-  the same datum wherever it is drawn. Single-panel plots and declared
-  `data_id`s are unchanged (VW-11).
-
-* `md()`, `vl_pattern()`, `sketch()`, `linear_gradient()` and
-  `radial_gradient()` are now vellum's own functions re-exported, not wrappers
-  around them. They behave the same, but attaching vellum and vellumplot
-  together (as `library(vellumverse)` does) no longer reports them as
-  conflicts. `pdf_pages()` and `render_all()` differ from vellum's (they take
-  plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
-  their docs now say how they differ (VV-2).
-
 * **Stacks follow the group key, whatever aesthetic defines it (VP-38).**
   Without `group`, `color` or `fill`, a discrete `pattern`, `linetype` or
   `shape` now groups the layer. **Behaviour change:**
@@ -113,50 +54,6 @@
   `color`, `alpha`, ...) is now dropped with a warning, and no legend is drawn
   for it. A continuous fill that is constant within each category is kept.
   (Areas and ribbons error instead, as ggplot2's do.)
-
-* **Violins on a binned axis keep their shape (VP-30).** With
-  `scale_y_binned()`, a violin's density (and the axis room made for it) was
-  estimated from the values snapped to their bin centres, giving a lumpy
-  outline cut off at the outer centres. The density now uses the continuous
-  values.
-
-* **`mark_histogram()` bins like ggplot2.** It gains `binwidth`, `breaks`,
-  `boundary`, `center` and `closed`, with ggplot2's meaning: `breaks` gives the
-  bin edges (bins may differ in width), `binwidth` the width, and `boundary` /
-  `center` where the bins are aligned. The bin stat also computes `ncount` and
-  `ndensity`, and the x axis now covers the outer bars' edges (F-10).
-
-  **Behaviour change:** the default `bins = 30` now places bins as ggplot2
-  does, with the outer bins centred on the smallest and largest values (width
-  `range / (bins - 1)`), instead of 30 bins from the minimum to the maximum.
-  Counts now match `geom_histogram()` for the same `bins`.
-
-* **New `mark_freqpoly()`** draws the bin counts as a frequency polygon, one
-  line per group, padded with an empty bin at each end like ggplot2's
-  `geom_freqpoly()`. It takes the same binning arguments as
-  `mark_histogram()` (F-10).
-
-* **`mark_summary()` draws ranges.** With `fun.data` (`"mean_se"`,
-  `"mean_cl_normal"`, `"mean_sdl"`, `"median_hilow"`, or a function such as
-  `ggplot2::mean_se()`), or with `fun.min` / `fun.max`, it summarises each
-  category into a point and a range and draws a point range, like ggplot2's
-  `stat_summary()`. `fun.args` passes extra arguments. Without them it draws
-  points as before (F-10).
-
-* **Horizontal box plots and violins.** `mark_boxplot()` and `mark_violin()`
-  gain `orientation`. By default it is inferred as in ggplot2: a discrete `y`
-  with a continuous `x` (`mark_boxplot(x = mpg, y = factor(cyl))`) draws
-  horizontal boxes / violins, and the axis is widened for the violin outline as
-  for vertical ones. `orientation = "x"` or `"y"` forces either (F-10).
-
-* **Stat parameters are checked where you write them.** `bins`, `binwidth`,
-  `adjust`, `span`, `level`, `height`, `segments` and `n` in `mark_histogram()`,
-  `mark_hex()`, `mark_bin2d()`, `mark_dotplot()`, `mark_density()`,
-  `mark_violin()`, `mark_ridgeline()`, `mark_halfeye()`, `mark_smooth()`,
-  `mark_ellipse()` and `mark_contour()` are validated by the constructor, with an
-  error naming the argument. Before, `bins = 0` crashed with "arguments imply
-  differing number of rows", `adjust = 0` with "'bw' is not positive", and
-  `level = 2` or `binwidth = -1` drew a wrong plot without complaint (VP-21).
 
 * **Stat edge cases follow ggplot2 (VP-22).**
   - **Behaviour change:** a stat layer with too few points (a density of one
@@ -193,6 +90,73 @@
     a layer gets the same margin whatever its size. `mark_node_hull()`'s default
     `expand` is now `0.04`.
 
+## New features
+
+* **`mark_histogram()` bins like ggplot2.** It gains `binwidth`, `breaks`,
+  `boundary`, `center` and `closed`, with ggplot2's meaning: `breaks` gives the
+  bin edges (bins may differ in width), `binwidth` the width, and `boundary` /
+  `center` where the bins are aligned. The bin stat also computes `ncount` and
+  `ndensity`, and the x axis now covers the outer bars' edges (F-10).
+
+  **Behaviour change:** the default `bins = 30` now places bins as ggplot2
+  does, with the outer bins centred on the smallest and largest values (width
+  `range / (bins - 1)`), instead of 30 bins from the minimum to the maximum.
+  Counts now match `geom_histogram()` for the same `bins`.
+
+* **New `mark_freqpoly()`** draws the bin counts as a frequency polygon, one
+  line per group, padded with an empty bin at each end like ggplot2's
+  `geom_freqpoly()`. It takes the same binning arguments as
+  `mark_histogram()` (F-10).
+
+* **`mark_summary()` draws ranges.** With `fun.data` (`"mean_se"`,
+  `"mean_cl_normal"`, `"mean_sdl"`, `"median_hilow"`, or a function such as
+  `ggplot2::mean_se()`), or with `fun.min` / `fun.max`, it summarises each
+  category into a point and a range and draws a point range, like ggplot2's
+  `stat_summary()`. `fun.args` passes extra arguments. Without them it draws
+  points as before (F-10).
+
+* **Horizontal box plots and violins.** `mark_boxplot()` and `mark_violin()`
+  gain `orientation`. By default it is inferred as in ggplot2: a discrete `y`
+  with a continuous `x` (`mark_boxplot(x = mpg, y = factor(cyl))`) draws
+  horizontal boxes / violins, and the axis is widened for the violin outline as
+  for vertical ones. `orientation = "x"` or `"y"` forces either (F-10).
+
+* `facet_wrap()` and `facet_grid()` take a `labeller` argument for the strip
+  text, with ggplot2's labellers: `label_value()`, `label_both()`
+  (`"cyl: 4"`), `label_wrap_gen(width)` for long values, and
+  `as_labeller()` for a lookup table (`c("0" = "automatic")`) or a function
+  of the values. A named character vector or a plain function can be passed
+  to `labeller =` directly. With several facet variables a strip shows one
+  line per variable, centred, and the strip grows to fit (F-10).
+
+* `guide_bivariate()` labels the swatch edges with the class breaks
+  `bi_class()` chose, along both axes, so the legend says which range each
+  colour stands for (`labels = FALSE` turns them off; the swatches widen to fit
+  them unless `key.size` is set). `guide_bivariate(rotate = TRUE)` turns the
+  grid 45 degrees into a diamond, low-low at the bottom and high-high at the
+  top. The "Scales and guides" article has a new bivariate section (VP-35).
+
+* `scale_x_discrete()` / `scale_y_discrete()` gain `breaks` (the levels that
+  get a tick), `labels` (a vector, a vector named by level, or a function) and
+  `drop` (F-10).
+
+* `scale_x_continuous()`, `scale_y_continuous()`, `scale_color_continuous()`,
+  `scale_fill_continuous()`, `scale_size()` and `scale_alpha()` gain `oob`:
+  `"censor"`, `"squish"`, `"keep"` or a `function(x, range)` such as
+  `scales::oob_squish_any()`, with `scales::oob_*()` semantics. The defaults
+  are unchanged: positions and sizes keep out-of-limits values, colours squish
+  them (F-10).
+
+* Legends can sit inside the panels: `theme(legend.position = "inside")` with
+  `legend.position.inside = c(x, y)` and `legend.justification`, or the older
+  `legend.position = c(x, y)`. Positions are fractions of the panel area; the
+  justification (a `c(x, y)` or words such as `c("right", "top")`) defaults to
+  the position, so `c(1, 1)` tucks the legend into the top-right corner (F-10).
+
+* `coord_cartesian(xlim =, ylim =)` (and the other coords' limits) now zoom a
+  discrete axis too, in level positions as in ggplot2: `xlim = c(2, 4)` shows
+  the second to fourth levels (VP-11).
+
 * `spec_diagnose()`'s `$report` now also counts the rows a stat leaves out
   itself, in a new `stat` column: an infinite value in a histogram, density,
   smooth or 2-D bin, or every row of a group too small for a density, smooth,
@@ -208,13 +172,57 @@
   continuous variable is now an error, matching the compile, which refuses it
   (VP-36, #208).
 
-* `facet_wrap()` and `facet_grid()` take a `labeller` argument for the strip
-  text, with ggplot2's labellers: `label_value()`, `label_both()`
-  (`"cyl: 4"`), `label_wrap_gen(width)` for long values, and
-  `as_labeller()` for a lookup table (`c("0" = "automatic")`) or a function
-  of the values. A named character vector or a plain function can be passed
-  to `labeller =` directly. With several facet variables a strip shows one
-  line per variable, centred, and the strip grows to fit (F-10).
+* **Stat parameters are checked where you write them.** `bins`, `binwidth`,
+  `adjust`, `span`, `level`, `height`, `segments` and `n` in `mark_histogram()`,
+  `mark_hex()`, `mark_bin2d()`, `mark_dotplot()`, `mark_density()`,
+  `mark_violin()`, `mark_ridgeline()`, `mark_halfeye()`, `mark_smooth()`,
+  `mark_ellipse()` and `mark_contour()` are validated by the constructor, with an
+  error naming the argument. Before, `bins = 0` crashed with "arguments imply
+  differing number of rows", `adjust = 0` with "'bw' is not positive", and
+  `level = 2` or `binwidth = -1` drew a wrong plot without complaint (VP-21).
+
+## Bug fixes
+
+* **Violins on a binned axis keep their shape (VP-30).** With
+  `scale_y_binned()`, a violin's density (and the axis room made for it) was
+  estimated from the values snapped to their bin centres, giving a lumpy
+  outline cut off at the outer centres. The density now uses the continuous
+  values.
+
+* An aesthetic whose values are all missing no longer draws a 0-1 colourbar or
+  size legend; a continuous scale with no data and no limits draws no legend
+  (VP-11).
+
+* A two-vertex graph on the default stress layout no longer warns
+  "data length [3] is not a sub-multiple or multiple of the number of rows
+  [2]". The warning came from graphlayouts' fixed two-vertex branch;
+  `vgraph()` now returns that same layout itself (VP-40).
+
+* Faceted interactive plots without a `data_id` no longer link marks across
+  panels by accident. Their default element keys were row positions within each
+  panel's layer, so they repeated from panel to panel, and a hover, click or
+  brush in one panel also lit up the marks at the same positions in the others.
+  Default keys in a faceted plot are now `"<panel>:<row>"`, using the source
+  row when the layer draws one element per input row, and that source row is
+  carried as the element's `join` id so a declarative selection still matches
+  the same datum wherever it is drawn. Single-panel plots and declared
+  `data_id`s are unchanged (VW-11).
+
+* `md()`, `vl_pattern()`, `sketch()`, `linear_gradient()` and
+  `radial_gradient()` are now vellum's own functions re-exported, not wrappers
+  around them. They behave the same, but attaching vellum and vellumplot
+  together (as `library(vellumverse)` does) no longer reports them as
+  conflicts. `pdf_pages()` and `render_all()` differ from vellum's (they take
+  plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
+  their docs now say how they differ (VV-2).
+
+## Internal
+
+* Internal: a trained scale now records its scale type (`continuous`,
+  `discrete`, `binned`, `identity`, ...) in `type` for every aesthetic, where
+  `kind` held the type for colour and position scales and the aesthetic name
+  for the rest. The provenance scale-refs report the same `type` values as
+  before (R-14).
 
 # vellumplot 0.12.0
 
