@@ -117,7 +117,8 @@ Ignored for a <a href="PlotSpec.html">PlotSpec</a>, which carries its own data.<
 <code>ok</code> (logical), <code>plot</code> (the <a href="PlotSpec.html">PlotSpec</a> or <code>NULL</code>), <code>diagnostics</code> (a list of
 records with <code>severity</code>, <code>field</code>, <code>message</code>, <code>hint</code>), and <code>report</code> (a data
 frame with one row per layer: <code>layer</code>, <code>mark</code>, <code>rows</code>, the counts
-<code>missing</code>, <code>transform</code>, <code>limits</code>, and their total <code>dropped</code>; <code>NULL</code>
+<code>missing</code>, <code>transform</code>, <code>stat</code>, <code>limits</code>, their total <code>dropped</code>, and
+<code>oob</code>, the rows outside a scale's limits that are still drawn; <code>NULL</code>
 when the plot could not be built). Printing it shows a summary.
 <code>vplot_from_spec()</code> returns a <a href="PlotSpec.html">PlotSpec</a>.</p>
     </div>
@@ -132,13 +133,13 @@ on (which field is unknown, the nearest real field) rather than a traceback.</p>
 
 <p>Before compiling, the plot is checked for mistakes that would compile to a
 wrong plot or fail with an opaque error:</p><ul><li><p>a <strong>facet variable missing</strong> from the plot data (an error), or from a
-layer's own data (a warning: that layer is then repeated in every panel);</p></li>
+layer's own data (a warning: that layer is then repeated across that
+variable's panels);</p></li>
 <li><p><strong><code>color</code> and <code>fill</code> mapped to variables of different type</strong> (one
 continuous, one discrete) although they share one colour scale and legend
 (an error, or a warning when the scale kind is set explicitly);</p></li>
 <li><p>a <strong>manual or discrete palette</strong> (<code><a href="scale_color_continuous.html">scale_color_manual()</a></code>, ...) on a
-continuous colour channel, which would make every distinct number its own
-category (a warning).</p></li>
+continuous colour channel, which the compile refuses (an error).</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="compile-report">Compile report<a class="anchor" aria-label="anchor" href="#compile-report"></a></h2>
@@ -151,10 +152,20 @@ that applies:</p><ul><li><p><code>missing</code>: a continuous position value (<
 in a line, step or area;</p></li>
 <li><p><code>transform</code>: the axis transform cannot map the value, e.g. a value <code>&lt;= 0</code>
 on a log axis;</p></li>
+<li><p><code>stat</code>: the layer's statistic leaves the row out, e.g. an infinite value
+in a histogram or density, or a group with too few points for a density,
+a smooth or an ellipse;</p></li>
 <li><p><code>limits</code>: the value is outside explicit scale limits (<code><a href="lims.html">lims()</a></code>,
 <code>scale_*(limits = )</code>), so it is clipped away. Coordinate limits
 (<code>coord_cartesian(xlim = )</code>) zoom instead and are not counted.</p></li>
-</ul><p>A missing <em>non-position</em> value (colour, size, ...) is drawn with the scale's
+</ul><p>Their total is <code>dropped</code>. Limits follow each scale's <code>oob</code> handler: a
+position outside its limits counts under <code>limits</code> when it is clipped (the
+default) or censored, and so does a censored size. A separate column, <code>oob</code>,
+counts rows that are outside a scale's <code>limits</code> but still drawn: a squished
+position, or a colour, fill, size, alpha or linewidth value (clamped to the
+end of the palette, given the NA colour, or extrapolated). They are not part
+of <code>dropped</code>.</p>
+<p>A missing <em>non-position</em> value (colour, size, ...) is drawn with the scale's
 <code>NA</code> value, a missing discrete position as a trailing <code>"NA"</code> category, and a
 missing facet value in a trailing <code>"NA"</code> panel, so none of them is counted.
 Each layer that loses rows also adds a <code>"warning"</code> diagnostic, so it shows in
@@ -184,9 +195,9 @@ the printed summary.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> * [warning] Layer 1 (point): 2 of 4 rows will not be shown: 1 missing a position value, 1 not mappable on a transformed axis (e.g. &lt;= 0 on a log scale).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     See `$report` for the per-layer counts.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Rows not shown, per layer:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  layer  mark rows missing transform limits dropped</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      1 point    4       1         1      0       2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Rows not shown, per layer (`oob`: drawn, outside a scale's limits):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  layer  mark rows missing transform stat limits dropped oob</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      1 point    4       1         1    0      0       2   0</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

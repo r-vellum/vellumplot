@@ -48,8 +48,9 @@ vplot_from_spec(spec, data = NULL, env = globalenv())
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md)
 or `NULL`), `diagnostics` (a list of records with `severity`, `field`,
 `message`, `hint`), and `report` (a data frame with one row per layer:
-`layer`, `mark`, `rows`, the counts `missing`, `transform`, `limits`,
-and their total `dropped`; `NULL` when the plot could not be built).
+`layer`, `mark`, `rows`, the counts `missing`, `transform`, `stat`,
+`limits`, their total `dropped`, and `oob`, the rows outside a scale's
+limits that are still drawn; `NULL` when the plot could not be built).
 Printing it shows a summary. `vplot_from_spec()` returns a
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
 
@@ -65,8 +66,8 @@ Before compiling, the plot is checked for mistakes that would compile to
 a wrong plot or fail with an opaque error:
 
 - a **facet variable missing** from the plot data (an error), or from a
-  layer's own data (a warning: that layer is then repeated in every
-  panel);
+  layer's own data (a warning: that layer is then repeated across that
+  variable's panels);
 
 - **`color` and `fill` mapped to variables of different type** (one
   continuous, one discrete) although they share one colour scale and
@@ -74,8 +75,8 @@ a wrong plot or fail with an opaque error:
 
 - a **manual or discrete palette**
   ([`scale_color_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
-  ...) on a continuous colour channel, which would make every distinct
-  number its own category (a warning).
+  ...) on a continuous colour channel, which the compile refuses (an
+  error).
 
 ## Compile report
 
@@ -90,10 +91,22 @@ reason that applies:
 - `transform`: the axis transform cannot map the value, e.g. a value
   `<= 0` on a log axis;
 
+- `stat`: the layer's statistic leaves the row out, e.g. an infinite
+  value in a histogram or density, or a group with too few points for a
+  density, a smooth or an ellipse;
+
 - `limits`: the value is outside explicit scale limits
   ([`lims()`](https://r-vellum.github.io/vellumplot/reference/lims.md),
   `scale_*(limits = )`), so it is clipped away. Coordinate limits
   (`coord_cartesian(xlim = )`) zoom instead and are not counted.
+
+Their total is `dropped`. Limits follow each scale's `oob` handler: a
+position outside its limits counts under `limits` when it is clipped
+(the default) or censored, and so does a censored size. A separate
+column, `oob`, counts rows that are outside a scale's `limits` but still
+drawn: a squished position, or a colour, fill, size, alpha or linewidth
+value (clamped to the end of the palette, given the NA colour, or
+extrapolated). They are not part of `dropped`.
 
 A missing *non-position* value (colour, size, ...) is drawn with the
 scale's `NA` value, a missing discrete position as a trailing `"NA"`
@@ -127,7 +140,7 @@ spec_diagnose(p)
 #> * [warning] Layer 1 (point): 2 of 4 rows will not be shown: 1 missing a position value, 1 not mappable on a transformed axis (e.g. <= 0 on a log scale).
 #>     See `$report` for the per-layer counts.
 #> 
-#> Rows not shown, per layer:
-#>  layer  mark rows missing transform limits dropped
-#>      1 point    4       1         1      0       2
+#> Rows not shown, per layer (`oob`: drawn, outside a scale's limits):
+#>  layer  mark rows missing transform stat limits dropped oob
+#>      1 point    4       1         1    0      0       2   0
 ```
