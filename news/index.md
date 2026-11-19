@@ -2,6 +2,17 @@
 
 ## vellumplot 0.12.0.9000 (development version)
 
+- Faceted interactive plots without a `data_id` no longer link marks
+  across panels by accident. Their default element keys were row
+  positions within each panel’s layer, so they repeated from panel to
+  panel, and a hover, click or brush in one panel also lit up the marks
+  at the same positions in the others. Default keys in a faceted plot
+  are now `"<panel>:<row>"`, using the source row when the layer draws
+  one element per input row, and that source row is carried as the
+  element’s `join` id so a declarative selection still matches the same
+  datum wherever it is drawn. Single-panel plots and declared `data_id`s
+  are unchanged (VW-11).
+
 ## vellumplot 0.12.0
 
 ### New features
