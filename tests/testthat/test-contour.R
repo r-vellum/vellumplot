@@ -85,12 +85,58 @@ test_that("filled density bands close along the grid edge (no straight-chord wed
   kd <- MASS::kde2d(faithful$eruptions, faithful$waiting, n = 100)
   expect_equal(range(bf$x), range(kd$x), tolerance = 1e-6)
   expect_equal(range(bf$y), range(kd$y), tolerance = 1e-6)
-  lowest <- bf[bf$level == min(bf$level), ]
-  expect_lt(kd$z[1, 100], min(bf$level)) # the top-left corner is below it
+  # the first inner level (the lowest band, VP-45, covers everything)
+  first <- sort(unique(bf$level))[2]
+  lowest <- bf[bf$level == first, ]
+  expect_lt(kd$z[1, 100], first) # the top-left corner is below it
   near <- abs(lowest$x - min(kd$x)) < 0.05 & abs(lowest$y - max(kd$y)) < 1
   expect_false(any(near))
   # the band runs along the bottom-left edge, where the density is high
   expect_true(any(abs(lowest$x - min(kd$x)) < 1e-6))
+})
+
+test_that("filled contours paint ggplot2's lowest band over the whole grid", {
+  skip_if_no_contour()
+  # ggplot2's (0, b1] band covers the field below the first inner level, so
+  # the whole data grid is painted (VP-45)
+  Lf <- list(
+    values = list(x = faithful$eruptions, y = faithful$waiting),
+    stat_params = list(filled = TRUE),
+    after = list(),
+    types = list()
+  )
+  bf <- .stat_density_2d(Lf)
+  kd <- MASS::kde2d(faithful$eruptions, faithful$waiting, n = 100)
+  levs <- sort(unique(bf$level))
+  expect_identical(levs[1], 0)
+  # the same 13 bands (lower bounds) as ggplot2's geom_density_2d_filled()
+  expect_equal(levs, seq(0, 0.024, by = 0.002))
+  base <- bf[bf$level == 0, ]
+  expect_length(unique(base$.piece), 1L)
+  expect_equal(range(base$x), range(kd$x), tolerance = 1e-5)
+  expect_equal(range(base$y), range(kd$y), tolerance = 1e-5)
+  # painted first, under the inner bands
+  expect_identical(base$.piece[1], min(bf$.piece))
+  # line contours keep only the inner levels
+  Ll <- Lf
+  Ll$stat_params$filled <- FALSE
+  expect_false(0 %in% .stat_density_2d(Ll)$level)
+
+  # a z surface whose minimum sits exactly on a break: the band still covers
+  # every cell, and explicit breaks below the minimum bound the lowest band
+  g <- expand.grid(x = 1:20, y = 1:20)
+  g$z <- with(g, (x - 1) * (y - 1))
+  Lz <- list(
+    values = list(x = g$x, y = g$y, z = g$z),
+    stat_params = list(filled = TRUE, breaks = c(-50, 0, 100, 200)),
+    after = list(),
+    types = list()
+  )
+  bz <- .stat_density_2d(Lz)
+  expect_identical(sort(unique(bz$level)), c(0, 100, 200))
+  b0 <- bz[bz$level == 0, ]
+  expect_equal(range(b0$x), c(1, 20), tolerance = 1e-5)
+  expect_equal(range(b0$y), c(1, 20), tolerance = 1e-5)
 })
 
 test_that("a z surface is contoured in the right orientation (not transposed)", {

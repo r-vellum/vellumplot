@@ -84,6 +84,12 @@ Contours are coloured by level automatically — \code{mark_contour()} maps
 tracing is done by the engine (\code{vellum::vl_contour()}), so no extra package is
 needed for the lines; a density field additionally needs \pkg{MASS}.
 }
+\details{
+As in ggplot2, each filled band is coloured by its lower level, and the
+lowest band -- from the highest break at or below the field's minimum (e.g.
+\code{0} for a density) up to the first inner level -- covers the whole grid, so
+the field's low-lying parts are painted rather than left as background.
+}
 \examples{
 vplot(faithful) |>
   mark_point(x = eruptions, y = waiting) |>
