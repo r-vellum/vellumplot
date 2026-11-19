@@ -15,6 +15,7 @@ mark_violin(
   position = "identity",
   adjust = 1,
   trim = TRUE,
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -73,6 +74,13 @@ mark_dotplot(
   the smallest and largest value of its data; `FALSE` lets the kernel's
   tails run on past them.
 
+- orientation:
+
+  For `mark_violin()`, `NA` (default) to infer it from the data
+  (horizontal when `y` is discrete and `x` is not, as in ggplot2), `"x"`
+  for vertical violins along a discrete `x`, or `"y"` for horizontal
+  violins along `y`.
+
 - blend, sketch, data:
 
   Standard layer arguments (see
@@ -97,6 +105,8 @@ The modified
 ``` r
 df <- data.frame(g = rep(letters[1:3], each = 50), v = rnorm(150))
 vplot(df) |> mark_violin(x = g, y = v)
+
+vplot(df) |> mark_violin(x = v, y = g) # horizontal
 
 vplot(df) |> mark_ridgeline(x = v, y = g)
 

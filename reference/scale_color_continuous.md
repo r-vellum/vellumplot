@@ -18,7 +18,8 @@ scale_color_continuous(
   limits = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 
 scale_color_discrete(
@@ -48,7 +49,8 @@ scale_fill_continuous(
   limits = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 
 scale_color_gradientn(plot, colours, name = NULL)
@@ -84,7 +86,8 @@ scale_colour_continuous(
   limits = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 
 scale_colour_discrete(
@@ -135,6 +138,13 @@ scale_colour_gradient2(
 - name:
 
   Legend title, or `NULL` to derive from the encoding.
+
+- oob:
+
+  For `scale_*_continuous()`, what to do with values outside `limits`:
+  `"censor"` gives them the NA colour, `"squish"` the colour of the
+  nearest limit, `"keep"` the same (a ramp cannot extend past its ends),
+  or a `function(x, range)`. `NULL` (default) squishes.
 
 - values:
 

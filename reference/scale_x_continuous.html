@@ -86,7 +86,8 @@ let you set the level order via <code>limits</code>.</p>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  expand <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_y_continuous</span><span class="op">(</span></span>
@@ -97,12 +98,27 @@ let you set the level order via <code>limits</code>.</p>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  expand <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  sec.axis <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_x_discrete</span><span class="op">(</span><span class="va">plot</span>, limits <span class="op">=</span> <span class="cn">NULL</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_x_discrete</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_y_discrete</span><span class="op">(</span><span class="va">plot</span>, limits <span class="op">=</span> <span class="cn">NULL</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">scale_y_discrete</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -128,7 +144,9 @@ so signed data and zero/negatives read on one axis), <code>"reverse"</code>, or 
 
 <dt id="arg-breaks-labels">breaks, labels<a class="anchor" aria-label="anchor" href="#arg-breaks-labels"></a></dt>
 <dd><p>Explicit break positions (data units) and their labels,
-or <code>NULL</code> to compute them.</p></dd>
+or <code>NULL</code> to compute them. On a discrete scale <code>breaks</code> is the levels that
+get a tick, and <code>labels</code> a character vector (one per break, or named by
+level) or a function of the levels.</p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
@@ -148,6 +166,21 @@ axis exactly to the data (e.g. a bar chart's baseline), or <code>expand = c(0.1,
 <dd><p>A secondary axis from <code><a href="sec_axis.html">sec_axis()</a></code> / <code><a href="sec_axis.html">dup_axis()</a></code>, drawn on
 the opposite edge, or <code>NULL</code> for none. Continuous Cartesian plots only (see
 <code><a href="sec_axis.html">sec_axis()</a></code> for the current limitations).</p></dd>
+
+
+<dt id="arg-oob">oob<a class="anchor" aria-label="anchor" href="#arg-oob"></a></dt>
+<dd><p>What to do with values outside <code>limits</code>, as in
+<code><a href="https://scales.r-lib.org/reference/oob.html" class="external-link">scales::oob_censor()</a></code> and friends: <code>"censor"</code> drops them (they become
+<code>NA</code> and are not drawn), <code>"squish"</code> moves them onto the nearest limit,
+<code>"keep"</code> draws them where they fall, clipped by the panel. A function
+<code>function(x, range)</code> such as <code><a href="https://scales.r-lib.org/reference/oob.html" class="external-link">scales::oob_squish_any()</a></code> also works. <code>NULL</code>
+(default) is <code>"keep"</code> on a position axis. Infinite values are never out
+of bounds: <code>x = Inf</code> sits on the panel edge.</p></dd>
+
+
+<dt id="arg-drop">drop<a class="anchor" aria-label="anchor" href="#arg-drop"></a></dt>
+<dd><p>For discrete scales, drop factor levels that do not occur in
+the data (default <code>TRUE</code>, as in ggplot2). <code>limits</code> overrides it.</p></dd>
 
 </dl></div>
     <div class="section level2">

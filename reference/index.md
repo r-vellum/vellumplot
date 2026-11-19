@@ -100,6 +100,7 @@ Layers that draw data. Scales train across every mark on the panel.
   [`mark_dotplot()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
   : Density-shape marks
 - [`mark_histogram()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  [`mark_freqpoly()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
   [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
   : Statistical marks
 - [`mark_ecdf()`](https://r-vellum.github.io/vellumplot/reference/mark_ecdf.md)

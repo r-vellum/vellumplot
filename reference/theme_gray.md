@@ -64,10 +64,15 @@ set_theme(
   Named theme elements, e.g. `plot.title = element_text(size = 16)`,
   `panel.grid.minor = element_blank()`, or settings like
   `legend.position`, one of `"right"` (default), `"left"`, `"top"`,
-  `"bottom"`, or `"none"`. Legend geometry is tunable via
-  `legend.key.size` (key/swatch side, mm), `legend.spacing` (gap between
-  stacked guides, mm), and `legend.margin` (inset around the legend
-  block, one or four millimetres, `t, r, b, l`).
+  `"bottom"`, `"none"`, or `"inside"`. An inside legend sits over the
+  panels at `legend.position.inside = c(x, y)` (fractions of the panel
+  area; the older `legend.position = c(x, y)` works too), its
+  `legend.justification` point (`c(x, y)` or words such as
+  `c("right", "top")`, defaulting to the position) on that spot. Legend
+  geometry is tunable via `legend.key.size` (key/swatch side, mm),
+  `legend.spacing` (gap between stacked guides, mm), and `legend.margin`
+  (inset around the legend block, one or four millimetres,
+  `t, r, b, l`).
 
 - panel_bg, grid_col, label_col, strip_bg:
 
@@ -111,4 +116,10 @@ vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_minimal()
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   theme(panel.grid.minor = element_blank(), legend.position = "none")
+
+
+# a legend tucked into the top-right corner of the panel
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+  theme(legend.position = "inside", legend.justification = c(1, 1))
 ```

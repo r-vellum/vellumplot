@@ -5,7 +5,9 @@
 points). `mark_errorbar()` draws vertical bars from `ymin` to `ymax`
 with horizontal caps; `mark_linerange()` omits the caps.
 `mark_summary()` aggregates `y` per `x` with `fun` (default mean) and
-draws the result as points.
+draws the result as points; give it `fun.data` (or `fun.min` /
+`fun.max`) and it draws each summary as a point with a range instead,
+like ggplot2's `stat_summary()`.
 
 ## Usage
 
@@ -14,6 +16,7 @@ mark_boxplot(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -43,6 +46,10 @@ mark_summary(
   ...,
   position = "identity",
   fun = mean,
+  fun.data = NULL,
+  fun.min = NULL,
+  fun.max = NULL,
+  fun.args = list(),
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -101,6 +108,12 @@ mark_crossbar(
   points, text and labels; `"jitterdodge"` and `"sina"` on points. A
   position a mark does not support is an error naming the ones it does.
 
+- orientation:
+
+  For `mark_boxplot()`, `NA` (default) to infer it from the data
+  (horizontal when `y` is discrete and `x` is not), `"x"` for vertical
+  boxes along a discrete `x`, or `"y"` for horizontal boxes along `y`.
+
 - blend:
 
   Optional blend mode for compositing this layer against what is already
@@ -128,7 +141,29 @@ mark_crossbar(
 
 - fun:
 
-  For `mark_summary()`, the aggregation function (default `mean`).
+  For `mark_summary()`, the aggregation function (default `mean`). With
+  `fun.min` / `fun.max` it gives the point of the range.
+
+- fun.data:
+
+  For `mark_summary()`, a summary giving a point and a range per
+  category: `"mean_se"` (mean +/- one standard error),
+  `"mean_cl_normal"` (mean with a t-based confidence interval),
+  `"mean_sdl"` (mean +/- two standard deviations), `"median_hilow"`
+  (median with the central 95% of the data), or a function of the values
+  that returns `y`, `ymin` and `ymax` (such as ggplot2's `mean_se()`).
+  Overrides `fun`, `fun.min` and `fun.max`.
+
+- fun.min, fun.max:
+
+  For `mark_summary()`, functions giving the bottom and top of each
+  category's range (e.g. `fun.min = min, fun.max = max`).
+
+- fun.args:
+
+  For `mark_summary()`, a list of extra arguments to the summary
+  functions, e.g. `list(mult = 2)` for `"mean_se"` or
+  `list(conf.int = 0.9)` for `"mean_cl_normal"`.
 
 ## Value
 
@@ -136,6 +171,10 @@ The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
 
 ## Details
+
+A box plot is vertical when `x` is the discrete axis. When `y` is
+discrete and `x` continuous (`mark_boxplot(x = mpg, y = factor(cyl))`)
+it is drawn horizontally, as in ggplot2; `orientation` forces either.
 
 `mark_pointrange()` draws a point at `(x, y)` with a vertical line from
 `ymin` to `ymax` (an identity mark — supply the summary values yourself,
@@ -148,4 +187,10 @@ counterparts of the aggregating
 
 ``` r
 vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
+
+# horizontal: the discrete variable on y
+vplot(mtcars) |> mark_boxplot(x = mpg, y = factor(cyl))
+
+# mean and standard error per category
+vplot(mtcars) |> mark_summary(x = factor(cyl), y = mpg, fun.data = "mean_se")
 ```

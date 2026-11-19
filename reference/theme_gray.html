@@ -136,7 +136,12 @@ system default.</p></dd>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Named theme elements, e.g. <code>plot.title = element_text(size = 16)</code>,
 <code>panel.grid.minor = element_blank()</code>, or settings like <code>legend.position</code>,
-one of <code>"right"</code> (default), <code>"left"</code>, <code>"top"</code>, <code>"bottom"</code>, or <code>"none"</code>.
+one of <code>"right"</code> (default), <code>"left"</code>, <code>"top"</code>, <code>"bottom"</code>, <code>"none"</code>, or
+<code>"inside"</code>. An inside legend sits over the panels at
+<code>legend.position.inside = c(x, y)</code> (fractions of the panel area; the older
+<code>legend.position = c(x, y)</code> works too), its <code>legend.justification</code> point
+(<code>c(x, y)</code> or words such as <code>c("right", "top")</code>, defaulting to the
+position) on that spot.
 Legend geometry is tunable via <code>legend.key.size</code> (key/swatch side, mm),
 <code>legend.spacing</code> (gap between stacked guides, mm), and <code>legend.margin</code>
 (inset around the legend block, one or four millimetres, <code>t, r, b, l</code>).</p></dd>
@@ -172,6 +177,12 @@ the palette is only a <em>default</em>, so <code>scale_*</code> overrides still 
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">theme</span><span class="op">(</span>panel.grid.minor <span class="op">=</span> <span class="fu"><a href="element.html">element_blank</a></span><span class="op">(</span><span class="op">)</span>, legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="theme_gray-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a legend tucked into the top-right corner of the panel</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">theme</span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"inside"</span>, legend.justification <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="theme_gray-3.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

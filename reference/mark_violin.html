@@ -87,6 +87,7 @@ stacks one dot per observation.</p>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  trim <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -143,6 +144,13 @@ at the smallest and largest value of its data; <code>FALSE</code> lets the kerne
 tails run on past them.</p></dd>
 
 
+<dt id="arg-orientation">orientation<a class="anchor" aria-label="anchor" href="#arg-orientation"></a></dt>
+<dd><p>For <code>mark_violin()</code>, <code>NA</code> (default) to infer it from the
+data (horizontal when <code>y</code> is discrete and <code>x</code> is not, as in ggplot2), <code>"x"</code>
+for vertical violins along a discrete <code>x</code>, or <code>"y"</code> for horizontal violins
+along <code>y</code>.</p></dd>
+
+
 <dt id="arg-blend-sketch-data">blend, sketch, data<a class="anchor" aria-label="anchor" href="#arg-blend-sketch-data"></a></dt>
 <dd><p>Standard layer arguments (see <code><a href="mark_point.html">mark_point()</a></code>).</p></dd>
 
@@ -166,10 +174,12 @@ tails run on past them.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, each <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>, v <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_violin</span><span class="op">(</span>x <span class="op">=</span> <span class="va">g</span>, y <span class="op">=</span> <span class="va">v</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_violin-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_ridgeline</span><span class="op">(</span>x <span class="op">=</span> <span class="va">v</span>, y <span class="op">=</span> <span class="va">g</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_violin</span><span class="op">(</span>x <span class="op">=</span> <span class="va">v</span>, y <span class="op">=</span> <span class="va">g</span><span class="op">)</span> <span class="co"># horizontal</span></span></span>
 <span class="r-plt img"><img src="mark_violin-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_dotplot</span><span class="op">(</span>x <span class="op">=</span> <span class="va">v</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_ridgeline</span><span class="op">(</span>x <span class="op">=</span> <span class="va">v</span>, y <span class="op">=</span> <span class="va">g</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_violin-3.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_dotplot</span><span class="op">(</span>x <span class="op">=</span> <span class="va">v</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="mark_violin-4.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

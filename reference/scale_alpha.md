@@ -6,14 +6,22 @@ opacity `range` in `[0, 1]`. An alpha legend is drawn automatically.
 ## Usage
 
 ``` r
-scale_alpha(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
+scale_alpha(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  name = NULL,
+  oob = NULL
+)
 
 scale_alpha_continuous(
   plot,
   range = NULL,
   limits = NULL,
   breaks = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 ```
 
@@ -41,10 +49,23 @@ scale_alpha_continuous(
 
   Legend title, or `NULL` to derive from the encoding.
 
+- oob:
+
+  What to do with values outside `limits`: `"censor"` (they get no
+  opacity, so the mark is not drawn), `"squish"` (the opacity of the
+  nearest limit), `"keep"` (extrapolated past the range), or a
+  `function(x, range)`. `NULL` (default) keeps them.
+
 ## Value
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## Details
+
+A factor, character or logical mapped to `alpha` gets a discrete scale,
+its levels spread evenly over `range`, with a warning for an unordered
+variable (as in ggplot2).
 
 ## Examples
 

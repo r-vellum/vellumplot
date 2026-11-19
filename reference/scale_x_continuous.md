@@ -16,7 +16,8 @@ scale_x_continuous(
   labels = NULL,
   name = NULL,
   expand = NULL,
-  sec.axis = NULL
+  sec.axis = NULL,
+  oob = NULL
 )
 
 scale_y_continuous(
@@ -27,12 +28,27 @@ scale_y_continuous(
   labels = NULL,
   name = NULL,
   expand = NULL,
-  sec.axis = NULL
+  sec.axis = NULL,
+  oob = NULL
 )
 
-scale_x_discrete(plot, limits = NULL, name = NULL)
+scale_x_discrete(
+  plot,
+  limits = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  drop = TRUE
+)
 
-scale_y_discrete(plot, limits = NULL, name = NULL)
+scale_y_discrete(
+  plot,
+  limits = NULL,
+  name = NULL,
+  breaks = NULL,
+  labels = NULL,
+  drop = TRUE
+)
 ```
 
 ## Arguments
@@ -60,7 +76,9 @@ scale_y_discrete(plot, limits = NULL, name = NULL)
 - breaks, labels:
 
   Explicit break positions (data units) and their labels, or `NULL` to
-  compute them.
+  compute them. On a discrete scale `breaks` is the levels that get a
+  tick, and `labels` a character vector (one per break, or named by
+  level) or a function of the levels.
 
 - name:
 
@@ -86,6 +104,23 @@ scale_y_discrete(plot, limits = NULL, name = NULL)
   plots only (see
   [`sec_axis()`](https://r-vellum.github.io/vellumplot/reference/sec_axis.md)
   for the current limitations).
+
+- oob:
+
+  What to do with values outside `limits`, as in
+  [`scales::oob_censor()`](https://scales.r-lib.org/reference/oob.html)
+  and friends: `"censor"` drops them (they become `NA` and are not
+  drawn), `"squish"` moves them onto the nearest limit, `"keep"` draws
+  them where they fall, clipped by the panel. A function
+  `function(x, range)` such as
+  [`scales::oob_squish_any()`](https://scales.r-lib.org/reference/oob.html)
+  also works. `NULL` (default) is `"keep"` on a position axis. Infinite
+  values are never out of bounds: `x = Inf` sits on the panel edge.
+
+- drop:
+
+  For discrete scales, drop factor levels that do not occur in the data
+  (default `TRUE`, as in ggplot2). `limits` overrides it.
 
 ## Value
 

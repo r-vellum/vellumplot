@@ -72,14 +72,22 @@ opacity <code>range</code> in <code>[0, 1]</code>. An alpha legend is drawn auto
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">scale_alpha</span><span class="op">(</span><span class="va">plot</span>, range <span class="op">=</span> <span class="cn">NULL</span>, limits <span class="op">=</span> <span class="cn">NULL</span>, breaks <span class="op">=</span> <span class="cn">NULL</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">scale_alpha</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  range <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_alpha_continuous</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  range <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,10 +115,23 @@ default <code>c(0.1, 1)</code>.</p></dd>
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Legend title, or <code>NULL</code> to derive from the encoding.</p></dd>
 
+
+<dt id="arg-oob">oob<a class="anchor" aria-label="anchor" href="#arg-oob"></a></dt>
+<dd><p>What to do with values outside <code>limits</code>: <code>"censor"</code> (they get
+no opacity, so the mark is not drawn), <code>"squish"</code> (the opacity of the
+nearest limit), <code>"keep"</code> (extrapolated past the range), or a
+<code>function(x, range)</code>. <code>NULL</code> (default) keeps them.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>A factor, character or logical mapped to <code>alpha</code> gets a discrete scale, its
+levels spread evenly over <code>range</code>, with a warning for an unordered variable
+(as in ggplot2).</p>
     </div>
 
     <div class="section level2">

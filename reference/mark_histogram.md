@@ -2,8 +2,11 @@
 
 Marks that apply a statistical transform before drawing.
 `mark_histogram()` bins a continuous `x` and draws the per-bin counts as
-bars. `mark_smooth()` fits a model of `y` on `x` (per group) and draws
-the fitted line, with a confidence ribbon when `se = TRUE`.
+bars. The bin stat computes `count`, `density` (each group integrates to
+1), `ncount` and `ndensity` (scaled to a maximum of 1), and `width`, for
+[`after_stat()`](https://r-vellum.github.io/vellumplot/reference/after_stat.md).
+`mark_smooth()` fits a model of `y` on `x` (per group) and draws the
+fitted line, with a confidence ribbon when `se = TRUE`.
 
 ## Usage
 
@@ -12,7 +15,27 @@ mark_histogram(
   plot,
   ...,
   bins = 30,
+  binwidth = NULL,
+  breaks = NULL,
+  boundary = NULL,
+  center = NULL,
+  closed = c("right", "left"),
   position = "stack",
+  blend = NULL,
+  sketch = NULL,
+  data = NULL
+)
+
+mark_freqpoly(
+  plot,
+  ...,
+  bins = 30,
+  binwidth = NULL,
+  breaks = NULL,
+  boundary = NULL,
+  center = NULL,
+  closed = c("right", "left"),
+  position = "identity",
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -49,7 +72,31 @@ mark_smooth(
 
 - bins:
 
-  Number of histogram bins.
+  Number of histogram bins (default 30), used when neither `binwidth`
+  nor `breaks` is given. As in ggplot2, the outer bins are centred on
+  the smallest and largest values unless `boundary` or `center` is set.
+
+- binwidth:
+
+  Width of each bin, overriding `bins`.
+
+- breaks:
+
+  A numeric vector of bin edges, overriding `bins` and `binwidth`. Bins
+  may have different widths; values outside the edges are not counted.
+
+- boundary, center:
+
+  Where the bins are aligned: `boundary` is a position that falls on an
+  edge between two bins, `center` one that falls on a bin's centre (give
+  at most one). Either may lie outside the data. For example
+  `binwidth = 1, boundary = 0` makes bins `(0, 1]`, `(1, 2]`, .... With
+  neither, bins of a given `binwidth` are aligned on `binwidth / 2`.
+
+- closed:
+
+  Which side of each bin is closed: `"right"` (default, `(a, b]`) or
+  `"left"` (`[a, b)`). The outermost edges always count.
 
 - position:
 
@@ -130,10 +177,22 @@ The modified
   (no confidence ribbon). For several quantiles, add one layer per
   `tau`.
 
+`mark_freqpoly()` draws the same bin counts as a line through the bin
+centres (a frequency polygon), one line per group. Like ggplot2's
+`geom_freqpoly()` it adds an empty bin at each end, so each line starts
+and ends at zero. It takes the same binning arguments as
+`mark_histogram()`, and `y = after_stat(density)` draws densities
+instead of counts.
+
 ## Examples
 
 ``` r
 vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
+
+# bins of width 2 with an edge at 10: (10, 12], (12, 14], ...
+vplot(mtcars) |> mark_histogram(x = mpg, binwidth = 2, boundary = 10)
+
+vplot(mtcars) |> mark_freqpoly(x = mpg, color = factor(cyl), binwidth = 2)
 
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> mark_smooth(x = wt, y = mpg)
 

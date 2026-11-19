@@ -2,6 +2,89 @@
 
 ## vellumplot 0.12.0.9000 (development version)
 
+- [`guide_bivariate()`](https://r-vellum.github.io/vellumplot/reference/guide_bivariate.md)
+  labels the swatch edges with the class breaks
+  [`bi_class()`](https://r-vellum.github.io/vellumplot/reference/bi_class.md)
+  chose, along both axes, so the legend says which range each colour
+  stands for (`labels = FALSE` turns them off; the swatches widen to fit
+  them unless `key.size` is set). `guide_bivariate(rotate = TRUE)` turns
+  the grid 45 degrees into a diamond, low-low at the bottom and
+  high-high at the top. The “Scales and guides” article has a new
+  bivariate section (VP-35).
+
+- **Behaviour change:** a discrete colour scale (`scale_*_manual()`,
+  `scale_*_discrete()`, `scale_*_brewer()`, …) on a numeric variable now
+  errors (“Continuous values supplied to a discrete colour scale”), as
+  in ggplot2, instead of giving every distinct number its own colour
+  (VP-11).
+
+- **Behaviour change:** discrete position axes drop factor levels no row
+  uses, as ggplot2 does by default; `scale_x_discrete(drop = FALSE)`
+  keeps them (F-10).
+
+- **Behaviour change:** `x = Inf` / `-Inf` (and `y`) on a continuous
+  axis now sits on the panel edge, as in ggplot2, rather than being lost
+  (VP-11).
+
+- An aesthetic whose values are all missing no longer draws a 0-1
+  colourbar or size legend; a continuous scale with no data and no
+  limits draws no legend (VP-11).
+
+- `coord_cartesian(xlim =, ylim =)` (and the other coords’ limits) now
+  zoom a discrete axis too, in level positions as in ggplot2:
+  `xlim = c(2, 4)` shows the second to fourth levels (VP-11).
+
+- [`scale_x_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  /
+  [`scale_y_discrete()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  gain `breaks` (the levels that get a tick), `labels` (a vector, a
+  vector named by level, or a function) and `drop` (F-10).
+
+- [`scale_x_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_y_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  [`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
+  [`scale_fill_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
+  [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  and
+  [`scale_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  gain `oob`: `"censor"`, `"squish"`, `"keep"` or a `function(x, range)`
+  such as
+  [`scales::oob_squish_any()`](https://scales.r-lib.org/reference/oob.html),
+  with `scales::oob_*()` semantics. The defaults are unchanged:
+  positions and sizes keep out-of-limits values, colours squish them
+  (F-10).
+
+- Legends can sit inside the panels: `theme(legend.position = "inside")`
+  with `legend.position.inside = c(x, y)` and `legend.justification`, or
+  the older `legend.position = c(x, y)`. Positions are fractions of the
+  panel area; the justification (a `c(x, y)` or words such as
+  `c("right", "top")`) defaults to the position, so `c(1, 1)` tucks the
+  legend into the top-right corner (F-10).
+
+- **Behaviour change:** a factor, character or logical mapped to `size`
+  or `alpha` now trains a discrete scale, as in ggplot2. Before, a
+  factor was trained as its integer codes (the legend read 1.0, 1.5, …
+  3.0, never merged with a `colour` legend of the same variable, and the
+  marks failed to draw) and a character failed outright. The levels now
+  spread evenly over the output range (by area for size), the legend
+  keys are the levels, and a discrete size or alpha legend merges with a
+  colour or shape legend of the same title and levels
+  ([\#220](https://github.com/r-vellum/vellumplot/issues/220)). As in
+  ggplot2, an unordered variable warns that size or alpha “for a
+  discrete variable is not advised”; an ordered factor does not.
+  [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
+  and
+  [`scale_alpha()`](https://r-vellum.github.io/vellumplot/reference/scale_alpha.md)
+  `breaks` pick the levels the legend shows, and `range` sets the spread
+  (VP-39).
+
+- **Behaviour change:**
+  [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  labels each bin boundary on its own, in the colourbar’s plain number
+  style, so quantile breaks that span orders of magnitude read
+  `0.0002, 0.066, 2.32, 193, 806` instead of all padded to the smallest
+  one’s precision (`0.0002 ... 806.0000`) (VP-33).
+
 - **Behaviour change:** the grammar lint rules (`single_level_scale`,
   `legend_overflow`) now check discrete shape, linetype and pattern
   scales as well as colour ones. They were meant to all along, but only
@@ -49,6 +132,46 @@
   [`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)
   splits a faceted plot into pages), so they stay, and their docs now
   say how they differ (VV-2).
+
+- **[`mark_histogram()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  bins like ggplot2.** It gains `binwidth`, `breaks`, `boundary`,
+  `center` and `closed`, with ggplot2’s meaning: `breaks` gives the bin
+  edges (bins may differ in width), `binwidth` the width, and `boundary`
+  / `center` where the bins are aligned. The bin stat also computes
+  `ncount` and `ndensity`, and the x axis now covers the outer bars’
+  edges (F-10).
+
+  **Behaviour change:** the default `bins = 30` now places bins as
+  ggplot2 does, with the outer bins centred on the smallest and largest
+  values (width `range / (bins - 1)`), instead of 30 bins from the
+  minimum to the maximum. Counts now match `geom_histogram()` for the
+  same `bins`.
+
+- **New
+  [`mark_freqpoly()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)**
+  draws the bin counts as a frequency polygon, one line per group,
+  padded with an empty bin at each end like ggplot2’s `geom_freqpoly()`.
+  It takes the same binning arguments as
+  [`mark_histogram()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  (F-10).
+
+- **[`mark_summary()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  draws ranges.** With `fun.data` (`"mean_se"`, `"mean_cl_normal"`,
+  `"mean_sdl"`, `"median_hilow"`, or a function such as
+  `ggplot2::mean_se()`), or with `fun.min` / `fun.max`, it summarises
+  each category into a point and a range and draws a point range, like
+  ggplot2’s `stat_summary()`. `fun.args` passes extra arguments. Without
+  them it draws points as before (F-10).
+
+- **Horizontal box plots and violins.**
+  [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  and
+  [`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
+  gain `orientation`. By default it is inferred as in ggplot2: a
+  discrete `y` with a continuous `x`
+  (`mark_boxplot(x = mpg, y = factor(cyl))`) draws horizontal boxes /
+  violins, and the axis is widened for the violin outline as for
+  vertical ones. `orientation = "x"` or `"y"` forces either (F-10).
 
 - **Stat parameters are checked where you write them.** `bins`,
   `binwidth`, `adjust`, `span`, `level`, `height`, `segments` and `n` in

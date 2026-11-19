@@ -93,7 +93,8 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_discrete</span><span class="op">(</span></span>
@@ -123,7 +124,8 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_gradientn</span><span class="op">(</span><span class="va">plot</span>, <span class="va">colours</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
@@ -159,7 +161,8 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_discrete</span><span class="op">(</span></span>
@@ -210,6 +213,13 @@ case/space-insensitively). <code>NULL</code> uses a sensible default.</p></dd>
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Legend title, or <code>NULL</code> to derive from the encoding.</p></dd>
+
+
+<dt id="arg-oob">oob<a class="anchor" aria-label="anchor" href="#arg-oob"></a></dt>
+<dd><p>For <code>scale_*_continuous()</code>, what to do with values outside
+<code>limits</code>: <code>"censor"</code> gives them the NA colour, <code>"squish"</code> the colour of the
+nearest limit, <code>"keep"</code> the same (a ramp cannot extend past its ends), or
+a <code>function(x, range)</code>. <code>NULL</code> (default) squishes.</p></dd>
 
 
 <dt id="arg-values">values<a class="anchor" aria-label="anchor" href="#arg-values"></a></dt>

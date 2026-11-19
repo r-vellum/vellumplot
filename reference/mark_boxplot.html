@@ -9,11 +9,15 @@
 values (box = Q1-Q3, median line, 1.5*IQR whiskers, outlier points).
 mark_errorbar() draws vertical bars from ymin to ymax with horizontal
 caps; mark_linerange() omits the caps. mark_summary() aggregates y per
-x with fun (default mean) and draws the result as points."><meta property="og:description" content="mark_boxplot() draws a box-and-whisker per x category from the raw y
+x with fun (default mean) and draws the result as points; give it
+fun.data (or fun.min / fun.max) and it draws each summary as a point
+with a range instead, like ggplot2's stat_summary()."><meta property="og:description" content="mark_boxplot() draws a box-and-whisker per x category from the raw y
 values (box = Q1-Q3, median line, 1.5*IQR whiskers, outlier points).
 mark_errorbar() draws vertical bars from ymin to ymax with horizontal
 caps; mark_linerange() omits the caps. mark_summary() aggregates y per
-x with fun (default mean) and draws the result as points."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+x with fun (default mean) and draws the result as points; give it
+fun.data (or fun.min / fun.max) and it draws each summary as a point
+with a range instead, like ggplot2's stat_summary()."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -76,7 +80,9 @@ x with fun (default mean) and draws the result as points."><meta property="og:im
 values (box = Q1-Q3, median line, 1.5*IQR whiskers, outlier points).
 <code>mark_errorbar()</code> draws vertical bars from <code>ymin</code> to <code>ymax</code> with horizontal
 caps; <code>mark_linerange()</code> omits the caps. <code>mark_summary()</code> aggregates <code>y</code> per
-<code>x</code> with <code>fun</code> (default mean) and draws the result as points.</p>
+<code>x</code> with <code>fun</code> (default mean) and draws the result as points; give it
+<code>fun.data</code> (or <code>fun.min</code> / <code>fun.max</code>) and it draws each summary as a point
+with a range instead, like ggplot2's <code>stat_summary()</code>.</p>
     </div>
 
     <div class="section level2">
@@ -85,6 +91,7 @@ caps; <code>mark_linerange()</code> omits the caps. <code>mark_summary()</code> 
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -114,6 +121,10 @@ caps; <code>mark_linerange()</code> omits the caps. <code>mark_summary()</code> 
 <span>  <span class="va">...</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  fun <span class="op">=</span> <span class="va">mean</span>,</span>
+<span>  fun.data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fun.min <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fun.max <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fun.args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -167,6 +178,12 @@ points. A position a mark does not support is an error naming the ones it
 does.</p></dd>
 
 
+<dt id="arg-orientation">orientation<a class="anchor" aria-label="anchor" href="#arg-orientation"></a></dt>
+<dd><p>For <code>mark_boxplot()</code>, <code>NA</code> (default) to infer it from the
+data (horizontal when <code>y</code> is discrete and <code>x</code> is not), <code>"x"</code> for vertical
+boxes along a discrete <code>x</code>, or <code>"y"</code> for horizontal boxes along <code>y</code>.</p></dd>
+
+
 <dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>
 <dd><p>Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
@@ -190,7 +207,28 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
 
 
 <dt id="arg-fun">fun<a class="anchor" aria-label="anchor" href="#arg-fun"></a></dt>
-<dd><p>For <code>mark_summary()</code>, the aggregation function (default <code>mean</code>).</p></dd>
+<dd><p>For <code>mark_summary()</code>, the aggregation function (default <code>mean</code>).
+With <code>fun.min</code> / <code>fun.max</code> it gives the point of the range.</p></dd>
+
+
+<dt id="arg-fun-data">fun.data<a class="anchor" aria-label="anchor" href="#arg-fun-data"></a></dt>
+<dd><p>For <code>mark_summary()</code>, a summary giving a point and a range
+per category: <code>"mean_se"</code> (mean +/- one standard error), <code>"mean_cl_normal"</code>
+(mean with a t-based confidence interval), <code>"mean_sdl"</code> (mean +/- two
+standard deviations), <code>"median_hilow"</code> (median with the central 95% of the
+data), or a function of the values that returns <code>y</code>, <code>ymin</code> and <code>ymax</code>
+(such as ggplot2's <code>mean_se()</code>). Overrides <code>fun</code>, <code>fun.min</code> and <code>fun.max</code>.</p></dd>
+
+
+<dt id="arg-fun-min-fun-max">fun.min, fun.max<a class="anchor" aria-label="anchor" href="#arg-fun-min-fun-max"></a></dt>
+<dd><p>For <code>mark_summary()</code>, functions giving the bottom and
+top of each category's range (e.g. <code>fun.min = min, fun.max = max</code>).</p></dd>
+
+
+<dt id="arg-fun-args">fun.args<a class="anchor" aria-label="anchor" href="#arg-fun-args"></a></dt>
+<dd><p>For <code>mark_summary()</code>, a list of extra arguments to the
+summary functions, e.g. <code>list(mult = 2)</code> for <code>"mean_se"</code> or
+<code>list(conf.int = 0.9)</code> for <code>"mean_cl_normal"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -199,7 +237,10 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>mark_pointrange()</code> draws a point at <code>(x, y)</code> with a vertical line from <code>ymin</code>
+    <p>A box plot is vertical when <code>x</code> is the discrete axis. When <code>y</code> is discrete
+and <code>x</code> continuous (<code>mark_boxplot(x = mpg, y = factor(cyl))</code>) it is drawn
+horizontally, as in ggplot2; <code>orientation</code> forces either.</p>
+<p><code>mark_pointrange()</code> draws a point at <code>(x, y)</code> with a vertical line from <code>ymin</code>
 to <code>ymax</code> (an identity mark — supply the summary values yourself, e.g. from a
 model). <code>mark_crossbar()</code> draws a box spanning <code>ymin</code>..<code>ymax</code> with a
 horizontal line at <code>y</code>. Both are the identity counterparts of the aggregating
@@ -210,6 +251,12 @@ horizontal line at <code>y</code>. Both are the identity counterparts of the agg
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_boxplot</span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_boxplot-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="co"># horizontal: the discrete variable on y</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_boxplot</span><span class="op">(</span>x <span class="op">=</span> <span class="va">mpg</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="mark_boxplot-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="co"># mean and standard error per category</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_summary</span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">mpg</span>, fun.data <span class="op">=</span> <span class="st">"mean_se"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="mark_boxplot-3.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
