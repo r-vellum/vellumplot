@@ -5,14 +5,22 @@
 \alias{scale_alpha_continuous}
 \title{Alpha (opacity) scale}
 \usage{
-scale_alpha(plot, range = NULL, limits = NULL, breaks = NULL, name = NULL)
+scale_alpha(
+  plot,
+  range = NULL,
+  limits = NULL,
+  breaks = NULL,
+  name = NULL,
+  oob = NULL
+)
 
 scale_alpha_continuous(
   plot,
   range = NULL,
   limits = NULL,
   breaks = NULL,
-  name = NULL
+  name = NULL,
+  oob = NULL
 )
 }
 \arguments{
@@ -26,6 +34,11 @@ default \code{c(0.1, 1)}.}
 \item{breaks}{Explicit legend breaks, or \code{NULL}.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
+
+\item{oob}{What to do with values outside \code{limits}: \code{"censor"} (they get
+no opacity, so the mark is not drawn), \code{"squish"} (the opacity of the
+nearest limit), \code{"keep"} (extrapolated past the range), or a
+\verb{function(x, range)}. \code{NULL} (default) keeps them.}
 }
 \value{
 The modified \link{PlotSpec}.

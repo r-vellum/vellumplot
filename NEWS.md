@@ -1,5 +1,42 @@
 # vellumplot 0.12.0.9000 (development version)
 
+* **Behaviour change:** a discrete colour scale (`scale_*_manual()`,
+  `scale_*_discrete()`, `scale_*_brewer()`, ...) on a numeric variable now
+  errors ("Continuous values supplied to a discrete colour scale"), as in
+  ggplot2, instead of giving every distinct number its own colour (VP-11).
+
+* **Behaviour change:** discrete position axes drop factor levels no row uses,
+  as ggplot2 does by default; `scale_x_discrete(drop = FALSE)` keeps them
+  (F-10).
+
+* **Behaviour change:** `x = Inf` / `-Inf` (and `y`) on a continuous axis now
+  sits on the panel edge, as in ggplot2, rather than being lost (VP-11).
+
+* An aesthetic whose values are all missing no longer draws a 0-1 colourbar or
+  size legend; a continuous scale with no data and no limits draws no legend
+  (VP-11).
+
+* `coord_cartesian(xlim =, ylim =)` (and the other coords' limits) now zoom a
+  discrete axis too, in level positions as in ggplot2: `xlim = c(2, 4)` shows
+  the second to fourth levels (VP-11).
+
+* `scale_x_discrete()` / `scale_y_discrete()` gain `breaks` (the levels that
+  get a tick), `labels` (a vector, a vector named by level, or a function) and
+  `drop` (F-10).
+
+* `scale_x_continuous()`, `scale_y_continuous()`, `scale_color_continuous()`,
+  `scale_fill_continuous()`, `scale_size()` and `scale_alpha()` gain `oob`:
+  `"censor"`, `"squish"`, `"keep"` or a `function(x, range)` such as
+  `scales::oob_squish_any()`, with `scales::oob_*()` semantics. The defaults
+  are unchanged: positions and sizes keep out-of-limits values, colours squish
+  them (F-10).
+
+* Legends can sit inside the panels: `theme(legend.position = "inside")` with
+  `legend.position.inside = c(x, y)` and `legend.justification`, or the older
+  `legend.position = c(x, y)`. Positions are fractions of the panel area; the
+  justification (a `c(x, y)` or words such as `c("right", "top")`) defaults to
+  the position, so `c(1, 1)` tucks the legend into the top-right corner (F-10).
+
 * **Behaviour change:** a factor, character or logical mapped to `size` or
   `alpha` now trains a discrete scale, as in ggplot2. Before, a factor was
   trained as its integer codes (the legend read 1.0, 1.5, ... 3.0, never merged
