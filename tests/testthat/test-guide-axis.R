@@ -258,6 +258,7 @@ test_that("date, datetime, time and binned position scales take guide =", {
   expect_true(all(axis_text(b)$rot == 90))
   expect_error(scale_x_date(base, guide = guide_legend()), "guide")
   expect_error(scale_y_binned(base, guide = "legend"), "guide")
+})
 
 test_that("check.overlap thins free facet scales, fixed aspect and marginals", {
   labs <- sprintf("category %02d", 1:30)
