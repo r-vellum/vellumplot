@@ -20,11 +20,12 @@ test_that("repeated labs() calls merge, last value winning", {
   expect_identical(p@labels$subtitle, "b")
 })
 
-test_that("colour/color/fill all fold into the color key", {
+test_that("colour folds into the color key; fill keeps its own (VP-48)", {
   p1 <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> labs(colour = "X")
   p2 <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> labs(fill = "X")
   expect_identical(p1@labels$color, "X")
-  expect_identical(p2@labels$color, "X")
+  expect_identical(p2@labels$fill, "X")
+  expect_null(p2@labels$color)
   expect_null(p1@labels$colour)
   expect_null(p1@labels$fill)
 })
@@ -47,12 +48,13 @@ test_that("labs() axis/legend overrides reach the trained scales", {
   expect_identical(sc$color$name, "Power")
 })
 
-test_that("labs(fill =) titles the colour scale", {
+test_that("labs(fill =) titles the fill scale, not the colour scale", {
   p <- vplot(mtcars) |>
-    mark_point(x = wt, y = mpg, color = hp) |>
+    mark_point(x = wt, y = mpg, color = hp, fill = hp) |>
     labs(fill = "Power")
   sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
-  expect_identical(sc$color$name, "Power")
+  expect_identical(sc$fill$name, "Power")
+  expect_identical(sc$color$name, "hp")
 })
 
 test_that("scale_*(name =) takes precedence over labs()", {

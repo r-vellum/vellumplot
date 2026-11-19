@@ -292,19 +292,16 @@ NULL
   sp <- L$stat_params
 
   # Categorical (count_cat): a mapped colour/fill trained the discrete colour
-  # scale (see .resolve_layer). Feed the full-length category vector plus the
-  # per-level hues from that scale's map, so a legend comes for free. A
-  # non-discrete colour mapping (or none) falls back to plain density shading.
+  # or fill scale (see .resolve_layer). Feed the full-length category vector
+  # plus the per-level hues from that scale's map, so a legend comes for free.
+  # A non-discrete colour mapping (or none) falls back to plain density shading.
   category <- NULL
   colors <- NULL
-  if (
-    !is.null(ds$cat) &&
-      !is.null(scales$color) &&
-      identical(scales$color$type, "discrete")
-  ) {
+  csc <- if (!is.null(ds$cat)) scales[[ds$cat_channel %||% "color"]]
+  if (!is.null(csc) && identical(csc$type, "discrete")) {
     category <- as.character(ds$cat)
     levels <- unique(category)
-    colors <- stats::setNames(scales$color$map(levels), levels)
+    colors <- stats::setNames(csc$map(levels), levels)
   }
 
   # Under flip the raster axes swap with the data (the per-point category does not).

@@ -64,8 +64,9 @@ NULL
 # its own one-point series and the line would vanish -- so it keeps the series
 # whole and colours it per segment instead (`.draw_var_width_segments(cv = )`).
 .continuous_colour <- function(L, scales, n) {
-  v <- L$values$color %||% L$values$fill
-  type <- scales$color$type
+  ch <- if (!is.null(L$values$color)) "color" else "fill"
+  v <- L$values[[ch]]
+  type <- scales[[ch]]$type
   if (
     is.null(v) ||
       is.null(type) ||
@@ -82,13 +83,11 @@ NULL
 # `fill` stand in for `color` (true for fill-based marks; false for text/label,
 # where `fill` is the label background, not the ink colour).
 .aes_colour <- function(L, scales, default, fill_fallback = TRUE) {
-  if (!is.null(scales$color)) {
-    if (!is.null(L$values$color)) {
-      return(scales$color$map(L$values$color))
-    }
-    if (fill_fallback && !is.null(L$values$fill)) {
-      return(scales$color$map(L$values$fill))
-    }
+  if (!is.null(scales$color) && !is.null(L$values$color)) {
+    return(scales$color$map(L$values$color))
+  }
+  if (fill_fallback && !is.null(scales$fill) && !is.null(L$values$fill)) {
+    return(scales$fill$map(L$values$fill))
   }
   # A paint-valued `fill` (gradient/pattern) is not a per-row colour: ignore it
   # here (the emitter substitutes it at the `vl_gpar(fill = )` site via
@@ -107,13 +106,11 @@ NULL
 # never leak into the fill. Mapped `fill` wins, then mapped `color`; as a
 # constant, `fill` (a plain colour, not a paint) then `default` -- never `color`.
 .aes_fill_colour <- function(L, scales, default) {
-  if (!is.null(scales$color)) {
-    if (!is.null(L$values$fill)) {
-      return(scales$color$map(L$values$fill))
-    }
-    if (!is.null(L$values$color)) {
-      return(scales$color$map(L$values$color))
-    }
+  if (!is.null(scales$fill) && !is.null(L$values$fill)) {
+    return(scales$fill$map(L$values$fill))
+  }
+  if (!is.null(scales$color) && !is.null(L$values$color)) {
+    return(scales$color$map(L$values$color))
   }
   fillp <- if (.is_paint(L$params$fill)) NULL else L$params$fill
   fillp %||% default
@@ -145,8 +142,8 @@ NULL
   }
   # the fill comes from `fill` alone: a mapped `color` beside a constant `fill`
   # outlines, it never leaks into the fill
-  fill <- if (!is.null(L$values$fill) && !is.null(scales$color)) {
-    scales$color$map(L$values$fill)
+  fill <- if (!is.null(L$values$fill) && !is.null(scales$fill)) {
+    scales$fill$map(L$values$fill)
   } else {
     .plain_fill_param(L) %||% default
   }

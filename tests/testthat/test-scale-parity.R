@@ -225,10 +225,11 @@ test_that("the named continuous colour scales take limits and oob (VP-41)", {
     distiller = function(p, ...) scale_color_distiller(p, ...)
   )
   for (nm in names(ctors)) {
+    # a fill scale sets the fill scale only (VP-48)
+    aes <- if (nm %in% c("gradient2", "viridis_c")) "fill" else "color"
     sc <- function(...) {
-      panels(
-        ctors[[nm]](vplot(d) |> mark_point(x = x, y = y, color = v), ...)
-      )$scales$color
+      p <- vplot(d) |> mark_point(x = x, y = y, color = v, fill = v)
+      panels(ctors[[nm]](p, ...))$scales[[aes]]
     }
     # the default is unchanged: no limits, the data range, nothing out of bounds
     expect_equal(sc()$range, c(0, 10), info = nm)

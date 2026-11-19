@@ -157,19 +157,19 @@ test_that("theme_cyberpunk supplies the default palette, overridable by a scale"
   neon <- vplot(bars) |>
     mark_bar(x = cat, y = n, fill = cat) |>
     theme_cyberpunk()
-  expect_identical(train(neon)$color$map("a"), vellumplot:::.NEON_QUAL[[1]])
+  expect_identical(train(neon)$fill$map("a"), vellumplot:::.NEON_QUAL[[1]])
 
   # an explicit scale palette still wins over the theme default
   overridden <- neon |> scale_fill_discrete(palette = "Blues")
   expect_false(identical(
-    train(overridden)$color$map("a"),
+    train(overridden)$fill$map("a"),
     vellumplot:::.NEON_QUAL[[1]]
   ))
 
   # without the theme, the default palette is unchanged
   plain <- vplot(bars) |> mark_bar(x = cat, y = n, fill = cat)
   expect_false(identical(
-    train(plain)$color$map("a"),
+    train(plain)$fill$map("a"),
     vellumplot:::.NEON_QUAL[[1]]
   ))
 })

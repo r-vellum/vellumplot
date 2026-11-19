@@ -73,7 +73,7 @@ test_that("scale_fill_bivariate() sets the palette and the axis titles", {
   p <- vplot(d) |>
     mark_point(x = hp, y = wt, fill = bi_class) |>
     scale_fill_bivariate(palette = "GrPink", xlab = "Power", ylab = "Weight")
-  sc <- vellumplot:::.build_panels(p)$scales$color
+  sc <- vellumplot:::.build_panels(p)$scales$fill
   expect_identical(sc$colors, unname(bi_pal("GrPink")))
   expect_identical(
     sc$bivariate[c("xlab", "ylab")],
@@ -82,7 +82,7 @@ test_that("scale_fill_bivariate() sets the palette and the axis titles", {
   # guides() retitles without respelling the scale.
   p2 <- p |>
     guides(fill = guide_bivariate(xlab = "hp", key.size = 8, title = "T"))
-  sc2 <- vellumplot:::.build_panels(p2)$scales$color
+  sc2 <- vellumplot:::.build_panels(p2)$scales$fill
   expect_identical(sc2$bivariate$xlab, "hp")
   expect_identical(sc2$bivariate$key_size, 8)
   expect_identical(sc2$name, "T")

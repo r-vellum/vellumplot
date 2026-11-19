@@ -260,13 +260,15 @@ continuous ramp interpolates through.}
 The modified \link{PlotSpec}.
 }
 \description{
-Declare a colour scale for the \code{color}/\code{fill} channel. Continuous data get a
+Declare the scale for the \code{color} or the \code{fill} channel. Continuous data get a
 perceptual ramp; discrete data get a qualitative palette. \verb{scale_*_manual()}
 sets exact colours, \verb{scale_*_gradient()} a two-point ramp, and
 \verb{scale_*_gradient2()} a diverging three-point ramp (\code{low}--\code{mid}--\code{high})
 centred on \code{midpoint} --- for signed or anomaly data where a meaningful zero
-should sit at the neutral colour. The \code{fill} variants are identical (colour and
-fill share one scale). A legend is drawn automatically when colour is mapped.
+should sit at the neutral colour. The \code{fill} variants set the fill scale the
+same way: \code{color} and \code{fill} are separate scales with separate legends, as in
+ggplot2, drawn as one legend when they show the same title and keys. A
+legend is drawn automatically when colour or fill is mapped.
 }
 \details{
 Continuous and binned ramps built from a plain colour vector are interpolated

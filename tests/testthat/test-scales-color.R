@@ -49,11 +49,12 @@ test_that("scale_color_gradient sets a two-point ramp", {
   ))
 })
 
-test_that("fill mirror trains the colour scale", {
+test_that("scale_fill_manual() trains the fill scale", {
   p <- vplot(mtcars) |>
     mark_bar(x = factor(cyl), fill = factor(cyl)) |>
     scale_fill_manual(values = c("4" = "red", "6" = "blue", "8" = "green"))
-  expect_identical(train(p)$color$colors, c("red", "blue", "green"))
+  expect_identical(train(p)$fill$colors, c("red", "blue", "green"))
+  expect_null(train(p)$color)
 })
 
 test_that("an unknown palette name errors", {
@@ -73,8 +74,8 @@ test_that("explicit colour breaks/labels are honoured", {
 
 test_that("scale_fill_continuous applies a palette to a fill aesthetic", {
   base <- vplot(mtcars) |> mark_bar(x = factor(cyl), y = mpg, fill = hp)
-  def <- train(base)$color$pal256
-  blues <- train(base |> scale_fill_continuous(palette = "Blues"))$color$pal256
+  def <- train(base)$fill$pal256
+  blues <- train(base |> scale_fill_continuous(palette = "Blues"))$fill$pal256
   expect_length(blues, 256)
   expect_false(identical(def, blues))
 })
@@ -83,9 +84,9 @@ test_that("scale_fill_gradient sets a two-point fill ramp", {
   base <- vplot(mtcars) |> mark_bar(x = factor(cyl), y = mpg, fill = hp)
   pal <- train(
     base |> scale_fill_gradient(low = "white", high = "black")
-  )$color$pal256
+  )$fill$pal256
   expect_length(pal, 256)
-  expect_false(identical(pal, train(base)$color$pal256))
+  expect_false(identical(pal, train(base)$fill$pal256))
 })
 
 test_that("scale_color_binned cuts a continuous colour aesthetic into classes", {
@@ -219,7 +220,7 @@ test_that("scale_fill_gradient2 mirrors the colour version", {
     vplot(df) |>
       mark_tile(x = x, y = y, fill = z) |>
       scale_fill_gradient2(midpoint = 0)
-  )$color
+  )$fill
   expect_equal(cl$midpoint, 0)
 })
 
@@ -239,51 +240,78 @@ test_that("a diverging colorbar reports midpoint in its descriptor", {
   expect_equal(cbars[[1]]$colorbar$midpoint, 0)
 })
 
-test_that("fill values pool into the colour scale even when a layer maps color", {
+test_that("the fill scale trains on every fill value when a layer maps color", {
+  # VP-1 / #195: tiles filled by z under points coloured by a subset of z. With
+  # one shared scale the subset once set the range; the fill scale now trains
+  # on all of z, the colour scale on the points' values alone (as ggplot2).
   d <- data.frame(x = rep(1:10, 10), y = rep(1:10, each = 10), z = 1:100)
   p <- vplot(d) |>
     mark_tile(x = x, y = y, fill = z) |>
     mark_point(data = subset(d, z > 50), x = x, y = y, color = z)
-  cl <- train(p)$color
-  expect_identical(cl$type, "continuous")
-  expect_identical(cl$range, c(1, 100))
+  sc <- train(p)
+  expect_identical(sc$fill$type, "continuous")
+  expect_identical(sc$fill$range, c(1, 100))
+  expect_identical(sc$color$range, c(51, 100))
   # the tiles below the points' range get distinct colours, not one squished end
-  expect_false(identical(cl$map(1), cl$map(50)))
+  expect_false(identical(sc$fill$map(1), sc$fill$map(50)))
 })
 
-test_that("discrete color and fill layers share the union of levels", {
+test_that("discrete color and fill layers train separate scales (VP-48)", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
     mark_point(x = wt, y = qsec, fill = factor(gear))
-  cl <- train(p)$color
-  expect_identical(cl$type, "discrete")
-  expect_setequal(cl$levels, c("4", "6", "8", "3", "5"))
+  sc <- train(p)
+  expect_identical(sc$color$levels, c("4", "6", "8"))
+  expect_identical(sc$fill$levels, c("3", "4", "5"))
+  # two variables, two legends; the fill keys keep their own namespace
+  expect_length(.legend_guides(sc), 2L)
+  expect_identical(sc$fill$series_aes, "fill")
 })
 
-test_that("quantitative fill with a discrete color layer is a clear error", {
+test_that("a quantitative fill beside a discrete color is two scales", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
     mark_point(x = wt, y = qsec, fill = hp)
-  expect_error(train(p), "share one colour scale")
+  sc <- train(p)
+  expect_identical(sc$color$type, "discrete")
+  expect_identical(sc$fill$type, "continuous")
+})
+
+test_that("one channel mapped to mixed variable types is a clear error", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    mark_point(x = wt, y = qsec, color = hp)
+  expect_error(train(p), "incompatible variable types")
   expect_snapshot(train(p), error = TRUE)
 })
 
-test_that("an explicit colour scale kind settles mixed color/fill types", {
+test_that("an explicit colour scale kind settles mixed color types", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
-    mark_point(x = wt, y = qsec, fill = carb) |>
+    mark_point(x = wt, y = qsec, color = carb) |>
     scale_color_discrete()
   cl <- train(p)$color
   expect_identical(cl$type, "discrete")
   expect_true(all(c("4", "6", "8", "1", "2") %in% cl$levels))
 })
 
-test_that("a mixed color/fill continuous scale renders one legend", {
+test_that("colour and fill bars fold into one only with the same keys and palette", {
   d <- data.frame(x = rep(1:10, 10), y = rep(1:10, each = 10), z = 1:100)
+  # a subset on the points: other breaks, two colour bars (as ggplot2)
   p <- vplot(d) |>
     mark_tile(x = x, y = y, fill = z) |>
     mark_point(data = subset(d, z > 50), x = x, y = y, color = z)
   guides <- .legend_guides(.build_panels(p)$scales)
-  expect_length(guides, 1L)
+  expect_length(guides, 2L)
   expect_no_error(.compile_plot(p))
+  # one variable over the same rows: one colour bar
+  same <- vplot(d) |>
+    mark_tile(x = x, y = y, fill = z) |>
+    mark_point(x = x, y = y, color = z)
+  guides <- .legend_guides(.build_panels(same)$scales)
+  expect_length(guides, 1L)
+  expect_identical(guides[[1]]$kind, "color_continuous")
+  # ... unless the palettes differ
+  apart <- same |> scale_fill_viridis_c()
+  expect_length(.legend_guides(.build_panels(apart)$scales), 2L)
 })

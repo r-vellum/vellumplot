@@ -67,7 +67,7 @@ test_that("every ColorBrewer palette compiles with k distinct colours", {
       cols <- train(pc)$color$colors
       expect_identical(cols, scales::pal_brewer(palette = pal)(k), info = pal)
       expect_length(unique(cols), k)
-      expect_identical(train(pf)$color$colors, cols, info = pal)
+      expect_identical(train(pf)$fill$colors, cols, info = pal)
     }
   }
 })

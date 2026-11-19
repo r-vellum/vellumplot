@@ -357,24 +357,32 @@ test_that("an unknown facet field in a spec is reported once", {
   expect_identical(sum(fields == "cyll", na.rm = TRUE), 1L)
 })
 
-test_that("color and fill of different types sharing a legend are caught", {
+test_that("one colour channel of different types across layers is caught", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
-    mark_bar(x = wt, y = mpg, fill = hp)
+    mark_point(x = wt, y = qsec, color = hp)
   d <- spec_diagnose(p)
   expect_false(d$ok)
   e <- diag_msgs(d, "error")
   # one specific finding, not a second generic "Compile failed" for the same
   expect_length(e, 1L)
-  expect_match(e, "layer 2 maps fill to a continuous variable", fixed = TRUE)
-  expect_match(e, "layer 1 maps color to a nominal one", fixed = TRUE)
+  expect_match(e, "layer 2 maps color to a continuous variable", fixed = TRUE)
+  expect_match(e, "layer 1 maps it to a nominal one", fixed = TRUE)
 
   # with the scale kind set explicitly the compile decides; the clash itself is
   # demoted to a warning (here a discrete scale, so `hp` becomes categories)
   ex <- spec_diagnose(p |> scale_color_discrete())
   expect_true(ex$ok)
   w <- diag_msgs(ex, "warning")
-  expect_true(any(grepl("share one colour scale", w, fixed = TRUE)))
+  expect_true(any(grepl("share one color scale", w, fixed = TRUE)))
+
+  # color and fill are separate scales (VP-48): their types may differ
+  ok <- spec_diagnose(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+      mark_bar(x = wt, y = mpg, fill = hp)
+  )
+  expect_length(diag_msgs(ok, "error"), 0L)
 })
 
 test_that("a manual palette on a continuous channel is caught", {
@@ -387,7 +395,7 @@ test_that("a manual palette on a continuous channel is caught", {
   expect_false(d$ok)
   e <- diag_msgs(d, "error")
   expect_length(e, 1L)
-  expect_match(e, "manual/discrete colour palette", fixed = TRUE)
+  expect_match(e, "manual/discrete palette is set on the color scale", fixed = TRUE)
   expect_length(diag_msgs(d, "warning"), 0L)
   # and the compile agrees
   expect_error(

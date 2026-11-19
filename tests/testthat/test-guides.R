@@ -128,7 +128,7 @@ test_that("the colour key glyph matches the mark that maps colour", {
 
   df <- data.frame(g = c("a", "b"), h = c(1, 2), k = c("x", "y"))
   br <- vplot(df) |> mark_bar(x = g, y = h, fill = k)
-  expect_identical(train(br)$color$key_glyph, "square")
+  expect_identical(train(br)$fill$key_glyph, "square")
 })
 
 test_that("colour + shape on one variable merge into a single guide", {

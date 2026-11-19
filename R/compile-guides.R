@@ -907,7 +907,7 @@ NULL
       next
     }
     guide <- .AES_REGISTRY[[k]]$guide
-    if (k == "color") {
+    if (k %in% c("color", "fill")) {
       gk <- sc$type
       # A binned (classed) colour scale draws as discrete swatches with interval
       # labels, so it reuses the discrete guide -- unless guide_coloursteps()
@@ -1012,15 +1012,22 @@ NULL
     members <- i
     if (!is.null(sigs[[i]])) {
       for (j in seq_along(guides)[-seq_len(i)]) {
-        if (!used[j] && identical(sigs[[i]], sigs[[j]])) {
+        if (
+          !used[j] &&
+            identical(sigs[[i]], sigs[[j]]) &&
+            .same_colourbar(guides[[i]], guides[[j]])
+        ) {
           members <- c(members, j)
         }
       }
     }
     used[members] <- TRUE
+    kinds <- vapply(guides[members], function(g) g$kind, character(1))
     out <- c(
       out,
-      if (length(members) == 1L) {
+      # A colour bar and a fill bar of one variable, title and palette are
+      # one colour bar, as in ggplot2.
+      if (length(members) == 1L || all(kinds == "color_continuous")) {
         guides[i]
       } else {
         list(list(
@@ -1034,40 +1041,71 @@ NULL
   out
 }
 
+# Two continuous colour legends (a colour and a fill bar) fold into one only when
+# they also share their palette; any other pair is decided by the signature.
+.same_colourbar <- function(a, b) {
+  if (!identical(a$kind, "color_continuous") || a$kind != b$kind) {
+    return(TRUE)
+  }
+  identical(a$sc$pal256, b$sc$pal256) && identical(a$sc$range, b$sc$range)
+}
+
 # Pseudo-scale for a merged legend: one row per shared key, carrying each
-# member's per-key style -- `cols`/`fills` (colour), `shapes`, `sizes_mm`,
-# `linetypes`, `alphas`, `linewidths` -- aligned to `labels` (NA rows padded
-# with neutral values). A member that does not set a style leaves it NULL.
-# `glyph` picks the key drawing: a point, a line, both, or the colour scale's
-# own swatch when nothing asks for a point or a line.
+# member's per-key style -- `fills` and `cols` (the fill and the stroke colour),
+# `shapes`, `sizes_mm`, `linetypes`, `alphas`, `linewidths` -- aligned to
+# `labels` (NA rows padded with neutral values). A member that does not set a
+# style leaves it NULL. The fill scale fills and the colour scale strokes; a
+# lone colour member does both, unless its filled mark's constant other half
+# (`key_style`, VP-46) supplies the outline or the fill. `outlined` / `filled`
+# say the stroke / fill is its own colour. `glyph` picks the key drawing: a
+# point, a line, both, a swatch under a line, or the colour scales' own swatch
+# when nothing asks for a point or a line.
 .merged_legend <- function(members, sig) {
   labels <- sig$labels
   k <- length(labels)
   pad <- function(v, fill) c(v, rep(fill, k - length(v)))
   style <- list()
   colour_glyph <- NULL
+  fill_glyph <- NULL
+  ks <- list()
   series_aes <- NULL
   levels <- NULL
   override <- list()
   for (g in members) {
     sc <- g$sc
+    is_fill <- identical(g$key, "fill")
+    paint <- switch(
+      g$kind,
+      color_discrete = pad(
+        c(sc$colors, if (isTRUE(sc$na)) sc$na_value),
+        "grey50"
+      ),
+      color_continuous = pad(
+        c(sc$map(sig$values), if (isTRUE(sc$na)) sc$na_value),
+        "grey50"
+      )
+    )
+    if (!is.null(paint)) {
+      glyph <- if (identical(g$kind, "color_continuous")) {
+        "point"
+      } else {
+        sc$key_glyph
+      }
+      if (is_fill) {
+        style$fills <- paint
+        fill_glyph <- glyph
+        ks$col <- ks$col %||% sc$key_style$col
+      } else {
+        style$cols <- paint
+        colour_glyph <- glyph
+        ks$fill <- ks$fill %||% sc$key_style$fill
+      }
+      if (identical(g$kind, "color_discrete")) {
+        series_aes <- series_aes %||% (sc$series_aes %||% "color")
+      }
+    }
     switch(
       g$kind,
-      color_discrete = {
-        style$cols <- pad(
-          c(sc$colors, if (isTRUE(sc$na)) sc$na_value),
-          "grey50"
-        )
-        colour_glyph <- sc$key_glyph
-        series_aes <- "color"
-      },
-      color_continuous = {
-        style$cols <- pad(
-          c(sc$map(sig$values), if (isTRUE(sc$na)) sc$na_value),
-          "grey50"
-        )
-        colour_glyph <- "point"
-      },
       shape = {
         style$shapes <- pad(sc$shapes, "circle")
         series_aes <- series_aes %||% "shape"
@@ -1093,23 +1131,37 @@ NULL
     ov <- sc$override_aes %||% list()
     override <- c(override, ov[setdiff(names(ov), names(override))])
   }
+  glyphs <- c(colour_glyph, fill_glyph)
   has_line <- !is.null(style$linetypes) ||
     !is.null(style$linewidths) ||
-    identical(colour_glyph, "line")
+    "line" %in% glyphs
   has_point <- !is.null(style$shapes) ||
     !is.null(style$sizes_mm) ||
-    colour_glyph %in% c("point", "circle") ||
-    (is.null(colour_glyph) && !has_line)
+    any(glyphs %in% c("point", "circle")) ||
+    (!length(glyphs) && !has_line)
+  # the swatch the colour scales draw on their own: the fill's, when it has one
+  swatch <- fill_glyph %||% colour_glyph
   glyph <- if (has_line && has_point) {
     "line+point"
+  } else if (has_line && identical(fill_glyph, "square")) {
+    "square+line"
   } else if (has_line) {
     "line"
   } else if (has_point) {
     "point"
   } else {
-    colour_glyph
+    swatch
   }
-  cols <- style$cols %||% rep_len("grey35", k)
+  outlined <- !is.null(style$cols) && !is.null(style$fills) ||
+    is.null(style$cols) && !is.null(ks$col)
+  filled <- !is.null(style$fills) || !is.null(ks$fill)
+  fills <- style$fills %||%
+    (if (!is.null(ks$fill)) rep_len(ks$fill, k)) %||%
+    style$cols %||%
+    rep_len("grey35", k)
+  cols <- style$cols %||%
+    (if (!is.null(ks$col)) rep_len(ks$col, k)) %||%
+    fills
   list(
     name = sig$name,
     # The shared discrete key: `.legend_series_key()` tags the merged swatches
@@ -1117,8 +1169,10 @@ NULL
     levels = if (!is.null(series_aes)) levels,
     series_aes = series_aes,
     labels = labels,
-    fills = cols,
+    fills = fills,
     cols = cols,
+    outlined = outlined,
+    filled = filled && !is.null(style$cols),
     shapes = style$shapes,
     sizes_mm = style$sizes_mm,
     linetypes = style$linetypes,
@@ -1595,18 +1649,25 @@ NULL
       )
     )
   }
+  # the colour scales' own swatch: an outlined box keeps its stroke colour
+  # (and a fill of its own), any other glyph is filled and maybe outlined
+  swatch <- function(glyph) {
+    ova <- utils::modifyList(ov, list(alpha = alpha))
+    if (identical(glyph, "outline")) {
+      ks <- if (isTRUE(sc$filled)) list(fill = sc$fills[i])
+      .colour_key_grob(glyph, sc$cols[i], m, sk, ova, ks)
+    } else {
+      ks <- if (isTRUE(sc$outlined)) list(col = sc$cols[i])
+      .colour_key_grob(glyph, sc$fills[i], m, sk, ova, ks)
+    }
+  }
   switch(
     sc$glyph %||% "point",
     point = point(),
     line = line(),
     `line+point` = list(line(), point()),
-    .colour_key_grob(
-      sc$glyph,
-      sc$cols[i],
-      m,
-      sk,
-      utils::modifyList(ov, list(alpha = alpha))
-    )
+    `square+line` = list(swatch("square"), line()),
+    swatch(sc$glyph)
   )
 }
 
@@ -1718,8 +1779,9 @@ NULL
 .legend_series_key <- function(g, i) {
   aes <- switch(
     g$kind,
-    color_discrete = "color",
-    color_bivariate = "color",
+    # a fill legend beside a separate colour legend keys "fill:<level>"
+    color_discrete = ,
+    color_bivariate = g$sc$series_aes %||% "color",
     shape = "shape",
     # A merged legend over a discrete colour or shape scale joins that series
     # (marks carry `color:<value>`/`shape:<value>`); one with neither (say,

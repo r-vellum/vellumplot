@@ -136,11 +136,11 @@ NULL
   yn <- rep_len(scales$y$map(L$values$y), n)
   label <- rep_len(as.character(L$values$label), n)
   col <- rep_len(.text_colour(L, scales, "black"), n)
-  # Label background: a mapped `fill` channel (through the colour scale), else a
+  # Label background: a mapped `fill` channel (through the fill scale), else a
   # constant `fill` param, else white. `.text_colour` deliberately keeps `fill`
   # out of the ink colour, so the background is resolved here on its own.
-  bg <- if (!is.null(scales$color) && !is.null(L$values$fill)) {
-    scales$color$map(L$values$fill)
+  bg <- if (!is.null(scales$fill) && !is.null(L$values$fill)) {
+    scales$fill$map(L$values$fill)
   } else {
     L$params$fill %||% "white"
   }

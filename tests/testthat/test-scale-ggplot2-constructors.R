@@ -208,7 +208,7 @@ test_that("scale_color_hue() / scale_fill_hue() match ggplot2", {
   pf <- vplot(mt) |>
     mark_point(x = wt, y = mpg, fill = fcyl) |>
     scale_fill_hue()
-  expect_identical(train(pf)$color$colors, scales::pal_hue()(3))
+  expect_identical(train(pf)$fill$colors, scales::pal_hue()(3))
   expect_identical(
     train(vplot(mt) |> mark_point(x = wt, y = mpg, color = fcyl) |> scale_colour_hue())$color$colors,
     scales::pal_hue()(3)
@@ -226,7 +226,7 @@ test_that("scale_color_grey() / scale_fill_grey() match ggplot2", {
       ggplot2::geom_point() +
       ggplot2::scale_fill_grey(start = 0.1, end = 0.9)
   ))
-  expect_identical(hex(train(p)$color$map(mt$fcyl)), hex(g$fill))
+  expect_identical(hex(train(p)$fill$map(mt$fcyl)), hex(g$fill))
   pc <- vplot(mt) |>
     mark_point(x = wt, y = mpg, color = fcyl) |>
     scale_color_grey()
@@ -251,7 +251,7 @@ test_that("scale_color_ordinal() / scale_fill_ordinal() match ggplot2", {
   pf <- vplot(d) |>
     mark_point(x = wt, y = mpg, fill = ocyl) |>
     scale_fill_ordinal()
-  expect_identical(train(pf)$color$colors, train(p)$color$colors)
+  expect_identical(train(pf)$fill$colors, train(p)$color$colors)
 })
 
 # --- binned colour scales -----------------------------------------------------
@@ -284,7 +284,7 @@ test_that("scale_color_steps2() / scale_fill_steps2() match ggplot2", {
     mark_point(x = wt, y = mpg, fill = hp) |>
     scale_fill_steps2(midpoint = 150, n.breaks = 3)
   gf <- gg_binned("fill", ggplot2::scale_fill_steps2(midpoint = 150, n.breaks = 3))
-  expect_equal(train(pf)$color$breaks, gf$breaks)
+  expect_equal(train(pf)$fill$breaks, gf$breaks)
   expect_no_error(vellum::as_vellum_scene(p))
 })
 
@@ -294,7 +294,7 @@ test_that("scale_color_stepsn() / scale_fill_stepsn() match ggplot2", {
   p <- vplot(mt) |>
     mark_point(x = wt, y = mpg, fill = hp) |>
     scale_fill_stepsn(colours = cols, limits = c(0, 400), breaks = c(100, 200, 300))
-  sc <- train(p)$color
+  sc <- train(p)$fill
   g <- gg_binned(
     "fill",
     ggplot2::scale_fill_stepsn(colours = cols, limits = c(0, 400), breaks = c(100, 200, 300))
@@ -321,7 +321,7 @@ test_that("scale_color_fermenter() / scale_fill_fermenter() match ggplot2", {
     mark_point(x = wt, y = mpg, fill = hp) |>
     scale_fill_fermenter(palette = 2, type = "div", direction = 1)
   gf <- gg_binned("fill", ggplot2::scale_fill_fermenter(palette = 2, type = "div", direction = 1))
-  expect_identical(hex(train(pf)$color$map(mt$hp)), hex(gf$data$fill))
+  expect_identical(hex(train(pf)$fill$map(mt$hp)), hex(gf$data$fill))
 })
 
 test_that("scale_color_viridis_b() / scale_fill_viridis_b() match ggplot2", {
@@ -337,7 +337,7 @@ test_that("scale_color_viridis_b() / scale_fill_viridis_b() match ggplot2", {
     mark_point(x = wt, y = mpg, fill = hp) |>
     scale_fill_viridis_b(direction = -1)
   gf <- gg_binned("fill", ggplot2::scale_fill_viridis_b(direction = -1))
-  expect_lt(max_colour_diff(train(pf)$color$map(mt$hp), gf$data$fill), 10)
+  expect_lt(max_colour_diff(train(pf)$fill$map(mt$hp), gf$data$fill), 10)
 })
 
 test_that("the ggplot2-named binned scales label right-closed classes", {
