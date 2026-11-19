@@ -74,6 +74,12 @@
   reads a facet-level `resolve.scale` back. Before, the exporter ignored
   resolution, so free scales came out shared (VP-47).
 
+* `guide_bins()` draws the legend of a binned scale as ggplot2's does: one key
+  per bin, edge to edge, with the bin boundaries (not interval labels) on a
+  small axis beside them; `show.limits = TRUE` also labels the outer limits.
+  It works on `scale_size_binned()`, `scale_alpha_binned()` and the binned
+  colour scales, vertically and in a top / bottom legend (VP-45).
+
 ## Bug fixes
 
 * ggplot2 plots no longer break when vellumplot is attached after ggplot2.

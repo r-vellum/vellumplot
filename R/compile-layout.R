@@ -137,6 +137,9 @@ NULL
   if (g$kind == "color_bivariate") {
     return(.bi_geom(g, m)$width)
   }
+  if (isTRUE(g$sc$bins)) {
+    return(.bins_geom(g, m)$width)
+  }
   labs <- .guide_labels(g)
   lw <- .mm_tw(labs, m$text_fs)
   body <- if (g$kind %in% c("color_continuous", "color_steps")) {
@@ -233,6 +236,8 @@ NULL
   for (g in guides) {
     gh <- if (g$kind == "color_bivariate") {
       .bi_geom(g, m)$height
+    } else if (isTRUE(g$sc$bins)) {
+      .bins_geom(g, m, horizontal = TRUE)$height
     } else if (g$kind %in% c("color_continuous", "color_steps")) {
       # A horizontal colour bar / stepped bar: title + bar thickness
       # (guide_colourbar(barheight=) or the theme default) + the label row.

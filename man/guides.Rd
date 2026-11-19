@@ -124,7 +124,8 @@ respelling the whole \verb{scale_*()}. Pass \code{"none"} (or \code{\link[=guide
 legend, \code{\link[=guide_legend]{guide_legend()}} to tweak a keyed legend (reverse the key order,
 override the title, restyle the keys with \code{override.aes}), \code{guide_colourbar()}
 to size, tick and style a continuous colour bar, or \code{guide_coloursteps()} to draw a
-\strong{binned} colour scale as a segmented bar instead of swatches. Applies to the
+\strong{binned} colour scale as a segmented bar instead of swatches; \code{\link[ggplot2:guide_bins]{guide_bins()}}
+draws any binned scale's keys with the bin boundaries on an axis. Applies to the
 non-position legends (\code{color}/\code{fill}, \code{size}, \code{shape}, \code{alpha}, \code{linetype});
 for the position axes, pass \code{\link[=guide_axis]{guide_axis()}} (or \code{"none"}) as \code{x} / \code{y}.
 }
