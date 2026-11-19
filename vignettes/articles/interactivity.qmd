@@ -145,9 +145,63 @@ express — it lives in the plot.
 
 ## Overview + detail: `bind_scale()`
 
-`bind_scale()` binds a panel's view to an interval selection on another (an
-overview), so brushing the overview pans/zooms the detail. It is declared in the
-spec today; host enactment is in progress.
+`bind_scale()` binds a view's scale domain to an interval selection defined on
+another view. Brush the small *overview* and the *detail* zooms to the brushed
+range; clear the brush (click empty space, or `Escape`) and the detail zooms
+back out. This is Vega-Lite's overview + detail, where the detail's
+`scale.domain` names the brush:
+
+```{r}
+#| label: overview-detail
+#| eval: !expr requireNamespace("ggplot2", quietly = TRUE)
+econ <- ggplot2::economics
+brush <- select_interval("brush", encodings = "x")
+
+overview <- vplot(econ) |>
+  mark_area(x = date, y = unemploy, fill = "steelblue", alpha = 0.6) |>
+  add_selection(brush) |>
+  labs(x = NULL, y = NULL)
+
+detail <- vplot(econ) |>
+  mark_line(x = date, y = unemploy, color = "steelblue") |>
+  bind_scale(brush, aes = "x") |>
+  labs(x = NULL, y = "Unemployed (thousands)")
+
+vconcat(detail, overview, heights = c(3, 1))
+```
+
+The detail keeps its own scales; the host only changes what part of them is
+visible and re-ticks the axes for that range (a display-tier zoom, nothing is
+recomputed). Bind several views to one brush, or bind both `"x"` and `"y"` to a
+rectangular brush. The view the brush is drawn in never zooms itself. Under
+Shiny, every panel's visible range arrives in `input$<id>_zoom$panels`, keyed by
+panel name; a composition names its panels per cell (`"cell-1-panel-1-1"` is
+the detail here, `"cell-2-panel-1-1"` the overview).
+
+```{r}
+#| label: overview-detail-widget
+#| eval: false
+vellumwidget::as_widget(vconcat(detail, overview, heights = c(3, 1)))
+```
+
+### Linked zoom: `bind = "scales"`
+
+`select_interval(bind = "scales")` is Vega-Lite's other half: no brush is drawn.
+The selection is the view's own pan/zoom domain, so zooming or panning the view
+(wheel, pinch, the navigator, a drag in pan mode, which becomes the default drag)
+writes the interval, and resetting the zoom empties it. A `bind_scale()` on another view then
+follows it (linked zoom), and `condition()` / `filter_by()` react to whatever is
+in view:
+
+```{r}
+#| label: linked-zoom
+#| eval: false
+zoom <- select_interval("zoom", encodings = "x", bind = "scales")
+hconcat(
+  vplot(econ) |> mark_line(x = date, y = unemploy) |> add_selection(zoom),
+  vplot(econ) |> mark_line(x = date, y = psavert) |> bind_scale(zoom)
+)
+```
 
 ## Which marks are addressable
 

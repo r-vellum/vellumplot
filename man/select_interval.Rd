@@ -10,7 +10,8 @@ select_interval(
   encodings = c("x", "y"),
   region = c("rect", "lasso"),
   empty = TRUE,
-  on = NULL
+  on = NULL,
+  bind = NULL
 )
 }
 \arguments{
@@ -31,6 +32,10 @@ default, so an untouched plot shows its full self and brushing narrows it)
 or \emph{none} (\code{FALSE}).}
 
 \item{on}{Deprecated alias for \code{encodings}: \code{"x"}, \code{"y"} or \code{"xy"}.}
+
+\item{bind}{\code{NULL} (default) for a brush, or \code{"scales"} to bind the selection
+to the view's own pan/zoom domain (Vega-Lite's \code{bind: "scales"}; see the
+section below). A \code{"scales"} selection must use \code{region = "rect"}.}
 }
 \value{
 A \link{PlotSpec} (piped form) or a \code{SelectionSpec} (free-standing form).
@@ -69,6 +74,20 @@ Like \code{\link[=select_point]{select_point()}}, it is pipe-first (attach to th
 free-standing (call with the name as the first argument, then share it across
 views with \code{\link[=add_selection]{add_selection()}} / \code{\link[=filter_by]{filter_by()}}).
 }
+\section{Driving another view's zoom (overview + detail)}{
+An interval selection can set the visible range of another view: give the
+\emph{detail} view a \code{\link[=bind_scale]{bind_scale()}} that names the selection, and brushing the
+\emph{overview} zooms the detail to the brushed range (clearing the brush resets
+it). This is Vega-Lite's \code{scale = list(domain = list(param = "brush"))}.
+
+\code{bind = "scales"} is Vega-Lite's other half: the selection is bound to the
+\emph{scales of the view it is registered on}. No brush is drawn; panning and
+zooming that view (wheel, pinch, drag in pan mode, the navigator) \strong{is} the
+selection, its interval the visible data range on \code{encodings}, and resetting
+the zoom empties it. Pair it with \code{\link[=bind_scale]{bind_scale()}} on another view for linked
+zoom, or with \code{\link[=condition]{condition()}} / \code{\link[=filter_by]{filter_by()}} to react to the visible window.
+}
+
 \examples{
 df <- data.frame(x = 1:20, y = sqrt(1:20), g = rep(c("a", "b"), 10))
 
@@ -88,6 +107,20 @@ sel <- select_interval("brush", encodings = "x")
 hconcat(
   vplot(df) |> mark_point(x = x, y = y) |> add_selection(sel),
   vplot(df) |> mark_bar(x = g, y = y) |> filter_by(sel)
+)
+
+# overview + detail: brushing the overview zooms the detail
+brush <- select_interval("brush", encodings = "x")
+vconcat(
+  vplot(df) |> mark_line(x = x, y = y) |> add_selection(brush),
+  vplot(df) |> mark_line(x = x, y = y) |> bind_scale(brush)
+)
+
+# linked zoom: zooming the left view zooms the right one along x
+zoom <- select_interval("zoom", encodings = "x", bind = "scales")
+hconcat(
+  vplot(df) |> mark_point(x = x, y = y) |> add_selection(zoom),
+  vplot(df) |> mark_point(x = x, y = y) |> bind_scale(zoom)
 )
 }
 \seealso{

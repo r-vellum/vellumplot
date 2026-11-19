@@ -197,7 +197,9 @@ guide_colorsteps <- guide_coloursteps
 #' @param check.overlap If `TRUE`, leave out labels that would overlap one
 #'   already drawn, keeping the first, the last and then those in the middle
 #'   first (ggplot2's priority). Needs the panel's size, so it applies to a
-#'   plot with a set page size and shared (not free) scales.
+#'   plot with a set page size; free facet scales are thinned panel by panel,
+#'   and fixed-aspect and marginal plots use their laid-out panel size. Polar
+#'   axes keep every label.
 #' @param angle The rotation of the labels in degrees (overrides the theme's
 #'   `axis.text.x`/`axis.text.y` angle), or `NULL` to keep the theme's. The
 #'   labels are justified so their ends meet the ticks.

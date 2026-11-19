@@ -649,14 +649,33 @@ NULL
   }
 
   # `guide_axis(check.overlap = TRUE)`: which tick labels survive, from the
-  # panel's laid-out mm size (NULL keeps them all).
-  pmm <- .panel_mm(W$u, H$u, page_width, page_height, rt, R, C)
-  overlap_ok <- !respect && !polar && is.null(marginal)
-  x_keep <- if (overlap_ok && !free_x) {
-    .axis_keep(hsc, rt[["axis.text.x"]], xrot, pmm[["w"]], "x")
-  }
-  y_keep <- if (overlap_ok && !free_y) {
-    .axis_keep(vsc, rt[["axis.text.y"]], yrot, pmm[["h"]], "y")
+  # panel's laid-out mm size (NULL keeps them all). A shared axis gets one mask;
+  # a free one a mask per panel (`*_keep_panels`, in `built$panels` order).
+  # Polar panels draw their labels inside the panel, so they keep them all.
+  pmm <- .panel_mm(W$u, H$u, page_width, page_height, rt, respect)
+  pmm <- c(
+    w = .null_weight(panel_w) * pmm[["w"]],
+    h = .null_weight(panel_h) * pmm[["h"]]
+  )
+  x_keep <- y_keep <- x_keep_panels <- y_keep_panels <- NULL
+  if (!polar) {
+    keep_x <- function(sc) {
+      .axis_keep(sc, rt[["axis.text.x"]], xrot, pmm[["w"]], "x")
+    }
+    keep_y <- function(sc) {
+      .axis_keep(sc, rt[["axis.text.y"]], yrot, pmm[["h"]], "y")
+    }
+    panel_hv <- function(p) .hv_roles(p$x_sc, p$y_sc, flip)
+    if (free_x) {
+      x_keep_panels <- lapply(built$panels, function(p) keep_x(panel_hv(p)$h))
+    } else {
+      x_keep <- keep_x(hsc)
+    }
+    if (free_y) {
+      y_keep_panels <- lapply(built$panels, function(p) keep_y(panel_hv(p)$v))
+    } else {
+      y_keep <- keep_y(vsc)
+    }
   }
 
   list(
@@ -694,24 +713,29 @@ NULL
     xwrap_mm = xwrap_mm,
     x_keep = x_keep,
     y_keep = y_keep,
+    x_keep_panels = x_keep_panels,
+    y_keep_panels = y_keep_panels,
     respect = respect
   )
 }
 
-# The mm width and height of one panel, from the solved tracks: the page content
-# box less every fixed track, shared among the panel (`null`) tracks of each
-# direction (`C` columns, `R` rows). NA when the page size is unknown or a track
-# cannot be converted.
-.panel_mm <- function(wu, hu, page_width, page_height, rt, R, C) {
+# The mm size of one `null` unit across and down, from the solved tracks: the
+# page content box less every fixed track, shared among the `null` tracks of
+# each direction by weight (panels, and any marginal-plot track). Under
+# `respect` (fixed aspect, `coord_fixed()`/`coord_sf()`/`aspect.ratio`) one
+# null unit is the same size both ways -- the smaller of the two, as the layout
+# engine shrinks the looser direction. NA when the page size is unknown or a
+# track cannot be converted.
+.panel_mm <- function(wu, hu, page_width, page_height, rt, respect = FALSE) {
   pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
-  free <- function(units, total, n) {
+  free <- function(units, total) {
     if (is.null(total) || !is.finite(total)) {
       return(NA_real_)
     }
     fixed <- vapply(
       units,
       function(u) {
-        if (grepl("null", format(u), fixed = TRUE)) {
+        if (.null_weight(u) > 0) {
           0
         } else {
           tryCatch(vellum::vl_convert(u, "mm"), error = function(e) NA_real_)
@@ -719,21 +743,27 @@ NULL
       },
       numeric(1)
     )
-    out <- (total - sum(fixed)) / n
+    nulls <- sum(vapply(units, .null_weight, numeric(1)))
+    out <- (total - sum(fixed)) / nulls
     if (is.finite(out) && out > 0) out else NA_real_
   }
-  c(
-    w = free(
-      wu,
-      if (!is.null(page_width)) page_width * 25.4 - pm[2] - pm[4],
-      C
-    ),
-    h = free(
-      hu,
-      if (!is.null(page_height)) page_height * 25.4 - pm[1] - pm[3],
-      R
-    )
-  )
+  w <- free(wu, if (!is.null(page_width)) page_width * 25.4 - pm[2] - pm[4])
+  h <- free(hu, if (!is.null(page_height)) page_height * 25.4 - pm[1] - pm[3])
+  if (isTRUE(respect)) {
+    w <- h <- min(w, h)
+  }
+  c(w = w, h = h)
+}
+
+# The weight of a plain `null` track unit (`vl_unit(2, "null")` -> 2), or 0 for
+# any other unit (fixed, or a compound sum).
+.null_weight <- function(u) {
+  f <- format(u)
+  if (length(f) == 1L && grepl("^[0-9.eE+-]+null$", f)) {
+    as.numeric(sub("null$", "", f))
+  } else {
+    0
+  }
 }
 
 # The `check.overlap` keep mask of a position scale's labels, or NULL to keep
