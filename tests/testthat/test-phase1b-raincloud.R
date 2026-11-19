@@ -37,8 +37,15 @@ test_that("sina and raincloud tolerate NA values in y", {
     g = rep(c("a", "b"), each = 20),
     y = c(rnorm(19), NA, rnorm(20))
   )
-  expect_no_error(svg(vplot(dn) |> mark_point(x = g, y = y, position = "sina")))
-  expect_no_error(svg(vplot(dn) |> mark_raincloud(x = g, y = y)))
+  # the NA row is removed with a warning, once per layer
+  expect_warning(
+    svg(vplot(dn) |> mark_point(x = g, y = y, position = "sina")),
+    "Removed 1 row"
+  )
+  expect_no_error(suppressWarnings(
+    svg(vplot(dn) |> mark_raincloud(x = g, y = y)),
+    classes = "vellumplot_missing_rows"
+  ))
 })
 
 test_that("mark_raincloud forwards colour and does not train a spurious alpha scale", {

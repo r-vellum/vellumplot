@@ -14,23 +14,23 @@
 \alias{set_theme}
 \title{Plot themes}
 \usage{
-theme_gray(plot)
+theme_gray(plot, base_size = 11, base_family = "")
 
-theme_minimal(plot)
+theme_minimal(plot, base_size = 11, base_family = "")
 
-theme_bw(plot)
+theme_bw(plot, base_size = 11, base_family = "")
 
-theme_classic(plot)
+theme_classic(plot, base_size = 11, base_family = "")
 
-theme_void(plot)
+theme_void(plot, base_size = 11, base_family = "")
 
-theme_light(plot)
+theme_light(plot, base_size = 11, base_family = "")
 
-theme_dark(plot)
+theme_dark(plot, base_size = 11, base_family = "")
 
-theme_linedraw(plot)
+theme_linedraw(plot, base_size = 11, base_family = "")
 
-theme_cyberpunk(plot)
+theme_cyberpunk(plot, base_size = 11, base_family = "")
 
 theme(plot, ...)
 
@@ -45,6 +45,13 @@ set_theme(
 \arguments{
 \item{plot}{A \link{PlotSpec}. \code{\link[=theme]{theme()}} also accepts a \code{PlotComposition}, setting
 the figure-level chrome (title bands, collected legend, panel spacing, tags).}
+
+\item{base_size}{Base text size in points (default 11). Every text element
+is sized relative to it, so \code{theme_gray(base_size = 14)} scales titles,
+axis text, legend text and strips together.}
+
+\item{base_family}{Base font family for all text; \code{""} (default) keeps the
+system default.}
 
 \item{...}{Named theme elements, e.g. \code{plot.title = element_text(size = 16)},
 \code{panel.grid.minor = element_blank()}, or settings like \code{legend.position},

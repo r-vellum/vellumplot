@@ -153,6 +153,28 @@ NULL
 # per layer and is single-threaded with the rest of compilation.)
 .mark_ctx <- new.env(parent = emptyenv())
 
+# Fields of `.mark_ctx` that accumulate over a whole compile, so a nested draw
+# must not roll them back: the provenance table and the grob counter.
+.MARK_CTX_SHARED <- c("provenance", "seq")
+
+# Snapshot / restore the per-plot context around a nested `.draw_plot()` (an
+# inset sub-plot drawn from inside an outer layer). Restoring removes fields the
+# nested draw added and puts back the caller's values, leaving the shared
+# accumulators as the nested draw left them.
+.mark_ctx_save <- function() {
+  keep <- setdiff(ls(.mark_ctx, all.names = TRUE), .MARK_CTX_SHARED)
+  mget(keep, envir = .mark_ctx)
+}
+
+.mark_ctx_restore <- function(saved) {
+  now <- setdiff(ls(.mark_ctx, all.names = TRUE), .MARK_CTX_SHARED)
+  rm(list = setdiff(now, names(saved)), envir = .mark_ctx)
+  for (nm in names(saved)) {
+    assign(nm, saved[[nm]], envir = .mark_ctx)
+  }
+  invisible()
+}
+
 # Set the per-plot (or per composition-cell) interaction context the mark emitter
 # reads: `plot_interactive` (a plot declaring any selection/filter/bind keys its
 # marks so a host can address them) and `plot_filters` (the selection names whose

@@ -6,19 +6,33 @@ NULL
 # complete theme; theme() / set_theme() element-merge a partial onto it. The
 # compile pipeline resolves it once (.resolve_theme) before drawing.
 
-# The default (gray) theme. Axis/legend titles inherit black from the text root;
-# the tick/line/minor elements carry their intended values for the drawers.
-.theme_gray_complete <- function() {
+# The default (gray) theme. Text sizes below the `text` root are `rel()`
+# multiples of `base_size`, so `theme(text = element_text(size = ...))` and a
+# preset's `base_size` cascade to every text element; at the default
+# `base_size = 11` they resolve to exactly 14/11/9/12/10/9/9/9 pt. Axis/legend
+# titles inherit black from the text root; the tick/line/minor elements carry
+# their intended values for the drawers.
+.theme_gray_complete <- function(
+  base_size = .BASE_SIZE,
+  base_family = "",
+  call = rlang::caller_env()
+) {
+  .check_base_text(base_size, base_family, call = call)
+  b <- .BASE_SIZE
   list(
-    text = element_text(colour = "black", size = 11),
-    plot.title = element_text(size = 14, colour = "grey10"),
-    plot.subtitle = element_text(size = 11, colour = "grey30"),
-    plot.caption = element_text(size = 9, colour = "grey30"),
-    plot.tag = element_text(size = 12, colour = "grey10"),
-    legend.title = element_text(size = 10),
-    axis.text = element_text(size = 9, colour = "grey20"),
-    legend.text = element_text(size = 9, colour = "grey20"),
-    strip.text = element_text(size = 9, colour = "grey10"),
+    text = element_text(
+      colour = "black",
+      size = base_size,
+      family = if (nzchar(base_family)) base_family
+    ),
+    plot.title = element_text(size = rel(14 / b), colour = "grey10"),
+    plot.subtitle = element_text(size = rel(11 / b), colour = "grey30"),
+    plot.caption = element_text(size = rel(9 / b), colour = "grey30"),
+    plot.tag = element_text(size = rel(12 / b), colour = "grey10"),
+    legend.title = element_text(size = rel(10 / b)),
+    axis.text = element_text(size = rel(9 / b), colour = "grey20"),
+    legend.text = element_text(size = rel(9 / b), colour = "grey20"),
+    strip.text = element_text(size = rel(9 / b), colour = "grey10"),
     line = element_line(colour = "white", linewidth = 1),
     panel.grid.minor = element_line(linewidth = 0.5),
     axis.ticks = element_line(colour = "grey20"),
@@ -33,6 +47,32 @@ NULL
 }
 
 .theme_default <- function() .theme_gray_complete()
+
+.check_base_text <- function(
+  base_size,
+  base_family,
+  call = rlang::caller_env()
+) {
+  if (
+    !is.numeric(base_size) ||
+      length(base_size) != 1L ||
+      !is.finite(base_size) ||
+      base_size <= 0
+  ) {
+    cli::cli_abort(
+      "{.arg base_size} must be a single positive number (points).",
+      call = call
+    )
+  }
+  if (
+    !is.character(base_family) ||
+      length(base_family) != 1L ||
+      is.na(base_family)
+  ) {
+    cli::cli_abort("{.arg base_family} must be a single string.", call = call)
+  }
+  invisible()
+}
 
 # The resolved-or-default complete theme for a spec.
 .theme_of <- function(spec) spec@theme %||% .theme_default()
@@ -107,6 +147,11 @@ NULL
 #'   Legend geometry is tunable via `legend.key.size` (key/swatch side, mm),
 #'   `legend.spacing` (gap between stacked guides, mm), and `legend.margin`
 #'   (inset around the legend block, one or four millimetres, `t, r, b, l`).
+#' @param base_size Base text size in points (default 11). Every text element
+#'   is sized relative to it, so `theme_gray(base_size = 14)` scales titles,
+#'   axis text, legend text and strips together.
+#' @param base_family Base font family for all text; `""` (default) keeps the
+#'   system default.
 #' @param panel_bg,grid_col,label_col,strip_bg Colours (or `NA` to draw nothing)
 #'   for the panel background, gridlines, axis-label/legend text, and facet strip
 #'   background.
@@ -117,19 +162,19 @@ NULL
 #'   mark_point(x = wt, y = mpg) |>
 #'   theme(panel.grid.minor = element_blank(), legend.position = "none")
 #' @export
-theme_gray <- function(plot) {
+theme_gray <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
-  plot@theme <- .theme_gray_complete()
+  plot@theme <- .theme_gray_complete(base_size, base_family)
   attr(plot@theme, "vp_preset") <- "gray"
   plot
 }
 
 #' @rdname theme_gray
 #' @export
-theme_minimal <- function(plot) {
+theme_minimal <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
   plot@theme <- .merge_theme(
-    .theme_gray_complete(),
+    .theme_gray_complete(base_size, base_family),
     list(
       panel.background = element_blank(),
       panel.grid = element_line(colour = "grey92"),
@@ -145,10 +190,10 @@ theme_minimal <- function(plot) {
 
 #' @rdname theme_gray
 #' @export
-theme_bw <- function(plot) {
+theme_bw <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
   plot@theme <- .merge_theme(
-    .theme_gray_complete(),
+    .theme_gray_complete(base_size, base_family),
     list(
       panel.background = element_rect(fill = "white", colour = NA),
       panel.grid = element_line(colour = "grey90")
@@ -160,10 +205,10 @@ theme_bw <- function(plot) {
 
 #' @rdname theme_gray
 #' @export
-theme_classic <- function(plot) {
+theme_classic <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
   plot@theme <- .merge_theme(
-    .theme_gray_complete(),
+    .theme_gray_complete(base_size, base_family),
     list(
       panel.background = element_rect(fill = "white", colour = NA),
       panel.grid = element_blank(),
@@ -178,10 +223,10 @@ theme_classic <- function(plot) {
 
 #' @rdname theme_gray
 #' @export
-theme_void <- function(plot) {
+theme_void <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
   plot@theme <- .merge_theme(
-    .theme_gray_complete(),
+    .theme_gray_complete(base_size, base_family),
     list(
       panel.background = element_blank(),
       panel.grid = element_blank(),
@@ -198,10 +243,10 @@ theme_void <- function(plot) {
 
 #' @rdname theme_gray
 #' @export
-theme_light <- function(plot) {
+theme_light <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
   plot@theme <- .merge_theme(
-    .theme_gray_complete(),
+    .theme_gray_complete(base_size, base_family),
     list(
       panel.background = element_rect(fill = "white", colour = NA),
       panel.grid = element_line(colour = "grey87"),
@@ -216,10 +261,10 @@ theme_light <- function(plot) {
 
 #' @rdname theme_gray
 #' @export
-theme_dark <- function(plot) {
+theme_dark <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
   plot@theme <- .merge_theme(
-    .theme_gray_complete(),
+    .theme_gray_complete(base_size, base_family),
     list(
       panel.background = element_rect(fill = "grey50", colour = NA),
       panel.grid = element_line(colour = "grey42"),
@@ -233,10 +278,10 @@ theme_dark <- function(plot) {
 
 #' @rdname theme_gray
 #' @export
-theme_linedraw <- function(plot) {
+theme_linedraw <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
   plot@theme <- .merge_theme(
-    .theme_gray_complete(),
+    .theme_gray_complete(base_size, base_family),
     list(
       panel.background = element_rect(fill = "white", colour = NA),
       panel.grid = element_line(colour = "black", linewidth = 0.1),
@@ -257,13 +302,13 @@ theme_linedraw <- function(plot) {
 #' [glow()] layer effect and [linear_gradient()] fills for the full neon look;
 #' the palette is only a *default*, so `scale_*` overrides still win.
 #' @export
-theme_cyberpunk <- function(plot) {
+theme_cyberpunk <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
   ink <- "#0d0f18" # near-black canvas
   grid <- "#2b3350"
   fg <- "#c7d0f0"
   th <- .merge_theme(
-    .theme_gray_complete(),
+    .theme_gray_complete(base_size, base_family),
     list(
       text = element_text(colour = fg),
       plot.title = element_text(colour = "#08F7FE"),

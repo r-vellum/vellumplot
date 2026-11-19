@@ -566,12 +566,21 @@ NULL
     is_classed <- inherits(raw, c("Date", "POSIXct"))
     tfun <- function(v) as.numeric(v)
     domain <- .expand_domain(rng, scalespec)
+    # Breaks span the trained range `rng` (which honours explicit limits), not
+    # the raw data: a month of data under 2019-2022 limits gets yearly ticks,
+    # not weekly ones crammed into that month. An axis with no finite data and
+    # no limits has nothing to tick (ggplot2 draws it bare); `rng` is then
+    # only a placeholder window.
+    no_data <- is.null(user_lim) &&
+      !any(is.finite(suppressWarnings(as.numeric(raw))))
     braw <- if (!is.null(user_breaks)) {
       user_breaks
+    } else if (no_data) {
+      .as_like_time(numeric(0), raw)
     } else if (!is.null(dbreaks) && is_classed) {
       scales::breaks_width(dbreaks)(.as_like_time(rng, raw))
     } else {
-      pretty(raw)
+      pretty(.as_like_time(rng, raw))
     }
     lab <- .match_labels(user_labels, braw, aesthetic)
     keep <- as.numeric(braw) >= min(rng) & as.numeric(braw) <= max(rng)
@@ -665,18 +674,32 @@ NULL
 
 # A discrete (band) position scale: levels map to integer positions 1..k, each
 # occupying a unit-width band; the domain pads half a band each side. A user
-# `limits` (in `scalespec@domain`) sets/reorders/subsets the levels.
+# `limits` (in `scalespec@domain`) sets/reorders/subsets the levels. Missing
+# values get a trailing "NA" band (ggplot2's `na.translate = TRUE`) unless the
+# user set the limits, which then decide exactly what is shown.
 .train_position_discrete <- function(aesthetic, values, scalespec, name) {
-  levs <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
+  user_limits <- !is.null(scalespec) && !is.null(scalespec@domain)
+  levs <- if (user_limits) {
     as.character(scalespec@domain)
   } else {
     .cat_levels(values)
+  }
+  na_pos <- NULL
+  if (!user_limits && anyNA(unlist(values, use.names = FALSE))) {
+    levs <- c(levs, "NA")
+    na_pos <- length(levs)
   }
   k <- length(levs)
   trained_scale(
     aesthetic,
     "discrete",
-    map = function(x) match(as.character(x), levs),
+    map = function(x) {
+      i <- match(as.character(x), levs)
+      if (!is.null(na_pos)) {
+        i[is.na(x)] <- na_pos
+      }
+      i
+    },
     name = name,
     discrete = TRUE,
     band_width = 1,
