@@ -1,4 +1,34 @@
-# vellumplot 0.13.0.9000 (development version)
+# vellumplot 0.14.0
+
+## Behaviour changes
+
+* **Behaviour change:** a discrete colour scale now honours character
+  `limits` (e.g. `lims(color = c("a", "b"))`): it covers just those levels,
+  in that order, and other levels draw in the NA colour. Before, the limits of
+  a discrete colour scale were ignored. Legend `labels` on a discrete colour
+  scale may now be a function of the levels or a vector named by level
+  (VP-43).
+
+* **Behaviour change:** rows a position scale's `oob = "censor"` puts
+  outside its limits are now counted in the "Removed n rows containing missing
+  values or values outside the scale range (layer k, `mark_x()`)" warning
+  instead of vanishing silently, and -- for the marks that draw one element per
+  row, including boxplot, violin and smooth -- they are removed before the
+  layer's statistic, as in ggplot2 (VP-41).
+
+* **Behaviour change:** on the filled marks a `color` given alongside a `fill`
+  now outlines the shapes instead of overriding the fill, as in ggplot2:
+  `mark_histogram(fill = "#3182bd", color = "white")` draws blue bars with
+  white edges, where it used to draw white bars. This covers `mark_bar()`,
+  `mark_histogram()`, `mark_count()`, `mark_area()`, `mark_density()` (top
+  edge only), `mark_ribbon()` (both edges), `mark_tile()`, `mark_bin2d()`,
+  `mark_hex()`, `mark_crossbar()` (box and middle line), `mark_dotplot()`,
+  `mark_pie()` and `mark_donut()`, matching `mark_rect()` and
+  `mark_polygon()`; the slab of `mark_halfeye()` takes the `fill` and leaves
+  `color` to the point-interval. A mapped `color` beside a constant `fill`
+  outlines in the mapped colours. A lone `color` still fills, as before.
+  Legend keys draw the constant outline (or the constant fill inside an
+  outlined box) too, also for box plots, violins and ridgelines (VP-46).
 
 ## New features
 
@@ -59,36 +89,6 @@
   collected in the legend area and titled with the scale title and the panel's
   strip text (`"hp (cyl: 4)"`). Shared scales keep their single legend, and the
   default (everything shared) is unchanged (F-8).
-
-## Behaviour changes
-
-* **Behaviour change:** a discrete colour scale now honours character
-  `limits` (e.g. `lims(color = c("a", "b"))`): it covers just those levels,
-  in that order, and other levels draw in the NA colour. Before, the limits of
-  a discrete colour scale were ignored. Legend `labels` on a discrete colour
-  scale may now be a function of the levels or a vector named by level
-  (VP-43).
-
-* **Behaviour change:** rows a position scale's `oob = "censor"` puts
-  outside its limits are now counted in the "Removed n rows containing missing
-  values or values outside the scale range (layer k, `mark_x()`)" warning
-  instead of vanishing silently, and -- for the marks that draw one element per
-  row, including boxplot, violin and smooth -- they are removed before the
-  layer's statistic, as in ggplot2 (VP-41).
-
-* **Behaviour change:** on the filled marks a `color` given alongside a `fill`
-  now outlines the shapes instead of overriding the fill, as in ggplot2:
-  `mark_histogram(fill = "#3182bd", color = "white")` draws blue bars with
-  white edges, where it used to draw white bars. This covers `mark_bar()`,
-  `mark_histogram()`, `mark_count()`, `mark_area()`, `mark_density()` (top
-  edge only), `mark_ribbon()` (both edges), `mark_tile()`, `mark_bin2d()`,
-  `mark_hex()`, `mark_crossbar()` (box and middle line), `mark_dotplot()`,
-  `mark_pie()` and `mark_donut()`, matching `mark_rect()` and
-  `mark_polygon()`; the slab of `mark_halfeye()` takes the `fill` and leaves
-  `color` to the point-interval. A mapped `color` beside a constant `fill`
-  outlines in the mapped colours. A lone `color` still fills, as before.
-  Legend keys draw the constant outline (or the constant fill inside an
-  outlined box) too, also for box plots, violins and ridgelines (VP-46).
 
 ## Bug fixes
 
