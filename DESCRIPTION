@@ -121,6 +121,7 @@ Collate:
     'spec-vegalite.R'
     'svg.R'
     'table.R'
+    'trained-scale.R'
     'venn.R'
     'waffle.R'
     'zzz.R'

@@ -196,9 +196,7 @@ CoordSpec <- S7::new_class(
 # but its labels kept — the panel background, gridlines, and axis drawers read
 # this so ticks relocate while their text stays at the original data values.
 .warp_scale <- function(sc, f) {
-  sc$domain <- f(sc$domain)
-  sc$breaks <- f(sc$breaks)
-  sc
+  .scale_set(sc, domain = f(sc$domain), breaks = f(sc$breaks))
 }
 
 # Horizontal / vertical roles of an (x, y) pair under coord_flip: flip swaps the

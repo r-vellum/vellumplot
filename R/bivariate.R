@@ -473,8 +473,9 @@ guide_bivariate <- function(
   } else {
     spec@labels[["fill"]] %||% spec@labels[["color"]]
   }
-  list(
-    kind = "discrete",
+  trained_scale(
+    aes,
+    "discrete",
     map = map,
     name = title,
     levels = lv,

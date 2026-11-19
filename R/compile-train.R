@@ -40,8 +40,17 @@ NULL
 
 # An identity scale: values pass through verbatim (coerced), with no guide.
 # Shared by the size/alpha/edge-width, shape, linetype and colour trainers.
-.identity_scale <- function(kind, coerce, name) {
-  list(kind = kind, map = coerce, name = name, no_guide = TRUE)
+# `...` carries any extra fields (the colour scale's NA colour and key glyph).
+.identity_scale <- function(aesthetic, kind, coerce, name, ...) {
+  trained_scale(
+    aesthetic,
+    kind,
+    map = coerce,
+    name = name,
+    identity = TRUE,
+    no_guide = TRUE,
+    ...
+  )
 }
 
 # "Not enough <noun>" abort for a discrete palette that ran short of levels.
@@ -431,7 +440,7 @@ NULL
 .SHAPE_NA <- "circle"
 
 # Train a position scale. Dispatches to a continuous (numeric/temporal) or a
-# discrete (factor/character/logical) scale. Returns a trained-scale list: the
+# discrete (factor/character/logical) scale. Returns a `trained_scale()`: the
 # native domain (for the viewport scale), break positions in native units, their
 # labels, a data->native mapping function, and `discrete`/`band_width` flags the
 # mark compiler uses (e.g. for bar widths).
@@ -577,11 +586,11 @@ NULL
       } else {
         format(braw)
       })
-    # `type` stays "continuous" so downstream (guides/coord) is unchanged; the
+    # `kind` stays "continuous" so downstream (guides/coord) is unchanged; the
     # date/datetime nature is reported separately via `time_unit` (below), which a
     # host uses to interpret the numeric values (Date -> days, POSIXct -> seconds
     # since 1970). `transform` is identity (values are `as.numeric()` epochs).
-    type <- "continuous"
+    kind <- "continuous"
     trans_name <- "identity"
     time_unit <- if (
       inherits(raw, "POSIXct") ||
@@ -619,7 +628,7 @@ NULL
     lab <- fb$labels
     breaks <- tr$transform(braw)
     labels <- lab %||% tr$format(braw)
-    type <- if (!is.null(scalespec) && identical(scalespec@type, "log10")) {
+    kind <- if (!is.null(scalespec) && identical(scalespec@type, "log10")) {
       "log10"
     } else {
       "continuous"
@@ -637,17 +646,17 @@ NULL
     }
   }
 
-  list(
-    aesthetic = aesthetic,
-    type = type,
+  trained_scale(
+    aesthetic,
+    kind,
+    map = tfun,
+    name = name,
     discrete = FALSE,
     band_width = NULL,
     data_range = rng,
     domain = domain,
     breaks = breaks,
     labels = labels,
-    map = tfun,
-    name = name,
     sec = sec_list,
     transform = trans_name,
     time_unit = time_unit
@@ -664,9 +673,11 @@ NULL
     .cat_levels(values)
   }
   k <- length(levs)
-  list(
-    aesthetic = aesthetic,
-    type = "discrete",
+  trained_scale(
+    aesthetic,
+    "discrete",
+    map = function(x) match(as.character(x), levs),
+    name = name,
     discrete = TRUE,
     band_width = 1,
     data_range = c(1, k),
@@ -674,8 +685,6 @@ NULL
     breaks = seq_len(k),
     labels = levs,
     levels = levs, # stays the data levels even if `labels` is relabelled later
-    map = function(x) match(as.character(x), levs),
-    name = name,
     transform = "identity",
     time_unit = NULL
   )
@@ -713,15 +722,9 @@ NULL
   }
   ulab <- if (!is.null(scalespec)) scalespec@labels else NULL
   labs <- .match_labels(ulab, brks, aesthetic) %||% format(brks, trim = TRUE)
-  list(
-    aesthetic = aesthetic,
-    type = "binned",
-    discrete = FALSE,
-    band_width = bw,
-    data_range = c(lo, hi),
-    domain = .expand_domain(c(lo, hi), scalespec),
-    breaks = brks,
-    labels = labs,
+  trained_scale(
+    aesthetic,
+    "binned",
     map = function(x) {
       i <- findInterval(
         as.numeric(x),
@@ -732,6 +735,12 @@ NULL
       centers[i]
     },
     name = name,
+    discrete = FALSE,
+    band_width = bw,
+    data_range = c(lo, hi),
+    domain = .expand_domain(c(lo, hi), scalespec),
+    breaks = brks,
+    labels = labs,
     transform = "identity",
     time_unit = NULL
   )
@@ -817,9 +826,14 @@ NULL
   # An identity scale uses the data values verbatim as colours (they must already
   # be valid R/CSS colours) and draws no legend.
   if (identical(kind, "identity")) {
-    return(c(
-      .identity_scale("identity", as.character, title),
-      list(na = FALSE, na_value = na_value, key_glyph = key_glyph)
+    return(.identity_scale(
+      aes,
+      "identity",
+      as.character,
+      title,
+      na = FALSE,
+      na_value = na_value,
+      key_glyph = key_glyph
     ))
   }
 
@@ -859,8 +873,9 @@ NULL
     }
     labels <- .match_labels(user_labels, seq_len(k), aes) %||%
       .interval_labels(brks)
-    list(
-      kind = "binned",
+    trained_scale(
+      aes,
+      "binned",
       map = map,
       name = title,
       breaks = brks,
@@ -920,8 +935,9 @@ NULL
     fb <- .filter_breaks_labels(lbrk, llab, rng)
     lbrk <- fb$breaks
     llab <- fb$labels
-    list(
-      kind = "continuous",
+    trained_scale(
+      aes,
+      "continuous",
       map = map,
       name = title,
       range = rng,
@@ -960,8 +976,9 @@ NULL
       all_levels
     }
     labels <- .match_labels(user_labels, levels, aes) %||% levels
-    list(
-      kind = "discrete",
+    trained_scale(
+      aes,
+      "discrete",
       map = map,
       name = title,
       levels = levels,
@@ -1084,7 +1101,7 @@ NULL
   # An identity scale uses the data values verbatim (mm for size, opacity for
   # alpha), with no guide.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(.identity_scale(kind, as.numeric, titles$default[[aes]]))
+    return(.identity_scale(aes, kind, as.numeric, titles$default[[aes]]))
   }
   v <- as.numeric(unlist(values, use.names = FALSE))
   has_na <- anyNA(v) # detect before dropping non-finite, for the NA legend key
@@ -1129,17 +1146,18 @@ NULL
   fb <- .filter_breaks_labels(lbrk, llab, rng)
   lbrk <- fb$breaks
   llab <- fb$labels
-  out <- list(
-    kind = kind,
+  rlang::exec(
+    trained_scale,
+    aes,
+    kind,
     map = map,
     name = name,
     range = rng,
     na = has_na,
     legend_breaks = lbrk,
-    legend_labels = llab %||% .label_number_default(lbrk)
+    legend_labels = llab %||% .label_number_default(lbrk),
+    !!!rlang::set_names(list(map(lbrk)), legend_field)
   )
-  out[[legend_field]] <- map(lbrk)
-  out
 }
 
 # Train the size scale (if any layer maps `size` to data). Maps values to a
@@ -1224,7 +1242,12 @@ NULL
   scalespec <- .scale_for(spec, "shape")
   # An identity shape scale uses the data values verbatim as shape names.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(.identity_scale("shape", as.character, titles$default[["shape"]]))
+    return(.identity_scale(
+      "shape",
+      "shape",
+      as.character,
+      titles$default[["shape"]]
+    ))
   }
   levels <- .cat_levels(values)
   has_na <- anyNA(unlist(values, use.names = FALSE))
@@ -1245,8 +1268,9 @@ NULL
   shapes <- rep_len(pal, length(levels))
   names(shapes) <- levels
   name <- titles$title[["shape"]]
-  list(
-    kind = "shape",
+  trained_scale(
+    "shape",
+    "shape",
     # NA values map to the NA shape (a neutral circle) rather than to NA, which
     # would otherwise reach points_grob and error; the legend shows an NA key.
     map = function(x) {
@@ -1341,11 +1365,12 @@ NULL
   }
   objs <- pal[seq_along(levels)]
   names(objs) <- levels
-  list(
-    kind = "pattern",
+  trained_scale(
+    "pattern",
+    "pattern",
     map = function(x) as.character(x),
-    objs = objs,
     name = titles$title[["pattern"]],
+    objs = objs,
     levels = levels,
     patterns = unname(objs)
   )
@@ -1399,7 +1424,12 @@ NULL
   }
   scalespec <- .scale_for(spec, aes)
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(.identity_scale("linetype", as.character, titles$default[[aes]]))
+    return(.identity_scale(
+      aes,
+      "linetype",
+      as.character,
+      titles$default[[aes]]
+    ))
   }
   levels <- .cat_levels(values)
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
@@ -1419,8 +1449,9 @@ NULL
   ltys <- rep_len(pal, length(levels))
   names(ltys) <- levels
   name <- titles$title[[aes]]
-  list(
-    kind = "linetype",
+  trained_scale(
+    aes,
+    "linetype",
     map = function(x) unname(ltys[as.character(x)]),
     name = name,
     levels = levels,
@@ -1607,7 +1638,7 @@ NULL
     }
     ext <- .mark_footprint(L, aes, sc)
     if (!is.null(ext) && all(is.finite(ext))) {
-      sc$domain <- .union_domain(sc$domain, ext)
+      sc <- .scale_set(sc, domain = .union_domain(sc$domain, ext))
       drawn <- range(c(drawn, ext))
     }
   }
@@ -1641,8 +1672,7 @@ NULL
     return(sc)
   }
   wide <- .train_position(aes, values, scalespec, title, lim = rng)
-  sc[c("breaks", "labels", "sec")] <- wide[c("breaks", "labels", "sec")]
-  sc
+  .scale_set(sc, breaks = wide$breaks, labels = wide$labels, sec = wide$sec)
 }
 
 # Train all scales the plot needs: x, y (position), colour, and size. Bars force

@@ -49,7 +49,12 @@ test_that("coord_trans() rejects a 'reverse' transform (H23)", {
 })
 
 test_that(".warp_scale warps break/domain positions but keeps labels", {
-  sc <- list(
+  sc <- trained_scale(
+    "x",
+    "continuous",
+    map = identity,
+    discrete = FALSE,
+    data_range = c(1, 100),
     domain = c(1, 100),
     breaks = c(1, 10, 100),
     labels = c("1", "10", "100")

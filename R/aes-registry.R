@@ -26,6 +26,8 @@ NULL
 #               fields that must be identical for the fold. A field set may be
 #               keyed by the scale's `kind`, with `.default` for the rest
 #   provenance  TRUE when an element's provenance carries a scale-ref for it
+#   kinds       the `kind`s a trained scale under this key may have (checked by
+#               `trained_scale()`, R/trained-scale.R); defaults to the key
 # ---------------------------------------------------------------------------
 
 .aes_entry <- function(
@@ -36,7 +38,8 @@ NULL
   trainer = NULL,
   guide = NULL,
   merge = list(),
-  provenance = TRUE
+  provenance = TRUE,
+  kinds = name
 ) {
   list(
     name = name,
@@ -46,7 +49,8 @@ NULL
     trainer = trainer,
     guide = guide,
     merge = merge,
-    provenance = provenance
+    provenance = provenance,
+    kinds = kinds
   )
 }
 
@@ -57,14 +61,19 @@ NULL
 # width and a line's width to different variables in one plot.
 .LINEWIDTH_MARKS <- c("line", "step", "segment")
 
+# The kinds a trained position / colour scale comes in.
+.POSITION_KINDS <- c("continuous", "log10", "discrete", "binned")
+.COLOUR_KINDS <- c("continuous", "discrete", "binned", "identity")
+
 .AES_REGISTRY <- list(
-  x = .aes_entry("x"),
-  y = .aes_entry("y"),
+  x = .aes_entry("x", kinds = .POSITION_KINDS),
+  y = .aes_entry("y", kinds = .POSITION_KINDS),
   color = .aes_entry(
     "color",
     aliases = c("color", "fill"),
     trainer = ".train_colour",
     guide = "color",
+    kinds = .COLOUR_KINDS,
     # A discrete colour legend folds a shape legend of the same variable into
     # one keyed list; a continuous one folds a size legend into its bar.
     merge = list(
@@ -102,6 +111,7 @@ NULL
     "edge_color",
     trainer = ".train_edge_colour",
     guide = "color",
+    kinds = .COLOUR_KINDS,
     # One variable colouring nodes and edges: the node guide already carries the
     # encoding when the palette-defining fields agree (`key_glyph` and the `map`
     # closure are expected to differ and are not compared).
@@ -115,12 +125,14 @@ NULL
   edge_alpha = .aes_entry(
     "edge_alpha",
     trainer = ".train_edge_alpha",
-    guide = "alpha"
+    guide = "alpha",
+    kinds = "alpha"
   ),
   edge_linetype = .aes_entry(
     "edge_linetype",
     trainer = ".train_edge_linetype",
-    guide = "linetype"
+    guide = "linetype",
+    kinds = "linetype"
   )
 )
 
