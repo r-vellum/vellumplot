@@ -72,6 +72,73 @@ test_that("channels carry the scale-ref for each mapped aesthetic", {
   expect_equal(e$channels$color$type, "discrete")
 })
 
+test_that("channels carry alpha, linetype, linewidth and pattern scale-refs", {
+  df <- data.frame(
+    x = rep(1:4, 2),
+    y = c(1:4, 4:1),
+    g = rep(c("a", "b"), each = 4),
+    w = rep(c(1, 3), each = 4)
+  )
+  e <- plot_provenance(
+    vplot(df) |> mark_line(x = x, y = y, linetype = g, linewidth = w)
+  )[[1]]
+  expect_equal(e$channels$linetype$scale, "linetype")
+  expect_equal(e$channels$linetype$type, "linetype")
+  # a line reads the line-width scale, not the edge-width one
+  expect_equal(e$channels$linewidth$scale, "linewidth")
+
+  e <- plot_provenance(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg, alpha = hp)
+  )[[1]]
+  expect_equal(e$channels$alpha$scale, "alpha")
+
+  e <- plot_provenance(
+    vplot(mtcars) |>
+      mark_tile(x = factor(cyl), y = factor(gear), pattern = factor(am))
+  )[[1]]
+  expect_equal(e$channels$pattern$scale, "pattern")
+})
+
+test_that("every consumer reads the one aesthetic registry", {
+  reg <- vellumplot:::.AES_REGISTRY
+  # the trainer trains exactly the registered scales, in registry order
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  expect_identical(names(sc), names(reg))
+  # every legend row names a trainer, and every trainer exists
+  for (e in reg) {
+    if (!is.null(e$guide)) {
+      expect_false(is.null(e$trainer))
+    }
+    if (!is.null(e$trainer)) {
+      expect_true(is.function(vellumplot:::.aes_trainer(e)))
+    }
+  }
+  # channel routing: fill shares colour; linewidth splits by mark
+  expect_identical(
+    vellumplot:::.aes_scale_for_channel("fill", "point"),
+    "color"
+  )
+  expect_identical(
+    vellumplot:::.aes_scale_for_channel("linewidth", "edges"),
+    "edge_width"
+  )
+  expect_identical(
+    vellumplot:::.aes_scale_for_channel("linewidth", "line"),
+    "linewidth"
+  )
+})
+
+test_that("legend merge fields come from the registry", {
+  col <- list(kind = "discrete", name = "g", levels = c("a", "b"))
+  shp <- list(kind = "shape", name = "g", levels = c("a", "b"))
+  expect_true(vellumplot:::.aes_can_merge(col, shp, "color", "shape"))
+  shp$levels <- c("a", "c")
+  expect_false(vellumplot:::.aes_can_merge(col, shp, "color", "shape"))
+  # no registered partner, no merge
+  expect_false(vellumplot:::.aes_can_merge(col, shp, "shape", "color"))
+})
+
 test_that("row-keys partition the layer across style groups", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
   prov <- plot_provenance(p)

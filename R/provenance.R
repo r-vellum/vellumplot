@@ -63,16 +63,11 @@ NULL
 #   low value; refine them when a consumer needs finer granularity.
 # ---------------------------------------------------------------------------
 
-# Which trained scale resolves each aesthetic channel (the scale-ref lookup).
-# color/fill share the colour scale (see `.aes_aliases`).
-.PROV_CHANNEL_SCALE <- c(
-  x = "x",
-  y = "y",
-  color = "color",
-  fill = "color",
-  size = "size",
-  shape = "shape"
-)
+# Which trained scale resolves each aesthetic channel (the scale-ref lookup) is
+# the aesthetic registry's (`.AES_REGISTRY`, R/aes-registry.R): a channel routes
+# to the scale whose `aliases` list it (color/fill share the colour scale), and a
+# `linewidth` channel to the line-width or the edge-width scale by the layer's
+# mark. See `.aes_scale_for_channel()`.
 
 # Normalise a trained scale (whose field names differ by kind: position scales
 # carry `type`/`domain`, colour/size carry `kind`/`levels`/`range`) to a compact,
@@ -90,12 +85,12 @@ NULL
 # maps (present in `L$values`) that routes through a trained scale.
 .layer_channels <- function(L, scales) {
   out <- list()
-  for (ch in names(.PROV_CHANNEL_SCALE)) {
+  for (ch in .aes_channels()) {
     if (is.null(L$values[[ch]])) {
       next
     }
-    key <- .PROV_CHANNEL_SCALE[[ch]]
-    sc <- scales[[key]]
+    key <- .aes_scale_for_channel(ch, L$mark)
+    sc <- if (!is.null(key)) scales[[key]]
     if (is.null(sc)) {
       next
     }
