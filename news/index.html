@@ -66,8 +66,17 @@
 <h2 class="pkg-version" data-toc-text="0.13.0.9000" id="vellumplot-01309000-development-version">vellumplot 0.13.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01309000-development-version"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-13-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-13-0-9000"></a></h3>
+<ul><li><p><code>scale_*_gradient()</code>, <code>scale_*_gradient2()</code>, <code>scale_*_gradientn()</code>, <code>scale_*_viridis_c()</code> and <code>scale_*_distiller()</code> gain <code>limits</code>, <code>oob</code> and <code>na.value</code> (and the gradients <code>breaks</code> / <code>labels</code>), as <code>scale_*_continuous()</code> has; the default <code>oob = NULL</code> keeps today’s behaviour (VP-41).</p></li>
+<li><p><code><a href="../reference/mark_halfeye.html">mark_halfeye()</a></code> and <code><a href="../reference/mark_halfeye.html">mark_interval()</a></code> gain <code>orientation</code>, inferred as for box plots and violins: a discrete <code>y</code> with a continuous <code>x</code> draws horizontal intervals, with the slab above each one (VP-42).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="behaviour-changes-0-13-0-9000">Behaviour changes<a class="anchor" aria-label="anchor" href="#behaviour-changes-0-13-0-9000"></a></h3>
 <ul><li>
-<code><a href="../reference/mark_halfeye.html">mark_halfeye()</a></code> and <code><a href="../reference/mark_halfeye.html">mark_interval()</a></code> gain <code>orientation</code>, inferred as for box plots and violins: a discrete <code>y</code> with a continuous <code>x</code> draws horizontal intervals, with the slab above each one (VP-42).</li>
+<strong>Behaviour change:</strong> rows a position scale’s <code>oob = "censor"</code> puts outside its limits are now counted in the “Removed n rows containing missing values or values outside the scale range (layer k, <code>mark_x()</code>)” warning instead of vanishing silently, and – for the marks that draw one element per row, including boxplot, violin and smooth – they are removed before the layer’s statistic, as in ggplot2 (VP-41).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-13-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-13-0-9000"></a></h3>
+<ul><li>In a composition (<code>|</code>, <code>/</code>, <code><a href="../reference/concat.html">wrap_plots()</a></code>), each sub-plot now honours its own <code>theme(legend.position = "inside")</code> (or <code>c(x, y)</code>), drawing its legend over its panel instead of in a right-hand band, and <code>legend.position = "none"</code> hides that sub-plot’s legend. With <code>guides = "collect"</code> only the legends placed outside their panels are collected (VP-41).</li>
 </ul></div>
 </div>
     <div class="section level2">

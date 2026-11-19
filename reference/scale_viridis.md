@@ -17,7 +17,10 @@ scale_color_viridis_c(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_color_viridis_d(
@@ -33,7 +36,10 @@ scale_fill_viridis_c(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_fill_viridis_d(
@@ -71,7 +77,10 @@ scale_color_distiller(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = -1
+  direction = -1,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_fill_distiller(
@@ -81,7 +90,10 @@ scale_fill_distiller(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = -1
+  direction = -1,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_colour_viridis_c(
@@ -89,7 +101,10 @@ scale_colour_viridis_c(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_colour_viridis_d(
@@ -117,7 +132,10 @@ scale_colour_distiller(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = -1
+  direction = -1,
+  limits = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 ```
 
@@ -135,6 +153,14 @@ scale_colour_distiller(
 - name, breaks, labels:
 
   As for
+  [`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md).
+
+- limits, oob, na.value:
+
+  For the continuous scales (`_viridis_c()`, `_distiller()`), the mapped
+  data range `c(min, max)`, what to do with values outside it
+  (`"censor"`, `"squish"`, `"keep"` or a function; `NULL`, the default,
+  squishes) and the colour of missing values, as for
   [`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md).
 
 - palette:

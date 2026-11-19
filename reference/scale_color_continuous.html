@@ -107,7 +107,17 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span></span>
 <span><span class="fu">scale_color_manual</span><span class="op">(</span><span class="va">plot</span>, <span class="va">values</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_color_gradient</span><span class="op">(</span><span class="va">plot</span>, low <span class="op">=</span> <span class="st">"#132B43"</span>, high <span class="op">=</span> <span class="st">"#56B1F7"</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_color_gradient</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#132B43"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#56B1F7"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_gradient2</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -115,7 +125,12 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  mid <span class="op">=</span> <span class="st">"#FFFFFF"</span>,</span>
 <span>  high <span class="op">=</span> <span class="st">"#3A3A98"</span>,</span>
 <span>  midpoint <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_continuous</span><span class="op">(</span></span>
@@ -128,11 +143,38 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_color_gradientn</span><span class="op">(</span><span class="va">plot</span>, <span class="va">colours</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_color_gradientn</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">colours</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_fill_gradientn</span><span class="op">(</span><span class="va">plot</span>, <span class="va">colours</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_fill_gradientn</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">colours</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_colour_gradientn</span><span class="op">(</span><span class="va">plot</span>, <span class="va">colours</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_colour_gradientn</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">colours</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_discrete</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -144,7 +186,17 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span></span>
 <span><span class="fu">scale_fill_manual</span><span class="op">(</span><span class="va">plot</span>, <span class="va">values</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_fill_gradient</span><span class="op">(</span><span class="va">plot</span>, low <span class="op">=</span> <span class="st">"#132B43"</span>, high <span class="op">=</span> <span class="st">"#56B1F7"</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_fill_gradient</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#132B43"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#56B1F7"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_gradient2</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -152,7 +204,12 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  mid <span class="op">=</span> <span class="st">"#FFFFFF"</span>,</span>
 <span>  high <span class="op">=</span> <span class="st">"#3A3A98"</span>,</span>
 <span>  midpoint <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_continuous</span><span class="op">(</span></span>
@@ -175,7 +232,17 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span></span>
 <span><span class="fu">scale_colour_manual</span><span class="op">(</span><span class="va">plot</span>, <span class="va">values</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">scale_colour_gradient</span><span class="op">(</span><span class="va">plot</span>, low <span class="op">=</span> <span class="st">"#132B43"</span>, high <span class="op">=</span> <span class="st">"#56B1F7"</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">scale_colour_gradient</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  low <span class="op">=</span> <span class="st">"#132B43"</span>,</span>
+<span>  high <span class="op">=</span> <span class="st">"#56B1F7"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_gradient2</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
@@ -183,7 +250,12 @@ fill share one scale). A legend is drawn automatically when colour is mapped.</p
 <span>  mid <span class="op">=</span> <span class="st">"#FFFFFF"</span>,</span>
 <span>  high <span class="op">=</span> <span class="st">"#3A3A98"</span>,</span>
 <span>  midpoint <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oob <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -202,9 +274,9 @@ case/space-insensitively). <code>NULL</code> uses a sensible default.</p></dd>
 
 
 <dt id="arg-limits">limits<a class="anchor" aria-label="anchor" href="#arg-limits"></a></dt>
-<dd><p>For the continuous colour scales, a length-2 numeric
-<code>c(min, max)</code> fixing the mapped data range (the direct form of
-<code>lims(color = ...)</code>).</p></dd>
+<dd><p>For the continuous colour scales (including the gradient
+ones), a length-2 numeric <code>c(min, max)</code> fixing the mapped data range (the
+direct form of <code>lims(color = ...)</code>).</p></dd>
 
 
 <dt id="arg-breaks-labels">breaks, labels<a class="anchor" aria-label="anchor" href="#arg-breaks-labels"></a></dt>
@@ -216,10 +288,11 @@ case/space-insensitively). <code>NULL</code> uses a sensible default.</p></dd>
 
 
 <dt id="arg-oob">oob<a class="anchor" aria-label="anchor" href="#arg-oob"></a></dt>
-<dd><p>For <code>scale_*_continuous()</code>, what to do with values outside
-<code>limits</code>: <code>"censor"</code> gives them the NA colour, <code>"squish"</code> the colour of the
-nearest limit, <code>"keep"</code> the same (a ramp cannot extend past its ends), or
-a <code>function(x, range)</code>. <code>NULL</code> (default) squishes.</p></dd>
+<dd><p>For the continuous scales (<code>scale_*_continuous()</code>,
+<code>_gradient()</code>, <code>_gradient2()</code>, <code>_gradientn()</code>), what to do with values
+outside <code>limits</code>: <code>"censor"</code> gives them the NA colour, <code>"squish"</code> the
+colour of the nearest limit, <code>"keep"</code> the same (a ramp cannot extend past
+its ends), or a <code>function(x, range)</code>. <code>NULL</code> (default) squishes.</p></dd>
 
 
 <dt id="arg-values">values<a class="anchor" aria-label="anchor" href="#arg-values"></a></dt>
@@ -230,6 +303,11 @@ data levels by name (unmatched levels draw grey).</p></dd>
 <dt id="arg-low-high">low, high<a class="anchor" aria-label="anchor" href="#arg-low-high"></a></dt>
 <dd><p>For <code>scale_*_gradient()</code>/<code>scale_*_gradient2()</code>, the endpoint
 colours.</p></dd>
+
+
+<dt id="arg-na-value">na.value<a class="anchor" aria-label="anchor" href="#arg-na-value"></a></dt>
+<dd><p>For the gradient scales, the colour of missing (and
+censored) values; <code>NULL</code> keeps the default grey.</p></dd>
 
 
 <dt id="arg-mid">mid<a class="anchor" aria-label="anchor" href="#arg-mid"></a></dt>

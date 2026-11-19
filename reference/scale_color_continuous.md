@@ -32,7 +32,17 @@ scale_color_discrete(
 
 scale_color_manual(plot, values, name = NULL)
 
-scale_color_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+scale_color_gradient(
+  plot,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
 scale_color_gradient2(
   plot,
@@ -40,7 +50,12 @@ scale_color_gradient2(
   mid = "#FFFFFF",
   high = "#3A3A98",
   midpoint = 0,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_fill_continuous(
@@ -53,11 +68,38 @@ scale_fill_continuous(
   oob = NULL
 )
 
-scale_color_gradientn(plot, colours, name = NULL)
+scale_color_gradientn(
+  plot,
+  colours,
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
-scale_fill_gradientn(plot, colours, name = NULL)
+scale_fill_gradientn(
+  plot,
+  colours,
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
-scale_colour_gradientn(plot, colours, name = NULL)
+scale_colour_gradientn(
+  plot,
+  colours,
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
 scale_fill_discrete(
   plot,
@@ -69,7 +111,17 @@ scale_fill_discrete(
 
 scale_fill_manual(plot, values, name = NULL)
 
-scale_fill_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+scale_fill_gradient(
+  plot,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
 scale_fill_gradient2(
   plot,
@@ -77,7 +129,12 @@ scale_fill_gradient2(
   mid = "#FFFFFF",
   high = "#3A3A98",
   midpoint = 0,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 
 scale_colour_continuous(
@@ -100,7 +157,17 @@ scale_colour_discrete(
 
 scale_colour_manual(plot, values, name = NULL)
 
-scale_colour_gradient(plot, low = "#132B43", high = "#56B1F7", name = NULL)
+scale_colour_gradient(
+  plot,
+  low = "#132B43",
+  high = "#56B1F7",
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
+)
 
 scale_colour_gradient2(
   plot,
@@ -108,7 +175,12 @@ scale_colour_gradient2(
   mid = "#FFFFFF",
   high = "#3A3A98",
   midpoint = 0,
-  name = NULL
+  name = NULL,
+  limits = NULL,
+  breaks = NULL,
+  labels = NULL,
+  na.value = NULL,
+  oob = NULL
 )
 ```
 
@@ -128,8 +200,9 @@ scale_colour_gradient2(
 
 - limits:
 
-  For the continuous colour scales, a length-2 numeric `c(min, max)`
-  fixing the mapped data range (the direct form of `lims(color = ...)`).
+  For the continuous colour scales (including the gradient ones), a
+  length-2 numeric `c(min, max)` fixing the mapped data range (the
+  direct form of `lims(color = ...)`).
 
 - breaks, labels:
 
@@ -141,10 +214,11 @@ scale_colour_gradient2(
 
 - oob:
 
-  For `scale_*_continuous()`, what to do with values outside `limits`:
-  `"censor"` gives them the NA colour, `"squish"` the colour of the
-  nearest limit, `"keep"` the same (a ramp cannot extend past its ends),
-  or a `function(x, range)`. `NULL` (default) squishes.
+  For the continuous scales (`scale_*_continuous()`, `_gradient()`,
+  `_gradient2()`, `_gradientn()`), what to do with values outside
+  `limits`: `"censor"` gives them the NA colour, `"squish"` the colour
+  of the nearest limit, `"keep"` the same (a ramp cannot extend past its
+  ends), or a `function(x, range)`. `NULL` (default) squishes.
 
 - values:
 
@@ -154,6 +228,11 @@ scale_colour_gradient2(
 - low, high:
 
   For `scale_*_gradient()`/`scale_*_gradient2()`, the endpoint colours.
+
+- na.value:
+
+  For the gradient scales, the colour of missing (and censored) values;
+  `NULL` keeps the default grey.
 
 - mid:
 
