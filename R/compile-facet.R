@@ -274,9 +274,12 @@ NULL
     # are neither drawn nor counted as drawn by provenance. `.build_panels()`
     # sums the per-panel counts into one warning per layer.
     miss <- .missing_position_rows(layer, d)
-    if (any(miss)) {
-      d <- d[!miss, , drop = FALSE]
-      idx <- idx[!miss]
+    # So are rows a position scale's `oob = "censor"` puts outside its limits
+    # (before the stat, as in ggplot2), counted into the same warning.
+    cens <- !miss & .censored_position_rows(spec, layer, d)
+    if (any(miss | cens)) {
+      d <- d[!(miss | cens), , drop = FALSE]
+      idx <- idx[!(miss | cens)]
     }
     res <- .apply_position(.apply_stat(.resolve_layer(layer, d)))
     res$selgroup <- .realign_row_value(
@@ -285,6 +288,7 @@ NULL
     )
     res$source <- .layer_source(res, layer, i, idx)
     res$n_missing <- sum(miss)
+    res$n_censored <- sum(cens)
     res
   })
 }
@@ -350,17 +354,28 @@ NULL
 
 # One warning per layer for the rows `.resolve_panel()` removed, summed over
 # every panel, in ggplot2's wording.
+# Rows censored by a position scale's `oob` count too, and then the wording
+# names them, as ggplot2's does.
 .warn_missing_positions <- function(spec, panels) {
   for (i in seq_along(spec@layers)) {
-    n <- sum(vapply(
-      panels,
-      function(p) p$resolved[[i]]$n_missing %||% 0L,
-      integer(1)
-    ))
+    count <- function(field) {
+      sum(vapply(
+        panels,
+        function(p) as.integer(p$resolved[[i]][[field]] %||% 0L),
+        integer(1)
+      ))
+    }
+    n_cens <- count("n_censored")
+    n <- count("n_missing") + n_cens
     if (n > 0L) {
       mark <- spec@layers[[i]]@mark
+      what <- if (n_cens > 0L) {
+        "missing values or values outside the scale range"
+      } else {
+        "missing values"
+      }
       cli::cli_warn(
-        "Removed {n} row{?s} containing missing values (layer {i}, {.fn mark_{mark}}).",
+        "Removed {n} row{?s} containing {what} (layer {i}, {.fn mark_{mark}}).",
         class = "vellumplot_missing_rows"
       )
     }
