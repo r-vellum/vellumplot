@@ -10,6 +10,14 @@
   the same datum wherever it is drawn. Single-panel plots and declared
   `data_id`s are unchanged (VW-11).
 
+* `md()`, `vl_pattern()`, `sketch()`, `linear_gradient()` and
+  `radial_gradient()` are now vellum's own functions re-exported, not wrappers
+  around them. They behave the same, but attaching vellum and vellumplot
+  together (as `library(vellumverse)` does) no longer reports them as
+  conflicts. `pdf_pages()` and `render_all()` differ from vellum's (they take
+  plots, and `pdf_pages()` splits a faceted plot into pages), so they stay, and
+  their docs now say how they differ (VV-2).
+
 # vellumplot 0.12.0
 
 ## New features

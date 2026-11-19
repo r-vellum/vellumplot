@@ -3,22 +3,10 @@
 \name{sketch}
 \alias{sketch}
 \title{Hand-drawn ("sketch") rendering}
-\usage{
-sketch(...)
-}
-\arguments{
-\item{...}{Sketch parameters passed straight to \code{\link[vellum:sketch]{vellum::sketch()}} —
-\code{roughness}, \code{bowing}, \code{fill_style}, \code{fill_weight}, \code{hachure_angle},
-\code{hachure_gap}, \code{curve_tightness}, \code{disable_multi_stroke},
-\code{preserve_vertices}, \code{seed}. See there for defaults.}
-}
-\value{
-A \code{vellum_sketch} object.
-}
 \description{
-A re-export of \code{\link[vellum:sketch]{vellum::sketch()}} — the one vocabulary vellumplot speaks for the
-hand-drawn look (wobbly outlines, hachure fills, à la
-\href{https://roughjs.com}{Rough.js}). Pass a \code{sketch()} value to any mark's
+\code{sketch()} is \code{\link[vellum:sketch]{vellum::sketch()}}, re-exported --- the one vocabulary
+vellumplot speaks for the hand-drawn look (wobbly outlines, hachure fills, à
+la \href{https://roughjs.com}{Rough.js}). Pass a \code{sketch()} value to any mark's
 \verb{sketch =} argument, to an \code{\link[=element_line]{element_line()}} / \code{\link[=element_rect]{element_rect()}} \verb{sketch =}
 slot, or set it plot-wide with \code{\link[=theme_sketch]{theme_sketch()}}:
 }
@@ -29,13 +17,19 @@ slot, or set it plot-wide with \code{\link[=theme_sketch]{theme_sketch()}}:
 Sketch is a geometry property, not a layer \link[=glow]{effect}: it perturbs the
 mark itself (its wobble is generated natively in the vellum engine, so it is
 exact, cross-backend, and works in PDF), rather than compositing extra copies.
-Text is never sketched — pair a handwriting \code{family} with it for a fully
+Text is never sketched --- pair a handwriting \code{family} with it for a fully
 hand-drawn plot.
 
 Resolution is most-specific-wins: a mark's \verb{sketch =} beats an element slot,
 which beats the plot-wide \code{\link[=theme_sketch]{theme_sketch()}} default. At any level \code{sketch = NA}
 (or \code{FALSE}) forces that element crisp, overriding a broader default;
 \code{sketch = NULL} inherits.
+
+Its arguments are the sketch parameters of \code{\link[vellum:sketch]{vellum::sketch()}} ---
+\code{roughness}, \code{bowing}, \code{fill_style}, \code{fill_weight}, \code{hachure_angle},
+\code{hachure_gap}, \code{curve_tightness}, \code{disable_multi_stroke},
+\code{preserve_vertices}, \code{seed}; see there for defaults. It returns a
+\code{vellum_sketch} object.
 }
 \examples{
 vplot(mtcars) |>

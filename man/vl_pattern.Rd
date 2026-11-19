@@ -3,27 +3,13 @@
 \name{vl_pattern}
 \alias{vl_pattern}
 \title{Custom tiling-pattern fill}
-\usage{
-vl_pattern(
-  grob,
-  width = 0.1,
-  height = 0.1,
-  x = 0.5,
-  y = 0.5,
-  units = "npc",
-  extend = "repeat"
-)
-}
-\arguments{
-\item{grob, width, height, x, y, units, extend}{See \code{\link[vellum:vl_pattern]{vellum::vl_pattern()}}.}
-}
-\value{
-A \code{vellum_pattern} object usable as a \code{fill} value.
-}
 \description{
-A thin re-export of \code{\link[vellum:vl_pattern]{vellum::vl_pattern()}} for building a pattern fill from an
-arbitrary tile grob, when the ready-made \code{\link[=pattern_stripe]{pattern_stripe()}} family does not fit.
-Like a gradient, the result is an unscaled \code{fill} \emph{value}.
+\code{vl_pattern()} is \code{\link[vellum:vl_pattern]{vellum::vl_pattern()}}, re-exported, for building a
+pattern fill from an arbitrary tile grob when the ready-made
+\code{\link[=pattern_stripe]{pattern_stripe()}} family does not fit. Like a gradient, the result (a
+\code{vellum_pattern} object) is an unscaled \code{fill} \emph{value}. It takes the tile
+\code{grob}, the tile \code{width} / \code{height} and anchor \code{x} / \code{y} in \code{units}, and
+\code{extend}; see \code{\link[vellum:vl_pattern]{vellum::vl_pattern()}} for the full reference.
 }
 \examples{
 dots <- vellum::circle_grob(r = 0.25, gp = vellum::vl_gpar(fill = "grey30"))
