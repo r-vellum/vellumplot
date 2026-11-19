@@ -16,6 +16,7 @@ mark_halfeye(
   point = "median",
   adjust = 1,
   scale = 0.9,
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -27,6 +28,7 @@ mark_interval(
   position = "identity",
   .width = c(0.66, 0.95),
   point = "median",
+  orientation = NA,
   blend = NULL,
   data = NULL
 )
@@ -44,7 +46,8 @@ mark_interval(
 - ...:
 
   Encodings (tidy-eval): a categorical `x` and the sample `y` (+
-  `color`/`fill`).
+  `color`/`fill`), or a categorical `y` and the sample `x` for
+  horizontal intervals.
 
 - position:
 
@@ -80,6 +83,13 @@ mark_interval(
 
   Slab width as a fraction of the category band (`mark_halfeye()`).
 
+- orientation:
+
+  `NA` (default) to infer it from the data (horizontal when `y` is
+  discrete and `x` is not, as in ggplot2), `"x"` for vertical intervals
+  along a discrete `x` (the slab to the right of each), or `"y"` for
+  horizontal intervals along `y` (the slab above each).
+
 - blend:
 
   Optional blend mode for compositing this layer against what is already
@@ -108,8 +118,8 @@ The modified
 
 ## Details
 
-- `mark_halfeye()` draws, per `x` category, a one-sided density "slab"
-  (a half violin) with a **point-interval** at its base: the median (or
+- `mark_halfeye()` draws, per category, a one-sided density "slab" (a
+  half violin) with a **point-interval** at its base: the median (or
   mean) as a point, a thick bar for the inner interval and a thin bar
   for the outer one.
 
@@ -130,4 +140,7 @@ draws <- data.frame(
 vplot(draws) |> mark_halfeye(x = grp, y = val)
 
 vplot(draws) |> mark_interval(x = grp, y = val)
+
+# horizontal: the discrete variable on y
+vplot(draws) |> mark_halfeye(x = val, y = grp)
 ```

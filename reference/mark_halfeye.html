@@ -86,6 +86,7 @@ categorical <code>x</code>).</p>
 <span>  point <span class="op">=</span> <span class="st">"median"</span>,</span>
 <span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fl">0.9</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -97,6 +98,7 @@ categorical <code>x</code>).</p>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  .width <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.66</span>, <span class="fl">0.95</span><span class="op">)</span>,</span>
 <span>  point <span class="op">=</span> <span class="st">"median"</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -112,7 +114,8 @@ categorical <code>x</code>).</p>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Encodings (tidy-eval): a categorical <code>x</code> and the sample <code>y</code>
-(+ <code>color</code>/<code>fill</code>).</p></dd>
+(+ <code>color</code>/<code>fill</code>), or a categorical <code>y</code> and the sample <code>x</code> for horizontal
+intervals.</p></dd>
 
 
 <dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
@@ -146,6 +149,13 @@ does.</p></dd>
 <dd><p>Slab width as a fraction of the category band (<code>mark_halfeye()</code>).</p></dd>
 
 
+<dt id="arg-orientation">orientation<a class="anchor" aria-label="anchor" href="#arg-orientation"></a></dt>
+<dd><p><code>NA</code> (default) to infer it from the data (horizontal when
+<code>y</code> is discrete and <code>x</code> is not, as in ggplot2), <code>"x"</code> for vertical intervals
+along a discrete <code>x</code> (the slab to the right of each), or <code>"y"</code> for
+horizontal intervals along <code>y</code> (the slab above each).</p></dd>
+
+
 <dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>
 <dd><p>Optional blend mode for compositing this layer against what is
 already drawn beneath it (the panel and earlier layers), one of the CSS
@@ -171,7 +181,7 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
 
-<ul><li><p><code>mark_halfeye()</code> draws, per <code>x</code> category, a one-sided density "slab" (a half
+<ul><li><p><code>mark_halfeye()</code> draws, per category, a one-sided density "slab" (a half
 violin) with a <strong>point-interval</strong> at its base: the median (or mean) as a
 point, a thick bar for the inner interval and a thin bar for the outer one.</p></li>
 <li><p><code>mark_interval()</code> draws the point-interval alone (no slab).</p></li>
@@ -190,6 +200,9 @@ point, a thick bar for the inner interval and a thin bar for the outer one.</p><
 <span class="r-plt img"><img src="mark_halfeye-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_interval</span><span class="op">(</span>x <span class="op">=</span> <span class="va">grp</span>, y <span class="op">=</span> <span class="va">val</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_halfeye-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="co"># horizontal: the discrete variable on y</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_halfeye</span><span class="op">(</span>x <span class="op">=</span> <span class="va">val</span>, y <span class="op">=</span> <span class="va">grp</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="mark_halfeye-3.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
