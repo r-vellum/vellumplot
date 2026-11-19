@@ -61,6 +61,13 @@
 
 ## Bug fixes
 
+* **An inset plot no longer resets the outer plot's interaction context.** A
+  sub-plot drawn inside a plot (`annotate("sparkline")`, or `annotate("grob")`
+  with a plot) set the shared mark context for itself and left it that way, so
+  the outer plot's later panels lost their selection keys, `filter_by()` tags
+  and page size. Each plot now saves the context it was called with and
+  restores it when it returns (VP-12).
+
 * **Provenance carries every trained scale.** `plot_provenance()` records
   listed scale-refs only for `x`, `y`, colour/fill, `size` and `shape`. A
   mapped `alpha`, `linetype`, `linewidth` or `pattern` now carries its
