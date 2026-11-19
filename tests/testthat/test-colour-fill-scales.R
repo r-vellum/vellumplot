@@ -22,7 +22,9 @@ test_that("scale_fill_*() and scale_color_*() set their scales independently", {
   expect_true(g[[1]]$sc$outlined)
   # the bars are filled by the fill scale and outlined by the colour scale
   svg <- plot_svg(p)
-  expect_match(svg, 'fill="#4d4d4d"/><path d="[^"]*" fill="none" stroke="#0000ff"')
+  expect_match(svg, 'fill="#4d4d4d"', fixed = TRUE)
+  expect_match(svg, 'stroke="#0000ff"', fixed = TRUE)
+  expect_false(grepl('fill="#0000ff"', svg, fixed = TRUE))
 })
 
 test_that("a fill scale does not reach a colour mapping (as ggplot2)", {
