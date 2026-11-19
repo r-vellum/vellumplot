@@ -73,9 +73,11 @@ test_that("date breaks span the limits, not just the data (VP-8)", {
 test_that("an all-NA Date column renders a bare axis (VP-8)", {
   df <- data.frame(day = as.Date(c(NA, NA)), y = 1:2)
   p <- vplot(df) |> mark_point(x = day, y = y)
-  b <- .build_panels(p)
+  # The rows have no x, so they are removed with VP-6's warning.
+  expect_warning(b <- .build_panels(p), "Removed 2 rows")
   expect_length(b$scales$x$breaks, 0)
   expect_length(b$scales$x$labels, 0)
   f <- withr::local_tempfile(fileext = ".png")
-  expect_no_error(render_plot(p, f))
+  expect_warning(render_plot(p, f), "Removed 2 rows")
+  expect_true(file.exists(f))
 })
