@@ -351,6 +351,11 @@ NULL
   panel_clip <- dp$panel_clip
   hscale <- dp$hscale
   vscale <- dp$vscale
+  # More than one panel: default element keys must carry the panel to stay
+  # unique across panels (see `.default_keys()`).
+  old_faceted <- .mark_ctx$faceted
+  .mark_ctx$faceted <- length(built$panels) > 1L
+  on.exit(assign("faceted", old_faceted, envir = .mark_ctx), add = TRUE)
   for (p in built$panels) {
     hsc <- hscale(p)
     vsc <- vscale(p)
