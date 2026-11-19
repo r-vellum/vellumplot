@@ -13,6 +13,11 @@ NULL
 # that drop it, such as the animation states.
 .facet_key <- function(quos, data, na_level = TRUE) {
   vals <- lapply(quos, function(q) rlang::eval_tidy(q, data))
+  .facet_key_vals(vals, na_level)
+}
+
+# `.facet_key()` on already evaluated facet values (one vector per quosure).
+.facet_key_vals <- function(vals, na_level = TRUE) {
   if (length(vals) == 1 && is.factor(vals[[1]])) {
     f <- droplevels(vals[[1]])
     if (!anyNA(f) || !na_level) {
@@ -22,11 +27,7 @@ NULL
     chr[is.na(chr)] <- "NA"
     return(factor(chr, levels = unique(c(levels(f), "NA"))))
   }
-  parts <- lapply(vals, function(v) {
-    v <- as.character(v)
-    v[is.na(v)] <- "NA"
-    v
-  })
+  parts <- lapply(vals, .facet_chr)
   combined <- do.call(paste, c(parts, sep = ", "))
   if (!na_level) {
     combined[Reduce(`|`, lapply(vals, is.na))] <- NA_character_
@@ -39,6 +40,61 @@ NULL
   )
   lv <- unique(combined[ord])
   factor(combined, levels = lv[!is.na(lv)])
+}
+
+# One facet variable's values as the labels panels are matched on ("NA" for a
+# missing value).
+.facet_chr <- function(v) {
+  v <- as.character(v)
+  v[is.na(v)] <- "NA"
+  v
+}
+
+# Variables one facet quosure reads.
+.quo_vars <- function(q) all.vars(rlang::quo_get_expr(q))
+
+# Pool one facet variable's values from several tables. Values of one type
+# combine as that type (factors union their levels, numbers stay numeric), so
+# the pooled levels sort the way a single table's would; mixed types fall back
+# to character.
+.facet_pool <- function(vs) {
+  if (length(vs) == 1L) {
+    return(vs[[1]])
+  }
+  if (all(vapply(vs, is.factor, logical(1)))) {
+    return(do.call(c, vs))
+  }
+  cls <- unique(lapply(vs, class))
+  if (length(cls) == 1L && !is.factor(vs[[1]])) {
+    return(do.call(c, vs))
+  }
+  unlist(lapply(vs, as.character), use.names = FALSE)
+}
+
+# The panel levels along one facet dimension (`quos`), unioned over every table
+# in `datas` that carries all of the dimension's variables -- the plot data and
+# any layer's own data, as ggplot2 does -- so a level that only a layer has
+# still gets its panel. Returns the levels and, per level, each quosure's own
+# value (`parts`), which `.layer_panel_idx()` matches a layer on when the layer
+# carries only some of the facet variables.
+.facet_dim <- function(quos, datas) {
+  if (!length(quos)) {
+    return(list(levels = "", parts = list(character(0))))
+  }
+  vars <- unique(unlist(lapply(quos, .quo_vars)))
+  datas <- Filter(function(d) all(vars %in% names(d)), datas)
+  vals <- lapply(seq_along(quos), function(k) {
+    .facet_pool(lapply(datas, function(d) rlang::eval_tidy(quos[[k]], d)))
+  })
+  fkey <- .facet_key_vals(vals)
+  levs <- levels(fkey)
+  first <- match(levs, as.character(fkey))
+  list(
+    levels = levs,
+    parts = lapply(first, function(i) {
+      vapply(vals, function(v) .facet_chr(v[i]), character(1))
+    })
+  )
 }
 
 # Facet key(s) for `data`: the single wrap key, or the row and column keys for a
@@ -80,9 +136,16 @@ NULL
     ))
   }
 
+  # Levels come from the plot data and every layer's own data; rows of the
+  # plot data are assigned here, a layer's own rows in `.layer_panel_idx()`.
+  datas <- c(
+    list(data),
+    Filter(Negate(is.null), lapply(spec@layers, function(l) l@data))
+  )
   if (facet@type == "wrap") {
-    key <- .facet_keys(facet, data)$wrap
-    levs <- levels(key)
+    key <- as.character(.facet_keys(facet, data)$wrap)
+    dim <- .facet_dim(facet@cols, datas)
+    levs <- dim$levels
     n <- length(levs)
     ncol <- facet@ncol %||%
       (if (!is.null(facet@nrow)) ceiling(n / facet@nrow) else ceiling(sqrt(n)))
@@ -93,7 +156,8 @@ NULL
         r = (i - 1L) %/% ncol + 1L,
         c = (i - 1L) %% ncol + 1L,
         idx = which(key == levs[i]),
-        lvl = list(wrap = levs[i])
+        lvl = list(wrap = levs[i]),
+        match = .panel_match(facet@cols, dim$parts[[i]])
       )
     })
     list(
@@ -107,10 +171,12 @@ NULL
     )
   } else {
     keys <- .facet_keys(facet, data)
-    rkey <- keys$r
-    ckey <- keys$c
-    rlevs <- levels(rkey)
-    clevs <- levels(ckey)
+    rkey <- as.character(keys$r)
+    ckey <- as.character(keys$c)
+    rdim <- .facet_dim(facet@rows, datas)
+    cdim <- .facet_dim(facet@cols, datas)
+    rlevs <- rdim$levels
+    clevs <- cdim$levels
     R <- length(rlevs)
     C <- length(clevs)
     panels <- vector("list", R * C)
@@ -122,7 +188,11 @@ NULL
           r = r,
           c = cc,
           idx = which(rkey == rlevs[r] & ckey == clevs[cc]),
-          lvl = list(r = rlevs[r], c = clevs[cc])
+          lvl = list(r = rlevs[r], c = clevs[cc]),
+          match = c(
+            .panel_match(facet@rows, rdim$parts[[r]]),
+            .panel_match(facet@cols, cdim$parts[[cc]])
+          )
         )
       }
     }
@@ -138,33 +208,43 @@ NULL
   }
 }
 
-# Row indices of `data` belonging to `panel`, by matching the facet variable(s)
-# evaluated on `data` against the panel's level. When `data` lacks the facet
-# variable(s) (e.g. an annotation layer's own data), every row is returned so the
-# layer draws on every panel.
+# A panel's membership test, one entry per facet quosure: the quosure and the
+# value (as `.facet_chr()` labels it) a row needs to belong to the panel.
+.panel_match <- function(quos, parts) {
+  lapply(seq_along(quos), function(k) list(quo = quos[[k]], value = parts[[k]]))
+}
+
+# Row indices of `data` belonging to `panel`, for a layer with its own data.
+# The layer is split on whichever facet variables it carries, as in ggplot2: a
+# row must match the panel on each facet quosure whose variables are all in
+# `data`, and a quosure the data lacks does not constrain it. So in
+# `facet_grid(am ~ cyl)` a layer with only `am` draws in its `am` row, repeated
+# across the `cyl` columns, and a layer with no facet variable draws in every
+# panel. Guarding on the variables being present (not a catch-all `tryCatch`)
+# lets a real evaluation error propagate.
 .layer_panel_idx <- function(facet, data, panel) {
   if (is.null(facet) || is.null(panel$lvl)) {
     return(seq_len(nrow(data)))
   }
-  # Fall back to "every panel" only when this data genuinely lacks the facet
-  # variable(s) (an annotation layer's own data). A catch-all `tryCatch` here
-  # would also swallow a real evaluation bug into a silently-wrong plot, so guard
-  # on the specific condition and let any other error propagate.
-  vars <- unique(unlist(lapply(
-    c(facet@cols, facet@rows),
-    function(q) all.vars(rlang::quo_get_expr(q))
-  )))
-  if (!all(vars %in% names(data))) {
-    return(seq_len(nrow(data)))
+  keep <- rep(TRUE, nrow(data))
+  for (m in panel$match %||% .panel_match_from_lvl(facet, panel$lvl)) {
+    if (all(.quo_vars(m$quo) %in% names(data))) {
+      keep <- keep & .facet_chr(rlang::eval_tidy(m$quo, data)) == m$value
+    }
   }
-  keys <- .facet_keys(facet, data)
+  which(keep)
+}
+
+# The membership test for a panel given only its level labels (no `match`
+# recorded): a single-quosure dimension's label is its value.
+.panel_match_from_lvl <- function(facet, lvl) {
+  one <- function(quos, label) {
+    if (length(quos) == 1L) .panel_match(quos, label) else list()
+  }
   if (facet@type == "wrap") {
-    which(as.character(keys$wrap) == panel$lvl$wrap)
+    one(facet@cols, lvl$wrap)
   } else {
-    which(
-      as.character(keys$r) == panel$lvl$r &
-        as.character(keys$c) == panel$lvl$c
-    )
+    c(one(facet@rows, lvl$r), one(facet@cols, lvl$c))
   }
 }
 
