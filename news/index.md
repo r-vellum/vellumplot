@@ -2,6 +2,13 @@
 
 ## vellumplot 0.14.0.9000 (development version)
 
+### Bug fixes
+
+- `add_marginal(group = TRUE)` fills each group’s histogram or density
+  in its colour again. Since 0.14.0 made a `color` given with a `fill`
+  an outline (VP-46), the marginals’ constant grey fill turned the group
+  colours into thin outlines on grey.
+
 ## vellumplot 0.14.0
 
 ### Behaviour changes
