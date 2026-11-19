@@ -21,6 +21,11 @@
   interaction model tags each bind with its `cell`, and each selection with the
   `cells` that register it (F-15).
 
+* `scale_x_date()`, `scale_x_datetime()`, `scale_x_time()`, `scale_x_binned()`
+  and their `y` counterparts take `guide =`, like the continuous and discrete
+  position scales: `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the
+  month labels (VP-45).
+
 # vellumplot 0.14.1
 
 ## Bug fixes
