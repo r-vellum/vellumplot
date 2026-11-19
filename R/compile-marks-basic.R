@@ -538,48 +538,34 @@ NULL
   scene
 }
 
+# Horizontal (`yintercept`) and vertical (`xintercept`) reference lines spanning
+# the panel. A mapped colour / alpha / linetype varies per line: the lines are
+# split into style groups, one batched segments grob each (as `.emit_abline()`
+# styles each line), so every rule takes its own row's style and matches the
+# legend.
 .emit_rule <- function(scene, L, scales) {
-  col <- .aes_colour(L, scales, "grey40")[1]
+  col <- .aes_colour(L, scales, "grey40")
   lwd <- .aes_param(L, "linewidth", 1)
   lty <- .aes_linetype(L, scales, NULL)
-  alpha <- .aes_alpha(L, scales, NA_real_)[1]
-  gp <- vellum::vl_gpar(
-    col = col,
-    lwd = lwd,
-    lty = lty,
-    alpha = gp_alpha(alpha)
-  )
+  alpha <- .aes_alpha(L, scales, NA_real_)
   sk <- .mark_sketch(L, scales)
-  yi <- .intercept(L, "yintercept")
-  xi <- .intercept(L, "xintercept")
-  if (!is.null(yi)) {
-    vy <- scales$y$map(yi)
-    if (length(vy)) {
-      k <- length(vy)
-      s <- .seg_units(
-        scales,
-        vellum::vl_unit(rep(0, k), "npc"),
-        vellum::vl_unit(vy, "native"),
-        vellum::vl_unit(rep(1, k), "npc"),
-        vellum::vl_unit(vy, "native")
-      )
-      scene <- .draw(
-        scene,
-        vellum::segments_grob(s$x0, s$y0, s$x1, s$y1, sketch = sk, gp = gp)
-      )
+  # One family of lines: `v` intercepts (native), `seg(v)` their segment
+  # endpoints. Rows whose style differs go to separate grobs.
+  draw_family <- function(scene, v, seg, bump) {
+    k <- length(v)
+    if (!k) {
+      return(scene)
     }
-  }
-  if (!is.null(xi)) {
-    vx <- scales$x$map(xi)
-    if (length(vx)) {
-      k <- length(vx)
-      s <- .seg_units(
-        scales,
-        vellum::vl_unit(vx, "native"),
-        vellum::vl_unit(rep(0, k), "npc"),
-        vellum::vl_unit(vx, "native"),
-        vellum::vl_unit(rep(1, k), "npc")
-      )
+    colk <- rep_len(col, k)
+    alphak <- rep_len(alpha, k)
+    ltyk <- if (!is.null(lty)) rep_len(lty, k)
+    per_row <- identical(k, L$n)
+    gi <- 0L
+    for (idx in .style_groups(
+      k,
+      list(col = colk, alpha = alphak, lty = ltyk)
+    )) {
+      s <- seg(v[idx])
       scene <- .draw(
         scene,
         vellum::segments_grob(
@@ -587,11 +573,51 @@ NULL
           s$y0,
           s$x1,
           s$y1,
-          sketch = .sketch_bump(sk, 1L),
-          gp = gp
-        )
+          sketch = .sketch_bump(sk, bump + gi),
+          gp = .gp_stroke(colk, alphak, idx[1], lwd, ltyk)
+        ),
+        # PROVENANCE: one rule per layer row when the intercept is mapped.
+        rows = if (per_row) idx
       )
+      gi <- gi + 1L
     }
+    scene
+  }
+  yi <- .intercept(L, "yintercept")
+  xi <- .intercept(L, "xintercept")
+  if (!is.null(yi)) {
+    scene <- draw_family(
+      scene,
+      scales$y$map(yi),
+      function(vy) {
+        k <- length(vy)
+        .seg_units(
+          scales,
+          vellum::vl_unit(rep(0, k), "npc"),
+          vellum::vl_unit(vy, "native"),
+          vellum::vl_unit(rep(1, k), "npc"),
+          vellum::vl_unit(vy, "native")
+        )
+      },
+      0L
+    )
+  }
+  if (!is.null(xi)) {
+    scene <- draw_family(
+      scene,
+      scales$x$map(xi),
+      function(vx) {
+        k <- length(vx)
+        .seg_units(
+          scales,
+          vellum::vl_unit(vx, "native"),
+          vellum::vl_unit(rep(0, k), "npc"),
+          vellum::vl_unit(vx, "native"),
+          vellum::vl_unit(rep(1, k), "npc")
+        )
+      },
+      1L
+    )
   }
   scene
 }

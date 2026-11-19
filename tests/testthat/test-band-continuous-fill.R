@@ -74,3 +74,28 @@ test_that("discrete fills and constant fills are unaffected", {
   ))
   expect_no_error(compile(vplot(d) |> mark_area(x = x, y = y, alpha = 0.5)))
 })
+
+test_that("violins and ridgelines never split on a continuous fill (VP-34)", {
+  # Unlike areas before #204, the density marks draw one polygon per category
+  # cell (`.by_category()`), whatever the fill does within it -- so a fill that
+  # varies along the cell cannot shatter the shape into slivers.
+  set.seed(1)
+  dd <- data.frame(
+    g = rep(c("a", "b"), each = 30),
+    y = stats::rnorm(60),
+    z = stats::runif(60)
+  )
+  # Provenance records one entry per emitted grob.
+  grobs <- function(p, mark) {
+    pr <- attr(compile(p), "vellumplot_provenance")
+    Filter(function(e) identical(e$mark, mark), pr)
+  }
+  expect_length(
+    grobs(vplot(dd) |> mark_violin(x = g, y = y, fill = z), "violin"),
+    2L
+  )
+  expect_length(
+    grobs(vplot(dd) |> mark_ridgeline(x = y, y = g, fill = z), "ridgeline"),
+    2L
+  )
+})
