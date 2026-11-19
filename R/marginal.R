@@ -207,7 +207,7 @@ add_marginal <- function(
 ) {
   group_vals <- if (ms@group) src$color else NULL
   if (
-    ms@group && (is.null(colorscale) || !identical(colorscale$kind, "discrete"))
+    ms@group && (is.null(colorscale) || !identical(colorscale$type, "discrete"))
   ) {
     cli::cli_abort(c(
       "{.code add_marginal(group = TRUE)} needs a discrete {.field color}/{.field fill} mapping.",

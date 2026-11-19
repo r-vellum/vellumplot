@@ -17,22 +17,22 @@ NULL
 #               scale serves (`include`) or does not (`exclude`); NULL = all
 #   title       the channel whose labs() entry / mapped expression supplies the
 #               default title (see .plot_titles())
-#   trainer     the per-kind trainer's name, `fn(spec, resolved, titles = )`;
+#   trainer     the per-aesthetic trainer's name, `fn(spec, resolved, titles = )`;
 #               NULL for the position scales, which `.train_axis()` trains
-#   guide       the legend kind it draws, NULL for an axis. `"color"` is
-#               resolved per scale kind (bar, steps, swatches, bivariate) by
+#   guide       the legend it draws, NULL for an axis. `"color"` is
+#               resolved per scale type (bar, steps, swatches, bivariate) by
 #               `.legend_guides()`
 #   merge       the partners its legend may fold into *and disappear*, each
 #               with the trained fields that must be identical for the fold. A
-#               field set may be keyed by the scale's `kind`, with `.default`
+#               field set may be keyed by the scale's `type`, with `.default`
 #               for the rest (the edge colour guide folding into the node one)
 #   legend_merge TRUE when its legend joins ggplot2's legend merge: any two
 #               such legends with the same title and the same keys (values and
 #               labels) draw as one legend whose keys carry every encoding
 #               (see `.merge_legend_guides()`, R/compile-guides.R)
 #   provenance  TRUE when an element's provenance carries a scale-ref for it
-#   kinds       the `kind`s a trained scale under this key may have (checked by
-#               `trained_scale()`, R/trained-scale.R); defaults to the key
+#   types       the `type`s a trained scale under this key may have (checked by
+#               `trained_scale()`, R/trained-scale.R)
 # ---------------------------------------------------------------------------
 
 .aes_entry <- function(
@@ -45,7 +45,7 @@ NULL
   merge = list(),
   legend_merge = FALSE,
   provenance = TRUE,
-  kinds = name
+  types = .CONTINUOUS_TYPES
 ) {
   list(
     name = name,
@@ -57,7 +57,7 @@ NULL
     merge = merge,
     legend_merge = legend_merge,
     provenance = provenance,
-    kinds = kinds
+    types = types
   )
 }
 
@@ -68,19 +68,23 @@ NULL
 # width and a line's width to different variables in one plot.
 .LINEWIDTH_MARKS <- c("line", "step", "segment")
 
-# The kinds a trained position / colour scale comes in.
-.POSITION_KINDS <- c("continuous", "log10", "discrete", "binned")
-.COLOUR_KINDS <- c("continuous", "discrete", "binned", "identity")
+# The types a trained scale comes in, by aesthetic family. A keyed aesthetic
+# (shape, linetype, pattern) is always discrete; a sized one (size, alpha, the
+# widths) is continuous; colour and position take more.
+.POSITION_TYPES <- c("continuous", "log10", "discrete", "binned")
+.COLOUR_TYPES <- c("continuous", "discrete", "binned", "identity")
+.CONTINUOUS_TYPES <- c("continuous", "identity")
+.DISCRETE_TYPES <- c("discrete", "identity")
 
 .AES_REGISTRY <- list(
-  x = .aes_entry("x", kinds = .POSITION_KINDS),
-  y = .aes_entry("y", kinds = .POSITION_KINDS),
+  x = .aes_entry("x", types = .POSITION_TYPES),
+  y = .aes_entry("y", types = .POSITION_TYPES),
   color = .aes_entry(
     "color",
     aliases = c("color", "fill"),
     trainer = ".train_colour",
     guide = "color",
-    kinds = .COLOUR_KINDS,
+    types = .COLOUR_TYPES,
     # A discrete colour legend merges with any other discrete legend (shape,
     # linetype, ...) of the same title and keys; a continuous colour bar turns
     # into keys when it merges with a size/alpha/linewidth legend.
@@ -96,12 +100,14 @@ NULL
     "shape",
     trainer = ".train_shape",
     guide = "shape",
-    legend_merge = TRUE
+    legend_merge = TRUE,
+    types = .DISCRETE_TYPES
   ),
   pattern = .aes_entry(
     "pattern",
     trainer = ".train_pattern",
-    guide = "pattern"
+    guide = "pattern",
+    types = "discrete"
   ),
   edge_width = .aes_entry(
     "edge_width",
@@ -127,34 +133,34 @@ NULL
     "linetype",
     trainer = ".train_linetype",
     guide = "linetype",
-    legend_merge = TRUE
+    legend_merge = TRUE,
+    types = .DISCRETE_TYPES
   ),
   edge_color = .aes_entry(
     "edge_color",
     trainer = ".train_edge_colour",
     guide = "color",
-    kinds = .COLOUR_KINDS,
+    types = .COLOUR_TYPES,
     # One variable colouring nodes and edges: the node guide already carries the
     # encoding when the palette-defining fields agree (`key_glyph` and the `map`
     # closure are expected to differ and are not compared).
     merge = list(
       color = list(
-        continuous = c("kind", "name", "range", "pal256", "midpoint"),
-        .default = c("kind", "name", "levels", "colors")
+        continuous = c("type", "name", "range", "pal256", "midpoint"),
+        .default = c("type", "name", "levels", "colors")
       )
     )
   ),
   edge_alpha = .aes_entry(
     "edge_alpha",
     trainer = ".train_edge_alpha",
-    guide = "alpha",
-    kinds = "alpha"
+    guide = "alpha"
   ),
   edge_linetype = .aes_entry(
     "edge_linetype",
     trainer = ".train_edge_linetype",
     guide = "linetype",
-    kinds = "linetype"
+    types = .DISCRETE_TYPES
   )
 )
 
@@ -203,8 +209,8 @@ NULL
 
 # May legend `from` (a trained scale under registry key `from_key`) fold into
 # legend `to` (key `to_key`)? True when the registry lists the partner and every
-# field it names is identical on both scales. A field set keyed by kind is
-# picked by `from`'s kind (`.default` for any other).
+# field it names is identical on both scales. A field set keyed by type is
+# picked by `from`'s type (`.default` for any other).
 .aes_can_merge <- function(from, to, from_key, to_key) {
   if (is.null(from) || is.null(to)) {
     return(FALSE)
@@ -214,7 +220,7 @@ NULL
     return(FALSE)
   }
   if (is.list(fields)) {
-    fields <- fields[[from$kind %||% ".default"]] %||% fields[[".default"]]
+    fields <- fields[[from$type %||% ".default"]] %||% fields[[".default"]]
   }
   all(vapply(
     fields,

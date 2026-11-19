@@ -93,7 +93,7 @@ test_that("scale_color_binned cuts a continuous colour aesthetic into classes", 
     mark_point(x = wt, y = mpg, color = hp) |>
     scale_color_binned(n = 4)
   cl <- train(p)$color
-  expect_identical(cl$kind, "binned")
+  expect_identical(cl$type, "binned")
 })
 
 test_that("a binned colour scale with too-few breaks errors clearly (H43)", {
@@ -111,7 +111,7 @@ test_that("a binned colour scale with too-few breaks errors clearly (H43)", {
   p2 <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = hp) |>
     scale_color_binned(breaks = c(100, 200))
-  expect_identical(train(p2)$color$kind, "binned")
+  expect_identical(train(p2)$color$type, "binned")
 })
 
 test_that("scale_color_manual / scale_fill_manual reject missing or bad values", {
@@ -172,7 +172,7 @@ test_that("binned colour scales also use the perceptual ramp", {
       mark_point(x = x, y = y, color = z) |>
       scale_color_binned(palette = c("black", "white"), n = 4)
   )$color
-  expect_identical(cl$kind, "binned")
+  expect_identical(cl$type, "binned")
   # the middle class colour is perceptual, not the sRGB code-midpoint grey
   mids <- as.integer(grDevices::col2rgb(cl$colors[2]))[1]
   expect_lt(mids, 130L)
@@ -245,7 +245,7 @@ test_that("fill values pool into the colour scale even when a layer maps color",
     mark_tile(x = x, y = y, fill = z) |>
     mark_point(data = subset(d, z > 50), x = x, y = y, color = z)
   cl <- train(p)$color
-  expect_identical(cl$kind, "continuous")
+  expect_identical(cl$type, "continuous")
   expect_identical(cl$range, c(1, 100))
   # the tiles below the points' range get distinct colours, not one squished end
   expect_false(identical(cl$map(1), cl$map(50)))
@@ -256,7 +256,7 @@ test_that("discrete color and fill layers share the union of levels", {
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
     mark_point(x = wt, y = qsec, fill = factor(gear))
   cl <- train(p)$color
-  expect_identical(cl$kind, "discrete")
+  expect_identical(cl$type, "discrete")
   expect_setequal(cl$levels, c("4", "6", "8", "3", "5"))
 })
 
@@ -274,7 +274,7 @@ test_that("an explicit colour scale kind settles mixed color/fill types", {
     mark_point(x = wt, y = qsec, fill = carb) |>
     scale_color_discrete()
   cl <- train(p)$color
-  expect_identical(cl$kind, "discrete")
+  expect_identical(cl$type, "discrete")
   expect_true(all(c("4", "6", "8", "1", "2") %in% cl$levels))
 })
 

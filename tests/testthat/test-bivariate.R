@@ -27,8 +27,14 @@ test_that("bi_class() bins both variables over the whole table", {
   expect_s3_class(d$bi_class, "factor")
   expect_identical(levels(d$bi_class), vellumplot:::.bi_levels(3))
   # x is the first index, y the second.
-  expect_identical(substr(as.character(d$bi_class[which.min(mtcars$hp)]), 1, 1), "1")
-  expect_identical(substr(as.character(d$bi_class[which.max(mtcars$wt)]), 3, 3), "3")
+  expect_identical(
+    substr(as.character(d$bi_class[which.min(mtcars$hp)]), 1, 1),
+    "1"
+  )
+  expect_identical(
+    substr(as.character(d$bi_class[which.max(mtcars$wt)]), 3, 3),
+    "3"
+  )
   info <- attr(d$bi_class, "vellum_bivariate")
   expect_identical(info[c("x", "y", "dim")], list(x = "hp", y = "wt", dim = 3L))
   expect_length(info$x_breaks, 4L)
@@ -52,7 +58,7 @@ test_that("a bi_class() column trains a bivariate scale on its own", {
   d <- bi_class(mtcars, hp, wt)
   p <- vplot(d) |> mark_point(x = hp, y = wt, color = bi_class)
   sc <- vellumplot:::.build_panels(p)$scales$color
-  expect_identical(sc$kind, "discrete")
+  expect_identical(sc$type, "discrete")
   expect_identical(sc$bivariate$dim, 3L)
   expect_identical(sc$bivariate$xlab, "hp")
   expect_identical(sc$bivariate$ylab, "wt")
@@ -69,9 +75,13 @@ test_that("scale_fill_bivariate() sets the palette and the axis titles", {
     scale_fill_bivariate(palette = "GrPink", xlab = "Power", ylab = "Weight")
   sc <- vellumplot:::.build_panels(p)$scales$color
   expect_identical(sc$colors, unname(bi_pal("GrPink")))
-  expect_identical(sc$bivariate[c("xlab", "ylab")], list(xlab = "Power", ylab = "Weight"))
+  expect_identical(
+    sc$bivariate[c("xlab", "ylab")],
+    list(xlab = "Power", ylab = "Weight")
+  )
   # guides() retitles without respelling the scale.
-  p2 <- p |> guides(fill = guide_bivariate(xlab = "hp", key.size = 8, title = "T"))
+  p2 <- p |>
+    guides(fill = guide_bivariate(xlab = "hp", key.size = 8, title = "T"))
   sc2 <- vellumplot:::.build_panels(p2)$scales$color
   expect_identical(sc2$bivariate$xlab, "hp")
   expect_identical(sc2$bivariate$key_size, 8)
@@ -104,7 +114,10 @@ test_that("scale and guide arguments are validated", {
   p <- vplot(mtcars)
   expect_error(scale_fill_bivariate(p, dim = 9), "must be one of")
   expect_error(scale_fill_bivariate(p, palette = c("red", "blue")), "explicit")
-  expect_error(scale_fill_bivariate(p, palette = c("red", "blue"), dim = 2), "needs 4")
+  expect_error(
+    scale_fill_bivariate(p, palette = c("red", "blue"), dim = 2),
+    "needs 4"
+  )
   expect_error(guide_bivariate(xlab = 1), "single string")
   expect_error(guide_bivariate(key.size = -1), "positive")
   # guide_bivariate() on a continuous colour scale is a mistake.

@@ -716,7 +716,7 @@ NULL
     }
     guide <- .AES_REGISTRY[[k]]$guide
     if (k == "color") {
-      gk <- sc$kind
+      gk <- sc$type
       # A binned (classed) colour scale draws as discrete swatches with interval
       # labels, so it reuses the discrete guide -- unless guide_coloursteps()
       # asked for a segmented bar, which routes to its own stepped-bar drawer.
@@ -741,7 +741,7 @@ NULL
       if (.can_merge_edge_color(scales$color, sc)) {
         next
       }
-      gk <- sc$kind
+      gk <- sc$type
       add(
         paste0(
           "color_",

@@ -322,7 +322,8 @@ guide_colorsteps <- guide_coloursteps
     # guide_legend(nested = TRUE) on a size scale draws its keys as concentric,
     # bottom-aligned circles (a proportional-symbol legend) instead of stacked
     # rows; flagged here, re-routed to the bubble drawer in .legend_guides().
-    if (isTRUE(guide$nested)) {
+    # Any other scale ignores it.
+    if (isTRUE(guide$nested) && identical(trained$aesthetic, "size")) {
       trained <- .scale_set(trained, nested = TRUE)
     }
     # guide_colourbar() / guide_coloursteps(): carry the bar geometry + tick/label
@@ -341,7 +342,11 @@ guide_colorsteps <- guide_coloursteps
         bar_ticks_colour = guide$ticks_colour,
         bar_label_pos = guide$label_position
       )
-      if (identical(guide$kind, "coloursteps")) {
+      if (
+        identical(guide$kind, "coloursteps") &&
+          identical(trained$type, "binned")
+      ) {
+        # A continuous scale under guide_coloursteps() keeps its bar.
         # `.reverse_guide()` above already flipped the bin colours (the `binned`
         # branch) but deliberately NOT `breaks` (they would desync a swatch
         # legend). The stepped bar pairs each break with a segment edge, so flip
@@ -380,7 +385,7 @@ guide_colorsteps <- guide_coloursteps
 # a tick, which outranks a count.
 .rebreak_bar <- function(tr, n) {
   if (
-    !identical(tr$kind, "continuous") ||
+    !identical(tr$type, "continuous") ||
       isTRUE(tr$breaks_asked) ||
       isTRUE(tr$labels_asked) ||
       is.null(tr$range)
@@ -401,7 +406,8 @@ guide_colorsteps <- guide_coloursteps
 }
 
 # Reverse a legend's key order (display only; the data -> aesthetic mapping is
-# unchanged). Reverses the paired display vectors for the guide's kind.
+# unchanged). Reverses the paired display vectors the scale's legend draws: by
+# type for a colour scale, by the registry row's guide for the others.
 .reverse_guide <- function(tr) {
   rev_fields <- function(tr, fields) {
     for (f in fields) {
@@ -410,7 +416,7 @@ guide_colorsteps <- guide_coloursteps
     tr
   }
   switch(
-    tr$kind,
+    .scale_guide_key(tr) %||% "",
     discrete = rev_fields(tr, c("levels", "labels", "colors")),
     # Not `breaks`: they are bin boundaries (length n+1) paired index-wise with
     # the length-n colours/labels; reversing them here would desync boundaries
@@ -418,6 +424,7 @@ guide_colorsteps <- guide_coloursteps
     binned = rev_fields(tr, c("levels", "labels", "colors")),
     shape = rev_fields(tr, c("levels", "shapes")),
     linetype = rev_fields(tr, c("levels", "linetypes")),
+    pattern = rev_fields(tr, c("levels", "patterns")),
     # A continuous colourbar positions each label by its value, so reversing the
     # value/label arrays is a visible no-op. Flag the drawer to flip the gradient
     # and mirror each position (1 - frac) instead, keeping value<->label pairing.

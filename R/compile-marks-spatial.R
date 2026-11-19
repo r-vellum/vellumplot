@@ -284,7 +284,7 @@ NULL
   if (
     !is.null(ds$cat) &&
       !is.null(scales$color) &&
-      identical(scales$color$kind, "discrete")
+      identical(scales$color$type, "discrete")
   ) {
     category <- as.character(ds$cat)
     levels <- unique(category)

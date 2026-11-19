@@ -10,7 +10,7 @@ df <- data.frame(
 test_that("a mapped alpha trains a continuous opacity scale with a legend", {
   p <- vplot(df) |> mark_point(x = x, y = y, alpha = w)
   b <- vellumplot:::.build_panels(p)
-  expect_identical(b$scales$alpha$kind, "alpha")
+  expect_identical(b$scales$alpha$type, "continuous")
   # data range maps into the [0.1, 1] default opacity range
   expect_equal(b$scales$alpha$map(range(df$w)), c(0.1, 1))
   guides <- vellumplot:::.legend_guides(b$scales)

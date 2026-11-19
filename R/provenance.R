@@ -70,13 +70,13 @@ NULL
 # mark. See `.aes_scale_for_channel()`.
 
 # Normalise a trained scale (R/trained-scale.R) to a compact, serializable
-# reference: its `kind`, and its domain -- `domain` for an axis, `levels` for a
+# reference: its type (as `.scale_public_type()` reports it), and its domain -- `domain` for an axis, `levels` for a
 # keyed legend scale. Best-effort and defensive -- a missing field is NA/NULL,
 # never an error.
 .scale_ref <- function(key, sc) {
   list(
     scale = key,
-    type = sc$kind %||% NA_character_,
+    type = if (is.null(sc$type)) NA_character_ else .scale_public_type(key, sc),
     domain = sc$domain %||% sc$levels
   )
 }
