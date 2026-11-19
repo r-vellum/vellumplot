@@ -11,8 +11,10 @@ NULL
 # as an accessible SVG (role="img" + <title>/<desc>) and a tagged PDF Figure.
 #
 # The alt text is either authored by the user (labs(alt=)) or generated here
-# from the spec. Generation is spec-only (no compile / no trained scales) so it
-# is cheap and cannot recurse through the compile seam that calls it.
+# from the spec. Generation never compiles (no trained scales), so it is cheap
+# and cannot recurse through the compile seam that calls it. Axis and legend
+# titles come from the titles record (.plot_titles): the seam hands over the one
+# its panel build made; a bare plot_alt(spec) builds it from the spec.
 # ---------------------------------------------------------------------------
 
 # Human-readable chart-type phrase per mark. Unknown marks fall back to
@@ -75,45 +77,6 @@ NULL
   paste0(paste(x[-n], collapse = ", "), ", and ", x[[n]])
 }
 
-# The channel-expression label for the first layer that maps `aes`, or NULL.
-# color/colour/fill are aliases for the colour channel.
-.alt_channel <- function(spec, aes) {
-  keys <- if (aes == "color") c("color", "colour", "fill") else aes
-  for (L in spec@layers) {
-    for (k in keys) {
-      ch <- L@encoding[[k]]
-      if (!is.null(ch)) {
-        return(.channel_label(ch))
-      }
-    }
-  }
-  NULL
-}
-
-# The human title for an aesthetic: a labs() override wins, else the mapped
-# expression. Only plain-string overrides are used (a rich md() title has no
-# reliable plain-text form for a description).
-.alt_axis_title <- function(spec, aes) {
-  # Mirror the compiler's title resolution (scale name -> labs -> mapped
-  # expression) so the description matches the rendered axis/legend title. A
-  # `scale_*(name = )` lives on the spec, so no compile is needed. Preserve the
-  # NULL-when-unmapped contract the sentence logic below relies on.
-  sc <- .scale_for(spec, aes)
-  if (
-    !is.null(sc) &&
-      !is.null(sc@name) &&
-      is.character(sc@name) &&
-      nzchar(sc@name)
-  ) {
-    return(sc@name)
-  }
-  lab <- spec@labels[[aes]]
-  if (!is.null(lab) && is.character(lab) && nzchar(lab)) {
-    return(lab)
-  }
-  .alt_channel(spec, aes)
-}
-
 # The faceting variables, as a readable "a and b" string, or NULL.
 .alt_facet_vars <- function(f) {
   lab <- function(qs) .facet_var_labels(qs, " and ")
@@ -142,8 +105,11 @@ NULL
 }
 
 # Build the automatic alt text from a PlotSpec: chart type, what is mapped to
-# each axis / colour / size, the observation count, and any faceting.
-.plot_alt_auto <- function(spec) {
+# each axis / colour / size, the observation count, and any faceting. The titles
+# come from the plot's titles record (.plot_titles), the same one the axes and
+# legends draw from: the compile seam passes the record its panel build made;
+# a bare `plot_alt(spec)` builds it from the spec alone.
+.plot_alt_auto <- function(spec, titles = .plot_titles(spec)) {
   marks <- vapply(spec@layers, function(L) L@mark, character(1))
   if (!length(marks)) {
     return("An empty plot with no layers.")
@@ -155,8 +121,8 @@ NULL
     paste0("A plot combining ", .oxford(phrases), ".")
   }
 
-  col <- .alt_axis_title(spec, "color")
-  sz <- .alt_axis_title(spec, "size")
+  col <- titles$text[["color"]]
+  sz <- titles$text[["size"]]
   extras <- c(
     if (!is.null(col)) paste0("colour shows ", col),
     if (!is.null(sz)) paste0("size shows ", sz)
@@ -187,27 +153,18 @@ NULL
     ))
   }
 
-  x <- .alt_axis_title(spec, "x")
-  y <- .alt_axis_title(spec, "y")
-  # An unmapped y on a bar/histogram plot renders as a "count" axis (mirrors the
-  # compiler's .y_axis_title); report it so the description names both axes.
-  if (is.null(y)) {
-    y_mapped <- any(vapply(
-      spec@layers,
-      function(L) "y" %in% names(L@encoding),
-      logical(1)
-    ))
-    if (!y_mapped && any(marks %in% c("bar", "histogram"))) {
-      y <- "count"
-    }
-  }
+  # Under coord_flip() the x scale is drawn up the side and y along the bottom,
+  # so the sentence names the scale on each *drawn* axis. An unmapped y on a bar
+  # chart is the "count" axis the record already names.
+  h <- titles$text[[titles$h]]
+  v <- titles$text[[titles$v]]
   s2 <- NULL
-  axis <- if (!is.null(x) && !is.null(y)) {
-    paste0("It plots ", y, " (vertical axis) against ", x, " (horizontal axis)")
-  } else if (!is.null(x)) {
-    paste0("It shows ", x, " on the horizontal axis")
-  } else if (!is.null(y)) {
-    paste0("It shows ", y, " on the vertical axis")
+  axis <- if (!is.null(h) && !is.null(v)) {
+    paste0("It plots ", v, " (vertical axis) against ", h, " (horizontal axis)")
+  } else if (!is.null(h)) {
+    paste0("It shows ", h, " on the horizontal axis")
+  } else if (!is.null(v)) {
+    paste0("It shows ", v, " on the vertical axis")
   }
   if (!is.null(axis)) {
     if (length(extras)) {
@@ -265,6 +222,12 @@ NULL
 #' plot_alt(labs(p, alt = "Heavier cars get fewer miles per gallon."))
 #' @export
 plot_alt <- function(x) {
+  .plot_alt(x)
+}
+
+# plot_alt() with an optional titles record: the compile seam passes the one its
+# panel build already made, so the description and the drawn titles agree.
+.plot_alt <- function(x, titles = NULL) {
   is_spec <- S7::S7_inherits(x, PlotSpec)
   is_comp <- S7::S7_inherits(x, PlotComposition)
   if (!is_spec && !is_comp) {
@@ -275,7 +238,7 @@ plot_alt <- function(x) {
     return(manual)
   }
   if (is_spec) {
-    return(.plot_alt_auto(x))
+    return(.plot_alt_auto(x, titles %||% .plot_titles(x)))
   }
   n <- length(x@plots)
   paste0(
@@ -300,6 +263,6 @@ plot_alt <- function(x) {
 
 # Best-effort alt text for the compile seam: never lets a description-generation
 # problem break a render (returns NULL, i.e. no accessibility markup, on error).
-.alt_desc_safe <- function(x) {
-  tryCatch(plot_alt(x), error = function(e) NULL)
+.alt_desc_safe <- function(x, titles = NULL) {
+  tryCatch(.plot_alt(x, titles), error = function(e) NULL)
 }

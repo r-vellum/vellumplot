@@ -112,3 +112,56 @@ test_that("auto-alt names the implicit count axis for a count bar", {
   expect_match(alt, "count", fixed = TRUE)
   expect_match(alt, "factor(cyl)", fixed = TRUE)
 })
+
+test_that("auto-alt names the drawn axes under coord_flip() (VP-11)", {
+  # coord_flip() draws the x scale up the side and y along the bottom, so the
+  # description must say so -- it reads the same titles record as the axes.
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    coord_flip()
+  alt <- plot_alt(p)
+  expect_match(
+    alt,
+    "It plots wt (vertical axis) against mpg (horizontal axis)",
+    fixed = TRUE
+  )
+
+  # The compiled scene's description agrees with the drawn axis titles.
+  scene <- vellum::as_vellum_scene(p)
+  expect_match(scene@desc, "wt (vertical axis)", fixed = TRUE)
+
+  # A flipped count bar puts the implicit "count" axis along the bottom.
+  bars <- vplot(mtcars) |>
+    mark_bar(x = factor(cyl)) |>
+    coord_flip()
+  expect_match(
+    plot_alt(bars),
+    "It plots factor(cyl) (vertical axis) against count (horizontal axis)",
+    fixed = TRUE
+  )
+})
+
+test_that("auto-alt and the legend share one title, labs() aliases included", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, fill = factor(cyl)) |>
+    labs(fill = "Cylinders")
+  expect_match(plot_alt(p), "colour shows Cylinders", fixed = TRUE)
+  built <- vellumplot:::.build_panels(p)
+  expect_identical(built$scales$color$name, "Cylinders")
+  expect_identical(built$titles$text[["color"]], "Cylinders")
+})
+
+test_that("the titles record resolves scale name > labs > mapping", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    labs(x = "Weight", color = "from labs") |>
+    scale_color_discrete(name = "from scale")
+  tt <- vellumplot:::.plot_titles(p)
+  expect_identical(tt$title[["x"]], "Weight")
+  expect_identical(tt$title[["y"]], "mpg")
+  expect_identical(tt$title[["color"]], "from scale")
+  expect_identical(tt$default[["color"]], "from labs")
+  expect_null(tt$text[["size"]]) # unmapped, unnamed
+  expect_identical(c(tt$h, tt$v), c("x", "y"))
+  expect_identical(c(tt$flip), FALSE)
+})

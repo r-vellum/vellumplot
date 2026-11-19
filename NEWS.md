@@ -59,6 +59,18 @@
   which turns every distinct number into its own category. The result now prints
   as a short summary.
 
+## Bug fixes
+
+* **Alt text names the drawn axes under `coord_flip()`.** The automatic
+  description said "It plots y (vertical axis) against x (horizontal axis)"
+  even when `coord_flip()` drew x up the side. It now names the scale on each
+  drawn axis, including the implicit "count" axis of a flipped bar chart. The
+  description also follows a `labs()` alias the legend already honoured, so
+  `labs(fill = "Cylinders")` on a fill mapping is "colour shows Cylinders"
+  rather than the mapped expression. Axes, legends, alt text and the lint
+  summary now read one titles record computed once per panel build, so they
+  can no longer disagree about a title (VP-11).
+
 # vellumplot 0.11.1
 
 ## Bug fixes

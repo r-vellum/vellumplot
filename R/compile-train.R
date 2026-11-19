@@ -443,7 +443,7 @@ NULL
   include_zero = FALSE,
   lim = NULL
 ) {
-  name <- .scale_title(scalespec, title)
+  name <- title # resolved by the titles record (.plot_titles)
   raw <- do.call(c, values) # combine across layers, preserving class
   # A binned position scale bins the continuous variable (ticks at boundaries,
   # data drawn at bin centres). Checked before the numeric branch since the data
@@ -745,7 +745,8 @@ NULL
   resolved,
   channel = "color",
   fill_channel = "fill",
-  aes = "color"
+  aes = "color",
+  titles = .plot_titles(spec, resolved)
 ) {
   # `color` and `fill` share one colour scale, so pool the values of every layer
   # mapping either channel (not just `fill` when nothing maps `color`).
@@ -770,7 +771,7 @@ NULL
   } else {
     "discrete"
   }
-  title <- .scale_title(scalespec, .default_title(spec, aes))
+  title <- titles$title[[aes]]
 
   pal <- if (!is.null(scalespec)) scalespec@palette else NULL
   # No explicit palette? A theme may supply a default (e.g. theme_cyberpunk()'s
@@ -1072,7 +1073,8 @@ NULL
   channel,
   aes,
   out_default,
-  legend_field
+  legend_field,
+  titles = .plot_titles(spec, resolved)
 ) {
   values <- .pool_values(resolved, channel)
   if (is.null(values)) {
@@ -1082,7 +1084,7 @@ NULL
   # An identity scale uses the data values verbatim (mm for size, opacity for
   # alpha), with no guide.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(.identity_scale(kind, as.numeric, .default_title(spec, channel)))
+    return(.identity_scale(kind, as.numeric, titles$default[[aes]]))
   }
   v <- as.numeric(unlist(values, use.names = FALSE))
   has_na <- anyNA(v) # detect before dropping non-finite, for the NA legend key
@@ -1113,7 +1115,7 @@ NULL
   } else {
     function(x) scales::rescale(x, to = out_range, from = rng)
   }
-  name <- .scale_title(scalespec, .default_title(spec, channel))
+  name <- titles$title[[aes]]
   lbrk <- if (!is.null(scalespec) && !is.null(scalespec@breaks)) {
     as.numeric(scalespec@breaks)
   } else {
@@ -1142,7 +1144,7 @@ NULL
 
 # Train the size scale (if any layer maps `size` to data). Maps values to a
 # point-size range in mm and carries representative breaks for a size legend.
-.train_size <- function(spec, resolved) {
+.train_size <- function(spec, resolved, titles = .plot_titles(spec, resolved)) {
   .train_continuous_aes(
     spec,
     resolved,
@@ -1150,7 +1152,8 @@ NULL
     channel = "size",
     aes = "size",
     out_default = .SIZE_RANGE,
-    legend_field = "legend_sizes"
+    legend_field = "legend_sizes",
+    titles = titles
   )
 }
 
@@ -1175,7 +1178,11 @@ NULL
 
 # Train the edge-width scale (if any edge layer maps `linewidth` to data). Mirrors
 # the size scale: rescale the data range to an lwd range; emits its own legend.
-.train_edge_width <- function(spec, resolved) {
+.train_edge_width <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   .train_continuous_aes(
     spec,
     .layers_with_mark(resolved, .LINEWIDTH_MARKS, invert = TRUE),
@@ -1183,13 +1190,18 @@ NULL
     channel = "linewidth",
     aes = "edge_width",
     out_default = .EDGE_WIDTH_RANGE,
-    legend_field = "legend_widths"
+    legend_field = "legend_widths",
+    titles = titles
   )
 }
 
 # Train the line-width scale (if a line/step/segment layer maps `linewidth`).
 # Same shape as the edge-width scale, on the marks whose emitter can honour it.
-.train_linewidth <- function(spec, resolved) {
+.train_linewidth <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   .train_continuous_aes(
     spec,
     .layers_with_mark(resolved, .LINEWIDTH_MARKS),
@@ -1197,13 +1209,18 @@ NULL
     channel = "linewidth",
     aes = "linewidth",
     out_default = .LINEWIDTH_RANGE,
-    legend_field = "legend_widths"
+    legend_field = "legend_widths",
+    titles = titles
   )
 }
 
 # Train the shape scale (if any layer maps `shape` to data). Shape is always
 # discrete: levels cycle through `.SHAPE_PALETTE` (or a user `scale_shape(values)`).
-.train_shape <- function(spec, resolved) {
+.train_shape <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   values <- .pool_values(resolved, "shape")
   if (is.null(values)) {
     return(NULL)
@@ -1211,11 +1228,7 @@ NULL
   scalespec <- .scale_for(spec, "shape")
   # An identity shape scale uses the data values verbatim as shape names.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(.identity_scale(
-      "shape",
-      as.character,
-      .default_title(spec, "shape")
-    ))
+    return(.identity_scale("shape", as.character, titles$default[["shape"]]))
   }
   levels <- .cat_levels(values)
   has_na <- anyNA(unlist(values, use.names = FALSE))
@@ -1235,7 +1248,7 @@ NULL
   }
   shapes <- rep_len(pal, length(levels))
   names(shapes) <- levels
-  name <- .scale_title(scalespec, .default_title(spec, "shape"))
+  name <- titles$title[["shape"]]
   list(
     kind = "shape",
     # NA values map to the NA shape (a neutral circle) rather than to NA, which
@@ -1305,7 +1318,11 @@ NULL
 # cycle through `.pattern_palette()` (or a user `scale_pattern(values)`). `map`
 # returns the per-row level (a grouping key); `objs` looks the level up to its
 # `vellum_pattern`, used as the fill paint at emit and the legend swatch.
-.train_pattern <- function(spec, resolved) {
+.train_pattern <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   values <- .pool_values(resolved, "pattern")
   if (is.null(values)) {
     return(NULL)
@@ -1332,7 +1349,7 @@ NULL
     kind = "pattern",
     map = function(x) as.character(x),
     objs = objs,
-    name = .scale_title(scalespec, .default_title(spec, "pattern")),
+    name = titles$title[["pattern"]],
     levels = levels,
     patterns = unname(objs)
   )
@@ -1354,7 +1371,11 @@ NULL
 
 # Train the alpha scale (if any layer maps `alpha` to data). Continuous: rescale
 # the data range to an opacity range; carries breaks for an alpha legend.
-.train_alpha <- function(spec, resolved) {
+.train_alpha <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   .train_continuous_aes(
     spec,
     resolved,
@@ -1362,7 +1383,8 @@ NULL
     channel = "alpha",
     aes = "alpha",
     out_default = .ALPHA_RANGE,
-    legend_field = "legend_alphas"
+    legend_field = "legend_alphas",
+    titles = titles
   )
 }
 
@@ -1372,7 +1394,8 @@ NULL
   spec,
   resolved,
   channel = "linetype",
-  aes = "linetype"
+  aes = "linetype",
+  titles = .plot_titles(spec, resolved)
 ) {
   values <- .pool_values(resolved, channel)
   if (is.null(values)) {
@@ -1380,7 +1403,7 @@ NULL
   }
   scalespec <- .scale_for(spec, aes)
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(.identity_scale("linetype", as.character, .default_title(spec, aes)))
+    return(.identity_scale("linetype", as.character, titles$default[[aes]]))
   }
   levels <- .cat_levels(values)
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
@@ -1399,7 +1422,7 @@ NULL
   }
   ltys <- rep_len(pal, length(levels))
   names(ltys) <- levels
-  name <- .scale_title(scalespec, .default_title(spec, aes))
+  name <- titles$title[[aes]]
   list(
     kind = "linetype",
     map = function(x) unname(ltys[as.character(x)]),
@@ -1418,17 +1441,26 @@ NULL
 # one edge scale that shipped first, already works this way via the `linewidth`
 # channel; these three complete the set.)
 
-.train_edge_colour <- function(spec, resolved) {
+.train_edge_colour <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   .train_colour(
     spec,
     resolved,
     channel = "edge_color",
     fill_channel = NULL,
-    aes = "edge_color"
+    aes = "edge_color",
+    titles = titles
   )
 }
 
-.train_edge_alpha <- function(spec, resolved) {
+.train_edge_alpha <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   .train_continuous_aes(
     spec,
     resolved,
@@ -1436,16 +1468,22 @@ NULL
     channel = "edge_alpha",
     aes = "edge_alpha",
     out_default = .ALPHA_RANGE,
-    legend_field = "legend_alphas"
+    legend_field = "legend_alphas",
+    titles = titles
   )
 }
 
-.train_edge_linetype <- function(spec, resolved) {
+.train_edge_linetype <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   .train_linetype(
     spec,
     resolved,
     channel = "edge_linetype",
-    aes = "edge_linetype"
+    aes = "edge_linetype",
+    titles = titles
   )
 }
 
@@ -1613,7 +1651,11 @@ NULL
 
 # Train all scales the plot needs: x, y (position), colour, and size. Bars force
 # the y axis to include the zero baseline.
-.train_scales <- function(spec, resolved) {
+.train_scales <- function(
+  spec,
+  resolved,
+  titles = .plot_titles(spec, resolved)
+) {
   zero_base <- .needs_zero(resolved)
   co <- .coord_of(spec)
   xs <- .axis_pool(resolved, "x", "xintercept")
@@ -1628,7 +1670,7 @@ NULL
       spec,
       resolved,
       "x",
-      .default_title(spec, "x"),
+      titles$title[["x"]],
       lim = co@xlim,
       values = xs
     ),
@@ -1636,22 +1678,22 @@ NULL
       spec,
       resolved,
       "y",
-      .y_axis_title(spec, resolved),
+      titles$title[["y"]],
       include_zero = zero_base,
       lim = co@ylim,
       values = ys
     ),
-    color = .train_colour(spec, resolved),
-    size = .train_size(spec, resolved),
-    shape = .train_shape(spec, resolved),
-    pattern = .train_pattern(spec, resolved),
-    edge_width = .train_edge_width(spec, resolved),
-    linewidth = .train_linewidth(spec, resolved),
-    alpha = .train_alpha(spec, resolved),
-    linetype = .train_linetype(spec, resolved),
-    edge_color = .train_edge_colour(spec, resolved),
-    edge_alpha = .train_edge_alpha(spec, resolved),
-    edge_linetype = .train_edge_linetype(spec, resolved)
+    color = .train_colour(spec, resolved, titles = titles),
+    size = .train_size(spec, resolved, titles = titles),
+    shape = .train_shape(spec, resolved, titles = titles),
+    pattern = .train_pattern(spec, resolved, titles = titles),
+    edge_width = .train_edge_width(spec, resolved, titles = titles),
+    linewidth = .train_linewidth(spec, resolved, titles = titles),
+    alpha = .train_alpha(spec, resolved, titles = titles),
+    linetype = .train_linetype(spec, resolved, titles = titles),
+    edge_color = .train_edge_colour(spec, resolved, titles = titles),
+    edge_alpha = .train_edge_alpha(spec, resolved, titles = titles),
+    edge_linetype = .train_edge_linetype(spec, resolved, titles = titles)
   )
   # Apply per-scale guide overrides (guides(): guide = "none" / guide_legend()).
   for (aes in c(

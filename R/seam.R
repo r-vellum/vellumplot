@@ -725,7 +725,10 @@ NULL
 # layout -> guides + strips + per-panel marks. The single-panel case is a 1x1
 # grid. `.draw_plot()` renders into the *current* viewport of `scene` (pushing
 # and popping its own grid_layout), so a composition can place plots in cells.
-.draw_plot <- function(scene, spec, frozen_scales = NULL) {
+# `describe = TRUE` (the single-plot compile) also sets the scene's alt text from
+# the titles record the panel build made, so it names the titles that are drawn.
+.draw_plot <- function(scene, spec, frozen_scales = NULL, describe = FALSE) {
+  spec0 <- spec # as the user wrote it, for the alt text
   if (!length(spec@layers)) {
     cli::cli_abort(
       "Nothing to draw: add a layer with {.fn mark_point} / {.fn mark_line}."
@@ -887,7 +890,17 @@ NULL
   # for them to read. Set here because this is where `built` already exists --
   # recomputing it would put a panel build on every render, including every frame
   # of an animation, to serve a check almost no render asks for. See R/lint.R.
-  attr(scene, "vellumplot_lint_scales") <- .lint_scales_summary(built$scales)
+  attr(scene, "vellumplot_lint_scales") <- .lint_scales_summary(
+    built$scales,
+    built$titles
+  )
+  if (describe) {
+    scene <- vellum::describe(
+      scene,
+      title = scene@title,
+      desc = .alt_desc_safe(spec0, built$titles)
+    )
+  }
   scene
 }
 
@@ -919,10 +932,16 @@ NULL
     # Accessibility (WCAG 1.1.1): the plot title is the accessible name and the
     # alt text is the description. vellum emits these as an accessible SVG /
     # tagged PDF. Additive — geometry is unchanged. See R/alt.R.
-    title = .alt_name(spec@labels),
-    desc = .alt_desc_safe(spec)
+    # The description (alt text) is set once the panels are built, from their
+    # titles record; see .draw_plot(describe = TRUE).
+    title = .alt_name(spec@labels)
   )
-  scene <- .draw_plot(scene, spec, frozen_scales = frozen_scales)
+  scene <- .draw_plot(
+    scene,
+    spec,
+    frozen_scales = frozen_scales,
+    describe = TRUE
+  )
   # Carry the row-key / scale-ref schema on the returned scene (DESIGN §4). Set
   # last so it survives to the caller; the `id` of each record matches a grob's
   # `data-vellum-id`. Additive only -- render() ignores it.
