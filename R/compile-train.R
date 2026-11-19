@@ -937,7 +937,7 @@ NULL
     return(.identity_scale(
       aes,
       as.character,
-      title,
+      name = title,
       na = FALSE,
       na_value = na_value,
       key_glyph = key_glyph
