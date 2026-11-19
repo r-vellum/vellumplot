@@ -83,6 +83,33 @@ NULL
   identity = "linear"
 )
 
+# vellumplot aesthetic <-> the Vega-Lite channel its scale resolves on (for the
+# facet-level `resolve`). `fill` shares Vega-Lite's `color` channel, as in the
+# encoding map.
+.VL_RESOLVE <- c(
+  x = "x",
+  y = "y",
+  color = "color",
+  fill = "color",
+  size = "size",
+  shape = "shape",
+  alpha = "opacity",
+  linetype = "strokeDash",
+  linewidth = "strokeWidth"
+)
+.VL_RESOLVE_INV <- c(
+  x = "x",
+  y = "y",
+  color = "color",
+  fill = "color",
+  stroke = "color",
+  size = "size",
+  shape = "shape",
+  opacity = "alpha",
+  strokeDash = "linetype",
+  strokeWidth = "linewidth"
+)
+
 # Look up `key` in a named lookup vector, returning NULL (not an error) when the
 # key is absent. `map[[key]]` on a named ATOMIC vector throws "subscript out of
 # bounds" for a missing name, which would defeat the is.null()/%||% fallbacks the
@@ -159,6 +186,67 @@ NULL
   rows
 }
 
+# A faceted spec's resolve lattice -> Vega-Lite's facet-level `resolve`: each
+# independent scale becomes `resolve.scale.<channel> = "independent"`, with the
+# matching guide made independent too -- `resolve.axis` for x / y (each panel
+# draws its own axis, as free facet scales do) and `resolve.legend` for the
+# rest (one legend per panel). Shared is Vega-Lite's facet default, so shared
+# entries are left out. An aesthetic with no Vega-Lite channel is reported.
+# NULL when nothing is independent.
+.resolve_to_vl <- function(resolve, notes) {
+  out <- list()
+  for (aes in names(resolve)) {
+    if (!identical(resolve[[aes]], "independent")) {
+      next
+    }
+    ch <- .vl_get(.VL_RESOLVE, aes)
+    if (is.null(ch)) {
+      .vl_note(notes, paste0("resolve '", aes, "'"))
+      next
+    }
+    out$scale[[ch]] <- "independent"
+    guide <- if (ch %in% c("x", "y")) "axis" else "legend"
+    out[[guide]][[ch]] <- "independent"
+  }
+  if (length(out)) out[intersect(c("scale", "axis", "legend"), names(out))]
+}
+
+# Vega-Lite's facet-level `resolve` -> the resolve lattice. An independent
+# scale maps back to its aesthetic. A guide made independent over a shared
+# scale (separate axes / legends showing one scale) has no vellumplot
+# equivalent and is reported in `dropped`, as is a channel with no aesthetic.
+.resolve_from_vl <- function(res) {
+  resolve <- list()
+  dropped <- character(0)
+  sc <- res$scale %||% list()
+  for (ch in names(sc)) {
+    if (!identical(sc[[ch]], "independent")) {
+      next
+    }
+    aes <- .vl_get(.VL_RESOLVE_INV, ch)
+    if (is.null(aes)) {
+      dropped <- c(dropped, paste0("resolve.scale '", ch, "'"))
+      next
+    }
+    resolve[[aes]] <- "independent"
+  }
+  for (guide in c("axis", "legend")) {
+    g <- res[[guide]] %||% list()
+    for (ch in names(g)) {
+      if (
+        identical(g[[ch]], "independent") &&
+          !identical(sc[[ch]], "independent")
+      ) {
+        dropped <- c(
+          dropped,
+          paste0("resolve.", guide, " '", ch, "' over a shared scale")
+        )
+      }
+    }
+  }
+  list(resolve = resolve, dropped = dropped)
+}
+
 #' Convert between a vellumplot spec and a Vega-Lite specification
 #'
 #' `spec_to_vegalite()` translates a [PlotSpec] into a
@@ -167,6 +255,13 @@ NULL
 #' graphics, so the mapping is direct for the common cases — marks, encodings,
 #' scales (domain / log-sqrt type / categorical range / title), `bin` +
 #' `count`, faceting, inline data, and the plot title.
+#'
+#' Free facet scales and [resolve_scale()] map to the facet's Vega-Lite
+#' `resolve`: an independent scale becomes `resolve.scale`, with its axis
+#' (`x`/`y`) or legend made independent too. On import, a facet-level
+#' `resolve.scale` comes back as the resolve lattice; an independent axis or
+#' legend over a shared scale, and a resolve between the layers of one view
+#' (e.g. a dual axis), have no vellumplot equivalent and are reported.
 #'
 #' The bridge covers a **documented subset** (see the "Specs, agents, and
 #' interoperability" article). Anything it cannot map — polar/flipped
@@ -304,6 +399,11 @@ spec_to_vegalite <- function(plot, json = FALSE) {
       }
     }
     out$spec <- inner
+    # free facet scales / resolve_scale() -> the facet-level resolve
+    res <- .resolve_to_vl(spec$resolve %||% list(), notes)
+    if (!is.null(res)) {
+      out$resolve <- res
+    }
   }
   if (!is.null(spec$coord) && !spec$coord$kind %in% c("cartesian")) {
     .vl_note(notes, paste0("coord '", spec$coord$kind, "'"))
@@ -371,6 +471,24 @@ spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
     view <- vl$spec
   } else {
     view <- vl
+  }
+  # A facet-level resolve maps onto the resolve lattice. A resolve between
+  # layers (a dual axis, separate legends of one view) has no vellumplot
+  # equivalent: its panels are facets, never overlaid layers.
+  resolve_ir <- NULL
+  if (!is.null(vl$resolve)) {
+    if (!is.null(facet_ir)) {
+      r <- .resolve_from_vl(vl$resolve)
+      if (length(r$resolve)) {
+        resolve_ir <- r$resolve
+      }
+      dropped <- c(dropped, r$dropped)
+    } else {
+      dropped <- c(dropped, "resolve (between layers)")
+    }
+  }
+  if (!is.null(view$resolve)) {
+    dropped <- c(dropped, "resolve (between layers)")
   }
 
   views <- if (!is.null(view$layer)) view$layer else list(view)
@@ -472,6 +590,9 @@ spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
   }
   if (!is.null(facet_ir)) {
     ir$facet <- facet_ir
+  }
+  if (!is.null(resolve_ir)) {
+    ir$resolve <- resolve_ir
   }
   if (!is.null(vl$title) && is.character(vl$title)) {
     ir$labels <- list(title = vl$title)

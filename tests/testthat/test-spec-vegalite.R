@@ -121,3 +121,117 @@ test_that("spec_to_vegalite() degrades gracefully (never crashes) off the happy 
   )
   expect_warning(spec_from_vegalite(vl_in), "trail|theta")
 })
+
+test_that("free facet scales and resolve_scale() export as Vega-Lite resolve", {
+  skip_if_not_installed("jsonlite")
+  mt <- mtcars
+  mt$gear <- factor(mt$gear)
+  p <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, color = gear) |>
+    facet_wrap(~cyl, scales = "free_y") |>
+    resolve_scale(color = "independent")
+  vl <- spec_to_vegalite(p)
+  # hand-written expectation (validated against the Vega-Lite v5 schema)
+  expected <- jsonlite::fromJSON(
+    '{
+      "scale": {"y": "independent", "color": "independent"},
+      "axis": {"y": "independent"},
+      "legend": {"color": "independent"}
+    }',
+    simplifyVector = FALSE
+  )
+  expect_identical(vl$resolve, expected)
+  # the resolve sits on the facet operator, beside `facet` / `spec`
+  expect_null(vl$spec$resolve)
+  js <- jsonlite::fromJSON(
+    spec_to_vegalite(p, json = TRUE),
+    simplifyVector = FALSE
+  )
+  expect_identical(js$resolve, expected)
+
+  # every mapped aesthetic, a grid facet, free x and y; fill shares `color`
+  q <- vplot(mt) |>
+    mark_point(x = wt, y = mpg, size = hp, shape = gear, alpha = qsec) |>
+    facet_grid(am ~ cyl, scales = "free") |>
+    resolve_scale(
+      size = "independent",
+      shape = "independent",
+      alpha = "independent",
+      fill = "independent"
+    )
+  r <- spec_to_vegalite(q)$resolve
+  expect_setequal(
+    names(r$scale),
+    c("x", "y", "size", "shape", "opacity", "color")
+  )
+  expect_true(all(unlist(r$scale) == "independent"))
+  expect_setequal(names(r$axis), c("x", "y"))
+  expect_setequal(names(r$legend), c("size", "shape", "opacity", "color"))
+
+  # shared (the default) adds nothing; a single panel has no facet, so no resolve
+  expect_null(
+    spec_to_vegalite(
+      vplot(mt) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
+    )$resolve
+  )
+  expect_null(
+    spec_to_vegalite(
+      vplot(mt) |>
+        mark_point(x = wt, y = mpg) |>
+        resolve_scale(y = "independent")
+    )$resolve
+  )
+})
+
+test_that("a facet-level Vega-Lite resolve imports as the resolve lattice", {
+  skip_if_not_installed("jsonlite")
+  vl <- '{
+    "data": {"values": [
+      {"a": 1, "b": 2, "g": "x", "f": "p"},
+      {"a": 2, "b": 5, "g": "y", "f": "q"},
+      {"a": 3, "b": 4, "g": "x", "f": "q"}
+    ]},
+    "facet": {"field": "f", "type": "nominal"},
+    "spec": {
+      "mark": "point",
+      "encoding": {
+        "x": {"field": "a", "type": "quantitative"},
+        "y": {"field": "b", "type": "quantitative"},
+        "color": {"field": "g", "type": "nominal"}
+      }
+    },
+    "resolve": {
+      "scale": {"x": "independent", "color": "independent", "opacity": "shared"},
+      "axis": {"x": "independent"},
+      "legend": {"color": "independent"}
+    }
+  }'
+  p <- spec_from_vegalite(vl)
+  expect_identical(p@resolve, list(x = "independent", color = "independent"))
+  expect_no_error(vellum::as_vellum_scene(p))
+  # and round-trips through the exporter
+  back <- spec_to_vegalite(p)$resolve
+  expect_identical(back$scale, list(x = "independent", color = "independent"))
+
+  # an independent guide over a shared scale is reported, not imported
+  vl2 <- sub(
+    '"axis": {"x": "independent"}',
+    '"axis": {"x": "independent", "y": "independent"}',
+    vl,
+    fixed = TRUE
+  )
+  expect_warning(p2 <- spec_from_vegalite(vl2), "over a shared scale")
+  expect_null(p2@resolve$y)
+
+  # a resolve between layers (no facet) is a dual axis: reported
+  layered <- '{
+    "data": {"values": [{"a": 1, "b": 2, "c": 3}]},
+    "layer": [
+      {"mark": "point", "encoding": {"x": {"field": "a"}, "y": {"field": "b"}}},
+      {"mark": "line", "encoding": {"x": {"field": "a"}, "y": {"field": "c"}}}
+    ],
+    "resolve": {"scale": {"y": "independent"}}
+  }'
+  expect_warning(p3 <- spec_from_vegalite(layered), "between layers")
+  expect_length(p3@resolve, 0L)
+})
