@@ -162,20 +162,34 @@ NULL
 # values to native coordinates, shifts them, and hands the emitter an x scale
 # whose `map` is the identity -- so the emitter draws at the shifted positions
 # without knowing a position ran. Under dodge, a mark with a cap / box width
-# (errorbar, crossbar) also narrows it to its slot, as a dodged bar does.
+# (errorbar, crossbar) also narrows it to its slot, as a dodged bar does. A
+# horizontal range mark (`orientation = "y"`: errorbar, linerange, pointrange)
+# dodges along y, its category axis, as a horizontal box plot does.
 .position_native <- function(L, scales) {
   type <- L$position %||% "identity"
   if (
     !type %in% c("dodge", "dodge2", "jitter") ||
       L$mark %in% .NATIVE_POSITION_MARKS ||
-      is.null(L$values$x) ||
       !L$n
   ) {
     return(list(L = L, scales = scales))
   }
+  # the axis the shift runs along: x, or y for a horizontal range mark
+  ca <- if (
+    !identical(type, "jitter") &&
+      L$mark %in% c("errorbar", "linerange", "pointrange") &&
+      identical(.range_orient(L), "y")
+  ) {
+    "y"
+  } else {
+    "x"
+  }
+  if (is.null(L$values[[ca]])) {
+    return(list(L = L, scales = scales))
+  }
   n <- L$n
-  sx <- scales$x
-  xn <- rep_len(sx$map(L$values$x), n)
+  sx <- scales[[ca]]
+  xn <- rep_len(sx$map(L$values[[ca]]), n)
   band <- sx$band_width %||% .resolution(xn)
   if (identical(type, "jitter")) {
     # The same defaults as a jittered point: 40% of the resolution each way.
@@ -206,14 +220,15 @@ NULL
       L$values$width <- rep_len(w, n) * d$share
     }
   }
-  for (a in intersect(.X_AES, names(L$values))) {
+  fam <- if (identical(ca, "y")) .Y_AES else .X_AES
+  for (a in intersect(fam, names(L$values))) {
     L$values[[a]] <- rep_len(sx$map(L$values[[a]]), n) + off
   }
   sx$map <- function(v) v
   # The band is kept (marks size caps / boxes from it); the trained domain is in
   # native units already.
   sx$band_width <- band
-  scales$x <- sx
+  scales[[ca]] <- sx
   list(L = L, scales = scales)
 }
 
