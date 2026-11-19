@@ -87,7 +87,8 @@ dense continuous axis, or to place <code><a href="mark_point.html">mark_bar()</a
 <span>  n <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  guide <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_y_binned</span><span class="op">(</span></span>
@@ -96,7 +97,8 @@ dense continuous axis, or to place <code><a href="mark_point.html">mark_bar()</a
 <span>  n <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  guide <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -127,6 +129,12 @@ dense continuous axis, or to place <code><a href="mark_point.html">mark_bar()</a
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Axis title, or <code>NULL</code> to derive from the encoding.</p></dd>
+
+
+<dt id="arg-guide">guide<a class="anchor" aria-label="anchor" href="#arg-guide"></a></dt>
+<dd><p>The axis guide: <code><a href="guide_axis.html">guide_axis()</a></code> to stagger, rotate or thin the
+labels, <code>"none"</code> for no labels or ticks, or <code>NULL</code> (default) for the plain
+axis. Same as <code>guides(x = )</code> / <code>guides(y = )</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -16,7 +16,8 @@ scale_x_date(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_y_date(
@@ -26,7 +27,8 @@ scale_y_date(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_x_datetime(
@@ -36,7 +38,8 @@ scale_x_datetime(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_y_datetime(
@@ -46,7 +49,8 @@ scale_y_datetime(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_x_time(
@@ -56,7 +60,8 @@ scale_x_time(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_y_time(
@@ -66,7 +71,8 @@ scale_y_time(
   date_labels = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 ```
 
@@ -103,6 +109,14 @@ scale_y_time(
 - name:
 
   Axis title, or `NULL` to derive from the encoding.
+
+- guide:
+
+  The axis guide:
+  [`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
+  to stagger, rotate or thin the labels, `"none"` for no labels or
+  ticks, or `NULL` (default) for the plain axis. Same as `guides(x = )`
+  / `guides(y = )`.
 
 ## Value
 

@@ -17,7 +17,8 @@ scale_x_binned(
   n = 10,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 
 scale_y_binned(
@@ -26,7 +27,8 @@ scale_y_binned(
   n = 10,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  guide = NULL
 )
 ```
 
@@ -57,6 +59,14 @@ scale_y_binned(
 - name:
 
   Axis title, or `NULL` to derive from the encoding.
+
+- guide:
+
+  The axis guide:
+  [`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md)
+  to stagger, rotate or thin the labels, `"none"` for no labels or
+  ticks, or `NULL` (default) for the plain axis. Same as `guides(x = )`
+  / `guides(y = )`.
 
 ## Value
 

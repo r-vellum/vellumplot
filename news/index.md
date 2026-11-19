@@ -2,6 +2,17 @@
 
 ## vellumplot 0.14.1.9000 (development version)
 
+### New features
+
+- [`scale_x_date()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md),
+  [`scale_x_datetime()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md),
+  [`scale_x_time()`](https://r-vellum.github.io/vellumplot/reference/scale_x_date.md),
+  [`scale_x_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_x_binned.md)
+  and their `y` counterparts take `guide =`, like the continuous and
+  discrete position scales:
+  `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the month
+  labels (VP-45).
+
 ## vellumplot 0.14.1
 
 ### Bug fixes
