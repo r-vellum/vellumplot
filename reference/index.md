@@ -299,6 +299,11 @@ Map data values to visual properties, with trained domains and guides.
 - [`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
   [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
   : Facet a plot into a grid of panels
+- [`label_value()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  [`label_both()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  [`label_wrap_gen()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  [`as_labeller()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  : Facet strip labellers
 - [`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
   : Add marginal distributions to a plot
 - [`position_nudge()`](https://r-vellum.github.io/vellumplot/reference/position.md)

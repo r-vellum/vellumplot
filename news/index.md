@@ -284,6 +284,20 @@
   now an error, matching the compile, which refuses it (VP-36,
   [\#208](https://github.com/r-vellum/vellumplot/issues/208)).
 
+- [`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+  and
+  [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+  take a `labeller` argument for the strip text, with ggplot2’s
+  labellers:
+  [`label_value()`](https://r-vellum.github.io/vellumplot/reference/labellers.md),
+  [`label_both()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  (`"cyl: 4"`), `label_wrap_gen(width)` for long values, and
+  [`as_labeller()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  for a lookup table (`c("0" = "automatic")`) or a function of the
+  values. A named character vector or a plain function can be passed to
+  `labeller =` directly. With several facet variables a strip shows one
+  line per variable, centred, and the strip grows to fit (F-10).
+
 ## vellumplot 0.12.0
 
 ### New features

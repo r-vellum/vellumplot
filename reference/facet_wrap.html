@@ -86,10 +86,16 @@ Colour and size scales (and their legends) are always shared in this version.</p
 <span>  <span class="va">facets</span>,</span>
 <span>  ncol <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nrow <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  scales <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fixed"</span>, <span class="st">"free_x"</span>, <span class="st">"free_y"</span>, <span class="st">"free"</span><span class="op">)</span></span>
+<span>  scales <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fixed"</span>, <span class="st">"free_x"</span>, <span class="st">"free_y"</span>, <span class="st">"free"</span><span class="op">)</span>,</span>
+<span>  labeller <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">facet_grid</span><span class="op">(</span><span class="va">plot</span>, <span class="va">facets</span>, scales <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fixed"</span>, <span class="st">"free_x"</span>, <span class="st">"free_y"</span>, <span class="st">"free"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">facet_grid</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">facets</span>,</span>
+<span>  scales <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fixed"</span>, <span class="st">"free_x"</span>, <span class="st">"free_y"</span>, <span class="st">"free"</span><span class="op">)</span>,</span>
+<span>  labeller <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -113,10 +119,22 @@ two-sided <code>rows ~ cols</code> (use <code>.</code> for no faceting on a side
 <dt id="arg-scales">scales<a class="anchor" aria-label="anchor" href="#arg-scales"></a></dt>
 <dd><p>One of <code>"fixed"</code> (default), <code>"free_x"</code>, <code>"free_y"</code>, <code>"free"</code>.</p></dd>
 
+
+<dt id="arg-labeller">labeller<a class="anchor" aria-label="anchor" href="#arg-labeller"></a></dt>
+<dd><p>How to label the facet strips: a labeller such as
+<code><a href="labellers.html">label_both()</a></code>, <code><a href="labellers.html">label_value()</a></code> or <code><a href="labellers.html">label_wrap_gen()</a></code>, a named character
+vector looking values up (<code>c("4" = "Four")</code>), or a function from values to
+labels (see <code><a href="labellers.html">as_labeller()</a></code>). The default, <code>NULL</code>, shows the values,
+several variables on one side joined by <code>", "</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><a href="labellers.html">labellers</a></p></div>
     </div>
 
     <div class="section level2">
@@ -125,6 +143,10 @@ two-sided <code>rows ~ cols</code> (use <code>.</code> for no faceting on a side
 <span class="r-plt img"><img src="facet_wrap-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">facet_grid</span><span class="op">(</span><span class="va">am</span> <span class="op">~</span> <span class="va">cyl</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="facet_wrap-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">facet_grid</span><span class="op">(</span><span class="va">am</span> <span class="op">~</span> <span class="va">cyl</span>, labeller <span class="op">=</span> <span class="va">label_both</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="facet_wrap-3.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -15,10 +15,16 @@ facet_wrap(
   facets,
   ncol = NULL,
   nrow = NULL,
-  scales = c("fixed", "free_x", "free_y", "free")
+  scales = c("fixed", "free_x", "free_y", "free"),
+  labeller = NULL
 )
 
-facet_grid(plot, facets, scales = c("fixed", "free_x", "free_y", "free"))
+facet_grid(
+  plot,
+  facets,
+  scales = c("fixed", "free_x", "free_y", "free"),
+  labeller = NULL
+)
 ```
 
 ## Arguments
@@ -42,10 +48,27 @@ facet_grid(plot, facets, scales = c("fixed", "free_x", "free_y", "free"))
 
   One of `"fixed"` (default), `"free_x"`, `"free_y"`, `"free"`.
 
+- labeller:
+
+  How to label the facet strips: a labeller such as
+  [`label_both()`](https://r-vellum.github.io/vellumplot/reference/labellers.md),
+  [`label_value()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  or
+  [`label_wrap_gen()`](https://r-vellum.github.io/vellumplot/reference/labellers.md),
+  a named character vector looking values up (`c("4" = "Four")`), or a
+  function from values to labels (see
+  [`as_labeller()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)).
+  The default, `NULL`, shows the values, several variables on one side
+  joined by `", "`.
+
 ## Value
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## See also
+
+[labellers](https://r-vellum.github.io/vellumplot/reference/labellers.md)
 
 ## Examples
 
@@ -53,4 +76,8 @@ The modified
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
 
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_grid(am ~ cyl)
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  facet_grid(am ~ cyl, labeller = label_both)
 ```
