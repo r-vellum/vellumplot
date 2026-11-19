@@ -9,11 +9,13 @@
 facet_grid() arranges them on a 2-D grid defined by a rows ~ cols
 formula. Position scales are shared across panels by default (so axes align);
 pass scales = &quot;free_x&quot;, &quot;free_y&quot;, or &quot;free&quot; to train them per panel.
-Colour and size scales (and their legends) are always shared in this version."><meta property="og:description" content="facet_wrap() lays panels out in a ribbon wrapped into ncol/nrow;
+Colour, size and the other non-position scales are shared too (one legend);
+resolve_scale(color = &quot;independent&quot;) gives each panel its own."><meta property="og:description" content="facet_wrap() lays panels out in a ribbon wrapped into ncol/nrow;
 facet_grid() arranges them on a 2-D grid defined by a rows ~ cols
 formula. Position scales are shared across panels by default (so axes align);
 pass scales = &quot;free_x&quot;, &quot;free_y&quot;, or &quot;free&quot; to train them per panel.
-Colour and size scales (and their legends) are always shared in this version."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+Colour, size and the other non-position scales are shared too (one legend);
+resolve_scale(color = &quot;independent&quot;) gives each panel its own."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -76,7 +78,8 @@ Colour and size scales (and their legends) are always shared in this version."><
 <code>facet_grid()</code> arranges them on a 2-D grid defined by a <code>rows ~ cols</code>
 formula. Position scales are shared across panels by default (so axes align);
 pass <code>scales = "free_x"</code>, <code>"free_y"</code>, or <code>"free"</code> to train them per panel.
-Colour and size scales (and their legends) are always shared in this version.</p>
+Colour, size and the other non-position scales are shared too (one legend);
+<code>resolve_scale(color = "independent")</code> gives each panel its own.</p>
     </div>
 
     <div class="section level2">

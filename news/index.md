@@ -63,6 +63,16 @@
   [`mark_spoke()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
   (`angle` + `radius`).
 
+- Independent non-position scales across facet panels:
+  [`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md)
+  now accepts `color` (`colour`, `fill`), `size`, `alpha`, `shape`,
+  `linetype`, `linewidth`, `pattern` and the edge scales.
+  `"independent"` trains that scale in each panel from the panel’s own
+  data, and each panel gets its own legend, collected in the legend area
+  and titled with the scale title and the panel’s strip text
+  (`"hp (cyl: 4)"`). Shared scales keep their single legend, and the
+  default (everything shared) is unchanged (F-8).
+
 ### Behaviour changes
 
 - **Behaviour change:** rows a position scale’s `oob = "censor"` puts

@@ -4,8 +4,9 @@
 `facet_grid()` arranges them on a 2-D grid defined by a `rows ~ cols`
 formula. Position scales are shared across panels by default (so axes
 align); pass `scales = "free_x"`, `"free_y"`, or `"free"` to train them
-per panel. Colour and size scales (and their legends) are always shared
-in this version.
+per panel. Colour, size and the other non-position scales are shared too
+(one legend); `resolve_scale(color = "independent")` gives each panel
+its own.
 
 ## Usage
 
