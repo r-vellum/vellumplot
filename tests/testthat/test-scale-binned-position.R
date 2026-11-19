@@ -16,7 +16,7 @@ test_that("a binned position scale ticks at boundaries and maps to bin centres",
     ScaleSpec(aesthetic = "x", type = "binned", style = "equal", n = 5),
     "wt"
   )
-  expect_identical(sc$kind, "binned")
+  expect_identical(sc$type, "binned")
   expect_false(sc$discrete)
   expect_length(sc$breaks, 6L) # n+1 boundaries
   expect_equal(sc$band_width, diff(sc$breaks)[1]) # equal bins -> uniform width

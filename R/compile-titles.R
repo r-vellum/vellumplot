@@ -72,6 +72,10 @@ NULL
 #               identity scale, which draws no guide, carries)
 #   text     -- per scale key, a plain-text title for a description, or NULL
 #               when the aesthetic is neither mapped nor named
+#   named    -- per scale key, the title the user gave (`scale_*(name = )`,
+#               else `labs()`), or NULL: no fallback to the mapped expression.
+#               A bivariate legend titles its axes itself, so it only carries a
+#               title the user asked for
 #   flip     -- TRUE under coord_flip()
 #   h, v     -- the scale key drawn on the horizontal / vertical axis
 .plot_titles <- function(spec, resolved = NULL) {
@@ -80,6 +84,7 @@ NULL
   default <- list()
   title <- list()
   text <- list()
+  named <- list()
   for (key in keys) {
     # The channel whose labs() entry / mapped expression supplies the default
     # (edge width reads the `linewidth` channel). See .AES_REGISTRY.
@@ -91,6 +96,7 @@ NULL
     sc <- .scale_for(spec, key)
     name <- if (!is.null(sc)) sc@name else NULL
     title[key] <- list(name %||% default[[key]])
+    named[key] <- list(name %||% lab)
     text[key] <- list(
       .plain_title(name) %||%
         .plain_title(lab) %||%
@@ -104,6 +110,7 @@ NULL
       title = title,
       default = default,
       text = text,
+      named = named,
       flip = flip,
       h = if (flip) "y" else "x",
       v = if (flip) "x" else "y"

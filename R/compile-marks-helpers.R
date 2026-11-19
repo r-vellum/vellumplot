@@ -58,11 +58,11 @@ NULL
 # whole and colours it per segment instead (`.draw_var_width_segments(cv = )`).
 .continuous_colour <- function(L, scales, n) {
   v <- L$values$color %||% L$values$fill
-  kind <- scales$color$kind
+  type <- scales$color$type
   if (
     is.null(v) ||
-      is.null(kind) ||
-      !kind %in% c("continuous", "binned") ||
+      is.null(type) ||
+      !type %in% c("continuous", "binned") ||
       !is.numeric(v)
   ) {
     return(NULL)

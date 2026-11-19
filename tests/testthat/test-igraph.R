@@ -278,10 +278,10 @@ test_that("mark_edges scopes colour/alpha/linetype to edge channels", {
 
 test_that(".legend_guides emits independent node and edge colour guides", {
   guides <- .legend_guides(list(
-    color = list(kind = "discrete", colors = "red", levels = "a", name = "grp"),
-    edge_color = list(kind = "continuous", legend_labels = "1", name = "w"),
-    edge_alpha = list(kind = "alpha", legend_labels = "0.5", name = "a"),
-    edge_linetype = list(kind = "linetype", levels = "solid", name = "t")
+    color = list(type = "discrete", colors = "red", levels = "a", name = "grp"),
+    edge_color = list(type = "continuous", legend_labels = "1", name = "w"),
+    edge_alpha = list(type = "continuous", legend_labels = "0.5", name = "a"),
+    edge_linetype = list(type = "discrete", levels = "solid", name = "t")
   ))
   kinds <- vapply(guides, function(g) g$kind, character(1))
   expect_true("color_discrete" %in% kinds) # node colour
@@ -293,7 +293,7 @@ test_that(".legend_guides emits independent node and edge colour guides", {
 test_that(".legend_guides folds a shared node+edge colour into one guide", {
   # One variable colours both nodes and edges: same title, levels, and colours.
   shared <- list(
-    kind = "discrete",
+    type = "discrete",
     colors = c("red", "blue"),
     levels = c("a", "b"),
     name = "grp"
@@ -306,14 +306,14 @@ test_that(".legend_guides folds a shared node+edge colour into one guide", {
 test_that(".legend_guides keeps both guides when node/edge colours differ", {
   guides <- .legend_guides(list(
     color = list(
-      kind = "discrete",
+      type = "discrete",
       colors = c("red", "blue"),
       levels = c("a", "b"),
       name = "grp"
     ),
     # Same variable name, but a different palette -> a genuinely distinct scale.
     edge_color = list(
-      kind = "discrete",
+      type = "discrete",
       colors = c("green", "orange"),
       levels = c("a", "b"),
       name = "grp"

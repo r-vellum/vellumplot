@@ -8,7 +8,7 @@ test_that("a mapped shape trains a discrete shape scale", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = factor(cyl))
   sh <- train(p)$shape
   expect_false(is.null(sh))
-  expect_identical(sh$kind, "shape")
+  expect_identical(sh$type, "discrete")
   expect_identical(sh$levels, c("4", "6", "8"))
   expect_identical(sh$shapes, c("circle", "square", "triangle"))
   expect_identical(sh$map("6"), "square")

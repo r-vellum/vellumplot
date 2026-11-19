@@ -41,10 +41,10 @@ NULL
 # An identity scale: values pass through verbatim (coerced), with no guide.
 # Shared by the size/alpha/edge-width, shape, linetype and colour trainers.
 # `...` carries any extra fields (the colour scale's NA colour and key glyph).
-.identity_scale <- function(aesthetic, kind, coerce, name, ...) {
+.identity_scale <- function(aesthetic, coerce, name, ...) {
   trained_scale(
     aesthetic,
-    kind,
+    "identity",
     map = coerce,
     name = name,
     identity = TRUE,
@@ -595,11 +595,11 @@ NULL
       } else {
         format(braw)
       })
-    # `kind` stays "continuous" so downstream (guides/coord) is unchanged; the
+    # `type` stays "continuous" so downstream (guides/coord) is unchanged; the
     # date/datetime nature is reported separately via `time_unit` (below), which a
     # host uses to interpret the numeric values (Date -> days, POSIXct -> seconds
     # since 1970). `transform` is identity (values are `as.numeric()` epochs).
-    kind <- "continuous"
+    type <- "continuous"
     trans_name <- "identity"
     time_unit <- if (
       inherits(raw, "POSIXct") ||
@@ -637,7 +637,7 @@ NULL
     lab <- fb$labels
     breaks <- tr$transform(braw)
     labels <- lab %||% tr$format(braw)
-    kind <- if (!is.null(scalespec) && identical(scalespec@type, "log10")) {
+    type <- if (!is.null(scalespec) && identical(scalespec@type, "log10")) {
       "log10"
     } else {
       "continuous"
@@ -657,7 +657,7 @@ NULL
 
   trained_scale(
     aesthetic,
-    kind,
+    type,
     map = tfun,
     name = name,
     discrete = FALSE,
@@ -792,11 +792,11 @@ NULL
   }
 
   scalespec <- .scale_for(spec, aes)
-  explicit_kind <- !is.null(scalespec) &&
+  explicit_type <- !is.null(scalespec) &&
     length(scalespec@type) &&
     nzchar(scalespec@type)
-  chan_type <- .colour_channel_type(resolved, channels, explicit_kind)
-  kind <- if (explicit_kind) {
+  chan_type <- .colour_channel_type(resolved, channels, explicit_type)
+  type <- if (explicit_type) {
     scalespec@type
   } else if (identical(chan_type, "quantitative")) {
     "continuous"
@@ -809,7 +809,7 @@ NULL
   # No explicit palette? A theme may supply a default (e.g. theme_cyberpunk()'s
   # neon set): `palette` for discrete, `palette.continuous` for continuous/binned.
   if (is.null(pal)) {
-    pal <- .theme_palette(spec, kind)
+    pal <- .theme_palette(spec, type)
   }
   user_breaks <- if (!is.null(scalespec)) scalespec@breaks else NULL
   user_labels <- if (!is.null(scalespec)) scalespec@labels else NULL
@@ -823,19 +823,19 @@ NULL
   has_na <- any(is.na(unlist(values, use.names = FALSE)))
   key_glyph <- .key_glyph_for_aes(resolved, channel)
 
-  # A bivariate scale (scale_fill_bivariate()), or -- with no explicit kind -- a
+  # A bivariate scale (scale_fill_bivariate()), or -- with no explicit type -- a
   # fill mapped to a bi_class() column or given guide_bivariate(): a discrete
   # scale over the "x-y" classes with a 2-D legend. See R/bivariate.R.
   bi_info <- if (identical(aes, "color")) .bivariate_info(spec) else NULL
-  wants_bi <- identical(kind, "bivariate") ||
-    (!explicit_kind &&
+  wants_bi <- identical(type, "bivariate") ||
+    (!explicit_type &&
       (!is.null(bi_info) ||
         (!is.null(scalespec) &&
           is.list(scalespec@guide) &&
           identical(scalespec@guide$kind, "bivariate"))))
   if (wants_bi) {
     return(.train_bivariate(
-      spec,
+      titles$named[[aes]],
       scalespec,
       values,
       bi_info,
@@ -848,10 +848,9 @@ NULL
 
   # An identity scale uses the data values verbatim as colours (they must already
   # be valid R/CSS colours) and draws no legend.
-  if (identical(kind, "identity")) {
+  if (identical(type, "identity")) {
     return(.identity_scale(
       aes,
-      "identity",
       as.character,
       title,
       na = FALSE,
@@ -860,7 +859,7 @@ NULL
     ))
   }
 
-  if (identical(kind, "binned")) {
+  if (identical(type, "binned")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
     v <- v[is.finite(v)]
     # A user-set `limits` (domain) restricts the data the scale bins over, so the
@@ -909,7 +908,7 @@ NULL
       na_value = na_value,
       key_glyph = key_glyph
     )
-  } else if (identical(kind, "continuous")) {
+  } else if (identical(type, "continuous")) {
     v <- as.numeric(unlist(values, use.names = FALSE))
     v <- v[is.finite(v)]
     # A user-set `limits` (domain) fixes the colour range, matching the size /
@@ -1017,14 +1016,14 @@ NULL
 # The encoding type driving the shared colour scale, from every layer mapping
 # one of `channels` (`color`/`fill`). Layers that disagree on whether the
 # variable is quantitative cannot share one scale; unless the user fixed the
-# scale's kind explicitly, that is an error rather than a silent squish/grey.
-.colour_channel_type <- function(resolved, channels, explicit_kind = FALSE) {
+# scale type explicitly, that is an error rather than a silent squish/grey.
+.colour_channel_type <- function(resolved, channels, explicit_type = FALSE) {
   found <- .colour_channel_votes(resolved, channels)
   if (!length(found$votes)) {
     return(found$fallback)
   }
   clash <- .colour_type_clash(found$votes)
-  if (!explicit_kind && !is.null(clash)) {
+  if (!explicit_type && !is.null(clash)) {
     q <- clash$quantitative
     d <- clash$discrete
     cli::cli_abort(c(
@@ -1034,7 +1033,7 @@ NULL
       "i" = "{.field color} and {.field fill} share one colour scale, so every
         layer mapping either must use the same kind of variable.",
       "i" = "Convert one of them (e.g. with {.fn factor} or
-        {.fn as.numeric}), or set the scale kind explicitly."
+        {.fn as.numeric}), or set the scale type explicitly."
     ))
   }
   found$votes[[1]]$type
@@ -1109,7 +1108,6 @@ NULL
 .train_continuous_aes <- function(
   spec,
   resolved,
-  kind,
   channel,
   aes,
   out_default,
@@ -1124,7 +1122,7 @@ NULL
   # An identity scale uses the data values verbatim (mm for size, opacity for
   # alpha), with no guide.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
-    return(.identity_scale(aes, kind, as.numeric, titles$default[[aes]]))
+    return(.identity_scale(aes, as.numeric, titles$default[[aes]]))
   }
   v <- as.numeric(unlist(values, use.names = FALSE))
   has_na <- anyNA(v) # detect before dropping non-finite, for the NA legend key
@@ -1172,7 +1170,7 @@ NULL
   rlang::exec(
     trained_scale,
     aes,
-    kind,
+    "continuous",
     map = map,
     name = name,
     range = rng,
@@ -1189,7 +1187,6 @@ NULL
   .train_continuous_aes(
     spec,
     resolved,
-    kind = "size",
     channel = "size",
     aes = "size",
     out_default = .SIZE_RANGE,
@@ -1223,7 +1220,6 @@ NULL
   .train_continuous_aes(
     spec,
     .layers_with_mark(resolved, .LINEWIDTH_MARKS, invert = TRUE),
-    kind = "edge_width",
     channel = "linewidth",
     aes = "edge_width",
     out_default = .EDGE_WIDTH_RANGE,
@@ -1242,7 +1238,6 @@ NULL
   .train_continuous_aes(
     spec,
     .layers_with_mark(resolved, .LINEWIDTH_MARKS),
-    kind = "linewidth",
     channel = "linewidth",
     aes = "linewidth",
     out_default = .LINEWIDTH_RANGE,
@@ -1266,7 +1261,6 @@ NULL
   # An identity shape scale uses the data values verbatim as shape names.
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
     return(.identity_scale(
-      "shape",
       "shape",
       as.character,
       titles$default[["shape"]]
@@ -1293,7 +1287,7 @@ NULL
   name <- titles$title[["shape"]]
   trained_scale(
     "shape",
-    "shape",
+    "discrete",
     # NA values map to the NA shape (a neutral circle) rather than to NA, which
     # would otherwise reach points_grob and error; the legend shows an NA key.
     map = function(x) {
@@ -1390,7 +1384,7 @@ NULL
   names(objs) <- levels
   trained_scale(
     "pattern",
-    "pattern",
+    "discrete",
     map = function(x) as.character(x),
     name = titles$title[["pattern"]],
     objs = objs,
@@ -1423,7 +1417,6 @@ NULL
   .train_continuous_aes(
     spec,
     resolved,
-    kind = "alpha",
     channel = "alpha",
     aes = "alpha",
     out_default = .ALPHA_RANGE,
@@ -1449,7 +1442,6 @@ NULL
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
     return(.identity_scale(
       aes,
-      "linetype",
       as.character,
       titles$default[[aes]]
     ))
@@ -1474,7 +1466,7 @@ NULL
   name <- titles$title[[aes]]
   trained_scale(
     aes,
-    "linetype",
+    "discrete",
     map = function(x) unname(ltys[as.character(x)]),
     name = name,
     levels = levels,
@@ -1514,7 +1506,6 @@ NULL
   .train_continuous_aes(
     spec,
     resolved,
-    kind = "alpha",
     channel = "edge_alpha",
     aes = "edge_alpha",
     out_default = .ALPHA_RANGE,

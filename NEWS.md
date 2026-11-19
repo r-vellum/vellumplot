@@ -1,5 +1,17 @@
 # vellumplot 0.12.0.9000 (development version)
 
+* **Behaviour change:** the grammar lint rules (`single_level_scale`,
+  `legend_overflow`) now check discrete shape, linetype and pattern scales as
+  well as colour ones. They were meant to all along, but only a colour scale
+  reported itself as discrete, so a one-level shape went unflagged.
+  `guide_legend(reverse = TRUE)` now also reverses a pattern legend (R-14).
+
+* Internal: a trained scale now records its scale type (`continuous`,
+  `discrete`, `binned`, `identity`, ...) in `type` for every aesthetic, where
+  `kind` held the type for colour and position scales and the aesthetic name
+  for the rest. The provenance scale-refs report the same `type` values as
+  before (R-14).
+
 * Faceted interactive plots without a `data_id` no longer link marks across
   panels by accident. Their default element keys were row positions within each
   panel's layer, so they repeated from panel to panel, and a hover, click or
