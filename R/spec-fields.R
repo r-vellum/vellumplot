@@ -287,8 +287,9 @@ spec_fields <- function(data, n_examples = 3L) {
   }
   # 1. A facet variable missing from a layer's data. From the plot data that is
   # an error (the facet cannot be built); from a layer's own data the layer is
-  # drawn whole in every panel (ggplot2's rule, meant for annotation layers),
-  # which is worth a warning because it is as often a forgotten column.
+  # split on the facet variables it has and repeated across the values of the
+  # one it lacks (ggplot2's rule, meant for annotation layers), which is worth a
+  # warning because it is as often a forgotten column.
   fv <- .facet_vars(plot@facet)
   if (length(fv)) {
     miss_plot <- setdiff(fv, names(plot@data))
@@ -313,8 +314,9 @@ spec_fields <- function(data, n_examples = 3L) {
         add(
           "warning",
           sprintf(
-            "Layer %d's data has no facet variable '%s', so the layer is repeated in every panel.",
+            "Layer %d's data has no facet variable '%s', so its rows are repeated in every '%s' panel.",
             i,
+            f,
             f
           ),
           field = f,
@@ -401,7 +403,8 @@ spec_fields <- function(data, n_examples = 3L) {
 #' Before compiling, the plot is checked for mistakes that would compile to a
 #' wrong plot or fail with an opaque error:
 #' * a **facet variable missing** from the plot data (an error), or from a
-#'   layer's own data (a warning: that layer is then repeated in every panel);
+#'   layer's own data (a warning: that layer is then repeated across that
+#'   variable's panels);
 #' * **`color` and `fill` mapped to variables of different type** (one
 #'   continuous, one discrete) although they share one colour scale and legend
 #'   (an error, or a warning when the scale kind is set explicitly);
