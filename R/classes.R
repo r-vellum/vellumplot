@@ -210,7 +210,12 @@ SelectionSpec <- S7::new_class(
     # both. A brush becomes a data-value range on each, and an element is a
     # member when its data values fall inside every range. NULL for a point
     # selection.
-    encodings = S7::new_property(S7::class_any, default = NULL)
+    encodings = S7::new_property(S7::class_any, default = NULL),
+    # Vega-Lite's interval `bind`: NULL (the default, a drawn brush) or
+    # "scales" (the selection *is* the view's own pan/zoom domain: panning or
+    # zooming the view it is registered on writes the interval). Enacted
+    # host-side.
+    bind = S7::new_property(S7::class_any, default = NULL)
   )
 )
 

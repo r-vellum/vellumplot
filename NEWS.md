@@ -2,6 +2,25 @@
 
 ## New features
 
+* `bind_scale()` is now enacted by vellumwidget: brushing an overview view zooms
+  every view bound to the brush to the brushed range, and clearing the brush
+  resets the zoom (overview + detail, Vega-Lite's
+  `scale = list(domain = list(param = ...))`). It now checks that it names an
+  interval selection that constrains the bound axis (F-15).
+
+* `select_interval()` gains `bind = "scales"` (Vega-Lite's `bind: "scales"`):
+  the selection is the view's own pan/zoom domain instead of a drawn brush, so
+  zooming one view can drive `bind_scale()` on another (linked zoom) or a
+  `condition()` / `filter_by()` (F-15).
+
+* Compositions (`hconcat()`, `vconcat()`, `wrap_plots()`, `|`, `/`) now give
+  each cell's panels a unique name (`"cell-2-panel-1-1"`) and record the cell id
+  in the panel `meta`. The panels of an aligned composition also carry the scale
+  descriptors and pan group a single plot's panel has, so a host can map their
+  pixels to data and zoom them (axis-aware zoom, re-ticked axes). The
+  interaction model tags each bind with its `cell`, and each selection with the
+  `cells` that register it (F-15).
+
 * `scale_x_date()`, `scale_x_datetime()`, `scale_x_time()`, `scale_x_binned()`
   and their `y` counterparts take `guide =`, like the continuous and discrete
   position scales: `scale_x_date(guide = guide_axis(n.dodge = 2))` staggers the
