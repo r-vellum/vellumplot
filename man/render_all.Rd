@@ -30,6 +30,12 @@ byte-identical to rendering them one by one. Parallelism uses process forks,
 so it speeds things up on macOS/Linux and falls back to sequential on Windows;
 it is only worth it for several substantial plots.
 }
+\details{
+This wraps \code{\link[vellum:render_all]{vellum::render_all()}}, which it masks when both packages are
+attached. It takes \code{plots} rather than \code{scenes} and checks that every entry
+is a vellumplot plot before rendering; vellum's accepts anything
+\code{\link[vellum:as_vellum_scene]{vellum::as_vellum_scene()}} can convert.
+}
 \examples{
 plots <- list(
   wt = vplot(mtcars) |> mark_point(x = wt, y = mpg),

@@ -5,34 +5,26 @@
 \alias{linear_gradient}
 \alias{radial_gradient}
 \title{Gradient fill paints}
-\usage{
-linear_gradient(colours, stops = NULL, ...)
-
-radial_gradient(colours, stops = NULL, ...)
-}
-\arguments{
-\item{colours, stops}{See \code{\link[vellum:linear_gradient]{vellum::linear_gradient()}} /
-\code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}.}
-
-\item{...}{Further gradient arguments passed to the vellum constructor:
-\code{x1}/\code{y1}/\code{x2}/\code{y2} (linear), \code{cx}/\code{cy}/\code{r} plus the optional focal circle
-\code{fx}/\code{fy}/\code{fr} (radial), \code{units}, \code{extend}, and
-\code{interpolation} (\code{"srgb"} default, or \code{"oklab"} / \code{"oklch"} to blend the
-stops perceptually — \code{"oklch"} additionally preserves chroma by rotating
-hue). See \code{\link[vellum:linear_gradient]{vellum::linear_gradient()}} / \code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}.}
-}
-\value{
-A \code{vellum_gradient} object usable as a \code{fill} value.
-}
 \description{
-Thin re-exports of \code{\link[vellum:linear_gradient]{vellum::linear_gradient()}} and \code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}.
-A gradient is an unscaled \emph{value} for the \code{fill} aesthetic: pass it directly,
-e.g. \code{mark_area(x = t, y = y, fill = linear_gradient(c("#00e5ff", "#00e5ff00")))},
+\code{linear_gradient()} and \code{radial_gradient()} are \code{\link[vellum:linear_gradient]{vellum::linear_gradient()}}
+and \code{\link[vellum:radial_gradient]{vellum::radial_gradient()}}, re-exported. A gradient is an unscaled
+\emph{value} for the \code{fill} aesthetic: pass it directly, e.g.
+\code{mark_area(x = t, y = y, fill = linear_gradient(c("#00e5ff", "#00e5ff00")))},
 and the filled region (area / ribbon / bar) is painted with the paint as a
-single grob. Use \code{"transparent"} (or an \code{"#RRGGBB00"} colour) as a stop to fade
-out — the "glow fade under a line" look. The gradient's \code{x1}/\code{y1}/\code{x2}/\code{y2}
-(in \code{units}, \code{"npc"} by default) set its direction. A gradient cannot be
+single grob. Use \code{"transparent"} (or an \code{"#RRGGBB00"} colour) as a stop to
+fade out --- the "glow fade under a line" look. A gradient cannot be
 \emph{mapped} to a data column (it is one paint per region).
+}
+\details{
+Both take \code{colours} and optional \code{stops}. A linear gradient's
+\code{x1}/\code{y1}/\code{x2}/\code{y2} (in \code{units}, \code{"npc"} by default) set its direction; a
+radial gradient takes \code{cx}/\code{cy}/\code{r} plus the optional focal circle
+\code{fx}/\code{fy}/\code{fr}. Both also take \code{extend} and \code{interpolation} (\code{"srgb"}
+default, or \code{"oklab"} / \code{"oklch"} to blend the stops perceptually ---
+\code{"oklch"} additionally preserves chroma by rotating hue). Each returns a
+\code{vellum_gradient} object usable as a \code{fill} value. See
+\code{\link[vellum:linear_gradient]{vellum::linear_gradient()}} / \code{\link[vellum:radial_gradient]{vellum::radial_gradient()}} for the full
+reference.
 }
 \examples{
 df <- data.frame(x = 1:20, y = cumsum(abs(rnorm(20))))

@@ -65,6 +65,11 @@ NULL
 #' (structure tree + `Alt`, see the *Accessibility* article) are written for
 #' every page.
 #'
+#' This is not [vellum::pdf_pages()], which it masks when both packages are
+#' attached: vellum's takes a list of scenes and can return the PDF as bytes,
+#' while this one takes plots, splits a faceted plot into pages, and always
+#' writes to `path`. It draws through vellum's.
+#'
 #' @param x Either a **list** of plots (each a [PlotSpec], composition, or table)
 #'   — one page each — or a **single faceted** `PlotSpec`, in which case it is
 #'   split into one page per facet cell (the facet is dropped and the data
@@ -105,6 +110,11 @@ pdf_pages <- function(x, path) {
 #' byte-identical to rendering them one by one. Parallelism uses process forks,
 #' so it speeds things up on macOS/Linux and falls back to sequential on Windows;
 #' it is only worth it for several substantial plots.
+#'
+#' This wraps [vellum::render_all()], which it masks when both packages are
+#' attached. It takes `plots` rather than `scenes` and checks that every entry
+#' is a vellumplot plot before rendering; vellum's accepts anything
+#' [vellum::as_vellum_scene()] can convert.
 #'
 #' @param plots A named or unnamed list of plots.
 #' @param paths Output paths, one per plot (the format of each comes from its

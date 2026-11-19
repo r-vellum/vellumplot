@@ -3,22 +3,18 @@
 \name{md}
 \alias{md}
 \title{Rich-text labels}
-\usage{
-md(text)
-}
-\arguments{
-\item{text}{A length-one markdown string.}
-}
-\value{
-A \code{vellum_md_label} object accepted by \code{\link[vellum:text_grob]{vellum::text_grob()}}.
-}
 \description{
-A thin wrapper around \code{\link[vellum:md]{vellum::md()}} that builds a rich-text label from a
-markdown subset: \verb{**bold**}, \verb{*italic*} / \verb{_italic_}, \verb{^superscript^},
-\verb{~subscript~}, and a colour span \verb{[text]\{#c00\}}. The result can be used
+\code{md(text)} builds a rich-text label from a markdown subset: \verb{**bold**},
+\verb{*italic*} / \verb{_italic_}, \verb{^superscript^}, \verb{~subscript~}, and a colour span
+\verb{[text]\{#c00\}}. It is \code{\link[vellum:md]{vellum::md()}}, re-exported. The result can be used
 anywhere vellumplot draws a \emph{title}: \code{\link[=labs]{labs()}} (\code{title} / \code{subtitle} /
-\code{caption} / \code{tag} / \code{x} / \code{y} / \code{color}) and \verb{scale_*(name = )}. Per-element
-rich labels (in \code{mark_text()}) are not yet supported.
+\code{caption} / \code{tag} / \code{x} / \code{y} / \code{color}) and \verb{scale_*(name = )}.
+Per-element rich labels (in \code{mark_text()}) are not yet supported.
+}
+\details{
+\code{text} is a length-one markdown string; the result is a \code{vellum_md_label}
+object accepted by \code{\link[vellum:text_grob]{vellum::text_grob()}}. See \code{\link[vellum:md]{vellum::md()}} for the full
+reference.
 }
 \examples{
 vplot(mtcars) |>

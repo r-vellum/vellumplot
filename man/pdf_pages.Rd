@@ -25,6 +25,12 @@ plot keeps its own \code{width}/\code{height}), and the per-page accessibility t
 (structure tree + \code{Alt}, see the \emph{Accessibility} article) are written for
 every page.
 }
+\details{
+This is not \code{\link[vellum:pdf_pages]{vellum::pdf_pages()}}, which it masks when both packages are
+attached: vellum's takes a list of scenes and can return the PDF as bytes,
+while this one takes plots, splits a faceted plot into pages, and always
+writes to \code{path}. It draws through vellum's.
+}
 \examples{
 p1 <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 p2 <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
