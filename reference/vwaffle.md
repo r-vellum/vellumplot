@@ -69,6 +69,14 @@ vwaffle(
 A
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
 
+## Details
+
+Cells take the fill scale's colours. A cell with no fill colour falls
+back to `"grey50"`, or to `col_mix(ink, paper, 0.2)` (`"grey20"`) on a
+theme whose panel is that grey, such as
+[`theme_dark()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+so it stays visible.
+
 ## See also
 
 [`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md),

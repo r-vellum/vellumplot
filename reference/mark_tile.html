@@ -205,6 +205,15 @@ past the data, so the axis is not padded by the kernel's tails.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>With its count fill turned off (<code>fill = NULL</code>), <code>mark_hex()</code> fills with
+ggplot2's <code>col_mix(ink, paper, 0.5)</code> (<code>"grey50"</code> on a light theme). On a
+theme whose panel is that same grey, such as <code><a href="theme_gray.html">theme_dark()</a></code>, it uses
+<code>col_mix(ink, paper, 0.2)</code> (<code>"grey20"</code>) instead, so the hexes stay visible.
+This differs from ggplot2, which draws grey50 hexes on <code><a href="theme_gray.html">theme_dark()</a></code>'s
+grey50 panel.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

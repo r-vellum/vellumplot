@@ -110,6 +110,20 @@
   its key’s row number from the whole edge table, so its `join` is the
   same as in the unfaceted plot (VP-64).
 
+- On
+  [`theme_dark()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+  [`mark_hex()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  with its count fill turned off (`fill = NULL`) and
+  [`vwaffle()`](https://r-vellum.github.io/vellumplot/reference/vwaffle.md)’s
+  fallback cell fill no longer draw grey50 on the theme’s grey50 panel.
+  When the default grey is that close to the panel, they fill with
+  `col_mix(ink, paper, 0.2)` (`"grey20"`), the area fill. This differs
+  from ggplot2, whose `geom_hex()` draws grey50 there. The colourbar and
+  coloursteps frames now follow the theme’s ink and paper
+  ([`theme_cyberpunk()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  draws them in its own mid grey). Light themes draw exactly as before
+  (VP-65).
+
 ## vellumplot 0.16.0
 
 ### Behaviour changes

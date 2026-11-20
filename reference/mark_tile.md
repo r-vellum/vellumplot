@@ -133,6 +133,17 @@ mark_hex(
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
 
+## Details
+
+With its count fill turned off (`fill = NULL`), `mark_hex()` fills with
+ggplot2's `col_mix(ink, paper, 0.5)` (`"grey50"` on a light theme). On a
+theme whose panel is that same grey, such as
+[`theme_dark()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
+it uses `col_mix(ink, paper, 0.2)` (`"grey20"`) instead, so the hexes
+stay visible. This differs from ggplot2, which draws grey50 hexes on
+[`theme_dark()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)'s
+grey50 panel.
+
 ## Examples
 
 ``` r
