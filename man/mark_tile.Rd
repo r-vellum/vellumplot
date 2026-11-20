@@ -105,6 +105,11 @@ a light theme), the fill of ggplot2's \code{geom_tile()} and \code{geom_area()}.
 curve, filled like an area.)
 }
 \details{
+\code{mark_density()} draws its fill at 80\% opacity, so a single curve reads
+lighter and overlapping groups show through each other. An \code{alpha} you set
+or map replaces the 0.8, and an outline (a \code{color} beside a \code{fill}) stays
+opaque.
+
 With its count fill turned off (\code{fill = NULL}), \code{mark_hex()} fills with
 ggplot2's \code{col_mix(ink, paper, 0.5)} (\code{"grey50"} on a light theme). On a
 theme whose panel is that same grey, such as \code{\link[=theme_dark]{theme_dark()}}, it uses
