@@ -220,3 +220,29 @@ test_that("a nested plot does not leak its context into the outer layers (VP-12)
     c("panel-1-1", "panel-1-2")
   )
 })
+
+test_that("annotations get no default keys from a plot-level selection (VW-24)", {
+  df <- data.frame(x = 1:3, y = 1:3, g = c("a", "b", "a"))
+  p <- vplot(df) |>
+    mark_point(x = x, y = y, color = condition("pick", g, "grey80")) |>
+    select_point("pick") |>
+    annotate("text", x = 2, y = 3, label = "note") |>
+    annotate("rect", xmin = 1, xmax = 2, ymin = 1, ymax = 2)
+  expect_identical(
+    vapply(p@layers, function(l) l@annotation, logical(1)),
+    c(FALSE, TRUE, TRUE)
+  )
+  sc <- as_vellum_scene(p)
+  ids <- vellum::scene_model(sc)$elements$key
+  ids <- ids[!is.na(ids)]
+  expect_length(ids, 3L)
+})
+
+test_that("an annotation with its own data_id is still keyed", {
+  p <- vplot(data.frame(x = 1:2, y = 1:2)) |>
+    mark_point(x = x, y = y) |>
+    select_point("pick") |>
+    annotate("text", x = 1, y = 2, label = "note", data_id = "n1")
+  ids <- vellum::scene_model(as_vellum_scene(p))$elements$key
+  expect_true("n1" %in% ids)
+})

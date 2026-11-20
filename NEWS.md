@@ -1,5 +1,7 @@
 # vellumplot 0.15.0.9000 (development version)
 
+* `annotate()` layers no longer get default keys just because the plot declares a selection. A keyed annotation made the widget's display list inexact, which switched off its zoomed canvas and detail tier for the whole plot (VW-24). An annotation with its own `data_id` or a `condition()` is still keyed.
+
 * Compiling a big plot is faster (VR-16): per-element legend membership,
   element meta records and SVG-marker lookup are built column-wise instead of
   with a closure per point. A 200k-point scatter compiles in about 0.65 s

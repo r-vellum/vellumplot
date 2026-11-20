@@ -126,7 +126,11 @@ LayerSpec <- S7::new_class(
     # `hover_group`, `hover_color`, `selected_color` — evaluated per data row at
     # compile and threaded into the vellum scene as per-element keys/metadata.
     # Empty by default: a plot without them compiles and renders exactly as before.
-    interactivity = S7::new_property(S7::class_list, default = list())
+    interactivity = S7::new_property(S7::class_list, default = list()),
+    # TRUE for a layer added by annotate(): it isn't data, so a plot-level
+    # selection doesn't give it default keys (VW-24). An explicit `data_id` or a
+    # `condition()` on the annotation still keys it.
+    annotation = S7::new_property(S7::class_logical, default = FALSE)
   )
 )
 
