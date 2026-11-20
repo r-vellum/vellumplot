@@ -569,7 +569,9 @@ NULL
     per_panel_mm <- (band_w - side_mm - gaps_mm) / C
   }
   # Per-panel legends beside the panels that would leave them narrower than
-  # `.PANEL_LEGEND_MIN_MM`: the seam collects them instead (VP-59).
+  # `.PANEL_LEGEND_MIN_MM`: the seam collects them instead (VP-59). Legends
+  # above / below the panels are checked against the panel height once the
+  # rows are laid out (below).
   panel_legends_squeeze <- any(is.finite(pleg_w)) &&
     isTRUE(per_panel_mm < .PANEL_LEGEND_MIN_MM)
 
@@ -788,6 +790,24 @@ NULL
     w = .null_weight(panel_w) * pmm[["w"]],
     h = .null_weight(panel_h) * pmm[["h"]]
   )
+  # Per-panel legends above / below the panels that would leave them shorter
+  # than `.PANEL_LEGEND_MIN_MM` on this page: collected, as for the width
+  # (VP-62). `ph` is one panel row's mm height once every fixed row track, the
+  # legend rows included, is taken (negative when they overrun the page); NA
+  # when the page height is unknown.
+  if (any(is.finite(pleg_h)) && !respect && !polar) {
+    ph <- .panel_mm(
+      W$u,
+      H$u,
+      page_width,
+      page_height,
+      rt,
+      overflow = TRUE
+    )[["h"]] *
+      .null_weight(panel_h)
+    panel_legends_squeeze <- panel_legends_squeeze ||
+      isTRUE(ph < .PANEL_LEGEND_MIN_MM)
+  }
   x_keep <- y_keep <- x_keep_panels <- y_keep_panels <- NULL
   if (!polar) {
     keep_x <- function(sc) {
@@ -885,7 +905,15 @@ NULL
 # null unit is the same size both ways -- the smaller of the two, as the layout
 # engine shrinks the looser direction. NA when the page size is unknown or a
 # track cannot be converted.
-.panel_mm <- function(wu, hu, page_width, page_height, rt, respect = FALSE) {
+.panel_mm <- function(
+  wu,
+  hu,
+  page_width,
+  page_height,
+  rt,
+  respect = FALSE,
+  overflow = FALSE
+) {
   pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
   free <- function(units, total) {
     if (is.null(total) || !is.finite(total)) {
@@ -904,7 +932,9 @@ NULL
     )
     nulls <- sum(vapply(units, .null_weight, numeric(1)))
     out <- (total - sum(fixed)) / nulls
-    if (is.finite(out) && out > 0) out else NA_real_
+    # `overflow = TRUE` keeps a negative size (the fixed tracks overrun the
+    # page), for callers asking whether the panels are squeezed at all
+    if (is.finite(out) && (out > 0 || overflow)) out else NA_real_
   }
   w <- free(wu, if (!is.null(page_width)) page_width * 25.4 - pm[2] - pm[4])
   h <- free(hu, if (!is.null(page_height)) page_height * 25.4 - pm[1] - pm[3])
