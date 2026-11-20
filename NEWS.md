@@ -98,6 +98,14 @@
 
 ## Bug fixes
 
+* Default element keys no longer coincide with user `data_id`s. A mark keyed
+  by default (row position, or a line's first row) got keys such as `"1"`, so
+  in `mark_line(x = t, y = v) |> mark_point(x = t, y = v, data_id = t)` the
+  line and the point with `t = 1` shared a key and were selected together. In
+  a plot where any layer declares a `data_id`, default keys now carry their
+  layer (`"layer-1:1"`); user `data_id`s, and the keys of plots without one,
+  are unchanged (VP-54).
+
 * An aligned composition (`hconcat()`, `vconcat()`, `wrap_plots()` of
   single-panel plots) now keeps the theme's `plot.margin` around the figure,
   as a single plot does. Before, the first row's panels touched the top edge

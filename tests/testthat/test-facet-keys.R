@@ -119,3 +119,33 @@ test_that("a lone faceted plot's keys are unchanged by the cell prefix", {
   el <- .fk_keyed(fp)
   expect_true(all(grepl("^panel-1-[12]:\\d+$", el$key)))
 })
+
+test_that("default keys never equal another layer's user data_id", {
+  # VP-54: the line's default key was its first row, "1" -- the key of the
+  # point whose data_id is 1 -- so a host selected both together.
+  ts <- data.frame(t = 1:5, v = c(2, 4, 3, 5, 1))
+  for (p in list(
+    vplot(ts) |>
+      mark_line(x = t, y = v) |>
+      mark_point(x = t, y = v, data_id = t) |>
+      select_point("s"),
+    vplot(ts) |>
+      mark_line(x = t, y = v, tooltip = "line") |>
+      mark_point(x = t, y = v, data_id = t)
+  )) {
+    el <- .fk_keyed(p)
+    line <- el$key[el$mark == "line"]
+    pts <- el$key[el$mark == "point"]
+    expect_identical(pts, as.character(ts$t)) # user ids as given
+    expect_identical(line, "layer-1:1")
+    expect_length(intersect(line, pts), 0L)
+  }
+})
+
+test_that("default keys stay plain when no layer declares a data_id", {
+  ts <- data.frame(t = 1:5, v = c(2, 4, 3, 5, 1))
+  el <- .fk_keyed(
+    vplot(ts) |> mark_line(x = t, y = v) |> mark_point(x = t, y = v, tooltip = v)
+  )
+  expect_identical(el$key[el$mark == "point"], as.character(1:5))
+})
