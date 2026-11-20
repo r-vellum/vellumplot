@@ -1,5 +1,15 @@
 # vellumplot 0.15.1.9000 (development version)
 
+## Behaviour changes
+
+* **Behaviour change:** a discrete `alpha`, `size` or `linewidth` mapping now
+  groups a layer too, as ggplot2 groups by every discrete aesthetic. Before,
+  `mark_line(x = wt, y = mpg, alpha = factor(am))` drew one line through all
+  rows; now it draws one per `am` level, and stats (boxplots, densities, fits),
+  stacks and dodges split the same way. `mark_outlier_label()` still judges
+  outliers within colour / fill groups, so a discrete `alpha` or `size` there
+  styles the labels without splitting the data (VP-57).
+
 # vellumplot 0.15.1
 
 * `annotate()` layers no longer get default keys just because the plot declares a selection. A keyed annotation made the widget's display list inexact, which switched off its zoomed canvas and detail tier for the whole plot (VW-24). An annotation with its own `data_id` or a `condition()` is still keyed.
