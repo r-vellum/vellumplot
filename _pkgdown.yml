@@ -257,6 +257,7 @@ reference:
   - theme_gray
   - theme_sketch
   - element
+  - element_geom
   - rel
   - labs
   - annotate
