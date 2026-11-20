@@ -347,6 +347,8 @@ NULL
     !is.null(hover_group) ||
     !is.null(hover_color) ||
     !is.null(selected_color)
+  # The row positions are a placeholder: `.compile_marks()` replaces a default
+  # key with the panel/layer/row key from `.default_keys()`.
   default_id <- is.null(data_id) && present
   if (default_id) {
     data_id <- as.character(seq_len(n0))
@@ -361,7 +363,7 @@ NULL
     hover_color = hover_color,
     selected_color = selected_color,
     n = n0,
-    # the key is only the row index (renumbered after a summarising stat)
+    # no `data_id` declared: the key is a default (see `.default_keys()`)
     default_id = default_id
   )
 }

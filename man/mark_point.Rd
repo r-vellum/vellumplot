@@ -63,8 +63,10 @@ set: see \code{\link[=scale_linewidth]{scale_linewidth()}} for the tapered strok
 it falls back to per-segment widths. Everywhere else \code{linewidth} is a constant. Every mark also takes
 \code{group}, which says which rows form one series without styling them:
 \code{mark_line(x = t, y = y, group = id)} draws one line per \code{id}. Without it,
-a discrete \code{color} (else \code{fill}) groups; a continuous colour never does, so
-a line mapped to one stays connected and changes colour along its length.
+as in ggplot2, the interaction of every discrete \code{color}, \code{fill},
+\code{pattern}, \code{linetype}, \code{shape}, \code{alpha}, \code{size} and \code{linewidth} mapping
+groups; a continuous colour never does, so a line mapped to one stays
+connected and changes colour along its length.
 \code{group = 1} makes the whole layer one group.}
 
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
@@ -169,8 +171,10 @@ theme set by \code{vellumwidget::as_widget(hover_color=, selected_color=)}.
 
 These are inert for PNG/PDF and for an SVG opened without a JS host: a plot
 with none of them compiles and renders exactly as before. Declaring any of them
-without \code{data_id} defaults the key to the row index, so the element is still
-addressable. They currently apply to \code{stat = "identity"} marks (points, bars,
+without \code{data_id} gives the element a default key, so it is still
+addressable. A default key names the panel, the layer and the row
+(\code{"p1-1:l2:7"}: row 7 of layer 2 in the first panel), so it never matches
+another layer's keys; give two layers the same \code{data_id} to link them. They currently apply to \code{stat = "identity"} marks (points, bars,
 tiles, segments, edges, hexbins, sf features, …); aggregating stats
 (histogram/count/density) drop them, since rows no longer map 1:1 to elements.
 
