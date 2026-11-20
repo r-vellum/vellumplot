@@ -137,7 +137,11 @@ per level of a discrete `fill`/`color`), and a polygon has a single
 fill. A continuous `fill`, `color` or `alpha` must therefore be constant
 within each series; one that varies along a series is an error. A
 `color` given alongside a `fill` outlines the band: an area along its
-top, a ribbon along both edges. A `color` alone fills it.
+top, a ribbon along both edges. A `color` alone fills it. With neither,
+an area or ribbon fills with ggplot2's default,
+`col_mix(ink, paper, 0.2)` from the theme's
+[`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)
+(`"grey20"` on a light theme).
 
 ## See also
 

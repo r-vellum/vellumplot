@@ -7,7 +7,12 @@ requiring a complete regular grid). `mark_bin2d()` bins continuous
 draws a 1-D kernel density of `x` as a filled curve. On all of them a
 `color` given alongside a `fill` (or the default count fill of
 `mark_bin2d()` / `mark_hex()`) outlines the shapes; a `color` alone
-fills them.
+fills them. Unmapped, tiles, rasters and densities fill with
+`col_mix(ink, paper, 0.2)` from the theme's
+[`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)
+(`"grey20"` on a light theme), the fill of ggplot2's `geom_tile()` and
+`geom_area()`. (ggplot2's `geom_density()` draws an unfilled outline;
+`mark_density()` keeps its filled curve, filled like an area.)
 
 ## Usage
 

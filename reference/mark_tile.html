@@ -11,13 +11,21 @@ complete regular grid). mark_bin2d() bins continuous x/y into a grid and
 colours each cell by count. mark_density() draws a 1-D kernel density of x
 as a filled curve. On all of them a color given alongside a fill (or the
 default count fill of mark_bin2d() / mark_hex()) outlines the shapes; a
-color alone fills them."><meta property="og:description" content="mark_tile() draws a rectangular tile at each (x, y) coloured by fill;
+color alone fills them. Unmapped, tiles, rasters and densities fill with
+col_mix(ink, paper, 0.2) from the theme's element_geom() (&quot;grey20&quot; on
+a light theme), the fill of ggplot2's geom_tile() and geom_area(). (ggplot2's
+geom_density() draws an unfilled outline; mark_density() keeps its filled
+curve, filled like an area.)"><meta property="og:description" content="mark_tile() draws a rectangular tile at each (x, y) coloured by fill;
 mark_raster() draws the same as one raster image (a fast path requiring a
 complete regular grid). mark_bin2d() bins continuous x/y into a grid and
 colours each cell by count. mark_density() draws a 1-D kernel density of x
 as a filled curve. On all of them a color given alongside a fill (or the
 default count fill of mark_bin2d() / mark_hex()) outlines the shapes; a
-color alone fills them."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+color alone fills them. Unmapped, tiles, rasters and densities fill with
+col_mix(ink, paper, 0.2) from the theme's element_geom() (&quot;grey20&quot; on
+a light theme), the fill of ggplot2's geom_tile() and geom_area(). (ggplot2's
+geom_density() draws an unfilled outline; mark_density() keeps its filled
+curve, filled like an area.)"><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -82,7 +90,11 @@ complete regular grid). <code>mark_bin2d()</code> bins continuous <code>x</code>
 colours each cell by count. <code>mark_density()</code> draws a 1-D kernel density of <code>x</code>
 as a filled curve. On all of them a <code>color</code> given alongside a <code>fill</code> (or the
 default count fill of <code>mark_bin2d()</code> / <code>mark_hex()</code>) outlines the shapes; a
-<code>color</code> alone fills them.</p>
+<code>color</code> alone fills them. Unmapped, tiles, rasters and densities fill with
+<code>col_mix(ink, paper, 0.2)</code> from the theme's <code><a href="element_geom.html">element_geom()</a></code> (<code>"grey20"</code> on
+a light theme), the fill of ggplot2's <code>geom_tile()</code> and <code>geom_area()</code>. (ggplot2's
+<code>geom_density()</code> draws an unfilled outline; <code>mark_density()</code> keeps its filled
+curve, filled like an area.)</p>
     </div>
 
     <div class="section level2">

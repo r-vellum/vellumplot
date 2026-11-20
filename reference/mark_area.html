@@ -181,7 +181,9 @@ level of a discrete <code>fill</code>/<code>color</code>), and a polygon has a s
 continuous <code>fill</code>, <code>color</code> or <code>alpha</code> must therefore be constant within each
 series; one that varies along a series is an error. A <code>color</code> given
 alongside a <code>fill</code> outlines the band: an area along its top, a ribbon along
-both edges. A <code>color</code> alone fills it.</p>
+both edges. A <code>color</code> alone fills it. With neither, an area or ribbon fills
+with ggplot2's default, <code>col_mix(ink, paper, 0.2)</code> from the theme's
+<code><a href="element_geom.html">element_geom()</a></code> (<code>"grey20"</code> on a light theme).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
