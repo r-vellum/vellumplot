@@ -67,6 +67,10 @@ PlotComposition <- S7::new_class(
 #'   vector), or `NULL` for equal panels.
 #' @param guides `"collect"` (default) to dedupe identical legends across
 #'   sub-plots into one, or `"keep"` to leave each sub-plot's legend in place.
+#'   The collected legend goes where the composition's theme puts it
+#'   (`theme(comp, legend.position = )`: `"right"`, the default, `"left"`,
+#'   `"top"`, `"bottom"` or `"none"`), as in patchwork; the sub-plots' own
+#'   themes do not move it.
 #' @param design An explicit layout: a list of [area()]s (one per plot, in the
 #'   order plots are passed) or a textual layout string (rows split by `\n`, `#`
 #'   an empty cell). In a string, distinct letters bind to the plots in `...` in

@@ -955,13 +955,23 @@ NULL
     page_height = spec@height,
     page_width = spec@width
   )
-  # Legends beside each facet panel (`position = "panel"`) that would leave the
-  # panels too narrow on this page are collected into the plot's legend
-  # instead, titled "title (panel)" (VP-59).
+  # Legends beside (or above / below) each facet panel (`position = "panel"`)
+  # that would leave the panels too narrow (or too short) on this page are
+  # collected into the plot's legend instead, titled "title (panel)" (VP-59,
+  # VP-62).
   if (isTRUE(lay$panel_legends_squeeze)) {
+    vertical <- lay$panel_legends$side %in% c("top", "bottom")
     cli::cli_inform(c(
-      "Collecting the per-panel legends: beside each panel they would leave the panels narrower than {(.PANEL_LEGEND_MIN_MM)} mm.",
-      i = "Make the plot wider, or place the legends with {.code guide_legend(position = )}."
+      if (vertical) {
+        "Collecting the per-panel legends: above or below each panel they would leave the panels shorter than {(.PANEL_LEGEND_MIN_MM)} mm."
+      } else {
+        "Collecting the per-panel legends: beside each panel they would leave the panels narrower than {(.PANEL_LEGEND_MIN_MM)} mm."
+      },
+      i = if (vertical) {
+        "Make the plot taller, or place the legends with {.code guide_legend(position = )}."
+      } else {
+        "Make the plot wider, or place the legends with {.code guide_legend(position = )}."
+      }
     ))
     guides <- .facet_legend_guides(built, collect = TRUE)
     lay <- .build_layout(

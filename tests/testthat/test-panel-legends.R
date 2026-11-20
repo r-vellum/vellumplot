@@ -87,10 +87,13 @@ test_that("the theme's legend.position picks the side of panel legends", {
   expect_identical(inside$side, "inside")
   expect_false(is.null(inside$inside))
   expect_true(all(is.na(inside$cols)) && all(is.na(inside$rows)))
+  # (tall enough for legend rows above / below both panel rows, VP-62)
+  tall <- pl_wrap
+  tall@height <- 7
   for (pos in c("left", "top", "bottom", "inside")) {
-    expect_no_error(vellum::as_vellum_scene(
-      pl_wrap |> theme(legend.position = pos)
-    ))
+    expect_no_message(expect_no_error(vellum::as_vellum_scene(
+      tall |> theme(legend.position = pos)
+    )))
   }
   # "none" hides them too
   expect_null(pl_layout(pl_wrap |> theme(legend.position = "none"))$panel_legends)
@@ -108,10 +111,14 @@ test_that("facet_grid gets per-column and per-row legend tracks", {
   expect_gt(cols[length(cols)], lay$rowstrip_col)
   lay_b <- pl_layout(p |> theme(legend.position = "bottom"))
   expect_false(anyNA(lay_b$panel_legends$rows))
-  # (wide enough for four panels beside their legends, VP-59)
+  # (wide enough for four panels beside their legends, VP-59, and tall enough
+  # for a legend row above each panel row, VP-62)
   p@width <- 10
-  expect_no_error(vellum::as_vellum_scene(p))
-  expect_no_error(vellum::as_vellum_scene(p |> theme(legend.position = "top")))
+  p@height <- 7
+  expect_no_message(vellum::as_vellum_scene(p))
+  expect_no_message(vellum::as_vellum_scene(
+    p |> theme(legend.position = "top")
+  ))
 })
 
 test_that("shared and per-panel legends mix", {
@@ -266,4 +273,31 @@ test_that("per-panel legends that would squeeze the panels are collected (VP-59)
   shared@width <- 3
   expect_message(nms <- pl_panels(shared)$name, "per-panel legends")
   expect_identical(sum(startsWith(nms, "legend")), 1L)
+})
+
+test_that("per-panel legends above / below that would squeeze panel heights are collected (VP-62)", {
+  low <- pl_wrap |> theme(legend.position = "bottom")
+  low@height <- 2.5
+  expect_message(
+    nms <- pl_panels(low)$name,
+    "shorter than"
+  )
+  expect_true("legend" %in% nms)
+  expect_false(any(startsWith(nms, "legend-panel-")))
+  # the collected legend sits below the panels, as the theme asks
+  pan <- suppressMessages(pl_panels(low))
+  leg <- pan[pan$name == "legend", ]
+  panels <- pan[startsWith(pan$name, "panel-"), ]
+  expect_gt(leg$y0, max(panels$y1))
+  # a tall enough page keeps them under each panel row, without a message
+  tall <- low
+  tall@height <- 6
+  expect_no_message(nms <- pl_panels(tall)$name)
+  expect_true("legend-panel-1-1" %in% nms)
+  # the width check is unchanged: a narrow page with bottom legends is not
+  # squeezed sideways
+  narrow <- low
+  narrow@height <- 6
+  narrow@width <- 3
+  expect_no_message(pl_panels(narrow))
 })

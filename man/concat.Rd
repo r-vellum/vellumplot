@@ -50,7 +50,11 @@ vconcat(..., guides = c("collect", "keep"), width = NULL)
 vector), or \code{NULL} for equal panels.}
 
 \item{guides}{\code{"collect"} (default) to dedupe identical legends across
-sub-plots into one, or \code{"keep"} to leave each sub-plot's legend in place.}
+sub-plots into one, or \code{"keep"} to leave each sub-plot's legend in place.
+The collected legend goes where the composition's theme puts it
+(\code{theme(comp, legend.position = )}: \code{"right"}, the default, \code{"left"},
+\code{"top"}, \code{"bottom"} or \code{"none"}), as in patchwork; the sub-plots' own
+themes do not move it.}
 
 \item{design}{An explicit layout: a list of \code{\link[=area]{area()}}s (one per plot, in the
 order plots are passed) or a textual layout string (rows split by \verb{\\n}, \verb{#}
