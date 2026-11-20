@@ -406,6 +406,7 @@ scale_colour_bivariate <- scale_color_bivariate
 #'   class column) has none to show.
 #' @param rotate Turn the grid 45 degrees, so the classes read as a diamond
 #'   with high-high at the top (default `FALSE`).
+#' @inheritParams guides
 #' @return A guide specification for [guides()].
 #' @seealso [scale_fill_bivariate()]
 #' @family bivariate
@@ -426,7 +427,8 @@ guide_bivariate <- function(
   ylab = NULL,
   key.size = NULL,
   labels = TRUE,
-  rotate = FALSE
+  rotate = FALSE,
+  position = NULL
 ) {
   for (a in list(list(labels, "labels"), list(rotate, "rotate"))) {
     if (!is.logical(a[[1]]) || length(a[[1]]) != 1L || is.na(a[[1]])) {
@@ -445,7 +447,8 @@ guide_bivariate <- function(
     ylab = ylab,
     key_size = .check_bar_dim(key.size, "key.size"),
     labels = labels,
-    rotate = rotate
+    rotate = rotate,
+    position = .check_guide_position(position)
   )
 }
 
