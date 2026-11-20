@@ -363,6 +363,8 @@ NULL
   # `.draw_plot`): a cell declaring an interaction keys its marks, and a cell with
   # a `filter_by()` tags its elements so a host scopes the filter to this view.
   .set_interaction_ctx(plan$spec)
+  # ... and its theme's default mark colours, for its marks and own legend.
+  .set_geom_ctx(.theme_of(plan$spec))
   scene <- .compile_marks(scene, panel$resolved, psc, panel = pkey)
   scene <- vellum::pop(scene)
   # axes + axis titles
@@ -447,6 +449,18 @@ NULL
   # falling back to the default. Sub-plots resolve their own theme in `.plan_plot`.
   rt0 <- .resolve_theme(comp@theme %||% .theme_default())
   glo <- .composition_grid(plans, comp, collect, rt0)
+  # Default mark colours: each cell sets its own theme's; the collected legend
+  # keys take the composition theme's, else the first sub-plot's. Put the
+  # caller's back afterwards (a composition can be drawn inside a plot).
+  old_geom <- .mark_ctx$geom
+  on.exit(assign("geom", old_geom, envir = .mark_ctx), add = TRUE)
+  .set_geom_ctx(
+    if (!is.null(.theme_geom(comp@theme))) {
+      comp@theme
+    } else {
+      .theme_of(plans[[1]]$spec)
+    }
+  )
 
   # The figure keeps the theme's `plot.margin` around its grid, as a single
   # plot does (`.dp_push_frame()`); before, the first row's panels touched the

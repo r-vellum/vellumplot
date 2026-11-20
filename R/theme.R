@@ -152,6 +152,8 @@ NULL
 #'   (`guide_legend(position = "panel")`) sit on the side `legend.position`
 #'   names, justified along the panel edge by `legend.justification` (e.g.
 #'   `"top"` aligns a legend right of a panel with the panel's top).
+#'   `geom = element_geom(ink, paper, accent)` sets the default colours of
+#'   unmapped marks (see [element_geom()]).
 #'   Legend geometry is tunable via `legend.key.size` (key/swatch side, mm),
 #'   `legend.spacing` (gap between stacked guides, mm), and `legend.margin`
 #'   (inset around the legend block, one or four millimetres, `t, r, b, l`).
@@ -313,7 +315,9 @@ theme_linedraw <- function(plot, base_size = 11, base_family = "") {
 #' neon default palette (both discrete and continuous), in the spirit of
 #' [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk). It pairs with the
 #' [glow()] layer effect and [linear_gradient()] fills for the full neon look;
-#' the palette is only a *default*, so `scale_*` overrides still win.
+#' the palette is only a *default*, so `scale_*` overrides still win. Unmapped
+#' marks draw in the light foreground colour (`element_geom(ink = "#c7d0f0")`),
+#' with smooths and contours in neon cyan.
 #' @export
 theme_cyberpunk <- function(plot, base_size = 11, base_family = "") {
   .check_plot(plot)
@@ -338,6 +342,9 @@ theme_cyberpunk <- function(plot, base_size = 11, base_family = "") {
       strip.text = element_text(colour = fg)
     )
   )
+  # Unmapped marks draw in the light foreground (points, lines, text), bars and
+  # areas in a mix of it with the canvas, smooths and contours in neon cyan.
+  th[["geom"]] <- element_geom(ink = fg, paper = ink, accent = "#08F7FE")
   # Neon palette defaults ride the theme (read by .train_colour when no scale
   # palette is set); they are plain keys, not drawn elements.
   th[["palette"]] <- .NEON_QUAL
@@ -366,7 +373,9 @@ theme_cyberpunk <- function(plot, base_size = 11, base_family = "") {
 #' @param font Font family for all text (text is not sketched; a handwriting font
 #'   such as `"Comic Sans MS"` or `"Chilanka"` sells the hand-drawn look).
 #'   `NULL` (default) keeps the system default family.
-#' @param paper,ink Background and foreground (text/line) colours.
+#' @param paper,ink Background and foreground (text/line) colours. Setting
+#'   either also makes them the default mark colours ([element_geom()]), so
+#'   unmapped marks draw in `ink` and fills mix `ink` with `paper`.
 #' @return The modified [PlotSpec].
 #' @seealso [sketch()], [theme_gray()], [mark_point()]
 #' @examples
@@ -432,6 +441,11 @@ theme_sketch <- function(
       strip.text = element_text(colour = ink)
     )
   )
+  # Marks follow a custom paper / ink (`element_geom()`); the default pair keeps
+  # them as on any light theme.
+  if (!missing(ink) || !missing(paper)) {
+    th <- .merge_theme(th, list(geom = element_geom(ink = ink, paper = paper)))
+  }
   # The plot-wide mark default rides the theme as a plain key (read by mark
   # emitters + legend keys via `.theme_sketch_default`), like `palette`.
   th[["sketch"]] <- sk

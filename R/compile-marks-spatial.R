@@ -116,7 +116,7 @@ NULL
       "{.fn mark_raster} needs an evenly-spaced grid; use {.fn mark_tile} for irregular spacing."
     )
   }
-  cols <- rep_len(.aes_colour(L, scales, "grey50"), length(xv))
+  cols <- rep_len(.aes_colour(L, scales, "grey50", role = "fill"), length(xv))
   m <- matrix("#FFFFFF00", nrow = length(uy), ncol = length(ux))
   m[cbind(length(uy) - ri + 1L, ci)] <- cols # row 1 = top = max y
   xw <- if (length(ux) > 1) min(diff(ux)) else 1
@@ -463,7 +463,7 @@ NULL
   primary <- rep_len(.aes_colour(L, scales, NA_character_), n)
   poly_fill <- rep_len(.aes_fill_colour(L, scales, NA_character_), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
-  border <- .aes_param(L, "color", "grey40")
+  border <- .aes_param(L, "color", .geom_paint("grey40"))
   lwd <- .aes_param(L, "linewidth", 0.5)
   size <- rep_len(.aes_size(L, scales, 1.5), n)
   sk <- .mark_sketch(L, scales)
@@ -610,7 +610,7 @@ NULL
   scene <- by_style(
     scene,
     "poly",
-    kind_col(poly_fill, "grey80"),
+    kind_col(poly_fill, .geom_paint("grey80", "fill")),
     function(scene, idx, fill, a) {
       gpp <- vellum::vl_gpar(
         fill = .paint_or(L, fill),
@@ -650,7 +650,7 @@ NULL
   scene <- by_style(
     scene,
     "line",
-    kind_col(primary, "grey20"),
+    kind_col(primary, .geom_paint("grey20")),
     function(scene, idx, col, a) {
       gpp <- vellum::vl_gpar(col = col, lwd = lwd, alpha = gp_alpha(a))
       emit <- function(scene, g, rows) {
@@ -672,7 +672,7 @@ NULL
   scene <- by_style(
     scene,
     "point",
-    kind_col(primary, "black"),
+    kind_col(primary, .geom_paint("black")),
     function(scene, idx, col, a) {
       # Accumulate into lists and combine once (a nested-loop `c()` grow is
       # O(k^2)); mirrors gather_poly/gather_line. `rows` is the feature index per

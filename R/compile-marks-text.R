@@ -142,7 +142,7 @@ NULL
   bg <- if (!is.null(scales$fill) && !is.null(L$values$fill)) {
     scales$fill$map(L$values$fill)
   } else {
-    L$params$fill %||% "white"
+    L$params$fill %||% .geom_paint("white", "fill")
   }
   bg <- rep_len(bg, n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)

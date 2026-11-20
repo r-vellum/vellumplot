@@ -29,7 +29,9 @@ NULL
 #' @param pad Inset from the panel edge, in millimetres.
 #' @param color,fill Stroke and fill colours. For the scale bar the segments
 #'   alternate `color` and `fill`; for the compass the arrow is `fill` with a
-#'   `color` outline.
+#'   `color` outline. By default the scale bar alternates the theme's ink and
+#'   paper colours (black and white, see [element_geom()]) and the compass is
+#'   drawn in its ink.
 #' @param data Optional layer data (rarely needed -- decorations are not
 #'   data-driven).
 #' @return The modified [PlotSpec].
@@ -65,8 +67,8 @@ mark_scalebar <- function(
   height = 2.5,
   pad = 4,
   text_size = 7,
-  color = "black",
-  fill = "white",
+  color = NULL,
+  fill = NULL,
   data = NULL
 ) {
   .check_plot(plot)
@@ -102,8 +104,8 @@ mark_compass <- function(
   size = 10,
   pad = 4,
   rotation = 0,
-  color = "black",
-  fill = "black",
+  color = NULL,
+  fill = NULL,
   text = TRUE,
   data = NULL
 ) {
@@ -234,8 +236,8 @@ mark_compass <- function(
   h <- sp$height %||% 2.5
   pad <- sp$pad %||% 4
   ts <- sp$text_size %||% 7
-  color <- sp$color %||% "black"
-  fill <- sp$fill %||% "white"
+  color <- sp$color %||% .geom_paint("black")
+  fill <- sp$fill %||% .geom_paint("white", "fill")
   a <- .corner_anchor(sp$position %||% "bottomleft")
   sk <- .mark_sketch(L, scales)
 
@@ -292,8 +294,8 @@ mark_compass <- function(
   sp <- L$stat_params
   size <- sp$size %||% 10
   pad <- sp$pad %||% 4
-  color <- sp$color %||% "black"
-  fill <- sp$fill %||% "black"
+  color <- sp$color %||% .geom_paint("black")
+  fill <- sp$fill %||% .geom_paint("black", "fill")
   rot <- (sp$rotation %||% 0) * pi / 180
   show_text <- !isFALSE(sp$text)
   a <- .corner_anchor(sp$position %||% "topright")
