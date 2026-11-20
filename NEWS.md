@@ -2,6 +2,14 @@
 
 ## Behaviour changes
 
+* **Behaviour change:** the legends of a scale resolved `"independent"` across
+  facet panels (`resolve_scale(color = "independent")`, and size, alpha, shape,
+  linetype, linewidth, pattern, fill) are now drawn beside each panel, titled
+  with the scale title alone, instead of collected in the legend area as
+  `"title (panel)"`. `guides(color = guide_legend(position = "right"))` (or
+  any other side) collects them as before. A panel with no values of an
+  independent discrete scale no longer shows an empty legend (VP-53).
+
 * **Behaviour change:** a layer is now grouped by the interaction of all its
   discrete `color`, `fill`, `pattern`, `linetype` and `shape` mappings, as
   ggplot2 groups by every discrete aesthetic. Before, only the first of them
@@ -56,6 +64,13 @@
   `position =` (`"right"`, `"left"`, `"top"`, `"bottom"` or `"inside"`), as in
   ggplot2 3.5: it overrides `theme(legend.position = )` for that legend only,
   so one plot can carry legends on several sides (VP-53).
+
+* The guide position `"panel"` draws a legend beside each facet panel: right of
+  each panel by default, or on the side `theme(legend.position = )` names (left,
+  above, below, or inside each panel), justified along the panel edge by
+  `legend.justification`. Each column (or row) of panels gets a legend track
+  sized to its largest legend, for `facet_wrap()` and `facet_grid()`. Shared and
+  per-panel legends mix in one plot (VP-53).
 
 * `scale_*_stepsn()` gains `values =`, the positions of its `colours` along
   the ramp, as in ggplot2 (VP-49).

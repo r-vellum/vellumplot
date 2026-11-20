@@ -2570,6 +2570,48 @@ NULL
 }
 
 # --- legend assembly --------------------------------------------------------
+
+# Justify a legend block of `size_mm` along one axis ("x" / "y") of the current
+# cell: `just` 0 is the left / bottom edge, 1 the right / top, 0.5 (the
+# default, and what every legend area uses) centred -- which pushes nothing, so
+# a centred legend draws exactly as before. Otherwise a three-track grid (the
+# slack split `just : 1 - just` around the block) leaves the cursor in a cell
+# exactly `size_mm` long. Undo with `.pop_justified()`.
+.push_justified <- function(scene, size_mm, just, axis) {
+  if (isTRUE(all.equal(just, 0.5))) {
+    return(scene)
+  }
+  # rows run top to bottom, so on y the slack before the block is `1 - just`
+  before <- if (axis == "x") just else 1 - just
+  tracks <- c(
+    vellum::vl_unit(before, "null"),
+    vellum::vl_unit(size_mm, "mm"),
+    vellum::vl_unit(1 - before, "null")
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      layout = if (axis == "x") {
+        vellum::grid_layout(widths = tracks)
+      } else {
+        vellum::grid_layout(heights = tracks)
+      }
+    )
+  )
+  vellum::push(
+    scene,
+    vellum::vl_viewport(
+      row = if (axis == "x") 1L else 2L,
+      col = if (axis == "x") 2L else 1L
+    )
+  )
+}
+.pop_justified <- function(scene, just) {
+  if (isTRUE(all.equal(just, 0.5))) {
+    return(scene)
+  }
+  vellum::pop(vellum::pop(scene))
+}
 # Lay the guides out in the legend cell. A vertical (left/right) legend stacks
 # the guides top-to-bottom in a mm-height block centred in the cell; a horizontal
 # (top/bottom) legend packs them left-to-right in a mm-width block centred in the
@@ -2582,7 +2624,8 @@ NULL
   rt,
   orient = "vertical",
   avail_h = Inf,
-  name = "legend"
+  name = "legend",
+  just = 0.5
 ) {
   scene <- vellum::push(
     scene,
@@ -2629,6 +2672,7 @@ NULL
   if (orient == "horizontal") {
     ws <- vapply(guides, .guide_width_mm, 0, m = m)
     total <- sum(ws) + (n - 1) * m$spacing
+    scene <- .push_justified(scene, total, just, "x")
     scene <- vellum::push(
       scene,
       vellum::vl_viewport(
@@ -2650,6 +2694,7 @@ NULL
       scene <- vellum::pop(scene)
     }
     scene <- vellum::pop(scene)
+    scene <- .pop_justified(scene, just)
   } else {
     # Pack guides into as many columns as it takes to fit `avail_h` (the figure
     # height), so a tall stack wraps sideways instead of spilling off the top and
@@ -2678,6 +2723,7 @@ NULL
         scene,
         vellum::vl_viewport(row = 1, col = 2L * c - 1L)
       )
+      scene <- .push_justified(scene, total, just, "y")
       scene <- vellum::push(
         scene,
         vellum::vl_viewport(
@@ -2699,6 +2745,7 @@ NULL
         scene <- vellum::pop(scene)
       }
       scene <- vellum::pop(scene) # this column's stack
+      scene <- .pop_justified(scene, just)
       scene <- vellum::pop(scene) # this column's cell
     }
     scene <- vellum::pop(scene) # columns grid

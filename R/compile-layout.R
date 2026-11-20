@@ -264,15 +264,17 @@ NULL
 
 # Split the guides by where they are drawn: each guide's own `position =`, else
 # the theme's `legend.position`. Returns a named list of guide lists, one per
-# position (empty when nothing goes there). `legend.position = "none"` hides
-# every legend, whatever its guide asked for (as in ggplot2 3.5).
+# position (empty when nothing goes there); `panel` holds the legends drawn
+# beside each facet panel (see `.panel_legend_guides()`). `legend.position =
+# "none"` hides every legend, whatever its guide asked for (as in ggplot2 3.5).
 .legend_groups <- function(guides, rt) {
   out <- list(
     right = list(),
     left = list(),
     top = list(),
     bottom = list(),
-    inside = list()
+    inside = list(),
+    panel = list()
   )
   default <- .legend_default_position(rt)
   if (identical(default, "none")) {
@@ -283,6 +285,15 @@ NULL
     out[[p]] <- c(out[[p]], list(g))
   }
   out
+}
+
+# Which side of its panel a per-panel legend (`position = "panel"`) sits on:
+# the side the theme's `legend.position` names, so the per-panel legends sit
+# the way the plot's other legends do -- right of each panel by default, left,
+# above or below it -- or "inside" each panel (at `legend.position.inside` /
+# the justification) when the theme puts the legends inside.
+.panel_legend_side <- function(pos) {
+  if (pos %in% c("left", "right", "top", "bottom")) pos else "inside"
 }
 
 # A tiny ordered track builder: `add(unit)` appends a track and returns its
@@ -490,6 +501,37 @@ NULL
   side_w <- function(side) {
     .legend_width(groups[[side]], rt, legend_avail_h)
   }
+  # Per-panel legends (`position = "panel"`): one legend track per panel
+  # column (beside the panels) or per panel row (above / below them), as wide
+  # / tall as the largest of the legends in it. Panels with no legend of their
+  # own leave the track to their neighbours; a column / row with none gets no
+  # track at all.
+  pside <- .panel_legend_side(pos)
+  panel_guides <- if (length(groups$panel)) {
+    lapply(seq_along(built$panels), function(i) {
+      .panel_legend_guides(groups$panel, i)
+    })
+  } else {
+    list()
+  }
+  # -Inf: no legend in that column / row (decided by presence, not by the
+  # measured size, so a track never depends on font metrics to exist)
+  pleg_w <- rep(-Inf, C)
+  pleg_h <- rep(-Inf, R)
+  for (i in seq_along(panel_guides)) {
+    pg <- panel_guides[[i]]
+    if (!length(pg)) {
+      next
+    }
+    pp <- built$panels[[i]]
+    if (pside %in% c("left", "right")) {
+      w <- vellum::vl_convert(.legend_width(pg, rt), "mm")
+      pleg_w[pp$c] <- max(pleg_w[pp$c], w)
+    } else if (pside %in% c("top", "bottom")) {
+      h <- vellum::vl_convert(.legend_height(pg, rt), "mm")
+      pleg_h[pp$r] <- max(pleg_h[pp$r], h)
+    }
+  }
 
   # Per-x-tick wrap budget (mm): the panel's mm width shared among its x ticks, so
   # a long discrete label wraps to its own column instead of running into its
@@ -516,7 +558,7 @@ NULL
       side_w
     )
     side <- c(
-      list(yt, yl),
+      list(yt, yl, vellum::vl_unit(sum(pleg_w[is.finite(pleg_w)]), "mm")),
       leg_w,
       if (has_row_strip) list(row_strip),
       if (has_y_sec) list(y2l, y2t)
@@ -575,13 +617,31 @@ NULL
   if (length(groups$left)) {
     legend_cols[["left"]] <- .tk_add(W, side_w("left"))
   }
+  # A per-panel legend column sits right beside its panel; the outermost one
+  # (left of the first column / right of the last) outside the axis title /
+  # row strips instead, so it never splits a panel from its own chrome.
+  panel_legend_col <- rep(NA_integer_, C)
+  add_pleg_col <- function(c) {
+    if (is.finite(pleg_w[c])) {
+      panel_legend_col[c] <<- .tk_add(W, vellum::vl_unit(pleg_w[c], "mm"))
+    }
+  }
+  if (pside == "left") {
+    add_pleg_col(1L)
+  }
   ytitle_col <- .tk_add(W, yt)
   panel_col <- integer(C)
   ylabels_col <- integer(C)
   shared_yl <- if (!free_y) .tk_add(W, yl) else NA_integer_
   for (c in seq_len(C)) {
+    if (pside == "left" && c > 1L) {
+      add_pleg_col(c)
+    }
     ylabels_col[c] <- if (free_y) .tk_add(W, yl) else shared_yl
     panel_col[c] <- .tk_add(W, panel_w)
+    if (pside == "right" && c < C) {
+      add_pleg_col(c)
+    }
     if (c < C) .tk_add(W, gap)
   }
   if (has_right) {
@@ -597,6 +657,9 @@ NULL
     y2title_col <- .tk_add(W, y2t)
   }
   rowstrip_col <- if (has_row_strip) .tk_add(W, row_strip) else NA_integer_
+  if (pside == "right") {
+    add_pleg_col(C)
+  }
   if (length(groups$right)) {
     legend_cols[["right"]] <- .tk_add(W, side_w("right"))
   }
@@ -633,6 +696,17 @@ NULL
   if (length(groups$top)) {
     legend_rows[["top"]] <- .tk_add(H, .legend_height(groups$top, rt))
   }
+  # Per-panel legend rows, placed as the columns are: beside their panel row,
+  # the outermost outside the column strips / x-axis title.
+  panel_legend_row <- rep(NA_integer_, R)
+  add_pleg_row <- function(r) {
+    if (is.finite(pleg_h[r])) {
+      panel_legend_row[r] <<- .tk_add(H, vellum::vl_unit(pleg_h[r], "mm"))
+    }
+  }
+  if (pside == "top") {
+    add_pleg_row(1L)
+  }
   colstrip_row <- if (fa$type == "grid" && has_col_strip) {
     .tk_add(H, strip)
   } else {
@@ -650,6 +724,9 @@ NULL
   xlabels_row <- integer(R)
   wrapstrip_row <- integer(R)
   for (r in seq_len(R)) {
+    if (pside == "top" && r > 1L) {
+      add_pleg_row(r)
+    }
     if (fa$type == "wrap") {
       wrapstrip_row[r] <- .tk_add(H, strip)
     }
@@ -661,6 +738,9 @@ NULL
     if (free_x) {
       xlabels_row[r] <- .tk_add(H, xl)
     }
+    if (pside == "bottom" && r < R) {
+      add_pleg_row(r)
+    }
     if (r < R) .tk_add(H, gap)
   }
   shared_xl <- if (!free_x) .tk_add(H, xl) else NA_integer_
@@ -670,6 +750,9 @@ NULL
     }
   }
   xtitle_row <- .tk_add(H, xt)
+  if (pside == "bottom") {
+    add_pleg_row(R)
+  }
   if (length(groups$bottom)) {
     legend_rows[["bottom"]] <- .tk_add(H, .legend_height(groups$bottom, rt))
   }
@@ -743,6 +826,20 @@ NULL
     legend_groups = groups,
     legend_pos = pos,
     legend_inside = inside,
+    # The per-panel legends: the side they sit on, each panel's guides (in
+    # `built$panels` order, empty for a panel with none), its (row, col) in the
+    # panel grid, and the per-column / per-row legend tracks (NA where none).
+    panel_legends = if (length(panel_guides)) {
+      list(
+        side = pside,
+        guides = panel_guides,
+        at = lapply(built$panels, function(p) c(p$r, p$c)),
+        cols = panel_legend_col,
+        rows = panel_legend_row,
+        inside = if (pside == "inside") .legend_inside(rt, force = TRUE),
+        just = .legend_just(rt[["legend.justification"]]) %||% c(0.5, 0.5)
+      )
+    },
     legend_avail_h = legend_avail_h,
     title_row = title_row,
     subtitle_row = subtitle_row,

@@ -774,6 +774,64 @@ NULL
       name = vp_name("inside")
     )
   }
+  .dp_draw_panel_legends(scene, lay, rt)
+}
+
+# The per-panel legends (`position = "panel"`, the default of a scale resolved
+# "independent"): each panel's legends in its own legend track -- a vertical
+# stack in the panel's row of its column's track (left / right), or a
+# horizontal row in the panel's column of its row's track (top / bottom),
+# justified along the panel edge by `legend.justification` -- or inside the
+# panel. Named "legend-panel-<row>-<col>".
+.dp_draw_panel_legends <- function(scene, lay, rt) {
+  pl <- lay$panel_legends
+  if (is.null(pl)) {
+    return(scene)
+  }
+  for (i in seq_along(pl$guides)) {
+    g <- pl$guides[[i]]
+    if (!length(g)) {
+      next
+    }
+    r <- pl$at[[i]][1]
+    c <- pl$at[[i]][2]
+    name <- sprintf("legend-panel-%d-%d", r, c)
+    if (identical(pl$side, "inside")) {
+      scene <- .draw_legend_inside(
+        scene,
+        list(
+          legend_inside = pl$inside,
+          panel_row = lay$panel_row[r],
+          panel_col = lay$panel_col[c],
+          R = 1L,
+          C = 1L
+        ),
+        g,
+        rt,
+        name = name
+      )
+    } else if (pl$side %in% c("left", "right")) {
+      scene <- .draw_legends(
+        scene,
+        list(row = lay$panel_row[r], col = pl$cols[c]),
+        g,
+        rt,
+        orient = "vertical",
+        name = name,
+        just = pl$just[2]
+      )
+    } else {
+      scene <- .draw_legends(
+        scene,
+        list(row = pl$rows[r], col = lay$panel_col[c]),
+        g,
+        rt,
+        orient = "horizontal",
+        name = name,
+        just = pl$just[1]
+      )
+    }
+  }
   scene
 }
 

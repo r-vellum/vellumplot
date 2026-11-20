@@ -54,8 +54,14 @@ NULL
 #'   drawn from the data.
 #' @param position Where this legend goes: `"right"`, `"left"`, `"top"`,
 #'   `"bottom"` or `"inside"` (over the panels, at `theme(legend.position.inside
-#'   = )` / `legend.justification`). `NULL` (default) follows
-#'   `theme(legend.position = )`. A guide's own position overrides the theme for
+#'   = )` / `legend.justification`), or `"panel"`: beside each facet panel, on
+#'   the side `theme(legend.position = )` names (right by default; inside each
+#'   panel when the theme puts legends inside) and justified along the panel
+#'   edge by `legend.justification`. A scale resolved `"independent"` across
+#'   panels ([resolve_scale()]) draws each panel's legend there by default; a
+#'   shared scale placed `"panel"` repeats its legend beside every panel. `NULL`
+#'   (default) follows `theme(legend.position = )` (and `"panel"` for an
+#'   independent scale). A guide's own position overrides the theme for
 #'   that legend only, as in ggplot2 3.5, so legends can sit on different sides
 #'   of one plot; legends at one position stack as usual. A legend at the top or
 #'   bottom is laid out horizontally. `theme(legend.position = "none")` still
@@ -414,7 +420,7 @@ guide_axis_logticks <- function(
 
 # The positions a legend guide's `position =` accepts (`NULL` follows the
 # theme's `legend.position`).
-.GUIDE_POSITIONS <- c("right", "left", "top", "bottom", "inside")
+.GUIDE_POSITIONS <- c("right", "left", "top", "bottom", "inside", "panel")
 
 # A guide's `position =`: NULL, or one of `.GUIDE_POSITIONS`.
 .check_guide_position <- function(position) {

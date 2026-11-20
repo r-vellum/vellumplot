@@ -102,7 +102,13 @@ NULL
   if (!is.null(lay$legend_inside)) {
     return("inside")
   }
-  if (is.na(lay$legend_col) && is.na(lay$legend_row)) {
+  # (a legend placed beside its panel, `position = "panel"`, joins the side
+  # band too)
+  if (
+    is.na(lay$legend_col) &&
+      is.na(lay$legend_row) &&
+      is.null(lay$panel_legends)
+  ) {
     return("none")
   }
   "side"
