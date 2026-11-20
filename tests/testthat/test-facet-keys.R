@@ -2,6 +2,10 @@
 # unique across facet panels. They used to be row positions within each panel's
 # layer, so they repeated: hovering or brushing in one panel lit up the marks
 # sharing those positions in every other panel.
+#
+# VP-55: every default key names its panel, layer and row --
+# "p<r>-<c>:l<layer>:<row>" -- in single-panel plots too, so default keys never
+# collide across panels or layers; composition cells prefix it with their id.
 
 .fk_keyed <- function(p) {
   el <- vellum::scene_model(vellum::as_vellum_scene(p))$elements
@@ -20,8 +24,8 @@ test_that("default keys are unique across facet_wrap panels", {
   el <- .fk_keyed(p)
   expect_equal(nrow(el), nrow(mtcars))
   expect_false(anyDuplicated(el$key) > 0L)
-  # "<panel>:<source row>", and the source row rides along as `join`
-  expect_true(all(grepl("^panel-\\d+-\\d+:\\d+$", el$key)))
+  # "p<r>-<c>:l<layer>:<source row>", and the source row rides along as `join`
+  expect_true(all(grepl("^p\\d+-\\d+:l1:\\d+$", el$key)))
   expect_setequal(.fk_join(el), as.character(seq_len(nrow(mtcars))))
   expect_identical(sub("^.*:", "", el$key), .fk_join(el))
 })
@@ -52,10 +56,10 @@ test_that("a layer repeated in every panel still gets unique keys", {
   expect_setequal(.fk_join(ref_el), c("1", "2"))
 })
 
-test_that("a single-panel plot keeps plain row keys and no join", {
+test_that("a single-panel plot keys by panel, layer and row, with no join", {
   p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> select_point("s")
   el <- .fk_keyed(p)
-  expect_identical(el$key, as.character(seq_len(nrow(mtcars))))
+  expect_identical(el$key, paste0("p1-1:l1:", seq_len(nrow(mtcars))))
   expect_true(all(is.na(.fk_join(el))))
 })
 
@@ -91,7 +95,7 @@ test_that("faceted composition cells prefix their keys with the cell id", {
   el <- .fk_keyed(hconcat(fp, fp))
   expect_equal(nrow(el), 2L * nrow(mtcars))
   expect_false(anyDuplicated(el$key) > 0L)
-  expect_true(all(grepl("^cell-[12]:panel-1-[12]:\\d+$", el$key)))
+  expect_true(all(grepl("^cell-[12]:p1-[12]:l1:\\d+$", el$key)))
   # the source row is still the join, shared by both cells
   expect_identical(sub("^.*:", "", el$key), .fk_join(el))
   expect_setequal(
@@ -107,7 +111,7 @@ test_that("an unaligned single-panel cell next to a faceted one is prefixed too"
   el <- el[!grepl("^legend:", el$key), , drop = FALSE]
   one <- el[startsWith(el$key, "cell-1:"), , drop = FALSE]
   expect_equal(nrow(one), nrow(mtcars))
-  expect_identical(one$key, paste0("cell-1:", .fk_join(one)))
+  expect_identical(one$key, paste0("cell-1:p1-1:l1:", .fk_join(one)))
   expect_true(all(startsWith(el$key, "cell-")))
 })
 
@@ -117,12 +121,13 @@ test_that("a lone faceted plot's keys are unchanged by the cell prefix", {
     facet_wrap(~am) |>
     select_point("s")
   el <- .fk_keyed(fp)
-  expect_true(all(grepl("^panel-1-[12]:\\d+$", el$key)))
+  expect_true(all(grepl("^p1-[12]:l1:\\d+$", el$key)))
 })
 
 test_that("default keys never equal another layer's user data_id", {
   # VP-54: the line's default key was its first row, "1" -- the key of the
-  # point whose data_id is 1 -- so a host selected both together.
+  # point whose data_id is 1 -- so a host selected both together. A default key
+  # now always carries panel and layer, so it cannot look like a plain user id.
   ts <- data.frame(t = 1:5, v = c(2, 4, 3, 5, 1))
   for (p in list(
     vplot(ts) |>
@@ -137,15 +142,97 @@ test_that("default keys never equal another layer's user data_id", {
     line <- el$key[el$mark == "line"]
     pts <- el$key[el$mark == "point"]
     expect_identical(pts, as.character(ts$t)) # user ids as given
-    expect_identical(line, "layer-1:1")
+    expect_identical(line, "p1-1:l1:1")
     expect_length(intersect(line, pts), 0L)
   }
 })
 
-test_that("default keys stay plain when no layer declares a data_id", {
-  ts <- data.frame(t = 1:5, v = c(2, 4, 3, 5, 1))
-  el <- .fk_keyed(
-    vplot(ts) |> mark_line(x = t, y = v) |> mark_point(x = t, y = v, tooltip = v)
+test_that("two default-keyed layers never share a key (VP-55)", {
+  # a line series' key is its first row, so "1"/"4" used to equal point keys and
+  # selecting a point selected a line too
+  df <- data.frame(
+    t = rep(1:3, 2),
+    v = c(1, 3, 2, 2, 1, 3),
+    g = rep(c("a", "b"), each = 3)
   )
-  expect_identical(el$key[el$mark == "point"], as.character(1:5))
+  el <- .fk_keyed(
+    vplot(df) |>
+      mark_line(x = t, y = v, color = g) |>
+      mark_point(x = t, y = v) |>
+      select_point("s")
+  )
+  el <- el[!grepl("^legend:", el$key), , drop = FALSE]
+  line <- el$key[el$mark == "line"]
+  pts <- el$key[el$mark == "point"]
+  expect_identical(line, c("p1-1:l1:1", "p1-1:l1:4"))
+  expect_identical(pts, paste0("p1-1:l2:", 1:6))
+  expect_length(intersect(line, pts), 0L)
+  # a tooltip-only second layer too
+  el <- .fk_keyed(
+    vplot(df) |>
+      mark_line(x = t, y = v) |>
+      mark_point(x = t, y = v, tooltip = v)
+  )
+  expect_identical(el$key[el$mark == "point"], paste0("p1-1:l2:", 1:6))
+})
+
+test_that("an explicit data_id shared by two layers still links them", {
+  df <- data.frame(
+    t = rep(1:3, 2),
+    v = c(1, 3, 2, 2, 1, 3),
+    g = rep(c("a", "b"), each = 3)
+  )
+  el <- .fk_keyed(
+    vplot(df) |>
+      mark_line(x = t, y = v, color = g, data_id = g) |>
+      mark_point(x = t, y = v, data_id = g) |>
+      select_point("s")
+  )
+  el <- el[!grepl("^legend:", el$key), , drop = FALSE]
+  expect_identical(el$key[el$mark == "line"], c("a", "b"))
+  expect_identical(el$key[el$mark == "point"], df$g)
+})
+
+test_that("tooltip-only default keys are unique across facet panels (VP-55)", {
+  # `meta$default_id` keys used to be row positions per panel, repeating
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, tooltip = cyl) |>
+    facet_wrap(~am)
+  el <- .fk_keyed(p)
+  el <- el[!grepl("^legend:", el$key), , drop = FALSE]
+  expect_equal(nrow(el), nrow(mtcars))
+  expect_false(anyDuplicated(el$key) > 0L)
+  expect_true(all(grepl("^p1-[12]:l1:\\d+$", el$key)))
+  expect_setequal(.fk_join(el), as.character(seq_len(nrow(mtcars))))
+  # also after a summarising stat
+  p <- vplot(mtcars) |>
+    mark_bar(x = factor(gear), stat = "count", tooltip = "n") |>
+    facet_wrap(~am)
+  el <- .fk_keyed(p)
+  expect_gt(nrow(el), 0L)
+  expect_false(anyDuplicated(el$key) > 0L)
+  expect_true(all(grepl("^p1-[12]:l1:\\d+$", el$key)))
+})
+
+test_that("aligned composition cells prefix the default key, row as join", {
+  sp <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> select_point("s")
+  el <- .fk_keyed(hconcat(sp, sp))
+  expect_equal(nrow(el), 2L * nrow(mtcars))
+  expect_false(anyDuplicated(el$key) > 0L)
+  expect_identical(
+    el$key,
+    paste0("subplot-", rep(1:2, each = 32), ":p1-1:l1:", 1:32)
+  )
+  expect_identical(.fk_join(el), as.character(rep(1:32, 2)))
+})
+
+test_that("annotate() layers stay unkeyed under a plot-level selection", {
+  el <- .fk_keyed(
+    vplot(mtcars) |>
+      mark_point(x = wt, y = mpg) |>
+      annotate("text", x = 3, y = 30, label = "note") |>
+      select_point("s")
+  )
+  expect_identical(unique(el$mark), "point")
+  expect_identical(el$key, paste0("p1-1:l1:", seq_len(nrow(mtcars))))
 })

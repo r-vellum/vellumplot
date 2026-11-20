@@ -171,8 +171,10 @@ theme set by \code{vellumwidget::as_widget(hover_color=, selected_color=)}.
 
 These are inert for PNG/PDF and for an SVG opened without a JS host: a plot
 with none of them compiles and renders exactly as before. Declaring any of them
-without \code{data_id} defaults the key to the row index, so the element is still
-addressable. They currently apply to \code{stat = "identity"} marks (points, bars,
+without \code{data_id} gives the element a default key, so it is still
+addressable. A default key names the panel, the layer and the row
+(\code{"p1-1:l2:7"}: row 7 of layer 2 in the first panel), so it never matches
+another layer's keys; give two layers the same \code{data_id} to link them. They currently apply to \code{stat = "identity"} marks (points, bars,
 tiles, segments, edges, hexbins, sf features, …); aggregating stats
 (histogram/count/density) drop them, since rows no longer map 1:1 to elements.
 

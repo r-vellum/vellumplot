@@ -67,7 +67,7 @@ test_that("bin2d/hex cells never carry per-row keys (VP-31)", {
     vplot(d) |> mark_bin2d(x = x, y = y, tooltip = "a bin", bins = 4)
   )
   expect_equal(nrow(el), 4L)
-  expect_identical(sort(el$key), as.character(1:4))
+  expect_identical(sort(el$key), paste0("p1-1:l1:", 1:4))
   expect_true(all(tooltips(el) == "a bin"))
 })
 
