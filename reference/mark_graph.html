@@ -212,7 +212,7 @@ mapped automatically, so bare <code>mark_edges() |&gt; mark_nodes()</code> just 
 <span>  size <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  inner <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  color <span class="op">=</span> <span class="st">"white"</span>,</span>
+<span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  linewidth <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -357,7 +357,9 @@ a mapped expression. <code>size</code> is also the label font size for
 <dt id="arg-fill-color-alpha">fill, color, alpha<a class="anchor" aria-label="anchor" href="#arg-fill-color-alpha"></a></dt>
 <dd><p>Convenience aesthetics; a constant or a mapped
 expression. For nodes, <code>fill</code> (or <code>color</code>) is the marker colour; for
-<code>mark_edges()</code>, <code>color</code>/<code>alpha</code> map through the edge scales.</p></dd>
+<code>mark_edges()</code>, <code>color</code>/<code>alpha</code> map through the edge scales. For
+<code>mark_node_pie()</code>, <code>color</code> is the wedge border: <code>NULL</code> (the default) is
+the theme's paper colour, white on a light theme.</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>

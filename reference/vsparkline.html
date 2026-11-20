@@ -84,11 +84,11 @@ composition with <code><a href="inset.html">inset()</a></code>, or (soon) a tabl
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vsparkline</span><span class="op">(</span></span>
 <span>  <span class="va">values</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"line"</span>, <span class="st">"bar"</span>, <span class="st">"winloss"</span><span class="op">)</span>,</span>
-<span>  color <span class="op">=</span> <span class="st">"grey30"</span>,</span>
+<span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  points <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"extremes"</span>, <span class="st">"last"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
-<span>  point_color <span class="op">=</span> <span class="st">"firebrick"</span>,</span>
+<span>  point_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  baseline <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  win_color <span class="op">=</span> <span class="st">"#2c7fb8"</span>,</span>
+<span>  win_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  loss_color <span class="op">=</span> <span class="st">"#d7301f"</span>,</span>
 <span>  linewidth <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  point_size <span class="op">=</span> <span class="fl">1.4</span>,</span>
@@ -112,7 +112,9 @@ composition with <code><a href="inset.html">inset()</a></code>, or (soon) a tabl
 
 
 <dt id="arg-color">color<a class="anchor" aria-label="anchor" href="#arg-color"></a></dt>
-<dd><p>Trend / bar colour. Default <code>"grey30"</code>.</p></dd>
+<dd><p>Trend / bar colour. <code>NULL</code> (the default) is the theme's
+<code>col_mix(ink, paper, 0.3)</code>: <code>"grey30"</code> on a light theme, a light grey on a
+dark one such as <code><a href="theme_gray.html">theme_cyberpunk()</a></code>.</p></dd>
 
 
 <dt id="arg-points">points<a class="anchor" aria-label="anchor" href="#arg-points"></a></dt>
@@ -121,7 +123,8 @@ composition with <code><a href="inset.html">inset()</a></code>, or (soon) a tabl
 
 
 <dt id="arg-point-color">point_color<a class="anchor" aria-label="anchor" href="#arg-point-color"></a></dt>
-<dd><p>Dot colour (default <code>"firebrick"</code>).</p></dd>
+<dd><p>Dot colour. <code>NULL</code> (the default) is the theme's accent
+colour (<code><a href="element_geom.html">element_geom()</a></code>), else <code>"firebrick"</code>.</p></dd>
 
 
 <dt id="arg-baseline">baseline<a class="anchor" aria-label="anchor" href="#arg-baseline"></a></dt>
@@ -130,8 +133,9 @@ composition with <code><a href="inset.html">inset()</a></code>, or (soon) a tabl
 
 
 <dt id="arg-win-color-loss-color">win_color, loss_color<a class="anchor" aria-label="anchor" href="#arg-win-color-loss-color"></a></dt>
-<dd><p>For <code>"winloss"</code>, the up / down bar colours
-(defaults blue / red).</p></dd>
+<dd><p>For <code>"winloss"</code>, the up / down bar colours.
+<code>win_color = NULL</code> (the default) is the theme's accent colour, else blue;
+<code>loss_color</code> defaults to red.</p></dd>
 
 
 <dt id="arg-linewidth">linewidth<a class="anchor" aria-label="anchor" href="#arg-linewidth"></a></dt>

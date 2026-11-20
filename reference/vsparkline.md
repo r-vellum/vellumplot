@@ -17,11 +17,11 @@ or (soon) a table cell.
 vsparkline(
   values,
   type = c("line", "bar", "winloss"),
-  color = "grey30",
+  color = NULL,
   points = c("extremes", "last", "none"),
-  point_color = "firebrick",
+  point_color = NULL,
   baseline = 0,
-  win_color = "#2c7fb8",
+  win_color = NULL,
   loss_color = "#d7301f",
   linewidth = 1,
   point_size = 1.4,
@@ -44,7 +44,10 @@ vsparkline(
 
 - color:
 
-  Trend / bar colour. Default `"grey30"`.
+  Trend / bar colour. `NULL` (the default) is the theme's
+  `col_mix(ink, paper, 0.3)`: `"grey30"` on a light theme, a light grey
+  on a dark one such as
+  [`theme_cyberpunk()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md).
 
 - points:
 
@@ -53,7 +56,9 @@ vsparkline(
 
 - point_color:
 
-  Dot colour (default `"firebrick"`).
+  Dot colour. `NULL` (the default) is the theme's accent colour
+  ([`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)),
+  else `"firebrick"`.
 
 - baseline:
 
@@ -62,7 +67,9 @@ vsparkline(
 
 - win_color, loss_color:
 
-  For `"winloss"`, the up / down bar colours (defaults blue / red).
+  For `"winloss"`, the up / down bar colours. `win_color = NULL` (the
+  default) is the theme's accent colour, else blue; `loss_color`
+  defaults to red.
 
 - linewidth:
 

@@ -75,7 +75,7 @@ dark backdrop (the "sticker" look). Applies to the same marks as <code><a href="
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outline</span><span class="op">(</span>size <span class="op">=</span> <span class="fl">1</span>, color <span class="op">=</span> <span class="st">"white"</span>, alpha <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outline</span><span class="op">(</span>size <span class="op">=</span> <span class="fl">1</span>, color <span class="op">=</span> <span class="cn">NULL</span>, alpha <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -87,7 +87,9 @@ dark backdrop (the "sticker" look). Applies to the same marks as <code><a href="
 
 
 <dt id="arg-color">color<a class="anchor" aria-label="anchor" href="#arg-color"></a></dt>
-<dd><p>Outline colour.</p></dd>
+<dd><p>Outline colour. <code>NULL</code> (the default) is the theme's paper
+colour (<code><a href="element_geom.html">element_geom()</a></code>): white on a light theme, the dark canvas on a
+dark one such as <code><a href="theme_gray.html">theme_cyberpunk()</a></code>.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>

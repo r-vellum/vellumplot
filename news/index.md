@@ -26,6 +26,33 @@
   [`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   keeps its filled curve and fills it like an area (VP-60).
 
+### Bug fixes
+
+- More of the colours vellumplot draws on its own now follow a dark
+  theme’s
+  [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)
+  ink, paper and accent, as the mark defaults have since VP-58: legend
+  keys for missing values (`NA`) and the pattern-key border, the nested
+  size legend’s leader lines,
+  [`vsparkline()`](https://r-vellum.github.io/vellumplot/reference/vsparkline.md)
+  (its line and bars `col_mix(ink, paper, 0.3)`, its highlight dots and
+  win bars the accent), including a sparkline added with
+  `annotate("sparkline")`,
+  [`vhierarchy()`](https://r-vellum.github.io/vellumplot/reference/vhierarchy.md)
+  (cell borders and the root label; branch shades fade toward the
+  paper), the
+  [`vchord()`](https://r-vellum.github.io/vellumplot/reference/vchord.md)
+  ring borders and labels,
+  [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  wedge borders, leader lines to repelled labels, and the
+  [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md)
+  effect, which now defaults to the paper colour. So
+  [`theme_cyberpunk()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  no longer draws black chord labels on its black canvas.
+  `vsparkline(color, point_color, win_color)`, `mark_node_pie(color)`
+  and `outline(color)` now default to `NULL` (the theme’s colour). Light
+  themes draw exactly as before (VP-61).
+
 ## vellumplot 0.16.0
 
 ### Behaviour changes

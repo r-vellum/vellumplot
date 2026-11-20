@@ -139,7 +139,7 @@ mark_node_pie(
   size = 4,
   inner = 0,
   fill = NULL,
-  color = "white",
+  color = NULL,
   linewidth = 0.5,
   alpha = NA,
   data = NULL
@@ -308,7 +308,9 @@ mark_node_pie(
 
   Convenience aesthetics; a constant or a mapped expression. For nodes,
   `fill` (or `color`) is the marker colour; for `mark_edges()`,
-  `color`/`alpha` map through the edge scales.
+  `color`/`alpha` map through the edge scales. For `mark_node_pie()`,
+  `color` is the wedge border: `NULL` (the default) is the theme's paper
+  colour, white on a light theme.
 
 - label:
 

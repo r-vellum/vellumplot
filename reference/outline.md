@@ -8,7 +8,7 @@ busy or dark backdrop (the "sticker" look). Applies to the same marks as
 ## Usage
 
 ``` r
-outline(size = 1, color = "white", alpha = 1)
+outline(size = 1, color = NULL, alpha = 1)
 ```
 
 ## Arguments
@@ -19,7 +19,10 @@ outline(size = 1, color = "white", alpha = 1)
 
 - color:
 
-  Outline colour.
+  Outline colour. `NULL` (the default) is the theme's paper colour
+  ([`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)):
+  white on a light theme, the dark canvas on a dark one such as
+  [`theme_cyberpunk()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md).
 
 - alpha:
 
