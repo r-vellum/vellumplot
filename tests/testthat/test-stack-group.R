@@ -38,9 +38,12 @@ test_that("pattern, linetype and shape group a layer without color or fill", {
     )[[1]]
     expect_identical(as.character(.group_key(L)), d$g)
   }
-  # color still wins over them
+  # with color too, the key is their interaction (VP-52)
   L <- .resolve_layers(
     vplot(d) |> mark_point(x = x, y = x, color = x > 2, shape = g)
   )[[1]]
-  expect_identical(.group_key(L), L$values$color)
+  expect_identical(
+    as.character(.group_key(L)),
+    c("FALSE:a", "FALSE:b", "TRUE:a", "TRUE:b")
+  )
 })
