@@ -88,48 +88,60 @@ NULL
   }
 }
 
-# Where a sub-plot's own legend goes in the aligned path, from its theme (as
-# resolved into its layout): "inside" its panel (`legend.position = "inside"`
-# / `c(x, y)`), "none" (`legend.position = "none"`, or no guides), or "side"
-# -- any outside position, normalised to a right-side band, or pooled into
-# the figure's legend when guides are collected. An inside legend stays in its
-# cell even when collecting, and a "none" one contributes nothing to the pool.
-.subplot_legend_mode <- function(plan) {
+# Where a sub-plot's own legends go in the aligned path: its guides split by
+# side as its layout placed them (each guide's `position =`, else the theme's
+# `legend.position`; nothing at all under `legend.position = "none"`). A legend
+# beside its (single) panel, `position = "panel"`, joins the side the theme
+# names for those. Returns the guide lists `left`, `right`, `top`, `bottom`
+# (bands around the sub-plot's cell, or pooled into the figure's legend when
+# guides are collected) and `inside` (over its panel, at `inside_at`, even when
+# collecting).
+.subplot_legend_groups <- function(plan) {
   lay <- plan$lay
-  if (!length(plan$guides)) {
-    return("none")
+  sides <- c("left", "right", "top", "bottom", "inside")
+  out <- stats::setNames(rep(list(list()), length(sides)), sides)
+  groups <- lay$legend_groups
+  for (sd in sides) {
+    out[[sd]] <- groups[[sd]] %||% list()
   }
-  if (!is.null(lay$legend_inside)) {
-    return("inside")
+  pl <- lay$panel_legends
+  if (!is.null(pl) && length(pl$guides) && length(pl$guides[[1]])) {
+    out[[pl$side]] <- c(out[[pl$side]], pl$guides[[1]])
   }
-  # (a legend placed beside its panel, `position = "panel"`, joins the side
-  # band too)
-  if (
-    is.na(lay$legend_col) &&
-      is.na(lay$legend_row) &&
-      is.null(lay$panel_legends)
-  ) {
-    return("none")
-  }
-  "side"
+  out$inside_at <- lay$legend_inside %||% pl$inside
+  out
+}
+
+# The outside sides (`.subplot_legend_groups()`) holding any legend.
+.LEGEND_SIDES <- c("left", "right", "top", "bottom")
+.subplot_legend_sides <- function(lg) {
+  .LEGEND_SIDES[vapply(.LEGEND_SIDES, function(sd) length(lg[[sd]]) > 0L, NA)]
 }
 
 # Decompose a single-panel plan into canonical decoration bands + the panel.
-# In the aligned path a sub-plot legend is normalised to a right-side band (or
-# zero when guides are collected at the figure level, or when the legend sits
-# inside the panel or is off).
+# A sub-plot's legends take a band on the side each was placed (zero when
+# guides are collected at the figure level, or for a side with none); `legends`
+# says which sides hold any, so a figure adds a left / top / bottom legend
+# track only where some sub-plot uses it.
 .plot_bands <- function(plan, collect) {
   lay <- plan$lay
   z <- vellum::vl_unit(0, "mm")
-  legw <- if (identical(.subplot_legend_mode(plan), "side") && !collect) {
-    .legend_width(plan$guides, plan$rt)
-  } else {
-    z
+  lg <- .subplot_legend_groups(plan)
+  sides <- if (collect) character(0) else .subplot_legend_sides(lg)
+  legw <- function(sd) {
+    if (sd %in% sides) .legend_width(lg[[sd]], plan$rt) else z
+  }
+  legh <- function(sd) {
+    if (sd %in% sides) .legend_height(lg[[sd]], plan$rt) else z
   }
   list(
+    legends = sides,
+    L_legend = legw("left"),
+    T_legend = legh("top"),
+    B_legend = legh("bottom"),
     L_ytitle = .lay_w(lay, lay$ytitle_col),
     L_ylabels = .lay_w(lay, lay$ylabels_col[1]),
-    R_legend = legw,
+    R_legend = legw("right"),
     T_tag = .lay_h(lay, lay$tag_row),
     T_title = .lay_h(lay, lay$title_row),
     T_subtitle = .lay_h(lay, lay$subtitle_row),
@@ -158,17 +170,32 @@ NULL
   in_col <- function(c) which(vapply(cell, function(e) e$c == c, logical(1)))
   in_row <- function(r) which(vapply(cell, function(e) e$r == r, logical(1)))
 
-  # per-column shared left/right widths; per-row shared top/bottom heights
-  Lyt <- Lyl <- Rleg <- vector("list", nc)
+  # per-column shared left/right widths; per-row shared top/bottom heights.
+  # A left / top / bottom legend track exists only in a column / row where some
+  # sub-plot puts a legend there (decided by presence, not measured size).
+  uses <- function(ix, sd) {
+    any(vapply(bands[ix], function(b) sd %in% b$legends, NA))
+  }
+  Lyt <- Lyl <- Rleg <- Lleg <- vector("list", nc)
   for (c in seq_len(nc)) {
     ix <- in_col(c)
     Lyt[[c]] <- .umax(lapply(bands[ix], `[[`, "L_ytitle"))
     Lyl[[c]] <- .umax(lapply(bands[ix], `[[`, "L_ylabels"))
     Rleg[[c]] <- .umax(lapply(bands[ix], `[[`, "R_legend"))
+    if (uses(ix, "left")) {
+      Lleg[[c]] <- .umax(lapply(bands[ix], `[[`, "L_legend"))
+    }
   }
   Ttag <- Ttit <- Tsub <- Bxl <- Bxt <- Bcap <- vector("list", nr)
+  Tleg <- Bleg <- vector("list", nr)
   for (r in seq_len(nr)) {
     ix <- in_row(r)
+    if (uses(ix, "top")) {
+      Tleg[[r]] <- .umax(lapply(bands[ix], `[[`, "T_legend"))
+    }
+    if (uses(ix, "bottom")) {
+      Bleg[[r]] <- .umax(lapply(bands[ix], `[[`, "B_legend"))
+    }
     Ttag[[r]] <- .umax(lapply(bands[ix], `[[`, "T_tag"))
     Ttit[[r]] <- .umax(lapply(bands[ix], `[[`, "T_title"))
     Tsub[[r]] <- .umax(lapply(bands[ix], `[[`, "T_subtitle"))
@@ -184,7 +211,11 @@ NULL
   # --- columns -------------------------------------------------------------
   W <- .tracks()
   ytitle_col <- ylabels_col <- panel_col <- rleg_col <- integer(nc)
+  lleg_col <- rep(NA_integer_, nc)
   for (c in seq_len(nc)) {
+    if (!is.null(Lleg[[c]])) {
+      lleg_col[c] <- .tk_add(W, Lleg[[c]])
+    }
     ytitle_col[c] <- .tk_add(W, Lyt[[c]])
     ylabels_col[c] <- .tk_add(W, Lyl[[c]])
     panel_col[c] <- .tk_add(W, vellum::vl_unit(wts_w[c], "null"))
@@ -212,13 +243,20 @@ NULL
   }
   tag_row <- title_row <- subtitle_row <- integer(nr)
   panel_row <- xlabels_row <- xtitle_row <- caption_row <- integer(nr)
+  tleg_row <- bleg_row <- rep(NA_integer_, nr)
   for (r in seq_len(nr)) {
     tag_row[r] <- .tk_add(H, Ttag[[r]])
     title_row[r] <- .tk_add(H, Ttit[[r]])
     subtitle_row[r] <- .tk_add(H, Tsub[[r]])
+    if (!is.null(Tleg[[r]])) {
+      tleg_row[r] <- .tk_add(H, Tleg[[r]])
+    }
     panel_row[r] <- .tk_add(H, vellum::vl_unit(wts_h[r], "null"))
     xlabels_row[r] <- .tk_add(H, Bxl[[r]])
     xtitle_row[r] <- .tk_add(H, Bxt[[r]])
+    if (!is.null(Bleg[[r]])) {
+      bleg_row[r] <- .tk_add(H, Bleg[[r]])
+    }
     caption_row[r] <- .tk_add(H, Bcap[[r]])
     if (r < nr) .tk_add(H, gap)
   }
@@ -238,7 +276,9 @@ NULL
       xlabels_row = xlabels_row[e$r],
       xtitle_row = xtitle_row[e$r],
       tag_row = tag_row[e$r],
-      legend_col = rleg_col[e$c]
+      legend_col = rleg_col[e$c],
+      legend_cols = c(left = lleg_col[e$c], right = rleg_col[e$c]),
+      legend_rows = c(top = tleg_row[e$r], bottom = bleg_row[e$r])
     )
   })
 
@@ -269,16 +309,14 @@ NULL
 }
 
 # Pool guides across sub-plots, keeping the first of each distinct key. Only
-# sub-plots whose legend sits outside the panel contribute (see
-# `.subplot_legend_mode()`).
+# legends outside their panel contribute, from whichever side (see
+# `.subplot_legend_groups()`); an inside one stays in its cell.
 .pool_guides <- function(plans) {
   out <- list()
   seen <- character(0)
   for (p in plans) {
-    if (!identical(.subplot_legend_mode(p), "side")) {
-      next
-    }
-    for (g in p$guides) {
+    lg <- .subplot_legend_groups(p)
+    for (g in unlist(lg[.LEGEND_SIDES], recursive = FALSE)) {
       k <- .guide_key(g)
       if (!k %in% seen) {
         seen <- c(seen, k)
@@ -377,30 +415,50 @@ NULL
   )
   scene <- .draw_y_title(scene, gm$panel_row, gm$ytitle_col, vsc$name, rt)
   scene <- .draw_x_title(scene, gm$xtitle_row, gm$panel_col, hsc$name, rt)
-  # per-sub-plot legend: inside its own panel cell, or (only when not
-  # collecting) in its right-side band
-  mode <- .subplot_legend_mode(plan)
-  if (identical(mode, "inside")) {
+  # per-sub-plot legends: inside its own panel cell, and (only when not
+  # collecting) in the band on each side a legend was placed -- a vertical
+  # stack beside the panel (left / right), a horizontal row above / below it.
+  # The legends at the theme's own position keep the viewport name "legend".
+  lg <- .subplot_legend_groups(plan)
+  vp_name <- function(pos) {
+    if (identical(pos, plan$lay$legend_pos)) {
+      "legend"
+    } else {
+      paste0("legend-", pos)
+    }
+  }
+  if (length(lg$inside) && !is.null(lg$inside_at)) {
     scene <- .draw_legend_inside(
       scene,
       list(
-        legend_inside = plan$lay$legend_inside,
+        legend_inside = lg$inside_at,
         panel_row = gm$panel_row,
         panel_col = gm$panel_col,
         R = 1L,
         C = 1L
       ),
-      plan$guides,
-      rt
-    )
-  } else if (identical(mode, "side") && !collect) {
-    scene <- .draw_legends(
-      scene,
-      list(row = gm$panel_row, col = gm$legend_col),
-      plan$guides,
+      lg$inside,
       rt,
-      orient = "vertical"
+      name = vp_name("inside")
     )
+  }
+  if (!collect) {
+    for (sd in .subplot_legend_sides(lg)) {
+      vertical <- sd %in% c("left", "right")
+      cell <- if (vertical) {
+        list(row = gm$panel_row, col = gm$legend_cols[[sd]])
+      } else {
+        list(row = gm$legend_rows[[sd]], col = gm$panel_col)
+      }
+      scene <- .draw_legends(
+        scene,
+        cell,
+        lg[[sd]],
+        rt,
+        orient = if (vertical) "vertical" else "horizontal",
+        name = vp_name(sd)
+      )
+    }
   }
   scene
 }

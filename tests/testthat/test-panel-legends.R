@@ -108,6 +108,8 @@ test_that("facet_grid gets per-column and per-row legend tracks", {
   expect_gt(cols[length(cols)], lay$rowstrip_col)
   lay_b <- pl_layout(p |> theme(legend.position = "bottom"))
   expect_false(anyNA(lay_b$panel_legends$rows))
+  # (wide enough for four panels beside their legends, VP-59)
+  p@width <- 10
   expect_no_error(vellum::as_vellum_scene(p))
   expect_no_error(vellum::as_vellum_scene(p |> theme(legend.position = "top")))
 })
@@ -220,4 +222,34 @@ test_that("a faceted plot with panel legends still composes", {
     guides(color = guide_legend(position = "panel"))
   expect_no_error(vellum::as_vellum_scene(hconcat(a, b)))
   expect_no_error(vellum::as_vellum_scene(hconcat(b, b, guides = "keep")))
+})
+
+test_that("per-panel legends that would squeeze the panels are collected (VP-59)", {
+  narrow <- pl_wrap
+  narrow@width <- 2.5
+  expect_message(
+    nms <- pl_panels(narrow)$name,
+    "Collecting the per-panel legends"
+  )
+  # one plot legend, titled by panel, instead of a legend beside each panel
+  expect_true("legend" %in% nms)
+  expect_false(any(startsWith(nms, "legend-panel-")))
+  built <- vellumplot:::.build_panels(narrow)
+  guides <- vellumplot:::.facet_legend_guides(built, collect = TRUE)
+  titles <- vapply(guides, function(g) g$sc$name, "")
+  expect_setequal(titles, paste0("k (", c("a", "b", "c", "d"), ")"))
+  expect_true(all(vapply(guides, function(g) is.null(g$panel), NA)))
+  # a page wide enough keeps them beside the panels, without a message
+  wide <- pl_wrap
+  wide@width <- 9
+  expect_no_message(nms <- pl_panels(wide)$name)
+  expect_true("legend-panel-1-1" %in% nms)
+  # a shared scale's legend repeated beside every panel collapses to one
+  shared <- vplot(pl_df) |>
+    mark_point(x = x, y = y, color = k) |>
+    facet_wrap(~g, ncol = 4) |>
+    guides(color = guide_legend(position = "panel"))
+  shared@width <- 3
+  expect_message(nms <- pl_panels(shared)$name, "per-panel legends")
+  expect_identical(sum(startsWith(nms, "legend")), 1L)
 })

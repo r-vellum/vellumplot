@@ -1,5 +1,19 @@
 # vellumplot 0.15.1.9000 (development version)
 
+* In an aligned composition (`wrap_plots()`, `|`, `/`) each sub-plot's
+  legends now sit on the side their guide asks for
+  (`guide_legend(position = "bottom")` and co.) or, failing that, where the
+  sub-plot's `theme(legend.position = )` puts them: left, right, above or
+  below its panel, or inside it. Before, every sub-plot legend went to a band
+  on its right. Collected legends (`guides = "collect"`) gather them from
+  every side (VP-59).
+
+* Legends drawn beside each facet panel (`guide_legend(position = "panel")`,
+  the default of an independent scale) are collected into the plot's legend,
+  titled `"title (panel)"`, when they would leave the panels narrower than
+  25 mm on the page, with a message saying so. Before, a small page could
+  squeeze the panels to slivers (VP-59).
+
 # vellumplot 0.15.1
 
 * `annotate()` layers no longer get default keys just because the plot declares a selection. A keyed annotation made the widget's display list inexact, which switched off its zoomed canvas and detail tier for the whole plot (VW-24). An annotation with its own `data_id` or a `condition()` is still keyed.
