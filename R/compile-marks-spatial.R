@@ -10,7 +10,7 @@ NULL
   paint <- .paint_fill(L)
   xp <- rep_len(scales$x$map(L$values$x), n)
   yp <- rep_len(scales$y$map(L$values$y), n)
-  fo <- .fill_and_outline(L, scales, "grey50", n)
+  fo <- .fill_and_outline(L, scales, "grey20", n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   w <- rep_len(L$values$width %||% .resolution(xp), n)
   h <- rep_len(L$values$height %||% .resolution(yp), n)
@@ -116,7 +116,7 @@ NULL
       "{.fn mark_raster} needs an evenly-spaced grid; use {.fn mark_tile} for irregular spacing."
     )
   }
-  cols <- rep_len(.aes_colour(L, scales, "grey50", role = "fill"), length(xv))
+  cols <- rep_len(.aes_colour(L, scales, "grey20", role = "fill"), length(xv))
   m <- matrix("#FFFFFF00", nrow = length(uy), ncol = length(ux))
   m[cbind(length(uy) - ri + 1L, ci)] <- cols # row 1 = top = max y
   xw <- if (length(ux) > 1) min(diff(ux)) else 1
