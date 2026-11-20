@@ -113,6 +113,14 @@
 
 ## Bug fixes
 
+* Element keys no longer collide between the cells of a composition when a
+  cell is faceted (or otherwise drawn as a whole plot rather than aligned).
+  Such a cell names its panels `panel-r-c` like a lone plot, so two faceted
+  cells both keyed marks `"panel-1-1:3"` and hovering or brushing one cell lit
+  up the other. Their keys now start with the cell id (`"cell-2:panel-1-1:3"`),
+  with the unprefixed row kept as the `join` id, as aligned cells' keys start
+  with `subplot-N`. Lone plots are unchanged (VP-51).
+
 * ggplot2 plots no longer break when vellumplot is attached after ggplot2.
   ggplot2 looks default scales (`scale_colour_continuous()`, ...) and guides
   given by name (`guide = "legend"`) up along the search path, where it found
