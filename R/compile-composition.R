@@ -326,7 +326,9 @@ NULL
 # An inside position has no cell to sit in, so it falls back to the right.
 .fig_legend_side <- function(rt) {
   pos <- .legend_default_position(rt)
-  if (is.character(pos) && length(pos) == 1L && pos %in% c(.LEGEND_SIDES, "none")) {
+  if (
+    is.character(pos) && length(pos) == 1L && pos %in% c(.LEGEND_SIDES, "none")
+  ) {
     pos
   } else {
     "right"
@@ -548,7 +550,9 @@ NULL
   # keys take the composition theme's, else the first sub-plot's. Put the
   # caller's back afterwards (a composition can be drawn inside a plot).
   old_geom <- .mark_ctx$geom
+  old_ground <- .mark_ctx$geom_ground
   on.exit(assign("geom", old_geom, envir = .mark_ctx), add = TRUE)
+  on.exit(assign("geom_ground", old_ground, envir = .mark_ctx), add = TRUE)
   .set_geom_ctx(
     if (!is.null(.theme_geom(comp@theme))) {
       comp@theme

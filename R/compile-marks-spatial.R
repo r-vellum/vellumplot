@@ -216,7 +216,8 @@ NULL
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
-  fo <- .fill_and_outline(L, scales, "grey50", n)
+  # ggplot2's grey50, unless that is the panel's own grey (`theme_dark()`).
+  fo <- .fill_and_outline(L, scales, .geom_paint_visible("grey50"), n)
   fill <- fo$fill
   lwd <- .aes_param(L, "linewidth", 0.5)
   # One batched hexagon_grob carries a single scalar alpha, so a mapped alpha can

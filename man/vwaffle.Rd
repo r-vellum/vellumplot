@@ -47,6 +47,11 @@ count — a part-of-whole chart that is easier to read than a pie because the
 eye counts squares. It is a self-contained chart (like \code{\link[=vsankey]{vsankey()}} /
 \code{\link[=vvenn]{vvenn()}}): it returns a \link{PlotSpec} with no axes.
 }
+\details{
+Cells take the fill scale's colours. A cell with no fill colour falls back
+to \code{"grey50"}, or to \code{col_mix(ink, paper, 0.2)} (\code{"grey20"}) on a theme
+whose panel is that grey, such as \code{\link[=theme_dark]{theme_dark()}}, so it stays visible.
+}
 \examples{
 df <- data.frame(part = c("a", "b", "c"), n = c(50, 30, 20))
 vwaffle(df, category = part, value = n)

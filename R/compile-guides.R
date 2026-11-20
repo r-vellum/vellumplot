@@ -1156,7 +1156,8 @@ NULL
   } else {
     swatch
   }
-  outlined <- !is.null(style$cols) && !is.null(style$fills) ||
+  outlined <- !is.null(style$cols) &&
+    !is.null(style$fills) ||
     is.null(style$cols) && !is.null(ks$col)
   filled <- !is.null(style$fills) || !is.null(ks$fill)
   fills <- style$fills %||%
@@ -1978,7 +1979,11 @@ NULL
     y = vellum::vl_unit(0.5, "npc"),
     width = vellum::vl_unit(bw, "mm"),
     height = vellum::vl_unit(1, "npc"),
-    gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
+    gp = vellum::vl_gpar(
+      fill = grad,
+      col = .geom_paint("grey50", "neutral"),
+      lwd = 0.5
+    )
   )
   # Carry the colorbar descriptor so a host can overlay an interactive value
   # filter; it surfaces (with the bar's device-px bbox) via scene_model().
@@ -2102,7 +2107,11 @@ NULL
         y = vellum::vl_unit((i - 0.5) / n, "npc"),
         width = vellum::vl_unit(bw, "mm"),
         height = vellum::vl_unit(1 / n, "npc"),
-        gp = vellum::vl_gpar(fill = cols[i], col = "grey50", lwd = 0.5)
+        gp = vellum::vl_gpar(
+          fill = cols[i],
+          col = .geom_paint("grey50", "neutral"),
+          lwd = 0.5
+        )
       )
     )
   }
@@ -2376,7 +2385,11 @@ NULL
     y = vellum::vl_unit(0.5, "npc"),
     width = vellum::vl_unit(1, "npc"),
     height = vellum::vl_unit(1, "npc"),
-    gp = vellum::vl_gpar(fill = grad, col = "grey50", lwd = 0.5)
+    gp = vellum::vl_gpar(
+      fill = grad,
+      col = .geom_paint("grey50", "neutral"),
+      lwd = 0.5
+    )
   )
   bar@meta <- .colorbar_meta(cl, revb, "h")
   scene <- vellum::draw(scene, bar)
@@ -2507,7 +2520,11 @@ NULL
         y = vellum::vl_unit(0.5, "npc"),
         width = vellum::vl_unit(1 / n, "npc"),
         height = vellum::vl_unit(1, "npc"),
-        gp = vellum::vl_gpar(fill = cols[i], col = "grey50", lwd = 0.5)
+        gp = vellum::vl_gpar(
+          fill = cols[i],
+          col = .geom_paint("grey50", "neutral"),
+          lwd = 0.5
+        )
       )
     )
     if (ticks_on && i < n) {

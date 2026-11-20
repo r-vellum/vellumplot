@@ -130,7 +130,9 @@ NULL
   # The leaders are drawn after the plot's draw, so point the default-colour
   # lookup at the plot's theme again (its grey follows a dark theme's ink).
   old_geom <- .mark_ctx$geom
+  old_ground <- .mark_ctx$geom_ground
   on.exit(assign("geom", old_geom, envir = .mark_ctx), add = TRUE)
+  on.exit(assign("geom_ground", old_ground, envir = .mark_ctx), add = TRUE)
   .set_geom_ctx(.theme_of(spec))
   .repel_leaders(scene, sol, moved, spec@dpi, spec@height, p$min_seg)
 }
