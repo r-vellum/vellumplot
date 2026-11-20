@@ -21,8 +21,10 @@ NULL
 #
 # Returns NULL (ungrouped) or a vector recycled to the layer's row count, so a
 # grouping aesthetic that resolved shorter than the data (a constant) still
-# aligns 1:1 when masked by `is.finite(x)` etc.
-.group_key <- function(L) {
+# aligns 1:1 when masked by `is.finite(x)` etc. `aes` narrows the aesthetics
+# the key may come from, for a stat whose groups are a narrower notion than
+# the layer's (the outlier rule, `.OUTLIER_GROUP_AES`).
+.group_key <- function(L, aes = .GROUP_AES) {
   g <- L$values$group
   if (is.null(g) && !is.null(L$params$group)) {
     g <- L$params$group
@@ -32,10 +34,10 @@ NULL
     # Mapping order (the order of `L$values`), as ggplot2 takes its data
     # columns: the first aesthetic varies slowest in the interaction.
     disc <- list()
-    for (aes in intersect(names(L$values), .GROUP_AES)) {
-      v <- L$values[[aes]]
+    for (a in intersect(names(L$values), aes)) {
+      v <- L$values[[a]]
       if (length(v) && !.is_continuous_group(v)) {
-        disc[[aes]] <- v
+        disc[[a]] <- v
       }
     }
     g <- .interaction_key(disc, n)
@@ -51,9 +53,24 @@ NULL
 }
 
 # The aesthetics a layer without `group` takes its grouping key from: the
-# interaction of the discrete ones among them. (ggplot2 also groups by a
-# discrete alpha, size or linewidth; those are not keys here yet.)
-.GROUP_AES <- c("color", "fill", "pattern", "linetype", "shape")
+# interaction of the discrete ones among them, as ggplot2 groups by every
+# discrete aesthetic (VP-57 added alpha, size and linewidth).
+.GROUP_AES <- c(
+  "color",
+  "fill",
+  "pattern",
+  "linetype",
+  "shape",
+  "alpha",
+  "size",
+  "linewidth"
+)
+
+# The aesthetics the outlier rule (`mark_outlier_label()`) splits its data by.
+# A discrete alpha, size or linewidth styles the labels it draws -- a bigger
+# label for the "big" rows -- rather than splitting the distribution an outlier
+# is judged against, so they are carried by row instead.
+.OUTLIER_GROUP_AES <- setdiff(.GROUP_AES, c("alpha", "size", "linewidth"))
 
 # The interaction of the discrete vectors `disc` (in order, the first varying
 # slowest), or NULL for none. A vector that does not split any group further
@@ -867,7 +884,7 @@ NULL
   x <- as.numeric(rep_len(L$values$x, n))
   method <- L$stat_params$method %||% "iqr"
   k <- L$stat_params$k %||% 1.5
-  grp <- .group_key(L)
+  grp <- .group_key(L, .OUTLIER_GROUP_AES)
   gvec <- if (is.null(grp)) rep_len("", n) else as.character(rep_len(grp, n))
   is_out <- logical(n)
   for (lev in unique(gvec)) {

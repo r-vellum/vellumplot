@@ -535,8 +535,10 @@ after_stat <- function(x) x
 #'   it falls back to per-segment widths. Everywhere else `linewidth` is a constant. Every mark also takes
 #'   `group`, which says which rows form one series without styling them:
 #'   `mark_line(x = t, y = y, group = id)` draws one line per `id`. Without it,
-#'   a discrete `color` (else `fill`) groups; a continuous colour never does, so
-#'   a line mapped to one stays connected and changes colour along its length.
+#'   as in ggplot2, the interaction of every discrete `color`, `fill`,
+#'   `pattern`, `linetype`, `shape`, `alpha`, `size` and `linewidth` mapping
+#'   groups; a continuous colour never does, so a line mapped to one stays
+#'   connected and changes colour along its length.
 #'   `group = 1` makes the whole layer one group.
 #' @param size,shape Convenience arguments for the point size (in mm) / shape;
 #'   may be a constant or a mapped expression. A shape is a built-in marker
@@ -1781,6 +1783,8 @@ mark_series_label <- function(
 #' where the story usually is — instead of every datum. It keeps the rows whose
 #' `y` is an outlier (per colour/fill group) and labels just those, repelled
 #' apart with the same solver as [mark_text()]. Layer it over the raw points.
+#' A discrete `alpha`, `size` or `linewidth` styles the labels without
+#' splitting the groups outliers are judged within.
 #'
 #' The default `method = "iqr"` flags `y` outside `[Q1 - k*IQR, Q3 + k*IQR]` (the
 #' boxplot whisker rule); `method = "sd"` flags `|y - mean| > k * sd`. Map a

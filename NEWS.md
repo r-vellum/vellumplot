@@ -13,6 +13,14 @@
   one group wide. Points now dodge with `position = "dodge"` too; before they
   were drawn undodged (VP-56).
 
+* **Behaviour change:** a discrete `alpha`, `size` or `linewidth` mapping now
+  groups a layer too, as ggplot2 groups by every discrete aesthetic. Before,
+  `mark_line(x = wt, y = mpg, alpha = factor(am))` drew one line through all
+  rows; now it draws one per `am` level, and stats (boxplots, densities, fits),
+  stacks and dodges split the same way. `mark_outlier_label()` still judges
+  outliers within colour / fill groups, so a discrete `alpha` or `size` there
+  styles the labels without splitting the data (VP-57).
+
 * **Behaviour change:** default element keys (for an interactive layer that
   declares no `data_id`) now always name the panel, the layer and the row, as
   `"p<row>-<col>:l<layer>:<row>"`: `"p1-1:l2:7"` is row 7 of layer 2 in the

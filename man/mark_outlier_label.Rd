@@ -68,6 +68,8 @@ The modified \link{PlotSpec}.
 where the story usually is — instead of every datum. It keeps the rows whose
 \code{y} is an outlier (per colour/fill group) and labels just those, repelled
 apart with the same solver as \code{\link[=mark_text]{mark_text()}}. Layer it over the raw points.
+A discrete \code{alpha}, \code{size} or \code{linewidth} styles the labels without
+splitting the groups outliers are judged within.
 }
 \details{
 The default \code{method = "iqr"} flags \code{y} outside \verb{[Q1 - k*IQR, Q3 + k*IQR]} (the

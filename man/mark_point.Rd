@@ -63,8 +63,10 @@ set: see \code{\link[=scale_linewidth]{scale_linewidth()}} for the tapered strok
 it falls back to per-segment widths. Everywhere else \code{linewidth} is a constant. Every mark also takes
 \code{group}, which says which rows form one series without styling them:
 \code{mark_line(x = t, y = y, group = id)} draws one line per \code{id}. Without it,
-a discrete \code{color} (else \code{fill}) groups; a continuous colour never does, so
-a line mapped to one stays connected and changes colour along its length.
+as in ggplot2, the interaction of every discrete \code{color}, \code{fill},
+\code{pattern}, \code{linetype}, \code{shape}, \code{alpha}, \code{size} and \code{linewidth} mapping
+groups; a continuous colour never does, so a line mapped to one stays
+connected and changes colour along its length.
 \code{group = 1} makes the whole layer one group.}
 
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
