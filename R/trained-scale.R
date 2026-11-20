@@ -44,7 +44,8 @@ NULL
 #   "identity", and implies `no_guide`), and the guide flags `.apply_guide()`
 #   sets on a legend scale -- `no_guide`, `nested` (size only), `stepped`
 #   (binned colour only), `reverse_bar`, `bins` / `bins_limits` / `bins_axis`
-#   (guide_bins(), with the boundaries in `bin_breaks`) -- plus `na`, `breaks_asked`,
+#   (guide_bins(), with the boundaries in `bin_breaks`), and `guide_position`
+#   (a guide's `position =`, a single string) -- plus `na`, `breaks_asked`,
 #   `labels_asked`. Every flag is a single TRUE/FALSE. Position scales carry no
 #   guide flags (guides() never reaches an axis).
 # ---------------------------------------------------------------------------
@@ -159,6 +160,9 @@ trained_scale <- function(aesthetic, type, map, name = NULL, ...) {
   }
   if (!is.function(sc$map)) {
     bad("`map` is not a function")
+  }
+  if (!is.null(sc$guide_position) && !.is_string(sc$guide_position)) {
+    bad("`guide_position` is not a single string")
   }
   for (f in intersect(.TRAINED_SCALE_FLAGS, names(sc))) {
     if (!is.null(sc[[f]]) && !.is_flag(sc[[f]])) {

@@ -10,7 +10,8 @@ guide_bivariate(
   ylab = NULL,
   key.size = NULL,
   labels = TRUE,
-  rotate = FALSE
+  rotate = FALSE,
+  position = NULL
 )
 }
 \arguments{
@@ -28,6 +29,15 @@ class column) has none to show.}
 
 \item{rotate}{Turn the grid 45 degrees, so the classes read as a diamond
 with high-high at the top (default \code{FALSE}).}
+
+\item{position}{Where this legend goes: \code{"right"}, \code{"left"}, \code{"top"},
+\code{"bottom"} or \code{"inside"} (over the panels, at \code{theme(legend.position.inside = )} / \code{legend.justification}). \code{NULL} (default) follows
+\code{theme(legend.position = )}. A guide's own position overrides the theme for
+that legend only, as in ggplot2 3.5, so legends can sit on different sides
+of one plot; legends at one position stack as usual. A legend at the top or
+bottom is laid out horizontally. \code{theme(legend.position = "none")} still
+hides every legend. Two legends that would merge (one variable, one title)
+only merge when they share a position.}
 }
 \value{
 A guide specification for \code{\link[=guides]{guides()}}.
