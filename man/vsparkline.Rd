@@ -7,11 +7,11 @@
 vsparkline(
   values,
   type = c("line", "bar", "winloss"),
-  color = "grey30",
+  color = NULL,
   points = c("extremes", "last", "none"),
-  point_color = "firebrick",
+  point_color = NULL,
   baseline = 0,
-  win_color = "#2c7fb8",
+  win_color = NULL,
   loss_color = "#d7301f",
   linewidth = 1,
   point_size = 1.4,
@@ -26,18 +26,22 @@ vsparkline(
 
 \item{type}{\code{"line"} (default), \code{"bar"}, or \code{"winloss"}.}
 
-\item{color}{Trend / bar colour. Default \code{"grey30"}.}
+\item{color}{Trend / bar colour. \code{NULL} (the default) is the theme's
+\code{col_mix(ink, paper, 0.3)}: \code{"grey30"} on a light theme, a light grey on a
+dark one such as \code{\link[=theme_cyberpunk]{theme_cyberpunk()}}.}
 
 \item{points}{For \code{type = "line"}, which points get a dot: \code{"extremes"}
 (default -- the min and max), \code{"last"}, or \code{"none"}.}
 
-\item{point_color}{Dot colour (default \code{"firebrick"}).}
+\item{point_color}{Dot colour. \code{NULL} (the default) is the theme's accent
+colour (\code{\link[=element_geom]{element_geom()}}), else \code{"firebrick"}.}
 
 \item{baseline}{For \code{"bar"}, the value bars grow from (default \code{0}); for
 \code{"winloss"}, the threshold separating a win (\code{>=}) from a loss (default \code{0}).}
 
-\item{win_color, loss_color}{For \code{"winloss"}, the up / down bar colours
-(defaults blue / red).}
+\item{win_color, loss_color}{For \code{"winloss"}, the up / down bar colours.
+\code{win_color = NULL} (the default) is the theme's accent colour, else blue;
+\code{loss_color} defaults to red.}
 
 \item{linewidth}{Trend line width (default \code{1}).}
 

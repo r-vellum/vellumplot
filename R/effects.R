@@ -86,7 +86,9 @@ glow <- function(
 #' dark backdrop (the "sticker" look). Applies to the same marks as [glow()].
 #'
 #' @param size Halo width per side, in millimetres.
-#' @param color Outline colour.
+#' @param color Outline colour. `NULL` (the default) is the theme's paper
+#'   colour ([element_geom()]): white on a light theme, the dark canvas on a
+#'   dark one such as [theme_cyberpunk()].
 #' @param alpha Outline opacity.
 #' @return An `OutlineSpec` object for a mark's `effects` list.
 #' @seealso [glow()], [shadow()]
@@ -95,9 +97,9 @@ glow <- function(
 #'   mark_point(x = wt, y = mpg, color = factor(cyl), size = 3,
 #'     effects = list(outline()))
 #' @export
-outline <- function(size = 1, color = "white", alpha = 1) {
+outline <- function(size = 1, color = NULL, alpha = 1) {
   .check_pos_num(size, "size", "mm")
-  .check_req_colour(color, "color")
+  .check_opt_colour(color, "color")
   .check_unit_alpha(alpha)
   OutlineSpec(size = as.double(size), color = color, alpha = as.double(alpha))
 }

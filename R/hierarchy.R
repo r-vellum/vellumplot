@@ -402,12 +402,14 @@ NULL
 
 # --- shared colour / label helpers ------------------------------------------
 
-# Blend colours toward white by `amount` in [0, 1] (0 = unchanged, 1 = white).
-# Vectorised. Fades branch hues outward by depth.
-.lighten <- function(col, amount) {
+# Blend colours toward `to` (white by default) by `amount` in [0, 1] (0 =
+# unchanged, 1 = `to`). Vectorised. Fades branch hues outward by depth, toward
+# the theme's paper.
+.lighten <- function(col, amount, to = "white") {
   m <- farver::decode_colour(col)
   amount <- pmin(pmax(amount, 0), 1)
-  m <- m + (255 - m) * amount
+  target <- farver::decode_colour(to)[rep(1L, nrow(m)), , drop = FALSE]
+  m <- m + (target - m) * amount
   farver::encode_colour(m)
 }
 

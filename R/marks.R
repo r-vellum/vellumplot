@@ -3528,7 +3528,9 @@ mark_path <- function(
 #'   `mark_node_text()`/`mark_edge_text()`.
 #' @param fill,color,alpha Convenience aesthetics; a constant or a mapped
 #'   expression. For nodes, `fill` (or `color`) is the marker colour; for
-#'   `mark_edges()`, `color`/`alpha` map through the edge scales.
+#'   `mark_edges()`, `color`/`alpha` map through the edge scales. For
+#'   `mark_node_pie()`, `color` is the wedge border: `NULL` (the default) is
+#'   the theme's paper colour, white on a light theme.
 #' @param linewidth For `mark_edges()`, the edge width; a constant or (via
 #'   [scale_edge_width()]) a mapped expression such as `linewidth = weight`. For
 #'   `mark_node_pie()`, the wedge border width.
@@ -4078,7 +4080,7 @@ mark_node_pie <- function(
   size = 4,
   inner = 0,
   fill = NULL,
-  color = "white",
+  color = NULL,
   linewidth = 0.5,
   alpha = NA,
   data = NULL
