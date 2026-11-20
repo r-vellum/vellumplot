@@ -22,6 +22,7 @@ NULL
 #'   (default `FALSE`: only the boundaries between bins are labelled).
 #' @param reverse Reverse the order of the keys.
 #' @param axis Draw the axis line and ticks beside the keys (default `TRUE`).
+#' @inheritParams guides
 #' @return A guide specification for [guides()] or a scale's `guide`.
 #' @seealso [guides()], [guide_coloursteps()] for a binned colour scale as a
 #'   segmented bar.
@@ -41,7 +42,8 @@ guide_bins <- function(
   title = NULL,
   show.limits = FALSE,
   reverse = FALSE,
-  axis = TRUE
+  axis = TRUE,
+  position = NULL
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("guide_bins"))
   for (nm in c("show.limits", "reverse", "axis")) {
@@ -55,7 +57,8 @@ guide_bins <- function(
     title = title,
     show.limits = show.limits,
     reverse = reverse,
-    axis = axis
+    axis = axis,
+    position = .check_guide_position(position)
   )
 }
 

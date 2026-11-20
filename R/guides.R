@@ -52,6 +52,15 @@ NULL
 #'   `override.aes = list(size = 5, alpha = 1)` draws big, opaque keys over a
 #'   scatter of tiny translucent points. `NULL` (default) leaves the keys as
 #'   drawn from the data.
+#' @param position Where this legend goes: `"right"`, `"left"`, `"top"`,
+#'   `"bottom"` or `"inside"` (over the panels, at `theme(legend.position.inside
+#'   = )` / `legend.justification`). `NULL` (default) follows
+#'   `theme(legend.position = )`. A guide's own position overrides the theme for
+#'   that legend only, as in ggplot2 3.5, so legends can sit on different sides
+#'   of one plot; legends at one position stack as usual. A legend at the top or
+#'   bottom is laid out horizontally. `theme(legend.position = "none")` still
+#'   hides every legend. Two legends that would merge (one variable, one title)
+#'   only merge when they share a position.
 #' @return `guides()`: the modified [PlotSpec]. `guide_none()` / `guide_legend()`:
 #'   a guide specification for use inside `guides()`.
 #' @examples
@@ -91,6 +100,11 @@ NULL
 #'   mark_point(x = wt, y = mpg, size = hp) |>
 #'   scale_size(range = c(2, 12)) |>
 #'   guides(size = guide_legend(nested = TRUE))
+#'
+#' # one legend at the bottom, the other on the (theme's default) right
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg, color = factor(cyl), size = hp) |>
+#'   guides(color = guide_legend(position = "bottom"))
 #' @export
 guides <- function(plot, ...) {
   .check_plot(plot)
@@ -118,7 +132,8 @@ guide_legend <- function(
   title = NULL,
   reverse = FALSE,
   override.aes = NULL,
-  nested = FALSE
+  nested = FALSE,
+  position = NULL
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("guide_legend"))
   list(
@@ -126,7 +141,8 @@ guide_legend <- function(
     title = title,
     reverse = isTRUE(reverse),
     override.aes = .check_override_aes(override.aes),
-    nested = isTRUE(nested)
+    nested = isTRUE(nested),
+    position = .check_guide_position(position)
   )
 }
 
@@ -140,7 +156,8 @@ guide_colourbar <- function(
   ticks.colour = "white",
   label.position = NULL,
   n.breaks = NULL,
-  reverse = FALSE
+  reverse = FALSE,
+  position = NULL
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("guide_colourbar"))
   .guide_bar(
@@ -152,7 +169,8 @@ guide_colourbar <- function(
     ticks.colour,
     label.position,
     reverse,
-    n.breaks
+    n.breaks,
+    position
   )
 }
 
@@ -169,7 +187,8 @@ guide_coloursteps <- function(
   ticks = FALSE,
   ticks.colour = "white",
   label.position = NULL,
-  reverse = FALSE
+  reverse = FALSE,
+  position = NULL
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("guide_coloursteps"))
   .guide_bar(
@@ -180,7 +199,8 @@ guide_coloursteps <- function(
     ticks,
     ticks.colour,
     label.position,
-    reverse
+    reverse,
+    position = position
   )
 }
 
@@ -369,7 +389,8 @@ guide_axis_logticks <- function(
   ticks.colour,
   label.position,
   reverse,
-  n.breaks = NULL
+  n.breaks = NULL,
+  position = NULL
 ) {
   pos <- label.position %||% "right"
   if (!pos %in% c("right", "left")) {
@@ -386,8 +407,26 @@ guide_axis_logticks <- function(
     ticks_colour = ticks.colour,
     label_position = pos,
     n_breaks = .check_n_breaks(n.breaks),
-    reverse = isTRUE(reverse)
+    reverse = isTRUE(reverse),
+    position = .check_guide_position(position)
   )
+}
+
+# The positions a legend guide's `position =` accepts (`NULL` follows the
+# theme's `legend.position`).
+.GUIDE_POSITIONS <- c("right", "left", "top", "bottom", "inside")
+
+# A guide's `position =`: NULL, or one of `.GUIDE_POSITIONS`.
+.check_guide_position <- function(position) {
+  if (is.null(position)) {
+    return(NULL)
+  }
+  if (!.is_string(position) || !position %in% .GUIDE_POSITIONS) {
+    cli::cli_abort(
+      "{.arg position} must be one of {.or {.val {(.GUIDE_POSITIONS)}}}, or {.code NULL}."
+    )
+  }
+  position
 }
 
 # A colourbar dimension (`barwidth` / `barheight`) in mm: NULL, or one positive
@@ -484,6 +523,11 @@ guide_axis_logticks <- function(
     }
     if (!is.null(guide$title)) {
       trained <- .scale_set(trained, name = guide$title)
+    }
+    # `position =`: where this legend goes, read by the layout
+    # (`.legend_groups()`, R/compile-layout.R).
+    if (!is.null(guide$position)) {
+      trained <- .scale_set(trained, guide_position = guide$position)
     }
     if (isTRUE(guide$reverse)) {
       trained <- .reverse_guide(trained)

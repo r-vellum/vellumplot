@@ -358,15 +358,17 @@ NULL
 # panels (or off). `legend.position = c(x, y)` (the old ggplot2 form) places
 # it there; "inside" uses `legend.position.inside`, else the justification.
 # The justification defaults to the position, so c(1, 1) is the top-right
-# corner with the legend inside it.
-.legend_inside <- function(rt) {
+# corner with the legend inside it. `force = TRUE` answers for a legend that
+# asked to be inside itself (`guide_legend(position = "inside")`) whatever the
+# theme's position: `legend.position.inside`, else the justification.
+.legend_inside <- function(rt, force = FALSE) {
   pos <- rt[["legend.position"]]
   just <- rt[["legend.justification"]]
   explicit_just <- !identical(just, "center")
   just <- .legend_just(just) %||% c(0.5, 0.5)
   at <- if (.is_npc_pair(pos)) {
     as.numeric(pos)
-  } else if (identical(pos, "inside")) {
+  } else if (identical(pos, "inside") || force) {
     rt[["legend.position.inside"]] %||% just
   } else {
     return(NULL)

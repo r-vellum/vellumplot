@@ -993,7 +993,10 @@ NULL
   list(
     name = sc$name,
     values = sc$levels %||% sc$legend_breaks,
-    labels = labels
+    labels = labels,
+    # legends placed at different positions (`guide_legend(position =)`)
+    # stay apart
+    position = sc$guide_position
   )
 }
 
@@ -1033,7 +1036,8 @@ NULL
         list(list(
           kind = "merged",
           sc = .merged_legend(guides[members], sigs[[i]]),
-          key = guides[[i]]$key
+          key = guides[[i]]$key,
+          position = sigs[[i]]$position
         ))
       }
     )
@@ -2577,7 +2581,8 @@ NULL
   guides,
   rt,
   orient = "vertical",
-  avail_h = Inf
+  avail_h = Inf,
+  name = "legend"
 ) {
   scene <- vellum::push(
     scene,
@@ -2586,7 +2591,7 @@ NULL
       col = cell$col,
       rowspan = cell$rowspan %||% 1,
       colspan = cell$colspan %||% 1,
-      name = "legend"
+      name = name
     )
   )
   lb <- rt[["legend.background"]]
