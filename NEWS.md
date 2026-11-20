@@ -2,6 +2,16 @@
 
 ## Behaviour changes
 
+* **Behaviour change:** a layer is now grouped by the interaction of all its
+  discrete `color`, `fill`, `pattern`, `linetype` and `shape` mappings, as
+  ggplot2 groups by every discrete aesthetic. Before, only the first of them
+  formed the groups, so `mark_bar(fill = gear, color = am)` counted by `am`
+  alone and dropped `fill` with a warning, and dodges, stacks and stats
+  (densities, fits, boxplots) missed the other split. Now each (gear, am) pair
+  is its own bar, box, curve or fit, ordered by the first aesthetic, then the
+  next. `mark_smooth()` also draws a mapped `linetype`. A layer with a single
+  discrete aesthetic (or one variable on several) groups as before (VP-52).
+
 * **Behaviour change:** `scale_*_binned()` now bins like ggplot2 by default
   (`style = "extended"`): about `n` "nice" class boundaries inside the data
   range, the outer classes widened to whole bins, classes closed on the right

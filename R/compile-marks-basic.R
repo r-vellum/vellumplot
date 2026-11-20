@@ -1019,13 +1019,14 @@ NULL
   # line honours a `linewidth` param (its own default weight is 1.5)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   lwd <- .aes_param(L, "linewidth", 1.5)
+  lty <- .resolve_lty(L, scales, n)
   sk <- .mark_sketch(L, scales)
   has_se <- !is.null(L$values$ymin)
   ymin <- if (has_se) scales$y$map(L$values$ymin)
   ymax <- if (has_se) scales$y$map(L$values$ymax)
 
   gi <- 0L
-  for (idx in .series_groups(L, n, list(col = col, alpha = alpha))) {
+  for (idx in .series_groups(L, n, list(col = col, alpha = alpha, lty = lty))) {
     o <- idx[order(xn[idx])]
     cc <- col[idx[1]]
     a <- alpha[idx[1]]
@@ -1052,7 +1053,7 @@ NULL
         ln$x,
         ln$y,
         sketch = .sketch_bump(sk, gi + 50L),
-        gp = vellum::vl_gpar(col = cc, lwd = lwd)
+        gp = vellum::vl_gpar(col = cc, lwd = lwd, lty = lty[idx[1]])
       )
     )
     gi <- gi + 1L
