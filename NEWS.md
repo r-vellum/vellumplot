@@ -82,6 +82,11 @@
 
 ## Bug fixes
 
+* An aligned composition (`hconcat()`, `vconcat()`, `wrap_plots()` of
+  single-panel plots) now keeps the theme's `plot.margin` around the figure,
+  as a single plot does. Before, the first row's panels touched the top edge
+  and the last column's the right edge (VP-50).
+
 * ggplot2 plots no longer break when vellumplot is attached after ggplot2.
   ggplot2 looks default scales (`scale_colour_continuous()`, ...) and guides
   given by name (`guide = "legend"`) up along the search path, where it found

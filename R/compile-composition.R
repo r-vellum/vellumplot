@@ -442,6 +442,28 @@ NULL
   rt0 <- .resolve_theme(comp@theme %||% .theme_default())
   glo <- .composition_grid(plans, comp, collect, rt0)
 
+  # The figure keeps the theme's `plot.margin` around its grid, as a single
+  # plot does (`.dp_push_frame()`); before, the first row's panels touched the
+  # top edge and the last column's the right edge (VP-50).
+  m <- rep_len(rt0[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      layout = vellum::grid_layout(
+        c(
+          vellum::vl_unit(m[4], "mm"),
+          vellum::vl_unit(1, "null"),
+          vellum::vl_unit(m[2], "mm")
+        ),
+        c(
+          vellum::vl_unit(m[1], "mm"),
+          vellum::vl_unit(1, "null"),
+          vellum::vl_unit(m[3], "mm")
+        )
+      )
+    )
+  )
+  scene <- vellum::push(scene, vellum::vl_viewport(row = 2, col = 2))
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(layout = vellum::grid_layout(glo$widths, glo$heights))
@@ -478,7 +500,7 @@ NULL
       scene <- .draw_tag_corner(scene, gm$panel_row, gm$panel_col, tags[i], rt0)
     }
   }
-  vellum::pop(scene)
+  vellum::pop(vellum::pop(vellum::pop(scene)))
 }
 
 # Spreadsheet-style alphabetic labels: A..Z, AA, AB, ... (bijective base-26), so
