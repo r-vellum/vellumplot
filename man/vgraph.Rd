@@ -78,6 +78,11 @@ the centre line (not curved); self-loops as small loops.
 Reductions apply in a fixed order: \code{augment} (metrics computed on the input
 graph) -> \code{filter_edges} -> \code{filter_nodes} -> \code{k_core}. Augmented metrics thus
 reflect the \emph{input} graph, not the post-filter subgraph.
+
+A graph can be faceted by a vertex attribute (\code{facet_wrap(~group)}): each
+panel draws that group's nodes and only the edges whose two endpoints are
+both in the panel, as ggraph's \code{facet_nodes()} does. Edges between groups
+are left out, and all panels share the one layout.
 }
 \examples{
 \dontrun{

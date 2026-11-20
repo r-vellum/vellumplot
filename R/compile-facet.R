@@ -239,6 +239,48 @@ NULL
   which(keep)
 }
 
+# Graph marks drawn from the edge table: in a faceted graph each panel keeps
+# only these edges' rows whose two endpoints are both among the panel's nodes.
+.GRAPH_EDGE_MARKS <- c("edges", "edge_text", "edge_bundle")
+
+# A faceted graph splits its nodes (the plot data) by a vertex attribute, which
+# the edge table lacks, so an edge layer would otherwise draw in full in every
+# panel, with edges whose endpoints are not there. Keep the edges whose two
+# endpoints are both among the panel's nodes, as ggraph's `facet_nodes()` does
+# (VP-64). Endpoints are matched by vertex name: the edge table's `from`/`to`
+# and the node table's `name` come from the same igraph vertex ids.
+.graph_panel_edges <- function(spec, layer, panel, idx) {
+  d <- layer@data
+  nm <- spec@data$name
+  if (
+    is.null(spec@facet) ||
+      is.null(panel$lvl) ||
+      is.null(spec@edge_data) ||
+      !layer@mark %in% .GRAPH_EDGE_MARKS ||
+      is.null(nm) ||
+      is.null(d$from) ||
+      is.null(d$to)
+  ) {
+    return(idx)
+  }
+  nodes <- as.character(nm[panel$idx])
+  idx[
+    as.character(d$from[idx]) %in% nodes & as.character(d$to[idx]) %in% nodes
+  ]
+}
+
+# A graph edge's key ends in its row index. A panel that keeps only some edges
+# (see `.graph_panel_edges()`) numbers them by their row in the whole edge
+# table, so an edge's key, and its `join`, is the same in every panel and in
+# the unfaceted plot.
+.edge_keys_by_row <- function(gi, idx) {
+  if (!identical(gi$kind, "edges") || length(gi$source) != length(idx)) {
+    return(gi)
+  }
+  gi$key <- paste(gi$source, gi$target, idx, sep = "\001")
+  gi
+}
+
 # The membership test for a panel given only its level labels (no `match`
 # recorded): a single-quosure dimension's label is its value.
 .panel_match_from_lvl <- function(facet, lvl) {
@@ -268,6 +310,7 @@ NULL
       d <- spec@data[idx, , drop = FALSE]
     } else {
       idx <- .layer_panel_idx(spec@facet, layer@data, panel)
+      idx <- .graph_panel_edges(spec, layer, panel, idx)
       d <- layer@data[idx, , drop = FALSE]
     }
     # Rows missing a continuous position are removed before the stat, so they
@@ -282,6 +325,7 @@ NULL
       idx <- idx[!(miss | cens)]
     }
     res <- .apply_position(.apply_stat(.resolve_layer(layer, d)))
+    res$graph_identity <- .edge_keys_by_row(res$graph_identity, idx)
     res$selgroup <- .realign_row_value(
       .selection_group_values(fsel, d),
       res$stat_map
