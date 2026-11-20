@@ -208,10 +208,25 @@ NULL
   wts_w <- .size_weights(comp@widths, nc)
   wts_h <- .size_weights(comp@heights, nr)
 
+  # The collected legend goes where the composition theme's `legend.position`
+  # puts it, as patchwork's does: a column left / right of the cells, or a row
+  # above / below them; "none" drops it (VP-62).
+  figguides <- if (collect) .pool_guides(plans) else list()
+  figside <- .fig_legend_side(rt0)
+  if (identical(figside, "none")) {
+    figguides <- list()
+  }
+  has_fig <- length(figguides) > 0L
+
   # --- columns -------------------------------------------------------------
   W <- .tracks()
   ytitle_col <- ylabels_col <- panel_col <- rleg_col <- integer(nc)
   lleg_col <- rep(NA_integer_, nc)
+  figlegend_col <- NA_integer_
+  if (has_fig && identical(figside, "left")) {
+    figlegend_col <- .tk_add(W, .legend_width(figguides, rt0))
+    .tk_add(W, gap)
+  }
   for (c in seq_len(nc)) {
     if (!is.null(Lleg[[c]])) {
       lleg_col[c] <- .tk_add(W, Lleg[[c]])
@@ -222,9 +237,7 @@ NULL
     rleg_col[c] <- .tk_add(W, Rleg[[c]])
     if (c < nc) .tk_add(W, gap)
   }
-  figguides <- if (collect) .pool_guides(plans) else list()
-  figlegend_col <- NA_integer_
-  if (collect && length(figguides)) {
+  if (has_fig && identical(figside, "right")) {
     .tk_add(W, gap)
     figlegend_col <- .tk_add(W, .legend_width(figguides, rt0))
   }
@@ -240,6 +253,11 @@ NULL
     .tk_add(H, .track_h(rt0[["plot.subtitle"]], comp@labels$subtitle, .PAD_MM))
   } else {
     NA_integer_
+  }
+  figlegend_row <- NA_integer_
+  if (has_fig && identical(figside, "top")) {
+    figlegend_row <- .tk_add(H, .legend_height(figguides, rt0))
+    .tk_add(H, gap)
   }
   tag_row <- title_row <- subtitle_row <- integer(nr)
   panel_row <- xlabels_row <- xtitle_row <- caption_row <- integer(nr)
@@ -259,6 +277,10 @@ NULL
     }
     caption_row[r] <- .tk_add(H, Bcap[[r]])
     if (r < nr) .tk_add(H, gap)
+  }
+  if (has_fig && identical(figside, "bottom")) {
+    .tk_add(H, gap)
+    figlegend_row <- .tk_add(H, .legend_height(figguides, rt0))
   }
   figcaption_row <- if (!is.null(comp@labels$caption)) {
     .tk_add(H, .track_h(rt0[["plot.caption"]], comp@labels$caption, .PAD_MM))
@@ -288,12 +310,27 @@ NULL
     ncol_total = length(W$u),
     map = map,
     figguides = figguides,
+    figlegend_side = figside,
     figlegend_col = figlegend_col,
+    figlegend_row = figlegend_row,
     panel_row_span = c(min(panel_row), max(panel_row)),
+    panel_col_span = c(min(panel_col), max(panel_col)),
     figtitle_row = figtitle_row,
     figsubtitle_row = figsubtitle_row,
     figcaption_row = figcaption_row
   )
+}
+
+# Where a composition's collected legend goes: the composition theme's
+# `legend.position` ("right", the default, "left", "top", "bottom" or "none").
+# An inside position has no cell to sit in, so it falls back to the right.
+.fig_legend_side <- function(rt) {
+  pos <- .legend_default_position(rt)
+  if (is.character(pos) && length(pos) == 1L && pos %in% c(.LEGEND_SIDES, "none")) {
+    pos
+  } else {
+    "right"
+  }
 }
 
 # A declarative key for a guide, so identical guides across sub-plots collapse to
@@ -559,6 +596,20 @@ NULL
       glo$figguides,
       rt0,
       orient = "vertical"
+    )
+  }
+  if (collect && length(glo$figguides) && !is.na(glo$figlegend_row)) {
+    span <- glo$panel_col_span
+    scene <- .draw_legends(
+      scene,
+      list(
+        row = glo$figlegend_row,
+        col = span[1],
+        colspan = span[2] - span[1] + 1L
+      ),
+      glo$figguides,
+      rt0,
+      orient = "horizontal"
     )
   }
   for (i in seq_along(plans)) {

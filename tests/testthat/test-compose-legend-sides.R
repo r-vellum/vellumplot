@@ -83,3 +83,47 @@ test_that("a right-hand legend is drawn as before", {
   expect_gt(leg$x0, c1$x1)
   expect_lt(leg$x1, c2$x0)
 })
+
+# VP-62: the collected legend follows the composition theme's legend.position,
+# as patchwork's does.
+test_that("a collected legend honours the composition's legend.position", {
+  p1 <- vplot(cls_mt) |> mark_point(x = wt, y = mpg, color = fcyl)
+  p2 <- vplot(cls_mt) |> mark_point(x = hp, y = qsec, color = fcyl)
+  at <- function(pos) {
+    comp <- wrap_plots(list(p1, p2), guides = "collect")
+    if (!is.null(pos)) {
+      comp <- theme(comp, legend.position = pos)
+    }
+    pan <- cls_panels(comp)
+    list(
+      leg = cls_row(pan, "legend"),
+      c1 = cls_row(pan, "cell-1-panel-1-1"),
+      c2 = cls_row(pan, "cell-2-panel-1-1")
+    )
+  }
+  right <- at(NULL)
+  expect_identical(nrow(right$leg), 1L)
+  expect_gt(right$leg$x0, right$c2$x1)
+  left <- at("left")
+  expect_lt(left$leg$x1, left$c1$x0)
+  top <- at("top")
+  expect_lt(top$leg$y1, top$c1$y0)
+  expect_gte(top$leg$x0, top$c1$x0)
+  expect_lte(top$leg$x1, top$c2$x1)
+  bottom <- at("bottom")
+  expect_gt(bottom$leg$y0, bottom$c1$y1)
+  expect_gte(bottom$leg$x0, bottom$c1$x0)
+  expect_lte(bottom$leg$x1, bottom$c2$x1)
+  # panels still line up, and a top / bottom legend takes no column
+  expect_equal(top$c1$py0, top$c2$py0)
+  expect_gt(top$c2$x1, right$c2$x1)
+  none <- at("none")
+  expect_identical(nrow(none$leg), 0L)
+  # the sub-plots' own themes do not move the collected legend (as patchwork)
+  sub <- wrap_plots(
+    list(p1 |> theme(legend.position = "bottom"), p2),
+    guides = "collect"
+  )
+  pan <- cls_panels(sub)
+  expect_gt(cls_row(pan, "legend")$x0, cls_row(pan, "cell-2-panel-1-1")$x1)
+})
