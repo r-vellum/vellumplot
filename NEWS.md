@@ -1,5 +1,17 @@
 # vellumplot 0.16.0.9000 (development version)
 
+## Behaviour changes
+
+* **Behaviour change:** an unmapped `mark_area()`, `mark_ribbon()`,
+  `mark_density()`, `mark_tile()` or `mark_raster()` now fills with ggplot2's
+  default for areas, ribbons and tiles, `col_mix(ink, paper, 0.2)` from the
+  theme's `element_geom()`: `"grey20"` on a light theme, instead of `"grey50"`.
+  The old grey was the colour of `theme_dark()`'s panel, so a default area or
+  density disappeared into it. Light-theme plots with these marks now draw
+  them darker, matching `ggplot2::layer_data()` on `theme_grey()` and
+  `theme_dark()`. ggplot2's `geom_density()` is unfilled by default;
+  `mark_density()` keeps its filled curve and fills it like an area (VP-60).
+
 # vellumplot 0.16.0
 
 ## Behaviour changes

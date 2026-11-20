@@ -98,7 +98,11 @@ complete regular grid). \code{mark_bin2d()} bins continuous \code{x}/\code{y} in
 colours each cell by count. \code{mark_density()} draws a 1-D kernel density of \code{x}
 as a filled curve. On all of them a \code{color} given alongside a \code{fill} (or the
 default count fill of \code{mark_bin2d()} / \code{mark_hex()}) outlines the shapes; a
-\code{color} alone fills them.
+\code{color} alone fills them. Unmapped, tiles, rasters and densities fill with
+\code{col_mix(ink, paper, 0.2)} from the theme's \code{\link[=element_geom]{element_geom()}} (\code{"grey20"} on
+a light theme), the fill of ggplot2's \code{geom_tile()} and \code{geom_area()}. (ggplot2's
+\code{geom_density()} draws an unfilled outline; \code{mark_density()} keeps its filled
+curve, filled like an area.)
 }
 \examples{
 d <- expand.grid(x = 1:5, y = 1:5)

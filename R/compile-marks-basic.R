@@ -1115,7 +1115,7 @@ NULL
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
   sk <- .mark_sketch(L, scales)
-  fo <- .fill_and_outline(L, scales, "grey50", n)
+  fo <- .fill_and_outline(L, scales, "grey20", n)
   lwd <- .aes_param(L, "linewidth", 0.5)
   # the boundary line(s) of the rows `o` (x-ordered), stroked in colour `cc`
   stroke <- function(scene, o, cc, a, gi) {
@@ -1203,7 +1203,7 @@ NULL
   # Series = explicit `group`, then any *discrete* style still in play; the
   # continuous channels under test must not split the series themselves.
   fill <- if (is.null(cv)) {
-    rep_len(.aes_colour(L, scales, "grey50", role = "fill"), n)
+    rep_len(.aes_colour(L, scales, "grey20", role = "fill"), n)
   }
   alpha <- if (is.null(av)) rep_len(.aes_alpha(L, scales, NA_real_), n)
   varies <- function(v, idx) length(unique(v[idx])) > 1L
