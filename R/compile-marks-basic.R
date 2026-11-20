@@ -15,15 +15,18 @@ NULL
   yn <- rep_len(scales$y$map(L$values$y), n)
   band_x <- scales$x$band_width %||% .resolution(xn)
   # jitterdodge first offsets each element into its group's dodged slot, then
-  # jitters within the (narrower) slot.
-  slot <- band_x
-  if (identical(L$position, "jitterdodge")) {
+  # jitters it. As in ggplot2, the default jitter is 40% of the resolution
+  # divided by (the most groups at any x of the whole layer + 2), and none
+  # vertically (VP-63).
+  jd <- identical(L$position, "jitterdodge")
+  if (jd) {
     grp <- .group_key(L)
     dw <- L$stat_params$dodge_width %||% 0.75
+    nd <- L$dodge_n %||% 1L
     if (!is.null(grp)) {
       d <- .dodge_offsets(xn, grp, dw * band_x)
       xn <- xn + d$offset
-      slot <- dw * band_x * min(d$share)
+      nd <- L$dodge_n %||% max(1 / d$share)
     }
   } else if (L$position %in% c("dodge", "dodge2")) {
     # points dodge onto the centres of dodged bars (the default span is a bar's
@@ -32,14 +35,16 @@ NULL
       xn,
       .group_key(L),
       L$stat_params$dodge_width %||% (.DODGE_WIDTH * band_x),
-      preserve = .dodge_preserve(L)
+      preserve = .dodge_preserve(L),
+      n_single = L$dodge_n
     )
     xn <- xn + d$offset
   }
   if (L$position %in% c("jitter", "jitterdodge")) {
     ax <- L$stat_params$jitter_width %||%
-      (0.4 * if (identical(L$position, "jitterdodge")) slot else band_x)
-    ay <- L$stat_params$jitter_height %||% (0.4 * .resolution(yn))
+      (0.4 * band_x / (if (jd) nd + 2 else 1))
+    ay <- L$stat_params$jitter_height %||%
+      (if (jd) 0 else 0.4 * .resolution(yn))
     jit <- .with_seed(
       L$stat_params$seed,
       list(
@@ -974,7 +979,8 @@ NULL
       xp,
       .group_key(L),
       L$stat_params$dodge_width %||% w,
-      preserve = .dodge_preserve(L)
+      preserve = .dodge_preserve(L),
+      n_single = L$dodge_n
     )
     w <- w * d$share
     xc <- xp + d$offset

@@ -435,6 +435,7 @@ NULL
     p$resolved <- .resolve_panel(spec, p)
     p
   })
+  panels <- .share_dodge_n(panels)
   .warn_missing_positions(spec, panels)
 
   all_res <- unlist(lapply(panels, function(p) p$resolved), recursive = FALSE)
