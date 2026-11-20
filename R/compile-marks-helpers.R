@@ -31,13 +31,32 @@ NULL
 # `group`, each then split by style tuple exactly as `.style_groups()` would --
 # so `group = id` draws one polyline per id even when every id shares a colour,
 # and a discrete colour varying within an id still breaks it into styled runs.
-# Without an explicit `group` the key is the discrete colour/fill, which the
-# style split already separates, so this is `.style_groups()` unchanged (same
-# groups, same order, same output).
+# Without an explicit `group` the key is the interaction of the discrete
+# styling aesthetics, which the style split usually already separates: then
+# this is `.style_groups()` unchanged (same groups, same order, same output).
+# Only when the key splits a style group further -- it includes an aesthetic
+# the mark does not style by, e.g. a `linetype` on a smooth's ribbon -- is each
+# style group split by key level too, so two series never join into one path.
 .series_groups <- function(L, n, fields) {
   piece <- L$values$.piece
   if (is.null(L$values$group) && is.null(L$params$group) && is.null(piece)) {
-    return(.style_groups(n, fields))
+    groups <- .style_groups(n, fields)
+    g <- .group_key(L)
+    if (is.null(g) || length(groups) == 1L && length(unique(g)) <= 1L) {
+      return(groups)
+    }
+    g <- rep_len(as.character(g), n)
+    pure <- vapply(groups, function(i) length(unique(g[i])) <= 1L, logical(1))
+    if (all(pure)) {
+      return(groups)
+    }
+    out <- list()
+    for (idx in groups) {
+      for (j in unname(split(idx, match(g[idx], unique(g[idx]))))) {
+        out[[length(out) + 1L]] <- j
+      }
+    }
+    return(out)
   }
   g <- .group_key(L)
   g <- if (is.null(g)) rep("", n) else rep_len(as.character(g), n)
