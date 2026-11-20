@@ -117,40 +117,51 @@ NULL
 # its `offset` from the category centre and its `share` of the dodged span (the
 # fraction of `span` its slot gets). `span` (native units, scalar or per row) is
 # the total width the groups at one category share. The one implementation of
-# `(rank - (G + 1) / 2) / G * span` -- bars, jitterdodge, dodge2, the generic
+# ggplot2's `pos_dodge()` -- bars, points, jitterdodge, dodge2, the generic
 # native step and the distribution marks all call it, so dodged elements of
 # different marks land on exactly the same centres.
 #
-# `ragged = FALSE` (dodge) gives every category a slot for every group level, so
-# a group sits at the same offset everywhere. `ragged = TRUE` (dodge2) ranks only
-# the groups present at each category, so a category with fewer groups centres
-# them and gives each a wider slot.
-.dodge_offsets <- function(x, grp, span, ragged = FALSE) {
+# At each category only the groups present there are ranked (in group-level
+# order), as ggplot2 does. `preserve = "total"` (ggplot2's default) splits the
+# span between those `k` groups, so a category with fewer groups centres them
+# and gives each a wider slot. `preserve = "single"` gives every slot the width
+# of one group at the fullest category (`n` groups), packing a sparser
+# category's groups from the left: `(rank - 0.5) / n - 0.5` of the span.
+.dodge_offsets <- function(x, grp, span, preserve = "total") {
   n <- length(x)
   if (is.null(grp) || !n) {
     return(list(offset = rep(0, n), share = rep(1, n)))
   }
   span <- rep_len(span, n)
-  levs <- .cat_levels(grp)
-  rank <- match(as.character(rep_len(grp, n)), levs)
-  if (!ragged) {
-    G <- length(levs)
-    return(list(
-      offset = (rank - (G + 1) / 2) / G * span,
-      share = rep(1 / G, n)
-    ))
-  }
-  offset <- numeric(n)
-  share <- numeric(n)
+  rank <- match(as.character(rep_len(grp, n)), .cat_levels(grp))
   key <- as.character(x)
-  for (rows in split(seq_len(n), factor(key, levels = unique(key)))) {
+  cells <- split(seq_len(n), factor(key, levels = unique(key)))
+  r <- integer(n)
+  k <- integer(n)
+  for (rows in cells) {
     present <- sort(unique(rank[rows]))
-    k <- length(present)
-    r <- match(rank[rows], present)
-    offset[rows] <- (r - (k + 1) / 2) / k * span[rows]
-    share[rows] <- 1 / k
+    r[rows] <- match(rank[rows], present)
+    k[rows] <- length(present)
   }
-  list(offset = offset, share = share)
+  if (identical(preserve, "single")) {
+    k[] <- max(k)
+  }
+  list(offset = ((r - 0.5) / k - 0.5) * span, share = 1 / k)
+}
+
+# The default dodge span, as a fraction of the band: a bar's width, so error
+# bars, text and points dodged without a `position_dodge(width =)` land on the
+# centres of dodged bars.
+.DODGE_WIDTH <- 0.9
+
+# How a dodged layer sizes its slots: `position_dodge(preserve =)`, else
+# "total". dodge2 always splits between the groups present.
+.dodge_preserve <- function(L) {
+  if (identical(L$position, "dodge")) {
+    L$stat_params$dodge_preserve %||% "total"
+  } else {
+    "total"
+  }
 }
 
 # The x- / y-family aesthetics a position shift moves together.
@@ -211,8 +222,8 @@ NULL
     d <- .dodge_offsets(
       xn,
       .group_key(L),
-      L$stat_params$dodge_width %||% band,
-      ragged = identical(type, "dodge2")
+      L$stat_params$dodge_width %||% (.DODGE_WIDTH * band),
+      preserve = .dodge_preserve(L)
     )
     off <- d$offset
     if (L$mark %in% c("errorbar", "crossbar")) {
