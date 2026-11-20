@@ -53,6 +53,19 @@
   and `outline(color)` now default to `NULL` (the theme’s colour). Light
   themes draw exactly as before (VP-61).
 
+- Per-panel facet legends placed above or below the panels (a theme’s
+  `legend.position = "top"` / `"bottom"`) are now collected into one
+  plot legend, with a message, when they would leave the panels shorter
+  than 25 mm on the page. VP-59 did this only for legends beside the
+  panels and only checked the panel width (VP-62).
+
+- A composition’s collected legend (`guides = "collect"`) now goes where
+  the composition theme’s `legend.position` puts it, as in patchwork:
+  `wrap_plots(a, b) |> theme(legend.position = "bottom")` draws it in a
+  row below the plots, spanning their panels. `"left"` and `"top"` work
+  the same way, and `"none"` drops it. Before, it always went in a
+  column on the right (VP-62).
+
 ## vellumplot 0.16.0
 
 ### Behaviour changes

@@ -64,7 +64,11 @@ vconcat(..., guides = c("collect", "keep"), width = NULL)
 - guides:
 
   `"collect"` (default) to dedupe identical legends across sub-plots
-  into one, or `"keep"` to leave each sub-plot's legend in place.
+  into one, or `"keep"` to leave each sub-plot's legend in place. The
+  collected legend goes where the composition's theme puts it
+  (`theme(comp, legend.position = )`: `"right"`, the default, `"left"`,
+  `"top"`, `"bottom"` or `"none"`), as in patchwork; the sub-plots' own
+  themes do not move it.
 
 - design:
 

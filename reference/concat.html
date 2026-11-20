@@ -134,7 +134,11 @@ vector), or <code>NULL</code> for equal panels.</p></dd>
 
 <dt id="arg-guides">guides<a class="anchor" aria-label="anchor" href="#arg-guides"></a></dt>
 <dd><p><code>"collect"</code> (default) to dedupe identical legends across
-sub-plots into one, or <code>"keep"</code> to leave each sub-plot's legend in place.</p></dd>
+sub-plots into one, or <code>"keep"</code> to leave each sub-plot's legend in place.
+The collected legend goes where the composition's theme puts it
+(<code>theme(comp, legend.position = )</code>: <code>"right"</code>, the default, <code>"left"</code>,
+<code>"top"</code>, <code>"bottom"</code> or <code>"none"</code>), as in patchwork; the sub-plots' own
+themes do not move it.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
