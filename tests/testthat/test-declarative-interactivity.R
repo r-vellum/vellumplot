@@ -145,12 +145,12 @@ test_that("a composition resolves cross-cell selection references", {
 })
 
 test_that("composition cells get unique keys + a join id; single plots do not", {
-  # single plot: keys are the row/data ids, no join
+  # single plot: default keys are "p1-1:l<layer>:<row>" (VP-55), no join
   sp <- vellum::scene_model(vellum::as_vellum_scene(
     vplot(df) |> mark_point(x = x, y = y, tooltip = x)
   ))$elements
   sp <- sp[!is.na(sp$key), , drop = FALSE]
-  expect_false(any(grepl(":", sp$key)))
+  expect_true(all(startsWith(sp$key, "p1-1:l1:")))
   expect_null(sp$meta[[1]]$join)
 
   # composition: cells share row identity via `join`, but keys are unique per cell

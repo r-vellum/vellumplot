@@ -13,6 +13,21 @@
   one group wide. Points now dodge with `position = "dodge"` too; before they
   were drawn undodged (VP-56).
 
+* **Behaviour change:** default element keys (for an interactive layer that
+  declares no `data_id`) now always name the panel, the layer and the row, as
+  `"p<row>-<col>:l<layer>:<row>"`: `"p1-1:l2:7"` is row 7 of layer 2 in the
+  first (or only) panel. Composition cells keep their prefix in front
+  (`"subplot-2:p1-1:l1:7"`, `"cell-1:p1-2:l1:7"`). Before, keys were plain row
+  numbers, so two default-keyed layers shared them: in
+  `mark_line(color = g) |> mark_point() |> select_point()` selecting a point
+  also selected the line whose first row had the same number. Keys made for a
+  tooltip-only layer also repeated across facet panels. Both are fixed, and the
+  `"layer-<i>:"` prefix from 0.15.0 is gone (VP-55). Layers no longer link
+  through matching row numbers: to link elements on purpose, give the layers the
+  same `data_id =` (for example `data_id = g` on both the line and the points).
+  The same datum drawn in several facet panels or composition cells still links
+  across them through its `join` id.
+
 # vellumplot 0.15.1
 
 * `annotate()` layers no longer get default keys just because the plot declares a selection. A keyed annotation made the widget's display list inexact, which switched off its zoomed canvas and detail tier for the whole plot (VW-24). An annotation with its own `data_id` or a `condition()` is still keyed.
