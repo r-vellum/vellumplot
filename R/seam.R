@@ -638,7 +638,6 @@ NULL
 .dp_draw_labels_legends <- function(scene, dp) {
   lay <- dp$lay
   rt <- dp$rt
-  guides <- dp$guides
   vshared <- dp$vshared
   hshared <- dp$hshared
   labels <- dp$spec@labels
@@ -680,39 +679,7 @@ NULL
       )
     }
   }
-  # A left/right legend takes its column spanning every row; a top/bottom legend
-  # takes its row spanning the panel columns (centred under/over the panels).
-  if (!is.na(lay$legend_col)) {
-    # A vertical legend takes its whole column, spanning every row, and centres its
-    # content block within — so a tall multi-guide legend has the full figure
-    # height to work with instead of only the panel-row span.
-    scene <- .draw_legends(
-      scene,
-      list(
-        row = 1,
-        col = lay$legend_col,
-        rowspan = lay$nrow_total
-      ),
-      guides,
-      rt,
-      orient = "vertical",
-      avail_h = lay$legend_avail_h
-    )
-  } else if (!is.na(lay$legend_row)) {
-    scene <- .draw_legends(
-      scene,
-      list(
-        row = lay$legend_row,
-        col = lay$panel_col[1],
-        colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
-      ),
-      guides,
-      rt,
-      orient = "horizontal"
-    )
-  } else if (!is.null(lay$legend_inside) && length(guides)) {
-    scene <- .draw_legend_inside(scene, lay, guides, rt)
-  }
+  scene <- .dp_draw_legends(scene, lay, rt)
 
   # plot title / subtitle / caption bands + tag overlay (full width)
   if (!is.na(lay$title_row)) {
@@ -747,6 +714,65 @@ NULL
   }
   if (!is.na(lay$tag_row)) {
     scene <- .draw_tag(scene, lay$tag_row, lay$ncol_total, labels$tag, rt)
+  }
+  scene
+}
+
+# The legends at each position (`lay$legend_groups`, split by each guide's
+# `position =` or the theme's). A left/right legend takes its column spanning
+# every row; a top/bottom legend takes its row spanning the panel columns
+# (centred under/over the panels); an inside legend overlays the panels. The
+# legends at the theme's own position keep the viewport name "legend"; others
+# are named "legend-<position>".
+.dp_draw_legends <- function(scene, lay, rt) {
+  groups <- lay$legend_groups
+  vp_name <- function(pos) {
+    if (identical(pos, lay$legend_pos)) "legend" else paste0("legend-", pos)
+  }
+  for (side in c("left", "right")) {
+    col <- lay$legend_cols[[side]]
+    if (is.na(col)) {
+      next
+    }
+    # A vertical legend takes its whole column, spanning every row, and centres
+    # its content block within -- so a tall multi-guide legend has the full
+    # figure height to work with instead of only the panel-row span.
+    scene <- .draw_legends(
+      scene,
+      list(row = 1, col = col, rowspan = lay$nrow_total),
+      groups[[side]],
+      rt,
+      orient = "vertical",
+      avail_h = lay$legend_avail_h,
+      name = vp_name(side)
+    )
+  }
+  for (side in c("top", "bottom")) {
+    row <- lay$legend_rows[[side]]
+    if (is.na(row)) {
+      next
+    }
+    scene <- .draw_legends(
+      scene,
+      list(
+        row = row,
+        col = lay$panel_col[1],
+        colspan = lay$panel_col[lay$C] - lay$panel_col[1] + 1
+      ),
+      groups[[side]],
+      rt,
+      orient = "horizontal",
+      name = vp_name(side)
+    )
+  }
+  if (!is.null(lay$legend_inside) && length(groups$inside)) {
+    scene <- .draw_legend_inside(
+      scene,
+      lay,
+      groups$inside,
+      rt,
+      name = vp_name("inside")
+    )
   }
   scene
 }
@@ -1057,7 +1083,7 @@ S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
 # (both in fractions of the panel area). A 1 mm anchor viewport sits at the
 # position and the box is offset from it in mm, since the panel's own size is
 # only known at render time.
-.draw_legend_inside <- function(scene, lay, guides, rt) {
+.draw_legend_inside <- function(scene, lay, guides, rt, name = "legend") {
   at <- lay$legend_inside$pos
   just <- lay$legend_inside$just
   w <- vellum::vl_convert(.legend_width(guides, rt), "mm")
@@ -1099,7 +1125,8 @@ S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
     list(row = 1, col = 1),
     guides,
     rt,
-    orient = "vertical"
+    orient = "vertical",
+    name = name
   )
   scene <- vellum::pop(scene)
   scene <- vellum::pop(scene)
