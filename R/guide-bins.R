@@ -43,6 +43,7 @@ guide_bins <- function(
   reverse = FALSE,
   axis = TRUE
 ) {
+  if (.ggplot2_asks()) return(.ggplot2_own("guide_bins"))
   for (nm in c("show.limits", "reverse", "axis")) {
     v <- get(nm)
     if (!.is_flag(v)) {
