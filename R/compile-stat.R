@@ -5,16 +5,19 @@ NULL
 # This is the ONE place grouping is derived; stats, positions and the connected
 # marks all ask it rather than open-coding `color %||% fill`.
 #
-# Semantics (ggplot2's): an explicit `group` wins outright -- mapped (`group =
-# id`) it is the key, set as a constant (`group = 1`) it makes the whole layer one
-# group. Without one, the first *discrete* of `color`, `fill`, `pattern`,
-# `linetype`, `shape` (`.GROUP_AES`) is the key, so a layer split only by a
-# pattern or a linetype groups -- and stacks, in legend order -- as one split by
-# fill does (VP-38). A continuous colour never groups: it varies within a series (a line coloured
-# along its length), it does not split it. The key is not an interaction of
-# every discrete aesthetic -- connected marks still split each group by style at
-# draw time (`.series_groups()`), which gives the interaction where it matters
-# visually without changing which rows a stat pools.
+# Semantics (ggplot2's `add_group()`): an explicit `group` wins outright --
+# mapped (`group = id`) it is the key, set as a constant (`group = 1`) it makes
+# the whole layer one group. Without one, the key is the interaction of every
+# *discrete* mapped aesthetic in `.GROUP_AES`, so `mark_bar(fill = gear, color =
+# am)` counts, dodges and stacks one bar per (gear, am) pair (VP-52), and a
+# layer split only by a pattern or a linetype groups as one split by fill does
+# (VP-38). A continuous colour never groups: it varies within a series (a line
+# coloured along its length), it does not split it.
+#
+# A layer with a single discrete grouping aesthetic -- or several that split the
+# rows the same way (`color = cyl, fill = cyl`) -- returns that aesthetic's own
+# vector unchanged, so its level order, and everything keyed on it, stays as it
+# was. Only a genuine interaction builds a new factor (`.interaction_key()`).
 #
 # Returns NULL (ungrouped) or a vector recycled to the layer's row count, so a
 # grouping aesthetic that resolved shorter than the data (a constant) still
@@ -24,28 +27,100 @@ NULL
   if (is.null(g) && !is.null(L$params$group)) {
     g <- L$params$group
   }
+  n <- L$n
   if (is.null(g)) {
-    for (aes in .GROUP_AES) {
+    # Mapping order (the order of `L$values`), as ggplot2 takes its data
+    # columns: the first aesthetic varies slowest in the interaction.
+    disc <- list()
+    for (aes in intersect(names(L$values), .GROUP_AES)) {
       v <- L$values[[aes]]
-      if (!is.null(v) && !.is_continuous_group(v)) {
-        g <- v
-        break
+      if (length(v) && !.is_continuous_group(v)) {
+        disc[[aes]] <- v
       }
     }
+    g <- .interaction_key(disc, n)
   }
   if (is.null(g)) {
     return(NULL)
   }
-  n <- L$n %||% length(g)
+  n <- n %||% length(g)
   if (length(g) >= 1L && length(g) != n) {
     g <- rep_len(g, n)
   }
   g
 }
 
-# The aesthetics a layer without `group` takes its grouping key from; the first
-# discrete one wins.
+# The aesthetics a layer without `group` takes its grouping key from: the
+# interaction of the discrete ones among them. (ggplot2 also groups by a
+# discrete alpha, size or linewidth; those are not keys here yet.)
 .GROUP_AES <- c("color", "fill", "pattern", "linetype", "shape")
+
+# The interaction of the discrete vectors `disc` (in order, the first varying
+# slowest), or NULL for none. A vector that does not split any group further
+# than the ones before it (a constant, or a duplicate mapping) is skipped, and a
+# leading constant gives way to the first vector that does split; if only one is
+# left it is returned as is. Otherwise the key is a factor with one
+# level per combination present, ordered by each component's own level order
+# (an NA category last), as ggplot2's `id()` numbers its groups. The labels join
+# the components' labels with ":" (falling back to the combination number in the
+# unlikely case two combinations would share a label).
+.interaction_key <- function(disc, n = NULL) {
+  if (!length(disc)) {
+    return(NULL)
+  }
+  n <- n %||% max(lengths(disc))
+  codes <- list()
+  comb <- NULL
+  for (k in seq_along(disc)) {
+    v <- disc[[k]]
+    if (length(v) != n) {
+      v <- rep_len(v, n)
+    }
+    levs <- .cat_levels(v)
+    code <- match(as.character(v), levs)
+    code[is.na(code)] <- length(levs) + 1L
+    this <- list(code = code, v = v, k = k)
+    if (is.null(comb)) {
+      comb <- as.character(code)
+      codes <- list(this)
+      next
+    }
+    nxt <- paste(comb, code, sep = "\r")
+    if (length(unique(nxt)) == length(unique(comb))) {
+      next # splits no group further
+    }
+    if (length(unique(comb)) == 1L) {
+      # everything so far was one constant group: this one replaces it
+      comb <- as.character(code)
+      codes <- list(this)
+    } else {
+      comb <- nxt
+      codes[[length(codes) + 1L]] <- this
+    }
+  }
+  if (length(codes) == 1L) {
+    return(disc[[codes[[1L]]$k]])
+  }
+  ord <- do.call(order, lapply(codes, `[[`, "code"))
+  id <- match(comb, unique(comb[ord]))
+  labs <- do.call(
+    paste,
+    c(
+      lapply(codes, function(cc) {
+        lab <- as.character(cc$v)
+        lab[is.na(lab)] <- "NA"
+        lab
+      }),
+      sep = ":"
+    )
+  )
+  first <- match(seq_len(max(id)), id)
+  levs <- labs[first]
+  if (anyDuplicated(levs)) {
+    levs <- as.character(seq_along(levs))
+  }
+  factor(levs[id], levels = levs)
+}
 
 # A vector that varies continuously (numeric / date-time), which `.group_key()`
 # never splits on. A factor is discrete whatever its levels look like.
