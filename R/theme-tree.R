@@ -427,6 +427,12 @@ NULL
 # fill = )` override wins for its role; otherwise the literal is mapped onto
 # ink / paper / accent. A colour that is not one of the mapped literals (or no
 # theme geom at all) comes back as is.
+#
+# Two more roles serve drawn chrome that is not a data mark (VP-61):
+# `"neutral"` maps the literal onto ink / paper but ignores the colour / fill
+# overrides (legend NA swatches, borders between hierarchy cells, leader
+# lines, labels on the background), and `"accent"` is the theme's accent
+# whatever the literal (a sparkline's highlight dots), else the literal.
 .geom_paint <- function(default, role = "colour") {
   g <- .mark_ctx$geom
   if (
@@ -437,7 +443,10 @@ NULL
   ) {
     return(default)
   }
-  over <- if (identical(role, "fill")) g$fill else g$colour
+  if (identical(role, "accent")) {
+    return(g$accent %||% default)
+  }
+  over <- switch(role, fill = g$fill, neutral = NULL, g$colour)
   if (!is.null(over)) {
     return(over)
   }
@@ -460,6 +469,14 @@ NULL
     return(default)
   }
   .col_mix(g$ink %||% "black", g$paper %||% "white", amount)
+}
+
+# `.geom_paint()` for a built-in default written as some other literal than
+# the one it stands for (`"#7f7f7f"` for `"grey50"`): the literal itself when
+# the theme leaves `as` unchanged, so a light theme draws exactly as before.
+.geom_paint_as <- function(default, as, role = "colour") {
+  p <- .geom_paint(as, role)
+  if (identical(p, as)) default else p
 }
 
 # Mix colour `a` towards `b` by `amount` (0 = a, 1 = b), as ggplot2's

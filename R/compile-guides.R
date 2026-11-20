@@ -1082,11 +1082,11 @@ NULL
       g$kind,
       color_discrete = pad(
         c(sc$colors, if (isTRUE(sc$na)) sc$na_value),
-        "grey50"
+        .geom_paint("grey50", "neutral")
       ),
       color_continuous = pad(
         c(sc$map(sig$values), if (isTRUE(sc$na)) sc$na_value),
-        "grey50"
+        .geom_paint("grey50", "neutral")
       )
     )
     if (!is.null(paint)) {
@@ -1485,6 +1485,7 @@ NULL
 # stacked keys from sharing an identical wobble.
 # The key for an NA row of a size/shape guide: a neutral grey circle (mirrors the
 # grey NA swatch a colour guide draws), signalling "missing" without a value.
+# The greys follow the theme's ink / paper (VP-61).
 .na_key_grob <- function(m, sketch = NULL) {
   vellum::points_grob(
     vellum::vl_unit(0.5, "npc"),
@@ -1492,7 +1493,10 @@ NULL
     size = vellum::vl_unit(m$key / 2, "mm"),
     shape = "circle",
     sketch = sketch,
-    gp = vellum::vl_gpar(fill = "grey70", col = "grey50")
+    gp = vellum::vl_gpar(
+      fill = .geom_paint("grey70", "neutral"),
+      col = .geom_paint("grey50", "neutral")
+    )
   )
 }
 
@@ -1573,7 +1577,10 @@ NULL
       width = vellum::vl_unit(0.86, "npc"),
       height = vellum::vl_unit(0.86, "npc"),
       sketch = sk,
-      gp = vellum::vl_gpar(fill = sc$patterns[[i]], col = "grey55")
+      gp = vellum::vl_gpar(
+        fill = sc$patterns[[i]],
+        col = .geom_paint("grey55", "neutral")
+      )
     ),
     edge_width = ,
     linewidth = vellum::segments_grob(
@@ -2219,7 +2226,7 @@ NULL
         vellum::vl_unit(top, "npc"),
         vellum::vl_unit(label_x - m$lab_gap / 2, "mm"),
         vellum::vl_unit(top, "npc"),
-        gp = vellum::vl_gpar(col = "grey70", lwd = 0.4)
+        gp = vellum::vl_gpar(col = .geom_paint("grey70", "neutral"), lwd = 0.4)
       )
     )
     scene <- vellum::draw(

@@ -1,6 +1,32 @@
 # vellumplot 0.16.0.9000 (development version)
 
+## Behaviour changes
+
+* **Behaviour change:** an unmapped `mark_area()`, `mark_ribbon()`,
+  `mark_density()`, `mark_tile()` or `mark_raster()` now fills with ggplot2's
+  default for areas, ribbons and tiles, `col_mix(ink, paper, 0.2)` from the
+  theme's `element_geom()`: `"grey20"` on a light theme, instead of `"grey50"`.
+  The old grey was the colour of `theme_dark()`'s panel, so a default area or
+  density disappeared into it. Light-theme plots with these marks now draw
+  them darker, matching `ggplot2::layer_data()` on `theme_grey()` and
+  `theme_dark()`. ggplot2's `geom_density()` is unfilled by default;
+  `mark_density()` keeps its filled curve and fills it like an area (VP-60).
+
 ## Bug fixes
+
+* More of the colours vellumplot draws on its own now follow a dark theme's
+  `element_geom()` ink, paper and accent, as the mark defaults have since
+  VP-58: legend keys for missing values (`NA`) and the pattern-key border,
+  the nested size legend's leader lines, `vsparkline()` (its line and bars
+  `col_mix(ink, paper, 0.3)`, its highlight dots and win bars the accent),
+  including a sparkline added with `annotate("sparkline")`, `vhierarchy()`
+  (cell borders and the root label; branch shades fade toward the paper), the
+  `vchord()` ring borders and labels, `mark_node_pie()` wedge borders,
+  leader lines to repelled labels, and the `outline()` effect, which now
+  defaults to the paper colour. So `theme_cyberpunk()` no longer draws black
+  chord labels on its black canvas. `vsparkline(color, point_color,
+  win_color)`, `mark_node_pie(color)` and `outline(color)` now default to
+  `NULL` (the theme's colour). Light themes draw exactly as before (VP-61).
 
 * Per-panel facet legends placed above or below the panels (a theme's
   `legend.position = "top"` / `"bottom"`) are now collected into one plot

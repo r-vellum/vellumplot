@@ -85,7 +85,7 @@ NULL
       theta0 = sec$theta0,
       theta1 = sec$theta1,
       fill = sec$colour,
-      gp = vellum::vl_gpar(col = "white", lwd = 0.5)
+      gp = vellum::vl_gpar(col = .geom_paint("white", "neutral"), lwd = 0.5)
     )
   )
 
@@ -108,7 +108,10 @@ NULL
           vellum::vl_unit(rl * sin(mid[i]), "native"),
           just = c(if (flip) "right" else "left", "centre"),
           rot = .upright_rot(mid[i], "radius"),
-          gp = vellum::vl_gpar(fontsize = fs, col = "black")
+          gp = vellum::vl_gpar(
+            fontsize = fs,
+            col = .geom_paint("black", "neutral")
+          )
         )
       )
     }
@@ -678,7 +681,7 @@ NULL
         theta1 = th1[keep],
         fill = cols_fill[j],
         gp = vellum::vl_gpar(
-          col = sp$color,
+          col = sp$color %||% .geom_paint("white", "neutral"),
           lwd = sp$linewidth,
           alpha = gp_alpha(sp$alpha)
         )

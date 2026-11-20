@@ -804,7 +804,8 @@ NULL
 .emit_outline <- function(scene, L, scales, o) {
   # one opaque copy, wider by `size` per side, in a contrasting colour (sharp --
   # a sticker halo, not blurred)
-  .emit_copies(scene, L, scales, 2 * o@size, o@alpha, o@color, "normal")
+  col <- o@color %||% .geom_paint("white", "neutral")
+  .emit_copies(scene, L, scales, 2 * o@size, o@alpha, col, "normal")
 }
 
 .emit_shadow <- function(scene, L, scales, s) {
