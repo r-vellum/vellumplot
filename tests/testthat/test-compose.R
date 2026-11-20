@@ -191,3 +191,25 @@ test_that("non-plot inputs are rejected with a clear error", {
   expect_error(concat(mtcars), "PlotSpec")
   expect_error(concat(p_xy(), 42), "Argument 2")
 })
+
+test_that("an aligned composition keeps the plot margin around its grid", {
+  # VP-50: the first row's panels touched the top edge (py0 = 0) and the last
+  # column's the right edge; the theme's plot.margin now frames the figure as
+  # it frames a single plot.
+  panels <- function(x) {
+    p <- vellum::scene_model(vellum::as_vellum_scene(x))$panels
+    p[grepl("panel-", p$name), , drop = FALSE]
+  }
+  p1 <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  single <- panels(p1)
+  page_w <- p1@width * p1@dpi
+  for (cmp in list(vconcat(p1, p1), hconcat(p1, p1))) {
+    pc <- panels(cmp)
+    expect_equal(min(pc$py0), single$py0, tolerance = 1e-4)
+    expect_equal(
+      cmp@width * cmp@dpi - max(pc$px1),
+      page_w - single$px1,
+      tolerance = 1e-4
+    )
+  }
+})
