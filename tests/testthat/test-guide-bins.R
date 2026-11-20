@@ -78,7 +78,9 @@ test_that("binned colour scales take guide_bins() too", {
     guides(fill = guide_bins())
   sf <- vellumplot:::.build_panels(f)$scales$fill
   expect_true(sf$bins)
-  expect_equal(sf$bin_breaks, c(0, 4, 8, 12))
+  # ggplot2's binning (#254): the outer edges are the data limits, 1 and 11,
+  # so the user's 0 and 12 fall outside and only 4 and 8 are labelled
+  expect_equal(sf$bin_breaks, c(1, 4, 8, 11))
   expect_identical(legend_texts(f), c("4", "8"))
 })
 
