@@ -172,6 +172,10 @@ the centre line (not curved); self-loops as small loops.</p>
 <p>Reductions apply in a fixed order: <code>augment</code> (metrics computed on the input
 graph) -&gt; <code>filter_edges</code> -&gt; <code>filter_nodes</code> -&gt; <code>k_core</code>. Augmented metrics thus
 reflect the <em>input</em> graph, not the post-filter subgraph.</p>
+<p>A graph can be faceted by a vertex attribute (<code>facet_wrap(~group)</code>): each
+panel draws that group's nodes and only the edges whose two endpoints are
+both in the panel, as ggraph's <code>facet_nodes()</code> does. Edges between groups
+are left out, and all panels share the one layout.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

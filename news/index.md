@@ -91,6 +91,25 @@
   the node keys, also in compositions, where neighbour highlighting
   matched no node before (VP-63).
 
+- A graph plot faceted by a vertex attribute
+  ([`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  with
+  [`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+  or
+  [`facet_grid()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md))
+  now draws in each panel only the edges whose two endpoints are both
+  among that panel’s nodes, as ggraph’s `facet_nodes()` does.
+  [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
+  [`mark_edge_text()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  and
+  [`mark_edge_bundle()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  used to draw the whole edge table in every panel, with edges ending at
+  nodes drawn in another panel. Each kept edge is now also capped at its
+  own endpoints’ node sizes; before, a faceted panel looked them up by
+  position and could cap an edge at another node’s radius. An edge keeps
+  its key’s row number from the whole edge table, so its `join` is the
+  same as in the unfaceted plot (VP-64).
+
 ## vellumplot 0.16.0
 
 ### Behaviour changes

@@ -111,6 +111,11 @@ input graph) -\> `filter_edges` -\> `filter_nodes` -\> `k_core`.
 Augmented metrics thus reflect the *input* graph, not the post-filter
 subgraph.
 
+A graph can be faceted by a vertex attribute (`facet_wrap(~group)`):
+each panel draws that group's nodes and only the edges whose two
+endpoints are both in the panel, as ggraph's `facet_nodes()` does. Edges
+between groups are left out, and all panels share the one layout.
+
 ## See also
 
 [`mark_edges()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md),
