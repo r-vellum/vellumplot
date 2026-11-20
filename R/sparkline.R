@@ -48,14 +48,18 @@ NULL
 #'
 #' @param values A numeric vector (the series), length >= 2.
 #' @param type `"line"` (default), `"bar"`, or `"winloss"`.
-#' @param color Trend / bar colour. Default `"grey30"`.
+#' @param color Trend / bar colour. `NULL` (the default) is the theme's
+#'   `col_mix(ink, paper, 0.3)`: `"grey30"` on a light theme, a light grey on a
+#'   dark one such as [theme_cyberpunk()].
 #' @param points For `type = "line"`, which points get a dot: `"extremes"`
 #'   (default -- the min and max), `"last"`, or `"none"`.
-#' @param point_color Dot colour (default `"firebrick"`).
+#' @param point_color Dot colour. `NULL` (the default) is the theme's accent
+#'   colour ([element_geom()]), else `"firebrick"`.
 #' @param baseline For `"bar"`, the value bars grow from (default `0`); for
 #'   `"winloss"`, the threshold separating a win (`>=`) from a loss (default `0`).
-#' @param win_color,loss_color For `"winloss"`, the up / down bar colours
-#'   (defaults blue / red).
+#' @param win_color,loss_color For `"winloss"`, the up / down bar colours.
+#'   `win_color = NULL` (the default) is the theme's accent colour, else blue;
+#'   `loss_color` defaults to red.
 #' @param linewidth Trend line width (default `1`).
 #' @param point_size Dot **diameter** in mm (default `1.4`).
 #' @param width,height,units Physical size of the sparkline; `units` is one of
@@ -72,11 +76,11 @@ NULL
 vsparkline <- function(
   values,
   type = c("line", "bar", "winloss"),
-  color = "grey30",
+  color = NULL,
   points = c("extremes", "last", "none"),
-  point_color = "firebrick",
+  point_color = NULL,
   baseline = 0,
-  win_color = "#2c7fb8",
+  win_color = NULL,
   loss_color = "#d7301f",
   linewidth = 1,
   point_size = 1.4,

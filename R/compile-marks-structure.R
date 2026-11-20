@@ -114,12 +114,17 @@ NULL
   }
   type <- L$params$type %||% "sunburst"
   # Node fill comes from the (branch or mapped) fill scale; in branch mode fade
-  # each node toward white by depth so levels within a branch stay distinct.
-  base <- rep_len(.aes_colour(L, scales, "#7f7f7f"), nrow(lay))
+  # each node toward the paper (white on a light theme) by depth so levels
+  # within a branch stay distinct. Unmapped nodes take the theme's mid grey,
+  # `col_mix(ink, paper, 0.5)` (VP-61).
+  base <- rep_len(
+    .aes_colour(L, scales, .geom_paint_as("#7f7f7f", "grey50", "neutral")),
+    nrow(lay)
+  )
   if (identical(L$hier_fill_mode, "branch")) {
     D <- max(lay$depth)
     amt <- (lay$depth - 1L) / max(1L, D - 1L) * (L$params$lighten %||% 0.6)
-    lay$colour <- .lighten(base, amt)
+    lay$colour <- .lighten(base, amt, to = .geom_paint("white", "neutral"))
   } else {
     lay$colour <- base
   }
@@ -154,7 +159,7 @@ NULL
       theta0 = lay$theta0,
       theta1 = lay$theta1,
       fill = lay$colour,
-      gp = vellum::vl_gpar(col = "white", lwd = 0.5)
+      gp = vellum::vl_gpar(col = .geom_paint("white", "neutral"), lwd = 0.5)
     )
   )
 }
@@ -172,7 +177,11 @@ NULL
         y = vellum::vl_unit((s$y0 + s$y1) / 2, "native"),
         width = vellum::vl_unit(s$x1 - s$x0, "native"),
         height = vellum::vl_unit(s$y1 - s$y0, "native"),
-        gp = vellum::vl_gpar(fill = col, col = "white", lwd = 0.5)
+        gp = vellum::vl_gpar(
+          fill = col,
+          col = .geom_paint("white", "neutral"),
+          lwd = 0.5
+        )
       )
     )
   }
@@ -190,7 +199,11 @@ NULL
         x = vellum::vl_unit(s$cx, "native"),
         y = vellum::vl_unit(s$cy, "native"),
         r = vellum::vl_unit(s$cr, "native"),
-        gp = vellum::vl_gpar(fill = col, col = "white", lwd = 0.5)
+        gp = vellum::vl_gpar(
+          fill = col,
+          col = .geom_paint("white", "neutral"),
+          lwd = 0.5
+        )
       )
     )
   }
@@ -285,7 +298,10 @@ NULL
         vellum::vl_unit(0, "native"),
         vellum::vl_unit(0, "native"),
         just = c("centre", "centre"),
-        gp = vellum::vl_gpar(fontsize = fs + 1, col = "black")
+        gp = vellum::vl_gpar(
+          fontsize = fs + 1,
+          col = .geom_paint("black", "neutral")
+        )
       )
     )
   }

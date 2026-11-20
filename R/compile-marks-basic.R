@@ -387,7 +387,7 @@ NULL
       integer(0)
     )
     if (length(hi)) {
-      pc <- sp$point_color %||% "firebrick"
+      pc <- sp$point_color %||% .geom_paint("firebrick", "accent")
       scene <- .draw(
         scene,
         vellum::points_grob(
@@ -444,7 +444,12 @@ NULL
       rows = o[sel]
     )
   }
-  scene <- draw_side(scene, which(up), 0.5 + h / 2, sp$win_color %||% "#2c7fb8")
+  scene <- draw_side(
+    scene,
+    which(up),
+    0.5 + h / 2,
+    sp$win_color %||% .geom_paint("#2c7fb8", "accent")
+  )
   scene <- draw_side(
     scene,
     which(!up),
@@ -470,6 +475,9 @@ NULL
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   is_plot <- S7::S7_inherits(g, PlotSpec)
+  if (is_plot) {
+    g <- .inherit_sparkline_geom(g)
+  }
   for (i in seq_len(n)) {
     pos <- .xy_units(scales, xn[i], yn[i])
     scene <- vellum::push(
@@ -485,6 +493,25 @@ NULL
     scene <- vellum::pop(scene)
   }
   scene
+}
+
+# A sparkline drawn inside another plot (`annotate("sparkline")`) has no
+# background of its own, so unless its theme sets default mark colours it takes
+# the host plot's (`.mark_ctx$geom`): a sparkline on a dark theme is drawn in
+# that theme's ink. Any other inset plot keeps its own theme.
+.inherit_sparkline_geom <- function(g) {
+  host <- .mark_ctx$geom
+  marks <- vapply(g@layers, function(l) l@mark, character(1))
+  if (
+    is.null(host) ||
+      !length(marks) ||
+      !all(marks == "sparkline") ||
+      !is.null(.theme_geom(g@theme))
+  ) {
+    return(g)
+  }
+  g@theme[["geom"]] <- do.call(element_geom, host)
+  g
 }
 
 # Polygons (`mark_polygon()`): one filled shape per series group, vertices in
