@@ -4,6 +4,18 @@
 
 ### Behaviour changes
 
+- **Behaviour change:** a layer is now grouped by the interaction of all
+  its discrete `color`, `fill`, `pattern`, `linetype` and `shape`
+  mappings, as ggplot2 groups by every discrete aesthetic. Before, only
+  the first of them formed the groups, so
+  `mark_bar(fill = gear, color = am)` counted by `am` alone and dropped
+  `fill` with a warning, and dodges, stacks and stats (densities, fits,
+  boxplots) missed the other split. Now each (gear, am) pair is its own
+  bar, box, curve or fit, ordered by the first aesthetic, then the next.
+  [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  also draws a mapped `linetype`. A layer with a single discrete
+  aesthetic (or one variable on several) groups as before (VP-52).
+
 - **Behaviour change:** `scale_*_binned()` now bins like ggplot2 by
   default (`style = "extended"`): about `n` “nice” class boundaries
   inside the data range, the outer classes widened to whole bins,
@@ -129,6 +141,23 @@
   a top / bottom legend (VP-45).
 
 ### Bug fixes
+
+- An aligned composition
+  ([`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`wrap_plots()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  of single-panel plots) now keeps the theme’s `plot.margin` around the
+  figure, as a single plot does. Before, the first row’s panels touched
+  the top edge and the last column’s the right edge (VP-50).
+
+- Element keys no longer collide between the cells of a composition when
+  a cell is faceted (or otherwise drawn as a whole plot rather than
+  aligned). Such a cell names its panels `panel-r-c` like a lone plot,
+  so two faceted cells both keyed marks `"panel-1-1:3"` and hovering or
+  brushing one cell lit up the other. Their keys now start with the cell
+  id (`"cell-2:panel-1-1:3"`), with the unprefixed row kept as the
+  `join` id, as aligned cells’ keys start with `subplot-N`. Lone plots
+  are unchanged (VP-51).
 
 - ggplot2 plots no longer break when vellumplot is attached after
   ggplot2. ggplot2 looks default scales
