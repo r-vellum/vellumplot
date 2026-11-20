@@ -454,6 +454,92 @@ NULL
   ) {
     return(NULL)
   }
+  ctx <- list(
+    tt = tt,
+    hg = hg,
+    hc = hc,
+    sc = sc,
+    esrc = esrc,
+    etgt = etgt,
+    lg = lg,
+    fv = fv,
+    cond_tags = cond_tags,
+    cond_rowvals = cond_rowvals,
+    filt_tags = filt_tags,
+    join = join,
+    iv = iv
+  )
+  if (is.null(iv) && is.null(cond_rowvals)) {
+    .elem_meta_cols(rows, ctx)
+  } else {
+    .elem_meta_rows(rows, ctx)
+  }
+}
+
+# `.elem_meta()` built column-wise (VR-16): each field's per-row values at
+# once, then one record per row. A big scatter has a record per point, and the
+# per-row closure below was a large share of compiling it. Same records as
+# `.elem_meta_rows()` (fields in the same order, a NULL value leaves its field
+# out); used when no field varies in shape per row (no interval values, no
+# per-row condition values).
+.elem_meta_cols <- function(rows, ctx) {
+  n <- length(rows)
+  chr <- function(v) {
+    if (is.atomic(v)) as.list(as.character(v[rows])) else lapply(v[rows], as.character)
+  }
+  raw <- function(v) {
+    if (is.list(v) && !is.object(v)) {
+      v[rows]
+    } else if (is.atomic(v) && !is.object(v)) {
+      as.list(v[rows])
+    } else {
+      lapply(rows, function(i) v[[i]])
+    }
+  }
+  cols <- list()
+  if (!is.null(ctx$tt)) cols$tooltip <- chr(ctx$tt)
+  if (!is.null(ctx$hg)) cols$hover_group <- chr(ctx$hg)
+  if (!is.null(ctx$hc)) cols$hover_color <- chr(ctx$hc)
+  if (!is.null(ctx$sc)) cols$selected_color <- chr(ctx$sc)
+  if (!is.null(ctx$esrc)) cols$source <- chr(ctx$esrc)
+  if (!is.null(ctx$etgt)) cols$target <- chr(ctx$etgt)
+  if (!is.null(ctx$lg)) cols$legend <- raw(ctx$lg)
+  if (!is.null(ctx$fv)) cols$filter_value <- raw(ctx$fv)
+  if (!is.null(ctx$cond_tags)) cols$cond <- rep(list(ctx$cond_tags), n)
+  if (!is.null(ctx$filt_tags)) cols$filt <- rep(list(ctx$filt_tags), n)
+  if (!is.null(ctx$join)) cols$join <- chr(ctx$join)
+  recs <- .mapply(list, cols, NULL)
+  # A NULL value (`rec$legend <- NULL`) leaves the field out of that record.
+  nul <- Reduce(
+    `|`,
+    lapply(cols[c("legend", "filter_value")], function(l) {
+      if (is.null(l)) logical(n) else vapply(l, is.null, logical(1))
+    })
+  )
+  if (any(nul)) {
+    recs[nul] <- lapply(recs[nul], function(r) {
+      r <- r[!vapply(r, is.null, logical(1))]
+      if (length(r)) r else list()
+    })
+  }
+  recs
+}
+
+# The per-row build of `.elem_meta()`, for the fields whose shape varies by row.
+.elem_meta_rows <- function(rows, ctx) {
+  tt <- ctx$tt
+  hg <- ctx$hg
+  hc <- ctx$hc
+  sc <- ctx$sc
+  esrc <- ctx$esrc
+  etgt <- ctx$etgt
+  lg <- ctx$lg
+  fv <- ctx$fv
+  cond_tags <- ctx$cond_tags
+  cond_rowvals <- ctx$cond_rowvals
+  filt_tags <- ctx$filt_tags
+  join <- ctx$join
+  iv <- ctx$iv
   lapply(rows, function(i) {
     rec <- list()
     if (!is.null(tt)) {
@@ -544,9 +630,12 @@ NULL
   if (!length(cols)) {
     return(NULL)
   }
-  lapply(seq_len(n), function(i) {
-    unname(vapply(cols, function(v) v[[i]], character(1)))
-  })
+  # One series key per aesthetic per element, without a closure per element.
+  cols <- unname(cols)
+  if (length(cols) == 1L) {
+    return(as.list(cols[[1L]]))
+  }
+  .mapply(c, cols, NULL)
 }
 
 # The [xscale, yscale] a blend/effect wrapper viewport carries so native

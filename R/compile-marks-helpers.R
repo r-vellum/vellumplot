@@ -339,8 +339,11 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # string is taken to be a `d` already. `svg_grob()` (vellum) parses the `d`;
 # vellumplot only does the four lines of xml2 for the file case.
 .shape_svg_d <- function(shape) {
-  vapply(
-    as.character(shape),
+  # Resolved once per distinct shape, then mapped back (one per point otherwise).
+  shape <- as.character(shape)
+  u <- unique(shape)
+  d <- vapply(
+    u,
     function(s) {
       if (is.na(s) || s %in% .BUILTIN_SHAPES) {
         return(NA_character_)
@@ -365,6 +368,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     character(1),
     USE.NAMES = FALSE
   )
+  d[match(shape, u)]
 }
 
 # Resolve a layer's opacity: a mapped alpha channel (via the trained alpha
