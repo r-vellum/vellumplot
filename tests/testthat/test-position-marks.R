@@ -411,3 +411,68 @@ test_that("position_dodge() checks `preserve`", {
   expect_identical(position_dodge()$dodge_preserve, "total")
   expect_error(position_dodge(preserve = "all"), "preserve")
 })
+
+# VP-63: ggplot2 counts preserve = "single" groups over the whole layer.
+# Native (data-unit) xmin / xmax of a faceted plot's rects, per panel.
+facet_rects <- function(p) {
+  m <- vellum::scene_model(as_vellum_scene(p))
+  e <- m$elements
+  e <- e[!is.na(e$id) & startsWith(e$id, "layer-1") & e$mark == "rect", ]
+  do.call(rbind, lapply(split(e, e$panel), function(r) {
+    pn <- m$panels[m$panels$name == r$panel[1], ]
+    f <- function(px) {
+      pn$xscale_lo + (px - pn$x0) / (pn$x1 - pn$x0) * (pn$xscale_hi - pn$xscale_lo)
+    }
+    data.frame(panel = r$panel, xmin = round(f(r$x0), 4), xmax = round(f(r$x1), 4))
+  }))
+}
+
+test_that("preserve = 'single' sizes slots from the fullest x of every panel", {
+  d <- dodge_cars()
+  d$vs <- factor(d$vs)
+  p <- vplot(d) |>
+    mark_bar(x = cyl, fill = gear, position = position_dodge(preserve = "single")) |>
+    facet_wrap(~vs)
+  r <- facet_rects(p)
+  # vs = 1 has three gears at cyl 4, so every bar in both panels is 0.9 / 3
+  expect_equal(unique(round(r$xmax - r$xmin, 4)), 0.3)
+  # panel 1 (vs = 0): cyl 6 holds gears 4 and 5, packed from the left
+  p1 <- r[r$panel == "panel-1-1", ]
+  expect_equal(sort(p1$xmin), c(0.55, 1.55, 1.85, 2.55, 2.85))
+  skip_if_not_installed("ggplot2")
+  ld <- ggplot2::layer_data(
+    ggplot2::ggplot(d, ggplot2::aes(cyl, fill = gear)) +
+      ggplot2::geom_bar(position = ggplot2::position_dodge(preserve = "single")) +
+      ggplot2::facet_wrap(~vs)
+  )
+  g <- ld[order(ld$PANEL, ld$xmin), c("xmin", "xmax")]
+  v <- r[order(r$panel, r$xmin), c("xmin", "xmax")]
+  expect_equal(v, g, ignore_attr = TRUE)
+})
+
+test_that("jitterdodge jitters 0.4 * resolution / (groups + 2), not vertically", {
+  set.seed(3)
+  n <- 600
+  d <- data.frame(
+    x = factor(sample(c("a", "b", "c"), n, TRUE)),
+    g = factor(sample(c("p", "q", "r"), n, TRUE)),
+    y = round(runif(n) * 10)
+  )
+  p <- vplot(d) |> mark_point(x = x, y = y, color = g, position = "jitterdodge")
+  m <- vellum::scene_model(as_vellum_scene(p))
+  e <- m$elements
+  e <- e[!is.na(e$id) & startsWith(e$id, "layer-1") & e$mark == "point", ]
+  pn <- m$panels[m$panels$name == "panel-1-1", ]
+  fx <- function(px) {
+    pn$xscale_lo + (px - pn$x0) / (pn$x1 - pn$x0) * (pn$xscale_hi - pn$xscale_lo)
+  }
+  # distance from the nearest dodged slot centre (3 slots of 0.25 per x)
+  x <- fx(e$x)
+  base <- round(x)
+  centre <- base + (floor((x - base + 0.375) / 0.25) + 0.5) * 0.25 - 0.375
+  amp <- max(abs(x - centre))
+  expect_lte(amp, 0.4 / 5 + 1e-6)
+  expect_gt(amp, 0.4 / 5 * 0.9)
+  # no vertical jitter: every point keeps its data row's height
+  expect_identical(length(unique(round(e$y, 3))), length(unique(d$y)))
+})

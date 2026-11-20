@@ -866,6 +866,19 @@ NULL
   }
 }
 
+# A graph edge's endpoints name the node keys it joins; when a composition
+# prefixes this cell's keys, prefix the endpoints alike so they still match
+# (VP-63).
+.prefix_edge_ends <- function(prefix) {
+  for (k in c("edge_source", "edge_target")) {
+    v <- .mark_ctx[[k]]
+    if (!is.null(v)) {
+      assign(k, paste0(prefix, ":", v), envir = .mark_ctx)
+    }
+  }
+  invisible()
+}
+
 .compile_marks <- function(
   scene,
   resolved,
@@ -975,12 +988,27 @@ NULL
     .mark_ctx$edge_target <- NULL
     gi <- L$graph_identity
     if (isTRUE(.mark_ctx$plot_interactive) && !is.null(gi)) {
-      .mark_ctx$data_id <- gi$key
+      # A faceted graph draws a layer the facet variable does not split (the
+      # edges, for a vertex facet) in every panel, so the vertex-name keys
+      # repeat. Key each panel's copy uniquely ("p1-2:v1"), its edges'
+      # endpoints with the same prefix so neighbours still link within the
+      # panel, and keep the bare name as `join`, the cross-panel identity, as
+      # facet default keys do (VP-63).
+      pfx <- ""
       default_join <- NULL
+      if (
+        isTRUE(.mark_ctx$faceted) &&
+          !is.na(.mark_ctx$panel) &&
+          startsWith(.mark_ctx$panel, "panel-")
+      ) {
+        pfx <- paste0("p", sub("^panel-", "", .mark_ctx$panel), ":")
+        default_join <- gi$key
+      }
+      .mark_ctx$data_id <- paste0(pfx, gi$key)
       default_cross <- NULL
       if (identical(gi$kind, "edges")) {
-        .mark_ctx$edge_source <- gi$source
-        .mark_ctx$edge_target <- gi$target
+        .mark_ctx$edge_source <- paste0(pfx, gi$source)
+        .mark_ctx$edge_target <- paste0(pfx, gi$target)
       } else if (is.null(.mark_ctx$tooltip)) {
         .mark_ctx$tooltip <- gi$key
       }
@@ -1016,6 +1044,7 @@ NULL
         default_cross %||%
         .mark_ctx$data_id
       .mark_ctx$data_id <- paste0(.mark_ctx$panel, ":", .mark_ctx$data_id)
+      .prefix_edge_ends(.mark_ctx$panel)
     }
     # A composition cell drawn as a whole plot (faceted, or otherwise not
     # aligned) names its panels `panel-r-c` like a lone plot, so its keys
@@ -1034,6 +1063,7 @@ NULL
         default_cross %||%
         .mark_ctx$data_id
       .mark_ctx$data_id <- paste0(cell, ":", .mark_ctx$data_id)
+      .prefix_edge_ends(cell)
     }
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {

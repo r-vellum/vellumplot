@@ -37,7 +37,13 @@ NULL
     gch <- as.character(g)
     glevs <- .cat_levels(g)
     if (dodge) {
-      d <- .dodge_offsets(cchar, g, span, preserve = .dodge_preserve(L))
+      d <- .dodge_offsets(
+        cchar,
+        g,
+        span,
+        preserve = .dodge_preserve(L),
+        n_single = L$dodge_n
+      )
     }
   }
   # dodge2 (the default) leaves a gap between neighbours; position_dodge()

@@ -30,7 +30,9 @@ NULL
 #'   splits the band between them with a `padding` gap — so ragged groupings
 #'   stay centred and evenly spaced.
 #' * `position_jitterdodge()` dodges grouped elements, then jitters within each
-#'   dodged slot (points over dodged boxes).
+#'   dodged slot (points over dodged boxes). As in ggplot2, the default
+#'   `jitter.width` is 40% of the resolution divided by (the most groups at
+#'   any x, over every facet panel, + 2), and there is no vertical jitter.
 #' * `position_stack()` / `position_fill()` stack grouped elements sharing an
 #'   x (`fill` normalises each stack to 1). Bars and areas take the stacked
 #'   span; a point, text or label moves to a height inside its span: `vjust = 1`
@@ -51,7 +53,8 @@ NULL
 #'   of the element width.
 #' @param preserve `position_dodge()`: `"total"` splits the dodge width
 #'   between the groups present at each x; `"single"` gives each element the
-#'   width of one group at the x with the most groups.
+#'   width of one group at the x with the most groups, counted over the whole
+#'   layer (every facet panel), as in ggplot2.
 #' @param seed Optional integer seed for the random jitter.
 #' @param vjust `position_stack()` / `position_fill()`: where a point, text or
 #'   label sits inside its stacked span, from `0` (bottom) to `1` (top).

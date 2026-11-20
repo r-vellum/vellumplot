@@ -236,3 +236,46 @@ test_that("annotate() layers stay unkeyed under a plot-level selection", {
   expect_identical(unique(el$mark), "point")
   expect_identical(el$key, paste0("p1-1:l1:", seq_len(nrow(mtcars))))
 })
+
+# VP-63: a faceted graph keys each panel's copy of a node / edge uniquely, its
+# edge endpoints with the same prefix, and keeps the vertex name as `join`.
+test_that("faceted graph keys are unique per panel and still link", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(6)
+  igraph::V(g)$name <- paste0("v", 1:6)
+  igraph::V(g)$grp <- rep(c("a", "b"), 3)
+  p <- vgraph(g) |>
+    mark_edges() |>
+    mark_nodes(size = 3) |>
+    select_neighbours() |>
+    facet_wrap(~grp)
+  el <- vellum::scene_model(as_vellum_scene(p))$elements
+  keyed <- el[!is.na(el$key), ]
+  expect_false(anyDuplicated(keyed$key) > 0)
+  pts <- keyed[keyed$mark == "point", ]
+  expect_true(all(grepl("^p1-[12]:v[1-6]$", pts$key)))
+  seg <- keyed[keyed$mark == "segment", ]
+  src <- vapply(seg$meta, function(m) m$source %||% NA_character_, "")
+  # each edge's endpoints carry its own panel's prefix
+  expect_identical(sub(":.*", "", src), sub(":.*", "", seg$key))
+  joins <- vapply(pts$meta, function(m) m$join %||% NA_character_, "")
+  expect_identical(joins, sub("^p1-[12]:", "", pts$key))
+  # an unfaceted graph keeps the bare vertex names
+  q <- vgraph(g) |> mark_edges() |> mark_nodes() |> select_neighbours()
+  el <- vellum::scene_model(as_vellum_scene(q))$elements
+  expect_setequal(el$key[!is.na(el$key) & el$mark == "point"], paste0("v", 1:6))
+})
+
+test_that("a composition prefixes graph edge endpoints like its node keys", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(4)
+  igraph::V(g)$name <- paste0("v", 1:4)
+  p <- vgraph(g) |> mark_edges() |> mark_nodes() |> select_neighbours()
+  el <- vellum::scene_model(as_vellum_scene(hconcat(p, p)))$elements
+  pts <- el[!is.na(el$key) & el$mark == "point", ]
+  seg <- el[!is.na(el$key) & el$mark == "segment", ]
+  src <- vapply(seg$meta, function(m) m$source %||% NA_character_, "")
+  tgt <- vapply(seg$meta, function(m) m$target %||% NA_character_, "")
+  expect_true(all(c(src, tgt) %in% pts$key))
+  expect_true(all(startsWith(src, "subplot-")))
+})

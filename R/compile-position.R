@@ -127,7 +127,10 @@ NULL
 # and gives each a wider slot. `preserve = "single"` gives every slot the width
 # of one group at the fullest category (`n` groups), packing a sparser
 # category's groups from the left: `(rank - 0.5) / n - 0.5` of the span.
-.dodge_offsets <- function(x, grp, span, preserve = "total") {
+# ggplot2 takes that `n` over the whole layer, every facet panel included, not
+# just the categories drawn here: pass it as `n` (`L$dodge_n`, see
+# `.share_dodge_n()`) so every panel's slots are equally wide (VP-63).
+.dodge_offsets <- function(x, grp, span, preserve = "total", n_single = NULL) {
   n <- length(x)
   if (is.null(grp) || !n) {
     return(list(offset = rep(0, n), share = rep(1, n)))
@@ -144,7 +147,7 @@ NULL
     k[rows] <- length(present)
   }
   if (identical(preserve, "single")) {
-    k[] <- max(k)
+    k[] <- max(k, n_single)
   }
   list(offset = ((r - 0.5) / k - 0.5) * span, share = 1 / k)
 }
@@ -162,6 +165,72 @@ NULL
   } else {
     "total"
   }
+}
+
+# The category axis a dodged layer is dodged along: y for a horizontal box
+# plot / violin / slab-interval or range mark, else x.
+.dodge_axis <- function(L) {
+  if (L$mark %in% c("boxplot", "violin", "halfeye", "interval")) {
+    .dist_axes(.dist_orient(L))[["cat"]]
+  } else if (
+    L$mark %in% c("errorbar", "linerange", "pointrange") &&
+      identical(.range_orient(L), "y")
+  ) {
+    "y"
+  } else {
+    "x"
+  }
+}
+
+# The most groups a layer has at any one category of its dodge axis (0 for an
+# empty layer, 1 for an ungrouped one).
+.dodge_cell_max <- function(L) {
+  if (!L$n) {
+    return(0L)
+  }
+  g <- .group_key(L)
+  x <- L$values[[.dodge_axis(L)]]
+  if (is.null(g) || is.null(x)) {
+    return(1L)
+  }
+  x <- as.character(rep_len(x, L$n))
+  pair <- !duplicated(data.frame(x = x, g = as.character(g)))
+  max(tabulate(match(x[pair], unique(x[pair]))))
+}
+
+# ggplot2 sizes a `position_dodge(preserve = "single")` layer's slots, and a
+# `position_jitterdodge()` layer's jitter, from the most groups at any (PANEL,
+# x) of the *whole* layer. Facet panels are resolved one by one, so count that
+# here, over every panel's copy of each such layer, and give each copy the
+# shared count as `L$dodge_n` (VP-63).
+.share_dodge_n <- function(panels) {
+  if (!length(panels)) {
+    return(panels)
+  }
+  nl <- length(panels[[1]]$resolved)
+  same <- vapply(panels, function(p) length(p$resolved) == nl, logical(1))
+  if (!nl || !all(same)) {
+    return(panels)
+  }
+  for (j in seq_len(nl)) {
+    L1 <- panels[[1]]$resolved[[j]]
+    pos <- L1$position %||% "identity"
+    if (
+      !identical(pos, "jitterdodge") &&
+        !(identical(pos, "dodge") && identical(.dodge_preserve(L1), "single"))
+    ) {
+      next
+    }
+    n <- max(vapply(
+      panels,
+      function(p) as.integer(.dodge_cell_max(p$resolved[[j]])),
+      integer(1)
+    ))
+    for (i in seq_along(panels)) {
+      panels[[i]]$resolved[[j]]$dodge_n <- n
+    }
+  }
+  panels
 }
 
 # The x- / y-family aesthetics a position shift moves together.
@@ -223,7 +292,8 @@ NULL
       xn,
       .group_key(L),
       L$stat_params$dodge_width %||% (.DODGE_WIDTH * band),
-      preserve = .dodge_preserve(L)
+      preserve = .dodge_preserve(L),
+      n_single = L$dodge_n
     )
     off <- d$offset
     if (L$mark %in% c("errorbar", "crossbar")) {
