@@ -221,3 +221,17 @@ test_that("a faceted plot with panel legends still composes", {
   expect_no_error(vellum::as_vellum_scene(hconcat(a, b)))
   expect_no_error(vellum::as_vellum_scene(hconcat(b, b, guides = "keep")))
 })
+
+test_that("a layout built outside a render measures legends at the theme size", {
+  # an unthemed plot's NULL @theme resolves the default theme, so legend text
+  # has a size and a finite, positive width (VR-15: it was measured at no size)
+  rt <- vellumplot:::.resolve_theme(NULL)
+  expect_identical(rt, vellumplot:::.resolve_theme(vellumplot:::.theme_default()))
+  m <- vellumplot:::.legend_metrics(rt)
+  expect_true(is.numeric(m$text_fs) && m$text_fs > 0)
+  w <- vellum::vl_convert(
+    vellumplot:::.legend_width(pl_layout(pl_wrap)$panel_legends$guides[[1]], rt),
+    "mm"
+  )
+  expect_true(is.finite(w) && w > 0 && w < 100)
+})

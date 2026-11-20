@@ -171,8 +171,12 @@ NULL
 }
 
 # Flatten a complete theme into a resolved element per drawn leaf, plus the
-# scalar settings (filled from defaults).
+# scalar settings (filled from defaults). A plot with no theme of its own (a
+# NULL `@theme`) resolves the default theme, as a render does (`.theme_of()`):
+# resolving NULL left every element's size NULL, and a layout built from it
+# measured text at no size at all (VR-15).
 .resolve_theme <- function(theme) {
+  theme <- theme %||% .theme_default()
   cache <- new.env(parent = emptyenv())
   out <- list()
   for (slot in .DRAWN_LEAVES) {
