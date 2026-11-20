@@ -64,6 +64,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.15.1.9000" id="vellumplot-01519000-development-version">vellumplot 0.15.1.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01519000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="behaviour-changes-0-15-1-9000">Behaviour changes<a class="anchor" aria-label="anchor" href="#behaviour-changes-0-15-1-9000"></a></h3>
+<ul><li>
+<strong>Behaviour change:</strong> <code>position = "dodge"</code> now splits the width at each x between the groups present there, as ggplot2’s <code><a href="../reference/position.html">position_dodge()</a></code> does. Before, every x kept a slot for every group, so <code>mark_bar(x = factor(cyl), fill = factor(gear), position = "dodge")</code> left a gap for the missing gear-4 bar at <code>cyl = 8</code>; now that x shows two wider bars, centred. The default dodge width is now the bar width (90% of the band) instead of the whole band, so dodged bars touch, and a dodged box plot no longer leaves a gap between its boxes, both as in ggplot2. <code>position_dodge(preserve = "single")</code> keeps every element one group wide. Points now dodge with <code>position = "dodge"</code> too; before they were drawn undodged (VP-56).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.15.1" id="vellumplot-0151">vellumplot 0.15.1<a class="anchor" aria-label="anchor" href="#vellumplot-0151"></a></h2>

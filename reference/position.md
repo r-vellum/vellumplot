@@ -12,7 +12,7 @@ position_nudge(x = 0, y = 0)
 
 position_jitter(width = NULL, height = NULL, seed = NULL)
 
-position_dodge(width = NULL)
+position_dodge(width = NULL, preserve = c("total", "single"))
 
 position_dodge2(padding = 0.1)
 
@@ -45,6 +45,12 @@ position_jitterdodge(
 
   Optional integer seed for the random jitter.
 
+- preserve:
+
+  `position_dodge()`: `"total"` splits the dodge width between the
+  groups present at each x; `"single"` gives each element the width of
+  one group at the x with the most groups.
+
 - padding:
 
   `position_dodge2()` gap between dodged elements, as a fraction of the
@@ -74,8 +80,11 @@ A `vellumplot_position` object for a mark's `position` argument.
   `seed` makes it reproducible.
 
 - `position_dodge()` places grouped elements side by side; `width` is
-  the total data-space width shared by the group (default: the category
-  band).
+  the total data-space width shared by the groups at one x (default: the
+  bar width, 90% of the category band). As in ggplot2, only the groups
+  present at an x share it: with `preserve = "total"` (the default) an x
+  with fewer groups gets wider elements, while `preserve = "single"`
+  keeps every element as wide as one group at the fullest x.
 
 - `position_dodge2()` dodges by the groups actually present at each x
   and splits the band between them with a `padding` gap — so ragged
