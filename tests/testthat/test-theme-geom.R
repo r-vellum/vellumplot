@@ -160,3 +160,58 @@ test_that(".col_mix() matches ggplot2's col_mix()", {
   expect_identical(vellumplot:::.col_mix("black", "white", 0), "black")
   expect_identical(vellumplot:::.col_mix("black", "white", 1), "white")
 })
+
+# VP-60: areas, ribbons, densities, tiles and rasters fill with ggplot2's
+# col_mix(ink, paper, 0.2), not grey50 (theme_dark's panel colour).
+vp60_df <- data.frame(x = 1:5, y = c(1, 3, 2, 4, 3))
+vp60_grid <- expand.grid(x = 1:3, y = 1:3)
+vp60_plots <- list(
+  area = vplot(vp60_df) |> mark_area(x = x, y = y),
+  ribbon = vplot(vp60_df) |> mark_ribbon(x = x, ymin = y - 1, ymax = y + 1),
+  density = vplot(mtcars) |> mark_density(x = mpg),
+  tile = vplot(vp60_grid) |> mark_tile(x = x, y = y)
+)
+
+test_that("unmapped bands and tiles fill with col_mix(ink, paper, 0.2)", {
+  for (nm in names(vp60_plots)) {
+    p <- vp60_plots[[nm]]
+    expect_identical(geom_paints(p)$fill, "grey20", info = nm)
+    # theme_dark keeps black ink, so the fill stays clear of its grey50 panel
+    expect_identical(geom_paints(theme_dark(p))$fill, "grey20", info = nm)
+    expect_identical(
+      geom_paints(theme_cyberpunk(p))$fill,
+      tolower(vellumplot:::.col_mix(cp_ink, cp_paper, 0.2)),
+      info = nm
+    )
+  }
+  ras <- vplot(vp60_grid) |> mark_raster(x = x, y = y)
+  ras_vals <- unlist(vellum::as_scene_spec(vellum::as_vellum_scene(ras)))
+  expect_true("grey20" %in% ras_vals)
+  expect_false("grey50" %in% ras_vals)
+})
+
+test_that("default band and tile fills match ggplot2's layer_data()", {
+  skip_if_not_installed("ggplot2", "4.0.0")
+  hex <- function(x) {
+    m <- grDevices::col2rgb(x)
+    sprintf("#%02X%02X%02X", m[1], m[2], m[3])
+  }
+  gg <- list(
+    area = ggplot2::geom_area(ggplot2::aes(x, y), data = vp60_df),
+    ribbon = ggplot2::geom_ribbon(
+      ggplot2::aes(x, ymin = y - 1, ymax = y + 1),
+      data = vp60_df
+    ),
+    tile = ggplot2::geom_tile(ggplot2::aes(x, y), data = vp60_grid)
+  )
+  for (nm in names(gg)) {
+    for (th in list(ggplot2::theme_grey(), ggplot2::theme_dark())) {
+      ld <- ggplot2::layer_data(ggplot2::ggplot() + gg[[nm]] + th)
+      expect_identical(
+        hex(unique(ld$fill)),
+        hex(geom_paints(vp60_plots[[nm]])$fill),
+        info = nm
+      )
+    }
+  }
+})

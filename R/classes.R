@@ -45,13 +45,14 @@ GlowSpec <- S7::new_class(
 # An outline / halo effect: one opaque, wider copy of a stroked/point mark drawn
 # beneath the crisp original in a contrasting `color`, so the mark reads clearly
 # over a busy or dark backdrop. `size` is the halo width per side, in mm.
+# `color` NULL is the theme's paper (white on a light theme).
 OutlineSpec <- S7::new_class(
   "OutlineSpec",
   package = "vellumplot",
   parent = Effect,
   properties = list(
     size = S7::new_property(S7::class_double, default = 1),
-    color = S7::new_property(S7::class_character, default = "white"),
+    color = S7::new_property(S7::class_any, default = NULL),
     alpha = S7::new_property(S7::class_double, default = 1)
   )
 )

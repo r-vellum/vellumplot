@@ -4,12 +4,14 @@
 \alias{outline}
 \title{Outline (halo) layer effect}
 \usage{
-outline(size = 1, color = "white", alpha = 1)
+outline(size = 1, color = NULL, alpha = 1)
 }
 \arguments{
 \item{size}{Halo width per side, in millimetres.}
 
-\item{color}{Outline colour.}
+\item{color}{Outline colour. \code{NULL} (the default) is the theme's paper
+colour (\code{\link[=element_geom]{element_geom()}}): white on a light theme, the dark canvas on a
+dark one such as \code{\link[=theme_cyberpunk]{theme_cyberpunk()}}.}
 
 \item{alpha}{Outline opacity.}
 }

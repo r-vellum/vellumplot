@@ -1461,7 +1461,9 @@ mark_datashade <- function(
 #' continuous `fill`, `color` or `alpha` must therefore be constant within each
 #' series; one that varies along a series is an error. A `color` given
 #' alongside a `fill` outlines the band: an area along its top, a ribbon along
-#' both edges. A `color` alone fills it.
+#' both edges. A `color` alone fills it. With neither, an area or ribbon fills
+#' with ggplot2's default, `col_mix(ink, paper, 0.2)` from the theme's
+#' [element_geom()] (`"grey20"` on a light theme).
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
@@ -1915,7 +1917,11 @@ mark_text_path <- function(
 #' colours each cell by count. `mark_density()` draws a 1-D kernel density of `x`
 #' as a filled curve. On all of them a `color` given alongside a `fill` (or the
 #' default count fill of `mark_bin2d()` / `mark_hex()`) outlines the shapes; a
-#' `color` alone fills them.
+#' `color` alone fills them. Unmapped, tiles, rasters and densities fill with
+#' `col_mix(ink, paper, 0.2)` from the theme's [element_geom()] (`"grey20"` on
+#' a light theme), the fill of ggplot2's `geom_tile()` and `geom_area()`. (ggplot2's
+#' `geom_density()` draws an unfilled outline; `mark_density()` keeps its filled
+#' curve, filled like an area.)
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `fill` for tile/raster; `x`, `y`
@@ -3528,7 +3534,9 @@ mark_path <- function(
 #'   `mark_node_text()`/`mark_edge_text()`.
 #' @param fill,color,alpha Convenience aesthetics; a constant or a mapped
 #'   expression. For nodes, `fill` (or `color`) is the marker colour; for
-#'   `mark_edges()`, `color`/`alpha` map through the edge scales.
+#'   `mark_edges()`, `color`/`alpha` map through the edge scales. For
+#'   `mark_node_pie()`, `color` is the wedge border: `NULL` (the default) is
+#'   the theme's paper colour, white on a light theme.
 #' @param linewidth For `mark_edges()`, the edge width; a constant or (via
 #'   [scale_edge_width()]) a mapped expression such as `linewidth = weight`. For
 #'   `mark_node_pie()`, the wedge border width.
@@ -4078,7 +4086,7 @@ mark_node_pie <- function(
   size = 4,
   inner = 0,
   fill = NULL,
-  color = "white",
+  color = NULL,
   linewidth = 0.5,
   alpha = NA,
   data = NULL

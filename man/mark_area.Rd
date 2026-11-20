@@ -93,7 +93,9 @@ level of a discrete \code{fill}/\code{color}), and a polygon has a single fill. 
 continuous \code{fill}, \code{color} or \code{alpha} must therefore be constant within each
 series; one that varies along a series is an error. A \code{color} given
 alongside a \code{fill} outlines the band: an area along its top, a ribbon along
-both edges. A \code{color} alone fills it.
+both edges. A \code{color} alone fills it. With neither, an area or ribbon fills
+with ggplot2's default, \code{col_mix(ink, paper, 0.2)} from the theme's
+\code{\link[=element_geom]{element_geom()}} (\code{"grey20"} on a light theme).
 }
 \examples{
 vplot(pressure) |> mark_area(x = temperature, y = pressure)

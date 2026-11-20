@@ -127,6 +127,11 @@ NULL
     padding = p$padding,
     max_shift = p$max_shift
   )
+  # The leaders are drawn after the plot's draw, so point the default-colour
+  # lookup at the plot's theme again (its grey follows a dark theme's ink).
+  old_geom <- .mark_ctx$geom
+  on.exit(assign("geom", old_geom, envir = .mark_ctx), add = TRUE)
+  .set_geom_ctx(.theme_of(spec))
   .repel_leaders(scene, sol, moved, spec@dpi, spec@height, p$min_seg)
 }
 
@@ -239,7 +244,7 @@ NULL
       vellum::vl_unit(y2mm(ay[keep]), "mm"),
       vellum::vl_unit(x2mm(edge$x), "mm"),
       vellum::vl_unit(y2mm(edge$y), "mm"),
-      gp = vellum::vl_gpar(col = "grey50", lwd = 0.4)
+      gp = vellum::vl_gpar(col = .geom_paint("grey50", "neutral"), lwd = 0.4)
     )
   )
 }

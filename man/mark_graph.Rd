@@ -134,7 +134,7 @@ mark_node_pie(
   size = 4,
   inner = 0,
   fill = NULL,
-  color = "white",
+  color = NULL,
   linewidth = 0.5,
   alpha = NA,
   data = NULL
@@ -234,7 +234,9 @@ a mapped expression. \code{size} is also the label font size for
 
 \item{fill, color, alpha}{Convenience aesthetics; a constant or a mapped
 expression. For nodes, \code{fill} (or \code{color}) is the marker colour; for
-\code{mark_edges()}, \code{color}/\code{alpha} map through the edge scales.}
+\code{mark_edges()}, \code{color}/\code{alpha} map through the edge scales. For
+\code{mark_node_pie()}, \code{color} is the wedge border: \code{NULL} (the default) is
+the theme's paper colour, white on a light theme.}
 
 \item{label}{For \code{mark_node_text()}, the label expression (default the vertex
 \code{name}); for \code{mark_edge_text()}, the edge label expression (no default -- map

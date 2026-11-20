@@ -2,6 +2,16 @@
 
 ## Behaviour changes
 
+* **Behaviour change:** an unmapped `mark_area()`, `mark_ribbon()`,
+  `mark_density()`, `mark_tile()` or `mark_raster()` now fills with ggplot2's
+  default for areas, ribbons and tiles, `col_mix(ink, paper, 0.2)` from the
+  theme's `element_geom()`: `"grey20"` on a light theme, instead of `"grey50"`.
+  The old grey was the colour of `theme_dark()`'s panel, so a default area or
+  density disappeared into it. Light-theme plots with these marks now draw
+  them darker, matching `ggplot2::layer_data()` on `theme_grey()` and
+  `theme_dark()`. ggplot2's `geom_density()` is unfilled by default;
+  `mark_density()` keeps its filled curve and fills it like an area (VP-60).
+
 * **Behaviour change:** `position = "jitterdodge"` jitters as ggplot2's
   `position_jitterdodge()` does: by default 40% of the resolution divided by
   (the most groups at any x + 2) each way, and not at all vertically. Before,
@@ -11,6 +21,20 @@
   jitter (VP-63).
 
 ## Bug fixes
+
+* More of the colours vellumplot draws on its own now follow a dark theme's
+  `element_geom()` ink, paper and accent, as the mark defaults have since
+  VP-58: legend keys for missing values (`NA`) and the pattern-key border,
+  the nested size legend's leader lines, `vsparkline()` (its line and bars
+  `col_mix(ink, paper, 0.3)`, its highlight dots and win bars the accent),
+  including a sparkline added with `annotate("sparkline")`, `vhierarchy()`
+  (cell borders and the root label; branch shades fade toward the paper), the
+  `vchord()` ring borders and labels, `mark_node_pie()` wedge borders,
+  leader lines to repelled labels, and the `outline()` effect, which now
+  defaults to the paper colour. So `theme_cyberpunk()` no longer draws black
+  chord labels on its black canvas. `vsparkline(color, point_color,
+  win_color)`, `mark_node_pie(color)` and `outline(color)` now default to
+  `NULL` (the theme's colour). Light themes draw exactly as before (VP-61).
 
 * `position_dodge(preserve = "single")` in a faceted plot now sizes every
   panel's bars from the x with the most groups across the whole layer, as
