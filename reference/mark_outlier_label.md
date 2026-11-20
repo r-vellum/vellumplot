@@ -5,7 +5,9 @@ extremes, where the story usually is — instead of every datum. It keeps
 the rows whose `y` is an outlier (per colour/fill group) and labels just
 those, repelled apart with the same solver as
 [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md).
-Layer it over the raw points.
+Layer it over the raw points. A discrete `alpha`, `size` or `linewidth`
+styles the labels without splitting the groups outliers are judged
+within.
 
 ## Usage
 

@@ -80,10 +80,11 @@ mark_bar(
   per-segment widths. Everywhere else `linewidth` is a constant. Every
   mark also takes `group`, which says which rows form one series without
   styling them: `mark_line(x = t, y = y, group = id)` draws one line per
-  `id`. Without it, a discrete `color` (else `fill`) groups; a
-  continuous colour never does, so a line mapped to one stays connected
-  and changes colour along its length. `group = 1` makes the whole layer
-  one group.
+  `id`. Without it, as in ggplot2, the interaction of every discrete
+  `color`, `fill`, `pattern`, `linetype`, `shape`, `alpha`, `size` and
+  `linewidth` mapping groups; a continuous colour never does, so a line
+  mapped to one stays connected and changes colour along its length.
+  `group = 1` makes the whole layer one group.
 
 - size, shape:
 
@@ -232,11 +233,14 @@ by an interactive host without changing what a static render draws:
 
 These are inert for PNG/PDF and for an SVG opened without a JS host: a
 plot with none of them compiles and renders exactly as before. Declaring
-any of them without `data_id` defaults the key to the row index, so the
-element is still addressable. They currently apply to
-`stat = "identity"` marks (points, bars, tiles, segments, edges,
-hexbins, sf features, …); aggregating stats (histogram/count/density)
-drop them, since rows no longer map 1:1 to elements.
+any of them without `data_id` gives the element a default key, so it is
+still addressable. A default key names the panel, the layer and the row
+(`"p1-1:l2:7"`: row 7 of layer 2 in the first panel), so it never
+matches another layer's keys; give two layers the same `data_id` to link
+them. They currently apply to `stat = "identity"` marks (points, bars,
+tiles, segments, edges, hexbins, sf features, …); aggregating stats
+(histogram/count/density) drop them, since rows no longer map 1:1 to
+elements.
 
 How these flow into the vellum scene (the `scene_model()` element table,
 the SVG `data-key` / `data-vellum-*` attributes, and the reserved `meta`

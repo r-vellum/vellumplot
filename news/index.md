@@ -17,6 +17,77 @@
   group wide. Points now dodge with `position = "dodge"` too; before
   they were drawn undodged (VP-56).
 
+- **Behaviour change:** a discrete `alpha`, `size` or `linewidth`
+  mapping now groups a layer too, as ggplot2 groups by every discrete
+  aesthetic. Before, `mark_line(x = wt, y = mpg, alpha = factor(am))`
+  drew one line through all rows; now it draws one per `am` level, and
+  stats (boxplots, densities, fits), stacks and dodges split the same
+  way.
+  [`mark_outlier_label()`](https://r-vellum.github.io/vellumplot/reference/mark_outlier_label.md)
+  still judges outliers within colour / fill groups, so a discrete
+  `alpha` or `size` there styles the labels without splitting the data
+  (VP-57).
+
+- **Behaviour change:** default element keys (for an interactive layer
+  that declares no `data_id`) now always name the panel, the layer and
+  the row, as `"p<row>-<col>:l<layer>:<row>"`: `"p1-1:l2:7"` is row 7 of
+  layer 2 in the first (or only) panel. Composition cells keep their
+  prefix in front (`"subplot-2:p1-1:l1:7"`, `"cell-1:p1-2:l1:7"`).
+  Before, keys were plain row numbers, so two default-keyed layers
+  shared them: in
+  `mark_line(color = g) |> mark_point() |> select_point()` selecting a
+  point also selected the line whose first row had the same number. Keys
+  made for a tooltip-only layer also repeated across facet panels. Both
+  are fixed, and the `"layer-<i>:"` prefix from 0.15.0 is gone (VP-55).
+  Layers no longer link through matching row numbers: to link elements
+  on purpose, give the layers the same `data_id =` (for example
+  `data_id = g` on both the line and the points). The same datum drawn
+  in several facet panels or composition cells still links across them
+  through its `join` id.
+
+### New features
+
+- Themes now set the default colours of unmapped marks, as ggplot2’s
+  [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)
+  does: `theme(geom = element_geom(ink, paper, accent))`. Points, lines,
+  text and error bars use `ink`, bars and areas a mix of `ink` and
+  `paper`, box plot, violin and label backgrounds `paper`, smooths and
+  contours `accent`; `element_geom(colour =, fill =)` override them all.
+  [`theme_cyberpunk()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  sets a light ink, so
+  `vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_cyberpunk()` no
+  longer draws black points on its near-black panel, and legend keys of
+  an unmapped colour follow suit. A
+  [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
+  given its own `ink` / `paper` colours its marks with them. Light
+  themes draw exactly as before; mapped scales and constant `color =` /
+  `fill =` still win.
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)’s
+  `fill` and the `color` / `fill` of
+  [`mark_scalebar()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
+  /
+  [`mark_compass()`](https://r-vellum.github.io/vellumplot/reference/map_decorations.md)
+  now default to the theme’s colours (white / black on light themes)
+  (VP-58).
+
+### Bug fixes
+
+- In an aligned composition
+  ([`wrap_plots()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  `|`, `/`) each sub-plot’s legends now sit on the side their guide asks
+  for (`guide_legend(position = "bottom")` and co.) or, failing that,
+  where the sub-plot’s `theme(legend.position = )` puts them: left,
+  right, above or below its panel, or inside it. Before, every sub-plot
+  legend went to a band on its right. Collected legends
+  (`guides = "collect"`) gather them from every side (VP-59).
+
+- Legends drawn beside each facet panel
+  (`guide_legend(position = "panel")`, the default of an independent
+  scale) are collected into the plot’s legend, titled `"title (panel)"`,
+  when they would leave the panels narrower than 25 mm on the page, with
+  a message saying so. Before, a small page could squeeze the panels to
+  slivers (VP-59).
+
 ## vellumplot 0.15.1
 
 - [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md)

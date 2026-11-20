@@ -144,8 +144,10 @@ set: see <code><a href="scale_linewidth.html">scale_linewidth()</a></code> for t
 it falls back to per-segment widths. Everywhere else <code>linewidth</code> is a constant. Every mark also takes
 <code>group</code>, which says which rows form one series without styling them:
 <code>mark_line(x = t, y = y, group = id)</code> draws one line per <code>id</code>. Without it,
-a discrete <code>color</code> (else <code>fill</code>) groups; a continuous colour never does, so
-a line mapped to one stays connected and changes colour along its length.
+as in ggplot2, the interaction of every discrete <code>color</code>, <code>fill</code>,
+<code>pattern</code>, <code>linetype</code>, <code>shape</code>, <code>alpha</code>, <code>size</code> and <code>linewidth</code> mapping
+groups; a continuous colour never does, so a line mapped to one stays
+connected and changes colour along its length.
 <code>group = 1</code> makes the whole layer one group.</p></dd>
 
 
@@ -262,8 +264,10 @@ column so different marks highlight differently). They override the widget-wide
 theme set by <code>vellumwidget::as_widget(hover_color=, selected_color=)</code>.</p></li>
 </ul><p>These are inert for PNG/PDF and for an SVG opened without a JS host: a plot
 with none of them compiles and renders exactly as before. Declaring any of them
-without <code>data_id</code> defaults the key to the row index, so the element is still
-addressable. They currently apply to <code>stat = "identity"</code> marks (points, bars,
+without <code>data_id</code> gives the element a default key, so it is still
+addressable. A default key names the panel, the layer and the row
+(<code>"p1-1:l2:7"</code>: row 7 of layer 2 in the first panel), so it never matches
+another layer's keys; give two layers the same <code>data_id</code> to link them. They currently apply to <code>stat = "identity"</code> marks (points, bars,
 tiles, segments, edges, hexbins, sf features, …); aggregating stats
 (histogram/count/density) drop them, since rows no longer map 1:1 to elements.</p>
 <p>How these flow into the vellum scene (the <code>scene_model()</code> element table, the

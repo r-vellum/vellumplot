@@ -46,7 +46,10 @@ theme_sketch(
 
 - paper, ink:
 
-  Background and foreground (text/line) colours.
+  Background and foreground (text/line) colours. Setting either also
+  makes them the default mark colours
+  ([`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)),
+  so unmapped marks draw in `ink` and fills mix `ink` with `paper`.
 
 ## Value
 

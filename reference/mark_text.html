@@ -109,7 +109,7 @@ the font size in points; <code>angle</code> (degrees) may be mapped or constant.
 <span>  angle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nudge_x <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  nudge_y <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  fill <span class="op">=</span> <span class="st">"white"</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  repel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  box_padding <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  point_padding <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -216,7 +216,8 @@ layer composites as one isolated group (not per element).</p></dd>
 
 <dt id="arg-fill">fill<a class="anchor" aria-label="anchor" href="#arg-fill"></a></dt>
 <dd><p>For <code>mark_label()</code>, the label background: a constant colour, or a
-mapped encoding (e.g. <code>fill = group</code>) coloured through the fill/colour scale.</p></dd>
+mapped encoding (e.g. <code>fill = group</code>) coloured through the fill/colour scale.
+Default: the theme's paper colour (white; see <code><a href="element_geom.html">element_geom()</a></code>).</p></dd>
 
 
 <dt id="arg-sketch">sketch<a class="anchor" aria-label="anchor" href="#arg-sketch"></a></dt>

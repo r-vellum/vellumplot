@@ -145,6 +145,8 @@ position) on that spot. Legends drawn beside each facet panel
 (<code>guide_legend(position = "panel")</code>) sit on the side <code>legend.position</code>
 names, justified along the panel edge by <code>legend.justification</code> (e.g.
 <code>"top"</code> aligns a legend right of a panel with the panel's top).
+<code>geom = element_geom(ink, paper, accent)</code> sets the default colours of
+unmapped marks (see <code><a href="element_geom.html">element_geom()</a></code>).
 Legend geometry is tunable via <code>legend.key.size</code> (key/swatch side, mm),
 <code>legend.spacing</code> (gap between stacked guides, mm), and <code>legend.margin</code>
 (inset around the legend block, one or four millimetres, <code>t, r, b, l</code>).</p></dd>
@@ -169,7 +171,9 @@ background.</p></dd>
 neon default palette (both discrete and continuous), in the spirit of
 <a href="https://github.com/dhaitz/mplcyberpunk" class="external-link">mplcyberpunk</a>. It pairs with the
 <code><a href="glow.html">glow()</a></code> layer effect and <code><a href="gradients.html">linear_gradient()</a></code> fills for the full neon look;
-the palette is only a <em>default</em>, so <code>scale_*</code> overrides still win.</p>
+the palette is only a <em>default</em>, so <code>scale_*</code> overrides still win. Unmapped
+marks draw in the light foreground colour (<code>element_geom(ink = "#c7d0f0")</code>),
+with smooths and contours in neon cyan.</p>
     </div>
 
     <div class="section level2">

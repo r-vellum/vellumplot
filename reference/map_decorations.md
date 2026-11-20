@@ -21,8 +21,8 @@ mark_scalebar(
   height = 2.5,
   pad = 4,
   text_size = 7,
-  color = "black",
-  fill = "white",
+  color = NULL,
+  fill = NULL,
   data = NULL
 )
 
@@ -32,8 +32,8 @@ mark_compass(
   size = 10,
   pad = 4,
   rotation = 0,
-  color = "black",
-  fill = "black",
+  color = NULL,
+  fill = NULL,
   text = TRUE,
   data = NULL
 )
@@ -83,7 +83,10 @@ mark_compass(
 
   Stroke and fill colours. For the scale bar the segments alternate
   `color` and `fill`; for the compass the arrow is `fill` with a `color`
-  outline.
+  outline. By default the scale bar alternates the theme's ink and paper
+  colours (black and white, see
+  [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md))
+  and the compass is drawn in its ink.
 
 - data:
 

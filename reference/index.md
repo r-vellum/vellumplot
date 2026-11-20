@@ -420,6 +420,8 @@ Combine plots into a single figure, or repeat one over a variable.
   [`element_rect()`](https://r-vellum.github.io/vellumplot/reference/element.md)
   [`element_blank()`](https://r-vellum.github.io/vellumplot/reference/element.md)
   : Theme elements
+- [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)
+  : Default mark colours of a theme
 - [`rel()`](https://r-vellum.github.io/vellumplot/reference/rel.md) :
   Relative sizing
 - [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md) :

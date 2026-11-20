@@ -42,7 +42,7 @@ mark_label(
   angle = NULL,
   nudge_x = 0,
   nudge_y = 0,
-  fill = "white",
+  fill = NULL,
   repel = FALSE,
   box_padding = 1,
   point_padding = 1,
@@ -157,7 +157,8 @@ mark_label(
 
   For `mark_label()`, the label background: a constant colour, or a
   mapped encoding (e.g. `fill = group`) coloured through the fill/colour
-  scale.
+  scale. Default: the theme's paper colour (white; see
+  [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)).
 
 - sketch:
 

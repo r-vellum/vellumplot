@@ -93,8 +93,8 @@ map.</p>
 <span>  height <span class="op">=</span> <span class="fl">2.5</span>,</span>
 <span>  pad <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  text_size <span class="op">=</span> <span class="fl">7</span>,</span>
-<span>  color <span class="op">=</span> <span class="st">"black"</span>,</span>
-<span>  fill <span class="op">=</span> <span class="st">"white"</span>,</span>
+<span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -104,8 +104,8 @@ map.</p>
 <span>  size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  pad <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  rotation <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  color <span class="op">=</span> <span class="st">"black"</span>,</span>
-<span>  fill <span class="op">=</span> <span class="st">"black"</span>,</span>
+<span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -155,7 +155,9 @@ near a quarter of the panel width.</p></dd>
 <dt id="arg-color-fill">color, fill<a class="anchor" aria-label="anchor" href="#arg-color-fill"></a></dt>
 <dd><p>Stroke and fill colours. For the scale bar the segments
 alternate <code>color</code> and <code>fill</code>; for the compass the arrow is <code>fill</code> with a
-<code>color</code> outline.</p></dd>
+<code>color</code> outline. By default the scale bar alternates the theme's ink and
+paper colours (black and white, see <code><a href="element_geom.html">element_geom()</a></code>) and the compass is
+drawn in its ink.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>

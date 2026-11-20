@@ -72,10 +72,13 @@ set_theme(
   drawn beside each facet panel (`guide_legend(position = "panel")`) sit
   on the side `legend.position` names, justified along the panel edge by
   `legend.justification` (e.g. `"top"` aligns a legend right of a panel
-  with the panel's top). Legend geometry is tunable via
-  `legend.key.size` (key/swatch side, mm), `legend.spacing` (gap between
-  stacked guides, mm), and `legend.margin` (inset around the legend
-  block, one or four millimetres, `t, r, b, l`).
+  with the panel's top). `geom = element_geom(ink, paper, accent)` sets
+  the default colours of unmapped marks (see
+  [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)).
+  Legend geometry is tunable via `legend.key.size` (key/swatch side,
+  mm), `legend.spacing` (gap between stacked guides, mm), and
+  `legend.margin` (inset around the legend block, one or four
+  millimetres, `t, r, b, l`).
 
 - panel_bg, grid_col, label_col, strip_bg:
 
@@ -109,7 +112,9 @@ pairs with the
 layer effect and
 [`linear_gradient()`](https://r-vellum.github.io/vellumplot/reference/gradients.md)
 fills for the full neon look; the palette is only a *default*, so
-`scale_*` overrides still win.
+`scale_*` overrides still win. Unmapped marks draw in the light
+foreground colour (`element_geom(ink = "#c7d0f0")`), with smooths and
+contours in neon cyan.
 
 ## Examples
 
