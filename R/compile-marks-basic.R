@@ -23,8 +23,18 @@ NULL
     if (!is.null(grp)) {
       d <- .dodge_offsets(xn, grp, dw * band_x)
       xn <- xn + d$offset
-      slot <- dw * band_x * d$share[1]
+      slot <- dw * band_x * min(d$share)
     }
+  } else if (L$position %in% c("dodge", "dodge2")) {
+    # points dodge onto the centres of dodged bars (the default span is a bar's
+    # width)
+    d <- .dodge_offsets(
+      xn,
+      .group_key(L),
+      L$stat_params$dodge_width %||% (.DODGE_WIDTH * band_x),
+      preserve = .dodge_preserve(L)
+    )
+    xn <- xn + d$offset
   }
   if (L$position %in% c("jitter", "jitterdodge")) {
     ax <- L$stat_params$jitter_width %||%
@@ -957,8 +967,15 @@ NULL
   w <- rep_len(L$values$width %||% (0.9 * band), n)
   xc <- xp
   if (identical(L$position, "dodge")) {
-    # `dodge_width` (data units) overrides the band as the group's total span.
-    d <- .dodge_offsets(xp, .group_key(L), L$stat_params$dodge_width %||% band)
+    # The groups at each x share the bar width, or `dodge_width` (data units)
+    # when given; `preserve` says whether a sparse x widens its bars (ggplot2's
+    # position_dodge()).
+    d <- .dodge_offsets(
+      xp,
+      .group_key(L),
+      L$stat_params$dodge_width %||% w,
+      preserve = .dodge_preserve(L)
+    )
     w <- w * d$share
     xc <- xp + d$offset
   } else if (identical(L$position, "dodge2")) {
@@ -966,7 +983,7 @@ NULL
     # equal slots separated by `padding` (a fraction of the slot) -- so a ragged
     # category gets wider bars centred on the tick, not gaps for absent groups.
     tw <- rep_len(L$values$width %||% (0.9 * band), n)
-    d <- .dodge_offsets(xp, .group_key(L), tw, ragged = TRUE)
+    d <- .dodge_offsets(xp, .group_key(L), tw)
     xc <- xp + d$offset
     w <- tw * d$share * (1 - (L$stat_params$dodge2_padding %||% 0.1))
   }
