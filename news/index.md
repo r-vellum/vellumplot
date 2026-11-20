@@ -1,6 +1,8 @@
 # Changelog
 
-## vellumplot 0.15.0.9000 (development version)
+## vellumplot 0.15.1.9000 (development version)
+
+## vellumplot 0.15.1
 
 - [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md)
   layers no longer get default keys just because the plot declares a
