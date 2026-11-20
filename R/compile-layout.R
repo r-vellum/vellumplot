@@ -514,8 +514,10 @@ NULL
   } else {
     list()
   }
-  pleg_w <- numeric(C)
-  pleg_h <- numeric(R)
+  # -Inf: no legend in that column / row (decided by presence, not by the
+  # measured size, so a track never depends on font metrics to exist)
+  pleg_w <- rep(-Inf, C)
+  pleg_h <- rep(-Inf, R)
   for (i in seq_along(panel_guides)) {
     pg <- panel_guides[[i]]
     if (!length(pg)) {
@@ -556,7 +558,7 @@ NULL
       side_w
     )
     side <- c(
-      list(yt, yl, vellum::vl_unit(sum(pleg_w), "mm")),
+      list(yt, yl, vellum::vl_unit(sum(pleg_w[is.finite(pleg_w)]), "mm")),
       leg_w,
       if (has_row_strip) list(row_strip),
       if (has_y_sec) list(y2l, y2t)
@@ -620,7 +622,7 @@ NULL
   # row strips instead, so it never splits a panel from its own chrome.
   panel_legend_col <- rep(NA_integer_, C)
   add_pleg_col <- function(c) {
-    if (pleg_w[c] > 0) {
+    if (is.finite(pleg_w[c])) {
       panel_legend_col[c] <<- .tk_add(W, vellum::vl_unit(pleg_w[c], "mm"))
     }
   }
@@ -698,7 +700,7 @@ NULL
   # the outermost outside the column strips / x-axis title.
   panel_legend_row <- rep(NA_integer_, R)
   add_pleg_row <- function(r) {
-    if (pleg_h[r] > 0) {
+    if (is.finite(pleg_h[r])) {
       panel_legend_row[r] <<- .tk_add(H, vellum::vl_unit(pleg_h[r], "mm"))
     }
   }
