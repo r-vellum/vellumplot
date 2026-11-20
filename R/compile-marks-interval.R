@@ -136,7 +136,7 @@ NULL
   # (default "grey20"); a lone `color` still fills (VP-46)
   fo <- .fill_and_outline(L, scales, "white", n)
   fill <- fo$fill
-  col <- ifelse(is.na(fo$col), "grey20", fo$col)
+  col <- ifelse(is.na(fo$col), .geom_paint("grey20"), fo$col)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   band <- scales$x$band_width %||% .resolution(xn)
   hw <- rep_len(L$values$width %||% .aes_param(L, "width", 0.5), n) * band / 2

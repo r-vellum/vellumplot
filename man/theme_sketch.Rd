@@ -25,7 +25,9 @@ plot-wide default (see \code{\link[=sketch]{sketch()}} for the full set of knobs
 such as \code{"Comic Sans MS"} or \code{"Chilanka"} sells the hand-drawn look).
 \code{NULL} (default) keeps the system default family.}
 
-\item{paper, ink}{Background and foreground (text/line) colours.}
+\item{paper, ink}{Background and foreground (text/line) colours. Setting
+either also makes them the default mark colours (\code{\link[=element_geom]{element_geom()}}), so
+unmapped marks draw in \code{ink} and fills mix \code{ink} with \code{paper}.}
 }
 \value{
 The modified \link{PlotSpec}.

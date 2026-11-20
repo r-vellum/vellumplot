@@ -145,6 +145,88 @@ element_rect <- function(
   )
 }
 
+.element_geom <- S7::new_class(
+  ".element_geom",
+  package = "vellumplot",
+  properties = list(
+    ink = S7::class_any,
+    paper = S7::class_any,
+    accent = S7::class_any,
+    colour = S7::class_any,
+    fill = S7::class_any
+  )
+)
+
+#' Default mark colours of a theme
+#'
+#' `element_geom()` sets the colours a theme gives marks whose colour or fill
+#' is neither mapped nor set, as ggplot2's `element_geom()` does. Pass it as
+#' `theme(geom = element_geom(...))`; dark themes such as [theme_cyberpunk()]
+#' set a light `ink` so unmapped points, lines and text stay visible.
+#'
+#' Each mark's default is derived from these as in ggplot2. Points, lines,
+#' text, rules and error bars use `ink`; filled marks use a mix of `ink` and
+#' `paper` (bars, histograms and areas `col_mix(ink, paper, 0.35)`, the default
+#' light-theme `"grey35"`); box plot, violin and label backgrounds use
+#' `paper`; fitted smooths and contours use `accent`. A mapped scale and a
+#' constant `color =` / `fill =` on a mark always win.
+#'
+#' @param ink Foreground colour of marks (default `"black"`).
+#' @param paper Background colour marks are mixed against (default `"white"`).
+#' @param accent Colour of fitted smooths and contour lines (default
+#'   `"#3366CC"`).
+#' @param colour,color A colour for every unmapped mark stroke, overriding the
+#'   colour derived from `ink` / `accent`. `color` is an alias for `colour`.
+#' @param fill A fill for every unmapped filled mark, overriding the fill
+#'   derived from `ink` / `paper`.
+#' @return An element object for the `geom` slot of [theme()].
+#' @seealso [theme()], [theme_cyberpunk()]
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg) |>
+#'   theme(
+#'     plot.background = element_rect(fill = "grey10"),
+#'     panel.background = element_rect(fill = "grey15"),
+#'     geom = element_geom(ink = "grey90", paper = "grey15")
+#'   )
+#' @export
+element_geom <- function(
+  ink = NULL,
+  paper = NULL,
+  accent = NULL,
+  colour = NULL,
+  color = NULL,
+  fill = NULL
+) {
+  colour <- colour %||% color
+  vals <- list(
+    ink = ink,
+    paper = paper,
+    accent = accent,
+    colour = colour,
+    fill = fill
+  )
+  for (nm in names(vals)) {
+    v <- vals[[nm]]
+    if (!is.null(v) && !.is_colour1(v)) {
+      cli::cli_abort("{.arg {nm}} must be a single colour.")
+    }
+  }
+  do.call(.element_geom, vals)
+}
+
+# A single valid colour string (a name, hex, or NA).
+.is_colour1 <- function(x) {
+  if (length(x) != 1L) {
+    return(FALSE)
+  }
+  if (is.na(x)) {
+    return(TRUE)
+  }
+  is.character(x) &&
+    !inherits(try(grDevices::col2rgb(x), silent = TRUE), "try-error")
+}
+
 #' @rdname element
 #' @export
 element_blank <- S7::new_class(

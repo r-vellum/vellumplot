@@ -64,6 +64,8 @@ position) on that spot. Legends drawn beside each facet panel
 (\code{guide_legend(position = "panel")}) sit on the side \code{legend.position}
 names, justified along the panel edge by \code{legend.justification} (e.g.
 \code{"top"} aligns a legend right of a panel with the panel's top).
+\code{geom = element_geom(ink, paper, accent)} sets the default colours of
+unmapped marks (see \code{\link[=element_geom]{element_geom()}}).
 Legend geometry is tunable via \code{legend.key.size} (key/swatch side, mm),
 \code{legend.spacing} (gap between stacked guides, mm), and \code{legend.margin}
 (inset around the legend block, one or four millimetres, \verb{t, r, b, l}).}
@@ -92,7 +94,9 @@ neon theme (see Details).
 neon default palette (both discrete and continuous), in the spirit of
 \href{https://github.com/dhaitz/mplcyberpunk}{mplcyberpunk}. It pairs with the
 \code{\link[=glow]{glow()}} layer effect and \code{\link[=linear_gradient]{linear_gradient()}} fills for the full neon look;
-the palette is only a \emph{default}, so \verb{scale_*} overrides still win.
+the palette is only a \emph{default}, so \verb{scale_*} overrides still win. Unmapped
+marks draw in the light foreground colour (\code{element_geom(ink = "#c7d0f0")}),
+with smooths and contours in neon cyan.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_minimal()

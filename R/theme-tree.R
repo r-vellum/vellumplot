@@ -301,6 +301,15 @@ NULL
       }
       next
     }
+    if (identical(nm, "geom")) {
+      if (!S7::S7_inherits(args[[nm]], .element_geom)) {
+        cli::cli_abort(
+          "{.field geom} must be an {.fn element_geom}.",
+          call = call
+        )
+      }
+      next
+    }
     if (!nm %in% known_slots) {
       cli::cli_abort(
         "Unknown theme element {.field {nm}}.",
@@ -374,4 +383,97 @@ NULL
     return(NULL)
   }
   list(pos = at, just = if (explicit_just) just else at)
+}
+
+# --- default mark colours: theme(geom = element_geom()) ---------------------
+#
+# A mark whose colour or fill is neither mapped nor set falls back to a
+# built-in light-theme literal ("black" points, "grey35" bars, "white" box
+# plot fills, "#3366CC" smooths). `.geom_paint()` turns that literal into the
+# theme's version of it, as ggplot2's `from_theme()` defaults do: "black" is
+# `ink`, "white" is `paper`, "greyNN" is `col_mix(ink, paper, NN / 100)` (so
+# "grey35" is ggplot2's bar fill `col_mix(ink, paper, 0.35)`), and the smooth /
+# contour blues are `accent`. The theme's resolved geom rides `.mark_ctx$geom`
+# for the duration of a plot's draw; it is NULL when the theme sets nothing,
+# and then every literal is returned unchanged.
+
+# The light-theme defaults that stand for `accent` (smooth, contour).
+.GEOM_ACCENT_LITERALS <- c("#3366cc", "#3366bb")
+
+# The properties a theme's `geom` element sets (a named list), or NULL when it
+# sets none.
+.theme_geom <- function(theme) {
+  g <- theme[["geom"]]
+  if (is.null(g) || !S7::S7_inherits(g, .element_geom)) {
+    return(NULL)
+  }
+  p <- S7::props(g)
+  p <- p[!vapply(p, is.null, logical(1))]
+  if (length(p)) p
+}
+
+# Point the mark emitters and legend keys at a theme's default mark colours.
+.set_geom_ctx <- function(theme) {
+  assign("geom", .theme_geom(theme), envir = .mark_ctx)
+  invisible()
+}
+
+# The theme's version of a built-in default colour `default`, for a stroke
+# (`role = "colour"`) or a fill (`role = "fill"`). An `element_geom(colour = ,
+# fill = )` override wins for its role; otherwise the literal is mapped onto
+# ink / paper / accent. A colour that is not one of the mapped literals (or no
+# theme geom at all) comes back as is.
+.geom_paint <- function(default, role = "colour") {
+  g <- .mark_ctx$geom
+  if (
+    is.null(g) ||
+      !is.character(default) ||
+      length(default) != 1L ||
+      is.na(default)
+  ) {
+    return(default)
+  }
+  over <- if (identical(role, "fill")) g$fill else g$colour
+  if (!is.null(over)) {
+    return(over)
+  }
+  key <- tolower(default)
+  if (key %in% .GEOM_ACCENT_LITERALS) {
+    return(g$accent %||% default)
+  }
+  if (is.null(g$ink) && is.null(g$paper)) {
+    return(default)
+  }
+  amount <- if (identical(key, "black")) {
+    0
+  } else if (identical(key, "white")) {
+    1
+  } else {
+    m <- regmatches(key, regexec("^gr[ae]y([0-9]{1,3})$", key))[[1]]
+    if (length(m) == 2L) as.numeric(m[2]) / 100 else NA_real_
+  }
+  if (is.na(amount)) {
+    return(default)
+  }
+  .col_mix(g$ink %||% "black", g$paper %||% "white", amount)
+}
+
+# Mix colour `a` towards `b` by `amount` (0 = a, 1 = b), as ggplot2's
+# `col_mix()`.
+.col_mix <- function(a, b, amount) {
+  if (amount <= 0) {
+    return(a)
+  }
+  if (amount >= 1) {
+    return(b)
+  }
+  v <- grDevices::col2rgb(a, alpha = TRUE) *
+    (1 - amount) +
+    grDevices::col2rgb(b, alpha = TRUE) * amount
+  v <- round(v)
+  if (v[4] >= 255) {
+    grDevices::rgb(v[1], v[2], v[3], maxColorValue = 255)
+  } else {
+    grDevices::rgb(v[1], v[2], v[3], v[4], maxColorValue = 255)
+  }
 }

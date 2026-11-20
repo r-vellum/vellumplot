@@ -115,7 +115,8 @@ NULL
   fill <- if (!is.null(scales$fill) && !is.null(L$values$fill)) {
     scales$fill$map(L$values$fill)
   } else {
-    (if (.is_paint(L$params$fill)) NULL else L$params$fill) %||% fill_default
+    (if (.is_paint(L$params$fill)) NULL else L$params$fill) %||%
+      .geom_paint(fill_default, "fill")
   }
   list(
     fill = rep_len(fill, n),
@@ -133,7 +134,7 @@ NULL
   yv <- scales$y$map(L$values$y)
   labels <- L$values$.blabel
   tip <- (L$stat_params$tip_length %||% 0.03) * diff(scales$y$domain)
-  col <- .aes_param(L, "color", "black")
+  col <- .aes_param(L, "color", .geom_paint("black"))
   lwd <- .aes_param(L, "linewidth", 0.6)
   fs <- .aes_param(L, "size", 8)
   sk <- .mark_sketch(L, scales)

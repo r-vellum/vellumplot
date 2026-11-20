@@ -174,7 +174,7 @@ add_marginal <- function(
     params = if (ms@group) {
       list(alpha = 0.5)
     } else {
-      list(fill = "grey35", alpha = NA_real_)
+      list(fill = .geom_paint("grey35", "fill"), alpha = NA_real_)
     },
     n = length(values$x),
     stat = if (hist) "bin" else "density",

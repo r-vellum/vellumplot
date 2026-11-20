@@ -100,8 +100,16 @@ NULL
 # Resolve a layer's mark colour: a mapped colour channel (via the trained colour
 # scale), a constant colour param, or the supplied default. `fill_fallback` lets
 # `fill` stand in for `color` (true for fill-based marks; false for text/label,
-# where `fill` is the label background, not the ink colour).
-.aes_colour <- function(L, scales, default, fill_fallback = TRUE) {
+# where `fill` is the label background, not the ink colour). The default is the
+# theme's version of the built-in one (`.geom_paint()`), for a stroke or, for a
+# filled mark, a fill (`role`).
+.aes_colour <- function(
+  L,
+  scales,
+  default,
+  fill_fallback = TRUE,
+  role = "colour"
+) {
   if (!is.null(scales$color) && !is.null(L$values$color)) {
     return(scales$color$map(L$values$color))
   }
@@ -113,9 +121,9 @@ NULL
   # `.paint_or()`), so this returns a plain colour the row vector / grouping needs.
   fillp <- if (.is_paint(L$params$fill)) NULL else L$params$fill
   if (fill_fallback) {
-    L$params$color %||% fillp %||% default
+    L$params$color %||% fillp %||% .geom_paint(default, role)
   } else {
-    L$params$color %||% default
+    L$params$color %||% .geom_paint(default, role)
   }
 }
 
@@ -132,7 +140,7 @@ NULL
     return(scales$color$map(L$values$color))
   }
   fillp <- if (.is_paint(L$params$fill)) NULL else L$params$fill
-  fillp %||% default
+  fillp %||% .geom_paint(default, "fill")
 }
 
 # Per-row fill and outline of a filled mark (bar, histogram, tile, rect, area,
@@ -148,7 +156,7 @@ NULL
   has_col <- !is.null(L$values$color) || !is.null(L$params$color)
   if (!has_fill) {
     return(list(
-      fill = rep_len(.aes_colour(L, scales, default), n),
+      fill = rep_len(.aes_colour(L, scales, default, role = "fill"), n),
       col = rep_len(NA_character_, n)
     ))
   }
@@ -164,7 +172,7 @@ NULL
   fill <- if (!is.null(L$values$fill) && !is.null(scales$fill)) {
     scales$fill$map(L$values$fill)
   } else {
-    .plain_fill_param(L) %||% default
+    .plain_fill_param(L) %||% .geom_paint(default, "fill")
   }
   list(
     fill = rep_len(fill, n),
@@ -405,7 +413,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   if (!is.null(scales$edge_color) && !is.null(L$values$edge_color)) {
     return(scales$edge_color$map(L$values$edge_color))
   }
-  L$params$edge_color %||% default
+  L$params$edge_color %||% .geom_paint(default)
 }
 .aes_edge_alpha <- function(L, scales, default = NA_real_) {
   if (!is.null(scales$edge_alpha) && !is.null(L$values$edge_alpha)) {

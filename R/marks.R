@@ -1578,6 +1578,7 @@ mark_step <- function(
 #'   regardless of scale or panel aspect. Default `0`.
 #' @param fill For `mark_label()`, the label background: a constant colour, or a
 #'   mapped encoding (e.g. `fill = group`) coloured through the fill/colour scale.
+#'   Default: the theme's paper colour (white; see [element_geom()]).
 #' @param repel Move overlapping labels apart (force-directed, ggrepel-style),
 #'   with leader lines to the points? Single cartesian panel only.
 #' @param box_padding Extra space (mm) kept around each label box during
@@ -1662,7 +1663,7 @@ mark_label <- function(
   angle = NULL,
   nudge_x = 0,
   nudge_y = 0,
-  fill = "white",
+  fill = NULL,
   repel = FALSE,
   box_padding = 1,
   point_padding = 1,

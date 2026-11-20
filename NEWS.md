@@ -36,6 +36,22 @@
   The same datum drawn in several facet panels or composition cells still links
   across them through its `join` id.
 
+## New features
+
+* Themes now set the default colours of unmapped marks, as ggplot2's
+  `element_geom()` does: `theme(geom = element_geom(ink, paper, accent))`.
+  Points, lines, text and error bars use `ink`, bars and areas a mix of `ink`
+  and `paper`, box plot, violin and label backgrounds `paper`, smooths and
+  contours `accent`; `element_geom(colour =, fill =)` override them all.
+  `theme_cyberpunk()` sets a light ink, so
+  `vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_cyberpunk()` no
+  longer draws black points on its near-black panel, and legend keys of an
+  unmapped colour follow suit. A `theme_sketch()` given its own `ink` /
+  `paper` colours its marks with them. Light themes draw exactly as before;
+  mapped scales and constant `color =` / `fill =` still win. `mark_label()`'s
+  `fill` and the `color` / `fill` of `mark_scalebar()` / `mark_compass()` now
+  default to the theme's colours (white / black on light themes) (VP-58).
+
 # vellumplot 0.15.1
 
 * `annotate()` layers no longer get default keys just because the plot declares a selection. A keyed annotation made the widget's display list inexact, which switched off its zoomed canvas and detail tier for the whole plot (VW-24). An annotation with its own `data_id` or a `condition()` is still keyed.
