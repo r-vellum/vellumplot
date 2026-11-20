@@ -80,3 +80,42 @@ test_that("an aggregated layer in facets gets unique keys without a join", {
   expect_false(anyDuplicated(el$key) > 0L)
   expect_true(all(is.na(.fk_join(el))))
 })
+
+test_that("faceted composition cells prefix their keys with the cell id", {
+  # VP-51: each faceted cell names its panels `panel-r-c`, so without the cell
+  # id two cells shared "panel-1-1:3" and a hover in one lit up the other.
+  fp <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    facet_wrap(~am) |>
+    select_point("s")
+  el <- .fk_keyed(hconcat(fp, fp))
+  expect_equal(nrow(el), 2L * nrow(mtcars))
+  expect_false(anyDuplicated(el$key) > 0L)
+  expect_true(all(grepl("^cell-[12]:panel-1-[12]:\\d+$", el$key)))
+  # the source row is still the join, shared by both cells
+  expect_identical(sub("^.*:", "", el$key), .fk_join(el))
+  expect_setequal(
+    .fk_join(el)[startsWith(el$key, "cell-2:")],
+    as.character(seq_len(nrow(mtcars)))
+  )
+})
+
+test_that("an unaligned single-panel cell next to a faceted one is prefixed too", {
+  sp <- vplot(mtcars) |> mark_point(x = wt, y = mpg, tooltip = cyl)
+  fp <- sp |> facet_wrap(~am)
+  el <- .fk_keyed(hconcat(sp, fp))
+  el <- el[!grepl("^legend:", el$key), , drop = FALSE]
+  one <- el[startsWith(el$key, "cell-1:"), , drop = FALSE]
+  expect_equal(nrow(one), nrow(mtcars))
+  expect_identical(one$key, paste0("cell-1:", .fk_join(one)))
+  expect_true(all(startsWith(el$key, "cell-")))
+})
+
+test_that("a lone faceted plot's keys are unchanged by the cell prefix", {
+  fp <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    facet_wrap(~am) |>
+    select_point("s")
+  el <- .fk_keyed(fp)
+  expect_true(all(grepl("^panel-1-[12]:\\d+$", el$key)))
+})
