@@ -250,6 +250,41 @@ NULL
   vellum::vl_unit(h + m$margin[1] + m$margin[3], "mm")
 }
 
+# Where a legend guide asked to go (`guide_legend(position =)` & co.), or NULL
+# to follow the theme. A merged guide carries its members' shared position.
+.guide_position <- function(g) {
+  g$position %||% g$sc$guide_position
+}
+
+# The theme's legend position as one of "right" / "left" / "top" / "bottom" /
+# "inside" / "none" (`legend.position = c(x, y)` is "inside").
+.legend_default_position <- function(rt) {
+  if (!is.null(.legend_inside(rt))) "inside" else rt[["legend.position"]]
+}
+
+# Split the guides by where they are drawn: each guide's own `position =`, else
+# the theme's `legend.position`. Returns a named list of guide lists, one per
+# position (empty when nothing goes there). `legend.position = "none"` hides
+# every legend, whatever its guide asked for (as in ggplot2 3.5).
+.legend_groups <- function(guides, rt) {
+  out <- list(
+    right = list(),
+    left = list(),
+    top = list(),
+    bottom = list(),
+    inside = list()
+  )
+  default <- .legend_default_position(rt)
+  if (identical(default, "none")) {
+    return(out)
+  }
+  for (g in guides) {
+    p <- .guide_position(g) %||% default
+    out[[p]] <- c(out[[p]], list(g))
+  }
+  out
+}
+
 # A tiny ordered track builder: `add(unit)` appends a track and returns its
 # 1-based index; `units()` returns the concatenated unit vector.
 .tracks <- function() {
@@ -443,19 +478,18 @@ NULL
   has_col_strip <- fa$type == "grid" && !is.null(fa$col_labels)
   has_row_strip <- fa$type == "grid" && !is.null(fa$row_labels)
 
-  # Legend placement. "right"/"left" take a column beside the panels (vertical
-  # guide stack); "top"/"bottom" take a row spanning the panel columns
-  # (horizontal guide flow); "none" suppresses it.
-  # "inside" / c(x, y) overlays the panels and takes no track
-  # (`.legend_inside()`).
-  pos <- rt[["legend.position"]]
-  inside <- .legend_inside(rt)
-  if (!is.null(inside)) {
-    pos <- "inside"
+  # Legend placement. Each guide goes where its `position =` says, else where
+  # the theme's `legend.position` does (`.legend_groups()`), so one plot can
+  # have legends on several sides. "right"/"left" take a column beside the
+  # panels (vertical guide stack); "top"/"bottom" take a row spanning the panel
+  # columns (horizontal guide flow); "none" suppresses them all. "inside" /
+  # c(x, y) overlays the panels and takes no track (`.legend_inside()`).
+  pos <- .legend_default_position(rt)
+  groups <- .legend_groups(guides, rt)
+  inside <- if (length(groups$inside)) .legend_inside(rt, force = TRUE)
+  side_w <- function(side) {
+    .legend_width(groups[[side]], rt, legend_avail_h)
   }
-  show_legend <- length(guides) && !identical(pos, "none")
-  legend_vert <- show_legend && pos %in% c("left", "right")
-  legend_horiz <- show_legend && pos %in% c("top", "bottom")
 
   # Per-x-tick wrap budget (mm): the panel's mm width shared among its x ticks, so
   # a long discrete label wraps to its own column instead of running into its
@@ -477,13 +511,13 @@ NULL
     length(hsc$breaks) > 0L &&
     !.is_blank(rt[["axis.text.x"]])
   if (can_wrap_x) {
-    leg_w <- if (legend_vert) {
-      .legend_width(guides, rt, legend_avail_h)
-    } else {
-      vellum::vl_unit(0, "mm")
-    }
+    leg_w <- lapply(
+      Filter(function(sd) length(groups[[sd]]) > 0L, c("left", "right")),
+      side_w
+    )
     side <- c(
-      list(yt, yl, leg_w),
+      list(yt, yl),
+      leg_w,
       if (has_row_strip) list(row_strip),
       if (has_y_sec) list(y2l, y2t)
     )
@@ -537,9 +571,9 @@ NULL
   # --- columns: [ legend(left)? | ytitle | (ylabels panel gap)xC |
   #               row-strip? | legend(right)? ] ---
   W <- .tracks()
-  legend_col <- NA_integer_
-  if (legend_vert && pos == "left") {
-    legend_col <- .tk_add(W, .legend_width(guides, rt, legend_avail_h))
+  legend_cols <- c(left = NA_integer_, right = NA_integer_)
+  if (length(groups$left)) {
+    legend_cols[["left"]] <- .tk_add(W, side_w("left"))
   }
   ytitle_col <- .tk_add(W, yt)
   panel_col <- integer(C)
@@ -563,8 +597,8 @@ NULL
     y2title_col <- .tk_add(W, y2t)
   }
   rowstrip_col <- if (has_row_strip) .tk_add(W, row_strip) else NA_integer_
-  if (legend_vert && pos == "right") {
-    legend_col <- .tk_add(W, .legend_width(guides, rt, legend_avail_h))
+  if (length(groups$right)) {
+    legend_cols[["right"]] <- .tk_add(W, side_w("right"))
   }
 
   # --- rows: [ tag? | title? | subtitle? | col-strip? |
@@ -595,9 +629,9 @@ NULL
   } else {
     NA_integer_
   }
-  legend_row <- NA_integer_
-  if (legend_horiz && pos == "top") {
-    legend_row <- .tk_add(H, .legend_height(guides, rt))
+  legend_rows <- c(top = NA_integer_, bottom = NA_integer_)
+  if (length(groups$top)) {
+    legend_rows[["top"]] <- .tk_add(H, .legend_height(groups$top, rt))
   }
   colstrip_row <- if (fa$type == "grid" && has_col_strip) {
     .tk_add(H, strip)
@@ -636,8 +670,8 @@ NULL
     }
   }
   xtitle_row <- .tk_add(H, xt)
-  if (legend_horiz && pos == "bottom") {
-    legend_row <- .tk_add(H, .legend_height(guides, rt))
+  if (length(groups$bottom)) {
+    legend_rows[["bottom"]] <- .tk_add(H, .legend_height(groups$bottom, rt))
   }
   caption_row <- if (!is.null(labels$caption)) {
     .tk_add(
@@ -698,10 +732,17 @@ NULL
     x2title_row = x2title_row,
     marg_top_row = marg_top_row,
     marg_right_col = marg_right_col,
-    legend_col = legend_col,
-    legend_row = legend_row,
+    # One legend track per side that has guides (`legend_cols` / `legend_rows`,
+    # NA where none), and `legend_groups` the guides drawn at each position.
+    # `legend_col` / `legend_row` are the first of them (the right / bottom
+    # one when both sides are used), for callers that place a single legend.
+    legend_col = .first_non_na(legend_cols[c("right", "left")]),
+    legend_row = .first_non_na(legend_rows[c("bottom", "top")]),
+    legend_cols = legend_cols,
+    legend_rows = legend_rows,
+    legend_groups = groups,
     legend_pos = pos,
-    legend_inside = if (show_legend) inside,
+    legend_inside = inside,
     legend_avail_h = legend_avail_h,
     title_row = title_row,
     subtitle_row = subtitle_row,
@@ -717,6 +758,12 @@ NULL
     y_keep_panels = y_keep_panels,
     respect = respect
   )
+}
+
+# The first non-NA element of an integer vector, unnamed (NA when all are).
+.first_non_na <- function(x) {
+  x <- unname(x[!is.na(x)])
+  if (length(x)) x[1] else NA_integer_
 }
 
 # The mm size of one `null` unit across and down, from the solved tracks: the

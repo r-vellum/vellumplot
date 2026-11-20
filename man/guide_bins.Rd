@@ -4,7 +4,13 @@
 \alias{guide_bins}
 \title{Binned legend}
 \usage{
-guide_bins(title = NULL, show.limits = FALSE, reverse = FALSE, axis = TRUE)
+guide_bins(
+  title = NULL,
+  show.limits = FALSE,
+  reverse = FALSE,
+  axis = TRUE,
+  position = NULL
+)
 }
 \arguments{
 \item{title}{The legend title, or \code{NULL} to keep the scale's.}
@@ -15,6 +21,15 @@ guide_bins(title = NULL, show.limits = FALSE, reverse = FALSE, axis = TRUE)
 \item{reverse}{Reverse the order of the keys.}
 
 \item{axis}{Draw the axis line and ticks beside the keys (default \code{TRUE}).}
+
+\item{position}{Where this legend goes: \code{"right"}, \code{"left"}, \code{"top"},
+\code{"bottom"} or \code{"inside"} (over the panels, at \code{theme(legend.position.inside = )} / \code{legend.justification}). \code{NULL} (default) follows
+\code{theme(legend.position = )}. A guide's own position overrides the theme for
+that legend only, as in ggplot2 3.5, so legends can sit on different sides
+of one plot; legends at one position stack as usual. A legend at the top or
+bottom is laid out horizontally. \code{theme(legend.position = "none")} still
+hides every legend. Two legends that would merge (one variable, one title)
+only merge when they share a position.}
 }
 \value{
 A guide specification for \code{\link[=guides]{guides()}} or a scale's \code{guide}.

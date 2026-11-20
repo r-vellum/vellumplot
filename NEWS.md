@@ -41,6 +41,12 @@
 
 ## New features
 
+* `guide_legend()`, `guide_colourbar()` / `guide_colorbar()`,
+  `guide_coloursteps()`, `guide_bins()` and `guide_bivariate()` gain
+  `position =` (`"right"`, `"left"`, `"top"`, `"bottom"` or `"inside"`), as in
+  ggplot2 3.5: it overrides `theme(legend.position = )` for that legend only,
+  so one plot can carry legends on several sides (VP-53).
+
 * `scale_*_stepsn()` gains `values =`, the positions of its `colours` along
   the ramp, as in ggplot2 (VP-49).
 
