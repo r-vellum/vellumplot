@@ -933,7 +933,8 @@ NULL
     default_key <- ok && isTRUE(L$meta$default_id)
     if (
       is.null(.mark_ctx$data_id) &&
-        (length(L$conditions) || isTRUE(.mark_ctx$plot_interactive)) &&
+        (length(L$conditions) ||
+          (isTRUE(.mark_ctx$plot_interactive) && !isTRUE(L$annotation))) &&
         L$n >= 1L
     ) {
       dk <- .default_keys(L, .mark_ctx$panel)

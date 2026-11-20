@@ -58,7 +58,8 @@ annotate <- function(
     geom,
     c("text", "label", "point", "segment", "rect", "grob", "sparkline")
   )
-  switch(
+  n_before <- length(plot@layers)
+  out <- switch(
     geom,
     text = ,
     label = {
@@ -123,6 +124,10 @@ annotate <- function(
       .annotate_grob(plot, x, y, g, args)
     }
   )
+  for (i in seq_along(out@layers)[-seq_len(n_before)]) {
+    out@layers[[i]]@annotation <- TRUE
+  }
+  out
 }
 
 # Add a "grob" annotation layer: draw `g` (a vellum grob or a PlotSpec) at each
