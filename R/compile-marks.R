@@ -326,7 +326,8 @@ NULL
 # `join`, the cross-view identity a host matches selections on (as for
 # composition cells), so the same datum drawn in two places still links.
 # A single-panel plot keeps plain row positions ("1", "2", ...) and no join.
-# Composition cells (`subplot-N`) are prefixed separately in `.compile_marks()`.
+# Composition cells (`subplot-N`, or `cell-k` for a faceted cell) are prefixed
+# separately in `.compile_marks()`.
 .default_keys <- function(L, panel) {
   rows <- seq_len(L$n)
   if (
@@ -904,6 +905,21 @@ NULL
     ) {
       .mark_ctx$join <- .mark_ctx$data_id
       .mark_ctx$data_id <- paste0(.mark_ctx$panel, ":", .mark_ctx$data_id)
+    }
+    # A composition cell drawn as a whole plot (faceted, or otherwise not
+    # aligned) names its panels `panel-r-c` like a lone plot, so its keys --
+    # "panel-1-1:3" or plain row ids -- repeat from cell to cell. Prefix them
+    # with the cell id ("cell-2:panel-1-1:3"), keeping the unprefixed value (or
+    # the facet default's source row) as `join`, as for an aligned cell (VP-51).
+    cell <- .mark_ctx$panel_cell
+    if (
+      !is.null(.mark_ctx$data_id) &&
+        !is.null(cell) &&
+        !is.na(.mark_ctx$panel) &&
+        startsWith(.mark_ctx$panel, "panel-")
+    ) {
+      .mark_ctx$join <- .mark_ctx$join %||% .mark_ctx$data_id
+      .mark_ctx$data_id <- paste0(cell, ":", .mark_ctx$data_id)
     }
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {
