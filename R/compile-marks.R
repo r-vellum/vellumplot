@@ -188,7 +188,6 @@ NULL
   .mark_ctx$page <- NULL
   if (!S7::S7_inherits(spec, PlotSpec)) {
     .mark_ctx$plot_interactive <- FALSE
-    .mark_ctx$plot_user_ids <- FALSE
     .mark_ctx$plot_filters <- NULL
     .mark_ctx$plot_interval_aes <- NULL
     return(invisible())
@@ -200,13 +199,6 @@ NULL
     length(spec@binds) > 0L
   .mark_ctx$plot_filters <- if (length(filt_names)) unique(filt_names) else NULL
   .mark_ctx$plot_interval_aes <- .interval_encodings(spec@selections)
-  # Does any layer key its elements by a user `data_id`? Then default keys are
-  # namespaced by layer (see `.compile_marks()`), so they never equal a user id.
-  .mark_ctx$plot_user_ids <- any(vapply(
-    spec@layers,
-    function(l) !is.null(l@interactivity$data_id),
-    logical(1)
-  ))
   invisible()
 }
 
@@ -322,39 +314,52 @@ NULL
   vellum::draw(scene, grob)
 }
 
-# Default element keys for an interactive layer that declares no `data_id`.
-# Keys must be unique across the whole scene: a host addresses elements by key,
-# so a repeated key makes a hover/brush/selection in one place light up every
-# element sharing it. Row positions within the resolved layer restart at 1 in
-# every facet panel, so in a faceted plot (more than one `panel-r-c`, flagged
-# by `.dp_draw_panels()` as `.mark_ctx$faceted`) the key is
-# "<panel>:<row>". <row> is the source-table row the element draws when the
-# layer maps one-to-one onto its input rows (provenance's `.layer_source()`),
-# and its position in the layer otherwise. The source row is also returned as
-# `join`, the cross-view identity a host matches selections on (as for
-# composition cells), so the same datum drawn in two places still links.
-# A single-panel plot keeps plain row positions ("1", "2", ...) and no join.
-# Composition cells (`subplot-N`, or `cell-k` for a faceted cell) are prefixed
-# separately in `.compile_marks()`.
-.default_keys <- function(L, panel) {
+# Default element keys for an interactive layer that declares no `data_id`
+# (VP-55). Keys must be unique across the whole scene: a host addresses
+# elements by key, so a repeated key makes a hover/brush/selection in one place
+# light up every element sharing it. So every default key names its panel, its
+# layer and its row -- "p<r>-<c>:l<layer>:<row>", e.g. "p1-1:l2:7" for row 7 of
+# layer 2 in the top-left (or only) panel -- whatever produced it: plain
+# keyed layers, tooltip-only layers (`meta$default_id`), stat output and
+# line/polygon series (which take their first row's key). <row> is the
+# source-table row the element draws when the layer maps one-to-one onto its
+# input rows (provenance's `.layer_source()`), and its position in the layer
+# otherwise. Two layers never share a default key; layers meant to link share
+# an explicit `data_id`. Composition cells add their `subplot-N` / `cell-k`
+# prefix in front in `.compile_marks()`.
+#
+# Besides `key`, returns `join` -- the cross-view identity a host matches
+# filters on: the source row in a facet panel (so the same datum drawn in two
+# panels still links, VP-51), NULL otherwise -- and `cross`, the identity a
+# composition cell falls back to when there is no `join` (the row, or
+# "<panel>:<row>" in a facet panel whose rows are not source rows).
+.default_keys <- function(L, panel, layer) {
   rows <- seq_len(L$n)
+  src <- L$source
+  per_row <- !is.null(src) &&
+    isTRUE(src$per_row) &&
+    is.null(src$members) &&
+    length(src$rows) == L$n &&
+    !anyDuplicated(src$rows)
+  if (per_row) {
+    rows <- src$rows
+  }
+  rc <- if (!is.na(panel) && startsWith(panel, "panel-")) {
+    sub("^panel-", "", panel)
+  } else {
+    "1-1" # an aligned composition cell draws one panel
+  }
+  key <- paste0("p", rc, ":l", layer, ":", rows)
   if (
     !isTRUE(.mark_ctx$faceted) || is.na(panel) || !startsWith(panel, "panel-")
   ) {
-    return(list(key = as.character(rows), join = NULL))
+    return(list(key = key, join = NULL, cross = as.character(rows)))
   }
-  src <- L$source
-  join <- NULL
-  if (
-    !is.null(src) &&
-      isTRUE(src$per_row) &&
-      is.null(src$members) &&
-      length(src$rows) == L$n
-  ) {
-    rows <- src$rows
-    join <- as.character(rows)
-  }
-  list(key = paste0(panel, ":", rows), join = join)
+  list(
+    key = key,
+    join = if (per_row) as.character(rows),
+    cross = if (per_row) as.character(rows) else paste0(panel, ":", rows)
+  )
 }
 
 # A grob vellum treats as ONE element however many rows it draws (a line,
@@ -924,31 +929,26 @@ NULL
     })
     # Conditional encodings (from `condition()`): a layer bearing one is
     # interactive, so its elements need addressable keys even if no `data_id` was
-    # declared -- default to the row (see `.default_keys()`: in a facet panel the
-    # key carries the panel, so keys never repeat across panels). `cond` carries, per row, the "<sel>:<aes>"
-    # tags this element participates in (like `legend`), so a host can style
-    # non-members; the `if_false` constant + `empty` live in the plot-level block.
+    # declared -- a default key (see `.default_keys()`). `cond` carries, per row,
+    # the "<sel>:<aes>" tags this element participates in (like `legend`), so a
+    # host can style non-members; the `if_false` constant + `empty` live in the plot-level block.
     .mark_ctx$conditions <- if (length(L$conditions)) L$conditions else NULL
+    # Every default key -- a tooltip-only layer's (`meta$default_id`), or a
+    # keyless layer made interactive by a condition or a plot-level selection
+    # (not an annotation, VW-24) -- comes from `.default_keys()`.
     default_join <- NULL
-    default_key <- ok && isTRUE(L$meta$default_id)
+    default_cross <- NULL
     if (
-      is.null(.mark_ctx$data_id) &&
-        (length(L$conditions) ||
-          (isTRUE(.mark_ctx$plot_interactive) && !isTRUE(L$annotation))) &&
-        L$n >= 1L
+      (ok && isTRUE(L$meta$default_id)) ||
+        (is.null(.mark_ctx$data_id) &&
+          (length(L$conditions) ||
+            (isTRUE(.mark_ctx$plot_interactive) && !isTRUE(L$annotation))) &&
+          L$n >= 1L)
     ) {
-      dk <- .default_keys(L, .mark_ctx$panel)
+      dk <- .default_keys(L, .mark_ctx$panel, li)
       .mark_ctx$data_id <- dk$key
       default_join <- dk$join
-      default_key <- TRUE
-    }
-    # A default key is a row position (a line's: its first row), so in a plot
-    # where another layer keys by a user `data_id` it can equal one of those
-    # ids -- the line's "1" and the point whose `data_id` is 1 -- and a host
-    # would select both together. There, default keys carry their layer
-    # ("layer-1:1"), which no user id is made to look like (VP-54).
-    if (default_key && isTRUE(.mark_ctx$plot_user_ids)) {
-      .mark_ctx$data_id <- paste0("layer-", li, ":", .mark_ctx$data_id)
+      default_cross <- dk$cross
     }
     # A `group_by`/`fields` point selection groups elements sharing those column
     # values -- carried as the element `hover_group`, so a host links the whole
@@ -965,7 +965,7 @@ NULL
     # Graph marks (nodes/edges): when the plot is interactive, key nodes by vertex
     # `name` and carry each edge's two endpoint node names as source/target, so a
     # host can relate nodes to edges for neighbour highlighting. Overrides the
-    # row-index default above with the stable graph key. A node with no declared
+    # default key above with the stable graph key. A node with no declared
     # tooltip defaults to its name. Inert on a static render (gated on
     # `plot_interactive`). Straight / gradient / elbow edges all carry per-edge
     # keys (they pass `rows=` to `.draw`); self-loops draw without `rows=` so they
@@ -976,6 +976,7 @@ NULL
     if (isTRUE(.mark_ctx$plot_interactive) && !is.null(gi)) {
       .mark_ctx$data_id <- gi$key
       default_join <- NULL
+      default_cross <- NULL
       if (identical(gi$kind, "edges")) {
         .mark_ctx$edge_source <- gi$source
         .mark_ctx$edge_target <- gi$target
@@ -991,14 +992,13 @@ NULL
       .interval_values(L, scales, .mark_ctx$plot_interval_aes)
     }
     # In a composition, each cell is a separate plot compiled independently, so
-    # cells share row-index keys that would collide in one host runtime (hiding one
-    # cell's key-3 would hit every cell's key-3). So a composition cell's DOM key is
-    # made unique (prefixed with its `subplot-N` panel), while the original value is
-    # kept as `join` -- the cross-view identity a host matches on (brush cell A ->
-    # filter cell B's rows with the same join). A single plot is unchanged: no
-    # prefix, no `join`. A facet panel's (`panel-r-c`) default keys already carry
-    # the panel, with the source row as `join` (`.default_keys()`); a declared
-    # `data_id` is used as given.
+    # cells share keys that would collide in one host runtime (hiding one cell's
+    # "p1-1:l1:3" would hit every cell's). So a composition cell's DOM key is
+    # made unique (prefixed with its `subplot-N` panel), while a cross-view
+    # identity is kept as `join` -- what a host matches on (brush cell A ->
+    # filter cell B's rows with the same join): a declared `data_id` as given, a
+    # default key's row (`.default_keys()`). A single plot gets no prefix, and a
+    # `join` only for facet-panel default keys (the source row).
     .mark_ctx$join <- NULL
     if (
       !is.null(default_join) &&
@@ -1011,14 +1011,17 @@ NULL
         !is.na(.mark_ctx$panel) &&
         startsWith(.mark_ctx$panel, "subplot-")
     ) {
-      .mark_ctx$join <- .mark_ctx$data_id
+      .mark_ctx$join <- .mark_ctx$join %||%
+        default_cross %||%
+        .mark_ctx$data_id
       .mark_ctx$data_id <- paste0(.mark_ctx$panel, ":", .mark_ctx$data_id)
     }
     # A composition cell drawn as a whole plot (faceted, or otherwise not
-    # aligned) names its panels `panel-r-c` like a lone plot, so its keys --
-    # "panel-1-1:3" or plain row ids -- repeat from cell to cell. Prefix them
-    # with the cell id ("cell-2:panel-1-1:3"), keeping the unprefixed value (or
-    # the facet default's source row) as `join`, as for an aligned cell (VP-51).
+    # aligned) names its panels `panel-r-c` like a lone plot, so its keys
+    # repeat from cell to cell. Prefix them with the cell id
+    # ("cell-2:p1-1:l1:3"), keeping a cross-view identity as `join` (the facet
+    # default's source row, a default key's row, or a declared value), as for
+    # an aligned cell (VP-51).
     cell <- .mark_ctx$panel_cell
     if (
       !is.null(.mark_ctx$data_id) &&
@@ -1026,7 +1029,9 @@ NULL
         !is.na(.mark_ctx$panel) &&
         startsWith(.mark_ctx$panel, "panel-")
     ) {
-      .mark_ctx$join <- .mark_ctx$join %||% .mark_ctx$data_id
+      .mark_ctx$join <- .mark_ctx$join %||%
+        default_cross %||%
+        .mark_ctx$data_id
       .mark_ctx$data_id <- paste0(cell, ":", .mark_ctx$data_id)
     }
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.

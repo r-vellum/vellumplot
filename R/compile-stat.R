@@ -491,8 +491,8 @@ NULL
 # and the per-row `if_false` of its conditional encodings to a stat's output rows
 # (see `.realign_row_value()` for the rule). The data key decides: when it cannot
 # be realigned the elements are unkeyed and the whole set is dropped -- except a
-# key that was only the default row index, which is renumbered over the output
-# rows so constant or per-group tooltips still reach the summary elements.
+# default key (no `data_id` declared), which is rebuilt over the output rows so
+# constant or per-group tooltips still reach the summary elements.
 .realign_meta <- function(L, map) {
   if (is.null(map)) {
     return(L) # an empty stat output draws nothing
@@ -505,12 +505,10 @@ NULL
         m[nm] <- list(.realign_row_value(m[[nm]], map))
       }
     }
+    # A default key is a placeholder until `.default_keys()` builds the real
+    # one at emit (panel, layer, row); it only has to align to the output rows.
     id <- if (isTRUE(m$default_id)) {
-      if (is.null(map$rows)) {
-        as.character(seq_len(map$n_out))
-      } else {
-        m$data_id[map$rows]
-      }
+      as.character(seq_len(map$n_out))
     } else {
       .realign_row_value(m$data_id, map)
     }

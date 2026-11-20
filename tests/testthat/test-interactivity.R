@@ -45,10 +45,11 @@ test_that("a plot with no interactivity declarations is unchanged (no data-key)"
 })
 
 test_that("tooltip without data_id defaults the key to row identity", {
+  # panel, layer and row (VP-55)
   p <- vplot(df) |> mark_point(x = wt, y = mpg, tooltip = model)
   el <- data_points_of(p)
-  expect_setequal(el$key, as.character(seq_len(nrow(df))))
-  expect_match(svg_of(p), 'data-key="1"', fixed = TRUE)
+  expect_setequal(el$key, paste0("p1-1:l1:", seq_len(nrow(df))))
+  expect_match(svg_of(p), 'data-key="p1-1:l1:1"', fixed = TRUE)
 })
 
 test_that("a constant tooltip recycles to every element", {
