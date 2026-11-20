@@ -1,5 +1,18 @@
 # vellumplot 0.15.1.9000 (development version)
 
+## Behaviour changes
+
+* **Behaviour change:** `position = "dodge"` now splits the width at each x
+  between the groups present there, as ggplot2's `position_dodge()` does. Before,
+  every x kept a slot for every group, so `mark_bar(x = factor(cyl), fill =
+  factor(gear), position = "dodge")` left a gap for the missing gear-4 bar at
+  `cyl = 8`; now that x shows two wider bars, centred. The default dodge width
+  is now the bar width (90% of the band) instead of the whole band, so dodged
+  bars touch, and a dodged box plot no longer leaves a gap between its boxes,
+  both as in ggplot2. `position_dodge(preserve = "single")` keeps every element
+  one group wide. Points now dodge with `position = "dodge"` too; before they
+  were drawn undodged (VP-56).
+
 # vellumplot 0.15.1
 
 * `annotate()` layers no longer get default keys just because the plot declares a selection. A keyed annotation made the widget's display list inexact, which switched off its zoomed canvas and detail tier for the whole plot (VW-24). An annotation with its own `data_id` or a `condition()` is still keyed.
