@@ -524,6 +524,16 @@ NULL
   # radius (size = 20mm renders a 40mm-diameter marker), so the cap == size.
   # Default matches the node emitter's `.aes_size(L, scales, 1)`.
   r_mm <- rep_len(.aes_size(node_L, scales, 1), node_n)
+  # A faceted panel draws only its own nodes: place their radii at their vertex
+  # indices (the plot-data rows), so an edge looks up its own endpoints'.
+  rows <- node_L$source$rows
+  if (
+    identical(node_L$source$name, "plot") &&
+      length(rows) == node_L$n &&
+      length(rows) < node_n
+  ) {
+    r_mm[rows] <- rep_len(.aes_size(node_L, scales, 1), length(rows))
+  }
   # Per-edge perpendicular offset (mm): the signed parallel-edge index scaled by
   # the larger endpoint radius, so parallel/reciprocal edges spread across the
   # node face. Applied device-side by segments_grob(offset=) -> tracks the nodes.
@@ -740,6 +750,11 @@ NULL
 #' Reductions apply in a fixed order: `augment` (metrics computed on the input
 #' graph) -> `filter_edges` -> `filter_nodes` -> `k_core`. Augmented metrics thus
 #' reflect the *input* graph, not the post-filter subgraph.
+#'
+#' A graph can be faceted by a vertex attribute (`facet_wrap(~group)`): each
+#' panel draws that group's nodes and only the edges whose two endpoints are
+#' both in the panel, as ggraph's `facet_nodes()` does. Edges between groups
+#' are left out, and all panels share the one layout.
 #' @seealso [mark_edges()], [mark_nodes()], [mark_node_text()]
 #' @examples
 #' \dontrun{

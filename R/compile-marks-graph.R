@@ -151,7 +151,7 @@ NULL
   # Per-edge endpoint node radii (mm), for exact node-boundary capping. vellum
   # resolves the mm caps in device space at render, so this is correct at any
   # size/dpi and for arbitrary per-vertex sizes -- no native-per-mm estimate.
-  gh <- scales$graph
+  gh <- .graph_caps_rows(scales$graph, L)
   # A small gap (mm) past the node radius so the edge/arrowhead clears the marker.
   gap <- 0.4
 
@@ -233,6 +233,28 @@ NULL
     }
   }
   scene
+}
+
+# The panel's caps cover the whole edge table, while a faceted panel draws only
+# the edges among its own nodes (VP-64): take the drawn rows' entries so each
+# edge keeps its own caps, offset and loop placement.
+.graph_caps_rows <- function(gh, L) {
+  rows <- L$source$rows
+  if (
+    is.null(gh) ||
+      identical(L$source$name, "plot") ||
+      !length(rows) ||
+      length(rows) != L$n ||
+      max(rows) > length(gh$start_cap)
+  ) {
+    return(gh)
+  }
+  for (k in c("start_cap", "end_cap", "offset", "loop_angle", "loop_narrow")) {
+    if (!is.null(gh[[k]])) {
+      gh[[k]] <- gh[[k]][rows]
+    }
+  }
+  gh
 }
 
 # Straight edges: one batched segments_grob per (colour, alpha, width, linetype)
