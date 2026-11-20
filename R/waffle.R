@@ -105,7 +105,7 @@ vwaffle <- function(
   if (!n) {
     return(scene)
   }
-  fill <- rep_len(.aes_colour(L, scales, "grey50"), n)
+  fill <- rep_len(.aes_colour(L, scales, "grey50", role = "fill"), n)
   rows <- L$params$rows %||% 10L
   flip <- isTRUE(L$params$flip)
   pad <- L$params$pad %||% 0.12

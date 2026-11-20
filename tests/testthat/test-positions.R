@@ -42,16 +42,21 @@ test_that("dodge2 fills the band by the groups present at each x", {
   d2 <- vellumplot:::.dodge_offsets(
     x = c(1, 2, 2),
     grp = c("x", "x", "y"),
-    span = rep(0.9, 3),
-    ragged = TRUE
+    span = rep(0.9, 3)
   )
   expect_equal(d2$offset[1], 0) # lone group stays centred on the tick
   expect_equal(d2$share[1], 1) # and fills the whole band
   # the paired group splits the band in two, symmetric about the tick
   expect_equal(d2$share[2:3], c(0.5, 0.5))
   expect_equal(d2$offset[2] + d2$offset[3], 0)
-  # plain dodge keeps a slot for every level, so x = 1's lone group is off-centre
-  d1 <- vellumplot:::.dodge_offsets(c(1, 2, 2), c("x", "x", "y"), 0.9)
+  # preserve = "single" keeps every slot one group wide, packed from the left,
+  # so x = 1's lone group is off-centre (ggplot2's pos_dodge(n = 2))
+  d1 <- vellumplot:::.dodge_offsets(
+    c(1, 2, 2),
+    c("x", "x", "y"),
+    0.9,
+    preserve = "single"
+  )
   expect_equal(d1$offset, c(-0.225, -0.225, 0.225))
   expect_equal(d1$share, rep(0.5, 3))
 })

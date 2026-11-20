@@ -362,8 +362,8 @@ NULL
   panel_clip <- dp$panel_clip
   hscale <- dp$hscale
   vscale <- dp$vscale
-  # More than one panel: default element keys must carry the panel to stay
-  # unique across panels (see `.default_keys()`).
+  # More than one panel: facet-panel default keys also carry the source row
+  # as a cross-panel `join` (see `.default_keys()`).
   old_faceted <- .mark_ctx$faceted
   .mark_ctx$faceted <- length(built$panels) > 1L
   on.exit(assign("faceted", old_faceted, envir = .mark_ctx), add = TRUE)
@@ -857,6 +857,9 @@ NULL
   # Interaction context for the mark emitter (single-plot path; the aligned
   # composition path sets it per cell). See `.set_interaction_ctx`.
   .set_interaction_ctx(spec)
+  # The theme's default mark colours (`theme(geom = element_geom())`), read by
+  # the mark emitters and legend keys through `.geom_paint()`.
+  .set_geom_ctx(.theme_of(spec))
   # The composition cell this plot is drawn as (NULL for a lone plot or an
   # inset), for per-cell panel names. Restored with the rest of `.mark_ctx`.
   .mark_ctx$panel_cell <- .comp_cell_take()

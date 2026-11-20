@@ -1162,7 +1162,7 @@ NULL
   fills <- style$fills %||%
     (if (!is.null(ks$fill)) rep_len(ks$fill, k)) %||%
     style$cols %||%
-    rep_len("grey35", k)
+    rep_len(.geom_paint("grey35", "fill"), k)
   cols <- style$cols %||%
     (if (!is.null(ks$col)) rep_len(ks$col, k)) %||%
     fills
@@ -1541,7 +1541,7 @@ NULL
     size = if (isTRUE(sc$na) && i > length(sc$legend_sizes)) {
       .na_key_grob(m, sk)
     } else {
-      fill <- ov$fill %||% ov$color %||% "grey35"
+      fill <- ov$fill %||% ov$color %||% .geom_paint("grey35", "fill")
       vellum::points_grob(
         vellum::vl_unit(0.5, "npc"),
         vellum::vl_unit(0.5, "npc"),
@@ -1550,7 +1550,7 @@ NULL
         sketch = sk,
         gp = vellum::vl_gpar(
           fill = fill,
-          col = ov$color %||% "grey35",
+          col = ov$color %||% .geom_paint("grey35"),
           alpha = ov$alpha
         )
       )
@@ -1561,8 +1561,8 @@ NULL
       .shape_key_grob(
         ov$shape %||% sc$shapes[i],
         ov$size %||% (m$key / 2),
-        ov$fill %||% ov$color %||% "grey35",
-        ov$color %||% "grey35",
+        ov$fill %||% ov$color %||% .geom_paint("grey35", "fill"),
+        ov$color %||% .geom_paint("grey35"),
         sk,
         ov$alpha
       )
@@ -1583,7 +1583,7 @@ NULL
       vellum::vl_unit(0.5, "npc"),
       sketch = sk,
       gp = vellum::vl_gpar(
-        col = ov$color %||% "grey35",
+        col = ov$color %||% .geom_paint("grey35"),
         lwd = sc$legend_widths[i],
         alpha = ov$alpha
       )
@@ -1595,7 +1595,7 @@ NULL
       shape = ov$shape %||% "circle",
       sketch = sk,
       gp = vellum::vl_gpar(
-        fill = ov$fill %||% ov$color %||% "grey20",
+        fill = ov$fill %||% ov$color %||% .geom_paint("grey20", "fill"),
         col = NA,
         alpha = ov$alpha %||% sc$legend_alphas[i]
       )
@@ -1607,7 +1607,7 @@ NULL
       vellum::vl_unit(0.5, "npc"),
       sketch = sk,
       gp = vellum::vl_gpar(
-        col = ov$color %||% "grey35",
+        col = ov$color %||% .geom_paint("grey35"),
         lwd = ov$linewidth %||% 1.5,
         lty = ov$linetype %||% sc$linetypes[i],
         alpha = ov$alpha
@@ -1730,7 +1730,7 @@ NULL
       height = vellum::vl_unit(m$key * 0.8, "mm"),
       sketch = sketch,
       gp = vellum::vl_gpar(
-        fill = ov$fill %||% ks$fill %||% "white",
+        fill = ov$fill %||% ks$fill %||% .geom_paint("white", "fill"),
         col = line_col,
         lwd = ov$linewidth %||% 1.5,
         alpha = alpha
@@ -2205,7 +2205,7 @@ NULL
         vellum::vl_unit(sizes[i] / h, "npc"),
         size = vellum::vl_unit(sizes[i], "mm"),
         shape = "circle",
-        gp = vellum::vl_gpar(fill = NA, col = "grey35", lwd = 0.7)
+        gp = vellum::vl_gpar(fill = NA, col = .geom_paint("grey35"), lwd = 0.7)
       )
     )
   }

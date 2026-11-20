@@ -134,3 +134,92 @@ test_that("densities and fits run per pair, and draw one series each", {
     logical(1)
   )))
 })
+
+# --- alpha, size and linewidth group too (VP-57) -----------------------------
+
+test_that("a discrete alpha, size or linewidth groups a layer", {
+  d <- cars()
+  plots <- list(
+    alpha = vplot(d) |> mark_line(x = wt, y = mpg, color = cyl, alpha = am),
+    size = vplot(d) |> mark_point(x = wt, y = mpg, color = cyl, size = am),
+    linewidth = vplot(d) |>
+      mark_line(x = wt, y = mpg, color = cyl, linewidth = am)
+  )
+  for (aes in names(plots)) {
+    k <- .group_key(suppressWarnings(.resolve_layers(plots[[aes]])[[1]]))
+    expect_identical(length(unique(k)), 6L, info = aes)
+    expect_identical(levels(k)[1:2], c("4:0", "4:1"), info = aes)
+  }
+  # a continuous one does not
+  L <- quiet_layer(vplot(d) |> mark_line(x = wt, y = mpg, alpha = hp))
+  expect_null(.group_key(L))
+})
+
+test_that("alpha / size / linewidth groups match ggplot2's layer_data()", {
+  skip_if_not_installed("ggplot2")
+  d <- cars()
+  aes <- ggplot2::aes
+  gg_group <- function(p) {
+    as.vector(suppressWarnings(ggplot2::layer_data(p)$group))
+  }
+  vp_group <- function(p) {
+    k <- .group_key(suppressWarnings(.resolve_layers(p)[[1]]))
+    as.integer(if (is.factor(k)) k else factor(k))
+  }
+  # lines (geom_path keeps row order)
+  expect_identical(
+    vp_group(
+      vplot(d) |>
+        mark_line(x = wt, y = mpg, color = cyl, alpha = am, linewidth = vs)
+    ),
+    gg_group(
+      ggplot2::ggplot(d, aes(wt, mpg, colour = cyl, alpha = am, linewidth = vs)) +
+        ggplot2::geom_path()
+    )
+  )
+  # boxplots: one box per (x, fill, alpha) present, with ggplot2's medians
+  L <- suppressWarnings(
+    .resolve_layers(
+      vplot(d) |> mark_boxplot(x = cyl, y = mpg, fill = gear, alpha = am)
+    )[[1]]
+  )
+  med <- tapply(L$values$y, paste(L$values$x, .group_key(L)), stats::median)
+  ld <- suppressWarnings(ggplot2::layer_data(
+    ggplot2::ggplot(d, aes(cyl, mpg, fill = gear, alpha = am)) +
+      ggplot2::geom_boxplot()
+  ))
+  expect_equal(sort(as.vector(med)), sort(ld$middle))
+  # smooths: one fit per (colour, linewidth) pair
+  L <- suppressWarnings(
+    .resolve_layers(
+      vplot(d) |>
+        mark_smooth(x = wt, y = mpg, color = vs, linewidth = am, method = "lm")
+    )[[1]]
+  )
+  ld <- suppressWarnings(ggplot2::layer_data(
+    ggplot2::ggplot(d, aes(wt, mpg, colour = vs, linewidth = am)) +
+      ggplot2::geom_smooth(method = "lm", formula = y ~ x)
+  ))
+  ends <- function(y, g) {
+    sort(round(unlist(tapply(y, g, function(v) v[c(1, length(v))])), 6))
+  }
+  expect_identical(length(unique(.group_key(L))), length(unique(ld$group)))
+  expect_equal(
+    unname(ends(L$values$y, .group_key(L))),
+    unname(ends(ld$y, ld$group))
+  )
+})
+
+test_that("outlier labels judge outliers per colour group, styled by alpha", {
+  d <- data.frame(
+    x = 1:24,
+    y = c(rep(1, 11), 50, rep(5, 11), 90),
+    g = rep(c("a", "b"), each = 12),
+    s = rep(c(rep("small", 11), "big"), 2)
+  )
+  L <- quiet_layer(
+    vplot(d) |> mark_outlier_label(x = x, y = y, color = g, size = s)
+  )
+  expect_equal(L$values$y, c(50, 90))
+  expect_equal(as.character(L$values$size), c("big", "big"))
+})

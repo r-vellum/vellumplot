@@ -39,7 +39,7 @@ mark_label(
   angle = NULL,
   nudge_x = 0,
   nudge_y = 0,
-  fill = "white",
+  fill = NULL,
   repel = FALSE,
   box_padding = 1,
   point_padding = 1,
@@ -109,7 +109,8 @@ layer composites as one isolated group (not per element).}
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
 \item{fill}{For \code{mark_label()}, the label background: a constant colour, or a
-mapped encoding (e.g. \code{fill = group}) coloured through the fill/colour scale.}
+mapped encoding (e.g. \code{fill = group}) coloured through the fill/colour scale.
+Default: the theme's paper colour (white; see \code{\link[=element_geom]{element_geom()}}).}
 
 \item{sketch}{A \code{\link[=sketch]{sketch()}} spec giving this layer a hand-drawn look (wobbly
 outlines, hachure fills), \code{NA}/\code{FALSE} to force it crisp (overriding a

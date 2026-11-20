@@ -16,8 +16,9 @@ NULL
 # slab-interval): one per category level on `axis`, each split into one cell per
 # `.group_key()` sub-group present there. Sub-groups are dodged across `span`
 # (native units -- the mark's full width at one category) with `.dodge_offsets()`
-# -- the groups present at each category share it (ggplot2's dodge2 for boxes),
-# or with `position = "dodge"` every category keeps a slot for every group. A
+# -- the groups present at each category share it, with a gap between them
+# (ggplot2's dodge2 for boxes) or, with `position = "dodge"`, without one
+# (`position_dodge(preserve = "single")` keeps every slot one group wide). A
 # `dodge = FALSE` mark (ridgeline) overlays its sub-groups on the shared baseline
 # instead. Each cell carries its rows (provenance keys), its native `centre`, and
 # `share`, the fraction of the mark's usual width it may take.
@@ -36,14 +37,12 @@ NULL
     gch <- as.character(g)
     glevs <- .cat_levels(g)
     if (dodge) {
-      d <- .dodge_offsets(
-        cchar,
-        g,
-        span,
-        ragged = !identical(L$position, "dodge")
-      )
+      d <- .dodge_offsets(cchar, g, span, preserve = .dodge_preserve(L))
     }
   }
+  # dodge2 (the default) leaves a gap between neighbours; position_dodge()
+  # gives each group its whole slot, as ggplot2 does
+  pad <- if (identical(L$position, "dodge")) 1 else 1 - .DIST_DODGE_PAD
   cells <- list()
   for (j in seq_along(levs)) {
     sel <- by_level[[j]]
@@ -62,7 +61,7 @@ NULL
         label = levs[j],
         rows = rows,
         centre = centres[j] + if (is.null(d)) 0 else d$offset[i0],
-        share = if (is.null(d)) 1 else d$share[i0] * (1 - .DIST_DODGE_PAD)
+        share = if (is.null(d)) 1 else d$share[i0] * pad
       )
     }
   }
@@ -116,7 +115,8 @@ NULL
   fill <- if (!is.null(scales$fill) && !is.null(L$values$fill)) {
     scales$fill$map(L$values$fill)
   } else {
-    (if (.is_paint(L$params$fill)) NULL else L$params$fill) %||% fill_default
+    (if (.is_paint(L$params$fill)) NULL else L$params$fill) %||%
+      .geom_paint(fill_default, "fill")
   }
   list(
     fill = rep_len(fill, n),
@@ -134,7 +134,7 @@ NULL
   yv <- scales$y$map(L$values$y)
   labels <- L$values$.blabel
   tip <- (L$stat_params$tip_length %||% 0.03) * diff(scales$y$domain)
-  col <- .aes_param(L, "color", "black")
+  col <- .aes_param(L, "color", .geom_paint("black"))
   lwd <- .aes_param(L, "linewidth", 0.6)
   fs <- .aes_param(L, "size", 8)
   sk <- .mark_sketch(L, scales)

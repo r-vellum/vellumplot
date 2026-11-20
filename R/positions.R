@@ -21,7 +21,11 @@ NULL
 #'   maximum shift in data units (default: 40% of the resolution), `seed` makes
 #'   it reproducible.
 #' * `position_dodge()` places grouped elements side by side; `width` is the
-#'   total data-space width shared by the group (default: the category band).
+#'   total data-space width shared by the groups at one x (default: the bar
+#'   width, 90% of the category band). As in ggplot2, only the groups present
+#'   at an x share it: with `preserve = "total"` (the default) an x with fewer
+#'   groups gets wider elements, while `preserve = "single"` keeps every
+#'   element as wide as one group at the fullest x.
 #' * `position_dodge2()` dodges by the groups actually present at each x and
 #'   splits the band between them with a `padding` gap — so ragged groupings
 #'   stay centred and evenly spaced.
@@ -45,6 +49,9 @@ NULL
 #'   dodge / jitter extents.
 #' @param padding `position_dodge2()` gap between dodged elements, as a fraction
 #'   of the element width.
+#' @param preserve `position_dodge()`: `"total"` splits the dodge width
+#'   between the groups present at each x; `"single"` gives each element the
+#'   width of one group at the x with the most groups.
 #' @param seed Optional integer seed for the random jitter.
 #' @param vjust `position_stack()` / `position_fill()`: where a point, text or
 #'   label sits inside its stacked span, from `0` (bottom) to `1` (top).
@@ -78,8 +85,9 @@ position_jitter <- function(width = NULL, height = NULL, seed = NULL) {
 
 #' @rdname position
 #' @export
-position_dodge <- function(width = NULL) {
-  .new_position("dodge", dodge_width = width)
+position_dodge <- function(width = NULL, preserve = c("total", "single")) {
+  preserve <- rlang::arg_match(preserve)
+  .new_position("dodge", dodge_width = width, dodge_preserve = preserve)
 }
 
 #' @rdname position

@@ -227,6 +227,27 @@ is deliberate: a plot's gridlines and axis labels are unkeyed text and lines, an
 they must not drown the marks that carry meaning. So *absence of a key is a
 choice you are making*, not a limitation.
 
+### Default keys
+
+A layer without `data_id` still gets keys when it has a `tooltip`, a
+`condition()`, or the plot declares a selection. These default keys name the
+panel, the layer and the row: `"p1-1:l2:7"` is row 7 of layer 2 in the first
+(or only) panel, and a line or area series takes the key of its first row. In a
+composition the cell id goes in front (`"subplot-2:p1-1:l1:7"`). So no two
+layers ever share a default key, and selecting a point never selects a line by
+accident. When two layers *should* react together, give them the same
+`data_id`:
+
+```{r}
+#| label: shared-key
+#| eval: false
+# clicking a point selects its whole series, line included
+vplot(df) |>
+  mark_line(x = t, y = v, color = g, data_id = g) |>
+  mark_point(x = t, y = v, data_id = g) |>
+  select_point("series")
+```
+
 ## What a host does with it
 
 `vellumplot` compiles once and carries the interaction declarations plus the
