@@ -1,4 +1,4 @@
-# vellumplot 0.14.1.9000 (development version)
+# vellumplot 0.15.0
 
 ## Behaviour changes
 
