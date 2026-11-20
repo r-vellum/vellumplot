@@ -31,8 +31,14 @@ class column) has none to show.}
 with high-high at the top (default \code{FALSE}).}
 
 \item{position}{Where this legend goes: \code{"right"}, \code{"left"}, \code{"top"},
-\code{"bottom"} or \code{"inside"} (over the panels, at \code{theme(legend.position.inside = )} / \code{legend.justification}). \code{NULL} (default) follows
-\code{theme(legend.position = )}. A guide's own position overrides the theme for
+\code{"bottom"} or \code{"inside"} (over the panels, at \code{theme(legend.position.inside = )} / \code{legend.justification}), or \code{"panel"}: beside each facet panel, on
+the side \code{theme(legend.position = )} names (right by default; inside each
+panel when the theme puts legends inside) and justified along the panel
+edge by \code{legend.justification}. A scale resolved \code{"independent"} across
+panels (\code{\link[=resolve_scale]{resolve_scale()}}) draws each panel's legend there by default; a
+shared scale placed \code{"panel"} repeats its legend beside every panel. \code{NULL}
+(default) follows \code{theme(legend.position = )} (and \code{"panel"} for an
+independent scale). A guide's own position overrides the theme for
 that legend only, as in ggplot2 3.5, so legends can sit on different sides
 of one plot; legends at one position stack as usual. A legend at the top or
 bottom is laid out horizontally. \code{theme(legend.position = "none")} still

@@ -1,6 +1,7 @@
 # Independent non-position scales across facet panels (F-8):
 # `resolve_scale(color = "independent")` trains the colour scale per panel and
-# gives each panel its own legend.
+# gives each panel its own legend, drawn beside the panel (VP-53) unless its
+# guide asks for another position.
 
 df <- data.frame(
   x = 1:9,
@@ -59,11 +60,23 @@ test_that("an independent colour scale trains per panel", {
   )
 })
 
-test_that("each panel gets its own legend titled with its strip", {
+test_that("each panel gets its own legend, beside its panel", {
   p <- resolve_scale(base, color = "independent")
   guides <- vellumplot:::.facet_legend_guides(vellumplot:::.build_panels(p))
   titles <- vapply(guides, function(g) g$sc$name, character(1))
+  expect_identical(titles, c("k", "k", "k"))
+  expect_identical(vapply(guides, function(g) g$panel, 1L), 1:3)
+  svg <- svg_of(p)
+  expect_no_match(svg, "k (a)", fixed = TRUE)
+})
+
+test_that("a collected per-panel legend is titled with its strip", {
+  p <- resolve_scale(base, color = "independent") |>
+    guides(color = guide_legend(position = "right"))
+  guides <- vellumplot:::.facet_legend_guides(vellumplot:::.build_panels(p))
+  titles <- vapply(guides, function(g) g$sc$name, character(1))
   expect_identical(titles, c("k (a)", "k (b)", "k (c)"))
+  expect_true(all(vapply(guides, function(g) is.null(g$panel), TRUE)))
   svg <- svg_of(p)
   expect_match(svg, "k (a)", fixed = TRUE)
   expect_match(svg, "k (c)", fixed = TRUE)
@@ -73,7 +86,8 @@ test_that("shared and independent legends coexist; labellers title them", {
   p <- vplot(df) |>
     mark_point(x = x, y = y, color = v, size = v) |>
     facet_wrap(~g, labeller = label_both) |>
-    resolve_scale(color = "independent")
+    resolve_scale(color = "independent") |>
+    guides(color = guide_colourbar(position = "right"))
   guides <- vellumplot:::.facet_legend_guides(vellumplot:::.build_panels(p))
   titles <- vapply(guides, function(g) g$sc$name, character(1))
   expect_identical(titles, c("v", "v (g: a)", "v (g: b)", "v (g: c)"))
@@ -92,7 +106,8 @@ test_that("grid panels are titled by their column and row strips", {
   p <- vplot(d2) |>
     mark_point(x = x, y = y, color = k) |>
     facet_grid(h ~ g) |>
-    resolve_scale(color = "independent")
+    resolve_scale(color = "independent") |>
+    guides(color = guide_legend(position = "bottom"))
   guides <- vellumplot:::.facet_legend_guides(vellumplot:::.build_panels(p))
   titles <- vapply(guides, function(g) g$sc$name, character(1))
   expect_length(titles, 6)

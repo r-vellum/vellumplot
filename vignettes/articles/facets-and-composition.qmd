@@ -75,9 +75,8 @@ default, so one legend describes the whole figure and a colour means the same
 thing in every panel. When each panel has its own set of categories, or values
 on very different ranges, a shared scale can waste most of the palette.
 `resolve_scale()` takes those aesthetics too: `"independent"` trains the scale
-in each panel from that panel's data alone, and each panel gets its own legend.
-The legends are collected in the legend area, each titled with the scale title
-and the panel's strip text.
+in each panel from that panel's data alone, and each panel gets its own legend,
+drawn beside its panel.
 
 ```{r}
 #| fig-width: 8
@@ -99,6 +98,36 @@ vplot(mtcars) |>
   facet_wrap(~am, labeller = label_both) |>
   resolve_scale(color = "independent")
 ```
+
+The per-panel legends sit right of each panel by default; each column of panels
+gets a legend track as wide as the widest legend in it. They follow
+`theme(legend.position = )`, so `"bottom"` puts them under each panel (one
+track per row of panels, for `facet_grid()` too) and `"inside"` inside each
+panel, and `legend.justification` aligns them along the panel edge.
+
+```{r}
+#| fig-width: 8
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(carb)) |>
+  facet_grid(am ~ cyl, labeller = label_both) |>
+  resolve_scale(color = "independent") |>
+  theme(legend.position = "bottom")
+```
+
+To collect them in the legend area instead, give the guide a position. Each
+legend is then titled with the scale title and the panel's strip text:
+
+```{r}
+#| fig-width: 8
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(gear)) |>
+  facet_wrap(~cyl, labeller = label_both) |>
+  resolve_scale(color = "independent") |>
+  guides(color = guide_legend(position = "right"))
+```
+
+The guide position `"panel"` works for a shared scale too: its one legend is
+repeated beside every panel.
 
 Because colours are no longer comparable between panels, an independent scale
 suits panels that are read one at a time. An unfaceted plot has a single panel

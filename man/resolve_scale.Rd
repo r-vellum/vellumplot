@@ -25,19 +25,31 @@ for setting \code{x}/\code{y} to \code{"independent"}.
 A non-position aesthetic (\code{color}, \code{fill}, \code{size}, \code{alpha}, \code{shape}, \code{linetype},
 \code{linewidth}, \code{pattern}, ...) set to \code{"independent"} is trained in each panel
 from that panel's data alone, so each panel spends the whole palette or
-range on its own values, and each panel gets its own legend. The legends
-are collected in the legend area, titled with the scale title and the
-panel's strip text (\code{"hp (cyl: 4)"}). Scales left shared keep their single
-legend. \code{colour} is an alias for \code{color}; \code{fill} is its own scale. A plot
-with a single panel ignores the setting.
+range on its own values, and each panel gets its own legend, drawn \strong{beside
+its panel} (the guide position \code{"panel"}): right of each panel by default,
+or on the side \code{theme(legend.position = )} names (left of, above or below
+each panel, or inside it). Each column of panels (or row, for legends above
+or below) gets a legend track as wide (tall) as its largest legend. To
+collect them in the legend area instead, give the guide a position, e.g.
+\code{guides(color = guide_legend(position = "right"))}; they are then titled
+with the scale title and the panel's strip text (\code{"hp (cyl: 4)"}). Scales
+left shared keep their single legend. \code{colour} is an alias for \code{color};
+\code{fill} is its own scale. A plot with a single panel ignores the setting.
 }
 \examples{
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl) |>
   resolve_scale(y = "independent")
 
-# one colour legend per panel
+# one colour legend beside each panel
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg, color = factor(gear)) |>
   facet_wrap(~cyl) |>
   resolve_scale(color = "independent")
+
+# the per-panel legends collected on the right instead
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(gear)) |>
+  facet_wrap(~cyl) |>
+  resolve_scale(color = "independent") |>
+  guides(color = guide_legend(position = "right"))
 }

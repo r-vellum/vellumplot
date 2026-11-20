@@ -60,7 +60,10 @@ one of \code{"right"} (default), \code{"left"}, \code{"top"}, \code{"bottom"}, \
 \code{legend.position.inside = c(x, y)} (fractions of the panel area; the older
 \code{legend.position = c(x, y)} works too), its \code{legend.justification} point
 (\code{c(x, y)} or words such as \code{c("right", "top")}, defaulting to the
-position) on that spot.
+position) on that spot. Legends drawn beside each facet panel
+(\code{guide_legend(position = "panel")}) sit on the side \code{legend.position}
+names, justified along the panel edge by \code{legend.justification} (e.g.
+\code{"top"} aligns a legend right of a panel with the panel's top).
 Legend geometry is tunable via \code{legend.key.size} (key/swatch side, mm),
 \code{legend.spacing} (gap between stacked guides, mm), and \code{legend.margin}
 (inset around the legend block, one or four millimetres, \verb{t, r, b, l}).}

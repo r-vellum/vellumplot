@@ -613,11 +613,14 @@ NULL
 
 # The legend guides of a faceted plot: the shared scales' guides (as
 # `.legend_guides()` builds them), then each panel's guides for the
-# aesthetics resolved as independent, titled with the panel's strip text --
-# "title (panel)", or the panel alone for an untitled scale. Guides merge
-# within one panel (a colour and a size legend of one variable), never across
-# panels, whose titles differ. With no independent aesthetic this is exactly
-# `.legend_guides(built$scales)`.
+# aesthetics resolved as independent. A panel's own legend is drawn beside its
+# panel by default (`position = "panel"`, tagged with the panel's index in
+# `$panel`, see `.panel_legend_guides()`); one whose guide asks for another
+# position (`guide_legend(position = "right")`) is collected with the shared
+# legends, titled with the panel's strip text -- "title (panel)", or the panel
+# alone for an untitled scale. Guides merge within one panel (a colour and a
+# size legend of one variable), never across panels. With no independent
+# aesthetic this is exactly `.legend_guides(built$scales)`.
 .facet_legend_guides <- function(built) {
   indep <- built$independent %||% character(0)
   if (!length(indep)) {
@@ -629,11 +632,21 @@ NULL
   for (i in seq_along(built$panels)) {
     p <- built$panels[[i]]
     own <- p$aes_sc[intersect(indep, names(p$aes_sc))]
+    # a panel with no values of a discrete aesthetic has no keys to show
+    own <- Filter(
+      function(sc) !identical(sc$type, "discrete") || length(sc$levels) > 0L,
+      own
+    )
     if (!length(own)) {
       next
     }
     label <- .panel_label(built$fa, i)
     own <- lapply(own, function(sc) {
+      pos <- sc$guide_position %||% "panel"
+      if (identical(pos, "panel")) {
+        # beside its own panel, the legend needs no panel label
+        return(.scale_set(sc, guide_position = pos))
+      }
       # A plain-text title gains the panel; a rich-text or empty one gives way
       # to the panel label, which is what tells the legends apart.
       sc$name <- if (.is_plain_title(sc$name)) {
@@ -643,7 +656,19 @@ NULL
       }
       sc
     })
-    out <- c(out, .legend_guides(own))
+    gs <- lapply(.legend_guides(own), function(g) {
+      if (identical(.guide_position(g), "panel")) {
+        g$panel <- i
+      }
+      g
+    })
+    out <- c(out, gs)
   }
   out
+}
+
+# The legends drawn beside panel `i`, from the guides placed "panel": a shared
+# scale's (repeated beside every panel) and the panel's own (`$panel == i`).
+.panel_legend_guides <- function(guides, i) {
+  Filter(function(g) is.null(g$panel) || identical(g$panel, i), guides)
 }
