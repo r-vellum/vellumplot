@@ -16,7 +16,7 @@ position_nudge(x = 0, y = 0)
 
 position_jitter(width = NULL, height = NULL, seed = NULL)
 
-position_dodge(width = NULL)
+position_dodge(width = NULL, preserve = c("total", "single"))
 
 position_dodge2(padding = 0.1)
 
@@ -40,6 +40,10 @@ position_jitterdodge(
 \code{position_sina()}, \code{width} is the spread as a fraction of the band.}
 
 \item{seed}{Optional integer seed for the random jitter.}
+
+\item{preserve}{\code{position_dodge()}: \code{"total"} splits the dodge width
+between the groups present at each x; \code{"single"} gives each element the
+width of one group at the x with the most groups.}
 
 \item{padding}{\code{position_dodge2()} gap between dodged elements, as a fraction
 of the element width.}
@@ -67,7 +71,11 @@ units (for continuous axes) — handy for offsetting labels from points.
 maximum shift in data units (default: 40\% of the resolution), \code{seed} makes
 it reproducible.
 \item \code{position_dodge()} places grouped elements side by side; \code{width} is the
-total data-space width shared by the group (default: the category band).
+total data-space width shared by the groups at one x (default: the bar
+width, 90\% of the category band). As in ggplot2, only the groups present
+at an x share it: with \code{preserve = "total"} (the default) an x with fewer
+groups gets wider elements, while \code{preserve = "single"} keeps every
+element as wide as one group at the fullest x.
 \item \code{position_dodge2()} dodges by the groups actually present at each x and
 splits the band between them with a \code{padding} gap — so ragged groupings
 stay centred and evenly spaced.
