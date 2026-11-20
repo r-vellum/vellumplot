@@ -56,8 +56,7 @@ test_that("dodged error bars sit over dodged bars", {
 
 test_that("horizontal range marks dodge along y, their category axis", {
   # native positions after the draw-time step: each category's two groups sit
-  # a quarter band either side of it (as a horizontal dodged box plot's do);
-  # the value axis is untouched
+  # a quarter of the bar width either side of it; the value axis is untouched
   native <- function(p) {
     L <- vellumplot:::.resolve_layers(p)[[1]]
     sc <- vellumplot:::.build_panels(p)$scales
@@ -75,7 +74,7 @@ test_that("horizontal range marks dodge along y, their category axis", {
         position = "dodge"
       )
     out <- native(p)
-    expect_equal(out$L$values$y, c(0.75, 1.25, 1.75, 2.25))
+    expect_equal(out$L$values$y, c(0.775, 1.225, 1.775, 2.225))
     expect_equal(out$L$values$xmin, summ$m - summ$se)
     expect_equal(out$L$values$xmax, summ$m + summ$se)
     expect_identical(
@@ -165,10 +164,11 @@ test_that("text and labels dodge with the bars they annotate", {
     sc <- vellumplot:::.train_scales(p, r)
     pn <- vellumplot:::.position_native(r[[2]], sc)
     band <- sc$x$band_width
-    # the generic step moves x onto the bar slots: +/- a quarter band for 2 groups
+    # the generic step moves x onto the bar slots: +/- a quarter of the bar
+    # width (90% of the band) for 2 groups
     expect_equal(
       pn$L$values$x,
-      sc$x$map(summ$cat) + c(-1, 1, -1, 1) * band / 4
+      sc$x$map(summ$cat) + c(-1, 1, -1, 1) * 0.9 * band / 4
     )
     # and hands the emitter an identity x map over the shifted positions
     expect_equal(pn$scales$x$map(pn$L$values$x), pn$L$values$x)
@@ -272,4 +272,142 @@ test_that("box plots use ggplot2 colour semantics: color strokes, fill fills", {
     vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg, color = factor(am))
   )
   expect_identical(vellumplot:::.key_glyph_for_aes(r, "color"), "outline")
+})
+
+# --- dodge by the groups present at each x (VP-56) ---------------------------
+
+# Data-space centres and widths of layer 1's `mark` elements: a reference point
+# layer at the three cyl categories turns device x into category units.
+dodge_geom <- function(p, mark) {
+  p <- p |>
+    mark_point(x = cyl, y = 0, data = data.frame(cyl = factor(c(4, 6, 8))))
+  el <- vellum::scene_model(as_vellum_scene(p))$elements
+  el <- el[!is.na(el$id), ]
+  ref <- sort(unique(el$x[startsWith(el$id, "layer-2")]))
+  s <- ref[2] - ref[1]
+  g <- el[startsWith(el$id, "layer-1") & el$mark == mark, ]
+  out <- unique(round(data.frame(x = 1 + (g$x - ref[1]) / s, w = g$w / s), 4))
+  out[order(out$x), ]
+}
+
+dodge_cars <- function() {
+  d <- mtcars
+  d$cyl <- factor(d$cyl)
+  d$gear <- factor(d$gear)
+  d
+}
+
+test_that("dodged bars split the width between the groups present at an x", {
+  d <- dodge_cars()
+  # cyl = 8 has no gear-4 cars: two wider bars, centred (ggplot2's layer_data)
+  g <- dodge_geom(
+    vplot(d) |> mark_bar(x = cyl, fill = gear, position = "dodge"),
+    "rect"
+  )
+  expect_equal(g$x, c(0.7, 1, 1.3, 1.7, 2, 2.3, 2.775, 3.225))
+  expect_equal(g$w, c(rep(0.3, 6), 0.45, 0.45))
+  # preserve = "single": every bar one group wide, packed from the left
+  g <- dodge_geom(
+    vplot(d) |>
+      mark_bar(
+        x = cyl,
+        fill = gear,
+        position = position_dodge(preserve = "single")
+      ),
+    "rect"
+  )
+  expect_equal(g$x, c(0.7, 1, 1.3, 1.7, 2, 2.3, 2.7, 3))
+  expect_equal(g$w, rep(0.3, 8))
+})
+
+test_that("dodged boxes and points follow the groups present, as ggplot2", {
+  d <- dodge_cars()
+  g <- dodge_geom(
+    vplot(d) |> mark_boxplot(x = cyl, y = mpg, fill = gear, position = "dodge"),
+    "rect"
+  )
+  expect_equal(g$x, c(0.75, 1, 1.25, 1.75, 2, 2.25, 2.8125, 3.1875))
+  expect_equal(g$w, c(rep(0.25, 6), 0.375, 0.375))
+  g <- dodge_geom(
+    vplot(d) |>
+      mark_point(
+        x = cyl,
+        y = mpg,
+        color = gear,
+        position = position_dodge(width = 0.75)
+      ),
+    "point"
+  )
+  expect_equal(
+    sort(unique(g$x)),
+    c(0.75, 1, 1.25, 1.75, 2, 2.25, 2.8125, 3.1875)
+  )
+  g <- dodge_geom(
+    vplot(d) |>
+      mark_point(
+        x = cyl,
+        y = mpg,
+        color = gear,
+        position = position_jitterdodge(jitter.width = 0)
+      ),
+    "point"
+  )
+  expect_equal(
+    sort(unique(g$x)),
+    c(0.75, 1, 1.25, 1.75, 2, 2.25, 2.8125, 3.1875)
+  )
+})
+
+test_that("dodge geometry matches ggplot2's layer_data()", {
+  skip_if_not_installed("ggplot2")
+  d <- dodge_cars()
+  gg <- function(p) {
+    ld <- ggplot2::layer_data(p)
+    out <- unique(round(data.frame(x = ld$x, w = ld$xmax - ld$xmin), 4))
+    out[order(out$x), ]
+  }
+  aes <- ggplot2::aes
+  for (pres in c("total", "single")) {
+    v <- dodge_geom(
+      vplot(d) |>
+        mark_bar(x = cyl, fill = gear, position = position_dodge(preserve = pres)),
+      "rect"
+    )
+    g <- gg(
+      ggplot2::ggplot(d, aes(cyl, fill = gear)) +
+        ggplot2::geom_bar(position = ggplot2::position_dodge(preserve = pres))
+    )
+    expect_equal(v, g, ignore_attr = TRUE, info = pres)
+    v <- dodge_geom(
+      vplot(d) |>
+        mark_boxplot(
+          x = cyl,
+          y = mpg,
+          fill = gear,
+          position = position_dodge(preserve = pres)
+        ),
+      "rect"
+    )
+    g <- gg(
+      ggplot2::ggplot(d, aes(cyl, mpg, fill = gear)) +
+        ggplot2::geom_boxplot(
+          position = ggplot2::position_dodge(preserve = pres)
+        )
+    )
+    expect_equal(v, g, ignore_attr = TRUE, info = pres)
+  }
+  v <- dodge_geom(
+    vplot(d) |> mark_bar(x = cyl, fill = gear, position = "dodge2"),
+    "rect"
+  )
+  g <- gg(
+    ggplot2::ggplot(d, aes(cyl, fill = gear)) +
+      ggplot2::geom_bar(position = "dodge2")
+  )
+  expect_equal(v, g, ignore_attr = TRUE)
+})
+
+test_that("position_dodge() checks `preserve`", {
+  expect_identical(position_dodge()$dodge_preserve, "total")
+  expect_error(position_dodge(preserve = "all"), "preserve")
 })

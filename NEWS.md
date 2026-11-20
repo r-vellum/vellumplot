@@ -2,6 +2,17 @@
 
 ## Behaviour changes
 
+* **Behaviour change:** `position = "dodge"` now splits the width at each x
+  between the groups present there, as ggplot2's `position_dodge()` does. Before,
+  every x kept a slot for every group, so `mark_bar(x = factor(cyl), fill =
+  factor(gear), position = "dodge")` left a gap for the missing gear-4 bar at
+  `cyl = 8`; now that x shows two wider bars, centred. The default dodge width
+  is now the bar width (90% of the band) instead of the whole band, so dodged
+  bars touch, and a dodged box plot no longer leaves a gap between its boxes,
+  both as in ggplot2. `position_dodge(preserve = "single")` keeps every element
+  one group wide. Points now dodge with `position = "dodge"` too; before they
+  were drawn undodged (VP-56).
+
 * **Behaviour change:** default element keys (for an interactive layer that
   declares no `data_id`) now always name the panel, the layer and the row, as
   `"p<row>-<col>:l<layer>:<row>"`: `"p1-1:l2:7"` is row 7 of layer 2 in the
