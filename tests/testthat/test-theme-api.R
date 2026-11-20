@@ -111,7 +111,11 @@ test_that("layout settings are validated at theme() construction (H40)", {
 })
 
 test_that("a bigger legend.key.size widens the reserved legend column", {
-  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  # a one-letter title, so the key column (not the title) sets the legend width;
+  # "factor(cyl)" is wider than the keys + labels with Linux fonts
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+    labs(color = "c")
   g <- vellumplot:::.legend_guides(vellumplot:::.build_panels(p)$scales)
   small <- vellumplot:::.legend_width(g, resolve_of(p))
   big <- vellumplot:::.legend_width(
