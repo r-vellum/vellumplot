@@ -1921,10 +1921,12 @@ mark_text_path <- function(
 #' `col_mix(ink, paper, 0.2)` from the theme's [element_geom()] (`"grey20"` on
 #' a light theme), the fill of ggplot2's `geom_tile()` and `geom_area()`. (ggplot2's
 #' `geom_density()` draws an unfilled outline; `mark_density()` keeps its filled
-#' curve, filled like an area.) Its fill is drawn at 80% opacity, so a single
-#' curve reads lighter and overlapping groups show through each other. An
-#' `alpha` you set or map replaces the 0.8, and an outline (a `color` beside
-#' a `fill`) stays opaque.
+#' curve, filled like an area.)
+#'
+#' `mark_density()` draws its fill at 80% opacity, so a single curve reads
+#' lighter and overlapping groups show through each other. An `alpha` you set
+#' or map replaces the 0.8, and an outline (a `color` beside a `fill`) stays
+#' opaque.
 #'
 #' With its count fill turned off (`fill = NULL`), `mark_hex()` fills with
 #' ggplot2's `col_mix(ink, paper, 0.5)` (`"grey50"` on a light theme). On a
