@@ -26,6 +26,15 @@
   [`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   keeps its filled curve and fills it like an area (VP-60).
 
+- **Behaviour change:**
+  [`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  now draws its fill at `alpha = 0.8` by default, so a single curve
+  reads lighter than VP-60’s solid grey20 and overlapping groups (`fill`
+  mapped) no longer hide the ones behind them. An `alpha` you set
+  (including `alpha = 1`) or map still wins, and an outline (a `color`
+  beside a `fill`) stays opaque. ggplot2’s `geom_density()` is unfilled,
+  so there is no ggplot2 default to match here (VP-66).
+
 - **Behaviour change:** `position = "jitterdodge"` jitters as ggplot2’s
   [`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
   does: by default 40% of the resolution divided by (the most groups at
