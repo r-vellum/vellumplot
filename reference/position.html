@@ -120,7 +120,8 @@ the result to a mark's <code>position</code> argument (e.g.
 <dt id="arg-preserve">preserve<a class="anchor" aria-label="anchor" href="#arg-preserve"></a></dt>
 <dd><p><code>position_dodge()</code>: <code>"total"</code> splits the dodge width
 between the groups present at each x; <code>"single"</code> gives each element the
-width of one group at the x with the most groups.</p></dd>
+width of one group at the x with the most groups, counted over the whole
+layer (every facet panel), as in ggplot2.</p></dd>
 
 
 <dt id="arg-padding">padding<a class="anchor" aria-label="anchor" href="#arg-padding"></a></dt>
@@ -160,7 +161,9 @@ element as wide as one group at the fullest x.</p></li>
 splits the band between them with a <code>padding</code> gap — so ragged groupings
 stay centred and evenly spaced.</p></li>
 <li><p><code>position_jitterdodge()</code> dodges grouped elements, then jitters within each
-dodged slot (points over dodged boxes).</p></li>
+dodged slot (points over dodged boxes). As in ggplot2, the default
+<code>jitter.width</code> is 40% of the resolution divided by (the most groups at
+any x, over every facet panel, + 2), and there is no vertical jitter.</p></li>
 <li><p><code>position_stack()</code> / <code>position_fill()</code> stack grouped elements sharing an
 x (<code>fill</code> normalises each stack to 1). Bars and areas take the stacked
 span; a point, text or label moves to a height inside its span: <code>vjust = 1</code>

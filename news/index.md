@@ -26,6 +26,15 @@
   [`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
   keeps its filled curve and fills it like an area (VP-60).
 
+- **Behaviour change:** `position = "jitterdodge"` jitters as ggplot2’s
+  [`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  does: by default 40% of the resolution divided by (the most groups at
+  any x + 2) each way, and not at all vertically. Before, it jittered
+  40% of the dodged slot sideways (0.15 instead of 0.1 of a category
+  with two groups) and 40% of the y resolution up and down. A
+  [`position_jitterdodge()`](https://r-vellum.github.io/vellumplot/reference/position.md)
+  built with the constructor already had no vertical jitter (VP-63).
+
 ### Bug fixes
 
 - More of the colours vellumplot draws on its own now follow a dark
@@ -65,6 +74,22 @@
   row below the plots, spanning their panels. `"left"` and `"top"` work
   the same way, and `"none"` drops it. Before, it always went in a
   column on the right (VP-62).
+
+- `position_dodge(preserve = "single")` in a faceted plot now sizes
+  every panel’s bars from the x with the most groups across the whole
+  layer, as ggplot2 does. Before, each panel counted only its own
+  groups, so a panel with at most two groups drew wider bars than one
+  with three (VP-63).
+
+- A faceted interactive graph plot
+  ([`vgraph()`](https://r-vellum.github.io/vellumplot/reference/vgraph.md)
+  with
+  [`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md))
+  keys each panel’s nodes and edges uniquely (`"p1-2:v1"`), with the
+  vertex name as the cross-panel `join`. Before, edges repeated in every
+  panel had the same keys. Edge endpoints now carry the same prefix as
+  the node keys, also in compositions, where neighbour highlighting
+  matched no node before (VP-63).
 
 ## vellumplot 0.16.0
 
