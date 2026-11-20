@@ -955,6 +955,27 @@ NULL
     page_height = spec@height,
     page_width = spec@width
   )
+  # Legends beside each facet panel (`position = "panel"`) that would leave the
+  # panels too narrow on this page are collected into the plot's legend
+  # instead, titled "title (panel)" (VP-59).
+  if (isTRUE(lay$panel_legends_squeeze)) {
+    cli::cli_inform(c(
+      "Collecting the per-panel legends: beside each panel they would leave the panels narrower than {(.PANEL_LEGEND_MIN_MM)} mm.",
+      i = "Make the plot wider, or place the legends with {.code guide_legend(position = )}."
+    ))
+    guides <- .facet_legend_guides(built, collect = TRUE)
+    lay <- .build_layout(
+      built,
+      guides,
+      spec@labels,
+      rt,
+      flip,
+      co,
+      spec@marginal,
+      page_height = spec@height,
+      page_width = spec@width
+    )
+  }
 
   # The draw context threaded to the panel/axis/legend drawers below, so each is
   # a `(scene, dp)` helper rather than a call with a dozen positional locals.

@@ -10,6 +10,9 @@ NULL
 .LEGEND_TITLE_GAP_MM <- 1.2 # gap below a guide title
 .LEGEND_KEY_LABEL_GAP_MM <- 1.6 # gap between a key and its label
 .LEGEND_INNER_PAD_MM <- 1.4 # legend content inset
+# Narrowest a facet panel may get beside per-panel legends before they are
+# collected into the plot's legend instead (VP-59).
+.PANEL_LEGEND_MIN_MM <- 25
 .LEGEND_MIN_BAR_MM <- 22 # minimum colour-bar length
 .LEGEND_TICK_MM <- 1.6 # colour-bar break tick length
 
@@ -542,17 +545,11 @@ NULL
   # Panel mm = content box less the fixed flanking columns (y title/labels, any
   # secondary y pair, a row strip, a vertical legend) and the inter-panel gaps,
   # split across the C panel columns.
-  xwrap_mm <- NA_real_
-  can_wrap_x <- is.finite(band_w) &&
-    xrot == 0 &&
-    xdodge == 1L &&
-    !respect &&
-    !polar &&
-    is.null(marginal) &&
-    !free_x &&
-    length(hsc$breaks) > 0L &&
-    !.is_blank(rt[["axis.text.x"]])
-  if (can_wrap_x) {
+  # The mm width each panel column is left with once the fixed flanking
+  # columns are taken (NA when the page width is unknown or a track does not
+  # resolve to mm, e.g. an aspect-locked panel).
+  per_panel_mm <- NA_real_
+  if (is.finite(band_w) && !respect && !polar) {
     leg_w <- lapply(
       Filter(function(sd) length(groups[[sd]]) > 0L, c("left", "right")),
       side_w
@@ -570,6 +567,23 @@ NULL
     ))
     gaps_mm <- vellum::vl_convert(gap, "mm") * (C - 1L)
     per_panel_mm <- (band_w - side_mm - gaps_mm) / C
+  }
+  # Per-panel legends beside the panels that would leave them narrower than
+  # `.PANEL_LEGEND_MIN_MM`: the seam collects them instead (VP-59).
+  panel_legends_squeeze <- any(is.finite(pleg_w)) &&
+    isTRUE(per_panel_mm < .PANEL_LEGEND_MIN_MM)
+
+  xwrap_mm <- NA_real_
+  can_wrap_x <- is.finite(band_w) &&
+    xrot == 0 &&
+    xdodge == 1L &&
+    !respect &&
+    !polar &&
+    is.null(marginal) &&
+    !free_x &&
+    length(hsc$breaks) > 0L &&
+    !.is_blank(rt[["axis.text.x"]])
+  if (can_wrap_x) {
     # Any track that does not resolve to a plain mm (a null width slipping
     # through) leaves `per_panel_mm` non-finite -- fall back to single-line.
     if (isTRUE(per_panel_mm > 0)) {
@@ -840,6 +854,7 @@ NULL
         just = .legend_just(rt[["legend.justification"]]) %||% c(0.5, 0.5)
       )
     },
+    panel_legends_squeeze = panel_legends_squeeze,
     legend_avail_h = legend_avail_h,
     title_row = title_row,
     subtitle_row = subtitle_row,
