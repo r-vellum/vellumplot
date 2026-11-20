@@ -620,9 +620,23 @@ NULL
 # legends, titled with the panel's strip text -- "title (panel)", or the panel
 # alone for an untitled scale. Guides merge within one panel (a colour and a
 # size legend of one variable), never across panels. With no independent
-# aesthetic this is exactly `.legend_guides(built$scales)`.
-.facet_legend_guides <- function(built) {
+# aesthetic this is exactly `.legend_guides(built$scales)`. `collect = TRUE`
+# moves every per-panel legend into the plot's legend (where the theme puts
+# it), as if its guide had asked for that position: the fallback when legends
+# beside each panel would leave the panels too narrow (VP-59).
+.facet_legend_guides <- function(built, collect = FALSE) {
   indep <- built$independent %||% character(0)
+  if (collect) {
+    unpanel <- function(sc) {
+      if (identical(sc$guide_position, "panel")) {
+        sc$guide_position <- NULL
+      }
+      sc
+    }
+    built$scales <- lapply(built$scales, function(sc) {
+      if (is.null(sc)) sc else unpanel(sc)
+    })
+  }
   if (!length(indep)) {
     return(.legend_guides(built$scales))
   }
@@ -643,6 +657,10 @@ NULL
     label <- .panel_label(built$fa, i)
     own <- lapply(own, function(sc) {
       pos <- sc$guide_position %||% "panel"
+      if (collect && identical(pos, "panel")) {
+        sc$guide_position <- NULL
+        pos <- "collected"
+      }
       if (identical(pos, "panel")) {
         # beside its own panel, the legend needs no panel label
         return(.scale_set(sc, guide_position = pos))

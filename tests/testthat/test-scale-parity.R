@@ -308,8 +308,18 @@ test_that("each composition cell honours its own legend position (VP-41)", {
     mark_point(x = drat, y = mpg, color = fcyl) |>
     theme(legend.position = "none")
   plans <- lapply(list(p1, p2, p3, p4), .plan_plot)
+  mode <- function(plan) {
+    lg <- .subplot_legend_groups(plan)
+    if (length(lg$inside)) {
+      "inside"
+    } else if (length(.subplot_legend_sides(lg))) {
+      "side"
+    } else {
+      "none"
+    }
+  }
   expect_identical(
-    vapply(plans, .subplot_legend_mode, ""),
+    vapply(plans, mode, ""),
     c("inside", "inside", "side", "none")
   )
   # only an outside legend takes a right-side band
