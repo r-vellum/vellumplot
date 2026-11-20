@@ -7,7 +7,7 @@ legend (reverse the key order, override the title, restyle the keys with
 `override.aes`), `guide_colourbar()` to size, tick and style a
 continuous colour bar, or `guide_coloursteps()` to draw a **binned**
 colour scale as a segmented bar instead of swatches;
-[`guide_bins()`](https://ggplot2.tidyverse.org/reference/guide_bins.html)
+[`guide_bins()`](https://r-vellum.github.io/vellumplot/reference/guide_bins.md)
 draws any binned scale's keys with the bin boundaries on an axis.
 Applies to the non-position legends (`color`/`fill`, `size`, `shape`,
 `alpha`, `linetype`); for the position axes, pass
@@ -25,7 +25,8 @@ guide_legend(
   title = NULL,
   reverse = FALSE,
   override.aes = NULL,
-  nested = FALSE
+  nested = FALSE,
+  position = NULL
 )
 
 guide_colourbar(
@@ -36,7 +37,8 @@ guide_colourbar(
   ticks.colour = "white",
   label.position = NULL,
   n.breaks = NULL,
-  reverse = FALSE
+  reverse = FALSE,
+  position = NULL
 )
 
 guide_colorbar(
@@ -47,7 +49,8 @@ guide_colorbar(
   ticks.colour = "white",
   label.position = NULL,
   n.breaks = NULL,
-  reverse = FALSE
+  reverse = FALSE,
+  position = NULL
 )
 
 guide_coloursteps(
@@ -57,7 +60,8 @@ guide_coloursteps(
   ticks = FALSE,
   ticks.colour = "white",
   label.position = NULL,
-  reverse = FALSE
+  reverse = FALSE,
+  position = NULL
 )
 
 guide_colorsteps(
@@ -67,7 +71,8 @@ guide_colorsteps(
   ticks = FALSE,
   ticks.colour = "white",
   label.position = NULL,
-  reverse = FALSE
+  reverse = FALSE,
+  position = NULL
 )
 ```
 
@@ -109,6 +114,19 @@ guide_colorsteps(
   size range (e.g. `scale_size(range = c(2, 12))`) so the circles are
   large enough to read; ignored by non-size legends. Drawn for a
   vertical legend (a horizontal one keeps the stacked keys).
+
+- position:
+
+  Where this legend goes: `"right"`, `"left"`, `"top"`, `"bottom"` or
+  `"inside"` (over the panels, at `theme(legend.position.inside = )` /
+  `legend.justification`). `NULL` (default) follows
+  `theme(legend.position = )`. A guide's own position overrides the
+  theme for that legend only, as in ggplot2 3.5, so legends can sit on
+  different sides of one plot; legends at one position stack as usual. A
+  legend at the top or bottom is laid out horizontally.
+  `theme(legend.position = "none")` still hides every legend. Two
+  legends that would merge (one variable, one title) only merge when
+  they share a position.
 
 - barwidth, barheight:
 
@@ -201,4 +219,10 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg, size = hp) |>
   scale_size(range = c(2, 12)) |>
   guides(size = guide_legend(nested = TRUE))
+
+
+# one legend at the bottom, the other on the (theme's default) right
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl), size = hp) |>
+  guides(color = guide_legend(position = "bottom"))
 ```

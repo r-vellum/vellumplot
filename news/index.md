@@ -54,6 +54,19 @@
 
 ### New features
 
+- [`guide_legend()`](https://r-vellum.github.io/vellumplot/reference/guides.md),
+  [`guide_colourbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md)
+  /
+  [`guide_colorbar()`](https://r-vellum.github.io/vellumplot/reference/guides.md),
+  [`guide_coloursteps()`](https://r-vellum.github.io/vellumplot/reference/guides.md),
+  [`guide_bins()`](https://r-vellum.github.io/vellumplot/reference/guide_bins.md)
+  and
+  [`guide_bivariate()`](https://r-vellum.github.io/vellumplot/reference/guide_bivariate.md)
+  gain `position =` (`"right"`, `"left"`, `"top"`, `"bottom"` or
+  `"inside"`), as in ggplot2 3.5: it overrides
+  `theme(legend.position = )` for that legend only, so one plot can
+  carry legends on several sides (VP-53).
+
 - `scale_*_stepsn()` gains `values =`, the positions of its `colours`
   along the ramp, as in ggplot2 (VP-49).
 

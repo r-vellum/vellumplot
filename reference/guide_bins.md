@@ -15,7 +15,13 @@ legend and left to right in a top / bottom one.
 ## Usage
 
 ``` r
-guide_bins(title = NULL, show.limits = FALSE, reverse = FALSE, axis = TRUE)
+guide_bins(
+  title = NULL,
+  show.limits = FALSE,
+  reverse = FALSE,
+  axis = TRUE,
+  position = NULL
+)
 ```
 
 ## Arguments
@@ -36,6 +42,19 @@ guide_bins(title = NULL, show.limits = FALSE, reverse = FALSE, axis = TRUE)
 - axis:
 
   Draw the axis line and ticks beside the keys (default `TRUE`).
+
+- position:
+
+  Where this legend goes: `"right"`, `"left"`, `"top"`, `"bottom"` or
+  `"inside"` (over the panels, at `theme(legend.position.inside = )` /
+  `legend.justification`). `NULL` (default) follows
+  `theme(legend.position = )`. A guide's own position overrides the
+  theme for that legend only, as in ggplot2 3.5, so legends can sit on
+  different sides of one plot; legends at one position stack as usual. A
+  legend at the top or bottom is laid out horizontally.
+  `theme(legend.position = "none")` still hides every legend. Two
+  legends that would merge (one variable, one title) only merge when
+  they share a position.
 
 ## Value
 

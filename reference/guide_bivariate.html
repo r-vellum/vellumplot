@@ -102,7 +102,8 @@ maps a <code><a href="bi_class.html">bi_class()</a></code>-style column makes th
 <span>  ylab <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  key.size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  rotate <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  rotate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  position <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -133,6 +134,17 @@ class column) has none to show.</p></dd>
 <dt id="arg-rotate">rotate<a class="anchor" aria-label="anchor" href="#arg-rotate"></a></dt>
 <dd><p>Turn the grid 45 degrees, so the classes read as a diamond
 with high-high at the top (default <code>FALSE</code>).</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Where this legend goes: <code>"right"</code>, <code>"left"</code>, <code>"top"</code>,
+<code>"bottom"</code> or <code>"inside"</code> (over the panels, at <code>theme(legend.position.inside = )</code> / <code>legend.justification</code>). <code>NULL</code> (default) follows
+<code>theme(legend.position = )</code>. A guide's own position overrides the theme for
+that legend only, as in ggplot2 3.5, so legends can sit on different sides
+of one plot; legends at one position stack as usual. A legend at the top or
+bottom is laid out horizontally. <code>theme(legend.position = "none")</code> still
+hides every legend. Two legends that would merge (one variable, one title)
+only merge when they share a position.</p></dd>
 
 </dl></div>
     <div class="section level2">

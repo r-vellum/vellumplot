@@ -90,7 +90,13 @@ and left to right in a top / bottom one.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">guide_bins</span><span class="op">(</span>title <span class="op">=</span> <span class="cn">NULL</span>, show.limits <span class="op">=</span> <span class="cn">FALSE</span>, reverse <span class="op">=</span> <span class="cn">FALSE</span>, axis <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">guide_bins</span><span class="op">(</span></span>
+<span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  show.limits <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  reverse <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  axis <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  position <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -112,6 +118,17 @@ and left to right in a top / bottom one.</p>
 
 <dt id="arg-axis">axis<a class="anchor" aria-label="anchor" href="#arg-axis"></a></dt>
 <dd><p>Draw the axis line and ticks beside the keys (default <code>TRUE</code>).</p></dd>
+
+
+<dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
+<dd><p>Where this legend goes: <code>"right"</code>, <code>"left"</code>, <code>"top"</code>,
+<code>"bottom"</code> or <code>"inside"</code> (over the panels, at <code>theme(legend.position.inside = )</code> / <code>legend.justification</code>). <code>NULL</code> (default) follows
+<code>theme(legend.position = )</code>. A guide's own position overrides the theme for
+that legend only, as in ggplot2 3.5, so legends can sit on different sides
+of one plot; legends at one position stack as usual. A legend at the top or
+bottom is laid out horizontally. <code>theme(legend.position = "none")</code> still
+hides every legend. Two legends that would merge (one variable, one title)
+only merge when they share a position.</p></dd>
 
 </dl></div>
     <div class="section level2">
