@@ -416,10 +416,73 @@ NULL
   if (length(p)) p
 }
 
-# Point the mark emitters and legend keys at a theme's default mark colours.
+# Point the mark emitters and legend keys at a theme's default mark colours,
+# and at the colour the marks are drawn over (see `.geom_paint_visible()`).
 .set_geom_ctx <- function(theme) {
   assign("geom", .theme_geom(theme), envir = .mark_ctx)
+  assign("geom_ground", .theme_ground(theme), envir = .mark_ctx)
   invisible()
+}
+
+# The colour a theme draws its marks over: the panel background's fill, else
+# (a blank panel) the plot background's, else NULL.
+.theme_ground <- function(theme) {
+  rt <- .resolve_theme(theme)
+  for (slot in c("panel.background", "plot.background")) {
+    el <- rt[[slot]]
+    if (is.null(el) || .is_blank(el)) {
+      next
+    }
+    f <- el@fill
+    if (is.character(f) && length(f) == 1L && !is.na(f)) {
+      return(f)
+    }
+    return(NULL)
+  }
+  NULL
+}
+
+# WCAG contrast ratio of two colours (1 = the same luminance, 21 = black on
+# white).
+.contrast_ratio <- function(a, b) {
+  lum <- function(col) {
+    v <- grDevices::col2rgb(col)[, 1] / 255
+    v <- ifelse(v <= 0.03928, v / 12.92, ((v + 0.055) / 1.055)^2.4)
+    sum(c(0.2126, 0.7152, 0.0722) * v)
+  }
+  l <- sort(c(lum(a), lum(b)), decreasing = TRUE)
+  (l[1] + 0.05) / (l[2] + 0.05)
+}
+
+# Below this contrast with the panel a default mark fill counts as lost in it.
+.GROUND_MIN_CONTRAST <- 1.5
+
+# `.geom_paint()` for a default fill that must stay visible on the panel. A few
+# marks fall back to ggplot2's mid grey, `col_mix(ink, paper, 0.5)`, which is
+# exactly `theme_dark()`'s grey50 panel, since that theme keeps the black ink
+# and white paper. When the theme's version of `default` is that close to the
+# colour the marks sit on, use the area fill `col_mix(ink, paper, 0.2)` instead
+# ("grey20" on a light-ink theme). An `element_geom(fill = )` override is used
+# as given, and a light theme, whose panel is far from the grey, keeps
+# `default` (VP-65). ggplot2 draws its grey either way.
+.geom_paint_visible <- function(default, role = "fill") {
+  p <- .geom_paint(default, role)
+  ground <- .mark_ctx$geom_ground
+  over <- switch(role, fill = .mark_ctx$geom$fill, .mark_ctx$geom$colour)
+  if (
+    is.null(ground) ||
+      !is.null(over) ||
+      !is.character(p) ||
+      length(p) != 1L ||
+      is.na(p)
+  ) {
+    return(p)
+  }
+  ok <- tryCatch(
+    .contrast_ratio(p, ground) >= .GROUND_MIN_CONTRAST,
+    error = function(e) TRUE
+  )
+  if (ok) p else .geom_paint("grey20", role)
 }
 
 # The theme's version of a built-in default colour `default`, for a stroke

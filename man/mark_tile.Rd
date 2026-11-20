@@ -107,6 +107,14 @@ curve reads lighter and overlapping groups show through each other. An
 \code{alpha} you set or map replaces the 0.8, and an outline (a \code{color} beside
 a \code{fill}) stays opaque.
 }
+\details{
+With its count fill turned off (\code{fill = NULL}), \code{mark_hex()} fills with
+ggplot2's \code{col_mix(ink, paper, 0.5)} (\code{"grey50"} on a light theme). On a
+theme whose panel is that same grey, such as \code{\link[=theme_dark]{theme_dark()}}, it uses
+\code{col_mix(ink, paper, 0.2)} (\code{"grey20"}) instead, so the hexes stay visible.
+This differs from ggplot2, which draws grey50 hexes on \code{theme_dark()}'s
+grey50 panel.
+}
 \examples{
 d <- expand.grid(x = 1:5, y = 1:5)
 d$z <- d$x * d$y

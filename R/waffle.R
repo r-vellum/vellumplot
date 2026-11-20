@@ -9,6 +9,10 @@ NULL
 #' eye counts squares. It is a self-contained chart (like [vsankey()] /
 #' [vvenn()]): it returns a [PlotSpec] with no axes.
 #'
+#' Cells take the fill scale's colours. A cell with no fill colour falls back
+#' to `"grey50"`, or to `col_mix(ink, paper, 0.2)` (`"grey20"`) on a theme
+#' whose panel is that grey, such as [theme_dark()], so it stays visible.
+#'
 #' @param data A data frame.
 #' @param category The categorical column that colours the cells (tidy-eval).
 #' @param value Optional per-row weight column; if omitted, each row counts once.
@@ -105,7 +109,11 @@ vwaffle <- function(
   if (!n) {
     return(scene)
   }
-  fill <- rep_len(.aes_colour(L, scales, "grey50", role = "fill"), n)
+  # grey50, unless that is the panel's own grey (`theme_dark()`).
+  fill <- rep_len(
+    .aes_colour(L, scales, .geom_paint_visible("grey50"), role = "fill"),
+    n
+  )
   rows <- L$params$rows %||% 10L
   flip <- isTRUE(L$params$flip)
   pad <- L$params$pad %||% 0.12

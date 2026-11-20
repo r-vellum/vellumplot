@@ -1926,6 +1926,13 @@ mark_text_path <- function(
 #' `alpha` you set or map replaces the 0.8, and an outline (a `color` beside
 #' a `fill`) stays opaque.
 #'
+#' With its count fill turned off (`fill = NULL`), `mark_hex()` fills with
+#' ggplot2's `col_mix(ink, paper, 0.5)` (`"grey50"` on a light theme). On a
+#' theme whose panel is that same grey, such as [theme_dark()], it uses
+#' `col_mix(ink, paper, 0.2)` (`"grey20"`) instead, so the hexes stay visible.
+#' This differs from ggplot2, which draws grey50 hexes on `theme_dark()`'s
+#' grey50 panel.
+#'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `fill` for tile/raster; `x`, `y`
 #'   for bin2d; `x` (+ `fill`/`color`) for density.

@@ -243,7 +243,7 @@ test_that("faceted graph keys are unique per panel and still link", {
   skip_if_not_installed("igraph")
   g <- igraph::make_ring(6)
   igraph::V(g)$name <- paste0("v", 1:6)
-  igraph::V(g)$grp <- rep(c("a", "b"), 3)
+  igraph::V(g)$grp <- rep(c("a", "b"), each = 3)
   p <- vgraph(g) |>
     mark_edges() |>
     mark_nodes(size = 3) |>
@@ -278,4 +278,80 @@ test_that("a composition prefixes graph edge endpoints like its node keys", {
   tgt <- vapply(seg$meta, function(m) m$target %||% NA_character_, "")
   expect_true(all(c(src, tgt) %in% pts$key))
   expect_true(all(startsWith(src, "subplot-")))
+})
+
+# VP-64: a faceted graph draws, in each panel, only the edges whose two
+# endpoints are both among that panel's nodes, as ggraph's facet_nodes() does.
+test_that("a vertex facet keeps only the panel's own edges", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(6)
+  igraph::V(g)$name <- paste0("v", 1:6)
+  igraph::V(g)$grp <- rep(c("a", "b"), each = 3)
+  p <- vgraph(g) |>
+    mark_edges() |>
+    mark_nodes(size = 3) |>
+    select_neighbours() |>
+    facet_wrap(~grp)
+  el <- vellum::scene_model(as_vellum_scene(p))$elements
+  seg <- el[!is.na(el$key) & el$mark == "segment", ]
+  pts <- el[!is.na(el$key) & el$mark == "point", ]
+  # v3-v4 and v6-v1 cross the two groups, so neither panel draws them
+  expect_setequal(
+    seg$key,
+    c(
+      "p1-1:v1\001v2\0011",
+      "p1-1:v2\001v3\0012",
+      "p1-2:v4\001v5\0014",
+      "p1-2:v5\001v6\0015"
+    )
+  )
+  src <- vapply(seg$meta, function(m) m$source %||% NA_character_, "")
+  tgt <- vapply(seg$meta, function(m) m$target %||% NA_character_, "")
+  expect_true(all(c(src, tgt) %in% pts$key))
+  expect_false(anyDuplicated(c(seg$key, pts$key)) > 0)
+  # the static render draws the same edges: 2 per panel
+  st <- vellum::scene_model(as_vellum_scene(
+    vgraph(g) |> mark_edges() |> mark_nodes() |> facet_wrap(~grp)
+  ))$elements
+  expect_identical(sum(st$mark == "segment"), 4L)
+})
+
+test_that("an unfaceted graph still draws every edge", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(6)
+  igraph::V(g)$grp <- rep(c("a", "b"), 3)
+  el <- vellum::scene_model(as_vellum_scene(
+    vgraph(g) |> mark_edges() |> mark_nodes()
+  ))$elements
+  expect_identical(sum(el$mark == "segment"), 6L)
+})
+
+test_that("a faceted graph caps each kept edge at its own endpoints", {
+  skip_if_not_installed("igraph")
+  caps <- function(p) {
+    out <- list()
+    walk <- function(x) {
+      if (is.list(x)) {
+        if (!is.null(x$start_cap)) {
+          out[[length(out) + 1L]] <<- rbind(
+            x$start_cap$value$v,
+            x$end_cap$value$v
+          )
+        }
+        lapply(x, walk)
+      }
+      invisible()
+    }
+    walk(vellum::as_scene_spec(as_vellum_scene(p)))
+    do.call(cbind, out)
+  }
+  g <- igraph::make_ring(6)
+  igraph::V(g)$name <- paste0("v", 1:6)
+  igraph::V(g)$grp <- rep(c("a", "b"), each = 3)
+  igraph::V(g)$deg <- c(1, 4, 2, 3, 5, 2)
+  p <- vgraph(g) |> mark_edges() |> mark_nodes(size = deg)
+  whole <- caps(p)
+  # the panels keep ring edges 1, 2 (group a) and 4, 5 (group b); the shared
+  # size scale gives each the caps it has in the unfaceted plot
+  expect_identical(caps(p |> facet_wrap(~grp)), whole[, c(1, 2, 4, 5)])
 })

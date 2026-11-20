@@ -67,6 +67,26 @@
   Edge endpoints now carry the same prefix as the node keys, also in
   compositions, where neighbour highlighting matched no node before (VP-63).
 
+* A graph plot faceted by a vertex attribute (`vgraph()` with `facet_wrap()`
+  or `facet_grid()`) now draws in each panel only the edges whose two
+  endpoints are both among that panel's nodes, as ggraph's `facet_nodes()`
+  does. `mark_edges()`, `mark_edge_text()` and `mark_edge_bundle()` used to
+  draw the whole edge table in every panel, with edges ending at nodes drawn
+  in another panel. Each kept edge is now also capped at its own endpoints'
+  node sizes; before, a faceted panel looked them up by position and could
+  cap an edge at another node's radius. An edge keeps its key's row number
+  from the whole edge table, so its `join` is the same as in the unfaceted
+  plot (VP-64).
+
+* On `theme_dark()`, `mark_hex()` with its count fill turned off
+  (`fill = NULL`) and `vwaffle()`'s fallback cell fill no longer draw grey50
+  on the theme's grey50 panel. When the default grey is that close to the
+  panel, they fill with `col_mix(ink, paper, 0.2)` (`"grey20"`), the area
+  fill. This differs from ggplot2, whose `geom_hex()` draws grey50 there.
+  The colourbar and coloursteps frames now follow the theme's ink and paper
+  (`theme_cyberpunk()` draws them in its own mid grey). Light themes draw
+  exactly as before (VP-65).
+
 # vellumplot 0.16.0
 
 ## Behaviour changes
