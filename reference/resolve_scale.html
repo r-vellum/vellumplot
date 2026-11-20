@@ -103,11 +103,16 @@ for setting <code>x</code>/<code>y</code> to <code>"independent"</code>.</p>
     <p>A non-position aesthetic (<code>color</code>, <code>fill</code>, <code>size</code>, <code>alpha</code>, <code>shape</code>, <code>linetype</code>,
 <code>linewidth</code>, <code>pattern</code>, ...) set to <code>"independent"</code> is trained in each panel
 from that panel's data alone, so each panel spends the whole palette or
-range on its own values, and each panel gets its own legend. The legends
-are collected in the legend area, titled with the scale title and the
-panel's strip text (<code>"hp (cyl: 4)"</code>). Scales left shared keep their single
-legend. <code>colour</code> is an alias for <code>color</code>; <code>fill</code> is its own scale. A plot
-with a single panel ignores the setting.</p>
+range on its own values, and each panel gets its own legend, drawn <strong>beside
+its panel</strong> (the guide position <code>"panel"</code>): right of each panel by default,
+or on the side <code>theme(legend.position = )</code> names (left of, above or below
+each panel, or inside it). Each column of panels (or row, for legends above
+or below) gets a legend track as wide (tall) as its largest legend. To
+collect them in the legend area instead, give the guide a position, e.g.
+<code>guides(color = guide_legend(position = "right"))</code>; they are then titled
+with the scale title and the panel's strip text (<code>"hp (cyl: 4)"</code>). Scales
+left shared keep their single legend. <code>colour</code> is an alias for <code>color</code>;
+<code>fill</code> is its own scale. A plot with a single panel ignores the setting.</p>
     </div>
 
     <div class="section level2">
@@ -116,12 +121,20 @@ with a single panel ignores the setting.</p>
 <span class="r-in"><span>  <span class="fu">resolve_scale</span><span class="op">(</span>y <span class="op">=</span> <span class="st">"independent"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="resolve_scale-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># one colour legend per panel</span></span></span>
+<span class="r-in"><span><span class="co"># one colour legend beside each panel</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">gear</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="facet_wrap.html">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">cyl</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">resolve_scale</span><span class="op">(</span>color <span class="op">=</span> <span class="st">"independent"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="resolve_scale-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the per-panel legends collected on the right instead</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">gear</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="facet_wrap.html">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">cyl</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">resolve_scale</span><span class="op">(</span>color <span class="op">=</span> <span class="st">"independent"</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="guides.html">guides</a></span><span class="op">(</span>color <span class="op">=</span> <span class="fu"><a href="guides.html">guide_legend</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"right"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="resolve_scale-3.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

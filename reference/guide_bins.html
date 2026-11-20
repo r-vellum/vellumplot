@@ -122,8 +122,14 @@ and left to right in a top / bottom one.</p>
 
 <dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
 <dd><p>Where this legend goes: <code>"right"</code>, <code>"left"</code>, <code>"top"</code>,
-<code>"bottom"</code> or <code>"inside"</code> (over the panels, at <code>theme(legend.position.inside = )</code> / <code>legend.justification</code>). <code>NULL</code> (default) follows
-<code>theme(legend.position = )</code>. A guide's own position overrides the theme for
+<code>"bottom"</code> or <code>"inside"</code> (over the panels, at <code>theme(legend.position.inside = )</code> / <code>legend.justification</code>), or <code>"panel"</code>: beside each facet panel, on
+the side <code>theme(legend.position = )</code> names (right by default; inside each
+panel when the theme puts legends inside) and justified along the panel
+edge by <code>legend.justification</code>. A scale resolved <code>"independent"</code> across
+panels (<code><a href="resolve_scale.html">resolve_scale()</a></code>) draws each panel's legend there by default; a
+shared scale placed <code>"panel"</code> repeats its legend beside every panel. <code>NULL</code>
+(default) follows <code>theme(legend.position = )</code> (and <code>"panel"</code> for an
+independent scale). A guide's own position overrides the theme for
 that legend only, as in ggplot2 3.5, so legends can sit on different sides
 of one plot; legends at one position stack as usual. A legend at the top or
 bottom is laid out horizontally. <code>theme(legend.position = "none")</code> still

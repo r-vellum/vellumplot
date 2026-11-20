@@ -141,7 +141,10 @@ one of <code>"right"</code> (default), <code>"left"</code>, <code>"top"</code>, 
 <code>legend.position.inside = c(x, y)</code> (fractions of the panel area; the older
 <code>legend.position = c(x, y)</code> works too), its <code>legend.justification</code> point
 (<code>c(x, y)</code> or words such as <code>c("right", "top")</code>, defaulting to the
-position) on that spot.
+position) on that spot. Legends drawn beside each facet panel
+(<code>guide_legend(position = "panel")</code>) sit on the side <code>legend.position</code>
+names, justified along the panel edge by <code>legend.justification</code> (e.g.
+<code>"top"</code> aligns a legend right of a panel with the panel's top).
 Legend geometry is tunable via <code>legend.key.size</code> (key/swatch side, mm),
 <code>legend.spacing</code> (gap between stacked guides, mm), and <code>legend.margin</code>
 (inset around the legend block, one or four millimetres, <code>t, r, b, l</code>).</p></dd>
