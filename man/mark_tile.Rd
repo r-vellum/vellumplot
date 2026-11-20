@@ -102,7 +102,10 @@ default count fill of \code{mark_bin2d()} / \code{mark_hex()}) outlines the shap
 \code{col_mix(ink, paper, 0.2)} from the theme's \code{\link[=element_geom]{element_geom()}} (\code{"grey20"} on
 a light theme), the fill of ggplot2's \code{geom_tile()} and \code{geom_area()}. (ggplot2's
 \code{geom_density()} draws an unfilled outline; \code{mark_density()} keeps its filled
-curve, filled like an area.)
+curve, filled like an area.) Its fill is drawn at 80\% opacity, so a single
+curve reads lighter and overlapping groups show through each other. An
+\code{alpha} you set or map replaces the 0.8, and an outline (a \code{color} beside
+a \code{fill}) stays opaque.
 }
 \examples{
 d <- expand.grid(x = 1:5, y = 1:5)

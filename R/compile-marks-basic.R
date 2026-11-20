@@ -1117,6 +1117,20 @@ NULL
 # given alongside a `fill` outlines the band as ggplot2's `outline.type` default
 # does: along `ya` only for `outline = "upper"` (area, density), along both
 # boundaries for `"both"` (ribbon) -- never down the closing sides.
+# `mark_density()` stays filled (ggplot2's `geom_density()` is unfilled), so
+# its fill is drawn slightly see-through: a single curve reads lighter, and
+# overlapping groups show the ones behind them (VP-66).
+.DENSITY_FILL_ALPHA <- 0.8
+
+# Does the layer take the density's default fill alpha? A `mark_density()`
+# layer (an area with the density stat) with no `alpha` set or mapped.
+.density_default_alpha <- function(L) {
+  identical(L$mark, "area") &&
+    identical(L$stat, "density") &&
+    is.null(L$values$alpha) &&
+    !"alpha" %in% names(L$params)
+}
+
 .emit_band <- function(scene, L, scales, ya, yb, outline = "upper") {
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
@@ -1165,6 +1179,13 @@ NULL
   .check_band_style(L, scales, n)
   fill <- fo$fill
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  # The fill's own opacity: the layer alpha, or a density's default (the
+  # outline keeps the layer alpha, so a density's stays opaque).
+  fill_alpha <- if (.density_default_alpha(L)) {
+    rep_len(.DENSITY_FILL_ALPHA, n)
+  } else {
+    alpha
+  }
 
   gi <- 0L
   for (idx in .series_groups(
@@ -1180,7 +1201,7 @@ NULL
         poly$x,
         poly$y,
         sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, alpha, idx[1])
+        gp = .gp_fill(fill, fill_alpha, idx[1])
       ),
       # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
       rows = o
