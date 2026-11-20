@@ -2,6 +2,11 @@
 
 ## vellumplot 0.15.0.9000 (development version)
 
+- Compiling a big plot is faster (VR-16): per-element legend membership,
+  element meta records and SVG-marker lookup are built column-wise
+  instead of with a closure per point. A 200k-point scatter compiles in
+  about 0.65 s instead of 1.1 s. Output is unchanged.
+
 ## vellumplot 0.15.0
 
 ### Behaviour changes
