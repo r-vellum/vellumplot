@@ -188,6 +188,7 @@ NULL
   .mark_ctx$page <- NULL
   if (!S7::S7_inherits(spec, PlotSpec)) {
     .mark_ctx$plot_interactive <- FALSE
+    .mark_ctx$plot_user_ids <- FALSE
     .mark_ctx$plot_filters <- NULL
     .mark_ctx$plot_interval_aes <- NULL
     return(invisible())
@@ -199,6 +200,13 @@ NULL
     length(spec@binds) > 0L
   .mark_ctx$plot_filters <- if (length(filt_names)) unique(filt_names) else NULL
   .mark_ctx$plot_interval_aes <- .interval_encodings(spec@selections)
+  # Does any layer key its elements by a user `data_id`? Then default keys are
+  # namespaced by layer (see `.compile_marks()`), so they never equal a user id.
+  .mark_ctx$plot_user_ids <- any(vapply(
+    spec@layers,
+    function(l) !is.null(l@interactivity$data_id),
+    logical(1)
+  ))
   invisible()
 }
 
@@ -833,6 +841,7 @@ NULL
     # non-members; the `if_false` constant + `empty` live in the plot-level block.
     .mark_ctx$conditions <- if (length(L$conditions)) L$conditions else NULL
     default_join <- NULL
+    default_key <- ok && isTRUE(L$meta$default_id)
     if (
       is.null(.mark_ctx$data_id) &&
         (length(L$conditions) || isTRUE(.mark_ctx$plot_interactive)) &&
@@ -841,6 +850,15 @@ NULL
       dk <- .default_keys(L, .mark_ctx$panel)
       .mark_ctx$data_id <- dk$key
       default_join <- dk$join
+      default_key <- TRUE
+    }
+    # A default key is a row position (a line's: its first row), so in a plot
+    # where another layer keys by a user `data_id` it can equal one of those
+    # ids -- the line's "1" and the point whose `data_id` is 1 -- and a host
+    # would select both together. There, default keys carry their layer
+    # ("layer-1:1"), which no user id is made to look like (VP-54).
+    if (default_key && isTRUE(.mark_ctx$plot_user_ids)) {
+      .mark_ctx$data_id <- paste0("layer-", li, ":", .mark_ctx$data_id)
     }
     # A `group_by`/`fields` point selection groups elements sharing those column
     # values -- carried as the element `hover_group`, so a host links the whole
