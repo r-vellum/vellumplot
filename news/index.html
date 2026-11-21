@@ -64,6 +64,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.17.1.9000" id="vellumplot-01719000-development-version">vellumplot 0.17.1.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01719000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-17-1-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-17-1-9000"></a></h3>
+<ul><li>Legend keys of filled marks now take the layer’s alpha, as ggplot2’s keys do. A <code><a href="../reference/mark_tile.html">mark_density()</a></code> key draws its fill at the default <code>alpha = 0.8</code> (VP-66) and keeps an outline opaque, as the curve does, and a set <code>alpha</code> on <code><a href="../reference/mark_tile.html">mark_density()</a></code>, <code><a href="../reference/mark_area.html">mark_area()</a></code>, <code><a href="../reference/mark_area.html">mark_ribbon()</a></code>, <code><a href="../reference/mark_point.html">mark_bar()</a></code>, <code><a href="../reference/mark_histogram.html">mark_histogram()</a></code>, <code><a href="../reference/mark_tile.html">mark_tile()</a></code>, <code><a href="../reference/mark_boxplot.html">mark_boxplot()</a></code>, <code><a href="../reference/mark_violin.html">mark_violin()</a></code> and the other filled marks reaches their keys. Before, the keys were opaque. A mapped <code>alpha</code> still draws its own legend, <code>guide_legend(override.aes = list(alpha = ))</code> still wins, and point and line keys are unchanged (VP-67).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.17.1" id="vellumplot-0171">vellumplot 0.17.1<a class="anchor" aria-label="anchor" href="#vellumplot-0171"></a></h2>
