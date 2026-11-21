@@ -190,6 +190,7 @@ NULL
     .mark_ctx$plot_interactive <- FALSE
     .mark_ctx$plot_filters <- NULL
     .mark_ctx$plot_interval_aes <- NULL
+    .mark_ctx$plot_cond_tags <- NULL
     return(invisible())
   }
   .mark_ctx$page <- c(w = spec@width, h = spec@height)
@@ -199,6 +200,9 @@ NULL
     length(spec@binds) > 0L
   .mark_ctx$plot_filters <- if (length(filt_names)) unique(filt_names) else NULL
   .mark_ctx$plot_interval_aes <- .interval_encodings(spec@selections)
+  # each layer's condition tags (`.condition_tags()`), so two layers
+  # conditioning one aesthetic on one selection stay apart (VP-72)
+  .mark_ctx$plot_cond_tags <- .condition_tags(spec@layers)
   invisible()
 }
 
@@ -425,15 +429,21 @@ NULL
   # Data values on the brushed channels (interval selections), per row.
   iv <- .mark_ctx$interval_values
   # The "<sel>:<aes>" tags this layer's elements participate in (same for every
-  # row of the layer, since a condition applies to the whole layer). A per-row
-  # `if_false` column is carried per element as `cond_value`; a constant one lives
-  # in the plot-level block.
+  # row of the layer, since a condition applies to the whole layer), with the
+  # layer index appended when another layer shares the tag (`.condition_tags()`,
+  # VP-72). A per-row `if_false` column is carried per element as `cond_value`;
+  # a constant one lives in the plot-level block.
   cond_tags <- if (length(cond)) {
-    paste0(
+    own <- paste0(
       vapply(cond, function(cnd) cnd$selection, character(1)),
       ":",
       names(cond)
     )
+    li <- .mark_ctx$layer
+    pt <- .mark_ctx$plot_cond_tags
+    lt <- if (is.numeric(li) && li >= 1L && li <= length(pt)) pt[[li]] else NULL
+    fixed <- if (is.null(lt)) NULL else unname(lt[names(cond)])
+    if (length(fixed) == length(own) && !anyNA(fixed)) fixed else own
   } else {
     NULL
   }
