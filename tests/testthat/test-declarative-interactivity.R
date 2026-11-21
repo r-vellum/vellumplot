@@ -85,6 +85,7 @@ test_that("interaction_model() returns the declaration block, or NULL", {
   expect_identical(im$conditions[[1]]$aes, "color")
   expect_identical(im$conditions[[1]]$selection, "hi")
   expect_identical(im$conditions[[1]]$if_false, "grey80")
+  expect_identical(im$conditions[[1]]$tag, "hi:color")
   expect_true(im$selections[[1]]$empty)
 })
 
@@ -114,6 +115,43 @@ test_that("the compiled scene carries condition membership tags + keys", {
   expect_identical(keyed$meta[[1]]$cond, "hi:color")
   # a conditioned layer is interactive but declares no tooltip
   expect_null(keyed$meta[[1]]$tooltip)
+})
+
+test_that("two layers conditioning one aesthetic on one selection keep apart (VP-72)", {
+  lab <- data.frame(x = c(1, 2), y = c(3, 4), g = c("a", "b"), l = c("p", "q"))
+  p <- vplot(df) |>
+    mark_point(x = x, y = y, color = condition("pick", g, "grey85")) |>
+    mark_text(
+      data = lab,
+      x = x,
+      y = y,
+      label = l,
+      color = condition("pick", g, "tomato")
+    ) |>
+    select_point("pick", on = "click")
+  im <- interaction_model(p)
+  tags <- vapply(im$conditions, function(cnd) cnd$tag, character(1))
+  falses <- vapply(im$conditions, function(cnd) cnd$if_false, character(1))
+  expect_identical(tags, c("pick:color@1", "pick:color@2"))
+  expect_identical(falses, c("grey85", "tomato"))
+  # each layer's elements carry their own layer's tag, so a host styles a
+  # point with the point layer's `if_false` and a label with the text layer's
+  el <- vellum::scene_model(vellum::as_vellum_scene(p))$elements
+  keyed <- el[!is.na(el$key), , drop = FALSE]
+  cond <- vapply(keyed$meta, function(m) paste(m$cond, collapse = ","), "")
+  expect_setequal(unique(cond), c("pick:color@1", "pick:color@2"))
+  expect_equal(sum(cond == "pick:color@1"), nrow(df))
+  expect_equal(sum(cond == "pick:color@2"), nrow(lab))
+  # an unshared tag stays "<sel>:<aes>", as before
+  one <- vplot(df) |>
+    mark_point(x = x, y = y, color = condition("pick", g, "grey85")) |>
+    mark_text(data = lab, x = x, y = y, label = l, size = condition("pick", 5, 3)) |>
+    select_point("pick", on = "click")
+  im1 <- interaction_model(one)
+  expect_identical(
+    vapply(im1$conditions, function(cnd) cnd$tag, character(1)),
+    c("pick:color", "pick:size")
+  )
 })
 
 test_that("a plot that declares interaction keys its marks (for a host to address)", {

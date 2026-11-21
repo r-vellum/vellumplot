@@ -568,7 +568,9 @@ interaction_model.default <- function(x) {
 # channel's `condition` slot (populated at split by `.condition_channel`).
 .plot_conditions <- function(plot) {
   out <- list()
-  for (layer in plot@layers) {
+  tags <- .condition_tags(plot@layers)
+  for (li in seq_along(plot@layers)) {
+    layer <- plot@layers[[li]]
     for (nm in names(layer@encoding)) {
       cnd <- layer@encoding[[nm]]@condition
       if (is.null(cnd)) {
@@ -599,11 +601,51 @@ interaction_model.default <- function(x) {
         selection = cnd$selection,
         aes = nm,
         if_false = if_false,
-        empty = cnd$empty
+        empty = cnd$empty,
+        tag = tags[[li]][[nm]]
       )
     }
   }
   out
+}
+
+# The tag each layer's conditional encodings carry: "<sel>:<aes>", the key a
+# host matches a condition to its elements by. When two layers condition the
+# same aesthetic on the same selection (a point layer and a text layer, each
+# with its own `if_false`), that key would be shared and one layer's `if_false`
+# would style the other's elements (VP-72), so each of those layers' tags gets
+# its layer index: "<sel>:<aes>@<layer>". A list with one entry per layer, a
+# named character vector (aesthetic -> tag) or NULL.
+.condition_tags <- function(layers) {
+  base <- lapply(layers, function(layer) {
+    nms <- Filter(
+      function(nm) !is.null(layer@encoding[[nm]]@condition),
+      names(layer@encoding)
+    )
+    if (!length(nms)) {
+      return(NULL)
+    }
+    sels <- vapply(
+      nms,
+      function(nm) layer@encoding[[nm]]@condition$selection,
+      character(1)
+    )
+    stats::setNames(paste0(sels, ":", nms), nms)
+  })
+  all_tags <- unlist(lapply(base, unname), use.names = FALSE)
+  shared <- unique(all_tags[duplicated(all_tags)])
+  if (!length(shared)) {
+    return(base)
+  }
+  lapply(seq_along(base), function(li) {
+    t <- base[[li]]
+    if (is.null(t)) {
+      return(NULL)
+    }
+    hit <- t %in% shared
+    t[hit] <- paste0(t[hit], "@", li)
+    t
+  })
 }
 
 # Error on any condition/filter/bind that references an undeclared selection.
