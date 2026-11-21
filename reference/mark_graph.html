@@ -456,6 +456,14 @@ continuously rather than stepping. (That only arises for <code>type = "steiner"<
 whose flow is per-vertex; a spiral tree's flow is constant along each branch.)
 A <code>sketch =</code> flow map falls back to one uniform stroke per branch, since a
 hand-drawn ribbon would jitter its outline rather than the pen.</p>
+<p>In an interactive host (vellumwidget, or a plot with <code><a href="select_neighbours.html">select_neighbours()</a></code>)
+each branch is an element with a tooltip naming the root, the vertex it
+reaches and its flow (or the layer's own <code>tooltip</code>). A branch reaching a
+vertex the root has an edge to stands for that edge: it links to its two
+nodes, so hovering a node highlights its flow, and carries the edge as its
+<code>join</code>. Its key is the edge's key with a <code>flow</code> suffix, so it never collides
+with the same edge drawn by <code>mark_edges()</code>. A trunk merging several flows
+links to no nodes.</p>
 <p>These are thin over the point / segment / text marks; <code>igraph</code> need not be
 installed to use them (only <code><a href="vgraph.html">vgraph()</a></code> needs it). <code>mark_edge_bundle()</code> and
 <code>mark_flow_map()</code> also need the <span class="pkg">edgebundle</span> package.</p>
