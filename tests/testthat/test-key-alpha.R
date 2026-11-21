@@ -144,10 +144,126 @@ test_that("override.aes alpha still wins", {
   expect_identical(k$alpha, rep(1, 3))
 })
 
-test_that("point keys are unchanged by a layer alpha", {
-  p <- vplot(mtcars) |>
-    mark_point(x = wt, y = mpg, color = factor(cyl), alpha = 0.4)
-  expect_null(
-    vellumplot:::.key_alpha_for_aes(vellumplot:::.resolve_layers(p), "color")
+# VP-70: point and line keys take a constant layer alpha too, as ggplot2's
+# draw_key_point() / draw_key_path() do.
+
+# The legend's key grobs of `class` (alpha, col) in drawing order.
+ka_keys <- function(p, class = c("grob_points", "grob_segments")) {
+  s <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+  val <- function(x) if (is.list(x)) x$v else x
+  out <- list()
+  walk <- function(node, inside) {
+    nm <- val(node$name)
+    if (is.character(nm) && length(nm) == 1L && grepl("legend", nm)) {
+      inside <- TRUE
+    }
+    if (inside && isTRUE(node$class %in% class) && is.list(node$gp)) {
+      a <- val(node$gp$alpha)
+      out[[length(out) + 1L]] <<- data.frame(
+        class = node$class,
+        alpha = if (is.null(a)) NA_real_ else as.numeric(a)
+      )
+    }
+    for (ch in node) {
+      if (is.list(ch)) walk(ch, inside)
+    }
+  }
+  walk(s$root, FALSE)
+  do.call(rbind, out)
+}
+
+ka_df <- data.frame(
+  x = 1:6,
+  y = c(2, 4, 3, 5, 4, 6),
+  g = rep(c("a", "b"), 3),
+  s = 1:6
+)
+
+test_that("point and line keys take a set alpha", {
+  cases <- list(
+    point = vplot(ka_df) |> mark_point(x = x, y = y, color = g, alpha = 0.4),
+    line = vplot(ka_df) |> mark_line(x = x, y = y, color = g, alpha = 0.4),
+    step = vplot(ka_df) |> mark_step(x = x, y = y, color = g, alpha = 0.4),
+    segment = vplot(ka_df) |>
+      mark_segment(x = x, y = y, xend = x + 1, yend = y, color = g, alpha = 0.4),
+    size = vplot(ka_df) |> mark_point(x = x, y = y, size = s, alpha = 0.4),
+    shape = vplot(ka_df) |> mark_point(x = x, y = y, shape = g, alpha = 0.4),
+    linetype = vplot(ka_df) |>
+      mark_line(x = x, y = y, linetype = g, alpha = 0.4),
+    linewidth = vplot(ka_df) |>
+      mark_line(x = x, y = y, linewidth = s, alpha = 0.4),
+    merged = vplot(ka_df) |>
+      mark_point(x = x, y = y, color = g, shape = g, alpha = 0.4)
   )
+  for (nm in names(cases)) {
+    k <- ka_keys(cases[[nm]])
+    expect_true(nrow(k) >= 2L, label = nm)
+    expect_true(all(k$alpha == 0.4), label = nm)
+  }
+})
+
+test_that("graph edge and node keys take their layer alpha", {
+  g <- igraph::make_ring(6)
+  igraph::E(g)$k <- rep(c("a", "b"), 3)
+  igraph::V(g)$k <- rep(c("u", "v"), 3)
+  e <- ka_keys(
+    vgraph(g) |> mark_edges(edge_color = k, edge_alpha = 0.4) |> mark_nodes(),
+    "grob_segments"
+  )
+  expect_identical(e$alpha, rep(0.4, 2))
+  n <- ka_keys(
+    vgraph(g) |> mark_edges() |> mark_nodes(color = k, alpha = 0.5),
+    "grob_points"
+  )
+  expect_identical(n$alpha, rep(0.5, 2))
+})
+
+test_that("point and line keys stay opaque without a set alpha", {
+  k <- ka_keys(vplot(ka_df) |> mark_point(x = x, y = y, color = g))
+  expect_true(all(is.na(k$alpha)))
+  # a smooth's alpha is its band's: the fitted line, the key, stays opaque
+  k <- ka_keys(
+    vplot(ka_df) |> mark_smooth(x = x, y = y, color = g, alpha = 0.4, method = "lm")
+  )
+  expect_true(all(is.na(k$alpha)))
+})
+
+test_that("the key takes the alpha of the layer that draws its glyph", {
+  # a point key reads the point layer, not an opaque line listed first
+  k <- ka_keys(
+    vplot(ka_df) |>
+      mark_line(x = x, y = y, color = g) |>
+      mark_point(x = x, y = y, color = g, alpha = 0.4)
+  )
+  expect_true(all(k$alpha == 0.4))
+  # and an opaque point layer keeps the key opaque beside a see-through bar
+  k <- ka_keys(
+    vplot(ka_df) |>
+      mark_bar(x = g, y = y, fill = g, alpha = 0.3) |>
+      mark_point(x = g, y = y, fill = g)
+  )
+  expect_true(all(is.na(k$alpha)))
+})
+
+test_that("a mapped alpha keeps its own legend and the point keys opaque", {
+  p <- vplot(ka_df) |> mark_point(x = x, y = y, color = g, alpha = s)
+  sc <- vellumplot:::.train_scales(p, vellumplot:::.resolve_layers(p))
+  expect_false(is.null(sc$alpha))
+  expect_null(sc$color$key_alpha)
+  expect_length(unique(ka_keys(p, "grob_points")$alpha), 7L)
+})
+
+test_that("override.aes alpha still wins over a set alpha", {
+  k <- ka_keys(
+    vplot(ka_df) |>
+      mark_point(x = x, y = y, color = g, alpha = 0.4) |>
+      guides(color = guide_legend(override.aes = list(alpha = 1)))
+  )
+  expect_true(all(k$alpha == 1))
+  k <- ka_keys(
+    vplot(ka_df) |>
+      mark_point(x = x, y = y, size = s, alpha = 0.4) |>
+      guides(size = guide_legend(override.aes = list(alpha = 0.9)))
+  )
+  expect_true(all(k$alpha == 0.9))
 })

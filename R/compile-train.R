@@ -2057,12 +2057,34 @@ NULL
     if (!is.null(sc) && !is.null(g)) {
       sc <- .apply_guide(sc, g)
     }
+    if (!is.null(sc) && e$guide %in% .KEY_ALPHA_GUIDES && is.null(sc$key_alpha)) {
+      sc <- .with_key_alpha(sc, e, resolved)
+    }
     scales[e$name] <- list(sc)
   }
   if (identical(.fill_series_aes(scales), "fill")) {
     scales$fill$series_aes <- "fill"
   }
   scales
+}
+
+# The legends whose point / line keys take a layer's constant alpha (VP-70);
+# a discrete colour scale reads its own in `.train_colour()`.
+.KEY_ALPHA_GUIDES <- c(
+  "color",
+  "size",
+  "shape",
+  "linewidth",
+  "edge_width",
+  "linetype"
+)
+
+# `sc` with the `key_alpha` (`.key_alpha_for_aes()`) of the layers registry row
+# `e` serves, read on the scale's channel (`linewidth` for the edge widths).
+.with_key_alpha <- function(sc, e, resolved) {
+  served <- Filter(function(L) .aes_serves_mark(e, L$mark), resolved)
+  ka <- .key_alpha_for_aes(served, e$aliases[[1]])
+  if (is.null(ka)) sc else .scale_set(sc, key_alpha = ka)
 }
 
 # The namespace of a discrete fill legend's interactive series keys
