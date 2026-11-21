@@ -269,8 +269,11 @@ NULL
 # `R/provenance.R`). `rows` is the row-key refinement: pass the original
 # input-data row indices this grob draws when the emitter groups rows by style;
 # it defaults to the whole layer (`.mark_ctx$rows`) otherwise. Purely additive
-# metadata -- raster/PDF output is unchanged.
-.draw <- function(scene, grob, rows = NULL) {
+# metadata -- raster/PDF output is unchanged. `elem` overrides a keyed
+# element's identity where it is not one of `rows`' own: `key` replaces its key,
+# `tooltip` sets its tooltip, and `source` / `target` / `join` replace those
+# meta fields (NA leaves the field out). A flow-map branch uses it (VP-71).
+.draw <- function(scene, grob, rows = NULL, elem = NULL) {
   id <- .provenance_record(rows = rows)
   if (!is.null(id)) {
     grob@id <- id
@@ -306,6 +309,14 @@ NULL
     m <- .elem_meta(rows)
     if (!is.null(m) && length(rows) > 1L && .is_single_shape(grob)) {
       m <- .interval_series_span(m[1L, , drop = FALSE], rows)
+    }
+    if (!is.null(elem)) {
+      grob@keys <- elem$key %||% grob@keys
+      for (f in intersect(names(elem), c("tooltip", "source", "target", "join"))) {
+        if (!is.null(m) && (f == "tooltip" || f %in% names(m))) {
+          m[[f]] <- elem[[f]]
+        }
+      }
     }
     if (!is.null(m)) {
       grob@meta <- m
@@ -837,7 +848,7 @@ NULL
 # prefixes this cell's keys, prefix the endpoints alike so they still match
 # (VP-63).
 .prefix_edge_ends <- function(prefix) {
-  for (k in c("edge_source", "edge_target")) {
+  for (k in c("edge_source", "edge_target", "flow_prefix")) {
     v <- .mark_ctx[[k]]
     if (!is.null(v)) {
       assign(k, paste0(prefix, ":", v), envir = .mark_ctx)
@@ -953,6 +964,8 @@ NULL
     # stay unkeyed -- harmless, a loop's only neighbour is its own node.
     .mark_ctx$edge_source <- NULL
     .mark_ctx$edge_target <- NULL
+    .mark_ctx$flow_prefix <- NULL
+    .mark_ctx$flow_tooltip <- NULL
     gi <- L$graph_identity
     if (isTRUE(.mark_ctx$plot_interactive) && !is.null(gi)) {
       # A faceted graph draws a layer the facet variable does not split (the
@@ -973,10 +986,20 @@ NULL
       }
       .mark_ctx$data_id <- paste0(pfx, gi$key)
       default_cross <- NULL
-      if (identical(gi$kind, "edges")) {
+      if (gi$kind %in% c("edges", "flow")) {
         .mark_ctx$edge_source <- paste0(pfx, gi$source)
         .mark_ctx$edge_target <- paste0(pfx, gi$target)
-      } else if (is.null(.mark_ctx$tooltip)) {
+      }
+      if (identical(gi$kind, "flow")) {
+        # A flow-map branch keys by the edge it carries, apart from that
+        # edge's `mark_edges()` key ("<edge key>\001flow"), and carries the edge
+        # key as `join`; a branch merging several flows keys in the emitter
+        # (`.flow_branch_ids()`, VP-71), under `flow_prefix`.
+        .mark_ctx$data_id <- paste0(pfx, gi$key, "\001flow")
+        default_join <- gi$key
+        .mark_ctx$flow_prefix <- pfx
+        .mark_ctx$flow_tooltip <- is.null(.mark_ctx$tooltip)
+      } else if (identical(gi$kind, "nodes") && is.null(.mark_ctx$tooltip)) {
         .mark_ctx$tooltip <- gi$key
       }
     }

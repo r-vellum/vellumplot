@@ -327,6 +327,15 @@ whose flow is per-vertex; a spiral tree's flow is constant along each branch.)
 A \verb{sketch =} flow map falls back to one uniform stroke per branch, since a
 hand-drawn ribbon would jitter its outline rather than the pen.
 
+In an interactive host (vellumwidget, or a plot with \code{\link[=select_neighbours]{select_neighbours()}})
+each branch is an element with a tooltip naming the root, the vertex it
+reaches and its flow (or the layer's own \code{tooltip}). A branch reaching a
+vertex the root has an edge to stands for that edge: it links to its two
+nodes, so hovering a node highlights its flow, and carries the edge as its
+\code{join}. Its key is the edge's key with a \code{flow} suffix, so it never collides
+with the same edge drawn by \code{mark_edges()}. A trunk merging several flows
+links to no nodes.
+
 These are thin over the point / segment / text marks; \code{igraph} need not be
 installed to use them (only \code{\link[=vgraph]{vgraph()}} needs it). \code{mark_edge_bundle()} and
 \code{mark_flow_map()} also need the \pkg{edgebundle} package.

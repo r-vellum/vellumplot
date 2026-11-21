@@ -1,5 +1,18 @@
 # vellumplot 0.17.1.9000 (development version)
 
+## New features
+
+* An interactive `mark_flow_map()` keys its branches, so flows get hover,
+  tooltips and selection in vellumwidget. A branch reaching a vertex the root
+  has an edge to stands for that edge: it carries the edge's two endpoints
+  (the node keys, so `select_neighbours()` highlights a node's flows), the
+  edge's key as `join`, and a key of its own (the edge key with a `flow`
+  suffix) that never collides with the edge drawn by `mark_edges()`. A trunk
+  merging several flows gets a key but no endpoints. The default tooltip names
+  the root, the vertex the flow reaches and the flow; a layer `tooltip`
+  replaces it. Faceted and composed plots prefix the keys and endpoints as
+  they do for nodes and edges. A static render is unchanged (VP-71).
+
 ## Bug fixes
 
 * Legend keys of filled marks now take the layer's alpha, as ggplot2's keys
