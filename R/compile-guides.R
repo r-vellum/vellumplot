@@ -1072,6 +1072,7 @@ NULL
   colour_glyph <- NULL
   fill_glyph <- NULL
   ks <- list()
+  ka <- NULL
   series_aes <- NULL
   levels <- NULL
   override <- list()
@@ -1104,6 +1105,7 @@ NULL
         colour_glyph <- glyph
         ks$fill <- ks$fill %||% sc$key_style$fill
       }
+      ka <- ka %||% sc$key_alpha
       if (identical(g$kind, "color_discrete")) {
         series_aes <- series_aes %||% (sc$series_aes %||% "color")
       }
@@ -1184,6 +1186,7 @@ NULL
     alphas = style$alphas,
     linewidths = style$linewidths,
     glyph = glyph,
+    key_alpha = ka,
     override_aes = if (length(override)) override
   )
 }
@@ -1540,7 +1543,15 @@ NULL
       if (isTRUE(sc$na)) {
         cols <- c(cols, sc$na_value)
       }
-      .colour_key_grob(sc$key_glyph, cols[i], m, sk, ov, sc$key_style)
+      .colour_key_grob(
+        sc$key_glyph,
+        cols[i],
+        m,
+        sk,
+        ov,
+        sc$key_style,
+        sc$key_alpha
+      )
     },
     size_nested = ,
     size = if (isTRUE(sc$na) && i > length(sc$legend_sizes)) {
@@ -1667,10 +1678,10 @@ NULL
     ova <- utils::modifyList(ov, list(alpha = alpha))
     if (identical(glyph, "outline")) {
       ks <- if (isTRUE(sc$filled)) list(fill = sc$fills[i])
-      .colour_key_grob(glyph, sc$cols[i], m, sk, ova, ks)
+      .colour_key_grob(glyph, sc$cols[i], m, sk, ova, ks, sc$key_alpha)
     } else {
       ks <- if (isTRUE(sc$outlined)) list(col = sc$cols[i])
-      .colour_key_grob(glyph, sc$fills[i], m, sk, ova, ks)
+      .colour_key_grob(glyph, sc$fills[i], m, sk, ova, ks, sc$key_alpha)
     }
   }
   switch(
@@ -1678,7 +1689,7 @@ NULL
     point = point(),
     line = line(),
     `line+point` = list(line(), point()),
-    `square+line` = list(swatch("square"), line()),
+    `square+line` = c(.grob_list(swatch("square")), list(line())),
     swatch(sc$glyph)
   )
 }
@@ -1687,13 +1698,17 @@ NULL
 # marks, a short line for line marks, else the default filled square swatch.
 # `ks` (`.key_style_for_aes()`) is a filled mark's constant other half: a
 # `col` outlines the square / point swatch, a `fill` fills the outlined box.
+# `ka` (`.key_alpha_for_aes()`) is the filled mark's layer opacity, drawn into
+# the square / outlined box: `alpha` for the whole key, `fill_alpha` for its
+# fill alone (the outline stays opaque, so the key is a fill and an outline).
 .colour_key_grob <- function(
   glyph,
   col,
   m,
   sketch = NULL,
   ov = list(),
-  ks = NULL
+  ks = NULL,
+  ka = NULL
 ) {
   # `override.aes` forces key aesthetics: fill/stroke take the overridden colour,
   # a point key its overridden size/shape/alpha, a line key its linewidth. The
@@ -1733,29 +1748,77 @@ NULL
       )
     ),
     # An outlined box: the key of a box plot / violin coloured through `color`.
-    outline = vellum::rect_grob(
-      width = vellum::vl_unit(m$key * 0.8, "mm"),
-      height = vellum::vl_unit(m$key * 0.8, "mm"),
-      sketch = sketch,
-      gp = vellum::vl_gpar(
-        fill = ov$fill %||% ks$fill %||% .geom_paint("white", "fill"),
-        col = line_col,
-        lwd = ov$linewidth %||% 1.5,
-        alpha = alpha
-      )
+    outline = .swatch_key_grob(
+      m$key * 0.8,
+      ov$fill %||% ks$fill %||% .geom_paint("white", "fill"),
+      line_col,
+      ov$linewidth %||% 1.5,
+      sketch,
+      ov$alpha %||% ka$alpha %||% ka$fill_alpha,
+      ov$alpha %||% ka$alpha
     ),
-    vellum::rect_grob(
-      width = vellum::vl_unit(m$key, "mm"),
-      height = vellum::vl_unit(m$key, "mm"),
-      sketch = sketch,
-      gp = if (is.null(ks$col)) {
-        vellum::vl_gpar(fill = fill, col = NA, alpha = alpha)
-      } else {
-        vellum::vl_gpar(fill = fill, col = edge, lwd = 1, alpha = alpha)
-      }
-    )
+    if (is.null(ks$col)) {
+      vellum::rect_grob(
+        width = vellum::vl_unit(m$key, "mm"),
+        height = vellum::vl_unit(m$key, "mm"),
+        sketch = sketch,
+        gp = vellum::vl_gpar(
+          fill = fill,
+          col = NA,
+          alpha = ov$alpha %||% ka$alpha %||% ka$fill_alpha
+        )
+      )
+    } else {
+      .swatch_key_grob(
+        m$key,
+        fill,
+        edge,
+        1,
+        sketch,
+        ov$alpha %||% ka$alpha %||% ka$fill_alpha,
+        ov$alpha %||% ka$alpha
+      )
+    }
   )
 }
+
+# A square key `size` mm wide, filled with `fill` and outlined in `col` (`lwd`
+# wide). One rect when the fill and the outline share an opacity; otherwise a
+# fill-only rect under an outline-only one, so a see-through fill (a density's
+# default `fill_alpha`) keeps an opaque outline, as the mark draws it (VP-67).
+.swatch_key_grob <- function(
+  size,
+  fill,
+  col,
+  lwd,
+  sketch,
+  fill_alpha,
+  col_alpha
+) {
+  rect <- function(gp) {
+    vellum::rect_grob(
+      width = vellum::vl_unit(size, "mm"),
+      height = vellum::vl_unit(size, "mm"),
+      sketch = sketch,
+      gp = gp
+    )
+  }
+  if (identical(fill_alpha, col_alpha)) {
+    return(rect(vellum::vl_gpar(
+      fill = fill,
+      col = col,
+      lwd = lwd,
+      alpha = fill_alpha
+    )))
+  }
+  list(
+    rect(vellum::vl_gpar(fill = fill, col = NA, alpha = fill_alpha)),
+    rect(vellum::vl_gpar(fill = NA, col = col, lwd = lwd, alpha = col_alpha))
+  )
+}
+
+# A key's grobs as a list: a key glyph is one grob or a list of grobs.
+.grob_list <- function(x) if (S7::S7_inherits(x)) list(x) else x
 
 # --- guide drawers ----------------------------------------------------------
 

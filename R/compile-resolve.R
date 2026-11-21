@@ -487,6 +487,36 @@ NULL
   NULL
 }
 
+# The opacity a filled mark's legend key takes from its layer, as ggplot2's
+# `draw_key_rect()` / `draw_key_polygon()` take the layer alpha (VP-67). Read
+# from the first layer mapping `aesthetic` whose key is a swatch (an area, bar,
+# tile, box, ...): `list(alpha = )` for a constant `alpha`, which the mark
+# applies to its fill and outline alike, or `list(fill_alpha = )` for
+# `mark_density()`'s default fill alpha, which leaves the outline opaque. NULL
+# when that layer sets no alpha or maps one (a mapped alpha has its own legend).
+.key_alpha_for_aes <- function(resolved, aesthetic) {
+  for (L in resolved) {
+    if (!aesthetic %in% names(L$values)) {
+      next
+    }
+    if (!identical(.key_glyph_for_mark(L$mark), "square")) {
+      next
+    }
+    if (!is.null(L$values$alpha)) {
+      return(NULL)
+    }
+    if (.density_default_alpha(L)) {
+      return(list(fill_alpha = .DENSITY_FILL_ALPHA))
+    }
+    a <- L$params$alpha
+    if (is.numeric(a) && length(a) == 1L && !is.na(a)) {
+      return(list(alpha = a))
+    }
+    return(NULL)
+  }
+  NULL
+}
+
 .key_glyph_for_mark <- function(mark) {
   if (mark %in% names(.MARK_KEY_GLYPH)) .MARK_KEY_GLYPH[[mark]] else "square"
 }
