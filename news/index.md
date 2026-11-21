@@ -18,9 +18,21 @@
   [`mark_boxplot()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md),
   [`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
   and the other filled marks reaches their keys. Before, the keys were
-  opaque. A mapped `alpha` still draws its own legend,
-  `guide_legend(override.aes = list(alpha = ))` still wins, and point
-  and line keys are unchanged (VP-67).
+  opaque. A mapped `alpha` still draws its own legend and
+  `guide_legend(override.aes = list(alpha = ))` still wins (VP-67).
+
+- Point and line legend keys now take a constant layer alpha too, as
+  ggplot2’s `draw_key_point()` and `draw_key_path()` do:
+  `mark_point(color = g, alpha = 0.4)` draws see-through colour keys,
+  and so do the size, shape, line-type and line-width keys of a layer
+  with a set `alpha`, a merged legend’s keys, and the keys of
+  `mark_edges(edge_alpha = )` and `mark_nodes(alpha = )`. Each key reads
+  the layer that draws its glyph (a point layer for a point key). A
+  mapped `alpha` still draws its own legend, `override.aes` still wins,
+  and a
+  [`mark_smooth()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md)
+  key stays opaque, since its `alpha` is the band’s and the fitted line
+  is opaque (VP-70).
 
 - A
   [`mark_flow_map()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
