@@ -1,5 +1,7 @@
 # Changelog
 
+## vellumplot 0.17.0.9000 (development version)
+
 ## vellumplot 0.17.0
 
 ### Behaviour changes
