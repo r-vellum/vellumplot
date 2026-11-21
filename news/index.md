@@ -23,6 +23,17 @@
 
 ### Bug fixes
 
+- Two layers that condition the same aesthetic on the same selection (a
+  point layer and a text layer, each
+  `color = condition(sel, ..., if_false)`) no longer share a condition
+  tag. Each such layer’s elements and its
+  [`interaction_model()`](https://r-vellum.github.io/vellumplot/reference/interaction_model.md)
+  condition carry `"<sel>:<aes>@<layer>"`, so in vellumwidget a
+  non-selected point takes its own layer’s `if_false`, not the text
+  layer’s. Conditions also carry their `tag` in
+  [`interaction_model()`](https://r-vellum.github.io/vellumplot/reference/interaction_model.md).
+  Tags that no other layer shares stay `"<sel>:<aes>"` (VP-72).
+
 - Legend keys of filled marks now take the layer’s alpha, as ggplot2’s
   keys do. A
   [`mark_density()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
