@@ -1,5 +1,16 @@
 # vellumplot 0.17.1.9000 (development version)
 
+## Bug fixes
+
+* Legend keys of filled marks now take the layer's alpha, as ggplot2's keys
+  do. A `mark_density()` key draws its fill at the default `alpha = 0.8`
+  (VP-66) and keeps an outline opaque, as the curve does, and a set `alpha`
+  on `mark_density()`, `mark_area()`, `mark_ribbon()`, `mark_bar()`,
+  `mark_histogram()`, `mark_tile()`, `mark_boxplot()`, `mark_violin()` and the
+  other filled marks reaches their keys. Before, the keys were opaque. A mapped
+  `alpha` still draws its own legend, `guide_legend(override.aes = list(alpha =
+  ))` still wins, and point and line keys are unchanged (VP-67).
+
 # vellumplot 0.17.1
 
 * Requires vellum (>= 0.12.0).
