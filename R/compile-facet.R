@@ -322,7 +322,7 @@ NULL
 # table, so an edge's key, and its `join`, is the same in every panel and in
 # the unfaceted plot.
 .edge_keys_by_row <- function(gi, idx) {
-  if (!identical(gi$kind, "edges") || length(gi$source) != length(idx)) {
+  if (!isTRUE(gi$kind %in% c("edges", "flow")) || length(gi$source) != length(idx)) {
     return(gi)
   }
   gi$key <- paste(gi$source, gi$target, idx, sep = "\001")

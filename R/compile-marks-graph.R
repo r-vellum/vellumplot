@@ -603,7 +603,10 @@ NULL
   # returns. `sketch` is not passed: it cannot be combined with a profile (it
   # would jitter the ribbon's outline rather than the pen), so a sketched flow
   # map keeps the plain stroke below.
-  for (idx in split(seq_len(nrow(fm)), fm$grp)) {
+  branches <- split(seq_len(nrow(fm)), fm$grp)
+  ids <- .flow_branch_ids(fm, branches, rec, root_i, L)
+  for (b in seq_along(branches)) {
+    idx <- branches[[b]]
     wv <- wmap(fm$flow[idx])
     if (!is.null(sk) || !any(wv > 0)) {
       # Sketched, or a degenerate all-zero width range: stroke it uniformly.
@@ -621,7 +624,9 @@ NULL
             lineend = "round",
             linejoin = "round"
           )
-        )
+        ),
+        rows = ids$rows[[b]],
+        elem = ids$elem[[b]]
       )
       next
     }
@@ -639,10 +644,78 @@ NULL
           lineend = "round",
           linejoin = "round"
         )
-      )
+      ),
+      rows = ids$rows[[b]],
+      elem = ids$elem[[b]]
     )
   }
   scene
+}
+
+# The keyed identity of each flow-map branch (VP-71), as `.draw()`'s `rows` and
+# `elem`: NULLs unless the plot is interactive and the layer has a graph
+# identity (`flow_prefix`, set in `.compile_marks()`). A branch ending at a
+# vertex the root has an edge to carries that edge's flow, so it takes the
+# edge's row: its key ("<edge key>\001flow", never the edge's own
+# `mark_edges()` key), its endpoints (the node keys) and the edge key as
+# `join`. A branch merging several flows (a spiral tree's trunk, or a vertex
+# the root has no edge to) corresponds to no one edge: it keys as
+# "flow\001<root>\001b<branch>" with no endpoints or `join`, and records
+# every row as its provenance. The default tooltip names the root, the
+# vertex the flow reaches, and the flow.
+.flow_branch_ids <- function(fm, branches, rec, root_i, L) {
+  k <- length(branches)
+  prefix <- .mark_ctx$flow_prefix
+  gi <- L$graph_identity
+  out <- list(rows = vector("list", k), elem = vector("list", k))
+  if (is.null(prefix) || !identical(gi$kind, "flow")) {
+    return(out)
+  }
+  el <- igraph::as_edgelist(rec$g, names = FALSE)
+  rows <- rec$keep
+  vname <- function(v) {
+    j <- match(v, el[, 1L])
+    if (!is.na(j)) {
+      return(gi$source[rows[j]])
+    }
+    gi$target[rows[match(v, el[, 2L])]]
+  }
+  root <- vname(root_i)
+  lab <- function(f) .label_number_default(signif(f, 4))
+  default_tt <- isTRUE(.mark_ctx$flow_tooltip)
+  for (b in seq_len(k)) {
+    i <- branches[[b]][1L]
+    leaf <- fm$leaf[i]
+    r <- if (!is.na(leaf) && leaf != root_i) {
+      rows[
+        (el[, 1L] == root_i & el[, 2L] == leaf) |
+          (el[, 2L] == root_i & el[, 1L] == leaf)
+      ][1L]
+    } else {
+      NA_integer_
+    }
+    if (!is.na(r)) {
+      out$rows[[b]] <- r
+      if (default_tt) {
+        out$elem[[b]] <- list(
+          tooltip = paste0(root, " \u2192 ", vname(leaf), ": ", lab(fm$carried[i]))
+        )
+      }
+      next
+    }
+    out$rows[[b]] <- seq_len(L$n)
+    to <- if (is.na(leaf)) "\u2026" else vname(leaf)
+    out$elem[[b]] <- list(
+      key = paste0(prefix, "flow\001", root, "\001b", b),
+      source = NA_character_,
+      target = NA_character_,
+      join = NA_character_,
+      tooltip = if (default_tt) {
+        paste0(root, " \u2192 ", to, ": ", lab(fm$carried[i]))
+      }
+    )
+  }
+  out
 }
 
 # A flow map's per-edge weights, one per drawn edge row. The weights are
@@ -674,14 +747,43 @@ NULL
       c(list(g = g, xy = xy, xydummy = dummies, root = root), params)
     )
     sm <- edgebundle::tnss_smooth(gt)
-    data.frame(x = sm$x, y = sm$y, flow = sm$flow, grp = sm$destination)
+    fm <- data.frame(x = sm$x, y = sm$y, flow = sm$flow, grp = sm$destination)
+    # each path runs from the root to its destination vertex
+    end <- !duplicated(fm$grp, fromLast = TRUE)
+    fm$leaf <- as.integer(fm$grp)
+    fm$carried <- fm$flow[end][match(fm$grp, fm$grp[end])]
+    fm
   } else {
     fm <- do.call(
       edgebundle::flow_tree,
       c(list(object = g, xy = xy, root = root), params)
     )
-    data.frame(x = fm$x, y = fm$y, flow = fm$flow, grp = fm$edge)
+    fm <- data.frame(x = fm$x, y = fm$y, flow = fm$flow, grp = fm$edge)
+    # each branch runs from its child node -- a vertex, or a branch point the
+    # spiral tree added -- up towards the root
+    start <- !duplicated(fm$grp)
+    fm$leaf <- .match_vertex(fm$x[start], fm$y[start], xy)[match(
+      fm$grp,
+      fm$grp[start]
+    )]
+    fm$carried <- fm$flow
+    fm
   }
+}
+
+# The row of `xy` each point (`x`, `y`) lies on, or NA: a flow tree's branch
+# points are new nodes, its leaves the vertices themselves.
+.match_vertex <- function(x, y, xy) {
+  tol <- 1e-9 * max(1, abs(xy))
+  vapply(
+    seq_along(x),
+    function(i) {
+      d <- abs(xy[, 1L] - x[i]) + abs(xy[, 2L] - y[i])
+      j <- which.min(d)
+      if (length(j) && d[j] <= tol) j else NA_integer_
+    },
+    integer(1)
+  )
 }
 
 # Pie / donut node glyphs: each vertex is drawn as a pie whose wedges are sized by

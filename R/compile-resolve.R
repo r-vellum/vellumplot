@@ -259,11 +259,12 @@ NULL
     layer@mark %in% c("nodes", "node_text", "node_pie") && !is.null(data$name)
   ) {
     graph_identity <- list(kind = "nodes", key = as.character(data$name))
-  } else if (identical(layer@mark, "edges") && !is.null(data$from)) {
+  } else if (layer@mark %in% c("edges", "flow_map") && !is.null(data$from)) {
+    # A flow map's branches key by the edge they carry (VP-71).
     frm <- as.character(data$from)
     to <- as.character(data$to)
     graph_identity <- list(
-      kind = "edges",
+      kind = if (identical(layer@mark, "edges")) "edges" else "flow",
       key = paste(frm, to, seq_along(frm), sep = ""),
       source = frm,
       target = to
