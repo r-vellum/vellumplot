@@ -561,11 +561,17 @@ NULL
   g <- rec$g
   pts <- rec$pts
   keep <- rec$keep
-  igraph::E(g)$weight <- rep_len(sp$weight %||% 1, n)[keep]
+  igraph::E(g)$weight <- .flow_map_weights(L)[keep]
   # Root: the reconstructed point nearest the build-time root coordinate, mapped
   # into the same native space as the endpoints.
   rxy <- c(scales$x$map(sp$root_xy[1]), scales$y$map(sp$root_xy[2]))
-  root_i <- which.min((pts[, 1] - rxy[1])^2 + (pts[, 2] - rxy[2])^2)
+  d2 <- (pts[, 1] - rxy[1])^2 + (pts[, 2] - rxy[2])^2
+  root_i <- which.min(d2)
+  # A faceted panel keeps only the edges among its own nodes (VP-68); one
+  # without the root has no flow to fan out, so it draws none.
+  if (!identical(L$source$rows, seq_len(n)) && d2[root_i] > 1e-12) {
+    return(scene)
+  }
 
   fm <- .flow_paths(type, g, pts, root_i, sp$params %||% list())
   if (is.null(fm) || !nrow(fm)) {
@@ -637,6 +643,24 @@ NULL
     )
   }
   scene
+}
+
+# A flow map's per-edge weights, one per drawn edge row. The weights are
+# resolved against the whole edge table when the layer is built, while a
+# faceted panel draws only the edges among its own nodes (VP-68), so take the
+# drawn rows' weights, as `.graph_caps_rows()` does for the caps.
+.flow_map_weights <- function(L) {
+  w <- L$stat_params$weight %||% 1
+  rows <- L$source$rows
+  if (
+    length(w) > 1L &&
+      length(rows) == L$n &&
+      length(rows) &&
+      max(rows) <= length(w)
+  ) {
+    w <- w[rows]
+  }
+  rep_len(w, L$n)
 }
 
 # Dispatch the flow-tree builder for `.emit_flow_map`, normalising both backends

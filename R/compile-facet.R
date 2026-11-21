@@ -288,7 +288,8 @@ NULL
 
 # Graph marks drawn from the edge table: in a faceted graph each panel keeps
 # only these edges' rows whose two endpoints are both among the panel's nodes.
-.GRAPH_EDGE_MARKS <- c("edges", "edge_text", "edge_bundle")
+# A flow map's per-edge weights follow its kept rows (`.flow_map_weights()`).
+.GRAPH_EDGE_MARKS <- c("edges", "edge_text", "edge_bundle", "flow_map")
 
 # A faceted graph splits its nodes (the plot data) by a vertex attribute, which
 # the edge table lacks, so an edge layer would otherwise draw in full in every
