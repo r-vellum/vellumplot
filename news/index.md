@@ -4,6 +4,16 @@
 
 ### Performance
 
+- Faceting assigns rows to panels, and marks split rows into style
+  groups, per distinct value instead of per row (VP-69): the level
+  order, labels and panel rows are worked out once per facet value (or
+  style tuple), and each panel’s rows come from one
+  [`split()`](https://rdrr.io/r/base/split.html) instead of a comparison
+  over every row per panel. Building a 200,000-point scatter with
+  [`facet_wrap()`](https://r-vellum.github.io/vellumplot/reference/facet_wrap.md)
+  (4 panels) as a raster widget went from 1.46 s to 1.18 s. Scenes are
+  unchanged.
+
 - Interactive marks carry their element meta (tooltips, legend
   membership, interval values, …) as columns, a data frame with one row
   per element, instead of a list with one record per element.
