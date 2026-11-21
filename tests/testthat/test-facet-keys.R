@@ -355,3 +355,91 @@ test_that("a faceted graph caps each kept edge at its own endpoints", {
   # size scale gives each the caps it has in the unfaceted plot
   expect_identical(caps(p |> facet_wrap(~grp)), whole[, c(1, 2, 4, 5)])
 })
+
+# VP-68: a faceted flow map keeps the panel's own edges too, with their own
+# weights; a panel without the root draws no flow.
+vp68_flow_graph <- function() {
+  g <- igraph::make_star(9, mode = "undirected")
+  # edges 9-12: v2-v3, v4-v5, v6-v7, v8-v9; edge 13 (v1-v6) crosses the groups
+  g <- igraph::add_edges(g, c(2, 3, 4, 5, 6, 7, 8, 9, 1, 6))
+  igraph::V(g)$name <- paste0("v", 1:9)
+  igraph::V(g)$grp <- rep(c("a", "b"), c(5, 4))
+  igraph::E(g)$w <- 10 * seq_len(igraph::ecount(g))
+  g
+}
+
+# The flow layer's lines_grob count per panel.
+vp68_panel_lines <- function(p) {
+  s <- vellum::as_scene_spec(as_vellum_scene(p))
+  val <- function(x) if (is.list(x)) x$v else x
+  out <- character()
+  walk <- function(node, panel) {
+    nm <- val(node$name)
+    if (is.character(nm) && length(nm) == 1L && grepl("^panel-", nm)) {
+      panel <- nm
+    }
+    if (identical(node$class, "grob_lines")) {
+      out[length(out) + 1L] <<- panel
+    }
+    for (ch in node) {
+      if (is.list(ch)) walk(ch, panel)
+    }
+  }
+  walk(s$root, NA_character_)
+  table(out)
+}
+
+test_that("a vertex facet keeps a flow map's own edges and weights", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("edgebundle")
+  g <- vp68_flow_graph()
+  p <- vgraph(g, layout = "stress") |>
+    mark_flow_map(root = "v1", weight = w) |>
+    facet_wrap(~grp)
+  b <- vellumplot:::.build_panels(p)
+  L <- lapply(b$panels, function(pn) pn$resolved[[1]])
+  # group a: the star edges to v2..v5, v2-v3 and v4-v5; group b: v6-v7, v8-v9
+  expect_identical(L[[1]]$source$rows, c(1:4, 9L, 10L))
+  expect_identical(L[[2]]$source$rows, 11:12)
+  expect_identical(
+    vellumplot:::.flow_map_weights(L[[1]]),
+    10 * c(1:4, 9, 10)
+  )
+  expect_identical(vellumplot:::.flow_map_weights(L[[2]]), 10 * (11:12))
+  # only the root's panel draws a flow
+  n <- vp68_panel_lines(p)
+  expect_identical(names(n), "panel-1-1")
+  expect_gt(n[["panel-1-1"]], 0L)
+})
+
+test_that("a constant flow weight recycles to a panel's edges", {
+  skip_if_not_installed("igraph")
+  g <- vp68_flow_graph()
+  g <- igraph::delete_edge_attr(g, "w")
+  p <- vgraph(g, layout = "stress") |>
+    mark_flow_map(root = "v1") |>
+    facet_wrap(~grp)
+  L <- vellumplot:::.build_panels(p)$panels[[1]]$resolved[[1]]
+  expect_identical(vellumplot:::.flow_map_weights(L), rep(1, 6))
+})
+
+test_that("a faceted flow map leaves the widget keys unique and linked", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("edgebundle")
+  g <- vp68_flow_graph()
+  p <- vgraph(g, layout = "stress") |>
+    mark_edges() |>
+    mark_flow_map(root = "v1", weight = w) |>
+    mark_nodes(size = 3) |>
+    select_neighbours() |>
+    facet_wrap(~grp)
+  el <- vellum::scene_model(as_vellum_scene(p))$elements
+  el <- el[!is.na(el$key), ]
+  expect_false(anyDuplicated(el$key) > 0)
+  seg <- el[el$mark == "segment", ]
+  pts <- el[el$mark == "point", ]
+  expect_identical(nrow(seg), 8L)
+  src <- vapply(seg$meta, function(m) m$source %||% NA_character_, "")
+  tgt <- vapply(seg$meta, function(m) m$target %||% NA_character_, "")
+  expect_true(all(c(src, tgt) %in% pts$key))
+})

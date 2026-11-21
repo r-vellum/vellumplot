@@ -1,5 +1,13 @@
 # vellumplot 0.17.1.9000 (development version)
 
+## Bug fixes
+
+* A `mark_flow_map()` in a graph faceted by a vertex attribute now draws, in
+  each panel, only the edges whose two endpoints are both among the panel's
+  nodes, with those edges' own weights, as `mark_edges()` has since VP-64. A
+  panel without the `root` draws no flow. Before, every panel drew the whole
+  flow map (VP-68).
+
 # vellumplot 0.17.1
 
 * Requires vellum (>= 0.12.0).
