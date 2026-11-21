@@ -16,7 +16,6 @@ URL: https://r-vellum.github.io/vellumplot/,
 BugReports: https://github.com/r-vellum/vellumplot/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 8.0.0.9000
 Depends:
     R (>= 4.2)
 Imports:
@@ -128,3 +127,4 @@ Collate:
     'venn.R'
     'waffle.R'
     'zzz.R'
+Config/roxygen2/version: 8.1.0
