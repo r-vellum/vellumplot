@@ -23,7 +23,15 @@ NULL
     v <- rep_len(v, n)
     match(v, unique(v))
   })
-  unname(split(seq_len(n), do.call(paste, c(codes, sep = "\036"))))
+  # One id per style tuple (VP-69). The groups come in the order `split()`
+  # gives the tuples' code strings ("<code>\036<code>..."), built once per
+  # tuple rather than per row: their first appearances are those of the rows,
+  # so `as.factor()` orders them the same way.
+  combo <- .combo_id(codes)
+  first <- which(!duplicated(combo))
+  label <- do.call(paste, c(lapply(codes, `[`, first), sep = "\036"))
+  pos <- match(label, levels(as.factor(label)))
+  .split_rows(pos[combo], length(label))
 }
 
 # Row groups for a *connected* mark (line, step, area, ribbon, smooth, text
