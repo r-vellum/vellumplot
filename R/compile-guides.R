@@ -1105,7 +1105,6 @@ NULL
         colour_glyph <- glyph
         ks$fill <- ks$fill %||% sc$key_style$fill
       }
-      ka <- ka %||% sc$key_alpha
       if (identical(g$kind, "color_discrete")) {
         series_aes <- series_aes %||% (sc$series_aes %||% "color")
       }
@@ -1129,6 +1128,7 @@ NULL
         style$linewidths <- pad(sc$legend_widths, NA)
       }
     )
+    ka <- ka %||% sc$key_alpha
     if (is.character(sc$levels)) {
       levels <- levels %||% sc$levels
     }
@@ -1536,6 +1536,9 @@ NULL
   # swatch only. Read each named entry with `%||%` so an absent one keeps the
   # data-driven default. `colour` was canonicalised to `color` in guide_legend().
   ov <- sc$override_aes %||% list()
+  # the layer's constant opacity (`.key_alpha_for_aes()`, VP-70) for the point
+  # and line keys of a size / shape / line-width / line-type legend
+  ka <- ov$alpha %||% sc$key_alpha$alpha
   switch(
     g$kind,
     color_discrete = {
@@ -1567,7 +1570,7 @@ NULL
         gp = vellum::vl_gpar(
           fill = fill,
           col = ov$color %||% .geom_paint("grey35"),
-          alpha = ov$alpha
+          alpha = ka
         )
       )
     },
@@ -1580,7 +1583,7 @@ NULL
         ov$fill %||% ov$color %||% .geom_paint("grey35", "fill"),
         ov$color %||% .geom_paint("grey35"),
         sk,
-        ov$alpha
+        ka
       )
     },
     pattern = vellum::rect_grob(
@@ -1604,7 +1607,7 @@ NULL
       gp = vellum::vl_gpar(
         col = ov$color %||% .geom_paint("grey35"),
         lwd = sc$legend_widths[i],
-        alpha = ov$alpha
+        alpha = ka
       )
     ),
     alpha = vellum::points_grob(
@@ -1629,7 +1632,7 @@ NULL
         col = ov$color %||% .geom_paint("grey35"),
         lwd = ov$linewidth %||% 1.5,
         lty = ov$linetype %||% sc$linetypes[i],
-        alpha = ov$alpha
+        alpha = ka
       )
     ),
     merged = .merged_key_grob(sc, i, m, sk, ov)
@@ -1645,7 +1648,7 @@ NULL
     x <- if (length(v) >= i) v[[i]] else NULL
     if (is.null(x) || is.na(x)) default else x
   }
-  alpha <- ov$alpha %||% pick(sc$alphas, NULL)
+  alpha <- ov$alpha %||% pick(sc$alphas, NULL) %||% sc$key_alpha$alpha
   col <- ov$color %||% sc$cols[i]
   point <- function() {
     .shape_key_grob(
@@ -1698,9 +1701,9 @@ NULL
 # marks, a short line for line marks, else the default filled square swatch.
 # `ks` (`.key_style_for_aes()`) is a filled mark's constant other half: a
 # `col` outlines the square / point swatch, a `fill` fills the outlined box.
-# `ka` (`.key_alpha_for_aes()`) is the filled mark's layer opacity, drawn into
-# the square / outlined box: `alpha` for the whole key, `fill_alpha` for its
-# fill alone (the outline stays opaque, so the key is a fill and an outline).
+# `ka` (`.key_alpha_for_aes()`) is the layer opacity: `alpha` for the whole
+# key (point, line, square or outlined box), `fill_alpha` for a square's fill
+# alone (the outline stays opaque, so the key is a fill and an outline).
 .colour_key_grob <- function(
   glyph,
   col,
@@ -1718,7 +1721,7 @@ NULL
   # the swatch outline: a constant `color` around a mapped fill, or the mapped
   # colour around a constant fill (a point key; the square becomes "outline")
   edge <- ov$color %||% ks$col %||% (if (!is.null(ks$fill)) col)
-  alpha <- ov$alpha
+  alpha <- ov$alpha %||% ka$alpha
   glyph <- if (!is.null(ov$shape)) "point" else (glyph %||% "square")
   switch(
     glyph,
