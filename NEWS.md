@@ -8,8 +8,19 @@
   on `mark_density()`, `mark_area()`, `mark_ribbon()`, `mark_bar()`,
   `mark_histogram()`, `mark_tile()`, `mark_boxplot()`, `mark_violin()` and the
   other filled marks reaches their keys. Before, the keys were opaque. A mapped
-  `alpha` still draws its own legend, `guide_legend(override.aes = list(alpha =
-  ))` still wins, and point and line keys are unchanged (VP-67).
+  `alpha` still draws its own legend and `guide_legend(override.aes =
+  list(alpha = ))` still wins (VP-67).
+
+* Point and line legend keys now take a constant layer alpha too, as
+  ggplot2's `draw_key_point()` and `draw_key_path()` do:
+  `mark_point(color = g, alpha = 0.4)` draws see-through colour keys, and so
+  do the size, shape, line-type and line-width keys of a layer with a set
+  `alpha`, a merged legend's keys, and the keys of
+  `mark_edges(edge_alpha = )` and `mark_nodes(alpha = )`. Each key reads the
+  layer that draws its glyph (a point layer for a point key). A mapped
+  `alpha` still draws its own legend, `override.aes` still wins, and a
+  `mark_smooth()` key stays opaque, since its `alpha` is the band's and the
+  fitted line is opaque (VP-70).
 
 * A `mark_flow_map()` in a graph faceted by a vertex attribute now draws, in
   each panel, only the edges whose two endpoints are both among the panel's

@@ -487,28 +487,38 @@ NULL
   NULL
 }
 
-# The opacity a filled mark's legend key takes from its layer, as ggplot2's
-# `draw_key_rect()` / `draw_key_polygon()` take the layer alpha (VP-67). Read
-# from the first layer mapping `aesthetic` whose key is a swatch (an area, bar,
-# tile, box, ...): `list(alpha = )` for a constant `alpha`, which the mark
-# applies to its fill and outline alike, or `list(fill_alpha = )` for
-# `mark_density()`'s default fill alpha, which leaves the outline opaque. NULL
-# when that layer sets no alpha or maps one (a mapped alpha has its own legend).
-.key_alpha_for_aes <- function(resolved, aesthetic) {
+# The opacity a legend key takes from its layer, as ggplot2's key drawers
+# (`draw_key_rect()`, `draw_key_point()`, `draw_key_path()`, ...) take the
+# layer alpha (VP-67, VP-70). Read from the first layer mapping `aesthetic`
+# that draws the scale's key glyph (`glyph`: a point layer for a point key, a
+# line layer for a line key, a filled layer for a square or an outlined box):
+# `list(alpha = )` for a constant `alpha` (`edge_alpha` on an edge layer),
+# which the mark applies to its fill and outline alike, or `list(fill_alpha = )`
+# for `mark_density()`'s default fill alpha, which leaves the outline opaque.
+# NULL when that layer sets no alpha or maps one (a mapped alpha has its own
+# legend), and for `mark_smooth()`, whose alpha is the band's: the fitted line,
+# all its key draws, stays opaque.
+.key_alpha_for_aes <- function(
+  resolved,
+  aesthetic,
+  glyph = .key_glyph_for_aes(resolved, aesthetic)
+) {
+  want <- if (glyph %in% c("point", "line")) glyph else "square"
   for (L in resolved) {
     if (!aesthetic %in% names(L$values)) {
       next
     }
-    if (!identical(.key_glyph_for_mark(L$mark), "square")) {
+    if (!identical(.key_glyph_for_mark(L$mark), want)) {
       next
     }
-    if (!is.null(L$values$alpha)) {
+    ch <- if (L$mark %in% .EDGE_ALPHA_MARKS) "edge_alpha" else "alpha"
+    if (!is.null(L$values[[ch]]) || identical(L$mark, "smooth")) {
       return(NULL)
     }
     if (.density_default_alpha(L)) {
       return(list(fill_alpha = .DENSITY_FILL_ALPHA))
     }
-    a <- L$params$alpha
+    a <- L$params[[ch]]
     if (is.numeric(a) && length(a) == 1L && !is.na(a)) {
       return(list(alpha = a))
     }
@@ -516,6 +526,9 @@ NULL
   }
   NULL
 }
+
+# Marks whose opacity is the `edge_alpha` channel (`.rename_edge_aes()`).
+.EDGE_ALPHA_MARKS <- c("edges", "edge_bundle")
 
 .key_glyph_for_mark <- function(mark) {
   if (mark %in% names(.MARK_KEY_GLYPH)) .MARK_KEY_GLYPH[[mark]] else "square"
