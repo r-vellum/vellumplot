@@ -305,7 +305,7 @@ NULL
     grob@keys <- .mark_ctx$data_id[rows]
     m <- .elem_meta(rows)
     if (!is.null(m) && length(rows) > 1L && .is_single_shape(grob)) {
-      m[[1L]] <- .interval_series_span(m[[1L]], rows)
+      m <- .interval_series_span(m[1L, , drop = FALSE], rows)
     }
     if (!is.null(m)) {
       grob@meta <- m
@@ -375,6 +375,7 @@ NULL
 # values to the span of all those rows (`ix` = min, `ixh` = max; likewise y), so
 # a host counts the series a member when any part of it lies in the brushed
 # range rather than only its first vertex. A discrete value stays the first row's.
+# `rec` is the element's one-row meta data frame.
 .interval_series_span <- function(rec, rows) {
   iv <- .mark_ctx$interval_values
   for (a in intersect(c("x", "y"), names(iv))) {
@@ -474,140 +475,104 @@ NULL
     join = join,
     iv = iv
   )
-  if (is.null(iv) && is.null(cond_rowvals)) {
-    .elem_meta_cols(rows, ctx)
-  } else {
-    .elem_meta_rows(rows, ctx)
-  }
+  .elem_meta_df(rows, ctx)
 }
 
-# `.elem_meta()` built column-wise (VR-16): each field's per-row values at
-# once, then one record per row. A big scatter has a record per point, and the
-# per-row closure below was a large share of compiling it. Same records as
-# `.elem_meta_rows()` (fields in the same order, a NULL value leaves its field
-# out); used when no field varies in shape per row (no interval values, no
-# per-row condition values).
-.elem_meta_cols <- function(rows, ctx) {
+# `.elem_meta()`'s columns (VR-19): a data frame with one row per element and
+# one column per field, which vellum reads as one record per row (a NULL entry
+# of a list-column leaves its field out of that record). Built a field at a
+# time, so a big scatter never makes a record per point: vellum hands the
+# columns on to a host as they are (`scene_model(meta = "columns")`). Field
+# order: tooltip, hover_group, hover_color, selected_color, source, target,
+# legend, filter_value, cond, cond_value, filt, join, then the interval values.
+.elem_meta_df <- function(rows, ctx) {
   n <- length(rows)
   chr <- function(v) {
-    if (is.atomic(v)) as.list(as.character(v[rows])) else lapply(v[rows], as.character)
+    if (is.atomic(v)) {
+      as.character(unname(v[rows]))
+    } else {
+      lapply(unname(v[rows]), as.character)
+    }
   }
   raw <- function(v) {
-    if (is.list(v) && !is.object(v)) {
-      v[rows]
-    } else if (is.atomic(v) && !is.object(v)) {
-      as.list(v[rows])
+    if (is.atomic(v) && !is.object(v)) {
+      unname(v[rows])
+    } else if (is.list(v) && !is.object(v)) {
+      unname(v[rows])
     } else {
       lapply(rows, function(i) v[[i]])
     }
   }
   cols <- list()
-  if (!is.null(ctx$tt)) cols$tooltip <- chr(ctx$tt)
-  if (!is.null(ctx$hg)) cols$hover_group <- chr(ctx$hg)
-  if (!is.null(ctx$hc)) cols$hover_color <- chr(ctx$hc)
-  if (!is.null(ctx$sc)) cols$selected_color <- chr(ctx$sc)
-  if (!is.null(ctx$esrc)) cols$source <- chr(ctx$esrc)
-  if (!is.null(ctx$etgt)) cols$target <- chr(ctx$etgt)
-  if (!is.null(ctx$lg)) cols$legend <- raw(ctx$lg)
-  if (!is.null(ctx$fv)) cols$filter_value <- raw(ctx$fv)
-  if (!is.null(ctx$cond_tags)) cols$cond <- rep(list(ctx$cond_tags), n)
-  if (!is.null(ctx$filt_tags)) cols$filt <- rep(list(ctx$filt_tags), n)
-  if (!is.null(ctx$join)) cols$join <- chr(ctx$join)
-  recs <- .mapply(list, cols, NULL)
-  # A NULL value (`rec$legend <- NULL`) leaves the field out of that record.
-  nul <- Reduce(
-    `|`,
-    lapply(cols[c("legend", "filter_value")], function(l) {
-      if (is.null(l)) logical(n) else vapply(l, is.null, logical(1))
-    })
-  )
-  if (any(nul)) {
-    recs[nul] <- lapply(recs[nul], function(r) {
-      r <- r[!vapply(r, is.null, logical(1))]
-      if (length(r)) r else list()
-    })
+  if (!is.null(ctx$tt)) {
+    cols$tooltip <- chr(ctx$tt)
   }
-  recs
-}
-
-# The per-row build of `.elem_meta()`, for the fields whose shape varies by row.
-.elem_meta_rows <- function(rows, ctx) {
-  tt <- ctx$tt
-  hg <- ctx$hg
-  hc <- ctx$hc
-  sc <- ctx$sc
-  esrc <- ctx$esrc
-  etgt <- ctx$etgt
-  lg <- ctx$lg
-  fv <- ctx$fv
-  cond_tags <- ctx$cond_tags
-  cond_rowvals <- ctx$cond_rowvals
-  filt_tags <- ctx$filt_tags
-  join <- ctx$join
-  iv <- ctx$iv
-  lapply(rows, function(i) {
-    rec <- list()
-    if (!is.null(tt)) {
-      rec$tooltip <- as.character(tt[[i]])
+  if (!is.null(ctx$hg)) {
+    cols$hover_group <- chr(ctx$hg)
+  }
+  if (!is.null(ctx$hc)) {
+    cols$hover_color <- chr(ctx$hc)
+  }
+  if (!is.null(ctx$sc)) {
+    cols$selected_color <- chr(ctx$sc)
+  }
+  if (!is.null(ctx$esrc)) {
+    cols$source <- chr(ctx$esrc)
+  }
+  if (!is.null(ctx$etgt)) {
+    cols$target <- chr(ctx$etgt)
+  }
+  # `legend`: the discrete series this element belongs to ("<aes>:<value>"), so a
+  # legend swatch (tagged with `legend_for`) can highlight the whole series.
+  if (!is.null(ctx$lg)) {
+    cols$legend <- raw(ctx$lg)
+  }
+  # `filter_value`: this element's value on the continuous colour scale, for the
+  # interactive colorbar filter.
+  if (!is.null(ctx$fv)) {
+    cols$filter_value <- raw(ctx$fv)
+  }
+  # `cond`: the conditional-encoding tags this element participates in, and a
+  # per-row `if_false` value per tag as `cond_value`.
+  if (!is.null(ctx$cond_tags)) {
+    cols$cond <- rep(list(ctx$cond_tags), n)
+    if (!is.null(ctx$cond_rowvals)) {
+      cv <- lapply(ctx$cond_rowvals, function(v) raw(v))
+      cols$cond_value <- .mapply(
+        function(...) list(...),
+        lapply(cv, function(v) if (is.list(v)) v else as.list(v)),
+        NULL
+      )
     }
-    if (!is.null(hg)) {
-      rec$hover_group <- as.character(hg[[i]])
-    }
-    if (!is.null(hc)) {
-      rec$hover_color <- as.character(hc[[i]])
-    }
-    if (!is.null(sc)) {
-      rec$selected_color <- as.character(sc[[i]])
-    }
-    if (!is.null(esrc)) {
-      rec$source <- as.character(esrc[[i]])
-    }
-    if (!is.null(etgt)) {
-      rec$target <- as.character(etgt[[i]])
-    }
-    # `legend`: the discrete series this element belongs to ("<aes>:<value>"), so a
-    # legend swatch (tagged with `legend_for`) can highlight the whole series.
-    if (!is.null(lg)) {
-      rec$legend <- lg[[i]]
-    }
-    # `filter_value`: this element's value on the continuous colour scale, for the
-    # interactive colorbar filter.
-    if (!is.null(fv)) {
-      rec$filter_value <- fv[[i]]
-    }
-    # `cond`: the conditional-encoding tags this element participates in.
-    if (!is.null(cond_tags)) {
-      rec$cond <- cond_tags
-      if (!is.null(cond_rowvals)) {
-        rec$cond_value <- lapply(cond_rowvals, function(v) v[[i]])
-      }
-    }
-    # `filt`: the filter selections this view is filtered by.
-    if (!is.null(filt_tags)) {
-      rec$filt <- filt_tags
-    }
-    # `join`: cross-view identity (per-cell key prefixing keeps it separate).
-    if (!is.null(join)) {
-      rec$join <- as.character(join[[i]])
-    }
-    # `ix` / `iy`: the element's data value on a brushed position channel
-    # (numeric), or `ixd` / `iyd` for a discrete channel (the category label).
-    # (`ixh` / `iyh` is the upper end when the element spans a range.)
-    for (a in names(iv)) {
-      v <- iv[[a]][[i]]
-      if (is.character(v)) {
-        rec[[paste0("i", a, "d")]] <- v
-      } else {
-        rec[[paste0("i", a)]] <- v
-      }
-    }
-    rec
-  })
+  }
+  # `filt`: the filter selections this view is filtered by.
+  if (!is.null(ctx$filt_tags)) {
+    cols$filt <- rep(list(ctx$filt_tags), n)
+  }
+  # `join`: cross-view identity (per-cell key prefixing keeps it separate).
+  if (!is.null(ctx$join)) {
+    cols$join <- chr(ctx$join)
+  }
+  # `ix` / `iy`: the element's data value on a brushed position channel
+  # (numeric), or `ixd` / `iyd` for a discrete channel (the category label).
+  # (`ixh` / `iyh` is the upper end when the element spans a range.)
+  for (a in names(ctx$iv)) {
+    v <- raw(ctx$iv[[a]])
+    f <- if (is.character(v)) paste0("i", a, "d") else paste0("i", a)
+    cols[[f]] <- v
+  }
+  structure(
+    cols,
+    names = names(cols) %||% character(),
+    class = "data.frame",
+    row.names = .set_row_names(n)
+  )
 }
 
 # Per-row legend membership: for each discrete colour/fill/shape scale the layer
-# maps, the element's series key(s) "<aes>:<value>". Returns a list (one entry per
-# row, each a character vector), or NULL when the layer maps no discrete legend
+# maps, the element's series key(s) "<aes>:<value>". Returns a character vector
+# (one key per row) for a single aesthetic, a list (one character vector per
+# row) for several, or NULL when the layer maps no discrete legend
 # aesthetic. Matches the `legend_for` a discrete legend swatch carries. A fill
 # key reads "color:<value>" unless the fill legend stands beside a separate
 # colour legend (`.fill_series_aes()`).
@@ -635,10 +600,12 @@ NULL
   if (!length(cols)) {
     return(NULL)
   }
-  # One series key per aesthetic per element, without a closure per element.
+  # One series key per aesthetic per element, without a closure per element. A
+  # single aesthetic stays a character vector (one key per element), which the
+  # columnar element meta carries as is.
   cols <- unname(cols)
   if (length(cols) == 1L) {
-    return(as.list(cols[[1L]]))
+    return(cols[[1L]])
   }
   .mapply(c, cols, NULL)
 }
