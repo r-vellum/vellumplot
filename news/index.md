@@ -1,6 +1,8 @@
 # Changelog
 
-## vellumplot 0.17.1.9000 (development version)
+## vellumplot 0.18.0
+
+- Requires vellum (\>= 0.13.0).
 
 ### New features
 
