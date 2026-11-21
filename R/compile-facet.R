@@ -17,6 +17,12 @@ NULL
 }
 
 # `.facet_key()` on already evaluated facet values (one vector per quosure).
+#
+# The level order is that of the rows sorted by each variable in turn, but the
+# sort and the labels are worked out once per distinct combination of values
+# (VP-69): each combination's first row stands for it, the representatives are
+# sorted (`order()` breaks ties by position, i.e. by first row, as it would
+# for all rows), and every row takes its combination's level.
 .facet_key_vals <- function(vals, na_level = TRUE) {
   if (length(vals) == 1 && is.factor(vals[[1]])) {
     f <- droplevels(vals[[1]])
@@ -27,19 +33,43 @@ NULL
     chr[is.na(chr)] <- "NA"
     return(factor(chr, levels = unique(c(levels(f), "NA"))))
   }
-  parts <- lapply(vals, .facet_chr)
-  combined <- do.call(paste, c(parts, sep = ", "))
+  combo <- .combo_id(vals)
+  first <- which(!duplicated(combo))
+  rep_vals <- lapply(vals, function(v) v[first])
+  label <- do.call(paste, c(lapply(rep_vals, .facet_chr), sep = ", "))
   if (!na_level) {
-    combined[Reduce(`|`, lapply(vals, is.na))] <- NA_character_
+    label[Reduce(`|`, lapply(rep_vals, is.na))] <- NA_character_
   }
-  # Order rows by each variable in turn (factors by level code, everything else
-  # by its own type; `order()` puts NA last), then take the level order from it.
+  # Order the combinations by each variable in turn (factors by level code,
+  # everything else by its own type; `order()` puts NA last), then take the
+  # level order from it.
   ord <- do.call(
     order,
-    lapply(vals, function(v) if (is.factor(v)) as.integer(v) else v)
+    lapply(rep_vals, function(v) if (is.factor(v)) as.integer(v) else v)
   )
-  lv <- unique(combined[ord])
-  factor(combined, levels = lv[!is.na(lv)])
+  lv <- unique(label[ord])
+  lv <- lv[!is.na(lv)]
+  codes <- match(label, lv)[combo]
+  structure(codes, levels = lv, class = "factor")
+}
+
+# One integer id per distinct combination of values across the vectors in
+# `vals` (all of one length), numbered in order of first appearance.
+.combo_id <- function(vals) {
+  id <- NULL
+  for (v in vals) {
+    code <- if (is.factor(v)) as.integer(v) else match(v, unique(v))
+    code[is.na(code)] <- 0L
+    id <- if (is.null(id)) {
+      code
+    } else {
+      # Pair the ids so far with this variable's codes; doubles hold the
+      # product exactly, and renumbering keeps the ids small.
+      pair <- as.numeric(id) * (max(code, 0L) + 1) + code
+      match(pair, unique(pair))
+    }
+  }
+  match(id, unique(id))
 }
 
 # One facet variable's values as the labels panels are matched on ("NA" for a
@@ -88,13 +118,27 @@ NULL
   })
   fkey <- .facet_key_vals(vals)
   levs <- levels(fkey)
-  first <- match(levs, as.character(fkey))
+  first <- match(seq_along(levs), as.integer(fkey))
   list(
     levels = levs,
     parts = lapply(first, function(i) {
       vapply(vals, function(v) .facet_chr(v[i]), character(1))
     })
   )
+}
+
+# The rows of `key` (a factor) at each of `levs`, as `which(as.character(key)
+# == levs[i])` for every `i`, in one pass.
+.rows_by_level <- function(key, levs) {
+  code <- match(levels(key), levs)[as.integer(key)]
+  .split_rows(code, length(levs))
+}
+
+# Row indices grouped by `code` (integers 1..k, NA for none): element `i` holds
+# `which(code == i)`.
+.split_rows <- function(code, k) {
+  f <- structure(code, levels = as.character(seq_len(k)), class = "factor")
+  unname(split(seq_along(code), f))
 }
 
 # Facet key(s) for `data`: the single wrap key, or the row and column keys for a
@@ -143,7 +187,7 @@ NULL
     Filter(Negate(is.null), lapply(spec@layers, function(l) l@data))
   )
   if (facet@type == "wrap") {
-    key <- as.character(.facet_keys(facet, data)$wrap)
+    key <- .facet_keys(facet, data)$wrap
     dim <- .facet_dim(facet@cols, datas)
     levs <- dim$levels
     n <- length(levs)
@@ -151,11 +195,12 @@ NULL
       (if (!is.null(facet@nrow)) ceiling(n / facet@nrow) else ceiling(sqrt(n)))
     ncol <- max(1L, as.integer(ncol))
     nrow <- as.integer(ceiling(n / ncol))
+    rows <- .rows_by_level(key, levs)
     panels <- lapply(seq_len(n), function(i) {
       list(
         r = (i - 1L) %/% ncol + 1L,
         c = (i - 1L) %% ncol + 1L,
-        idx = which(key == levs[i]),
+        idx = rows[[i]],
         lvl = list(wrap = levs[i]),
         match = .panel_match(facet@cols, dim$parts[[i]])
       )
@@ -171,14 +216,16 @@ NULL
     )
   } else {
     keys <- .facet_keys(facet, data)
-    rkey <- as.character(keys$r)
-    ckey <- as.character(keys$c)
     rdim <- .facet_dim(facet@rows, datas)
     cdim <- .facet_dim(facet@cols, datas)
     rlevs <- rdim$levels
     clevs <- cdim$levels
     R <- length(rlevs)
     C <- length(clevs)
+    # Each row's cell, numbered row-major like the panels.
+    rcode <- match(levels(keys$r), rlevs)[as.integer(keys$r)]
+    ccode <- match(levels(keys$c), clevs)[as.integer(keys$c)]
+    rows <- .split_rows((rcode - 1L) * C + ccode, R * C)
     panels <- vector("list", R * C)
     k <- 0L
     for (r in seq_len(R)) {
@@ -187,7 +234,7 @@ NULL
         panels[[k]] <- list(
           r = r,
           c = cc,
-          idx = which(rkey == rlevs[r] & ckey == clevs[cc]),
+          idx = rows[[k]],
           lvl = list(r = rlevs[r], c = clevs[cc]),
           match = c(
             .panel_match(facet@rows, rdim$parts[[r]]),
