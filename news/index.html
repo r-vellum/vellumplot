@@ -64,6 +64,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.17.0.9000" id="vellumplot-01709000-development-version">vellumplot 0.17.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01709000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="performance-0-17-0-9000">Performance<a class="anchor" aria-label="anchor" href="#performance-0-17-0-9000"></a></h3>
+<ul><li>Interactive marks carry their element meta (tooltips, legend membership, interval values, …) as columns, a data frame with one row per element, instead of a list with one record per element. <code><a href="https://r-vellum.github.io/vellum/reference/scene_model.html" class="external-link">vellum::scene_model()</a></code> returns the same records as before, and vellumwidget reads the columns directly, so a large keyed plot no longer builds a record per point (VR-19). Needs vellum 0.11.1.9000 or later.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.17.0" id="vellumplot-0170">vellumplot 0.17.0<a class="anchor" aria-label="anchor" href="#vellumplot-0170"></a></h2>

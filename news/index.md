@@ -2,6 +2,16 @@
 
 ## vellumplot 0.17.0.9000 (development version)
 
+### Performance
+
+- Interactive marks carry their element meta (tooltips, legend
+  membership, interval values, …) as columns, a data frame with one row
+  per element, instead of a list with one record per element.
+  [`vellum::scene_model()`](https://r-vellum.github.io/vellum/reference/scene_model.html)
+  returns the same records as before, and vellumwidget reads the columns
+  directly, so a large keyed plot no longer builds a record per point
+  (VR-19). Needs vellum 0.11.1.9000 or later.
+
 ## vellumplot 0.17.0
 
 ### Behaviour changes
