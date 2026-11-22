@@ -973,7 +973,7 @@ NULL
 # touch), else a constant `mark_bar(width =)` in data units as in ggplot2's
 # geom_bar() (VP-98), else 90% of the band (`band`: the discrete band or the
 # resolution), leaving a 10% gap. Shared by `.emit_bar()` and the x-extent
-# training (`.bar_extent_data()`), so the trained axis covers exactly the bars
+# training (`.mark_extent_data()`), so the trained axis covers exactly the bars
 # drawn.
 .bar_geometry <- function(L, xp, band, n) {
   w <- rep_len(L$values$width %||% L$params$width %||% (0.9 * band), n)

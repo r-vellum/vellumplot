@@ -1964,7 +1964,10 @@ mark_text_path <- function(
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `fill` for tile/raster; `x`, `y`
-#'   for bin2d; `x` (+ `fill`/`color`) for density.
+#'   for bin2d; `x` (+ `fill`/`color`) for density. `mark_tile()` also takes
+#'   `width` and `height` (data units; default the resolution, so tiles abut).
+#'   On a continuous axis the tiles' edges train the scale, as in ggplot2, so
+#'   the end tiles are not clipped.
 #' @param bins Number of bins per axis for `mark_bin2d()` / hex columns for
 #'   `mark_hex()`.
 #' @param adjust Bandwidth multiplier for `mark_density()`.

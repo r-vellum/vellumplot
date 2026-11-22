@@ -52,7 +52,10 @@ mark_hex(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x}, \code{y}, \code{fill} for tile/raster; \code{x}, \code{y}
-for bin2d; \code{x} (+ \code{fill}/\code{color}) for density.}
+for bin2d; \code{x} (+ \code{fill}/\code{color}) for density. \code{mark_tile()} also takes
+\code{width} and \code{height} (data units; default the resolution, so tiles abut).
+On a continuous axis the tiles' edges train the scale, as in ggplot2, so
+the end tiles are not clipped.}
 
 \item{position}{Position adjustment: a string — \code{"identity"} (default),
 \code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},
