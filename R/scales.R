@@ -2331,6 +2331,10 @@ scale_size_binned <- function(
 #'   named by level).
 #' @param na.value For the discrete forms, the size drawn for missing values,
 #'   or `NULL` to drop them.
+#' @param drop For the discrete forms, drop factor levels that no row uses
+#'   (default `TRUE`, as in ggplot2): they get no legend key and no size, so the
+#'   range is spread over the levels that remain. `FALSE` keeps every level.
+#'   `limits` overrides it.
 #' @examples
 #' vplot(mtcars) |>
 #'   mark_point(x = wt, y = mpg, size = factor(cyl)) |>
@@ -2343,10 +2347,11 @@ scale_size_manual <- function(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   .check_manual_present(values)
-  .discrete_range_scale(
+  plot <- .discrete_range_scale(
     plot,
     "size",
     "discrete",
@@ -2357,6 +2362,7 @@ scale_size_manual <- function(
     limits = limits,
     na_value = na.value
   )
+  .with_drop(plot, "size", drop)
 }
 
 #' @rdname scale_size
@@ -2368,10 +2374,11 @@ scale_size_discrete <- function(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_size_discrete"))
-  .discrete_range_scale(
+  plot <- .discrete_range_scale(
     plot,
     "size",
     "discrete",
@@ -2382,6 +2389,7 @@ scale_size_discrete <- function(
     limits = limits,
     na_value = na.value
   )
+  .with_drop(plot, "size", drop)
 }
 
 #' @rdname scale_size
@@ -2393,10 +2401,11 @@ scale_size_ordinal <- function(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_size_ordinal"))
-  .discrete_range_scale(
+  plot <- .discrete_range_scale(
     plot,
     "size",
     "ordinal",
@@ -2407,6 +2416,7 @@ scale_size_ordinal <- function(
     limits = limits,
     na_value = na.value
   )
+  .with_drop(plot, "size", drop)
 }
 
 # The shared engine behind the discrete size / alpha scales: manual `values`,
@@ -3143,6 +3153,10 @@ scale_alpha_continuous <- scale_alpha
 #'   named by level, or a function), or `NULL`.
 #' @param na.value For the discrete forms, the opacity drawn for missing
 #'   values, or `NULL` to drop them.
+#' @param drop For the discrete forms, drop factor levels that no row uses
+#'   (default `TRUE`, as in ggplot2): they get no legend key and no opacity, so
+#'   the range is spread over the levels that remain. `FALSE` keeps every level.
+#'   `limits` overrides it.
 #' @examples
 #' vplot(mtcars) |>
 #'   mark_point(x = wt, y = mpg, alpha = factor(cyl)) |>
@@ -3155,10 +3169,11 @@ scale_alpha_manual <- function(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   .check_manual_present(values)
-  .discrete_range_scale(
+  plot <- .discrete_range_scale(
     plot,
     "alpha",
     "discrete",
@@ -3170,6 +3185,7 @@ scale_alpha_manual <- function(
     na_value = na.value,
     upper = 1
   )
+  .with_drop(plot, "alpha", drop)
 }
 
 #' @rdname scale_alpha
@@ -3181,10 +3197,11 @@ scale_alpha_discrete <- function(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_alpha_discrete"))
-  .discrete_range_scale(
+  plot <- .discrete_range_scale(
     plot,
     "alpha",
     "discrete",
@@ -3196,6 +3213,7 @@ scale_alpha_discrete <- function(
     na_value = na.value,
     upper = 1
   )
+  .with_drop(plot, "alpha", drop)
 }
 
 #' @rdname scale_alpha
@@ -3207,10 +3225,11 @@ scale_alpha_ordinal <- function(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_alpha_ordinal"))
-  .discrete_range_scale(
+  plot <- .discrete_range_scale(
     plot,
     "alpha",
     "ordinal",
@@ -3222,6 +3241,7 @@ scale_alpha_ordinal <- function(
     na_value = na.value,
     upper = 1
   )
+  .with_drop(plot, "alpha", drop)
 }
 
 #' Line-type scale
