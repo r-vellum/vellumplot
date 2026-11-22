@@ -505,6 +505,45 @@ test_that("anim_save() validates its inputs", {
   expect_error(anim_save("x.gif", mtcars), "vellum_animation")
 })
 
+test_that("anim_save() writes .apng and explains video/WebP (VP-85)", {
+  a <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    transition_states(cyl) |>
+    quiet_animate(nframes = 4)
+  f <- withr::local_tempfile(fileext = ".apng")
+  anim_save(f, a)
+  raw <- readBin(f, "raw", file.size(f))
+  expect_identical(raw[1:8], as.raw(c(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)))
+  expect_true(length(grepRaw("acTL", raw)) > 0) # an animated PNG
+  # Upper-case extensions work too.
+  f2 <- withr::local_tempfile(fileext = ".APNG")
+  expect_no_error(anim_save(f2, a))
+
+  err <- function(ext) {
+    tryCatch(
+      anim_save(withr::local_tempfile(fileext = ext), a),
+      error = function(e) conditionMessage(e)
+    )
+  }
+  expect_match(err(".mp4"), "no video encoder")
+  expect_match(err(".mp4"), "ffmpeg")
+  expect_match(err(".webm"), "no video encoder")
+  expect_match(err(".webp"), "no WebP encoder")
+  expect_match(err(".webp"), "magick")
+  expect_match(err(".tiff"), "cannot write")
+})
+
+test_that("render_plot() on an animation points at anim_save() (VP-85)", {
+  a <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    transition_states(cyl) |>
+    quiet_animate(nframes = 4)
+  expect_error(
+    render_plot(a, withr::local_tempfile(fileext = ".png")),
+    "anim_save"
+  )
+})
+
 test_that("a layer's own data is filtered to each keyframe's state", {
   d <- data.frame(
     x = rep(1:4, 3),

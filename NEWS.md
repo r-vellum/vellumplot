@@ -23,6 +23,13 @@
   message, since frozen scales cannot honour them. `transition_reveal()`
   works with facets too.
 
+* `anim_save()` writes `.apng` as well as `.png` (both an animated PNG), and
+  explains a video (`.mp4`, `.webm`, ...) or `.webp` filename instead of a
+  bare "must end in" error: there is no encoder for them, so it suggests
+  saving an APNG/GIF and converting it (an `ffmpeg` or `magick` one-liner).
+  `render_plot()` on an animation now says to use `anim_save()` (or to render
+  the plot before `animate()` for a still) instead of a class error (VP-85).
+
 * `transition_time()` accepts `Date` and `POSIXct` times (VP-83). They run on
   their numeric value (segments weighted by the day/second gaps) and keep
   their class for `{frame_time}` (with the time zone) and in the cut warning's

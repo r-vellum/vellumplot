@@ -1157,7 +1157,9 @@ animate <- function(plot, nframes = 50, fps = 25) {
 #' streaming pass in vellum's Rust backend. The format follows the file extension:
 #'
 #' * `.gif` — a looping GIF (universal compatibility).
-#' * `.png` — an animated PNG (APNG; lossless, alpha).
+#' * `.png` or `.apng` — an animated PNG (APNG; lossless, alpha). Browsers
+#'   play either; `.png` is the more widely recognised extension, and image
+#'   viewers that do not know APNG show its first frame.
 #' * `.svg` — a single **animated SVG**: every frame is emitted as vector markup
 #'   and shown in turn by a CSS step animation. It is resolution-independent (crisp
 #'   at any size, in print and on retina) and honours `prefers-reduced-motion`
@@ -1172,7 +1174,12 @@ animate <- function(plot, nframes = 50, fps = 25) {
 #' a raster format is the right answer. `anim_save()` says so when a `.svg` scene
 #' is dense enough that a raster format would likely be smaller.
 #'
-#' @param filename Output path; `.gif`, `.png`, or `.svg`.
+#' Video (`.mp4`, `.webm`, ...) and animated WebP are not written: there is no
+#' encoder for them among vellum's dependencies. Save an APNG or GIF and
+#' convert it, e.g. `ffmpeg -i anim.png -pix_fmt yuv420p anim.mp4`, or
+#' `magick::image_write(magick::image_read("anim.gif"), "anim.webp")`.
+#'
+#' @param filename Output path; `.gif`, `.png`/`.apng`, or `.svg`.
 #' @param animation A `vellum_animation` (from [animate()]).
 #' @return `filename`, invisibly.
 #' @seealso [animate()]
@@ -1199,16 +1206,36 @@ anim_save <- function(filename, animation) {
   format <- switch(
     ext,
     gif = "gif",
-    png = "apng",
+    png = ,
+    apng = "apng",
     svg = "svg",
-    cli::cli_abort(
-      "{.arg filename} must end in {.val .gif}, {.val .png}, or {.val .svg} (got {.val .{ext}})."
-    )
+    .anim_format_error(ext)
   )
   if (identical(format, "svg")) {
     .anim_svg_advice(animation)
   }
   .anim_render(animation, filename, format)
+}
+
+# Why `anim_save()` cannot write `.<ext>`, with what to do instead (VP-85).
+.anim_format_error <- function(ext, call = rlang::caller_env()) {
+  video <- c("mp4", "m4v", "mov", "webm", "mkv", "avi", "ogv")
+  hint <- if (ext %in% video) {
+    c(
+      x = "Video is not supported: vellum has no video encoder.",
+      i = "Save an APNG and convert it, e.g. {.code ffmpeg -i anim.png -pix_fmt yuv420p anim.{ext}}."
+    )
+  } else if (identical(ext, "webp")) {
+    c(
+      x = "Animated WebP is not supported: vellum has no WebP encoder.",
+      i = "Save a GIF or APNG and convert it, e.g. {.code magick::image_write(magick::image_read(\"anim.gif\"), \"anim.webp\")}."
+    )
+  }
+  cli::cli_abort(c(
+    "{.fn anim_save} cannot write {.val .{ext}} files.",
+    hint,
+    i = "Use {.val .gif} (any viewer), {.val .png} or {.val .apng} (APNG: lossless, alpha), or {.val .svg} (vector, resolution-independent)."
+  ), call = call)
 }
 
 # Shared render core: build the eased schedule, wrap the loop, and hand the K
