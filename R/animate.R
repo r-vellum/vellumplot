@@ -901,7 +901,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
       }
       src <- if (own) L@data else plot@data
       if (.reveal_leads(L)) {
-        L@data <- .reveal_rows(src, a, cut, lead = .reveal_groups(L, src))
+        L@data <- .reveal_rows(src, a, cut, lead = .reveal_groups(L, src, plot@facet))
       } else if (own) {
         L@data <- .reveal_rows(src, a, cut)
       }
@@ -970,33 +970,46 @@ animate <- function(plot, nframes = 50, fps = 25) {
 
 # The identity group of each row of `data` for layer `L`: its `group`
 # aesthetic, else the interaction of its discrete grouping aesthetics, as the
-# layer will be drawn (one line per group).
-.reveal_groups <- function(L, data) {
+# layer will be drawn (one line per group), split further by facet panel when
+# `facet` is given. The leading point of a group is interpolated toward that
+# group's own next row only (VP-94: evaluating the quosure instead of the
+# channel's `expr` found no groups, so a series' leading point aimed at
+# whichever series came next in `along`).
+.reveal_groups <- function(L, data, facet = NULL) {
   n <- nrow(data)
   enc <- L@encoding
   ev <- function(a) {
-    q <- enc[[a]]
-    if (is.null(q)) {
+    ch <- enc[[a]]
+    if (is.null(ch) || isTRUE(ch@after)) {
       return(NULL)
     }
-    v <- tryCatch(rlang::eval_tidy(q, data), error = function(e) NULL)
+    v <- tryCatch(rlang::eval_tidy(ch@expr, data), error = function(e) NULL)
     if (length(v) == n) v else NULL
   }
+  parts <- list()
   g <- ev("group")
   if (!is.null(g)) {
-    return(as.character(g))
+    parts$group <- as.character(g)
+  } else {
+    for (a in .GROUP_AES) {
+      v <- ev(a)
+      if (!is.null(v) && !.is_continuous_group(v)) {
+        parts[[a]] <- as.character(v)
+      }
+    }
   }
-  parts <- list()
-  for (a in .GROUP_AES) {
-    v <- ev(a)
-    if (!is.null(v) && !.is_continuous_group(v)) {
-      parts[[a]] <- as.character(v)
+  if (!is.null(facet)) {
+    keys <- tryCatch(.facet_keys(facet, data), error = function(e) NULL)
+    for (k in names(keys)) {
+      if (length(keys[[k]]) == n) {
+        parts[[paste0("facet_", k)]] <- as.character(keys[[k]])
+      }
     }
   }
   if (!length(parts)) {
     return(rep("", n))
   }
-  do.call(paste, c(unname(parts), sep = ":"))
+  do.call(paste, c(unname(parts), sep = "\r"))
 }
 
 # The rows of `data` revealed at `cut` (`along <= cut`; rows with a missing
