@@ -129,6 +129,18 @@
   legend), and for a computed constant such as `rgb(1, 0, 0)`. A mapped
   `if_true` still trains its scale and legend as before.
 
+- Date and date-time axes no longer overlap their labels (VP-92). The
+  default breaks are chosen by the available width:
+  [`pretty()`](https://rdrr.io/r/base/pretty.html) breaks are thinned
+  until the widest label, measured with vellum’s text metrics at the
+  axis text size, fits between neighbouring ticks along an estimated
+  axis length (75% of the plot’s width, or height for a vertical axis,
+  shared among facet columns or rows). The default labels are now
+  [`pretty()`](https://rdrr.io/r/base/pretty.html)’s, as ggplot2 shows
+  them: “2000”, “2002” for years, “Jan”, “Feb” for months, rather than
+  full ISO dates. `date_breaks`, `breaks` and `date_labels` are used as
+  given (`date_labels` is measured for the fit).
+
 - Effect underlays
   ([`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md),
   [`outline()`](https://r-vellum.github.io/vellumplot/reference/outline.md),
