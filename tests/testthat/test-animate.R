@@ -1,6 +1,15 @@
 # Keyframe animation grammar: transition_states() / ease_aes() / animate() /
 # anim_save(), plus the frozen-scale (non-reactive) guardrail.
 
+# mtcars by cyl draws a different number of points per state, so animate()
+# warns that the states cut rather than tween; these tests are about other things.
+quiet_animate <- function(...) {
+  withCallingHandlers(
+    animate(...),
+    vellumplot_anim_cut = function(w) invokeRestart("muffleWarning")
+  )
+}
+
 # Sorted unique text drawn in a scene's SVG (axis tick labels, titles, ...).
 axis_text <- function(scene) {
   svg <- vellum::scene_svg(vellum::as_vellum_scene(scene))
@@ -114,7 +123,7 @@ test_that("animate() carries per-class easings onto the animation", {
     mark_point(x = wt, y = mpg) |>
     transition_states(cyl) |>
     ease_aes("cubic-in-out", alpha = "linear")
-  a <- animate(p, nframes = 6, fps = 10)
+  a <- quiet_animate(p, nframes = 6, fps = 10)
   expect_equal(vellumplot:::.anim_easings(a)$position, "cubic-in-out")
   expect_equal(vellumplot:::.anim_easings(a)$alpha, "linear")
 })
@@ -125,7 +134,7 @@ test_that("an animation with no easing_aes resolves to a single curve", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     transition_states(cyl)
-  a <- animate(p, nframes = 4, fps = 10)
+  a <- quiet_animate(p, nframes = 4, fps = 10)
   a@easing <- "sine-in"
   a@easing_aes <- list()
   expect_equal(unname(unlist(vellumplot:::.anim_easings(a))), rep("sine-in", 4))
@@ -240,7 +249,7 @@ test_that("animate() compiles one keyframe per state", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
     transition_states(cyl)
-  a <- animate(p, nframes = 12, fps = 10)
+  a <- quiet_animate(p, nframes = 12, fps = 10)
   expect_true(S7::S7_inherits(a, vellumplot:::vellum_animation))
   expect_equal(a@states, c("4", "6", "8"))
   expect_length(a@scenes, 3L)
@@ -266,7 +275,7 @@ test_that("scales are frozen across keyframes (the non-reactive guardrail)", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     transition_states(cyl)
-  a <- animate(p, nframes = 6)
+  a <- quiet_animate(p, nframes = 6)
 
   # Every keyframe shares one frozen set of axis breaks, even though the per-state
   # data ranges differ wildly (cyl 4 is light, cyl 8 is heavy).
@@ -351,7 +360,7 @@ test_that("anim_save() writes a GIF and an APNG", {
   a <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     transition_states(cyl) |>
-    animate(nframes = 15, fps = 10)
+    quiet_animate(nframes = 15, fps = 10)
 
   gif <- withr::local_tempfile(fileext = ".gif")
   expect_equal(anim_save(gif, a), gif)
@@ -366,7 +375,7 @@ test_that("anim_save() writes an animated SVG", {
   a <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, color = factor(cyl)) |>
     transition_states(cyl) |>
-    animate(nframes = 12, fps = 12)
+    quiet_animate(nframes = 12, fps = 12)
 
   svg <- withr::local_tempfile(fileext = ".svg")
   expect_equal(anim_save(svg, a), svg)
@@ -398,7 +407,7 @@ test_that("anim_save() validates its inputs", {
   a <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
     transition_states(cyl) |>
-    animate(nframes = 6)
+    quiet_animate(nframes = 6)
   expect_error(
     anim_save(withr::local_tempfile(fileext = ".mp4"), a),
     "\\.gif.*\\.png.*\\.svg"
