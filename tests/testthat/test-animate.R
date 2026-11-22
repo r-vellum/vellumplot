@@ -392,7 +392,11 @@ test_that("transition_reveal() follows `along`, not the x axis (VP-81)", {
   width <- vapply(ext, diff, numeric(1))
   expect_true(all(diff(width) > 0))
   left <- vapply(ext, `[`, numeric(1), 1)
-  expect_true(all(diff(left) < 0)) # the left edge moves outwards, not fixed
+  # The left edge never moves inwards and ends further out than it started.
+  # Not strictly per frame: between t = pi and 2 * pi the spiral's leftmost
+  # point stays at x = -pi, so two frames can share their left edge.
+  expect_true(all(diff(left) <= 0))
+  expect_lt(left[length(left)], left[1])
   # The middle frame holds only the rows with t <= cutoff: drawn by the path
   # data, so its extent is that of the inner turns.
   spec_mid <- vellumplot:::.reveal_rows(sp, sp$t, 2 * pi, lead = rep("", 100))

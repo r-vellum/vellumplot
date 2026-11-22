@@ -225,8 +225,8 @@ mini_gap <- function() {
   g$life <- (k * 7) %% 13 + g$year
   g
 }
-gap_anim <- function(g, ...) {
-  vplot(g, width = 4, height = 3, dpi = 50) |>
+gap_anim <- function(g, ..., dpi = 50) {
+  vplot(g, width = 4, height = 3, dpi = dpi) |>
     mark_point(x = gdp, y = life, color = continent, ...) |>
     transition_time(year) |>
     animate(nframes = 10)
@@ -260,8 +260,11 @@ test_that("gapminder with one row dropped: every other country still tweens (VR-
   pr <- vellum::vl_tween_pairing(a@scenes)
   expect_identical(pr$exited, c(1L, 0L))
   expect_identical(pr$entered, c(0L, 1L))
-  # colours are the country's own, not a blend with a neighbour's
-  expect_equal(colour_at(a, "l1|c06"), colour_at(a, "l1|c06", frac = 0))
+  # colours are the country's own, not a blend with a neighbour's. Sampled at
+  # dpi 200 so the centre pixel sits well inside the point on every platform
+  # (at dpi 50 a point is ~4 px and its centre can land on an anti-aliased edge).
+  hi <- gap_anim(g2, data_id = country, dpi = 200)
+  expect_equal(colour_at(hi, "l1|c06"), colour_at(hi, "l1|c06", frac = 0))
   # Without a data_id the other continents are untouched: their rows pair by
   # order within the continent, which a dropped Asian row does not shift.
   b <- gap_anim(g2)
