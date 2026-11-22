@@ -58,6 +58,13 @@
 
 ## Bug fixes
 
+* A constant `if_true` in `condition()` is a setting, not a mapping (VP-86):
+  `alpha = condition("s", 1, 0.2)` no longer adds an alpha legend titled "1"
+  with keys 0.5-1.5. The same holds for colour, fill and size
+  (`color = condition("s", "red", "grey80")` draws red points and no legend),
+  and for a computed constant such as `rgb(1, 0, 0)`. A mapped `if_true`
+  still trains its scale and legend as before.
+
 * Effect underlays (`glow()`, `outline()`, `shadow()`, `motion()`) are keyed
   with their mark in animation keyframes (VR-34), so a halo fades in and out
   with its series or point instead of switching halfway and triggering the
