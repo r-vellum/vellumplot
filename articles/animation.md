@@ -122,12 +122,6 @@ a <- vplot(mtcars) |>
   transition_states(cyl) |>
   ease_aes("cubic-in-out") |>
   animate(nframes = 60, fps = 20)
-#> Warning: Some keyframes will cut rather than tween.
-#> • "4 -> 6", "6 -> 8", and "8 -> 4": some marks change in number between states
-#>   (the points of a line or path, or points without a `data_id`), so they switch
-#>   halfway through instead of morphing.
-#> ℹ A state tweens into the next only when both draw the same layers and groups,
-#>   and each line or path keeps its number of points.
 
 # a@scenes holds one vellum scene per state; render the first as a still.
 vellum::render(a@scenes[[1]], tempfile(fileext = ".png"))

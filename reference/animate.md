@@ -43,15 +43,38 @@ Per-state statistics (e.g. a smooth) are recomputed per keyframe, but no
 scale domain retrains — the frozen scales are the observable proof the
 animation stayed non-reactive (axis breaks do not move between frames).
 
-Marks tween from one state to the next only when the two keyframes draw
-the same layers and groups, and each line or path keeps its number of
-points. A state that adds or drops a colour group, say, cannot be
-matched mark for mark: its frames cut to the next state halfway through
-the transition, and a line whose point count changes switches whole at
-the same moment. `animate()` warns (once per call) when that will
-happen, naming the states. Within a group, points carrying a `data_id`
-match by it, so single points may enter and leave without breaking the
-tween.
+## Which mark becomes which
+
+Marks tween by **identity**, as gganimate matches by group: each mark of
+one state moves into the mark that *is the same thing* in the next
+state, however the rows are ordered and whatever groups each state
+contains. A mark's identity is
+
+1.  its `data_id`, when the layer declares one
+    (`mark_point(data_id = country)`): the way to follow individual
+    observations;
+
+2.  otherwise its group – the `group` aesthetic if mapped, else the
+    combination of the layer's discrete mapped aesthetics (`color`,
+    `fill`, `shape`, ..., and a discrete `x`, `y` or `label`) – so a bar
+    race's bars, filled by country, slide between ranks keeping their
+    colours;
+
+3.  and within a group, the order of its rows – the last resort, enough
+    when each group has one mark per state, but rows of one group pair
+    up by position. Give such a layer a `data_id` (or a `group`) when
+    its rows are individual observations whose order may change.
+
+A line, path or area is one mark per series and is matched by its group.
+
+A mark found in only one of two adjacent states fades in or out (points,
+bars and tiles, labels, lines and areas alike) on the alpha easing, and
+a point whose colour group changes slides to its new place while its
+colour blends. What cannot move switches whole halfway through the
+transition: a matched line or path whose number of points changes, and
+decoration without an identity (an effect underlay) that comes and goes.
+`animate()` warns (once per call) when that will happen, naming the
+states.
 
 Give each transition enough frames to be seen: `nframes` is spread over
 all the states, so 40 states in 80 frames leave two frames per state and

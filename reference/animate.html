@@ -107,14 +107,29 @@ shows the first keyframe as a preview.</p>
     <p>Per-state statistics (e.g. a smooth) are recomputed per keyframe, but no scale
 domain retrains — the frozen scales are the observable proof the animation
 stayed non-reactive (axis breaks do not move between frames).</p>
-<p>Marks tween from one state to the next only when the two keyframes draw the
-same layers and groups, and each line or path keeps its number of points. A
-state that adds or drops a colour group, say, cannot be matched mark for mark:
-its frames cut to the next state halfway through the transition, and a line
-whose point count changes switches whole at the same moment. <code>animate()</code>
-warns (once per call) when that will happen, naming the states. Within a
-group, points carrying a <code>data_id</code> match by it, so single points may enter and
-leave without breaking the tween.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="which-mark-becomes-which">Which mark becomes which<a class="anchor" aria-label="anchor" href="#which-mark-becomes-which"></a></h2>
+    <p>Marks tween by <strong>identity</strong>, as gganimate matches by group: each mark of one
+state moves into the mark that <em>is the same thing</em> in the next state, however
+the rows are ordered and whatever groups each state contains. A mark's
+identity is</p><ol><li><p>its <code>data_id</code>, when the layer declares one (<code>mark_point(data_id = country)</code>): the way to follow individual observations;</p></li>
+<li><p>otherwise its group – the <code>group</code> aesthetic if mapped, else the
+combination of the layer's discrete mapped aesthetics (<code>color</code>, <code>fill</code>,
+<code>shape</code>, ..., and a discrete <code>x</code>, <code>y</code> or <code>label</code>) – so a bar race's bars,
+filled by country, slide between ranks keeping their colours;</p></li>
+<li><p>and within a group, the order of its rows – the last resort, enough when
+each group has one mark per state, but rows of one group pair up by
+position. Give such a layer a <code>data_id</code> (or a <code>group</code>) when its rows are
+individual observations whose order may change.</p></li>
+</ol><p>A line, path or area is one mark per series and is matched by its group.</p>
+<p>A mark found in only one of two adjacent states fades in or out (points,
+bars and tiles, labels, lines and areas alike) on the alpha easing, and a
+point whose colour group changes slides to its new place while its colour
+blends. What cannot move switches whole halfway through the transition: a
+matched line or path whose number of points changes, and decoration without
+an identity (an effect underlay) that comes and goes. <code>animate()</code> warns (once
+per call) when that will happen, naming the states.</p>
 <p>Give each transition enough frames to be seen: <code>nframes</code> is spread over all
 the states, so 40 states in 80 frames leave two frames per state and nothing
 visibly moves.</p>
