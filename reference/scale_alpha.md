@@ -37,7 +37,8 @@ scale_alpha_manual(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_alpha_discrete(
@@ -47,7 +48,8 @@ scale_alpha_discrete(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_alpha_ordinal(
@@ -57,7 +59,8 @@ scale_alpha_ordinal(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 ```
 
@@ -106,6 +109,13 @@ scale_alpha_ordinal(
 
   For the discrete forms, the opacity drawn for missing values, or
   `NULL` to drop them.
+
+- drop:
+
+  For the discrete forms, drop factor levels that no row uses (default
+  `TRUE`, as in ggplot2): they get no legend key and no opacity, so the
+  range is spread over the levels that remain. `FALSE` keeps every
+  level. `limits` overrides it.
 
 ## Value
 

@@ -75,7 +75,8 @@ scale_size_manual(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_size_discrete(
@@ -85,7 +86,8 @@ scale_size_discrete(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_size_ordinal(
@@ -95,7 +97,8 @@ scale_size_ordinal(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 ```
 
@@ -153,6 +156,13 @@ scale_size_ordinal(
 
   For the discrete forms, the size drawn for missing values, or `NULL`
   to drop them.
+
+- drop:
+
+  For the discrete forms, drop factor levels that no row uses (default
+  `TRUE`, as in ggplot2): they get no legend key and no size, so the
+  range is spread over the levels that remain. `FALSE` keeps every
+  level. `limits` overrides it.
 
 ## Value
 

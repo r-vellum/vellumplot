@@ -112,7 +112,8 @@ unordered variable, the ordinal form does not.</p>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_alpha_discrete</span><span class="op">(</span></span>
@@ -122,7 +123,8 @@ unordered variable, the ordinal form does not.</p>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_alpha_ordinal</span><span class="op">(</span></span>
@@ -132,7 +134,8 @@ unordered variable, the ordinal form does not.</p>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -181,6 +184,13 @@ named by level, or a function), or <code>NULL</code>.</p></dd>
 <dt id="arg-na-value">na.value<a class="anchor" aria-label="anchor" href="#arg-na-value"></a></dt>
 <dd><p>For the discrete forms, the opacity drawn for missing
 values, or <code>NULL</code> to drop them.</p></dd>
+
+
+<dt id="arg-drop">drop<a class="anchor" aria-label="anchor" href="#arg-drop"></a></dt>
+<dd><p>For the discrete forms, drop factor levels that no row uses
+(default <code>TRUE</code>, as in ggplot2): they get no legend key and no opacity, so
+the range is spread over the levels that remain. <code>FALSE</code> keeps every level.
+<code>limits</code> overrides it.</p></dd>
 
 </dl></div>
     <div class="section level2">
