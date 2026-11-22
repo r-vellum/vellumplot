@@ -1,5 +1,13 @@
 # vellumplot 0.19.0.9000 (development version)
 
+## Bug fixes
+
+* `mark_bar(width =)` is honoured (VP-98): it sets the bar width in data
+  units, as in ggplot2's `geom_bar()`, where it was ignored and bars stayed at
+  90% of the resolution. Dodged bars share it, and the continuous-x extent
+  training (VP-90) now follows the drawn bars exactly, so a narrow or
+  `position_dodge(width =)` layer pads the axis as ggplot2 does.
+
 # vellumplot 0.19.0
 
 ## New features

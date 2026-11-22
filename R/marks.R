@@ -957,6 +957,9 @@ mark_function <- function(
 #' `y` values as heights; with no `y` it counts rows per category (the `"count"`
 #' stat). When `color`/`fill` is mapped, grouped bars are stacked by default; use
 #' `position = "dodge"` for side-by-side bars or `"fill"` to normalise to 1.
+#' `width` sets the bar width in data units, as in ggplot2 (a fraction of the
+#' band on a categorical axis, days on a date axis); the default is 90% of the
+#' smallest gap between bars. Dodged bars share it.
 #' `fill` fills the bars and a `color` given alongside it outlines them
 #' (`fill = "steelblue", color = "white"`); a `color` alone fills them.
 #' The count stat computes `count` and `prop`, the share of its group (or of the

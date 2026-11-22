@@ -968,6 +968,40 @@ NULL
   scene
 }
 
+# Each bar's centre `x` and `width` in native units, after any dodge. The width
+# is a stat-provided or mapped `width` (histogram bins fill their bin so bars
+# touch), else a constant `mark_bar(width =)` in data units as in ggplot2's
+# geom_bar() (VP-98), else 90% of the band (`band`: the discrete band or the
+# resolution), leaving a 10% gap. Shared by `.emit_bar()` and the x-extent
+# training (`.bar_extent_data()`), so the trained axis covers exactly the bars
+# drawn.
+.bar_geometry <- function(L, xp, band, n) {
+  w <- rep_len(L$values$width %||% L$params$width %||% (0.9 * band), n)
+  xc <- xp
+  if (identical(L$position, "dodge")) {
+    # The groups at each x share the bar width, or `dodge_width` (data units)
+    # when given; `preserve` says whether a sparse x widens its bars (ggplot2's
+    # position_dodge()).
+    d <- .dodge_offsets(
+      xp,
+      .group_key(L),
+      L$stat_params$dodge_width %||% w,
+      preserve = .dodge_preserve(L),
+      n_single = L$dodge_n
+    )
+    w <- w * d$share
+    xc <- xp + d$offset
+  } else if (identical(L$position, "dodge2")) {
+    # dodge2: only the groups present at each x share its full width `w`, as
+    # equal slots separated by `padding` (a fraction of the slot) -- so a ragged
+    # category gets wider bars centred on the tick, not gaps for absent groups.
+    d <- .dodge_offsets(xp, .group_key(L), w)
+    xc <- xp + d$offset
+    w <- w * d$share * (1 - (L$stat_params$dodge2_padding %||% 0.1))
+  }
+  list(x = xc, width = w)
+}
+
 .emit_bar <- function(scene, L, scales) {
   grad <- .paint_fill(L)
   if (!is.null(scales$polar)) {
@@ -996,32 +1030,9 @@ NULL
   y0 <- rep_len(.clamp_baseline(scales$y$map(ymin_d), scales$y$domain), n)
   y1 <- rep_len(scales$y$map(ymax_d), n)
 
-  # Bar width: a stat-provided `width` (histogram bins) fills the bin so bars
-  # touch; categorical / explicit bars leave a 10% gap around the band.
-  w <- rep_len(L$values$width %||% (0.9 * band), n)
-  xc <- xp
-  if (identical(L$position, "dodge")) {
-    # The groups at each x share the bar width, or `dodge_width` (data units)
-    # when given; `preserve` says whether a sparse x widens its bars (ggplot2's
-    # position_dodge()).
-    d <- .dodge_offsets(
-      xp,
-      .group_key(L),
-      L$stat_params$dodge_width %||% w,
-      preserve = .dodge_preserve(L),
-      n_single = L$dodge_n
-    )
-    w <- w * d$share
-    xc <- xp + d$offset
-  } else if (identical(L$position, "dodge2")) {
-    # dodge2: only the groups present at each x share its full width `tw`, as
-    # equal slots separated by `padding` (a fraction of the slot) -- so a ragged
-    # category gets wider bars centred on the tick, not gaps for absent groups.
-    tw <- rep_len(L$values$width %||% (0.9 * band), n)
-    d <- .dodge_offsets(xp, .group_key(L), tw)
-    xc <- xp + d$offset
-    w <- tw * d$share * (1 - (L$stat_params$dodge2_padding %||% 0.1))
-  }
+  g <- .bar_geometry(L, xp, band, n)
+  xc <- g$x
+  w <- g$width
 
   # A gradient fill paints every bar as one rect grob sharing the paint.
   if (!is.null(grad)) {
