@@ -2019,8 +2019,8 @@ NULL
 
 # The x extent of the bar layers (`mark_bar()`, `mark_histogram()`, ...) in
 # data units: each bar's centre +/- half its width, computed in native units
-# exactly as `.emit_bar()` sizes it (a stat's `width`, else 90% of the
-# resolution; a dodged group spans `dodge_width` when that is wider), then taken
+# exactly as `.emit_bar()` places and sizes it (`.bar_geometry()`: a stat's or
+# the user's `width`, else 90% of the resolution, after any dodge), then taken
 # back through the transform's inverse (a date axis keeps its class). NULL when
 # there are no such bars, the axis is discrete or binned (bars fill their
 # bands), or the user pinned the limits, which must win.
@@ -2050,11 +2050,10 @@ NULL
     if (!any(ok)) {
       next
     }
-    w <- rep_len(L$values$width %||% (0.9 * .resolution(xp)), length(xp))
-    if (L$position %in% c("dodge", "dodge2")) {
-      w <- pmax(w, L$stat_params$dodge_width %||% 0)
-    }
-    ext <- range(c(ext, xp[ok] - w[ok] / 2, xp[ok] + w[ok] / 2), finite = TRUE)
+    g <- .bar_geometry(L, xp, .resolution(xp), length(xp))
+    lo <- g$x - g$width / 2
+    hi <- g$x + g$width / 2
+    ext <- range(c(ext, lo[ok], hi[ok]), finite = TRUE)
   }
   if (is.null(ext)) {
     return(NULL)

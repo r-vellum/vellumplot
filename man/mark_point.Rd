@@ -143,6 +143,9 @@ mappings.
 \code{y} values as heights; with no \code{y} it counts rows per category (the \code{"count"}
 stat). When \code{color}/\code{fill} is mapped, grouped bars are stacked by default; use
 \code{position = "dodge"} for side-by-side bars or \code{"fill"} to normalise to 1.
+\code{width} sets the bar width in data units, as in ggplot2 (a fraction of the
+band on a categorical axis, days on a date axis); the default is 90\% of the
+smallest gap between bars. Dodged bars share it.
 \code{fill} fills the bars and a \code{color} given alongside it outlines them
 (\verb{fill = "steelblue", color = "white"}); a \code{color} alone fills them.
 The count stat computes \code{count} and \code{prop}, the share of its group (or of the
