@@ -36,7 +36,8 @@ scale_color_discrete(
   palette = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_color_manual(
@@ -46,7 +47,8 @@ scale_color_manual(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_color_gradient(
@@ -123,7 +125,8 @@ scale_fill_discrete(
   palette = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_fill_manual(
@@ -133,7 +136,8 @@ scale_fill_manual(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_fill_gradient(
@@ -177,7 +181,8 @@ scale_colour_discrete(
   palette = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_colour_manual(
@@ -187,7 +192,8 @@ scale_colour_manual(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_colour_gradient(
@@ -237,6 +243,11 @@ the scale covers.}
 outside \code{limits}: \code{"censor"} gives them the NA colour, \code{"squish"} the
 colour of the nearest limit, \code{"keep"} the same (a ramp cannot extend past
 its ends), or a \verb{function(x, range)}. \code{NULL} (default) squishes.}
+
+\item{drop}{For the discrete scales, drop factor levels that no row uses
+(default \code{TRUE}, as in ggplot2): they get no legend key and no palette
+entry, so the colours go to the levels that remain. \code{FALSE} keeps every
+level. \code{limits} overrides it.}
 
 \item{values}{For \verb{scale_*_manual()}, a vector of colours; if named, matched to
 data levels by name (unmatched levels draw grey).}

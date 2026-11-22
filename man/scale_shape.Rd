@@ -13,7 +13,8 @@ scale_shape(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_shape_manual(
@@ -23,7 +24,8 @@ scale_shape_manual(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_shape_discrete(
@@ -33,7 +35,8 @@ scale_shape_discrete(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 }
 \arguments{
@@ -64,6 +67,11 @@ or a function of the levels; \code{NULL} keeps the levels.}
 for the levels in the data. Data outside \code{limits} draws as \code{na.value}.}
 
 \item{na.value}{The shape drawn for missing values (default a circle).}
+
+\item{drop}{For the discrete scales, drop factor levels that no row uses
+(default \code{TRUE}, as in ggplot2): they get no legend key and no palette
+entry, so the colours go to the levels that remain. \code{FALSE} keeps every
+level. \code{limits} overrides it.}
 }
 \value{
 The modified \link{PlotSpec}.

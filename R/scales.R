@@ -40,6 +40,30 @@ NULL
   plot
 }
 
+# Set `drop` on the scale just declared for `aesthetic` (a discrete legend
+# scale): `TRUE` (the default, as in ggplot2) drops factor levels no row uses
+# from the legend and the palette, `FALSE` keeps every level (VP-91).
+.with_drop <- function(plot, aesthetic, drop, call = rlang::caller_env()) {
+  if (!is.logical(drop) || length(drop) != 1L || is.na(drop)) {
+    cli::cli_abort("{.arg drop} must be {.code TRUE} or {.code FALSE}.", call = call)
+  }
+  if (isTRUE(drop)) {
+    return(plot)
+  }
+  i <- which(vapply(
+    plot@scales,
+    function(s) identical(s@aesthetic, aesthetic),
+    logical(1)
+  ))
+  if (length(i)) {
+    i <- i[length(i)]
+    sc <- plot@scales[[i]]
+    sc@drop <- FALSE
+    plot@scales[[i]] <- sc
+  }
+  plot
+}
+
 # Validate a continuous scale bound (`limits` or an output `range`). `NULL` means
 # "derive from the data" and is always allowed. Otherwise it must be a length-2
 # vector `c(min, max)`; `numeric = TRUE` additionally requires it to be numeric
@@ -983,6 +1007,10 @@ ylim <- function(plot, ...) {
 #' @param na.value For the gradient scales, the colour of missing (and
 #'   censored) values; for `scale_*_manual()`, also of levels outside
 #'   `limits`. `NULL` keeps the default grey.
+#' @param drop For the discrete scales, drop factor levels that no row uses
+#'   (default `TRUE`, as in ggplot2): they get no legend key and no palette
+#'   entry, so the colours go to the levels that remain. `FALSE` keeps every
+#'   level. `limits` overrides it.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |>
@@ -1020,10 +1048,12 @@ scale_color_discrete <- function(
   palette = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_color_discrete"))
-  .colour_scale(plot, "color", "discrete", palette, breaks, labels, name)
+  plot <- .colour_scale(plot, "color", "discrete", palette, breaks, labels, name)
+  .with_drop(plot, "color", drop)
 }
 
 # Validate the `values` supplied to a manual colour/fill scale.
@@ -1044,10 +1074,11 @@ scale_color_manual <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   .check_manual_values(values)
-  .discrete_colour_scale(
+  plot <- .discrete_colour_scale(
     plot,
     "color",
     values,
@@ -1057,6 +1088,7 @@ scale_color_manual <- function(
     limits,
     na.value
   )
+  .with_drop(plot, "color", drop)
 }
 
 #' @rdname scale_color_continuous
@@ -1203,10 +1235,12 @@ scale_fill_discrete <- function(
   palette = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_fill_discrete"))
-  .colour_scale(plot, "fill", "discrete", palette, breaks, labels, name)
+  plot <- .colour_scale(plot, "fill", "discrete", palette, breaks, labels, name)
+  .with_drop(plot, "fill", drop)
 }
 
 #' @rdname scale_color_continuous
@@ -1218,10 +1252,11 @@ scale_fill_manual <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   .check_manual_values(values)
-  .discrete_colour_scale(
+  plot <- .discrete_colour_scale(
     plot,
     "fill",
     values,
@@ -1231,6 +1266,7 @@ scale_fill_manual <- function(
     limits,
     na.value
   )
+  .with_drop(plot, "fill", drop)
 }
 
 #' @rdname scale_color_continuous
@@ -1315,6 +1351,10 @@ scale_fill_gradient2 <- function(
 #'   shown level, a vector named by level, or a function), or `NULL`.
 #' @param limits The levels the scale covers, or `NULL` for those in the data.
 #' @param na.value Colour for missing values (and levels outside `limits`).
+#' @param drop For the discrete scales, drop factor levels that no row uses
+#'   (default `TRUE`, as in ggplot2): they get no legend key and no palette
+#'   entry, so the colours go to the levels that remain. `FALSE` keeps every
+#'   level. `limits` overrides it.
 #' @return The modified [PlotSpec].
 #' @seealso [scale_color_discrete()], [scale_viridis]
 #' @examples
@@ -1457,9 +1497,10 @@ scale_color_hue <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 ) {
-  .hue_scale(
+  plot <- .hue_scale(
     plot,
     "color",
     h,
@@ -1473,6 +1514,7 @@ scale_color_hue <- function(
     limits,
     na.value
   )
+  .with_drop(plot, "color", drop)
 }
 
 #' @rdname scale_hue
@@ -1492,9 +1534,10 @@ scale_fill_hue <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 ) {
-  .hue_scale(
+  plot <- .hue_scale(
     plot,
     "fill",
     h,
@@ -1508,6 +1551,7 @@ scale_fill_hue <- function(
     limits,
     na.value
   )
+  .with_drop(plot, "fill", drop)
 }
 
 .grey_scale <- function(
@@ -1547,9 +1591,11 @@ scale_color_grey <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "red"
+  na.value = "red",
+  drop = TRUE
 ) {
-  .grey_scale(plot, "color", start, end, name, breaks, labels, limits, na.value)
+  plot <- .grey_scale(plot, "color", start, end, name, breaks, labels, limits, na.value)
+  .with_drop(plot, "color", drop)
 }
 
 #' @rdname scale_hue
@@ -1566,9 +1612,11 @@ scale_fill_grey <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "red"
+  na.value = "red",
+  drop = TRUE
 ) {
-  .grey_scale(plot, "fill", start, end, name, breaks, labels, limits, na.value)
+  plot <- .grey_scale(plot, "fill", start, end, name, breaks, labels, limits, na.value)
+  .with_drop(plot, "fill", drop)
 }
 
 #' @rdname scale_hue
@@ -1580,10 +1628,11 @@ scale_color_ordinal <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_color_ordinal"))
-  .discrete_colour_scale(
+  plot <- .discrete_colour_scale(
     plot,
     "color",
     .viridis_pal(option),
@@ -1593,6 +1642,7 @@ scale_color_ordinal <- function(
     limits,
     na.value
   )
+  .with_drop(plot, "color", drop)
 }
 
 #' @rdname scale_hue
@@ -1608,10 +1658,11 @@ scale_fill_ordinal <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_fill_ordinal"))
-  .discrete_colour_scale(
+  plot <- .discrete_colour_scale(
     plot,
     "fill",
     .viridis_pal(option),
@@ -1621,6 +1672,7 @@ scale_fill_ordinal <- function(
     limits,
     na.value
   )
+  .with_drop(plot, "fill", drop)
 }
 
 # Map a viridis `option` (a name or ggplot2's A–H letter) to the matching
@@ -1683,6 +1735,10 @@ scale_fill_ordinal <- function(
 #'   values outside it (`"censor"`, `"squish"`, `"keep"` or a function; `NULL`,
 #'   the default, squishes) and the colour of missing values, as for
 #'   [scale_color_continuous()].
+#' @param drop For the discrete scales, drop factor levels that no row uses
+#'   (default `TRUE`, as in ggplot2): they get no legend key and no palette
+#'   entry, so the colours go to the levels that remain. `FALSE` keeps every
+#'   level. `limits` overrides it.
 #' @return The modified [PlotSpec].
 #' @seealso [scale_color_continuous()]
 #' @examples
@@ -1728,9 +1784,10 @@ scale_color_viridis_d <- function(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 ) {
-  .colour_scale(
+  plot <- .colour_scale(
     plot,
     "color",
     "discrete",
@@ -1739,6 +1796,7 @@ scale_color_viridis_d <- function(
     labels,
     name
   )
+  .with_drop(plot, "color", drop)
 }
 
 #' @rdname scale_viridis
@@ -1773,9 +1831,10 @@ scale_fill_viridis_d <- function(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 ) {
-  .colour_scale(
+  plot <- .colour_scale(
     plot,
     "fill",
     "discrete",
@@ -1784,6 +1843,7 @@ scale_fill_viridis_d <- function(
     labels,
     name
   )
+  .with_drop(plot, "fill", drop)
 }
 
 #' @rdname scale_viridis
@@ -1795,10 +1855,12 @@ scale_color_brewer <- function(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = 1
+  direction = 1,
+  drop = TRUE
 ) {
   palette <- .brewer_scale_palette(palette, type, direction, "discrete")
-  .colour_scale(plot, "color", "discrete", palette, breaks, labels, name)
+  plot <- .colour_scale(plot, "color", "discrete", palette, breaks, labels, name)
+  .with_drop(plot, "color", drop)
 }
 
 #' @rdname scale_viridis
@@ -1810,10 +1872,12 @@ scale_fill_brewer <- function(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = 1
+  direction = 1,
+  drop = TRUE
 ) {
   palette <- .brewer_scale_palette(palette, type, direction, "discrete")
-  .colour_scale(plot, "fill", "discrete", palette, breaks, labels, name)
+  plot <- .colour_scale(plot, "fill", "discrete", palette, breaks, labels, name)
+  .with_drop(plot, "fill", drop)
 }
 
 #' @rdname scale_viridis
@@ -2700,14 +2764,24 @@ scale_edge_alpha <- function(
   as.character(limits)
 }
 
-# The levels a discrete legend scale trains: its `limits` when set, else every
-# level in the data.
+# The levels a discrete legend scale trains: its `limits` when set, else the
+# data's levels in factor order. As in ggplot2, a factor level no row uses is
+# dropped (`drop = TRUE`, the default), so it gets neither a legend key nor a
+# palette colour -- the colours go to the levels that remain (VP-91); the
+# scale's `drop = FALSE` keeps every level. `values` pools every panel, so a
+# level used in only some facet panels stays.
 .discrete_scale_levels <- function(scalespec, values) {
   dom <- if (!is.null(scalespec)) scalespec@domain else NULL
   if (is.character(dom) || is.factor(dom)) {
     return(as.character(dom))
   }
-  .cat_levels(values)
+  levs <- .cat_levels(values)
+  if (is.null(scalespec) || !isFALSE(scalespec@drop)) {
+    vals <- if (is.list(values)) values else list(values)
+    seen <- unique(unlist(lapply(vals, as.character), use.names = FALSE))
+    levs <- levs[levs %in% seen]
+  }
+  levs
 }
 
 # The legend keys of a discrete scale: the levels `breaks` selects (unknown
@@ -2829,6 +2903,10 @@ scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
 #' @param limits The levels the scale covers (a character vector), or `NULL`
 #'   for the levels in the data. Data outside `limits` draws as `na.value`.
 #' @param na.value The shape drawn for missing values (default a circle).
+#' @param drop For the discrete scales, drop factor levels that no row uses
+#'   (default `TRUE`, as in ggplot2): they get no legend key and no palette
+#'   entry, so the colours go to the levels that remain. `FALSE` keeps every
+#'   level. `limits` overrides it.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg, shape = factor(cyl))
@@ -2848,10 +2926,11 @@ scale_shape <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_shape"))
-  .discrete_palette_scale(
+  plot <- .discrete_palette_scale(
     plot,
     "shape",
     .pch_to_shape(values),
@@ -2864,6 +2943,7 @@ scale_shape <- function(
     limits = limits,
     na_value = .pch_to_shape(na.value)
   )
+  .with_drop(plot, "shape", drop)
 }
 
 #' @rdname scale_shape
@@ -2875,10 +2955,11 @@ scale_shape_manual <- function(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   .check_manual_present(values)
-  scale_shape(
+  plot <- scale_shape(
     plot,
     values = values,
     name = name,
@@ -2887,6 +2968,7 @@ scale_shape_manual <- function(
     limits = limits,
     na.value = na.value
   )
+  .with_drop(plot, "shape", drop)
 }
 
 #' @rdname scale_shape
@@ -3159,6 +3241,10 @@ scale_alpha_ordinal <- function(
 #' @param name Legend title, or `NULL` to derive from the encoding.
 #' @param breaks,labels,limits As for [scale_shape()].
 #' @param na.value The line type drawn for missing values, or `NULL`.
+#' @param drop For the discrete scales, drop factor levels that no row uses
+#'   (default `TRUE`, as in ggplot2): they get no legend key and no palette
+#'   entry, so the colours go to the levels that remain. `FALSE` keeps every
+#'   level. `limits` overrides it.
 #' @return The modified [PlotSpec].
 #' @examples
 #' df <- data.frame(x = rep(1:10, 2), y = rnorm(20), g = rep(c("a", "b"), each = 10))
@@ -3174,10 +3260,11 @@ scale_linetype <- function(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   if (.ggplot2_asks()) return(.ggplot2_own("scale_linetype"))
-  .discrete_palette_scale(
+  plot <- .discrete_palette_scale(
     plot,
     "linetype",
     .lty_to_linetype(values),
@@ -3189,6 +3276,7 @@ scale_linetype <- function(
     limits = limits,
     na_value = .lty_to_linetype(na.value)
   )
+  .with_drop(plot, "linetype", drop)
 }
 
 #' @rdname scale_linetype
@@ -3200,10 +3288,11 @@ scale_linetype_manual <- function(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 ) {
   .check_manual_present(values)
-  scale_linetype(
+  plot <- scale_linetype(
     plot,
     values = values,
     name = name,
@@ -3212,6 +3301,7 @@ scale_linetype_manual <- function(
     limits = limits,
     na.value = na.value
   )
+  .with_drop(plot, "linetype", drop)
 }
 
 #' @rdname scale_linetype
