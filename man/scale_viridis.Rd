@@ -32,7 +32,8 @@ scale_color_viridis_d(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_fill_viridis_c(
@@ -51,7 +52,8 @@ scale_fill_viridis_d(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_color_brewer(
@@ -61,7 +63,8 @@ scale_color_brewer(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = 1
+  direction = 1,
+  drop = TRUE
 )
 
 scale_fill_brewer(
@@ -71,7 +74,8 @@ scale_fill_brewer(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = 1
+  direction = 1,
+  drop = TRUE
 )
 
 scale_color_distiller(
@@ -116,7 +120,8 @@ scale_colour_viridis_d(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_colour_brewer(
@@ -126,7 +131,8 @@ scale_colour_brewer(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = 1
+  direction = 1,
+  drop = TRUE
 )
 
 scale_colour_distiller(
@@ -154,6 +160,11 @@ scale_colour_distiller(
 values outside it (\code{"censor"}, \code{"squish"}, \code{"keep"} or a function; \code{NULL},
 the default, squishes) and the colour of missing values, as for
 \code{\link[=scale_color_continuous]{scale_color_continuous()}}.}
+
+\item{drop}{For the discrete scales, drop factor levels that no row uses
+(default \code{TRUE}, as in ggplot2): they get no legend key and no palette
+entry, so the colours go to the levels that remain. \code{FALSE} keeps every
+level. \code{limits} overrides it.}
 
 \item{palette}{A ColorBrewer palette name or index (see above), or a
 \code{grDevices::hcl.colors()} palette name.}

@@ -1621,7 +1621,7 @@ NULL
     return(NULL)
   }
   scalespec <- .scale_for(spec, "pattern")
-  levels <- .cat_levels(values)
+  levels <- .discrete_scale_levels(scalespec, values)
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
     .resolve_pattern_values(scalespec@palette)
   } else {

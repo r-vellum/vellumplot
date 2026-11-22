@@ -141,6 +141,15 @@
 * Fractional `fps` (12.5, 0.5) is now written exactly instead of being rounded
   to a whole number (VL-15, in vellum).
 
+* Legends no longer list unused factor levels (VP-91). As in ggplot2, a
+  discrete colour, fill, shape, linetype or pattern scale drops the levels no
+  row uses, and the palette goes to the levels that remain (two used levels of
+  four get the palette's first two colours). A level used in only some facet
+  panels stays. The discrete colour/fill scales (`_discrete()`, `_manual()`,
+  `_hue()`, `_brewer()`, `_viridis_d()`, `_grey()`, `_ordinal()`),
+  `scale_shape()`, `scale_linetype()` and their `_manual()` forms gain
+  `drop = FALSE` to keep every level; `limits` still decide the levels.
+
 ## Documentation
 
 * `inst/examples/28-animation.R`: part 2 now animates telephones by region
