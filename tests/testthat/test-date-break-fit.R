@@ -9,8 +9,8 @@ hr <- data.frame(
   t = seq(as.POSIXct("2024-03-01 00:00", tz = "UTC"), by = "10 min", length.out = 100),
   v = cos(seq_len(100) / 8)
 )
-hours <- function() {
-  vplot(hr, width = 2.5, height = 2.5) |> mark_line(x = t, y = v)
+hours <- function(width = 2.5) {
+  vplot(hr, width = width, height = 2.5) |> mark_line(x = t, y = v)
 }
 
 test_that("rotated and dodged labels allow denser date breaks (VP-101)", {
@@ -22,8 +22,11 @@ test_that("rotated and dodged labels allow denser date breaks (VP-101)", {
     .xlabels(hours() |> guides(x = guide_axis(angle = 90))),
     three_hourly
   )
+  # at 45 degrees they need their line height times sqrt(2); a little wider
+  # so the margin covers platform text metrics, horizontal still too narrow
+  expect_lt(length(.xlabels(hours(3))), 6L)
   expect_identical(
-    .xlabels(hours() |> guides(x = guide_axis(angle = 45))),
+    .xlabels(hours(3) |> guides(x = guide_axis(angle = 45))),
     three_hourly
   )
   # staggered over two rows, neighbours in a row are two breaks apart
