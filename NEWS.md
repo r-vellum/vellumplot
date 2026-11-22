@@ -13,6 +13,16 @@
   text (needs vellum 0.13.0.9000). Data labels (`mark_text()`) are not
   templated. See *Frame variables* in `?animate`.
 
+* `animate()` supports faceted plots (VP-84). Every panel of the whole data is
+  drawn in every frame (a state with no rows for a panel leaves it empty
+  instead of changing the layout, which would cut), the scales are frozen
+  across frames as before, and a mark's identity includes its panel, so a row
+  whose facet value changes fades out of one panel and into the other rather
+  than sliding across. Per-panel scales (`scales = "free"`, `"free_x"`,
+  `"free_y"`, or an independent `resolve_scale()`) are refused with a clear
+  message, since frozen scales cannot honour them. `transition_reveal()`
+  works with facets too.
+
 * `transition_time()` accepts `Date` and `POSIXct` times (VP-83). They run on
   their numeric value (segments weighted by the day/second gaps) and keep
   their class for `{frame_time}` (with the time zone) and in the cut warning's

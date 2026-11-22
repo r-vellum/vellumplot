@@ -334,6 +334,14 @@ vellum_animation <- S7::new_class(
 #'
 #' A line, path or area is one mark per series and is matched by its group.
 #'
+#' A faceted plot animates panel by panel: every panel of the whole data is
+#' drawn in every frame (a state without rows for a panel leaves it empty
+#' rather than dropping it), and a mark's identity includes its panel, so a
+#' mark never slides from one panel into another -- a row whose facet value
+#' changes between states fades out of one panel and into the other. The
+#' scales are frozen across frames, so per-panel scales (`facet_wrap(scales =
+#' "free")`, an independent `resolve_scale()`) are refused.
+#'
 #' A mark found in only one of two adjacent states fades in or out (points,
 #' bars and tiles, labels, lines and areas alike) on the alpha easing, and a
 #' point whose colour group changes slides to its new place while its colour
@@ -399,13 +407,21 @@ animate <- function(plot, nframes = 50, fps = 25) {
       "{.fn animate} needs a transition; add {.fn transition_states} or {.fn transition_time} first."
     )
   }
-  if (!is.null(plot@facet)) {
-    cli::cli_abort("{.fn animate} does not support facets.")
-  }
   nframes <- .pos_whole(nframes, "nframes")
   fps <- .pos_num(fps, "fps")
   easing <- if (is.null(plot@ease)) "linear" else plot@ease@default
   easing_aes <- .ease_classes(plot@ease)
+
+  # A faceted animation keeps every panel in every frame (VP-84): the panels
+  # are laid out from the whole data, not each state's.
+  if (!is.null(plot@facet)) {
+    .anim_check_facet(plot)
+    .mark_ctx$anim_facet_datas <- c(
+      list(plot@data),
+      Filter(Negate(is.null), lapply(plot@layers, function(L) L@data))
+    )
+    on.exit(rm(list = "anim_facet_datas", envir = .mark_ctx), add = TRUE)
+  }
 
   # A reveal is not a state tween: each frame is its own keyframe, compiled
   # from the rows revealed so far (see `.animate_reveal()`).
@@ -533,6 +549,25 @@ animate <- function(plot, nframes = 50, fps = 25) {
 }
 
 # ---- frame variables (VP-82) ------------------------------------------------
+
+# A faceted animation shares one frozen set of scales across its frames, so
+# per-panel scales cannot be honoured: refuse them rather than silently fix
+# them (VP-84).
+.anim_check_facet <- function(plot) {
+  free <- c(
+    if (identical(.resolve_for(plot, "x"), "independent")) "x",
+    if (identical(.resolve_for(plot, "y"), "independent")) "y",
+    .independent_aes(plot)
+  )
+  if (length(free)) {
+    cli::cli_abort(c(
+      "{.fn animate} cannot animate per-panel scales ({.val {free}}).",
+      i = "An animation trains its scales once over every state and freezes them, so each panel's own scale would not hold still.",
+      i = "Use {.code scales = \"fixed\"} in the facet (and shared scales in {.fn resolve_scale})."
+    ))
+  }
+  invisible()
+}
 
 # The labels that carry frame variables: the title, subtitle and caption whose
 # text holds a `{`.
@@ -738,6 +773,11 @@ animate <- function(plot, nframes = 50, fps = 25) {
 .anim_keys <- function(L, layer, explicit = NULL) {
   n <- L$n
   pfx <- paste0("l", layer, "|")
+  # Faceted (VP-84): the same row may be drawn in several panels and a mark
+  # must not slide between panels, so the panel is part of the identity.
+  if (!is.null(.mark_ctx$anim_facet_datas) && !is.na(.mark_ctx$panel %||% NA)) {
+    pfx <- paste0(.mark_ctx$panel, "|", pfx)
+  }
   if (!is.null(explicit) && length(explicit) == n) {
     id <- as.character(explicit)
     id[is.na(id)] <- "NA"
@@ -804,6 +844,8 @@ animate <- function(plot, nframes = 50, fps = 25) {
   base@transition <- NULL
   base@ease <- NULL
 
+  # (A faceted reveal's panels are laid out from the whole data: `animate()`
+  # set that up before dispatching here.)
   along <- .reveal_along(tr@var, plot@data, required = TRUE)
   lay_along <- lapply(plot@layers, function(L) {
     if (is.null(L@data)) NULL else .reveal_along(tr@var, L@data)
