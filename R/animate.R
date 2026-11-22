@@ -101,15 +101,31 @@ transition_time <- function(plot, time) {
 
 #' Reveal a plot progressively along a variable
 #'
-#' `transition_reveal()` wipes the plot into view left to right — the classic
-#' "line draws itself" animation. Unlike [transition_states()], it does not tween
-#' between states: the full plot is compiled and a clip rectangle grows across the
-#' panel, revealing the marks in `along` order. Best for a line or path over a
-#' continuous `along` (typically the x variable, e.g. time).
+#' `transition_reveal()` draws the data in, in the order of `along` -- the
+#' classic "line draws itself" animation, as in gganimate. Each frame shows the
+#' rows whose `along` value has been reached: a point appears when the reveal
+#' reaches it, and a line, path, area, ribbon or step grows through its rows
+#' with an interpolated leading point, so it advances smoothly between data
+#' points rather than jumping from one to the next.
+#'
+#' The reveal follows `along`, not the screen: a spiral revealed along its
+#' parameter winds outwards, a `coord_flip()` series grows up the vertical axis,
+#' and a reversed scale grows from the right. Only the data layers change; the
+#' panel background, gridlines, axes and legends are drawn whole on every frame,
+#' and the scales are trained once over all the data and frozen, so nothing
+#' moves as the data arrive. A layer whose own `data` lacks the `along`
+#' variable (a reference line, say) is drawn whole throughout.
+#'
+#' `animate(nframes = )` frames are spread evenly over the range of `along` (the
+#' [ease_aes()] position easing shapes the pace). Each frame is compiled from its
+#' own rows, so a statistic (a smooth) is recomputed on the data revealed so far.
+#' The leading point is interpolated on the data values, before any scale
+#' transformation, and among the rows of each group (the `group` aesthetic, else
+#' the layer's discrete colour/fill/linetype/... mappings).
 #'
 #' @param plot A [PlotSpec] (from [vplot()]).
-#' @param along The variable the reveal follows (mapped to x, increasing left to
-#'   right).
+#' @param along The variable the reveal follows: numeric, `Date` or `POSIXct`
+#'   (often time, but any ordering column, such as a path's parameter).
 #' @return The modified [PlotSpec].
 #' @seealso [transition_states()], [transition_time()], [animate()]
 #' @examples
@@ -354,8 +370,8 @@ animate <- function(plot, nframes = 50, fps = 25) {
   easing <- if (is.null(plot@ease)) "linear" else plot@ease@default
   easing_aes <- .ease_classes(plot@ease)
 
-  # A reveal is not a state tween: compile the plot once (two keyframes that
-  # differ only in a clip rectangle) and let the tween grow the clip.
+  # A reveal is not a state tween: each frame is its own keyframe, compiled
+  # from the rows revealed so far (see `.animate_reveal()`).
   if (identical(tr@kind, "reveal")) {
     return(.animate_reveal(plot, nframes, fps, easing, easing_aes))
   }
@@ -543,33 +559,223 @@ animate <- function(plot, nframes = 50, fps = 25) {
   stats::ave(seq_along(x), x, FUN = seq_along)
 }
 
-# A reveal animation: compile the plot with a reveal clip at 0% and at 100% —
-# same data, same frozen scales, differing only in the clip rectangle — and let
-# the tween grow the clip across the panel. The axes/labels sit outside the panel
-# viewport, so only the marks wipe in.
+# A reveal animation (VP-81): one keyframe per frame, each the plot compiled
+# from the rows whose `along` value the frame has reached -- plus, for a
+# line-like layer, an interpolated leading row per group -- on scales trained
+# once over the whole data and frozen. The frames sit exactly on their
+# keyframes (seg = frame, frac = 0; the last at frac = 1 of the final segment),
+# so the engine draws each keyframe as compiled; the easing is applied to the
+# cutoffs, not to the schedule.
 .animate_reveal <- function(plot, nframes, fps, easing, easing_aes = list()) {
+  tr <- plot@transition
   base <- plot
   base@transition <- NULL
   base@ease <- NULL
-  reveal_at <- function(f) {
-    s <- base
-    s@clip <- ClipSpec(kind = "reveal", type = "alpha", reveal_frac = f)
-    .compile_plot(s)
+
+  along <- .reveal_along(tr@var, plot@data, required = TRUE)
+  lay_along <- lapply(plot@layers, function(L) {
+    if (is.null(L@data)) NULL else .reveal_along(tr@var, L@data)
+  })
+  vals <- c(along, unlist(lay_along, use.names = FALSE))
+  vals <- vals[is.finite(vals)]
+  if (!length(vals)) {
+    cli::cli_abort(
+      "{.fn transition_reveal} found no finite {.arg along} values."
+    )
   }
+  rng <- range(vals)
+
+  # Cutoffs: evenly spread over the range of `along`, shaped by the position
+  # easing. At least two keyframes (the engine tweens pairs); a one-frame
+  # reveal shows the whole plot.
+  n <- max(2L, as.integer(nframes))
+  raw <- (seq_len(n) - 1) / (n - 1)
+  pos_ease <- (easing_aes$position %||% NA_character_)
+  if (is.na(pos_ease)) {
+    pos_ease <- easing
+  }
+  cuts <- rng[1L] + .ease_apply(raw, pos_ease) * diff(rng)
+  if (nframes < 2L) {
+    cuts <- rep(rng[2L], 2L)
+  }
+
+  frame_spec <- function(cut) {
+    s <- base
+    s@data <- .reveal_rows(plot@data, along, cut)
+    s@layers <- lapply(seq_along(s@layers), function(i) {
+      L <- s@layers[[i]]
+      own <- !is.null(L@data)
+      a <- if (own) lay_along[[i]] else along
+      if (is.null(a)) {
+        return(L) # no `along` in this layer's own data: drawn whole
+      }
+      src <- if (own) L@data else plot@data
+      if (.reveal_leads(L)) {
+        L@data <- .reveal_rows(src, a, cut, lead = .reveal_groups(L, src))
+      } else if (own) {
+        L@data <- .reveal_rows(src, a, cut)
+      }
+      L
+    })
+    s
+  }
+
+  # Freeze the scales over the whole data, so the axes, legends and colours
+  # stay put while the rows arrive.
+  bp <- .build_panels(base)
+  pooled <- unlist(lapply(bp$panels, function(p) p$resolved), recursive = FALSE)
+  frozen <- .train_scales(base, pooled)
+  scenes <- lapply(cuts, function(cut) {
+    .compile_plot(frame_spec(cut), frozen_scales = frozen)
+  })
+
   vellum_animation(
-    scenes = list(reveal_at(0), reveal_at(1)),
-    states = c("0", "1"),
-    nframes = nframes,
+    scenes = scenes,
+    states = format(cuts),
+    nframes = as.double(nframes),
     fps = fps,
-    seg_weights = 1,
+    seg_weights = rep(1, length(scenes) - 1L),
     state_length = 0,
     wrap = FALSE,
-    easing = easing,
-    easing_aes = easing_aes,
+    easing = "linear",
+    easing_aes = list(),
     width = plot@width,
     height = plot@height,
     dpi = plot@dpi
   )
+}
+
+# The `along` values of `data` as doubles (a Date or POSIXct by its numeric
+# value), or NULL when `data` lacks the variables (`required = FALSE`).
+.reveal_along <- function(var, data, required = FALSE) {
+  if (!required && !all(.quo_vars(var) %in% names(data))) {
+    return(NULL)
+  }
+  v <- tryCatch(rlang::eval_tidy(var, data), error = function(e) {
+    if (required) {
+      cli::cli_abort(
+        "{.fn transition_reveal} could not evaluate {.arg along} in the plot data.",
+        parent = e
+      )
+    }
+    NULL
+  })
+  if (is.null(v)) {
+    return(NULL)
+  }
+  if (!(is.numeric(v) || inherits(v, c("Date", "POSIXt")))) {
+    cli::cli_abort(c(
+      "{.fn transition_reveal} needs a numeric, Date or POSIXct {.arg along}.",
+      x = "It is {.cls {class(v)[1]}}."
+    ))
+  }
+  rep_len(as.double(unclass(v)), nrow(data))
+}
+
+# Does layer `L` grow through its rows (a line, path, area, ribbon or step),
+# and so get an interpolated leading point?
+.reveal_leads <- function(L) {
+  L@mark %in% c("line", "path", "area", "ribbon", "step")
+}
+
+# The identity group of each row of `data` for layer `L`: its `group`
+# aesthetic, else the interaction of its discrete grouping aesthetics, as the
+# layer will be drawn (one line per group).
+.reveal_groups <- function(L, data) {
+  n <- nrow(data)
+  enc <- L@encoding
+  ev <- function(a) {
+    q <- enc[[a]]
+    if (is.null(q)) {
+      return(NULL)
+    }
+    v <- tryCatch(rlang::eval_tidy(q, data), error = function(e) NULL)
+    if (length(v) == n) v else NULL
+  }
+  g <- ev("group")
+  if (!is.null(g)) {
+    return(as.character(g))
+  }
+  parts <- list()
+  for (a in .GROUP_AES) {
+    v <- ev(a)
+    if (!is.null(v) && !.is_continuous_group(v)) {
+      parts[[a]] <- as.character(v)
+    }
+  }
+  if (!length(parts)) {
+    return(rep("", n))
+  }
+  do.call(paste, c(unname(parts), sep = ":"))
+}
+
+# The rows of `data` revealed at `cut` (`along <= cut`; rows with a missing
+# `along` are never revealed). With `lead` (one group id per row), each group
+# that has rows on both sides of `cut` gains an interpolated row placed right
+# after its last revealed row: numeric (and Date/POSIXct) columns are
+# interpolated between that row and the group's next one in `along` order,
+# other columns copied from the last revealed row.
+.reveal_rows <- function(data, along, cut, lead = NULL) {
+  keep <- which(!is.na(along) & along <= cut)
+  if (is.null(lead)) {
+    return(data[keep, , drop = FALSE])
+  }
+  ord <- as.double(keep)
+  extra <- list()
+  extra_ord <- numeric(0)
+  for (idx in split(seq_along(along), lead)) {
+    idx <- idx[!is.na(along[idx])]
+    idx <- idx[order(along[idx], idx)]
+    before <- idx[along[idx] <= cut]
+    after <- idx[along[idx] > cut]
+    if (!length(before) || !length(after)) {
+      next
+    }
+    i <- before[length(before)]
+    j <- after[1L]
+    a0 <- along[i]
+    a1 <- along[j]
+    if (a1 <= a0 || cut <= a0) {
+      next
+    }
+    t <- (cut - a0) / (a1 - a0)
+    extra[[length(extra) + 1L]] <- .lerp_row(data, i, j, t)
+    extra_ord <- c(extra_ord, max(before) + 0.5)
+  }
+  if (!length(extra)) {
+    return(data[keep, , drop = FALSE])
+  }
+  out <- rbind(data[keep, , drop = FALSE], do.call(rbind, extra))
+  out <- out[order(c(ord, extra_ord)), , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
+# Row `i` of `data` with its numeric/Date/POSIXct columns moved a fraction `t`
+# of the way to row `j`'s values.
+.lerp_row <- function(data, i, j, t) {
+  row <- data[i, , drop = FALSE]
+  for (nm in names(data)) {
+    v <- data[[nm]]
+    if (is.factor(v) || !(is.numeric(v) || inherits(v, c("Date", "POSIXt")))) {
+      next
+    }
+    a <- as.double(unclass(v[i]))
+    b <- as.double(unclass(v[j]))
+    if (is.finite(a) && is.finite(b)) {
+      val <- a + t * (b - a)
+      if (is.integer(v)) {
+        v <- as.double(v)
+        row[[nm]] <- as.double(row[[nm]])
+      }
+      row[[nm]][1L] <- if (inherits(v, c("Date", "POSIXt"))) {
+        structure(val, class = class(v), tzone = attr(v, "tzone"))
+      } else {
+        val
+      }
+    }
+  }
+  row
 }
 
 # Enumerate a transition's states and the per-segment timing. Returns `key` (a
