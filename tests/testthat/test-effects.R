@@ -305,3 +305,43 @@ test_that("axis tick labels carry the tabular-figures feature", {
   expect_no_error(vellum::scene_raster(p))
   expect_true(grepl("tnum|font-feature", svg) || grepl("<text", svg))
 })
+
+test_that("a recoloured underlay keeps a multi-series line's series apart (VP-97)", {
+  d <- data.frame(
+    t = rep(1:5, 3),
+    y = c(1:5, 3:7, 5:9),
+    g = rep(c("a", "b", "c"), each = 5)
+  )
+  # polyline grobs in the compiled scene
+  lines_of <- function(p) {
+    walk <- function(node) {
+      if (S7::S7_inherits(node, vellum:::gtree)) {
+        sum(vapply(node@children, walk, numeric(1)))
+      } else {
+        as.numeric(S7::S7_inherits(node, vellum:::grob_lines))
+      }
+    }
+    walk(vellum:::.materialize(vellum::as_vellum_scene(p)))
+  }
+  base <- lines_of(vplot(d) |> mark_line(x = t, y = y, color = g))
+  expect_equal(base, 3L)
+  for (e in list(
+    outline(color = "black"),
+    shadow(),
+    glow(color = "orange")
+  )) {
+    p <- vplot(d) |> mark_line(x = t, y = y, color = g, effects = list(e))
+    # one underlay path per series, beneath the three series
+    expect_equal(lines_of(p), 2L * base)
+  }
+  # an explicit group is kept as given
+  p <- vplot(d) |>
+    mark_line(x = t, y = y, group = g, effects = list(outline()))
+  expect_equal(lines_of(p), 2L * base)
+  # the copy's grouping does not leak into the layer
+  L <- list(values = list(color = d$g), params = list(), n = 15L)
+  L2 <- vellumplot:::.fx_recolour(L, "black")
+  expect_identical(L2$values$group, d$g)
+  expect_null(L2$values$color)
+  expect_identical(vellumplot:::.fx_recolour(L, NULL), L)
+})

@@ -58,6 +58,12 @@
 
 ## Bug fixes
 
+* `outline()`, `shadow()` and `glow(color =)` on a multi-series line draw one
+  underlay per series again (VP-97). The recoloured underlay dropped the
+  colour mapping that grouped the line, so its copy joined every series into
+  one zig-zag path. The copy now keeps the layer's grouping (or its explicit
+  `group`).
+
 * `nudge_x` / `nudge_y` follow the data axes, as in ggplot2 (VP-88): under
   `coord_flip()` `nudge_y` moves a label across and `nudge_x` up/down (they
   used to move it along the screen axes, so a flipped bar chart's labels

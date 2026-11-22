@@ -745,6 +745,27 @@ NULL
   }
 }
 
+# Paint an effect copy in one `colour` (NULL keeps the mark's own colours).
+# Dropping the mapped colour/fill would also drop the grouping it implied, and a
+# multi-series line would come out as one path joining every series (VP-97), so
+# the copy keeps the layer's group key as an explicit `group`.
+.fx_recolour <- function(L, colour) {
+  if (is.null(colour)) {
+    return(L)
+  }
+  if (is.null(L$values$group) && is.null(L$params$group)) {
+    g <- .group_key(L)
+    if (!is.null(g) && length(unique(g)) > 1L) {
+      L$values$group <- g
+    }
+  }
+  L$values$color <- NULL
+  L$values$fill <- NULL
+  L$params$color <- colour
+  L$params$fill <- colour
+  L
+}
+
 # Generalized underlay copy-emitter for glow / outline / shadow: draw one copy
 # of the mark per entry of `deltas` (width in mm added to the base stroke width /
 # point diameter), at `alpha` and `colour`, composited under `blend`, offset by
@@ -779,12 +800,7 @@ NULL
     L2 <- L
     L2$effects <- list() # copies are plain (their halo followed the same path)
     L2$params$alpha <- alpha
-    if (!is.null(colour)) {
-      L2$values$color <- NULL
-      L2$values$fill <- NULL
-      L2$params$color <- colour
-      L2$params$fill <- colour
-    }
+    L2 <- .fx_recolour(L2, colour)
     if (is_point) {
       L2$values$size <- NULL
       L2$params$size <- base + d
@@ -835,12 +851,7 @@ NULL
   L2 <- L
   L2$effects <- list()
   L2$params$alpha <- alpha
-  if (!is.null(colour)) {
-    L2$values$color <- NULL
-    L2$values$fill <- NULL
-    L2$params$color <- colour
-    L2$params$fill <- colour
-  }
+  L2 <- .fx_recolour(L2, colour)
   # Widening fattens a stroke/point before the blur; a text glyph cannot be
   # fattened, so a text halo comes from the blur alone.
   if (widen > 0 && L$mark %in% .STROKE_POINT_MARKS) {
