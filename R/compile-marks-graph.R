@@ -484,7 +484,7 @@ NULL
   y1 <- rep_len(scales$y$map(L$values$yend), n)
   col <- rep_len(.aes_edge_colour(L, scales, "grey40"), n)
   # Bundled trunks overlap heavily, so a faint default alpha lets density read.
-  alpha <- rep_len(.aes_edge_alpha(L, scales, 0.3), n)
+  alpha <- rep_len(.aes_edge_alpha(L, scales, .EDGE_BUNDLE_ALPHA), n)
   lwd <- rep_len(.edge_width(L, scales, 0.5), n)
   lty <- .aes_edge_linetype(L, scales, NULL)
   lty <- if (is.null(lty)) NULL else rep_len(lty, n)
@@ -662,7 +662,8 @@ NULL
 # the root has no edge to) corresponds to no one edge: it keys as
 # "flow\001<root>\001b<branch>" with no endpoints or `join`, and records
 # every row as its provenance. The default tooltip names the root, the
-# vertex the flow reaches, and the flow.
+# vertex the flow reaches (for a trunk, the destinations it carries, VP-74), and
+# the flow.
 .flow_branch_ids <- function(fm, branches, rec, root_i, L) {
   k <- length(branches)
   prefix <- .mark_ctx$flow_prefix
@@ -683,6 +684,7 @@ NULL
   root <- vname(root_i)
   lab <- function(f) .label_number_default(signif(f, 4))
   default_tt <- isTRUE(.mark_ctx$flow_tooltip)
+  dests <- if (default_tt) .flow_branch_dests(fm, branches, root_i)
   for (b in seq_len(k)) {
     i <- branches[[b]][1L]
     leaf <- fm$leaf[i]
@@ -704,7 +706,11 @@ NULL
       next
     }
     out$rows[[b]] <- seq_len(L$n)
-    to <- if (is.na(leaf)) "\u2026" else vname(leaf)
+    to <- if (is.na(leaf)) {
+      .flow_dest_label(vapply(dests[[b]], vname, character(1)))
+    } else {
+      vname(leaf)
+    }
     out$elem[[b]] <- list(
       key = paste0(prefix, "flow\001", root, "\001b", b),
       source = NA_character_,
@@ -716,6 +722,53 @@ NULL
     )
   }
   out
+}
+
+# The destination vertices (rows of the flow graph's points) each flow-map
+# branch carries flow to, in vertex order (VP-74): its own end vertex plus those
+# of every branch upstream of it. A spiral tree's branch runs from its child
+# node up towards the root, so it continues into the branch that starts where it
+# ends; following those links from every vertex branch collects, for a trunk,
+# the vertices it feeds. (A Steiner tree's paths each run root to destination,
+# so every branch already ends at its one vertex.)
+.flow_branch_dests <- function(fm, branches, root_i) {
+  k <- length(branches)
+  first <- vapply(branches, function(i) i[1L], integer(1))
+  last <- vapply(branches, function(i) i[length(i)], integer(1))
+  tol <- 1e-9 * max(1, abs(fm$x), abs(fm$y))
+  parent <- vapply(
+    last,
+    function(j) {
+      d <- abs(fm$x[first] - fm$x[j]) + abs(fm$y[first] - fm$y[j])
+      p <- which.min(d)
+      if (length(p) && d[p] <= tol) p else NA_integer_
+    },
+    integer(1)
+  )
+  dests <- vector("list", k)
+  for (b in seq_len(k)) {
+    v <- fm$leaf[first[b]]
+    if (is.na(v) || v == root_i) {
+      next
+    }
+    a <- b
+    for (step in seq_len(k)) {
+      dests[[a]] <- c(dests[[a]], v)
+      a <- parent[a]
+      if (is.na(a) || a == b) break
+    }
+  }
+  lapply(dests, function(d) sort(unique(d)))
+}
+
+# A trunk's destination list for its tooltip: up to three names, then a count
+# of the rest ("v3, v5, v8 + 2 more"); an ellipsis when there are none.
+.flow_dest_label <- function(nm) {
+  if (!length(nm)) {
+    return("\u2026")
+  }
+  shown <- paste(utils::head(nm, 3L), collapse = ", ")
+  if (length(nm) > 3L) paste0(shown, " + ", length(nm) - 3L, " more") else shown
 }
 
 # A flow map's per-edge weights, one per drawn edge row. The weights are
