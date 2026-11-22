@@ -509,6 +509,8 @@ and encode the frames (GIF / APNG) in vellum’s parallel Rust backend.
   : Build a keyframe animation from a plot
 - [`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
   : Write a keyframe animation to a file
+- [`anim_frame()`](https://r-vellum.github.io/vellumplot/reference/anim_frame.md)
+  : Save one frame of an animation as a still image
 
 ## Accessibility and provenance
 

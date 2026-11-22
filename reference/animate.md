@@ -11,7 +11,14 @@ printing it shows the first keyframe as a preview.
 ## Usage
 
 ``` r
-animate(plot, nframes = 50, fps = 25)
+animate(
+  plot,
+  nframes = 50,
+  fps = 25,
+  start_pause = 0,
+  end_pause = 0,
+  rewind = FALSE
+)
 ```
 
 ## Arguments
@@ -27,11 +34,26 @@ animate(plot, nframes = 50, fps = 25)
 
 - nframes:
 
-  Total number of frames to render, a positive whole number.
+  Total number of frames to render, a positive whole number. The pauses
+  and the rewind are part of it, as in gganimate.
 
 - fps:
 
   Frames per second (the playback rate written into the file).
+
+- start_pause, end_pause:
+
+  Number of frames to hold the first and the last frame for, before the
+  animation starts and after it ends (default 0). A looping file (every
+  format loops) then rests on the final picture before starting over:
+  `end_pause = fps` holds it for a second.
+
+- rewind:
+
+  Play the animation backwards after it has played forwards, so the loop
+  returns to its start smoothly instead of cutting (default `FALSE`).
+  The frames are split between the two directions; the end pause sits
+  between them and the start pause at both ends.
 
 ## Value
 
@@ -78,11 +100,16 @@ scales are frozen across frames, so per-panel scales
 are refused.
 
 A mark found in only one of two adjacent states fades in or out (points,
-bars and tiles, labels, lines and areas alike) on the alpha easing, and
-a point whose colour group changes slides to its new place while its
-colour blends. What cannot move switches whole halfway through the
-transition: a matched line or path whose number of points changes, and
-decoration without an identity (an effect underlay) that comes and goes.
+bars and tiles, labels, lines and areas alike, with their effect
+underlays such as
+[`glow()`](https://r-vellum.github.io/vellumplot/reference/glow.md)) on
+the alpha easing, and a point whose colour group changes slides to its
+new place while its colour blends. A line, path or area whose number of
+points changes morphs from one outline into the other. Where marks
+overlap, the stacking order switches to the next state's halfway through
+the transition. What cannot move switches whole halfway through:
+decoration without an identity that comes and goes, or a line that
+cannot be morphed (a broken line with missing values, mixed units).
 `animate()` warns (once per call) when that will happen, naming the
 states.
 
@@ -121,17 +148,35 @@ the in-between times while the marks move.
 - [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md):
   `frame_along`, the `along` value revealed so far.
 
-Data labels
-([`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md))
-take their text from the data and are not templated: a label whose
-string differs between two states takes the nearer state's string,
-switching halfway through.
+A
+[`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+label can use the same variables (VP-93):
+`mark_text(data = data.frame(x = 3000, y = 40), x = x, y = y, label = "{round(frame_time)}", size = 60)`
+draws the year large behind a gapminder bubble chart, counting on every
+frame. A constant label or a column of labels may contain `{...}`; the
+label is placed (and moves) as the mark it belongs to, and only its
+string changes per frame. Repelled and rich-text labels are not
+templated. An ordinary data label whose string differs between two
+states takes the nearer state's string, switching halfway through.
+
+## Pauses and rewind
+
+`start_pause` and `end_pause` hold the first and last frame for that
+many frames, and `rewind = TRUE` plays the animation back to the start,
+as in gganimate. They come out of `nframes`:
+`animate(nframes = 100, end_pause = 20)` moves for 80 frames and rests
+on the final picture for 20. Every output honours them –
+[`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+to GIF, APNG or SVG,
+[`anim_frame()`](https://r-vellum.github.io/vellumplot/reference/anim_frame.md)'s
+frame numbers, and the frame scrubber of an animated `vellumwidget`.
 
 ## See also
 
 [`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md),
 [`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md),
-[`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+[`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md),
+[`anim_frame()`](https://r-vellum.github.io/vellumplot/reference/anim_frame.md)
 
 ## Examples
 

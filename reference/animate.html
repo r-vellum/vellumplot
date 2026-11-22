@@ -78,7 +78,14 @@ shows the first keyframe as a preview.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">animate</span><span class="op">(</span><span class="va">plot</span>, nframes <span class="op">=</span> <span class="fl">50</span>, fps <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">animate</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  nframes <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  fps <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  start_pause <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  end_pause <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  rewind <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -91,11 +98,26 @@ shows the first keyframe as a preview.</p>
 
 
 <dt id="arg-nframes">nframes<a class="anchor" aria-label="anchor" href="#arg-nframes"></a></dt>
-<dd><p>Total number of frames to render, a positive whole number.</p></dd>
+<dd><p>Total number of frames to render, a positive whole number.
+The pauses and the rewind are part of it, as in gganimate.</p></dd>
 
 
 <dt id="arg-fps">fps<a class="anchor" aria-label="anchor" href="#arg-fps"></a></dt>
 <dd><p>Frames per second (the playback rate written into the file).</p></dd>
+
+
+<dt id="arg-start-pause-end-pause">start_pause, end_pause<a class="anchor" aria-label="anchor" href="#arg-start-pause-end-pause"></a></dt>
+<dd><p>Number of frames to hold the first and the last
+frame for, before the animation starts and after it ends (default 0).
+A looping file (every format loops) then rests on the final picture
+before starting over: <code>end_pause = fps</code> holds it for a second.</p></dd>
+
+
+<dt id="arg-rewind">rewind<a class="anchor" aria-label="anchor" href="#arg-rewind"></a></dt>
+<dd><p>Play the animation backwards after it has played forwards, so
+the loop returns to its start smoothly instead of cutting (default
+<code>FALSE</code>). The frames are split between the two directions; the end pause
+sits between them and the start pause at both ends.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -130,12 +152,15 @@ mark never slides from one panel into another – a row whose facet value
 changes between states fades out of one panel and into the other. The
 scales are frozen across frames, so per-panel scales (<code>facet_wrap(scales = "free")</code>, an independent <code><a href="resolve_scale.html">resolve_scale()</a></code>) are refused.</p>
 <p>A mark found in only one of two adjacent states fades in or out (points,
-bars and tiles, labels, lines and areas alike) on the alpha easing, and a
-point whose colour group changes slides to its new place while its colour
-blends. What cannot move switches whole halfway through the transition: a
-matched line or path whose number of points changes, and decoration without
-an identity (an effect underlay) that comes and goes. <code>animate()</code> warns (once
-per call) when that will happen, naming the states.</p>
+bars and tiles, labels, lines and areas alike, with their effect underlays
+such as <code><a href="glow.html">glow()</a></code>) on the alpha easing, and a point whose colour group changes
+slides to its new place while its colour blends. A line, path or area whose
+number of points changes morphs from one outline into the other. Where marks
+overlap, the stacking order switches to the next state's halfway through the
+transition. What cannot move switches whole halfway through: decoration
+without an identity that comes and goes, or a line that cannot be morphed (a
+broken line with missing values, mixed units). <code>animate()</code> warns (once per
+call) when that will happen, naming the states.</p>
 <p>Give each transition enough frames to be seen: <code>nframes</code> is spread over all
 the states, so 40 states in 80 frames leave two frames per state and nothing
 visibly moves.</p>
@@ -160,13 +185,24 @@ easing, when the marks' discrete attributes do;</p></li>
 position easing, so it agrees with where the marks are), of the time
 column's class (<code>Date</code>, <code>POSIXct</code>, or double);</p></li>
 <li><p><code><a href="transition_reveal.html">transition_reveal()</a></code>: <code>frame_along</code>, the <code>along</code> value revealed so far.</p></li>
-</ul><p>Data labels (<code><a href="mark_text.html">mark_text()</a></code>) take their text from the data and are not
-templated: a label whose string differs between two states takes the nearer
-state's string, switching halfway through.</p>
+</ul><p>A <code><a href="mark_text.html">mark_text()</a></code> label can use the same variables (VP-93): <code>mark_text(data = data.frame(x = 3000, y = 40), x = x, y = y, label = "{round(frame_time)}", size = 60)</code> draws the year large behind a gapminder bubble chart, counting
+on every frame. A constant label or a column of labels may contain <code>{...}</code>;
+the label is placed (and moves) as the mark it belongs to, and only its
+string changes per frame. Repelled and rich-text labels are not templated.
+An ordinary data label whose string differs between two states takes the
+nearer state's string, switching halfway through.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="pauses-and-rewind">Pauses and rewind<a class="anchor" aria-label="anchor" href="#pauses-and-rewind"></a></h2>
+    <p><code>start_pause</code> and <code>end_pause</code> hold the first and last frame for that many
+frames, and <code>rewind = TRUE</code> plays the animation back to the start, as in
+gganimate. They come out of <code>nframes</code>: <code>animate(nframes = 100, end_pause = 20)</code> moves for 80 frames and rests on the final picture for 20. Every output
+honours them – <code><a href="anim_save.html">anim_save()</a></code> to GIF, APNG or SVG, <code><a href="anim_frame.html">anim_frame()</a></code>'s frame
+numbers, and the frame scrubber of an animated <code>vellumwidget</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="transition_states.html">transition_states()</a></code>, <code><a href="ease_aes.html">ease_aes()</a></code>, <code><a href="anim_save.html">anim_save()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="transition_states.html">transition_states()</a></code>, <code><a href="ease_aes.html">ease_aes()</a></code>, <code><a href="anim_save.html">anim_save()</a></code>, <code><a href="anim_frame.html">anim_frame()</a></code></p></div>
     </div>
 
     <div class="section level2">

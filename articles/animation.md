@@ -122,6 +122,10 @@ a <- vplot(mtcars) |>
   transition_states(cyl) |>
   ease_aes("cubic-in-out") |>
   animate(nframes = 60, fps = 20)
+#> ℹ Some marks have no `data_id`, so within each group they are matched by row
+#>   order, and the groups change size between states.
+#>   A mark may then move to another row's place. Give the layer a `data_id` (e.g.
+#>   `mark_point(data_id = id)`) to follow each observation.
 
 # a@scenes holds one vellum scene per state; render the first as a still.
 vellum::render(a@scenes[[1]], tempfile(fileext = ".png"))
