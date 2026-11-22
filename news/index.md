@@ -27,6 +27,18 @@
   gave the colour, fill, shape and linetype scales: `drop = FALSE` keeps
   a factor level no row uses in the legend and the output range.
 
+- Date-break fitting (VP-92) reads `guide_axis(angle =, n.dodge =)` and
+  measures the panel the way the layout does (VP-101). Rotated labels
+  only need their line height between them, and labels staggered over
+  `n.dodge` rows sit `n.dodge` breaks apart, so such an axis gets denser
+  breaks. The axis length used to be estimated as 75% of the plot’s
+  width. It now subtracts the plot margins, the legends, the other
+  axis’s title and label gutter, the title/subtitle/caption bands (for a
+  vertical axis) and the panel spacing, so a wide legend thins the date
+  labels instead of letting them collide. The wanted gap between labels
+  is now 1 mm (was 2 mm, which was calibrated against the rough
+  estimate).
+
 ## vellumplot 0.19.0
 
 ### New features
