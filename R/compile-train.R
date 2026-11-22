@@ -526,48 +526,178 @@ NULL
   best
 }
 
-# Share of the plot's width (height) the panels get, after the axis, title and
-# legend gutters, for the label-fit estimate below.
-.PANEL_FRAC <- 0.75
-# Clear space (mm) wanted between neighbouring tick labels.
-.LABEL_GAP_MM <- 2
+# Clear space (mm) wanted between neighbouring tick labels. 1 mm, about a third
+# of the default axis text's line height: VP-92's 2 mm was set against a rough
+# 75%-of-the-plot axis length, which overestimated small plots; with the panel
+# measured as the layout does (VP-101), 2 mm thinned six month labels on a
+# 3-inch plot that sit 1.5 mm apart.
+.LABEL_GAP_MM <- 1
 
 # A test of whether a set of tick labels fits along position axis `aes`, for
-# choosing date breaks by the available width (VP-92). The labels are measured
-# with vellum's text metrics at the theme's axis text size and angle (the same
-# measure the layout's gutters use); the axis length is estimated, since the
-# panel is laid out only after training: `.PANEL_FRAC` of the plot's width (or
-# height, for a vertical axis, e.g. x under coord_flip()), divided among the
-# facet columns (rows). NULL (no thinning) for polar and other non-cartesian
-# coordinates, or blank axis text.
-.axis_label_fit <- function(spec, aes) {
+# choosing date breaks by the available length (VP-92). The labels are measured
+# with vellum's text metrics at the theme's axis text size. They are drawn at
+# the axis guide's `angle` (`guide_axis(angle =)`), else the theme element's,
+# and `guide_axis(n.dodge =)` staggers them over rows, so neighbours in one row
+# are `n.dodge` breaks apart (VP-101). The axis length is estimated by
+# `.axis_fit_len_mm()`, since the panel is laid out only after training, from
+# `ctx` (`.axis_fit_ctx()`, or a function returning it, called only if the fit
+# is used). NULL
+# (no thinning) for polar and other non-cartesian coordinates, blank axis text,
+# or an axis without labels (`guides(x = "none")`).
+.axis_label_fit <- function(spec, aes, ctx = NULL) {
   co <- .coord_of(spec)
   if (!co@kind %in% c("cartesian", "flip", "fixed")) {
     return(NULL)
   }
   horiz <- xor(identical(aes, "x"), identical(co@kind, "flip"))
-  el <- .resolve_theme(.theme_of(spec))[[
-    if (horiz) "axis.text.x" else "axis.text.y"
-  ]]
+  rt <- .resolve_theme(.theme_of(spec))
+  el <- rt[[if (horiz) "axis.text.x" else "axis.text.y"]]
   if (is.null(el) || .is_blank(el)) {
     return(NULL)
   }
-  grid <- .mark_ctx$panel_grid %||% c(R = 1L, C = 1L)
-  len_mm <- if (horiz) {
-    spec@width * 25.4 * .PANEL_FRAC / grid[["C"]]
-  } else {
-    spec@height * 25.4 * .PANEL_FRAC / grid[["R"]]
+  ss <- .scale_for(spec, aes)
+  g <- if (!is.null(ss)) ss@guide
+  if (identical(g, "none")) {
+    return(NULL)
   }
-  rot <- .el_rot(el)
+  g <- if (is.list(g) && identical(g$kind, "axis")) g else list()
+  if (identical(g$kind, "none")) {
+    return(NULL)
+  }
+  rot <- g$angle %||% .el_rot(el)
+  n_dodge <- max(1L, g$n.dodge %||% 1L)
+  # measured on first use: only a date axis without set breaks calls the fit
+  len_mm <- NULL
   function(breaks, labels, domain) {
-    g <- .txt(labels, el@size, rot)
-    ext <- vellum::vl_convert(
-      if (horiz) vellum::grobwidth(g) else vellum::grobheight(g),
-      "mm"
-    )
-    step <- min(diff(sort(breaks))) / abs(diff(domain)) * len_mm
-    step >= ext + .LABEL_GAP_MM
+    if (is.null(len_mm)) {
+      len_mm <<- .axis_fit_len_mm(
+        spec,
+        rt,
+        horiz,
+        if (is.function(ctx)) ctx() else ctx
+      )
+    }
+    tg <- .txt(labels, el@size)
+    w <- vellum::vl_convert(vellum::grobwidth(tg), "mm")
+    h <- vellum::vl_convert(vellum::grobheight(tg), "mm")
+    step <- n_dodge * min(diff(sort(breaks))) / abs(diff(domain)) * len_mm
+    step >= .label_clearance_mm(w, h, rot, horiz)
   }
+}
+
+# The spacing along an axis two neighbouring tick labels (each `w` x `h` mm
+# unrotated, drawn at `rot` degrees) need so they do not touch, with
+# `.LABEL_GAP_MM` clear between them. Two equal rectangles rotated alike and
+# offset by `d` along the axis are apart when `d` covers either their length
+# along the text direction or their height across it -- so labels at 45 degrees
+# pack as densely as their line height allows, not their width. Horizontal
+# text on a horizontal axis needs `w` plus the gap, as before.
+.label_clearance_mm <- function(w, h, rot, horiz) {
+  th <- rot * pi / 180
+  along <- abs(if (horiz) cos(th) else sin(th)) # text direction . axis
+  across <- abs(if (horiz) sin(th) else cos(th)) # text normal . axis
+  need <- function(size, f) if (f > 1e-6) (size + .LABEL_GAP_MM) / f else Inf
+  min(need(w, along), need(h, across))
+}
+
+# Estimated length (mm) of one panel along the axis being fitted, before the
+# layout runs: the plot's width (height, for a vertical axis such as x under
+# coord_flip()) less the plot margins, the legends beside (above / below) the
+# panels, the other axis's title and label gutter -- or the title, subtitle and
+# caption bands and this axis's own gutter, for a vertical axis -- and the
+# panel spacing, shared among the facet columns (rows). `ctx`
+# (`.axis_fit_ctx()`) carries the trained legends' extents and the vertical
+# axis's labels; without it they count as absent / a short number. The layout
+# measures the same tracks, so this tracks the real panel closely; facet strips
+# and secondary axes are not counted (VP-101).
+.axis_fit_len_mm <- function(spec, rt, horiz, ctx = NULL) {
+  grid <- .mark_ctx$panel_grid %||% c(R = 1L, C = 1L)
+  pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  leg <- ctx$legend %||% c(top = 0, right = 0, bottom = 0, left = 0)
+  mm <- function(u) vellum::vl_convert(u, "mm")
+  gap <- rt[["panel.spacing"]] %||% 0
+  tick <- rt[["axis.ticks.length"]] %||% 0
+  if (horiz) {
+    v <- ctx$vertical
+    yl <- if (isFALSE(v$shows_labels)) {
+      0
+    } else {
+      mm(.track_w_axis(
+        rt[["axis.text.y"]],
+        .longest(v$labels %||% "00.0"),
+        tick + .PAD_MM,
+        rot = v$rot %||% .el_rot(rt[["axis.text.y"]]),
+        n_dodge = v$n_dodge %||% 1L
+      ))
+    }
+    yt <- mm(.track_w(rt[["axis.title.y"]], v$name, .PAD_MM, rot = 90))
+    total <- spec@width * 25.4 - pm[2] - pm[4] - leg[["left"]] -
+      leg[["right"]] - yl - yt - (grid[["C"]] - 1) * gap
+    n <- grid[["C"]]
+  } else {
+    labs <- spec@labels
+    band <- function(el, label, pad) {
+      if (is.null(label) || is.null(rt[[el]])) 0 else mm(.track_h(rt[[el]], label, pad))
+    }
+    xl <- mm(.track_h(rt[["axis.text.x"]], "0", tick + .PAD_MM))
+    xt <- band("axis.title.x", ctx$horizontal_name, .PAD_MM)
+    total <- spec@height * 25.4 - pm[1] - pm[3] - leg[["top"]] -
+      leg[["bottom"]] - xl - xt -
+      band("plot.title", labs$title, 2 * .PAD_MM) -
+      band("plot.subtitle", labs$subtitle, .PAD_MM) -
+      band("plot.caption", labs$caption, .PAD_MM) -
+      (grid[["R"]] - 1) * gap
+    n <- grid[["R"]]
+  }
+  # never below a sliver, so a cramped plot still thins rather than erroring
+  max(total, 10) / n
+}
+
+# The context the date-break fit (`.axis_label_fit()`) estimates the panel
+# from (VP-101): the extent (mm) of the legends on each side, measured from the
+# trained legend scales exactly as the layout sizes them, and the vertical
+# axis's labels, name and guide (its label gutter narrows the panels).
+# `scales` holds the trained legend scales, and the vertical position scale
+# when it is trained; `titles` the axis titles.
+.axis_fit_ctx <- function(spec, scales, titles, flip = FALSE) {
+  rt <- .resolve_theme(.theme_of(spec))
+  leg <- c(top = 0, right = 0, bottom = 0, left = 0)
+  guides <- tryCatch(.legend_guides(scales), error = function(e) list())
+  if (length(guides)) {
+    groups <- .legend_groups(guides, rt)
+    avail_h <- .legend_avail_h(spec@height, rt)
+    for (sd in c("left", "right")) {
+      if (length(groups[[sd]])) {
+        leg[[sd]] <- vellum::vl_convert(
+          .legend_width(groups[[sd]], rt, avail_h),
+          "mm"
+        )
+      }
+    }
+    for (sd in c("top", "bottom")) {
+      if (length(groups[[sd]])) {
+        leg[[sd]] <- vellum::vl_convert(.legend_height(groups[[sd]], rt), "mm")
+      }
+    }
+  }
+  va <- if (flip) "x" else "y"
+  ha <- if (flip) "y" else "x"
+  vsc <- scales[[va]]
+  vertical <- list(name = titles$title[[va]])
+  if (!is.null(vsc)) {
+    vertical <- list(
+      name = vsc$name,
+      labels = as.character(vsc$labels),
+      rot = .axis_rot(vsc, rt[["axis.text.y"]]),
+      n_dodge = .axis_guide_of(vsc)$n.dodge %||% 1L,
+      shows_labels = .axis_shows_labels(vsc)
+    )
+  }
+  list(
+    legend = leg,
+    vertical = vertical,
+    horizontal_name = titles$title[[ha]]
+  )
 }
 
 .train_position_continuous <- function(
@@ -1988,10 +2118,11 @@ NULL
   title,
   include_zero = FALSE,
   lim = NULL,
-  values = .axis_pool(resolved, aes, paste0(aes, "intercept"))
+  values = .axis_pool(resolved, aes, paste0(aes, "intercept")),
+  fit_ctx = NULL
 ) {
   scalespec <- .scale_for(spec, aes)
-  fit <- .axis_label_fit(spec, aes)
+  fit <- .axis_label_fit(spec, aes, fit_ctx)
   sc <- .train_position(aes, values, scalespec, title, include_zero, lim, fit)
   # Bars on a continuous x, and tiles / rasters on either axis, reach half a
   # cell past their centres: train on those edges too, as ggplot2 does, so the
@@ -2166,36 +2297,13 @@ NULL
       "No layer maps {.field {miss}}; every plot needs an {.field x} and a {.field y} position."
     )
   }
-  scales <- list(
-    x = .train_axis(
-      spec,
-      resolved,
-      "x",
-      titles$title[["x"]],
-      lim = co@xlim,
-      values = xs
-    ),
-    y = .train_axis(
-      spec,
-      resolved,
-      "y",
-      titles$title[["y"]],
-      include_zero = zero_base,
-      lim = co@ylim,
-      values = ys
-    )
-  )
-  if (!is.null(blank)) {
-    scales[[blank]] <- .scale_set(
-      scales[[blank]],
-      breaks = numeric(0),
-      labels = character(0),
-      name = NULL
-    )
-  }
-  # Every other registered scale, in registry (legend) order, by its trainer;
-  # then its guides() override (guide = "none" / guide_legend()). An untrained
-  # scale stays as a NULL entry so every key is always present.
+  # The legend scales first: they never read the position scales, and the
+  # date-break fit of the axes takes the legends' width off the panel (VP-101).
+  # Then the vertical axis, whose label gutter the horizontal axis's fit also
+  # subtracts.
+  # Each registered scale by its trainer, then its guides() override
+  # (guide = "none" / guide_legend()).
+  aes_sc <- list()
   for (e in .AES_REGISTRY) {
     if (is.null(e$trainer)) {
       next
@@ -2209,8 +2317,38 @@ NULL
     if (!is.null(sc) && e$guide %in% .KEY_ALPHA_GUIDES && is.null(sc$key_alpha)) {
       sc <- .with_key_alpha(sc, e, resolved)
     }
-    scales[e$name] <- list(sc)
+    aes_sc[e$name] <- list(sc)
   }
+  flip <- identical(co@kind, "flip")
+  train <- function(aes, scales_so_far) {
+    .train_axis(
+      spec,
+      resolved,
+      aes,
+      titles$title[[aes]],
+      include_zero = identical(aes, "y") && zero_base,
+      lim = if (identical(aes, "x")) co@xlim else co@ylim,
+      values = if (identical(aes, "x")) xs else ys,
+      fit_ctx = function() .axis_fit_ctx(spec, scales_so_far, titles, flip)
+    )
+  }
+  va <- if (flip) "x" else "y"
+  ha <- if (flip) "y" else "x"
+  pos <- list()
+  pos[[va]] <- train(va, aes_sc)
+  pos[[ha]] <- train(ha, c(aes_sc, pos))
+  scales <- list(x = pos$x, y = pos$y)
+  if (!is.null(blank)) {
+    scales[[blank]] <- .scale_set(
+      scales[[blank]],
+      breaks = numeric(0),
+      labels = character(0),
+      name = NULL
+    )
+  }
+  # The registered scales follow x and y, in registry (legend) order; an
+  # untrained one stays as a NULL entry so every key is always present.
+  scales <- c(scales, aes_sc)
   if (identical(.fill_series_aes(scales), "fill")) {
     scales$fill$series_aes <- "fill"
   }

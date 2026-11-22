@@ -569,6 +569,11 @@ NULL
     unlist(lapply(panels[sel], function(p) p$resolved), recursive = FALSE)
   }
   co <- .coord_of(spec)
+  # the date-break fit of a free axis estimates its panel from the shared
+  # legends and vertical axis (VP-101)
+  fit_ctx <- function() {
+    .axis_fit_ctx(spec, shared, titles, identical(co@kind, "flip"))
+  }
   train_free <- function(aes, intercept, title, inc0, lim) {
     function(res) {
       .train_axis(
@@ -578,7 +583,8 @@ NULL
         title,
         include_zero = inc0,
         lim = lim,
-        values = .axis_pool(res, aes, intercept)
+        values = .axis_pool(res, aes, intercept),
+        fit_ctx = fit_ctx
       )
     }
   }
