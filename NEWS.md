@@ -2,6 +2,18 @@
 
 ## Bug fixes
 
+* `transition_reveal()` reveals the data along `along`, as gganimate does
+  (VP-81). It used to ignore `along` and wipe a clip across the panel left to
+  right, background and gridlines included: a spiral wiped by x, a
+  `coord_flip()` series wiped along the value axis and a reversed scale showed
+  its newest data first. Each frame now shows the rows whose `along` has been
+  reached -- points appear as they are reached, and a line, path, area, ribbon
+  or step grows through its rows with an interpolated leading point -- on
+  scales frozen over the whole data, with the background, grid, axes and
+  legends drawn whole throughout. `along` may be numeric, Date or POSIXct.
+  Each frame is its own keyframe, so `animate()` compiles `nframes` scenes
+  (about 6 s for 100 frames of a 240-row time series).
+
 * `animate()` tweens marks by data identity, as gganimate matches by group
   (VR-32). Each mark is keyed by its `data_id`, else its `group` (or the
   combination of the layer's discrete mapped aesthetics), then its order within

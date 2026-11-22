@@ -9,18 +9,35 @@ transition_reveal(plot, along)
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
-\item{along}{The variable the reveal follows (mapped to x, increasing left to
-right).}
+\item{along}{The variable the reveal follows: numeric, \code{Date} or \code{POSIXct}
+(often time, but any ordering column, such as a path's parameter).}
 }
 \value{
 The modified \link{PlotSpec}.
 }
 \description{
-\code{transition_reveal()} wipes the plot into view left to right — the classic
-"line draws itself" animation. Unlike \code{\link[=transition_states]{transition_states()}}, it does not tween
-between states: the full plot is compiled and a clip rectangle grows across the
-panel, revealing the marks in \code{along} order. Best for a line or path over a
-continuous \code{along} (typically the x variable, e.g. time).
+\code{transition_reveal()} draws the data in, in the order of \code{along} -- the
+classic "line draws itself" animation, as in gganimate. Each frame shows the
+rows whose \code{along} value has been reached: a point appears when the reveal
+reaches it, and a line, path, area, ribbon or step grows through its rows
+with an interpolated leading point, so it advances smoothly between data
+points rather than jumping from one to the next.
+}
+\details{
+The reveal follows \code{along}, not the screen: a spiral revealed along its
+parameter winds outwards, a \code{coord_flip()} series grows up the vertical axis,
+and a reversed scale grows from the right. Only the data layers change; the
+panel background, gridlines, axes and legends are drawn whole on every frame,
+and the scales are trained once over all the data and frozen, so nothing
+moves as the data arrive. A layer whose own \code{data} lacks the \code{along}
+variable (a reference line, say) is drawn whole throughout.
+
+\code{animate(nframes = )} frames are spread evenly over the range of \code{along} (the
+\code{\link[=ease_aes]{ease_aes()}} position easing shapes the pace). Each frame is compiled from its
+own rows, so a statistic (a smooth) is recomputed on the data revealed so far.
+The leading point is interpolated on the data values, before any scale
+transformation, and among the rows of each group (the \code{group} aesthetic, else
+the layer's discrete colour/fill/linetype/... mappings).
 }
 \examples{
 vplot(data.frame(t = 1:20, y = cumsum(rnorm(20)))) |>

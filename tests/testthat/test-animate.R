@@ -317,43 +317,136 @@ test_that("data_id carries element identity through to the keyframes (enter/exit
   expect_true(file.exists(gif))
 })
 
-test_that("transition_reveal() wipes the panel left to right", {
-  skip_if_not_installed("png")
-  d <- data.frame(t = 1:30, y = sin(seq(0, 6, length.out = 30)))
-  p <- vplot(d) |> mark_line(x = t, y = y) |> transition_reveal(t)
-  expect_equal(p@transition@kind, "reveal")
-  a <- animate(p, nframes = 6)
-  expect_length(a@scenes, 2L) # one compile, revealed at 0% and 100%
+# Elements of a keyframe scene, by mark kind (scene model).
+reveal_elems <- function(scene) {
+  vellum::scene_model(vellum::as_vellum_scene(scene))$elements
+}
 
-  dir <- withr::local_tempdir()
+test_that("transition_reveal() reveals the rows along `along`, frame by frame (VP-81)", {
+  d <- data.frame(t = 1:10, y = (1:10)^2)
+  p <- vplot(d) |>
+    mark_line(x = t, y = y) |>
+    mark_point(x = t, y = y) |>
+    transition_reveal(t)
+  expect_equal(p@transition@kind, "reveal")
+  a <- animate(p, nframes = 7)
+  # One keyframe per frame, and the schedule lands exactly on each of them.
+  expect_length(a@scenes, 7L)
   sch <- vellumplot:::.anim_schedule(
-    2,
-    6,
-    "linear",
+    7,
+    a@nframes,
+    vellumplot:::.anim_easings(a),
     a@seg_weights,
     a@state_length,
     a@wrap
   )
-  vellum::vl_render_animation(
-    a@scenes,
-    sch$seg,
-    sch$frac,
-    dir,
-    format = "frames",
-    fps = 10
-  )
-  files <- sort(list.files(dir, pattern = "\\.png$", full.names = TRUE))
+  expect_equal(sch$seg, c(1:6, 6))
+  expect_equal(sch$frac, c(rep(0, 6), 1))
+  # Cutoffs 1, 2.5, 4, ..., 10: a point appears once it is reached.
+  npts <- vapply(a@scenes, function(s) sum(reveal_elems(s)$mark == "point"), integer(1))
+  expect_equal(npts, as.integer(floor(seq(1, 10, length.out = 7))))
+  # The background and gridlines are drawn whole on every frame.
+  grid <- function(s) {
+    e <- reveal_elems(s)
+    sum(e$mark %in% c("rect", "segment") & !is.na(e$panel))
+  }
+  g <- vapply(a@scenes, grid, integer(1))
+  expect_true(all(g == g[7]))
+})
 
-  # Ink in the right half of the panel appears only once the wipe reaches it, so
-  # it is (near) empty early and fuller late; the left half fills first.
+test_that("a revealed line ends on an interpolated leading point (VP-81)", {
+  d <- data.frame(t = c(0, 10), x = c(0, 100), y = c(0, 50))
+  r <- vellumplot:::.reveal_rows(d, d$t, 2.5, lead = c("", ""))
+  expect_equal(nrow(r), 2L)
+  expect_equal(r$t, c(0, 2.5))
+  expect_equal(r$x, c(0, 25))
+  expect_equal(r$y, c(0, 12.5))
+  # Without `lead` (points), only the rows reached.
+  expect_equal(nrow(vellumplot:::.reveal_rows(d, d$t, 2.5)), 1L)
+  # Groups interpolate separately and each lead sits after its group's rows.
+  d2 <- data.frame(t = c(1, 2, 3, 1, 2, 3), y = c(1, 2, 3, 10, 20, 30), g = rep(c("a", "b"), each = 3))
+  r2 <- vellumplot:::.reveal_rows(d2, d2$t, 1.5, lead = d2$g)
+  expect_equal(r2$g, c("a", "a", "b", "b"))
+  expect_equal(r2$y, c(1, 1.5, 10, 15))
+  # A Date column keeps its class.
+  d3 <- data.frame(t = as.Date("2020-01-01") + c(0, 10), y = c(0, 1))
+  r3 <- vellumplot:::.reveal_rows(d3, as.double(d3$t), as.double(as.Date("2020-01-06")), lead = c("", ""))
+  expect_s3_class(r3$t, "Date")
+  expect_equal(r3$t[2], as.Date("2020-01-06"))
+})
+
+test_that("transition_reveal() follows `along`, not the x axis (VP-81)", {
+  # A spiral revealed along its parameter: the drawn ink grows outwards from
+  # the centre instead of wiping in from the left edge.
+  skip_if_not_installed("png")
+  tt <- seq(0, 4 * pi, length.out = 100)
+  sp <- data.frame(t = tt, x = tt * cos(tt), y = tt * sin(tt))
+  a <- vplot(sp) |> mark_path(x = x, y = y, linewidth = 2) |> transition_reveal(t) |> animate(nframes = 5)
+  ink_cols <- function(s) {
+    f <- withr::local_tempfile(fileext = ".png")
+    vellum::render(vellum::as_vellum_scene(s), f)
+    arr <- png::readPNG(f)
+    e <- reveal_elems(s)
+    pr <- e[e$mark == "rect" & e$panel == "panel-1-1", ][1, ]
+    cols <- seq(ceiling(pr$x0) + 2, floor(pr$x1) - 2)
+    rows <- seq(ceiling(pr$y0) + 2, floor(pr$y1) - 2)
+    cols[range(which(colSums(arr[rows, cols, 1] < 0.3) > 0))]
+  }
+  ext <- lapply(a@scenes[2:5], ink_cols)
+  width <- vapply(ext, diff, numeric(1))
+  expect_true(all(diff(width) > 0))
+  left <- vapply(ext, `[`, numeric(1), 1)
+  expect_true(all(diff(left) < 0)) # the left edge moves outwards, not fixed
+  # The middle frame holds only the rows with t <= cutoff: drawn by the path
+  # data, so its extent is that of the inner turns.
+  spec_mid <- vellumplot:::.reveal_rows(sp, sp$t, 2 * pi, lead = rep("", 100))
+  expect_true(all(spec_mid$t <= 2 * pi + 1e-12))
+  expect_equal(max(spec_mid$t), 2 * pi)
+})
+
+test_that("transition_reveal() works under coord_flip() and a reversed scale (VP-81)", {
+  d <- data.frame(t = 1:20, v = sin(1:20))
+  for (p in list(
+    vplot(d) |> mark_line(x = t, y = v) |> mark_point(x = t, y = v) |> coord_flip(),
+    vplot(d) |> mark_line(x = t, y = v) |> mark_point(x = t, y = v) |> scale_x_reverse()
+  )) {
+    a <- p |> transition_reveal(t) |> animate(nframes = 5)
+    npts <- vapply(a@scenes, function(s) sum(reveal_elems(s)$mark == "point"), integer(1))
+    expect_equal(npts, as.integer(floor(seq(1, 20, length.out = 5))))
+  }
+})
+
+test_that("transition_reveal() keeps a layer without `along` whole and rejects a discrete along", {
+  d <- data.frame(t = 1:10, y = 1:10)
+  ref <- data.frame(h = 5)
+  a <- vplot(d) |>
+    mark_point(x = t, y = y) |>
+    mark_rule(yintercept = h, data = ref) |>
+    transition_reveal(t) |>
+    animate(nframes = 3)
+  expect_length(a@scenes, 3L)
+  d$s <- letters[1:10]
+  expect_error(
+    vplot(d) |> mark_point(x = t, y = y) |> transition_reveal(s) |> animate(nframes = 3),
+    "numeric, Date or POSIXct"
+  )
+})
+
+test_that("a revealed animation renders its frames", {
+  skip_if_not_installed("png")
+  d <- data.frame(t = 1:30, y = sin(seq(0, 6, length.out = 30)))
+  a <- vplot(d) |> mark_line(x = t, y = y) |> transition_reveal(t) |> animate(nframes = 6)
+  dir <- withr::local_tempdir()
+  vellumplot:::.anim_render(a, dir, "frames")
+  files <- sort(list.files(dir, pattern = "\\.png$", full.names = TRUE))
+  expect_length(files, 6L)
   right_ink <- function(f) {
     arr <- png::readPNG(f)
     w <- dim(arr)[2]
     sum(arr[, (w / 2 + 1):w, 1] < 0.5)
   }
   ri <- vapply(files, right_ink, numeric(1))
-  expect_lt(ri[1], ri[length(ri)]) # right side reveals later
-  expect_true(ri[length(ri)] > ri[2]) # and keeps growing
+  expect_lt(ri[1], ri[6])
 })
 
 test_that("anim_save() writes a GIF and an APNG", {
