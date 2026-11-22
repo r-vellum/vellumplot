@@ -7,7 +7,7 @@
 anim_save(filename, animation)
 }
 \arguments{
-\item{filename}{Output path; \code{.gif}, \code{.png}, or \code{.svg}.}
+\item{filename}{Output path; \code{.gif}, \code{.png}/\code{.apng}, or \code{.svg}.}
 
 \item{animation}{A \code{vellum_animation} (from \code{\link[=animate]{animate()}}).}
 }
@@ -22,7 +22,9 @@ streaming pass in vellum's Rust backend. The format follows the file extension:
 \details{
 \itemize{
 \item \code{.gif} — a looping GIF (universal compatibility).
-\item \code{.png} — an animated PNG (APNG; lossless, alpha).
+\item \code{.png} or \code{.apng} — an animated PNG (APNG; lossless, alpha). Browsers
+play either; \code{.png} is the more widely recognised extension, and image
+viewers that do not know APNG show its first frame.
 \item \code{.svg} — a single \strong{animated SVG}: every frame is emitted as vector markup
 and shown in turn by a CSS step animation. It is resolution-independent (crisp
 at any size, in print and on retina) and honours \code{prefers-reduced-motion}
@@ -36,6 +38,11 @@ a raster format (GIF/APNG) does not. So SVG wins clearly on line art — a few
 moving marks, the common explanatory case — and loses on a dense scatter, where
 a raster format is the right answer. \code{anim_save()} says so when a \code{.svg} scene
 is dense enough that a raster format would likely be smaller.
+
+Video (\code{.mp4}, \code{.webm}, ...) and animated WebP are not written: there is no
+encoder for them among vellum's dependencies. Save an APNG or GIF and
+convert it, e.g. \verb{ffmpeg -i anim.png -pix_fmt yuv420p anim.mp4}, or
+\code{magick::image_write(magick::image_read("anim.gif"), "anim.webp")}.
 }
 
 \examples{

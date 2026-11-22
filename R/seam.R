@@ -1255,6 +1255,15 @@ S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
 #' render_plot(p, f, cvd = "deuteranopia") # preview for red-green colour blindness
 #' @export
 render_plot <- function(plot, path, text = "native", dpi = NULL, cvd = "none") {
+  # An animation is not a still plot: point at `anim_save()` rather than the
+  # generic class error (VP-85).
+  if (S7::S7_inherits(plot, vellum_animation)) {
+    cli::cli_abort(c(
+      "{.fn render_plot} draws a still plot, and {.arg plot} is an animation.",
+      i = "Write it with {.code anim_save(path, animation)} ({.val .gif}, {.val .png}/{.val .apng}, or {.val .svg}).",
+      i = "For a still image, render the plot before {.fn animate}: the transition is ignored and every state is drawn at once."
+    ))
+  }
   if (
     !S7::S7_inherits(plot, PlotSpec) &&
       !S7::S7_inherits(plot, PlotComposition) &&
