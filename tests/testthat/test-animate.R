@@ -371,6 +371,32 @@ test_that("a revealed line ends on an interpolated leading point (VP-81)", {
   expect_equal(r3$t[2], as.Date("2020-01-06"))
 })
 
+test_that("each series of a multi-group reveal leads toward its own next row (VP-94)", {
+  # Two flat series in ONE line layer, rows interleaved by `along` (and in the
+  # reverse order): the leading point of each must stay on its own level, not
+  # aim at the other series' next value (a vertical spike).
+  m <- data.frame(t = rep(1:10, 2), g = rep(c("a", "b"), each = 10), y = rep(c(10, 1), each = 10))
+  for (d in list(m[order(m$t), ], m[rev(seq_len(nrow(m))), ])) {
+    p <- vplot(d) |> mark_line(x = t, y = y, color = g)
+    lead <- vellumplot:::.reveal_groups(p@layers[[1]], d)
+    expect_equal(lead, d$g)
+    r <- vellumplot:::.reveal_rows(d, d$t, 2.9, lead = lead)
+    expect_equal(sort(r$t[r$t > 2]), c(2.9, 2.9))
+    expect_equal(r$y, ifelse(r$g == "a", 10, 1))
+  }
+  # An explicit `group` wins; a continuous colour does not split.
+  d <- data.frame(t = rep(1:3, 2), y = 1:6, k = rep(c("u", "v"), each = 3))
+  p <- vplot(d) |> mark_line(x = t, y = y, group = k, color = y)
+  expect_equal(vellumplot:::.reveal_groups(p@layers[[1]], d), d$k)
+  # Facet panels split too.
+  p <- vplot(d) |> mark_line(x = t, y = y) |> facet_wrap(~k)
+  g <- vellumplot:::.reveal_groups(p@layers[[1]], d, p@facet)
+  expect_equal(length(unique(g)), 2L)
+  # End to end: the animation compiles.
+  a <- vplot(m[order(m$t), ]) |> mark_line(x = t, y = y, color = g) |> transition_reveal(t) |> animate(nframes = 6)
+  expect_length(a@scenes, 6L)
+})
+
 test_that("transition_reveal() follows `along`, not the x axis (VP-81)", {
   # A spiral revealed along its parameter: the drawn ink grows outwards from
   # the centre instead of wiping in from the left edge.
