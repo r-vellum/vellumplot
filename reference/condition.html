@@ -100,7 +100,8 @@ highlight-on-interaction.</p>
 appearance. For <code>color</code> / <code>fill</code>, a column whose values are levels (or, on
 a continuous scale, numbers) of the aesthetic's scale is taken through
 that scale, as <code>if_true</code> is; any other value is read as a colour, and a
-row whose value is neither gets the theme dim.</p></dd>
+row whose value is neither gets the theme dim. For <code>alpha</code>, a number in
+<code>[0, 1]</code> (constant or per row) is the non-members' opacity.</p></dd>
 
 
 <dt id="arg-empty">empty<a class="anchor" aria-label="anchor" href="#arg-empty"></a></dt>
@@ -119,7 +120,10 @@ trains scales exactly as the equivalent plain encoding, so
 <code>color = condition("s", g, "grey80")</code> produces the same colour scale and legend
 as <code>color = g</code>. With <code>empty = TRUE</code> (the default) an empty selection matches
 everything, so a static / initial render shows <code>if_true</code> for all elements and
-interaction dims non-members to <code>if_false</code>.</p>
+interaction dims non-members to <code>if_false</code>. A constant <code>if_true</code> (one that
+refers to no data column, such as <code>alpha = condition("s", 1, 0.2)</code> or
+<code>color = condition("s", "red", "grey80")</code>) is a setting, as <code>alpha = 1</code> is:
+it is drawn at that value and trains no scale and adds no legend.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

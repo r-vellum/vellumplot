@@ -30,7 +30,9 @@ condition(selection, if_true, if_false, empty = TRUE)
   appearance. For `color` / `fill`, a column whose values are levels
   (or, on a continuous scale, numbers) of the aesthetic's scale is taken
   through that scale, as `if_true` is; any other value is read as a
-  colour, and a row whose value is neither gets the theme dim.
+  colour, and a row whose value is neither gets the theme dim. For
+  `alpha`, a number in `[0, 1]` (constant or per row) is the
+  non-members' opacity.
 
 - empty:
 
@@ -49,7 +51,10 @@ encoding, so `color = condition("s", g, "grey80")` produces the same
 colour scale and legend as `color = g`. With `empty = TRUE` (the
 default) an empty selection matches everything, so a static / initial
 render shows `if_true` for all elements and interaction dims non-members
-to `if_false`.
+to `if_false`. A constant `if_true` (one that refers to no data column,
+such as `alpha = condition("s", 1, 0.2)` or
+`color = condition("s", "red", "grey80")`) is a setting, as `alpha = 1`
+is: it is drawn at that value and trains no scale and adds no legend.
 
 ## See also
 
