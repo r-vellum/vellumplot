@@ -1597,8 +1597,11 @@ mark_step <- function(
 #'   `"centre"`, `"right"`, `"bottom"`, `"top"`, or numeric in `[0, 1]`).
 #' @param angle Text rotation in degrees.
 #' @param nudge_x,nudge_y Shift each label by an exact absolute distance in
-#'   millimetres (`+x` right, `+y` up), device-resolved so the nudge is constant
-#'   regardless of scale or panel aspect. Default `0`.
+#'   millimetres along the data x / y axis (`+x` right, `+y` up on ordinary
+#'   axes; under [coord_flip()] `nudge_x` moves vertically and `nudge_y`
+#'   horizontally, and on a reversed axis a positive nudge points toward larger
+#'   values, as in ggplot2), device-resolved so the nudge is constant regardless
+#'   of scale or panel aspect. Default `0`.
 #' @param fill For `mark_label()`, the label background: a constant colour, or a
 #'   mapped encoding (e.g. `fill = group`) coloured through the fill/colour scale.
 #'   Default: the theme's paper colour (white; see [element_geom()]).
@@ -2033,7 +2036,8 @@ mark_raster <- function(
 #' @param size Image height in millimetres (constant or mapped); the width
 #'   follows the image's own aspect ratio. Default `5`.
 #' @param nudge_x,nudge_y Shift each image by an exact absolute distance in
-#'   millimetres (`+x` right, `+y` up). Default `0`.
+#'   millimetres along the data x / y axis (`+x` right, `+y` up on ordinary
+#'   axes; swapped under [coord_flip()]). Default `0`.
 #' @param interpolate Smoothly interpolate when scaling (default `TRUE`)?
 #'   `FALSE` keeps hard pixel edges.
 #' @return The modified [PlotSpec].

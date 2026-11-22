@@ -79,8 +79,11 @@ does.}
 \item{angle}{Text rotation in degrees.}
 
 \item{nudge_x, nudge_y}{Shift each label by an exact absolute distance in
-millimetres (\code{+x} right, \code{+y} up), device-resolved so the nudge is constant
-regardless of scale or panel aspect. Default \code{0}.}
+millimetres along the data x / y axis (\code{+x} right, \code{+y} up on ordinary
+axes; under \code{\link[=coord_flip]{coord_flip()}} \code{nudge_x} moves vertically and \code{nudge_y}
+horizontally, and on a reversed axis a positive nudge points toward larger
+values, as in ggplot2), device-resolved so the nudge is constant regardless
+of scale or panel aspect. Default \code{0}.}
 
 \item{repel}{Move overlapping labels apart (force-directed, ggrepel-style),
 with leader lines to the points? Single cartesian panel only.}

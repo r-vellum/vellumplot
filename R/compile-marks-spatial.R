@@ -162,7 +162,7 @@ NULL
     img <- .read_image(src[i], cache)
     h_mm <- size[i]
     w_mm <- size[i] * (img$iw / img$ih)
-    xy <- .nudge_xy(.xy_units(scales, xn[i], yn[i]), L, i)
+    xy <- .nudge_xy(.xy_units(scales, xn[i], yn[i]), L, i, scales)
     scene <- .draw(
       scene,
       vellum::raster_grob(
