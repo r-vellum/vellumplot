@@ -3,6 +3,24 @@ NULL
 
 # Mark emitters: spatial marks (tile, raster, image, hex, datashade, sf).
 
+# A tile's size along axis `aes` ("x": width, "y": height) in native units, one
+# per row: a mapped or constant `width` / `height` (data units, as in ggplot2's
+# geom_tile()), else the resolution of the native positions `vp`, so tiles
+# abut. Shared by `.emit_tile()` and the extent training (VP-99).
+.tile_size <- function(L, aes, vp, n) {
+  nm <- if (identical(aes, "x")) "width" else "height"
+  rep_len(L$values[[nm]] %||% L$params[[nm]] %||% .resolution(vp), n)
+}
+
+# The data-unit extent of a raster's cells along one axis, from its distinct
+# cell centres `v`: half the (smallest) cell spacing past each end cell, as
+# `.emit_raster()` stretches the image.
+.raster_extent <- function(v) {
+  u <- sort(unique(v[!is.na(v)]))
+  w <- if (length(u) > 1) min(diff(u)) else 1
+  c(min(u) - w / 2, max(u) + w / 2)
+}
+
 # A heatmap of rectangular tiles at each (x, y), coloured by fill. Width/height
 # default to the data resolution so tiles abut.
 .emit_tile <- function(scene, L, scales) {
@@ -12,8 +30,8 @@ NULL
   yp <- rep_len(scales$y$map(L$values$y), n)
   fo <- .fill_and_outline(L, scales, "grey20", n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
-  w <- rep_len(L$values$width %||% .resolution(xp), n)
-  h <- rep_len(L$values$height %||% .resolution(yp), n)
+  w <- .tile_size(L, "x", xp, n)
+  h <- .tile_size(L, "y", yp, n)
   sk <- .mark_sketch(L, scales)
 
   .emit_rect_groups(
@@ -119,10 +137,8 @@ NULL
   cols <- rep_len(.aes_colour(L, scales, "grey20", role = "fill"), length(xv))
   m <- matrix("#FFFFFF00", nrow = length(uy), ncol = length(ux))
   m[cbind(length(uy) - ri + 1L, ci)] <- cols # row 1 = top = max y
-  xw <- if (length(ux) > 1) min(diff(ux)) else 1
-  yw <- if (length(uy) > 1) min(diff(uy)) else 1
-  xn <- scales$x$map(c(min(ux) - xw / 2, max(ux) + xw / 2))
-  yn <- scales$y$map(c(min(uy) - yw / 2, max(uy) + yw / 2))
+  xn <- scales$x$map(.raster_extent(ux))
+  yn <- scales$y$map(.raster_extent(uy))
   .draw(
     scene,
     vellum::raster_grob(

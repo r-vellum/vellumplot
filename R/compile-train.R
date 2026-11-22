@@ -1993,9 +1993,10 @@ NULL
   scalespec <- .scale_for(spec, aes)
   fit <- .axis_label_fit(spec, aes)
   sc <- .train_position(aes, values, scalespec, title, include_zero, lim, fit)
-  # Bars on a continuous x reach half a bar width past their centres: train on
-  # those edges too, as ggplot2 does, so the end bars are not clipped (VP-90).
-  ext <- .bar_extent_data(sc, resolved, aes, scalespec, lim)
+  # Bars on a continuous x, and tiles / rasters on either axis, reach half a
+  # cell past their centres: train on those edges too, as ggplot2 does, so the
+  # end bars and tiles are not clipped (VP-90, VP-99).
+  ext <- .mark_extent_data(sc, resolved, aes, scalespec, lim)
   if (!is.null(ext)) {
     values <- c(values, list(ext))
     sc <- .train_position(aes, values, scalespec, title, include_zero, lim, fit)
@@ -2017,16 +2018,19 @@ NULL
   .attach_axis_guide(sc, scalespec)
 }
 
-# The x extent of the bar layers (`mark_bar()`, `mark_histogram()`, ...) in
-# data units: each bar's centre +/- half its width, computed in native units
-# exactly as `.emit_bar()` places and sizes it (`.bar_geometry()`: a stat's or
-# the user's `width`, else 90% of the resolution, after any dodge), then taken
-# back through the transform's inverse (a date axis keeps its class). NULL when
-# there are no such bars, the axis is discrete or binned (bars fill their
-# bands), or the user pinned the limits, which must win.
-.bar_extent_data <- function(sc, resolved, aes, scalespec, lim) {
+# The extent along position axis `aes` of the marks drawn wider than their
+# centres, in data units: bars on x (`mark_bar()`, `mark_histogram()`, ...: each
+# bar's centre +/- half its width, computed in native units exactly as
+# `.emit_bar()` places and sizes it via `.bar_geometry()`, after any dodge), and
+# tiles and rasters on x and y (each cell's centre +/- half its width / height,
+# as `.emit_tile()` / `.emit_raster()` size them, VP-99) -- ggplot2 trains on
+# these xmin/xmax/ymin/ymax edges too. The native extent is taken back through
+# the transform's inverse (a date axis keeps its class). NULL when there are no
+# such marks, the axis is discrete or binned (cells fill their bands), or the
+# user pinned the limits, which must win.
+.mark_extent_data <- function(sc, resolved, aes, scalespec, lim) {
   if (
-    !identical(aes, "x") ||
+    !aes %in% c("x", "y") ||
       isTRUE(sc$discrete) ||
       !is.null(sc$band_width) ||
       !is.null(lim) ||
@@ -2037,23 +2041,34 @@ NULL
   ext <- NULL
   proto <- NULL
   for (L in resolved) {
-    if (!identical(L$mark, "bar") || is.null(L$values$x)) {
+    v <- L$values[[aes]]
+    if (
+      is.null(v) ||
+        !L$mark %in% c("bar", "tile", "raster") ||
+        (identical(L$mark, "bar") && !identical(aes, "x")) ||
+        (!is.numeric(v) && !inherits(v, c("Date", "POSIXct")))
+    ) {
       next
     }
-    xv <- L$values$x
-    if (!is.numeric(xv) && !inherits(xv, c("Date", "POSIXct"))) {
-      next
-    }
-    proto <- proto %||% xv
-    xp <- sc$map(xv)
-    ok <- is.finite(xp)
+    vp <- sc$map(v)
+    ok <- is.finite(vp)
     if (!any(ok)) {
       next
     }
-    g <- .bar_geometry(L, xp, .resolution(xp), length(xp))
-    lo <- g$x - g$width / 2
-    hi <- g$x + g$width / 2
-    ext <- range(c(ext, lo[ok], hi[ok]), finite = TRUE)
+    proto <- proto %||% v
+    edges <- switch(
+      L$mark,
+      bar = {
+        g <- .bar_geometry(L, vp, .resolution(vp), length(vp))
+        c(g$x[ok] - g$width[ok] / 2, g$x[ok] + g$width[ok] / 2)
+      },
+      tile = {
+        w <- .tile_size(L, aes, vp, length(vp))
+        c(vp[ok] - w[ok] / 2, vp[ok] + w[ok] / 2)
+      },
+      raster = sc$map(.raster_extent(v))
+    )
+    ext <- range(c(ext, edges), finite = TRUE)
   }
   if (is.null(ext)) {
     return(NULL)
