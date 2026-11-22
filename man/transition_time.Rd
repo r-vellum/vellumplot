@@ -9,7 +9,7 @@ transition_time(plot, time)
 \arguments{
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
-\item{time}{A numeric column giving each row's time.}
+\item{time}{A numeric, \code{Date} or \code{POSIXct} column giving each row's time.}
 }
 \value{
 The modified \link{PlotSpec}.
@@ -20,6 +20,12 @@ continuous quantity: the states are its distinct values and each transition is
 allocated frames \strong{in proportion to its time gap}, so the animation plays at a
 constant rate through unevenly spaced times. There is no pause on a state and no
 wrap — time flows once, start to finish.
+}
+\details{
+\code{{frame_time}} in a title, subtitle or caption shows the time each frame
+has reached, updated on every frame (see \emph{Frame variables} in \code{\link[=animate]{animate()}});
+for a \code{Date} or \code{POSIXct} time it is a \code{Date} or \code{POSIXct}, so
+\code{"{format(frame_time, '\%b \%Y')}"} works.
 }
 \examples{
 if (requireNamespace("gapminder", quietly = TRUE)) {

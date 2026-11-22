@@ -15,6 +15,9 @@ NULL
 #'
 #' @param plot A [PlotSpec].
 #' @param title,subtitle,caption,tag Plot-level text (or `NULL` to leave unset).
+#'   In an animation, the title, subtitle and caption may embed frame variables
+#'   such as `"{closest_state}"` or `"{round(frame_time)}"` (see *Frame
+#'   variables* in [animate()]).
 #' @param x,y,size Axis / legend title overrides for those aesthetics.
 #' @param color,colour Colour-scale title override; `colour` is an alias for
 #'   `color`.

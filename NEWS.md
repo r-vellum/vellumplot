@@ -1,5 +1,23 @@
 # vellumplot 0.18.1.9000 (development version)
 
+## New features
+
+* Frame variables in animation titles (VP-82): `labs(title = "Year:
+  {round(frame_time)}")`, glue-style, as in gganimate. Available:
+  `frame`, `nframes`, `progress` always; `closest_state`, `previous_state`,
+  `next_state`, `transitioning` for `transition_states()`; `frame_time` for
+  `transition_time()`; `frame_along` for `transition_reveal()`. Each `{...}`
+  is an R expression evaluated per frame. The title, subtitle and caption
+  update on **every** frame, not only at keyframes: each distinct string is
+  shaped once and swapped into the tweened frame by vellum's new per-frame
+  text (needs vellum 0.13.0.9000). Data labels (`mark_text()`) are not
+  templated. See *Frame variables* in `?animate`.
+
+* `transition_time()` accepts `Date` and `POSIXct` times (VP-83). They run on
+  their numeric value (segments weighted by the day/second gaps) and keep
+  their class for `{frame_time}` (with the time zone) and in the cut warning's
+  state names.
+
 ## Bug fixes
 
 * `transition_reveal()` reveals the data along `along`, as gganimate does

@@ -60,6 +60,34 @@ the states, so 40 states in 80 frames leave two frames per state and nothing
 visibly moves.
 }
 
+\section{Frame variables}{
+A title, subtitle or caption (set with \code{\link[=labs]{labs()}}) may embed frame variables
+in braces, glue-style, as in gganimate: \code{labs(title = "Year: {frame_time}")}.
+Each \code{{...}} is an R expression evaluated per frame with the variables below
+in scope (and the environment \code{animate()} was called from behind them), so
+\code{"{round(frame_time)}"} or \code{"{format(frame_time, '\%Y')}"} work; write \verb{\{\{}
+and \verb{\}\}} for literal braces. The label is updated on \strong{every frame}, not
+only at keyframes: a \code{{frame_time}} title counts through the in-between
+times while the marks move.
+\itemize{
+\item every transition: \code{frame} (the frame number), \code{nframes}, \code{progress}
+(\code{frame / nframes});
+\item \code{\link[=transition_states]{transition_states()}}: \code{closest_state}, \code{previous_state}, \code{next_state}
+(the state the frame is nearest to, comes from and goes to; all three are
+the held state during a pause) and \code{transitioning} (\code{TRUE} while moving).
+\code{closest_state} switches halfway through a transition, on the position
+easing, when the marks' discrete attributes do;
+\item \code{\link[=transition_time]{transition_time()}}: \code{frame_time}, the time the frame has reached (on the
+position easing, so it agrees with where the marks are), of the time
+column's class (\code{Date}, \code{POSIXct}, or double);
+\item \code{\link[=transition_reveal]{transition_reveal()}}: \code{frame_along}, the \code{along} value revealed so far.
+}
+
+Data labels (\code{\link[=mark_text]{mark_text()}}) take their text from the data and are not
+templated: a label whose string differs between two states takes the nearer
+state's string, switching halfway through.
+}
+
 \examples{
 \dontrun{
 # Four bars in every state, so each bar tweens into its next height.

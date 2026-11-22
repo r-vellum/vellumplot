@@ -155,8 +155,10 @@ NULL
 .mark_ctx <- new.env(parent = emptyenv())
 
 # Fields of `.mark_ctx` that accumulate over a whole compile, so a nested draw
-# must not roll them back: the provenance table and the grob counter.
-.MARK_CTX_SHARED <- c("provenance", "seq")
+# must not roll them back: the provenance table, the grob counter, and an
+# animation's record of how its frame-variable title bands were drawn
+# (`.draw_band()`, VP-82).
+.MARK_CTX_SHARED <- c("provenance", "seq", "anim_bands")
 
 # Snapshot / restore the per-plot context around a nested `.draw_plot()` (an
 # inset sub-plot drawn from inside an outer layer). Restoring removes fields the

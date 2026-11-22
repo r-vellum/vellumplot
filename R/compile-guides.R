@@ -817,7 +817,13 @@ NULL
 # With `band_w` unset (the composition path, which does not know its page width
 # here) it is an ordinary single-line label. Shared by the layout height
 # measurement and the draw so the reserved height always matches the drawn text.
-.band_text_grob <- function(text, el, band_w = NA_real_, default_hjust = 0) {
+.band_text_grob <- function(
+  text,
+  el,
+  band_w = NA_real_,
+  default_hjust = 0,
+  key = NULL
+) {
   hj <- el@hjust %||% default_hjust
   a <- .band_anchor(hj)
   rot <- .el_rot(el)
@@ -831,7 +837,8 @@ NULL
     rot = rot,
     width = if (wrap) vellum::vl_unit(band_w, "mm") else NULL,
     align = if (wrap) a$just else "left",
-    gp = .el_gpar_text(el)
+    gp = .el_gpar_text(el),
+    key = key
   )
 }
 
@@ -842,29 +849,54 @@ NULL
   text,
   el,
   default_hjust,
-  band_w = NA_real_
+  band_w = NA_real_,
+  slot = NULL
 ) {
   if (.is_blank(el)) {
     return(scene)
+  }
+  # In an animation keyframe whose labels carry frame variables (VP-82), key
+  # the band's text ("vp:title") and record how it was drawn, so the render can
+  # shape every frame's string the same way and swap it in per frame.
+  key <- NULL
+  if (!is.null(slot) && slot %in% names(.mark_ctx$anim_bands)) {
+    key <- paste0("vp:", slot)
+    .mark_ctx$anim_bands[[slot]] <- list(
+      el = el,
+      band_w = band_w,
+      default_hjust = default_hjust
+    )
   }
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(row = row, col = 1, colspan = ncol)
   )
-  scene <- vellum::draw(scene, .band_text_grob(text, el, band_w, default_hjust))
+  scene <- vellum::draw(
+    scene,
+    .band_text_grob(text, el, band_w, default_hjust, key = key)
+  )
   vellum::pop(scene)
 }
 
 .draw_title <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
-  .draw_band(scene, row, ncol, text, rt[["plot.title"]], 0, band_w)
+  .draw_band(scene, row, ncol, text, rt[["plot.title"]], 0, band_w, "title")
 }
 
 .draw_subtitle <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
-  .draw_band(scene, row, ncol, text, rt[["plot.subtitle"]], 0, band_w)
+  .draw_band(
+    scene,
+    row,
+    ncol,
+    text,
+    rt[["plot.subtitle"]],
+    0,
+    band_w,
+    "subtitle"
+  )
 }
 
 .draw_caption <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
-  .draw_band(scene, row, ncol, text, rt[["plot.caption"]], 1, band_w)
+  .draw_band(scene, row, ncol, text, rt[["plot.caption"]], 1, band_w, "caption")
 }
 
 .draw_tag <- function(scene, row, ncol, text, rt, band_w = NA_real_) {

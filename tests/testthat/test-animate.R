@@ -239,10 +239,10 @@ test_that("transition_time weights frames by the time gap", {
   expect_false(a@wrap)
 })
 
-test_that("transition_time needs a numeric column", {
+test_that("transition_time needs a numeric, Date or POSIXct column", {
   d <- data.frame(g = rep(letters[1:2], each = 2), x = 1:4, y = 1:4)
   p <- vplot(d) |> mark_point(x = x, y = y) |> transition_time(g)
-  expect_error(animate(p), "numeric time column")
+  expect_error(animate(p), "numeric, Date or POSIXct time column")
 })
 
 test_that("animate() compiles one keyframe per state", {
@@ -529,4 +529,129 @@ test_that("a layer's own data is filtered to each keyframe's state", {
   }
   # a layer whose data lacks the state column persists whole (NULL key)
   expect_null(vellumplot:::.layer_state_key(tr, data.frame(x = 1, y = 1)))
+})
+
+# ---- frame variables (VP-82) and Date/POSIXct times (VP-83) -----------------
+
+# The title text of every frame of an animated SVG, in frame order.
+svg_frame_titles <- function(a, pattern) {
+  f <- withr::local_tempfile(fileext = ".svg")
+  suppressMessages(anim_save(f, a))
+  doc <- xml2::read_xml(f)
+  frames <- xml2::xml_find_all(doc, "/*[local-name()='svg']/*[local-name()='g']")
+  vapply(frames, function(g) {
+    tx <- xml2::xml_text(xml2::xml_find_all(g, ".//*[local-name()='text']"))
+    hit <- grep(pattern, tx, value = TRUE)
+    if (length(hit)) hit[[1]] else NA_character_
+  }, character(1))
+}
+
+test_that("frame variables are substituted glue-style (VP-82)", {
+  g <- vellumplot:::.glue_one
+  e <- new.env()
+  e$k <- 10
+  expect_identical(g("Year {round(frame_time)}", list(frame_time = 1952.6), e), "Year 1953")
+  expect_identical(g("{{literal}} {frame} of {nframes}", list(frame = 2L, nframes = 9), e), "{literal} 2 of 9")
+  expect_identical(g("{frame * k}", list(frame = 3L), e), "30") # caller env behind the vars
+  expect_identical(g("no braces", list(), e), "no braces")
+  expect_error(g("{nope}", list(), e), "animation label")
+})
+
+test_that("a {frame_time} title updates on every frame, not only at keyframes (VP-82)", {
+  skip_if_not_installed("xml2")
+  d <- data.frame(t = rep(c(0, 10, 20), each = 2), x = rep(1:2, 3), y = c(1, 2, 2, 3, 3, 1))
+  a <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    labs(title = "t = {round(frame_time, 1)}") |>
+    transition_time(t) |>
+    animate(nframes = 9)
+  expect_named(a@frame_text$bands, "title")
+  got <- svg_frame_titles(a, "^t = ")
+  # 9 frames evenly over 0..20: every frame shows its own time.
+  expect_identical(got, paste("t =", round(seq(0, 20, length.out = 9), 1)))
+})
+
+test_that("state frame variables follow the schedule (VP-82)", {
+  d <- data.frame(s = rep(c("a", "b", "c"), each = 2), x = rep(1:2, 3), y = 1:6)
+  a <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    labs(title = "{closest_state}", subtitle = "{previous_state}>{next_state}") |>
+    transition_states(s, wrap = TRUE) |>
+    animate(nframes = 12)
+  sch <- vellumplot:::.anim_schedule(3, 12, "linear", a@seg_weights, a@state_length, a@wrap)
+  v <- vellumplot:::.schedule_vars(a@frame_text, sch)
+  closest <- vapply(v, `[[`, "", "closest_state")
+  prev <- vapply(v, `[[`, "", "previous_state")
+  nxt <- vapply(v, `[[`, "", "next_state")
+  moving <- vapply(v, `[[`, NA, "transitioning")
+  # Held frames: all three equal; moving: from -> to, closest flips at 0.5.
+  expect_true(all(prev[!moving] == nxt[!moving]))
+  expect_true(all(ifelse(sch$frac[moving] < 0.5, closest[moving] == prev[moving], closest[moving] == nxt[moving])))
+  # The wrap's last move goes back to the first state.
+  last_move <- max(which(moving))
+  expect_identical(c(prev[last_move], nxt[last_move]), c("c", "a"))
+  expect_identical(vapply(v, `[[`, 0, "progress"), (1:12) / 12)
+
+  skip_if_not_installed("xml2")
+  got <- svg_frame_titles(a, "^[abc]$")
+  expect_identical(got, closest)
+})
+
+test_that("transition_time() accepts Date and POSIXct times (VP-83)", {
+  d <- data.frame(t = rep(as.Date("2020-01-01") + c(0, 31, 59), each = 3), x = rep(1:3, 3), y = c(1, 2, 3, 2, 3, 4, 3, 4, 5))
+  a <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    labs(title = "{format(frame_time, '%Y-%m-%d')}") |>
+    transition_time(t) |>
+    animate(nframes = 10)
+  expect_length(a@scenes, 3L)
+  expect_identical(a@states, as.character(as.double(as.Date("2020-01-01") + c(0, 31, 59))))
+  # Segments weighted by the day gaps, as for a numeric time.
+  expect_equal(a@seg_weights, c(31, 28))
+  sch <- vellumplot:::.anim_schedule(3, 10, "linear", a@seg_weights, 0, FALSE)
+  v <- vellumplot:::.schedule_vars(a@frame_text, sch)
+  ft <- lapply(v, `[[`, "frame_time")
+  expect_s3_class(ft[[1]], "Date")
+  expect_equal(ft[[1]], as.Date("2020-01-01"))
+  expect_equal(ft[[10]], as.Date("2020-02-29"))
+
+  d$p <- as.POSIXct(d$t, tz = "UTC") + 3600
+  a2 <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    labs(title = "{frame_time}") |>
+    transition_time(p) |>
+    animate(nframes = 5)
+  v2 <- vellumplot:::.schedule_vars(
+    a2@frame_text,
+    vellumplot:::.anim_schedule(3, 5, "linear", a2@seg_weights, 0, FALSE)
+  )
+  expect_s3_class(v2[[1]]$frame_time, "POSIXct")
+  expect_identical(attr(v2[[1]]$frame_time, "tzone"), "UTC")
+  expect_equal(v2[[5]]$frame_time, as.POSIXct("2020-02-29 01:00:00", tz = "UTC"))
+
+  d$f <- factor(d$t)
+  expect_error(
+    vplot(d) |> mark_point(x = x, y = y) |> transition_time(f) |> animate(),
+    "numeric, Date or POSIXct"
+  )
+})
+
+test_that("a reveal's {frame_along} label is compiled into each frame (VP-82)", {
+  d <- data.frame(t = 1:9, y = 1:9)
+  a <- vplot(d) |>
+    mark_line(x = t, y = y) |>
+    labs(title = "along {frame_along} ({frame}/{nframes})") |>
+    transition_reveal(t) |>
+    animate(nframes = 5)
+  f <- withr::local_tempfile(fileext = ".svg")
+  vellum::render(vellum::as_vellum_scene(a@scenes[[3]]), f)
+  expect_true(any(grepl("along 5 (3/5)", readLines(f, warn = FALSE), fixed = TRUE)))
+})
+
+test_that("a plot without frame variables keeps no frame text", {
+  d <- data.frame(s = rep(1:2, each = 2), x = 1:4, y = 1:4)
+  a <- vplot(d) |> mark_point(x = x, y = y) |> labs(title = "Plain") |> transition_states(s) |> animate(nframes = 4)
+  expect_length(a@frame_text, 0L)
+  sch <- vellumplot:::.anim_schedule(2, 4, "linear", a@seg_weights, a@state_length, a@wrap)
+  expect_null(vellumplot:::.frame_text(a, sch))
 })
