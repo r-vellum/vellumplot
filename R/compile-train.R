@@ -1915,6 +1915,13 @@ NULL
 ) {
   scalespec <- .scale_for(spec, aes)
   sc <- .train_position(aes, values, scalespec, title, include_zero, lim)
+  # Bars on a continuous x reach half a bar width past their centres: train on
+  # those edges too, as ggplot2 does, so the end bars are not clipped (VP-90).
+  ext <- .bar_extent_data(sc, resolved, aes, scalespec, lim)
+  if (!is.null(ext)) {
+    values <- c(values, list(ext))
+    sc <- .train_position(aes, values, scalespec, title, include_zero, lim)
+  }
   sc <- .widen_for_footprints(
     sc,
     spec,
@@ -1930,6 +1937,56 @@ NULL
     sc <- .scale_set(sc, map = .inf_to_edge(sc$map, sc$domain))
   }
   .attach_axis_guide(sc, scalespec)
+}
+
+# The x extent of the bar layers (`mark_bar()`, `mark_histogram()`, ...) in
+# data units: each bar's centre +/- half its width, computed in native units
+# exactly as `.emit_bar()` sizes it (a stat's `width`, else 90% of the
+# resolution; a dodged group spans `dodge_width` when that is wider), then taken
+# back through the transform's inverse (a date axis keeps its class). NULL when
+# there are no such bars, the axis is discrete or binned (bars fill their
+# bands), or the user pinned the limits, which must win.
+.bar_extent_data <- function(sc, resolved, aes, scalespec, lim) {
+  if (
+    !identical(aes, "x") ||
+      isTRUE(sc$discrete) ||
+      !is.null(sc$band_width) ||
+      !is.null(lim) ||
+      (!is.null(scalespec) && !is.null(scalespec@domain))
+  ) {
+    return(NULL)
+  }
+  ext <- NULL
+  proto <- NULL
+  for (L in resolved) {
+    if (!identical(L$mark, "bar") || is.null(L$values$x)) {
+      next
+    }
+    xv <- L$values$x
+    if (!is.numeric(xv) && !inherits(xv, c("Date", "POSIXct"))) {
+      next
+    }
+    proto <- proto %||% xv
+    xp <- sc$map(xv)
+    ok <- is.finite(xp)
+    if (!any(ok)) {
+      next
+    }
+    w <- rep_len(L$values$width %||% (0.9 * .resolution(xp)), length(xp))
+    if (L$position %in% c("dodge", "dodge2")) {
+      w <- pmax(w, L$stat_params$dodge_width %||% 0)
+    }
+    ext <- range(c(ext, xp[ok] - w[ok] / 2, xp[ok] + w[ok] / 2), finite = TRUE)
+  }
+  if (is.null(ext)) {
+    return(NULL)
+  }
+  if (!is.null(sc$time_unit)) {
+    return(.as_like_time(ext, proto))
+  }
+  inv <- .resolve_trans(scalespec)$inverse
+  out <- suppressWarnings(inv(ext))
+  if (all(is.finite(out))) out
 }
 
 # The footprint widening of `.train_axis()` (see there).

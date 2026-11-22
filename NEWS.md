@@ -70,6 +70,13 @@
   `coord_flip()`, drew no bars because their native width resolved to a
   negative size. Fixed in vellum (needs vellum with VP-89).
 
+* Bars on a continuous x axis are no longer clipped at the ends (VP-90). The
+  x scale is now trained on each bar's edges (centre +/- half its width,
+  dodged groups included), not only its centre, as in ggplot2, so
+  `mark_bar(x = year, ...)` gets a slightly wider x domain. Explicit limits,
+  discrete and binned axes are unchanged. Histograms already trained on their
+  bin edges.
+
 * A constant `if_true` in `condition()` is a setting, not a mapping (VP-86):
   `alpha = condition("s", 1, 0.2)` no longer adds an alpha legend titled "1"
   with keys 0.5-1.5. The same holds for colour, fill and size
