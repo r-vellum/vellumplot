@@ -4,15 +4,33 @@
 \alias{animate}
 \title{Build a keyframe animation from a plot}
 \usage{
-animate(plot, nframes = 50, fps = 25)
+animate(
+  plot,
+  nframes = 50,
+  fps = 25,
+  start_pause = 0,
+  end_pause = 0,
+  rewind = FALSE
+)
 }
 \arguments{
 \item{plot}{A \link{PlotSpec} with a \code{\link[=transition_states]{transition_states()}} (and optionally an
 \code{\link[=ease_aes]{ease_aes()}}).}
 
-\item{nframes}{Total number of frames to render, a positive whole number.}
+\item{nframes}{Total number of frames to render, a positive whole number.
+The pauses and the rewind are part of it, as in gganimate.}
 
 \item{fps}{Frames per second (the playback rate written into the file).}
+
+\item{start_pause, end_pause}{Number of frames to hold the first and the last
+frame for, before the animation starts and after it ends (default 0).
+A looping file (every format loops) then rests on the final picture
+before starting over: \code{end_pause = fps} holds it for a second.}
+
+\item{rewind}{Play the animation backwards after it has played forwards, so
+the loop returns to its start smoothly instead of cutting (default
+\code{FALSE}). The frames are split between the two directions; the end pause
+sits between them and the start pause at both ends.}
 }
 \value{
 A \code{vellum_animation}.
@@ -55,12 +73,15 @@ changes between states fades out of one panel and into the other. The
 scales are frozen across frames, so per-panel scales (\code{facet_wrap(scales = "free")}, an independent \code{resolve_scale()}) are refused.
 
 A mark found in only one of two adjacent states fades in or out (points,
-bars and tiles, labels, lines and areas alike) on the alpha easing, and a
-point whose colour group changes slides to its new place while its colour
-blends. What cannot move switches whole halfway through the transition: a
-matched line or path whose number of points changes, and decoration without
-an identity (an effect underlay) that comes and goes. \code{animate()} warns (once
-per call) when that will happen, naming the states.
+bars and tiles, labels, lines and areas alike, with their effect underlays
+such as \code{\link[=glow]{glow()}}) on the alpha easing, and a point whose colour group changes
+slides to its new place while its colour blends. A line, path or area whose
+number of points changes morphs from one outline into the other. Where marks
+overlap, the stacking order switches to the next state's halfway through the
+transition. What cannot move switches whole halfway through: decoration
+without an identity that comes and goes, or a line that cannot be morphed (a
+broken line with missing values, mixed units). \code{animate()} warns (once per
+call) when that will happen, naming the states.
 
 Give each transition enough frames to be seen: \code{nframes} is spread over all
 the states, so 40 states in 80 frames leave two frames per state and nothing
@@ -90,9 +111,20 @@ column's class (\code{Date}, \code{POSIXct}, or double);
 \item \code{\link[=transition_reveal]{transition_reveal()}}: \code{frame_along}, the \code{along} value revealed so far.
 }
 
-Data labels (\code{\link[=mark_text]{mark_text()}}) take their text from the data and are not
-templated: a label whose string differs between two states takes the nearer
-state's string, switching halfway through.
+A \code{\link[=mark_text]{mark_text()}} label can use the same variables (VP-93): \code{mark_text(data = data.frame(x = 3000, y = 40), x = x, y = y, label = "{round(frame_time)}", size = 60)} draws the year large behind a gapminder bubble chart, counting
+on every frame. A constant label or a column of labels may contain \code{{...}};
+the label is placed (and moves) as the mark it belongs to, and only its
+string changes per frame. Repelled and rich-text labels are not templated.
+An ordinary data label whose string differs between two states takes the
+nearer state's string, switching halfway through.
+}
+
+\section{Pauses and rewind}{
+\code{start_pause} and \code{end_pause} hold the first and last frame for that many
+frames, and \code{rewind = TRUE} plays the animation back to the start, as in
+gganimate. They come out of \code{nframes}: \code{animate(nframes = 100, end_pause = 20)} moves for 80 frames and rests on the final picture for 20. Every output
+honours them -- \code{\link[=anim_save]{anim_save()}} to GIF, APNG or SVG, \code{\link[=anim_frame]{anim_frame()}}'s frame
+numbers, and the frame scrubber of an animated \code{vellumwidget}.
 }
 
 \examples{
@@ -107,5 +139,5 @@ vplot(d) |>
 }
 }
 \seealso{
-\code{\link[=transition_states]{transition_states()}}, \code{\link[=ease_aes]{ease_aes()}}, \code{\link[=anim_save]{anim_save()}}
+\code{\link[=transition_states]{transition_states()}}, \code{\link[=ease_aes]{ease_aes()}}, \code{\link[=anim_save]{anim_save()}}, \code{\link[=anim_frame]{anim_frame()}}
 }

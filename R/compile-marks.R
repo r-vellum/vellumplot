@@ -157,8 +157,9 @@ NULL
 # Fields of `.mark_ctx` that accumulate over a whole compile, so a nested draw
 # must not roll them back: the provenance table, the grob counter, and an
 # animation's record of how its frame-variable title bands were drawn
-# (`.draw_band()`, VP-82).
-.MARK_CTX_SHARED <- c("provenance", "seq", "anim_bands")
+# (`.draw_band()`, VP-82), its group sizes per state (VP-87) and its
+# templated data labels (VP-93).
+.MARK_CTX_SHARED <- c("provenance", "seq", "anim_bands", "anim_counts", "anim_labels")
 
 # Snapshot / restore the per-plot context around a nested `.draw_plot()` (an
 # inset sub-plot drawn from inside an outer layer). Restoring removes fields the
@@ -339,6 +340,23 @@ NULL
     if (!is.null(m)) {
       grob@meta <- m
     }
+  } else if (
+    !is.null(rows) &&
+      identical(.mark_ctx$kind, "effect") &&
+      isTRUE(.mark_ctx$anim_identity) &&
+      !is.null(.mark_ctx$data_id)
+  ) {
+    # An effect underlay (glow, outline, shadow, motion trail) in an animation
+    # keyframe is keyed with its mark plus the copy's place in the layer's
+    # underlays (VR-34), so it fades in and out with its mark instead of
+    # switching at the midpoint. No metadata: a halo is not a data element.
+    keys <- .mark_ctx$data_id[rows]
+    if (
+      !is.null(.mark_ctx$anim_series) && length(rows) && .is_single_shape(grob)
+    ) {
+      keys <- .mark_ctx$anim_series[rows[[1L]]]
+    }
+    grob@keys <- paste0(keys, "~fx", .mark_ctx$fx_seq %||% 0L)
   }
   vellum::draw(scene, grob)
 }
@@ -777,6 +795,7 @@ NULL
       # separately for `.mapped_linewidth()` to add to each mapped width.
       L2$params$.lwd_add <- d * .MM_TO_LWD
     }
+    .mark_ctx$fx_seq <- (.mark_ctx$fx_seq %||% 0L) + 1L
     scene <- .emit_layer(scene, L2, scales)
   }
   vellum::pop(scene)
@@ -833,6 +852,7 @@ NULL
       L2$params$.lwd_add <- widen * .MM_TO_LWD
     }
   }
+  .mark_ctx$fx_seq <- (.mark_ctx$fx_seq %||% 0L) + 1L
   scene <- .emit_layer(scene, L2, scales)
   vellum::pop(scene)
 }
@@ -1150,6 +1170,7 @@ NULL
       .mark_ctx$anim_series <- ak$series
     }
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
+    .mark_ctx$fx_seq <- 0L
     for (e in .underlay_effects(L)) {
       scene <- .emit_underlay(scene, L, scales, e)
     }

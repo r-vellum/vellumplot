@@ -783,3 +783,141 @@ test_that("each series of a multi-group reveal leads toward its own next row (VP
   a <- vplot(m[order(m$t), ]) |> mark_line(x = t, y = y, color = g) |> transition_reveal(t) |> animate(nframes = 6)
   expect_length(a@scenes, 6L)
 })
+
+test_that("animate() suggests data_id when row order decides the pairing (VP-87)", {
+  d <- data.frame(
+    s = c(rep("A", 4), rep("B", 3)),
+    g = c("x", "x", "y", "y", "x", "y", "y"),
+    x = c(1, 2, 1, 2, 1, 1, 2),
+    y = 1:7
+  )
+  p <- vplot(d) |> mark_point(x = x, y = y, color = g) |> transition_states(s)
+  expect_message(animate(p, nframes = 4), class = "vellumplot_anim_row_order")
+  # Once per call, however many layers.
+  p2 <- p |> mark_text(x = x, y = y, label = g, color = g)
+  msgs <- 0L
+  withCallingHandlers(
+    suppressWarnings(animate(p2, nframes = 4)),
+    vellumplot_anim_row_order = function(m) {
+      msgs <<- msgs + 1L
+      invokeRestart("muffleMessage")
+    }
+  )
+  expect_identical(msgs, 1L)
+  # Not with a data_id, not when every group keeps its size, not for lines.
+  d$id <- c(1, 2, 3, 4, 1, 3, 4)
+  expect_no_message(
+    vplot(d) |> mark_point(x = x, y = y, color = g, data_id = id) |>
+      transition_states(s) |> animate(nframes = 4),
+    class = "vellumplot_anim_row_order"
+  )
+  expect_no_message(
+    vplot(d[c(1, 3, 5, 6), ]) |> mark_point(x = x, y = y, color = g) |>
+      transition_states(s) |> animate(nframes = 4),
+    class = "vellumplot_anim_row_order"
+  )
+  expect_no_message(
+    suppressWarnings(vplot(d) |> mark_line(x = x, y = y, color = g) |>
+      transition_states(s) |> animate(nframes = 4)),
+    class = "vellumplot_anim_row_order"
+  )
+})
+
+test_that("start_pause, end_pause and rewind hold and reverse frames (VP-95)", {
+  d <- data.frame(t = rep(1:3, each = 2), g = rep(c("a", "b"), 3), v = c(1, 3, 2, 1, 3, 2))
+  p <- vplot(d, width = 2, height = 1.5, dpi = 40) |>
+    mark_bar(x = g, y = v, fill = g) |>
+    transition_states(t, wrap = FALSE)
+  a <- animate(p, nframes = 20, start_pause = 3, end_pause = 5)
+  s <- vellumplot:::.anim_frame_schedule(a)
+  expect_length(s$seg, 20L)
+  expect_identical(vellumplot:::.anim_total_frames(a), 20)
+  # The first three frames are the first keyframe; the last five the final one.
+  expect_true(all(s$seg[1:4] == 1L & s$frac[1:4] == 0))
+  expect_true(all(s$seg[16:20] == 2L & s$frac[16:20] == 1))
+  # The movement in between is the 12-frame schedule.
+  core <- vellumplot:::.anim_schedule(3, 12, "linear", a@seg_weights, a@state_length, FALSE)
+  expect_equal(s$frac[4:15], core$frac)
+  # Rewind: forwards, then the same frames backwards.
+  r <- animate(p, nframes = 20, end_pause = 2, rewind = TRUE)
+  sr <- vellumplot:::.anim_frame_schedule(r)
+  expect_length(sr$seg, 20L)
+  expect_identical(sr$frac, rev(sr$frac))
+  expect_identical(sr$seg, rev(sr$seg))
+  # Without pauses nothing changes.
+  a0 <- animate(p, nframes = 12)
+  expect_equal(vellumplot:::.anim_frame_schedule(a0)$frac, core$frac)
+  # Too few frames left, or bad values.
+  expect_error(animate(p, nframes = 5, end_pause = 4), "too few frames")
+  expect_error(animate(p, nframes = 10, start_pause = -1), "non-negative")
+  expect_error(animate(p, nframes = 10, rewind = NA), "rewind")
+  # The files carry every frame: an animated SVG has one frame group each.
+  f <- withr::local_tempfile(fileext = ".svg")
+  anim_save(f, a)
+  svg <- paste(readLines(f, warn = FALSE), collapse = "")
+  expect_identical(lengths(regmatches(svg, gregexpr("-vf[ \"]", svg))), 20L)
+  # A reveal pauses too.
+  rv <- vplot(data.frame(t = 1:5, y = 1:5)) |> mark_line(x = t, y = y) |>
+    transition_reveal(t) |> animate(nframes = 10, end_pause = 4)
+  expect_length(rv@scenes, 6L)
+  expect_length(vellumplot:::.anim_frame_schedule(rv)$seg, 10L)
+})
+
+test_that("anim_frame() saves the animation's own frame as a still (VP-96)", {
+  skip_if_not_installed("png")
+  d <- data.frame(t = rep(1:3, each = 2), g = rep(c("a", "b"), 3), v = c(1, 3, 2, 1, 3, 2))
+  a <- vplot(d, width = 2, height = 1.5, dpi = 40) |>
+    mark_bar(x = g, y = v, fill = g) |>
+    labs(title = "{closest_state}") |>
+    transition_states(t, wrap = FALSE) |>
+    animate(nframes = 9)
+  dir <- withr::local_tempdir()
+  vellumplot:::.anim_render(a, dir, "frames")
+  frames <- sort(list.files(dir, full.names = TRUE))
+  one <- function(...) {
+    f <- withr::local_tempfile(fileext = ".png", .local_envir = parent.frame())
+    anim_frame(f, a, ...)
+    png::readPNG(f)
+  }
+  expect_equal(one(frame = 4), png::readPNG(frames[[4]]))
+  # The default is the final frame of a non-looping animation.
+  expect_equal(one(), png::readPNG(frames[[9]]))
+  sv <- withr::local_tempfile(fileext = ".svg")
+  anim_frame(sv, a, frame = 1)
+  expect_match(paste(readLines(sv, warn = FALSE), collapse = ""), ">1<")
+  expect_error(anim_frame(sv, a, frame = 10), "1:9")
+  expect_error(anim_frame("x.gif", a), "cannot write")
+  # A looping animation defaults to its first frame.
+  w <- vplot(d, width = 2, height = 1.5, dpi = 40) |>
+    mark_bar(x = g, y = v, fill = g) |>
+    transition_states(t) |>
+    animate(nframes = 6)
+  dir2 <- withr::local_tempdir()
+  vellumplot:::.anim_render(w, dir2, "frames")
+  f <- withr::local_tempfile(fileext = ".png")
+  anim_frame(f, w)
+  expect_equal(png::readPNG(f), png::readPNG(sort(list.files(dir2, full.names = TRUE))[[1]]))
+})
+
+test_that("mark_text() labels can use frame variables (VP-93)", {
+  d <- data.frame(year = rep(c(2000, 2010), each = 2), g = c("a", "b", "a", "b"), v = c(1, 2, 3, 4))
+  a <- vplot(d, width = 3, height = 2, dpi = 40) |>
+    mark_point(x = g, y = v, data_id = g) |>
+    mark_text(data = data.frame(x = "a", y = 3.5), x = x, y = y, label = "yr {round(frame_time)}") |>
+    transition_time(year) |>
+    animate(nframes = 11)
+  svg_of <- function(i) {
+    f <- withr::local_tempfile(fileext = ".svg", .local_envir = parent.frame())
+    anim_frame(f, a, frame = i)
+    paste(readLines(f, warn = FALSE), collapse = "")
+  }
+  # Each keyframe is compiled with its own value, every frame shows its own.
+  expect_match(svg_of(1), "yr 2000")
+  expect_match(svg_of(6), "yr 2005")
+  expect_match(svg_of(11), "yr 2010")
+  # The literal is untouched outside an animation, and `{{` escapes.
+  st <- vplot(d) |> mark_text(x = g, y = v, label = "{{x}} {frame}")
+  expect_no_error(vellum::as_vellum_scene(st))
+  expect_true(all(vellumplot:::.is_frame_template(c("{a}", "x {b} y")) ))
+  expect_false(any(vellumplot:::.is_frame_template(c("{{a}}", "plain", NA))))
+})
