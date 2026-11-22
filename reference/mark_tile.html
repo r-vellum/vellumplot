@@ -150,7 +150,10 @@ curve, filled like an area.)</p>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Encodings (tidy-eval): <code>x</code>, <code>y</code>, <code>fill</code> for tile/raster; <code>x</code>, <code>y</code>
-for bin2d; <code>x</code> (+ <code>fill</code>/<code>color</code>) for density.</p></dd>
+for bin2d; <code>x</code> (+ <code>fill</code>/<code>color</code>) for density. <code>mark_tile()</code> also takes
+<code>width</code> and <code>height</code> (data units; default the resolution, so tiles abut).
+On a continuous axis the tiles' edges train the scale, as in ggplot2, so
+the end tiles are not clipped.</p></dd>
 
 
 <dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>

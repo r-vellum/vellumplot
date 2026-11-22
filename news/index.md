@@ -11,6 +11,14 @@
   exactly, so a narrow or `position_dodge(width =)` layer pads the axis
   as ggplot2 does.
 
+- [`mark_tile()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  and
+  [`mark_raster()`](https://r-vellum.github.io/vellumplot/reference/mark_tile.md)
+  on a continuous axis are no longer clipped at the ends (VP-99): the
+  tiles’ edges (centre +/- half the width / height) train the x and y
+  scales, as ggplot2 does, the tile version of VP-90. A constant
+  `mark_tile(width =, height =)` is honoured too (it was ignored).
+
 ## vellumplot 0.19.0
 
 ### New features
