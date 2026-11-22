@@ -19,11 +19,12 @@ NULL
 }
 
 # The mapped expression of the first layer (in layer order) that maps
-# `channel`, as text; NULL when no layer maps it.
+# `channel`, as text; NULL when no layer maps it. A `condition()` with a
+# constant `if_true` maps nothing (VP-86).
 .mapped_title <- function(spec, channel) {
   for (layer in spec@layers) {
     ch <- layer@encoding[[channel]]
-    if (!is.null(ch)) {
+    if (!is.null(ch) && !.cond_constant(ch, channel)) {
       return(.channel_label(ch))
     }
   }

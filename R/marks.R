@@ -92,6 +92,13 @@ NULL
       # drawing see the plain encoding -- transparency), and carry the selection +
       # `if_false` + `empty` alongside for the interactive host.
       encoding[[nm]] <- .condition_channel(e, rlang::quo_get_env(q))
+      # A constant `if_true` (`alpha = condition(sel, 1, 0.2)`) is a setting,
+      # as `alpha = 1` is: its value is a param, drawn as is, and the channel
+      # stays only to carry the condition (no values, no scale, no legend;
+      # `.cond_constant()`, VP-86).
+      if (.cond_constant(encoding[[nm]], nm)) {
+        params[[nm]] <- rlang::eval_tidy(encoding[[nm]]@expr)
+      }
     } else if (is.call(e) && .is_paint_call(e)) {
       # fill = linear_gradient(...) -> a paint *value* (constant aesthetic), not a
       # data channel: evaluate it now and store as a param.
@@ -484,6 +491,20 @@ after_stat <- function(x) x
     expr = rlang::new_quosure(args$if_true, env),
     condition = list(selection = selection, if_false = if_false, empty = empty)
   )
+}
+
+# Is `ch` a `condition()` channel whose `if_true` is a constant (VP-86)? One
+# that references no data column -- a literal, or a computed constant such as
+# `-1` or `rgb(1, 0, 0)` -- on a non-positional aesthetic. Such a channel only
+# carries the condition: its value is a layer param (set at split), and
+# `.resolve_layer()` gives it no values, so it trains no scale and adds no
+# legend. Decided from the expression alone, so a spec read back from its IR
+# (`.channel_from_ir()`) is treated the same way.
+.cond_constant <- function(ch, nm) {
+  if (is.null(ch@condition) || isTRUE(ch@after) || nm %in% .COORD_AES) {
+    return(FALSE)
+  }
+  length(all.vars(rlang::quo_get_expr(ch@expr))) == 0L
 }
 
 # The slab/interval marks name their interval probabilities `.width` (dotted) to

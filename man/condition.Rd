@@ -17,7 +17,8 @@ condition(selection, if_true, if_false, empty = TRUE)
 appearance. For \code{color} / \code{fill}, a column whose values are levels (or, on
 a continuous scale, numbers) of the aesthetic's scale is taken through
 that scale, as \code{if_true} is; any other value is read as a colour, and a
-row whose value is neither gets the theme dim.}
+row whose value is neither gets the theme dim. For \code{alpha}, a number in
+\verb{[0, 1]} (constant or per row) is the non-members' opacity.}
 
 \item{empty}{Whether an empty selection matches all elements (\code{TRUE}, default).}
 }
@@ -37,7 +38,10 @@ trains scales exactly as the equivalent plain encoding, so
 \code{color = condition("s", g, "grey80")} produces the same colour scale and legend
 as \code{color = g}. With \code{empty = TRUE} (the default) an empty selection matches
 everything, so a static / initial render shows \code{if_true} for all elements and
-interaction dims non-members to \code{if_false}.
+interaction dims non-members to \code{if_false}. A constant \code{if_true} (one that
+refers to no data column, such as \code{alpha = condition("s", 1, 0.2)} or
+\code{color = condition("s", "red", "grey80")}) is a setting, as \code{alpha = 1} is:
+it is drawn at that value and trains no scale and adds no legend.
 }
 \seealso{
 \code{\link[=select_point]{select_point()}}, \code{\link[=filter_by]{filter_by()}}

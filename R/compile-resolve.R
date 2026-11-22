@@ -25,9 +25,13 @@ NULL
     # already *is* the `if_true` branch (set at split), so this resolves + trains
     # transparently. The condition's selection + `if_false` (a constant, or a
     # per-row column) are then recorded for the interactive host.
-    v <- rlang::eval_tidy(ch@expr, data = data)
-    values[[nm]] <- v
-    types[[nm]] <- if (nzchar(ch@type)) ch@type else .infer_type(v)
+    # A constant `if_true` is a setting (the layer param holds it): it gets no
+    # values, so it trains no scale and draws no legend (VP-86).
+    if (!.cond_constant(ch, nm)) {
+      v <- rlang::eval_tidy(ch@expr, data = data)
+      values[[nm]] <- v
+      types[[nm]] <- if (nzchar(ch@type)) ch@type else .infer_type(v)
+    }
     if (!is.null(ch@condition)) {
       cnd <- ch@condition
       if_false <- if (!is.null(cnd$if_false)) {
