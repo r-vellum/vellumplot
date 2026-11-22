@@ -182,7 +182,7 @@ NULL
 # filter_by() targets this view -- emitted as per-element `filt` tags so a host
 # scopes the hide to this view, never the cross-view source). Called by both the
 # single-plot path (`.draw_plot`) and the aligned-composition path.
-.set_interaction_ctx <- function(spec) {
+.set_interaction_ctx <- function(spec, cell = NULL) {
   # Page size (inches), for emitters that must compare device text extent to a
   # native span -- e.g. sunburst label fitting. NULL when unknown.
   .mark_ctx$page <- NULL
@@ -201,8 +201,14 @@ NULL
   .mark_ctx$plot_filters <- if (length(filt_names)) unique(filt_names) else NULL
   .mark_ctx$plot_interval_aes <- .interval_encodings(spec@selections)
   # each layer's condition tags (`.condition_tags()`), so two layers
-  # conditioning one aesthetic on one selection stay apart (VP-72)
-  .mark_ctx$plot_cond_tags <- .condition_tags(spec@layers)
+  # conditioning one aesthetic on one selection stay apart (VP-72), and so do
+  # two composition cells (VP-75: `cell` is the cell id, NULL for a lone plot
+  # or an inset)
+  .mark_ctx$plot_cond_tags <- .condition_tags(
+    spec@layers,
+    cell,
+    .comp_cell_ctx$shared_cond_tags
+  )
   invisible()
 }
 

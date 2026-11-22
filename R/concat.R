@@ -526,6 +526,7 @@ compose_annotation <- function(
 .comp_cell_reset <- function() {
   .comp_cell_ctx$n <- 0L
   .comp_cell_ctx$current <- NULL
+  .comp_cell_ctx$shared_cond_tags <- NULL
 }
 
 # A panel viewport's name inside cell `cell` ("cell-2-panel-1-1"); unchanged
@@ -538,6 +539,10 @@ compose_annotation <- function(
   .provenance_reset()
   .comp_cell_reset()
   on.exit(.comp_cell_reset(), add = TRUE)
+  # condition tags two cells share, prefixed per cell (VP-75)
+  .comp_cell_ctx$shared_cond_tags <- .comp_shared_cond_tags(
+    .composition_leaf_plots(comp)
+  )
   scene <- vellum::vl_scene(
     width = comp@width,
     height = comp@height,

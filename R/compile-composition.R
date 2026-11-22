@@ -439,7 +439,7 @@ NULL
   # Per-cell interaction context (the aligned path does not go through
   # `.draw_plot`): a cell declaring an interaction keys its marks, and a cell with
   # a `filter_by()` tags its elements so a host scopes the filter to this view.
-  .set_interaction_ctx(plan$spec)
+  .set_interaction_ctx(plan$spec, cell)
   # ... and its theme's default mark colours, for its marks and own legend.
   .set_geom_ctx(.theme_of(plan$spec))
   scene <- .compile_marks(scene, panel$resolved, psc, panel = pkey)

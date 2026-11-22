@@ -2,6 +2,14 @@
 
 ## Bug fixes
 
+* Two composition cells that condition the same aesthetic on the same
+  selection (`hconcat(p1, p2)`, each `color = condition("s", ..., if_false)`)
+  no longer share a condition tag, so in vellumwidget each cell's
+  non-members take their own cell's `if_false`, not the last cell's. A tag
+  that two cells share takes the cell id, `"cell-<k>:<sel>:<aes>"` (with any
+  `"@<layer>"` suffix kept), in the elements and in `interaction_model()`;
+  tags no other cell shares are unchanged (VP-75).
+
 * A per-row `if_false` of a `color` or `fill` condition
   (`color = condition(sel, g, col)`) is carried to the host as colours: a
   column of the scale's levels (or numbers, on a continuous scale) is taken

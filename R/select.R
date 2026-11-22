@@ -570,9 +570,9 @@ interaction_model.default <- function(x) {
 # selection name, the target aesthetic, a *constant* `if_false` (a per-row
 # `if_false` is carried per element instead; NULL here), and `empty`. Read off the
 # channel's `condition` slot (populated at split by `.condition_channel`).
-.plot_conditions <- function(plot) {
+.plot_conditions <- function(plot, cell = NULL, shared_cells = NULL) {
   out <- list()
-  tags <- .condition_tags(plot@layers)
+  tags <- .condition_tags(plot@layers, cell, shared_cells)
   for (li in seq_along(plot@layers)) {
     layer <- plot@layers[[li]]
     for (nm in names(layer@encoding)) {
@@ -619,8 +619,41 @@ interaction_model.default <- function(x) {
 # with its own `if_false`), that key would be shared and one layer's `if_false`
 # would style the other's elements (VP-72), so each of those layers' tags gets
 # its layer index: "<sel>:<aes>@<layer>". A list with one entry per layer, a
-# named character vector (aesthetic -> tag) or NULL.
-.condition_tags <- function(layers) {
+# named character vector (aesthetic -> tag) or NULL. In a composition, two cells
+# that condition the same aesthetic on the same selection would share such a
+# tag too, and the last cell's condition would style both (VP-75): a tag in
+# `shared_cells` (`.comp_shared_cond_tags()`) is prefixed with the cell id,
+# "<cell>:<sel>:<aes>[@<layer>]" ("cell-2:pick:color"). A tag no other cell
+# shares stays as it is.
+.condition_tags <- function(layers, cell = NULL, shared_cells = NULL) {
+  tags <- .layer_condition_tags(layers)
+  if (is.null(cell) || !length(shared_cells)) {
+    return(tags)
+  }
+  lapply(tags, function(t) {
+    if (is.null(t)) {
+      return(NULL)
+    }
+    hit <- t %in% shared_cells
+    t[hit] <- paste0(cell, ":", t[hit])
+    t
+  })
+}
+
+# The tags any two cells of a composition share (VP-75): each leaf plot's
+# `.condition_tags()` without a cell prefix, those appearing in more than one
+# cell. `cells` are the leaf PlotSpecs in cell order.
+.comp_shared_cond_tags <- function(cells) {
+  per <- lapply(cells, function(p) {
+    unique(unlist(lapply(.layer_condition_tags(p@layers), unname)))
+  })
+  all <- unlist(per, use.names = FALSE)
+  unique(all[duplicated(all)])
+}
+
+# `.condition_tags()` within one plot: "<sel>:<aes>", with "@<layer>" where two
+# layers share it (VP-72).
+.layer_condition_tags <- function(layers) {
   base <- lapply(layers, function(layer) {
     nms <- Filter(
       function(nm) !is.null(layer@encoding[[nm]]@condition),
@@ -709,7 +742,7 @@ interaction_model.default <- function(x) {
 # `cell` is the composition cell id ("cell-<k>", NULL for a lone plot): it scopes
 # a bind to the panels of its own cell (the host matches it against each panel's
 # `cell`, see `.comp_cell_id()`), and records which cells register a selection.
-.plot_interaction_parts <- function(plot, cell = NULL) {
+.plot_interaction_parts <- function(plot, cell = NULL, shared_cells = NULL) {
   sels <- lapply(plot@selections, .selection_record)
   if (!is.null(cell)) {
     sels <- lapply(sels, function(s) {
@@ -719,7 +752,7 @@ interaction_model.default <- function(x) {
   }
   parts <- list(
     selections = sels,
-    conditions = .plot_conditions(plot),
+    conditions = .plot_conditions(plot, cell, shared_cells),
     filters = lapply(plot@filters, function(f) list(selection = f@selection)),
     binds = lapply(plot@binds, function(b) {
       out <- list(selection = b@selection, aes = b@aes)
@@ -803,8 +836,12 @@ interaction_model.default <- function(x) {
   cells <- .composition_leaf_plots(comp)
   # collect, DON'T validate per cell; cell ids follow the leaf order the compiler
   # numbers panels by (`.comp_cell_id()`)
+  # condition tags two cells share take their cell id (VP-75)
+  shared <- .comp_shared_cond_tags(cells)
   parts <- Map(
-    function(p, k) .plot_interaction_parts(p, cell = .comp_cell_id(k)),
+    function(p, k) {
+      .plot_interaction_parts(p, cell = .comp_cell_id(k), shared_cells = shared)
+    },
     cells,
     seq_along(cells)
   )

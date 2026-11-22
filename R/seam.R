@@ -856,7 +856,8 @@ NULL
   on.exit(.mark_ctx_restore(ctx), add = TRUE)
   # Interaction context for the mark emitter (single-plot path; the aligned
   # composition path sets it per cell). See `.set_interaction_ctx`.
-  .set_interaction_ctx(spec)
+  # (the pending cell id, NULL for a lone plot or an inset, claimed below)
+  .set_interaction_ctx(spec, .comp_cell_ctx$current)
   # The theme's default mark colours (`theme(geom = element_geom())`), read by
   # the mark emitters and legend keys through `.geom_paint()`.
   .set_geom_ctx(.theme_of(spec))
