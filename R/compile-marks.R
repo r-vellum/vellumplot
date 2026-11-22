@@ -411,6 +411,57 @@ NULL
   rec
 }
 
+# A per-row `if_false` of a colour aesthetic (`color = condition(sel, g, col)`)
+# as the colours a host paints non-members with (VW-46): taken through the
+# layer's trained scale for that aesthetic when the values lie in its domain (a
+# discrete scale's levels, or numbers on a continuous / binned one) -- the same
+# mapping `if_true` gets -- and otherwise read as colours, `NA` where a value is
+# neither (the host falls back to the theme dim there). Constant `if_false`
+# values and other aesthetics pass through unchanged.
+.cond_rowvals_resolve <- function(conditions, scales) {
+  for (nm in intersect(names(conditions), c("color", "fill"))) {
+    f <- conditions[[nm]]$if_false
+    if (is.null(f) || length(f) <= 1L) {
+      next
+    }
+    conditions[[nm]]$if_false <- .cond_colours(f, scales[[nm]])
+  }
+  conditions
+}
+
+.cond_colours <- function(v, sc) {
+  set <- !is.na(v)
+  chr <- is.character(v) || is.factor(v)
+  colours <- function() {
+    v <- as.character(v)
+    lv <- unique(v[set])
+    ok <- lv[vapply(lv, .is_colour1, logical(1))]
+    ifelse(set & v %in% ok, v, NA_character_)
+  }
+  if (is.null(sc) || isTRUE(sc$identity)) {
+    return(if (chr) colours() else rep(NA_character_, length(v)))
+  }
+  if (identical(sc$type, "discrete")) {
+    # A value that is one of the scale's levels maps; any other is read as a
+    # colour (NA when it is not one).
+    lev <- set & as.character(v) %in% as.character(sc$levels)
+    out <- if (chr) colours() else rep(NA_character_, length(v))
+    if (any(lev)) {
+      out[lev] <- as.character(sc$map(v[lev]))
+    }
+    return(out)
+  }
+  if (is.numeric(v)) {
+    out <- as.character(sc$map(v))
+    out[!set] <- NA_character_
+    out
+  } else if (chr) {
+    colours()
+  } else {
+    rep(NA_character_, length(v))
+  }
+}
+
 # Build the per-element `meta` list (one record per drawn element) from the layer
 # context's resolved tooltip / hover-group, indexed by this grob's `rows`. Returns
 # NULL when neither is declared (so grobs carry no `meta`).
@@ -934,7 +985,12 @@ NULL
     # declared -- a default key (see `.default_keys()`). `cond` carries, per row,
     # the "<sel>:<aes>" tags this element participates in (like `legend`), so a
     # host can style non-members; the `if_false` constant + `empty` live in the plot-level block.
-    .mark_ctx$conditions <- if (length(L$conditions)) L$conditions else NULL
+    # A per-row colour `if_false` is resolved to colours here (VW-46).
+    .mark_ctx$conditions <- if (length(L$conditions)) {
+      .cond_rowvals_resolve(L$conditions, scales)
+    } else {
+      NULL
+    }
     # Every default key -- a tooltip-only layer's (`meta$default_id`), or a
     # keyless layer made interactive by a condition or a plot-level selection
     # (not an annotation, VW-24) -- comes from `.default_keys()`.

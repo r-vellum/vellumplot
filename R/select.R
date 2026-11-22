@@ -412,8 +412,12 @@ add_selection <- function(plot, selection) {
 #' @param selection The selection name (a string) that drives the condition.
 #' @param if_true The aesthetic value for selection members — a column expression
 #'   (data-masked) or a constant.
-#' @param if_false The value for non-members — a constant, or omitted to use the
-#'   theme's dim appearance.
+#' @param if_false The value for non-members — a constant, a column expression
+#'   (data-masked, one value per row), or omitted to use the theme's dim
+#'   appearance. For `color` / `fill`, a column whose values are levels (or, on
+#'   a continuous scale, numbers) of the aesthetic's scale is taken through
+#'   that scale, as `if_true` is; any other value is read as a colour, and a
+#'   row whose value is neither gets the theme dim.
 #' @param empty Whether an empty selection matches all elements (`TRUE`, default).
 #' @return Used only inside a `mark_*()` encoding; not called directly.
 #' @seealso [select_point()], [filter_by()]
