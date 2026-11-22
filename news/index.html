@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.18.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.18.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,9 +63,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.18.0.9000" id="vellumplot-01809000-development-version">vellumplot 0.18.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01809000-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.18.1" id="vellumplot-0181">vellumplot 0.18.1<a class="anchor" aria-label="anchor" href="#vellumplot-0181"></a></h2>
 <div class="section level3">
-<h3 id="bug-fixes-0-18-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-18-0-9000"></a></h3>
+<h3 id="bug-fixes-0-18-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-18-1"></a></h3>
 <ul><li><p>A line, path or step mapped to a continuous colour that holds constant within each series (<code>mark_path(group = id, color = level)</code> on contour lines) draws each series as one plain path in its colour. It used to draw one segment record per vertex pair: 91 volcano contours went from 9,097 records and 18.2k points to 91 records and 9.2k points. A series whose colour does vary is still coloured per segment (VP-76).</p></li>
 <li><p>Two composition cells that condition the same aesthetic on the same selection (<code>hconcat(p1, p2)</code>, each <code>color = condition("s", ..., if_false)</code>) no longer share a condition tag, so in vellumwidget each cell’s non-members take their own cell’s <code>if_false</code>, not the last cell’s. A tag that two cells share takes the cell id, <code>"cell-&lt;k&gt;:&lt;sel&gt;:&lt;aes&gt;"</code> (with any <code>"@&lt;layer&gt;"</code> suffix kept), in the elements and in <code><a href="../reference/interaction_model.html">interaction_model()</a></code>; tags no other cell shares are unchanged (VP-75).</p></li>
 <li><p>A per-row <code>if_false</code> of a <code>color</code> or <code>fill</code> condition (<code>color = condition(sel, g, col)</code>) is carried to the host as colours: a column of the scale’s levels (or numbers, on a continuous scale) is taken through that scale, as <code>if_true</code> is, and any other value is read as a colour (<code>NA</code>, the theme dim, when it is not one). It used to be the raw column, which a host could not paint. <code><a href="../reference/condition.html">?condition</a></code> documents per-row <code>if_false</code> columns (VW-46).</p></li>
