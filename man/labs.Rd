@@ -23,7 +23,10 @@ labs(
 \arguments{
 \item{plot}{A \link{PlotSpec}.}
 
-\item{title, subtitle, caption, tag}{Plot-level text (or \code{NULL} to leave unset).}
+\item{title, subtitle, caption, tag}{Plot-level text (or \code{NULL} to leave unset).
+In an animation, the title, subtitle and caption may embed frame variables
+such as \code{"{closest_state}"} or \code{"{round(frame_time)}"} (see \emph{Frame
+variables} in \code{\link[=animate]{animate()}}).}
 
 \item{x, y, size}{Axis / legend title overrides for those aesthetics.}
 

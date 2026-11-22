@@ -75,8 +75,13 @@ transition_states <- function(
 #' constant rate through unevenly spaced times. There is no pause on a state and no
 #' wrap — time flows once, start to finish.
 #'
+#' `{frame_time}` in a title, subtitle or caption shows the time each frame
+#' has reached, updated on every frame (see *Frame variables* in [animate()]);
+#' for a `Date` or `POSIXct` time it is a `Date` or `POSIXct`, so
+#' `"{format(frame_time, '%b %Y')}"` works.
+#'
 #' @param plot A [PlotSpec] (from [vplot()]).
-#' @param time A numeric column giving each row's time.
+#' @param time A numeric, `Date` or `POSIXct` column giving each row's time.
 #' @return The modified [PlotSpec].
 #' @seealso [transition_states()], [ease_aes()], [animate()]
 #' @examples
@@ -92,7 +97,7 @@ transition_time <- function(plot, time) {
   var <- rlang::enquo(time)
   if (rlang::quo_is_missing(var)) {
     cli::cli_abort(
-      "{.fn transition_time} needs a numeric time column, e.g. {.code transition_time(year)}."
+      "{.fn transition_time} needs a time column, e.g. {.code transition_time(year)}."
     )
   }
   plot@transition <- TransitionSpec(var = var, kind = "time", wrap = FALSE)
@@ -288,6 +293,10 @@ vellum_animation <- S7::new_class(
     # or `NA` entry falls back to `easing`, so an empty list = one curve for
     # everything, exactly as before per-aesthetic easing existed.
     easing_aes = S7::new_property(S7::class_list, default = list()),
+    # Frame variables in the title/subtitle/caption (VP-82): the templates, how
+    # each band was drawn, and what the per-frame values are computed from (see
+    # `.frame_text()`). Empty when the labels carry no `{...}`.
+    frame_text = S7::new_property(S7::class_list, default = list()),
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
     dpi = S7::new_property(S7::class_double, default = 96)
@@ -337,6 +346,33 @@ vellum_animation <- S7::new_class(
 #' the states, so 40 states in 80 frames leave two frames per state and nothing
 #' visibly moves.
 #'
+#' # Frame variables
+#'
+#' A title, subtitle or caption (set with [labs()]) may embed frame variables
+#' in braces, glue-style, as in gganimate: `labs(title = "Year: {frame_time}")`.
+#' Each `{...}` is an R expression evaluated per frame with the variables below
+#' in scope (and the environment `animate()` was called from behind them), so
+#' `"{round(frame_time)}"` or `"{format(frame_time, '%Y')}"` work; write `{{`
+#' and `}}` for literal braces. The label is updated on **every frame**, not
+#' only at keyframes: a `{frame_time}` title counts through the in-between
+#' times while the marks move.
+#'
+#' * every transition: `frame` (the frame number), `nframes`, `progress`
+#'   (`frame / nframes`);
+#' * [transition_states()]: `closest_state`, `previous_state`, `next_state`
+#'   (the state the frame is nearest to, comes from and goes to; all three are
+#'   the held state during a pause) and `transitioning` (`TRUE` while moving).
+#'   `closest_state` switches halfway through a transition, on the position
+#'   easing, when the marks' discrete attributes do;
+#' * [transition_time()]: `frame_time`, the time the frame has reached (on the
+#'   position easing, so it agrees with where the marks are), of the time
+#'   column's class (`Date`, `POSIXct`, or double);
+#' * [transition_reveal()]: `frame_along`, the `along` value revealed so far.
+#'
+#' Data labels ([mark_text()]) take their text from the data and are not
+#' templated: a label whose string differs between two states takes the nearer
+#' state's string, switching halfway through.
+#'
 #' @param plot A [PlotSpec] with a [transition_states()] (and optionally an
 #'   [ease_aes()]).
 #' @param nframes Total number of frames to render, a positive whole number.
@@ -356,6 +392,7 @@ vellum_animation <- S7::new_class(
 #' @export
 animate <- function(plot, nframes = 50, fps = 25) {
   .check_plot(plot)
+  env <- rlang::caller_env()
   tr <- plot@transition
   if (is.null(tr)) {
     cli::cli_abort(
@@ -373,7 +410,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
   # A reveal is not a state tween: each frame is its own keyframe, compiled
   # from the rows revealed so far (see `.animate_reveal()`).
   if (identical(tr@kind, "reveal")) {
-    return(.animate_reveal(plot, nframes, fps, easing, easing_aes))
+    return(.animate_reveal(plot, nframes, fps, easing, easing_aes, env))
   }
 
   # Enumerate the states and per-segment timing. `transition_states` gives equal
@@ -390,12 +427,32 @@ animate <- function(plot, nframes = 50, fps = 25) {
     ))
   }
 
+  # Frame variables in the labels (VP-82): each keyframe is compiled with its
+  # own state's values (which also sizes the title band); the render then
+  # swaps in every frame's string (`.frame_text()`).
+  tpl <- .frame_templates(plot)
+  fvars <- list(
+    kind = tr@kind,
+    states = en$labels %||% states,
+    times = en$times,
+    restore = en$restore,
+    nframes = nframes,
+    env = env
+  )
   # A per-state spec: the base plot (transition stripped) over that state's rows.
   base <- plot
   base@transition <- NULL
   base@ease <- NULL
   state_spec <- function(level) {
     s <- base
+    if (length(tpl)) {
+      k <- match(level, states)
+      s@labels[names(tpl)] <- .glue_frame(
+        tpl,
+        .keyframe_vars(fvars, k),
+        env
+      )
+    }
     # `which()` (not a bare logical mask): `key` is a factor and rows with a
     # non-finite state value carry `key = NA`, so `key == level` would otherwise
     # inject an all-NA row into every keyframe.
@@ -436,10 +493,27 @@ animate <- function(plot, nframes = 50, fps = 25) {
   # by what they are, not by where they sit in the scene (VR-32).
   .mark_ctx$anim_identity <- TRUE
   on.exit(rm(list = "anim_identity", envir = .mark_ctx), add = TRUE)
+  if (length(tpl)) {
+    .mark_ctx$anim_bands <- stats::setNames(
+      vector("list", length(tpl)),
+      names(tpl)
+    )
+    on.exit(rm(list = "anim_bands", envir = .mark_ctx), add = TRUE)
+  }
   scenes <- lapply(states, function(level) {
     .compile_plot(state_spec(level), frozen_scales = frozen)
   })
-  .warn_unpaired(scenes, states, wrap = en$wrap)
+  .warn_unpaired(scenes, en$labels %||% states, wrap = en$wrap)
+  frame_text <- list()
+  if (length(tpl)) {
+    bands <- Filter(Negate(is.null), .mark_ctx$anim_bands)
+    if (length(bands)) {
+      frame_text <- c(
+        fvars,
+        list(templates = tpl[names(bands)], bands = bands)
+      )
+    }
+  }
 
   vellum_animation(
     scenes = scenes,
@@ -451,10 +525,161 @@ animate <- function(plot, nframes = 50, fps = 25) {
     wrap = en$wrap,
     easing = easing,
     easing_aes = easing_aes,
+    frame_text = frame_text,
     width = plot@width,
     height = plot@height,
     dpi = plot@dpi
   )
+}
+
+# ---- frame variables (VP-82) ------------------------------------------------
+
+# The labels that carry frame variables: the title, subtitle and caption whose
+# text holds a `{`.
+.frame_templates <- function(plot) {
+  out <- list()
+  for (slot in c("title", "subtitle", "caption")) {
+    x <- plot@labels[[slot]]
+    if (is.character(x) && length(x) == 1L && !is.na(x) && grepl("{", x, fixed = TRUE)) {
+      out[[slot]] <- x
+    }
+  }
+  out
+}
+
+# Substitute frame variables into each template, glue-style: every `{expr}` is
+# evaluated with `vars` in scope over `env`; `{{` and `}}` are literal braces.
+.glue_frame <- function(templates, vars, env) {
+  lapply(templates, function(x) .glue_one(x, vars, env))
+}
+
+.glue_one <- function(x, vars, env) {
+  open <- "\001"
+  close <- "\002"
+  x <- gsub("{{", open, x, fixed = TRUE)
+  x <- gsub("}}", close, x, fixed = TRUE)
+  m <- gregexpr("\\{[^{}]*\\}", x)
+  if (m[[1L]][1L] != -1L) {
+    exprs <- regmatches(x, m)[[1L]]
+    vals <- vapply(
+      exprs,
+      function(e) {
+        code <- substr(e, 2L, nchar(e) - 1L)
+        v <- tryCatch(
+          rlang::eval_tidy(rlang::parse_expr(code), data = vars, env = env),
+          error = function(err) {
+            cli::cli_abort(
+              "Could not evaluate {.code {e}} in an animation label.",
+              parent = err
+            )
+          }
+        )
+        paste(.frame_chr(v), collapse = "")
+      },
+      character(1)
+    )
+    regmatches(x, m) <- list(vals)
+  }
+  x <- gsub(open, "{", x, fixed = TRUE)
+  gsub(close, "}", x, fixed = TRUE)
+}
+
+# A frame variable's text: a date-time by `format()` (no time zone suffix, as
+# `as.character()` would print), anything else by `as.character()`.
+.frame_chr <- function(v) {
+  if (inherits(v, "POSIXt")) format(v) else as.character(v)
+}
+
+# The frame variables at keyframe `k` (used to compile that keyframe).
+.keyframe_vars <- function(fv, k) {
+  common <- list(frame = 1L, nframes = fv$nframes, progress = 0)
+  if (identical(fv$kind, "time")) {
+    c(common, list(frame_time = fv$restore(fv$times[[k]])))
+  } else {
+    st <- fv$states[[k]]
+    c(
+      common,
+      list(
+        closest_state = st,
+        previous_state = st,
+        next_state = st,
+        transitioning = FALSE
+      )
+    )
+  }
+}
+
+# The frame variables of every frame of a schedule (`seg`, eased position
+# `frac`), one list per frame.
+.schedule_vars <- function(fv, sched) {
+  n <- length(sched$seg)
+  k <- length(fv$states)
+  lapply(seq_len(n), function(f) {
+    seg <- sched$seg[[f]]
+    t <- sched$frac[[f]]
+    nxt <- if (seg + 1L > k) 1L else seg + 1L # a wrap's last move ends on state 1
+    common <- list(frame = f, nframes = n, progress = f / n)
+    if (identical(fv$kind, "time")) {
+      a <- fv$times[[seg]]
+      b <- fv$times[[nxt]]
+      return(c(common, list(frame_time = fv$restore(a + t * (b - a)))))
+    }
+    from <- fv$states[[seg]]
+    to <- fv$states[[nxt]]
+    if (t <= 0) {
+      to <- from
+    } else if (t >= 1) {
+      from <- to
+    }
+    c(
+      common,
+      list(
+        closest_state = if (t < 0.5) from else to,
+        previous_state = from,
+        next_state = to,
+        transitioning = t > 0 && t < 1
+      )
+    )
+  })
+}
+
+# The per-frame text a render needs (VP-82): every frame's title/subtitle/
+# caption strings, shaped once per distinct combination in a small scene keyed
+# like the keyframes' band text ("vp:title"), and each frame's variant index.
+# NULL when the animation has no frame variables.
+.frame_text <- function(animation, sched) {
+  ft <- animation@frame_text
+  if (!length(ft) || !length(ft$bands)) {
+    return(NULL)
+  }
+  vars <- .schedule_vars(ft, sched)
+  strings <- lapply(vars, function(v) {
+    unlist(.glue_frame(ft$templates, v, ft$env))
+  })
+  id <- vapply(strings, paste, character(1), collapse = "\037")
+  uniq <- unique(id)
+  variants <- lapply(match(uniq, id), function(i) {
+    sc <- vellum::vl_scene(
+      width = animation@width,
+      height = animation@height,
+      dpi = animation@dpi
+    )
+    for (slot in names(ft$bands)) {
+      b <- ft$bands[[slot]]
+      sc <- vellum::draw(
+        sc,
+        .band_text_grob(
+          strings[[i]][[slot]],
+          b$el,
+          b$band_w,
+          b$default_hjust,
+          key = paste0("vp:", slot)
+        )
+      )
+    }
+    sc
+  })
+  list(variants = variants, frame = match(id, uniq))
 }
 
 # Warn, once, when adjacent keyframes cannot tween: marks are matched by
@@ -566,7 +791,14 @@ animate <- function(plot, nframes = 50, fps = 25) {
 # keyframes (seg = frame, frac = 0; the last at frac = 1 of the final segment),
 # so the engine draws each keyframe as compiled; the easing is applied to the
 # cutoffs, not to the schedule.
-.animate_reveal <- function(plot, nframes, fps, easing, easing_aes = list()) {
+.animate_reveal <- function(
+  plot,
+  nframes,
+  fps,
+  easing,
+  easing_aes = list(),
+  env = rlang::caller_env()
+) {
   tr <- plot@transition
   base <- plot
   base@transition <- NULL
@@ -599,8 +831,24 @@ animate <- function(plot, nframes = 50, fps = 25) {
     cuts <- rep(rng[2L], 2L)
   }
 
-  frame_spec <- function(cut) {
+  # Frame variables: each frame is its own keyframe, so its labels are simply
+  # compiled with its own values.
+  tpl <- .frame_templates(plot)
+  restore <- .time_restorer(rlang::eval_tidy(tr@var, plot@data))
+  frame_spec <- function(cut, i) {
     s <- base
+    if (length(tpl)) {
+      s@labels[names(tpl)] <- .glue_frame(
+        tpl,
+        list(
+          frame = i,
+          nframes = length(cuts),
+          progress = i / length(cuts),
+          frame_along = restore(cut)
+        ),
+        env
+      )
+    }
     s@data <- .reveal_rows(plot@data, along, cut)
     s@layers <- lapply(seq_along(s@layers), function(i) {
       L <- s@layers[[i]]
@@ -625,8 +873,8 @@ animate <- function(plot, nframes = 50, fps = 25) {
   bp <- .build_panels(base)
   pooled <- unlist(lapply(bp$panels, function(p) p$resolved), recursive = FALSE)
   frozen <- .train_scales(base, pooled)
-  scenes <- lapply(cuts, function(cut) {
-    .compile_plot(frame_spec(cut), frozen_scales = frozen)
+  scenes <- lapply(seq_along(cuts), function(i) {
+    .compile_plot(frame_spec(cuts[[i]], i), frozen_scales = frozen)
   })
 
   vellum_animation(
@@ -792,14 +1040,44 @@ animate <- function(plot, nframes = 50, fps = 25) {
   })
 }
 
+# A function turning a numeric time back into the class of `vals` (a Date or
+# POSIXct, keeping its time zone; a plain double otherwise), or NULL when
+# `vals` is not a time a transition can run on.
+.time_restorer <- function(vals) {
+  if (inherits(vals, "Date")) {
+    return(function(x) structure(as.double(x), class = "Date"))
+  }
+  if (inherits(vals, "POSIXct")) {
+    tz <- attr(vals, "tzone")
+    return(function(x) {
+      structure(as.double(x), class = c("POSIXct", "POSIXt"), tzone = tz)
+    })
+  }
+  if (is.numeric(vals) && !is.factor(vals)) {
+    return(function(x) as.double(x))
+  }
+  NULL
+}
+
 .enumerate_states <- function(tr, data) {
   if (identical(tr@kind, "time")) {
     vals <- rlang::eval_tidy(tr@var, data)
-    if (!is.numeric(vals)) {
-      cli::cli_abort("{.fn transition_time} needs a numeric time column.")
+    # A Date or POSIXct time runs on its numeric value (days / seconds) and
+    # keeps its class for the labels and `{frame_time}` (VP-83).
+    restore <- .time_restorer(vals)
+    if (is.null(restore)) {
+      cli::cli_abort(c(
+        "{.fn transition_time} needs a numeric, Date or POSIXct time column.",
+        x = "It is {.cls {class(vals)[1]}}."
+      ))
     }
-    times <- as.double(sort(unique(vals[is.finite(vals)])))
+    vals <- as.double(unclass(vals))
+    times <- sort(unique(vals[is.finite(vals)]))
     states <- as.character(times)
+    labels <- .frame_chr(restore(times))
+    if (anyDuplicated(labels)) {
+      labels <- states
+    }
     # Segments weighted by the time gaps: constant playback speed through
     # unevenly spaced times. Time flows once, so no hold and no wrap.
     list(
@@ -810,7 +1088,10 @@ animate <- function(plot, nframes = 50, fps = 25) {
       states = states,
       seg_weights = if (length(times) > 1L) diff(times) else numeric(0),
       state_length = 0,
-      wrap = FALSE
+      wrap = FALSE,
+      times = times,
+      restore = restore,
+      labels = labels
     )
   } else {
     # A missing state value belongs to no state (it is not animated).
@@ -907,6 +1188,7 @@ anim_save <- function(filename, animation) {
   if (animation@wrap) {
     scenes <- c(scenes, scenes[1L])
   }
+  text <- .frame_text(animation, sched)
   vellum::vl_render_animation(
     scenes,
     sched$seg,
@@ -916,7 +1198,9 @@ anim_save <- function(filename, animation) {
     fps = animation@fps,
     frac_col = sched$frac_col,
     frac_size = sched$frac_size,
-    frac_alpha = sched$frac_alpha
+    frac_alpha = sched$frac_alpha,
+    text_variants = text$variants,
+    text_frame = text$frame
   )
 }
 
