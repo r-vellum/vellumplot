@@ -93,12 +93,19 @@ wrap — time flows once, start to finish.</p>
 
 
 <dt id="arg-time">time<a class="anchor" aria-label="anchor" href="#arg-time"></a></dt>
-<dd><p>A numeric column giving each row's time.</p></dd>
+<dd><p>A numeric, <code>Date</code> or <code>POSIXct</code> column giving each row's time.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><code>{frame_time}</code> in a title, subtitle or caption shows the time each frame
+has reached, updated on every frame (see <em>Frame variables</em> in <code><a href="animate.html">animate()</a></code>);
+for a <code>Date</code> or <code>POSIXct</code> time it is a <code>Date</code> or <code>POSIXct</code>, so
+<code>"{format(frame_time, '%b %Y')}"</code> works.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

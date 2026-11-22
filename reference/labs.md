@@ -35,7 +35,11 @@ labs(
 
 - title, subtitle, caption, tag:
 
-  Plot-level text (or `NULL` to leave unset).
+  Plot-level text (or `NULL` to leave unset). In an animation, the
+  title, subtitle and caption may embed frame variables such as
+  `"{closest_state}"` or `"{round(frame_time)}"` (see *Frame variables*
+  in
+  [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)).
 
 - x, y, size:
 

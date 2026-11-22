@@ -80,6 +80,43 @@ Give each transition enough frames to be seen: `nframes` is spread over
 all the states, so 40 states in 80 frames leave two frames per state and
 nothing visibly moves.
 
+## Frame variables
+
+A title, subtitle or caption (set with
+[`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md)) may
+embed frame variables in braces, glue-style, as in gganimate:
+`labs(title = "Year: {frame_time}")`. Each `{...}` is an R expression
+evaluated per frame with the variables below in scope (and the
+environment `animate()` was called from behind them), so
+`"{round(frame_time)}"` or `"{format(frame_time, '%Y')}"` work; write
+`{{` and `}}` for literal braces. The label is updated on **every
+frame**, not only at keyframes: a `{frame_time}` title counts through
+the in-between times while the marks move.
+
+- every transition: `frame` (the frame number), `nframes`, `progress`
+  (`frame / nframes`);
+
+- [`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md):
+  `closest_state`, `previous_state`, `next_state` (the state the frame
+  is nearest to, comes from and goes to; all three are the held state
+  during a pause) and `transitioning` (`TRUE` while moving).
+  `closest_state` switches halfway through a transition, on the position
+  easing, when the marks' discrete attributes do;
+
+- [`transition_time()`](https://r-vellum.github.io/vellumplot/reference/transition_time.md):
+  `frame_time`, the time the frame has reached (on the position easing,
+  so it agrees with where the marks are), of the time column's class
+  (`Date`, `POSIXct`, or double);
+
+- [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md):
+  `frame_along`, the `along` value revealed so far.
+
+Data labels
+([`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md))
+take their text from the data and are not templated: a label whose
+string differs between two states takes the nearer state's string,
+switching halfway through.
+
 ## See also
 
 [`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md),

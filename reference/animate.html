@@ -135,6 +135,30 @@ the states, so 40 states in 80 frames leave two frames per state and nothing
 visibly moves.</p>
     </div>
     <div class="section level2">
+    <h2 id="frame-variables">Frame variables<a class="anchor" aria-label="anchor" href="#frame-variables"></a></h2>
+    <p>A title, subtitle or caption (set with <code><a href="labs.html">labs()</a></code>) may embed frame variables
+in braces, glue-style, as in gganimate: <code>labs(title = "Year: {frame_time}")</code>.
+Each <code>{...}</code> is an R expression evaluated per frame with the variables below
+in scope (and the environment <code>animate()</code> was called from behind them), so
+<code>"{round(frame_time)}"</code> or <code>"{format(frame_time, '%Y')}"</code> work; write <code>{{</code>
+and <code>}}</code> for literal braces. The label is updated on <strong>every frame</strong>, not
+only at keyframes: a <code>{frame_time}</code> title counts through the in-between
+times while the marks move.</p><ul><li><p>every transition: <code>frame</code> (the frame number), <code>nframes</code>, <code>progress</code>
+(<code>frame / nframes</code>);</p></li>
+<li><p><code><a href="transition_states.html">transition_states()</a></code>: <code>closest_state</code>, <code>previous_state</code>, <code>next_state</code>
+(the state the frame is nearest to, comes from and goes to; all three are
+the held state during a pause) and <code>transitioning</code> (<code>TRUE</code> while moving).
+<code>closest_state</code> switches halfway through a transition, on the position
+easing, when the marks' discrete attributes do;</p></li>
+<li><p><code><a href="transition_time.html">transition_time()</a></code>: <code>frame_time</code>, the time the frame has reached (on the
+position easing, so it agrees with where the marks are), of the time
+column's class (<code>Date</code>, <code>POSIXct</code>, or double);</p></li>
+<li><p><code><a href="transition_reveal.html">transition_reveal()</a></code>: <code>frame_along</code>, the <code>along</code> value revealed so far.</p></li>
+</ul><p>Data labels (<code><a href="mark_text.html">mark_text()</a></code>) take their text from the data and are not
+templated: a label whose string differs between two states takes the nearer
+state's string, switching halfway through.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="transition_states.html">transition_states()</a></code>, <code><a href="ease_aes.html">ease_aes()</a></code>, <code><a href="anim_save.html">anim_save()</a></code></p></div>
     </div>

@@ -25,12 +25,20 @@ transition_time(plot, time)
 
 - time:
 
-  A numeric column giving each row's time.
+  A numeric, `Date` or `POSIXct` column giving each row's time.
 
 ## Value
 
 The modified
 [PlotSpec](https://r-vellum.github.io/vellumplot/reference/PlotSpec.md).
+
+## Details
+
+`{frame_time}` in a title, subtitle or caption shows the time each frame
+has reached, updated on every frame (see *Frame variables* in
+[`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md));
+for a `Date` or `POSIXct` time it is a `Date` or `POSIXct`, so
+`"{format(frame_time, '%b %Y')}"` works.
 
 ## See also
 

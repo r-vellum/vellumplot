@@ -107,7 +107,10 @@ in a band below. Repeated <code>labs()</code> calls merge, with later values win
 
 
 <dt id="arg-title-subtitle-caption-tag">title, subtitle, caption, tag<a class="anchor" aria-label="anchor" href="#arg-title-subtitle-caption-tag"></a></dt>
-<dd><p>Plot-level text (or <code>NULL</code> to leave unset).</p></dd>
+<dd><p>Plot-level text (or <code>NULL</code> to leave unset).
+In an animation, the title, subtitle and caption may embed frame variables
+such as <code>"{closest_state}"</code> or <code>"{round(frame_time)}"</code> (see <em>Frame
+variables</em> in <code><a href="animate.html">animate()</a></code>).</p></dd>
 
 
 <dt id="arg-x-y-size">x, y, size<a class="anchor" aria-label="anchor" href="#arg-x-y-size"></a></dt>
