@@ -57,6 +57,14 @@
 ### Bug fixes
 
 - [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md)
+  with several series in one line, path, area, ribbon or step layer no
+  longer draws a spike at the line end (VP-94): each series’ leading
+  point is interpolated toward that series’ own next row (and within its
+  facet panel), whatever the row order. The grouping lookup evaluated
+  the wrong object and found no groups, so every series’ lead aimed at
+  whichever row came next in `along`.
+
+- [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md)
   reveals the data along `along`, as gganimate does (VP-81). It used to
   ignore `along` and wipe a clip across the panel left to right,
   background and gridlines included: a spiral wiped by x, a
