@@ -307,8 +307,9 @@ test_that("data_id carries element identity through to the keyframes (enter/exit
   keys <- function(sc) {
     sort(stats::na.omit(vellum::scene_model(sc)$elements$key))
   }
-  expect_setequal(keys(a@scenes[[1]]), c("a", "b"))
-  expect_setequal(keys(a@scenes[[2]]), c("a", "b", "z")) # z enters
+  # keyed per layer ("l<layer>|"), so two layers never match each other's marks
+  expect_setequal(keys(a@scenes[[1]]), c("l1|a", "l1|b"))
+  expect_setequal(keys(a@scenes[[2]]), c("l1|a", "l1|b", "l1|z")) # z enters
 
   skip_if_not_installed("magick")
   gif <- withr::local_tempfile(fileext = ".gif")
