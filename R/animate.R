@@ -297,6 +297,12 @@ vellum_animation <- S7::new_class(
     # each band was drawn, and what the per-frame values are computed from (see
     # `.frame_text()`). Empty when the labels carry no `{...}`.
     frame_text = S7::new_property(S7::class_list, default = list()),
+    # Frames held on the first / last frame, and whether the animation plays
+    # back to the start (VP-95, gganimate's `start_pause`, `end_pause`,
+    # `rewind`). They are part of `nframes`.
+    start_pause = S7::new_property(S7::class_double, default = 0),
+    end_pause = S7::new_property(S7::class_double, default = 0),
+    rewind = S7::new_property(S7::class_logical, default = FALSE),
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
     dpi = S7::new_property(S7::class_double, default = 96)
@@ -343,12 +349,15 @@ vellum_animation <- S7::new_class(
 #' "free")`, an independent `resolve_scale()`) are refused.
 #'
 #' A mark found in only one of two adjacent states fades in or out (points,
-#' bars and tiles, labels, lines and areas alike) on the alpha easing, and a
-#' point whose colour group changes slides to its new place while its colour
-#' blends. What cannot move switches whole halfway through the transition: a
-#' matched line or path whose number of points changes, and decoration without
-#' an identity (an effect underlay) that comes and goes. `animate()` warns (once
-#' per call) when that will happen, naming the states.
+#' bars and tiles, labels, lines and areas alike, with their effect underlays
+#' such as [glow()]) on the alpha easing, and a point whose colour group changes
+#' slides to its new place while its colour blends. A line, path or area whose
+#' number of points changes morphs from one outline into the other. Where marks
+#' overlap, the stacking order switches to the next state's halfway through the
+#' transition. What cannot move switches whole halfway through: decoration
+#' without an identity that comes and goes, or a line that cannot be morphed (a
+#' broken line with missing values, mixed units). `animate()` warns (once per
+#' call) when that will happen, naming the states.
 #'
 #' Give each transition enough frames to be seen: `nframes` is spread over all
 #' the states, so 40 states in 80 frames leave two frames per state and nothing
@@ -377,16 +386,39 @@ vellum_animation <- S7::new_class(
 #'   column's class (`Date`, `POSIXct`, or double);
 #' * [transition_reveal()]: `frame_along`, the `along` value revealed so far.
 #'
-#' Data labels ([mark_text()]) take their text from the data and are not
-#' templated: a label whose string differs between two states takes the nearer
-#' state's string, switching halfway through.
+#' A [mark_text()] label can use the same variables (VP-93): `mark_text(data =
+#' data.frame(x = 3000, y = 40), x = x, y = y, label = "{round(frame_time)}",
+#' size = 60)` draws the year large behind a gapminder bubble chart, counting
+#' on every frame. A constant label or a column of labels may contain `{...}`;
+#' the label is placed (and moves) as the mark it belongs to, and only its
+#' string changes per frame. Repelled and rich-text labels are not templated.
+#' An ordinary data label whose string differs between two states takes the
+#' nearer state's string, switching halfway through.
+#'
+#' # Pauses and rewind
+#'
+#' `start_pause` and `end_pause` hold the first and last frame for that many
+#' frames, and `rewind = TRUE` plays the animation back to the start, as in
+#' gganimate. They come out of `nframes`: `animate(nframes = 100, end_pause =
+#' 20)` moves for 80 frames and rests on the final picture for 20. Every output
+#' honours them -- [anim_save()] to GIF, APNG or SVG, [anim_frame()]'s frame
+#' numbers, and the frame scrubber of an animated `vellumwidget`.
 #'
 #' @param plot A [PlotSpec] with a [transition_states()] (and optionally an
 #'   [ease_aes()]).
 #' @param nframes Total number of frames to render, a positive whole number.
+#'   The pauses and the rewind are part of it, as in gganimate.
 #' @param fps Frames per second (the playback rate written into the file).
+#' @param start_pause,end_pause Number of frames to hold the first and the last
+#'   frame for, before the animation starts and after it ends (default 0).
+#'   A looping file (every format loops) then rests on the final picture
+#'   before starting over: `end_pause = fps` holds it for a second.
+#' @param rewind Play the animation backwards after it has played forwards, so
+#'   the loop returns to its start smoothly instead of cutting (default
+#'   `FALSE`). The frames are split between the two directions; the end pause
+#'   sits between them and the start pause at both ends.
 #' @return A `vellum_animation`.
-#' @seealso [transition_states()], [ease_aes()], [anim_save()]
+#' @seealso [transition_states()], [ease_aes()], [anim_save()], [anim_frame()]
 #' @examples
 #' \dontrun{
 #' # Four bars in every state, so each bar tweens into its next height.
@@ -398,9 +430,17 @@ vellum_animation <- S7::new_class(
 #'   animate(nframes = 60, fps = 25)
 #' }
 #' @export
-animate <- function(plot, nframes = 50, fps = 25) {
+animate <- function(
+  plot,
+  nframes = 50,
+  fps = 25,
+  start_pause = 0,
+  end_pause = 0,
+  rewind = FALSE
+) {
   .check_plot(plot)
   env <- rlang::caller_env()
+  pauses <- .anim_pauses(nframes, start_pause, end_pause, rewind)
   tr <- plot@transition
   if (is.null(tr)) {
     cli::cli_abort(
@@ -426,7 +466,11 @@ animate <- function(plot, nframes = 50, fps = 25) {
   # A reveal is not a state tween: each frame is its own keyframe, compiled
   # from the rows revealed so far (see `.animate_reveal()`).
   if (identical(tr@kind, "reveal")) {
-    return(.animate_reveal(plot, nframes, fps, easing, easing_aes, env))
+    return(.anim_with_pauses(
+      .animate_reveal(plot, pauses$core, fps, easing, easing_aes, env),
+      nframes,
+      pauses
+    ))
   }
 
   # Enumerate the states and per-segment timing. `transition_states` gives equal
@@ -516,22 +560,47 @@ animate <- function(plot, nframes = 50, fps = 25) {
     )
     on.exit(rm(list = "anim_bands", envir = .mark_ctx), add = TRUE)
   }
-  scenes <- lapply(states, function(level) {
+  # Per-state bookkeeping while the keyframes compile: group sizes for the
+  # row-order hint (VP-87), and the keyframe's frame variables and how its
+  # templated data labels were drawn (VP-93).
+  .mark_ctx$anim_counts <- list()
+  .mark_ctx$anim_labels <- list()
+  .mark_ctx$anim_env <- env
+  on.exit(
+    rm(
+      list = intersect(
+        c("anim_counts", "anim_state", "anim_labels", "anim_env", "anim_kvars", "anim_k"),
+        ls(.mark_ctx)
+      ),
+      envir = .mark_ctx
+    ),
+    add = TRUE
+  )
+  scenes <- lapply(seq_along(states), function(k) {
+    level <- states[[k]]
+    .mark_ctx$anim_state <- as.character(level)
+    .mark_ctx$anim_k <- k
+    .mark_ctx$anim_kvars <- .keyframe_vars(fvars, k)
     .compile_plot(state_spec(level), frozen_scales = frozen)
   })
+  .inform_row_order(.mark_ctx$anim_counts)
+  labels <- .mark_ctx$anim_labels
   .warn_unpaired(scenes, en$labels %||% states, wrap = en$wrap)
   frame_text <- list()
-  if (length(tpl)) {
-    bands <- Filter(Negate(is.null), .mark_ctx$anim_bands)
-    if (length(bands)) {
-      frame_text <- c(
-        fvars,
-        list(templates = tpl[names(bands)], bands = bands)
+  bands <- if (length(tpl)) Filter(Negate(is.null), .mark_ctx$anim_bands)
+  if (length(bands) || length(labels)) {
+    frame_text <- c(
+      fvars,
+      list(
+        templates = tpl[names(bands)],
+        bands = bands,
+        labels = labels,
+        wrap = en$wrap
       )
-    }
+    )
   }
 
-  vellum_animation(
+  a <- vellum_animation(
     scenes = scenes,
     states = states,
     nframes = nframes,
@@ -546,6 +615,77 @@ animate <- function(plot, nframes = 50, fps = 25) {
     height = plot@height,
     dpi = plot@dpi
   )
+  .anim_with_pauses(a, nframes, pauses)
+}
+
+# ---- pauses and rewind (VP-95) ----------------------------------------------
+
+# Validate the pauses and split `nframes` the gganimate way: with `rewind`
+# half the frames (rounded up) play forwards; the pauses come out of those,
+# leaving `core` frames of movement (at least 2).
+.anim_pauses <- function(nframes, start_pause, end_pause, rewind) {
+  nframes <- .pos_whole(nframes, "nframes")
+  sp <- .nonneg_whole(start_pause, "start_pause")
+  ep <- .nonneg_whole(end_pause, "end_pause")
+  if (!is.logical(rewind) || length(rewind) != 1L || is.na(rewind)) {
+    cli::cli_abort("{.arg rewind} must be {.code TRUE} or {.code FALSE}.")
+  }
+  half <- if (rewind) ceiling(nframes / 2) else nframes
+  core <- half - sp - ep
+  if (core < 2L && (sp > 0 || ep > 0 || rewind)) {
+    cli::cli_abort(c(
+      "The pauses leave too few frames to animate.",
+      i = "{.arg nframes} = {nframes}{if (rewind) ' (halved by rewind)' else ''} with {.arg start_pause} = {sp} and {.arg end_pause} = {ep} leaves {core}; increase {.arg nframes}."
+    ))
+  }
+  list(core = max(core, 1L), start = sp, end = ep, rewind = rewind)
+}
+
+.nonneg_whole <- function(x, arg) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < 0 || x != round(x)) {
+    cli::cli_abort("{.arg {arg}} must be a non-negative whole number.")
+  }
+  as.integer(x)
+}
+
+# Attach the pauses to an animation compiled for `pauses$core` frames of
+# movement, and restore its total frame count.
+.anim_with_pauses <- function(a, nframes, pauses) {
+  a@nframes <- as.double(pauses$core)
+  a@start_pause <- as.double(pauses$start)
+  a@end_pause <- as.double(pauses$end)
+  a@rewind <- isTRUE(pauses$rewind)
+  a
+}
+
+# The schedule an animation renders: its core frames (`.anim_schedule()`),
+# then the pauses and the rewind applied by repeating / reversing frames, as
+# gganimate does. Every output (GIF, APNG, SVG, the widget) is drawn from this.
+.anim_frame_schedule <- function(animation) {
+  sched <- .anim_schedule(
+    length(animation@scenes),
+    animation@nframes,
+    .anim_easings(animation),
+    animation@seg_weights,
+    animation@state_length,
+    animation@wrap
+  )
+  m <- length(sched$seg)
+  idx <- c(
+    rep(1L, animation@start_pause),
+    seq_len(m),
+    rep(m, animation@end_pause)
+  )
+  if (isTRUE(animation@rewind)) {
+    idx <- c(idx, rev(idx))
+  }
+  lapply(sched, function(v) v[idx])
+}
+
+# The total number of frames an animation renders.
+.anim_total_frames <- function(animation) {
+  n <- animation@nframes + animation@start_pause + animation@end_pause
+  if (isTRUE(animation@rewind)) 2 * n else n
 }
 
 # ---- frame variables (VP-82) ------------------------------------------------
@@ -684,14 +824,33 @@ animate <- function(plot, nframes = 50, fps = 25) {
 # NULL when the animation has no frame variables.
 .frame_text <- function(animation, sched) {
   ft <- animation@frame_text
-  if (!length(ft) || !length(ft$bands)) {
+  if (!length(ft) || (!length(ft$bands) && !length(ft$labels))) {
     return(NULL)
   }
   vars <- .schedule_vars(ft, sched)
-  strings <- lapply(vars, function(v) {
-    unlist(.glue_frame(ft$templates, v, ft$env))
+  k <- length(ft$states)
+  # The keyframe each frame is nearest to (on the position fraction): its
+  # templated data labels are the ones the frame shows (VP-93).
+  near <- ifelse(sched$frac < 0.5, sched$seg, sched$seg + 1L)
+  near[near > k] <- 1L
+  strings <- lapply(seq_along(vars), function(f) {
+    v <- vars[[f]]
+    bands <- unlist(.glue_frame(ft$templates, v, ft$env))
+    recs <- ft$labels[[as.character(near[[f]])]]
+    labs <- vapply(
+      recs,
+      function(r) .glue_one(r$template, v, ft$env),
+      character(1)
+    )
+    list(bands = bands, labels = labs, near = near[[f]])
   })
-  id <- vapply(strings, paste, character(1), collapse = "\037")
+  id <- vapply(
+    strings,
+    function(x) {
+      paste(c(x$bands, names(x$labels), x$labels), collapse = "\037")
+    },
+    character(1)
+  )
   uniq <- unique(id)
   variants <- lapply(match(uniq, id), function(i) {
     sc <- vellum::vl_scene(
@@ -704,11 +863,25 @@ animate <- function(plot, nframes = 50, fps = 25) {
       sc <- vellum::draw(
         sc,
         .band_text_grob(
-          strings[[i]][[slot]],
+          strings[[i]]$bands[[slot]],
           b$el,
           b$band_w,
           b$default_hjust,
           key = paste0("vp:", slot)
+        )
+      )
+    }
+    recs <- ft$labels[[as.character(strings[[i]]$near)]]
+    for (key in names(recs)) {
+      r <- recs[[key]]
+      sc <- vellum::draw(
+        sc,
+        vellum::text_grob(
+          strings[[i]]$labels[[key]],
+          just = r$just,
+          rot = r$rot,
+          gp = r$gp,
+          key = key
         )
       )
     }
@@ -719,8 +892,9 @@ animate <- function(plot, nframes = 50, fps = 25) {
 
 # Warn, once, when adjacent keyframes cannot tween: marks are matched by
 # identity (`.anim_keys()`) and a mark only in one state fades, so what is left
-# is a line/path whose vertex count changes (it switches whole at the midpoint),
-# an unkeyed node that comes and goes, or -- rarely -- two keyframes that do not
+# is a line/path whose vertex count changes and cannot be morphed (it switches
+# whole at the midpoint), an unkeyed node that comes and goes, or -- rarely --
+# two keyframes that do not
 # share a layout at all (a cut). Say which states and why.
 .warn_unpaired <- function(scenes, states, wrap = FALSE) {
   ks <- if (wrap) c(scenes, scenes[1L]) else scenes
@@ -742,7 +916,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
   if (length(snapped)) {
     msg <- c(
       msg,
-      "*" = "{.val {pair_lab(snapped)}}: some marks cannot be matched between the states (a line or path whose number of points changes, or an unkeyed decoration that comes and goes), so they switch halfway through instead of moving."
+      "*" = "{.val {pair_lab(snapped)}}: some marks cannot be matched between the states (an unkeyed decoration that comes and goes, or a line or path whose number of points changes and cannot be morphed), so they switch halfway through instead of moving."
     )
   }
   msg <- c(
@@ -787,10 +961,72 @@ animate <- function(plot, nframes = 50, fps = 25) {
   }
   series <- .anim_group(L, .GROUP_AES)
   id <- .anim_group(L, c(.GROUP_AES, "x", "y", "label"))
+  .anim_note_row_order(pfx, L, id)
   list(
     key = paste0(pfx, id, "#", .occurrence(id)),
     series = paste0(pfx, series)
   )
+}
+
+# Marks drawn one per series (matched by their group, never by row order).
+.SERIES_MARKS <- c("line", "path", "area", "ribbon", "step", "polygon", "smooth", "density")
+
+# Record, for the row-order hint (VP-87), how many rows of each identity group
+# layer `pfx` drew in the state being compiled.
+.anim_note_row_order <- function(pfx, L, id) {
+  st <- .mark_ctx$anim_state
+  if (is.null(st) || !length(id) || L$mark %in% .SERIES_MARKS) {
+    return(invisible())
+  }
+  counts <- .mark_ctx$anim_counts %||% list()
+  prev <- counts[[pfx]][[st]]
+  tab <- table(id)
+  if (!is.null(prev)) {
+    tab <- tapply(c(prev, tab), names(c(prev, tab)), sum)
+  }
+  counts[[pfx]][[st]] <- c(tab)
+  .mark_ctx$anim_counts <- counts
+  invisible()
+}
+
+# Tell the user, once per `animate()` call, when marks without a `data_id`
+# fall back to row order within a group whose size changes between states:
+# the k-th row of a group in one state then pairs with the k-th row in the
+# next, which need not be the same observation (VP-87).
+.inform_row_order <- function(counts) {
+  hit <- FALSE
+  for (pfx in names(counts)) {
+    per_state <- counts[[pfx]]
+    if (length(per_state) < 2L) {
+      next
+    }
+    ids <- unique(unlist(lapply(per_state, names)))
+    n <- vapply(
+      per_state,
+      function(tab) {
+        v <- tab[ids]
+        v[is.na(v)] <- 0
+        as.double(v)
+      },
+      numeric(length(ids))
+    )
+    n <- matrix(n, nrow = length(ids))
+    # A group with more than one row somewhere whose size is not constant.
+    if (any(apply(n, 1L, function(r) max(r) > 1 && length(unique(r)) > 1L))) {
+      hit <- TRUE
+      break
+    }
+  }
+  if (hit) {
+    cli::cli_inform(
+      c(
+        "i" = "Some marks have no {.arg data_id}, so within each group they are matched by row order, and the groups change size between states.",
+        " " = "A mark may then move to another row's place. Give the layer a {.arg data_id} (e.g. {.code mark_point(data_id = id)}) to follow each observation."
+      ),
+      class = "vellumplot_anim_row_order"
+    )
+  }
+  invisible(hit)
 }
 
 # The identity group of each row: the `group` aesthetic, else the discrete
@@ -915,7 +1151,19 @@ animate <- function(plot, nframes = 50, fps = 25) {
   bp <- .build_panels(base)
   pooled <- unlist(lapply(bp$panels, function(p) p$resolved), recursive = FALSE)
   frozen <- .train_scales(base, pooled)
+  # A data label's frame variables (VP-93) are filled in per frame too.
+  .mark_ctx$anim_env <- env
+  on.exit(
+    rm(list = intersect(c("anim_kvars", "anim_env"), ls(.mark_ctx)), envir = .mark_ctx),
+    add = TRUE
+  )
   scenes <- lapply(seq_along(cuts), function(i) {
+    .mark_ctx$anim_kvars <- list(
+      frame = i,
+      nframes = length(cuts),
+      progress = i / length(cuts),
+      frame_along = restore(cuts[[i]])
+    )
     .compile_plot(frame_spec(cuts[[i]], i), frozen_scales = frozen)
   })
 
@@ -1230,6 +1478,93 @@ anim_save <- function(filename, animation) {
   .anim_render(animation, filename, format)
 }
 
+#' Save one frame of an animation as a still image
+#'
+#' `anim_frame()` writes a single frame of a `vellum_animation` to a PNG, SVG
+#' or PDF file: the poster for an animation, its thumbnail, or the moment to
+#' put in print. The frame is drawn exactly as it appears in the animation --
+#' the same frozen scales and colours, the same tween, the same frame
+#' variables in the title -- so a poster matches the animation it stands for,
+#' which a separately built static plot (its scales trained on one state)
+#' need not.
+#'
+#' Frames are numbered as in the files [anim_save()] writes, pauses and rewind
+#' included (see [animate()]).
+#'
+#' @param filename Output path; `.png`, `.svg` or `.pdf`.
+#' @param animation A `vellum_animation` (from [animate()]).
+#' @param frame The frame to save: a whole number from 1 to the number of
+#'   frames. The default is the frame a reader who asks for reduced motion
+#'   sees: the last frame when the animation ends on its final state (a reveal,
+#'   [transition_time()], a non-looping [transition_states()]), else the first.
+#' @param scale Resolution multiplier (default 1), as in [render_plot()]: `2`
+#'   doubles the pixels of a PNG at the same layout.
+#' @return `filename`, invisibly.
+#' @seealso [anim_save()], [animate()]
+#' @examples
+#' \dontrun{
+#' d <- data.frame(t = rep(1:3, each = 4), g = rep(letters[1:4], 3),
+#'                 v = c(1, 3, 2, 4, 4, 1, 3, 2, 2, 4, 1, 3))
+#' a <- vplot(d) |>
+#'   mark_bar(x = g, y = v, fill = g) |>
+#'   transition_states(t, wrap = FALSE) |>
+#'   animate()
+#' anim_frame("poster.png", a) # the final state
+#' anim_frame("middle.svg", a, frame = 25)
+#' }
+#' @export
+anim_frame <- function(filename, animation, frame = NULL, scale = 1) {
+  if (!S7::S7_inherits(animation, vellum_animation)) {
+    cli::cli_abort(
+      "{.arg animation} must be a {.cls vellum_animation} from {.fn animate}."
+    )
+  }
+  ext <- tolower(tools::file_ext(filename))
+  if (!ext %in% c("png", "svg", "pdf")) {
+    cli::cli_abort(c(
+      "{.fn anim_frame} cannot write {.val .{ext}} files.",
+      i = "Use {.val .png}, {.val .svg} or {.val .pdf}; {.fn anim_save} writes the whole animation."
+    ))
+  }
+  sched <- .anim_frame_schedule(animation)
+  n <- length(sched$seg)
+  if (is.null(frame)) {
+    k <- length(animation@scenes)
+    ends <- !animation@wrap &&
+      !isTRUE(animation@rewind) &&
+      sched$seg[[n]] + 1L == k &&
+      sched$frac[[n]] >= 1
+    frame <- if (ends) n else 1L
+  }
+  if (
+    !is.numeric(frame) || length(frame) != 1L || !is.finite(frame) ||
+      frame != round(frame) || frame < 1 || frame > n
+  ) {
+    cli::cli_abort("{.arg frame} must be a whole number in 1:{n}.")
+  }
+  frame <- as.integer(frame)
+  scenes <- animation@scenes
+  if (animation@wrap) {
+    scenes <- c(scenes, scenes[1L])
+  }
+  text <- .frame_text(animation, sched)
+  variant <- NULL
+  if (!is.null(text) && text$frame[[frame]] > 0L) {
+    variant <- text$variants[[text$frame[[frame]]]]
+  }
+  vellum::vl_render_frame(
+    scenes,
+    sched$seg[[frame]],
+    sched$frac[[frame]],
+    filename,
+    frac_col = sched$frac_col[[frame]],
+    frac_size = sched$frac_size[[frame]],
+    frac_alpha = sched$frac_alpha[[frame]],
+    text_variant = variant,
+    scale = scale
+  )
+}
+
 # Why `anim_save()` cannot write `.<ext>`, with what to do instead (VP-85).
 .anim_format_error <- function(ext, call = rlang::caller_env()) {
   video <- c("mp4", "m4v", "mov", "webm", "mkv", "avi", "ogv")
@@ -1255,15 +1590,7 @@ anim_save <- function(filename, animation) {
 # keyframes to vellum's one-pass animation encoder. Used by anim_save() and by
 # the widget's animated-SVG embed (vellumwidget), so both drive identical frames.
 .anim_render <- function(animation, filename, format) {
-  k <- length(animation@scenes)
-  sched <- .anim_schedule(
-    k,
-    animation@nframes,
-    .anim_easings(animation),
-    animation@seg_weights,
-    animation@state_length,
-    animation@wrap
-  )
+  sched <- .anim_frame_schedule(animation)
   scenes <- animation@scenes
   # Wrap loops the last state back to the first: append a copy of keyframe 1 so
   # the final segment K -> K+1 interpolates back to the start.
@@ -1506,8 +1833,9 @@ anim_save <- function(filename, animation) {
 # interactive device) and reports how to write it.
 S7::method(print, vellum_animation) <- function(x, ...) {
   vellum::display(x@scenes[[1L]])
+  total <- .anim_total_frames(x)
   cli::cli_inform(
-    "A {.cls vellum_animation}: {length(x@scenes)} state{?s}, {x@nframes} frame{?s} at {x@fps} fps. Write it with {.fn anim_save}."
+    "A {.cls vellum_animation}: {length(x@scenes)} state{?s}, {total} frame{?s} at {x@fps} fps. Write it with {.fn anim_save}."
   )
   invisible(x)
 }

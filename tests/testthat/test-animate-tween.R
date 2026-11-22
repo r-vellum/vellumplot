@@ -96,7 +96,7 @@ test_that("a colour group appearing later is shown in the final frame", {
   expect_true(same_png(fr[[6]], keyframe_png(a, 2)))
 })
 
-test_that("a line whose vertex count changes ends on the later line", {
+test_that("a line whose vertex count changes morphs into the later line (VR-37)", {
   l <- rbind(
     data.frame(s = "A", x = 1:5, y = c(1, 3, 2, 4, 3)),
     data.frame(s = "B", x = 1:6, y = c(5, 4, 5, 4, 5, 4))
@@ -104,9 +104,13 @@ test_that("a line whose vertex count changes ends on the later line", {
   p <- vplot(l, width = 3, height = 2, dpi = 50) |>
     mark_line(x = x, y = y) |>
     transition_states(s, wrap = FALSE, state_length = 0)
-  expect_warning(a <- animate(p, nframes = 9), "number of points")
+  # It morphs, so nothing switches and nothing warns.
+  expect_no_warning(a <- animate(p, nframes = 9))
+  expect_identical(vellum::vl_tween_pairing(a@scenes)$snapped, 0L)
   fr <- anim_frames(a)
-  expect_true(same_png(fr[[4]], keyframe_png(a, 1)))
+  expect_true(same_png(fr[[1]], keyframe_png(a, 1)))
+  expect_false(same_png(fr[[5]], keyframe_png(a, 1)))
+  expect_false(same_png(fr[[5]], keyframe_png(a, 2)))
   # Before VR-27 the last frame drew B's first five vertices only.
   expect_true(same_png(fr[[9]], keyframe_png(a, 2)))
 })
@@ -341,4 +345,32 @@ test_that("a colour group appearing fades in, and a point changing group slides 
   vm <- colour_at(a, "l1|v")
   expect_false(isTRUE(all.equal(vm, v0)))
   expect_false(isTRUE(all.equal(vm, v1)))
+})
+
+test_that("an effect underlay fades with its mark instead of switching (VR-34)", {
+  d <- data.frame(
+    s = c(rep("A", 6), rep("B", 3)),
+    g = c(rep(c("x", "y"), each = 3), rep("x", 3)),
+    t = c(1:3, 1:3, 1:3),
+    y = c(1, 2, 3, 3, 2, 1, 2, 2, 2)
+  )
+  p <- vplot(d, width = 3, height = 2, dpi = 50) |>
+    mark_line(x = t, y = y, color = g, effects = list(glow())) |>
+    transition_states(s, wrap = FALSE, state_length = 0)
+  expect_no_warning(a <- animate(p, nframes = 5))
+  pr <- vellum::vl_tween_pairing(a@scenes)
+  expect_identical(pr$snapped, 0L)
+  # Series y leaves: its line and its glow both fade out.
+  expect_identical(pr$exited, 2L)
+  # Points: every point's underlay is keyed with the point, one key per copy
+  # (a motion trail draws several).
+  for (fx in list(glow(), outline(), shadow(), motion(n = 3))) {
+    p <- vplot(d, width = 3, height = 2, dpi = 50) |>
+      mark_point(x = t, y = y, color = g, effects = list(fx)) |>
+      transition_states(s, wrap = FALSE, state_length = 0)
+    expect_no_warning(a <- animate(p, nframes = 5))
+    pr <- vellum::vl_tween_pairing(a@scenes)
+    copies <- if (S7::S7_inherits(fx, vellumplot:::MotionSpec)) 3L else 1L
+    expect_identical(c(pr$snapped, pr$exited), c(0L, 3L * (1L + copies)))
+  }
 })

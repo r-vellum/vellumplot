@@ -2,6 +2,27 @@
 
 ## New features
 
+* `animate()` gains `start_pause`, `end_pause` and `rewind` (VP-95), with
+  gganimate's semantics: hold the first / last frame for that many frames, and
+  play back to the start; they come out of `nframes`. GIF, APNG and SVG files,
+  `anim_frame()` and the animated widget's scrubber all follow them.
+
+* `anim_frame(filename, animation, frame)` saves one frame of an animation as
+  a PNG, SVG or PDF (VP-96), drawn exactly as in the animation (same frozen
+  scales, tween and frame variables), so a poster matches its animation. The
+  default frame is the one shown under reduced motion: the final frame of an
+  animation that ends on its last state, else the first. Needs vellum's new
+  `vl_render_frame()`.
+
+* `mark_text()` labels may use frame variables in an animation (VP-93):
+  `label = "{round(frame_time)}"` (a constant, or a column of templates) is
+  filled in on every frame, through vellum's per-frame text, while the label
+  moves as its mark. Repelled and rich-text labels are not templated.
+
+* `animate()` tells you, once, when marks without a `data_id` are matched by
+  row order within groups whose size changes between states, and suggests a
+  `data_id` (VP-87).
+
 * Frame variables in animation titles (VP-82): `labs(title = "Year:
   {round(frame_time)}")`, glue-style, as in gganimate. Available:
   `frame`, `nframes`, `progress` always; `closest_state`, `previous_state`,
@@ -36,6 +57,15 @@
   state names.
 
 ## Bug fixes
+
+* Effect underlays (`glow()`, `outline()`, `shadow()`, `motion()`) are keyed
+  with their mark in animation keyframes (VR-34), so a halo fades in and out
+  with its series or point instead of switching halfway and triggering the
+  "cut rather than tween" warning.
+
+* With vellum's morphing (VR-37), a line or area whose number of points
+  changes between states morphs; `animate()`'s warning and docs no longer list
+  it as something that switches (only lines that cannot be morphed do).
 
 * `transition_reveal()` with several series in one line, path, area, ribbon
   or step layer no longer draws a spike at the line end (VP-94): each series'

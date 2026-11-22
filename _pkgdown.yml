@@ -305,6 +305,7 @@ reference:
   - ease_aes
   - animate
   - anim_save
+  - anim_frame
 
 - title: Accessibility and provenance
   desc: >

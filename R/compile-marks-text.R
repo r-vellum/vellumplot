@@ -92,6 +92,24 @@ NULL
   vj <- L$values$vjust %||% .aes_param(L, "vjust", "centre")
   just <- c(hj[[1]], vj[[1]])
   keep <- .repel_keep(repel_on, xn, yn, if (!rich_single && !rich_list) label)
+  # In an animation, a plain label may carry frame variables (VP-93):
+  # `label = "{round(frame_time)}"`. Each keyframe draws it filled in with
+  # that keyframe's values; the render then swaps every frame's string in.
+  tpl <- NULL
+  if (!is.null(.mark_ctx$anim_kvars) && !rich_single && !rich_list && !repel_on) {
+    is_tpl <- .is_frame_template(label)
+    if (any(is_tpl)) {
+      tpl <- ifelse(is_tpl, label, NA_character_)
+      label[is_tpl] <- vapply(
+        label[is_tpl],
+        .glue_one,
+        character(1),
+        vars = .mark_ctx$anim_kvars,
+        env = .mark_ctx$anim_env %||% globalenv(),
+        USE.NAMES = FALSE
+      )
+    }
+  }
 
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha, size = fs))) {
@@ -101,6 +119,13 @@ NULL
     }
     a <- alpha[idx[1]]
     xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
+    gp <- vellum::vl_gpar(
+      fontsize = fs[idx[1]],
+      col = col[idx[1]],
+      fontfamily = .aes_param(L, "family", NULL),
+      fontface = .aes_param(L, "fontface", NULL),
+      alpha = gp_alpha(a)
+    )
     scene <- .draw(
       scene,
       vellum::text_grob(
@@ -110,20 +135,44 @@ NULL
         just = just,
         rot = ang[idx],
         name = if (repel_on) .repel_name(gi),
-        gp = vellum::vl_gpar(
-          fontsize = fs[idx[1]],
-          col = col[idx[1]],
-          fontfamily = .aes_param(L, "family", NULL),
-          fontface = .aes_param(L, "fontface", NULL),
-          alpha = gp_alpha(a)
-        )
+        gp = gp
       ),
       # PROVENANCE: `idx` are the layer rows in this style group.
       rows = idx
     )
+    if (!is.null(tpl)) {
+      .note_label_templates(idx, tpl, just, ang, gp)
+    }
     gi <- gi + 1L
   }
   scene
+}
+
+# Is each label a frame-variable template (a `{...}` that is not a `{{`
+# escape)?
+.is_frame_template <- function(x) {
+  x <- gsub("{{", "", gsub("}}", "", x, fixed = TRUE), fixed = TRUE)
+  !is.na(x) & grepl("\\{[^{}]*\\}", x)
+}
+
+# Record how each templated label of rows `idx` was drawn, by its animation
+# key, so the render can shape every frame's string the same way (VP-93).
+# Only keyed (animation identity) labels can be swapped per frame.
+.note_label_templates <- function(idx, tpl, just, ang, gp) {
+  k <- .mark_ctx$anim_k
+  keys <- .mark_ctx$data_id
+  if (is.null(k) || !isTRUE(.mark_ctx$anim_identity) || is.null(keys)) {
+    return(invisible())
+  }
+  rec <- .mark_ctx$anim_labels %||% list()
+  for (i in idx) {
+    if (is.na(tpl[i]) || is.na(keys[i])) {
+      next
+    }
+    rec[[as.character(k)]][[keys[i]]] <- list(template = tpl[i], just = just, rot = ang[i], gp = gp)
+  }
+  .mark_ctx$anim_labels <- rec
+  invisible()
 }
 
 # A text mark with a filled rounded background sized to each label.
