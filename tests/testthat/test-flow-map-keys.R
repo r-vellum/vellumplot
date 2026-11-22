@@ -132,3 +132,47 @@ test_that("a static flow map stays unkeyed", {
   el <- vellum::scene_model(as_vellum_scene(p))$elements
   expect_true(all(is.na(el$key)))
 })
+
+test_that("a trunk's tooltip names the destinations it carries (VP-74)", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("edgebundle")
+  el <- vp71_elements(vp71_plot())
+  fl <- el[el$mark == "line", ]
+  merged <- fl[!endsWith(fl$key, "\001flow"), ]
+  tt <- vp71_meta(merged, "tooltip")
+  expect_false(any(grepl("…", tt, fixed = TRUE)))
+  # "v1 -> v2, v3: 30": the listed destinations' flows add up to the trunk's;
+  # past three, the rest are counted ("v1 -> v2, v3, v4 + 1 more: 100")
+  w <- c(v2 = 10, v3 = 20, v4 = 30, v5 = 40)
+  m <- regmatches(tt, regexec("^v1 → (.+?)( \\+ ([0-9]+) more)?: ([0-9.]+)$", tt))
+  expect_true(all(lengths(m) == 5L))
+  for (x in m) {
+    dests <- strsplit(x[2], ", ", fixed = TRUE)[[1]]
+    expect_true(all(dests %in% names(w)))
+    if (nzchar(x[3])) {
+      expect_length(dests, 3L)
+      expect_equal(as.numeric(x[5]), sum(w)) # the root's trunk: every flow
+      expect_equal(as.integer(x[4]), length(w) - 3L)
+    } else {
+      expect_gte(length(dests), 2L)
+      expect_equal(sum(w[dests]), as.numeric(x[5]))
+    }
+  }
+})
+
+test_that("flow destinations follow the branch links, truncated past three", {
+  # branch 1: a trunk from branch point P up to the root; branches 2-3 end at
+  # P (vertices 2, 3); branch 4 a vertex (5) straight to the root
+  fm <- data.frame(
+    x = c(1, 0, 2, 1, 1, 1, 3, 0),
+    y = c(1, 0, 2, 1, 0, 1, 3, 0),
+    leaf = c(NA, NA, 2L, 2L, 3L, 3L, 5L, 5L)
+  )
+  br <- list(1:2, 3:4, 5:6, 7:8)
+  d <- vellumplot:::.flow_branch_dests(fm, br, root_i = 1L)
+  expect_equal(d, list(c(2L, 3L), 2L, 3L, 5L))
+  lab <- vellumplot:::.flow_dest_label
+  expect_identical(lab(c("v3", "v5", "v8")), "v3, v5, v8")
+  expect_identical(lab(paste0("v", 1:5)), "v1, v2, v3 + 2 more")
+  expect_identical(lab(character()), "…")
+})

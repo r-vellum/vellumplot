@@ -431,7 +431,8 @@ NULL
   density = "line",
   linerange = "line",
   errorbar = "line",
-  edges = "line"
+  edges = "line",
+  edge_bundle = "line"
 )
 
 # Filled marks whose `color` strokes the outline rather than filling (ggplot2's
@@ -523,7 +524,9 @@ NULL
     if (.density_default_alpha(L)) {
       return(list(fill_alpha = .DENSITY_FILL_ALPHA))
     }
-    a <- L$params[[ch]]
+    # a bundle's faint default opacity reaches its key too (VP-73)
+    a <- L$params[[ch]] %||%
+      if (identical(L$mark, "edge_bundle")) .EDGE_BUNDLE_ALPHA
     if (is.numeric(a) && length(a) == 1L && !is.na(a)) {
       return(list(alpha = a))
     }
@@ -534,6 +537,10 @@ NULL
 
 # Marks whose opacity is the `edge_alpha` channel (`.rename_edge_aes()`).
 .EDGE_ALPHA_MARKS <- c("edges", "edge_bundle")
+
+# `mark_edge_bundle()`'s default opacity: bundled trunks overlap heavily, so a
+# faint stroke lets their density read. Its legend key uses it too (VP-73).
+.EDGE_BUNDLE_ALPHA <- 0.3
 
 .key_glyph_for_mark <- function(mark) {
   if (mark %in% names(.MARK_KEY_GLYPH)) .MARK_KEY_GLYPH[[mark]] else "square"
