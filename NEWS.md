@@ -2,6 +2,13 @@
 
 ## Bug fixes
 
+* A line, path or step mapped to a continuous colour that holds constant
+  within each series (`mark_path(group = id, color = level)` on contour
+  lines) draws each series as one plain path in its colour. It used to draw
+  one segment record per vertex pair: 91 volcano contours went from 9,097
+  records and 18.2k points to 91 records and 9.2k points. A series whose
+  colour does vary is still coloured per segment (VP-76).
+
 * Two composition cells that condition the same aesthetic on the same
   selection (`hconcat(p1, p2)`, each `color = condition("s", ..., if_false)`)
   no longer share a condition tag, so in vellumwidget each cell's
