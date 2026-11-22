@@ -128,8 +128,8 @@ and stays one element per series in <code><a href="https://r-vellum.github.io/ve
 constant <code>linewidth =</code> is unaffected and still draws an ordinary stroke.</p>
 <p>A tapered stroke has one colour and no dash pattern, so a series falls back to
 <strong>one segment per span</strong> – each at the mean of its two endpoint widths, so
-the width steps at every vertex – when it also maps a continuous colour (each
-segment then takes its own colour), uses a dashed or dotted <code>linetype</code>, is
+the width steps at every vertex – when it also maps a continuous colour that
+varies along the series (each segment then takes its own colour), uses a dashed or dotted <code>linetype</code>, is
 drawn with a sketch theme, or has a missing width. That fallback emits one
 path element per segment, worth knowing before combining those with tens of
 thousands of rows. <code><a href="mark_segment.html">mark_segment()</a></code> is already one element per row and takes

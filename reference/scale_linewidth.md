@@ -70,10 +70,11 @@ ordinary stroke.
 A tapered stroke has one colour and no dash pattern, so a series falls
 back to **one segment per span** – each at the mean of its two endpoint
 widths, so the width steps at every vertex – when it also maps a
-continuous colour (each segment then takes its own colour), uses a
-dashed or dotted `linetype`, is drawn with a sketch theme, or has a
-missing width. That fallback emits one path element per segment, worth
-knowing before combining those with tens of thousands of rows.
+continuous colour that varies along the series (each segment then takes
+its own colour), uses a dashed or dotted `linetype`, is drawn with a
+sketch theme, or has a missing width. That fallback emits one path
+element per segment, worth knowing before combining those with tens of
+thousands of rows.
 [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)
 is already one element per row and takes one width per segment.
 
