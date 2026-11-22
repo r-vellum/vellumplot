@@ -184,7 +184,10 @@ NULL
   # plot data are assigned here, a layer's own rows in `.layer_panel_idx()`.
   datas <- c(
     list(data),
-    Filter(Negate(is.null), lapply(spec@layers, function(l) l@data))
+    Filter(Negate(is.null), lapply(spec@layers, function(l) l@data)),
+    # An animation keyframe lays its panels out from the whole data, so every
+    # frame has every panel whichever rows its state holds (VP-84).
+    .mark_ctx$anim_facet_datas
   )
   if (facet@type == "wrap") {
     key <- .facet_keys(facet, data)$wrap

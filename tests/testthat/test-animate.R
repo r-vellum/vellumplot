@@ -259,11 +259,7 @@ test_that("animate() rejects specs it cannot animate", {
   no_tr <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
   expect_error(animate(no_tr), "transition_states")
 
-  faceted <- vplot(mtcars) |>
-    mark_point(x = wt, y = mpg) |>
-    facet_wrap(~gear) |>
-    transition_states(cyl)
-  expect_error(animate(faceted), "facet")
+  # (a faceted plot animates since VP-84; per-panel scales are refused, below)
 
   # a genuinely single-state column
   d1 <- transform(mtcars, only = 1)
@@ -654,4 +650,71 @@ test_that("a plot without frame variables keeps no frame text", {
   expect_length(a@frame_text, 0L)
   sch <- vellumplot:::.anim_schedule(2, 4, "linear", a@seg_weights, a@state_length, a@wrap)
   expect_null(vellumplot:::.frame_text(a, sch))
+})
+
+# ---- facets (VP-84) ---------------------------------------------------------
+
+test_that("a faceted animation keeps every panel in every frame (VP-84)", {
+  d <- data.frame(
+    s = rep(c("A", "B", "C"), each = 4),
+    p = c("x", "x", "y", "y", "x", "x", "x", "x", "y", "y", "y", "x"),
+    id = rep(1:4, 3),
+    v = c(1, 2, 3, 4, 2, 3, 4, 1, 4, 3, 2, 1)
+  )
+  a <- expect_no_warning(
+    vplot(d) |>
+      mark_point(x = id, y = v, data_id = id) |>
+      facet_wrap(~p) |>
+      transition_states(s, wrap = FALSE) |>
+      animate(nframes = 12)
+  )
+  # State B has no "y" rows, but its keyframe still lays out both panels.
+  panels <- lapply(a@scenes, function(sc) sort(unique(reveal_elems(sc)$panel)))
+  expect_identical(panels[[2]], panels[[1]])
+  expect_identical(panels[[3]], panels[[1]])
+  # Every adjacent pair tweens (same layout), and the identity includes the
+  # panel: point 3 leaves panel y and enters panel x between A and B.
+  pr <- vellum::vl_tween_pairing(a@scenes)
+  expect_true(all(pr$paired))
+  expect_equal(pr$exited[1], 2L) # points 3 and 4 leave panel y ...
+  expect_equal(pr$entered[1], 2L) # ... and enter panel x
+  keys <- vellum::scene_display_list(vellum::as_vellum_scene(a@scenes[[1]]))$keys
+  keys <- keys[!is.na(keys) & nzchar(keys)]
+  expect_true(all(grepl("^panel-1-[12]\\|l1\\|", keys)))
+  # Mid-transition both copies of point 3 are drawn, fading.
+  fr <- vellum:::.tween_frame(a@scenes[[1]], a@scenes[[2]], 0.5)$element_table()
+  expect_equal(sum(grepl("\\|l1\\|3$", fr$key)), 2L)
+})
+
+test_that("a faceted gapminder-style animation tweens without cuts (VP-84)", {
+  skip_if_not_installed("gapminder")
+  g <- as.data.frame(gapminder::gapminder)
+  g <- g[g$year %in% c(1952, 1957, 1962), ]
+  a <- expect_no_warning(
+    vplot(g) |>
+      mark_point(x = gdpPercap, y = lifeExp, color = continent, data_id = country) |>
+      facet_wrap(~continent) |>
+      transition_time(year) |>
+      animate(nframes = 6)
+  )
+  pr <- vellum::vl_tween_pairing(a@scenes)
+  expect_true(all(pr$paired))
+  expect_true(all(pr$exited == 0L & pr$entered == 0L))
+})
+
+test_that("animate() refuses per-panel scales with a clear message (VP-84)", {
+  d <- data.frame(s = rep(1:2, each = 4), p = rep(c("x", "y"), 4), x = 1:8, y = 8:1)
+  for (sc in c("free", "free_x", "free_y")) {
+    expect_error(
+      vplot(d) |> mark_point(x = x, y = y) |> facet_wrap(~p, scales = sc) |> transition_states(s) |> animate(),
+      "per-panel scales"
+    )
+  }
+})
+
+test_that("a faceted reveal reveals every panel along `along` (VP-84)", {
+  d <- data.frame(t = rep(1:10, 2), y = c(1:10, 10:1), g = rep(c("a", "b"), each = 10))
+  a <- vplot(d) |> mark_point(x = t, y = y) |> facet_wrap(~g) |> transition_reveal(t) |> animate(nframes = 4)
+  npts <- vapply(a@scenes, function(s) sum(reveal_elems(s)$mark == "point"), integer(1))
+  expect_equal(npts, 2L * c(1L, 4L, 7L, 10L))
 })
