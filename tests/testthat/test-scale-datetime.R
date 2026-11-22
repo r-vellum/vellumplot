@@ -7,8 +7,9 @@ test_that("a Date column gets a date axis with no scale declared", {
     y = seq_len(53)
   )
   b <- vellumplot:::.build_panels(vplot(df) |> mark_line(x = day, y = y))
-  # labels are formatted dates, not raw numbers
-  expect_true(any(grepl("2020", b$scales$x$labels)))
+  # labels are formatted dates, not raw numbers: a year of data reads by
+  # month, as pretty() and ggplot2 label it (VP-92)
+  expect_true(any(grepl("Jan", b$scales$x$labels)))
   expect_length(b$scales$x$breaks, length(b$scales$x$labels))
 })
 
