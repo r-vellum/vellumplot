@@ -449,8 +449,9 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 
 # Apply a layer's `nudge_x`/`nudge_y` (millimetres) to a resolved `.xy_units()`
 # pair, as a device-exact compound offset (vellum's `native + mm` unit). A zero
-# nudge is left untouched, so an un-nudged mark is byte-identical.
-.nudge_xy <- function(xy, L, idx = NULL) {
+# nudge is left untouched, so an un-nudged mark is byte-identical. `scales`
+# orients the nudge along the data axes (coord_flip, reversed axes).
+.nudge_xy <- function(xy, L, idx = NULL, scales = NULL) {
   # A per-row nudge (mm) mapped as a `nudge_x`/`nudge_y` channel wins over the
   # scalar `nudge_x`/`nudge_y` param -- this is how `mark_node_text(dist=)` pushes
   # each label radially outward from the graph centroid. `idx` subsets it to the
@@ -462,6 +463,19 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
       nx <- nx[idx]
     }
     if (length(ny) > 1L) ny <- ny[idx]
+  }
+  # The nudge follows the data axes, as in ggplot2: under coord_flip() the data
+  # x runs vertically, so `nudge_x` moves a label up/down and `nudge_y` across
+  # (VP-88), and on a reversed axis a positive nudge points toward larger data
+  # values. `xy` is already in device orientation, so swap the two offsets.
+  if (!is.null(scales) && is.null(scales$polar)) {
+    nx <- nx * .axis_dir(scales$x)
+    ny <- ny * .axis_dir(scales$y)
+  }
+  if (.flipped(scales)) {
+    tmp <- nx
+    nx <- ny
+    ny <- tmp
   }
   if (!is.null(nx) && any(nx != 0)) {
     xy$x <- xy$x + vellum::vl_unit(nx, "mm")
@@ -637,6 +651,17 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     return(.xy_units(scales, c(da$x, db$x), c(da$y, db$y)))
   }
   .xy_units(scales, c(xa, rev(xb)), c(ya, rev(yb)))
+}
+
+# The direction of a position scale's native axis: -1 for a reversed axis (a
+# decreasing domain, from a reverse transform or descending limits), else 1.
+.axis_dir <- function(sc) {
+  d <- sc$domain
+  if (is.numeric(d) && length(d) == 2L && all(is.finite(d)) && d[2] < d[1]) {
+    -1
+  } else {
+    1
+  }
 }
 
 .rect_units <- function(scales, xc, yc, w, h) {

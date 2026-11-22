@@ -118,7 +118,7 @@ NULL
       next
     }
     a <- alpha[idx[1]]
-    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
+    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx, scales)
     gp <- vellum::vl_gpar(
       fontsize = fs[idx[1]],
       col = col[idx[1]],
@@ -218,7 +218,7 @@ NULL
       next
     }
     a <- alpha[idx[1]]
-    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx)
+    xy <- .nudge_xy(.xy_units(scales, xn[idx], yn[idx]), L, idx, scales)
     # Key the background box, not the text on top: the rounded rect is the whole
     # label's hit target, and (being a keyed batch mark) it contributes exactly
     # one `scene_model()` row per label when keyed and none when not -- so a label

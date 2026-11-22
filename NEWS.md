@@ -58,6 +58,18 @@
 
 ## Bug fixes
 
+* `nudge_x` / `nudge_y` follow the data axes, as in ggplot2 (VP-88): under
+  `coord_flip()` `nudge_y` moves a label across and `nudge_x` up/down (they
+  used to move it along the screen axes, so a flipped bar chart's labels
+  shifted by about one bar), and on a reversed axis a positive nudge points
+  toward larger values. Applies to `mark_text()`, `mark_label()` and
+  `mark_image()`.
+
+* Bars, histograms, tiles and boxplot boxes draw on a reversed axis again
+  (VP-89): `scale_x_reverse()` / `scale_y_reverse()`, with or without
+  `coord_flip()`, drew no bars because their native width resolved to a
+  negative size. Fixed in vellum (needs vellum with VP-89).
+
 * A constant `if_true` in `condition()` is a setting, not a mapping (VP-86):
   `alpha = condition("s", 1, 0.2)` no longer adds an alpha legend titled "1"
   with keys 0.5-1.5. The same holds for colour, fill and size

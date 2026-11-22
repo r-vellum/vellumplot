@@ -42,7 +42,8 @@ single constant path (the same image at every point).}
 follows the image's own aspect ratio. Default \code{5}.}
 
 \item{nudge_x, nudge_y}{Shift each image by an exact absolute distance in
-millimetres (\code{+x} right, \code{+y} up). Default \code{0}.}
+millimetres along the data x / y axis (\code{+x} right, \code{+y} up on ordinary
+axes; swapped under \code{\link[=coord_flip]{coord_flip()}}). Default \code{0}.}
 
 \item{interpolate}{Smoothly interpolate when scaling (default \code{TRUE})?
 \code{FALSE} keeps hard pixel edges.}
