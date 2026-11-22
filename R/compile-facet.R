@@ -526,6 +526,11 @@ NULL
 # trained per panel, into `p$aes_sc` (F-8).
 .build_panels <- function(spec, frozen_scales = NULL) {
   fa <- .facet_assign(spec)
+  # The panel grid, for the date-break label fit (`.axis_label_fit()`), which
+  # shares the plot's width among the facet columns.
+  old_grid <- .mark_ctx$panel_grid
+  .mark_ctx$panel_grid <- c(R = fa$R %||% 1L, C = fa$C %||% 1L)
+  on.exit(.mark_ctx$panel_grid <- old_grid, add = TRUE)
   panels <- lapply(fa$panels, function(p) {
     p$resolved <- .resolve_panel(spec, p)
     p

@@ -454,7 +454,8 @@ NULL
   scalespec,
   title,
   include_zero = FALSE,
-  lim = NULL
+  lim = NULL,
+  fit = NULL
 ) {
   name <- title # resolved by the titles record (.plot_titles)
   raw <- do.call(c, values) # combine across layers, preserving class
@@ -477,7 +478,8 @@ NULL
       scalespec,
       name,
       include_zero,
-      lim
+      lim,
+      fit = fit
     )
   } else {
     .train_position_discrete(aesthetic, values, scalespec, name, lim)
@@ -496,13 +498,86 @@ NULL
   }
 }
 
+# Default breaks for a date/time axis: `pretty()` at decreasing densities until
+# the labels fit the axis (`fit`, from `.axis_label_fit()`), else the sparsest
+# tried (VP-92). Labels are pretty()'s own ("2000", "Jan", "Jan 08", "06:00"),
+# as ggplot2 shows them, or the scale's `date_labels` format. Breaks outside the
+# trained range `rng` are dropped before the fit is judged. Returns the breaks
+# (classed like the data) and their labels.
+.pretty_time_breaks <- function(rng, raw, domain, dlabels = NULL, fit = NULL) {
+  x <- .as_like_time(rng, raw)
+  best <- NULL
+  for (n in c(5L, 4L, 3L, 2L, 1L)) {
+    b <- pretty(x, n)
+    lab <- if (!is.null(dlabels) && inherits(b, c("Date", "POSIXct"))) {
+      format(b, dlabels)
+    } else {
+      attr(b, "labels") %||% format(b)
+    }
+    keep <- as.numeric(b) >= min(rng) & as.numeric(b) <= max(rng)
+    best <- list(breaks = b[keep], labels = as.character(lab[keep]))
+    if (is.null(fit) || sum(keep) < 2L) {
+      return(best)
+    }
+    if (fit(as.numeric(best$breaks), best$labels, domain)) {
+      return(best)
+    }
+  }
+  best
+}
+
+# Share of the plot's width (height) the panels get, after the axis, title and
+# legend gutters, for the label-fit estimate below.
+.PANEL_FRAC <- 0.75
+# Clear space (mm) wanted between neighbouring tick labels.
+.LABEL_GAP_MM <- 2
+
+# A test of whether a set of tick labels fits along position axis `aes`, for
+# choosing date breaks by the available width (VP-92). The labels are measured
+# with vellum's text metrics at the theme's axis text size and angle (the same
+# measure the layout's gutters use); the axis length is estimated, since the
+# panel is laid out only after training: `.PANEL_FRAC` of the plot's width (or
+# height, for a vertical axis, e.g. x under coord_flip()), divided among the
+# facet columns (rows). NULL (no thinning) for polar and other non-cartesian
+# coordinates, or blank axis text.
+.axis_label_fit <- function(spec, aes) {
+  co <- .coord_of(spec)
+  if (!co@kind %in% c("cartesian", "flip", "fixed")) {
+    return(NULL)
+  }
+  horiz <- xor(identical(aes, "x"), identical(co@kind, "flip"))
+  el <- .resolve_theme(.theme_of(spec))[[
+    if (horiz) "axis.text.x" else "axis.text.y"
+  ]]
+  if (is.null(el) || .is_blank(el)) {
+    return(NULL)
+  }
+  grid <- .mark_ctx$panel_grid %||% c(R = 1L, C = 1L)
+  len_mm <- if (horiz) {
+    spec@width * 25.4 * .PANEL_FRAC / grid[["C"]]
+  } else {
+    spec@height * 25.4 * .PANEL_FRAC / grid[["R"]]
+  }
+  rot <- .el_rot(el)
+  function(breaks, labels, domain) {
+    g <- .txt(labels, el@size, rot)
+    ext <- vellum::vl_convert(
+      if (horiz) vellum::grobwidth(g) else vellum::grobheight(g),
+      "mm"
+    )
+    step <- min(diff(sort(breaks))) / abs(diff(domain)) * len_mm
+    step >= ext + .LABEL_GAP_MM
+  }
+}
+
 .train_position_continuous <- function(
   aesthetic,
   raw,
   scalespec,
   name,
   include_zero,
-  lim = NULL
+  lim = NULL,
+  fit = NULL
 ) {
   is_time <- inherits(raw, c("Date", "POSIXct")) ||
     (!is.null(scalespec) && scalespec@type %in% c("date", "datetime", "time"))
@@ -577,6 +652,7 @@ NULL
     # only a placeholder window.
     no_data <- is.null(user_lim) &&
       !any(is.finite(suppressWarnings(as.numeric(raw))))
+    auto <- NULL
     braw <- if (!is.null(user_breaks)) {
       user_breaks
     } else if (no_data) {
@@ -584,9 +660,10 @@ NULL
     } else if (!is.null(dbreaks) && is_classed) {
       scales::breaks_width(dbreaks)(.as_like_time(rng, raw))
     } else {
-      pretty(.as_like_time(rng, raw))
+      auto <- .pretty_time_breaks(rng, raw, domain, dlabels, fit)
+      auto$breaks
     }
-    lab <- .match_labels(user_labels, braw, aesthetic)
+    lab <- .match_labels(user_labels, braw, aesthetic) %||% auto$labels
     keep <- as.numeric(braw) >= min(rng) & as.numeric(braw) <= max(rng)
     braw <- braw[keep]
     if (!is.null(lab)) {
@@ -1914,13 +1991,14 @@ NULL
   values = .axis_pool(resolved, aes, paste0(aes, "intercept"))
 ) {
   scalespec <- .scale_for(spec, aes)
-  sc <- .train_position(aes, values, scalespec, title, include_zero, lim)
+  fit <- .axis_label_fit(spec, aes)
+  sc <- .train_position(aes, values, scalespec, title, include_zero, lim, fit)
   # Bars on a continuous x reach half a bar width past their centres: train on
   # those edges too, as ggplot2 does, so the end bars are not clipped (VP-90).
   ext <- .bar_extent_data(sc, resolved, aes, scalespec, lim)
   if (!is.null(ext)) {
     values <- c(values, list(ext))
-    sc <- .train_position(aes, values, scalespec, title, include_zero, lim)
+    sc <- .train_position(aes, values, scalespec, title, include_zero, lim, fit)
   }
   sc <- .widen_for_footprints(
     sc,
