@@ -16,7 +16,8 @@ scale_linetype(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_linetype_manual(
@@ -26,7 +27,8 @@ scale_linetype_manual(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_linetype_discrete(
@@ -36,7 +38,8 @@ scale_linetype_discrete(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 ```
 
@@ -67,6 +70,13 @@ scale_linetype_discrete(
 - na.value:
 
   The line type drawn for missing values, or `NULL`.
+
+- drop:
+
+  For the discrete scales, drop factor levels that no row uses (default
+  `TRUE`, as in ggplot2): they get no legend key and no palette entry,
+  so the colours go to the levels that remain. `FALSE` keeps every
+  level. `limits` overrides it.
 
 ## Value
 

@@ -108,7 +108,8 @@ legend is drawn automatically when colour or fill is mapped.</p>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_manual</span><span class="op">(</span></span>
@@ -118,7 +119,8 @@ legend is drawn automatically when colour or fill is mapped.</p>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_gradient</span><span class="op">(</span></span>
@@ -195,7 +197,8 @@ legend is drawn automatically when colour or fill is mapped.</p>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_manual</span><span class="op">(</span></span>
@@ -205,7 +208,8 @@ legend is drawn automatically when colour or fill is mapped.</p>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_gradient</span><span class="op">(</span></span>
@@ -249,7 +253,8 @@ legend is drawn automatically when colour or fill is mapped.</p>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_manual</span><span class="op">(</span></span>
@@ -259,7 +264,8 @@ legend is drawn automatically when colour or fill is mapped.</p>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na.value <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  na.value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_gradient</span><span class="op">(</span></span>
@@ -324,6 +330,13 @@ the scale covers.</p></dd>
 outside <code>limits</code>: <code>"censor"</code> gives them the NA colour, <code>"squish"</code> the
 colour of the nearest limit, <code>"keep"</code> the same (a ramp cannot extend past
 its ends), or a <code>function(x, range)</code>. <code>NULL</code> (default) squishes.</p></dd>
+
+
+<dt id="arg-drop">drop<a class="anchor" aria-label="anchor" href="#arg-drop"></a></dt>
+<dd><p>For the discrete scales, drop factor levels that no row uses
+(default <code>TRUE</code>, as in ggplot2): they get no legend key and no palette
+entry, so the colours go to the levels that remain. <code>FALSE</code> keeps every
+level. <code>limits</code> overrides it.</p></dd>
 
 
 <dt id="arg-values">values<a class="anchor" aria-label="anchor" href="#arg-values"></a></dt>

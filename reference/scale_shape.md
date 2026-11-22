@@ -14,7 +14,8 @@ scale_shape(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_shape_manual(
@@ -24,7 +25,8 @@ scale_shape_manual(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_shape_discrete(
@@ -34,7 +36,8 @@ scale_shape_discrete(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 ```
 
@@ -82,6 +85,13 @@ scale_shape_discrete(
 - na.value:
 
   The shape drawn for missing values (default a circle).
+
+- drop:
+
+  For the discrete scales, drop factor levels that no row uses (default
+  `TRUE`, as in ggplot2): they get no legend key and no palette entry,
+  so the colours go to the levels that remain. `FALSE` keeps every
+  level. `limits` overrides it.
 
 ## Value
 

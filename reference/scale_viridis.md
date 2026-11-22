@@ -28,7 +28,8 @@ scale_color_viridis_d(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_fill_viridis_c(
@@ -47,7 +48,8 @@ scale_fill_viridis_d(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_color_brewer(
@@ -57,7 +59,8 @@ scale_color_brewer(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = 1
+  direction = 1,
+  drop = TRUE
 )
 
 scale_fill_brewer(
@@ -67,7 +70,8 @@ scale_fill_brewer(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = 1
+  direction = 1,
+  drop = TRUE
 )
 
 scale_color_distiller(
@@ -112,7 +116,8 @@ scale_colour_viridis_d(
   option = "viridis",
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_colour_brewer(
@@ -122,7 +127,8 @@ scale_colour_brewer(
   labels = NULL,
   name = NULL,
   type = "seq",
-  direction = 1
+  direction = 1,
+  drop = TRUE
 )
 
 scale_colour_distiller(
@@ -162,6 +168,13 @@ scale_colour_distiller(
   (`"censor"`, `"squish"`, `"keep"` or a function; `NULL`, the default,
   squishes) and the colour of missing values, as for
   [`scale_color_continuous()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md).
+
+- drop:
+
+  For the discrete scales, drop factor levels that no row uses (default
+  `TRUE`, as in ggplot2): they get no legend key and no palette entry,
+  so the colours go to the levels that remain. `FALSE` keeps every
+  level. `limits` overrides it.
 
 - palette:
 

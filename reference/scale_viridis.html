@@ -94,7 +94,8 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  option <span class="op">=</span> <span class="st">"viridis"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_viridis_c</span><span class="op">(</span></span>
@@ -113,7 +114,8 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  option <span class="op">=</span> <span class="st">"viridis"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_brewer</span><span class="op">(</span></span>
@@ -123,7 +125,8 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
-<span>  direction <span class="op">=</span> <span class="fl">1</span></span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_fill_brewer</span><span class="op">(</span></span>
@@ -133,7 +136,8 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
-<span>  direction <span class="op">=</span> <span class="fl">1</span></span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_color_distiller</span><span class="op">(</span></span>
@@ -178,7 +182,8 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  option <span class="op">=</span> <span class="st">"viridis"</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_brewer</span><span class="op">(</span></span>
@@ -188,7 +193,8 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"seq"</span>,</span>
-<span>  direction <span class="op">=</span> <span class="fl">1</span></span>
+<span>  direction <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">scale_colour_distiller</span><span class="op">(</span></span>
@@ -227,6 +233,13 @@ ggplot2. They are thin wrappers over the <code>palette =</code> argument of
 values outside it (<code>"censor"</code>, <code>"squish"</code>, <code>"keep"</code> or a function; <code>NULL</code>,
 the default, squishes) and the colour of missing values, as for
 <code><a href="scale_color_continuous.html">scale_color_continuous()</a></code>.</p></dd>
+
+
+<dt id="arg-drop">drop<a class="anchor" aria-label="anchor" href="#arg-drop"></a></dt>
+<dd><p>For the discrete scales, drop factor levels that no row uses
+(default <code>TRUE</code>, as in ggplot2): they get no legend key and no palette
+entry, so the colours go to the levels that remain. <code>FALSE</code> keeps every
+level. <code>limits</code> overrides it.</p></dd>
 
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>

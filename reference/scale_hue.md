@@ -16,7 +16,8 @@ scale_color_hue(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 )
 
 scale_colour_hue(
@@ -30,7 +31,8 @@ scale_colour_hue(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 )
 
 scale_fill_hue(
@@ -44,7 +46,8 @@ scale_fill_hue(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 )
 
 scale_color_grey(
@@ -55,7 +58,8 @@ scale_color_grey(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "red"
+  na.value = "red",
+  drop = TRUE
 )
 
 scale_colour_grey(
@@ -66,7 +70,8 @@ scale_colour_grey(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "red"
+  na.value = "red",
+  drop = TRUE
 )
 
 scale_fill_grey(
@@ -77,7 +82,8 @@ scale_fill_grey(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "red"
+  na.value = "red",
+  drop = TRUE
 )
 
 scale_color_ordinal(
@@ -87,7 +93,8 @@ scale_color_ordinal(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 )
 
 scale_colour_ordinal(
@@ -97,7 +104,8 @@ scale_colour_ordinal(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 )
 
 scale_fill_ordinal(
@@ -107,7 +115,8 @@ scale_fill_ordinal(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = "grey50"
+  na.value = "grey50",
+  drop = TRUE
 )
 ```
 
@@ -150,6 +159,13 @@ scale_fill_ordinal(
 - na.value:
 
   Colour for missing values (and levels outside `limits`).
+
+- drop:
+
+  For the discrete scales, drop factor levels that no row uses (default
+  `TRUE`, as in ggplot2): they get no legend key and no palette entry,
+  so the colours go to the levels that remain. `FALSE` keeps every
+  level. `limits` overrides it.
 
 - start, end:
 

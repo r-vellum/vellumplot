@@ -113,6 +113,13 @@
   drew no bars because their native width resolved to a negative size.
   Fixed in vellum (needs vellum with VP-89).
 
+- Bars on a continuous x axis are no longer clipped at the ends (VP-90).
+  The x scale is now trained on each bar’s edges (centre +/- half its
+  width, dodged groups included), not only its centre, as in ggplot2, so
+  `mark_bar(x = year, ...)` gets a slightly wider x domain. Explicit
+  limits, discrete and binned axes are unchanged. Histograms already
+  trained on their bin edges.
+
 - A constant `if_true` in
   [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
   is a setting, not a mapping (VP-86): `alpha = condition("s", 1, 0.2)`
@@ -189,6 +196,18 @@
 
 - Fractional `fps` (12.5, 0.5) is now written exactly instead of being
   rounded to a whole number (VL-15, in vellum).
+
+- Legends no longer list unused factor levels (VP-91). As in ggplot2, a
+  discrete colour, fill, shape, linetype or pattern scale drops the
+  levels no row uses, and the palette goes to the levels that remain
+  (two used levels of four get the palette’s first two colours). A level
+  used in only some facet panels stays. The discrete colour/fill scales
+  (`_discrete()`, `_manual()`, `_hue()`, `_brewer()`, `_viridis_d()`,
+  `_grey()`, `_ordinal()`),
+  [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md),
+  [`scale_linetype()`](https://r-vellum.github.io/vellumplot/reference/scale_linetype.md)
+  and their `_manual()` forms gain `drop = FALSE` to keep every level;
+  `limits` still decide the levels.
 
 ### Documentation
 

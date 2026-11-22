@@ -29,7 +29,8 @@ scale_color_discrete(
   palette = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_color_manual(
@@ -39,7 +40,8 @@ scale_color_manual(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_color_gradient(
@@ -116,7 +118,8 @@ scale_fill_discrete(
   palette = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_fill_manual(
@@ -126,7 +129,8 @@ scale_fill_manual(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_fill_gradient(
@@ -170,7 +174,8 @@ scale_colour_discrete(
   palette = NULL,
   breaks = NULL,
   labels = NULL,
-  name = NULL
+  name = NULL,
+  drop = TRUE
 )
 
 scale_colour_manual(
@@ -180,7 +185,8 @@ scale_colour_manual(
   breaks = NULL,
   labels = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_colour_gradient(
@@ -246,6 +252,13 @@ scale_colour_gradient2(
   `limits`: `"censor"` gives them the NA colour, `"squish"` the colour
   of the nearest limit, `"keep"` the same (a ramp cannot extend past its
   ends), or a `function(x, range)`. `NULL` (default) squishes.
+
+- drop:
+
+  For the discrete scales, drop factor levels that no row uses (default
+  `TRUE`, as in ggplot2): they get no legend key and no palette entry,
+  so the colours go to the levels that remain. `FALSE` keeps every
+  level. `limits` overrides it.
 
 - values:
 
