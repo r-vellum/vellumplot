@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.18.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.19.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,9 +63,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.18.1.9000" id="vellumplot-01819000-development-version">vellumplot 0.18.1.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01819000-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.19.0" id="vellumplot-0190">vellumplot 0.19.0<a class="anchor" aria-label="anchor" href="#vellumplot-0190"></a></h2>
 <div class="section level3">
-<h3 id="new-features-0-18-1-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-18-1-9000"></a></h3>
+<h3 id="new-features-0-19-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-19-0"></a></h3>
 <ul><li><p><code><a href="../reference/animate.html">animate()</a></code> gains <code>start_pause</code>, <code>end_pause</code> and <code>rewind</code> (VP-95), with gganimate’s semantics: hold the first / last frame for that many frames, and play back to the start; they come out of <code>nframes</code>. GIF, APNG and SVG files, <code><a href="../reference/anim_frame.html">anim_frame()</a></code> and the animated widget’s scrubber all follow them.</p></li>
 <li><p><code>anim_frame(filename, animation, frame)</code> saves one frame of an animation as a PNG, SVG or PDF (VP-96), drawn exactly as in the animation (same frozen scales, tween and frame variables), so a poster matches its animation. The default frame is the one shown under reduced motion: the final frame of an animation that ends on its last state, else the first. Needs vellum’s new <code>vl_render_frame()</code>.</p></li>
 <li><p><code><a href="../reference/mark_text.html">mark_text()</a></code> labels may use frame variables in an animation (VP-93): <code>label = "{round(frame_time)}"</code> (a constant, or a column of templates) is filled in on every frame, through vellum’s per-frame text, while the label moves as its mark. Repelled and rich-text labels are not templated.</p></li>
@@ -76,7 +76,7 @@
 <li><p><code><a href="../reference/transition_time.html">transition_time()</a></code> accepts <code>Date</code> and <code>POSIXct</code> times (VP-83). They run on their numeric value (segments weighted by the day/second gaps) and keep their class for <code>{frame_time}</code> (with the time zone) and in the cut warning’s state names.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-18-1-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-18-1-9000"></a></h3>
+<h3 id="bug-fixes-0-19-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-19-0"></a></h3>
 <ul><li><p><code><a href="../reference/outline.html">outline()</a></code>, <code><a href="../reference/shadow.html">shadow()</a></code> and <code>glow(color =)</code> on a multi-series line draw one underlay per series again (VP-97). The recoloured underlay dropped the colour mapping that grouped the line, so its copy joined every series into one zig-zag path. The copy now keeps the layer’s grouping (or its explicit <code>group</code>).</p></li>
 <li><p><code>nudge_x</code> / <code>nudge_y</code> follow the data axes, as in ggplot2 (VP-88): under <code><a href="../reference/coord_cartesian.html">coord_flip()</a></code> <code>nudge_y</code> moves a label across and <code>nudge_x</code> up/down (they used to move it along the screen axes, so a flipped bar chart’s labels shifted by about one bar), and on a reversed axis a positive nudge points toward larger values. Applies to <code><a href="../reference/mark_text.html">mark_text()</a></code>, <code><a href="../reference/mark_text.html">mark_label()</a></code> and <code><a href="../reference/mark_image.html">mark_image()</a></code>.</p></li>
 <li><p>Bars, histograms, tiles and boxplot boxes draw on a reversed axis again (VP-89): <code><a href="../reference/scale_x_continuous.html">scale_x_reverse()</a></code> / <code><a href="../reference/scale_x_continuous.html">scale_y_reverse()</a></code>, with or without <code><a href="../reference/coord_cartesian.html">coord_flip()</a></code>, drew no bars because their native width resolved to a negative size. Fixed in vellum (needs vellum with VP-89).</p></li>
@@ -95,12 +95,12 @@
 <li><p>Legends no longer list unused factor levels (VP-91). As in ggplot2, a discrete colour, fill, shape, linetype or pattern scale drops the levels no row uses, and the palette goes to the levels that remain (two used levels of four get the palette’s first two colours). A level used in only some facet panels stays. The discrete colour/fill scales (<code>_discrete()</code>, <code>_manual()</code>, <code>_hue()</code>, <code>_brewer()</code>, <code>_viridis_d()</code>, <code>_grey()</code>, <code>_ordinal()</code>), <code><a href="../reference/scale_shape.html">scale_shape()</a></code>, <code><a href="../reference/scale_linetype.html">scale_linetype()</a></code> and their <code>_manual()</code> forms gain <code>drop = FALSE</code> to keep every level; <code>limits</code> still decide the levels.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="documentation-0-18-1-9000">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-18-1-9000"></a></h3>
+<h3 id="documentation-0-19-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-19-0"></a></h3>
 <ul><li>
 <code>inst/examples/28-animation.R</code>: part 2 now animates telephones by region (the same seven bars every year) so the bars visibly grow, and part 3 is a 12-phase wave with 10 frames per step, so every frame moves (VP-79). The <code><a href="../reference/animate.html">animate()</a></code>, <code><a href="../reference/ease_aes.html">ease_aes()</a></code> and <code><a href="../reference/anim_save.html">anim_save()</a></code> examples use data with the same marks in every state, and <code><a href="../reference/animate.html">animate()</a></code> documents when states cut.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="tests-0-18-1-9000">Tests<a class="anchor" aria-label="anchor" href="#tests-0-18-1-9000"></a></h3>
+<h3 id="tests-0-19-0">Tests<a class="anchor" aria-label="anchor" href="#tests-0-19-0"></a></h3>
 <ul><li>New mid-transition tests render the in-between frames for unequal counts, colour groups appearing and disappearing, changing vertex counts, changing text, two animated SVGs’ CSS isolation and fps timing (VP-80). The reordered-rows identity case (VR-32) is recorded as a skipped test.</li>
 </ul></div>
 </div>
