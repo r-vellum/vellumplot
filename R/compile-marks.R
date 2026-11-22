@@ -316,6 +316,12 @@ NULL
       !is.null(.mark_ctx$data_id)
   ) {
     grob@keys <- .mark_ctx$data_id[rows]
+    if (
+      !is.null(.mark_ctx$anim_series) && length(rows) && .is_single_shape(grob)
+    ) {
+      # one series in an animation keyframe: its group, not its first row
+      grob@keys <- .mark_ctx$anim_series[rows[[1L]]]
+    }
     m <- .elem_meta(rows)
     if (!is.null(m) && length(rows) > 1L && .is_single_shape(grob)) {
       m <- .interval_series_span(m[1L, , drop = FALSE], rows)
@@ -1126,6 +1132,20 @@ NULL
         .mark_ctx$data_id
       .mark_ctx$data_id <- paste0(cell, ":", .mark_ctx$data_id)
       .prefix_edge_ends(cell)
+    }
+    # Animation identity (VR-32): in an `animate()` keyframe every mark is
+    # keyed by its data identity, so the tween matches marks across states by
+    # key rather than by node and row position (`.anim_keys()`).
+    .mark_ctx$anim_series <- NULL
+    if (isTRUE(.mark_ctx$anim_identity)) {
+      explicit <- if (ok && !isTRUE(L$meta$default_id)) {
+        L$meta$data_id
+      } else if (length(gi$key) == L$n) {
+        gi$key
+      }
+      ak <- .anim_keys(L, li, explicit)
+      .mark_ctx$data_id <- ak$key
+      .mark_ctx$anim_series <- ak$series
     }
     # Layer effects (glow / outline / shadow) draw beneath the core, in order.
     for (e in .underlay_effects(L)) {

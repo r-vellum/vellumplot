@@ -2,6 +2,16 @@
 
 ## Bug fixes
 
+* `animate()` tweens marks by data identity, as gganimate matches by group
+  (VR-32). Each mark is keyed by its `data_id`, else its `group` (or the
+  combination of the layer's discrete mapped aesthetics), then its order within
+  that group; lines and areas by their group. Reordered or missing rows no
+  longer blend unrelated marks into muddy colours, a bar race sorted by rank
+  slides its bars between ranks in their own colours, and a colour group
+  present in only one state fades in or out instead of cutting the whole
+  transition. The cut warning now fires only for what truly cannot be matched
+  (a line whose number of points changes). Needs vellum 0.13.0.9000.
+
 * `animate()` now warns, once, when adjacent states cannot tween mark for
   mark -- a state that adds or drops a colour group, or a line whose number of
   points changes -- naming the states. Such a transition now cuts to the next

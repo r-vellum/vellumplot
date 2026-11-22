@@ -289,14 +289,33 @@ vellum_animation <- S7::new_class(
 #' domain retrains — the frozen scales are the observable proof the animation
 #' stayed non-reactive (axis breaks do not move between frames).
 #'
-#' Marks tween from one state to the next only when the two keyframes draw the
-#' same layers and groups, and each line or path keeps its number of points. A
-#' state that adds or drops a colour group, say, cannot be matched mark for mark:
-#' its frames cut to the next state halfway through the transition, and a line
-#' whose point count changes switches whole at the same moment. `animate()`
-#' warns (once per call) when that will happen, naming the states. Within a
-#' group, points carrying a `data_id` match by it, so single points may enter and
-#' leave without breaking the tween.
+#' # Which mark becomes which
+#'
+#' Marks tween by **identity**, as gganimate matches by group: each mark of one
+#' state moves into the mark that *is the same thing* in the next state, however
+#' the rows are ordered and whatever groups each state contains. A mark's
+#' identity is
+#'
+#' 1. its `data_id`, when the layer declares one (`mark_point(data_id =
+#'    country)`): the way to follow individual observations;
+#' 2. otherwise its group -- the `group` aesthetic if mapped, else the
+#'    combination of the layer's discrete mapped aesthetics (`color`, `fill`,
+#'    `shape`, ..., and a discrete `x`, `y` or `label`) -- so a bar race's bars,
+#'    filled by country, slide between ranks keeping their colours;
+#' 3. and within a group, the order of its rows -- the last resort, enough when
+#'    each group has one mark per state, but rows of one group pair up by
+#'    position. Give such a layer a `data_id` (or a `group`) when its rows are
+#'    individual observations whose order may change.
+#'
+#' A line, path or area is one mark per series and is matched by its group.
+#'
+#' A mark found in only one of two adjacent states fades in or out (points,
+#' bars and tiles, labels, lines and areas alike) on the alpha easing, and a
+#' point whose colour group changes slides to its new place while its colour
+#' blends. What cannot move switches whole halfway through the transition: a
+#' matched line or path whose number of points changes, and decoration without
+#' an identity (an effect underlay) that comes and goes. `animate()` warns (once
+#' per call) when that will happen, naming the states.
 #'
 #' Give each transition enough frames to be seen: `nframes` is spread over all
 #' the states, so 40 states in 80 frames leave two frames per state and nothing
@@ -397,6 +416,10 @@ animate <- function(plot, nframes = 50, fps = 25) {
   )
   frozen <- .train_scales(base, pooled)
 
+  # Key every mark by its data identity so the tween pairs marks across states
+  # by what they are, not by where they sit in the scene (VR-32).
+  .mark_ctx$anim_identity <- TRUE
+  on.exit(rm(list = "anim_identity", envir = .mark_ctx), add = TRUE)
   scenes <- lapply(states, function(level) {
     .compile_plot(state_spec(level), frozen_scales = frozen)
   })
@@ -418,11 +441,11 @@ animate <- function(plot, nframes = 50, fps = 25) {
   )
 }
 
-# Warn, once, when adjacent keyframes cannot tween: a state that draws a
-# different set of nodes (a colour group present in one state and absent from the
-# next, typically) cuts to the next keyframe at the midpoint instead of moving,
-# and a line/path whose vertex count changes switches whole. Both are easy to
-# build by accident and look like a bug, so say which states and why.
+# Warn, once, when adjacent keyframes cannot tween: marks are matched by
+# identity (`.anim_keys()`) and a mark only in one state fades, so what is left
+# is a line/path whose vertex count changes (it switches whole at the midpoint),
+# an unkeyed node that comes and goes, or -- rarely -- two keyframes that do not
+# share a layout at all (a cut). Say which states and why.
 .warn_unpaired <- function(scenes, states, wrap = FALSE) {
   ks <- if (wrap) c(scenes, scenes[1L]) else scenes
   labs <- if (wrap) c(states, states[1L]) else states
@@ -437,20 +460,87 @@ animate <- function(plot, nframes = 50, fps = 25) {
   if (length(cut)) {
     msg <- c(
       msg,
-      "*" = "{.val {pair_lab(cut)}}: the states draw different numbers of marks or groups (e.g. a colour group missing from one state), so the frame switches to the next state halfway through."
+      "*" = "{.val {pair_lab(cut)}}: the states' scenes are laid out differently, so the frame switches to the next state halfway through."
     )
   }
   if (length(snapped)) {
     msg <- c(
       msg,
-      "*" = "{.val {pair_lab(snapped)}}: some marks change in number between states (the points of a line or path, or points without a {.arg data_id}), so they switch halfway through instead of morphing."
+      "*" = "{.val {pair_lab(snapped)}}: some marks cannot be matched between the states (a line or path whose number of points changes, or an unkeyed decoration that comes and goes), so they switch halfway through instead of moving."
     )
   }
   msg <- c(
     msg,
-    i = "A state tweens into the next only when both draw the same layers and groups, and each line or path keeps its number of points."
+    i = "Marks are matched by their identity (see {.fn animate}); one that is only in one state fades in or out."
   )
   cli::cli_warn(msg, class = "vellumplot_anim_cut")
+}
+
+# Animation identity (VR-32). The tween matches marks across keyframes by key,
+# so each mark of an animation keyframe is keyed by what it IS:
+#
+# 1. an explicit `data_id` (or a graph mark's vertex / edge key) wins;
+# 2. otherwise its group: the `group` aesthetic when mapped or set, else the
+#    interaction of the layer's discrete mapped aesthetics -- those that group a
+#    layer (`.GROUP_AES`: colour, fill, shape, ...) plus a discrete `x`, `y` or
+#    `label` -- as gganimate matches by ggplot2's group;
+# 3. and, within that, the row's order among the rows sharing it: the last
+#    resort for a layer whose rows are distinct observations of one group (the
+#    points of one colour). A repeated `data_id` is told apart the same way.
+#
+# A line, path or polygon is one mark per series, so it is keyed by its group
+# alone (`series`, picked up in `.draw()`), not by its first row.
+#
+# Keys are prefixed with the layer ("l<layer>|...") so two layers never match
+# each other's marks. Returns `key` (one per row) and `series` (one per row; NULL
+# when an explicit id is used, in which case a series takes its first row's id).
+.anim_keys <- function(L, layer, explicit = NULL) {
+  n <- L$n
+  pfx <- paste0("l", layer, "|")
+  if (!is.null(explicit) && length(explicit) == n) {
+    id <- as.character(explicit)
+    id[is.na(id)] <- "NA"
+    occ <- .occurrence(id)
+    key <- ifelse(occ > 1L, paste0(id, "#", occ), id)
+    return(list(key = paste0(pfx, key), series = NULL))
+  }
+  series <- .anim_group(L, .GROUP_AES)
+  id <- .anim_group(L, c(.GROUP_AES, "x", "y", "label"))
+  list(
+    key = paste0(pfx, id, "#", .occurrence(id)),
+    series = paste0(pfx, series)
+  )
+}
+
+# The identity group of each row: the `group` aesthetic, else the discrete
+# mapped aesthetics among `aes` pasted together in that fixed order (every
+# component kept, so the key is the same in every state whatever subset of the
+# levels a state happens to contain).
+.anim_group <- function(L, aes) {
+  n <- L$n
+  g <- L$values$group %||% L$params$group
+  if (!is.null(g)) {
+    return(rep_len(as.character(g), n))
+  }
+  parts <- list()
+  for (a in aes) {
+    v <- L$values[[a]]
+    if (length(v) && !.is_continuous_group(v)) {
+      parts[[a]] <- rep_len(as.character(v), n)
+    }
+  }
+  if (!length(parts)) {
+    return(rep("", n))
+  }
+  do.call(paste, c(unname(parts), sep = ":"))
+}
+
+# The position of each element among the equal elements before it: 1, 2, ...
+.occurrence <- function(x) {
+  if (!length(x)) {
+    return(integer(0))
+  }
+  stats::ave(seq_along(x), x, FUN = seq_along)
 }
 
 # A reveal animation: compile the plot with a reveal clip at 0% and at 100% —
