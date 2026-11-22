@@ -67,6 +67,16 @@ contains. A mark's identity is
 
 A line, path or area is one mark per series and is matched by its group.
 
+A faceted plot animates panel by panel: every panel of the whole data is
+drawn in every frame (a state without rows for a panel leaves it empty
+rather than dropping it), and a mark's identity includes its panel, so a
+mark never slides from one panel into another – a row whose facet value
+changes between states fades out of one panel and into the other. The
+scales are frozen across frames, so per-panel scales
+(`facet_wrap(scales = "free")`, an independent
+[`resolve_scale()`](https://r-vellum.github.io/vellumplot/reference/resolve_scale.md))
+are refused.
+
 A mark found in only one of two adjacent states fades in or out (points,
 bars and tiles, labels, lines and areas alike) on the alpha easing, and
 a point whose colour group changes slides to its new place while its

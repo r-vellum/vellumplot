@@ -123,6 +123,12 @@ each group has one mark per state, but rows of one group pair up by
 position. Give such a layer a <code>data_id</code> (or a <code>group</code>) when its rows are
 individual observations whose order may change.</p></li>
 </ol><p>A line, path or area is one mark per series and is matched by its group.</p>
+<p>A faceted plot animates panel by panel: every panel of the whole data is
+drawn in every frame (a state without rows for a panel leaves it empty
+rather than dropping it), and a mark's identity includes its panel, so a
+mark never slides from one panel into another – a row whose facet value
+changes between states fades out of one panel and into the other. The
+scales are frozen across frames, so per-panel scales (<code>facet_wrap(scales = "free")</code>, an independent <code><a href="resolve_scale.html">resolve_scale()</a></code>) are refused.</p>
 <p>A mark found in only one of two adjacent states fades in or out (points,
 bars and tiles, labels, lines and areas alike) on the alpha easing, and a
 point whose colour group changes slides to its new place while its colour
