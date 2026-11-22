@@ -5,15 +5,17 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.5.0/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.5.0/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.5.0/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Reveal a plot progressively along a variable — transition_reveal"><meta name="description" content="transition_reveal() wipes the plot into view left to right — the classic
-&quot;line draws itself&quot; animation. Unlike transition_states(), it does not tween
-between states: the full plot is compiled and a clip rectangle grows across the
-panel, revealing the marks in along order. Best for a line or path over a
-continuous along (typically the x variable, e.g. time)."><meta property="og:description" content="transition_reveal() wipes the plot into view left to right — the classic
-&quot;line draws itself&quot; animation. Unlike transition_states(), it does not tween
-between states: the full plot is compiled and a clip rectangle grows across the
-panel, revealing the marks in along order. Best for a line or path over a
-continuous along (typically the x variable, e.g. time)."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.5.0/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.5.0/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.5.0/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Reveal a plot progressively along a variable — transition_reveal"><meta name="description" content="transition_reveal() draws the data in, in the order of along – the
+classic &quot;line draws itself&quot; animation, as in gganimate. Each frame shows the
+rows whose along value has been reached: a point appears when the reveal
+reaches it, and a line, path, area, ribbon or step grows through its rows
+with an interpolated leading point, so it advances smoothly between data
+points rather than jumping from one to the next."><meta property="og:description" content="transition_reveal() draws the data in, in the order of along – the
+classic &quot;line draws itself&quot; animation, as in gganimate. Each frame shows the
+rows whose along value has been reached: a point appears when the reveal
+reaches it, and a line, path, area, ribbon or step grows through its rows
+with an interpolated leading point, so it advances smoothly between data
+points rather than jumping from one to the next."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -72,11 +74,12 @@ continuous along (typically the x variable, e.g. time)."><meta property="og:imag
     </div>
 
     <div class="ref-description section level2">
-    <p><code>transition_reveal()</code> wipes the plot into view left to right — the classic
-"line draws itself" animation. Unlike <code><a href="transition_states.html">transition_states()</a></code>, it does not tween
-between states: the full plot is compiled and a clip rectangle grows across the
-panel, revealing the marks in <code>along</code> order. Best for a line or path over a
-continuous <code>along</code> (typically the x variable, e.g. time).</p>
+    <p><code>transition_reveal()</code> draws the data in, in the order of <code>along</code> – the
+classic "line draws itself" animation, as in gganimate. Each frame shows the
+rows whose <code>along</code> value has been reached: a point appears when the reveal
+reaches it, and a line, path, area, ribbon or step grows through its rows
+with an interpolated leading point, so it advances smoothly between data
+points rather than jumping from one to the next.</p>
     </div>
 
     <div class="section level2">
@@ -93,13 +96,29 @@ continuous <code>along</code> (typically the x variable, e.g. time).</p>
 
 
 <dt id="arg-along">along<a class="anchor" aria-label="anchor" href="#arg-along"></a></dt>
-<dd><p>The variable the reveal follows (mapped to x, increasing left to
-right).</p></dd>
+<dd><p>The variable the reveal follows: numeric, <code>Date</code> or <code>POSIXct</code>
+(often time, but any ordering column, such as a path's parameter).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The modified <a href="PlotSpec.html">PlotSpec</a>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The reveal follows <code>along</code>, not the screen: a spiral revealed along its
+parameter winds outwards, a <code><a href="coord_cartesian.html">coord_flip()</a></code> series grows up the vertical axis,
+and a reversed scale grows from the right. Only the data layers change; the
+panel background, gridlines, axes and legends are drawn whole on every frame,
+and the scales are trained once over all the data and frozen, so nothing
+moves as the data arrive. A layer whose own <code>data</code> lacks the <code>along</code>
+variable (a reference line, say) is drawn whole throughout.</p>
+<p><code>animate(nframes = )</code> frames are spread evenly over the range of <code>along</code> (the
+<code><a href="ease_aes.html">ease_aes()</a></code> position easing shapes the pace). Each frame is compiled from its
+own rows, so a statistic (a smooth) is recomputed on the data revealed so far.
+The leading point is interpolated on the data values, before any scale
+transformation, and among the rows of each group (the <code>group</code> aesthetic, else
+the layer's discrete colour/fill/linetype/... mappings).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
