@@ -12,8 +12,12 @@ condition(selection, if_true, if_false, empty = TRUE)
 \item{if_true}{The aesthetic value for selection members — a column expression
 (data-masked) or a constant.}
 
-\item{if_false}{The value for non-members — a constant, or omitted to use the
-theme's dim appearance.}
+\item{if_false}{The value for non-members — a constant, a column expression
+(data-masked, one value per row), or omitted to use the theme's dim
+appearance. For \code{color} / \code{fill}, a column whose values are levels (or, on
+a continuous scale, numbers) of the aesthetic's scale is taken through
+that scale, as \code{if_true} is; any other value is read as a colour, and a
+row whose value is neither gets the theme dim.}
 
 \item{empty}{Whether an empty selection matches all elements (\code{TRUE}, default).}
 }
