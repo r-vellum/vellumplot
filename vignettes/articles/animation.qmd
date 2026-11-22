@@ -65,7 +65,10 @@ and shown in turn by a CSS step animation. Two things make it worth reaching for
 It is **resolution-independent** — the same file is crisp in a slide, on a retina
 screen, and in print, which no raster format is. And it honours
 **`prefers-reduced-motion`**: a reader who has asked their system not to animate is
-shown the first frame, held, with no extra work from you.
+shown one still frame, with no extra work from you -- the last frame when the
+animation ends on its final state (a reveal, `transition_time()`, a non-looping
+`transition_states()`), otherwise the first. Each animated SVG namespaces its CSS,
+so several can share one HTML page.
 
 The trade-off is size. Because every frame is emitted in full, an animated SVG
 grows with the number of marks times the number of frames, where a GIF does not.

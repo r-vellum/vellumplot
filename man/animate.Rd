@@ -10,7 +10,7 @@ animate(plot, nframes = 50, fps = 25)
 \item{plot}{A \link{PlotSpec} with a \code{\link[=transition_states]{transition_states()}} (and optionally an
 \code{\link[=ease_aes]{ease_aes()}}).}
 
-\item{nframes}{Total number of frames to render.}
+\item{nframes}{Total number of frames to render, a positive whole number.}
 
 \item{fps}{Frames per second (the playback rate written into the file).}
 }
@@ -27,13 +27,29 @@ shows the first keyframe as a preview.
 Per-state statistics (e.g. a smooth) are recomputed per keyframe, but no scale
 domain retrains — the frozen scales are the observable proof the animation
 stayed non-reactive (axis breaks do not move between frames).
+
+Marks tween from one state to the next only when the two keyframes draw the
+same layers and groups, and each line or path keeps its number of points. A
+state that adds or drops a colour group, say, cannot be matched mark for mark:
+its frames cut to the next state halfway through the transition, and a line
+whose point count changes switches whole at the same moment. \code{animate()}
+warns (once per call) when that will happen, naming the states. Within a
+group, points carrying a \code{data_id} match by it, so single points may enter and
+leave without breaking the tween.
+
+Give each transition enough frames to be seen: \code{nframes} is spread over all
+the states, so 40 states in 80 frames leave two frames per state and nothing
+visibly moves.
 }
 \examples{
 \dontrun{
-vplot(mtcars) |>
-  mark_point(x = wt, y = mpg) |>
-  transition_states(cyl) |>
-  animate(nframes = 50, fps = 25)
+# Four bars in every state, so each bar tweens into its next height.
+d <- data.frame(t = rep(1:3, each = 4), g = rep(letters[1:4], 3),
+                v = c(1, 3, 2, 4, 4, 1, 3, 2, 2, 4, 1, 3))
+vplot(d) |>
+  mark_bar(x = g, y = v, fill = g) |>
+  transition_states(t) |>
+  animate(nframes = 60, fps = 25)
 }
 }
 \seealso{

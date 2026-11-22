@@ -40,12 +40,15 @@ is dense enough that a raster format would likely be smaller.
 
 \examples{
 \dontrun{
-a <- vplot(mtcars) |>
-  mark_point(x = wt, y = mpg) |>
-  transition_states(cyl) |>
+# Four bars in every state, so each bar tweens into its next height.
+d <- data.frame(t = rep(1:3, each = 4), g = rep(letters[1:4], 3),
+                v = c(1, 3, 2, 4, 4, 1, 3, 2, 2, 4, 1, 3))
+a <- vplot(d) |>
+  mark_bar(x = g, y = v, fill = g) |>
+  transition_states(t) |>
   animate()
-anim_save("cyl.gif", a)
-anim_save("cyl.svg", a) # resolution-independent
+anim_save("bars.gif", a)
+anim_save("bars.svg", a) # resolution-independent
 }
 }
 \seealso{

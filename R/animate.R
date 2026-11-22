@@ -160,15 +160,18 @@ transition_reveal <- function(plot, along) {
 #' @return The modified [PlotSpec].
 #' @seealso [transition_states()], [animate()]
 #' @examples
-#' vplot(mtcars) |>
-#'   mark_point(x = wt, y = mpg) |>
-#'   transition_states(cyl) |>
+#' # Four bars in every state, so each bar tweens into its next height.
+#' d <- data.frame(t = rep(1:3, each = 4), g = rep(letters[1:4], 3),
+#'                 v = c(1, 3, 2, 4, 4, 1, 3, 2, 2, 4, 1, 3))
+#' vplot(d) |>
+#'   mark_bar(x = g, y = v, fill = g) |>
+#'   transition_states(t) |>
 #'   ease_aes("cubic-in-out")
 #'
-#' # Marks settle into place gently, but the colour crossfade stays even.
-#' vplot(mtcars) |>
-#'   mark_point(x = wt, y = mpg, color = factor(gear)) |>
-#'   transition_states(cyl) |>
+#' # Bars settle into place gently, but the colour crossfade stays even.
+#' vplot(d) |>
+#'   mark_bar(x = g, y = v, fill = v) |>
+#'   transition_states(t) |>
 #'   ease_aes("cubic-in-out", color = "linear")
 #' @export
 ease_aes <- function(
@@ -232,6 +235,15 @@ ease_aes <- function(
   }
   as.double(x)
 }
+.pos_whole <- function(x, arg) {
+  x <- x[[1L]]
+  if (!is.numeric(x) || !is.finite(x) || x < 1 || x != round(x)) {
+    cli::cli_abort(
+      "{.arg {arg}} must be a positive whole number, not {.val {x}}."
+    )
+  }
+  as.double(x)
+}
 .nonneg_num <- function(x, arg) {
   x <- x[[1L]]
   if (!is.numeric(x) || !is.finite(x) || x < 0) {
@@ -277,18 +289,34 @@ vellum_animation <- S7::new_class(
 #' domain retrains — the frozen scales are the observable proof the animation
 #' stayed non-reactive (axis breaks do not move between frames).
 #'
+#' Marks tween from one state to the next only when the two keyframes draw the
+#' same layers and groups, and each line or path keeps its number of points. A
+#' state that adds or drops a colour group, say, cannot be matched mark for mark:
+#' its frames cut to the next state halfway through the transition, and a line
+#' whose point count changes switches whole at the same moment. `animate()`
+#' warns (once per call) when that will happen, naming the states. Within a
+#' group, points carrying a `data_id` match by it, so single points may enter and
+#' leave without breaking the tween.
+#'
+#' Give each transition enough frames to be seen: `nframes` is spread over all
+#' the states, so 40 states in 80 frames leave two frames per state and nothing
+#' visibly moves.
+#'
 #' @param plot A [PlotSpec] with a [transition_states()] (and optionally an
 #'   [ease_aes()]).
-#' @param nframes Total number of frames to render.
+#' @param nframes Total number of frames to render, a positive whole number.
 #' @param fps Frames per second (the playback rate written into the file).
 #' @return A `vellum_animation`.
 #' @seealso [transition_states()], [ease_aes()], [anim_save()]
 #' @examples
 #' \dontrun{
-#' vplot(mtcars) |>
-#'   mark_point(x = wt, y = mpg) |>
-#'   transition_states(cyl) |>
-#'   animate(nframes = 50, fps = 25)
+#' # Four bars in every state, so each bar tweens into its next height.
+#' d <- data.frame(t = rep(1:3, each = 4), g = rep(letters[1:4], 3),
+#'                 v = c(1, 3, 2, 4, 4, 1, 3, 2, 2, 4, 1, 3))
+#' vplot(d) |>
+#'   mark_bar(x = g, y = v, fill = g) |>
+#'   transition_states(t) |>
+#'   animate(nframes = 60, fps = 25)
 #' }
 #' @export
 animate <- function(plot, nframes = 50, fps = 25) {
@@ -302,7 +330,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
   if (!is.null(plot@facet)) {
     cli::cli_abort("{.fn animate} does not support facets.")
   }
-  nframes <- .pos_num(nframes, "nframes")
+  nframes <- .pos_whole(nframes, "nframes")
   fps <- .pos_num(fps, "fps")
   easing <- if (is.null(plot@ease)) "linear" else plot@ease@default
   easing_aes <- .ease_classes(plot@ease)
@@ -372,6 +400,7 @@ animate <- function(plot, nframes = 50, fps = 25) {
   scenes <- lapply(states, function(level) {
     .compile_plot(state_spec(level), frozen_scales = frozen)
   })
+  .warn_unpaired(scenes, states, wrap = en$wrap)
 
   vellum_animation(
     scenes = scenes,
@@ -387,6 +416,41 @@ animate <- function(plot, nframes = 50, fps = 25) {
     height = plot@height,
     dpi = plot@dpi
   )
+}
+
+# Warn, once, when adjacent keyframes cannot tween: a state that draws a
+# different set of nodes (a colour group present in one state and absent from the
+# next, typically) cuts to the next keyframe at the midpoint instead of moving,
+# and a line/path whose vertex count changes switches whole. Both are easy to
+# build by accident and look like a bug, so say which states and why.
+.warn_unpaired <- function(scenes, states, wrap = FALSE) {
+  ks <- if (wrap) c(scenes, scenes[1L]) else scenes
+  labs <- if (wrap) c(states, states[1L]) else states
+  p <- vellum::vl_tween_pairing(ks)
+  cut <- which(!p$paired)
+  snapped <- which(p$paired & !is.na(p$snapped) & p$snapped > 0L)
+  if (!length(cut) && !length(snapped)) {
+    return(invisible())
+  }
+  pair_lab <- function(i) paste0(labs[p$from[i]], " -> ", labs[p$to[i]])
+  msg <- c("Some keyframes will cut rather than tween.")
+  if (length(cut)) {
+    msg <- c(
+      msg,
+      "*" = "{.val {pair_lab(cut)}}: the states draw different numbers of marks or groups (e.g. a colour group missing from one state), so the frame switches to the next state halfway through."
+    )
+  }
+  if (length(snapped)) {
+    msg <- c(
+      msg,
+      "*" = "{.val {pair_lab(snapped)}}: some marks change in number between states (the points of a line or path, or points without a {.arg data_id}), so they switch halfway through instead of morphing."
+    )
+  }
+  msg <- c(
+    msg,
+    i = "A state tweens into the next only when both draw the same layers and groups, and each line or path keeps its number of points."
+  )
+  cli::cli_warn(msg, class = "vellumplot_anim_cut")
 }
 
 # A reveal animation: compile the plot with a reveal clip at 0% and at 100% —
@@ -443,7 +507,10 @@ animate <- function(plot, nframes = 50, fps = 25) {
     # Segments weighted by the time gaps: constant playback speed through
     # unevenly spaced times. Time flows once, so no hold and no wrap.
     list(
-      key = factor(as.character(vals), levels = states),
+      # Match on the value, not its string: `as.character(100000L)` is
+      # "100000" but the level is `as.character(1e5)` = "1e+05", so a string key
+      # would drop that keyframe's rows.
+      key = factor(states[match(as.double(vals), times)], levels = states),
       states = states,
       seg_weights = if (length(times) > 1L) diff(times) else numeric(0),
       state_length = 0,
@@ -492,12 +559,15 @@ animate <- function(plot, nframes = 50, fps = 25) {
 #' @seealso [animate()]
 #' @examples
 #' \dontrun{
-#' a <- vplot(mtcars) |>
-#'   mark_point(x = wt, y = mpg) |>
-#'   transition_states(cyl) |>
+#' # Four bars in every state, so each bar tweens into its next height.
+#' d <- data.frame(t = rep(1:3, each = 4), g = rep(letters[1:4], 3),
+#'                 v = c(1, 3, 2, 4, 4, 1, 3, 2, 2, 4, 1, 3))
+#' a <- vplot(d) |>
+#'   mark_bar(x = g, y = v, fill = g) |>
+#'   transition_states(t) |>
 #'   animate()
-#' anim_save("cyl.gif", a)
-#' anim_save("cyl.svg", a) # resolution-independent
+#' anim_save("bars.gif", a)
+#' anim_save("bars.svg", a) # resolution-independent
 #' }
 #' @export
 anim_save <- function(filename, animation) {
