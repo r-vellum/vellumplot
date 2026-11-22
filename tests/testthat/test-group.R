@@ -102,6 +102,37 @@ test_that("a continuous colour keeps a line connected, coloured per segment", {
   expect_length(st, 1L)
 })
 
+test_that("a continuous colour constant within each group draws one path per group", {
+  # contour-like data: one level per line (VP-76). Each line is one plain
+  # polyline in its level's colour, not a segment record per vertex pair.
+  d <- data.frame(
+    t = rep(1:5, 3),
+    y = c(1:5, 2:6, 3:7),
+    id = rep(c("a", "b", "c"), each = 5),
+    level = rep(c(10, 20, 30), each = 5)
+  )
+  for (mk in c("path", "line", "step")) {
+    mark_fn <- switch(mk, path = mark_path, line = mark_line, step = mark_step)
+    p <- mark_fn(vplot(d), x = t, y = y, group = id, color = level)
+    # mark_path() is a line mark that keeps data order
+    lines <- prov_of(p, if (mk == "step") "step" else "line")
+    expect_length(lines, 3L)
+    expect_equal(lengths(lapply(lines, `[[`, "rows")), rep(5L, 3))
+    svg <- vellum::scene_svg(as_vellum_scene(p))
+    strokes <- unique(regmatches(svg, gregexpr('stroke="#[0-9A-Fa-f]{6}', svg))[[
+      1
+    ]])
+    expect_gte(length(strokes), 3L)
+  }
+  # one varying group still colours per segment; the constant ones stay whole
+  d2 <- transform(d, level = replace(level, 1:5, c(1, 2, 3, 4, 5)))
+  lines <- prov_of(
+    vplot(d2) |> mark_path(x = t, y = y, group = id, color = level),
+    "line"
+  )
+  expect_equal(sort(lengths(lapply(lines, `[[`, "rows"))), c(4L, 5L, 5L))
+})
+
 test_that("stats run per group and keep each group's own colour", {
   p <- vplot(grp_df) |>
     mark_smooth(x = t, y = y, group = id, method = "lm", se = FALSE)

@@ -105,6 +105,17 @@ NULL
   rep_len(as.numeric(v), n)
 }
 
+# `cv` (from `.continuous_colour()`) if it varies over the series rows `idx`,
+# else NULL. A series whose continuous colour holds constant (one value per
+# `group`, as contour levels are) needs no per-segment colouring: its mapped row
+# colour is already right, so it draws as one plain path, not a segment each.
+.varying_colour <- function(cv, idx) {
+  if (is.null(cv) || length(unique(cv[idx])) <= 1L) {
+    return(NULL)
+  }
+  cv
+}
+
 # Resolve a layer's mark colour: a mapped colour channel (via the trained colour
 # scale), a constant colour param, or the supplied default. `fill_fallback` lets
 # `fill` stand in for `color` (true for fill-based marks; false for text/label,

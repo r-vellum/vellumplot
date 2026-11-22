@@ -190,7 +190,9 @@ NULL
   )) {
     # a line is drawn in x order; a path (`sort = FALSE`) in data order
     o <- if (isFALSE(L$stat_params$sort)) idx else idx[order(xn[idx])]
-    if (!is.null(lwv) || !is.null(cv)) {
+    # a series whose continuous colour holds constant is one plain path
+    gcv <- .varying_colour(cv, idx)
+    if (!is.null(lwv) || !is.null(gcv)) {
       scene <- .draw_var_width_line(
         scene,
         scales,
@@ -200,7 +202,7 @@ NULL
         o,
         .gp_stroke(col, alpha, idx[1], lwd, lty),
         .sketch_bump(sk, gi),
-        cv = if (!is.null(cv)) cv[o]
+        cv = if (!is.null(gcv)) gcv[o]
       )
       gi <- gi + 1L
       next
@@ -1315,12 +1317,13 @@ NULL
     sx <- xn[o]
     sy <- yn[o]
     m <- length(sx)
+    gcv <- .varying_colour(cv, idx)
     ew <- if (!is.null(lwv)) {
       lwv[o]
-    } else if (!is.null(cv)) {
+    } else if (!is.null(gcv)) {
       rep(lwd, m)
     }
-    ec <- if (!is.null(cv)) cv[o]
+    ec <- if (!is.null(gcv)) gcv[o]
     if (m >= 2) {
       if (identical(dir, "vh")) {
         ex <- c(rep(sx[-m], each = 2), sx[m])
