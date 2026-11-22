@@ -83,7 +83,7 @@ streaming pass in vellum's Rust backend. The format follows the file extension:<
 
 
 <dl><dt id="arg-filename">filename<a class="anchor" aria-label="anchor" href="#arg-filename"></a></dt>
-<dd><p>Output path; <code>.gif</code>, <code>.png</code>, or <code>.svg</code>.</p></dd>
+<dd><p>Output path; <code>.gif</code>, <code>.png</code>/<code>.apng</code>, or <code>.svg</code>.</p></dd>
 
 
 <dt id="arg-animation">animation<a class="anchor" aria-label="anchor" href="#arg-animation"></a></dt>
@@ -98,7 +98,9 @@ streaming pass in vellum's Rust backend. The format follows the file extension:<
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
 
 <ul><li><p><code>.gif</code> — a looping GIF (universal compatibility).</p></li>
-<li><p><code>.png</code> — an animated PNG (APNG; lossless, alpha).</p></li>
+<li><p><code>.png</code> or <code>.apng</code> — an animated PNG (APNG; lossless, alpha). Browsers
+play either; <code>.png</code> is the more widely recognised extension, and image
+viewers that do not know APNG show its first frame.</p></li>
 <li><p><code>.svg</code> — a single <strong>animated SVG</strong>: every frame is emitted as vector markup
 and shown in turn by a CSS step animation. It is resolution-independent (crisp
 at any size, in print and on retina) and honours <code>prefers-reduced-motion</code>
@@ -112,6 +114,10 @@ a raster format (GIF/APNG) does not. So SVG wins clearly on line art — a few
 moving marks, the common explanatory case — and loses on a dense scatter, where
 a raster format is the right answer. <code>anim_save()</code> says so when a <code>.svg</code> scene
 is dense enough that a raster format would likely be smaller.</p>
+<p>Video (<code>.mp4</code>, <code>.webm</code>, ...) and animated WebP are not written: there is no
+encoder for them among vellum's dependencies. Save an APNG or GIF and
+convert it, e.g. <code>ffmpeg -i anim.png -pix_fmt yuv420p anim.mp4</code>, or
+<code>magick::image_write(magick::image_read("anim.gif"), "anim.webp")</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

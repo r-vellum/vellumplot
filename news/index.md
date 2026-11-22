@@ -35,6 +35,19 @@
   [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md)
   works with facets too.
 
+- [`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+  writes `.apng` as well as `.png` (both an animated PNG), and explains
+  a video (`.mp4`, `.webm`, …) or `.webp` filename instead of a bare
+  “must end in” error: there is no encoder for them, so it suggests
+  saving an APNG/GIF and converting it (an `ffmpeg` or `magick`
+  one-liner).
+  [`render_plot()`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+  on an animation now says to use
+  [`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+  (or to render the plot before
+  [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
+  for a still) instead of a class error (VP-85).
+
 - [`transition_time()`](https://r-vellum.github.io/vellumplot/reference/transition_time.md)
   accepts `Date` and `POSIXct` times (VP-83). They run on their numeric
   value (segments weighted by the day/second gaps) and keep their class

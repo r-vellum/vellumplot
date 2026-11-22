@@ -16,7 +16,7 @@ anim_save(filename, animation)
 
 - filename:
 
-  Output path; `.gif`, `.png`, or `.svg`.
+  Output path; `.gif`, `.png`/`.apng`, or `.svg`.
 
 - animation:
 
@@ -31,7 +31,9 @@ anim_save(filename, animation)
 
 - `.gif` — a looping GIF (universal compatibility).
 
-- `.png` — an animated PNG (APNG; lossless, alpha).
+- `.png` or `.apng` — an animated PNG (APNG; lossless, alpha). Browsers
+  play either; `.png` is the more widely recognised extension, and image
+  viewers that do not know APNG show its first frame.
 
 - `.svg` — a single **animated SVG**: every frame is emitted as vector
   markup and shown in turn by a CSS step animation. It is
@@ -48,6 +50,11 @@ clearly on line art — a few moving marks, the common explanatory case —
 and loses on a dense scatter, where a raster format is the right answer.
 `anim_save()` says so when a `.svg` scene is dense enough that a raster
 format would likely be smaller.
+
+Video (`.mp4`, `.webm`, ...) and animated WebP are not written: there is
+no encoder for them among vellum's dependencies. Save an APNG or GIF and
+convert it, e.g. `ffmpeg -i anim.png -pix_fmt yuv420p anim.mp4`, or
+`magick::image_write(magick::image_read("anim.gif"), "anim.webp")`.
 
 ## See also
 
