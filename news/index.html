@@ -64,6 +64,25 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.18.1.9000" id="vellumplot-01819000-development-version">vellumplot 0.18.1.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01819000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-18-1-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-18-1-9000"></a></h3>
+<ul><li>
+<code><a href="../reference/animate.html">animate()</a></code> now warns, once, when adjacent states cannot tween mark for mark – a state that adds or drops a colour group, or a line whose number of points changes – naming the states. Such a transition now cuts to the next state halfway through instead of never showing it (VR-26, VR-27; the engine fix is in vellum). Needs vellum 0.13.0.9000.</li>
+<li>
+<code><a href="../reference/transition_time.html">transition_time()</a></code> no longer drops a keyframe’s rows for integer times whose text form differs from the double’s, such as <code>100000L</code> versus <code>"1e+05"</code> (VP-77).</li>
+<li>
+<code>animate(nframes =)</code> must be a positive whole number; <code>2.5</code> used to be floored silently (VP-78).</li>
+<li>Fractional <code>fps</code> (12.5, 0.5) is now written exactly instead of being rounded to a whole number (VL-15, in vellum).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-18-1-9000">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-18-1-9000"></a></h3>
+<ul><li>
+<code>inst/examples/28-animation.R</code>: part 2 now animates telephones by region (the same seven bars every year) so the bars visibly grow, and part 3 is a 12-phase wave with 10 frames per step, so every frame moves (VP-79). The <code><a href="../reference/animate.html">animate()</a></code>, <code><a href="../reference/ease_aes.html">ease_aes()</a></code> and <code><a href="../reference/anim_save.html">anim_save()</a></code> examples use data with the same marks in every state, and <code><a href="../reference/animate.html">animate()</a></code> documents when states cut.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="tests-0-18-1-9000">Tests<a class="anchor" aria-label="anchor" href="#tests-0-18-1-9000"></a></h3>
+<ul><li>New mid-transition tests render the in-between frames for unequal counts, colour groups appearing and disappearing, changing vertex counts, changing text, two animated SVGs’ CSS isolation and fps timing (VP-80). The reordered-rows identity case (VR-32) is recorded as a skipped test.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.18.1" id="vellumplot-0181">vellumplot 0.18.1<a class="anchor" aria-label="anchor" href="#vellumplot-0181"></a></h2>

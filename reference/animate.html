@@ -91,7 +91,7 @@ shows the first keyframe as a preview.</p>
 
 
 <dt id="arg-nframes">nframes<a class="anchor" aria-label="anchor" href="#arg-nframes"></a></dt>
-<dd><p>Total number of frames to render.</p></dd>
+<dd><p>Total number of frames to render, a positive whole number.</p></dd>
 
 
 <dt id="arg-fps">fps<a class="anchor" aria-label="anchor" href="#arg-fps"></a></dt>
@@ -107,6 +107,17 @@ shows the first keyframe as a preview.</p>
     <p>Per-state statistics (e.g. a smooth) are recomputed per keyframe, but no scale
 domain retrains — the frozen scales are the observable proof the animation
 stayed non-reactive (axis breaks do not move between frames).</p>
+<p>Marks tween from one state to the next only when the two keyframes draw the
+same layers and groups, and each line or path keeps its number of points. A
+state that adds or drops a colour group, say, cannot be matched mark for mark:
+its frames cut to the next state halfway through the transition, and a line
+whose point count changes switches whole at the same moment. <code>animate()</code>
+warns (once per call) when that will happen, naming the states. Within a
+group, points carrying a <code>data_id</code> match by it, so single points may enter and
+leave without breaking the tween.</p>
+<p>Give each transition enough frames to be seen: <code>nframes</code> is spread over all
+the states, so 40 states in 80 frames leave two frames per state and nothing
+visibly moves.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -116,10 +127,13 @@ stayed non-reactive (axis breaks do not move between frames).</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="transition_states.html">transition_states</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">animate</span><span class="op">(</span>nframes <span class="op">=</span> <span class="fl">50</span>, fps <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Four bars in every state, so each bar tweens into its next height.</span></span></span>
+<span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>, g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                v <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">4</span>, <span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_bar</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">g</span>, y <span class="op">=</span> <span class="va">v</span>, fill <span class="op">=</span> <span class="va">g</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="transition_states.html">transition_states</a></span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">animate</span><span class="op">(</span>nframes <span class="op">=</span> <span class="fl">60</span>, fps <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

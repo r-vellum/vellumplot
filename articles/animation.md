@@ -53,8 +53,14 @@ vector markup and shown in turn by a CSS step animation. Two things make
 it worth reaching for. It is **resolution-independent** — the same file
 is crisp in a slide, on a retina screen, and in print, which no raster
 format is. And it honours **`prefers-reduced-motion`**: a reader who has
-asked their system not to animate is shown the first frame, held, with
-no extra work from you.
+asked their system not to animate is shown one still frame, with no
+extra work from you – the last frame when the animation ends on its
+final state (a reveal,
+[`transition_time()`](https://r-vellum.github.io/vellumplot/reference/transition_time.md),
+a non-looping
+[`transition_states()`](https://r-vellum.github.io/vellumplot/reference/transition_states.md)),
+otherwise the first. Each animated SVG namespaces its CSS, so several
+can share one HTML page.
 
 The trade-off is size. Because every frame is emitted in full, an
 animated SVG grows with the number of marks times the number of frames,
@@ -116,6 +122,12 @@ a <- vplot(mtcars) |>
   transition_states(cyl) |>
   ease_aes("cubic-in-out") |>
   animate(nframes = 60, fps = 20)
+#> Warning: Some keyframes will cut rather than tween.
+#> • "4 -> 6", "6 -> 8", and "8 -> 4": some marks change in number between states
+#>   (the points of a line or path, or points without a `data_id`), so they switch
+#>   halfway through instead of morphing.
+#> ℹ A state tweens into the next only when both draw the same layers and groups,
+#>   and each line or path keeps its number of points.
 
 # a@scenes holds one vellum scene per state; render the first as a still.
 vellum::render(a@scenes[[1]], tempfile(fileext = ".png"))

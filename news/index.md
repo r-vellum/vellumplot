@@ -2,6 +2,44 @@
 
 ## vellumplot 0.18.1.9000 (development version)
 
+### Bug fixes
+
+- [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
+  now warns, once, when adjacent states cannot tween mark for mark – a
+  state that adds or drops a colour group, or a line whose number of
+  points changes – naming the states. Such a transition now cuts to the
+  next state halfway through instead of never showing it (VR-26, VR-27;
+  the engine fix is in vellum). Needs vellum 0.13.0.9000.
+- [`transition_time()`](https://r-vellum.github.io/vellumplot/reference/transition_time.md)
+  no longer drops a keyframe’s rows for integer times whose text form
+  differs from the double’s, such as `100000L` versus `"1e+05"` (VP-77).
+- `animate(nframes =)` must be a positive whole number; `2.5` used to be
+  floored silently (VP-78).
+- Fractional `fps` (12.5, 0.5) is now written exactly instead of being
+  rounded to a whole number (VL-15, in vellum).
+
+### Documentation
+
+- `inst/examples/28-animation.R`: part 2 now animates telephones by
+  region (the same seven bars every year) so the bars visibly grow, and
+  part 3 is a 12-phase wave with 10 frames per step, so every frame
+  moves (VP-79). The
+  [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md),
+  [`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md)
+  and
+  [`anim_save()`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+  examples use data with the same marks in every state, and
+  [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
+  documents when states cut.
+
+### Tests
+
+- New mid-transition tests render the in-between frames for unequal
+  counts, colour groups appearing and disappearing, changing vertex
+  counts, changing text, two animated SVGs’ CSS isolation and fps timing
+  (VP-80). The reordered-rows identity case (VR-32) is recorded as a
+  skipped test.
+
 ## vellumplot 0.18.1
 
 ### Bug fixes
