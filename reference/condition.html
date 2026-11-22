@@ -95,8 +95,12 @@ highlight-on-interaction.</p>
 
 
 <dt id="arg-if-false">if_false<a class="anchor" aria-label="anchor" href="#arg-if-false"></a></dt>
-<dd><p>The value for non-members — a constant, or omitted to use the
-theme's dim appearance.</p></dd>
+<dd><p>The value for non-members — a constant, a column expression
+(data-masked, one value per row), or omitted to use the theme's dim
+appearance. For <code>color</code> / <code>fill</code>, a column whose values are levels (or, on
+a continuous scale, numbers) of the aesthetic's scale is taken through
+that scale, as <code>if_true</code> is; any other value is read as a colour, and a
+row whose value is neither gets the theme dim.</p></dd>
 
 
 <dt id="arg-empty">empty<a class="anchor" aria-label="anchor" href="#arg-empty"></a></dt>

@@ -25,8 +25,12 @@ condition(selection, if_true, if_false, empty = TRUE)
 
 - if_false:
 
-  The value for non-members — a constant, or omitted to use the theme's
-  dim appearance.
+  The value for non-members — a constant, a column expression
+  (data-masked, one value per row), or omitted to use the theme's dim
+  appearance. For `color` / `fill`, a column whose values are levels
+  (or, on a continuous scale, numbers) of the aesthetic's scale is taken
+  through that scale, as `if_true` is; any other value is read as a
+  colour, and a row whose value is neither gets the theme dim.
 
 - empty:
 

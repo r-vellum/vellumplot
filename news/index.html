@@ -64,6 +64,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.18.0.9000" id="vellumplot-01809000-development-version">vellumplot 0.18.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01809000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-18-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-18-0-9000"></a></h3>
+<ul><li>A per-row <code>if_false</code> of a <code>color</code> or <code>fill</code> condition (<code>color = condition(sel, g, col)</code>) is carried to the host as colours: a column of the scale’s levels (or numbers, on a continuous scale) is taken through that scale, as <code>if_true</code> is, and any other value is read as a colour (<code>NA</code>, the theme dim, when it is not one). It used to be the raw column, which a host could not paint. <code><a href="../reference/condition.html">?condition</a></code> documents per-row <code>if_false</code> columns (VW-46).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.18.0" id="vellumplot-0180">vellumplot 0.18.0<a class="anchor" aria-label="anchor" href="#vellumplot-0180"></a></h2>

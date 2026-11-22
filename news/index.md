@@ -2,6 +2,17 @@
 
 ## vellumplot 0.18.0.9000 (development version)
 
+### Bug fixes
+
+- A per-row `if_false` of a `color` or `fill` condition
+  (`color = condition(sel, g, col)`) is carried to the host as colours:
+  a column of the scale’s levels (or numbers, on a continuous scale) is
+  taken through that scale, as `if_true` is, and any other value is read
+  as a colour (`NA`, the theme dim, when it is not one). It used to be
+  the raw column, which a host could not paint.
+  [`?condition`](https://r-vellum.github.io/vellumplot/reference/condition.md)
+  documents per-row `if_false` columns (VW-46).
+
 ## vellumplot 0.18.0
 
 - Requires vellum (\>= 0.13.0).
