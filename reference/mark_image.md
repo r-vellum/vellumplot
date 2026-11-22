@@ -66,8 +66,11 @@ mark_image(
 
 - nudge_x, nudge_y:
 
-  Shift each image by an exact absolute distance in millimetres (`+x`
-  right, `+y` up). Default `0`.
+  Shift each image by an exact absolute distance in millimetres along
+  the data x / y axis (`+x` right, `+y` up on ordinary axes; swapped
+  under
+  [`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)).
+  Default `0`.
 
 - interpolate:
 

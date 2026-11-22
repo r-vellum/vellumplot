@@ -105,9 +105,13 @@ mark_label(
 
 - nudge_x, nudge_y:
 
-  Shift each label by an exact absolute distance in millimetres (`+x`
-  right, `+y` up), device-resolved so the nudge is constant regardless
-  of scale or panel aspect. Default `0`.
+  Shift each label by an exact absolute distance in millimetres along
+  the data x / y axis (`+x` right, `+y` up on ordinary axes; under
+  [`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+  `nudge_x` moves vertically and `nudge_y` horizontally, and on a
+  reversed axis a positive nudge points toward larger values, as in
+  ggplot2), device-resolved so the nudge is constant regardless of scale
+  or panel aspect. Default `0`.
 
 - repel:
 

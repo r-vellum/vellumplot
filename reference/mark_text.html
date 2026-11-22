@@ -168,8 +168,11 @@ does.</p></dd>
 
 <dt id="arg-nudge-x-nudge-y">nudge_x, nudge_y<a class="anchor" aria-label="anchor" href="#arg-nudge-x-nudge-y"></a></dt>
 <dd><p>Shift each label by an exact absolute distance in
-millimetres (<code>+x</code> right, <code>+y</code> up), device-resolved so the nudge is constant
-regardless of scale or panel aspect. Default <code>0</code>.</p></dd>
+millimetres along the data x / y axis (<code>+x</code> right, <code>+y</code> up on ordinary
+axes; under <code><a href="coord_cartesian.html">coord_flip()</a></code> <code>nudge_x</code> moves vertically and <code>nudge_y</code>
+horizontally, and on a reversed axis a positive nudge points toward larger
+values, as in ggplot2), device-resolved so the nudge is constant regardless
+of scale or panel aspect. Default <code>0</code>.</p></dd>
 
 
 <dt id="arg-repel">repel<a class="anchor" aria-label="anchor" href="#arg-repel"></a></dt>

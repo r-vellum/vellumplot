@@ -83,6 +83,28 @@
 
 ### Bug fixes
 
+- `nudge_x` / `nudge_y` follow the data axes, as in ggplot2 (VP-88):
+  under
+  [`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md)
+  `nudge_y` moves a label across and `nudge_x` up/down (they used to
+  move it along the screen axes, so a flipped bar chart’s labels shifted
+  by about one bar), and on a reversed axis a positive nudge points
+  toward larger values. Applies to
+  [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  and
+  [`mark_image()`](https://r-vellum.github.io/vellumplot/reference/mark_image.md).
+
+- Bars, histograms, tiles and boxplot boxes draw on a reversed axis
+  again (VP-89):
+  [`scale_x_reverse()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md)
+  /
+  [`scale_y_reverse()`](https://r-vellum.github.io/vellumplot/reference/scale_x_continuous.md),
+  with or without
+  [`coord_flip()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),
+  drew no bars because their native width resolved to a negative size.
+  Fixed in vellum (needs vellum with VP-89).
+
 - A constant `if_true` in
   [`condition()`](https://r-vellum.github.io/vellumplot/reference/condition.md)
   is a setting, not a mapping (VP-86): `alpha = condition("s", 1, 0.2)`
