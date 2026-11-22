@@ -57,7 +57,8 @@ scale_size_manual(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_size_discrete(
@@ -67,7 +68,8 @@ scale_size_discrete(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 
 scale_size_ordinal(
@@ -77,7 +79,8 @@ scale_size_ordinal(
   labels = NULL,
   name = NULL,
   limits = NULL,
-  na.value = NULL
+  na.value = NULL,
+  drop = TRUE
 )
 }
 \arguments{
@@ -111,6 +114,11 @@ named by level).}
 
 \item{na.value}{For the discrete forms, the size drawn for missing values,
 or \code{NULL} to drop them.}
+
+\item{drop}{For the discrete forms, drop factor levels that no row uses
+(default \code{TRUE}, as in ggplot2): they get no legend key and no size, so the
+range is spread over the levels that remain. \code{FALSE} keeps every level.
+\code{limits} overrides it.}
 }
 \value{
 The modified \link{PlotSpec}.

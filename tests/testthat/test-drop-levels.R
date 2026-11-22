@@ -75,3 +75,29 @@ test_that("a level used in only some facet panels stays", {
   p <- vplot(d2) |> mark_point(x = x, y = y, color = g) |> facet_wrap(~f)
   expect_equal(.legend_levels(p), c("a", "b", "c"))
 })
+
+test_that("the discrete size and alpha scales take drop = (VP-100)", {
+  sz <- function(p) vellumplot:::.build_panels(p)$scales$size
+  al <- function(p) vellumplot:::.build_panels(p)$scales$alpha
+  ps <- vplot(d) |> mark_point(x = x, y = y, size = g)
+  pa <- vplot(d) |> mark_point(x = x, y = y, alpha = g)
+  expect_equal(suppressWarnings(sz(ps))$levels, c("a", "c"))
+  expect_equal(suppressWarnings(al(pa))$levels, c("a", "c"))
+  keep <- c("a", "b", "c", "d")
+  for (f in list(scale_size_discrete, scale_size_ordinal)) {
+    s <- suppressWarnings(sz(f(ps, drop = FALSE)))
+    expect_equal(s$levels, keep)
+    expect_length(s$legend_sizes, 4)
+    expect_equal(suppressWarnings(sz(f(ps)))$levels, c("a", "c"))
+  }
+  s <- sz(scale_size_manual(ps, values = 1:4, drop = FALSE))
+  expect_equal(s$levels, keep)
+  for (f in list(scale_alpha_discrete, scale_alpha_ordinal)) {
+    s <- suppressWarnings(al(f(pa, drop = FALSE)))
+    expect_equal(s$levels, keep)
+    expect_length(s$legend_alphas, 4)
+  }
+  s <- al(scale_alpha_manual(pa, values = c(0.2, 0.4, 0.6, 0.8), drop = FALSE))
+  expect_equal(s$levels, keep)
+  expect_error(scale_size_discrete(ps, drop = NA), "drop")
+})

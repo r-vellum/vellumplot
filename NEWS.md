@@ -13,6 +13,12 @@
   train the x and y scales, as ggplot2 does, the tile version of VP-90. A
   constant `mark_tile(width =, height =)` is honoured too (it was ignored).
 
+* The discrete size and alpha scales (`scale_size_discrete()`,
+  `scale_size_ordinal()`, `scale_size_manual()` and their `scale_alpha_*()`
+  twins) gain `drop =` (VP-100), as VP-91 gave the colour, fill, shape and
+  linetype scales: `drop = FALSE` keeps a factor level no row uses in the
+  legend and the output range.
+
 # vellumplot 0.19.0
 
 ## New features
