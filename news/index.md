@@ -39,6 +39,14 @@
   is now 1 mm (was 2 mm, which was calibrated against the rough
   estimate).
 
+- [`mark_edge_bundle()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)’s
+  legend key is a line, drawn at the bundle’s default 0.3 opacity
+  (VP-73). It was a square swatch at full opacity.
+
+- A flow-map trunk’s default tooltip names the destinations it carries
+  (VP-74), e.g. “v1 → v3, v5, v8: 35”, or “v1 → v2, v3, v4 + 2 more: 90”
+  past three, where it said “v1 → …: 35”.
+
 ## vellumplot 0.19.0
 
 ### New features
