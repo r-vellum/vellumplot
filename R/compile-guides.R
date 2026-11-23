@@ -1272,6 +1272,7 @@ NULL
     text_h = .mm_th(rt[["legend.text"]]@size),
     title_h = .mm_th(rt[["legend.title"]]@size),
     key = rt[["legend.key.size"]],
+    key_point_min = rt[["legend.key.point.min"]],
     bar_w = .LEGEND_BAR_MM,
     row_gap = .LEGEND_ROW_GAP_MM,
     title_gap = .LEGEND_TITLE_GAP_MM,
@@ -1595,15 +1596,22 @@ NULL
 
 # The radius (mm) a point key is drawn at, before its shape's size factor: the
 # point layer's constant `size` (`kp$size`, `.key_point_for_aes()`), as ggplot2
-# keys a layer at its point size (VP-113), capped at half the key side so a
-# large point keeps to its key; half the key side when the layer sets none,
-# and for an SVG icon `shape`, whose `size` scales an icon many times a
-# point's size (`.SVG_MARKER_MM`), so its key keeps filling the key box.
+# keys a layer at its point size (VP-113), but no smaller than the theme's
+# `legend.key.point.min` (`m$key_point_min`, VP-118) so a plot of tiny points
+# keeps readable keys, and capped at half the key side so a large point keeps
+# to its key; half the key side when the layer sets none, and for an SVG icon
+# `shape`, whose `size` scales an icon many times a point's size
+# (`.SVG_MARKER_MM`), so its key keeps filling the key box. A size legend's
+# mapped sizes and an `override.aes` size do not come through here.
 .key_point_size <- function(kp, m, shape = NULL) {
   half <- m$key / 2
   icon <- !is.null(shape) &&
     !is.na(.shape_svg_d(.shape_parts(.pch_to_shape(shape))$marker))
-  if (is.numeric(kp$size) && !icon) min(kp$size, half) else half
+  if (!is.numeric(kp$size) || icon) {
+    return(half)
+  }
+  lo <- m$key_point_min %||% .SETTINGS_DEFAULTS[["legend.key.point.min"]]
+  min(max(kp$size, lo), half)
 }
 
 # The colour a line / alpha key draws in: its layer's constant colour, else the

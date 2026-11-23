@@ -67,7 +67,10 @@ names, justified along the panel edge by \code{legend.justification} (e.g.
 \code{geom = element_geom(ink, paper, accent)} sets the default colours of
 unmapped marks (see \code{\link[=element_geom]{element_geom()}}).
 Legend geometry is tunable via \code{legend.key.size} (key/swatch side, mm),
-\code{legend.spacing} (gap between stacked guides, mm), and \code{legend.margin}
+\code{legend.key.point.min} (the smallest radius, mm, a point key of a layer
+with a constant \code{size} is drawn at, default 1 -- an unsized point's
+radius -- so tiny points keep readable keys; a size legend keeps its
+mapped sizes), \code{legend.spacing} (gap between stacked guides, mm), and \code{legend.margin}
 (inset around the legend block, one or four millimetres, \verb{t, r, b, l}).}
 
 \item{panel_bg, grid_col, label_col, strip_bg}{Colours (or \code{NA} to draw nothing)
