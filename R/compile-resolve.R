@@ -493,6 +493,41 @@ NULL
   NULL
 }
 
+# The open or bordered point shape (VP-103) a legend key takes from the first
+# point layer mapping `aesthetic`: `list(shape =, fill =, col =, role =)`, the
+# layer's constant shape when it is "<marker> open" / "<marker> filled" (a
+# mapped shape keys itself), its constant plain `fill` and `color` (a bordered
+# shape's fill and outline), and `role` "fill" when `aesthetic` is the fill
+# (the key colour then fills the shape). NULL when the layer draws solid
+# markers and sets neither, so those keys draw as before.
+.key_point_for_aes <- function(resolved, aesthetic) {
+  for (L in resolved) {
+    if (
+      !aesthetic %in% names(L$values) ||
+        !identical(L$mark, "point") ||
+        identical(L$stat, "dotplot")
+    ) {
+      next
+    }
+    sh <- if (is.null(L$values$shape)) .pch_to_shape(L$params$shape)
+    if (.is_string(sh) && identical(.shape_parts(sh)$style, "solid")) {
+      sh <- NULL
+    }
+    out <- list(
+      shape = if (.is_string(sh)) sh,
+      fill = .plain_fill_param(L),
+      col = if (.is_string(L$params$color)) L$params$color,
+      role = if (identical(aesthetic, "fill")) "fill"
+    )
+    if (is.null(out$shape) && is.null(L$values$shape)) {
+      return(NULL)
+    }
+    out <- Filter(Negate(is.null), out)
+    return(if (length(out)) out)
+  }
+  NULL
+}
+
 # The opacity a legend key takes from its layer, as ggplot2's key drawers
 # (`draw_key_rect()`, `draw_key_point()`, `draw_key_path()`, ...) take the
 # layer alpha (VP-67, VP-70). Read from the first layer mapping `aesthetic`

@@ -72,7 +72,10 @@ connected and changes colour along its length.
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
 may be a constant or a mapped expression. A shape is a built-in marker
 (\code{"circle"}, \code{"square"}, \code{"triangle"}, \code{"diamond"}, \code{"plus"}, \code{"cross"},
-\code{"triangle_down"}, \code{"star"}) or an \strong{SVG icon} — a path \code{d} string or a
+\code{"triangle_down"}, \code{"star"}), its open or bordered variant
+(\code{"circle open"}, \code{"circle filled"}, ...; see \code{\link[=scale_shape]{scale_shape()}}), a ggplot2
+shape code (\code{shape = 1} is an open circle, \code{21} a circle filled with \code{fill}
+inside a \code{color} outline), or an \strong{SVG icon} — a path \code{d} string or a
 \code{.svg} file — drawn as a crisp vector marker. Use a literal string for a
 constant icon, or map \code{shape} and pass icons to \code{\link[=scale_shape]{scale_shape()}}.}
 

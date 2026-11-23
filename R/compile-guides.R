@@ -1105,6 +1105,7 @@ NULL
   fill_glyph <- NULL
   ks <- list()
   ka <- NULL
+  kp <- NULL
   series_aes <- NULL
   levels <- NULL
   override <- list()
@@ -1161,6 +1162,7 @@ NULL
       }
     )
     ka <- ka %||% sc$key_alpha
+    kp <- kp %||% sc$key_point
     if (is.character(sc$levels)) {
       levels <- levels %||% sc$levels
     }
@@ -1219,6 +1221,11 @@ NULL
     linewidths = style$linewidths,
     glyph = glyph,
     key_alpha = ka,
+    # open / bordered point shapes (VP-103): the layer's shape and paints, the
+    # fill scale's colours and whether a colour scale strokes the keys
+    key_point = kp,
+    by_fill = style$fills,
+    by_col = !is.null(style$cols),
     override_aes = if (length(override)) override
   )
 }
@@ -1539,8 +1546,21 @@ NULL
 # A legend key glyph for a `shape`: an `svg_grob()` icon when the shape is an
 # SVG (a `d` path or `.svg` file), otherwise the usual `points_grob()` marker.
 # `size_mm` is the marker size for the built-in case (the icon uses a slightly
-# larger longer-side so it reads at legend scale).
-.shape_key_grob <- function(shape, size_mm, fill, col, sk, alpha = NULL) {
+# larger longer-side so it reads at legend scale). A ggplot2 shape code or an
+# open / bordered shape (VP-103) draws as the plot does: an open one is its
+# outline in `col`, a bordered one fills with `bfill` (none when NA).
+.shape_key_grob <- function(
+  shape,
+  size_mm,
+  fill,
+  col,
+  sk,
+  alpha = NULL,
+  bfill = NA_character_
+) {
+  sp <- .shape_parts(.pch_to_shape(shape))
+  fill <- .shape_fill(sp$style, fill, bfill)
+  shape <- sp$marker
   d <- .shape_svg_d(shape)
   if (!is.na(d)) {
     return(vellum::svg_grob(
@@ -1585,23 +1605,34 @@ NULL
         sk,
         ov,
         sc$key_style,
-        sc$key_alpha
+        sc$key_alpha,
+        sc$key_point
       )
     },
     size_nested = ,
     size = if (isTRUE(sc$na) && i > length(sc$legend_sizes)) {
       .na_key_grob(m, sk)
     } else {
-      fill <- ov$fill %||% ov$color %||% .geom_paint("grey35", "fill")
+      kp <- sc$key_point
+      sp <- .shape_parts(
+        .pch_to_shape(ov$shape %||% kp$shape %||% sc$key_glyph %||% "circle")
+      )
+      fill <- .shape_fill(
+        sp$style,
+        ov$fill %||% ov$color %||% .geom_paint("grey35", "fill"),
+        ov$fill %||% kp$fill %||% NA_character_
+      )
       vellum::points_grob(
         vellum::vl_unit(0.5, "npc"),
         vellum::vl_unit(0.5, "npc"),
         size = vellum::vl_unit(ov$size %||% sc$legend_sizes[i], "mm"),
-        shape = ov$shape %||% sc$key_glyph %||% "circle",
+        shape = sp$marker,
         sketch = sk,
         gp = vellum::vl_gpar(
           fill = fill,
-          col = ov$color %||% .geom_paint("grey35"),
+          col = ov$color %||%
+            (if (sp$style != "solid") kp$col) %||%
+            .geom_paint("grey35"),
           alpha = ka
         )
       )
@@ -1609,13 +1640,17 @@ NULL
     shape = if (isTRUE(sc$na) && i > length(sc$shapes)) {
       .na_key_grob(m, sk)
     } else {
+      sh <- ov$shape %||% sc$shapes[i]
+      kp <- sc$key_point
+      plain <- identical(.shape_parts(.pch_to_shape(sh))$style, "solid")
       .shape_key_grob(
-        ov$shape %||% sc$shapes[i],
+        sh,
         ov$size %||% (m$key / 2),
         ov$fill %||% ov$color %||% .geom_paint("grey35", "fill"),
-        ov$color %||% .geom_paint("grey35"),
+        ov$color %||% (if (!plain) kp$col) %||% .geom_paint("grey35"),
         sk,
-        ka
+        ka,
+        ov$fill %||% kp$fill %||% NA_character_
       )
     },
     pattern = vellum::rect_grob(
@@ -1682,14 +1717,28 @@ NULL
   }
   alpha <- ov$alpha %||% pick(sc$alphas, NULL) %||% sc$key_alpha$alpha
   col <- ov$color %||% sc$cols[i]
+  kp <- sc$key_point
   point <- function() {
+    sh <- ov$shape %||% pick(sc$shapes, NULL) %||% kp$shape %||% "circle"
+    plain <- identical(.shape_parts(.pch_to_shape(sh))$style, "solid")
     .shape_key_grob(
-      ov$shape %||% pick(sc$shapes, "circle"),
+      sh,
       ov$size %||% pick(sc$sizes_mm, m$key / 2),
       ov$fill %||% ov$color %||% sc$fills[i],
-      col,
+      # an open / bordered shape's outline: the colour scale's, else the
+      # layer's constant colour
+      if (plain || isTRUE(sc$by_col)) {
+        col
+      } else {
+        ov$color %||% kp$col %||% .geom_paint("grey35")
+      },
       sk,
-      alpha
+      alpha,
+      # a bordered shape's fill: the fill scale's, else the layer's own
+      ov$fill %||%
+        (if (!is.null(sc$by_fill)) sc$by_fill[i]) %||%
+        kp$fill %||%
+        NA_character_
     )
   }
   line <- function() {
@@ -1736,6 +1785,10 @@ NULL
 # `ka` (`.key_alpha_for_aes()`) is the layer opacity: `alpha` for the whole
 # key (point, line, square or outlined box), `fill_alpha` for a square's fill
 # alone (the outline stays opaque, so the key is a fill and an outline).
+# `kp` (`.key_point_for_aes()`) is a point layer's open or bordered shape
+# (VP-103): the point key then draws that shape, its outline in the key colour
+# (an open shape) or the key colour inside the layer's outline (a bordered
+# shape keyed by `fill`).
 .colour_key_grob <- function(
   glyph,
   col,
@@ -1743,7 +1796,8 @@ NULL
   sketch = NULL,
   ov = list(),
   ks = NULL,
-  ka = NULL
+  ka = NULL,
+  kp = NULL
 ) {
   # `override.aes` forces key aesthetics: fill/stroke take the overridden colour,
   # a point key its overridden size/shape/alpha, a line key its linewidth. The
@@ -1755,6 +1809,21 @@ NULL
   edge <- ov$color %||% ks$col %||% (if (!is.null(ks$fill)) col)
   alpha <- ov$alpha %||% ka$alpha
   glyph <- if (!is.null(ov$shape)) "point" else (glyph %||% "square")
+  sp <- .shape_parts(.pch_to_shape(
+    ov$shape %||% (if (identical(glyph, "point")) kp$shape) %||% "circle"
+  ))
+  pt_edge <- if (is.null(ks)) NA else edge
+  if (identical(sp$style, "open")) {
+    fill <- NA_character_
+    pt_edge <- line_col
+  } else if (identical(sp$style, "filled")) {
+    by_fill <- identical(kp$role, "fill")
+    fill <- ov$fill %||%
+      (if (by_fill) col else kp$fill) %||%
+      NA_character_
+    pt_edge <- ov$color %||%
+      (if (by_fill) kp$col %||% .geom_paint("black") else col)
+  }
   switch(
     glyph,
     point = ,
@@ -1762,11 +1831,11 @@ NULL
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.5, "npc"),
       size = vellum::vl_unit(ov$size %||% (m$key / 2), "mm"),
-      shape = ov$shape %||% "circle",
+      shape = sp$marker,
       sketch = sketch,
       gp = vellum::vl_gpar(
         fill = fill,
-        col = if (is.null(ks)) NA else edge,
+        col = pt_edge,
         alpha = alpha
       )
     ),

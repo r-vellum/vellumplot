@@ -2828,39 +2828,58 @@ scale_edge_alpha <- function(
   rep_len(unname(pal), length(levels))
 }
 
-# ggplot2's numeric shape codes (R `pch`) as vellum marker names. vellum draws
-# one solid style per marker, so the open, filled and bordered variants of a
-# shape (1/16/19/21 ...) all become that marker; unknown codes are circles.
+# ggplot2's numeric shape codes (R `pch`) as vellum marker names. The open
+# codes 0-14 become "<marker> open" (stroke only, in the point colour), the
+# solid codes 15-20 the plain marker (filled with the point colour), and the
+# bordered codes 21-25 "<marker> filled" (`fill` inside a `color` outline), as
+# ggplot2 draws them (VP-103). Composite open glyphs (7, 9-14) take the nearest
+# open marker; 3 and 4 are the line glyphs "plus" and "cross"; the asterisk (8)
+# is an open star. Unknown codes are circles.
 .pch_to_shape <- function(x) {
   if (!is.numeric(x)) {
     return(x)
   }
   map <- c(
-    "0" = "square",
-    "15" = "square",
-    "22" = "square",
-    "1" = "circle",
-    "16" = "circle",
-    "19" = "circle",
-    "20" = "circle",
-    "21" = "circle",
-    "2" = "triangle",
-    "17" = "triangle",
-    "24" = "triangle",
-    "6" = "triangle_down",
-    "25" = "triangle_down",
-    "5" = "diamond",
-    "18" = "diamond",
-    "23" = "diamond",
+    "0" = "square open",
+    "1" = "circle open",
+    "2" = "triangle open",
     "3" = "plus",
     "4" = "cross",
-    "8" = "star"
+    "5" = "diamond open",
+    "6" = "triangle_down open",
+    "7" = "square open",
+    "8" = "star open",
+    "9" = "diamond open",
+    "10" = "circle open",
+    "11" = "star open",
+    "12" = "square open",
+    "13" = "circle open",
+    "14" = "square open",
+    "15" = "square",
+    "16" = "circle",
+    "17" = "triangle",
+    "18" = "diamond",
+    "19" = "circle",
+    "20" = "circle",
+    "21" = "circle filled",
+    "22" = "square filled",
+    "23" = "diamond filled",
+    "24" = "triangle filled",
+    "25" = "triangle_down filled"
   )
   out <- unname(map[as.character(x)])
   out[is.na(out)] <- "circle"
   names(out) <- names(x)
   out
 }
+
+# Every built-in shape name a scale accepts: the markers and their open and
+# bordered variants (VP-103).
+.SHAPE_VALID <- c(
+  .SHAPE_PALETTE,
+  paste(.SHAPE_PALETTE, "open"),
+  paste(.SHAPE_PALETTE, "filled")
+)
 
 # ggplot2's numeric line types (0 = blank, 1 = solid, 2 = dashed, ...) as names.
 # vellum has no blank line, so 0 is solid.
@@ -2903,8 +2922,11 @@ scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
 #'
 #'   For `scale_shape_manual()` `values` is required, and may also be
 #'   ggplot2's numeric shape codes (`16`, `17`, ...), which map to the nearest
-#'   marker (open, filled and bordered variants of a shape draw alike). Named
-#'   values are matched to levels by name.
+#'   marker. As in ggplot2, the open codes (0-14) draw an outline in the point
+#'   colour, the solid ones (15-20) fill with it, and the bordered ones (21-25)
+#'   fill with `fill` inside a `color` outline (unfilled when no `fill` is
+#'   given). By name, these are `"circle open"`, `"circle filled"` and so on
+#'   for every built-in marker. Named values are matched to levels by name.
 #' @param name Legend title, or `NULL` to derive from the encoding.
 #' @param breaks The levels the legend shows (and their order), or `NULL` for
 #'   all of them.
@@ -2944,7 +2966,7 @@ scale_shape <- function(
     plot,
     "shape",
     .pch_to_shape(values),
-    .SHAPE_PALETTE,
+    .SHAPE_VALID,
     "shape",
     name,
     svg_ok = TRUE,

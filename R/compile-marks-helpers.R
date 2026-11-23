@@ -344,7 +344,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   if (!is.null(scales$shape) && !is.null(L$values$shape)) {
     return(scales$shape$map(L$values$shape))
   }
-  L$params$shape %||% default
+  # a constant ggplot2 shape code (`shape = 1`) names its marker (VP-103)
+  .pch_to_shape(L$params$shape) %||% default
 }
 
 # vellum's built-in point-marker shapes; anything else a `shape` resolves to is
@@ -360,6 +361,35 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   "star"
 )
 
+# Split resolved shapes into vellum's marker and a paint style (VP-103):
+# "solid" for a plain marker (filled with the point colour), "open" for
+# "<marker> open" (outline only, in the point colour) and "filled" for
+# "<marker> filled" (ggplot2's bordered shapes 21-25: `fill` inside a `color`
+# outline). Anything else (an SVG icon) is passed through as a solid marker.
+.shape_parts <- function(shape) {
+  shape <- as.character(shape)
+  m <- regmatches(shape, regexec("^(.+) (open|filled)$", shape))
+  base <- vapply(m, function(z) if (length(z)) z[2] else NA_character_, "")
+  ok <- !is.na(base) & base %in% .BUILTIN_SHAPES
+  style <- rep("solid", length(shape))
+  style[ok] <- vapply(m[ok], `[`, "", 3L)
+  marker <- shape
+  marker[ok] <- base[ok]
+  list(marker = marker, style = style)
+}
+
+# The fill of points drawn with `style` (`.shape_parts()`): the solid fill
+# `solid` (the point colour), none for an open shape, and `bordered` (the
+# `fill` aesthetic, NA when unset, as in ggplot2) for a bordered one.
+.shape_fill <- function(style, solid, bordered) {
+  n <- length(style)
+  out <- rep_len(solid, n)
+  out[style == "open"] <- NA_character_
+  hit <- style == "filled"
+  out[hit] <- rep_len(bordered, n)[hit]
+  out
+}
+
 # For each resolved shape, the SVG path `d` to draw it as a vector icon, or NA
 # for a built-in marker. A `.svg` file is read and its `<path d=...>` attributes
 # concatenated (icon sets ship exactly these paths); any other non-builtin
@@ -372,7 +402,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   d <- vapply(
     u,
     function(s) {
-      if (is.na(s) || s %in% .BUILTIN_SHAPES) {
+      if (is.na(s) || .shape_parts(s)$marker %in% .BUILTIN_SHAPES) {
         return(NA_character_)
       }
       if (grepl("\\.svg$", s, ignore.case = TRUE) && file.exists(s)) {
