@@ -298,6 +298,13 @@ NULL
       xlabels_row = xlabels_row[e$r],
       xtitle_row = xtitle_row[e$r],
       tag_row = tag_row[e$r],
+      title_row = title_row[e$r],
+      subtitle_row = subtitle_row[e$r],
+      caption_row = caption_row[e$r],
+      # the cell's horizontal extent (its left legend / y title column through
+      # its right legend column), which its own title bands span
+      first_col = if (is.na(lleg_col[e$c])) ytitle_col[e$c] else lleg_col[e$c],
+      last_col = rleg_col[e$c],
       legend_col = rleg_col[e$c],
       legend_cols = c(left = lleg_col[e$c], right = rleg_col[e$c]),
       legend_rows = c(top = tleg_row[e$r], bottom = bleg_row[e$r])
@@ -456,6 +463,7 @@ NULL
   )
   scene <- .draw_y_title(scene, gm$panel_row, gm$ytitle_col, vsc$name, rt)
   scene <- .draw_x_title(scene, gm$xtitle_row, gm$panel_col, hsc$name, rt)
+  scene <- .draw_subplot_bands(scene, plan, gm)
   # per-sub-plot legends: inside its own panel cell, and (only when not
   # collecting) in the band on each side a legend was placed -- a vertical
   # stack beside the panel (left / right), a horizontal row above / below it.
@@ -500,6 +508,52 @@ NULL
         name = vp_name(sd)
       )
     }
+  }
+  scene
+}
+
+# A sub-plot's own tag / title / subtitle / caption (its `labs()`), drawn in
+# the rows the shared grid reserved for them (the row's tallest band, so cells
+# in a row keep their panels aligned), across the cell's own columns. Before,
+# the rows were reserved but nothing was drawn into them (VP-119).
+.draw_subplot_bands <- function(scene, plan, gm) {
+  labels <- plan$spec@labels
+  rt <- plan$rt
+  col <- gm$first_col
+  ncol <- gm$last_col - gm$first_col + 1L
+  has <- function(x) !is.null(x) && !identical(x, "")
+  if (has(labels$tag) && !is.na(plan$lay$tag_row)) {
+    scene <- .draw_tag(scene, gm$tag_row, ncol, labels$tag, rt, col = col)
+  }
+  if (has(labels$title) && !is.na(plan$lay$title_row)) {
+    scene <- .draw_title(
+      scene,
+      gm$title_row,
+      ncol,
+      labels$title,
+      rt,
+      col = col
+    )
+  }
+  if (has(labels$subtitle) && !is.na(plan$lay$subtitle_row)) {
+    scene <- .draw_subtitle(
+      scene,
+      gm$subtitle_row,
+      ncol,
+      labels$subtitle,
+      rt,
+      col = col
+    )
+  }
+  if (has(labels$caption) && !is.na(plan$lay$caption_row)) {
+    scene <- .draw_caption(
+      scene,
+      gm$caption_row,
+      ncol,
+      labels$caption,
+      rt,
+      col = col
+    )
   }
   scene
 }

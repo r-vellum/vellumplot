@@ -235,4 +235,36 @@ test_that("a panel's meta says which gridlines it draws (VW-66)", {
   s <- grid_meta(d)[[1]]$scales
   expect_false(s$x$grid$minor)
   expect_true(s$y$grid$minor)
+test_that("an aligned composition draws each sub-plot's title, subtitle and caption (VP-119)", {
+  # The aligned grid reserved rows for a cell's labs() bands but never drew
+  # them, leaving a blank band where the title should be.
+  svg_texts <- function(x) {
+    s <- plot_svg(x)
+    m <- regmatches(s, gregexpr("<text[^>]*>[^<]*</text>", s))[[1]]
+    sub("^<text[^>]*>([^<]*)</text>$", "\\1", m)
+  }
+  a <- p_xy(wt, mpg) |>
+    labs(title = "Alpha title", subtitle = "alpha sub", caption = "alpha cap")
+  b <- p_xy(hp, mpg) |> labs(title = "Beta title")
+  comp <- hconcat(a, b)
+  expect_true(vellumplot:::.comp_alignable(comp))
+  txt <- svg_texts(comp)
+  expect_true(all(
+    c("Alpha title", "alpha sub", "alpha cap", "Beta title") %in% txt
+  ))
+  # each title sits above its own panel, left-aligned to its own cell
+  m <- vellum::scene_model(vellum::as_vellum_scene(comp))$panels
+  s <- plot_svg(comp)
+  title_x <- function(lbl) {
+    t <- regmatches(s, regexpr(sprintf("<text[^>]*>%s</text>", lbl), s))
+    x <- as.numeric(sub('.* x="([0-9.]+)".*', "\\1", t))
+    tx <- as.numeric(sub(".*matrix\\(1 0 0 1 ([0-9.]+) .*", "\\1", t))
+    x + tx
+  }
+  right_panel <- m[m$name == "cell-2-panel-1-1", ]
+  expect_lt(title_x("Alpha title"), right_panel$px0)
+  expect_gt(title_x("Beta title"), m$px1[m$name == "cell-1-panel-1-1"])
+  # a figure-level title is still drawn alongside them
+  txt2 <- svg_texts(comp |> compose_annotation(title = "Figure"))
+  expect_true(all(c("Figure", "Alpha title", "Beta title") %in% txt2))
 })
