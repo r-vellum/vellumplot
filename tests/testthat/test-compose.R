@@ -235,6 +235,8 @@ test_that("a panel's meta says which gridlines it draws (VW-66)", {
   s <- grid_meta(d)[[1]]$scales
   expect_false(s$x$grid$minor)
   expect_true(s$y$grid$minor)
+})
+
 test_that("an aligned composition draws each sub-plot's title, subtitle and caption (VP-119)", {
   # The aligned grid reserved rows for a cell's labs() bands but never drew
   # them, leaving a blank band where the title should be.
