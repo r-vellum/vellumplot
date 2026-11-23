@@ -4,6 +4,16 @@
 
 ### Bug fixes
 
+- `mark_errorbar(width =)` is in data units, as `mark_bar(width =)` is
+  since VP-98 and as in ggplot2’s `geom_errorbar()` (VP-104). It was a
+  fraction of the band, so on a continuous x the caps did not match the
+  bars (`width = 4` on an axis with a resolution of 10 drew caps 40
+  units wide). The default is now 90% of the band, ggplot2’s default and
+  a default bar’s width (it was 50%), so error bars over bars span them.
+  Dodged error bars share the width among the groups as dodged bars do,
+  and the caps train a continuous axis, as bars’ edges do, so the outer
+  caps are not clipped.
+
 - ggplot2’s numeric point shapes draw as in ggplot2 (VP-103). The open
   codes 0-14 draw only an outline in the point colour, the solid 15-20
   fill with it, and the bordered 21-25 fill with `fill` inside a `color`

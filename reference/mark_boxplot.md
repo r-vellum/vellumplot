@@ -27,7 +27,7 @@ mark_errorbar(
   ...,
   position = "identity",
   orientation = NA,
-  width = 0.5,
+  width = NULL,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -144,7 +144,11 @@ mark_crossbar(
 
 - width:
 
-  For `mark_errorbar()`, the cap width as a fraction of the band.
+  For `mark_errorbar()`, the cap width in data units, as for
+  `mark_bar(width =)` and ggplot2's `geom_errorbar()`. `NULL` (default)
+  is 90% of the band (the resolution on a continuous axis), the width of
+  a default bar, so error bars over bars span them. Dodged error bars
+  share it among the groups, as dodged bars do.
 
 - fun:
 
