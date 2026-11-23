@@ -12,6 +12,12 @@
   `inset()` also gains `shadow =` for a soft drop shadow, and names each
   inset's viewport `"inset-<k>"`.
 
+* A cartesian panel's scale metadata now says which gridlines the panel draws
+  along each axis (`grid = list(major, minor)`, from the theme's
+  `panel.grid.major.*` / `panel.grid.minor.*`), so a widget re-ticking the
+  axes draws the same set (VW-66). In a composition, a cell themed with
+  `panel.grid = element_blank()` used to get gridlines back in the widget.
+
 * `mark_rule()` draws under `coord_polar()` and `coord_radial()` (VP-121),
   where the layer used to vanish without a warning. An intercept on the radius
   aesthetic is a circle (an arc over a partial `coord_radial(end =)` sweep) and
