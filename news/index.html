@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.19.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.20.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,9 +63,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.19.0.9000" id="vellumplot-01909000-development-version">vellumplot 0.19.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-01909000-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.20.0" id="vellumplot-0200">vellumplot 0.20.0<a class="anchor" aria-label="anchor" href="#vellumplot-0200"></a></h2>
 <div class="section level3">
-<h3 id="bug-fixes-0-19-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-19-0-9000"></a></h3>
+<h3 id="bug-fixes-0-20-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-20-0"></a></h3>
 <ul><li><p><code>mark_errorbar(width =)</code> is in data units, as <code>mark_bar(width =)</code> is since VP-98 and as in ggplot2’s <code>geom_errorbar()</code> (VP-104). It was a fraction of the band, so on a continuous x the caps did not match the bars (<code>width = 4</code> on an axis with a resolution of 10 drew caps 40 units wide). The default is now 90% of the band, ggplot2’s default and a default bar’s width (it was 50%), so error bars over bars span them. Dodged error bars share the width among the groups as dodged bars do, and the caps train a continuous axis, as bars’ edges do, so the outer caps are not clipped.</p></li>
 <li><p>ggplot2’s numeric point shapes draw as in ggplot2 (VP-103). The open codes 0-14 draw only an outline in the point colour, the solid 15-20 fill with it, and the bordered 21-25 fill with <code>fill</code> inside a <code>color</code> outline (black by default; unfilled when no <code>fill</code> is given). Before, all three families drew the same solid marker, so <code>scale_shape_manual(values = c(1, 0))</code> gave filled circles and squares. The variants are also available by name (<code>"circle open"</code>, <code>"square filled"</code>, …). Legend keys follow: shape keys, colour and size keys of a point layer with a constant open or bordered shape, merged keys and <code>override.aes = list(shape = )</code>. In vellumwidget the hollow fallback dots (VW-63) now pick these marks up.</p></li>
 <li><p>A constant numeric <code>shape</code> (<code>mark_point(shape = 1)</code>) and numeric codes under <code><a href="../reference/scale_color_identity.html">scale_shape_identity()</a></code> drew no points at all: the code was read as an SVG icon path. They now map to their marker, as <code><a href="../reference/scale_shape.html">scale_shape_manual()</a></code> values do.</p></li>
