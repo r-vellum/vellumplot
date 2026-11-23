@@ -159,8 +159,19 @@ NULL
     root
   } else {
     presolved <- .resolve_slot(parent, theme, cache)
-    if (.is_blank(presolved) || .is_blank(el)) {
+    if (.is_blank(el)) {
       element_blank()
+    } else if (.is_blank(presolved)) {
+      # A blank parent blanks its children, except an element the user set
+      # with theme(): as in ggplot2 (where theme() elements have
+      # `inherit.blank = FALSE`), `theme_void() |> theme(axis.text.x =
+      # element_text())` draws the x axis text. It inherits its unset
+      # properties from the nearest ancestor that is not blank.
+      if (!is.null(el) && slot %in% attr(theme, "vp_unblank")) {
+        .inherit_element(.nearest_unblank(parent, theme, cache, slot), el)
+      } else {
+        element_blank()
+      }
     } else if (is.null(el)) {
       presolved
     } else {
@@ -169,6 +180,37 @@ NULL
   }
   cache[[slot]] <- resolved
   resolved
+}
+
+# The resolved element of the nearest ancestor of `parent` (itself included)
+# that is not blank, or an empty element of `slot`'s class when the whole chain
+# is blank.
+.nearest_unblank <- function(parent, theme, cache, slot) {
+  while (!is.na(parent)) {
+    r <- .resolve_slot(parent, theme, cache)
+    if (!.is_blank(r)) {
+      return(r)
+    }
+    parent <- .ELEMENT_PARENTS[[parent]]
+  }
+  root <- .empty_element(slot)
+  if (S7::S7_inherits(root, .element_text)) {
+    root@size <- .BASE_SIZE
+  }
+  root
+}
+
+# Record the element slots a theme() call set to a drawn (non-blank) element,
+# so they are drawn even under a blank parent (see `.resolve_slot()`). A slot
+# set blank again is dropped from the record.
+.mark_unblank <- function(theme, args) {
+  els <- names(args)[!names(args) %in% .theme_setting_names]
+  blank <- vapply(args[els], .is_blank, logical(1))
+  attr(theme, "vp_unblank") <- setdiff(
+    union(attr(theme, "vp_unblank"), els[!blank]),
+    els[blank]
+  )
+  theme
 }
 
 # Flatten a complete theme into a resolved element per drawn leaf, plus the

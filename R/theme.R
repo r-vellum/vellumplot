@@ -464,11 +464,14 @@ theme <- function(plot, ...) {
   # A composition carries its own figure-level theme (title bands, collected
   # legend, panel spacing, tags); merge onto its base like a plot's.
   if (S7::S7_inherits(plot, PlotComposition)) {
-    plot@theme <- .merge_theme(plot@theme %||% .theme_default(), args)
+    plot@theme <- .mark_unblank(
+      .merge_theme(plot@theme %||% .theme_default(), args),
+      args
+    )
     return(plot)
   }
   .check_plot(plot)
-  plot@theme <- .merge_theme(.theme_of(plot), args)
+  plot@theme <- .mark_unblank(.merge_theme(.theme_of(plot), args), args)
   plot
 }
 
