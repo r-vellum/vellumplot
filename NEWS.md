@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+* `guide_bivariate()` sizes its swatches so the break labels on the x edge no
+  longer run into each other (VP-125). The automatic size fitted the widest
+  label, but the first label starts at its edge rather than centring on it,
+  so it could reach the second. The swatch now fits each pair of neighbouring
+  labels plus a 1 mm gap.
+
 * An element set with `theme()` is drawn even when its parent is blank, as in
   ggplot2: `theme_void() |> theme(axis.text.x = element_text())` now draws
   the x axis labels, which a blank `axis.text` used to swallow. The element
