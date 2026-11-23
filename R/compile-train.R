@@ -589,12 +589,61 @@ NULL
         if (is.function(ctx)) ctx() else ctx
       )
     }
-    tg <- .txt(labels, el@size)
-    w <- vellum::vl_convert(vellum::grobwidth(tg), "mm")
-    h <- vellum::vl_convert(vellum::grobheight(tg), "mm")
-    step <- n_dodge * min(diff(sort(breaks))) / abs(diff(domain)) * len_mm
-    step >= .label_clearance_mm(w, h, rot, horiz)
+    .labels_fit(breaks, labels, domain, len_mm, el@size, rot, horiz, n_dodge)
   }
+}
+
+# Do tick `labels` at `breaks` (on an axis spanning `domain` over `len_mm`)
+# clear each other? Each label is measured on its own, and each pair of
+# neighbours in one dodge row (`n_dodge` breaks apart) needs the clearance of
+# their mean width -- half of each label reaches towards the other -- so a
+# narrow label beside a wide one is not judged by the widest label of the axis
+# (VP-110).
+.labels_fit <- function(
+  breaks,
+  labels,
+  domain,
+  len_mm,
+  size,
+  rot,
+  horiz,
+  n_dodge = 1L
+) {
+  n <- length(breaks)
+  if (n - n_dodge < 1L) {
+    return(TRUE)
+  }
+  o <- order(breaks)
+  breaks <- breaks[o]
+  labels <- labels[o]
+  wh <- vapply(
+    labels,
+    function(l) {
+      tg <- .txt(l, size)
+      c(
+        vellum::vl_convert(vellum::grobwidth(tg), "mm"),
+        vellum::vl_convert(vellum::grobheight(tg), "mm")
+      )
+    },
+    numeric(2),
+    USE.NAMES = FALSE
+  )
+  i <- seq_len(n - n_dodge)
+  j <- i + n_dodge
+  step <- (breaks[j] - breaks[i]) / abs(diff(domain)) * len_mm
+  need <- vapply(
+    seq_along(i),
+    function(k) {
+      .label_clearance_mm(
+        (wh[1L, i[k]] + wh[1L, j[k]]) / 2,
+        max(wh[2L, i[k]], wh[2L, j[k]]),
+        rot,
+        horiz
+      )
+    },
+    numeric(1)
+  )
+  all(step >= need)
 }
 
 # The spacing along an axis two neighbouring tick labels (each `w` x `h` mm

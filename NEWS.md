@@ -48,6 +48,12 @@
   looked much smaller than in ggplot2. The plain marker names keep their
   sizes.
 
+* The date-break fit judges each pair of neighbouring labels by the mean of
+  their two widths (VP-110). It required the widest label's width between
+  every pair, so a month axis was thinned by its widest month name even where
+  narrower names sat side by side; a six-month axis now keeps monthly labels
+  on a slightly narrower plot.
+
 # vellumplot 0.20.0
 
 ## Bug fixes
