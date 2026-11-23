@@ -104,6 +104,9 @@ NULL
 # its own labels and title. `tfun` is the primary data->native map, `rng` the
 # primary data range, `domain` the primary native domain (shared by both axes),
 # and `primary_breaks`/`primary_labels` the trained primary axis (for `dup_axis`).
+# `tr` is the primary's transform: as in ggplot2, the secondary's default breaks
+# come from its break function (log breaks on a log10 axis), and the lookup grid
+# is spaced evenly along the axis rather than in data units.
 # Returns a list `{domain, breaks, labels, name}` (the shape the axis drawers
 # read) or NULL when the range is degenerate.
 .train_sec_axis <- function(
@@ -113,7 +116,8 @@ NULL
   primary_breaks,
   primary_labels,
   domain,
-  aesthetic
+  aesthetic,
+  tr = .TRANSFORMS$identity
 ) {
   # A plain duplicate with no overrides reuses the primary breaks/labels exactly.
   if (isTRUE(sec@dup) && is.null(sec@breaks) && is.null(sec@labels)) {
@@ -129,7 +133,8 @@ NULL
   if (!is.finite(lo) || !is.finite(hi) || lo == hi) {
     return(NULL)
   }
-  pg <- seq(lo, hi, length.out = 1000L)
+  pg <- tr$inverse(seq(tr$transform(lo), tr$transform(hi), length.out = 1000L))
+  pg[c(1L, 1000L)] <- c(lo, hi)
   native_g <- tfun(pg)
   sec_g <- suppressWarnings(as.numeric(sec@transform(pg)))
   ok <- is.finite(native_g) & is.finite(sec_g)
@@ -149,7 +154,7 @@ NULL
   sbreaks <- if (!is.null(sec@breaks)) {
     as.numeric(sec@breaks)
   } else {
-    scales::breaks_extended()(srng)
+    tr$breaks(srng)
   }
   # A vector of labels aligns to the unfiltered breaks and is filtered alongside;
   # a labelling function is applied to the surviving breaks (mirrors the primary).
@@ -954,7 +959,8 @@ NULL
         breaks,
         labels,
         domain,
-        aesthetic
+        aesthetic,
+        tr
       )
     }
   }
