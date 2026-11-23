@@ -1106,6 +1106,7 @@ NULL
   ks <- list()
   ka <- NULL
   kp <- NULL
+  ki <- NULL
   series_aes <- NULL
   levels <- NULL
   override <- list()
@@ -1163,6 +1164,7 @@ NULL
     )
     ka <- ka %||% sc$key_alpha
     kp <- kp %||% sc$key_point
+    ki <- ki %||% sc$key_ink
     if (is.character(sc$levels)) {
       levels <- levels %||% sc$levels
     }
@@ -1197,7 +1199,8 @@ NULL
     is.null(style$cols) && !is.null(ks$col)
   filled <- !is.null(style$fills) || !is.null(ks$fill)
   # with no colour member, a point key takes the layer's constant colour, else
-  # the points' default (black, as drawn and as ggplot2 keys it, VP-109)
+  # the points' default (black, as drawn and as ggplot2 keys it, VP-109), and a
+  # line key its layer's ink (VP-114)
   fills <- style$fills %||%
     (if (!is.null(ks$fill)) rep_len(ks$fill, k)) %||%
     style$cols %||%
@@ -1205,7 +1208,7 @@ NULL
       if (has_point) {
         kp$col %||% .geom_paint("black")
       } else {
-        .geom_paint("grey35", "fill")
+        .key_ink(ki, "grey35", "fill")
       },
       k
     )
@@ -1592,6 +1595,26 @@ NULL
   )
 }
 
+# The radius (mm) a point key is drawn at, before its shape's size factor: the
+# point layer's constant `size` (`kp$size`, `.key_point_for_aes()`), as ggplot2
+# keys a layer at its point size (VP-113), capped at half the key side so a
+# large point keeps to its key; half the key side when the layer sets none.
+.key_point_size <- function(kp, m) {
+  half <- m$key / 2
+  if (is.numeric(kp$size)) min(kp$size, half) else half
+}
+
+# The colour a line / alpha key draws in: its layer's constant colour, else the
+# default the layer's marks are drawn in, through the theme (`ki`,
+# `.key_ink_for_aes()`, VP-114); `fallback` (with `role`) when the layer draws
+# neither points nor lines.
+.key_ink <- function(ki, fallback, role = "colour") {
+  if (is.null(ki)) {
+    return(.geom_paint(fallback, role))
+  }
+  ki$col %||% .geom_paint(ki$default %||% "black")
+}
+
 .key_grob <- function(g, i, m, sketch = NULL) {
   sc <- g$sc
   sk <- .sketch_bump(sketch, 200L + i)
@@ -1661,7 +1684,7 @@ NULL
       kp <- sc$key_point
       .shape_key_grob(
         sh,
-        ov$size %||% (m$key / 2),
+        ov$size %||% .key_point_size(kp, m),
         ov$fill %||% ov$color %||% kp$col %||% .geom_paint("black"),
         ov$color %||% kp$col %||% .geom_paint("black"),
         sk,
@@ -1688,7 +1711,7 @@ NULL
       vellum::vl_unit(0.5, "npc"),
       sketch = sk,
       gp = vellum::vl_gpar(
-        col = ov$color %||% .geom_paint("grey35"),
+        col = ov$color %||% .key_ink(sc$key_ink, "grey35"),
         lwd = sc$legend_widths[i],
         alpha = ka
       )
@@ -1696,11 +1719,13 @@ NULL
     alpha = vellum::points_grob(
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.5, "npc"),
-      size = vellum::vl_unit(ov$size %||% (m$key / 2), "mm"),
+      size = vellum::vl_unit(ov$size %||% .key_point_size(sc$key_point, m), "mm"),
       shape = ov$shape %||% "circle",
       sketch = sk,
       gp = vellum::vl_gpar(
-        fill = ov$fill %||% ov$color %||% .geom_paint("grey20", "fill"),
+        fill = ov$fill %||%
+          ov$color %||%
+          .key_ink(sc$key_ink, "grey20", "fill"),
         col = NA,
         alpha = ov$alpha %||% sc$legend_alphas[i]
       )
@@ -1712,7 +1737,7 @@ NULL
       vellum::vl_unit(0.5, "npc"),
       sketch = sk,
       gp = vellum::vl_gpar(
-        col = ov$color %||% .geom_paint("grey35"),
+        col = ov$color %||% .key_ink(sc$key_ink, "grey35"),
         lwd = ov$linewidth %||% 1.5,
         lty = ov$linetype %||% sc$linetypes[i],
         alpha = ka
@@ -1739,7 +1764,7 @@ NULL
     plain <- .shape_plain(.shape_parts(.pch_to_shape(sh))$style)
     .shape_key_grob(
       sh,
-      ov$size %||% pick(sc$sizes_mm, m$key / 2),
+      ov$size %||% pick(sc$sizes_mm, .key_point_size(kp, m)),
       ov$fill %||% ov$color %||% sc$fills[i],
       # an open / bordered shape's outline: the colour scale's, else the
       # layer's constant colour
@@ -1849,7 +1874,8 @@ NULL
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.5, "npc"),
       size = vellum::vl_unit(
-        (ov$size %||% (m$key / 2)) * .shape_size_factor(sp$style, sp$marker),
+        (ov$size %||% .key_point_size(kp, m)) *
+          .shape_size_factor(sp$style, sp$marker),
         "mm"
       ),
       shape = sp$marker,

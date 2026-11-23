@@ -2431,13 +2431,23 @@ NULL
     if (!is.null(sc) && e$guide %in% .KEY_ALPHA_GUIDES && is.null(sc$key_alpha)) {
       sc <- .with_key_alpha(sc, e, resolved)
     }
-    if (!is.null(sc) && e$guide %in% c("color", "size", "shape")) {
+    if (!is.null(sc) && e$guide %in% c("color", "size", "shape", "alpha")) {
       kp <- .key_point_for_aes(
         Filter(function(L) .aes_serves_mark(e, L$mark), resolved),
         e$aliases[[1]]
       )
       if (!is.null(kp)) {
         sc <- .scale_set(sc, key_point = kp)
+      }
+    }
+    # the layer ink of a line / alpha key (VP-114)
+    if (!is.null(sc) && e$guide %in% .KEY_INK_GUIDES) {
+      ki <- .key_ink_for_aes(
+        Filter(function(L) .aes_serves_mark(e, L$mark), resolved),
+        e$aliases[[1]]
+      )
+      if (!is.null(ki)) {
+        sc <- .scale_set(sc, key_ink = ki)
       }
     }
     aes_sc[e$name] <- list(sc)
@@ -2488,6 +2498,10 @@ NULL
   "edge_width",
   "linetype"
 )
+
+# The legends whose keys draw in their layer's ink (`.key_ink_for_aes()`,
+# VP-114): line keys and the alpha legend's points.
+.KEY_INK_GUIDES <- c("linewidth", "edge_width", "linetype", "alpha")
 
 # `sc` with the `key_alpha` (`.key_alpha_for_aes()`) of the layers registry row
 # `e` serves, read on the scale's channel (`linewidth` for the edge widths).

@@ -501,8 +501,10 @@ NULL
 # bordered shape's fill and outline), and `role` "fill" when `aesthetic` is
 # the fill (the key colour then fills the shape). A constant `color` alone
 # colours a size or shape legend's keys, as the points are (and a constant
-# `fill` does, as it colours the points, VP-109). NULL when the
-# layer sets neither a shape nor a colour (the keys draw the default circle).
+# `fill` does, as it colours the points, VP-109). `size` is the layer's
+# constant point size, which sizes its keys as ggplot2's do (VP-113). NULL when
+# the layer sets none of a shape, a colour or a size (the keys draw the default
+# circle).
 .key_point_for_aes <- function(resolved, aesthetic) {
   for (L in resolved) {
     if (
@@ -525,17 +527,62 @@ NULL
     } else if (!bordered && is.null(L$values$shape)) {
       .plain_fill_param(L)
     }
+    size <- L$params$size
+    if (
+      !is.null(L$values$size) ||
+        !is.numeric(size) ||
+        length(size) != 1L ||
+        !is.finite(size)
+    ) {
+      size <- NULL
+    }
     out <- list(
       shape = if (.is_string(sh)) sh,
       fill = .plain_fill_param(L),
       col = col,
+      size = size,
       role = if (identical(aesthetic, "fill")) "fill"
     )
-    if (is.null(out$shape) && is.null(L$values$shape) && is.null(out$col)) {
+    if (
+      is.null(out$shape) &&
+        is.null(L$values$shape) &&
+        is.null(out$col) &&
+        is.null(out$size)
+    ) {
       return(NULL)
     }
     out <- Filter(Negate(is.null), out)
     return(if (length(out)) out)
+  }
+  NULL
+}
+
+# The ink a line, line-width or alpha legend key takes from its layer (VP-114),
+# as ggplot2's `draw_key_path()` / `draw_key_point()` draw in the layer's
+# colour: `list(col =, default =)` from the first layer mapping `aesthetic`
+# that draws a point or a line key -- its constant plain `color` (`edge_color`
+# on an edge layer; a point layer falls back to its constant `fill`, as its
+# points do) and the built-in default its marks are drawn in, which the key
+# takes through `.geom_paint()` (the theme's ink). NULL when that layer draws
+# neither (a bar, an area, ...): the key keeps its neutral grey.
+.key_ink_for_aes <- function(resolved, aesthetic) {
+  for (L in resolved) {
+    if (!aesthetic %in% names(L$values)) {
+      next
+    }
+    glyph <- .key_glyph_for_mark(L$mark)
+    if (!glyph %in% c("point", "line")) {
+      return(NULL)
+    }
+    edge <- L$mark %in% .EDGE_ALPHA_MARKS
+    col <- L$params[[if (edge) "edge_color" else "color"]]
+    if (!.is_string(col) || .is_paint(col)) {
+      col <- NULL
+    }
+    if (is.null(col) && identical(glyph, "point")) {
+      col <- .plain_fill_param(L)
+    }
+    return(list(col = col, default = if (edge) "grey40" else "black"))
   }
   NULL
 }
