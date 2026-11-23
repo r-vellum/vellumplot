@@ -1560,6 +1560,8 @@ NULL
 ) {
   sp <- .shape_parts(.pch_to_shape(shape))
   fill <- .shape_fill(sp$style, fill, bfill)
+  col <- .shape_col(sp$style, col)
+  size_mm <- size_mm * .shape_size_factor(sp$style)
   shape <- sp$marker
   d <- .shape_svg_d(shape)
   if (!is.na(d)) {
@@ -1619,20 +1621,25 @@ NULL
       )
       fill <- .shape_fill(
         sp$style,
-        ov$fill %||% ov$color %||% .geom_paint("grey35", "fill"),
+        ov$fill %||% ov$color %||% kp$col %||% .geom_paint("grey35", "fill"),
         ov$fill %||% kp$fill %||% NA_character_
       )
       vellum::points_grob(
         vellum::vl_unit(0.5, "npc"),
         vellum::vl_unit(0.5, "npc"),
-        size = vellum::vl_unit(ov$size %||% sc$legend_sizes[i], "mm"),
+        size = vellum::vl_unit(
+          (ov$size %||% sc$legend_sizes[i]) * .shape_size_factor(sp$style),
+          "mm"
+        ),
         shape = sp$marker,
         sketch = sk,
         gp = vellum::vl_gpar(
           fill = fill,
-          col = ov$color %||%
-            (if (sp$style != "solid") kp$col) %||%
-            .geom_paint("grey35"),
+          # the layer's constant colour, as the points are drawn
+          col = .shape_col(
+            sp$style,
+            ov$color %||% kp$col %||% .geom_paint("grey35")
+          ),
           alpha = ka
         )
       )
@@ -1642,12 +1649,11 @@ NULL
     } else {
       sh <- ov$shape %||% sc$shapes[i]
       kp <- sc$key_point
-      plain <- identical(.shape_parts(.pch_to_shape(sh))$style, "solid")
       .shape_key_grob(
         sh,
         ov$size %||% (m$key / 2),
-        ov$fill %||% ov$color %||% .geom_paint("grey35", "fill"),
-        ov$color %||% (if (!plain) kp$col) %||% .geom_paint("grey35"),
+        ov$fill %||% ov$color %||% kp$col %||% .geom_paint("grey35", "fill"),
+        ov$color %||% kp$col %||% .geom_paint("grey35"),
         sk,
         ka,
         ov$fill %||% kp$fill %||% NA_character_
@@ -1720,7 +1726,7 @@ NULL
   kp <- sc$key_point
   point <- function() {
     sh <- ov$shape %||% pick(sc$shapes, NULL) %||% kp$shape %||% "circle"
-    plain <- identical(.shape_parts(.pch_to_shape(sh))$style, "solid")
+    plain <- .shape_plain(.shape_parts(.pch_to_shape(sh))$style)
     .shape_key_grob(
       sh,
       ov$size %||% pick(sc$sizes_mm, m$key / 2),
@@ -1823,6 +1829,8 @@ NULL
       NA_character_
     pt_edge <- ov$color %||%
       (if (by_fill) kp$col %||% .geom_paint("black") else col)
+  } else if (identical(sp$style, "bare")) {
+    pt_edge <- NA_character_
   }
   switch(
     glyph,
@@ -1830,7 +1838,10 @@ NULL
     circle = vellum::points_grob(
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.5, "npc"),
-      size = vellum::vl_unit(ov$size %||% (m$key / 2), "mm"),
+      size = vellum::vl_unit(
+        (ov$size %||% (m$key / 2)) * .shape_size_factor(sp$style),
+        "mm"
+      ),
       shape = sp$marker,
       sketch = sketch,
       gp = vellum::vl_gpar(

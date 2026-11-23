@@ -493,13 +493,15 @@ NULL
   NULL
 }
 
-# The open or bordered point shape (VP-103) a legend key takes from the first
-# point layer mapping `aesthetic`: `list(shape =, fill =, col =, role =)`, the
-# layer's constant shape when it is "<marker> open" / "<marker> filled" (a
-# mapped shape keys itself), its constant plain `fill` and `color` (a bordered
-# shape's fill and outline), and `role` "fill" when `aesthetic` is the fill
-# (the key colour then fills the shape). NULL when the layer draws solid
-# markers and sets neither, so those keys draw as before.
+# The point shape a legend key takes from the first point layer mapping
+# `aesthetic`: `list(shape =, fill =, col =, role =)`, the layer's constant
+# built-in shape, whatever it is -- open or bordered (VP-103), or a solid
+# square, triangle, ... (VP-107) -- (a mapped shape keys itself; an SVG icon
+# is left to the default key), its constant plain `fill` and `color` (a
+# bordered shape's fill and outline), and `role` "fill" when `aesthetic` is
+# the fill (the key colour then fills the shape). A constant `color` alone
+# colours a size or shape legend's keys, as the points are. NULL when the
+# layer sets neither a shape nor a colour (the keys draw the default circle).
 .key_point_for_aes <- function(resolved, aesthetic) {
   for (L in resolved) {
     if (
@@ -510,7 +512,7 @@ NULL
       next
     }
     sh <- if (is.null(L$values$shape)) .pch_to_shape(L$params$shape)
-    if (.is_string(sh) && identical(.shape_parts(sh)$style, "solid")) {
+    if (.is_string(sh) && !.shape_parts(sh)$marker %in% .BUILTIN_SHAPES) {
       sh <- NULL
     }
     out <- list(
@@ -519,7 +521,7 @@ NULL
       col = if (.is_string(L$params$color)) L$params$color,
       role = if (identical(aesthetic, "fill")) "fill"
     )
-    if (is.null(out$shape) && is.null(L$values$shape)) {
+    if (is.null(out$shape) && is.null(L$values$shape) && is.null(out$col)) {
       return(NULL)
     }
     out <- Filter(Negate(is.null), out)

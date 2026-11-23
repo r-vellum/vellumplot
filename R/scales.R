@@ -2830,9 +2830,11 @@ scale_edge_alpha <- function(
 
 # ggplot2's numeric shape codes (R `pch`) as vellum marker names. The open
 # codes 0-14 become "<marker> open" (stroke only, in the point colour), the
-# solid codes 15-20 the plain marker (filled with the point colour), and the
-# bordered codes 21-25 "<marker> filled" (`fill` inside a `color` outline), as
-# ggplot2 draws them (VP-103). Composite open glyphs (7, 9-14) take the nearest
+# solid codes 15-20 a marker filled with the point colour, and the bordered
+# codes 21-25 "<marker> filled" (`fill` inside a `color` outline), as ggplot2
+# draws them (VP-103). Of the solid codes R outlines only 19 and 20, so 15-18
+# are "<marker> bare" (no outline), and 20, the bullet, is "circle small" (2/3
+# the size of 19, VP-106). Composite open glyphs (7, 9-14) take the nearest
 # open marker; 3 and 4 are the line glyphs "plus" and "cross"; the asterisk (8)
 # is an open star. Unknown codes are circles.
 .pch_to_shape <- function(x) {
@@ -2855,12 +2857,12 @@ scale_edge_alpha <- function(
     "12" = "square open",
     "13" = "circle open",
     "14" = "square open",
-    "15" = "square",
-    "16" = "circle",
-    "17" = "triangle",
-    "18" = "diamond",
+    "15" = "square bare",
+    "16" = "circle bare",
+    "17" = "triangle bare",
+    "18" = "diamond bare",
     "19" = "circle",
-    "20" = "circle",
+    "20" = "circle small",
     "21" = "circle filled",
     "22" = "square filled",
     "23" = "diamond filled",
@@ -2874,11 +2876,14 @@ scale_edge_alpha <- function(
 }
 
 # Every built-in shape name a scale accepts: the markers and their open and
-# bordered variants (VP-103).
+# bordered variants (VP-103), and the outline-free and small solid ones the
+# pch codes 15-18 and 20 name (VP-106).
 .SHAPE_VALID <- c(
   .SHAPE_PALETTE,
   paste(.SHAPE_PALETTE, "open"),
-  paste(.SHAPE_PALETTE, "filled")
+  paste(.SHAPE_PALETTE, "filled"),
+  paste(.SHAPE_PALETTE, "bare"),
+  paste(.SHAPE_PALETTE, "small")
 )
 
 # ggplot2's numeric line types (0 = blank, 1 = solid, 2 = dashed, ...) as names.
@@ -2925,8 +2930,10 @@ scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
 #'   marker. As in ggplot2, the open codes (0-14) draw an outline in the point
 #'   colour, the solid ones (15-20) fill with it, and the bordered ones (21-25)
 #'   fill with `fill` inside a `color` outline (unfilled when no `fill` is
-#'   given). By name, these are `"circle open"`, `"circle filled"` and so on
-#'   for every built-in marker. Named values are matched to levels by name.
+#'   given). Of the solid codes, 15-18 have no outline and 20 is 2/3 the size
+#'   of 19, as in ggplot2. By name, these are `"circle open"`,
+#'   `"circle filled"`, `"circle bare"` (no outline), `"circle small"` and so
+#'   on for every built-in marker. Named values are matched to levels by name.
 #' @param name Legend title, or `NULL` to derive from the encoding.
 #' @param breaks The levels the legend shows (and their order), or `NULL` for
 #'   all of them.
