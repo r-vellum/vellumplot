@@ -250,6 +250,15 @@ NULL
     }
   }
 
+  # Pie node glyphs: the wedge categories (the `cols`) train the fill scale, so
+  # the wedge colours get a legend and `scale_fill_*()` recolours them (VP-123).
+  # Training reads only the levels; the emitter maps the categories itself.
+  if (identical(layer@mark, "node_pie") && is.null(values$fill)) {
+    cats <- as.character(layer@stat_params$categories)
+    values$fill <- factor(cats, levels = cats)
+    types$fill <- "nominal"
+  }
+
   # Graph identity (inert): lets an interactive host relate nodes to edges for
   # neighbour highlighting. Node marks key by vertex `name`; edge marks carry
   # their two endpoint node `name`s as source/target plus a stable per-edge key
@@ -507,6 +516,15 @@ NULL
 # circle).
 .key_point_for_aes <- function(resolved, aesthetic) {
   for (L in resolved) {
+    # A pie's size keys are neutral discs: the wedge colours belong to the fill
+    # legend, and a black disc reads as a category of its own (VP-123).
+    if (
+      identical(aesthetic, "size") &&
+        identical(L$mark, "node_pie") &&
+        !is.null(L$values$size)
+    ) {
+      return(list(col = "grey60"))
+    }
     if (
       !aesthetic %in% names(L$values) ||
         !identical(L$mark, "point") ||

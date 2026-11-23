@@ -854,41 +854,121 @@ NULL
   }
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
-  cols_fill <- sp$fill %||% .qual_palette(k)
+  # Wedge colours: the trained fill scale over the categories (so they match
+  # the legend, VP-123), else the qualitative palette.
+  cats <- as.character(sp$categories)
+  cols_fill <- if (!is.null(scales$fill) && !is.null(L$values$fill)) {
+    scales$fill$map(cats)
+  } else {
+    sp$fill %||% .qual_palette(k)
+  }
+  # Radius (mm): a mapped size through the size scale (VP-123), else the
+  # constant `size`.
+  size <- if (!is.null(scales$size) && length(L$values$size)) {
+    rep_len(scales$size$map(L$values$size), n)
+  } else {
+    rep_len(L$params$size %||% sp$size, n)
+  }
+  gp <- vellum::vl_gpar(
+    col = sp$color %||% .geom_paint("white", "neutral"),
+    lwd = sp$linewidth,
+    alpha = gp_alpha(sp$alpha)
+  )
   # per-node fractions -> cumulative angles (a zero-weight node draws nothing)
   rs <- rowSums(weights, na.rm = TRUE)
   rs[!is.finite(rs) | rs == 0] <- 1
   frac <- weights / rs
   frac[!is.finite(frac)] <- 0
   cum <- t(apply(frac, 1L, function(z) cumsum(c(0, z)))) # n x (k + 1)
-  r0 <- vellum::vl_unit(sp$inner * sp$size, "mm")
-  r1 <- vellum::vl_unit(sp$size, "mm")
+  r0 <- sp$inner * size
+  # A node whose whole pie is one category is drawn as a disc (or ring), not a
+  # 360-degree wedge, whose radial edges left a seam from the centre to the
+  # rim (VP-122).
+  whole <- apply(frac, 1L, function(z) any(z > 1 - 1e-9))
   for (j in seq_len(k)) {
     th0 <- cum[, j] * 2 * pi
     th1 <- cum[, j + 1L] * 2 * pi
-    keep <- (th1 - th0) > 1e-9
-    if (!any(keep)) {
-      next
+    keep <- (th1 - th0) > 1e-9 & !whole
+    if (any(keep)) {
+      xy <- .xy_units(scales, xn[keep], yn[keep])
+      scene <- .draw(
+        scene,
+        vellum::sector_grob(
+          x = xy$x,
+          y = xy$y,
+          r0 = vellum::vl_unit(r0[keep], "mm"),
+          r1 = vellum::vl_unit(size[keep], "mm"),
+          theta0 = th0[keep],
+          theta1 = th1[keep],
+          fill = cols_fill[j],
+          gp = gp
+        ),
+        rows = which(keep)
+      )
     }
-    xy <- .xy_units(scales, xn[keep], yn[keep])
-    scene <- .draw(
-      scene,
-      vellum::sector_grob(
-        x = xy$x,
-        y = xy$y,
-        r0 = r0,
-        r1 = r1,
-        theta0 = th0[keep],
-        theta1 = th1[keep],
-        fill = cols_fill[j],
-        gp = vellum::vl_gpar(
-          col = sp$color %||% .geom_paint("white", "neutral"),
-          lwd = sp$linewidth,
-          alpha = gp_alpha(sp$alpha)
-        )
-      ),
-      rows = which(keep)
-    )
+    full <- whole & frac[, j] > 1 - 1e-9
+    if (any(full)) {
+      scene <- .draw_full_pies(
+        scene,
+        scales,
+        xn[full],
+        yn[full],
+        r0[full],
+        size[full],
+        cols_fill[j],
+        gp,
+        which(full)
+      )
+    }
   }
   scene
+}
+
+# Single-category pies (VP-122): a filled disc, or for a donut the full ring
+# drawn as one even-odd path (outer circle minus inner circle), outlined along
+# its circles only, so no radial seam shows.
+.draw_full_pies <- function(scene, scales, xn, yn, r0, r1, fill, gp, rows) {
+  xy <- .xy_units(scales, xn, yn)
+  if (all(r0 <= 0)) {
+    gp_fill <- gp
+    gp_fill@fill <- fill
+    return(.draw(
+      scene,
+      vellum::circle_grob(
+        x = xy$x,
+        y = xy$y,
+        r = vellum::vl_unit(r1, "mm"),
+        gp = gp_fill
+      ),
+      rows = rows
+    ))
+  }
+  # A ring: the fill as a sector without an outline, then the two circles.
+  no_line <- gp
+  no_line@col <- NA_character_
+  scene <- .draw(
+    scene,
+    vellum::sector_grob(
+      x = xy$x,
+      y = xy$y,
+      r0 = vellum::vl_unit(r0, "mm"),
+      r1 = vellum::vl_unit(r1, "mm"),
+      theta0 = rep(0, length(r1)),
+      theta1 = rep(2 * pi, length(r1)),
+      fill = fill,
+      gp = no_line
+    ),
+    rows = rows
+  )
+  outline <- gp
+  outline@fill <- NA_character_
+  vellum::draw(
+    scene,
+    vellum::circle_grob(
+      x = rep(xy$x, 2L),
+      y = rep(xy$y, 2L),
+      r = vellum::vl_unit(c(r1, r0), "mm"),
+      gp = outline
+    )
+  )
 }

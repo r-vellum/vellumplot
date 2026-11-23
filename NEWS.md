@@ -15,7 +15,21 @@
   exported with `as_spec()` / `spec_to_json()` / `spec_to_vegalite()` carries
   the value. See "Mappings and settings" in `?mark_point`.
 
+## New features
+
+* `mark_node_pie()` wedge colours get a legend (VP-123): the `cols` are the
+  categories of the fill scale, so the legend names them (untitled unless
+  `labs(fill =)` gives a title) and
+  `scale_fill_manual()` / `scale_fill_brewer()` recolour the wedges; colours
+  given with `fill =` become the scale's values. `size` can be mapped
+  (`size = total`), drawn through the size scale with a size legend of
+  neutral grey discs.
+
 ## Bug fixes
+
+* `mark_node_pie()` draws a node made of a single category as a whole disc
+  (or ring, for a donut) instead of a 360-degree wedge, whose radial edges
+  showed a seam from the centre to the rim (VP-122).
 
 * `spec_to_vegalite()` exports `scale: {zero: false}` on a continuous x or y
   scale whose data leaves zero out, so the Vega-Lite chart frames the data as
