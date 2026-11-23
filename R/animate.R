@@ -969,7 +969,10 @@ animate <- function(
 }
 
 # Marks drawn one per series (matched by their group, never by row order).
-.SERIES_MARKS <- c("line", "path", "area", "ribbon", "step", "polygon", "smooth", "density")
+.SERIES_MARKS <- c(
+  "line", "path", "area", "ribbon", "step", "polygon", "smooth", "density",
+  "violin", "ridgeline"
+)
 
 # Record, for the row-order hint (VP-87), how many rows of each identity group
 # layer `pfx` drew in the state being compiled.
