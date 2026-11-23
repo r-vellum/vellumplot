@@ -4,6 +4,15 @@
 
 ### Bug fixes
 
+- An aligned composition
+  ([`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md))
+  draws each sub-plot’s own `labs(title, subtitle, caption, tag)`
+  (VP-119). The shared grid reserved their rows but drew nothing into
+  them, leaving a blank band above the panel. Each band spans its own
+  cell and lines up with the other cells of its row.
+
 - An element set with
   [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
   is drawn even when its parent is blank, as in ggplot2:
