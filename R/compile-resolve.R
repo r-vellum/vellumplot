@@ -500,7 +500,8 @@ NULL
 # is left to the default key), its constant plain `fill` and `color` (a
 # bordered shape's fill and outline), and `role` "fill" when `aesthetic` is
 # the fill (the key colour then fills the shape). A constant `color` alone
-# colours a size or shape legend's keys, as the points are. NULL when the
+# colours a size or shape legend's keys, as the points are (and a constant
+# `fill` does, as it colours the points, VP-109). NULL when the
 # layer sets neither a shape nor a colour (the keys draw the default circle).
 .key_point_for_aes <- function(resolved, aesthetic) {
   for (L in resolved) {
@@ -515,10 +516,19 @@ NULL
     if (.is_string(sh) && !.shape_parts(sh)$marker %in% .BUILTIN_SHAPES) {
       sh <- NULL
     }
+    # the colour the points are drawn in: `color`, else (as `.aes_colour()`
+    # falls back) a constant `fill` -- except around a bordered shape, whose
+    # outline is `color` alone and whose `fill` fills it
+    bordered <- .is_string(sh) && identical(.shape_parts(sh)$style, "filled")
+    col <- if (.is_string(L$params$color)) {
+      L$params$color
+    } else if (!bordered && is.null(L$values$shape)) {
+      .plain_fill_param(L)
+    }
     out <- list(
       shape = if (.is_string(sh)) sh,
       fill = .plain_fill_param(L),
-      col = if (.is_string(L$params$color)) L$params$color,
+      col = col,
       role = if (identical(aesthetic, "fill")) "fill"
     )
     if (is.null(out$shape) && is.null(L$values$shape) && is.null(out$col)) {
@@ -686,6 +696,7 @@ NULL
   ))
 }
 
+
 # Pool the resolved values of an aesthetic across all layers that map it. For
 # position channels this is x or y; returns NULL if no layer maps it.
 .pool_values <- function(resolved, aesthetic) {
@@ -696,4 +707,3 @@ NULL
   }
   vs
 }
-

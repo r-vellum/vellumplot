@@ -1196,10 +1196,19 @@ NULL
     !is.null(style$fills) ||
     is.null(style$cols) && !is.null(ks$col)
   filled <- !is.null(style$fills) || !is.null(ks$fill)
+  # with no colour member, a point key takes the layer's constant colour, else
+  # the points' default (black, as drawn and as ggplot2 keys it, VP-109)
   fills <- style$fills %||%
     (if (!is.null(ks$fill)) rep_len(ks$fill, k)) %||%
     style$cols %||%
-    rep_len(.geom_paint("grey35", "fill"), k)
+    rep_len(
+      if (has_point) {
+        kp$col %||% .geom_paint("black")
+      } else {
+        .geom_paint("grey35", "fill")
+      },
+      k
+    )
   cols <- style$cols %||%
     (if (!is.null(ks$col)) rep_len(ks$col, k)) %||%
     fills
@@ -1621,7 +1630,7 @@ NULL
       )
       fill <- .shape_fill(
         sp$style,
-        ov$fill %||% ov$color %||% kp$col %||% .geom_paint("grey35", "fill"),
+        ov$fill %||% ov$color %||% kp$col %||% .geom_paint("black"),
         ov$fill %||% kp$fill %||% NA_character_
       )
       vellum::points_grob(
@@ -1638,7 +1647,7 @@ NULL
           # the layer's constant colour, as the points are drawn
           col = .shape_col(
             sp$style,
-            ov$color %||% kp$col %||% .geom_paint("grey35")
+            ov$color %||% kp$col %||% .geom_paint("black")
           ),
           alpha = ka
         )
@@ -1652,8 +1661,8 @@ NULL
       .shape_key_grob(
         sh,
         ov$size %||% (m$key / 2),
-        ov$fill %||% ov$color %||% kp$col %||% .geom_paint("grey35", "fill"),
-        ov$color %||% kp$col %||% .geom_paint("grey35"),
+        ov$fill %||% ov$color %||% kp$col %||% .geom_paint("black"),
+        ov$color %||% kp$col %||% .geom_paint("black"),
         sk,
         ka,
         ov$fill %||% kp$fill %||% NA_character_
@@ -1736,7 +1745,7 @@ NULL
       if (plain || isTRUE(sc$by_col)) {
         col
       } else {
-        ov$color %||% kp$col %||% .geom_paint("grey35")
+        ov$color %||% kp$col %||% .geom_paint("black")
       },
       sk,
       alpha,
