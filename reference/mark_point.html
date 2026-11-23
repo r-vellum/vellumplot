@@ -159,8 +159,11 @@ may be a constant or a mapped expression. A shape is a built-in marker
 (<code>"circle open"</code>, <code>"circle filled"</code>, ...; see <code><a href="scale_shape.html">scale_shape()</a></code>), a ggplot2
 shape code (<code>shape = 1</code> is an open circle, <code>21</code> a circle filled with <code>fill</code>
 inside a <code>color</code> outline), or an <strong>SVG icon</strong> — a path <code>d</code> string or a
-<code>.svg</code> file — drawn as a crisp vector marker. Use a literal string for a
-constant icon, or map <code>shape</code> and pass icons to <code><a href="scale_shape.html">scale_shape()</a></code>.</p></dd>
+<code>.svg</code> file — drawn as a crisp vector marker. Use a literal string (or
+<code>!!</code> a variable holding one) for a constant icon, map <code>shape</code> and pass
+icons to <code><a href="scale_shape.html">scale_shape()</a></code>, or map a column of icons with
+<code><a href="scale_color_identity.html">scale_shape_identity()</a></code>. A bare variable or column of SVG paths is a
+mapping like any other, and warns.</p></dd>
 
 
 <dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>

@@ -71,6 +71,8 @@
 <li><p>ggplot2’s solid point shapes 15-18 and 20 draw as in ggplot2 (VP-106). R draws 15-18 without an outline, so a 16 is slightly smaller than a 19, and 20 (the bullet) at 2/3 the size of 19; vellumplot drew them all outlined at full size. Legend keys draw them the same way. By name these are <code>"circle bare"</code> (and so on, no outline) and <code>"circle small"</code>.</p></li>
 <li><p>Colour and size legend keys draw a point layer’s constant shape whatever it is (VP-107): <code>mark_point(shape = "square", color = g)</code> keys its colours with squares, not circles. VP-103 did this only for open and bordered shapes.</p></li>
 <li><p>Size and shape legend keys take a point layer’s constant colour: <code>mark_point(size = hp, color = "red")</code> keyed its sizes in grey.</p></li>
+<li><p>Point legend keys default to the points’ own colour (VP-109): size, shape and merged size + shape keys of <code>mark_point(size = hp)</code> are black, as the points are and as ggplot2 keys them, where they were grey. A merged size + shape legend takes a constant <code>color</code> too, and a constant <code>fill</code> that colours solid points colours their keys.</p></li>
+<li><p>Mapping <code>shape</code> to a variable or column of SVG paths warns (VP-112): it is a mapping like any other, so the levels cycle through the shape palette. The warning points to the literal string (or <code>shape = !!path</code>) for one icon and to <code><a href="../reference/scale_color_identity.html">scale_shape_identity()</a></code> for each row’s own icon.</p></li>
 </ul></div>
 </div>
     <div class="section level2">

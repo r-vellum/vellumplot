@@ -97,8 +97,13 @@ mark_bar(
   a ggplot2 shape code (`shape = 1` is an open circle, `21` a circle
   filled with `fill` inside a `color` outline), or an **SVG icon** — a
   path `d` string or a `.svg` file — drawn as a crisp vector marker. Use
-  a literal string for a constant icon, or map `shape` and pass icons to
-  [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md).
+  a literal string (or `!!` a variable holding one) for a constant icon,
+  map `shape` and pass icons to
+  [`scale_shape()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md),
+  or map a column of icons with
+  [`scale_shape_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md).
+  A bare variable or column of SVG paths is a mapping like any other,
+  and warns.
 
 - position:
 

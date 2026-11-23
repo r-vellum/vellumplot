@@ -32,6 +32,19 @@
 - Size and shape legend keys take a point layer’s constant colour:
   `mark_point(size = hp, color = "red")` keyed its sizes in grey.
 
+- Point legend keys default to the points’ own colour (VP-109): size,
+  shape and merged size + shape keys of `mark_point(size = hp)` are
+  black, as the points are and as ggplot2 keys them, where they were
+  grey. A merged size + shape legend takes a constant `color` too, and a
+  constant `fill` that colours solid points colours their keys.
+
+- Mapping `shape` to a variable or column of SVG paths warns (VP-112):
+  it is a mapping like any other, so the levels cycle through the shape
+  palette. The warning points to the literal string (or
+  `shape = !!path`) for one icon and to
+  [`scale_shape_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  for each row’s own icon.
+
 ## vellumplot 0.20.0
 
 ### Bug fixes
