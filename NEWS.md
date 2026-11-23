@@ -38,6 +38,16 @@
   warning points to the literal string (or `shape = !!path`) for one icon and
   to `scale_shape_identity()` for each row's own icon.
 
+* ggplot2's point shape codes draw at R's size for each symbol (VP-111). R's
+  graphics engine scales its symbols from the circle's radius: triangles (2,
+  6, 17, 24, 25) are drawn about 1.56 times vellum's triangle, so their area
+  matches the circle's; the open diamond (5, 9) is sqrt(2) and the bordered
+  one (23) 1.25 times vellum's diamond; the bordered square (22) is 0.89 of
+  the open and solid squares (0, 15); and the plus (3) and cross (4) are
+  sqrt(2) times vellum's. vellumplot drew them all at one size, so pch 17
+  looked much smaller than in ggplot2. The plain marker names keep their
+  sizes.
+
 # vellumplot 0.20.0
 
 ## Bug fixes

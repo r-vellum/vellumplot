@@ -2845,8 +2845,8 @@ scale_edge_alpha <- function(
     "0" = "square open",
     "1" = "circle open",
     "2" = "triangle open",
-    "3" = "plus",
-    "4" = "cross",
+    "3" = "plus open",
+    "4" = "cross open",
     "5" = "diamond open",
     "6" = "triangle_down open",
     "7" = "square open",
@@ -2931,9 +2931,13 @@ scale_edge_linetype <- function(plot, values = NULL, name = NULL) {
 #'   colour, the solid ones (15-20) fill with it, and the bordered ones (21-25)
 #'   fill with `fill` inside a `color` outline (unfilled when no `fill` is
 #'   given). Of the solid codes, 15-18 have no outline and 20 is 2/3 the size
-#'   of 19, as in ggplot2. By name, these are `"circle open"`,
-#'   `"circle filled"`, `"circle bare"` (no outline), `"circle small"` and so
-#'   on for every built-in marker. Named values are matched to levels by name.
+#'   of 19, as in ggplot2. Each code draws at R's size for it: the triangles
+#'   are larger than the circle (equal in area), the bordered square (22) a
+#'   little smaller than the open and solid ones, and so on. By name, these are
+#'   `"circle open"`, `"circle filled"`, `"circle bare"` (no outline),
+#'   `"circle small"` and so on for every built-in marker; the plain names
+#'   (`"triangle"`) keep vellum's own sizes. Named values are matched to levels
+#'   by name.
 #' @param name Legend title, or `NULL` to derive from the encoding.
 #' @param breaks The levels the legend shows (and their order), or `NULL` for
 #'   all of them.
@@ -2968,7 +2972,9 @@ scale_shape <- function(
   na.value = NULL,
   drop = TRUE
 ) {
-  if (.ggplot2_asks()) return(.ggplot2_own("scale_shape"))
+  if (.ggplot2_asks()) {
+    return(.ggplot2_own("scale_shape"))
+  }
   plot <- .discrete_palette_scale(
     plot,
     "shape",

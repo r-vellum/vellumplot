@@ -57,7 +57,7 @@ test_that("pch codes map to open, solid and bordered markers", {
     .pch_to_shape(21:25),
     paste(c("circle", "square", "diamond", "triangle", "triangle_down"), "filled")
   )
-  expect_identical(.pch_to_shape(c(3, 4)), c("plus", "cross"))
+  expect_identical(.pch_to_shape(c(3, 4)), c("plus open", "cross open"))
   expect_identical(.shape_parts(c("circle open", "square", "star filled", "M0 0"))$style, c("open", "solid", "filled", "solid"))
   expect_identical(.shape_parts(c("circle open", "M0 0"))$marker, c("circle", "M0 0"))
 })
