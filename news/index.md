@@ -4,6 +4,17 @@
 
 ### Bug fixes
 
+- Point legend keys take a point layer’s constant `size` (VP-113):
+  `mark_point(shape = g, size = 1)` keys its shapes at the points’ size
+  (with R’s per-shape size factors), not at the larger default key size.
+  Colour and alpha keys of a point layer do the same. A size larger than
+  the key keeps to the key; a size legend keeps its mapped sizes.
+
+- Line-type, line-width and line-only merged legend keys draw in their
+  layer’s colour, its default black (the theme’s ink) unless the layer
+  sets a constant `color`, and alpha keys of a point or line layer
+  likewise (VP-114). They were grey35 and grey20.
+
 - `mark_crossbar(width =)` is in data units, as `mark_errorbar(width =)`
   and `mark_bar(width =)` are and as in ggplot2’s `geom_crossbar()`
   (VP-105). It was a fraction of the band, so on a continuous x a box
