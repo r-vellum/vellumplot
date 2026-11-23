@@ -146,7 +146,7 @@ with a range instead, like ggplot2's <code>stat_summary()</code>.</p>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
-<span>  width <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -214,7 +214,8 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
 <code>mark_bar(width =)</code> and ggplot2's <code>geom_errorbar()</code>. <code>NULL</code> (default) is
 90% of the band (the resolution on a continuous axis), the width of a
 default bar, so error bars over bars span them. Dodged error bars share
-it among the groups, as dodged bars do.</p></dd>
+it among the groups, as dodged bars do. For <code>mark_crossbar()</code>, the box
+width, the same way (VP-105).</p></dd>
 
 
 <dt id="arg-fun">fun<a class="anchor" aria-label="anchor" href="#arg-fun"></a></dt>

@@ -71,7 +71,7 @@ mark_crossbar(
   plot,
   ...,
   position = "identity",
-  width = 0.5,
+  width = NULL,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -148,7 +148,8 @@ mark_crossbar(
   `mark_bar(width =)` and ggplot2's `geom_errorbar()`. `NULL` (default)
   is 90% of the band (the resolution on a continuous axis), the width of
   a default bar, so error bars over bars span them. Dodged error bars
-  share it among the groups, as dodged bars do.
+  share it among the groups, as dodged bars do. For `mark_crossbar()`,
+  the box width, the same way (VP-105).
 
 - fun:
 

@@ -64,6 +64,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.20.0.9000" id="vellumplot-02009000-development-version">vellumplot 0.20.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-02009000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-20-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-20-0-9000"></a></h3>
+<ul><li><p><code>mark_crossbar(width =)</code> is in data units, as <code>mark_errorbar(width =)</code> and <code>mark_bar(width =)</code> are and as in ggplot2’s <code>geom_crossbar()</code> (VP-105). It was a fraction of the band, so on a continuous x a box could be many times too wide. The default is now 90% of the band, ggplot2’s default (it was 50%), so cross-bars line up with bars and error bars. Dodged cross-bars share the width among the groups, and the boxes train a continuous axis, so the outer boxes are not clipped.</p></li>
+<li><p><code><a href="../reference/mark_boxplot.html">mark_crossbar()</a></code> draws its middle line 2.5 times as wide as the box outline, as ggplot2’s <code>geom_crossbar()</code> does; it drew both at one width, so the middle value did not stand out.</p></li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.20.0" id="vellumplot-0200">vellumplot 0.20.0<a class="anchor" aria-label="anchor" href="#vellumplot-0200"></a></h2>

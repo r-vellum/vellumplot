@@ -2,6 +2,21 @@
 
 ## vellumplot 0.20.0.9000 (development version)
 
+### Bug fixes
+
+- `mark_crossbar(width =)` is in data units, as `mark_errorbar(width =)`
+  and `mark_bar(width =)` are and as in ggplot2’s `geom_crossbar()`
+  (VP-105). It was a fraction of the band, so on a continuous x a box
+  could be many times too wide. The default is now 90% of the band,
+  ggplot2’s default (it was 50%), so cross-bars line up with bars and
+  error bars. Dodged cross-bars share the width among the groups, and
+  the boxes train a continuous axis, so the outer boxes are not clipped.
+
+- [`mark_crossbar()`](https://r-vellum.github.io/vellumplot/reference/mark_boxplot.md)
+  draws its middle line 2.5 times as wide as the box outline, as
+  ggplot2’s `geom_crossbar()` does; it drew both at one width, so the
+  middle value did not stand out.
+
 ## vellumplot 0.20.0
 
 ### Bug fixes
