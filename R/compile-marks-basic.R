@@ -92,6 +92,26 @@ NULL
   size <- rep_len(.aes_size(L, scales, 1), n)
   shape <- rep_len(.aes_shape(L, scales, "circle"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
+  # Open shapes draw only their outline in the point colour; bordered ones
+  # (ggplot2's 21-25) fill with `fill` inside it, unfilled without one
+  # (VP-103).
+  sp <- .shape_parts(shape)
+  if (any(sp$style != "solid")) {
+    bfill <- if (!is.null(L$values$fill) && !is.null(scales$fill)) {
+      scales$fill$map(L$values$fill)
+    } else {
+      .plain_fill_param(L) %||% NA_character_
+    }
+    fillv <- .shape_fill(sp$style, fillv, bfill)
+    # a bordered shape's outline is `color` alone (black by default), never
+    # the `fill` it surrounds
+    hit <- sp$style == "filled"
+    if (any(hit)) {
+      bcol <- .aes_colour(L, scales, "black", fill_fallback = FALSE)
+      col[hit] <- rep_len(bcol, n)[hit]
+    }
+    shape <- sp$marker
+  }
 
   # A `shape` that is not a built-in marker is an SVG icon (a `d` path or a
   # `.svg` file); those points are drawn as crisp vector `svg_grob()`s, the rest

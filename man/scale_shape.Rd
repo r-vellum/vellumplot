@@ -52,8 +52,11 @@ scales them.
 
 For \code{scale_shape_manual()} \code{values} is required, and may also be
 ggplot2's numeric shape codes (\code{16}, \code{17}, ...), which map to the nearest
-marker (open, filled and bordered variants of a shape draw alike). Named
-values are matched to levels by name.}
+marker. As in ggplot2, the open codes (0-14) draw an outline in the point
+colour, the solid ones (15-20) fill with it, and the bordered ones (21-25)
+fill with \code{fill} inside a \code{color} outline (unfilled when no \code{fill} is
+given). By name, these are \code{"circle open"}, \code{"circle filled"} and so on
+for every built-in marker. Named values are matched to levels by name.}
 
 \item{name}{Legend title, or \code{NULL} to derive from the encoding.}
 

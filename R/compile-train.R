@@ -1733,7 +1733,7 @@ NULL
   if (!is.null(scalespec) && identical(scalespec@type, "identity")) {
     return(.identity_scale(
       "shape",
-      as.character,
+      function(x) as.character(.pch_to_shape(x)),
       titles$default[["shape"]]
     ))
   }
@@ -2328,6 +2328,15 @@ NULL
     }
     if (!is.null(sc) && e$guide %in% .KEY_ALPHA_GUIDES && is.null(sc$key_alpha)) {
       sc <- .with_key_alpha(sc, e, resolved)
+    }
+    if (!is.null(sc) && e$guide %in% c("color", "size", "shape")) {
+      kp <- .key_point_for_aes(
+        Filter(function(L) .aes_serves_mark(e, L$mark), resolved),
+        e$aliases[[1]]
+      )
+      if (!is.null(kp)) {
+        sc <- .scale_set(sc, key_point = kp)
+      }
     }
     aes_sc[e$name] <- list(sc)
   }
