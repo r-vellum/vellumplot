@@ -157,7 +157,12 @@ test_that("the bivariate legend measures and draws in every legend position", {
   rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
   m <- vellumplot:::.legend_metrics(rt)
   geo <- vellumplot:::.bi_geom(g, m)
-  expect_equal(geo$side, 3 * 1.5 * m$key)
+  # the swatch is 1.5 x the key size, or wider when the break labels need it
+  # (VP-125; label widths depend on the platform's fonts)
+  expect_equal(
+    geo$side,
+    3 * max(1.5 * m$key, vellumplot:::.bi_tick_span(geo$ticks$x, geo$lab_fs))
+  )
   expect_gt(vellumplot:::.guide_height_mm(g, m), geo$side)
   expect_gt(vellumplot:::.guide_col_width(g, m), geo$side)
   # A long axis title widens the guide rather than overflowing it.
@@ -259,4 +264,27 @@ test_that("guide_bivariate(rotate = TRUE) draws a diamond in a square cell", {
   }
   expect_error(guide_bivariate(rotate = NA), "rotate")
   expect_error(guide_bivariate(labels = "yes"), "labels")
+})
+
+test_that("the automatic key size keeps the x break labels apart (VP-125)", {
+  # Wide break labels (one decimal): the first label starts at its edge and the
+  # rest are centred, so sizing the swatch to the widest label alone let the
+  # first two touch.
+  set.seed(3)
+  d <- data.frame(a = round(runif(60, 35, 55), 1), b = runif(60, 20, 185))
+  d <- bi_class(d, a, b)
+  p <- vplot(d) |> mark_point(x = a, y = b, color = bi_class)
+  g <- .legend_guides(.build_panels(p)$scales)[[1]]
+  m <- .legend_metrics(.resolve_theme(p@theme))
+  geo <- .bi_geom(g, m)
+  w <- vellum::vl_strwidth(geo$ticks$x, "", "plain", geo$lab_fs, unit = "mm")
+  k <- length(w)
+  # extents along the grid edge: first left-justified at 0, others centred
+  lo <- c(0, (seq_len(k - 1L)) * geo$s - w[-1] / 2)
+  hi <- c(w[1], (seq_len(k - 1L)) * geo$s + w[-1] / 2)
+  expect_true(all(lo[-1] >= hi[-k]))
+  # an explicit key.size still wins
+  q <- p |> guides(color = guide_bivariate(key.size = 4))
+  gq <- .legend_guides(.build_panels(q)$scales)[[1]]
+  expect_equal(.bi_geom(gq, m)$s, 4)
 })
