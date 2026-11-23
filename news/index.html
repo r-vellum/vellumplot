@@ -68,6 +68,9 @@
 <h3 id="bug-fixes-0-20-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-20-0-9000"></a></h3>
 <ul><li><p><code>mark_crossbar(width =)</code> is in data units, as <code>mark_errorbar(width =)</code> and <code>mark_bar(width =)</code> are and as in ggplot2’s <code>geom_crossbar()</code> (VP-105). It was a fraction of the band, so on a continuous x a box could be many times too wide. The default is now 90% of the band, ggplot2’s default (it was 50%), so cross-bars line up with bars and error bars. Dodged cross-bars share the width among the groups, and the boxes train a continuous axis, so the outer boxes are not clipped.</p></li>
 <li><p><code><a href="../reference/mark_boxplot.html">mark_crossbar()</a></code> draws its middle line 2.5 times as wide as the box outline, as ggplot2’s <code>geom_crossbar()</code> does; it drew both at one width, so the middle value did not stand out.</p></li>
+<li><p>ggplot2’s solid point shapes 15-18 and 20 draw as in ggplot2 (VP-106). R draws 15-18 without an outline, so a 16 is slightly smaller than a 19, and 20 (the bullet) at 2/3 the size of 19; vellumplot drew them all outlined at full size. Legend keys draw them the same way. By name these are <code>"circle bare"</code> (and so on, no outline) and <code>"circle small"</code>.</p></li>
+<li><p>Colour and size legend keys draw a point layer’s constant shape whatever it is (VP-107): <code>mark_point(shape = "square", color = g)</code> keys its colours with squares, not circles. VP-103 did this only for open and bordered shapes.</p></li>
+<li><p>Size and shape legend keys take a point layer’s constant colour: <code>mark_point(size = hp, color = "red")</code> keyed its sizes in grey.</p></li>
 </ul></div>
 </div>
     <div class="section level2">

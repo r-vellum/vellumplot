@@ -17,6 +17,21 @@
   ggplot2’s `geom_crossbar()` does; it drew both at one width, so the
   middle value did not stand out.
 
+- ggplot2’s solid point shapes 15-18 and 20 draw as in ggplot2 (VP-106).
+  R draws 15-18 without an outline, so a 16 is slightly smaller than a
+  19, and 20 (the bullet) at 2/3 the size of 19; vellumplot drew them
+  all outlined at full size. Legend keys draw them the same way. By name
+  these are `"circle bare"` (and so on, no outline) and
+  `"circle small"`.
+
+- Colour and size legend keys draw a point layer’s constant shape
+  whatever it is (VP-107): `mark_point(shape = "square", color = g)`
+  keys its colours with squares, not circles. VP-103 did this only for
+  open and bordered shapes.
+
+- Size and shape legend keys take a point layer’s constant colour:
+  `mark_point(size = hp, color = "red")` keyed its sizes in grey.
+
 ## vellumplot 0.20.0
 
 ### Bug fixes

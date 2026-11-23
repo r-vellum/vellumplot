@@ -63,9 +63,11 @@ scale_shape_discrete(
   nearest marker. As in ggplot2, the open codes (0-14) draw an outline
   in the point colour, the solid ones (15-20) fill with it, and the
   bordered ones (21-25) fill with `fill` inside a `color` outline
-  (unfilled when no `fill` is given). By name, these are
-  `"circle open"`, `"circle filled"` and so on for every built-in
-  marker. Named values are matched to levels by name.
+  (unfilled when no `fill` is given). Of the solid codes, 15-18 have no
+  outline and 20 is 2/3 the size of 19, as in ggplot2. By name, these
+  are `"circle open"`, `"circle filled"`, `"circle bare"` (no outline),
+  `"circle small"` and so on for every built-in marker. Named values are
+  matched to levels by name.
 
 - name:
 
