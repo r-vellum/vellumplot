@@ -25,6 +25,14 @@
   never paired by order; the hint fired whenever the groups had
   different numbers of rows in different states.
 
+- A secondary axis on a log scale gets log breaks:
+  `scale_x_continuous(trans = "log10", sec.axis = sec_axis(~ . * 2.2))`
+  ticks the secondary axis at powers of ten, as in ggplot2, where it
+  used linear breaks that left one or two crowded labels at the top of
+  the range. The secondary’s default breaks now come from the primary
+  scale’s transform, and the labels are placed through a lookup grid
+  spaced evenly along the axis.
+
 ## vellumplot 0.21.1
 
 ### Bug fixes
