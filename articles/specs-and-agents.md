@@ -136,8 +136,8 @@ str(vl, max.level = 2)
 #>  $ mark    :List of 1
 #>   ..$ type: chr "point"
 #>  $ encoding:List of 3
-#>   ..$ x    :List of 1
-#>   ..$ y    :List of 1
+#>   ..$ x    :List of 2
+#>   ..$ y    :List of 2
 #>   ..$ color:List of 1
 ```
 

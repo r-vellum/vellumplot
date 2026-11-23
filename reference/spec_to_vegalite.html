@@ -127,6 +127,13 @@ if <code>json = TRUE</code>); <code>spec_from_vegalite()</code> returns a <a hre
 <code>resolve.scale</code> comes back as the resolve lattice; an independent axis or
 legend over a shared scale, and a resolve between the layers of one view
 (e.g. a dual axis), have no vellumplot equivalent and are reported.</p>
+<p>A continuous x or y scale whose data leaves zero out exports
+<code>scale: {zero: false}</code>, as Vega-Lite otherwise stretches a quantitative
+position axis to zero. A layer's <code>tooltip =</code> is Vega-Lite's <code>tooltip</code>
+channel: a column exports as that field, any other expression as the fields
+it reads (reported). On import, one tooltip field becomes that column, and
+an array of fields (or <code>tooltip: true</code>) a "title: value" line per field.
+Other interactive arguments (<code>data_id</code>, <code>onclick</code>, ...) are reported.</p>
 <p>The bridge covers a <strong>documented subset</strong> (see the "Specs, agents, and
 interoperability" article). Anything it cannot map — polar/flipped
 coordinates, layer effects, patterns, statistical marks without a Vega-Lite
