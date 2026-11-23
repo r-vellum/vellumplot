@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* `mark_rule()` draws under `coord_polar()` and `coord_radial()` (VP-121),
+  where the layer used to vanish without a warning. An intercept on the radius
+  aesthetic is a circle (an arc over a partial `coord_radial(end =)` sweep) and
+  one on the angle aesthetic a spoke from the inner to the outer radius.
+
 * An element set with `theme()` is drawn even when its parent is blank, as in
   ggplot2: `theme_void() |> theme(axis.text.x = element_text())` now draws
   the x axis labels, which a blank `axis.text` used to swallow. The element
