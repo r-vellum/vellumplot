@@ -42,7 +42,11 @@ test_that("pch 15-18 draw without an outline, 20 at 2/3 the size of 19", {
   pts <- pts[order(pts$shape, pts$size), ]
   bare <- pts[pts$col == "NA", ]
   expect_setequal(bare$shape, c("square", "circle", "triangle", "diamond"))
-  expect_equal(bare$size, rep(3, 4))
+  # the triangle (17) at R's size for it (VP-111)
+  expect_equal(
+    bare$size[order(bare$shape)],
+    3 * c(1, 1, 1, sqrt(4 * pi / (3 * sqrt(3))))
+  )
   solid <- pts[pts$col != "NA", ]
   expect_identical(solid$shape, c("circle", "circle"))
   expect_equal(sort(solid$size), c(2, 3))
@@ -174,4 +178,70 @@ test_that("point keys follow the theme's ink (VP-109)", {
     theme(geom = element_geom(ink = "navy"))
   k <- pch_pts(p)
   expect_true(all(k$col == "navy"))
+})
+
+# VP-111: R's graphics engine sizes its symbols from one radius r -- the
+# circle's radius and the squares' (0, 15) half side, as vellum's markers --
+# but draws triangles with circumradius TRC0 r, the open diamond with
+# half-diagonal sqrt(2) r, the bordered diamond DMDC r, the bordered square
+# with half side SQRC r, and the plus and cross sqrt(2) times vellum's.
+test_that("pch codes draw at R's per-symbol sizes (VP-111)", {
+  trc0 <- sqrt(4 * pi / (3 * sqrt(3)))
+  want <- c(
+    "0" = 1,
+    "1" = 1,
+    "2" = trc0,
+    "3" = sqrt(2),
+    "4" = sqrt(2),
+    "5" = sqrt(2),
+    "6" = trc0,
+    "15" = 1,
+    "16" = 1,
+    "17" = trc0,
+    "18" = 1,
+    "19" = 1,
+    "20" = 2 / 3,
+    "21" = 1,
+    "22" = sqrt(pi / 4),
+    "23" = sqrt(pi / 4) * sqrt(2),
+    "24" = trc0,
+    "25" = trc0
+  )
+  for (code in names(want)) {
+    pts <- pch_pts(
+      vplot(data.frame(x = 1, y = 1)) |>
+        mark_point(x = x, y = y, shape = !!as.numeric(code), size = 2)
+    )
+    expect_equal(unique(pts$size), 2 * want[[code]], info = code)
+  }
+  # the plus and cross are line glyphs drawn by name
+  expect_identical(
+    unique(
+      pch_pts(
+        vplot(data.frame(x = 1, y = 1)) |> mark_point(x = x, y = y, shape = 3)
+      )$shape
+    ),
+    "plus"
+  )
+})
+
+test_that("named markers keep their size; pch keys scale as the points (VP-111)", {
+  one <- data.frame(x = 1, y = 1)
+  for (nm in c("triangle", "diamond", "square", "plus", "cross")) {
+    pts <- pch_pts(
+      vplot(one) |> mark_point(x = x, y = y, shape = !!nm, size = 2)
+    )
+    expect_equal(unique(pts$size), 2, info = nm)
+  }
+  d <- data.frame(x = 1:2, y = 1:2, g = c("a", "b"))
+  keys <- pch_pts(
+    vplot(d) |>
+      mark_point(x = x, y = y, shape = g) |>
+      scale_shape_manual(values = c(a = 21, b = 24))
+  )
+  keys <- keys[keys$legend, ]
+  expect_equal(
+    keys$size[keys$shape == "triangle"] / keys$size[keys$shape == "circle"],
+    sqrt(4 * pi / (3 * sqrt(3)))
+  )
 })

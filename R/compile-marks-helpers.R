@@ -402,12 +402,43 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   out
 }
 
-# The size factor of points drawn with `style`: ggplot2's pch 20 (the bullet,
-# "small") is 2/3 the size of pch 19 -- R's graphics engine draws it with
-# radius 0.25 against 0.375 -- and every other shape is drawn at its size
-# (VP-106).
-.shape_size_factor <- function(style) {
-  ifelse(style == "small", 2 / 3, 1)
+# R's graphics engine (`GESymbol()`) draws its symbols from a radius `r`
+# (0.375 of the font size) that is the circle's radius and the open and solid
+# squares' half side -- as vellum's markers take their size -- but scales the
+# others (VP-111): every triangle (pch 2, 6, 17, 24, 25) has circumradius
+# `TRC0 * r`, sqrt(4 pi / (3 sqrt(3))), the size whose area matches the
+# circle's, where vellum's triangle has circumradius `r`; the open diamond
+# (5, 9) has half-diagonal sqrt(2) r and the bordered one (23) `DMDC * r`,
+# sqrt(pi / 4) sqrt(2), while the solid 18 keeps `r`; the bordered square (22)
+# has half side `SQRC * r`, sqrt(pi / 4), equal in area to the circle; and the
+# plus (3) and cross (4) reach sqrt(2) r and r along the axes and diagonals,
+# sqrt(2) times vellum's. The bullet (20, "small") has radius 0.25 against
+# 0.375, 2/3 of the circle's (VP-106).
+.PCH_SIZE_FACTORS <- c(
+  "triangle open" = sqrt(4 * pi / (3 * sqrt(3))),
+  "triangle bare" = sqrt(4 * pi / (3 * sqrt(3))),
+  "triangle filled" = sqrt(4 * pi / (3 * sqrt(3))),
+  "triangle_down open" = sqrt(4 * pi / (3 * sqrt(3))),
+  "triangle_down bare" = sqrt(4 * pi / (3 * sqrt(3))),
+  "triangle_down filled" = sqrt(4 * pi / (3 * sqrt(3))),
+  "diamond open" = sqrt(2),
+  "diamond filled" = sqrt(pi / 4) * sqrt(2),
+  "square filled" = sqrt(pi / 4),
+  "plus open" = sqrt(2),
+  "cross open" = sqrt(2)
+)
+
+# The size factor of points drawn as `marker` with `style` (`.shape_parts()`):
+# a ggplot2 shape code is drawn at R's size for it (`.PCH_SIZE_FACTORS`), the
+# bullet ("small") at 2/3, and a plain named marker or an SVG icon at its size.
+.shape_size_factor <- function(style, marker = NULL) {
+  f <- ifelse(style == "small", 2 / 3, 1)
+  if (!is.null(marker)) {
+    k <- .PCH_SIZE_FACTORS[paste(marker, style)]
+    hit <- !is.na(k)
+    f[hit] <- k[hit]
+  }
+  unname(f)
 }
 
 # Is `style` a plain solid marker, filled and outlined in one colour (or not

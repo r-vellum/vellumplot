@@ -1570,7 +1570,7 @@ NULL
   sp <- .shape_parts(.pch_to_shape(shape))
   fill <- .shape_fill(sp$style, fill, bfill)
   col <- .shape_col(sp$style, col)
-  size_mm <- size_mm * .shape_size_factor(sp$style)
+  size_mm <- size_mm * .shape_size_factor(sp$style, sp$marker)
   shape <- sp$marker
   d <- .shape_svg_d(shape)
   if (!is.na(d)) {
@@ -1637,7 +1637,8 @@ NULL
         vellum::vl_unit(0.5, "npc"),
         vellum::vl_unit(0.5, "npc"),
         size = vellum::vl_unit(
-          (ov$size %||% sc$legend_sizes[i]) * .shape_size_factor(sp$style),
+          (ov$size %||% sc$legend_sizes[i]) *
+            .shape_size_factor(sp$style, sp$marker),
           "mm"
         ),
         shape = sp$marker,
@@ -1848,7 +1849,7 @@ NULL
       vellum::vl_unit(0.5, "npc"),
       vellum::vl_unit(0.5, "npc"),
       size = vellum::vl_unit(
-        (ov$size %||% (m$key / 2)) * .shape_size_factor(sp$style),
+        (ov$size %||% (m$key / 2)) * .shape_size_factor(sp$style, sp$marker),
         "mm"
       ),
       shape = sp$marker,
