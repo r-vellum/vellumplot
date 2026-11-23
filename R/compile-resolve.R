@@ -516,6 +516,15 @@ NULL
 # circle).
 .key_point_for_aes <- function(resolved, aesthetic) {
   for (L in resolved) {
+    # A pie's size keys are neutral discs: the wedge colours belong to the fill
+    # legend, and a black disc reads as a category of its own (VP-123).
+    if (
+      identical(aesthetic, "size") &&
+        identical(L$mark, "node_pie") &&
+        !is.null(L$values$size)
+    ) {
+      return(list(col = "grey60"))
+    }
     if (
       !aesthetic %in% names(L$values) ||
         !identical(L$mark, "point") ||

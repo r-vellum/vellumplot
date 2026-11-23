@@ -31,6 +31,16 @@ NULL
   NULL
 }
 
+# Does a mark_node_pie() layer train the fill scale on its wedge categories
+# (no layer mapping fill)? Its legend then needs no default title.
+.pie_fill <- function(spec) {
+  any(vapply(
+    spec@layers,
+    function(L) identical(L@mark, "node_pie") && is.null(L@encoding$fill),
+    logical(1)
+  ))
+}
+
 # The labs() entry for `channel`, or NULL.
 .labs_title <- function(spec, channel) spec@labels[[channel]]
 
@@ -87,7 +97,13 @@ NULL
     channel <- .AES_REGISTRY[[key]]$title
     lab <- .labs_title(spec, channel)
     mapped <- .mapped_title(spec, channel)
-    fallback <- if (key == "y" && counts) "count" else mapped %||% channel
+    fallback <- if (key == "y" && counts) {
+      "count"
+    } else if (is.null(mapped) && key == "fill" && .pie_fill(spec)) {
+      NULL # the wedge categories name themselves (VP-123)
+    } else {
+      mapped %||% channel
+    }
     default[[key]] <- lab %||% fallback
     sc <- .scale_for(spec, key)
     name <- if (!is.null(sc)) sc@name else NULL

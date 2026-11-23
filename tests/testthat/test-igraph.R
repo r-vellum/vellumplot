@@ -1143,3 +1143,25 @@ test_that("a pie's size can be mapped, with a size legend (VP-123)", {
   # tot = 1, 3, 4, 4: the smallest node is the smallest glyph
   expect_gt(max(e$w), 2 * min(e$w))
 })
+
+test_that("a node-pie legend has no default title and grey size keys (VP-123)", {
+  skip_if_not_installed("igraph")
+  g <- igraph::make_ring(4)
+  igraph::V(g)$name <- letters[1:4]
+  igraph::V(g)$a <- c(1, 0, 2, 3)
+  igraph::V(g)$b <- c(0, 2, 1, 1)
+  igraph::V(g)$tot <- igraph::V(g)$a + igraph::V(g)$b
+  p <- vgraph(g) |> mark_node_pie(cols = c("a", "b"))
+  expect_null(vellumplot:::.plot_titles(p)$title$fill)
+  expect_identical(
+    vellumplot:::.plot_titles(p |> labs(fill = "Kind"))$title$fill,
+    "Kind"
+  )
+  # a mapped size draws its keys in a neutral grey, not black
+  ps <- vgraph(g) |> mark_node_pie(cols = c("a", "b"), size = tot)
+  kp <- vellumplot:::.key_point_for_aes(
+    vellumplot:::.resolve_layers(ps),
+    "size"
+  )
+  expect_identical(kp$col, "grey60")
+})

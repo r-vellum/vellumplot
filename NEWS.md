@@ -3,10 +3,12 @@
 ## New features
 
 * `mark_node_pie()` wedge colours get a legend (VP-123): the `cols` are the
-  categories of the fill scale, so `labs(fill =)` titles the legend and
+  categories of the fill scale, so the legend names them (untitled unless
+  `labs(fill =)` gives a title) and
   `scale_fill_manual()` / `scale_fill_brewer()` recolour the wedges; colours
   given with `fill =` become the scale's values. `size` can be mapped
-  (`size = total`), drawn through the size scale with a size legend.
+  (`size = total`), drawn through the size scale with a size legend of
+  neutral grey discs.
 
 ## Bug fixes
 
