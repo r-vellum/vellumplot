@@ -8,6 +8,11 @@
   axes draws the same set (VW-66). In a composition, a cell themed with
   `panel.grid = element_blank()` used to get gridlines back in the widget.
 
+* `mark_rule()` draws under `coord_polar()` and `coord_radial()` (VP-121),
+  where the layer used to vanish without a warning. An intercept on the radius
+  aesthetic is a circle (an arc over a partial `coord_radial(end =)` sweep) and
+  one on the angle aesthetic a spoke from the inner to the outer radius.
+
 * An aligned composition (`concat()`, `hconcat()`, `vconcat()`) draws each
   sub-plot's own `labs(title, subtitle, caption, tag)` (VP-119). The shared
   grid reserved their rows but drew nothing into them, leaving a blank band
@@ -342,11 +347,14 @@
   points changes -- naming the states. Such a transition now cuts to the next
   state halfway through instead of never showing it (VR-26, VR-27; the engine
   fix is in vellum). Needs vellum 0.13.0.9000.
+
 * `transition_time()` no longer drops a keyframe's rows for integer times
   whose text form differs from the double's, such as `100000L` versus
   `"1e+05"` (VP-77).
+
 * `animate(nframes =)` must be a positive whole number; `2.5` used to be
   floored silently (VP-78).
+
 * Fractional `fps` (12.5, 0.5) is now written exactly instead of being rounded
   to a whole number (VL-15, in vellum).
 
@@ -1651,6 +1659,7 @@
   irregularly-spaced grid (e.g. x = 1, 2, 4) rendered with every cell silently
   misplaced. It now errors with a message pointing to `mark_tile()` in both cases;
   numeric and evenly-spaced date/time grids are unaffected.
+
 * **`as_spec()` no longer silently drops declarative interactivity or animation.**
   A plot carrying `select_*()` / `filter_by()` / `bind_scale()`,
   `transition_*()`, or `inspect_source()` was serialized as if that state did not
@@ -1658,6 +1667,7 @@
   selection). These slots — which hold non-serializable tidy-eval quosures — are
   now **refused** with the same classed `vellumplot_unserializable` error as the
   other unsupported state, matching the documented contract.
+
 * **Ordered factors and POSIXct time zones now survive a spec round-trip.** An
   ordered factor came back unordered (so `spec_fields()` mislabelled it nominal
   instead of ordinal); a timestamp's display zone was forced to UTC. Both are now
@@ -1676,11 +1686,14 @@
   layer params too. A text mark (`mark_text()` / `mark_sf_label()` /
   `mark_node_text()`) with no `label` at all now errors clearly instead of
   drawing blanks.
+
 * **`mark_series_label()` on a discrete x** now errors with a clear message (it
   labels each series at its largest x, which a categorical axis has no notion of)
   instead of a cryptic internal failure.
+
 * **`mark_sf_label()` skips empty-geometry features** (which have no interior
   point) rather than placing a label at `NA` coordinates.
+
 * `guide_legend(override.aes =)` is now kept when a colour scale's legend merges
   with its shape/size partner.
 
@@ -1698,19 +1711,23 @@
   an aggregating mark (`mark_bin2d()`, `mark_count()`, `mark_hex()`, `mark_contour()`,
   a `mark_histogram(y = after_stat(density))`, ...) aborted the whole render with
   `object 'count' not found`; the empty layer now renders as a blank panel.
+
 * **`mcp_serve()` now handles more than one request per process.** The stdin
   connection was left unopened, so each `readLines()` reopened it and the loop
   saw end-of-file after the first line — a real MCP client died right after
   `initialize`. The connection is now opened once and held across the loop.
+
 * **`from_spec()` / `vplot_from_spec()` now honour supplied `data` for a spec
   with no data block**, instead of dropping it and failing later in compile with
   an opaque "argument must be coercible to non-negative integer". A spec that
   maps fields but has (and is given) no data now errors clearly, naming the
   missing references.
+
 * **`transition_states()` filters a layer's own `data =` per keyframe.** A layer
   with its own data (e.g. a per-state annotation) was not subset to the current
   state, so every keyframe drew all states' rows at once. A layer whose data
   lacks the state column still persists across all frames.
+
 * **`labs(x = NULL)` now blanks the axis title** (ggplot2 parity), distinct from
   omitting the argument. Previously only `labs(x = "")` blanked it.
 
@@ -1720,32 +1737,38 @@
   ("bubble") legend: concentric, bottom-aligned circles with a leader from each
   to its label, instead of stacked rows. Best with a wide size range
   (`scale_size(range = c(2, 12)) |> ... guides(size = guide_legend(nested = TRUE))`).
+
 * `guide_coloursteps()` (US alias `guide_colorsteps()`) draws a **binned** colour
   scale as a segmented colour bar — the bin colours in order, labelled at the
   numeric boundaries — instead of the default discrete swatches. Takes the same
   `barwidth` / `barheight` / `ticks` / `label.position` tunables as
   `guide_colourbar()`: `scale_color_binned() |> ... guides(color = guide_coloursteps())`.
+
 * `guide_colourbar()` (and the US alias `guide_colorbar()`) make the continuous
   colour bar tunable: `barwidth` / `barheight` (bar size in mm), `ticks` /
   `ticks.colour` (the break ticks), and `label.position` (`"right"` / `"left"`
   labels on a vertical bar), on top of the `title` / `reverse` that
   `guide_legend()` already offered for a colour bar. For example
   `guides(color = guide_colourbar(barheight = 60, ticks = FALSE))`.
+
 * `mark_sf_label()` labels each `sf` feature at its **interior point**
   (`sf::st_point_on_surface()`, always inside the polygon), reprojected through
   the same `coord_sf()` CRS as `mark_sf()` so the labels land on the geometry.
   Repels crowded labels apart. Layer it over a `mark_sf()` choropleth to name the
   regions: `vplot(nc) |> mark_sf(fill = AREA) |> mark_sf_label(label = NAME)`.
+
 * `guide_legend()` gained an **`override.aes`** argument (ggplot2 parity): a named
   list of aesthetics forced on the legend **keys** only, independent of the
   plotted data — e.g. `guides(color = guide_legend(override.aes = list(size = 5,
   alpha = 1)))` draws large, opaque keys over a scatter of tiny translucent
   points. Recognised: `size`, `alpha`, `colour`/`color`, `fill`, `shape`,
   `linewidth`. The key cell grows to hold an overridden size.
+
 * `scale_x_continuous()` / `scale_y_continuous()` gained an **`expand`** argument
   controlling axis padding: `NULL` (default) keeps the usual 5% margin, and a
   numeric `c(mult, add)` sets a proportion of the data range plus a constant in
   data units — e.g. `expand = c(0, 0)` clamps the axis exactly to the data.
+
 * `theme_sketch()` now **sketch-ifies the plot's current theme** instead of
   resetting to grey, so a self-contained chart that is deliberately axis-free
   (`vwaffle()` / `vvenn()` / `vsankey()` / …) is no longer given back a grid and
@@ -1783,34 +1806,44 @@
 
 * `scale_color_steps()` / `scale_fill_steps()` — ggplot2-parity aliases of the
   binned colour scales (a continuous variable cut into steps).
+
 * **Adaptive knit output.** When a plot is knitted (Quarto / R Markdown) to an
   HTML target it is now emitted as a crisp, selectable, resolution-independent
   inline **SVG**; other targets (LaTeX / Word) keep the default device render.
   One plot object, the best format per output — no conditional code.
+
 * `plot_data_uri()` encodes a plot as a self-contained `data:` URI (vector SVG by
   default, or `format = "png"`) — ready for an HTML `<img src>`, a Markdown image,
   an email, or a `gt` table's non-HTML backends.
+
 * Three more complete themes for ggplot2 parity: `theme_light()`, `theme_dark()`,
   and `theme_linedraw()`.
+
 * Named palette scale constructors (thin wrappers over `palette =`, easing
   migration): `scale_*_viridis_c()`/`_d()` (the viridis maps —
   viridis/plasma/inferno/cividis/rocket/mako), `scale_*_brewer()` (discrete) and
   `scale_*_distiller()` (continuous) ColorBrewer-style palettes, and
   `scale_*_gradientn()` for an arbitrary n-stop colour ramp.
+
 * `scale_color_continuous()` / `scale_fill_continuous()` gained a `limits =`
   argument (the direct form of `lims(color = ...)`).
+
 * The named graph-layout registry gained `gem`, `graphopt`, `dh`, and `lgl`
   (igraph force-directed layouts, now reachable by name).
+
 * `vwaffle()` — a self-contained **waffle chart** (square pie): a grid of cells
   coloured by category, each category taking a share of the cells proportional
   to its count (largest-remainder allocation, so the cells sum exactly). Works
   from a `value` column or raw row counts.
+
 * `position_sina()` (and `position = "sina"`) spreads a category's points along
   x by a quasirandom offset scaled to the local y-density, so the cloud traces
   the distribution's shape (ggforce's sina).
+
 * `mark_raincloud()` composes a **raincloud** — a one-sided density cloud
   (`mark_halfeye()`) with the raw observations as sina "rain" below it — in one
   call, forwarding any `color`/`fill` mapping to both layers.
+
 * New reference and summary marks (ggplot2 parity):
   - `mark_abline()` — a sloped reference line `y = slope * x + intercept` across
     the panel (`slope`/`intercept` may be vectors for several lines).
@@ -1839,6 +1872,7 @@
   hash). And a Vega-Lite export where two aesthetics map onto one channel (e.g.
   `color` and `fill`) now reports the dropped encoding rather than silently
   overwriting it.
+
 * Clearer, earlier input validation across several surfaces: `scale_*_binned()`
   rejects a non-positive or non-scalar `n` and a non-scalar `style`; a numeric
   scale `range` rejects a non-finite bound; `coord_fixed(ratio=)`,
@@ -1848,47 +1882,65 @@
   are validated; and an MCP `tools/call` with no tool name returns a clean error.
   Each previously failed late with an opaque message (or, for `set_mask(region=)`,
   silently ignored the argument — now rejected).
+
 * A discrete position axis no longer draws spurious minor gridlines between and
   outside its categories.
+
 * Legends with mixed titled and untitled guides no longer misalign: a guide with
   no title reserves no title band.
+
 * An `NA` in a facet variable now consistently drops the row (matching ggplot2)
   rather than creating a spurious `"NA"` panel for character/multi-variable facets.
+
 * Stacked bars/areas tolerate an `NA` height (dropped from the stack) instead of
   poisoning the whole group's cumulative total.
+
 * A non-finite scale break no longer anchors a stray gridline, tick, or axis label.
+
 * Serializing a preset theme carrying an `element_*()` override now warns that the
   customisation is dropped (previously suppressed whenever a preset was set).
+
 * `clip_to()` rejects a region vertex whose `group` is `NA` (it was silently
   dropped, deforming the clip).
+
 * Several marks no longer silently ignore aesthetics they document: `alpha` now
   applies to `mark_boxplot()`, `mark_errorbar()`, `mark_linerange()`,
   `mark_rule()`, `mark_halfeye()`/`mark_interval()`, and the `mark_smooth()`
   band; `mark_smooth()` honours `linewidth` for its fitted line; and the text
   marks (`mark_text()`, `mark_label()`, `mark_text_path()`) honour a mapped
   `size` (trained through a size scale, as points already were).
+
 * `facet_grid()` no longer aborts when a row/column combination has no data: a
   structurally-empty panel (e.g. a histogram cell with no observations) now
   renders blank instead of killing the whole plot.
+
 * One-sided continuous limits work as in ggplot2: `ylim(0, NA)` /
   `scale_*_continuous(limits = c(NA, hi))` now pin the supplied end and train the
   open end from the data, rather than silently collapsing the axis.
+
 * Numeric variables drawn on a discrete axis (e.g. `mark_bar(x = a_number)`)
   order their categories numerically (`1, 2, 10`) instead of lexicographically
   (`1, 10, 2`).
+
 * Overlaying two layers on one discrete axis, one mapping a `factor` and one a
   `character`, no longer drops or mislabels categories.
+
 * A pie / donut (`mark_pie()`, `mark_donut()`) with a constant or short `x`
   no longer errors.
+
 * `mark_edge_bundle()` and `mark_flow_map()` now accept their documented
   `effects =` argument (glow / shadow / outline) instead of rejecting every
   effect.
+
 * `layout = "dendrogram"` reports a clear "needs a connected tree" error on a
   disconnected graph instead of an opaque internal failure.
+
 * `vtable()` renders a blank cell for a too-short or empty sparkline series
   instead of aborting the whole table.
+
 * Non-looping `transition_reveal()` / `transition_time()` animations now reach
   their final keyframe instead of stopping roughly one frame short.
+
 * Faceting on a column whose name is not a syntactic R name (e.g.
   `"Miles per Gallon"`, common after a Vega-Lite import) round-trips through
   `as_spec()` / `from_spec()` instead of crashing.
@@ -2048,6 +2100,7 @@ First tagged release. Everything below is included.
     cause, and fix, than a changed dataset.
 
   Requires vellum >= 0.6.5.
+
 * **`mark_contour()` traces in the engine; `isoband` is no longer needed.**
   2-D contour lines and filled contours are now traced by
   `vellum::vl_contour()` (marching squares) instead of the `isoband` package,
@@ -2511,6 +2564,7 @@ First tagged release. Everything below is included.
   `coord_flip()` / `coord_polar()` / `coord_trans()`, free facet scales, or
   `add_marginal()` raises a clear error, and it is not drawn inside a plot
   composition. A plot without a `sec.axis` is byte-for-byte unchanged.
+
 * **Datashading now covers dense lines and large-graph edges.** `mark_line()`,
   `mark_step()`, `mark_segment()`, and `mark_edges()` gain an `auto = TRUE`
   switch (parallel to `mark_point(auto = TRUE)`): past a row threshold the layer
@@ -2520,11 +2574,13 @@ First tagged release. Everything below is included.
   The fallback is skipped under a warped coordinate system (`coord_polar()` /
   `coord_trans()`), which keeps the vector path. (Area / ribbon datashading is not
   yet available, pending area-fill support in vellum.)
+
 * **`mark_datashade(spread = )`** exposes vellum's post-aggregation spreading:
   `NULL` (default, raw output), a positive integer for a fixed pixel radius
   (`vellum::spread()`), or `"auto"` for density-adaptive dilation
   (`vellum::dynspread()`). Datashaded lines and segments default to `"auto"` so
   single-pixel marks stay visible.
+
 * **Continuous and binned colour scales now interpolate perceptually (Oklab) by
   default.** A colour ramp built from a plain colour vector (e.g.
   `scale_color_gradient(low, high)` or `scale_color_continuous(palette = c(...))`)
@@ -2647,6 +2703,7 @@ First tagged release. Everything below is included.
   (`tooltip`/`data_id`/…) must be length 1 or the data's row count; and
   `add_marginal()` requires a cleanly numeric column. Each now errors clearly
   instead of silently mis-rendering.
+
 * **Clearer alt text for grid facets.** A `facet_grid()` plot's automatic alt text
   now distinguishes the row and column variables (e.g. "Faceted by rows cyl,
   columns am") instead of running them together.
@@ -2780,6 +2837,7 @@ Consumes `vellum`'s new compound `native + mm` unit (requires vellum >= 0.1.1).
   (in millimetres, `+x` right / `+y` up) that shift a label by an exact absolute
   distance, device-resolved so the nudge is constant regardless of scale or panel
   aspect.
+
 * **Device-exact drop shadows**: `shadow()`'s `x` / `y` offset is now an absolute
   distance in **millimetres** (was a panel-relative npc fraction), so a drop
   shadow stays the same physical distance and is isotropic on non-square panels.
@@ -2801,14 +2859,18 @@ distribution marks, closing the most conspicuous gaps versus ggplot2.
   `scale_x_time()` (and `y` twins) with `date_breaks` (interval strings like
   `"3 months"`) and `date_labels` (strftime formats). `Date`/`POSIXct` columns
   still get a sensible date axis automatically.
+
 * **New mapped aesthetics**: `scale_alpha()` (continuous opacity) and
   `scale_linetype()` (discrete line types), each drawn per element with its own
   legend. `alpha` mapped to data now varies opacity (previously constant-only);
   `linetype` applies to `mark_line()` / `mark_step()`.
+
 * **Identity scales**: `scale_color_identity()`, `scale_fill_identity()`,
   `scale_size_identity()`, `scale_shape_identity()`, `scale_alpha_identity()`,
   `scale_linetype_identity()` — use data values verbatim, no legend.
+
 * **Limit shortcuts**: `xlim()`, `ylim()`, and `lims()`.
+
 * **Legend control**: `guides()` with `guide = "none"` (hide a legend),
   `guide_legend(reverse = TRUE)` (reverse key order), and `guide_legend(title=)`.
 
@@ -2816,6 +2878,7 @@ distribution marks, closing the most conspicuous gaps versus ggplot2.
 
 * **Distribution marks**: `mark_ecdf()` (empirical CDF step), `mark_rug()`
   (marginal ticks), `mark_qq()` + `mark_qq_line()` (quantile-quantile plot).
+
 * **Density-shape marks**: `mark_violin()` (mirrored density per category),
   `mark_ridgeline()` (overlapping per-category densities), and `mark_dotplot()`
   (binned, stacked dots). Violin and ridgeline carry per-category provenance.
@@ -2835,6 +2898,7 @@ distribution marks, closing the most conspicuous gaps versus ggplot2.
   grob's `data-vellum-id` in SVG and the `id` column of `vellum::scene_model()`.
   This is the first public consumer of the provenance metadata (previously
   internal), the substrate for interactivity, linked views, and accessibility.
+
 * Row-key provenance is now refined per element for the line, area, ribbon,
   step, text, and boxplot marks (previously only point/bar/tile/segment/sf/
   edges), so a record's `rows` resolve to the actual data rows an element draws
@@ -2858,6 +2922,7 @@ release.
   before. Applies to `stat = "identity"` marks (points, bars, tiles, segments,
   edges, hexbins, polar bars) and to `mark_sf()` — each sf feature
   (polygon/linestring/point) becomes an addressable, keyed element.
+
 * **Per-element interaction styling**: marks also accept `hover_color` and
   `selected_color` (constant or column-mapped), carried into the scene so a host
   (`vellumwidget`) outlines each element in its own colour on hover/select — overriding
@@ -2873,81 +2938,104 @@ release.
   graphics device — the RStudio / Positron Plots pane, or a knitr/Quarto chunk —
   like ggplot2 (via `vellum::display()`). `summary()` shows the inspectable spec
   tree instead; `render_plot()` still writes a file.
+
 * `vplot()` starts an inspectable, serializable `PlotSpec`.
+
 * **Output resolution**: `vplot(dpi =)` sets the authored resolution and
   `render_plot(dpi =)` overrides it per render, so an exported PNG's pixel
   dimensions are `width * dpi` by `height * dpi`. Compositions inherit the first
   sub-plot's `dpi` (or take an explicit `concat(dpi =)`).
+
 * Marks: `mark_point()`, `mark_line()`, `mark_rule()` (reference lines via
   `xintercept` / `yintercept`), and `mark_bar()` (uses explicit `y` heights, or
   counts rows per category when `y` is omitted).
+
 * Encodings captured with tidy evaluation: `x`, `y`, `color`/`fill`, `size`,
   `shape`, `alpha`. Scalar values become constant aesthetics.
+
 * Scales: `scale_x_continuous()` / `scale_y_continuous()` (linear and `log10`)
   with auto-trained domains and ggplot-style expansion; **discrete (band)
   position scales** are trained automatically for categorical `x`/`y` (bars);
   `scale_color_continuous()` (perceptual ramp), `scale_color_discrete()`
   (qualitative palette), and a trained **size scale** for a mapped `size`.
+
 * Guides: trained x/y axes (breaks, labels, titles), a grey panel with white
   gridlines, and a legend area that **stacks multiple guides** — a colour legend
   (continuous gradient bar or discrete swatches) and a size legend.
+
 * **Legend layout** is measured in millimetres: each guide is sized to its
   content (a title line above one row per key), the row pitch is driven by the
   key's drawn size so large bubble keys never overlap, and the guide block is
   centred in the legend track. Titles sit directly above their keys, horizontal
   (top/bottom) legends pack keys tightly instead of spreading them across the
   full width, and a vertical legend uses the full figure height.
+
 * **Legend keys match the mark**: a colour legend draws the glyph the plot
   actually uses — a filled circle for point layers, a short line for line-like
   layers (line/step/smooth/segment/…), and a filled square for bar/area/tile/
   polygon layers — instead of always a square swatch.
+
 * **Legend geometry is themeable**: `theme(legend.key.size=, legend.spacing=,
   legend.margin=)` set the key/swatch side, the gap between stacked guides, and
   the inset around the legend block (all in millimetres).
+
 * Continuous colour bars now carry **white break ticks** aligned to their
   labels, on both vertical and horizontal (top/bottom) legends.
+
 * **Merged legends**: mapping one variable to two aesthetics draws a single
   legend whose keys carry both encodings — discrete `colour` + `shape` become
   coloured shape keys; continuous `colour` + `size` become colour-graded,
   size-graduated points. Merging follows ggplot2's rule (same title and
   breaks/levels); give one scale a different `name=` to keep them separate.
+
 * Layering: multiple marks on one panel, with scales trained across all layers.
+
 * **Faceting**: `facet_wrap(~var)` and `facet_grid(rows ~ cols)` split the data
   into a panel grid with facet strips and aligned, shared axes.
+
 * **Scale resolution** (`resolve_scale()` / `facet_*(scales=)`): position scales
   are shared across panels by default; opt into `"free_x"` / `"free_y"` /
   `"free"` (independent per panel) for per-panel ranges and axes.
+
 * **Statistical transforms**: `mark_histogram()` (bin a continuous variable into
   count bars) and `mark_smooth()` (an `"lm"` fit drawn as a line with an optional
   confidence ribbon). `mark_bar()` with no `y` uses the count stat. Map computed
   variables with `after_stat()`, e.g. `y = after_stat(density)`.
+
 * **Position adjustments** (`position =`): grouped bars **stack** by default;
   `"dodge"` places them side by side and `"fill"` normalises each group to 1.
   `mark_point(position = "jitter")` spreads overlapping points.
+
 * **Datashading**: `mark_datashade()` aggregates a large point cloud into a
   density raster (via `vellum::datashade()`) that fills the panel — cost
   independent of point count. `mark_point(auto = TRUE)` switches to this
   automatically above ~50k rows.
+
 * **More marks**: areas/ribbons (`mark_area()`, `mark_ribbon()`), steps
   (`mark_step()`), intervals (`mark_errorbar()`, `mark_linerange()`,
   `mark_segment()`), `mark_boxplot()`, tiles/heatmaps (`mark_tile()`,
   `mark_raster()`), 2-D binning (`mark_bin2d()`, `mark_hex()`), `mark_text()` /
   `mark_label()`, and pie/donut shortcuts (`mark_pie()`, `mark_donut()`).
+
 * **More statistical transforms**: `mark_density()` (kernel density),
   `mark_summary()` (aggregate `y` per category), in addition to the histogram /
   binning / smooth stats. Map computed variables with `after_stat()`.
+
 * **Coordinate systems**: `coord_cartesian()` (view-window zoom),
   `coord_flip()`, `coord_fixed()` / `coord_equal()` (aspect lock), and
   `coord_polar()` (pie / coxcomb / radar).
+
 * **Themes**: `theme_gray()` (default), `theme_minimal()`, `theme_bw()`,
   `theme_classic()`, `theme_void()`, and `theme()` for ad-hoc overrides (panel
   background, gridlines, text, strip background, legend position, margins).
+
 * **Effects & paints**: stroked and point marks take a layer
   `effects = list(...)` argument — `glow()` (neon halo), `outline()` (contrasting
   halo for legibility), and `shadow()` (drop / ambient). `linear_gradient()` /
   `radial_gradient()` can be used as a `fill` value (area / ribbon / bar), and
   `theme_cyberpunk()` ties glow + gradients + a neon palette into the
   [mplcyberpunk](https://github.com/dhaitz/mplcyberpunk) look.
+
 * **Hand-drawn ("sketch") rendering**: `sketch()` (re-exported from vellum) gives
   any geometry mark a wobbly, hachure-filled [Rough.js](https://roughjs.com) look
   via a `sketch =` argument. Unlike a layer effect it is a *geometry* property,
@@ -2957,20 +3045,25 @@ release.
   `theme_sketch()` one-liner (hand-drawn gridlines, axes, ticks, marks and legend
   keys on a paper background). `sketch = NA` forces an element crisp; text is
   never sketched (pair a handwriting font).
+
 * **Composition**: `hconcat()`, `vconcat()`, `concat()`, and `wrap_plots()`
   arrange several plots on a grid; the aligned path lines up panel edges and can
   **collect guides** across sub-plots. `inset()` overlays a plot, and
   `compose_annotation()` adds figure-level titles and auto-tags (`A`, `B`, ...).
+
 * **Repeat**: `repeat_()` replicates a plot across a set of fields, zipping one
   or more encodings to produce a composition.
+
 * **Blend modes**: marks take a `blend =` argument (the CSS `mix-blend-mode` set
   — `"multiply"`, `"screen"`, `"darken"`, ...). The layer composites as one
   isolated group against the panel and earlier layers, e.g. two overlapping
   translucent layers under `"multiply"`.
+
 * **Spatial**: `mark_sf()` draws the geometry column of an `sf` object as a map
   layer (polygons / lines / points), with `coord_sf()` to reproject to a target
   CRS and lock the map aspect ratio; `scale_fill_binned()` / `scale_color_binned()`
   bin a continuous fill/colour into discrete classes for choropleths.
+
 * **Network**: `vgraph()` starts a node-link diagram from an `igraph` graph —
   it runs a layout (stress majorization by default, via `graphlayouts`;
   `"sparse_stress"`, `"backbone"`, `"fr"`, `"circle"`, ... or a matrix/function),
@@ -2982,6 +3075,7 @@ release.
   vertex, at any resolution), so arrowheads land on the node edge. `scale_edge_width()`
   maps a weight to edge width with its own legend.
   `igraph` / `graphlayouts` are optional (`Suggests`).
+
 * Output: `render_plot(plot, path)`; `vellum::render(plot, path)` and
   `print(plot)` also work. The compiler is registered on vellum's
   `as_vellum_scene()` seam.
@@ -2995,6 +3089,7 @@ release.
   the data rows and trained scales that produced it — carried on the compiled
   scene as `attr(scene, "vellumplot_provenance")`. Populated on every compile;
   additive metadata only (raster/PDF output is byte-for-byte unchanged).
+
 * **Continuous integration**: GitHub Actions run `R CMD check` (R
   release/devel/oldrel on Linux + macOS, with the Rust toolchain the `vellum`
   backend needs), including a nightly run against `vellum`'s `main` to catch
