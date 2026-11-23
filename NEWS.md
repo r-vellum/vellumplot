@@ -13,6 +13,11 @@
   constant `color`, and alpha keys of a point or line layer likewise (VP-114).
   They were grey35 and grey20.
 
+* On a narrow date axis the sparser break candidates keep the short labels of
+  the denser ones where those stay distinct (VP-116): six-monthly breaks read
+  "Jan Jul", not pretty()'s "2023-01 2023-07", which were wider than the
+  "Jan Apr Jul" that did not fit.
+
 * `mark_crossbar(width =)` is in data units, as `mark_errorbar(width =)` and
   `mark_bar(width =)` are and as in ggplot2's `geom_crossbar()` (VP-105). It
   was a fraction of the band, so on a continuous x a box could be many times
