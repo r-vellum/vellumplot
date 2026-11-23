@@ -84,20 +84,21 @@ NULL
   scene
 }
 
-# An error bar's cap width in data units along its category axis, as
-# `mark_bar(width =)` is (VP-98, VP-104): a mapped `width` (values, so a
-# per-row cap is honoured), else the constant, else 90% of the band (`band`:
-# the discrete band or the resolution) -- ggplot2's geom_errorbar() default,
-# the width of a default bar, so bars and their error bars line up. Under
-# dodge `.position_native()` has already narrowed it to the slot.
+# An error bar's cap width (or a cross-bar's box width) in data units along
+# its category axis, as `mark_bar(width =)` is (VP-98, VP-104, VP-105): a
+# mapped `width` (values, so a per-row width is honoured), else the constant,
+# else 90% of the band (`band`: the discrete band or the resolution) --
+# ggplot2's geom_errorbar() / geom_crossbar() default, the width of a default
+# bar, so bars, error bars and cross-bars line up. Under dodge
+# `.position_native()` has already narrowed it to the slot.
 .errorbar_width <- function(L, band, n) {
   rep_len(L$values$width %||% L$params$width %||% (0.9 * band), n)
 }
 
-# Each error bar's centre and cap width in native units along its category
-# axis, after any dodge, as `.position_native()` places and narrows them: the
-# error-bar twin of `.bar_geometry()`, for the axis extent training
-# (`.mark_extent_data()`, VP-104).
+# Each error bar's (or cross-bar's) centre and width in native units along its
+# category axis, after any dodge, as `.position_native()` places and narrows
+# them: the error-bar twin of `.bar_geometry()`, for the axis extent training
+# (`.mark_extent_data()`, VP-104, VP-105).
 .errorbar_geometry <- function(L, xp, band, n) {
   w <- .errorbar_width(L, band, n)
   xc <- xp
@@ -152,8 +153,9 @@ NULL
   scene
 }
 
-# An identity cross-bar: a box spanning ymin..ymax (width `width` of the band)
-# with a horizontal line at `y`. ggplot2's geom_crossbar.
+# An identity cross-bar: a box spanning ymin..ymax (`width` wide, in data
+# units, as an error bar's caps, VP-105) with a horizontal line at `y`.
+# ggplot2's geom_crossbar.
 .emit_crossbar <- function(scene, L, scales) {
   n <- L$n
   xn <- rep_len(scales$x$map(L$values$x), n)
@@ -167,7 +169,7 @@ NULL
   col <- ifelse(is.na(fo$col), .geom_paint("grey20"), fo$col)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
   band <- scales$x$band_width %||% .resolution(xn)
-  hw <- rep_len(L$values$width %||% .aes_param(L, "width", 0.5), n) * band / 2
+  hw <- .errorbar_width(L, band, n) / 2
   sk <- .mark_sketch(L, scales)
   for (i in seq_len(n)) {
     r <- .rect_units(
@@ -209,7 +211,9 @@ NULL
         s$x1,
         s$y1,
         sketch = .sketch_bump(sk, i),
-        gp = vellum::vl_gpar(col = col[i], lwd = 1)
+        # the middle line is 2.5 times the box's width, as ggplot2 draws it
+        # (geom_crossbar()'s `middle.linewidth`, formerly `fatten = 2.5`)
+        gp = vellum::vl_gpar(col = col[i], lwd = 2.5)
       ),
       rows = i
     )

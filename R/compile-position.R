@@ -297,13 +297,10 @@ NULL
     )
     off <- d$offset
     # a dodged cap / box shares its slot, as a dodged bar's width does (ggplot2
-    # divides it among the groups): an error bar's width is in data units
-    # (VP-104), a cross-bar's a fraction of the band
-    if (identical(L$mark, "errorbar")) {
+    # divides it among the groups); both widths are in data units (VP-104,
+    # VP-105)
+    if (L$mark %in% c("errorbar", "crossbar")) {
       L$values$width <- .errorbar_width(L, band, n) * d$share
-    } else if (identical(L$mark, "crossbar")) {
-      w <- L$values$width %||% .aes_param(L, "width", 0.5)
-      L$values$width <- rep_len(w, n) * d$share
     }
   }
   fam <- if (identical(ca, "y")) .Y_AES else .X_AES
