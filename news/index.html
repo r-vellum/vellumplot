@@ -64,6 +64,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.21.0.9000" id="vellumplot-02109000-development-version">vellumplot 0.21.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-02109000-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-21-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-21-0-9000"></a></h3>
+<ul><li>Point legend keys of a layer with a tiny constant <code>size</code> are no smaller than a readable minimum (VP-118): <code>theme(legend.key.point.min =)</code>, a radius in mm, defaulting to 1 (an unsized point’s radius). Since VP-113 (0.21.0) a plot of small points keyed its colour, shape, merged and alpha legends at the points’ size, too small to read. The cap at half the key side stays; a size legend keeps its mapped sizes, an <code>override.aes</code> size is kept as given, and SVG icon keys keep the key size.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.21.0" id="vellumplot-0210">vellumplot 0.21.0<a class="anchor" aria-label="anchor" href="#vellumplot-0210"></a></h2>

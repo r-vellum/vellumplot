@@ -2,6 +2,17 @@
 
 ## vellumplot 0.21.0.9000 (development version)
 
+### Bug fixes
+
+- Point legend keys of a layer with a tiny constant `size` are no
+  smaller than a readable minimum (VP-118):
+  `theme(legend.key.point.min =)`, a radius in mm, defaulting to 1 (an
+  unsized point’s radius). Since VP-113 (0.21.0) a plot of small points
+  keyed its colour, shape, merged and alpha legends at the points’ size,
+  too small to read. The cap at half the key side stays; a size legend
+  keeps its mapped sizes, an `override.aes` size is kept as given, and
+  SVG icon keys keep the key size.
+
 ## vellumplot 0.21.0
 
 ### Bug fixes

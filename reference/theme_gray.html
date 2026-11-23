@@ -148,7 +148,10 @@ names, justified along the panel edge by <code>legend.justification</code> (e.g.
 <code>geom = element_geom(ink, paper, accent)</code> sets the default colours of
 unmapped marks (see <code><a href="element_geom.html">element_geom()</a></code>).
 Legend geometry is tunable via <code>legend.key.size</code> (key/swatch side, mm),
-<code>legend.spacing</code> (gap between stacked guides, mm), and <code>legend.margin</code>
+<code>legend.key.point.min</code> (the smallest radius, mm, a point key of a layer
+with a constant <code>size</code> is drawn at, default 1 – an unsized point's
+radius – so tiny points keep readable keys; a size legend keeps its
+mapped sizes), <code>legend.spacing</code> (gap between stacked guides, mm), and <code>legend.margin</code>
 (inset around the legend block, one or four millimetres, <code>t, r, b, l</code>).</p></dd>
 
 

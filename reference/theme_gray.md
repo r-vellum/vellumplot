@@ -76,8 +76,11 @@ set_theme(
   the default colours of unmapped marks (see
   [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)).
   Legend geometry is tunable via `legend.key.size` (key/swatch side,
-  mm), `legend.spacing` (gap between stacked guides, mm), and
-  `legend.margin` (inset around the legend block, one or four
+  mm), `legend.key.point.min` (the smallest radius, mm, a point key of a
+  layer with a constant `size` is drawn at, default 1 – an unsized
+  point's radius – so tiny points keep readable keys; a size legend
+  keeps its mapped sizes), `legend.spacing` (gap between stacked guides,
+  mm), and `legend.margin` (inset around the legend block, one or four
   millimetres, `t, r, b, l`).
 
 - panel_bg, grid_col, label_col, strip_bg:
