@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+* A cartesian panel's scale metadata now says which gridlines the panel draws
+  along each axis (`grid = list(major, minor)`, from the theme's
+  `panel.grid.major.*` / `panel.grid.minor.*`), so a widget re-ticking the
+  axes draws the same set (VW-66). In a composition, a cell themed with
+  `panel.grid = element_blank()` used to get gridlines back in the widget.
+
 * An element set with `theme()` is drawn even when its parent is blank, as in
   ggplot2: `theme_void() |> theme(axis.text.x = element_text())` now draws
   the x axis labels, which a blank `axis.text` used to swallow. The element
