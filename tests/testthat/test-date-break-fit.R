@@ -133,3 +133,56 @@ test_that("each neighbour pair needs only its mean label width (VP-110)", {
   # one label per row: nothing to collide
   expect_true(fits(0.1, n_dodge = 3L))
 })
+
+test_that("a sparser date candidate keeps its denser neighbour's short labels (VP-116)", {
+  rng <- as.numeric(as.Date(c("2022-12-20", "2023-07-15")))
+  proto <- as.Date("2023-01-01")
+  # pretty(x, 2) labels its six-monthly breaks "2023-01 2023-07"; they are
+  # breaks of the three-monthly "Jan Apr Jul" too, so they read "Jan Jul"
+  never <- vellumplot:::.pretty_time_breaks(
+    rng,
+    proto,
+    rng,
+    fit = function(...) FALSE
+  )
+  expect_identical(never$labels, c("Jan", "Jul"))
+  seen <- list()
+  sparse <- vellumplot:::.pretty_time_breaks(
+    rng,
+    proto,
+    rng,
+    fit = function(b, l, d) {
+      seen[[length(seen) + 1L]] <<- l
+      length(b) < 3L
+    }
+  )
+  expect_identical(sparse$labels, c("Jan", "Jul"))
+  # the short labels are tried first; pretty()'s own are not needed
+  expect_false(any(vapply(seen, function(l) "2023-01" %in% l, TRUE)))
+  # a candidate whose own labels are shorter keeps them ("2023 2024", not the
+  # six-monthly "2023-01 2024-01")
+  rng2 <- as.numeric(as.Date(c("2022-12-20", "2024-01-15")))
+  yrs <- vellumplot:::.pretty_time_breaks(
+    rng2,
+    proto,
+    rng2,
+    fit = function(b, l, d) length(b) < 3L
+  )
+  expect_identical(yrs$labels, c("2023", "2024"))
+  # labels that would repeat ("Jan Jul Jan") are not used
+  rng3 <- as.numeric(as.Date(c("2022-12-20", "2024-01-15")))
+  out3 <- vellumplot:::.pretty_time_breaks(
+    rng3,
+    proto,
+    rng3,
+    fit = function(b, l, d) length(b) <= 3L
+  )
+  expect_false(anyDuplicated(out3$labels) > 0)
+})
+
+test_that("a narrow date axis draws the short sparse labels (VP-116)", {
+  d <- data.frame(x = seq(as.Date("2022-12-20"), as.Date("2023-07-15"), "day"))
+  d$y <- seq_len(nrow(d))
+  p <- vplot(d, width = 1, height = 2) |> mark_line(x = x, y = y)
+  expect_identical(.xlabels(p), c("Jan", "Jul"))
+})

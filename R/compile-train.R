@@ -505,12 +505,17 @@ NULL
 # trained range `rng` are dropped before the fit is judged. When nothing fits,
 # the axis keeps the first and last break of the sparsest set that still has
 # two in range, rather than thinning to a single label that gives no sense of
-# the scale (VP-102). Returns the breaks (classed like the data) and their
+# the scale (VP-102). A sparser candidate whose breaks in range are all
+# breaks of denser ones is also tried, first, with their labels ("Jan Jul",
+# not pretty()'s "2023-01 2023-07") when those are shorter and stay distinct:
+# they are no wider than the denser labels that did not fit, where pretty()'s
+# own may be (VP-116). Returns the breaks (classed like the data) and their
 # labels.
 .pretty_time_breaks <- function(rng, raw, domain, dlabels = NULL, fit = NULL) {
   x <- .as_like_time(rng, raw)
   best <- NULL
   multi <- NULL # sparsest candidate with at least two breaks in range
+  seen <- character(0) # each break's label in the denser candidates
   ends <- function(cand) {
     k <- unique(c(1L, length(cand$breaks)))
     list(breaks = cand$breaks[k], labels = cand$labels[k])
@@ -522,18 +527,40 @@ NULL
     } else {
       attr(b, "labels") %||% format(b)
     }
+    lab <- as.character(lab)
     keep <- as.numeric(b) >= min(rng) & as.numeric(b) <= max(rng)
-    best <- list(breaks = b[keep], labels = as.character(lab[keep]))
+    best <- list(breaks = b[keep], labels = lab[keep])
     if (is.null(fit)) {
       return(best)
     }
+    # the denser candidates' labels for the breaks in range, when they all are
+    # their breaks, the labels tell them apart and are shorter
+    short <- NULL
+    at <- seen[as.character(as.numeric(best$breaks))]
+    if (
+      length(at) &&
+        !anyNA(at) &&
+        !anyDuplicated(at) &&
+        sum(nchar(at)) < sum(nchar(best$labels))
+    ) {
+      short <- list(breaks = best$breaks, labels = unname(at))
+    }
+    # remember each break's label, the first (densest) one seen
+    nb <- as.character(as.numeric(b))
+    new <- !nb %in% names(seen)
+    seen <- c(seen, stats::setNames(lab[new], nb[new]))
     if (sum(keep) < 2L) {
       return(if (is.null(multi)) best else ends(multi))
+    }
+    if (
+      !is.null(short) && fit(as.numeric(short$breaks), short$labels, domain)
+    ) {
+      return(short)
     }
     if (fit(as.numeric(best$breaks), best$labels, domain)) {
       return(best)
     }
-    multi <- best
+    multi <- short %||% best
   }
   ends(multi)
 }
