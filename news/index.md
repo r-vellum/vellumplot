@@ -4,6 +4,16 @@
 
 ### Bug fixes
 
+- [`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  draws under
+  [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  and
+  [`coord_radial()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
+  (VP-121), where the layer used to vanish without a warning. An
+  intercept on the radius aesthetic is a circle (an arc over a partial
+  `coord_radial(end =)` sweep) and one on the angle aesthetic a spoke
+  from the inner to the outer radius.
+
 - An aligned composition
   ([`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
   [`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
