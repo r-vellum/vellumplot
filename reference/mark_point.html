@@ -254,6 +254,30 @@ layer, ungrouped), for use with <code><a href="after_stat.html">after_stat()</a>
 <code>y = after_stat(prop)</code>. <code>density</code> is an older name for <code>prop</code>.</p>
     </div>
     <div class="section level2">
+    <h2 id="mappings-and-settings">Mappings and settings<a class="anchor" aria-label="anchor" href="#mappings-and-settings"></a></h2>
+
+
+<p>A mark argument is either a <em>mapping</em>, whose values go through a scale and
+get a legend, or a <em>setting</em>, drawn as given with no legend:</p><ul><li><p>A literal (<code>color = "red"</code>, <code>size = 3</code>) is a setting.</p></li>
+<li><p>A bare name that is a column of the layer's data (<code>color = cyl</code>) is a
+mapping. The layer's data is its own <code>data =</code>, else the plot's.</p></li>
+<li><p>A bare name that is <strong>not</strong> a column, and holds a single value in the
+calling environment, is a setting, like the literal it holds:
+<code>ink &lt;- "#f4eee0"; mark_line(color = ink)</code> draws in that colour with no
+legend. A non-column name holding a longer vector (one value per row)
+still maps. The check is made when the plot is drawn, against the data it
+is drawn with, so a column always wins over a variable of the same name.</p></li>
+<li><p>Any other expression (<code>color = factor(cyl)</code>) is a mapping.</p></li>
+<li><p><code>I(x)</code> always sets: <code>color = I(ink)</code>. <code>!!x</code> injects the value, so it sets
+too.</p></li>
+<li><p><code>.env$x</code> always maps an R value (<code>color = .env$label</code> puts <code>label</code> in a
+one-entry legend titled "label"), and <code>.data$x</code> always reads a column.</p></li>
+</ul><p>The name rule applies to the arguments that train a non-positional scale:
+<code>color</code>, <code>fill</code>, <code>size</code>, <code>shape</code>, <code>alpha</code>, <code>linewidth</code>, <code>linetype</code>,
+<code>pattern</code> and the graph <code>edge_*</code> channels. Positions, <code>label</code> and the
+interactivity arguments (<code>tooltip</code>, <code>data_id</code>, ...) keep their meaning.</p>
+    </div>
+    <div class="section level2">
     <h2 id="interactivity">Interactivity<a class="anchor" aria-label="anchor" href="#interactivity"></a></h2>
 
 

@@ -108,6 +108,7 @@
 
 
     <p>A vellumplot plot is a stack of <em>marks</em>. Each <code>mark_*()</code> appends one drawing layer to the spec, and every mark reads the same grammar: bare column names (or expressions) captured with tidy evaluation become <em>encodings</em>, while scalar values become constant aesthetics. <code>color = hp</code> maps the <code>hp</code> column through a scale; <code>color = "red"</code> paints every element red.</p>
+<p>A bare name that is not a column of the data and holds one value is a setting too, so a colour kept in a variable works like the literal: <code>ink &lt;- "red"</code>, then <code>color = ink</code>. <code>I(x)</code> always sets, and <code>.env$x</code> always maps an R value (for a one-entry legend). The full rule is under “Mappings and settings” in [mark_point()].</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span></span>

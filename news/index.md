@@ -2,6 +2,27 @@
 
 ## vellumplot 0.21.1.9000 (development version)
 
+### Breaking changes
+
+- A bare name in a mark argument that is not a column of the layer’s
+  data and holds a single value is now a setting, not a mapping
+  (VP-126). `ink <- "#f4eee0"; mark_ridgeline(color = ink)` draws in
+  that colour, like `color = "#f4eee0"`; it used to map the value,
+  adding a one-entry legend and a default colour. A non-column name
+  holding one value per row still maps, and a column still wins over a
+  variable of the same name. `I(x)` forces a setting and `.env$x` forces
+  a mapping (with the legend titled `x`). The check runs at draw time
+  against the layer’s own data (else the plot’s), and covers the scaled
+  aesthetics (`color`, `fill`, `size`, `shape`, `alpha`, `linewidth`,
+  `linetype`, `pattern`, `edge_*`); a spec exported with
+  [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  /
+  [`spec_to_json()`](https://r-vellum.github.io/vellumplot/reference/spec_to_json.md)
+  /
+  [`spec_to_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
+  carries the value. See “Mappings and settings” in
+  [`?mark_point`](https://r-vellum.github.io/vellumplot/reference/mark_point.md).
+
 ### Bug fixes
 
 - [`spec_to_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)

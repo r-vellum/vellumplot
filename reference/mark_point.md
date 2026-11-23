@@ -218,6 +218,39 @@ group (or of the layer, ungrouped), for use with
 [`after_stat()`](https://r-vellum.github.io/vellumplot/reference/after_stat.md),
 e.g. `y = after_stat(prop)`. `density` is an older name for `prop`.
 
+## Mappings and settings
+
+A mark argument is either a *mapping*, whose values go through a scale
+and get a legend, or a *setting*, drawn as given with no legend:
+
+- A literal (`color = "red"`, `size = 3`) is a setting.
+
+- A bare name that is a column of the layer's data (`color = cyl`) is a
+  mapping. The layer's data is its own `data =`, else the plot's.
+
+- A bare name that is **not** a column, and holds a single value in the
+  calling environment, is a setting, like the literal it holds:
+  `ink <- "#f4eee0"; mark_line(color = ink)` draws in that colour with
+  no legend. A non-column name holding a longer vector (one value per
+  row) still maps. The check is made when the plot is drawn, against the
+  data it is drawn with, so a column always wins over a variable of the
+  same name.
+
+- Any other expression (`color = factor(cyl)`) is a mapping.
+
+- `I(x)` always sets: `color = I(ink)`. `!!x` injects the value, so it
+  sets too.
+
+- `.env$x` always maps an R value (`color = .env$label` puts `label` in
+  a one-entry legend titled "label"), and `.data$x` always reads a
+  column.
+
+The name rule applies to the arguments that train a non-positional
+scale: `color`, `fill`, `size`, `shape`, `alpha`, `linewidth`,
+`linetype`, `pattern` and the graph `edge_*` channels. Positions,
+`label` and the interactivity arguments (`tooltip`, `data_id`, ...) keep
+their meaning.
+
 ## Interactivity
 
 Any mark accepts reserved, per-row arguments (captured like encodings,

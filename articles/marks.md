@@ -7,6 +7,12 @@ column names (or expressions) captured with tidy evaluation become
 `color = hp` maps the `hp` column through a scale; `color = "red"`
 paints every element red.
 
+A bare name that is not a column of the data and holds one value is a
+setting too, so a colour kept in a variable works like the literal:
+`ink <- "red"`, then `color = ink`. `I(x)` always sets, and `.env$x`
+always maps an R value (for a one-entry legend). The full rule is under
+“Mappings and settings” in \[mark_point()\].
+
 ``` r
 
 vplot(mtcars) |>
