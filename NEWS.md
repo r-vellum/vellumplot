@@ -1,6 +1,18 @@
 # vellumplot 0.21.1.9000 (development version)
 
+## New features
+
+* `mark_node_pie()` wedge colours get a legend (VP-123): the `cols` are the
+  categories of the fill scale, so `labs(fill =)` titles the legend and
+  `scale_fill_manual()` / `scale_fill_brewer()` recolour the wedges; colours
+  given with `fill =` become the scale's values. `size` can be mapped
+  (`size = total`), drawn through the size scale with a size legend.
+
 ## Bug fixes
+
+* `mark_node_pie()` draws a node made of a single category as a whole disc
+  (or ring, for a donut) instead of a 360-degree wedge, whose radial edges
+  showed a seam from the centre to the rim (VP-122).
 
 * `mark_rule()` draws under `coord_polar()` and `coord_radial()` (VP-121),
   where the layer used to vanish without a warning. An intercept on the radius

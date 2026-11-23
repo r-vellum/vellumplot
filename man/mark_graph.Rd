@@ -230,7 +230,10 @@ is a physical width that holds at any figure size.}
 
 \item{size, shape}{For \code{mark_nodes()}, the node size (mm) / shape; a constant or
 a mapped expression. \code{size} is also the label font size for
-\code{mark_node_text()}/\code{mark_edge_text()}.}
+\code{mark_node_text()}/\code{mark_edge_text()}. For \code{mark_node_pie()}, the pie
+radius in mm: a constant (default \code{4}) or a mapped expression such as
+\code{size = total}, drawn through the size scale (see \code{\link[=scale_size]{scale_size()}}) with a
+size legend.}
 
 \item{fill, color, alpha}{Convenience aesthetics; a constant or a mapped
 expression. For nodes, \code{fill} (or \code{color}) is the marker colour; for
@@ -268,7 +271,10 @@ axis (default \code{0.04}). Every hull gets the same rounded margin.}
 
 \item{cols}{For \code{mark_node_pie()}, the compositional columns (a character
 vector of node-table column names, at least two) whose values size each
-node's wedges.}
+node's wedges. The column names are the wedge categories: they train the
+fill scale, so the wedge colours get a legend (title it with
+\code{labs(fill =)}) and \code{scale_fill_manual()} / \code{scale_fill_brewer()} recolour
+them. A node made of a single category is drawn as a whole disc.}
 
 \item{inner}{For \code{mark_node_pie()}, the inner-radius fraction: \code{0} (default)
 draws a pie, \verb{> 0} a donut (e.g. \code{0.5}).}

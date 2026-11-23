@@ -250,6 +250,15 @@ NULL
     }
   }
 
+  # Pie node glyphs: the wedge categories (the `cols`) train the fill scale, so
+  # the wedge colours get a legend and `scale_fill_*()` recolours them (VP-123).
+  # Training reads only the levels; the emitter maps the categories itself.
+  if (identical(layer@mark, "node_pie") && is.null(values$fill)) {
+    cats <- as.character(layer@stat_params$categories)
+    values$fill <- factor(cats, levels = cats)
+    types$fill <- "nominal"
+  }
+
   # Graph identity (inert): lets an interactive host relate nodes to edges for
   # neighbour highlighting. Node marks key by vertex `name`; edge marks carry
   # their two endpoint node `name`s as source/target plus a stable per-edge key

@@ -3594,7 +3594,10 @@ mark_path <- function(
 #'   mapped.
 #' @param size,shape For `mark_nodes()`, the node size (mm) / shape; a constant or
 #'   a mapped expression. `size` is also the label font size for
-#'   `mark_node_text()`/`mark_edge_text()`.
+#'   `mark_node_text()`/`mark_edge_text()`. For `mark_node_pie()`, the pie
+#'   radius in mm: a constant (default `4`) or a mapped expression such as
+#'   `size = total`, drawn through the size scale (see [scale_size()]) with a
+#'   size legend.
 #' @param fill,color,alpha Convenience aesthetics; a constant or a mapped
 #'   expression. For nodes, `fill` (or `color`) is the marker colour; for
 #'   `mark_edges()`, `color`/`alpha` map through the edge scales. For
@@ -3651,7 +3654,10 @@ mark_path <- function(
 #'   tuning for `mark_node_text(repel = TRUE)`; see [mark_text()].
 #' @param cols For `mark_node_pie()`, the compositional columns (a character
 #'   vector of node-table column names, at least two) whose values size each
-#'   node's wedges.
+#'   node's wedges. The column names are the wedge categories: they train the
+#'   fill scale, so the wedge colours get a legend (title it with
+#'   `labs(fill =)`) and `scale_fill_manual()` / `scale_fill_brewer()` recolour
+#'   them. A node made of a single category is drawn as a whole disc.
 #' @param inner For `mark_node_pie()`, the inner-radius fraction: `0` (default)
 #'   draws a pie, `> 0` a donut (e.g. `0.5`).
 #' @param expand For `mark_node_hull()`, the margin to grow each hull outward by
@@ -4175,7 +4181,17 @@ mark_node_pie <- function(
     )
   }
   dots <- .with_default_aes(rlang::enquos(...), rlang::quos(x = x, y = y))
-  .add_layer(
+  # A literal size is the constant radius; anything else maps through the size
+  # scale (a single-value variable becomes a setting at compile, VP-126).
+  size_q <- rlang::enquo(size)
+  size_e <- rlang::quo_get_expr(size_q)
+  if (is.numeric(size_e)) {
+    size <- as.numeric(size_e)
+  } else {
+    dots$size <- size_q
+    size <- 4
+  }
+  plot <- .add_layer(
     plot,
     "node_pie",
     dots,
@@ -4193,6 +4209,12 @@ mark_node_pie <- function(
     z = 3L,
     position = position
   )
+  # Explicit wedge colours become the fill scale's values, so the legend shows
+  # them (VP-123); a fill scale the plot already declares is kept.
+  if (!is.null(fill) && is.null(.scale_for(plot, "fill"))) {
+    plot <- scale_fill_manual(plot, values = stats::setNames(fill, cols))
+  }
+  plot
 }
 
 .check_plot <- function(plot, call = rlang::caller_env()) {

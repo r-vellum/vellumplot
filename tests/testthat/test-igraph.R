@@ -1089,3 +1089,57 @@ test_that("flow-map width tracks the flow, not the drawing order", {
   expect_gt(base, 0)
   expect_gt(.flow_ink(alt), 0)
 })
+
+pie_graph <- function() {
+  g <- igraph::make_ring(4)
+  igraph::V(g)$name <- c("A", "B", "C", "D")
+  igraph::V(g)$a <- c(1, 0, 2, 4)
+  igraph::V(g)$b <- c(0, 3, 2, 0)
+  igraph::V(g)$tot <- igraph::V(g)$a + igraph::V(g)$b
+  g
+}
+
+test_that("a single-category pie is a disc, without a radial seam (VP-122)", {
+  skip_if_not_installed("igraph")
+  p <- vgraph(pie_graph()) |> mark_node_pie(cols = c("a", "b"))
+  e <- vellum::scene_model(vellum::as_vellum_scene(p))$elements
+  e <- e[!is.na(e$id) & grepl("node_pie", e$id), ]
+  # A, B and D are one category each: discs; C is split: two wedges
+  expect_identical(sum(e$mark == "circle"), 3L)
+  expect_identical(sum(e$mark == "sector"), 2L)
+  # a donut's whole ring is outlined along its circles only
+  q <- vgraph(pie_graph()) |> mark_node_pie(cols = c("a", "b"), inner = 0.5)
+  expect_no_error(vellum::scene_raster(vellum::as_vellum_scene(q)))
+})
+
+test_that("pie wedge colours get a legend and follow the fill scale (VP-123)", {
+  skip_if_not_installed("igraph")
+  p <- vgraph(pie_graph()) |> mark_node_pie(cols = c("a", "b"))
+  b <- vellumplot:::.build_panels(p)
+  expect_identical(as.character(b$scales$fill$levels), c("a", "b"))
+  expect_true("legend" %in% vellum::node_names(vellum::as_vellum_scene(p)))
+  # explicit wedge colours are the legend's colours
+  pal <- c("#8c2d19", "#5f7f5a")
+  q <- vgraph(pie_graph()) |> mark_node_pie(cols = c("a", "b"), fill = pal)
+  sq <- vellumplot:::.build_panels(q)$scales$fill
+  expect_identical(toupper(sq$map(c("a", "b"))), toupper(pal))
+  # a fill scale recolours the wedges
+  r <- vgraph(pie_graph()) |>
+    mark_node_pie(cols = c("a", "b")) |>
+    scale_fill_manual(values = c(a = "#000000", b = "#ffffff"))
+  px <- render_px(r)
+  expect_gt(count_near(px, c(0, 0, 0)), 50)
+})
+
+test_that("a pie's size can be mapped, with a size legend (VP-123)", {
+  skip_if_not_installed("igraph")
+  p <- vgraph(pie_graph()) |>
+    mark_node_pie(cols = c("a", "b"), size = tot) |>
+    scale_size(range = c(2, 6))
+  b <- vellumplot:::.build_panels(p)
+  expect_false(is.null(b$scales$size))
+  e <- vellum::scene_model(vellum::as_vellum_scene(p))$elements
+  e <- e[!is.na(e$id) & grepl("node_pie", e$id), ]
+  # tot = 1, 3, 4, 4: the smallest node is the smallest glyph
+  expect_gt(max(e$w), 2 * min(e$w))
+})
