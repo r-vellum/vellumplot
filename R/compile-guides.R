@@ -1596,10 +1596,14 @@ NULL
 # The radius (mm) a point key is drawn at, before its shape's size factor: the
 # point layer's constant `size` (`kp$size`, `.key_point_for_aes()`), as ggplot2
 # keys a layer at its point size (VP-113), capped at half the key side so a
-# large point keeps to its key; half the key side when the layer sets none.
-.key_point_size <- function(kp, m) {
+# large point keeps to its key; half the key side when the layer sets none,
+# and for an SVG icon `shape`, whose `size` scales an icon many times a
+# point's size (`.SVG_MARKER_MM`), so its key keeps filling the key box.
+.key_point_size <- function(kp, m, shape = NULL) {
   half <- m$key / 2
-  if (is.numeric(kp$size)) min(kp$size, half) else half
+  icon <- !is.null(shape) &&
+    !is.na(.shape_svg_d(.shape_parts(.pch_to_shape(shape))$marker))
+  if (is.numeric(kp$size) && !icon) min(kp$size, half) else half
 }
 
 # The colour a line / alpha key draws in: its layer's constant colour, else the
@@ -1692,7 +1696,7 @@ NULL
       kp <- sc$key_point
       .shape_key_grob(
         sh,
-        ov$size %||% .key_point_size(kp, m),
+        ov$size %||% .key_point_size(kp, m, sh),
         ov$fill %||% ov$color %||% kp$col %||% .geom_paint("black"),
         ov$color %||% kp$col %||% .geom_paint("black"),
         sk,
@@ -1772,7 +1776,7 @@ NULL
     plain <- .shape_plain(.shape_parts(.pch_to_shape(sh))$style)
     .shape_key_grob(
       sh,
-      ov$size %||% pick(sc$sizes_mm, .key_point_size(kp, m)),
+      ov$size %||% pick(sc$sizes_mm, .key_point_size(kp, m, sh)),
       ov$fill %||% ov$color %||% sc$fills[i],
       # an open / bordered shape's outline: the colour scale's, else the
       # layer's constant colour
