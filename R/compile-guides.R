@@ -1585,13 +1585,11 @@ NULL
       gp = vellum::vl_gpar(fill = fill, col = col, alpha = alpha)
     ))
   }
-  vellum::points_grob(
-    vellum::vl_unit(0.5, "npc"),
-    vellum::vl_unit(0.5, "npc"),
-    size = vellum::vl_unit(size_mm, "mm"),
-    shape = shape,
-    sketch = sk,
-    gp = vellum::vl_gpar(fill = fill, col = col, alpha = alpha)
+  .key_marker_grob(
+    size_mm,
+    shape,
+    sk,
+    vellum::vl_gpar(fill = fill, col = col, alpha = alpha)
   )
 }
 
@@ -1613,6 +1611,21 @@ NULL
     return(.geom_paint(fallback, role))
   }
   ki$col %||% .geom_paint(ki$default %||% "black")
+}
+
+# A point key's marker, centred in the key cell: one `points_grob()`, or a
+# composite marker's grobs as a list (`.marker_grobs()`, VP-115).
+.key_marker_grob <- function(size_mm, marker, sketch, gp) {
+  parts <- .marker_grobs(
+    vellum::vl_unit(0.5, "npc"),
+    vellum::vl_unit(0.5, "npc"),
+    size_mm,
+    marker,
+    sketch = sketch,
+    gp = gp
+  )
+  grobs <- lapply(parts, `[[`, "grob")
+  if (length(grobs) == 1L) grobs[[1L]] else grobs
 }
 
 .key_grob <- function(g, i, m, sketch = NULL) {
@@ -1656,17 +1669,12 @@ NULL
         ov$fill %||% ov$color %||% kp$col %||% .geom_paint("black"),
         ov$fill %||% kp$fill %||% NA_character_
       )
-      vellum::points_grob(
-        vellum::vl_unit(0.5, "npc"),
-        vellum::vl_unit(0.5, "npc"),
-        size = vellum::vl_unit(
-          (ov$size %||% sc$legend_sizes[i]) *
-            .shape_size_factor(sp$style, sp$marker),
-          "mm"
-        ),
-        shape = sp$marker,
-        sketch = sk,
-        gp = vellum::vl_gpar(
+      .key_marker_grob(
+        (ov$size %||% sc$legend_sizes[i]) *
+          .shape_size_factor(sp$style, sp$marker),
+        sp$marker,
+        sk,
+        vellum::vl_gpar(
           fill = fill,
           # the layer's constant colour, as the points are drawn
           col = .shape_col(
@@ -1813,7 +1821,7 @@ NULL
     sc$glyph %||% "point",
     point = point(),
     line = line(),
-    `line+point` = list(line(), point()),
+    `line+point` = c(list(line()), .grob_list(point())),
     `square+line` = c(.grob_list(swatch("square")), list(line())),
     swatch(sc$glyph)
   )
@@ -1870,17 +1878,12 @@ NULL
   switch(
     glyph,
     point = ,
-    circle = vellum::points_grob(
-      vellum::vl_unit(0.5, "npc"),
-      vellum::vl_unit(0.5, "npc"),
-      size = vellum::vl_unit(
-        (ov$size %||% .key_point_size(kp, m)) *
-          .shape_size_factor(sp$style, sp$marker),
-        "mm"
-      ),
-      shape = sp$marker,
-      sketch = sketch,
-      gp = vellum::vl_gpar(
+    circle = .key_marker_grob(
+      (ov$size %||% .key_point_size(kp, m)) *
+        .shape_size_factor(sp$style, sp$marker),
+      sp$marker,
+      sketch,
+      vellum::vl_gpar(
         fill = fill,
         col = pt_edge,
         alpha = alpha
