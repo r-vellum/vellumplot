@@ -42,6 +42,39 @@ test_that("element_blank on an intermediate propagates to all descendants", {
   expect_true(vellumplot:::.is_blank(rt[["panel.grid.minor.y"]]))
 })
 
+test_that("a theme() element under a blank parent is drawn, as in ggplot2", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    theme_void() |>
+    theme(axis.text.x = element_text(colour = "red"))
+  rt <- resolve(p@theme)
+  # drawn, with its unset properties from the nearest non-blank ancestor
+  # (axis.text is blank in theme_void, so text: base size 11)
+  expect_false(vellumplot:::.is_blank(rt[["axis.text.x"]]))
+  expect_identical(rt[["axis.text.x"]]@colour, "red")
+  expect_identical(rt[["axis.text.x"]]@size, 11)
+  # the sibling the user did not set stays blank
+  expect_true(vellumplot:::.is_blank(rt[["axis.text.y"]]))
+  # and the labels reach the scene
+  sc <- vellum::as_vellum_scene(p)
+  expect_true(any(grepl("#ff0000", vellum::scene_svg(sc), fixed = TRUE)))
+})
+
+test_that("a preset's own children stay blank under a blank parent", {
+  # theme_classic / theme_void blank panel.grid; the gray base's
+  # panel.grid.minor element must not resurface
+  for (preset in list(theme_classic, theme_void)) {
+    rt <- resolve(preset(vplot(mtcars))@theme)
+    expect_true(vellumplot:::.is_blank(rt[["panel.grid.minor.x"]]))
+  }
+  # a theme() element set blank again is blank
+  p <- vplot(mtcars) |>
+    theme_void() |>
+    theme(axis.text.x = element_text(colour = "red")) |>
+    theme(axis.text.x = element_blank())
+  expect_true(vellumplot:::.is_blank(resolve(p@theme)[["axis.text.x"]]))
+})
+
 test_that("presets resolve every drawn leaf to blank or the right element", {
   cls <- list(
     text = vellumplot:::.element_text,
