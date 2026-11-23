@@ -525,6 +525,7 @@ NULL
 # and a non-position scale set to "independent" (`resolve_scale(color = )`) is
 # trained per panel, into `p$aes_sc` (F-8).
 .build_panels <- function(spec, frozen_scales = NULL) {
+  spec <- .settle_constants(spec)
   fa <- .facet_assign(spec)
   # The panel grid, for the date-break label fit (`.axis_label_fit()`), which
   # shares the plot's width among the facet columns.

@@ -158,6 +158,33 @@ The count stat computes \code{count} and \code{prop}, the share of its group (or
 layer, ungrouped), for use with \code{\link[=after_stat]{after_stat()}}, e.g.
 \code{y = after_stat(prop)}. \code{density} is an older name for \code{prop}.
 }
+\section{Mappings and settings}{
+
+A mark argument is either a \emph{mapping}, whose values go through a scale and
+get a legend, or a \emph{setting}, drawn as given with no legend:
+\itemize{
+\item A literal (\code{color = "red"}, \code{size = 3}) is a setting.
+\item A bare name that is a column of the layer's data (\code{color = cyl}) is a
+mapping. The layer's data is its own \verb{data =}, else the plot's.
+\item A bare name that is \strong{not} a column, and holds a single value in the
+calling environment, is a setting, like the literal it holds:
+\verb{ink <- "#f4eee0"; mark_line(color = ink)} draws in that colour with no
+legend. A non-column name holding a longer vector (one value per row)
+still maps. The check is made when the plot is drawn, against the data it
+is drawn with, so a column always wins over a variable of the same name.
+\item Any other expression (\code{color = factor(cyl)}) is a mapping.
+\item \code{I(x)} always sets: \code{color = I(ink)}. \code{!!x} injects the value, so it sets
+too.
+\item \code{.env$x} always maps an R value (\code{color = .env$label} puts \code{label} in a
+one-entry legend titled "label"), and \code{.data$x} always reads a column.
+}
+
+The name rule applies to the arguments that train a non-positional scale:
+\code{color}, \code{fill}, \code{size}, \code{shape}, \code{alpha}, \code{linewidth}, \code{linetype},
+\code{pattern} and the graph \verb{edge_*} channels. Positions, \code{label} and the
+interactivity arguments (\code{tooltip}, \code{data_id}, ...) keep their meaning.
+}
+
 \section{Interactivity}{
 
 Any mark accepts reserved, per-row arguments (captured like encodings, via tidy
