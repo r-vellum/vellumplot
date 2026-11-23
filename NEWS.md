@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+* `guide_bivariate()` sizes its swatches so the break labels on the x edge no
+  longer run into each other (VP-125). The automatic size fitted the widest
+  label, but the first label starts at its edge rather than centring on it,
+  so it could reach the second. The swatch now fits each pair of neighbouring
+  labels plus a 1 mm gap.
+
 * A cartesian panel's scale metadata now says which gridlines the panel draws
   along each axis (`grid = list(major, minor)`, from the theme's
   `panel.grid.major.*` / `panel.grid.minor.*`), so a widget re-ticking the
