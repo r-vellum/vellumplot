@@ -83,7 +83,8 @@ the inset (compose it further or render directly).</p>
 <span>  right <span class="op">=</span> <span class="fl">0.98</span>,</span>
 <span>  top <span class="op">=</span> <span class="fl">0.98</span>,</span>
 <span>  align_to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"panel"</span>, <span class="st">"plot"</span>, <span class="st">"full"</span><span class="op">)</span>,</span>
-<span>  on_top <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  on_top <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  shadow <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -111,10 +112,26 @@ whole <code>base</code> cell).</p></dd>
 <dt id="arg-on-top">on_top<a class="anchor" aria-label="anchor" href="#arg-on-top"></a></dt>
 <dd><p>Draw the inset above (<code>TRUE</code>) or below the base.</p></dd>
 
+
+<dt id="arg-shadow">shadow<a class="anchor" aria-label="anchor" href="#arg-shadow"></a></dt>
+<dd><p>Optional drop shadow cast by the inset, from
+<code><a href="https://r-vellum.github.io/vellum/reference/vl_shadow.html" class="external-link">vellum::vl_shadow()</a></code> (e.g. <code>vl_shadow(dx = 2, dy = 3, blur = 6)</code>).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>PlotComposition</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>A plot with a locked aspect ratio (<code><a href="coord_cartesian.html">coord_fixed()</a></code>, <code><a href="coord_sf.html">coord_sf()</a></code>,
+<code><a href="coord_polar.html">coord_polar()</a></code>, or <code>theme(aspect.ratio =)</code>) is fitted inside the inset
+box: the box shrinks in one direction to the plot's own shape, keeping
+the side nearest the edge it sits on (a box in the right half keeps its
+right edge, one in the top half its top edge), so its background and
+border hug the panel rather than framing empty bands.</p>
+<p>Each inset's viewport is named <code>"inset-&lt;k&gt;"</code> (the k-th inset of the
+composition), so it can be found with <code><a href="https://r-vellum.github.io/vellum/reference/node_names.html" class="external-link">vellum::node_names()</a></code>.</p>
     </div>
 
     <div class="section level2">

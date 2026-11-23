@@ -66,6 +66,26 @@
   scale’s transform, and the labels are placed through a lookup grid
   spaced evenly along the axis.
 
+- A fixed-aspect plot
+  ([`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),
+  [`coord_sf()`](https://r-vellum.github.io/vellumplot/reference/coord_sf.md),
+  [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md),
+  `theme(aspect.ratio =)`) placed with
+  [`inset()`](https://r-vellum.github.io/vellumplot/reference/inset.md)
+  or
+  [`vellum::scene_inset()`](https://r-vellum.github.io/vellum/reference/scene_inset.html)
+  fits its box (VP-120). It kept the whole box and letterboxed its panel
+  inside, so a small locator map sat shrunk in the middle of a mostly
+  empty frame.
+  [`inset()`](https://r-vellum.github.io/vellumplot/reference/inset.md)
+  now shrinks the box to the plot’s shape, keeping the side nearest the
+  edge the box sits on, and an aspect-locked plot’s scene tells
+  [`vellum::scene_inset()`](https://r-vellum.github.io/vellum/reference/scene_inset.html)
+  its shape (needs vellum with `fit =`).
+  [`inset()`](https://r-vellum.github.io/vellumplot/reference/inset.md)
+  also gains `shadow =` for a soft drop shadow, and names each inset’s
+  viewport `"inset-<k>"`.
+
 ## vellumplot 0.21.1
 
 ### Bug fixes
