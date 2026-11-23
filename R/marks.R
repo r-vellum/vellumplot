@@ -2930,7 +2930,11 @@ mark_hex <- function(
 #' @param ... Encodings (tidy-eval): `x`, `y` for boxplot/summary; `x`, `ymin`,
 #'   `ymax` (or `y`, `xmin`, `xmax`) for errorbar/linerange; plus `color`/`fill` (and `linetype` for
 #'   errorbar/linerange).
-#' @param width For `mark_errorbar()`, the cap width as a fraction of the band.
+#' @param width For `mark_errorbar()`, the cap width in data units, as for
+#'   `mark_bar(width =)` and ggplot2's `geom_errorbar()`. `NULL` (default) is
+#'   90% of the band (the resolution on a continuous axis), the width of a
+#'   default bar, so error bars over bars span them. Dodged error bars share
+#'   it among the groups, as dodged bars do.
 #' @param fun For `mark_summary()`, the aggregation function (default `mean`).
 #'   With `fun.min` / `fun.max` it gives the point of the range.
 #' @param fun.data For `mark_summary()`, a summary giving a point and a range
@@ -3055,7 +3059,7 @@ mark_errorbar <- function(
   ...,
   position = "identity",
   orientation = NA,
-  width = 0.5,
+  width = NULL,
   blend = NULL,
   sketch = NULL,
   data = NULL

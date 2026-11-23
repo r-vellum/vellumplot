@@ -34,10 +34,7 @@ NULL
   lwd <- .aes_param(L, "linewidth", 1)
   lty <- .resolve_lty(L, scales, n)
   band <- scales[[ca]]$band_width %||% .resolution(xn)
-  # A mapped `width` lands in values (a constant one in params); read values first
-  # so a per-row cap width is honoured, not silently ignored.
-  width <- rep_len(L$values$width %||% .aes_param(L, "width", 0.5), n)
-  half <- (width * band) / 2
+  half <- .errorbar_width(L, band, n) / 2
   sk <- .mark_sketch(L, scales)
 
   gi <- 0L
@@ -85,6 +82,37 @@ NULL
     gi <- gi + 1L
   }
   scene
+}
+
+# An error bar's cap width in data units along its category axis, as
+# `mark_bar(width =)` is (VP-98, VP-104): a mapped `width` (values, so a
+# per-row cap is honoured), else the constant, else 90% of the band (`band`:
+# the discrete band or the resolution) -- ggplot2's geom_errorbar() default,
+# the width of a default bar, so bars and their error bars line up. Under
+# dodge `.position_native()` has already narrowed it to the slot.
+.errorbar_width <- function(L, band, n) {
+  rep_len(L$values$width %||% L$params$width %||% (0.9 * band), n)
+}
+
+# Each error bar's centre and cap width in native units along its category
+# axis, after any dodge, as `.position_native()` places and narrows them: the
+# error-bar twin of `.bar_geometry()`, for the axis extent training
+# (`.mark_extent_data()`, VP-104).
+.errorbar_geometry <- function(L, xp, band, n) {
+  w <- .errorbar_width(L, band, n)
+  xc <- xp
+  if (L$position %in% c("dodge", "dodge2")) {
+    d <- .dodge_offsets(
+      xp,
+      .group_key(L),
+      L$stat_params$dodge_width %||% (.DODGE_WIDTH * band),
+      preserve = .dodge_preserve(L),
+      n_single = L$dodge_n
+    )
+    xc <- xp + d$offset
+    w <- w * d$share
+  }
+  list(x = xc, width = w)
 }
 
 .emit_linerange <- function(scene, L, scales) {

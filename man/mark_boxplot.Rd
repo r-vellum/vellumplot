@@ -24,7 +24,7 @@ mark_errorbar(
   ...,
   position = "identity",
   orientation = NA,
-  width = 0.5,
+  width = NULL,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -113,7 +113,11 @@ accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
-\item{width}{For \code{mark_errorbar()}, the cap width as a fraction of the band.}
+\item{width}{For \code{mark_errorbar()}, the cap width in data units, as for
+\code{mark_bar(width =)} and ggplot2's \code{geom_errorbar()}. \code{NULL} (default) is
+90\% of the band (the resolution on a continuous axis), the width of a
+default bar, so error bars over bars span them. Dodged error bars share
+it among the groups, as dodged bars do.}
 
 \item{fun}{For \code{mark_summary()}, the aggregation function (default \code{mean}).
 With \code{fun.min} / \code{fun.max} it gives the point of the range.}
