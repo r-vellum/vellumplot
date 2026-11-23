@@ -4,6 +4,13 @@
 
 ### Bug fixes
 
+- A cartesian panel’s scale metadata now says which gridlines the panel
+  draws along each axis (`grid = list(major, minor)`, from the theme’s
+  `panel.grid.major.*` / `panel.grid.minor.*`), so a widget re-ticking
+  the axes draws the same set (VW-66). In a composition, a cell themed
+  with `panel.grid = element_blank()` used to get gridlines back in the
+  widget.
+
 - [`mark_rule()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
   draws under
   [`coord_polar()`](https://r-vellum.github.io/vellumplot/reference/coord_polar.md)
