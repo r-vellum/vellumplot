@@ -6,6 +6,11 @@
   where the layer used to vanish without a warning. An intercept on the radius
   aesthetic is a circle (an arc over a partial `coord_radial(end =)` sweep) and
   one on the angle aesthetic a spoke from the inner to the outer radius.
+* An aligned composition (`concat()`, `hconcat()`, `vconcat()`) draws each
+  sub-plot's own `labs(title, subtitle, caption, tag)` (VP-119). The shared
+  grid reserved their rows but drew nothing into them, leaving a blank band
+  above the panel. Each band spans its own cell and lines up with the other
+  cells of its row.
 
 * An element set with `theme()` is drawn even when its parent is blank, as in
   ggplot2: `theme_void() |> theme(axis.text.x = element_text())` now draws
