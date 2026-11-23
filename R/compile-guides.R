@@ -850,7 +850,8 @@ NULL
   el,
   default_hjust,
   band_w = NA_real_,
-  slot = NULL
+  slot = NULL,
+  col = 1
 ) {
   if (.is_blank(el)) {
     return(scene)
@@ -869,7 +870,7 @@ NULL
   }
   scene <- vellum::push(
     scene,
-    vellum::vl_viewport(row = row, col = 1, colspan = ncol)
+    vellum::vl_viewport(row = row, col = col, colspan = ncol)
   )
   scene <- vellum::draw(
     scene,
@@ -878,11 +879,37 @@ NULL
   vellum::pop(scene)
 }
 
-.draw_title <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
-  .draw_band(scene, row, ncol, text, rt[["plot.title"]], 0, band_w, "title")
+.draw_title <- function(
+  scene,
+  row,
+  ncol,
+  text,
+  rt,
+  band_w = NA_real_,
+  col = 1
+) {
+  .draw_band(
+    scene,
+    row,
+    ncol,
+    text,
+    rt[["plot.title"]],
+    0,
+    band_w,
+    "title",
+    col = col
+  )
 }
 
-.draw_subtitle <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
+.draw_subtitle <- function(
+  scene,
+  row,
+  ncol,
+  text,
+  rt,
+  band_w = NA_real_,
+  col = 1
+) {
   .draw_band(
     scene,
     row,
@@ -891,18 +918,45 @@ NULL
     rt[["plot.subtitle"]],
     0,
     band_w,
-    "subtitle"
+    "subtitle",
+    col = col
   )
 }
 
-.draw_caption <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
-  .draw_band(scene, row, ncol, text, rt[["plot.caption"]], 1, band_w, "caption")
+.draw_caption <- function(
+  scene,
+  row,
+  ncol,
+  text,
+  rt,
+  band_w = NA_real_,
+  col = 1
+) {
+  .draw_band(
+    scene,
+    row,
+    ncol,
+    text,
+    rt[["plot.caption"]],
+    1,
+    band_w,
+    "caption",
+    col = col
+  )
 }
 
-.draw_tag <- function(scene, row, ncol, text, rt, band_w = NA_real_) {
+.draw_tag <- function(
+  scene,
+  row,
+  ncol,
+  text,
+  rt,
+  band_w = NA_real_,
+  col = 1
+) {
   # The tag never wraps -- it is a short corner mark, and its track is sized to a
   # single line -- so it keeps the single-line box.
-  .draw_band(scene, row, ncol, text, rt[["plot.tag"]], 0)
+  .draw_band(scene, row, ncol, text, rt[["plot.tag"]], 0, col = col)
 }
 
 # --- legend -----------------------------------------------------------------
