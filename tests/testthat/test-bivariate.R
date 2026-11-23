@@ -157,7 +157,12 @@ test_that("the bivariate legend measures and draws in every legend position", {
   rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
   m <- vellumplot:::.legend_metrics(rt)
   geo <- vellumplot:::.bi_geom(g, m)
-  expect_equal(geo$side, 3 * 1.5 * m$key)
+  # the swatch is 1.5 x the key size, or wider when the break labels need it
+  # (VP-125; label widths depend on the platform's fonts)
+  expect_equal(
+    geo$side,
+    3 * max(1.5 * m$key, vellumplot:::.bi_tick_span(geo$ticks$x, geo$lab_fs))
+  )
   expect_gt(vellumplot:::.guide_height_mm(g, m), geo$side)
   expect_gt(vellumplot:::.guide_col_width(g, m), geo$side)
   # A long axis title widens the guide rather than overflowing it.
