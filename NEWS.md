@@ -9,6 +9,11 @@
   own elements still follow a blank parent, so `theme_classic()` and
   `theme_void()` draw no minor gridlines.
 
+* `animate()` no longer suggests a `data_id` for `mark_ridgeline()` and
+  `mark_violin()` layers. Each ridge or violin is one outline per group, so
+  its rows are never paired by order; the hint fired whenever the groups had
+  different numbers of rows in different states.
+
 # vellumplot 0.21.1
 
 ## Bug fixes

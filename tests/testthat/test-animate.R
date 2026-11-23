@@ -826,6 +826,28 @@ test_that("animate() suggests data_id when row order decides the pairing (VP-87)
   )
 })
 
+test_that("density shapes are one mark per group, so no row-order hint", {
+  # A violin or ridge is one outline per group: its rows never pair up by
+  # order, so groups that change size between states are no reason to suggest
+  # a data_id.
+  set.seed(1)
+  d <- data.frame(
+    s = rep(c("A", "B"), c(60, 90)),
+    g = c(rep(c("x", "y"), c(20, 40)), rep(c("x", "y"), c(50, 40))),
+    v = rnorm(150)
+  )
+  expect_no_message(
+    vplot(d) |> mark_ridgeline(x = v, y = g) |>
+      transition_states(s) |> animate(nframes = 4),
+    class = "vellumplot_anim_row_order"
+  )
+  expect_no_message(
+    vplot(d) |> mark_violin(x = g, y = v) |>
+      transition_states(s) |> animate(nframes = 4),
+    class = "vellumplot_anim_row_order"
+  )
+})
+
 test_that("start_pause, end_pause and rewind hold and reverse frames (VP-95)", {
   d <- data.frame(t = rep(1:3, each = 2), g = rep(c("a", "b"), 3), v = c(1, 3, 2, 1, 3, 2))
   p <- vplot(d, width = 2, height = 1.5, dpi = 40) |>
