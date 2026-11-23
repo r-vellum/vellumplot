@@ -502,11 +502,19 @@ NULL
 # the labels fit the axis (`fit`, from `.axis_label_fit()`), else the sparsest
 # tried (VP-92). Labels are pretty()'s own ("2000", "Jan", "Jan 08", "06:00"),
 # as ggplot2 shows them, or the scale's `date_labels` format. Breaks outside the
-# trained range `rng` are dropped before the fit is judged. Returns the breaks
-# (classed like the data) and their labels.
+# trained range `rng` are dropped before the fit is judged. When nothing fits,
+# the axis keeps the first and last break of the sparsest set that still has
+# two in range, rather than thinning to a single label that gives no sense of
+# the scale (VP-102). Returns the breaks (classed like the data) and their
+# labels.
 .pretty_time_breaks <- function(rng, raw, domain, dlabels = NULL, fit = NULL) {
   x <- .as_like_time(rng, raw)
   best <- NULL
+  multi <- NULL # sparsest candidate with at least two breaks in range
+  ends <- function(cand) {
+    k <- unique(c(1L, length(cand$breaks)))
+    list(breaks = cand$breaks[k], labels = cand$labels[k])
+  }
   for (n in c(5L, 4L, 3L, 2L, 1L)) {
     b <- pretty(x, n)
     lab <- if (!is.null(dlabels) && inherits(b, c("Date", "POSIXct"))) {
@@ -516,14 +524,18 @@ NULL
     }
     keep <- as.numeric(b) >= min(rng) & as.numeric(b) <= max(rng)
     best <- list(breaks = b[keep], labels = as.character(lab[keep]))
-    if (is.null(fit) || sum(keep) < 2L) {
+    if (is.null(fit)) {
       return(best)
+    }
+    if (sum(keep) < 2L) {
+      return(if (is.null(multi)) best else ends(multi))
     }
     if (fit(as.numeric(best$breaks), best$labels, domain)) {
       return(best)
     }
+    multi <- best
   }
-  best
+  ends(multi)
 }
 
 # Clear space (mm) wanted between neighbouring tick labels. 1 mm, about a third

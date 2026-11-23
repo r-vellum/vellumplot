@@ -77,3 +77,27 @@ test_that("label clearance follows the rotation", {
   expect_equal(clr(10, 3, 0, FALSE), 4)
   expect_equal(clr(10, 3, 90, FALSE), 11)
 })
+
+test_that("a date axis keeps two labels when no breaks fit (VP-102)", {
+  d <- data.frame(
+    d = rep(seq(as.Date("2000-01-01"), as.Date("2019-12-31"), length.out = 80), 2),
+    g = rep(c("a long legend label", "b"), each = 80)
+  )
+  d$v <- sin(seq_len(160) / 7) + rep(c(0, 2), each = 80)
+  p <- vplot(d, width = 3, height = 2.5) |> mark_line(x = d, y = v, color = g)
+  lab <- .xlabels(p)
+  expect_gte(length(lab), 2L)
+  expect_identical(lab[1], "2000")
+  # the fallback directly: a fit that never passes keeps the first and last
+  rng <- as.numeric(as.Date(c("2000-01-01", "2019-12-31")))
+  out <- vellumplot:::.pretty_time_breaks(
+    rng,
+    as.Date("2000-01-01"),
+    rng,
+    fit = function(...) FALSE
+  )
+  expect_identical(out$labels, c("2000", "2010"))
+  # without a fit the densest breaks stay
+  one <- vellumplot:::.pretty_time_breaks(rng, as.Date("2000-01-01"), rng)
+  expect_identical(one$labels, c("2000", "2005", "2010", "2015"))
+})
