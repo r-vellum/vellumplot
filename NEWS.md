@@ -17,6 +17,26 @@
 
 ## Bug fixes
 
+* `spec_to_vegalite()` exports `scale: {zero: false}` on a continuous x or y
+  scale whose data leaves zero out, so the Vega-Lite chart frames the data as
+  vellumplot does instead of stretching the axis to zero (VP-124). A layer's
+  `tooltip =` now exports as Vega-Lite's `tooltip` channel (a plot with any
+  interactivity used to fail to export), and `spec_from_vegalite()` imports
+  the `tooltip` channel (one field, an array of fields, or `true`) into the
+  layer's `tooltip` instead of dropping it.
+
+* `guide_bivariate()` sizes its swatches so the break labels on the x edge no
+  longer run into each other (VP-125). The automatic size fitted the widest
+  label, but the first label starts at its edge rather than centring on it,
+  so it could reach the second. The swatch now fits each pair of neighbouring
+  labels plus a 1 mm gap.
+
+* A cartesian panel's scale metadata now says which gridlines the panel draws
+  along each axis (`grid = list(major, minor)`, from the theme's
+  `panel.grid.major.*` / `panel.grid.minor.*`), so a widget re-ticking the
+  axes draws the same set (VW-66). In a composition, a cell themed with
+  `panel.grid = element_blank()` used to get gridlines back in the widget.
+
 * `mark_rule()` draws under `coord_polar()` and `coord_radial()` (VP-121),
   where the layer used to vanish without a warning. An intercept on the radius
   aesthetic is a circle (an arc over a partial `coord_radial(end =)` sweep) and
@@ -46,6 +66,16 @@
   breaks that left one or two crowded labels at the top of the range. The
   secondary's default breaks now come from the primary scale's transform, and
   the labels are placed through a lookup grid spaced evenly along the axis.
+
+* A fixed-aspect plot (`coord_fixed()`, `coord_sf()`, `coord_polar()`,
+  `theme(aspect.ratio =)`) placed with `inset()` or `vellum::scene_inset()`
+  fits its box (VP-120). It kept the whole box and letterboxed its panel
+  inside, so a small locator map sat shrunk in the middle of a mostly empty
+  frame. `inset()` now shrinks the box to the plot's shape, keeping the side
+  nearest the edge the box sits on, and an aspect-locked plot's scene tells
+  `vellum::scene_inset()` its shape (needs vellum with `fit =`).
+  `inset()` also gains `shadow =` for a soft drop shadow, and names each
+  inset's viewport `"inset-<k>"`.
 
 # vellumplot 0.21.1
 
