@@ -44,7 +44,15 @@ test_that("pch codes map to open, solid and bordered markers", {
       "triangle_down open"
     )
   )
-  expect_identical(.pch_to_shape(c(15, 16, 17, 18, 19)), c("square", "circle", "triangle", "diamond", "circle"))
+  # R draws 15-18 without an outline and 20 at 2/3 the size of 19 (VP-106)
+  expect_identical(
+    .pch_to_shape(c(15, 16, 17, 18, 19, 20)),
+    c(
+      paste(c("square", "circle", "triangle", "diamond"), "bare"),
+      "circle",
+      "circle small"
+    )
+  )
   expect_identical(
     .pch_to_shape(21:25),
     paste(c("circle", "square", "diamond", "triangle", "triangle_down"), "filled")
@@ -103,7 +111,8 @@ test_that("bordered shapes fill with `fill` inside a `color` outline", {
 })
 
 test_that("solid codes and named shapes draw as before", {
-  p <- vplot(mt3) |> mark_point(x = wt, y = mpg, color = fcyl, shape = 16)
+  # (16 has no outline since VP-106; 19 fills and outlines in one colour)
+  p <- vplot(mt3) |> mark_point(x = wt, y = mpg, color = fcyl, shape = 19)
   pts <- pch_points(p)
   marks <- pts[!pts$legend, ]
   expect_true(all(marks$fill == marks$col))

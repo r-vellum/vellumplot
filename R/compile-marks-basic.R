@@ -110,6 +110,10 @@ NULL
       bcol <- .aes_colour(L, scales, "black", fill_fallback = FALSE)
       col[hit] <- rep_len(bcol, n)[hit]
     }
+    # pch 15-18 have no outline and pch 20 is 2/3 the size of 19, as in
+    # ggplot2 (VP-106)
+    col <- .shape_col(sp$style, col)
+    size <- size * .shape_size_factor(sp$style)
     shape <- sp$marker
   }
 

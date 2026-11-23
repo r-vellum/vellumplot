@@ -365,10 +365,14 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # "solid" for a plain marker (filled with the point colour), "open" for
 # "<marker> open" (outline only, in the point colour) and "filled" for
 # "<marker> filled" (ggplot2's bordered shapes 21-25: `fill` inside a `color`
-# outline). Anything else (an SVG icon) is passed through as a solid marker.
+# outline). Two more styles keep ggplot2's solid pch codes apart (VP-106):
+# "bare" for "<marker> bare" (filled, with no outline: pch 15-18, which R
+# draws without a border) and "small" for "<marker> small" (pch 20, the
+# bullet: a solid marker at 2/3 the size of pch 19). Anything else (an SVG
+# icon) is passed through as a solid marker.
 .shape_parts <- function(shape) {
   shape <- as.character(shape)
-  m <- regmatches(shape, regexec("^(.+) (open|filled)$", shape))
+  m <- regmatches(shape, regexec("^(.+) (open|filled|bare|small)$", shape))
   base <- vapply(m, function(z) if (length(z)) z[2] else NA_character_, "")
   ok <- !is.na(base) & base %in% .BUILTIN_SHAPES
   style <- rep("solid", length(shape))
@@ -388,6 +392,28 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   hit <- style == "filled"
   out[hit] <- rep_len(bordered, n)[hit]
   out
+}
+
+# The outline of points drawn with `style` (`.shape_parts()`): `col`, or none
+# for a "bare" marker (pch 15-18, VP-106).
+.shape_col <- function(style, col) {
+  out <- rep_len(col, length(style))
+  out[style == "bare"] <- NA_character_
+  out
+}
+
+# The size factor of points drawn with `style`: ggplot2's pch 20 (the bullet,
+# "small") is 2/3 the size of pch 19 -- R's graphics engine draws it with
+# radius 0.25 against 0.375 -- and every other shape is drawn at its size
+# (VP-106).
+.shape_size_factor <- function(style) {
+  ifelse(style == "small", 2 / 3, 1)
+}
+
+# Is `style` a plain solid marker, filled and outlined in one colour (or not
+# outlined at all), rather than an open or a bordered one?
+.shape_plain <- function(style) {
+  style %in% c("solid", "bare", "small")
 }
 
 # For each resolved shape, the SVG path `d` to draw it as a vector icon, or NA
