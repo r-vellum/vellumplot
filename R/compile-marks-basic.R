@@ -725,6 +725,14 @@ NULL
   }
   yi <- .intercept(L, "yintercept")
   xi <- .intercept(L, "xintercept")
+  if (!is.null(scales$polar)) {
+    # Under coord_polar() / coord_radial() a rule follows the warped grid: an
+    # intercept on the radius aesthetic is a circle (an arc over a partial
+    # sweep), one on the angle aesthetic a spoke from the inner to the outer
+    # radius (VP-121). Before, the cartesian segments landed outside the
+    # [-1, 1] polar panel and were clipped away.
+    return(.emit_rule_polar(scene, L, scales, xi, yi, col, lwd, lty, alpha, sk))
+  }
   if (!is.null(yi)) {
     scene <- draw_family(
       scene,
@@ -758,6 +766,63 @@ NULL
       },
       1L
     )
+  }
+  scene
+}
+
+# `.emit_rule()` under a polar coord. Each intercept is one polyline in data
+# space, densified by `.xy_path()` so a circle bends smoothly: a constant
+# radius traced over the whole angular domain, or a constant angle traced from
+# the radius domain's start to its end. Intercepts outside their scale's
+# domain are dropped (the cartesian path draws them outside the panel, where
+# the clip hides them).
+.emit_rule_polar <- function(scene, L, scales, xi, yi, col, lwd, lty, alpha, sk) {
+  ctx <- scales$polar
+  theta_aes <- ctx$theta_aes
+  r_aes <- if (identical(theta_aes, "x")) "y" else "x"
+  fam <- list(x = xi, y = yi)
+  bump <- 0L
+  for (aes in c("y", "x")) {
+    v <- fam[[aes]]
+    k <- length(v)
+    if (!k) {
+      next
+    }
+    vn <- scales[[aes]]$map(v)
+    colk <- rep_len(col, k)
+    alphak <- rep_len(alpha, k)
+    ltyk <- if (!is.null(lty)) rep_len(lty, k)
+    per_row <- identical(k, L$n)
+    on_r <- identical(aes, r_aes)
+    dom <- range(if (on_r) ctx$r_dom else ctx$theta_dom)
+    other <- range(if (on_r) ctx$theta_dom else ctx$r_dom)
+    for (i in seq_len(k)) {
+      if (!is.finite(vn[i]) || vn[i] < dom[1] || vn[i] > dom[2]) {
+        next
+      }
+      # the varying coordinate: the full angle range for a circle (many
+      # vertices, so the munch has an arc to follow), the radius for a spoke
+      t <- if (on_r) seq(other[1], other[2], length.out = 2L) else other
+      th <- if (on_r) t else rep(vn[i], 2L)
+      rr <- if (on_r) rep(vn[i], 2L) else t
+      xy <- if (identical(theta_aes, "x")) {
+        .xy_path(scales, th, rr)
+      } else {
+        .xy_path(scales, rr, th)
+      }
+      scene <- .draw(
+        scene,
+        vellum::lines_grob(
+          xy$x,
+          xy$y,
+          sketch = .sketch_bump(sk, bump),
+          gp = .gp_stroke(colk, alphak, i, lwd, ltyk)
+        ),
+        # PROVENANCE: one rule per layer row when the intercept is mapped.
+        rows = if (per_row) i
+      )
+      bump <- bump + 1L
+    }
   }
   scene
 }
