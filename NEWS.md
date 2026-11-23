@@ -2,16 +2,6 @@
 
 ## Bug fixes
 
-* A fixed-aspect plot (`coord_fixed()`, `coord_sf()`, `coord_polar()`,
-  `theme(aspect.ratio =)`) placed with `inset()` or `vellum::scene_inset()`
-  fits its box (VP-120). It kept the whole box and letterboxed its panel
-  inside, so a small locator map sat shrunk in the middle of a mostly empty
-  frame. `inset()` now shrinks the box to the plot's shape, keeping the side
-  nearest the edge the box sits on, and an aspect-locked plot's scene tells
-  `vellum::scene_inset()` its shape (needs vellum with `fit =`).
-  `inset()` also gains `shadow =` for a soft drop shadow, and names each
-  inset's viewport `"inset-<k>"`.
-
 * A cartesian panel's scale metadata now says which gridlines the panel draws
   along each axis (`grid = list(major, minor)`, from the theme's
   `panel.grid.major.*` / `panel.grid.minor.*`), so a widget re-ticking the
@@ -47,6 +37,16 @@
   breaks that left one or two crowded labels at the top of the range. The
   secondary's default breaks now come from the primary scale's transform, and
   the labels are placed through a lookup grid spaced evenly along the axis.
+
+* A fixed-aspect plot (`coord_fixed()`, `coord_sf()`, `coord_polar()`,
+  `theme(aspect.ratio =)`) placed with `inset()` or `vellum::scene_inset()`
+  fits its box (VP-120). It kept the whole box and letterboxed its panel
+  inside, so a small locator map sat shrunk in the middle of a mostly empty
+  frame. `inset()` now shrinks the box to the plot's shape, keeping the side
+  nearest the edge the box sits on, and an aspect-locked plot's scene tells
+  `vellum::scene_inset()` its shape (needs vellum with `fit =`).
+  `inset()` also gains `shadow =` for a soft drop shadow, and names each
+  inset's viewport `"inset-<k>"`.
 
 # vellumplot 0.21.1
 
