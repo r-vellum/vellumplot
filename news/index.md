@@ -4,6 +4,13 @@
 
 ### Bug fixes
 
+- A date axis on which no
+  [`pretty()`](https://rdrr.io/r/base/pretty.html) breaks fit keeps the
+  first and last break of the sparsest candidate with two in range, so
+  the reader can still tell the scale (VP-102). VP-92’s fallback could
+  leave a single label (a 20-year axis beside a wide legend showed only
+  “2000”; it now shows “2000” and “2010”).
+
 - `mark_bar(width =)` is honoured (VP-98): it sets the bar width in data
   units, as in ggplot2’s `geom_bar()`, where it was ignored and bars
   stayed at 90% of the resolution. Dodged bars share it, and the
