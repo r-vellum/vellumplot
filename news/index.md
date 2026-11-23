@@ -23,7 +23,25 @@
   carries the value. See “Mappings and settings” in
   [`?mark_point`](https://r-vellum.github.io/vellumplot/reference/mark_point.md).
 
+### New features
+
+- [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  wedge colours get a legend (VP-123): the `cols` are the categories of
+  the fill scale, so the legend names them (untitled unless
+  `labs(fill =)` gives a title) and
+  [`scale_fill_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  /
+  [`scale_fill_brewer()`](https://r-vellum.github.io/vellumplot/reference/scale_viridis.md)
+  recolour the wedges; colours given with `fill =` become the scale’s
+  values. `size` can be mapped (`size = total`), drawn through the size
+  scale with a size legend of neutral grey discs.
+
 ### Bug fixes
+
+- [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  draws a node made of a single category as a whole disc (or ring, for a
+  donut) instead of a 360-degree wedge, whose radial edges showed a seam
+  from the centre to the rim (VP-122).
 
 - [`spec_to_vegalite()`](https://r-vellum.github.io/vellumplot/reference/spec_to_vegalite.md)
   exports `scale: {zero: false}` on a continuous x or y scale whose data

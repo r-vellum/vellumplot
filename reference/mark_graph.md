@@ -302,7 +302,11 @@ mark_node_pie(
 
   For `mark_nodes()`, the node size (mm) / shape; a constant or a mapped
   expression. `size` is also the label font size for
-  `mark_node_text()`/`mark_edge_text()`.
+  `mark_node_text()`/`mark_edge_text()`. For `mark_node_pie()`, the pie
+  radius in mm: a constant (default `4`) or a mapped expression such as
+  `size = total`, drawn through the size scale (see
+  [`scale_size()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md))
+  with a size legend.
 
 - fill, color, alpha:
 
@@ -361,7 +365,14 @@ mark_node_pie(
 
   For `mark_node_pie()`, the compositional columns (a character vector
   of node-table column names, at least two) whose values size each
-  node's wedges.
+  node's wedges. The column names are the wedge categories: they train
+  the fill scale, so the wedge colours get a legend (title it with
+  `labs(fill =)`) and
+  [`scale_fill_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md)
+  /
+  [`scale_fill_brewer()`](https://r-vellum.github.io/vellumplot/reference/scale_viridis.md)
+  recolour them. A node made of a single category is drawn as a whole
+  disc.
 
 - inner:
 

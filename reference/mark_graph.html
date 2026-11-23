@@ -351,7 +351,10 @@ is a physical width that holds at any figure size.</p></dd>
 <dt id="arg-size-shape">size, shape<a class="anchor" aria-label="anchor" href="#arg-size-shape"></a></dt>
 <dd><p>For <code>mark_nodes()</code>, the node size (mm) / shape; a constant or
 a mapped expression. <code>size</code> is also the label font size for
-<code>mark_node_text()</code>/<code>mark_edge_text()</code>.</p></dd>
+<code>mark_node_text()</code>/<code>mark_edge_text()</code>. For <code>mark_node_pie()</code>, the pie
+radius in mm: a constant (default <code>4</code>) or a mapped expression such as
+<code>size = total</code>, drawn through the size scale (see <code><a href="scale_size.html">scale_size()</a></code>) with a
+size legend.</p></dd>
 
 
 <dt id="arg-fill-color-alpha">fill, color, alpha<a class="anchor" aria-label="anchor" href="#arg-fill-color-alpha"></a></dt>
@@ -407,7 +410,10 @@ axis (default <code>0.04</code>). Every hull gets the same rounded margin.</p></
 <dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>
 <dd><p>For <code>mark_node_pie()</code>, the compositional columns (a character
 vector of node-table column names, at least two) whose values size each
-node's wedges.</p></dd>
+node's wedges. The column names are the wedge categories: they train the
+fill scale, so the wedge colours get a legend (title it with
+<code>labs(fill =)</code>) and <code><a href="scale_color_continuous.html">scale_fill_manual()</a></code> / <code><a href="scale_viridis.html">scale_fill_brewer()</a></code> recolour
+them. A node made of a single category is drawn as a whole disc.</p></dd>
 
 
 <dt id="arg-inner">inner<a class="anchor" aria-label="anchor" href="#arg-inner"></a></dt>
