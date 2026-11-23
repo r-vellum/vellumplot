@@ -2,6 +2,20 @@
 
 ## vellumplot 0.21.1.9000 (development version)
 
+### Bug fixes
+
+- An element set with
+  [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  is drawn even when its parent is blank, as in ggplot2:
+  `theme_void() |> theme(axis.text.x = element_text())` now draws the x
+  axis labels, which a blank `axis.text` used to swallow. The element
+  takes its unset properties from its nearest non-blank ancestor. A
+  preset’s own elements still follow a blank parent, so
+  [`theme_classic()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  and
+  [`theme_void()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  draw no minor gridlines.
+
 ## vellumplot 0.21.1
 
 ### Bug fixes
