@@ -842,6 +842,8 @@ NULL
 # `describe = TRUE` (the single-plot compile) also sets the scene's alt text from
 # the titles record the panel build made, so it names the titles that are drawn.
 .draw_plot <- function(scene, spec, frozen_scales = NULL, describe = FALSE) {
+  # Non-column single-value symbols are settings, not mappings (VP-126).
+  spec <- .settle_constants(spec)
   spec0 <- spec # as the user wrote it, for the alt text
   if (!length(spec@layers)) {
     cli::cli_abort(

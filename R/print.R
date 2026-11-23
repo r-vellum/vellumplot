@@ -2,7 +2,28 @@
 NULL
 
 # A short text label for a channel's expression, e.g. `wt` or `factor(cyl)`.
-.channel_label <- function(ch) rlang::as_label(rlang::quo_get_expr(ch@expr))
+.channel_label <- function(ch) .pronoun_label(rlang::quo_get_expr(ch@expr))
+
+# A mapping's label, without a leading `.data$` / `.env$` pronoun: `.env$ink`
+# (an R value mapped on purpose, VP-126) titles its legend "ink".
+.pronoun_label <- function(e) {
+  if (
+    is.call(e) &&
+      length(e) == 3L &&
+      (identical(e[[1]], as.name("$")) || identical(e[[1]], as.name("[["))) &&
+      is.symbol(e[[2]]) &&
+      rlang::as_string(e[[2]]) %in% c(".data", ".env")
+  ) {
+    nm <- e[[3]]
+    if (is.symbol(nm)) {
+      return(rlang::as_string(nm))
+    }
+    if (is.character(nm) && length(nm) == 1L) {
+      return(nm)
+    }
+  }
+  rlang::as_label(e)
+}
 
 # A printable form of a title/label value. Plain strings print verbatim; a rich
 # `md()` object (a `vellum_md_label`) is shown as a placeholder so `paste0()`

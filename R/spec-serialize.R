@@ -774,6 +774,9 @@ as_spec <- function(plot) {
   if (!S7::S7_inherits(plot, PlotSpec)) {
     cli::cli_abort("{.arg plot} must be a {.cls PlotSpec}.")
   }
+  # A non-column single-value symbol is a setting (VP-126): serialize its value,
+  # which survives the round trip, not a name bound only in this session.
+  plot <- .settle_constants(plot)
   if (!is.null(plot@edge_data)) {
     .unserializable(
       "edge_data",
