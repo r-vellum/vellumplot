@@ -90,6 +90,24 @@ test_that("a user breaks/labels override on the secondary axis is honoured", {
   expect_equal(sec$breaks, c(25, 50, 75), tolerance = 0.5)
 })
 
+test_that("a secondary axis on a log10 scale gets log breaks, placed exactly", {
+  # kg on the primary, lb on top: as in ggplot2 the secondary's breaks come
+  # from the primary transform (powers of ten), not a linear pretty().
+  d <- data.frame(x = c(0.005, 6000), y = 1:2)
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    scale_x_continuous(
+      trans = "log10",
+      sec.axis = sec_axis(~ . * 2.20462, name = "lb")
+    )
+  sec <- train(p)$x$sec
+  lab <- as.numeric(sec$labels)
+  expect_true(length(lab) >= 3)
+  expect_true(all(abs(log10(lab) - round(log10(lab))) < 1e-9))
+  # each label sits where the primary axis reads label / 2.20462 kg
+  expect_equal(sec$breaks, log10(lab / 2.20462), tolerance = 1e-4)
+})
+
 test_that("a non-monotonic secondary transform errors clearly", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg) |>
