@@ -296,7 +296,12 @@ NULL
       n_single = L$dodge_n
     )
     off <- d$offset
-    if (L$mark %in% c("errorbar", "crossbar")) {
+    # a dodged cap / box shares its slot, as a dodged bar's width does (ggplot2
+    # divides it among the groups): an error bar's width is in data units
+    # (VP-104), a cross-bar's a fraction of the band
+    if (identical(L$mark, "errorbar")) {
+      L$values$width <- .errorbar_width(L, band, n) * d$share
+    } else if (identical(L$mark, "crossbar")) {
       w <- L$values$width %||% .aes_param(L, "width", 0.5)
       L$values$width <- rep_len(w, n) * d$share
     }
