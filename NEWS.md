@@ -2,6 +2,16 @@
 
 ## Bug fixes
 
+* A fixed-aspect plot (`coord_fixed()`, `coord_sf()`, `coord_polar()`,
+  `theme(aspect.ratio =)`) placed with `inset()` or `vellum::scene_inset()`
+  fits its box (VP-120). It kept the whole box and letterboxed its panel
+  inside, so a small locator map sat shrunk in the middle of a mostly empty
+  frame. `inset()` now shrinks the box to the plot's shape, keeping the side
+  nearest the edge the box sits on, and an aspect-locked plot's scene tells
+  `vellum::scene_inset()` its shape (needs vellum with `fit =`).
+  `inset()` also gains `shadow =` for a soft drop shadow, and names each
+  inset's viewport `"inset-<k>"`.
+
 * An element set with `theme()` is drawn even when its parent is blank, as in
   ggplot2: `theme_void() |> theme(axis.text.x = element_text())` now draws
   the x axis labels, which a blank `axis.text` used to swallow. The element

@@ -1058,8 +1058,92 @@ NULL
       title = scene@title,
       desc = .alt_desc_safe(spec0, built$titles)
     )
+    # An aspect-locked plot (coord_fixed / coord_sf / polar / aspect.ratio)
+    # tells vellum::scene_inset() the shape of its content, so an inset of it
+    # hugs the map instead of framing empty bands (VP-120).
+    attr(scene, "vellum_content_fit") <- .content_fit(lay, rt)
   }
   scene
+}
+
+# The fixed-aspect content box of a plot's layout, in vellum's
+# `vellum_content_fit` form: `c(fixed_w, fixed_h, null_w, null_h)` -- the
+# absolute width and height (mm) of the frame (the theme's plot.margin plus
+# every gutter, title and legend track) and the weights of the aspect-locked
+# `null` (panel) tracks, one null unit being the same size both ways. NULL for
+# a plot without a locked aspect, or a track that cannot be measured.
+.content_fit <- function(lay, rt) {
+  if (!isTRUE(lay$respect)) {
+    return(NULL)
+  }
+  pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  part <- function(units) {
+    n <- length(units)
+    w <- vapply(seq_len(n), function(i) .null_weight(units[i]), numeric(1))
+    f <- vapply(
+      seq_len(n),
+      function(i) {
+        if (w[i] > 0) {
+          0
+        } else {
+          tryCatch(vellum::vl_convert(units[i], "mm"), error = function(e) NA)
+        }
+      },
+      numeric(1)
+    )
+    c(sum(f), sum(w))
+  }
+  wd <- part(lay$widths)
+  ht <- part(lay$heights)
+  out <- c(wd[1] + pm[2] + pm[4], ht[1] + pm[1] + pm[3], wd[2], ht[2])
+  if (!all(is.finite(out)) || any(out[3:4] <= 0)) {
+    return(NULL)
+  }
+  out
+}
+
+# Shrink a box (`w` x `h` mm) to the content of a `.content_fit()` box: the
+# frame plus the largest aspect-locked panel that fits. NULL when the box is
+# too small for the frame.
+.fit_box <- function(cf, w, h) {
+  aw <- w - cf[1]
+  ah <- h - cf[2]
+  if (!is.finite(aw) || !is.finite(ah) || aw <= 0 || ah <= 0) {
+    return(NULL)
+  }
+  u <- min(aw / cf[3], ah / cf[4])
+  c(w = cf[1] + u * cf[3], h = cf[2] + u * cf[4])
+}
+
+# The `.content_fit()` box of a plot, laid out as `.draw_plot()` would lay it
+# out (projected for coord_sf), or NULL when its aspect is free. Builds the
+# panels, so it is only called for an inset whose coord or theme can lock it.
+.plot_content_fit <- function(spec) {
+  co <- .coord_of(spec)
+  rt <- .resolve_theme(.theme_of(spec))
+  maybe <- co@kind %in% c("fixed", "sf", "polar") ||
+    !is.null(rt[["aspect.ratio"]]) ||
+    .has_sf_layer(spec)
+  if (!maybe || !length(spec@layers)) {
+    return(NULL)
+  }
+  sfc <- .dp_setup_coord(spec)
+  built <- .build_panels(sfc$spec)
+  built$sf_geographic <- sfc$sf_geographic
+  built$sf_crs <- sfc$sf_crs
+  guides <- .facet_legend_guides(built)
+  lay <- .build_layout(
+    built,
+    guides,
+    sfc$spec@labels,
+    rt,
+    identical(sfc$co@kind, "flip"),
+    sfc$co,
+    sfc$spec@marginal,
+    page_height = spec@height,
+    page_width = spec@width
+  )
+  .content_fit(lay, rt)
 }
 
 # The scene (page) background, derived from the resolved theme's plot.background:

@@ -296,6 +296,17 @@ area <- function(t, l, b = t, r = l) {
 #' @param align_to Reference box: `"panel"`, `"plot"`, or `"full"` (currently the
 #'   whole `base` cell).
 #' @param on_top Draw the inset above (`TRUE`) or below the base.
+#' @param shadow Optional drop shadow cast by the inset, from
+#'   [vellum::vl_shadow()] (e.g. `vl_shadow(dx = 2, dy = 3, blur = 6)`).
+#' @details A plot with a locked aspect ratio (`coord_fixed()`, `coord_sf()`,
+#'   `coord_polar()`, or `theme(aspect.ratio =)`) is fitted inside the inset
+#'   box: the box shrinks in one direction to the plot's own shape, keeping
+#'   the side nearest the edge it sits on (a box in the right half keeps its
+#'   right edge, one in the top half its top edge), so its background and
+#'   border hug the panel rather than framing empty bands.
+#'
+#'   Each inset's viewport is named `"inset-<k>"` (the k-th inset of the
+#'   composition), so it can be found with [vellum::node_names()].
 #' @return A `PlotComposition`.
 #' @examples
 #' a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
@@ -310,7 +321,8 @@ inset <- function(
   right = 0.98,
   top = 0.98,
   align_to = c("panel", "plot", "full"),
-  on_top = TRUE
+  on_top = TRUE,
+  shadow = NULL
 ) {
   align_to <- match.arg(align_to)
   if (!S7::S7_inherits(plot, PlotSpec)) {
@@ -356,7 +368,8 @@ inset <- function(
       right = right,
       top = top,
       align_to = align_to,
-      on_top = on_top
+      on_top = on_top,
+      shadow = shadow
     ))
   )
   comp
@@ -558,7 +571,13 @@ compose_annotation <- function(
     scene <- .draw_composition(scene, comp)
     scene <- vellum::pop(scene)
   } else {
-    scene <- .compile_composition_independent(scene, comp)
+    # The top-level grid fills the page, so an inset's box has a known size
+    # there (a fixed-aspect inset fits to it, VP-120).
+    scene <- .compile_composition_independent(
+      scene,
+      comp,
+      box_mm = c(comp@width, comp@height) * 25.4
+    )
   }
   # Provenance accumulates across every sub-plot's marks; carry it out (DESIGN §4).
   attr(scene, "vellumplot_provenance") <- .provenance_snapshot()
@@ -569,7 +588,7 @@ compose_annotation <- function(
 # rendered with .draw_plot() (its own grid_layout inside the cell). No alignment
 # or guide collection. Used as a fallback for sub-plots the aligned path can't
 # yet place (facets, polar coords).
-.compile_composition_independent <- function(scene, comp) {
+.compile_composition_independent <- function(scene, comp, box_mm = NULL) {
   ncol <- comp@ncol
   nrow <- comp@nrow
   wfun <- function(v, k) {
@@ -590,7 +609,7 @@ compose_annotation <- function(
   )
   # Insets with `on_top = FALSE` sit behind the base plots (visible only through
   # gaps); the rest overlay after the cells are drawn.
-  scene <- .draw_insets(scene, comp, on_top = FALSE)
+  scene <- .draw_insets(scene, comp, on_top = FALSE, box_mm = box_mm)
   for (i in seq_along(comp@plots)) {
     p <- comp@plots[[i]]
     if (S7::S7_inherits(p, Spacer)) {
@@ -627,27 +646,49 @@ compose_annotation <- function(
     }
     scene <- vellum::pop(scene)
   }
-  scene <- .draw_insets(scene, comp, on_top = TRUE)
+  scene <- .draw_insets(scene, comp, on_top = TRUE, box_mm = box_mm)
   vellum::pop(scene)
 }
 
 # Draw inset plots positioned by fractional coordinates of the current viewport.
 # `on_top` selects which insets to draw: those layered above the base plots
 # (`TRUE`, the default) or behind them (`FALSE`).
-.draw_insets <- function(scene, comp, on_top = TRUE) {
-  for (ins in comp@insets) {
+.draw_insets <- function(scene, comp, on_top = TRUE, box_mm = NULL) {
+  for (k in seq_along(comp@insets)) {
+    ins <- comp@insets[[k]]
     if (!identical(isTRUE(ins$on_top), on_top)) {
       next
     }
-    w <- ins$right - ins$left
-    h <- ins$top - ins$bottom
+    left <- ins$left
+    right <- ins$right
+    bottom <- ins$bottom
+    top <- ins$top
+    # A fixed-aspect inset shrinks to its own shape inside the box, keeping the
+    # side nearest the edge it sits on (VP-120). Needs the box's physical size.
+    if (!is.null(box_mm)) {
+      cf <- .plot_content_fit(ins$plot)
+      fit <- if (!is.null(cf)) {
+        .fit_box(cf, (right - left) * box_mm[1], (top - bottom) * box_mm[2])
+      }
+      if (!is.null(fit)) {
+        fw <- fit[["w"]] / box_mm[1]
+        fh <- fit[["h"]] / box_mm[2]
+        if ((left + right) / 2 >= 0.5) left <- right - fw else right <- left + fw
+        if ((bottom + top) / 2 >= 0.5) bottom <- top - fh else top <- bottom + fh
+      }
+    }
+    w <- right - left
+    h <- top - bottom
     scene <- vellum::push(
       scene,
       vellum::vl_viewport(
-        x = vellum::vl_unit(ins$left + w / 2, "npc"),
-        y = vellum::vl_unit(ins$bottom + h / 2, "npc"),
+        x = vellum::vl_unit(left + w / 2, "npc"),
+        y = vellum::vl_unit(bottom + h / 2, "npc"),
         width = vellum::vl_unit(w, "npc"),
-        height = vellum::vl_unit(h, "npc")
+        height = vellum::vl_unit(h, "npc"),
+        shadow = ins$shadow,
+        # named, so the inset can be found (node_names()) and edited by name
+        name = paste0("inset-", k)
       )
     )
     scene <- .draw_plot(scene, ins$plot)
