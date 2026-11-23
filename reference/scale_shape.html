@@ -131,9 +131,13 @@ marker. As in ggplot2, the open codes (0-14) draw an outline in the point
 colour, the solid ones (15-20) fill with it, and the bordered ones (21-25)
 fill with <code>fill</code> inside a <code>color</code> outline (unfilled when no <code>fill</code> is
 given). Of the solid codes, 15-18 have no outline and 20 is 2/3 the size
-of 19, as in ggplot2. By name, these are <code>"circle open"</code>,
-<code>"circle filled"</code>, <code>"circle bare"</code> (no outline), <code>"circle small"</code> and so
-on for every built-in marker. Named values are matched to levels by name.</p></dd>
+of 19, as in ggplot2. Each code draws at R's size for it: the triangles
+are larger than the circle (equal in area), the bordered square (22) a
+little smaller than the open and solid ones, and so on. By name, these are
+<code>"circle open"</code>, <code>"circle filled"</code>, <code>"circle bare"</code> (no outline),
+<code>"circle small"</code> and so on for every built-in marker; the plain names
+(<code>"triangle"</code>) keep vellum's own sizes. Named values are matched to levels
+by name.</p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>

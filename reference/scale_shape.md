@@ -64,10 +64,13 @@ scale_shape_discrete(
   in the point colour, the solid ones (15-20) fill with it, and the
   bordered ones (21-25) fill with `fill` inside a `color` outline
   (unfilled when no `fill` is given). Of the solid codes, 15-18 have no
-  outline and 20 is 2/3 the size of 19, as in ggplot2. By name, these
-  are `"circle open"`, `"circle filled"`, `"circle bare"` (no outline),
-  `"circle small"` and so on for every built-in marker. Named values are
-  matched to levels by name.
+  outline and 20 is 2/3 the size of 19, as in ggplot2. Each code draws
+  at R's size for it: the triangles are larger than the circle (equal in
+  area), the bordered square (22) a little smaller than the open and
+  solid ones, and so on. By name, these are `"circle open"`,
+  `"circle filled"`, `"circle bare"` (no outline), `"circle small"` and
+  so on for every built-in marker; the plain names (`"triangle"`) keep
+  vellum's own sizes. Named values are matched to levels by name.
 
 - name:
 
