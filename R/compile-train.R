@@ -2167,7 +2167,8 @@ NULL
 # `.emit_bar()` places and sizes it via `.bar_geometry()`, after any dodge), and
 # tiles and rasters on x and y (each cell's centre +/- half its width / height,
 # as `.emit_tile()` / `.emit_raster()` size them, VP-99), and error bars' caps
-# along their category axis (`.errorbar_geometry()`, VP-104) -- ggplot2 trains on
+# and cross-bars' boxes along their category axis (`.errorbar_geometry()`,
+# VP-104, VP-105) -- ggplot2 trains on
 # these xmin/xmax/ymin/ymax edges too. The native extent is taken back through
 # the transform's inverse (a date axis keeps its class). NULL when there are no
 # such marks, the axis is discrete or binned (cells fill their bands), or the
@@ -2188,9 +2189,11 @@ NULL
     v <- L$values[[aes]]
     if (
       is.null(v) ||
-        !L$mark %in% c("bar", "tile", "raster", "errorbar") ||
+        !L$mark %in% c("bar", "tile", "raster", "errorbar", "crossbar") ||
         (identical(L$mark, "bar") && !identical(aes, "x")) ||
-        (identical(L$mark, "errorbar") && !identical(aes, .dodge_axis(L))) ||
+        (L$mark %in%
+          c("errorbar", "crossbar") &&
+          !identical(aes, .dodge_axis(L))) ||
         (!is.numeric(v) && !inherits(v, c("Date", "POSIXct")))
     ) {
       next
@@ -2207,7 +2210,8 @@ NULL
         g <- .bar_geometry(L, vp, .resolution(vp), length(vp))
         c(g$x[ok] - g$width[ok] / 2, g$x[ok] + g$width[ok] / 2)
       },
-      errorbar = {
+      errorbar = ,
+      crossbar = {
         g <- .errorbar_geometry(L, vp, .resolution(vp), length(vp))
         c(g$x[ok] - g$width[ok] / 2, g$x[ok] + g$width[ok] / 2)
       },

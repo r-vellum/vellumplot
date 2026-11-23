@@ -2934,7 +2934,8 @@ mark_hex <- function(
 #'   `mark_bar(width =)` and ggplot2's `geom_errorbar()`. `NULL` (default) is
 #'   90% of the band (the resolution on a continuous axis), the width of a
 #'   default bar, so error bars over bars span them. Dodged error bars share
-#'   it among the groups, as dodged bars do.
+#'   it among the groups, as dodged bars do. For `mark_crossbar()`, the box
+#'   width, the same way (VP-105).
 #' @param fun For `mark_summary()`, the aggregation function (default `mean`).
 #'   With `fun.min` / `fun.max` it gives the point of the range.
 #' @param fun.data For `mark_summary()`, a summary giving a point and a range
@@ -3188,7 +3189,7 @@ mark_crossbar <- function(
   plot,
   ...,
   position = "identity",
-  width = 0.5,
+  width = NULL,
   blend = NULL,
   sketch = NULL,
   data = NULL
