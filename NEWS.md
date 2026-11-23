@@ -18,6 +18,16 @@
   "Jan Jul", not pretty()'s "2023-01 2023-07", which were wider than the
   "Jan Apr Jul" that did not fit.
 
+* ggplot2's point shapes 8 and 11 draw as R draws them (VP-115): 8 is an
+  asterisk (a plus over a cross, at the sizes of 3 and 4) and 11 two overlaid
+  triangles with R's proportions, both stroke-only, in the plot and in the
+  legend keys. Both drew as an open star.
+
+* ggplot2's point shapes 7, 9, 10, 12, 13 and 14 draw both of their glyphs
+  (a square with a cross, a diamond with a plus, a circle with a plus, a
+  square with a plus, a circle with a cross, a square with a triangle), as R
+  does; they drew as the plain open square, diamond or circle.
+
 * `mark_crossbar(width =)` is in data units, as `mark_errorbar(width =)` and
   `mark_bar(width =)` are and as in ggplot2's `geom_crossbar()` (VP-105). It
   was a fraction of the band, so on a continuous x a box could be many times

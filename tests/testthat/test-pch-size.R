@@ -245,3 +245,99 @@ test_that("named markers keep their size; pch keys scale as the points (VP-111)"
     sqrt(4 * pi / (3 * sqrt(3)))
   )
 })
+
+# VP-115: pch 8 draws R's asterisk (a plus over a cross, at pch 3 and 4's
+# sizes) and pch 11 two overlaid triangles with R's vertices, stroke-only, in
+# the plot and the legend keys -- not an open star.
+test_that("pch 8 draws a plus over a cross, pch 11 two overlaid triangles", {
+  expect_identical(
+    unname(vellumplot:::.pch_to_shape(c(8, 11))),
+    c("asterisk open", "triangles open")
+  )
+  p <- vplot(data.frame(x = 1:2, y = 1, s = c(8, 11))) |>
+    mark_point(x = x, y = y, shape = s, size = 2) |>
+    scale_shape_identity()
+  s <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+  val <- function(x) if (is.list(x)) x$v else x
+  pts <- list()
+  paths <- list()
+  walk <- function(node) {
+    if (identical(node$class, "grob_points")) {
+      pts[[length(pts) + 1L]] <<- node
+    }
+    if (identical(node$class, "grob_path")) {
+      paths[[length(paths) + 1L]] <<- node
+    }
+    for (ch in node) if (is.list(ch)) walk(ch)
+  }
+  walk(s$root)
+  shapes <- vapply(pts, function(n) as.character(val(n$shape))[1], "")
+  expect_setequal(shapes, c("plus", "cross"))
+  expect_equal(
+    unique(vapply(pts, function(n) val(n$size$value)[1], 1)),
+    2 * sqrt(2)
+  )
+  expect_false("star" %in% shapes)
+  expect_length(paths, 1L)
+  expect_true(is.na(val(paths[[1]]$gp$fill)) || is.null(val(paths[[1]]$gp$fill)))
+})
+
+test_that(".marker_grobs() places pch 11's vertices as R does", {
+  g <- vellumplot:::.marker_grobs(
+    vellum::vl_unit(0.5, "npc"),
+    vellum::vl_unit(0.5, "npc"),
+    1,
+    "triangles"
+  )
+  expect_length(g, 1L)
+  path <- g[[1]]$grob
+  trc0 <- sqrt(4 * pi / (3 * sqrt(3)))
+  # npc centre, mm offsets
+  yo <- vctrs::field(path@y, "offset")
+  xo <- vctrs::field(path@x, "offset")
+  # apexes at +-TRC0 r, bases at +-0.75 TRC0 r, half width TRC1 r
+  expect_equal(range(yo), c(-trc0, trc0))
+  expect_equal(sort(unique(abs(yo))), trc0 * c(0.75, 1))
+  expect_equal(max(xo), trc0 * sqrt(3) / 2)
+  # pch 8 / 11 legend keys draw the composite markers
+  mt <- transform(mtcars, fcyl = factor(cyl))
+  k <- vellumplot:::.key_marker_grob(2, "asterisk", NULL, vellum::vl_gpar())
+  expect_length(k, 2L)
+  expect_no_error(vellum::as_vellum_scene(
+    vplot(mt) |>
+      mark_point(x = wt, y = mpg, shape = fcyl) |>
+      scale_shape_manual(values = c(8, 11, 2))
+  ))
+})
+
+test_that("pch 7, 9, 10, 12, 13 and 14 overlay their two glyphs as R does", {
+  parts <- function(code) {
+    sh <- vellumplot:::.shape_parts(vellumplot:::.pch_to_shape(code))
+    expect_identical(sh$style, "open")
+    g <- vellumplot:::.marker_grobs(
+      vellum::vl_unit(0.5, "npc"),
+      vellum::vl_unit(0.5, "npc"),
+      1,
+      sh$marker
+    )
+    vapply(
+      g,
+      function(p) {
+        gr <- p$grob
+        if (any(grepl("grob_path", class(gr)))) {
+          "path"
+        } else {
+          sprintf("%s %.4f", gr@shape, vctrs::field(gr@size, "value"))
+        }
+      },
+      ""
+    )
+  }
+  r2 <- sprintf("%.4f", sqrt(2))
+  expect_identical(parts(7), c("square 1.0000", paste("cross", r2)))
+  expect_identical(parts(9), c(paste("diamond", r2), paste("plus", r2)))
+  expect_identical(parts(10), c("circle 1.0000", "plus 1.0000"))
+  expect_identical(parts(12), c("square 1.0000", "plus 1.0000"))
+  expect_identical(parts(13), c("circle 1.0000", paste("cross", r2)))
+  expect_identical(parts(14), c("square 1.0000", "path"))
+})

@@ -137,23 +137,23 @@ NULL
     xy <- .xy_units(scales, xn[idx], yn[idx])
     # PROVENANCE: `idx` are the layer rows in this style group -- the row-key
     # refinement (DESIGN §4). This is the canonical example; other grouped
-    # emitters below should pass `rows = idx` the same way.
-    scene <- .draw(
-      scene,
-      vellum::points_grob(
-        xy$x,
-        xy$y,
-        size = vellum::vl_unit(size[idx], "mm"),
-        shape = shape[idx],
-        sketch = sk,
-        gp = vellum::vl_gpar(
-          fill = fillv[idx[1]],
-          col = col[idx[1]],
-          alpha = gp_alpha(a)
-        )
-      ),
-      rows = idx
+    # emitters below should pass `rows = idx` the same way. A composite marker
+    # (pch 8, 11; VP-115) draws several grobs, each keyed to its own rows.
+    parts <- .marker_grobs(
+      xy$x,
+      xy$y,
+      size[idx],
+      shape[idx],
+      sketch = sk,
+      gp = vellum::vl_gpar(
+        fill = fillv[idx[1]],
+        col = col[idx[1]],
+        alpha = gp_alpha(a)
+      )
     )
+    for (part in parts) {
+      scene <- .draw(scene, part$grob, rows = idx[part$i])
+    }
   }
   # SVG icons: one `svg_grob()` per point. `size` is the icon's longer-side
   # length in mm; the `size` aesthetic scales it, with a factor so a default-size

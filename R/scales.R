@@ -2849,14 +2849,14 @@ scale_edge_alpha <- function(
     "4" = "cross open",
     "5" = "diamond open",
     "6" = "triangle_down open",
-    "7" = "square open",
-    "8" = "star open",
-    "9" = "diamond open",
-    "10" = "circle open",
-    "11" = "star open",
-    "12" = "square open",
-    "13" = "circle open",
-    "14" = "square open",
+    "7" = "square_cross open",
+    "8" = "asterisk open",
+    "9" = "diamond_plus open",
+    "10" = "circle_plus open",
+    "11" = "triangles open",
+    "12" = "square_plus open",
+    "13" = "circle_cross open",
+    "14" = "square_triangle open",
     "15" = "square bare",
     "16" = "circle bare",
     "17" = "triangle bare",
@@ -2877,13 +2877,15 @@ scale_edge_alpha <- function(
 
 # Every built-in shape name a scale accepts: the markers and their open and
 # bordered variants (VP-103), and the outline-free and small solid ones the
-# pch codes 15-18 and 20 name (VP-106).
+# pch codes 15-18 and 20 name (VP-106), and the composite markers of pch
+# 7-14 (VP-115).
 .SHAPE_VALID <- c(
   .SHAPE_PALETTE,
   paste(.SHAPE_PALETTE, "open"),
   paste(.SHAPE_PALETTE, "filled"),
   paste(.SHAPE_PALETTE, "bare"),
-  paste(.SHAPE_PALETTE, "small")
+  paste(.SHAPE_PALETTE, "small"),
+  paste(.COMPOSITE_SHAPES, "open")
 )
 
 # ggplot2's numeric line types (0 = blank, 1 = solid, 2 = dashed, ...) as names.

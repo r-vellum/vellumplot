@@ -358,7 +358,16 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
   "plus",
   "cross",
   "triangle_down",
-  "star"
+  "star",
+  # vellumplot's composite markers (`.marker_grobs()`, VP-115)
+  "square_cross",
+  "asterisk",
+  "diamond_plus",
+  "circle_plus",
+  "triangles",
+  "square_plus",
+  "circle_cross",
+  "square_triangle"
 )
 
 # Split resolved shapes into vellum's marker and a paint style (VP-103):
@@ -412,7 +421,8 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # sqrt(pi / 4) sqrt(2), while the solid 18 keeps `r`; the bordered square (22)
 # has half side `SQRC * r`, sqrt(pi / 4), equal in area to the circle; and the
 # plus (3) and cross (4) reach sqrt(2) r and r along the axes and diagonals,
-# sqrt(2) times vellum's. The bullet (20, "small") has radius 0.25 against
+# sqrt(2) times vellum's. The composite pch 7-14 size their parts themselves
+# (`.COMPOSITE_PARTS`, VP-115). The bullet (20, "small") has radius 0.25 against
 # 0.375, 2/3 of the circle's (VP-106).
 .PCH_SIZE_FACTORS <- c(
   "triangle open" = sqrt(4 * pi / (3 * sqrt(3))),
@@ -439,6 +449,102 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     f[hit] <- k[hit]
   }
   unname(f)
+}
+
+# vellumplot's composite markers, drawn from vellum primitives (VP-115): R's
+# pch 7 to 14 overlay two glyphs. Each part is a vellum marker at a size
+# factor of the point's radius `r` -- R's sizes, as `.PCH_SIZE_FACTORS` gives
+# them for the single glyphs: an open square or circle of radius `r`, a
+# diamond of half-diagonal sqrt(2) r, a plus reaching `r` (pch 10, 12) or
+# sqrt(2) r (pch 8, 9) along the axes, a cross reaching the square's corners
+# (sqrt(2) times vellum's) -- or "tri11" / "tri14", the triangles of pch 11
+# and 14, which are not equilateral and draw as paths (`.marker_path_xy()`).
+.COMPOSITE_PARTS <- list(
+  square_cross = list(square = 1, cross = sqrt(2)),
+  asterisk = list(plus = sqrt(2), cross = sqrt(2)),
+  diamond_plus = list(diamond = sqrt(2), plus = sqrt(2)),
+  circle_plus = list(circle = 1, plus = 1),
+  triangles = list(tri11 = 1),
+  square_plus = list(square = 1, plus = 1),
+  circle_cross = list(circle = 1, cross = sqrt(2)),
+  square_triangle = list(square = 1, tri14 = 1)
+)
+.COMPOSITE_SHAPES <- names(.COMPOSITE_PARTS)
+
+# The vertices (multiples of the radius `r`, y up) and sub-path ids of R's
+# non-equilateral triangle glyphs (`GESymbol()`): pch 11's two triangles, with
+# apexes at `TRC0 * r` above and below the centre, bases at `0.75 * TRC0 * r`
+# and half width `TRC1 * r` -- taller than a regular star of David -- and pch
+# 14's triangle on the square's base corners with its apex at the top middle.
+.marker_path_xy <- function(part) {
+  trc0 <- sqrt(4 * pi / (3 * sqrt(3)))
+  switch(
+    part,
+    tri11 = list(
+      x = trc0 * sqrt(3) / 2 * c(0, 1, -1, 0, 1, -1),
+      y = trc0 * c(-1, 0.75, 0.75, 1, -0.75, -0.75),
+      id = rep(1:2, each = 3L)
+    ),
+    tri14 = list(x = c(-1, 0, 1), y = c(-1, 1, -1), id = rep(1L, 3L))
+  )
+}
+
+# The grobs that draw markers `shape` (built-in markers, `.shape_parts()`'s
+# `marker`) of radius `size` (mm) at `x`, `y` (units), as
+# `list(list(i =, grob =), ...)`: `i` the points each grob draws (for its
+# provenance rows). vellum's own markers are one `points_grob()`; a composite
+# marker (`.COMPOSITE_PARTS`) is one `points_grob()` per marker part over the
+# same points, and a `path_grob()` per point for a triangle part.
+.marker_grobs <- function(x, y, size, shape, sketch = NULL, gp = NULL) {
+  n <- length(shape)
+  size <- rep_len(size, n)
+  gp <- gp %||% vellum::vl_gpar()
+  pts <- function(i, marker, f = 1) {
+    list(
+      i = i,
+      grob = vellum::points_grob(
+        x[i],
+        y[i],
+        size = vellum::vl_unit(size[i] * f, "mm"),
+        shape = marker,
+        sketch = sketch,
+        gp = gp
+      )
+    )
+  }
+  out <- list()
+  plain <- which(!shape %in% .COMPOSITE_SHAPES)
+  if (length(plain)) {
+    out <- list(pts(plain, shape[plain]))
+  }
+  for (cs in intersect(.COMPOSITE_SHAPES, shape)) {
+    hit <- which(shape == cs)
+    parts <- .COMPOSITE_PARTS[[cs]]
+    for (part in names(parts)) {
+      xy <- .marker_path_xy(part)
+      if (is.null(xy)) {
+        out <- c(out, list(pts(hit, part, parts[[part]])))
+        next
+      }
+      m <- length(xy$x)
+      for (k in hit) {
+        out <- c(
+          out,
+          list(list(
+            i = k,
+            grob = vellum::path_grob(
+              x[rep(k, m)] + vellum::vl_unit(xy$x * size[k], "mm"),
+              y[rep(k, m)] + vellum::vl_unit(xy$y * size[k], "mm"),
+              id = xy$id,
+              sketch = sketch,
+              gp = gp
+            )
+          ))
+        )
+      }
+    }
+  }
+  out
 }
 
 # Is `style` a plain solid marker, filled and outlined in one colour (or not
