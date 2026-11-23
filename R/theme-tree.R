@@ -85,6 +85,7 @@ NULL
   legend.position.inside = NULL, # c(x, y) panel npc for "inside"
   legend.justification = "center", # anchor point of an inside legend
   legend.key.size = 4, # mm; default legend key / swatch side
+  legend.key.point.min = 1, # mm; smallest point-key radius (VP-118)
   legend.spacing = 3.5, # mm; gap between stacked guides
   legend.margin = c(2, 2, 2, 2), # mm (t, r, b, l) inset around the legend block
   panel.spacing = 1.6, # mm
@@ -261,6 +262,7 @@ NULL
         nm %in%
           c(
             "legend.key.size",
+            "legend.key.point.min",
             "legend.spacing",
             "panel.spacing",
             "axis.ticks.length"

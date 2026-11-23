@@ -155,7 +155,10 @@ NULL
 #'   `geom = element_geom(ink, paper, accent)` sets the default colours of
 #'   unmapped marks (see [element_geom()]).
 #'   Legend geometry is tunable via `legend.key.size` (key/swatch side, mm),
-#'   `legend.spacing` (gap between stacked guides, mm), and `legend.margin`
+#'   `legend.key.point.min` (the smallest radius, mm, a point key of a layer
+#'   with a constant `size` is drawn at, default 1 -- an unsized point's
+#'   radius -- so tiny points keep readable keys; a size legend keeps its
+#'   mapped sizes), `legend.spacing` (gap between stacked guides, mm), and `legend.margin`
 #'   (inset around the legend block, one or four millimetres, `t, r, b, l`).
 #' @param base_size Base text size in points (default 11). Every text element
 #'   is sized relative to it, so `theme_gray(base_size = 14)` scales titles,
