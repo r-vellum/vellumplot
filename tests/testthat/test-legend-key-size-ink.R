@@ -122,3 +122,23 @@ test_that("alpha keys of a point layer take its colour and size", {
   )
   expect_identical(unique(k$fill), "grey20")
 })
+
+test_that("SVG icon shape keys keep the key size, whatever the layer size", {
+  icons <- c(
+    a = "M0 0 L10 0 L10 10 Z",
+    b = "M0 0 L10 10 L0 10 Z",
+    c = "M5 0 L10 10 L0 10 Z"
+  )
+  p <- suppressWarnings(
+    vplot(mt) |>
+      mark_point(x = wt, y = mpg, shape = fcyl, size = 1.5) |>
+      scale_shape_manual(values = unname(icons))
+  )
+  expect_no_error(vellum::as_vellum_scene(p))
+  half <- vellumplot:::.key_point_size(list(size = 1.5), list(key = 4), icons[[1]])
+  expect_equal(half, 2)
+  expect_equal(
+    vellumplot:::.key_point_size(list(size = 1.5), list(key = 4), "circle"),
+    1.5
+  )
+})

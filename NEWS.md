@@ -6,7 +6,8 @@
   `mark_point(shape = g, size = 1)` keys its shapes at the points' size (with
   R's per-shape size factors), not at the larger default key size. Colour and
   alpha keys of a point layer do the same. A size larger than the key keeps
-  to the key; a size legend keeps its mapped sizes.
+  to the key; a size legend keeps its mapped sizes. SVG icon keys keep the
+  key size, as an icon's `size` scales it far beyond a point's.
 
 * Line-type, line-width and line-only merged legend keys draw in their
   layer's colour, its default black (the theme's ink) unless the layer sets a
