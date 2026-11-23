@@ -101,3 +101,35 @@ test_that("a date axis keeps two labels when no breaks fit (VP-102)", {
   one <- vellumplot:::.pretty_time_breaks(rng, as.Date("2000-01-01"), rng)
   expect_identical(one$labels, c("2000", "2005", "2010", "2015"))
 })
+
+test_that("each neighbour pair needs only its mean label width (VP-110)", {
+  wmm <- function(l) {
+    vellum::vl_convert(vellum::grobwidth(vellumplot:::.txt(l, 8.8)), "mm")
+  }
+  labs <- c("i", "WWWWWW", "i")
+  wn <- wmm("i")
+  ww <- wmm("WWWWWW")
+  gap <- vellumplot:::.LABEL_GAP_MM
+  fits <- function(len, ...) {
+    vellumplot:::.labels_fit(0:2, labs, c(0, 2), len, 8.8, 0, TRUE, ...)
+  }
+  # neighbours one unit apart: a pair needs (wn + ww) / 2 + gap, not ww + gap
+  pair <- (wn + ww) / 2 + gap
+  expect_lt(pair + 0.5, ww + gap) # the widest-label rule would refuse this
+  expect_true(fits(2 * (pair + 0.25)))
+  expect_false(fits(2 * (pair - 0.25)))
+  # order does not matter
+  expect_true(vellumplot:::.labels_fit(
+    c(2, 0, 1),
+    labs[c(3, 1, 2)],
+    c(0, 2),
+    2 * (pair + 0.25),
+    8.8,
+    0,
+    TRUE
+  ))
+  # dodged over two rows, the narrow labels are the row neighbours
+  expect_true(fits(2 * (wn + gap) / 2 + 0.5, n_dodge = 2L))
+  # one label per row: nothing to collide
+  expect_true(fits(0.1, n_dodge = 3L))
+})
