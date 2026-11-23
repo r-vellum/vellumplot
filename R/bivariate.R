@@ -575,10 +575,7 @@ guide_bivariate <- function(
   ticks <- .bi_tick_labels(bi)
   lab_gap <- 0.6
   s <- bi$key_size %||%
-    max(
-      1.5 * m$key,
-      if (!is.null(ticks$x)) .mm_tw(ticks$x, lab_fs) + 1
-    )
+    max(1.5 * m$key, .bi_tick_span(ticks$x, lab_fs))
   side <- bi$dim * s
   xw <- .mm_tw(bi$xlab, m$text_fs)
   yw <- .mm_tw(bi$ylab, m$text_fs)
@@ -622,6 +619,22 @@ guide_bivariate <- function(
     ),
     height = th + cell[2] + m$row_gap
   )
+}
+
+# The swatch side (mm) the x break labels need so neighbours do not touch
+# (VP-125). The labels sit on the swatch edges, `s` apart: the first starts at
+# its edge (left-justified, see `.draw_bi_body()`) and the rest are centred on
+# theirs, so the first pair needs w1 + w2 / 2 and any later pair
+# (w[k] + w[k + 1]) / 2, plus a gap. Sizing to the widest label alone let the
+# left-justified first label run into the second.
+.bi_tick_span <- function(ticks, fs, gap = 1) {
+  if (length(ticks) < 2L) {
+    return(0)
+  }
+  w <- vellum::vl_strwidth(as.character(ticks), "", "plain", fs, unit = "mm")
+  k <- length(w)
+  need <- c(w[1] + w[2] / 2, if (k > 2L) (w[-c(1L, k)] + w[-c(1L, 2L)]) / 2)
+  max(need) + gap
 }
 
 # The class-break labels of each axis (one per swatch edge, dim + 1), or NULL
