@@ -16,6 +16,15 @@
   [`theme_void()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
   draw no minor gridlines.
 
+- [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
+  no longer suggests a `data_id` for
+  [`mark_ridgeline()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
+  and
+  [`mark_violin()`](https://r-vellum.github.io/vellumplot/reference/mark_violin.md)
+  layers. Each ridge or violin is one outline per group, so its rows are
+  never paired by order; the hint fired whenever the groups had
+  different numbers of rows in different states.
+
 ## vellumplot 0.21.1
 
 ### Bug fixes
