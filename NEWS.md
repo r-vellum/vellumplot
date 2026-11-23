@@ -6,6 +6,7 @@
   where the layer used to vanish without a warning. An intercept on the radius
   aesthetic is a circle (an arc over a partial `coord_radial(end =)` sweep) and
   one on the angle aesthetic a spoke from the inner to the outer radius.
+
 * An aligned composition (`concat()`, `hconcat()`, `vconcat()`) draws each
   sub-plot's own `labs(title, subtitle, caption, tag)` (VP-119). The shared
   grid reserved their rows but drew nothing into them, leaving a blank band
