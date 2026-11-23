@@ -4,6 +4,26 @@
 
 ### Bug fixes
 
+- ggplot2’s numeric point shapes draw as in ggplot2 (VP-103). The open
+  codes 0-14 draw only an outline in the point colour, the solid 15-20
+  fill with it, and the bordered 21-25 fill with `fill` inside a `color`
+  outline (black by default; unfilled when no `fill` is given). Before,
+  all three families drew the same solid marker, so
+  `scale_shape_manual(values = c(1, 0))` gave filled circles and
+  squares. The variants are also available by name (`"circle open"`,
+  `"square filled"`, …). Legend keys follow: shape keys, colour and size
+  keys of a point layer with a constant open or bordered shape, merged
+  keys and `override.aes = list(shape = )`. In vellumwidget the hollow
+  fallback dots (VW-63) now pick these marks up.
+
+- A constant numeric `shape` (`mark_point(shape = 1)`) and numeric codes
+  under
+  [`scale_shape_identity()`](https://r-vellum.github.io/vellumplot/reference/scale_color_identity.md)
+  drew no points at all: the code was read as an SVG icon path. They now
+  map to their marker, as
+  [`scale_shape_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_shape.md)
+  values do.
+
 - A date axis on which no
   [`pretty()`](https://rdrr.io/r/base/pretty.html) breaks fit keeps the
   first and last break of the sparsest candidate with two in range, so
