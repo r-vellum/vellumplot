@@ -2,6 +2,14 @@
 
 ## Bug fixes
 
+* `spec_to_vegalite()` exports `scale: {zero: false}` on a continuous x or y
+  scale whose data leaves zero out, so the Vega-Lite chart frames the data as
+  vellumplot does instead of stretching the axis to zero (VP-124). A layer's
+  `tooltip =` now exports as Vega-Lite's `tooltip` channel (a plot with any
+  interactivity used to fail to export), and `spec_from_vegalite()` imports
+  the `tooltip` channel (one field, an array of fields, or `true`) into the
+  layer's `tooltip` instead of dropping it.
+
 * `guide_bivariate()` sizes its swatches so the break labels on the x edge no
   longer run into each other (VP-125). The automatic size fitted the widest
   label, but the first label starts at its edge rather than centring on it,

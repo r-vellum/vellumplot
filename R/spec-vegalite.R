@@ -247,6 +247,52 @@ NULL
   list(resolve = resolve, dropped = dropped)
 }
 
+# Does an exported x / y encoding need `scale: {zero: false}` (VP-124)? Yes for
+# a continuous (linear / sqrt) position scale whose trained domain leaves zero
+# out, when the export sets no explicit domain (which Vega-Lite would honour
+# anyway). A log scale never includes zero in Vega-Lite either.
+.vl_zero_false <- function(sc, def) {
+  if (is.null(sc) || !identical(sc$type, "continuous") || isTRUE(sc$discrete)) {
+    return(FALSE)
+  }
+  if (!is.null(def$scale$domain) || identical(def$scale$type, "log")) {
+    return(FALSE)
+  }
+  if (isTRUE(def$bin) || identical(def$aggregate, "count")) {
+    return(FALSE)
+  }
+  if (!is.null(sc$time_unit)) {
+    return(FALSE)
+  }
+  dom <- suppressWarnings(range(as.numeric(sc$domain), finite = TRUE))
+  all(is.finite(dom)) && (dom[1] > 0 || dom[2] < 0)
+}
+
+# A layer's tooltip quosure -> a Vega-Lite tooltip definition: a bare column
+# is one field; any other expression lists the columns it reads (approximate,
+# reported), as Vega-Lite has no expression tooltip.
+.tooltip_to_vl <- function(q, notes) {
+  e <- rlang::quo_get_expr(q)
+  if (is.symbol(e)) {
+    return(list(field = rlang::as_string(e)))
+  }
+  if (is.character(e) && length(e) == 1L) {
+    return(list(value = e))
+  }
+  # an imported tooltip goes back out as it came in
+  orig <- attr(q, "vellumplot_vl_tooltip")
+  if (!is.null(orig)) {
+    return(orig)
+  }
+  vars <- setdiff(all.vars(e), c("T", "F"))
+  if (!length(vars)) {
+    .vl_note(notes, "tooltip expression")
+    return(NULL)
+  }
+  .vl_note(notes, "tooltip expression (exported as its fields)")
+  lapply(vars, function(v) list(field = v))
+}
+
 #' Convert between a vellumplot spec and a Vega-Lite specification
 #'
 #' `spec_to_vegalite()` translates a [PlotSpec] into a
@@ -262,6 +308,14 @@ NULL
 #' `resolve.scale` comes back as the resolve lattice; an independent axis or
 #' legend over a shared scale, and a resolve between the layers of one view
 #' (e.g. a dual axis), have no vellumplot equivalent and are reported.
+#'
+#' A continuous x or y scale whose data leaves zero out exports
+#' `scale: {zero: false}`, as Vega-Lite otherwise stretches a quantitative
+#' position axis to zero. A layer's `tooltip =` is Vega-Lite's `tooltip`
+#' channel: a column exports as that field, any other expression as the fields
+#' it reads (reported). On import, one tooltip field becomes that column, and
+#' an array of fields (or `tooltip: true`) a "title: value" line per field.
+#' Other interactive arguments (`data_id`, `onclick`, ...) are reported.
 #'
 #' The bridge covers a **documented subset** (see the "Specs, agents, and
 #' interoperability" article). Anything it cannot map — polar/flipped
@@ -284,16 +338,37 @@ NULL
 #' vl$mark
 #' @export
 spec_to_vegalite <- function(plot, json = FALSE) {
-  spec <- as_spec(plot)
   notes <- new.env(parent = emptyenv())
   notes$dropped <- character(0)
+  # Per-row interactivity is not part of the spec IR. A layer's `tooltip`
+  # becomes Vega-Lite's tooltip channel (VP-124); its other interactive
+  # arguments have no Vega-Lite channel and are reported.
+  tips <- list()
+  if (S7::S7_inherits(plot, PlotSpec)) {
+    for (i in seq_along(plot@layers)) {
+      ia <- plot@layers[[i]]@interactivity
+      if (!length(ia)) {
+        next
+      }
+      tips[i] <- list(ia$tooltip)
+      for (a in setdiff(names(ia), "tooltip")) {
+        .vl_note(notes, paste0("interactivity '", a, "'"))
+      }
+      plot@layers[[i]]@interactivity <- list()
+    }
+  }
+  spec <- as_spec(plot)
+  # The trained position scales, for `scale.zero` (VP-124): vellumplot only
+  # reaches zero when the data (or a bar / area) does, while Vega-Lite starts a
+  # quantitative x / y at zero unless told not to.
+  trained <- tryCatch(.build_panels(plot)$scales, error = function(e) NULL)
 
   scales_by_aes <- list()
   for (sc in spec$scales %||% list()) {
     scales_by_aes[[sc$aesthetic]] <- sc
   }
 
-  layer_to_vl <- function(L) {
+  layer_to_vl <- function(L, i) {
     mk <- .vl_get(.VL_MARK, L$mark)
     if (is.null(mk)) {
       .vl_note(notes, paste0("mark '", L$mark, "'"))
@@ -336,7 +411,14 @@ spec_to_vegalite <- function(plot, json = FALSE) {
       if (identical(L[["stat"]], "bin") && aes == "x") {
         d$bin <- TRUE
       }
+      if (aes %in% c("x", "y") && .vl_zero_false(trained[[aes]], d)) {
+        d$scale$zero <- FALSE
+      }
       enc[[vlc]] <- d
+    }
+    tip <- if (i <= length(tips)) tips[[i]]
+    if (!is.null(tip)) {
+      enc$tooltip <- .tooltip_to_vl(tip, notes)
     }
     lstat <- L[["stat"]] %||% "identity"
     if (identical(lstat, "bin") && is.null(enc$y)) {
@@ -353,7 +435,9 @@ spec_to_vegalite <- function(plot, json = FALSE) {
     list(mark = mark_def, encoding = enc)
   }
 
-  layers_vl <- lapply(spec$layers, layer_to_vl)
+  layers_vl <- lapply(seq_along(spec$layers), function(i) {
+    layer_to_vl(spec$layers[[i]], i)
+  })
   out <- list(`$schema` = "https://vega.github.io/schema/vega-lite/v5.json")
   vals <- .values_to_vl(spec$data)
   if (!is.null(vals)) {
@@ -490,7 +574,11 @@ spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
   views <- if (!is.null(view$layer)) view$layer else list(view)
   scales <- list()
 
+  tooltips <- list()
+  tooltip_defs <- list()
   view_to_layer <- function(v) {
+    tooltips[length(tooltips) + 1L] <<- list(.tooltip_from_vl(v$encoding))
+    tooltip_defs[length(tooltip_defs) + 1L] <<- list(v$encoding$tooltip)
     mk <- if (is.list(v$mark)) v$mark$type else v$mark
     mark <- .vl_get(.VL_MARK_INV, mk) %||%
       {
@@ -502,6 +590,9 @@ spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
     stat <- "identity"
     for (vlc in names(v$encoding)) {
       def <- v$encoding[[vlc]]
+      if (identical(vlc, "tooltip")) {
+        next # read above, into the layer's tooltip (VP-124)
+      }
       aes <- .vl_get(.VL_CHANNEL_INV, vlc) %||%
         {
           dropped <<- c(dropped, paste0("channel '", vlc, "'"))
@@ -602,5 +693,58 @@ spec_from_vegalite <- function(vl, data = NULL, env = globalenv()) {
       "x" = "{unique(dropped)}"
     ))
   }
-  from_spec(ir, data = data, env = env)
+  out <- from_spec(ir, data = data, env = env)
+  # The tooltip channel is per-row interactivity, which the spec IR does not
+  # carry: set it on each layer once the plot is built (VP-124).
+  for (i in seq_along(out@layers)) {
+    e <- if (i <= length(tooltips)) tooltips[[i]]
+    if (!is.null(e)) {
+      q <- rlang::new_quosure(e, env)
+      attr(q, "vellumplot_vl_tooltip") <- tooltip_defs[[i]]
+      out@layers[[i]]@interactivity$tooltip <- q
+    }
+  }
+  out
+}
+
+# A Vega-Lite view's tooltip encoding -> the expression vellumplot's `tooltip =`
+# takes, or NULL: one field is that column; an array of fields (or
+# `tooltip: true` / `{content: "data"}`, every encoded field) becomes a
+# "title: value" line per field. A field's `title` labels its line.
+.tooltip_from_vl <- function(enc) {
+  tt <- enc$tooltip
+  if (is.null(tt) || isFALSE(tt)) {
+    return(NULL)
+  }
+  if (isTRUE(tt) || (is.list(tt) && identical(tt$content, "data"))) {
+    tt <- unname(Filter(
+      function(d) is.list(d) && !is.null(d$field),
+      enc[setdiff(names(enc), "tooltip")]
+    ))
+  } else if (is.list(tt) && !is.null(names(tt))) {
+    # a single definition
+    if (!is.null(tt$value)) {
+      return(as.character(tt$value))
+    }
+    if (!is.null(tt$field) && is.null(tt$title)) {
+      return(rlang::sym(tt$field))
+    }
+    tt <- list(tt)
+  }
+  fields <- Filter(function(d) is.list(d) && !is.null(d$field), tt)
+  if (!length(fields)) {
+    return(NULL)
+  }
+  parts <- list()
+  for (k in seq_along(fields)) {
+    d <- fields[[k]]
+    if (k > 1L) {
+      parts <- c(parts, list("\n"))
+    }
+    parts <- c(
+      parts,
+      list(paste0(d$title %||% d$field, ": "), rlang::sym(d$field))
+    )
+  }
+  as.call(c(list(as.name("paste0")), parts))
 }
