@@ -41,6 +41,14 @@ Free facet scales and \code{\link[=resolve_scale]{resolve_scale()}} map to the f
 legend over a shared scale, and a resolve between the layers of one view
 (e.g. a dual axis), have no vellumplot equivalent and are reported.
 
+A continuous x or y scale whose data leaves zero out exports
+\code{scale: {zero: false}}, as Vega-Lite otherwise stretches a quantitative
+position axis to zero. A layer's \verb{tooltip =} is Vega-Lite's \code{tooltip}
+channel: a column exports as that field, any other expression as the fields
+it reads (reported). On import, one tooltip field becomes that column, and
+an array of fields (or \code{tooltip: true}) a "title: value" line per field.
+Other interactive arguments (\code{data_id}, \code{onclick}, ...) are reported.
+
 The bridge covers a \strong{documented subset} (see the "Specs, agents, and
 interoperability" article). Anything it cannot map — polar/flipped
 coordinates, layer effects, patterns, statistical marks without a Vega-Lite

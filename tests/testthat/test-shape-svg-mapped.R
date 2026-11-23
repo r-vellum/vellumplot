@@ -40,10 +40,19 @@ test_that("mapping a column of SVG paths warns once and keeps the mapping", {
   expect_length(sh$levels, 2L)
 })
 
-test_that("an environment variable holding a path warns too", {
+test_that("an environment variable holding one path is that shape (VP-126)", {
+  # a non-column symbol with one value is a setting, like the literal string
   p <- star
+  expect_no_warning(
+    a <- scene_of(vplot(sd) |> mark_point(x = x, y = y, shape = p))
+  )
+  b <- scene_of(vplot(sd) |> mark_point(
+    x = x, y = y, shape = "M12 2l3 7h7l-5.5 4.5 2 7-6.5-4.5-6.5 4.5 2-7L2 9h7z"
+  ))
+  expect_identical(vellum::scene_svg(a), vellum::scene_svg(b))
+  # forcing the mapping with .env$ keeps the VP-112 warning
   expect_warning(
-    scene_of(vplot(sd) |> mark_point(x = x, y = y, shape = p)),
+    scene_of(vplot(sd) |> mark_point(x = x, y = y, shape = .env$p)),
     "literal string"
   )
 })

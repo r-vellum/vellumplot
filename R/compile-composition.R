@@ -45,6 +45,7 @@ NULL
 # without drawing. Returns the resolved theme, built panels, guide list, coord
 # flags and the per-plot layout (which carries the measured gutter sizes).
 .plan_plot <- function(spec) {
+  spec <- .settle_constants(spec)
   rt <- .resolve_theme(.theme_of(spec))
   built <- .build_panels(spec)
   guides <- .facet_legend_guides(built)
@@ -422,7 +423,7 @@ NULL
       yscale = vsc$domain,
       clip = TRUE,
       name = .cell_panel_name("panel-1-1", cell),
-      meta = if (linear) .panel_meta(hsc, vsc, cell),
+      meta = if (linear) .panel_meta(hsc, vsc, cell, rt),
       pannable = linear
     )
   )

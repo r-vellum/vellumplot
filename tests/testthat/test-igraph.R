@@ -1165,3 +1165,15 @@ test_that("a node-pie legend has no default title and grey size keys (VP-123)", 
   )
   expect_identical(kp$col, "grey60")
 })
+
+test_that("a single-value R variable as a pie's size is a setting (VP-123, VP-126)", {
+  skip_if_not_installed("igraph")
+  big <- 5
+  p <- vgraph(pie_graph()) |> mark_node_pie(cols = c("a", "b"), size = big)
+  b <- vellumplot:::.build_panels(p)
+  expect_null(b$scales$size)
+  e <- vellum::scene_model(vellum::as_vellum_scene(p))$elements
+  e <- e[!is.na(e$id) & grepl("node_pie", e$id), ]
+  # every glyph has the same size, as with the literal size = 5
+  expect_equal(max(e$w), min(e$w), tolerance = 1e-4)
+})

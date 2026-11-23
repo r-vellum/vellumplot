@@ -235,3 +235,73 @@ test_that("a facet-level Vega-Lite resolve imports as the resolve lattice", {
   expect_warning(p3 <- spec_from_vegalite(layered), "between layers")
   expect_length(p3@resolve, 0L)
 })
+
+test_that("a position scale that leaves zero out exports scale.zero = false (VP-124)", {
+  pt <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  enc <- spec_to_vegalite(pt)$encoding
+  expect_false(enc$x$scale$zero)
+  expect_false(enc$y$scale$zero)
+
+  # a bar reaches zero, so Vega-Lite's default already matches
+  bar <- vplot(data.frame(g = c("a", "b"), v = c(3, 5))) |>
+    mark_bar(x = g, y = v)
+  enc <- spec_to_vegalite(bar)$encoding
+  expect_null(enc$y$scale$zero)
+  expect_null(enc$x$scale$zero)
+
+  # data spanning zero needs nothing either
+  sp <- vplot(data.frame(a = c(-1, 2), b = c(-3, 4))) |> mark_point(x = a, y = b)
+  expect_null(spec_to_vegalite(sp)$encoding$x$scale$zero)
+
+  # an explicit domain is already honoured by Vega-Lite
+  lim <- pt |> scale_x_continuous(limits = c(1, 6))
+  enc <- spec_to_vegalite(lim)$encoding
+  expect_null(enc$x$scale$zero)
+  expect_equal(unlist(enc$x$scale$domain), c(1, 6))
+})
+
+test_that("the tooltip channel imports and exports (VP-124)", {
+  base <- '{"data": {"values": [{"a": 1, "b": 3, "n": "x"}, {"a": 2, "b": 5, "n": "y"}]},
+    "mark": "point",
+    "encoding": {"x": {"field": "a", "type": "quantitative"},
+                 "y": {"field": "b", "type": "quantitative"}, TT}}'
+  with_tt <- function(tt) sub("TT", tt, base, fixed = TRUE)
+  tip <- function(p) rlang::quo_get_expr(p@layers[[1]]@interactivity$tooltip)
+
+  # one field: that column
+  p1 <- expect_silent(spec_from_vegalite(with_tt('"tooltip": {"field": "n"}')))
+  expect_identical(tip(p1), quote(n))
+
+  # an array: a "title: value" line per field
+  p2 <- spec_from_vegalite(with_tt(
+    '"tooltip": [{"field": "n", "title": "Name"}, {"field": "b"}]'
+  ))
+  expect_identical(tip(p2), quote(paste0("Name: ", n, "\n", "b: ", b)))
+
+  # `true`: every encoded field
+  p3 <- spec_from_vegalite(with_tt('"tooltip": true'))
+  expect_identical(tip(p3), quote(paste0("a: ", a, "\n", "b: ", b)))
+
+  # a constant
+  p4 <- spec_from_vegalite(with_tt('"tooltip": {"value": "hi"}'))
+  expect_identical(tip(p4), "hi")
+
+  # the imported plot renders, and its tooltip goes back out unchanged
+  expect_no_error(vellum::as_vellum_scene(p2))
+  expect_identical(
+    spec_to_vegalite(p2)$encoding$tooltip,
+    list(list(field = "n", title = "Name"), list(field = "b"))
+  )
+  expect_true(spec_to_vegalite(p3)$encoding$tooltip)
+
+  # a vellumplot tooltip exports: a column as is, an expression as its fields
+  pt <- vplot(mtcars) |> mark_point(x = wt, y = mpg, tooltip = mpg)
+  expect_identical(spec_to_vegalite(pt)$encoding$tooltip, list(field = "mpg"))
+  pe <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, tooltip = paste(cyl, gear))
+  expect_warning(vl <- spec_to_vegalite(pe), "tooltip expression")
+  expect_identical(
+    vl$encoding$tooltip,
+    list(list(field = "cyl"), list(field = "gear"))
+  )
+})

@@ -99,6 +99,22 @@ NULL
       if (.cond_constant(encoding[[nm]], nm)) {
         params[[nm]] <- rlang::eval_tidy(encoding[[nm]]@expr)
       }
+    } else if (is.call(e) && identical(rlang::call_name(e), "I") && length(e) == 2L) {
+      # I(x): force a setting (VP-126). The value is evaluated in the calling
+      # environment now and kept as a constant, whatever `x` is: a variable
+      # (`I(ink)`), a literal or a call. A positional constant stays a channel
+      # (a constant coordinate trains the position scale, as `y = 0` does). If
+      # `x` cannot be evaluated outside the data (a data column), it stays the
+      # channel `I(x)`, mapping the column's values as they are.
+      inner <- rlang::new_quosure(e[[2]], rlang::quo_get_env(q))
+      val <- tryCatch(rlang::eval_tidy(inner), error = function(err) NULL)
+      if (is.null(val)) {
+        encoding[[nm]] <- channel(expr = q)
+      } else if (nm %in% .COORD_AES) {
+        encoding[[nm]] <- channel(expr = rlang::new_quosure(val, rlang::quo_get_env(q)))
+      } else {
+        params[[nm]] <- val
+      }
     } else if (is.call(e) && .is_paint_call(e)) {
       # fill = linear_gradient(...) -> a paint *value* (constant aesthetic), not a
       # data channel: evaluate it now and store as a param.
@@ -500,6 +516,107 @@ after_stat <- function(x) x
 # `.resolve_layer()` gives it no values, so it trains no scale and adds no
 # legend. Decided from the expression alone, so a spec read back from its IR
 # (`.channel_from_ir()`) is treated the same way.
+# --- bare symbols that name R values, not columns (VP-126) -------------------
+#
+# A bare symbol in a mark argument is a mapping when it names a column of the
+# layer's data. When it does not, and it evaluates in the calling environment
+# to a single value, it is a setting, exactly like the literal it holds:
+# `ink <- "#f4eee0"; mark_line(color = ink)` draws in that colour with no
+# legend, as `color = "#f4eee0"` does. A non-column symbol holding a longer
+# vector still maps (it is a per-row variable that lives outside the data).
+# `I(x)` always sets; `.env$x` always maps an R value, and `.data$x` always
+# reads a column.
+#
+# The check needs the data, so it runs at compile time against the layer's
+# effective data (its own `data =`, else the plot's), not when the mark is
+# added: the plot data can still change (`vplot() |> mark_*(data =)`, a spec
+# rebuilt from JSON), and a graph's edge layers read the edge table. It covers
+# the aesthetics that train a non-positional scale (colour, fill, size, shape,
+# alpha, line width / type, pattern, the edge channels) -- where a mapping draws
+# a legend and a setting does not. Positions, labels and the interactivity
+# arguments are untouched. A `condition()` whose `if_true` is such a symbol
+# gets the constant branch, so it is a setting too (VP-86).
+.SETTLE_AES <- c(
+  "color",
+  "fill",
+  "size",
+  "shape",
+  "pattern",
+  "edge_width",
+  "linewidth",
+  "alpha",
+  "linetype",
+  "edge_color",
+  "edge_alpha",
+  "edge_linetype"
+)
+
+# The single value a bare non-column symbol holds, or NULL when the channel is
+# not such a symbol (a column, a call, a longer vector, unbound).
+.symbol_constant <- function(q, cols) {
+  e <- rlang::quo_get_expr(q)
+  if (!is.symbol(e) || rlang::as_string(e) %in% cols) {
+    return(NULL)
+  }
+  val <- tryCatch(rlang::eval_tidy(q), error = function(err) NULL)
+  if (is.null(val) || length(val) != 1L) {
+    return(NULL)
+  }
+  if (!is.atomic(val) && !inherits(val, c("vellum_gradient", "vellum_pattern"))) {
+    return(NULL)
+  }
+  val
+}
+
+# Turn each layer's non-column single-value symbols into settings (see above).
+# Idempotent: a settled channel is a param and is not visited again.
+.settle_constants <- function(spec) {
+  if (!S7::S7_inherits(spec, PlotSpec) || !length(spec@layers)) {
+    return(spec)
+  }
+  changed <- FALSE
+  layers <- lapply(spec@layers, function(layer) {
+    enc <- layer@encoding
+    todo <- intersect(names(enc), .SETTLE_AES)
+    if (!length(todo)) {
+      return(layer)
+    }
+    cols <- names(layer@data %||% spec@data)
+    params <- layer@params
+    hit <- FALSE
+    for (nm in todo) {
+      ch <- enc[[nm]]
+      if (isTRUE(ch@after)) {
+        next
+      }
+      val <- .symbol_constant(ch@expr, cols)
+      if (is.null(val)) {
+        next
+      }
+      hit <- TRUE
+      params[[nm]] <- val
+      if (is.null(ch@condition)) {
+        enc[[nm]] <- NULL
+      } else {
+        # keep the condition; its `if_true` is now the constant itself
+        ch@expr <- rlang::new_quosure(val, rlang::quo_get_env(ch@expr))
+        enc[[nm]] <- ch
+      }
+    }
+    if (!hit) {
+      return(layer)
+    }
+    changed <<- TRUE
+    layer@encoding <- enc
+    layer@params <- params
+    layer
+  })
+  if (changed) {
+    spec@layers <- layers
+  }
+  spec
+}
+
 .cond_constant <- function(ch, nm) {
   if (is.null(ch@condition) || isTRUE(ch@after) || nm %in% .COORD_AES) {
     return(FALSE)
@@ -546,6 +663,30 @@ after_stat <- function(x) x
 #' `x = wt, y = mpg, color = hp`. Scalar values (e.g. `size = 3`,
 #' `color = "red"`) are treated as constant aesthetics rather than data
 #' mappings.
+#'
+#' @section Mappings and settings:
+#' A mark argument is either a *mapping*, whose values go through a scale and
+#' get a legend, or a *setting*, drawn as given with no legend:
+#'
+#' * A literal (`color = "red"`, `size = 3`) is a setting.
+#' * A bare name that is a column of the layer's data (`color = cyl`) is a
+#'   mapping. The layer's data is its own `data =`, else the plot's.
+#' * A bare name that is **not** a column, and holds a single value in the
+#'   calling environment, is a setting, like the literal it holds:
+#'   `ink <- "#f4eee0"; mark_line(color = ink)` draws in that colour with no
+#'   legend. A non-column name holding a longer vector (one value per row)
+#'   still maps. The check is made when the plot is drawn, against the data it
+#'   is drawn with, so a column always wins over a variable of the same name.
+#' * Any other expression (`color = factor(cyl)`) is a mapping.
+#' * `I(x)` always sets: `color = I(ink)`. `!!x` injects the value, so it sets
+#'   too.
+#' * `.env$x` always maps an R value (`color = .env$label` puts `label` in a
+#'   one-entry legend titled "label"), and `.data$x` always reads a column.
+#'
+#' The name rule applies to the arguments that train a non-positional scale:
+#' `color`, `fill`, `size`, `shape`, `alpha`, `linewidth`, `linetype`,
+#' `pattern` and the graph `edge_*` channels. Positions, `label` and the
+#' interactivity arguments (`tooltip`, `data_id`, ...) keep their meaning.
 #'
 #' @param plot A [PlotSpec] (from [vplot()]).
 #' @param ... Encodings: named channel expressions such as `x`, `y`, `color`,

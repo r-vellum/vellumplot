@@ -214,6 +214,29 @@ test_that("an aligned composition keeps the plot margin around its grid", {
   }
 })
 
+test_that("a panel's meta says which gridlines it draws (VW-66)", {
+  grid_meta <- function(x) {
+    m <- vellum::scene_model(vellum::as_vellum_scene(x))$panels
+    m$meta[grepl("panel-1-1$", m$name)]
+  }
+  a <- p_xy(wt, mpg)
+  b <- p_xy(hp, mpg) |>
+    theme(panel.grid = element_blank())
+  c <- p_xy(hp, mpg) |>
+    theme(panel.grid.minor.x = element_blank(), panel.grid.major.y = element_blank())
+  m <- grid_meta(hconcat(a, b, c))
+  expect_identical(m[[1]]$scales$x$grid, list(major = TRUE, minor = TRUE))
+  expect_identical(m[[2]]$scales$x$grid, list(major = FALSE, minor = FALSE))
+  expect_identical(m[[2]]$scales$y$grid, list(major = FALSE, minor = FALSE))
+  expect_identical(m[[3]]$scales$x$grid, list(major = TRUE, minor = FALSE))
+  expect_identical(m[[3]]$scales$y$grid, list(major = FALSE, minor = TRUE))
+  # a single plot too; a discrete axis has no minor gridlines
+  d <- vplot(mtcars) |> mark_bar(x = factor(cyl), y = mpg, stat = "summary")
+  s <- grid_meta(d)[[1]]$scales
+  expect_false(s$x$grid$minor)
+  expect_true(s$y$grid$minor)
+})
+
 test_that("an aligned composition draws each sub-plot's title, subtitle and caption (VP-119)", {
   # The aligned grid reserved rows for a cell's labs() bands but never drew
   # them, leaving a blank band where the title should be.

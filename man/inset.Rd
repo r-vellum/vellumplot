@@ -12,7 +12,8 @@ inset(
   right = 0.98,
   top = 0.98,
   align_to = c("panel", "plot", "full"),
-  on_top = TRUE
+  on_top = TRUE,
+  shadow = NULL
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ inset(
 whole \code{base} cell).}
 
 \item{on_top}{Draw the inset above (\code{TRUE}) or below the base.}
+
+\item{shadow}{Optional drop shadow cast by the inset, from
+\code{\link[vellum:vl_shadow]{vellum::vl_shadow()}} (e.g. \code{vl_shadow(dx = 2, dy = 3, blur = 6)}).}
 }
 \value{
 A \code{PlotComposition}.
@@ -34,6 +38,17 @@ A \code{PlotComposition}.
 Place \code{plot} as an inset over \code{base}, positioned by fractional coordinates
 (0–1) of the chosen reference box. Returns a 1-cell \code{PlotComposition} carrying
 the inset (compose it further or render directly).
+}
+\details{
+A plot with a locked aspect ratio (\code{coord_fixed()}, \code{coord_sf()},
+\code{coord_polar()}, or \code{theme(aspect.ratio =)}) is fitted inside the inset
+box: the box shrinks in one direction to the plot's own shape, keeping
+the side nearest the edge it sits on (a box in the right half keeps its
+right edge, one in the top half its top edge), so its background and
+border hug the panel rather than framing empty bands.
+
+Each inset's viewport is named \code{"inset-<k>"} (the k-th inset of the
+composition), so it can be found with \code{\link[vellum:node_names]{vellum::node_names()}}.
 }
 \examples{
 a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
