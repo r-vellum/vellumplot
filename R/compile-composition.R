@@ -422,7 +422,7 @@ NULL
       yscale = vsc$domain,
       clip = TRUE,
       name = .cell_panel_name("panel-1-1", cell),
-      meta = if (linear) .panel_meta(hsc, vsc, cell),
+      meta = if (linear) .panel_meta(hsc, vsc, cell, rt),
       pannable = linear
     )
   )

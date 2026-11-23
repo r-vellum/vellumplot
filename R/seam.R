@@ -86,8 +86,22 @@ NULL
 
 # The panel viewport `meta`: the scale descriptors plus, inside a composition,
 # the `cell` id the panel belongs to (see `.comp_cell_id()`).
-.panel_meta <- function(hsc, vsc, cell = NULL) {
+.panel_meta <- function(hsc, vsc, cell = NULL, rt = NULL) {
   meta <- .panel_scales_meta(hsc, vsc)
+  if (!is.null(meta) && !is.null(rt)) {
+    # Which gridlines the panel draws along each axis (`.draw_panel_bg()`), so a
+    # host re-ticking the axes draws the same set: a cell themed with
+    # `panel.grid = element_blank()` keeps no gridlines under zoom (VW-66).
+    grid <- function(sc, axis) {
+      list(
+        major = !.is_blank(rt[[paste0("panel.grid.major.", axis)]]),
+        minor = !.is_blank(rt[[paste0("panel.grid.minor.", axis)]]) &&
+          !isTRUE(sc$discrete)
+      )
+    }
+    if (!is.null(meta$scales$x)) meta$scales$x$grid <- grid(hsc, "x")
+    if (!is.null(meta$scales$y)) meta$scales$y$grid <- grid(vsc, "y")
+  }
   if (!is.null(cell)) {
     meta$cell <- cell
   }
@@ -468,7 +482,7 @@ NULL
           # coords (NULL when none is set, leaving the common path untouched).
           mask = .clip_mask(spec@clip, hsc$domain, vsc$domain),
           name = vname,
-          meta = .panel_meta(hsc, vsc, .mark_ctx$panel_cell),
+          meta = .panel_meta(hsc, vsc, .mark_ctx$panel_cell, rt),
           # Clip-stable pan group so a host (vellumwidget) can pan/zoom this panel's
           # marks while its clip + the axes stay fixed (axis-aware zoom). Inert for
           # static rendering. This cartesian branch (incl. coord_flip) is pannable;
