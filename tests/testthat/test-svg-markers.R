@@ -38,7 +38,7 @@ test_that("mark_point with an SVG shape does not perturb scene_model()", {
   # a keyed multi-sub-path svg path is not yet wired for interactivity, but it
   # must never break scene_model() when a layer is otherwise interactive.
   d <- data.frame(x = 1:3, y = 1:3, g = c("a", "b", "c"))
-  p <- vplot(d) |> mark_point(x = x, y = y, shape = star, data_id = g)
+  p <- vplot(d) |> mark_point(x = x, y = y, shape = !!star, data_id = g)
   expect_no_error(vellum::scene_model(vellum::as_vellum_scene(p)))
 })
 
@@ -68,9 +68,9 @@ test_that("a .svg file shape is read and drawn", {
   writeLines(sprintf('<svg viewBox="0 0 24 24"><path d="%s"/></svg>', star), f)
   d <- data.frame(x = 1:3, y = 1:3)
   expect_no_error(vellum::as_vellum_scene(
-    vplot(d) |> mark_point(x = x, y = y, shape = f)
+    vplot(d) |> mark_point(x = x, y = y, shape = !!f)
   ))
-  expect_gt(n_paths(vplot(d) |> mark_point(x = x, y = y, shape = f)), 0L)
+  expect_gt(n_paths(vplot(d) |> mark_point(x = x, y = y, shape = !!f)), 0L)
 })
 
 test_that("built-in shapes are unchanged (no <path> markers, no error)", {

@@ -144,8 +144,8 @@ test_that("legend keys of unmapped colour follow the theme", {
   p <- vplot(mtcars) |>
     mark_point(x = wt, y = mpg, size = hp) |>
     theme_cyberpunk()
-  key <- tolower(vellumplot:::.col_mix(cp_ink, cp_paper, 0.35))
-  expect_true(key %in% scene_paints(p))
+  # point keys take the points' default, the theme's ink (VP-109)
+  expect_true(tolower(cp_ink) %in% scene_paints(p))
   expect_false("grey35" %in% scene_paints(p))
 })
 

@@ -1717,6 +1717,48 @@ NULL
   )
 }
 
+# Does `x` read as SVG path data (a `d` attribute: a moveto with its two
+# coordinates, then numbers and path commands) or name a `.svg` file?
+.looks_like_svg_shape <- function(x) {
+  x <- as.character(x)
+  num <- "[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?"
+  !is.na(x) &
+    (grepl(
+      paste0(
+        "^\\s*[Mm]\\s*",
+        num,
+        "[\\s,]*",
+        num,
+        "[-+.,0-9eE\\sMmLlHhVvCcSsQqTtAaZz]*$"
+      ),
+      x,
+      perl = TRUE
+    ) |
+      grepl("\\.svg$", x, ignore.case = TRUE))
+}
+
+# A mapped `shape` whose values are SVG paths is a mapping, not icons: the
+# levels cycle through the shape palette (VP-112). Say so, once per plot, and
+# point to the forms that draw the paths.
+.warn_shape_paths <- function(levels) {
+  if (!any(.looks_like_svg_shape(levels))) {
+    return(invisible())
+  }
+  cli::cli_warn(
+    c(
+      "The mapped {.field shape} values look like SVG paths, but a mapped \\
+       {.field shape} is a variable: its levels cycle through the shape \\
+       palette.",
+      i = "To draw one path for every point, give it as a literal string \\
+           ({.code shape = \"M0 0 L1 1 ...\"}) or inject the variable \\
+           ({.code shape = !!path}).",
+      i = "To draw each row's own path, add {.fn scale_shape_identity}."
+    ),
+    class = "vellumplot_shape_svg_mapped"
+  )
+  invisible()
+}
+
 # Train the shape scale (if any layer maps `shape` to data). Shape is always
 # discrete: levels cycle through `.SHAPE_PALETTE` (or a user `scale_shape(values)`).
 .train_shape <- function(
@@ -1738,6 +1780,7 @@ NULL
     ))
   }
   levels <- .discrete_scale_levels(scalespec, values)
+  .warn_shape_paths(levels)
   has_na <- anyNA(unlist(values, use.names = FALSE))
   pal <- if (!is.null(scalespec) && !is.null(scalespec@palette)) {
     scalespec@palette

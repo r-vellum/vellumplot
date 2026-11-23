@@ -76,8 +76,11 @@ may be a constant or a mapped expression. A shape is a built-in marker
 (\code{"circle open"}, \code{"circle filled"}, ...; see \code{\link[=scale_shape]{scale_shape()}}), a ggplot2
 shape code (\code{shape = 1} is an open circle, \code{21} a circle filled with \code{fill}
 inside a \code{color} outline), or an \strong{SVG icon} — a path \code{d} string or a
-\code{.svg} file — drawn as a crisp vector marker. Use a literal string for a
-constant icon, or map \code{shape} and pass icons to \code{\link[=scale_shape]{scale_shape()}}.}
+\code{.svg} file — drawn as a crisp vector marker. Use a literal string (or
+\verb{!!} a variable holding one) for a constant icon, map \code{shape} and pass
+icons to \code{\link[=scale_shape]{scale_shape()}}, or map a column of icons with
+\code{\link[=scale_shape_identity]{scale_shape_identity()}}. A bare variable or column of SVG paths is a
+mapping like any other, and warns.}
 
 \item{position}{Position adjustment: a string — \code{"identity"} (default),
 \code{"nudge"}, \code{"stack"}, \code{"fill"}, \code{"dodge"}, \code{"dodge2"}, \code{"jitter"},

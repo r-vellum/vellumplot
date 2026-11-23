@@ -132,3 +132,46 @@ test_that("size and shape keys take a layer's constant colour", {
   keys <- pch_pts(p)
   expect_false(any(keys$col[keys$legend] == "red"))
 })
+
+# VP-109: point keys default to the points' colour (black), as ggplot2 keys
+# them, in every key path -- size, shape and merged size + shape legends.
+test_that("size and shape keys default to the points' black (VP-109)", {
+  mt <- transform(mtcars, fcyl = factor(cyl))
+  key_cols <- function(p) {
+    k <- pch_pts(p)
+    k$col[k$legend]
+  }
+  expect_true(all(
+    key_cols(vplot(mt) |> mark_point(x = wt, y = mpg, size = hp)) == "black"
+  ))
+  expect_true(all(
+    key_cols(vplot(mt) |> mark_point(x = wt, y = mpg, shape = fcyl)) == "black"
+  ))
+  merged <- function(...) {
+    suppressWarnings(pch_pts(
+      vplot(mt) |> mark_point(x = wt, y = mpg, size = fcyl, shape = fcyl, ...)
+    ))
+  }
+  k <- merged()
+  k <- k[k$legend, ]
+  expect_identical(nrow(k), 3L)
+  expect_true(all(k$col %in% c("black", "NA")))
+  # a merged size + shape legend takes the layer's constant colour too
+  k <- merged(color = "tomato")
+  k <- k[k$legend, ]
+  expect_identical(nrow(k), 3L)
+  expect_true(all(k$col %in% c("tomato", "NA")))
+  # a constant fill colours the points (`.aes_colour()`), and so the keys
+  k <- pch_pts(
+    vplot(mt) |> mark_point(x = wt, y = mpg, size = hp, fill = "steelblue")
+  )
+  expect_true(all(k$col == "steelblue"))
+})
+
+test_that("point keys follow the theme's ink (VP-109)", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, size = hp) |>
+    theme(geom = element_geom(ink = "navy"))
+  k <- pch_pts(p)
+  expect_true(all(k$col == "navy"))
+})
