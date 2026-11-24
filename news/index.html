@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.23.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,14 +64,17 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.23.0" id="vellumplot-0230">vellumplot 0.23.0<a class="anchor" aria-label="anchor" href="#vellumplot-0230"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-0-23-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-23-0"></a></h3>
 <ul><li><p>Math labels everywhere a plot draws text (F-31). <code><a href="../reference/tex.html">tex()</a></code> and <code><a href="../reference/tex.html">plotmath()</a></code> are re-exported from vellum, and <code><a href="../reference/md.html">md()</a></code> labels take inline math between <code>$</code> signs. A math label works in every <code><a href="../reference/labs.html">labs()</a></code> title (the rotated y title included), in a discrete legend’s <code>labels =</code> (a list, one label per key; plain strings in the list are read as <code><a href="../reference/md.html">md()</a></code>), in <code><a href="../reference/mark_text.html">mark_text()</a></code> and <code><a href="../reference/mark_text.html">mark_label()</a></code> (one label, or a list with one per row), and in <code><a href="../reference/annotate.html">annotate()</a></code>. A list may mix rich labels with plain strings; the strings are drawn literally (no markdown or <code>$</code> is read).</p></li>
 <li><p><code><a href="../reference/mark_text.html">mark_text()</a></code> and <code><a href="../reference/mark_text.html">mark_label()</a></code> gain <code>parse = TRUE</code>, which reads each label as plotmath, as in ggplot2 (F-31).</p></li>
 <li><p><code><a href="../reference/labellers.html">label_parsed()</a></code> typesets facet strips from plotmath values, like ggplot2’s labeller of the same name; it survives <code><a href="../reference/as_spec.html">as_spec()</a></code> (F-31).</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<h3 id="bug-fixes-0-23-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-23-0"></a></h3>
 <ul><li><p>A list of rich labels given to a discrete colour scale’s <code>labels =</code> drew <code>&lt;object&gt;</code> in the legend, and so did a mixed list in <code><a href="../reference/mark_text.html">mark_text()</a></code>; <code>annotate("text", label = md(...))</code> failed with “cannot coerce class to a data.frame”; and <code><a href="../reference/mark_text.html">mark_label()</a></code> flattened rich labels to text (F-31). An NA label with <code>parse = TRUE</code> draws nothing (no empty <code><a href="../reference/mark_text.html">mark_label()</a></code> box).</p></li>
 <li><p>Alt text, the accessible name and legend tooltips now use a rich label’s text (an <code><a href="../reference/md.html">md()</a></code> label’s words, a <code><a href="../reference/tex.html">tex()</a></code> label’s TeX source) where they used to skip it or show <code>&lt;rich text&gt;</code> (F-31).</p></li>
 </ul></div>

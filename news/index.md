@@ -2,6 +2,8 @@
 
 ## vellumplot (development version)
 
+## vellumplot 0.23.0
+
 ### New features
 
 - Math labels everywhere a plot draws text (F-31).
