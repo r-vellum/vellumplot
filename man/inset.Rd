@@ -23,8 +23,19 @@ inset(
 
 \item{left, bottom, right, top}{Inset position as fractions (0–1).}
 
-\item{align_to}{Reference box: \code{"panel"}, \code{"plot"}, or \code{"full"} (currently the
-whole \code{base} cell).}
+\item{align_to}{Reference box the fractions are measured in, as in
+patchwork's \code{inset_element()}:
+\itemize{
+\item \code{"panel"} (default): the base plot's panel area. For a faceted plot this
+is the area spanned by all panels (from the first panel to the last,
+the strips and gaps between them included).
+\item \code{"plot"}: the base plot without its title, subtitle, caption and tag,
+axes and legends included (inside the plot margin).
+\item \code{"full"}: the whole \code{base} cell, plot margin included.
+}
+
+When \code{base} is a composition of several plots there is no single plot to
+align to, and every inset is placed in the whole figure (\code{"full"}).}
 
 \item{on_top}{Draw the inset above (\code{TRUE}) or below the base.}
 
@@ -40,6 +51,9 @@ Place \code{plot} as an inset over \code{base}, positioned by fractional coordin
 the inset (compose it further or render directly).
 }
 \details{
+Up to vellumplot 0.21.1 every inset was placed in the whole base
+cell, whatever \code{align_to} said; pass \code{align_to = "full"} for that placement.
+
 A plot with a locked aspect ratio (\code{coord_fixed()}, \code{coord_sf()},
 \code{coord_polar()}, or \code{theme(aspect.ratio =)}) is fitted inside the inset
 box: the box shrinks in one direction to the plot's own shape, keeping

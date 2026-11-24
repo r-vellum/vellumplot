@@ -282,12 +282,15 @@ NULL
 # "plot" / "plot-background" / "panel-area" / "panel-<r>-<c>" / "axis-*" /
 # "strip-*" / "legend" / title-band names are the query keys). Leaves three
 # viewports pushed; the caller pops them after drawing.
-.dp_push_frame <- function(scene, lay, rt) {
+# `skeleton = TRUE` pushes the same grids unnamed and without the background:
+# the frame an inset drawn behind the plot is placed in (VP-127).
+.dp_push_frame <- function(scene, lay, rt, skeleton = FALSE) {
   m <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  nm <- function(x) if (skeleton) NULL else x
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(
-      name = "plot",
+      name = nm("plot"),
       layout = vellum::grid_layout(
         c(
           vellum::vl_unit(m[4], "mm"),
@@ -305,7 +308,7 @@ NULL
 
   # plot background fills the whole page region (behind the margins too)
   pbg <- rt[["plot.background"]]
-  if (!.is_blank(pbg)) {
+  if (!skeleton && !.is_blank(pbg)) {
     scene <- vellum::push(
       scene,
       vellum::vl_viewport(
@@ -329,7 +332,7 @@ NULL
   vellum::push(
     scene,
     vellum::vl_viewport(
-      name = "panel-area",
+      name = nm("panel-area"),
       layout = vellum::grid_layout(
         lay$widths,
         lay$heights,
@@ -855,7 +858,16 @@ NULL
 # and popping its own grid_layout), so a composition can place plots in cells.
 # `describe = TRUE` (the single-plot compile) also sets the scene's alt text from
 # the titles record the panel build made, so it names the titles that are drawn.
-.draw_plot <- function(scene, spec, frozen_scales = NULL, describe = FALSE) {
+# `insets` (from `.compile_composition_independent()`) carries the insets of a
+# one-plot composition that are aligned to this plot's panel area or plot area
+# (VP-127): `list(insets, which, box_mm)`, drawn inside the plot's layout grid.
+.draw_plot <- function(
+  scene,
+  spec,
+  frozen_scales = NULL,
+  describe = FALSE,
+  insets = NULL
+) {
   # Non-column single-value symbols are settings, not mappings (VP-126).
   spec <- .settle_constants(spec)
   spec0 <- spec # as the user wrote it, for the alt text
@@ -1028,6 +1040,14 @@ NULL
     warp_v = warp_v
   )
 
+  if (!is.null(insets)) {
+    # insets behind the plot: placed in an unnamed copy of its grid, drawn
+    # before anything of the plot itself
+    scene <- .dp_push_frame(scene, lay, rt, skeleton = TRUE)
+    scene <- .dp_draw_insets(scene, lay, rt, insets, on_top = FALSE)
+    scene <- vellum::pop(vellum::pop(vellum::pop(scene)))
+  }
+
   scene <- .dp_push_frame(scene, lay, rt)
 
   scene <- .dp_draw_panels(scene, dp)
@@ -1057,6 +1077,10 @@ NULL
 
   scene <- .dp_draw_labels_legends(scene, dp)
 
+  if (!is.null(insets)) {
+    scene <- .dp_draw_insets(scene, lay, rt, insets, on_top = TRUE)
+  }
+
   scene <- vellum::pop(scene) # inner layout grid
   scene <- vellum::pop(scene) # centre cell
   scene <- vellum::pop(scene) # outer margin grid
@@ -1078,6 +1102,91 @@ NULL
     # tells vellum::scene_inset() the shape of its content, so an inset of it
     # hugs the map instead of framing empty bands (VP-120).
     attr(scene, "vellum_content_fit") <- .content_fit(lay, rt)
+  }
+  scene
+}
+
+# The first and last row and column of a plot's `panel-area` grid that an
+# inset aligned to `align_to` spans (VP-127), as patchwork's inset_element()
+# does: `"panel"` from the first panel to the last (strips and gaps between
+# panels included), `"plot"` every track but the tag, title, subtitle and
+# caption bands (which stack outermost, above and below).
+.inset_span <- function(lay, align_to) {
+  if (identical(align_to, "panel")) {
+    return(list(rows = range(lay$panel_row), cols = range(lay$panel_col)))
+  }
+  top <- max(c(0L, lay$tag_row, lay$title_row, lay$subtitle_row), na.rm = TRUE)
+  bottom <- if (is.na(lay$caption_row)) {
+    lay$nrow_total
+  } else {
+    lay$caption_row - 1L
+  }
+  list(rows = c(top + 1L, bottom), cols = c(1L, lay$ncol_total))
+}
+
+# The mm size (width, height) of a `.inset_span()` region when the plot fills a
+# `box_mm` page, or NULL when the page size is unknown (NA entries for a track
+# that cannot be measured).
+.inset_span_mm <- function(lay, rt, span, box_mm) {
+  if (is.null(box_mm)) {
+    return(NULL)
+  }
+  u <- .panel_mm(
+    lay$widths,
+    lay$heights,
+    box_mm[1] / 25.4,
+    box_mm[2] / 25.4,
+    rt,
+    respect = isTRUE(lay$respect)
+  )
+  size <- function(units, idx, unull) {
+    sum(vapply(
+      idx,
+      function(i) {
+        w <- .null_weight(units[i])
+        if (w > 0) {
+          w * unull
+        } else {
+          tryCatch(vellum::vl_convert(units[i], "mm"), error = function(e) {
+            NA_real_
+          })
+        }
+      },
+      numeric(1)
+    ))
+  }
+  c(
+    size(lay$widths, seq(span$cols[1], span$cols[2]), u[["w"]]),
+    size(lay$heights, seq(span$rows[1], span$rows[2]), u[["h"]])
+  )
+}
+
+# Draw the aligned insets (`insets`, see `.draw_plot()`) layered `on_top` or
+# behind, each in the region of the pushed `panel-area` grid its `align_to`
+# names.
+.dp_draw_insets <- function(scene, lay, rt, insets, on_top) {
+  for (k in insets$which) {
+    ins <- insets$insets[[k]]
+    if (!identical(isTRUE(ins$on_top), on_top)) {
+      next
+    }
+    span <- .inset_span(lay, ins$align_to)
+    scene <- vellum::push(
+      scene,
+      vellum::vl_viewport(
+        row = span$rows[1],
+        col = span$cols[1],
+        rowspan = span$rows[2] - span$rows[1] + 1L,
+        colspan = span$cols[2] - span$cols[1] + 1L
+      )
+    )
+    scene <- .draw_inset(
+      scene,
+      ins,
+      k,
+      .inset_span_mm(lay, rt, span, insets$box_mm)
+    )
+    scene <- vellum::pop(scene)
   }
   scene
 }
