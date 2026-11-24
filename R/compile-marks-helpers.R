@@ -645,6 +645,21 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
 # nudge is left untouched, so an un-nudged mark is byte-identical. `scales`
 # orients the nudge along the data axes (coord_flip, reversed axes).
 .nudge_xy <- function(xy, L, idx = NULL, scales = NULL) {
+  nu <- .nudge_mm(L, idx, scales)
+  nx <- nu$x
+  ny <- nu$y
+  if (!is.null(nx) && any(nx != 0)) {
+    xy$x <- xy$x + vellum::vl_unit(nx, "mm")
+  }
+  if (!is.null(ny) && any(ny != 0)) {
+    xy$y <- xy$y + vellum::vl_unit(ny, "mm")
+  }
+  xy
+}
+
+# A layer's nudge (mm) in device orientation (`x` right, `y` up), as
+# `.nudge_xy()` applies it: `list(x, y)`, each a scalar or one per row of `idx`.
+.nudge_mm <- function(L, idx = NULL, scales = NULL) {
   # A per-row nudge (mm) mapped as a `nudge_x`/`nudge_y` channel wins over the
   # scalar `nudge_x`/`nudge_y` param -- this is how `mark_node_text(dist=)` pushes
   # each label radially outward from the graph centroid. `idx` subsets it to the
@@ -670,13 +685,7 @@ gp_alpha <- function(a) if (is.na(a)) NULL else a
     nx <- ny
     ny <- tmp
   }
-  if (!is.null(nx) && any(nx != 0)) {
-    xy$x <- xy$x + vellum::vl_unit(nx, "mm")
-  }
-  if (!is.null(ny) && any(ny != 0)) {
-    xy$y <- xy$y + vellum::vl_unit(ny, "mm")
-  }
-  xy
+  list(x = nx, y = ny)
 }
 
 # Coordinate placement honouring coord_flip: under flip the horizontal axis

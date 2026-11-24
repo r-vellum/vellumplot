@@ -415,6 +415,8 @@ NULL
       nrow(spec@data),
       psc
     )
+    # node glyphs a repelled node label's leader stops at (VP-129)
+    psc$node_glyphs <- .node_glyphs(p$resolved, psc)
     pname <- sprintf("panel-%d-%d", p$r, p$c)
     # The viewport name: unique per composition cell. Mark keys keep `pname`.
     vname <- .cell_panel_name(pname, .mark_ctx$panel_cell)
@@ -1260,6 +1262,8 @@ NULL
 # registers on the shared generic, so `vellum::render(plot, path)` dispatches here.
 .as_vellum_scene <- vellum::as_vellum_scene
 S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
+  .repel_glyphs_reset()
+  on.exit(.repel_glyphs_reset(), add = TRUE)
   scene <- .compile_plot(x)
   # Label repulsion is a single post-compile pass over the built scene: the
   # engine solver moves each named label (and its background) by an absolute mm

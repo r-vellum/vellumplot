@@ -126,6 +126,9 @@ NULL
       fontface = .aes_param(L, "fontface", NULL),
       alpha = gp_alpha(a)
     )
+    if (repel_on && identical(L$mark, "node_text")) {
+      .repel_note_glyphs(.repel_name(gi), L, idx, xn[idx], yn[idx], scales)
+    }
     scene <- .draw(
       scene,
       vellum::text_grob(
