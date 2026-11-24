@@ -33,15 +33,37 @@ NULL
 # constant (a literal passes through to `L$params$label`, bypassing the
 # encoding split). With `parse = TRUE` plain strings are read as plotmath and
 # become tex() labels, one per row (ggplot2's `parse = TRUE`).
+# A rich result carries `attr(, "missing")`: which labels were NA (before any
+# parsing), so a layer drops those rows instead of drawing an empty label.
 .layer_labels <- function(L) {
   raw <- L$values$label %||% .aes_param(L, "label", NULL)
+  if (is.null(raw)) {
+    return(NULL)
+  }
+  missing <- if (.is_rich(raw)) {
+    FALSE
+  } else if (is.list(raw)) {
+    vapply(
+      raw,
+      function(l) !.is_rich(l) && is.na(as.character(l)[1]),
+      logical(1)
+    )
+  } else {
+    is.na(raw)
+  }
   if (
-    !is.null(raw) &&
-      isTRUE(.aes_param(L, "parse", FALSE)) &&
+    isTRUE(.aes_param(L, "parse", FALSE)) &&
       !.is_rich(raw) &&
       !.is_rich_list(raw)
   ) {
     raw <- vellum::plotmath(as.character(raw))
+  }
+  if (.is_rich_list(raw)) {
+    raw <- .as_rich_list(raw)
+  }
+  # Only a rich list marks them: plain NA labels keep their old path.
+  if (.is_rich_list(raw)) {
+    attr(raw, "missing") <- missing
   }
   raw
 }
@@ -70,15 +92,11 @@ NULL
   # vellum), a single rich md() label (drawn at every position), or a per-datum
   # list of md() labels. Only plain labels are flattened with as.character(); rich
   # labels pass through.
-  rich_single <- inherits(raw, "vellum::vellum_label")
-  rich_list <- !rich_single &&
-    is.list(raw) &&
-    length(raw) > 0L &&
-    all(vapply(
-      raw,
-      function(x) inherits(x, "vellum::vellum_label"),
-      logical(1)
-    ))
+  # A list with any rich label is a rich list; its plain strings are drawn
+  # literally.
+  rich_single <- .is_rich(raw)
+  rich_list <- !rich_single && .is_rich_list(raw)
+  missing <- rep_len(attr(raw, "missing") %||% FALSE, n)
   if (rich_list) {
     labs <- raw[rep_len(seq_along(raw), n)]
   } else if (!rich_single) {
@@ -106,7 +124,13 @@ NULL
   hj <- L$values$hjust %||% .aes_param(L, "hjust", "centre")
   vj <- L$values$vjust %||% .aes_param(L, "vjust", "centre")
   just <- c(hj[[1]], vj[[1]])
-  keep <- .repel_keep(repel_on, xn, yn, if (!rich_single && !rich_list) label)
+  keep <- .repel_keep(
+    repel_on,
+    xn,
+    yn,
+    if (!rich_single && !rich_list) label
+  ) &
+    !missing
   # In an animation, a plain label may carry frame variables (VP-93):
   # `label = "{round(frame_time)}"`. Each keyframe draws it filled in with
   # that keyframe's values; the render then swaps every frame's string in.
@@ -204,10 +228,11 @@ NULL
   # Plain strings, or rich labels (one for every row, or a list of them).
   raw <- .layer_labels(L)
   rich <- .is_rich(raw) || .is_rich_list(raw)
+  missing <- rep_len(attr(raw, "missing") %||% FALSE, n)
   label <- if (.is_rich(raw)) {
     rep(list(raw), n)
   } else if (rich) {
-    .as_rich_list(raw)[rep_len(seq_along(raw), n)]
+    raw[rep_len(seq_along(raw), n)]
   } else {
     rep_len(as.character(raw), n)
   }
@@ -233,7 +258,8 @@ NULL
   txts <- lapply(seq_len(n), function(i) .txt(label[[i]], fs[i]))
   ws <- do.call(c, lapply(txts, function(t) vellum::grobwidth(t) + pad))
   hs <- do.call(c, lapply(txts, function(t) vellum::grobheight(t) + pad))
-  keep <- .repel_keep(repel_on, xn, yn, if (!rich) label)
+  # A missing label draws neither text nor its background box.
+  keep <- .repel_keep(repel_on, xn, yn, if (!rich) label) & !missing
 
   gi <- 0L
   for (idx in .style_groups(

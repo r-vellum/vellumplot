@@ -8,6 +8,8 @@
   included), in a discrete legend's `labels =` (a list, one label per key;
   plain strings in the list are read as `md()`), in `mark_text()` and
   `mark_label()` (one label, or a list with one per row), and in `annotate()`.
+  A list may mix rich labels with plain strings; the strings are drawn
+  literally (no markdown or `$` is read).
 
 * `mark_text()` and `mark_label()` gain `parse = TRUE`, which reads each
   label as plotmath, as in ggplot2 (F-31).
@@ -18,9 +20,10 @@
 ## Bug fixes
 
 * A list of rich labels given to a discrete colour scale's `labels =` drew
-  `<object>` in the legend; `annotate("text", label = md(...))` failed with
-  "cannot coerce class to a data.frame"; and `mark_label()` flattened rich
-  labels to text (F-31).
+  `<object>` in the legend, and so did a mixed list in `mark_text()`;
+  `annotate("text", label = md(...))` failed with "cannot coerce class to a
+  data.frame"; and `mark_label()` flattened rich labels to text (F-31). An NA
+  label with `parse = TRUE` draws nothing (no empty `mark_label()` box).
 
 * Alt text, the accessible name and legend tooltips now use a rich label's
   text (an `md()` label's words, a `tex()` label's TeX source) where they

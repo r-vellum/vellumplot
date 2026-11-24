@@ -1313,7 +1313,16 @@ NULL
     return(vellum::vl_strwidth(s, "", "plain", fs, unit = "mm"))
   }
   if (is.list(s)) {
-    return(max(0, vapply(s, .mm_tw, 0, fs = fs)))
+    if (!length(s)) {
+      return(0)
+    }
+    return(max(vellum::vl_strwidth(
+      .as_rich_list(s),
+      "",
+      "plain",
+      fs,
+      unit = "mm"
+    )))
   }
   s <- as.character(s)
   s <- s[!is.na(s)]

@@ -41,11 +41,12 @@ NULL
 }
 .is_rich <- function(x) inherits(x, "vellum::vellum_label")
 
-# Every element of a label list as a rich label: plain strings become md()
-# labels (an md() label without markup draws as the plain string).
+# A label list holding rich labels, normalised: rich labels as they are, every
+# other entry a plain string. vellum draws the strings literally (no markup or
+# `$` is read), so `"b*c*"` beside a tex() label stays "b*c*".
 .as_rich_list <- function(x) {
   lapply(unname(x), function(l) {
-    if (.is_rich(l)) l else vellum::md(as.character(l))
+    if (.is_rich(l)) l else as.character(l)[1]
   })
 }
 

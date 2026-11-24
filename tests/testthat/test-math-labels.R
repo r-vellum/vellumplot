@@ -64,11 +64,72 @@ test_that("a discrete legend takes a list of rich labels", {
 })
 
 test_that("legend swatch tooltips carry the label's text", {
-  g <- list(key = "colour")
-  sw <- vellum::rect_grob()
-  local_mocked_bindings(.legend_series_key = function(g, i) "a")
-  out <- vellumplot:::.tag_legend_swatch(sw, g, 1L, list(tex("\\alpha")), TRUE)
-  expect_equal(out@meta[[1]]$tooltip, "\\alpha")
+  d$id <- seq_len(nrow(d))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, colour = g, data_id = id) |>
+    scale_colour_discrete(labels = list(tex("\\alpha"), "b*c*"))
+  el <- vellum::scene_model(vellum::as_vellum_scene(p))$elements
+  sw <- el[!is.na(el$key) & grepl("^legend:", el$key), ]
+  tt <- vapply(sw$meta, function(m) m[["tooltip"]] %||% NA_character_, "")
+  expect_setequal(tt, c("\\alpha", "b*c*"))
+})
+
+test_that("plain strings beside rich labels are drawn literally", {
+  lits <- c("b*c*", "under_score_x_", "$x$ cost", "**no**")
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, colour = g) |>
+    scale_colour_discrete(labels = list(tex("\\alpha"), lits[1]))
+  expect_true("b*c*" %in% text_labels(p))
+  for (x in lits) {
+    labs <- list(tex("\\alpha"), x)
+    expect_equal(
+      vellumplot:::.mm_tw(labs, 10),
+      max(
+        vellumplot:::.mm_tw(tex("\\alpha"), 10),
+        vellumplot:::.mm_tw(x, 10)
+      ),
+      tolerance = 1e-6
+    )
+  }
+  # NA and "" entries draw nothing and do not fail.
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, colour = g) |>
+    scale_colour_discrete(labels = list(tex("\\alpha"), NA))
+  expect_no_error(render_px(p))
+  d3 <- data.frame(x = 1:3, y = 1:3, g = c("a", "b", "c"))
+  p <- vplot(d3) |>
+    mark_point(x = x, y = y, colour = g) |>
+    scale_colour_discrete(labels = list(tex("\\alpha"), NA, ""))
+  expect_no_error(render_px(p))
+})
+
+test_that("mixed rich / plain label lists draw every label in text marks", {
+  d3 <- data.frame(x = 1:3, y = 1:3)
+  p <- vplot(d3) |>
+    mark_text(x = x, y = y, label = list(tex("\\beta"), "b", md("*c*")))
+  labs <- text_labels(p)
+  expect_true(all(c("\\beta", "b", "c") %in% labs))
+  expect_false(any(grepl("object", labs)))
+  p <- vplot(d3) |>
+    mark_point(x = x, y = y) |>
+    annotate("text", x = 1:2, y = 2, label = list(tex("\\beta"), "plain"))
+  labs <- text_labels(p)
+  expect_true(all(c("\\beta", "plain") %in% labs))
+  expect_false(any(grepl("object", labs)))
+})
+
+test_that("mark_label(parse = TRUE) draws nothing for an NA label", {
+  d3 <- data.frame(x = 1:3, y = 1:3, f = c("alpha", NA, "beta"))
+  p <- vplot(d3) |> mark_label(x = x, y = y, label = f, parse = TRUE)
+  kinds <- function(p) {
+    s <- vellum:::.scene_to_backend(vellum::as_vellum_scene(p))
+    as.data.frame(s$lint_table())$kind
+  }
+  # Two background boxes for the two labels, none for the NA row.
+  expect_equal(sum(kinds(p) == "roundrect"), 2L)
+  labs <- text_labels(p)
+  expect_true(all(c("\\alpha", "\\beta") %in% labs))
+  expect_false("" %in% labs)
 })
 
 test_that("mark_text() and mark_label() parse plotmath with parse = TRUE", {
@@ -118,6 +179,29 @@ test_that("label_parsed() typesets facet strips as plotmath", {
   p <- vplot(d2) |>
     mark_point(x = x, y = y) |>
     facet_grid(f + h ~ ., labeller = label_parsed)
+  expect_no_error(render_px(p))
+  # Stacked lines never overlap: the strip's box is at least the two line
+  # boxes plus TeX's lineskip (0.1 em).
+  h <- function(l) vellum::vl_strheight(l, fontsize = 10, unit = "pt")
+  st <- vellumplot:::.stack_strip_lines(
+    list(plotmath("frac(1, n)"), plotmath("beta"))
+  )
+  expect_gte(
+    h(st),
+    h(md("$\\frac{1}{n}$")) + h(md("$\\beta$")) + 1 - 1e-6
+  )
+  d4 <- data.frame(x = 1:2, y = 1:2, g = "frac(1, n)", h = "beta")
+  p <- vplot(d4) |>
+    mark_point(x = x, y = y) |>
+    facet_wrap(~ g + h, labeller = label_parsed)
+  expect_no_error(render_px(p))
+  # A `$` in a value survives the stacking.
+  d5 <- data.frame(x = 1:2, y = 1:2, g = c("'a$'", "'$'"), h = "beta")
+  p <- vplot(d5) |>
+    mark_point(x = x, y = y) |>
+    facet_wrap(~ g + h, labeller = label_parsed)
+  labs <- text_labels(p)
+  expect_true(any(grepl("a\\$", labs, fixed = TRUE)))
   expect_no_error(render_px(p))
   out <- label_parsed(data.frame(a = "alpha", b = "beta"), multi_line = FALSE)
   expect_equal(out[[1]][[1]]@tex, "\\alpha, \\beta")
