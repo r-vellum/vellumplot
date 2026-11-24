@@ -63,6 +63,28 @@ test_that("a discrete legend takes a list of rich labels", {
   expect_gt(vellumplot:::.mm_tw(list(tex("\\frac{1}{2}xxxxxxxx")), 10), 0)
 })
 
+test_that("manual scales take a list of rich labels", {
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, colour = g, shape = g) |>
+    scale_colour_manual(
+      values = c("red", "blue"),
+      labels = list(tex("\\sigma = 1"), "plain")
+    ) |>
+    scale_shape_manual(
+      values = c(16, 17),
+      labels = list(tex("\\sigma = 1"), "plain")
+    )
+  labs <- text_labels(p)
+  expect_true("\\sigma = 1" %in% labs)
+  expect_true("plain" %in% labs)
+  expect_false("<object>" %in% labs)
+  expect_no_error(render_px(p))
+  expect_error(
+    vplot(d) |> scale_colour_manual(values = "red", labels = list(1, 2)),
+    "list of labels"
+  )
+})
+
 test_that("legend swatch tooltips carry the label's text", {
   d$id <- seq_len(nrow(d))
   p <- vplot(d) |>

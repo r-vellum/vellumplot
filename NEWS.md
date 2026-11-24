@@ -1,5 +1,11 @@
 # vellumplot (development version)
 
+## Bug fixes
+
+* `scale_colour_manual()`, `scale_fill_manual()` and the other manual scales
+  accept a list of rich labels in `labels =`, as the discrete scales already
+  did (F-31): `labels = list(tex("\\sigma = 1"), "plain")`.
+
 # vellumplot 0.23.0
 
 ## New features
