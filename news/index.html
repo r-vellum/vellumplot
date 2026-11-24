@@ -65,6 +65,10 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
 <div class="section level3">
+<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>Edges stop at the rim of a <code><a href="../reference/mark_graph.html">mark_node_pie()</a></code> pie, as they do at a <code><a href="../reference/mark_graph.html">mark_nodes()</a></code> marker (VP-130). They used to run to the pie’s centre, so an arrowhead into a pie was hidden under it, and parallel or reciprocal edges between pies were drawn on top of each other. A vertex with both a marker and a pie caps at the larger of the two.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="documentation-development-version">Documentation<a class="anchor" aria-label="anchor" href="#documentation-development-version"></a></h3>
 <ul><li>The <code><a href="../reference/inset.html">inset()</a></code> examples and the composition article give their insets a larger box (VP-131). Since <code>align_to = "panel"</code> became the default (VP-127) the fractions are of the panel, and the old boxes left the histogram inset cramped.</li>
 </ul></div>
