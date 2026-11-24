@@ -2746,10 +2746,11 @@ scale_edge_alpha <- function(
     !is.null(labels) &&
       !is.function(labels) &&
       !is.character(labels) &&
-      !is.numeric(labels)
+      !is.numeric(labels) &&
+      !.is_rich_list(labels)
   ) {
     cli::cli_abort(
-      "{.arg labels} must be a character vector, a function, or {.code NULL}.",
+      "{.arg labels} must be a character vector, a list of labels, a function, or {.code NULL}.",
       call = call
     )
   }
