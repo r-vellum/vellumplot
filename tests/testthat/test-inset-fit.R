@@ -26,7 +26,8 @@ test_that("inset() fits a fixed-aspect plot to its box, keeping the near edges",
     mark_point(x = wt, y = mpg) |>
     coord_fixed(ratio = 0.5) |>
     theme(axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
-  comp <- inset(base, tall, left = 0.3, bottom = 0.5, right = 0.98, top = 0.98)
+  comp <- inset(base, tall, left = 0.3, bottom = 0.5, right = 0.98, top = 0.98,
+    align_to = "full")
   s <- vellum::as_vellum_scene(comp)
   dpi <- s@dpi
   W <- 6 * dpi
@@ -43,7 +44,8 @@ test_that("inset() fits a fixed-aspect plot to its box, keeping the near edges",
   expect_equal(asp, dx / (0.5 * dy), tolerance = 0.01)
   # a free-aspect inset keeps the whole box
   free <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
-  q <- inset_panel(inset(base, free, left = 0.3, bottom = 0.5, right = 0.98, top = 0.98))
+  q <- inset_panel(inset(base, free, left = 0.3, bottom = 0.5, right = 0.98, top = 0.98,
+    align_to = "full"))
   expect_gt(q$px1 - q$px0, 2 * (p$px1 - p$px0))
 })
 
@@ -53,6 +55,7 @@ test_that("inset() fits a coord_sf() map and passes a shadow on", {
   map <- vplot(nc) |> mark_sf() |> coord_sf() |> theme_void()
   base <- vplot(mtcars) |> mark_point(x = hp, y = qsec)
   comp <- inset(base, map, left = 0.5, bottom = 0.5, right = 0.98, top = 0.98,
+    align_to = "full",
     shadow = vellum::vl_shadow(dx = 2, dy = 2, blur = 4))
   s <- vellum::as_vellum_scene(comp)
   box <- vellum::why_size(s, "inset-1")
