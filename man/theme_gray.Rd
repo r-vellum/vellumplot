@@ -85,7 +85,8 @@ Control the non-data look of a plot. \code{theme_gray()} is the default (grey pa
 white gridlines); \code{theme_minimal()} drops the panel fill for light gridlines on
 the page; \code{theme_bw()} is a white panel with light grey gridlines;
 \code{theme_classic()} has axis lines and no gridlines; \code{theme_void()} strips
-everything but the marks, legend, and titles; \code{theme_cyberpunk()} is a dark
+everything but the marks, legend, and titles, with no plot margin (as in
+ggplot2); \code{theme_cyberpunk()} is a dark
 neon theme (see Details).
 }
 \details{

@@ -132,7 +132,8 @@ NULL
 #' white gridlines); `theme_minimal()` drops the panel fill for light gridlines on
 #' the page; `theme_bw()` is a white panel with light grey gridlines;
 #' `theme_classic()` has axis lines and no gridlines; `theme_void()` strips
-#' everything but the marks, legend, and titles; `theme_cyberpunk()` is a dark
+#' everything but the marks, legend, and titles, with no plot margin (as in
+#' ggplot2); `theme_cyberpunk()` is a dark
 #' neon theme (see Details).
 #'
 #' [theme()] overrides individual elements on top of the current theme using
@@ -252,7 +253,9 @@ theme_void <- function(plot, base_size = 11, base_family = "") {
       axis.title = element_blank(),
       axis.ticks = element_blank(),
       axis.line = element_blank(),
-      strip.background = element_blank()
+      strip.background = element_blank(),
+      # no margin, as in ggplot2: a void plot fills its box (VP-128)
+      plot.margin = c(0, 0, 0, 0)
     )
   )
   attr(plot@theme, "vp_preset") <- "void"

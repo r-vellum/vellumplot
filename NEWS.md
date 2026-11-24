@@ -24,6 +24,11 @@
   panel and gets smaller; pass `align_to = "full"` to keep the old placement.
   A composition of several plots still places its insets in the whole figure.
 
+* `theme_void()` has no plot margin, matching ggplot2 (VP-128): a void plot
+  now fills its box edge to edge, where it kept the 5.5 mm `plot.margin` of
+  `theme_gray()`. Maps, locator insets and other void plots grow by that
+  margin; add `theme(plot.margin = c(5.5, 5.5, 5.5, 5.5))` for the old look.
+
 ## New features
 
 * `mark_node_pie()` wedge colours get a legend (VP-123): the `cols` are the

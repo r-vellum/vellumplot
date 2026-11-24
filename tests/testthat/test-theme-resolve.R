@@ -191,3 +191,16 @@ test_that("a text colour still inherits where no preset colour is set (VP-10)", 
   expect_identical(rt[["axis.title.x"]]@colour, "red")
   expect_identical(rt[["legend.title"]]@colour, "red")
 })
+
+test_that("theme_void() has no plot margin, as in ggplot2 (VP-128)", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_void()
+  expect_equal(resolve(p@theme)[["plot.margin"]], c(0, 0, 0, 0))
+  # so the panel fills the page edge to edge
+  m <- vellum::scene_model(vellum::as_vellum_scene(p))$panels
+  pan <- m[m$name == "panel-1-1", ]
+  expect_equal(c(pan$px0, pan$py0), c(0, 0), tolerance = 1e-6)
+  expect_equal(c(pan$px1, pan$py1), c(6, 4) * 96, tolerance = 1e-6)
+  # a margin set on top still wins
+  q <- p |> theme(plot.margin = c(2, 2, 2, 2))
+  expect_equal(resolve(q@theme)[["plot.margin"]], c(2, 2, 2, 2))
+})

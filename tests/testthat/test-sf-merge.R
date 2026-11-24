@@ -36,7 +36,10 @@ sfmap <- function(d, m, ...) {
   vplot(d, width = 4, height = 3) |>
     mark_sf(merge = m, linewidth = 1, ...) |>
     coord_sf() |>
-    theme_void()
+    theme_void() |>
+    # keep the outer border clear of the page edge, so only the shared border
+    # differs between merged and plain
+    theme(plot.margin = c(5.5, 5.5, 5.5, 5.5))
 }
 
 test_that("merge dissolves the shared border between same-fill features", {
