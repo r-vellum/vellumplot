@@ -41,8 +41,20 @@ inset(
 
 - align_to:
 
-  Reference box: `"panel"`, `"plot"`, or `"full"` (currently the whole
-  `base` cell).
+  Reference box the fractions are measured in, as in patchwork's
+  `inset_element()`:
+
+  - `"panel"` (default): the base plot's panel area. For a faceted plot
+    this is the area spanned by all panels (from the first panel to the
+    last, the strips and gaps between them included).
+
+  - `"plot"`: the base plot without its title, subtitle, caption and
+    tag, axes and legends included (inside the plot margin).
+
+  - `"full"`: the whole `base` cell, plot margin included.
+
+  When `base` is a composition of several plots there is no single plot
+  to align to, and every inset is placed in the whole figure (`"full"`).
 
 - on_top:
 
@@ -59,6 +71,9 @@ inset(
 A `PlotComposition`.
 
 ## Details
+
+Up to vellumplot 0.21.1 every inset was placed in the whole base cell,
+whatever `align_to` said; pass `align_to = "full"` for that placement.
 
 A plot with a locked aspect ratio
 ([`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),

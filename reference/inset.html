@@ -105,8 +105,15 @@ the inset (compose it further or render directly).</p>
 
 
 <dt id="arg-align-to">align_to<a class="anchor" aria-label="anchor" href="#arg-align-to"></a></dt>
-<dd><p>Reference box: <code>"panel"</code>, <code>"plot"</code>, or <code>"full"</code> (currently the
-whole <code>base</code> cell).</p></dd>
+<dd><p>Reference box the fractions are measured in, as in
+patchwork's <code>inset_element()</code>:</p><ul><li><p><code>"panel"</code> (default): the base plot's panel area. For a faceted plot this
+is the area spanned by all panels (from the first panel to the last,
+the strips and gaps between them included).</p></li>
+<li><p><code>"plot"</code>: the base plot without its title, subtitle, caption and tag,
+axes and legends included (inside the plot margin).</p></li>
+<li><p><code>"full"</code>: the whole <code>base</code> cell, plot margin included.</p></li>
+</ul><p>When <code>base</code> is a composition of several plots there is no single plot to
+align to, and every inset is placed in the whole figure (<code>"full"</code>).</p></dd>
 
 
 <dt id="arg-on-top">on_top<a class="anchor" aria-label="anchor" href="#arg-on-top"></a></dt>
@@ -124,7 +131,9 @@ whole <code>base</code> cell).</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A plot with a locked aspect ratio (<code><a href="coord_cartesian.html">coord_fixed()</a></code>, <code><a href="coord_sf.html">coord_sf()</a></code>,
+    <p>Up to vellumplot 0.21.1 every inset was placed in the whole base
+cell, whatever <code>align_to</code> said; pass <code>align_to = "full"</code> for that placement.</p>
+<p>A plot with a locked aspect ratio (<code><a href="coord_cartesian.html">coord_fixed()</a></code>, <code><a href="coord_sf.html">coord_sf()</a></code>,
 <code><a href="coord_polar.html">coord_polar()</a></code>, or <code>theme(aspect.ratio =)</code>) is fitted inside the inset
 box: the box shrinks in one direction to the plot's own shape, keeping
 the side nearest the edge it sits on (a box in the right half keeps its

@@ -23,6 +23,17 @@
   carries the value. See “Mappings and settings” in
   [`?mark_point`](https://r-vellum.github.io/vellumplot/reference/mark_point.md).
 
+- [`inset()`](https://r-vellum.github.io/vellumplot/reference/inset.md)
+  honours `align_to` (VP-127). The default `"panel"` now takes `left` /
+  `bottom` / `right` / `top` as fractions of the base plot’s panel area
+  (all panels of a faceted plot), `"plot"` of the plot without its
+  title, subtitle and caption, and `"full"` of the whole base cell, as
+  patchwork’s `inset_element()` does. Insets used to be placed in the
+  whole base cell whatever `align_to` said, so an existing inset moves
+  into the panel and gets smaller; pass `align_to = "full"` to keep the
+  old placement. A composition of several plots still places its insets
+  in the whole figure.
+
 ### New features
 
 - [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
