@@ -715,7 +715,7 @@ NULL
 # align within a text box, so the box is the label's own measured width (no
 # re-wrapping).
 .strip_text_grob <- function(label, rot, gp) {
-  if (!grepl("\n", label, fixed = TRUE)) {
+  if (.is_rich(label) || !grepl("\n", label, fixed = TRUE)) {
     return(vellum::text_grob(label, rot = rot, gp = gp))
   }
   w <- vellum::grobwidth(vellum::text_grob(label, gp = gp))
@@ -1308,6 +1308,13 @@ NULL
 # Millimetre text metrics at a given point size (device-space, resize-stable).
 .mm_th <- function(fs) vellum::vl_strheight("Ag", "", "plain", fs, unit = "mm")
 .mm_tw <- function(s, fs) {
+  # Rich (md() / tex()) labels, alone or in a list, measure as they draw.
+  if (.is_rich(s)) {
+    return(vellum::vl_strwidth(s, "", "plain", fs, unit = "mm"))
+  }
+  if (is.list(s)) {
+    return(max(0, vapply(s, .mm_tw, 0, fs = fs)))
+  }
   s <- as.character(s)
   s <- s[!is.na(s)]
   if (!length(s)) {
@@ -2104,7 +2111,7 @@ NULL
     return(swatch)
   }
   swatch@keys <- paste0("legend:", key)
-  swatch@meta <- list(list(legend_for = key, tooltip = as.character(label)))
+  swatch@meta <- list(list(legend_for = key, tooltip = .label_text(label)))
   swatch
 }
 

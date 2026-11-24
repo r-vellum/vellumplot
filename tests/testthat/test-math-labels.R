@@ -1,0 +1,140 @@
+# Math labels (tex(), plotmath(), md() with $...$) through every place a plot
+# draws text (F-31). The typesetting is vellum's; these tests check that
+# vellumplot passes the labels through un-coerced and that the plain-text seams
+# (alt text, tooltips) carry the TeX source.
+
+text_labels <- function(p) {
+  s <- vellum::as_vellum_scene(p)
+  nodes <- as.data.frame(vellum:::.scene_to_backend(s)$lint_table())
+  nodes$label[nodes$kind == "text"]
+}
+
+d <- data.frame(
+  x = 1:4,
+  y = 1:4,
+  g = rep(c("a", "b"), 2),
+  f = rep(c("alpha[1]", "sqrt(beta)"), each = 2),
+  lab = c("x^2", "hat(y)", "frac(1, n)", "bar(x)")
+)
+
+test_that("tex() and plotmath() are re-exported from vellum", {
+  expect_identical(tex, vellum::tex)
+  expect_identical(plotmath, vellum::plotmath)
+})
+
+test_that("math titles, axis and legend names draw as math", {
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, colour = g) |>
+    labs(
+      title = md("mass $m_e$ in **kg**"),
+      subtitle = tex("\\frac{a}{b}"),
+      caption = plotmath("sum(x[i], i==1, n)"),
+      x = tex("x_i"),
+      y = tex("\\sqrt{y}"),
+      colour = tex("\\beta_g")
+    )
+  labs <- text_labels(p)
+  for (src in c(
+    "mass $m_e$ in kg",
+    "\\frac{a}{b}",
+    "x_i",
+    "\\sqrt{y}",
+    "\\beta_g"
+  )) {
+    expect_true(src %in% labs, label = src)
+  }
+  expect_no_error(render_px(p))
+})
+
+test_that("a discrete legend takes a list of rich labels", {
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, colour = g) |>
+    scale_colour_discrete(labels = list(tex("\\alpha"), "plain"))
+  labs <- text_labels(p)
+  expect_true("\\alpha" %in% labs)
+  expect_true("plain" %in% labs)
+  expect_false("<object>" %in% labs)
+  # Named by level, too: unnamed levels keep their name.
+  p2 <- vplot(d) |>
+    mark_point(x = x, y = y, colour = g) |>
+    scale_colour_discrete(labels = list(b = tex("\\frac{1}{2}")))
+  expect_true(all(c("a", "\\frac{1}{2}") %in% text_labels(p2)))
+  # The legend measures the formula, not a placeholder string.
+  expect_gt(vellumplot:::.mm_tw(list(tex("\\frac{1}{2}xxxxxxxx")), 10), 0)
+})
+
+test_that("legend swatch tooltips carry the label's text", {
+  g <- list(key = "colour")
+  sw <- vellum::rect_grob()
+  local_mocked_bindings(.legend_series_key = function(g, i) "a")
+  out <- vellumplot:::.tag_legend_swatch(sw, g, 1L, list(tex("\\alpha")), TRUE)
+  expect_equal(out@meta[[1]]$tooltip, "\\alpha")
+})
+
+test_that("mark_text() and mark_label() parse plotmath with parse = TRUE", {
+  p <- vplot(d) |> mark_text(x = x, y = y, label = lab, parse = TRUE)
+  labs <- text_labels(p)
+  expect_true(all(c("x^{2}", "\\hat{y}", "\\frac{1}{n}", "\\bar{x}") %in% labs))
+  p <- vplot(d) |> mark_label(x = x, y = y, label = lab, parse = TRUE)
+  expect_true("\\frac{1}{n}" %in% text_labels(p))
+  expect_no_error(render_px(p))
+  # Without parse the strings are drawn as they are.
+  p <- vplot(d) |> mark_text(x = x, y = y, label = lab)
+  expect_true("frac(1, n)" %in% text_labels(p))
+  expect_error(
+    vplot(d) |> mark_text(x = x, y = y, label = lab, parse = "yes"),
+    "parse"
+  )
+})
+
+test_that("mark_label() takes rich labels, one or one per row", {
+  p <- vplot(d) |>
+    mark_label(x = x, y = y, label = tex(c("a_1", "b_2", "c_3", "d_4")))
+  expect_true(all(c("a_1", "d_4") %in% text_labels(p)))
+  p <- vplot(d) |> mark_label(x = x, y = y, label = tex("\\pi"))
+  expect_equal(sum(text_labels(p) == "\\pi"), 4L)
+})
+
+test_that("annotate() takes a rich label", {
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    annotate("text", x = 2, y = 3, label = tex("\\int_0^1 f")) |>
+    annotate("label", x = 3, y = 2, label = md("$\\Delta t$ small"))
+  labs <- text_labels(p)
+  expect_true("\\int_0^1 f" %in% labs)
+  expect_true("$\\Delta t$ small" %in% labs)
+})
+
+test_that("label_parsed() typesets facet strips as plotmath", {
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    facet_wrap(~f, labeller = label_parsed)
+  labs <- text_labels(p)
+  expect_true(all(c("\\alpha_{1}", "\\sqrt{\\beta}") %in% labs))
+  expect_no_error(render_px(p))
+  # A grid with two variables on one side stacks them, or joins them as
+  # plotmath's list() with multi_line = FALSE.
+  d2 <- transform(d, h = rep(c("x[1]", "x[2]"), 2))
+  p <- vplot(d2) |>
+    mark_point(x = x, y = y) |>
+    facet_grid(f + h ~ ., labeller = label_parsed)
+  expect_no_error(render_px(p))
+  out <- label_parsed(data.frame(a = "alpha", b = "beta"), multi_line = FALSE)
+  expect_equal(out[[1]][[1]]@tex, "\\alpha, \\beta")
+  # It survives the spec.
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    facet_wrap(~f, labeller = label_parsed)
+  back <- from_spec(as_spec(p))
+  expect_true("\\alpha_{1}" %in% text_labels(back))
+})
+
+test_that("alt text and the accessible name use the labels' source", {
+  p <- vplot(d) |>
+    mark_point(x = x, y = y, colour = g) |>
+    labs(title = tex("E = mc^2"), x = tex("x_i"), colour = md("*group*"))
+  expect_equal(vellumplot:::.alt_name(p@labels), "E = mc^2")
+  alt <- vellumplot:::.plot_alt(p)
+  expect_match(alt, "x_i", fixed = TRUE)
+  expect_match(alt, "colour shows group", fixed = TRUE)
+})

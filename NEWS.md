@@ -1,5 +1,31 @@
 # vellumplot (development version)
 
+## New features
+
+* Math labels everywhere a plot draws text (F-31). `tex()` and `plotmath()`
+  are re-exported from vellum, and `md()` labels take inline math between `$`
+  signs. A math label works in every `labs()` title (the rotated y title
+  included), in a discrete legend's `labels =` (a list, one label per key;
+  plain strings in the list are read as `md()`), in `mark_text()` and
+  `mark_label()` (one label, or a list with one per row), and in `annotate()`.
+
+* `mark_text()` and `mark_label()` gain `parse = TRUE`, which reads each
+  label as plotmath, as in ggplot2 (F-31).
+
+* `label_parsed()` typesets facet strips from plotmath values, like
+  ggplot2's labeller of the same name; it survives `as_spec()` (F-31).
+
+## Bug fixes
+
+* A list of rich labels given to a discrete colour scale's `labels =` drew
+  `<object>` in the legend; `annotate("text", label = md(...))` failed with
+  "cannot coerce class to a data.frame"; and `mark_label()` flattened rich
+  labels to text (F-31).
+
+* Alt text, the accessible name and legend tooltips now use a rich label's
+  text (an `md()` label's words, a `tex()` label's TeX source) where they
+  used to skip it or show `<rich text>` (F-31).
+
 # vellumplot 0.22.1
 
 ## Bug fixes

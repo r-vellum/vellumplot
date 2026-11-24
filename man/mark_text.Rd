@@ -24,6 +24,7 @@ mark_text(
   seed = NULL,
   effects = list(),
   blend = NULL,
+  parse = FALSE,
   data = NULL
 )
 
@@ -48,6 +49,7 @@ mark_label(
   effects = list(),
   blend = NULL,
   sketch = NULL,
+  parse = FALSE,
   data = NULL
 )
 }
@@ -109,6 +111,11 @@ already drawn beneath it (the panel and earlier layers), one of the CSS
 \code{mix-blend-mode} names, e.g. \code{"multiply"}, \code{"screen"}, \code{"darken"}. The whole
 layer composites as one isolated group (not per element).}
 
+\item{parse}{If \code{TRUE}, each label is read as R's plotmath notation and
+typeset as math (see \code{\link[=plotmath]{plotmath()}}), as in ggplot2. A \code{label} can also be a
+rich label itself: one \code{\link[=md]{md()}} or \code{\link[=tex]{tex()}} label for every row, or a list
+with one per row.}
+
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
 
 \item{fill}{For \code{mark_label()}, the label background: a constant colour, or a
@@ -142,6 +149,8 @@ panel (no facets / composition / polar).
 }
 \examples{
 vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
+d <- data.frame(x = 1:3, y = 1:3, f = c("alpha[1]", "beta^2", "sqrt(gamma)"))
+vplot(d) |> mark_label(x = x, y = y, label = f, parse = TRUE)
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |>
   mark_text(x = wt, y = mpg, label = rownames(mtcars), nudge_y = 2)
 }

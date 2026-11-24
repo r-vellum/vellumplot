@@ -1765,9 +1765,15 @@ mark_step <- function(
 #'   that barely moved gets none.
 #' @param seed Retained for back-compatibility and currently a no-op: the repel
 #'   layout is deterministic, so there is nothing for a seed to vary.
+#' @param parse If `TRUE`, each label is read as R's plotmath notation and
+#'   typeset as math (see [plotmath()]), as in ggplot2. A `label` can also be a
+#'   rich label itself: one [md()] or [tex()] label for every row, or a list
+#'   with one per row.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
+#' d <- data.frame(x = 1:3, y = 1:3, f = c("alpha[1]", "beta^2", "sqrt(gamma)"))
+#' vplot(d) |> mark_label(x = x, y = y, label = f, parse = TRUE)
 #' vplot(mtcars) |> mark_point(x = wt, y = mpg) |>
 #'   mark_text(x = wt, y = mpg, label = rownames(mtcars), nudge_y = 2)
 #' @export
@@ -1790,6 +1796,7 @@ mark_text <- function(
   seed = NULL,
   effects = list(),
   blend = NULL,
+  parse = FALSE,
   data = NULL
 ) {
   .check_plot(plot)
@@ -1807,7 +1814,8 @@ mark_text <- function(
     ),
     const_params = list(
       nudge_x = as.numeric(nudge_x),
-      nudge_y = as.numeric(nudge_y)
+      nudge_y = as.numeric(nudge_y),
+      parse = .check_flag(parse, "parse")
     ),
     stat_params = list(
       repel = .repel_params(
@@ -1848,6 +1856,7 @@ mark_label <- function(
   effects = list(),
   blend = NULL,
   sketch = NULL,
+  parse = FALSE,
   data = NULL
 ) {
   .check_plot(plot)
@@ -1866,7 +1875,8 @@ mark_label <- function(
     ),
     const_params = list(
       nudge_x = as.numeric(nudge_x),
-      nudge_y = as.numeric(nudge_y)
+      nudge_y = as.numeric(nudge_y),
+      parse = .check_flag(parse, "parse")
     ),
     stat_params = list(
       repel = .repel_params(

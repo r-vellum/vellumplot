@@ -20,7 +20,8 @@ NULL
 #' @param x,y Position (text/label/point/grob/sparkline; segment start).
 #' @param xend,yend Segment end.
 #' @param xmin,xmax,ymin,ymax Rectangle extent.
-#' @param label Text to draw (text/label).
+#' @param label Text to draw (text/label): a string, or a rich label such as
+#'   [md()] or [tex()] (a list of them for several positions).
 #' @param ... Constant aesthetics passed to the mark (e.g. `color`, `fill`,
 #'   `alpha`, `size`). For `"grob"`: `grob =` (a vellum grob or `PlotSpec`). For
 #'   `"sparkline"`: `values =` plus any [vsparkline()] argument. Both accept
@@ -64,7 +65,13 @@ annotate <- function(
     text = ,
     label = {
       .req(geom, x = x, y = y, label = label)
-      d <- data.frame(x = x, y = y, label = label, stringsAsFactors = FALSE)
+      # A rich label (md() / tex(), or a list of them) is not a column: it
+      # reaches the mark as a value, drawn at every position (or one each).
+      d <- if (.is_rich(label) || is.list(label)) {
+        data.frame(x = x, y = y)
+      } else {
+        data.frame(x = x, y = y, label = label, stringsAsFactors = FALSE)
+      }
       mk <- if (geom == "text") mark_text else mark_label
       mk(plot, x = x, y = y, label = label, ..., data = d)
     },

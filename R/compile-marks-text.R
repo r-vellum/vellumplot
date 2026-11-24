@@ -29,13 +29,28 @@ NULL
   is.finite(xn) & is.finite(yn) & (if (is.null(label)) TRUE else !is.na(label))
 }
 
+# The labels of a text / label layer: a mapped column (`L$values$label`) or a
+# constant (a literal passes through to `L$params$label`, bypassing the
+# encoding split). With `parse = TRUE` plain strings are read as plotmath and
+# become tex() labels, one per row (ggplot2's `parse = TRUE`).
+.layer_labels <- function(L) {
+  raw <- L$values$label %||% .aes_param(L, "label", NULL)
+  if (
+    !is.null(raw) &&
+      isTRUE(.aes_param(L, "parse", FALSE)) &&
+      !.is_rich(raw) &&
+      !.is_rich_list(raw)
+  ) {
+    raw <- vellum::plotmath(as.character(raw))
+  }
+  raw
+}
+
 .emit_text <- function(scene, L, scales) {
   n <- L$n
-  # The `label` is a mapped column (`L$values$label`) or a constant (a literal
-  # passes through to `L$params$label`, bypassing the encoding split) -- read
-  # either. A text mark with neither has nothing to write (it would otherwise draw
+  # A text mark with no label has nothing to write (it would otherwise draw
   # invisible `NA` glyphs at every point), so fail with a clear message.
-  raw <- L$values$label %||% .aes_param(L, "label", NULL)
+  raw <- .layer_labels(L)
   if (is.null(raw)) {
     fn <- switch(
       L$mark,
@@ -186,7 +201,16 @@ NULL
   repel_on <- isTRUE(L$stat_params$repel$on)
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
-  label <- rep_len(as.character(L$values$label), n)
+  # Plain strings, or rich labels (one for every row, or a list of them).
+  raw <- .layer_labels(L)
+  rich <- .is_rich(raw) || .is_rich_list(raw)
+  label <- if (.is_rich(raw)) {
+    rep(list(raw), n)
+  } else if (rich) {
+    .as_rich_list(raw)[rep_len(seq_along(raw), n)]
+  } else {
+    rep_len(as.character(raw), n)
+  }
   col <- rep_len(.text_colour(L, scales, "black"), n)
   # Label background: a mapped `fill` channel (through the fill scale), else a
   # constant `fill` param, else white. `.text_colour` deliberately keeps `fill`
@@ -206,10 +230,10 @@ NULL
   pad <- vellum::vl_unit(1.2, "mm")
   # Build each text grob once, then take its width and height (two passes built
   # the grob twice).
-  txts <- lapply(seq_len(n), function(i) .txt(label[i], fs[i]))
+  txts <- lapply(seq_len(n), function(i) .txt(label[[i]], fs[i]))
   ws <- do.call(c, lapply(txts, function(t) vellum::grobwidth(t) + pad))
   hs <- do.call(c, lapply(txts, function(t) vellum::grobheight(t) + pad))
-  keep <- .repel_keep(repel_on, xn, yn, label)
+  keep <- .repel_keep(repel_on, xn, yn, if (!rich) label)
 
   gi <- 0L
   for (idx in .style_groups(
