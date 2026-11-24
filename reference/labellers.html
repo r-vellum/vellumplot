@@ -76,6 +76,8 @@ the <code>labeller</code> argument of <code><a href="facet_wrap.html">facet_wrap
 <span></span>
 <span><span class="fu">label_both</span><span class="op">(</span><span class="va">labels</span>, multi_line <span class="op">=</span> <span class="cn">TRUE</span>, sep <span class="op">=</span> <span class="st">": "</span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">label_parsed</span><span class="op">(</span><span class="va">labels</span>, multi_line <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">label_wrap_gen</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">25</span>, multi_line <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">as_labeller</span><span class="op">(</span><span class="va">x</span>, default <span class="op">=</span> <span class="va">label_value</span>, multi_line <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -118,7 +120,7 @@ does not name.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>label_value()</code> and <code>label_both()</code> return a list of character
-vectors. <code>label_wrap_gen()</code> and <code>as_labeller()</code> return a labeller
+vectors, <code>label_parsed()</code> a list of lists of <code><a href="tex.html">tex()</a></code> labels. <code>label_wrap_gen()</code> and <code>as_labeller()</code> return a labeller
 function.</p>
     </div>
     <div class="section level2">
@@ -126,6 +128,10 @@ function.</p>
 
 <ul><li><p><code>label_value()</code> shows the value itself (<code>"4"</code>).</p></li>
 <li><p><code>label_both()</code> shows the variable name and the value (<code>"cyl: 4"</code>).</p></li>
+<li><p><code>label_parsed()</code> reads each value as R's plotmath notation and typesets
+it as math (<code>"alpha[1]"</code> shows as a subscripted alpha), as ggplot2's
+<code>label_parsed()</code> does; see <code><a href="tex.html">plotmath()</a></code>. With several facet variables,
+<code>multi_line = FALSE</code> joins them as plotmath's <code>list(a, b)</code>.</p></li>
 <li><p><code>label_wrap_gen()</code> returns a labeller that wraps long values onto several
 lines of at most <code>width</code> characters.</p></li>
 <li><p><code>as_labeller()</code> builds a labeller from a lookup table (a named character
@@ -134,12 +140,13 @@ values and returns their labels (<code>toupper</code>). Values the lookup table
 does not name keep the <code>default</code> labeller's text.</p></li>
 </ul><p>A named character vector or a plain function can also be passed straight to
 <code>labeller =</code>; it goes through <code>as_labeller()</code>.</p>
-<p>The declarative labellers (<code>label_value</code>, <code>label_both</code>, <code>label_wrap_gen()</code>
-and lookup tables over one of those) survive <code><a href="as_spec.html">as_spec()</a></code>; an arbitrary
-function does not.</p>
+<p>The declarative labellers (<code>label_value</code>, <code>label_both</code>, <code>label_parsed</code>,
+<code>label_wrap_gen()</code> and lookup tables over one of the first three) survive
+<code><a href="as_spec.html">as_spec()</a></code>; an arbitrary function does not.</p>
 <p>A labeller is a function of one argument, <code>labels</code>: a data frame with one
 character column per facet variable (named after it) and one row per strip.
-It returns a list of character vectors, one per line of the strip. With
+It returns a list of character vectors, one per line of the strip (or of
+lists of rich labels, <code><a href="md.html">md()</a></code> or <code><a href="tex.html">tex()</a></code>, as <code>label_parsed()</code> does). With
 several facet variables on one side, <code>multi_line = TRUE</code> puts each variable
 on its own line of the strip, and <code>multi_line = FALSE</code> joins them into one
 line, separated by <code>", "</code>.</p>
@@ -157,11 +164,18 @@ line, separated by <code>", "</code>.</p>
 <span class="r-in"><span><span class="va">p</span> <span class="op">|&gt;</span> <span class="fu"><a href="facet_wrap.html">facet_grid</a></span><span class="op">(</span><span class="va">am</span> <span class="op">~</span> <span class="va">cyl</span>, labeller <span class="op">=</span> <span class="va">label_both</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="labellers-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># values in plotmath notation, typeset as math</span></span></span>
+<span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alpha[1]"</span>, <span class="st">"sqrt(beta)"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="facet_wrap.html">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">g</span>, labeller <span class="op">=</span> <span class="va">label_parsed</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="labellers-3.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a lookup table, for one side or both</span></span></span>
 <span class="r-in"><span><span class="va">p</span> <span class="op">|&gt;</span> <span class="fu"><a href="facet_wrap.html">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">am</span>, labeller <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>`0` <span class="op">=</span> <span class="st">"automatic"</span>, `1` <span class="op">=</span> <span class="st">"manual"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="labellers-3.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="va">p</span> <span class="op">|&gt;</span> <span class="fu"><a href="facet_wrap.html">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">am</span>, labeller <span class="op">=</span> <span class="fu">as_labeller</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>`0` <span class="op">=</span> <span class="st">"automatic"</span><span class="op">)</span>, <span class="va">label_both</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="labellers-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="va">p</span> <span class="op">|&gt;</span> <span class="fu"><a href="facet_wrap.html">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">am</span>, labeller <span class="op">=</span> <span class="fu">as_labeller</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>`0` <span class="op">=</span> <span class="st">"automatic"</span><span class="op">)</span>, <span class="va">label_both</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="labellers-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># long values wrapped onto several lines</span></span></span>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
@@ -172,7 +186,7 @@ line, separated by <code>", "</code>.</p>
 <span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="facet_wrap.html">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">g</span>, labeller <span class="op">=</span> <span class="fu">label_wrap_gen</span><span class="op">(</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="labellers-5.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="labellers-6.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

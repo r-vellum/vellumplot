@@ -2,6 +2,60 @@
 
 ## vellumplot (development version)
 
+### New features
+
+- Math labels everywhere a plot draws text (F-31).
+  [`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md) and
+  [`plotmath()`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+  are re-exported from vellum, and
+  [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) labels
+  take inline math between `$` signs. A math label works in every
+  [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md)
+  title (the rotated y title included), in a discrete legend’s
+  `labels =` (a list, one label per key; plain strings in the list are
+  read as
+  [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md)), in
+  [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  and
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  (one label, or a list with one per row), and in
+  [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md).
+  A list may mix rich labels with plain strings; the strings are drawn
+  literally (no markdown or `$` is read).
+
+- [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  and
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  gain `parse = TRUE`, which reads each label as plotmath, as in ggplot2
+  (F-31).
+
+- [`label_parsed()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  typesets facet strips from plotmath values, like ggplot2’s labeller of
+  the same name; it survives
+  [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  (F-31).
+
+### Bug fixes
+
+- A list of rich labels given to a discrete colour scale’s `labels =`
+  drew `<object>` in the legend, and so did a mixed list in
+  [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md);
+  `annotate("text", label = md(...))` failed with “cannot coerce class
+  to a data.frame”; and
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  flattened rich labels to text (F-31). An NA label with `parse = TRUE`
+  draws nothing (no empty
+  [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
+  box).
+
+- Alt text, the accessible name and legend tooltips now use a rich
+  label’s text (an
+  [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md)
+  label’s words, a
+  [`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+  label’s TeX source) where they used to skip it or show `<rich text>`
+  (F-31).
+
 ## vellumplot 0.22.1
 
 ### Bug fixes

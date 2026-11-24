@@ -13,6 +13,8 @@ label_value(labels, multi_line = TRUE)
 
 label_both(labels, multi_line = TRUE, sep = ": ")
 
+label_parsed(labels, multi_line = TRUE)
+
 label_wrap_gen(width = 25, multi_line = TRUE)
 
 as_labeller(x, default = label_value, multi_line = TRUE)
@@ -50,14 +52,24 @@ as_labeller(x, default = label_value, multi_line = TRUE)
 
 ## Value
 
-`label_value()` and `label_both()` return a list of character vectors.
-`label_wrap_gen()` and `as_labeller()` return a labeller function.
+`label_value()` and `label_both()` return a list of character vectors,
+`label_parsed()` a list of lists of
+[`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+labels. `label_wrap_gen()` and `as_labeller()` return a labeller
+function.
 
 ## Details
 
 - `label_value()` shows the value itself (`"4"`).
 
 - `label_both()` shows the variable name and the value (`"cyl: 4"`).
+
+- `label_parsed()` reads each value as R's plotmath notation and
+  typesets it as math (`"alpha[1]"` shows as a subscripted alpha), as
+  ggplot2's `label_parsed()` does; see
+  [`plotmath()`](https://r-vellum.github.io/vellumplot/reference/tex.md).
+  With several facet variables, `multi_line = FALSE` joins them as
+  plotmath's `list(a, b)`.
 
 - `label_wrap_gen()` returns a labeller that wraps long values onto
   several lines of at most `width` characters.
@@ -70,16 +82,20 @@ as_labeller(x, default = label_value, multi_line = TRUE)
 A named character vector or a plain function can also be passed straight
 to `labeller =`; it goes through `as_labeller()`.
 
-The declarative labellers (`label_value`, `label_both`,
-`label_wrap_gen()` and lookup tables over one of those) survive
+The declarative labellers (`label_value`, `label_both`, `label_parsed`,
+`label_wrap_gen()` and lookup tables over one of the first three)
+survive
 [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md);
 an arbitrary function does not.
 
 A labeller is a function of one argument, `labels`: a data frame with
 one character column per facet variable (named after it) and one row per
-strip. It returns a list of character vectors, one per line of the
-strip. With several facet variables on one side, `multi_line = TRUE`
-puts each variable on its own line of the strip, and
+strip. It returns a list of character vectors, one per line of the strip
+(or of lists of rich labels,
+[`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) or
+[`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md), as
+`label_parsed()` does). With several facet variables on one side,
+`multi_line = TRUE` puts each variable on its own line of the strip, and
 `multi_line = FALSE` joins them into one line, separated by `", "`.
 
 ## See also
@@ -94,6 +110,13 @@ p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 p |> facet_wrap(~cyl, labeller = label_both)
 
 p |> facet_grid(am ~ cyl, labeller = label_both)
+
+
+# values in plotmath notation, typeset as math
+d <- data.frame(x = 1:4, y = 1:4, g = rep(c("alpha[1]", "sqrt(beta)"), 2))
+vplot(d) |>
+  mark_point(x = x, y = y) |>
+  facet_wrap(~g, labeller = label_parsed)
 
 
 # a lookup table, for one side or both

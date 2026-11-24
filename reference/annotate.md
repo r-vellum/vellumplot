@@ -52,7 +52,10 @@ annotate(
 
 - label:
 
-  Text to draw (text/label).
+  Text to draw (text/label): a string, or a rich label such as
+  [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) or
+  [`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md) (a
+  list of them for several positions).
 
 - ...:
 

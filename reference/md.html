@@ -6,16 +6,18 @@
     }
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Spectral-0.5.0/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.5.0/font.css" rel="stylesheet"><link href="../deps/Spectral_SC-0.5.0/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Rich-text labels — md"><meta name="description" content="md(text) builds a rich-text label from a markdown subset: **bold**,
-*italic* / _italic_, ^superscript^, ~subscript~, and a colour span
-[text]{#c00}. It is vellum::md(), re-exported. The result can be used
+*italic* / _italic_, ^superscript^, ~subscript~, a colour span
+[text]{#c00}, and inline math $...$ (see tex()). It is vellum::md(),
+re-exported. The result can be used
 anywhere vellumplot draws a title: labs() (title / subtitle /
 caption / tag / x / y / color) and scale_*(name = ).
-Per-element rich labels (in mark_text()) are not yet supported."><meta property="og:description" content="md(text) builds a rich-text label from a markdown subset: **bold**,
-*italic* / _italic_, ^superscript^, ~subscript~, and a colour span
-[text]{#c00}. It is vellum::md(), re-exported. The result can be used
+Per-element rich labels go in mark_text() as a list, one per row."><meta property="og:description" content="md(text) builds a rich-text label from a markdown subset: **bold**,
+*italic* / _italic_, ^superscript^, ~subscript~, a colour span
+[text]{#c00}, and inline math $...$ (see tex()). It is vellum::md(),
+re-exported. The result can be used
 anywhere vellumplot draws a title: labs() (title / subtitle /
 caption / tag / x / y / color) and scale_*(name = ).
-Per-element rich labels (in mark_text()) are not yet supported."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
+Per-element rich labels go in mark_text() as a list, one per row."><meta property="og:image" content="https://r-vellum.github.io/vellumplot/logo.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@schochastics"><meta name="twitter:site" content="@schochastics"><meta name="theme-color" content="#efe6d2"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -75,11 +77,12 @@ Per-element rich labels (in mark_text()) are not yet supported."><meta property=
 
     <div class="ref-description section level2">
     <p><code>md(text)</code> builds a rich-text label from a markdown subset: <code>**bold**</code>,
-<code>*italic*</code> / <code>_italic_</code>, <code>^superscript^</code>, <code>~subscript~</code>, and a colour span
-<code>[text]{#c00}</code>. It is <code><a href="https://r-vellum.github.io/vellum/reference/md.html" class="external-link">vellum::md()</a></code>, re-exported. The result can be used
+<code>*italic*</code> / <code>_italic_</code>, <code>^superscript^</code>, <code>~subscript~</code>, a colour span
+<code>[text]{#c00}</code>, and inline math <code>$...$</code> (see <code><a href="tex.html">tex()</a></code>). It is <code><a href="https://r-vellum.github.io/vellum/reference/md.html" class="external-link">vellum::md()</a></code>,
+re-exported. The result can be used
 anywhere vellumplot draws a <em>title</em>: <code><a href="labs.html">labs()</a></code> (<code>title</code> / <code>subtitle</code> /
 <code>caption</code> / <code>tag</code> / <code>x</code> / <code>y</code> / <code>color</code>) and <code>scale_*(name = )</code>.
-Per-element rich labels (in <code><a href="mark_text.html">mark_text()</a></code>) are not yet supported.</p>
+Per-element rich labels go in <code><a href="mark_text.html">mark_text()</a></code> as a list, one per row.</p>
     </div>
 
 

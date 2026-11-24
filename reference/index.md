@@ -358,6 +358,7 @@ Map data values to visual properties, with trained domains and guides.
   : Facet a plot into a grid of panels
 - [`label_value()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
   [`label_both()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  [`label_parsed()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
   [`label_wrap_gen()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
   [`as_labeller()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
   : Facet strip labellers
@@ -430,6 +431,9 @@ Combine plots into a single figure, or repeat one over a variable.
   : Add a one-off annotation
 - [`md`](https://r-vellum.github.io/vellumplot/reference/md.md) :
   Rich-text labels
+- [`tex`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+  [`plotmath`](https://r-vellum.github.io/vellumplot/reference/tex.md) :
+  Math labels
 
 ## Layer effects
 

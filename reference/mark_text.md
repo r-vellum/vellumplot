@@ -27,6 +27,7 @@ mark_text(
   seed = NULL,
   effects = list(),
   blend = NULL,
+  parse = FALSE,
   data = NULL
 )
 
@@ -51,6 +52,7 @@ mark_label(
   effects = list(),
   blend = NULL,
   sketch = NULL,
+  parse = FALSE,
   data = NULL
 )
 ```
@@ -153,6 +155,16 @@ mark_label(
   `mix-blend-mode` names, e.g. `"multiply"`, `"screen"`, `"darken"`. The
   whole layer composites as one isolated group (not per element).
 
+- parse:
+
+  If `TRUE`, each label is read as R's plotmath notation and typeset as
+  math (see
+  [`plotmath()`](https://r-vellum.github.io/vellumplot/reference/tex.md)),
+  as in ggplot2. A `label` can also be a rich label itself: one
+  [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) or
+  [`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+  label for every row, or a list with one per row.
+
 - data:
 
   Optional layer data frame; overrides the plot data for this layer.
@@ -199,6 +211,9 @@ polar).
 
 ``` r
 vplot(mtcars) |> mark_text(x = wt, y = mpg, label = rownames(mtcars))
+
+d <- data.frame(x = 1:3, y = 1:3, f = c("alpha[1]", "beta^2", "sqrt(gamma)"))
+vplot(d) |> mark_label(x = x, y = y, label = f, parse = TRUE)
 
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |>
   mark_text(x = wt, y = mpg, label = rownames(mtcars), nudge_y = 2)
