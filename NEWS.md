@@ -8,6 +8,13 @@
   between pies were drawn on top of each other. A vertex with both a marker
   and a pie caps at the larger of the two.
 
+## Documentation
+
+* The `inset()` examples and the composition article give their insets a
+  larger box (VP-131). Since `align_to = "panel"` became the default (VP-127)
+  the fractions are of the panel, and the old boxes left the histogram inset
+  cramped.
+
 # vellumplot 0.22.0
 
 ## Breaking changes

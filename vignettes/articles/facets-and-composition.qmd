@@ -164,7 +164,7 @@ a reference box. Good for an overview-plus-detail figure.
 ```{r}
 main <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 mini <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
-inset(main, mini, left = 0.6, bottom = 0.6, right = 0.98, top = 0.98)
+inset(main, mini, left = 0.5, bottom = 0.45, right = 1, top = 1)
 ```
 
 ### Sparklines
@@ -189,7 +189,7 @@ onto a plot as a tiny trend indicator:
 
 ```{r}
 spark <- vsparkline(cumsum(rnorm(40)))
-inset(main, spark, left = 0.62, bottom = 0.9, right = 0.98, top = 0.99)
+inset(main, spark, left = 0.55, bottom = 0.8, right = 1, top = 1)
 ```
 
 ### Tables with sparklines
