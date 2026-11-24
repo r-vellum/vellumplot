@@ -515,24 +515,42 @@ NULL
     logical(1)
   ))
   node_L <- Find(function(L) identical(L$mark, "nodes"), resolved)
+  pie_Ls <- Filter(function(L) identical(L$mark, "node_pie"), resolved)
   fi <- edge_data[[".from_i"]]
   ti <- edge_data[[".to_i"]]
-  if (!has_edges || is.null(node_L) || is.null(fi) || is.null(ti)) {
+  if (
+    !has_edges ||
+      (is.null(node_L) && !length(pie_Ls)) ||
+      is.null(fi) ||
+      is.null(ti)
+  ) {
     return(NULL)
   }
-  # Node radius (mm), in vertex order. vellum's points_grob `size` *is* the
-  # radius (size = 20mm renders a 40mm-diameter marker), so the cap == size.
-  # Default matches the node emitter's `.aes_size(L, scales, 1)`.
-  r_mm <- rep_len(.aes_size(node_L, scales, 1), node_n)
-  # A faceted panel draws only its own nodes: place their radii at their vertex
-  # indices (the plot-data rows), so an edge looks up its own endpoints'.
-  rows <- node_L$source$rows
-  if (
-    identical(node_L$source$name, "plot") &&
-      length(rows) == node_L$n &&
-      length(rows) < node_n
-  ) {
-    r_mm[rows] <- rep_len(.aes_size(node_L, scales, 1), length(rows))
+  r_mm <- rep(0, node_n)
+  if (!is.null(node_L)) {
+    # Node radius (mm), in vertex order. vellum's points_grob `size` *is* the
+    # radius (size = 20mm renders a 40mm-diameter marker), so the cap == size.
+    # Default matches the node emitter's `.aes_size(L, scales, 1)`.
+    r_mm <- rep_len(.aes_size(node_L, scales, 1), node_n)
+    # A faceted panel draws only its own nodes: place their radii at their
+    # vertex indices (the plot-data rows), so an edge looks up its own
+    # endpoints'.
+    rows <- node_L$source$rows
+    if (
+      identical(node_L$source$name, "plot") &&
+        length(rows) == node_L$n &&
+        length(rows) < node_n
+    ) {
+      r_mm[rows] <- rep_len(.aes_size(node_L, scales, 1), length(rows))
+    }
+  }
+  # A node pie caps the edge at its rim too (VP-130): each vertex takes its
+  # largest glyph, so an arrowhead is not hidden under a pie.
+  for (L in pie_Ls) {
+    r_mm <- pmax(
+      r_mm,
+      .graph_vertex_radius(L, .node_pie_radius(L, scales, L$n), node_n)
+    )
   }
   # Per-edge perpendicular offset (mm): the signed parallel-edge index scaled by
   # the larger endpoint radius, so parallel/reciprocal edges spread across the
@@ -551,6 +569,25 @@ NULL
     loop_angle = edge_data[[".loop_angle"]],
     loop_narrow = edge_data[[".loop_narrow"]]
   )
+}
+
+# A node glyph layer's radii (mm) placed at their vertex indices: the layer's
+# plot-data rows (a faceted panel draws only its own nodes), or one per vertex.
+# Zero where the layer has no glyph, e.g. a `data =` subset it cannot place.
+.graph_vertex_radius <- function(L, r, node_n) {
+  out <- rep(0, node_n)
+  rows <- L$source$rows
+  if (
+    identical(L$source$name, "plot") &&
+      length(rows) == L$n &&
+      length(rows) &&
+      max(rows) <= node_n
+  ) {
+    out[rows] <- rep_len(as.numeric(r), length(rows))
+  } else if (L$n == node_n) {
+    out <- rep_len(as.numeric(r), node_n)
+  }
+  out
 }
 
 # The void-like default theme for a graph: no axes, ticks, gridlines, or panel
