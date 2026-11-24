@@ -4,8 +4,9 @@ Control the non-data look of a plot. `theme_gray()` is the default (grey
 panel, white gridlines); `theme_minimal()` drops the panel fill for
 light gridlines on the page; `theme_bw()` is a white panel with light
 grey gridlines; `theme_classic()` has axis lines and no gridlines;
-`theme_void()` strips everything but the marks, legend, and titles;
-`theme_cyberpunk()` is a dark neon theme (see Details).
+`theme_void()` strips everything but the marks, legend, and titles, with
+no plot margin (as in ggplot2); `theme_cyberpunk()` is a dark neon theme
+(see Details).
 
 ## Usage
 

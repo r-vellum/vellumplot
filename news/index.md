@@ -34,6 +34,13 @@
   old placement. A composition of several plots still places its insets
   in the whole figure.
 
+- [`theme_void()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
+  has no plot margin, matching ggplot2 (VP-128): a void plot now fills
+  its box edge to edge, where it kept the 5.5 mm `plot.margin` of
+  [`theme_gray()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md).
+  Maps, locator insets and other void plots grow by that margin; add
+  `theme(plot.margin = c(5.5, 5.5, 5.5, 5.5))` for the old look.
+
 ### New features
 
 - [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
