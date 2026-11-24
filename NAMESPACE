@@ -59,6 +59,7 @@ export(inset)
 export(inspect_source)
 export(interaction_model)
 export(label_both)
+export(label_parsed)
 export(label_value)
 export(label_wrap_gen)
 export(labs)
@@ -155,6 +156,7 @@ export(plot_provenance)
 export(plot_spacer)
 export(plot_svg)
 export(plot_verify)
+export(plotmath)
 export(position_dodge)
 export(position_dodge2)
 export(position_fill)
@@ -297,6 +299,7 @@ export(spec_from_vegalite)
 export(spec_schema)
 export(spec_to_json)
 export(spec_to_vegalite)
+export(tex)
 export(theme)
 export(theme_bw)
 export(theme_classic)
@@ -344,6 +347,7 @@ importFrom(vellum,
   linear_gradient,
   lines_grob,
   md,
+  plotmath,
   points_grob,
   pop,
   push,
@@ -352,6 +356,7 @@ importFrom(vellum,
   render,
   segments_grob,
   sketch,
+  tex,
   text_grob,
   vl_gpar,
   vl_pattern,

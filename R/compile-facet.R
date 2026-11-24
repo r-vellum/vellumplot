@@ -325,7 +325,9 @@ NULL
 # table, so an edge's key, and its `join`, is the same in every panel and in
 # the unfaceted plot.
 .edge_keys_by_row <- function(gi, idx) {
-  if (!isTRUE(gi$kind %in% c("edges", "flow")) || length(gi$source) != length(idx)) {
+  if (
+    !isTRUE(gi$kind %in% c("edges", "flow")) || length(gi$source) != length(idx)
+  ) {
     return(gi)
   }
   gi$key <- paste(gi$source, gi$target, idx, sep = "\001")
@@ -705,9 +707,12 @@ NULL
   panel <- fa$panels[[i]]
   lab <- switch(
     fa$type,
-    wrap = fa$wrap_labels[[i]],
+    wrap = .label_text(fa$wrap_labels[[i]]),
     grid = paste(
-      c(fa$col_labels[panel$c], fa$row_labels[panel$r]),
+      c(
+        if (!is.null(fa$col_labels)) .label_text(fa$col_labels[[panel$c]]),
+        if (!is.null(fa$row_labels)) .label_text(fa$row_labels[[panel$r]])
+      ),
       collapse = ", "
     ),
     ""

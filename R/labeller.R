@@ -5,6 +5,10 @@
 #'
 #' * `label_value()` shows the value itself (`"4"`).
 #' * `label_both()` shows the variable name and the value (`"cyl: 4"`).
+#' * `label_parsed()` reads each value as R's plotmath notation and typesets
+#'   it as math (`"alpha[1]"` shows as a subscripted alpha), as ggplot2's
+#'   `label_parsed()` does; see [plotmath()]. With several facet variables,
+#'   `multi_line = FALSE` joins them as plotmath's `list(a, b)`.
 #' * `label_wrap_gen()` returns a labeller that wraps long values onto several
 #'   lines of at most `width` characters.
 #' * `as_labeller()` builds a labeller from a lookup table (a named character
@@ -15,13 +19,14 @@
 #' A named character vector or a plain function can also be passed straight to
 #' `labeller =`; it goes through `as_labeller()`.
 #'
-#' The declarative labellers (`label_value`, `label_both`, `label_wrap_gen()`
-#' and lookup tables over one of those) survive [as_spec()]; an arbitrary
-#' function does not.
+#' The declarative labellers (`label_value`, `label_both`, `label_parsed`,
+#' `label_wrap_gen()` and lookup tables over one of the first three) survive
+#' [as_spec()]; an arbitrary function does not.
 #'
 #' A labeller is a function of one argument, `labels`: a data frame with one
 #' character column per facet variable (named after it) and one row per strip.
-#' It returns a list of character vectors, one per line of the strip. With
+#' It returns a list of character vectors, one per line of the strip (or of
+#' lists of rich labels, [md()] or [tex()], as `label_parsed()` does). With
 #' several facet variables on one side, `multi_line = TRUE` puts each variable
 #' on its own line of the strip, and `multi_line = FALSE` joins them into one
 #' line, separated by `", "`.
@@ -39,13 +44,19 @@
 #' @param default For `as_labeller()`, the labeller for values a lookup table
 #'   does not name.
 #' @return `label_value()` and `label_both()` return a list of character
-#'   vectors. `label_wrap_gen()` and `as_labeller()` return a labeller
+#'   vectors, `label_parsed()` a list of lists of [tex()] labels. `label_wrap_gen()` and `as_labeller()` return a labeller
 #'   function.
 #' @seealso [facet_wrap()], [facet_grid()]
 #' @examples
 #' p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 #' p |> facet_wrap(~cyl, labeller = label_both)
 #' p |> facet_grid(am ~ cyl, labeller = label_both)
+#'
+#' # values in plotmath notation, typeset as math
+#' d <- data.frame(x = 1:4, y = 1:4, g = rep(c("alpha[1]", "sqrt(beta)"), 2))
+#' vplot(d) |>
+#'   mark_point(x = x, y = y) |>
+#'   facet_wrap(~g, labeller = label_parsed)
 #'
 #' # a lookup table, for one side or both
 #' p |> facet_wrap(~am, labeller = c(`0` = "automatic", `1` = "manual"))
@@ -89,6 +100,23 @@ label_both <- function(labels, multi_line = TRUE, sep = ": ") {
 }
 class(label_both) <- c("function", "labeller")
 attr(label_both, "vp_spec") <- list(type = "both")
+
+#' @rdname labellers
+#' @export
+label_parsed <- function(labels, multi_line = TRUE) {
+  labels <- .labeller_values(labels)
+  if (!isTRUE(multi_line) && length(labels) > 1L) {
+    labels <- list(paste0("list(", .join_labels(labels), ")"))
+  } else if (!isTRUE(multi_line)) {
+    labels <- unname(labels)
+  }
+  lapply(labels, function(v) {
+    out <- vellum::plotmath(v)
+    if (length(v) == 1L) list(out) else out
+  })
+}
+class(label_parsed) <- c("function", "labeller")
+attr(label_parsed, "vp_spec") <- list(type = "parsed")
 
 #' @rdname labellers
 #' @export
@@ -190,6 +218,7 @@ as_labeller <- function(x, default = label_value, multi_line = TRUE) {
     type,
     value = label_value,
     both = label_both,
+    parsed = label_parsed,
     wrap = label_wrap_gen(as.double(spec$width), multi_line = multi_line),
     lookup = {
       vals <- spec$values
@@ -266,13 +295,57 @@ as_labeller <- function(x, default = label_value, multi_line = TRUE) {
       "A facet labeller must return a list of character vectors."
     )
   }
+  if (any(vapply(out, is.list, logical(1)))) {
+    # Rich lines (label_parsed()): one rich label per strip.
+    out <- lapply(out, function(v) {
+      v <- if (is.list(v)) v else as.list(as.character(v))
+      v[rep_len(seq_along(v), length(parts))]
+    })
+    return(lapply(seq_along(parts), function(i) {
+      .stack_strip_lines(lapply(out, `[[`, i))
+    }))
+  }
   out <- lapply(out, function(v) rep_len(as.character(v), length(parts)))
   do.call(paste, c(unname(out), sep = "\n"))
 }
 
+# One strip's lines as one rich label: a single line as is, several stacked as
+# an md() label of inline formulas (and plain text), one per line.
+.stack_strip_lines <- function(lines) {
+  if (length(lines) == 1L) {
+    return(.as_rich_list(lines)[[1]])
+  }
+  src <- vapply(
+    lines,
+    function(l) {
+      if (inherits(l, "vellum::vellum_tex_label")) {
+        if (nzchar(l@tex)) paste0("$", l@tex, "$") else ""
+      } else if (is.character(l)) {
+        l
+      } else {
+        cli::cli_abort(
+          "A facet labeller can stack {.fn tex} labels and text, not {.cls {class(l)[1]}} labels."
+        )
+      }
+    },
+    character(1)
+  )
+  vellum::md(paste(src, collapse = "\n"))
+}
+
 # A probe string with as many lines as the tallest of `labs`, for sizing a
 # strip track.
-.strip_probe <- function(labs) {
+.strip_probe <- function(labs, fontsize = 10) {
+  if (is.list(labs)) {
+    # Rich strips: the tallest label itself (a plain one by its line count).
+    cand <- lapply(labs, function(l) if (.is_rich(l)) l else .strip_probe(l))
+    h <- vapply(
+      cand,
+      function(l) vellum::vl_strheight(l, fontsize = fontsize, unit = "pt"),
+      numeric(1)
+    )
+    return(cand[[which.max(h)]])
+  }
   n <- max(1L, lengths(strsplit(as.character(labs), "\n", fixed = TRUE)))
   paste(rep("Ag", n), collapse = "\n")
 }

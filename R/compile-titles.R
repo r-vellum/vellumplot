@@ -12,9 +12,12 @@ NULL
 # called -- or, under `coord_flip()`, about which title sits on which axis.
 # ---------------------------------------------------------------------------
 
-# A single non-empty plain string (a rich md() title has no reliable plain-text
-# form, so it never stands in for a description), else NULL.
+# A single non-empty plain string, else NULL. A rich label stands in by its
+# text: an md() label's words without the markup, a tex() label's TeX source.
 .plain_title <- function(x) {
+  if (.is_rich(x)) {
+    x <- x@text
+  }
   if (is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)) x else NULL
 }
 

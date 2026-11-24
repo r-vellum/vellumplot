@@ -31,7 +31,8 @@ annotate(
 
 \item{xmin, xmax, ymin, ymax}{Rectangle extent.}
 
-\item{label}{Text to draw (text/label).}
+\item{label}{Text to draw (text/label): a string, or a rich label such as
+\code{\link[=md]{md()}} or \code{\link[=tex]{tex()}} (a list of them for several positions).}
 
 \item{...}{Constant aesthetics passed to the mark (e.g. \code{color}, \code{fill},
 \code{alpha}, \code{size}). For \code{"grob"}: \verb{grob =} (a vellum grob or \code{PlotSpec}). For

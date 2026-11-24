@@ -2810,9 +2810,14 @@ scale_edge_alpha <- function(
   if (is.function(ul)) {
     ul <- ul(levels)
   } else if (!is.null(names(ul))) {
-    lab <- levels
     hit <- levels %in% names(ul)
-    lab[hit] <- as.character(ul[levels[hit]])
+    if (.is_rich_list(ul)) {
+      lab <- as.list(levels)
+      lab[hit] <- ul[levels[hit]]
+    } else {
+      lab <- levels
+      lab[hit] <- as.character(ul[levels[hit]])
+    }
     ul <- lab
   }
   list(levels = levels, labels = .match_labels(ul, levels, aes) %||% levels)

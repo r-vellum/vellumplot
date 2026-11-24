@@ -4,6 +4,7 @@
 \alias{labellers}
 \alias{label_value}
 \alias{label_both}
+\alias{label_parsed}
 \alias{label_wrap_gen}
 \alias{as_labeller}
 \title{Facet strip labellers}
@@ -11,6 +12,8 @@
 label_value(labels, multi_line = TRUE)
 
 label_both(labels, multi_line = TRUE, sep = ": ")
+
+label_parsed(labels, multi_line = TRUE)
 
 label_wrap_gen(width = 25, multi_line = TRUE)
 
@@ -37,7 +40,7 @@ does not name.}
 }
 \value{
 \code{label_value()} and \code{label_both()} return a list of character
-vectors. \code{label_wrap_gen()} and \code{as_labeller()} return a labeller
+vectors, \code{label_parsed()} a list of lists of \code{\link[=tex]{tex()}} labels. \code{label_wrap_gen()} and \code{as_labeller()} return a labeller
 function.
 }
 \description{
@@ -48,6 +51,10 @@ the \code{labeller} argument of \code{\link[=facet_wrap]{facet_wrap()}} or \code
 \itemize{
 \item \code{label_value()} shows the value itself (\code{"4"}).
 \item \code{label_both()} shows the variable name and the value (\code{"cyl: 4"}).
+\item \code{label_parsed()} reads each value as R's plotmath notation and typesets
+it as math (\code{"alpha[1]"} shows as a subscripted alpha), as ggplot2's
+\code{label_parsed()} does; see \code{\link[=plotmath]{plotmath()}}. With several facet variables,
+\code{multi_line = FALSE} joins them as plotmath's \code{list(a, b)}.
 \item \code{label_wrap_gen()} returns a labeller that wraps long values onto several
 lines of at most \code{width} characters.
 \item \code{as_labeller()} builds a labeller from a lookup table (a named character
@@ -59,13 +66,14 @@ does not name keep the \code{default} labeller's text.
 A named character vector or a plain function can also be passed straight to
 \verb{labeller =}; it goes through \code{as_labeller()}.
 
-The declarative labellers (\code{label_value}, \code{label_both}, \code{label_wrap_gen()}
-and lookup tables over one of those) survive \code{\link[=as_spec]{as_spec()}}; an arbitrary
-function does not.
+The declarative labellers (\code{label_value}, \code{label_both}, \code{label_parsed},
+\code{label_wrap_gen()} and lookup tables over one of the first three) survive
+\code{\link[=as_spec]{as_spec()}}; an arbitrary function does not.
 
 A labeller is a function of one argument, \code{labels}: a data frame with one
 character column per facet variable (named after it) and one row per strip.
-It returns a list of character vectors, one per line of the strip. With
+It returns a list of character vectors, one per line of the strip (or of
+lists of rich labels, \code{\link[=md]{md()}} or \code{\link[=tex]{tex()}}, as \code{label_parsed()} does). With
 several facet variables on one side, \code{multi_line = TRUE} puts each variable
 on its own line of the strip, and \code{multi_line = FALSE} joins them into one
 line, separated by \code{", "}.
@@ -74,6 +82,12 @@ line, separated by \code{", "}.
 p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 p |> facet_wrap(~cyl, labeller = label_both)
 p |> facet_grid(am ~ cyl, labeller = label_both)
+
+# values in plotmath notation, typeset as math
+d <- data.frame(x = 1:4, y = 1:4, g = rep(c("alpha[1]", "sqrt(beta)"), 2))
+vplot(d) |>
+  mark_point(x = x, y = y) |>
+  facet_wrap(~g, labeller = label_parsed)
 
 # a lookup table, for one side or both
 p |> facet_wrap(~am, labeller = c(`0` = "automatic", `1` = "manual"))

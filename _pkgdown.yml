@@ -262,6 +262,7 @@ reference:
   - labs
   - annotate
   - md
+  - tex
 
 - title: Layer effects
   desc: Glow, shadow, outline, motion trails, hand-drawn sketching, and gradient / pattern fills.

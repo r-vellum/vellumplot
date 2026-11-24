@@ -25,7 +25,46 @@ NULL
       call = call
     )
   }
+  if (.is_rich_list(user_labels)) {
+    return(.as_rich_list(user_labels))
+  }
   as.character(user_labels)
+}
+
+# A list of labels with at least one rich (md() / tex()) label in it, as
+# `labels = list(tex("\\alpha"), "b")` gives. Such lists stay lists (one label
+# per break) instead of being flattened to text; see `.as_rich_list()`.
+.is_rich_list <- function(x) {
+  is.list(x) &&
+    !is.data.frame(x) &&
+    any(vapply(x, .is_rich, logical(1)))
+}
+.is_rich <- function(x) inherits(x, "vellum::vellum_label")
+
+# A label list holding rich labels, normalised: rich labels as they are, every
+# other entry a plain string. vellum draws the strings literally (no markup or
+# `$` is read), so `"b*c*"` beside a tex() label stays "b*c*".
+.as_rich_list <- function(x) {
+  lapply(unname(x), function(l) {
+    if (.is_rich(l)) l else as.character(l)[1]
+  })
+}
+
+# The plain text of labels, for alt text, tooltips and payloads: a rich label's
+# source text, a plain label as is. Takes one label, a character vector or a
+# list of labels; returns a character vector.
+.label_text <- function(x) {
+  if (.is_rich(x)) {
+    return(x@text)
+  }
+  if (is.list(x)) {
+    return(vapply(
+      x,
+      function(l) if (.is_rich(l)) l@text else as.character(l)[1],
+      character(1)
+    ))
+  }
+  as.character(x)
 }
 
 # Keep only the legend breaks (and their paired labels) that are finite and

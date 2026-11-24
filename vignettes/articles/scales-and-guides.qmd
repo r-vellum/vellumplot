@@ -430,6 +430,37 @@ vplot(mtcars) |>
   scale_color_continuous(name = md("Power (hp m^2^)"))
 ```
 
+### Math in a plot
+
+For real formulae, `tex()` takes TeX notation and `plotmath()` R's plotmath
+notation (what ggplot2 reads with `parse = TRUE`); `md()` labels take inline
+math between `$` signs. vellum typesets the math itself, the same in PNG, SVG,
+PDF and the widget. A math label goes in every title, a discrete legend's
+`labels =` (a list, one label per key), `mark_text()` / `mark_label()`
+(`parse = TRUE` reads a column as plotmath), `annotate()`, and the facet
+strips through `label_parsed`. Alt text and tooltips show the TeX source.
+
+```{r}
+#| fig.height: 4
+d <- data.frame(
+  x = rep(1:5, 2),
+  y = c(1, 2, 4, 7, 11, 1, 3, 5, 7, 9),
+  g = rep(c("a", "b"), each = 5),
+  f = rep(c("alpha == 0.5", "beta[2]"), each = 5),
+  lab = c("x^2", "hat(y)", "frac(1, n)", "bar(x)", "sqrt(z)")
+)
+vplot(d) |>
+  mark_line(x = x, y = y, color = g) |>
+  mark_text(x = x, y = y, label = lab, parse = TRUE, nudge_y = 4) |>
+  facet_wrap(~f, labeller = label_parsed) |>
+  scale_color_discrete(labels = list(tex("e^{x}"), tex("2x - 1"))) |>
+  labs(
+    title = md("Growth with rate $\\lambda$ per **step**"),
+    x = tex("t\\ (\\mathrm{s})"),
+    y = plotmath("hat(N)[t]")
+  )
+```
+
 Faceted plots add one more question: should panels share a scale or train their
 own? That is the `resolve_scale()` lattice, covered in
 **[Facets and composition](facets-and-composition.html)**. For stat-derived

@@ -26,9 +26,11 @@ NULL
 }
 
 # A printable form of a title/label value. Plain strings print verbatim; a rich
-# `md()` object (a `vellum_md_label`) is shown as a placeholder so `paste0()`
-# does not mangle it in summary output.
-.lab_str <- function(x) if (is.character(x)) x else "<rich text>"
+# md() / tex() label prints its text (see `.label_text()`), so `paste0()` does
+# not mangle it in summary output.
+.lab_str <- function(x) {
+  if (is.character(x) || .is_rich(x)) .label_text(x) else "<rich text>"
+}
 
 # The facet variable expressions (a list of quosures) as one string joined by
 # `sep`, or NULL for an empty/absent set. Shared by the summary tree (" + ") and

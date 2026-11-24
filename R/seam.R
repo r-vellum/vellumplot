@@ -1330,7 +1330,7 @@ NULL
         scene,
         lay$wrapstrip_row[p$r],
         lay$panel_col[p$c],
-        labs[i],
+        labs[[i]],
         rt,
         name = sprintf("strip-%d-%d", p$r, p$c)
       )
@@ -1342,7 +1342,7 @@ NULL
           scene,
           lay$colstrip_row,
           lay$panel_col[cc],
-          fa$col_labels[cc],
+          fa$col_labels[[cc]],
           rt,
           name = sprintf("strip-col-%d", cc)
         )
@@ -1354,7 +1354,7 @@ NULL
           scene,
           lay$panel_row[r],
           lay$rowstrip_col,
-          fa$row_labels[r],
+          fa$row_labels[[r]],
           rt,
           rot = 90,
           name = sprintf("strip-row-%d", r)

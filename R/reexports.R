@@ -9,11 +9,12 @@
 #' Rich-text labels
 #'
 #' `md(text)` builds a rich-text label from a markdown subset: `**bold**`,
-#' `*italic*` / `_italic_`, `^superscript^`, `~subscript~`, and a colour span
-#' `[text]{#c00}`. It is [vellum::md()], re-exported. The result can be used
+#' `*italic*` / `_italic_`, `^superscript^`, `~subscript~`, a colour span
+#' `[text]{#c00}`, and inline math `$...$` (see [tex()]). It is [vellum::md()],
+#' re-exported. The result can be used
 #' anywhere vellumplot draws a *title*: [labs()] (`title` / `subtitle` /
 #' `caption` / `tag` / `x` / `y` / `color`) and `scale_*(name = )`.
-#' Per-element rich labels (in `mark_text()`) are not yet supported.
+#' Per-element rich labels go in `mark_text()` as a list, one per row.
 #'
 #' `text` is a length-one markdown string; the result is a `vellum_md_label`
 #' object accepted by [vellum::text_grob()]. See [vellum::md()] for the full
@@ -26,6 +27,34 @@
 #' @name md
 #' @importFrom vellum md
 #' @export md
+NULL
+
+#' Math labels
+#'
+#' `tex()` builds a label from TeX math notation and `plotmath()` from R's
+#' plotmath notation (as ggplot2's `parse = TRUE` reads it); `tex()` also
+#' takes plotmath unevaluated, `tex(quote(x[i]^2))`. They are [vellum::tex()]
+#' and [vellum::plotmath()], re-exported. A math label goes wherever an [md()]
+#' label does: [labs()] titles, scale names, discrete scale `labels =`
+#' (a list, one label per key), `mark_text()` and `mark_label()` labels (one
+#' label, or a list with one per row; or `parse = TRUE` to parse a column),
+#' facet strips through [label_parsed()], and [annotate()]. [md()] labels can
+#' carry inline math between `$` signs. The formula is typeset by vellum, the
+#' same in PNG, SVG and PDF; alt text and the widget's tooltips show its TeX
+#' source.
+#'
+#' @examples
+#' vplot(mtcars) |>
+#'   mark_point(x = wt, y = mpg) |>
+#'   labs(
+#'     title = md("Fuel use against weight, $\\hat{y} = \\beta_0 + \\beta_1 x$"),
+#'     x = tex("w\\ (10^3\\,\\mathrm{lb})"),
+#'     y = plotmath("mpg ~ (mi~gal^-1)")
+#'   )
+#' @name tex
+#' @aliases plotmath
+#' @importFrom vellum tex plotmath
+#' @export tex plotmath
 NULL
 
 #' Gradient fill paints

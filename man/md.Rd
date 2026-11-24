@@ -5,11 +5,12 @@
 \title{Rich-text labels}
 \description{
 \code{md(text)} builds a rich-text label from a markdown subset: \verb{**bold**},
-\verb{*italic*} / \verb{_italic_}, \verb{^superscript^}, \verb{~subscript~}, and a colour span
-\verb{[text]\{#c00\}}. It is \code{\link[vellum:md]{vellum::md()}}, re-exported. The result can be used
+\verb{*italic*} / \verb{_italic_}, \verb{^superscript^}, \verb{~subscript~}, a colour span
+\verb{[text]\{#c00\}}, and inline math \verb{$...$} (see \code{\link[=tex]{tex()}}). It is \code{\link[vellum:md]{vellum::md()}},
+re-exported. The result can be used
 anywhere vellumplot draws a \emph{title}: \code{\link[=labs]{labs()}} (\code{title} / \code{subtitle} /
 \code{caption} / \code{tag} / \code{x} / \code{y} / \code{color}) and \verb{scale_*(name = )}.
-Per-element rich labels (in \code{mark_text()}) are not yet supported.
+Per-element rich labels go in \code{mark_text()} as a list, one per row.
 }
 \details{
 \code{text} is a length-one markdown string; the result is a \code{vellum_md_label}

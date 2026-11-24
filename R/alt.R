@@ -260,11 +260,10 @@ plot_alt <- function(x) {
   )
 }
 
-# The accessible name (scene title): a plain-string labs() title, else NULL.
-# A rich md() title has no reliable plain-text form and is skipped.
+# The accessible name (scene title): the labs() title as text (a rich title
+# by its text, see `.plain_title()`), else NULL.
 .alt_name <- function(labels) {
-  t <- labels$title
-  if (!is.null(t) && is.character(t) && nzchar(t)) t else NULL
+  .plain_title(labels$title)
 }
 
 # Best-effort alt text for the compile seam: never lets a description-generation
