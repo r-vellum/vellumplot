@@ -56,6 +56,16 @@
 
 ### Bug fixes
 
+- `mark_node_text(repel = TRUE)` leader lines stop at the rim of the
+  node glyph under the label (a
+  [`mark_nodes()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  marker or a
+  [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
+  pie, plus the small gap edges leave) instead of running over it to the
+  vertex centre, which made a single-colour pie look as if it had a
+  radial line (VP-129). Static renders and widget payloads both carry
+  the trimmed leader.
+
 - [`mark_node_pie()`](https://r-vellum.github.io/vellumplot/reference/mark_graph.md)
   draws a node made of a single category as a whole disc (or ring, for a
   donut) instead of a 360-degree wedge, whose radial edges showed a seam
