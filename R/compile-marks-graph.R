@@ -862,13 +862,7 @@ NULL
   } else {
     sp$fill %||% .qual_palette(k)
   }
-  # Radius (mm): a mapped size through the size scale (VP-123), else the
-  # constant `size`.
-  size <- if (!is.null(scales$size) && length(L$values$size)) {
-    rep_len(scales$size$map(L$values$size), n)
-  } else {
-    rep_len(L$params$size %||% sp$size, n)
-  }
+  size <- .node_pie_radius(L, scales, n)
   gp <- vellum::vl_gpar(
     col = sp$color %||% .geom_paint("white", "neutral"),
     lwd = sp$linewidth,
@@ -922,6 +916,16 @@ NULL
     }
   }
   scene
+}
+
+# A node pie's radius (mm) per node: a mapped size through the size scale
+# (VP-123), else the constant `size`.
+.node_pie_radius <- function(L, scales, n = nrow(L$stat_params$weights)) {
+  if (!is.null(scales$size) && length(L$values$size)) {
+    rep_len(scales$size$map(L$values$size), n)
+  } else {
+    rep_len(L$params$size %||% L$stat_params$size, n)
+  }
 }
 
 # Single-category pies (VP-122): a filled disc, or for a donut the full ring

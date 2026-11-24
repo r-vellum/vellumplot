@@ -76,6 +76,82 @@ NULL
   )
 }
 
+# The node glyph under each repelled node label (VP-129), keyed by the label
+# node's name: per label element, the glyph radius (mm, 0 where no glyph sits at
+# the label's vertex) and the label's nudge off its vertex (device-oriented mm),
+# so the leader can stop at the glyph's rim instead of crossing it to the centre.
+# Noted while the marks compile, read by `.repel_leaders()`.
+.repel_glyph_ctx <- new.env(parent = emptyenv())
+
+.repel_glyphs_reset <- function() {
+  rm(list = ls(.repel_glyph_ctx, all.names = TRUE), envir = .repel_glyph_ctx)
+}
+
+# The node glyphs of a panel's resolved layers: their native x/y and radius
+# (mm), from `mark_nodes()` (the marker size is its radius) and
+# `mark_node_pie()` (the pie radius). NULL when the panel has no repelled node
+# labels or no node glyphs.
+.node_glyphs <- function(resolved, scales) {
+  wants <- any(vapply(
+    resolved,
+    function(L) {
+      identical(L$mark, "node_text") && isTRUE(L$stat_params$repel$on)
+    },
+    logical(1)
+  ))
+  if (!wants) {
+    return(NULL)
+  }
+  out <- list()
+  for (L in resolved) {
+    r <- switch(
+      L$mark,
+      nodes = rep_len(.aes_size(L, scales, 1), L$n),
+      node_pie = .node_pie_radius(L, scales, L$n),
+      NULL
+    )
+    if (is.null(r) || !L$n) {
+      next
+    }
+    out[[length(out) + 1L]] <- data.frame(
+      x = rep_len(as.numeric(L$values$x), L$n),
+      y = rep_len(as.numeric(L$values$y), L$n),
+      r = as.numeric(r)
+    )
+  }
+  if (!length(out)) {
+    return(NULL)
+  }
+  do.call(rbind, out)
+}
+
+# Note the glyph radius and nudge of the label elements `idx` of a node-label
+# layer, drawn as the repel node `name` at vertices `x`/`y` (raw values).
+.repel_note_glyphs <- function(name, L, idx, x, y, scales) {
+  g <- scales$node_glyphs
+  r <- numeric(length(idx))
+  if (!is.null(g) && nrow(g)) {
+    key <- function(a, b) sprintf("%.15g %.15g", a, b)
+    gk <- key(g$x, g$y)
+    lk <- key(as.numeric(x), as.numeric(y))
+    # the largest glyph at each label's vertex (a pie over a node marker)
+    big <- tapply(g$r, gk, max, na.rm = TRUE)
+    r <- unname(big[lk])
+    r[!is.finite(r)] <- 0
+  }
+  nu <- .nudge_mm(L, idx, scales)
+  assign(
+    name,
+    list(
+      r = r,
+      nx = rep_len(as.numeric(nu$x %||% 0), length(idx)),
+      ny = rep_len(as.numeric(nu$y %||% 0), length(idx))
+    ),
+    envir = .repel_glyph_ctx
+  )
+  invisible()
+}
+
 # The tuning for the whole-scene solve. All repel labels are solved together, so
 # a single set applies; take it from the first repel layer.
 .repel_scene_params <- function(spec) {
@@ -207,6 +283,24 @@ NULL
   list(x = cx + dx * t, y = cy + dy * t)
 }
 
+# The noted glyph radius and nudge (mm) of each solved label element (rows of
+# `sol`); zero where none was noted.
+.repel_glyph_lookup <- function(sol) {
+  n <- nrow(sol)
+  out <- list(r = numeric(n), nx = numeric(n), ny = numeric(n))
+  for (i in seq_len(n)) {
+    g <- .repel_glyph_ctx[[sol$name[i]]]
+    j <- sol$index[i]
+    if (is.null(g) || j > length(g$r)) {
+      next
+    }
+    out$r[i] <- g$r[j]
+    out$nx[i] <- g$nx[j]
+    out$ny[i] <- g$ny[j]
+  }
+  out
+}
+
 # Draw a thin leader from each moved label back to its anchor. Drawn in device
 # space at the scene root (px -> mm, y flipped from device-down to root-up), so
 # it is coordinate-agnostic exactly like the offsets: it needs no panel viewport
@@ -228,14 +322,28 @@ NULL
   if (!any(keep)) {
     return(scene)
   }
-  edge <- .repel_edge(
-    mx[keep],
-    my[keep],
-    hw[keep],
-    hh[keep],
-    ax[keep],
-    ay[keep]
-  )
+  # A node label's leader runs from its vertex (the anchor less the label's
+  # nudge) and stops at the node glyph's rim, plus the small gap edges leave,
+  # rather than crossing the glyph to its centre (VP-129).
+  gl <- .repel_glyph_lookup(sol)
+  px_mm <- dpi / 25.4
+  cx <- ax - gl$nx * px_mm
+  cy <- ay + gl$ny * px_mm # device y runs down
+  glyph <- gl$r > 0
+  ox <- ifelse(glyph, cx, ax)
+  oy <- ifelse(glyph, cy, ay)
+  edge <- .repel_edge(mx, my, hw, hh, ox, oy)
+  rim <- ifelse(glyph, (gl$r + 0.4) * px_mm, 0)
+  len <- sqrt((edge$x - ox)^2 + (edge$y - oy)^2)
+  # a label still touching its glyph needs no leader
+  keep <- keep & (!glyph | (is.finite(len) & len > rim))
+  if (!any(keep)) {
+    return(scene)
+  }
+  t <- ifelse(glyph & len > 0, rim / len, 0)
+  ax <- ox + (edge$x - ox) * t
+  ay <- oy + (edge$y - oy) * t
+  edge <- list(x = edge$x[keep], y = edge$y[keep])
   h_px <- height_in * dpi
   x2mm <- function(px) px / dpi * 25.4
   y2mm <- function(py) (h_px - py) / dpi * 25.4
