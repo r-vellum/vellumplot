@@ -99,9 +99,7 @@ NULL
           !isTRUE(sc$discrete)
       )
     }
-    if (!is.null(meta$scales$x)) {
-      meta$scales$x$grid <- grid(hsc, "x")
-    }
+    if (!is.null(meta$scales$x)) meta$scales$x$grid <- grid(hsc, "x")
     if (!is.null(meta$scales$y)) meta$scales$y$grid <- grid(vsc, "y")
   }
   if (!is.null(cell)) {
@@ -1248,8 +1246,7 @@ NULL
 .plot_content_fit <- function(spec) {
   co <- .coord_of(spec)
   rt <- .resolve_theme(.theme_of(spec))
-  maybe <- co@kind %in%
-    c("fixed", "sf", "polar") ||
+  maybe <- co@kind %in% c("fixed", "sf", "polar") ||
     !is.null(rt[["aspect.ratio"]]) ||
     .has_sf_layer(spec)
   if (!maybe || !length(spec@layers)) {
