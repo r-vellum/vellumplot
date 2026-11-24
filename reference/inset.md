@@ -94,5 +94,5 @@ composition), so it can be found with
 ``` r
 a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 b <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
-inset(a, b, left = 0.55, bottom = 0.55, right = 0.98, top = 0.98)
+inset(a, b, left = 0.5, bottom = 0.45, right = 1, top = 1)
 ```
