@@ -2,6 +2,8 @@
 
 ## vellumplot (development version)
 
+## vellumplot 0.23.1
+
 ### Bug fixes
 
 - [`scale_colour_manual()`](https://r-vellum.github.io/vellumplot/reference/scale_color_continuous.md),
