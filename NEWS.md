@@ -1,5 +1,13 @@
 # vellumplot (development version)
 
+## Bug fixes
+
+* Edges stop at the rim of a `mark_node_pie()` pie, as they do at a
+  `mark_nodes()` marker (VP-130). They used to run to the pie's centre, so an
+  arrowhead into a pie was hidden under it, and parallel or reciprocal edges
+  between pies were drawn on top of each other. A vertex with both a marker
+  and a pie caps at the larger of the two.
+
 # vellumplot 0.22.0
 
 ## Breaking changes
