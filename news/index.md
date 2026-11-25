@@ -9,6 +9,15 @@
   the page. Use `labeller = label_wrap_gen()` to wrap long labels
   instead; the strip grows to hold every line.
 
+- Chord, sankey, treemap / sunburst / icicle / circle-pack and scale-bar
+  labels, and
+  [`vtable()`](https://r-vellum.github.io/vellumplot/reference/vtable.md)
+  cells, use the family, face and weight of the theme’s base text font
+  (VP-135), and are measured in it. They used to draw in the default
+  family whatever the theme or
+  [`theme_brand()`](https://r-vellum.github.io/vellumplot/reference/theme_brand.md)
+  set. Plots in the default font are unchanged.
+
 - Layout measures text in the font the theme draws it in (VP-132).
   Legend labels and titles, axis titles and tick labels, facet strips,
   the tag and the composition title bands used to reserve space for the
