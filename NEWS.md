@@ -1,5 +1,15 @@
 # vellumplot (development version)
 
+## Bug fixes
+
+* Layout measures text in the font the theme draws it in (VP-132). Legend
+  labels and titles, axis titles and tick labels, facet strips, the tag and
+  the composition title bands used to reserve space for the default family
+  in the plain face, so a wider or heavier theme font (the `family`, `face`,
+  `weight` or `cex` of an `element_text()`, a `theme_brand()` font) could
+  overflow the legend column or run into the axis title. Plots in the
+  default font are unchanged.
+
 # vellumplot 0.24.0
 
 ## New features

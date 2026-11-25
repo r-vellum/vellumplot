@@ -1305,24 +1305,21 @@ NULL
 # `grid_layout()` cells so a key and its label land in their own mm-sized boxes
 # and no npc/mm unit arithmetic (which vellum disallows) is ever needed.
 
-# Millimetre text metrics at a given point size (device-space, resize-stable).
-.mm_th <- function(fs) vellum::vl_strheight("Ag", "", "plain", fs, unit = "mm")
-.mm_tw <- function(s, fs) {
+# Millimetre text metrics at a given point size (device-space, resize-stable),
+# in the font of the resolved text element `el` (family, face, weight, cex; NULL
+# = the default family, plain) -- the legend's `legend.text` / `legend.title`
+# (VP-132), so a wide or heavy theme font reserves the room it draws at.
+.mm_th <- function(fs, el = NULL) .el_strheight("Ag", el, fs)
+.mm_tw <- function(s, fs, el = NULL) {
   # Rich (md() / tex()) labels, alone or in a list, measure as they draw.
   if (.is_rich(s)) {
-    return(vellum::vl_strwidth(s, "", "plain", fs, unit = "mm"))
+    return(.el_strwidth(s, el, fs))
   }
   if (is.list(s)) {
     if (!length(s)) {
       return(0)
     }
-    return(max(vellum::vl_strwidth(
-      .as_rich_list(s),
-      "",
-      "plain",
-      fs,
-      unit = "mm"
-    )))
+    return(max(.el_strwidth(.as_rich_list(s), el, fs)))
   }
   s <- as.character(s)
   s <- s[!is.na(s)]
@@ -1330,7 +1327,7 @@ NULL
     return(0)
   }
   s[!nzchar(s)] <- " "
-  max(vellum::vl_strwidth(s, "", "plain", fs, unit = "mm"))
+  max(.el_strwidth(s, el, fs))
 }
 
 # Resolved legend geometry (all mm, except the two font sizes). Phase 3 lets the
@@ -1339,8 +1336,11 @@ NULL
   list(
     text_fs = rt[["legend.text"]]@size,
     title_fs = rt[["legend.title"]]@size,
-    text_h = .mm_th(rt[["legend.text"]]@size),
-    title_h = .mm_th(rt[["legend.title"]]@size),
+    # the resolved elements, so labels and titles measure in their own font
+    text_el = rt[["legend.text"]],
+    title_el = rt[["legend.title"]],
+    text_h = .mm_th(rt[["legend.text"]]@size, rt[["legend.text"]]),
+    title_h = .mm_th(rt[["legend.title"]]@size, rt[["legend.title"]]),
     key = rt[["legend.key.size"]],
     key_point_min = rt[["legend.key.point.min"]],
     bar_w = .LEGEND_BAR_MM,
@@ -1499,13 +1499,13 @@ NULL
   }
   labs <- .guide_labels(g)
   tw <- if (m$show_title && !is.null(g$sc$name)) {
-    .mm_tw_any(g$sc$name, m$title_fs)
+    .mm_tw_any(g$sc$name, m$title_fs, m$title_el)
   } else {
     0
   }
   if (g$kind %in% c("color_continuous", "color_steps")) {
     na <- if (isTRUE(g$sc$na)) {
-      m$spacing + max(m$key, .mm_tw("NA", fs = m$text_fs))
+      m$spacing + max(m$key, .mm_tw("NA", fs = m$text_fs, el = m$text_el))
     } else {
       0
     }
@@ -1515,7 +1515,7 @@ NULL
       .LEGEND_MIN_BAR_MM,
       g$sc$bar_width %||%
         max(
-          sum(vapply(labs, .mm_tw, 0, fs = m$text_fs) + m$lab_gap),
+          sum(vapply(labs, .mm_tw, 0, fs = m$text_fs, el = m$text_el) + m$lab_gap),
           .hbar_min_len_mm(g, m)
         )
     ) +
@@ -1525,7 +1525,7 @@ NULL
     body <- sum(
       key_d +
         m$lab_gap +
-        vapply(labs, .mm_tw, 0, fs = m$text_fs) +
+        vapply(labs, .mm_tw, 0, fs = m$text_fs, el = m$text_el) +
         m$spacing
     )
   }
@@ -1554,7 +1554,7 @@ NULL
   if (length(labs) < 2L) {
     return(0)
   }
-  w <- vapply(as.character(labs), .mm_tw, 0, fs = m$text_fs)
+  w <- vapply(as.character(labs), .mm_tw, 0, fs = m$text_fs, el = m$text_el)
   o <- order(fr)
   fr <- fr[o]
   w <- w[o]
@@ -1572,11 +1572,11 @@ NULL
 # path (the same run composition the renderer draws), so super/subscripts and
 # bold runs reserve the space they actually occupy — otherwise the legend column
 # is sized as if the title were empty and the drawn title clips.
-.mm_tw_any <- function(name, fs) {
+.mm_tw_any <- function(name, fs, el = NULL) {
   if (is.character(name)) {
-    return(.mm_tw(name, fs))
+    return(.mm_tw(name, fs, el))
   }
-  vellum::vl_strwidth(name, "", "plain", fs, unit = "mm")
+  .el_strwidth(name, el, fs)
 }
 
 # A unit vector of `sizes` (mm) separated by `gap` (mm) spacers, for a stacking
@@ -2264,7 +2264,7 @@ NULL
   ticks_on <- cl$bar_ticks %||% TRUE
   tick_col <- cl$bar_ticks_colour %||% "white"
   left_lab <- identical(cl$bar_label_pos, "left")
-  lw <- if (left_lab) .mm_tw(cl$legend_labels, m$text_fs) else 0
+  lw <- if (left_lab) .mm_tw(cl$legend_labels, m$text_fs, m$text_el) else 0
   x0 <- m$pad + if (left_lab) lw + m$lab_gap else 0 # bar's left edge (mm)
   lab_x <- if (left_lab) x0 - m$lab_gap else x0 + bw + m$lab_gap
   lab_just <- c(if (left_lab) "right" else "left", "centre")
@@ -2394,7 +2394,7 @@ NULL
   ticks_on <- cl$bar_ticks %||% FALSE
   tick_col <- cl$bar_ticks_colour %||% "white"
   left_lab <- identical(cl$bar_label_pos, "left")
-  lw <- if (left_lab) .mm_tw(blabs, m$text_fs) else 0
+  lw <- if (left_lab) .mm_tw(blabs, m$text_fs, m$text_el) else 0
   x0 <- m$pad + if (left_lab) lw + m$lab_gap else 0
   lab_x <- if (left_lab) x0 - m$lab_gap else x0 + bw + m$lab_gap
   lab_just <- c(if (left_lab) "right" else "left", "centre")
@@ -2578,7 +2578,7 @@ NULL
   # per-key cell width: key + gap + label + trailing spacer
   cellw <- key_d +
     m$lab_gap +
-    vapply(labs, .mm_tw, 0, fs = m$text_fs) +
+    vapply(labs, .mm_tw, 0, fs = m$text_fs, el = m$text_el) +
     m$spacing
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
@@ -2642,7 +2642,7 @@ NULL
   # Reserve a column at the right end for the NA key (mirrors the vertical guide,
   # which reserves a row); the gradient bar takes the remaining `null` width.
   has_na <- isTRUE(cl$na)
-  na_w <- if (has_na) max(m$key, .mm_tw("NA", fs = m$text_fs)) else 0
+  na_w <- if (has_na) max(m$key, .mm_tw("NA", fs = m$text_fs, el = m$text_el)) else 0
   # A horizontal bar's thickness is its vertical extent, so guide_colourbar()'s
   # `barheight` sets it (mirroring `barwidth` on the vertical bar). Ticks honour
   # the guide's on/off + colour. `barwidth` (the bar length) and top/bottom label
@@ -2781,7 +2781,7 @@ NULL
   ticks_on <- cl$bar_ticks %||% FALSE
   tick_col <- cl$bar_ticks_colour %||% "white"
   has_na <- isTRUE(cl$na)
-  na_w <- if (has_na) max(m$key, .mm_tw("NA", fs = m$text_fs)) else 0
+  na_w <- if (has_na) max(m$key, .mm_tw("NA", fs = m$text_fs, el = m$text_el)) else 0
   heights <- .c_units(
     if (m$show_title) vellum::vl_unit(th, "mm"),
     vellum::vl_unit(bar_thick, "mm"),

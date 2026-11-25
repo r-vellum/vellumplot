@@ -37,20 +37,32 @@ NULL
   vellum::text_grob(label, rot = rot, gp = vellum::vl_gpar(fontsize = fontsize))
 }
 
+# A text grob for measuring `label` as a resolved theme element draws it: its
+# size, family, face, weight, cex and line height (VP-132). The track sizers
+# below measure through it, so a wide or heavy theme font reserves the room it
+# actually draws at instead of the default family's.
+.el_txt <- function(label, el, rot = 0, features = NULL) {
+  vellum::text_grob(
+    label,
+    rot = rot,
+    gp = .el_gpar_text(el, features = features)
+  )
+}
+
 # Size of a text gutter/band track from a resolved theme element: the measured
-# text extent at the element's font size plus `pad_mm`, or zero when the element
-# is blank (so the track collapses).
+# text extent in the element's font plus `pad_mm`, or zero when the element is
+# blank (so the track collapses).
 .track_h <- function(el, label, pad_mm, rot = 0) {
   if (.is_blank(el)) {
     return(vellum::vl_unit(0, "mm"))
   }
-  vellum::grobheight(.txt(label, el@size, rot)) + vellum::vl_unit(pad_mm, "mm")
+  vellum::grobheight(.el_txt(label, el, rot)) + vellum::vl_unit(pad_mm, "mm")
 }
 .track_w <- function(el, label, pad_mm, rot = 0) {
   if (.is_blank(el)) {
     return(vellum::vl_unit(0, "mm"))
   }
-  vellum::grobwidth(.txt(label, el@size, rot)) + vellum::vl_unit(pad_mm, "mm")
+  vellum::grobwidth(.el_txt(label, el, rot)) + vellum::vl_unit(pad_mm, "mm")
 }
 
 # Height (mm) of a full-width title/subtitle/caption band. `band_w` is the mm
@@ -111,7 +123,8 @@ NULL
   if (.is_blank(el)) {
     return(vellum::vl_unit(0, "mm"))
   }
-  w <- vellum::grobwidth(.txt(label, el@size, rot))
+  # tabular figures, as `.axis_text_grob()` draws the tick labels
+  w <- vellum::grobwidth(.el_txt(label, el, rot, features = .TNUM))
   if (n_dodge > 1L) {
     w <- vellum::vl_unit(
       n_dodge * vellum::vl_convert(w, "mm") + (n_dodge - 1L) * .DODGE_GAP_MM,
@@ -144,14 +157,14 @@ NULL
     return(.bins_geom(g, m)$width)
   }
   labs <- .guide_labels(g)
-  lw <- .mm_tw(labs, m$text_fs)
+  lw <- .mm_tw(labs, m$text_fs, m$text_el)
   body <- if (g$kind %in% c("color_continuous", "color_steps")) {
     m$pad + .bar_w_mm(g, m) + m$lab_gap + lw
   } else {
     m$pad + .guide_key_d(g, m) + m$lab_gap + lw
   }
   tw <- if (m$show_title && !is.null(g$sc$name)) {
-    .mm_tw_any(g$sc$name, m$title_fs)
+    .mm_tw_any(g$sc$name, m$title_fs, m$title_el)
   } else {
     0
   }
