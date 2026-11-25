@@ -333,11 +333,7 @@ mark_compass <- function(
         cx + vellum::vl_unit(off * sin(rot), "mm"),
         cy + vellum::vl_unit(off * cos(rot), "mm"),
         just = c("centre", "centre"),
-        gp = vellum::vl_gpar(
-          fontsize = size * 0.9,
-          col = color,
-          fontface = "bold"
-        )
+        gp = .mark_gpar_text(size * 0.9, color, L, face = "bold")
       )
     )
   }
@@ -470,7 +466,8 @@ mark_compass <- function(
   gp_lon <- .el_gpar_line(el_lon)
   gp_lat <- .el_gpar_line(el_lat)
   sk <- .el_sketch(el_lon, 8L)
-  gp_txt <- vellum::vl_gpar(fontsize = 7, col = "grey30")
+  # labels in the theme's base text font (VP-139), as the mark labels are
+  gp_txt <- .mark_gpar_text(7, "grey30")
   do_labels <- !isFALSE(grat$labels)
   xr <- range(x_sc$domain)
   yr <- range(y_sc$domain)
