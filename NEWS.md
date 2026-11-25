@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* A composition's auto-tags (`compose_annotation(tag_levels =)`) take a band
+  above each row of cells, sized to the tallest tag as drawn and rotated by
+  the `plot.tag` element's `angle`, like a plot's own tag (VP-142). They
+  used to be drawn over the top-left corner of each panel at a fixed angle.
+
 * Facet strip text is clipped to its strip (VP-134), as in ggplot2: a label
   wider than its panel no longer runs into the next panel or off the page.
   Use `labeller = label_wrap_gen()` to wrap long labels instead; the strip
