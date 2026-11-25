@@ -460,8 +460,11 @@ NULL
   x_sec <- hsc$sec
   has_y_sec <- !is.null(y_sec)
   has_x_sec <- !is.null(x_sec)
+  # The secondary tick labels draw through the same `.axis_text_grob()` as the
+  # primary ones (tabular figures included), so they measure through the same
+  # axis sizers.
   y2l <- if (has_y_sec) {
-    .track_w(
+    .track_w_axis(
       rt[["axis.text.y"]],
       .longest(y_sec$labels),
       tick + .PAD_MM,
@@ -472,7 +475,7 @@ NULL
     .track_w(rt[["axis.title.y"]], y_sec$name, .PAD_MM, rot = 90)
   }
   x2l <- if (has_x_sec) {
-    .track_h(
+    .track_h_axis(
       rt[["axis.text.x"]],
       .longest(x_sec$labels),
       tick + .PAD_MM,

@@ -76,3 +76,52 @@ test_that("axis title and tick-label gutters fit a bold font (VP-132)", {
     mm(vellum::grobwidth(vellumplot:::.txt(lab, 9))) + 1.4
   )
 })
+
+# A font whose default digits are proportional, so tabular figures (`tnum`,
+# which axis labels draw with) change their width. NULL when none is installed.
+proportional_digit_family <- function() {
+  for (f in c("Graphik", "Skia", "Canela Text", "Kefa", "Baloo 2")) {
+    w <- vellum::vl_strwidth("1111111", f, "plain", 11, unit = "mm")
+    wt <- vellum::vl_strwidth(
+      "1111111", f, "plain", 11,
+      unit = "mm", features = c(tnum = 1L)
+    )
+    if (abs(wt - w) > 0.5) {
+      return(f)
+    }
+  }
+  NULL
+}
+
+test_that("secondary axis gutters measure tick labels as drawn, tnum included (VP-132)", {
+  fam <- proportional_digit_family()
+  skip_if(is.null(fam), "no font with proportional digits installed")
+  mm <- function(u) vellum::vl_convert(u, "mm")
+  d <- data.frame(x = c(1111111, 1200000), y = c(1111111, 1200000))
+  p <- vplot(d) |>
+    mark_point(x = x, y = y) |>
+    scale_y_continuous(sec.axis = dup_axis()) |>
+    scale_x_continuous(sec.axis = dup_axis()) |>
+    guides(x = guide_axis(angle = 90)) |>
+    theme(text = element_text(family = fam))
+  pl <- vellumplot:::.build_panels(p)
+  rt <- vellumplot:::.resolve_theme(p@theme)
+  lay <- vellumplot:::.build_layout(
+    pl,
+    vellumplot:::.legend_guides(pl$scales),
+    p@labels,
+    rt
+  )
+  w <- function(i) mm(lay$widths[i])
+  h <- function(i) mm(lay$heights[i])
+  # a dup_axis() mirrors the primary labels: same gutter on both sides
+  expect_equal(w(lay$y2labels_col), w(lay$ylabels_col), tolerance = 1e-6)
+  expect_equal(h(lay$x2labels_row), h(lay$xlabels_row), tolerance = 1e-6)
+  # and the y gutter holds the widest label drawn with tabular figures
+  el <- rt[["axis.text.y"]]
+  lab <- vellumplot:::.longest(pl$scales$y$labels %||% "1200000")
+  drawn <- mm(vellum::grobwidth(
+    vellumplot:::.axis_text_grob(lab, el, c("left", "centre"))
+  ))
+  expect_gte(w(lay$y2labels_col), drawn)
+})
