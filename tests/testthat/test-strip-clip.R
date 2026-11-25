@@ -81,3 +81,70 @@ test_that("label_wrap_gen() strips reserve every wrapped line", {
   expect_gte(strip_h(wrapped), one + (n - 1) * line_h * 0.9)
   expect_no_error(vellum::as_vellum_scene(wrapped))
 })
+
+# VP-143: theme(strip.clip =) opts out of the clipping.
+
+clip_plot <- function(...) {
+  d <- data.frame(x = 1:4, y = 1:4, g = rep(c(long_lab, "short"), 2))
+  vplot(d, width = 4, height = 3) |>
+    mark_point(x = x, y = y) |>
+    facet_wrap(~g) |>
+    (\(q) if (...length()) theme(q, ...) else q)()
+}
+
+strip_clips_text <- function(p, nm = "strip-1-1") {
+  ss <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+  "grob_text" %in% clipped_classes(find_vp(ss$root, nm))
+}
+
+test_that("strip.clip = 'off' lets strip text overflow; 'on' clips", {
+  expect_false(strip_clips_text(clip_plot(strip.clip = "off")))
+  expect_true(strip_clips_text(clip_plot(strip.clip = "on")))
+  expect_true(strip_clips_text(clip_plot(strip.clip = "inherit")))
+  p <- vplot(mtcars, width = 4, height = 3) |>
+    mark_point(x = wt, y = mpg) |>
+    facet_grid(am ~ cyl) |>
+    theme(strip.clip = "off")
+  expect_false(strip_clips_text(p, "strip-col-1"))
+  expect_false(strip_clips_text(p, "strip-row-1"))
+})
+
+test_that("the default 'inherit' draws exactly what an unset theme does", {
+  d <- data.frame(x = 1:4, y = 1:4, g = rep(c(long_lab, "short"), 2))
+  p <- vplot(d, width = 4, height = 3) |>
+    mark_point(x = x, y = y) |>
+    facet_wrap(~g)
+  svg <- function(q) vellum::as_scene_spec(vellum::as_vellum_scene(q))
+  expect_identical(svg(theme(p, strip.clip = "inherit")), svg(p))
+  expect_identical(
+    vellumplot:::.resolve_theme(NULL)[["strip.clip"]],
+    "inherit"
+  )
+})
+
+test_that("an unknown strip.clip value errors clearly", {
+  expect_error(clip_plot(strip.clip = "maybe"), "strip.clip")
+  expect_error(clip_plot(strip.clip = TRUE), "must be one of")
+  expect_error(clip_plot(strip.clip = c("on", "off")), "must be one of")
+})
+
+test_that("strip.clip round-trips through as_spec() and JSON", {
+  for (p in list(
+    clip_plot(strip.clip = "off"),
+    theme_minimal(clip_plot()) |> theme(strip.clip = "off")
+  )) {
+    clip_of <- function(q) {
+      vellumplot:::.resolve_theme(q@theme)[["strip.clip"]]
+    }
+    expect_identical(clip_of(from_spec(as_spec(p))), "off")
+    back <- spec_from_json(spec_to_json(p))
+    expect_identical(clip_of(back), "off")
+    expect_false(strip_clips_text(back))
+  }
+})
+
+test_that("a spec carrying an unknown strip.clip fails on read", {
+  s <- as_spec(clip_plot(strip.clip = "off"))
+  s$theme$settings$strip.clip <- "sometimes"
+  expect_error(from_spec(s), "strip.clip")
+})
