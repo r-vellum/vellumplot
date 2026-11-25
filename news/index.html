@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.24.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.24.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,9 +59,16 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/v0.24.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>Layout measures text in the font the theme draws it in (VP-132). Legend labels and titles, axis titles and tick labels, facet strips, the tag and the composition title bands used to reserve space for the default family in the plain face, so a wider or heavier theme font (the <code>family</code>, <code>face</code>, <code>weight</code> or <code>cex</code> of an <code><a href="../reference/element.html">element_text()</a></code>, a <code><a href="../reference/theme_brand.html">theme_brand()</a></code> font) could overflow the legend column or run into the axis title. Plots in the default font are unchanged.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.24.0" id="vellumplot-0240">vellumplot 0.24.0<a class="anchor" aria-label="anchor" href="#vellumplot-0240"></a></h2>
 <div class="section level3">
