@@ -355,3 +355,19 @@ test_that("an untagged whole-number param decodes as double, a tagged one as int
   expect_identical(p2@layers[[1]]@params$size, 3)
   expect_identical(p2@layers[[2]]@stat_params$bins, 20L)
 })
+
+test_that("deferred theme() tweaks on an unthemed plot serialize (VP-133)", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    theme(legend.position = "bottom", panel.spacing = 3)
+  expect_no_warning(s <- as_spec(p))
+  expect_identical(s$theme$preset, "gray")
+  expect_identical(s$theme$settings$legend.position, "bottom")
+  expect_identical(s$theme$settings$panel.spacing, 3)
+  # an element tweak is reported as dropped, as when theme() merged at once
+  q <- theme(p, axis.text = element_text(colour = "red"))
+  expect_warning(as_spec(q), "axis.text")
+  # a no-op tweak of a gray default element is not
+  r <- theme(p, axis.text = element_text(colour = "grey20"))
+  expect_no_warning(as_spec(r))
+})

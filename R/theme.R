@@ -75,8 +75,51 @@ NULL
 }
 
 # The resolved-or-default complete theme for a spec. The single theme
-# resolver: a spec with no theme of its own gets the automatic default.
-.theme_of <- function(spec) spec@theme %||% .theme_auto()
+# resolver: a spec with no theme of its own gets the automatic default, and one
+# holding only deferred `theme()` / `set_theme()` tweaks gets them replayed onto
+# that default here, at compile time (VP-133).
+.theme_of <- function(spec) {
+  th <- spec@theme
+  if (is.null(th)) {
+    return(.theme_auto())
+  }
+  if (.is_theme_tweak(th)) {
+    return(.theme_replay(.theme_auto(), th))
+  }
+  th
+}
+
+# Deferred theme tweaks (VP-133). `theme()` on a plot with no theme of its own
+# does not merge onto `.theme_auto()` at call time -- that would freeze the
+# brand state (`options(vellumplot.brand)`) of the moment `theme()` ran. It
+# stores the tweak instead: an empty theme list whose `vp_tweaks` attribute
+# holds each call's arguments in order, which `.theme_of()` replays onto the
+# automatic default when the plot compiles. Replaying the calls one by one
+# (rather than merging them into one partial theme) keeps the semantics of
+# successive calls exactly, e.g. two `rel()` text sizes multiply.
+.is_theme_tweak <- function(theme) !is.null(attr(theme, "vp_tweaks"))
+
+# Add one call's arguments to a plot's deferred tweaks (starting them on an
+# unthemed plot). `unblank` records the call's drawn elements as `theme()` does
+# (`.mark_unblank()`); `set_theme()` does not.
+.theme_add_tweak <- function(theme, args, unblank = TRUE) {
+  tweaks <- attr(theme, "vp_tweaks")
+  structure(
+    list(),
+    vp_tweaks = c(tweaks, list(list(args = args, unblank = unblank)))
+  )
+}
+
+# Replay deferred tweaks onto a base theme, call by call.
+.theme_replay <- function(base, theme) {
+  for (tw in attr(theme, "vp_tweaks")) {
+    base <- .merge_theme(base, tw$args)
+    if (isTRUE(tw$unblank)) {
+      base <- .mark_unblank(base, tw$args)
+    }
+  }
+  base
+}
 
 # The default theme for a plot that sets none: the brand theme when
 # `options(vellumplot.brand)` asks for one and a brand is found (see
@@ -122,7 +165,12 @@ NULL
 # fallback when a layer sets no `sketch =` of its own (see `.mark_sketch`).
 .theme_sketch_default <- function(spec) {
   # `.theme_of()` without building the gray default, which has no sketch.
-  s <- (spec@theme %||% .brand_auto_theme())[["sketch"]]
+  th <- spec@theme
+  s <- (if (is.null(th) || .is_theme_tweak(th)) {
+    .theme_replay(.brand_auto_theme() %||% list(), th)
+  } else {
+    th
+  })[["sketch"]]
   if (inherits(s, "vellum_sketch")) s else NULL
 }
 
@@ -131,9 +179,9 @@ NULL
 # theme list (these keys ride the theme but are not drawn elements).
 .theme_palette <- function(spec, kind) {
   # `.theme_of()` without building the gray default, which has no palette.
-  th <- spec@theme %||% .brand_auto_theme()
-  if (is.null(th)) {
-    return(NULL)
+  th <- spec@theme
+  if (is.null(th) || .is_theme_tweak(th)) {
+    th <- .theme_replay(.brand_auto_theme() %||% list(), th)
   }
   if (identical(kind, "discrete")) {
     th[["palette"]]
@@ -163,6 +211,9 @@ NULL
 #' [theme()] overrides individual elements on top of the current theme using
 #' [element_text()] / [element_line()] / [element_rect()] / [element_blank()].
 #' `set_theme()` is a small back-compatible shortcut for the most common colours.
+#' On a plot with no theme of its own, both apply on top of the default theme
+#' chosen when the plot is drawn (the brand theme under
+#' `options(vellumplot.brand)`, see [theme_brand()], else `theme_gray()`).
 #'
 #' @param plot A [PlotSpec]. [theme()] also accepts a `PlotComposition`, setting
 #'   the figure-level chrome (title bands, collected legend, panel spacing, tags).
@@ -498,7 +549,13 @@ theme <- function(plot, ...) {
     return(plot)
   }
   .check_plot(plot)
-  plot@theme <- .mark_unblank(.merge_theme(.theme_of(plot), args), args)
+  # An unthemed plot stores the tweak, resolved onto the automatic (brand or
+  # gray) default at compile time (VP-133); a themed one merges now.
+  plot@theme <- if (is.null(plot@theme) || .is_theme_tweak(plot@theme)) {
+    .theme_add_tweak(plot@theme, args)
+  } else {
+    .mark_unblank(.merge_theme(plot@theme, args), args)
+  }
   plot
 }
 
@@ -526,6 +583,10 @@ set_theme <- function(
   if (!is.null(strip_bg)) {
     over$strip.background <- .legacy_rect(strip_bg)
   }
-  plot@theme <- .merge_theme(.theme_of(plot), over)
+  plot@theme <- if (is.null(plot@theme) || .is_theme_tweak(plot@theme)) {
+    .theme_add_tweak(plot@theme, over, unblank = FALSE)
+  } else {
+    .merge_theme(plot@theme, over)
+  }
   plot
 }

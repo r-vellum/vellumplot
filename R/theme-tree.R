@@ -217,9 +217,12 @@ NULL
 # scalar settings (filled from defaults). A plot with no theme of its own (a
 # NULL `@theme`) resolves the default theme, as a render does (`.theme_of()`):
 # resolving NULL left every element's size NULL, and a layout built from it
-# measured text at no size at all (VR-15).
+# measured text at no size at all (VR-15). Deferred `theme()` tweaks (VP-133)
+# replay onto that default too.
 .resolve_theme <- function(theme) {
-  theme <- theme %||% .theme_auto()
+  if (is.null(theme) || .is_theme_tweak(theme)) {
+    theme <- .theme_replay(.theme_auto(), theme)
+  }
   cache <- new.env(parent = emptyenv())
   out <- list()
   for (slot in .DRAWN_LEAVES) {

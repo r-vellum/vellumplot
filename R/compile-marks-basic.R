@@ -532,6 +532,10 @@ NULL
 # the host plot's (`.mark_ctx$geom`): a sparkline on a dark theme is drawn in
 # that theme's ink. Any other inset plot keeps its own theme.
 .inherit_sparkline_geom <- function(g) {
+  # deferred theme() tweaks (VP-133) resolve here, so a geom they set counts
+  if (.is_theme_tweak(g@theme)) {
+    g@theme <- .theme_of(g)
+  }
   host <- .mark_ctx$geom
   marks <- vapply(g@layers, function(l) l@mark, character(1))
   if (

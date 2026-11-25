@@ -93,6 +93,9 @@ neon theme (see Details).
 \code{\link[=theme]{theme()}} overrides individual elements on top of the current theme using
 \code{\link[=element_text]{element_text()}} / \code{\link[=element_line]{element_line()}} / \code{\link[=element_rect]{element_rect()}} / \code{\link[=element_blank]{element_blank()}}.
 \code{set_theme()} is a small back-compatible shortcut for the most common colours.
+On a plot with no theme of its own, both apply on top of the default theme
+chosen when the plot is drawn (the brand theme under
+\code{options(vellumplot.brand)}, see \code{\link[=theme_brand]{theme_brand()}}, else \code{theme_gray()}).
 
 \code{theme_cyberpunk()} sets a dark canvas with dim neon gridlines and a bright
 neon default palette (both discrete and continuous), in the spirit of
