@@ -173,7 +173,7 @@ NULL
         as.character(cnt[i]),
         npc(ct[1]),
         npc(ct[2]),
-        gp = vellum::vl_gpar(fontsize = 9, col = .venn_ink(fills[i]))
+        gp = .mark_gpar_text(9, .venn_ink(fills[i]), L)
       )
     )
   }
@@ -214,7 +214,7 @@ NULL
         nm[j],
         npc(.venn_clamp(lab[1])),
         npc(.venn_clamp(lab[2])),
-        gp = vellum::vl_gpar(fontsize = 11, fontface = "bold")
+        gp = .mark_gpar_text(11, L = L, face = "bold")
       )
     )
   }

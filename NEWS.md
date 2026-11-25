@@ -2,6 +2,16 @@
 
 ## Bug fixes
 
+* Venn counts and set names, the compass "N", graticule labels and
+  significance-bracket labels use the theme's base text family, face and
+  weight (VP-139), as the other mark labels have since VP-135. Venn set
+  names and the compass "N" stay bold (in the theme's family). Plots in the
+  default font are unchanged.
+
+* `vtable()` measures its header row in the bold face it draws in (VP-141),
+  so a bold header no longer runs past its column. Tables whose header is
+  their widest text get slightly wider columns.
+
 * Facet strip text is clipped to its strip (VP-134), as in ggplot2: a label
   wider than its panel no longer runs into the next panel or off the page.
   Use `labeller = label_wrap_gen()` to wrap long labels instead; the strip
