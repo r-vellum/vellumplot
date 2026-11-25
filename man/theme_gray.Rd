@@ -71,7 +71,13 @@ Legend geometry is tunable via \code{legend.key.size} (key/swatch side, mm),
 with a constant \code{size} is drawn at, default 1 -- an unsized point's
 radius -- so tiny points keep readable keys; a size legend keeps its
 mapped sizes), \code{legend.spacing} (gap between stacked guides, mm), and \code{legend.margin}
-(inset around the legend block, one or four millimetres, \verb{t, r, b, l}).}
+(inset around the legend block, one or four millimetres, \verb{t, r, b, l}).
+\code{strip.clip} sets whether facet strip text is clipped to its strip, as
+in ggplot2: \code{"inherit"} (the default) and \code{"on"} clip a label longer
+than its strip at the strip's edge; \code{"off"} lets it run past the strip
+(a neighbouring strip drawn after it still paints over it, as in
+ggplot2). To keep a long label whole, wrap it with
+\code{labeller = label_wrap_gen()} instead.}
 
 \item{panel_bg, grid_col, label_col, strip_bg}{Colours (or \code{NA} to draw nothing)
 for the panel background, gridlines, axis-label/legend text, and facet strip

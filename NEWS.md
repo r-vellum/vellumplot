@@ -1,5 +1,12 @@
 # vellumplot (development version)
 
+## New features
+
+* `theme(strip.clip =)` sets whether facet strip text is clipped to its
+  strip, with ggplot2's values: `"inherit"` (the default) and `"on"` clip,
+  `"off"` lets a long label run past the strip (VP-143). It round-trips
+  through `as_spec()` / `spec_to_json()`, and an unknown value errors.
+
 ## Bug fixes
 
 * Facet strip text is clipped to its strip (VP-134), as in ggplot2: a label
