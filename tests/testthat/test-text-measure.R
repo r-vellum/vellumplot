@@ -29,7 +29,7 @@ test_that(".widest() picks the widest label, not the one with most characters", 
   expect_identical(vellumplot:::.widest(c("", "ab"), el), "ab")
   # an unrotated x row also measures the label with the most lines
   expect_setequal(
-    vellumplot:::.x_probe(c("WWWW", "a\nb"), el),
+    vellumplot:::.axis_probe(c("WWWW", "a\nb"), el),
     c("WWWW", "a\nb")
   )
 })
@@ -93,4 +93,53 @@ test_that("rotated composition title bands reserve their rotated height (VP-137)
   up <- grid_h(rt_up)
   expect_gt(up, flat)
   expect_gte(up, vellumplot:::.el_strwidth(title, rt_up[["plot.title"]]))
+})
+
+test_that("a rotated multi-line y label sets the gutter by its line count", {
+  d <- data.frame(x = 1:2, y = c("Alpha\nBeta\nGamma", "WWWWWWWWWW"))
+  p <- vplot(d, width = 4, height = 3) |>
+    mark_point(x = x, y = y) |>
+    theme(axis.text.y = element_text(angle = 90))
+  r <- lay_of(p)
+  el <- r$rt[["axis.text.y"]]
+  tall <- mm(vellum::grobwidth(
+    vellumplot:::.el_txt("Alpha\nBeta\nGamma", el, 90)
+  ))
+  expect_gte(mm(r$lay$widths[r$lay$ylabels_col]), tall)
+})
+
+test_that("dodged multi-line x labels keep their stagger", {
+  d <- data.frame(
+    x = c("Alpha\nBeta\nGamma", "WWWWWWW", "Delta\nEps\nZeta", "WWWWWW2"),
+    y = 1:4
+  )
+  p <- vplot(d, width = 5, height = 3) |>
+    mark_point(x = x, y = y) |>
+    scale_x_discrete(guide = guide_axis(n.dodge = 2))
+  ss <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+  ys <- list()
+  walk <- function(n) {
+    if (!is.list(n)) {
+      return()
+    }
+    if (identical(n$class, "grob_text")) {
+      lab <- n$label$v[1]
+      if (lab %in% d$x) ys[[lab]] <<- n$y
+    }
+    for (k in n) {
+      walk(k)
+    }
+  }
+  walk(ss$root)
+  # the second row sits a full three-line label below the first
+  el <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())[[
+    "axis.text.x"
+  ]]
+  h3 <- mm(vellum::grobheight(
+    vellumplot:::.axis_text_grob("Alpha\nBeta\nGamma", el, c("centre", "top"))
+  ))
+  lay <- lay_of(p)
+  row_h <- mm(lay$lay$heights[lay$lay$xlabels_row[1]])
+  expect_gte(row_h, 2 * h3)
+  expect_false(identical(ys[["Alpha\nBeta\nGamma"]], ys[["WWWWWWW"]]))
 })

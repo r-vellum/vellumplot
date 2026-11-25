@@ -756,7 +756,7 @@ NULL
     } else {
       mm(.track_w_axis(
         rt[["axis.text.y"]],
-        .widest(v$labels %||% "00.0", rt[["axis.text.y"]]),
+        .axis_probe(v$labels %||% "00.0", rt[["axis.text.y"]]),
         tick + .PAD_MM,
         rot = v$rot %||% .el_rot(rt[["axis.text.y"]]),
         n_dodge = v$n_dodge %||% 1L

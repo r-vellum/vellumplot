@@ -49,10 +49,11 @@ NULL
   x[which.max(.el_strwidth(x, el, features = .TNUM))]
 }
 
-# The x tick labels whose height can set the label row: the widest (a rotated
-# label's height grows with its width) and the one with the most lines (an
-# unrotated label's height grows with its line count).
-.x_probe <- function(x, el = NULL) {
+# The tick labels that can set an axis track: the widest and the one with the
+# most lines. Along the axis an unrotated label's extent follows its width,
+# across it its line count; rotated, the two swap and mix, so the sizers
+# measure both (as drawn) and take the larger (VP-136).
+.axis_probe <- function(x, el = NULL) {
   if (!is.character(x)) {
     return(.longest(x))
   }
@@ -150,12 +151,26 @@ NULL
 }
 
 # Width (mm) of the y tick-label gutter: the widest label (rotated as drawn),
-# times `n_dodge` staggered columns.
+# times `n_dodge` staggered columns. `label` may be several labels: the widest
+# counts.
 .track_w_axis <- function(el, label, pad_mm, rot = 0, n_dodge = 1L) {
   if (.is_blank(el)) {
     return(vellum::vl_unit(0, "mm"))
   }
   # tabular figures, as `.axis_text_grob()` draws the tick labels
+  if (length(label) > 1L) {
+    ws <- vapply(
+      label,
+      function(l) {
+        vellum::vl_convert(
+          vellum::grobwidth(.el_txt(l, el, rot, features = .TNUM)),
+          "mm"
+        )
+      },
+      numeric(1)
+    )
+    label <- label[[which.max(ws)]]
+  }
   w <- vellum::grobwidth(.el_txt(label, el, rot, features = .TNUM))
   if (n_dodge > 1L) {
     w <- vellum::vl_unit(
@@ -476,7 +491,7 @@ NULL
   yl <- if (.axis_shows_labels(vsc)) {
     .track_w_axis(
       rt[["axis.text.y"]],
-      .widest(v_labs, rt[["axis.text.y"]]),
+      .axis_probe(v_labs, rt[["axis.text.y"]]),
       tick + .PAD_MM,
       rot = yrot,
       n_dodge = ydodge
@@ -498,7 +513,7 @@ NULL
   y2l <- if (has_y_sec) {
     .track_w_axis(
       rt[["axis.text.y"]],
-      .widest(y_sec$labels, rt[["axis.text.y"]]),
+      .axis_probe(y_sec$labels, rt[["axis.text.y"]]),
       tick + .PAD_MM,
       rot = yrot
     )
@@ -509,7 +524,7 @@ NULL
   x2l <- if (has_x_sec) {
     .track_h_axis(
       rt[["axis.text.x"]],
-      .x_probe(x_sec$labels, rt[["axis.text.x"]]),
+      .axis_probe(x_sec$labels, rt[["axis.text.x"]]),
       tick + .PAD_MM,
       rot = xrot
     )
@@ -666,7 +681,7 @@ NULL
         if (is.finite(xwrap_mm)) {
           unique(h_labs)
         } else {
-          .x_probe(h_labs, rt[["axis.text.x"]])
+          .axis_probe(h_labs, rt[["axis.text.x"]])
         },
         tick + .PAD_MM,
         rot = xrot,
