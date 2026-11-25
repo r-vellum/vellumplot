@@ -86,7 +86,8 @@ in the theme tree. <code>element_blank()</code> draws nothing.</p>
 <span>  vjust <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  angle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lineheight <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  margin <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  margin <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  weight <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">element_line</span><span class="op">(</span></span>
@@ -118,6 +119,16 @@ in the theme tree. <code>element_blank()</code> draws nothing.</p>
 <dd><p>Text properties. <code>color</code> is an alias for <code>colour</code>; <code>size</code> is in points and
 <code>cex</code> is a relative multiplier on the inherited <code>size</code>; <code>margin</code> is a
 numeric vector of millimetres (recycled to length 4).</p></dd>
+
+
+<dt id="arg-weight">weight<a class="anchor" aria-label="anchor" href="#arg-weight"></a></dt>
+<dd><p>Font weight for text: a number from <code>100</code> to <code>900</code> in steps
+of 100 (300 light, 400 regular, 600 semi-bold, 700 bold) or a CSS weight
+name such as <code>"light"</code> or <code>"semi-bold"</code>, for families that ship more than
+regular and bold (see <code><a href="https://r-vellum.github.io/vellum/reference/vl_gpar.html" class="external-link">vellum::vl_gpar()</a></code>'s <code>fontweight</code>). It keeps the
+italic of <code>face</code>; a bold <code>face</code> draws at least 700, so <code>face = "bold"</code> on
+a title stays bold under a light inherited weight. <code>NULL</code> (default)
+inherits.</p></dd>
 
 
 <dt id="arg-linewidth-linetype-lineend">linewidth, linetype, lineend<a class="anchor" aria-label="anchor" href="#arg-linewidth-linetype-lineend"></a></dt>

@@ -20,7 +20,8 @@ element_text(
   vjust = NULL,
   angle = NULL,
   lineheight = NULL,
-  margin = NULL
+  margin = NULL,
+  weight = NULL
 )
 
 element_line(
@@ -52,6 +53,17 @@ element_blank()
   Text properties. `color` is an alias for `colour`; `size` is in points
   and `cex` is a relative multiplier on the inherited `size`; `margin`
   is a numeric vector of millimetres (recycled to length 4).
+
+- weight:
+
+  Font weight for text: a number from `100` to `900` in steps of 100
+  (300 light, 400 regular, 600 semi-bold, 700 bold) or a CSS weight name
+  such as `"light"` or `"semi-bold"`, for families that ship more than
+  regular and bold (see
+  [`vellum::vl_gpar()`](https://r-vellum.github.io/vellum/reference/vl_gpar.html)'s
+  `fontweight`). It keeps the italic of `face`; a bold `face` draws at
+  least 700, so `face = "bold"` on a title stays bold under a light
+  inherited weight. `NULL` (default) inherits.
 
 - linewidth, linetype, lineend:
 

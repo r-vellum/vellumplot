@@ -151,8 +151,12 @@ and <code>danger</code> colours (those that are set and distinct). Entries in th
 background colour are left out. When a scale has
 more levels than the brand has colours, vellumplot's own qualitative
 colours follow. A <code>scale_*()</code> palette still wins.</p></li>
-<li><p><code>typography.base</code> sets the family of all text and <code>typography.headings</code>
-the family of the title, subtitle and facet strips.</p></li>
+<li><p><code>typography.base</code> sets the family and weight of all text, and
+<code>typography.headings</code> the family of the title, subtitle and facet strips
+and the weight of the title and strips. Weights such as 300 (light) or
+<code>semi-bold</code> pick that face of a family that has it; axis and legend
+titles and labels and the caption stay at least regular (400) so they
+stay legible.</p></li>
 </ul><p>Elements the base preset leaves out (the axis ticks of <code><a href="theme_gray.html">theme_minimal()</a></code>,
 say) stay out.</p>
     </div>

@@ -93,9 +93,12 @@ The modified
   levels than the brand has colours, vellumplot's own qualitative
   colours follow. A `scale_*()` palette still wins.
 
-- `typography.base` sets the family of all text and
+- `typography.base` sets the family and weight of all text, and
   `typography.headings` the family of the title, subtitle and facet
-  strips.
+  strips and the weight of the title and strips. Weights such as 300
+  (light) or `semi-bold` pick that face of a family that has it; axis
+  and legend titles and labels and the caption stay at least
+  regular (400) so they stay legible.
 
 Elements the base preset leaves out (the axis ticks of
 [`theme_minimal()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
