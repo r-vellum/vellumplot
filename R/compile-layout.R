@@ -823,6 +823,7 @@ NULL
       xwrap_mm,
       W$u,
       H$u,
+      coord,
       list(
         t = seq_len(panel_row[1] - 1L),
         b = seq_along(H$u)[-seq_len(panel_row[R])],
@@ -1085,9 +1086,20 @@ NULL
   xwrap_mm,
   wu,
   hu,
+  coord,
   outer
 ) {
   pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  # coord_trans draws its axes from break/domain-warped copies of the scales
+  # (no flip under it): place the end breaks where those draw them
+  warp <- function(sc, axis) sc
+  if (!is.null(coord) && identical(coord@kind, "trans")) {
+    tf <- list(
+      x = .resolve_coord_trans(coord@xtrans, "x"),
+      y = .resolve_coord_trans(coord@ytrans, "y")
+    )
+    warp <- function(sc, axis) .warp_scale(sc, tf[[axis]])
+  }
   track_mm <- function(units, idx) {
     sum(vapply(
       units[idx],
@@ -1125,7 +1137,7 @@ NULL
       if (is.null(guide$angle)) el else .el_unjust(el),
       rot
     )
-    ex <- .end_tick_extent(sc, el, rot, just, axis, wrap_mm)
+    ex <- .end_tick_extent(warp(sc, axis), el, rot, just, axis, wrap_mm)
     if (is.null(ex)) {
       return()
     }

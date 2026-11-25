@@ -90,3 +90,34 @@ test_that(".shift_tracks() leaves NA and unused zero indices alone", {
   expect_identical(out$panel_col, 4L)
   expect_identical(out$legend_cols, c(left = NA_integer_, right = 6L))
 })
+
+test_that("coord_trans places the end breaks where the warped axis draws them", {
+  d <- data.frame(x = c(1, 10, 100, 1000), y = 1:4)
+  p <- vplot(d, width = 5, height = 3) |>
+    mark_point(x = x, y = y) |>
+    scale_x_continuous(
+      breaks = c(1, 10, 100, 900),
+      labels = c("1", "10", "100", "900000"),
+      expand = c(0, 0)
+    ) |>
+    theme(plot.margin = 0)
+  right_spacer <- function(q) {
+    pl <- vellumplot:::.build_panels(q)
+    rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(q))
+    lay <- vellumplot:::.build_layout(
+      pl,
+      list(),
+      q@labels,
+      rt,
+      coord = vellumplot:::.coord_of(q),
+      page_width = q@width,
+      page_height = q@height
+    )
+    n <- length(lay$widths)
+    if (n > max(lay$panel_col)) mm(lay$widths[n]) else 0
+  }
+  # untransformed, 900 sits a tenth of the panel in from the edge: no spacer
+  expect_identical(right_spacer(p), 0)
+  # on a log10 axis it sits almost at the edge, so "900000" needs room
+  expect_gt(right_spacer(coord_trans(p, x = "log10")), 0)
+})
