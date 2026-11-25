@@ -64,6 +64,16 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<div class="section level3">
+<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/theme_brand.html">theme_brand()</a></code> themes a plot from a brand.yml file, the format of Quarto’s <code>_brand.yml</code> (F-26). The brand’s background becomes the page, its foreground the ink of titles and unmapped marks (<code><a href="../reference/element_geom.html">element_geom()</a></code>), its primary colour the accent, and the greys between are foreground/background blends, as in brand.yml’s <code>theme_brand_ggplot2()</code>. <code>color.palette</code> (or the primary, secondary, … colours) is the default discrete palette, padded with vellumplot’s own colours past its length, and the base and headings font families go to the text and the titles and strips. It builds on <code><a href="../reference/theme_gray.html">theme_minimal()</a></code> (<code>base =</code> picks another preset) and keeps the preset’s blank elements blank. With no <code>brand =</code> it reads the brand Quarto resolved for the document being rendered (light or dark, <code>mode =</code>), or else the nearest <code>_brand.yml</code>. <code>fetch_fonts = TRUE</code> downloads Google/Bunny brand fonts or registers the brand’s font files for the session. Reading a file needs the brand.yml package (Suggests).</li>
+<li>
+<code>options(vellumplot.brand = TRUE)</code> (or a path) themes every plot that has no theme of its own with the brand, and says once per session which file it used (F-26). Explicit themes are never overridden. Off by default. <code>options(vellumplot.brand.fetch_fonts = TRUE)</code> fetches missing brand fonts for it.</li>
+<li>A composition with no theme of its own draws its page background and title bands from its first themed sub-plot’s theme (the page was always white), or from the brand when auto-apply is on and no sub-plot sets a theme, so composed dark or branded plots have no white margin (F-26).</li>
+<li>
+<code><a href="../reference/as_spec.html">as_spec()</a></code> now also warns when a theme’s default palette is dropped (a brand or custom palette; a preset’s own palette still round-trips).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.23.1" id="vellumplot-0231">vellumplot 0.23.1<a class="anchor" aria-label="anchor" href="#vellumplot-0231"></a></h2>

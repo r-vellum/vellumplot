@@ -68,8 +68,8 @@
   themes](https://r-vellum.github.io/vellumplot/articles/effects-and-themes.md):
 
   The non-data look of a plot: built-in themes, custom theme elements,
-  layer effects like glow and shadow, gradient fills, and the one-line
-  hand-drawn sketch mode.
+  layer effects like glow and shadow, gradient fills, brand.yml themes,
+  and the one-line hand-drawn sketch mode.
 
 - [Declarative
   interactivity](https://r-vellum.github.io/vellumplot/articles/interactivity.md):

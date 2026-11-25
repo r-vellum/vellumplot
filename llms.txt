@@ -803,6 +803,8 @@ Combine plots into a single figure, or repeat one over a variable.
   : Plot themes
 - [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
   : Hand-drawn plot theme
+- [`theme_brand()`](https://r-vellum.github.io/vellumplot/reference/theme_brand.md)
+  : A plot theme from a brand.yml file
 - [`element_text()`](https://r-vellum.github.io/vellumplot/reference/element.md)
   [`element_line()`](https://r-vellum.github.io/vellumplot/reference/element.md)
   [`element_rect()`](https://r-vellum.github.io/vellumplot/reference/element.md)
@@ -1025,8 +1027,8 @@ plots from an LLM / MCP agent, and translate to and from Vega-Lite.
   themes](https://r-vellum.github.io/vellumplot/articles/effects-and-themes.md):
 
   The non-data look of a plot: built-in themes, custom theme elements,
-  layer effects like glow and shadow, gradient fills, and the one-line
-  hand-drawn sketch mode.
+  layer effects like glow and shadow, gradient fills, brand.yml themes,
+  and the one-line hand-drawn sketch mode.
 
 - [Declarative
   interactivity](https://r-vellum.github.io/vellumplot/articles/interactivity.md):

@@ -416,6 +416,8 @@ Combine plots into a single figure, or repeat one over a variable.
   : Plot themes
 - [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
   : Hand-drawn plot theme
+- [`theme_brand()`](https://r-vellum.github.io/vellumplot/reference/theme_brand.md)
+  : A plot theme from a brand.yml file
 - [`element_text()`](https://r-vellum.github.io/vellumplot/reference/element.md)
   [`element_line()`](https://r-vellum.github.io/vellumplot/reference/element.md)
   [`element_rect()`](https://r-vellum.github.io/vellumplot/reference/element.md)
