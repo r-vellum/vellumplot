@@ -125,9 +125,11 @@ plot with an explicit theme
 ([`theme_bw()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md),
 a `theme_brand()` of its own) keeps it;
 [`theme()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)
-tweaks on an unthemed plot apply on top of the brand. The first branded
-plot of a session says which file it used. The option is off by default,
-so existing documents do not change their look. Add
+tweaks on an unthemed plot apply on top of the brand. The option is read
+when a plot is drawn, not when it is built, so tweaks made before the
+option is set still get the brand. The first branded plot of a session
+says which file it used. The option is off by default, so existing
+documents do not change their look. Add
 `options(vellumplot.brand.fetch_fonts = TRUE)` to fetch missing brand
 fonts there, as `fetch_fonts = TRUE` does.
 

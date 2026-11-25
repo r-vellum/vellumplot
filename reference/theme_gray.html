@@ -172,7 +172,10 @@ background.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>theme()</code> overrides individual elements on top of the current theme using
 <code><a href="element.html">element_text()</a></code> / <code><a href="element.html">element_line()</a></code> / <code><a href="element.html">element_rect()</a></code> / <code><a href="element.html">element_blank()</a></code>.
-<code>set_theme()</code> is a small back-compatible shortcut for the most common colours.</p>
+<code>set_theme()</code> is a small back-compatible shortcut for the most common colours.
+On a plot with no theme of its own, both apply on top of the default theme
+chosen when the plot is drawn (the brand theme under
+<code>options(vellumplot.brand)</code>, see <code><a href="theme_brand.html">theme_brand()</a></code>, else <code>theme_gray()</code>).</p>
 <p><code>theme_cyberpunk()</code> sets a dark canvas with dim neon gridlines and a bright
 neon default palette (both discrete and continuous), in the spirit of
 <a href="https://github.com/dhaitz/mplcyberpunk" class="external-link">mplcyberpunk</a>. It pairs with the

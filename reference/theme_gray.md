@@ -106,7 +106,11 @@ using
 /
 [`element_blank()`](https://r-vellum.github.io/vellumplot/reference/element.md).
 `set_theme()` is a small back-compatible shortcut for the most common
-colours.
+colours. On a plot with no theme of its own, both apply on top of the
+default theme chosen when the plot is drawn (the brand theme under
+`options(vellumplot.brand)`, see
+[`theme_brand()`](https://r-vellum.github.io/vellumplot/reference/theme_brand.md),
+else `theme_gray()`).
 
 `theme_cyberpunk()` sets a dark canvas with dim neon gridlines and a
 bright neon default palette (both discrete and continuous), in the
