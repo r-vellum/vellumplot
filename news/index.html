@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.23.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.24.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,13 +59,13 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/v0.24.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.24.0" id="vellumplot-0240">vellumplot 0.24.0<a class="anchor" aria-label="anchor" href="#vellumplot-0240"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-0-24-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-24-0"></a></h3>
 <ul><li>
 <code><a href="../reference/theme_brand.html">theme_brand()</a></code> themes a plot from a brand.yml file, the format of Quarto’s <code>_brand.yml</code> (F-26). The brand’s background becomes the page, its foreground the ink of titles and unmapped marks (<code><a href="../reference/element_geom.html">element_geom()</a></code>), its primary colour the accent, and the greys between are foreground/background blends, as in brand.yml’s <code>theme_brand_ggplot2()</code>. <code>color.palette</code> (or the primary, secondary, … colours) is the default discrete palette, padded with vellumplot’s own colours past its length, and the base and headings font families go to the text and the titles and strips. It builds on <code><a href="../reference/theme_gray.html">theme_minimal()</a></code> (<code>base =</code> picks another preset) and keeps the preset’s blank elements blank. With no <code>brand =</code> it reads the brand Quarto resolved for the document being rendered (light or dark, <code>mode =</code>), or else the nearest <code>_brand.yml</code>. <code>fetch_fonts = TRUE</code> downloads Google/Bunny brand fonts or registers the brand’s font files for the session. Reading a file needs the brand.yml package (Suggests).</li>
 <li>
