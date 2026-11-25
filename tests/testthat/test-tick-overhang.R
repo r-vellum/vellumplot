@@ -121,3 +121,131 @@ test_that("coord_trans places the end breaks where the warped axis draws them", 
   # on a log10 axis it sits almost at the edge, so "900000" needs room
   expect_gt(right_spacer(coord_trans(p, x = "log10")), 0)
 })
+
+# VP-140: opposite sides solved together, budgets refreshed, composition cells.
+
+conv_mm <- function(u) {
+  vapply(
+    seq_along(u),
+    function(i) tryCatch(mm(u[i]), error = function(e) NA_real_),
+    numeric(1)
+  )
+}
+
+test_that("top and bottom spacers are solved together: no residual clip", {
+  p <- vplot(mtcars, width = 4, height = 1.6) |>
+    mark_point(x = wt, y = mpg) |>
+    scale_y_continuous(
+      limits = c(10, 35),
+      breaks = c(10, 20, 30, 35),
+      expand = c(0.02, 0)
+    ) |>
+    theme(
+      plot.margin = 0,
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.title = element_blank(),
+      axis.text.y = element_text(size = 30)
+    )
+  pl <- vellumplot:::.build_panels(p)
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
+  lay <- lay_of(p)
+  h <- conv_mm(lay$heights)
+  n <- length(h)
+  expect_identical(lay$panel_row, 2L)
+  expect_gt(h[1], 0)
+  expect_gt(h[n], 0)
+  panel <- p@height * 25.4 - sum(h, na.rm = TRUE)
+  ex <- vellumplot:::.end_tick_extent(
+    pl$scales$y,
+    rt[["axis.text.y"]],
+    0,
+    c("right", "centre"),
+    "y"
+  )
+  # each end label fits in its spacer plus the end gap of the shrunk panel
+  expect_lte(ex$e[1] - (h[n] + ex$g[1] * panel), 1e-3)
+  expect_lte(ex$e[2] - (h[1] + ex$g[2] * panel), 1e-3)
+})
+
+test_that(".solve_overhang() grows monotonically and stops when settled", {
+  calls <- 0L
+  s <- vellumplot:::.solve_overhang(function(s) {
+    calls <<- calls + 1L
+    # each side needs 2 mm plus a tenth of the opposite side's spacer
+    c(t = 2 + 0.1 * s[["b"]], r = 0, b = 2 + 0.1 * s[["t"]], l = 0)
+  })
+  expect_equal(s[["t"]], 2.22, tolerance = 1e-9)
+  expect_identical(calls, 3L)
+  one <- 0L
+  vellumplot:::.solve_overhang(function(s) {
+    one <<- one + 1L
+    c(t = 1, r = 0, b = 0, l = 0)
+  })
+  expect_identical(one, 2L)
+})
+
+test_that("a left / right spacer narrows the x wrap budget", {
+  p <- vplot(data.frame(x = 1:4, y = 1:4), width = 3.2, height = 2.5) |>
+    mark_point(x = x, y = y) |>
+    scale_x_continuous(
+      breaks = 1:4,
+      labels = c(
+        "A long label one",
+        "Another long label",
+        "Third long label here",
+        "End label WWWWWW"
+      ),
+      expand = c(0.02, 0)
+    ) |>
+    theme(
+      plot.margin = 0,
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title = element_blank()
+    )
+  lay <- lay_of(p)
+  w <- conv_mm(lay$widths)
+  spacers <- w[1] + w[length(w)]
+  expect_gt(spacers, 0)
+  expect_equal(
+    lay$xwrap_mm,
+    (p@width * 25.4 - spacers) / 4,
+    tolerance = 1e-6
+  )
+})
+
+test_that("an aligned composition gives edge cells their end-tick room", {
+  edge <- function(q) {
+    q |>
+      scale_y_continuous(
+        limits = c(10, 35),
+        breaks = c(10, 20, 35),
+        expand = c(0, 0)
+      )
+  }
+  a <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> edge()
+  b <- vplot(mtcars) |>
+    mark_point(x = hp, y = mpg) |>
+    scale_x_continuous(
+      limits = c(50, 350),
+      breaks = c(50, 200, 350),
+      expand = c(0, 0)
+    )
+  panels <- function(x) {
+    p <- vellum::scene_model(vellum::as_vellum_scene(x))$panels
+    p[grepl("panel-", p$name), , drop = FALSE]
+  }
+  tight <- hconcat(a, b) |> theme(plot.margin = 0)
+  pc <- panels(tight)
+  # the top y label and the last x label get room at the page edge
+  expect_gt(min(pc$py0), 1)
+  expect_gt(tight@width * tight@dpi - max(pc$px1), 1)
+  # the default margin holds them: the layout is unchanged
+  loose <- panels(hconcat(a, b))
+  plo <- panels(hconcat(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg),
+    vplot(mtcars) |> mark_point(x = hp, y = mpg)
+  ))
+  expect_equal(min(loose$py0), min(plo$py0), tolerance = 1e-6)
+})

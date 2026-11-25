@@ -617,7 +617,9 @@ NULL
 
 # Draw a composition into the current viewport (so nesting works): push the
 # shared grid, draw figure bands, the collected legend, then each sub-plot.
-.draw_composition <- function(scene, comp) {
+# `page` is the figure's (width, height) in inches when it fills the page (the
+# top-level composition); a nested one is drawn into a cell of unknown size.
+.draw_composition <- function(scene, comp, page = NULL) {
   collect <- identical(comp@guides, "collect")
   plans <- lapply(comp@plots, .plan_plot)
   # Figure-level chrome (title/subtitle/caption bands, the collected legend, panel
@@ -645,6 +647,13 @@ NULL
   # plot does (`.dp_push_frame()`); before, the first row's panels touched the
   # top edge and the last column's the right edge (VP-50).
   m <- rep_len(rt0[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  # End tick labels of the cells on the figure's edge get the room the margin
+  # and the tracks outside them cannot give, as a single plot's do (VP-138,
+  # VP-140): the spacer widens the margin frame, so no grid index moves.
+  if (!is.null(page)) {
+    sp <- .comp_overhang_spacer(comp, plans, glo, m, page)
+    m <- m + unname(sp[c("t", "r", "b", "l")])
+  }
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(
@@ -714,6 +723,85 @@ NULL
     }
   }
   vellum::pop(vellum::pop(vellum::pop(scene)))
+}
+
+# The end-tick spacer (mm per side, t / r / b / l) an aligned composition
+# needs around its grid (VP-140): each cell's end tick labels on a figure edge
+# must fit in the figure margin `m`, the tracks between the cell's panel and
+# that edge, and the end gap of its panel, which the spacer itself shrinks.
+# The cell sizes come from the solved figure grid on the `page` (inches).
+# Aspect-locked cells (whose panel size the grid alone does not give) get none.
+.comp_overhang_spacer <- function(comp, plans, glo, m, page) {
+  zero <- c(t = 0, r = 0, b = 0, l = 0)
+  if (any(vapply(plans, function(pl) isTRUE(pl$lay$respect), NA))) {
+    return(zero)
+  }
+  as_list <- function(u) lapply(seq_along(u), function(i) u[i])
+  wu <- as_list(glo$widths)
+  hu <- as_list(glo$heights)
+  nr <- as.integer(comp@nrow)
+  nc <- as.integer(comp@ncol)
+  cells <- lapply(seq_along(plans), function(i) {
+    pl <- plans[[i]]
+    gm <- glo$map[[i]]
+    e <- .comp_cell(i, comp)
+    rt <- pl$rt
+    rt[["plot.margin"]] <- m # the figure's margin is the room at its edge
+    hv <- .hv_roles(pl$built$scales$x, pl$built$scales$y, pl$flip)
+    list(
+      pl = pl,
+      rt = rt,
+      gm = gm,
+      wt = c(
+        w = .null_weight(wu[[gm$panel_col]]),
+        h = .null_weight(hu[[gm$panel_row]])
+      ),
+      xrot = .axis_rot(hv$h, rt[["axis.text.x"]]),
+      yrot = .axis_rot(hv$v, rt[["axis.text.y"]]),
+      edge = c(t = e$r == 1L, r = e$c == nc, b = e$r == nr, l = e$c == 1L),
+      outer = list(
+        t = seq_len(gm$panel_row - 1L),
+        b = seq_along(hu)[-seq_len(gm$panel_row)],
+        l = seq_len(gm$panel_col - 1L),
+        r = seq_along(wu)[-seq_len(gm$panel_col)]
+      )
+    )
+  })
+  rt_page <- list(plot.margin = m)
+  null_mm <- function(s) {
+    .panel_mm(
+      wu,
+      hu,
+      page[1] - (s[["l"]] + s[["r"]]) / 25.4,
+      page[2] - (s[["t"]] + s[["b"]]) / 25.4,
+      rt_page
+    )
+  }
+  .solve_overhang(function(s) {
+    one <- null_mm(s)
+    if (!all(is.finite(one))) {
+      return(zero)
+    }
+    need <- zero
+    for (cl in cells) {
+      n <- .tick_overhang_spacer(
+        cl$pl$built,
+        cl$pl$flip,
+        cl$rt,
+        cl$wt * one,
+        cl$xrot,
+        cl$yrot,
+        NA_real_,
+        wu,
+        hu,
+        cl$pl$co,
+        cl$outer,
+        cur = s
+      )
+      need <- pmax(need, ifelse(cl$edge, n, 0))
+    }
+    need
+  })
 }
 
 # Spreadsheet-style alphabetic labels: A..Z, AA, AB, ... (bijective base-26), so

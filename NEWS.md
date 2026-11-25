@@ -2,6 +2,13 @@
 
 ## Bug fixes
 
+* End-tick spacers (VP-138) on opposite sides are solved together, so a top
+  and a bottom (or left and right) spacer no longer leave a sub-millimetre
+  clip; a left / right spacer also narrows the x-label wrap budget and is
+  counted in the per-panel legend width check (VP-140). Aligned compositions
+  that fill the page give the cells on their edges the same room, by
+  widening the figure's margin.
+
 * Facet strip text is clipped to its strip (VP-134), as in ggplot2: a label
   wider than its panel no longer runs into the next panel or off the page.
   Use `labeller = label_wrap_gen()` to wrap long labels instead; the strip

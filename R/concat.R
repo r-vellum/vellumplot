@@ -582,7 +582,7 @@ compose_annotation <- function(
   )
   if (.comp_alignable(comp)) {
     scene <- vellum::push(scene, vellum::vl_viewport())
-    scene <- .draw_composition(scene, comp)
+    scene <- .draw_composition(scene, comp, page = c(comp@width, comp@height))
     scene <- vellum::pop(scene)
   } else {
     # The top-level grid fills the page, so an inset's box has a known size
