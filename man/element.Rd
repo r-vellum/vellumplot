@@ -51,8 +51,10 @@ numeric vector of millimetres (recycled to length 4).}
 \item{weight}{Font weight for text: a number from \code{100} to \code{900} in steps
 of 100 (300 light, 400 regular, 600 semi-bold, 700 bold) or a CSS weight
 name such as \code{"light"} or \code{"semi-bold"}, for families that ship more than
-regular and bold (see \code{\link[vellum:vl_gpar]{vellum::vl_gpar()}}'s \code{fontweight}). It replaces the
-weight \code{face} implies and keeps its italic. \code{NULL} (default) inherits.}
+regular and bold (see \code{\link[vellum:vl_gpar]{vellum::vl_gpar()}}'s \code{fontweight}). It keeps the
+italic of \code{face}; a bold \code{face} draws at least 700, so \code{face = "bold"} on
+a title stays bold under a light inherited weight. \code{NULL} (default)
+inherits.}
 
 \item{linewidth, linetype, lineend}{Line properties.}
 

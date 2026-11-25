@@ -66,8 +66,10 @@ NULL
 #' @param weight Font weight for text: a number from `100` to `900` in steps
 #'   of 100 (300 light, 400 regular, 600 semi-bold, 700 bold) or a CSS weight
 #'   name such as `"light"` or `"semi-bold"`, for families that ship more than
-#'   regular and bold (see [vellum::vl_gpar()]'s `fontweight`). It replaces the
-#'   weight `face` implies and keeps its italic. `NULL` (default) inherits.
+#'   regular and bold (see [vellum::vl_gpar()]'s `fontweight`). It keeps the
+#'   italic of `face`; a bold `face` draws at least 700, so `face = "bold"` on
+#'   a title stays bold under a light inherited weight. `NULL` (default)
+#'   inherits.
 #' @param linewidth,linetype,lineend Line properties.
 #' @param fill Fill colour (rectangles).
 #' @param sketch For [element_line()] / [element_rect()], a [sketch()] spec giving
@@ -105,7 +107,7 @@ element_text <- function(
     call <- environment()
     weight <- tryCatch(
       vellum::vl_gpar(fontweight = weight)@fontweight,
-      error = function(e) {
+      vellum_error_fontweight = function(e) {
         cli::cli_abort(
           c(
             "{.arg weight} must be a font weight from 100 to 900 in steps of 100, or a weight name.",
@@ -338,13 +340,20 @@ print.rel <- function(x, ...) {
 # between ticks). `cex` is a relative size multiplier vellum applies to
 # `fontsize` -- how a theme cascades a base size (`element_text(cex = 1.2)`).
 .el_gpar_text <- function(el, features = NULL) {
+  # A bold face means at least 700, as a `**bold**` run in a rich label does:
+  # a weight inherited from a parent (a light brand body, say) must not turn
+  # an element's own `face = "bold"` light.
+  weight <- el@weight
+  if (!is.null(weight) && grepl("bold", el@face %||% "")) {
+    weight <- max(weight, 700L)
+  }
   vellum::vl_gpar(
     fontsize = el@size,
     cex = el@cex %||% 1,
     col = el@colour,
     fontfamily = el@family,
     fontface = el@face,
-    fontweight = el@weight,
+    fontweight = weight,
     lineheight = el@lineheight,
     features = features
   )

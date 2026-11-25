@@ -526,6 +526,7 @@ test_that("as_spec() warns that a brand theme is not kept", {
   expect_warning(as_spec(p), "theme_brand")
   # a preset's own palette still round-trips quietly
   expect_no_warning(as_spec(pts() |> theme_cyberpunk()))
+})
 
 # --- font weights ---------------------------------------------------------------
 
@@ -581,4 +582,60 @@ test_that("a weighted title draws in that face", {
     vellum::scene_svg(light, text = "outline"),
     vellum::scene_svg(base, text = "outline")
   ))
+})
+
+test_that("an explicit bold face is at least 700 over an inherited weight", {
+  skip_if_not_installed("brand.yml")
+  local_brand_state()
+  path <- local_brand(c(
+    keys_brand,
+    "typography:",
+    "  base:",
+    "    weight: 300"
+  ))
+  q <- theme_brand(pts(), path) |>
+    theme(plot.title = element_text(face = "bold"))
+  rt <- vellumplot:::.resolve_theme(q@theme)
+  expect_identical(rt$plot.title@weight, 300L) # inherited
+  gp <- vellumplot:::.el_gpar_text(rt$plot.title)
+  expect_identical(gp@fontweight, 700L)
+  # a heavier inherited weight is kept
+  gp <- vellumplot:::.el_gpar_text(element_text(face = "bold", weight = 900))
+  expect_identical(gp@fontweight, 900L)
+  gp <- vellumplot:::.el_gpar_text(element_text(face = "italic", weight = 300))
+  expect_identical(gp@fontweight, 300L)
+})
+
+test_that("small text keeps at least a regular weight under a light brand", {
+  skip_if_not_installed("brand.yml")
+  local_brand_state()
+  path <- local_brand(c(keys_brand, "typography:", "  base:", "    weight: 300"))
+  rt <- vellumplot:::.resolve_theme(theme_brand(pts(), path)@theme)
+  expect_identical(rt$axis.title.x@weight, 300L)
+  expect_identical(rt$axis.text.x@weight, 400L)
+  expect_identical(rt$legend.text@weight, 400L)
+  expect_identical(rt$plot.caption@weight, 400L)
+  heavy <- local_brand(c(keys_brand, "typography:", "  base:", "    weight: 500"))
+  rt <- vellumplot:::.resolve_theme(theme_brand(pts(), heavy)@theme)
+  expect_identical(rt$axis.text.x@weight, 500L)
+})
+
+test_that("odd brand weights round or warn, never vanish silently", {
+  expect_identical(vellumplot:::.brand_weight(350), 400L)
+  expect_identical(vellumplot:::.brand_weight(1000), 900L)
+  expect_identical(vellumplot:::.brand_weight("semi-bold"), 600L)
+  expect_warning(w <- vellumplot:::.brand_weight("chunky"), "chunky")
+  expect_null(w)
+  expect_null(vellumplot:::.brand_weight(NULL))
+})
+
+test_that("element_text() reports only weight errors as weight errors", {
+  expect_error(element_text(weight = "chunky"), class = "rlang_error")
+  expect_error(element_text(weight = "chunky"), "font weight")
+  # an unrelated error inside the weight check is not relabelled
+  local_mocked_bindings(
+    vl_gpar = function(...) stop("boom"),
+    .package = "vellum"
+  )
+  expect_error(element_text(weight = 300), "boom")
 })

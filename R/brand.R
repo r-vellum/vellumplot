@@ -37,7 +37,8 @@ NULL
 #' * `typography.base` sets the family and weight of all text, and
 #'   `typography.headings` the family of the title, subtitle and facet strips
 #'   and the weight of the title and strips. Weights such as 300 (light) or
-#'   `semi-bold` pick that face of a family that has it.
+#'   `semi-bold` pick that face of a family that has it; axis and legend
+#'   labels and the caption stay at least regular (400) so they stay legible.
 #'
 #' Elements the base preset leaves out (the axis ticks of [theme_minimal()],
 #' say) stay out.
@@ -437,6 +438,9 @@ theme_brand <- function(
   }
   base_weight <- if (fonts) .brand_weight(b$base$weight)
   head_weight <- if (fonts) .brand_weight(b$headings$weight)
+  # Small text (axis and legend labels, caption) stays at least regular: a
+  # light body weight at 9 pt in a grey is too faint to read.
+  small_weight <- if (!is.null(base_weight) && base_weight < 400L) 400L
   over <- list(
     text = element_text(colour = blend(0.1), weight = base_weight),
     title = element_text(colour = fg),
@@ -446,10 +450,10 @@ theme_brand <- function(
       weight = head_weight
     ),
     plot.subtitle = element_text(colour = fg, family = head_family),
-    plot.caption = element_text(colour = blend(0.25)),
+    plot.caption = element_text(colour = blend(0.25), weight = small_weight),
     plot.tag = element_text(colour = fg),
-    axis.text = element_text(colour = blend(0.3)),
-    legend.text = element_text(colour = blend(0.1)),
+    axis.text = element_text(colour = blend(0.3), weight = small_weight),
+    legend.text = element_text(colour = blend(0.1), weight = small_weight),
     strip.text = element_text(
       colour = blend(0.1),
       family = head_family,
@@ -526,15 +530,26 @@ theme_brand <- function(
 # Fonts ------------------------------------------------------------------------
 
 # A brand.yml weight (a number, or a name such as "semi-bold") as a font
-# weight for element_text(), or NULL when unset or not one vellum knows (a
-# brand is not rejected for an odd weight; the text keeps its face).
+# weight for element_text(), or NULL when unset. A number between the
+# hundreds (CSS allows any 1-1000) rounds to the nearest of 100..900; one
+# vellum cannot use warns and is ignored, rather than rejecting the brand.
 .brand_weight <- function(w) {
-  if (is.null(w) || length(w) != 1L) {
+  if (is.null(w)) {
     return(NULL)
+  }
+  if (length(w) == 1L && is.numeric(w) && !is.na(w) && w >= 1 && w <= 1000) {
+    w <- min(max(round(w / 100) * 100, 100), 900)
   }
   tryCatch(
     vellum::vl_gpar(fontweight = w)@fontweight,
-    error = function(e) NULL
+    vellum_error_fontweight = function(e) {
+      cli::cli_warn(
+        "Brand font weight {.val {w}} is not a weight vellumplot can draw; ignoring it.",
+        .frequency = "once",
+        .frequency_id = paste0("vellumplot-brand-weight-", paste(w, collapse = ","))
+      )
+      NULL
+    }
   )
 }
 
