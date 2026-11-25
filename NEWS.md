@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* Facet strip text is clipped to its strip (VP-134), as in ggplot2: a label
+  wider than its panel no longer runs into the next panel or off the page.
+  Use `labeller = label_wrap_gen()` to wrap long labels instead; the strip
+  grows to hold every line.
+
 * Layout measures text in the font the theme draws it in (VP-132). Legend
   labels and titles, axis titles and tick labels, facet strips, the tag and
   the composition title bands used to reserve space for the default family
