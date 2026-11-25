@@ -175,8 +175,9 @@ test_that(".solve_overhang() grows monotonically and stops when settled", {
     # each side needs 2 mm plus a tenth of the opposite side's spacer
     c(t = 2 + 0.1 * s[["b"]], r = 0, b = 2 + 0.1 * s[["t"]], l = 0)
   })
-  expect_equal(s[["t"]], 2.22, tolerance = 1e-9)
-  expect_identical(calls, 3L)
+  # iterated until no side grows by more than 1e-3 mm
+  expect_equal(s[["t"]], 2 / 0.9, tolerance = 1e-3)
+  expect_lte(calls, 6L)
   one <- 0L
   vellumplot:::.solve_overhang(function(s) {
     one <<- one + 1L
@@ -248,4 +249,78 @@ test_that("an aligned composition gives edge cells their end-tick room", {
     vplot(mtcars) |> mark_point(x = hp, y = mpg)
   ))
   expect_equal(min(loose$py0), min(plo$py0), tolerance = 1e-6)
+})
+
+test_that("an uncomputable need keeps the spacers found so far", {
+  s <- vellumplot:::.solve_overhang(function(s) {
+    if (s[["t"]] > 0) {
+      c(t = NA, r = NA, b = NA, l = NA)
+    } else {
+      c(t = 3, r = 0, b = 1, l = 0)
+    }
+  })
+  expect_identical(s, c(t = 3, r = 0, b = 1, l = 0))
+})
+
+test_that("spacers that eat the page never error (VP-140 review)", {
+  p <- vplot(mtcars, width = 3, height = 0.75) |>
+    mark_point(x = wt, y = mpg) |>
+    theme(plot.margin = 0, axis.text = element_text(size = 30))
+  expect_no_error(vellum::as_vellum_scene(p))
+  # a compact sweep of small pages, big text and facets at zero margin
+  for (fac in c("none", "wrap", "grid")) {
+    for (h in c(0.6, 0.9)) {
+      for (sz in c(30, 45)) {
+        q <- vplot(mtcars, width = 1.5, height = h) |>
+          mark_point(x = wt, y = mpg) |>
+          theme(plot.margin = 0, axis.text = element_text(size = sz))
+        q <- switch(
+          fac,
+          none = q,
+          wrap = facet_wrap(q, ~am),
+          grid = facet_grid(q, am ~ vs)
+        )
+        expect_no_error(vellum::as_vellum_scene(q))
+      }
+    }
+  }
+  tiny <- hconcat(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg),
+    vplot(mtcars) |> mark_point(x = hp, y = mpg),
+    width = 2,
+    height = 0.6
+  ) |>
+    theme(plot.margin = 0, axis.text = element_text(size = 40))
+  expect_no_error(vellum::as_vellum_scene(tiny))
+})
+
+test_that("end breaks well inside the panel converge with no residual clip", {
+  for (br in list(c(17, 28), c(19, 26))) {
+    p <- vplot(mtcars, width = 4, height = 0.8) |>
+      mark_point(x = wt, y = mpg) |>
+      scale_y_continuous(limits = c(10, 35), breaks = br, expand = c(0, 0)) |>
+      theme(
+        plot.margin = 0,
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title = element_blank(),
+        axis.text.y = element_text(size = 55)
+      )
+    pl <- vellumplot:::.build_panels(p)
+    rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
+    lay <- lay_of(p)
+    h <- conv_mm(lay$heights)
+    n <- length(h)
+    panel <- p@height * 25.4 - sum(h, na.rm = TRUE)
+    ex <- vellumplot:::.end_tick_extent(
+      pl$scales$y,
+      rt[["axis.text.y"]],
+      0,
+      c("right", "centre"),
+      "y"
+    )
+    expect_gt(ex$g[1], 0.25)
+    expect_lte(ex$e[1] - (h[n] + ex$g[1] * panel), 2e-3)
+    expect_lte(ex$e[2] - (h[1] + ex$g[2] * panel), 2e-3)
+  }
 })

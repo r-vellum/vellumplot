@@ -780,7 +780,7 @@ NULL
   .solve_overhang(function(s) {
     one <- null_mm(s)
     if (!all(is.finite(one))) {
-      return(zero)
+      return(s) # no grid left to place: keep what was found
     }
     need <- zero
     for (cl in cells) {

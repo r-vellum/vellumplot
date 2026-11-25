@@ -902,14 +902,17 @@ NULL
       l = seq_len(panel_col[1] - 1L),
       r = seq_along(W$u)[-seq_len(panel_col[C])]
     )
-    spacer <- .solve_overhang(function(s) {
-      # A left / right spacer narrows the panel columns, so the x wrap budget
-      # (and with it the x label row and the end labels' reach) follows it.
+    # A left / right spacer narrows the panel columns, so the x wrap budget
+    # (and with it the x label row and the end labels' reach) follows it.
+    refresh_x <- function(s) {
       if (s[["l"]] + s[["r"]] > 0 && can_wrap_x) {
         xwrap_mm <<- x_wrap(per_panel_mm - (s[["l"]] + s[["r"]]) / C)
         xl <<- x_track(xwrap_mm)
         if (!is.na(shared_xl)) H$u[[shared_xl]] <<- xl
       }
+    }
+    spacer <- .solve_overhang(function(s) {
+      refresh_x(s)
       .tick_overhang_spacer(
         built,
         flip,
@@ -925,6 +928,8 @@ NULL
         cur = s
       )
     })
+    # the budget the labels draw with is the returned spacer's
+    refresh_x(spacer)
   }
   if (any(spacer > 0)) {
     tr <- with_spacer(W$u, H$u, spacer)
@@ -1174,16 +1179,23 @@ NULL
 # the end gap on the opposite side too; solving each side alone left a
 # sub-millimetre clip there. Spacers only grow from pass to pass, so a side
 # that needed nothing extra keeps what the first pass gave it (one spacer
-# alone converges at once); the coupling between sides is the small end-gap
-# share, so three passes settle it.
-.solve_overhang <- function(need, passes = 3L) {
+# alone converges at once). The coupling is the end gaps' share of the panel,
+# which can be large when the end breaks sit well inside it, so iterate until
+# no side grows by more than `tol` mm (`max_passes` is only a safety cap). A
+# need that cannot be computed (the spacers left no panel: `.panel_mm()` is
+# NA) keeps the spacers found so far, as the single pass before VP-140 did.
+.solve_overhang <- function(need, tol = 1e-3, max_passes = 25L) {
   s <- c(t = 0, r = 0, b = 0, l = 0)
-  for (i in seq_len(passes)) {
-    nxt <- pmax(s, need(s))
-    if (all(nxt - s < 1e-6)) {
+  for (i in seq_len(max_passes)) {
+    n <- need(s)
+    bad <- !is.finite(n)
+    n[bad] <- s[bad]
+    nxt <- pmax(s, n)
+    grew <- max(nxt - s)
+    s <- nxt
+    if (grew < tol) {
       break
     }
-    s <- nxt
   }
   s
 }
