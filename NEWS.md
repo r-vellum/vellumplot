@@ -7,6 +7,12 @@
   Use `labeller = label_wrap_gen()` to wrap long labels instead; the strip
   grows to hold every line.
 
+* End tick labels that hang past the panel get room when the plot margin
+  cannot hold them (VP-138). With `plot.margin = 0` the top y label (or the
+  last x label) was cut at the page edge; a small spacer now reserves only
+  the part the margin and the tracks beside the panels do not already
+  cover, so plots with the default margin are unchanged.
+
 * Layout measures text in the font the theme draws it in (VP-132). Legend
   labels and titles, axis titles and tick labels, facet strips, the tag and
   the composition title bands used to reserve space for the default family
@@ -1677,7 +1683,6 @@
   outlined keys. Map `fill` to get the old look. The outline is no longer
   hard-coded: it follows `color` and defaults to `"grey20"`. Violins and ridges
   used to be outlined in `"grey30"`.
-
 
 * **Stats that reorder or summarise rows keep their colours aligned.** A stat
   that changes the row count or order used to hand its output the pre-stat

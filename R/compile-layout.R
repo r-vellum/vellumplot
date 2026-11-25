@@ -806,6 +806,43 @@ NULL
     w = .null_weight(panel_w) * pmm[["w"]],
     h = .null_weight(panel_h) * pmm[["h"]]
   )
+  # End tick labels hang half (or, rotated, more) of their extent past the
+  # panel edge. The tracks beside the panels and the plot margin normally hold
+  # that; when they cannot (`plot.margin = 0` with nothing above the panels,
+  # say) a spacer track reserves the rest (VP-138). Only knowable once the
+  # page size is set; a plot that needs no spacer keeps its layout.
+  spacer <- c(t = 0, r = 0, b = 0, l = 0)
+  if (!polar && all(is.finite(pmm))) {
+    spacer <- .tick_overhang_spacer(
+      built,
+      flip,
+      rt,
+      pmm,
+      xrot,
+      yrot,
+      xwrap_mm,
+      W$u,
+      H$u,
+      list(
+        t = seq_len(panel_row[1] - 1L),
+        b = seq_along(H$u)[-seq_len(panel_row[R])],
+        l = seq_len(panel_col[1] - 1L),
+        r = seq_along(W$u)[-seq_len(panel_col[C])]
+      )
+    )
+  }
+  if (any(spacer > 0)) {
+    sp <- function(side) list(vellum::vl_unit(spacer[[side]], "mm"))
+    if (spacer[["t"]] > 0) H$u <- c(sp("t"), H$u)
+    if (spacer[["b"]] > 0) H$u <- c(H$u, sp("b"))
+    if (spacer[["l"]] > 0) W$u <- c(sp("l"), W$u)
+    if (spacer[["r"]] > 0) W$u <- c(W$u, sp("r"))
+    pmm <- .panel_mm(W$u, H$u, page_width, page_height, rt, respect)
+    pmm <- c(
+      w = .null_weight(panel_w) * pmm[["w"]],
+      h = .null_weight(panel_h) * pmm[["h"]]
+    )
+  }
   # Per-panel legends above / below the panels that would leave them shorter
   # than `.PANEL_LEGEND_MIN_MM` on this page: collected, as for the width
   # (VP-62). `ph` is one panel row's mm height once every fixed row track, the
@@ -845,7 +882,7 @@ NULL
     }
   }
 
-  list(
+  out <- list(
     widths = .tk_units(W),
     heights = .tk_units(H),
     R = R,
@@ -906,6 +943,228 @@ NULL
     y_keep_panels = y_keep_panels,
     respect = respect
   )
+  # a top / left spacer (VP-138) shifts every track index after it
+  .shift_tracks(
+    out,
+    as.integer(spacer[["t"]] > 0),
+    as.integer(spacer[["l"]] > 0)
+  )
+}
+
+# Track-index fields of a `.build_layout()` result: rows, then columns.
+.LAYOUT_ROW_FIELDS <- c(
+  "panel_row",
+  "xlabels_row",
+  "xtitle_row",
+  "wrapstrip_row",
+  "colstrip_row",
+  "x2labels_row",
+  "x2title_row",
+  "marg_top_row",
+  "legend_row",
+  "legend_rows",
+  "title_row",
+  "subtitle_row",
+  "tag_row",
+  "caption_row"
+)
+.LAYOUT_COL_FIELDS <- c(
+  "panel_col",
+  "ylabels_col",
+  "ytitle_col",
+  "rowstrip_col",
+  "y2labels_col",
+  "y2title_col",
+  "marg_right_col",
+  "legend_col",
+  "legend_cols"
+)
+
+# Shift a layout's track indices by `dr` rows and `dc` columns, for a spacer
+# track put in front of them (VP-138). NA (no such track) and 0 (the unused
+# wrap-strip rows of a grid facet) stay as they are.
+.shift_tracks <- function(lay, dr = 0L, dc = 0L) {
+  if (!dr && !dc) {
+    return(lay)
+  }
+  bump <- function(x, d) {
+    hit <- !is.na(x) & x > 0L
+    x[hit] <- x[hit] + d
+    x
+  }
+  for (f in .LAYOUT_ROW_FIELDS) {
+    lay[[f]] <- bump(lay[[f]], dr)
+  }
+  for (f in .LAYOUT_COL_FIELDS) {
+    lay[[f]] <- bump(lay[[f]], dc)
+  }
+  if (!is.null(lay$panel_legends)) {
+    lay$panel_legends$rows <- bump(lay$panel_legends$rows, dr)
+    lay$panel_legends$cols <- bump(lay$panel_legends$cols, dc)
+  }
+  lay
+}
+
+# Justification words as fractions (left / bottom 0, centre 0.5, right / top 1).
+.just_frac <- function(word) {
+  switch(word, left = , bottom = 0, right = , top = 1, 0.5)
+}
+
+# How far the tick labels at the two ends of a position scale reach past the
+# panel along the axis (VP-138). Each label is measured through the grob the
+# axis draws, its box rotated about its anchor by `rot`. Returns `e`, the
+# extent (mm) of the end labels beyond their breaks on the low / high side
+# (bottom / top for `axis = "y"`, left / right for "x"), and `g`, the share of
+# the panel between each end break and the panel edge, or NULL when no label
+# is drawn.
+.end_tick_extent <- function(sc, el, rot, just, axis, wrap_mm = NA_real_) {
+  b <- suppressWarnings(as.numeric(sc$breaks))
+  labs <- sc$labels
+  d <- as.numeric(sc$domain)
+  if (!length(b) || length(labs) != length(b) || length(d) != 2L) {
+    return(NULL)
+  }
+  span <- d[2] - d[1]
+  if (!is.finite(span) || span == 0) {
+    return(NULL)
+  }
+  frac <- (b - d[1]) / span
+  ok <- is.finite(frac) & frac >= -1e-9 & frac <= 1 + 1e-9
+  ok <- ok &
+    vapply(
+      labs,
+      function(l) .is_rich(l) || (!is.na(l[1]) && nzchar(l[1])),
+      logical(1)
+    )
+  if (!any(ok)) {
+    return(NULL)
+  }
+  idx <- which(ok)
+  lo <- idx[which.min(frac[idx])]
+  hi <- idx[which.max(frac[idx])]
+  hj <- .just_frac(just[1])
+  vj <- .just_frac(just[2])
+  th <- rot * pi / 180
+  reach <- function(i) {
+    g <- .axis_text_grob(
+      labs[[i]],
+      el,
+      c("left", "bottom"),
+      wrap_mm = wrap_mm
+    )
+    w <- vellum::vl_convert(vellum::grobwidth(g), "mm")
+    h <- vellum::vl_convert(vellum::grobheight(g), "mm")
+    x <- c(-hj, 1 - hj, 1 - hj, -hj) * w
+    y <- c(-vj, -vj, 1 - vj, 1 - vj) * h
+    along <- if (axis == "y") {
+      x * sin(th) + y * cos(th)
+    } else {
+      x * cos(th) - y * sin(th)
+    }
+    c(lo = max(0, -min(along)), hi = max(0, max(along)))
+  }
+  list(
+    e = c(reach(lo)[["lo"]], reach(hi)[["hi"]]),
+    g = c(frac[lo], 1 - frac[hi])
+  )
+}
+
+# The spacer (mm per side, t / r / b / l) the end tick labels need beyond what
+# the plot margin and the tracks between the panels and the page edge already
+# give them (VP-138). `outer` names, per side, the track indices outside the
+# panels; `pmm` is the panel's mm size before any spacer. A spacer shrinks the
+# panel, which moves the end break nearer its edge, so it is solved for that:
+# the reach `e` must fit in the room `avail` plus the end gap `g * (size - s)`.
+.tick_overhang_spacer <- function(
+  built,
+  flip,
+  rt,
+  pmm,
+  xrot,
+  yrot,
+  xwrap_mm,
+  wu,
+  hu,
+  outer
+) {
+  pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  track_mm <- function(units, idx) {
+    sum(vapply(
+      units[idx],
+      function(u) {
+        if (.null_weight(u) > 0) {
+          0
+        } else {
+          tryCatch(vellum::vl_convert(u, "mm"), error = function(e) 0)
+        }
+      },
+      numeric(1)
+    ))
+  }
+  avail <- c(
+    t = pm[1] + track_mm(hu, outer$t),
+    r = pm[2] + track_mm(wu, outer$r),
+    b = pm[3] + track_mm(hu, outer$b),
+    l = pm[4] + track_mm(wu, outer$l)
+  )
+  need <- c(t = 0, r = 0, b = 0, l = 0)
+  solve <- function(e, g, size, side) {
+    s <- if (g < 0.999) (e - g * size - avail[[side]]) / (1 - g) else 0
+    need[[side]] <<- max(need[[side]], s)
+  }
+  # One scale's end labels on the sides `lo` / `hi` of its axis (NA: that end
+  # faces another panel, not the page edge).
+  add <- function(sc, el_name, rot, gjust, axis, lo, hi, wrap_mm = NA_real_) {
+    el <- rt[[el_name]]
+    if (is.null(sc) || .is_blank(el) || !.axis_shows_labels(sc)) {
+      return()
+    }
+    guide <- .axis_guide_of(sc)
+    just <- .axis_text_just(
+      list(just = gjust),
+      if (is.null(guide$angle)) el else .el_unjust(el),
+      rot
+    )
+    ex <- .end_tick_extent(sc, el, rot, just, axis, wrap_mm)
+    if (is.null(ex)) {
+      return()
+    }
+    size <- if (axis == "y") pmm[["h"]] else pmm[["w"]]
+    if (!is.na(lo)) solve(ex$e[1], ex$g[1], size, lo)
+    if (!is.na(hi)) solve(ex$e[2], ex$g[2], size, hi)
+  }
+  R <- built$fa$R
+  C <- built$fa$C
+  edge <- function(at_edge, side) if (at_edge) side else NA_character_
+  for (p in built$panels) {
+    hv <- .hv_roles(p$x_sc, p$y_sc, flip)
+    add(
+      hv$v,
+      "axis.text.y",
+      yrot,
+      c("right", "centre"),
+      "y",
+      edge(p$r == R, "b"),
+      edge(p$r == 1L, "t")
+    )
+    add(
+      hv$h,
+      "axis.text.x",
+      xrot,
+      c("centre", "top"),
+      "x",
+      edge(p$c == 1L, "l"),
+      edge(p$c == C, "r"),
+      xwrap_mm
+    )
+  }
+  # Secondary axes (shared scales only) draw the plain guide.
+  hv <- .hv_roles(built$scales$x, built$scales$y, flip)
+  yr2 <- .el_rot(rt[["axis.text.y"]])
+  xr2 <- .el_rot(rt[["axis.text.x"]])
+  add(hv$v$sec, "axis.text.y", yr2, c("left", "centre"), "y", "b", "t")
+  add(hv$h$sec, "axis.text.x", xr2, c("centre", "bottom"), "x", "l", "r")
+  pmax(need, 0)
 }
 
 # The first non-NA element of an integer vector, unnamed (NA when all are).
