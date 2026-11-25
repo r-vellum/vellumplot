@@ -211,14 +211,17 @@ NULL
 # The text element a mark's own labels (chord, sankey, treemap / sunburst /
 # circle-pack, scale bar) are set in at `fontsize`: the theme's base text
 # family, face and weight (`.set_text_font()`), unless the layer sets its own
-# `family` / `fontface` (VP-135).
+# `family` / `fontface` (VP-135). A layer's own `fontface` replaces the
+# theme's face and its weight: `fontface = "plain"` on a light or heavy brand
+# draws the plain face, not the brand's weight.
 .mark_text_el <- function(fontsize, L = NULL) {
   font <- .mark_ctx$text_font
+  own_face <- .aes_param(L, "fontface", NULL)
   .element_text(
     size = fontsize,
     family = .aes_param(L, "family", font$family),
-    face = .aes_param(L, "fontface", font$face),
-    weight = font$weight
+    face = own_face %||% font$face,
+    weight = if (is.null(own_face)) font$weight
   )
 }
 

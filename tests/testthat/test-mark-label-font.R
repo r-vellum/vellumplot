@@ -109,23 +109,64 @@ test_that("the scale bar text draws in the theme font", {
   expect_true(all(bar$family == "Verdana"))
 })
 
-test_that("vtable cells use the default theme's font, measured as drawn", {
+test_that("vtable cells use the default theme's font when drawn", {
   d <- data.frame(name = c("alpha", "beta"), n = c(1, 22))
-  plain <- vtable(d)
-  expect_null(plain@font)
-  f0 <- text_fonts(vellum::as_vellum_scene(plain))
+  vt <- vtable(d)
+  f0 <- text_fonts(vellum::as_vellum_scene(vt))
   expect_true(all(is.na(f0$family)))
-  # a branded default theme's font is drawn and measured
+  # the brand turned on after the table was built still reaches it (VP-133)
   local_mocked_bindings(
     .theme_auto = function() {
       list(text = element_text(family = "Verdana", face = "bold"))
     }
   )
-  vt <- vtable(d)
-  expect_identical(vt@font, list(family = "Verdana", face = "bold"))
+  rv <- vellumplot:::.vtable_font(vt)
+  expect_identical(rv$font, list(family = "Verdana", face = "bold"))
   f <- text_fonts(vellum::as_vellum_scene(vt))
   expect_true(all(f$family == "Verdana"))
   expect_true(all(f$face == "bold"))
+  # text columns are re-measured in that font; the page follows
   w <- vellum::vl_strwidth("alpha", "Verdana", "bold", 9, unit = "mm")
-  expect_gte(vt@col_widths[1], w)
+  expect_gte(rv$vt@col_widths[1], w)
+  expect_equal(
+    rv$vt@width - vt@width,
+    (sum(rv$vt@col_widths) - sum(vt@col_widths)) / 25.4
+  )
+})
+
+test_that("a layer's own fontface replaces the theme's face and weight", {
+  assign(
+    "text_font",
+    list(family = "Verdana", face = "bold", weight = 300L),
+    envir = vellumplot:::.mark_ctx
+  )
+  on.exit(assign("text_font", NULL, envir = vellumplot:::.mark_ctx))
+  themed <- vellumplot:::.mark_text_el(8)
+  expect_identical(themed@face, "bold")
+  expect_identical(vellumplot:::.el_weight(themed), 700L)
+  own <- vellumplot:::.mark_text_el(8, list(params = list(fontface = "plain")))
+  expect_identical(own@face, "plain")
+  expect_null(own@weight)
+  expect_identical(own@family, "Verdana")
+})
+
+test_that("animated chord label room is measured in the theme font", {
+  # frozen-scale panels are built outside the draw; they still see the font
+  seen <- NULL
+  local_mocked_bindings(
+    .chord_extent = function(labels, has_labels) {
+      seen <<- c(seen, list(vellumplot:::.mark_ctx$text_font))
+      1.2
+    }
+  )
+  p <- heavy(vchord(flows, from, to, value))
+  vellumplot:::.build_panels(p)
+  expect_true(length(seen) > 0L)
+  expect_true(all(vapply(
+    seen,
+    function(f) identical(f$family, "Verdana"),
+    TRUE
+  )))
+  # and the caller's font is put back
+  expect_null(vellumplot:::.mark_ctx$text_font)
 })

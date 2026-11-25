@@ -13,9 +13,8 @@ VTable <- S7::new_class(
     n = S7::class_double, # body rows
     header = S7::new_property(S7::class_logical, default = TRUE),
     font_size = S7::new_property(S7::class_double, default = 9),
-    # the default theme's base text font when the table was laid out (family,
-    # face, weight; NULL = the default family, plain), as `.text_font_of()`
-    font = S7::new_property(S7::class_any, default = NULL),
+    # cell padding (mm), kept so text columns can be re-measured when drawn
+    cell_pad = S7::new_property(S7::class_double, default = 1.5),
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
     dpi = S7::new_property(S7::class_double, default = 96)
@@ -124,9 +123,6 @@ vtable <- function(
   n <- nrow(data)
   spark_fns <- lapply(spark, .as_spark_fn)
   sw_mm <- .mm(spark_width, units)
-  # Cells are set in the default theme's base text font (the brand's under
-  # `options(vellumplot.brand)`), measured and drawn alike (VP-135).
-  font <- .text_font_of(.theme_auto())
   pad_mm <- .mm(cell_pad, units)
 
   descs <- lapply(cols, function(nm) {
@@ -153,8 +149,7 @@ vtable <- function(
       fmt <- .fmt_col(data[[nm]])
       al <- (align %||% list())[[nm]] %||%
         (if (is.numeric(data[[nm]])) "right" else "left")
-      w <- max(.strw_mm(c(nm, fmt), font_size, font), na.rm = TRUE) +
-        2 * pad_mm
+      w <- max(.strw_mm(c(nm, fmt), font_size), na.rm = TRUE) + 2 * pad_mm
       list(
         name = nm,
         kind = "text",
@@ -177,7 +172,7 @@ vtable <- function(
     n = as.double(n),
     header = isTRUE(header),
     font_size = font_size,
-    font = font,
+    cell_pad = pad_mm,
     width = sum(col_widths) / 25.4,
     height = sum(row_heights) / 25.4,
     dpi = dpi
@@ -221,7 +216,37 @@ vtable <- function(
   vellum::pop(scene)
 }
 
+# The font a table's cells draw in, and the column widths it needs: the
+# default theme's base text font (the brand's under `options(vellumplot.brand)`),
+# resolved when the table is drawn, as an unthemed plot's theme is (VP-133).
+# `vtable()` lays the text columns out in the default family; with a theme
+# font they are re-measured in it and the page widens or narrows by the
+# difference (VP-135). No theme font: the table as laid out.
+.vtable_font <- function(vt) {
+  font <- .text_font_of(.theme_auto())
+  if (is.null(font)) {
+    return(list(font = NULL, vt = vt))
+  }
+  w <- vt@col_widths
+  for (c in seq_along(vt@descs)) {
+    d <- vt@descs[[c]]
+    if (identical(d$kind, "text")) {
+      w[c] <- max(
+        .strw_mm(c(d$header, d$cells), vt@font_size, font),
+        na.rm = TRUE
+      ) +
+        2 * vt@cell_pad
+    }
+  }
+  vt@width <- vt@width + (sum(w) - sum(vt@col_widths)) / 25.4
+  vt@col_widths <- w
+  list(font = font, vt = vt)
+}
+
 .compile_vtable <- function(vt) {
+  rv <- .vtable_font(vt)
+  vt <- rv$vt
+  font <- rv$font
   .provenance_reset()
   scene <- vellum::vl_scene(
     width = vt@width,
@@ -251,7 +276,7 @@ vtable <- function(
         d$align,
         vt@font_size,
         TRUE,
-        vt@font
+        font
       )
     }
     # header underline: a rule spanning all columns at the header row's baseline.
@@ -301,7 +326,7 @@ vtable <- function(
           d$align,
           vt@font_size,
           FALSE,
-          vt@font
+          font
         )
       }
     }

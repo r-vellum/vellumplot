@@ -528,6 +528,12 @@ NULL
 # trained per panel, into `p$aes_sc` (F-8).
 .build_panels <- function(spec, frozen_scales = NULL) {
   spec <- .settle_constants(spec)
+  # Mark labels measured while resolving (a chord's label room) take this
+  # plot's theme font (VP-135), whoever builds the panels: the draw, a
+  # composition plan, an animation's frozen scales. Put the caller's back.
+  old_font <- .mark_ctx$text_font
+  on.exit(assign("text_font", old_font, envir = .mark_ctx), add = TRUE)
+  .set_text_font(.theme_of(spec))
   fa <- .facet_assign(spec)
   # The panel grid, for the date-break label fit (`.axis_label_fit()`), which
   # shares the plot's width among the facet columns.

@@ -47,9 +47,6 @@ NULL
 .plan_plot <- function(spec) {
   spec <- .settle_constants(spec)
   rt <- .resolve_theme(.theme_of(spec))
-  # mark labels measured while building (a chord's label room) take this
-  # sub-plot's theme font (VP-135)
-  .set_text_font(.theme_of(spec))
   built <- .build_panels(spec)
   guides <- .facet_legend_guides(built)
   co <- .coord_of(spec)
@@ -598,10 +595,6 @@ NULL
 # shared grid, draw figure bands, the collected legend, then each sub-plot.
 .draw_composition <- function(scene, comp) {
   collect <- identical(comp@guides, "collect")
-  # Planning points the mark-label font at each sub-plot's theme in turn
-  # (`.plan_plot()`); put the caller's back afterwards.
-  old_font <- .mark_ctx$text_font
-  on.exit(assign("text_font", old_font, envir = .mark_ctx), add = TRUE)
   plans <- lapply(comp@plots, .plan_plot)
   # Figure-level chrome (title/subtitle/caption bands, the collected legend, panel
   # gap, tags) honours a theme set on the composition (compose_annotation(theme=)),
