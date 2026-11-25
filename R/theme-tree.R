@@ -91,8 +91,24 @@ NULL
   panel.spacing = 1.6, # mm
   plot.margin = c(5.5, 5.5, 5.5, 5.5), # mm (t, r, b, l) padding around the plot
   aspect.ratio = NULL, # carried for coord_fixed
-  axis.ticks.length = 1.5 # mm
+  axis.ticks.length = 1.5, # mm
+  strip.clip = "inherit" # "on" / "off": clip strip text to its strip (VP-143)
 )
+
+# The values `strip.clip` takes (ggplot2's): "inherit" (the default) and "on"
+# clip strip text to its strip, "off" lets it overflow.
+.STRIP_CLIP <- c("inherit", "on", "off")
+
+# Check a `strip.clip` value (from `theme()` or a spec read back).
+.check_strip_clip <- function(val, call = rlang::caller_env()) {
+  if (!is.character(val) || length(val) != 1L || !val %in% .STRIP_CLIP) {
+    cli::cli_abort(
+      "{.field strip.clip} must be one of {.val {(.STRIP_CLIP)}}.",
+      call = call
+    )
+  }
+  invisible(val)
+}
 
 .theme_setting_names <- names(.SETTINGS_DEFAULTS)
 
@@ -287,6 +303,8 @@ NULL
             call = call
           )
         }
+      } else if (nm == "strip.clip") {
+        .check_strip_clip(args[[nm]], call = call)
       } else if (nm == "legend.position.inside") {
         if (!is.null(args[[nm]]) && !.is_npc_pair(args[[nm]])) {
           cli::cli_abort(

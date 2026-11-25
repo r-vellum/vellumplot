@@ -236,6 +236,12 @@ NULL
 #'   radius -- so tiny points keep readable keys; a size legend keeps its
 #'   mapped sizes), `legend.spacing` (gap between stacked guides, mm), and `legend.margin`
 #'   (inset around the legend block, one or four millimetres, `t, r, b, l`).
+#'   `strip.clip` sets whether facet strip text is clipped to its strip, as
+#'   in ggplot2: `"inherit"` (the default) and `"on"` clip a label longer
+#'   than its strip at the strip's edge; `"off"` lets it run past the strip
+#'   (a neighbouring strip drawn after it still paints over it, as in
+#'   ggplot2). To keep a long label whole, wrap it with
+#'   `labeller = label_wrap_gen()` instead.
 #' @param base_size Base text size in points (default 11). Every text element
 #'   is sized relative to it, so `theme_gray(base_size = 14)` scales titles,
 #'   axis text, legend text and strips together.

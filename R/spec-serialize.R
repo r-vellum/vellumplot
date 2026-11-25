@@ -597,6 +597,11 @@ NULL
   if (is.null(rec)) {
     return(NULL)
   }
+  # A setting with a fixed vocabulary is checked on the way in, so a
+  # hand-edited spec fails here and not mid-render.
+  if (!is.null(rec$settings[["strip.clip"]])) {
+    .check_strip_clip(rec$settings[["strip.clip"]], call = NULL)
+  }
   # A deferred tweak (VP-133) comes back as one: its settings on no base theme.
   if (isTRUE(rec$deferred)) {
     if (!length(rec$settings)) {

@@ -715,13 +715,19 @@ NULL
     # cut at the strip's edge instead of running into the next panel or off
     # the page. `label_wrap_gen()` wraps long labels onto lines the strip track
     # reserves. The background stays unclipped, so a hand-drawn strip keeps
-    # its whole outline.
-    scene <- vellum::push(scene, vellum::vl_viewport(clip = TRUE))
+    # its whole outline. `theme(strip.clip = "off")` lets the text overflow
+    # (VP-143).
+    clip <- !identical(rt[["strip.clip"]], "off")
+    if (clip) {
+      scene <- vellum::push(scene, vellum::vl_viewport(clip = TRUE))
+    }
     scene <- vellum::draw(
       scene,
       .strip_text_grob(label, rot, .el_gpar_text(st))
     )
-    scene <- vellum::pop(scene)
+    if (clip) {
+      scene <- vellum::pop(scene)
+    }
   }
   vellum::pop(scene)
 }
