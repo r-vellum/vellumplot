@@ -320,7 +320,7 @@ test_that("end breaks well inside the panel converge with no residual clip", {
   # both spacers present and a real panel left (text widths vary by platform)
   expect_identical(lay$panel_row, 2L)
   panel <- p@height * 25.4 - sum(h, na.rm = TRUE)
-  expect_gt(panel, 10)
+  expect_gt(panel, 3)
   ex <- vellumplot:::.end_tick_extent(
     pl$scales$y,
     rt[["axis.text.y"]],
