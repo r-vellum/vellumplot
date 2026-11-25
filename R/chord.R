@@ -186,8 +186,10 @@ NULL
   }
   pg <- .mark_ctx$page
   page_mm <- if (!is.null(pg)) min(pg) * 25.4 else 6 * 25.4
+  # measured in the font the labels draw in (VP-135)
+  el <- .mark_text_el(.CHORD_LABEL_FS)
   lw_mm <- max(
-    vapply(labels, function(s) .mm_tw(s, .CHORD_LABEL_FS), numeric(1)),
+    vapply(labels, .mm_tw, numeric(1), fs = .CHORD_LABEL_FS, el = el),
     0
   )
   inner <- .CHORD_R_OUT + 0.04 # radius where labels start

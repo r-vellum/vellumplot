@@ -562,11 +562,18 @@ NULL
     base_mm <- 0
     if (nd > 1L) {
       tick <- rt[["axis.ticks.length"]]
-      probe <- .axis_text_grob(.longest(sc$labels), el, just, rot = rot)
-      ext <- vellum::vl_convert(
-        if (is_y) vellum::grobwidth(probe) else vellum::grobheight(probe),
-        "mm"
-      )
+      # the widest and the most-lined label, as the layout sized the track
+      ext <- max(vapply(
+        .axis_probe(sc$labels, el),
+        function(l) {
+          probe <- .axis_text_grob(l, el, just, rot = rot)
+          vellum::vl_convert(
+            if (is_y) vellum::grobwidth(probe) else vellum::grobheight(probe),
+            "mm"
+          )
+        },
+        numeric(1)
+      ))
       step_mm <- ext + .DODGE_GAP_MM
       # the single-row gutter the default anchor fraction is relative to
       base_mm <- ext + tick + .PAD_MM
@@ -838,6 +845,22 @@ NULL
   # Wrap only for an unrotated band: a rotated box's width is along the rotated
   # axis, which is not the page-width wrapping the caller measured.
   wrap <- is.finite(band_w) && band_w > 0 && isTRUE(rot == 0)
+  if (!isTRUE(rot == 0)) {
+    # A rotated band turns about its centre, which sits half the rotated
+    # width in from the band's edge (VP-137): rotating about a left / right
+    # anchor would swing half the text out of the track that measures it.
+    g <- vellum::text_grob(text, rot = rot, gp = .el_gpar_text(el))
+    half <- vellum::vl_convert(vellum::grobwidth(g), "mm") / 2
+    off <- switch(a$just, left = half, right = -half, 0)
+    return(vellum::text_grob(
+      text,
+      x = vellum::vl_unit(a$x, "npc") + vellum::vl_unit(off, "mm"),
+      just = c("centre", "centre"),
+      rot = rot,
+      gp = .el_gpar_text(el),
+      key = key
+    ))
+  }
   vellum::text_grob(
     text,
     x = vellum::vl_unit(a$x, "npc"),

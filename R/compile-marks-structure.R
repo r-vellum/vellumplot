@@ -92,7 +92,7 @@ NULL
           x = xy$x + pad,
           y = xy$y,
           just = just,
-          gp = vellum::vl_gpar(fontsize = .SANKEY_LABEL_FONTSIZE)
+          gp = .mark_gpar_text(.SANKEY_LABEL_FONTSIZE, L = L)
         )
       )
     }
@@ -226,7 +226,8 @@ NULL
   if (isTRUE(L$params$show_values)) {
     labels <- paste0(labels, " (", .label_number_default(lay$value), ")")
   }
-  lw <- vapply(labels, function(s) .mm_tw(s, fs), numeric(1)) # label width, mm
+  el <- .mark_text_el(fs, L) # the theme's text font (VP-135)
+  lw <- vapply(labels, .mm_tw, numeric(1), fs = fs, el = el) # label width, mm
   lh <- fs * 25.4 / 72 # a line's height, mm
 
   thetamid <- (lay$theta0 + lay$theta1) / 2
@@ -279,7 +280,7 @@ NULL
         vellum::vl_unit(rmid[i] * sin(thetamid[i]), "native"),
         just = c("centre", "centre"),
         rot = rot,
-        gp = vellum::vl_gpar(fontsize = fs, col = ink[i])
+        gp = .mark_gpar_text(fs, ink[i], L)
       )
     )
   }
@@ -298,10 +299,7 @@ NULL
         vellum::vl_unit(0, "native"),
         vellum::vl_unit(0, "native"),
         just = c("centre", "centre"),
-        gp = vellum::vl_gpar(
-          fontsize = fs + 1,
-          col = .geom_paint("black", "neutral")
-        )
+        gp = .mark_gpar_text(fs + 1, .geom_paint("black", "neutral"), L)
       )
     )
   }
@@ -322,6 +320,7 @@ NULL
 # node (bands do not overlap).
 .emit_rect_labels <- function(scene, L, lay, leaf_only) {
   fs <- .HIER_LABEL_FS
+  el <- .mark_text_el(fs, L) # the theme's text font (VP-135)
   nat2mm <- .hier_nat2mm()
   labels <- lay$id
   if (isTRUE(L$params$show_values)) {
@@ -333,7 +332,7 @@ NULL
   for (i in cand) {
     w_mm <- (lay$x1[i] - lay$x0[i]) * nat2mm
     h_mm <- (lay$y1[i] - lay$y0[i]) * nat2mm
-    if (.mm_tw(labels[i], fs) > w_mm || lh > h_mm) {
+    if (.mm_tw(labels[i], fs, el) > w_mm || lh > h_mm) {
       next
     }
     scene <- .draw(
@@ -343,7 +342,7 @@ NULL
         vellum::vl_unit((lay$x0[i] + lay$x1[i]) / 2, "native"),
         vellum::vl_unit((lay$y0[i] + lay$y1[i]) / 2, "native"),
         just = c("centre", "centre"),
-        gp = vellum::vl_gpar(fontsize = fs, col = ink[i])
+        gp = .mark_gpar_text(fs, ink[i], L)
       )
     )
   }
@@ -354,6 +353,7 @@ NULL
 # fits (internal nodes are covered by their children, so only leaves are named).
 .emit_circle_labels <- function(scene, L, lay) {
   fs <- .HIER_LABEL_FS
+  el <- .mark_text_el(fs, L) # the theme's text font (VP-135)
   nat2mm <- .hier_nat2mm()
   labels <- lay$id
   if (isTRUE(L$params$show_values)) {
@@ -367,7 +367,7 @@ NULL
     if (half <= 0) {
       next
     }
-    if (.mm_tw(labels[i], fs) > 2 * sqrt(half)) {
+    if (.mm_tw(labels[i], fs, el) > 2 * sqrt(half)) {
       next
     }
     scene <- .draw(
@@ -377,7 +377,7 @@ NULL
         vellum::vl_unit(lay$cx[i], "native"),
         vellum::vl_unit(lay$cy[i], "native"),
         just = c("centre", "centre"),
-        gp = vellum::vl_gpar(fontsize = fs, col = ink[i])
+        gp = .mark_gpar_text(fs, ink[i], L)
       )
     )
   }

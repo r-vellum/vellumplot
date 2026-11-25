@@ -756,7 +756,7 @@ NULL
     } else {
       mm(.track_w_axis(
         rt[["axis.text.y"]],
-        .longest(v$labels %||% "00.0"),
+        .axis_probe(v$labels %||% "00.0", rt[["axis.text.y"]]),
         tick + .PAD_MM,
         rot = v$rot %||% .el_rot(rt[["axis.text.y"]]),
         n_dodge = v$n_dodge %||% 1L
@@ -769,7 +769,14 @@ NULL
   } else {
     labs <- spec@labels
     band <- function(el, label, pad) {
-      if (is.null(label) || is.null(rt[[el]])) 0 else mm(.track_h(rt[[el]], label, pad))
+      # a title band is rotated by its element's angle, as it draws (VP-137)
+      if (is.null(label) || is.null(rt[[el]])) {
+        0
+      } else if (startsWith(el, "plot.")) {
+        mm(.track_h_band(rt[[el]], label, pad, NA_real_))
+      } else {
+        mm(.track_h(rt[[el]], label, pad))
+      }
     }
     xl <- mm(.track_h(rt[["axis.text.x"]], "0", tick + .PAD_MM))
     xt <- band("axis.title.x", ctx$horizontal_name, .PAD_MM)

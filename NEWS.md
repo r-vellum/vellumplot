@@ -13,6 +13,25 @@
   the part the margin and the tracks beside the panels do not already
   cover, so plots with the default margin are unchanged.
 
+* Axis gutters measure the widest tick label in the axis text font
+  (VP-136). The y tick-label gutter (and the x label row, its wrap check and
+  dodged-label spacing) used to measure only the label with the most
+  characters, which in a proportional font need not be the widest
+  ("iiiiiiii" against "WWWW"), so a wider label could run into the axis
+  title. Rich facet strips likewise pick their tallest label in the strip
+  font.
+
+* The plot tag and a composition's title, subtitle and caption reserve their
+  rotated extent when their element sets an `angle` (VP-137), as axis
+  titles already did, and a rotated title band or tag is centred in its
+  track instead of swinging half out of it.
+
+* Chord, sankey, treemap / sunburst / icicle / circle-pack and scale-bar
+  labels, and `vtable()` cells, use the family, face and weight of the
+  theme's base text font (VP-135), and are measured in it. They used to draw
+  in the default family whatever the theme or `theme_brand()` set. Plots in
+  the default font are unchanged.
+
 * Layout measures text in the font the theme draws it in (VP-132). Legend
   labels and titles, axis titles and tick labels, facet strips, the tag and
   the composition title bands used to reserve space for the default family
