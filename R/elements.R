@@ -340,22 +340,55 @@ print.rel <- function(x, ...) {
 # between ticks). `cex` is a relative size multiplier vellum applies to
 # `fontsize` -- how a theme cascades a base size (`element_text(cex = 1.2)`).
 .el_gpar_text <- function(el, features = NULL) {
-  # A bold face means at least 700, as a `**bold**` run in a rich label does:
-  # a weight inherited from a parent (a light brand body, say) must not turn
-  # an element's own `face = "bold"` light.
-  weight <- el@weight
-  if (!is.null(weight) && grepl("bold", el@face %||% "")) {
-    weight <- max(weight, 700L)
-  }
   vellum::vl_gpar(
     fontsize = el@size,
     cex = el@cex %||% 1,
     col = el@colour,
     fontfamily = el@family,
     fontface = el@face,
-    fontweight = weight,
+    fontweight = .el_weight(el),
     lineheight = el@lineheight,
     features = features
+  )
+}
+
+# The numeric weight a resolved text element draws with (NULL = the face's
+# own). A bold face means at least 700, as a `**bold**` run in a rich label
+# does: a weight inherited from a parent (a light brand body, say) must not turn
+# an element's own `face = "bold"` light.
+.el_weight <- function(el) {
+  weight <- el@weight
+  if (!is.null(weight) && grepl("bold", el@face %||% "")) {
+    weight <- max(weight, 700L)
+  }
+  weight
+}
+
+# Width or height (mm) of `label` set in a resolved text element's font: the
+# family, face, weight and `cex` the drawers pass through `.el_gpar_text()`, at
+# `fontsize` (default: the element's own size). Layout reserves text space
+# through this (VP-132), so a wide or heavy theme font gets the room it draws
+# at. `el = NULL` measures the default family in the plain face. Vectorised over
+# `label`; rich md() / tex() labels measure as they draw.
+.el_strwidth <- function(label, el = NULL, fontsize = NULL, features = NULL) {
+  .el_text_metric(label, el, fontsize, features, vellum::vl_strwidth)
+}
+.el_strheight <- function(label, el = NULL, fontsize = NULL, features = NULL) {
+  .el_text_metric(label, el, fontsize, features, vellum::vl_strheight)
+}
+.el_text_metric <- function(label, el, fontsize, features, metric) {
+  if (is.null(el) || .is_blank(el)) {
+    el <- .element_text()
+  }
+  metric(
+    label,
+    family = el@family %||% "",
+    fontface = el@face %||% "plain",
+    fontsize = fontsize %||% el@size,
+    cex = el@cex %||% 1,
+    unit = "mm",
+    features = features,
+    fontweight = .el_weight(el)
   )
 }
 

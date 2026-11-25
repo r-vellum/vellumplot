@@ -618,7 +618,7 @@ NULL
 
 # A test of whether a set of tick labels fits along position axis `aes`, for
 # choosing date breaks by the available length (VP-92). The labels are measured
-# with vellum's text metrics at the theme's axis text size. They are drawn at
+# with vellum's text metrics in the theme's axis text font (VP-132). They are drawn at
 # the axis guide's `angle` (`guide_axis(angle =)`), else the theme element's,
 # and `guide_axis(n.dodge =)` staggers them over rows, so neighbours in one row
 # are `n.dodge` breaks apart (VP-101). The axis length is estimated by
@@ -660,7 +660,7 @@ NULL
         if (is.function(ctx)) ctx() else ctx
       )
     }
-    .labels_fit(breaks, labels, domain, len_mm, el@size, rot, horiz, n_dodge)
+    .labels_fit(breaks, labels, domain, len_mm, el, rot, horiz, n_dodge)
   }
 }
 
@@ -675,7 +675,7 @@ NULL
   labels,
   domain,
   len_mm,
-  size,
+  el,
   rot,
   horiz,
   n_dodge = 1L
@@ -690,7 +690,7 @@ NULL
   wh <- vapply(
     labels,
     function(l) {
-      tg <- .txt(l, size)
+      tg <- .el_txt(l, el, features = .TNUM)
       c(
         vellum::vl_convert(vellum::grobwidth(tg), "mm"),
         vellum::vl_convert(vellum::grobheight(tg), "mm")

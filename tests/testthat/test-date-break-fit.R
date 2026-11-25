@@ -111,7 +111,7 @@ test_that("each neighbour pair needs only its mean label width (VP-110)", {
   ww <- wmm("WWWWWW")
   gap <- vellumplot:::.LABEL_GAP_MM
   fits <- function(len, ...) {
-    vellumplot:::.labels_fit(0:2, labs, c(0, 2), len, 8.8, 0, TRUE, ...)
+    vellumplot:::.labels_fit(0:2, labs, c(0, 2), len, element_text(size = 8.8), 0, TRUE, ...)
   }
   # neighbours one unit apart: a pair needs (wn + ww) / 2 + gap, not ww + gap
   pair <- (wn + ww) / 2 + gap
@@ -124,7 +124,7 @@ test_that("each neighbour pair needs only its mean label width (VP-110)", {
     labs[c(3, 1, 2)],
     c(0, 2),
     2 * (pair + 0.25),
-    8.8,
+    element_text(size = 8.8),
     0,
     TRUE
   ))
