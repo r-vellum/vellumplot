@@ -19,6 +19,8 @@
 * `options(vellumplot.brand = TRUE)` (or a path) themes every plot that has
   no theme of its own with the brand, and says once per session which file it
   used (F-26). Explicit themes are never overridden. Off by default.
+  `options(vellumplot.brand.fetch_fonts = TRUE)` fetches missing brand fonts
+  for it.
 * A composition's page background follows its figure theme's
   `plot.background` (it was always white), so a branded or dark figure has no
   white margin.

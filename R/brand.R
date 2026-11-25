@@ -55,7 +55,8 @@ NULL
 #' `theme_brand()` of its own) keeps it; [theme()] tweaks on an unthemed plot
 #' apply on top of the brand. The first branded plot of a session says which
 #' file it used. The option is off by default, so existing documents do not
-#' change their look.
+#' change their look. Add `options(vellumplot.brand.fetch_fonts = TRUE)` to
+#' fetch missing brand fonts there, as `fetch_fonts = TRUE` does.
 #'
 #' @section Fonts:
 #' A brand font that is not installed falls back to the default family, with
@@ -589,7 +590,8 @@ theme_brand <- function(
   if (is.null(path)) {
     return(NULL)
   }
-  key <- paste(path, unclass(file.mtime(path)))
+  fetch <- isTRUE(getOption("vellumplot.brand.fetch_fonts"))
+  key <- paste(path, unclass(file.mtime(path)), fetch)
   hit <- .brand_cache[[key]]
   if (!is.null(hit)) {
     return(hit)
@@ -601,7 +603,7 @@ theme_brand <- function(
       } else {
         .brand_read_file(path)
       }
-      if (is.list(b)) .brand_theme(b) else NULL
+      if (is.list(b)) .brand_theme(b, fetch_fonts = fetch) else NULL
     },
     error = function(e) {
       cli::cli_warn(

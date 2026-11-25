@@ -225,6 +225,13 @@ test_that("a google font is fetched with fetch_fonts = TRUE", {
   ))
   p <- theme_brand(pts(), path, fetch_fonts = TRUE)
   expect_identical(p@theme$text@family, "Lobster")
+  # auto-apply fetches with its own option
+  withr::local_options(
+    vellumplot.brand = path,
+    vellumplot.brand.fetch_fonts = TRUE
+  )
+  th <- suppressMessages(vellumplot:::.theme_of(pts()))
+  expect_identical(th$text@family, "Lobster")
 })
 
 test_that("theme_brand validates its arguments", {
