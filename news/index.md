@@ -9,6 +9,19 @@
   the page. Use `labeller = label_wrap_gen()` to wrap long labels
   instead; the strip grows to hold every line.
 
+- Axis gutters measure the widest tick label in the axis text font
+  (VP-136). The y tick-label gutter (and the x label row, its wrap check
+  and dodged-label spacing) used to measure only the label with the most
+  characters, which in a proportional font need not be the widest
+  (“iiiiiiii” against “WWWW”), so a wider label could run into the axis
+  title. Rich facet strips likewise pick their tallest label in the
+  strip font.
+
+- The plot tag and a composition’s title, subtitle and caption reserve
+  their rotated extent when their element sets an `angle` (VP-137), as
+  axis titles already did, and a rotated title band or tag is centred in
+  its track instead of swinging half out of it.
+
 - Chord, sankey, treemap / sunburst / icicle / circle-pack and scale-bar
   labels, and
   [`vtable()`](https://r-vellum.github.io/vellumplot/reference/vtable.md)
