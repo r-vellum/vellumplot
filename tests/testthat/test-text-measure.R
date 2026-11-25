@@ -143,3 +143,50 @@ test_that("dodged multi-line x labels keep their stagger", {
   expect_gte(row_h, 2 * h3)
   expect_false(identical(ys[["Alpha\nBeta\nGamma"]], ys[["WWWWWWW"]]))
 })
+
+test_that("composition auto-tags get a track above each row (VP-142)", {
+  a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  b <- vplot(mtcars) |> mark_point(x = hp, y = mpg)
+  comp <- concat(a, b, a, ncol = 2) |>
+    compose_annotation(tag_levels = "A", tag_prefix = "Panel ")
+  plans <- lapply(comp@plots, vellumplot:::.plan_plot)
+  th <- vellumplot:::.theme_default()
+  glo_of <- function(th) {
+    rt0 <- vellumplot:::.resolve_theme(th)
+    list(g = vellumplot:::.composition_grid(plans, comp, TRUE, rt0), rt = rt0)
+  }
+  flat <- glo_of(th)
+  g <- flat$g
+  expect_identical(g$tags, c("Panel A", "Panel B", "Panel C"))
+  rows <- vapply(g$map, `[[`, integer(1), "ctag_row")
+  # one band per row of cells, just above the row's own tag track
+  expect_identical(rows[1], rows[2])
+  expect_false(rows[3] == rows[1])
+  expect_identical(rows + 1L, vapply(g$map, `[[`, integer(1), "tag_row"))
+  el <- flat$rt[["plot.tag"]]
+  expect_gte(mm(g$heights[rows[1]]), vellumplot:::.el_strheight("Panel A", el))
+  # rotated, the band is as tall as the rotated tag
+  th$plot.tag <- element_text(size = 14, angle = 90)
+  up <- glo_of(th)
+  h_up <- mm(up$g$heights[rows[1]])
+  expect_gt(h_up, mm(g$heights[rows[1]]))
+  expect_gte(h_up, vellumplot:::.el_strwidth("Panel A", up$rt[["plot.tag"]]))
+  # a blank tag element takes no track
+  th$plot.tag <- element_blank()
+  none <- glo_of(th)$g
+  expect_null(none$tags)
+  expect_true(all(is.na(vapply(none$map, `[[`, integer(1), "ctag_row"))))
+})
+
+test_that("a composition tag no longer overlaps its panel (VP-142)", {
+  a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  comp <- hconcat(a, a) |>
+    compose_annotation(tag_levels = "A") |>
+    theme(plot.tag = element_text(size = 20))
+  sm <- vellum::scene_model(vellum::as_vellum_scene(comp))
+  pan <- sm$panels[grepl("panel-", sm$panels$name), , drop = FALSE]
+  plain <- vellum::scene_model(vellum::as_vellum_scene(hconcat(a, a)))$panels
+  plain <- plain[grepl("panel-", plain$name), , drop = FALSE]
+  # the panels moved down by the tag band
+  expect_true(all(pan$py0 > plain$py0 + 5))
+})

@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* A composition's auto-tags (`compose_annotation(tag_levels =)`) take a band
+  above each row of cells, sized to the tallest tag as drawn and rotated by
+  the `plot.tag` element's `angle`, like a plot's own tag (VP-142). They
+  used to be drawn over the top-left corner of each panel at a fixed angle.
+
 * Venn counts and set names, the compass "N", graticule labels and
   significance-bracket labels use the theme's base text family, face and
   weight (VP-139), as the other mark labels have since VP-135. Venn set
