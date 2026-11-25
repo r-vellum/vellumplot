@@ -167,7 +167,7 @@ NULL
         pt$x,
         pt$y,
         just = c("centre", "bottom"),
-        gp = vellum::vl_gpar(fontsize = fs, col = col)
+        gp = .mark_gpar_text(fs, col, L)
       )
     )
   }
