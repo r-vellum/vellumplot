@@ -67,7 +67,8 @@ colours follow. A \verb{scale_*()} palette still wins.
 \code{typography.headings} the family of the title, subtitle and facet strips
 and the weight of the title and strips. Weights such as 300 (light) or
 \code{semi-bold} pick that face of a family that has it; axis and legend
-labels and the caption stay at least regular (400) so they stay legible.
+titles and labels and the caption stay at least regular (400) so they
+stay legible.
 }
 
 Elements the base preset leaves out (the axis ticks of \code{\link[=theme_minimal]{theme_minimal()}},

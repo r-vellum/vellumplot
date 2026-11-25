@@ -21,8 +21,8 @@
   multi-weight family through vellum's new `vl_gpar(fontweight = )` (F-26).
   A bold `face` draws at least 700, so `face = "bold"` stays bold under a
   light inherited weight. `theme_brand()` maps the brand's
-  `typography.base.weight` to the text (axis and legend labels and the
-  caption stay at least 400) and `typography.headings.weight` to the title
+  `typography.base.weight` to the text (axis and legend titles and labels
+  and the caption stay at least 400) and `typography.headings.weight` to the title
   and strips. Needs vellum 0.16.0.9001.
 * `options(vellumplot.brand = TRUE)` (or a path) themes every plot that has
   no theme of its own with the brand, and says once per session which file it
