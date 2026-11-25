@@ -7,6 +7,12 @@
   Use `labeller = label_wrap_gen()` to wrap long labels instead; the strip
   grows to hold every line.
 
+* Chord, sankey, treemap / sunburst / icicle / circle-pack and scale-bar
+  labels, and `vtable()` cells, use the family, face and weight of the
+  theme's base text font (VP-135), and are measured in it. They used to draw
+  in the default family whatever the theme or `theme_brand()` set. Plots in
+  the default font are unchanged.
+
 * Layout measures text in the font the theme draws it in (VP-132). Legend
   labels and titles, axis titles and tick labels, facet strips, the tag and
   the composition title bands used to reserve space for the default family
@@ -1677,7 +1683,6 @@
   outlined keys. Map `fill` to get the old look. The outline is no longer
   hard-coded: it follows `color` and defaults to `"grey20"`. Violins and ridges
   used to be outlined in `"grey30"`.
-
 
 * **Stats that reorder or summarise rows keep their colours aligned.** A stat
   that changes the row count or order used to hand its output the pre-stat

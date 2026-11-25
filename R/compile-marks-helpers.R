@@ -208,6 +208,34 @@ NULL
 
 .aes_param <- function(L, name, default) L$params[[name]] %||% default
 
+# The text element a mark's own labels (chord, sankey, treemap / sunburst /
+# circle-pack, scale bar) are set in at `fontsize`: the theme's base text
+# family, face and weight (`.set_text_font()`), unless the layer sets its own
+# `family` / `fontface` (VP-135).
+.mark_text_el <- function(fontsize, L = NULL) {
+  font <- .mark_ctx$text_font
+  .element_text(
+    size = fontsize,
+    family = .aes_param(L, "family", font$family),
+    face = .aes_param(L, "fontface", font$face),
+    weight = font$weight
+  )
+}
+
+# The gpar for a mark label: `.mark_text_el()`'s font plus a colour. With no
+# theme font set this is `vl_gpar(fontsize =, col =)` exactly, so a
+# default-font plot is unchanged.
+.mark_gpar_text <- function(fontsize, col = NULL, L = NULL) {
+  el <- .mark_text_el(fontsize, L)
+  vellum::vl_gpar(
+    fontsize = fontsize,
+    col = col,
+    fontfamily = el@family,
+    fontface = el@face,
+    fontweight = .el_weight(el)
+  )
+}
+
 # Resolve a per-group alpha for a `vl_gpar`: `NA` means "no alpha set" (the mark's
 # native opacity), which vellum expects as `NULL` rather than `NA`.
 gp_alpha <- function(a) if (is.na(a)) NULL else a

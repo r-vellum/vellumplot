@@ -13,6 +13,9 @@ VTable <- S7::new_class(
     n = S7::class_double, # body rows
     header = S7::new_property(S7::class_logical, default = TRUE),
     font_size = S7::new_property(S7::class_double, default = 9),
+    # the default theme's base text font when the table was laid out (family,
+    # face, weight; NULL = the default family, plain), as `.text_font_of()`
+    font = S7::new_property(S7::class_any, default = NULL),
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
     dpi = S7::new_property(S7::class_double, default = 96)
@@ -49,10 +52,19 @@ VTable <- S7::new_class(
   }
 }
 
-.strw_mm <- function(labels, fontsize) {
+.strw_mm <- function(labels, fontsize, font = NULL) {
   vapply(
     labels,
-    function(s) vellum::vl_strwidth(s, fontsize = fontsize, unit = "mm"),
+    function(s) {
+      vellum::vl_strwidth(
+        s,
+        family = font$family %||% "",
+        fontface = font$face %||% "plain",
+        fontsize = fontsize,
+        unit = "mm",
+        fontweight = font$weight
+      )
+    },
     numeric(1)
   )
 }
@@ -112,6 +124,9 @@ vtable <- function(
   n <- nrow(data)
   spark_fns <- lapply(spark, .as_spark_fn)
   sw_mm <- .mm(spark_width, units)
+  # Cells are set in the default theme's base text font (the brand's under
+  # `options(vellumplot.brand)`), measured and drawn alike (VP-135).
+  font <- .text_font_of(.theme_auto())
   pad_mm <- .mm(cell_pad, units)
 
   descs <- lapply(cols, function(nm) {
@@ -138,7 +153,8 @@ vtable <- function(
       fmt <- .fmt_col(data[[nm]])
       al <- (align %||% list())[[nm]] %||%
         (if (is.numeric(data[[nm]])) "right" else "left")
-      w <- max(.strw_mm(c(nm, fmt), font_size), na.rm = TRUE) + 2 * pad_mm
+      w <- max(.strw_mm(c(nm, fmt), font_size, font), na.rm = TRUE) +
+        2 * pad_mm
       list(
         name = nm,
         kind = "text",
@@ -161,6 +177,7 @@ vtable <- function(
     n = as.double(n),
     header = isTRUE(header),
     font_size = font_size,
+    font = font,
     width = sum(col_widths) / 25.4,
     height = sum(row_heights) / 25.4,
     dpi = dpi
@@ -168,7 +185,16 @@ vtable <- function(
 }
 
 # Draw a text cell at grid (row, col), aligned within it.
-.vtable_text <- function(scene, row, col, text, align, fontsize, bold) {
+.vtable_text <- function(
+  scene,
+  row,
+  col,
+  text,
+  align,
+  fontsize,
+  bold,
+  font = NULL
+) {
   x <- switch(align, left = 0.06, right = 0.94, 0.5)
   just <- switch(align, left = "left", right = "right", "centre")
   scene <- vellum::push(scene, vellum::vl_viewport(row = row, col = col))
@@ -181,8 +207,14 @@ vtable <- function(
       just = just,
       gp = vellum::vl_gpar(
         fontsize = fontsize,
-        fontface = if (bold) "bold" else "plain",
-        col = "grey15"
+        fontface = if (bold) "bold" else font$face %||% "plain",
+        col = "grey15",
+        fontfamily = font$family,
+        fontweight = if (bold && !is.null(font$weight)) {
+          max(font$weight, 700L)
+        } else {
+          font$weight
+        }
       )
     )
   )
@@ -211,7 +243,16 @@ vtable <- function(
   if (vt@header) {
     for (c in seq_len(ncol)) {
       d <- vt@descs[[c]]
-      scene <- .vtable_text(scene, 1L, c, d$header, d$align, vt@font_size, TRUE)
+      scene <- .vtable_text(
+        scene,
+        1L,
+        c,
+        d$header,
+        d$align,
+        vt@font_size,
+        TRUE,
+        vt@font
+      )
     }
     # header underline: a rule spanning all columns at the header row's baseline.
     scene <- vellum::push(
@@ -259,7 +300,8 @@ vtable <- function(
           d$cells[[r]],
           d$align,
           vt@font_size,
-          FALSE
+          FALSE,
+          vt@font
         )
       }
     }
