@@ -33,6 +33,39 @@ NULL
   x[which.max(nchar(x))]
 }
 
+# The widest of a set of tick labels as the element `el` draws them (its family,
+# face, weight and size, with tabular figures as `.axis_text_grob()` sets them),
+# for the axis sizers to measure (VP-136). The most characters is not the widest
+# in a proportional font ("1111111" against "WWWW"). Empty -> "0", as
+# `.longest()`; labels that are not plain strings fall back to it.
+.widest <- function(x, el = NULL) {
+  if (!is.character(x)) {
+    return(.longest(x))
+  }
+  x <- x[!is.na(x) & nzchar(x)]
+  if (length(x) < 2L) {
+    return(if (length(x)) x else "0")
+  }
+  x[which.max(.el_strwidth(x, el, features = .TNUM))]
+}
+
+# The tick labels that can set an axis track: the widest and the one with the
+# most lines. Along the axis an unrotated label's extent follows its width,
+# across it its line count; rotated, the two swap and mix, so the sizers
+# measure both (as drawn) and take the larger (VP-136).
+.axis_probe <- function(x, el = NULL) {
+  if (!is.character(x)) {
+    return(.longest(x))
+  }
+  w <- .widest(x, el)
+  x <- x[!is.na(x) & nzchar(x)]
+  if (!length(x)) {
+    return(w)
+  }
+  lines <- lengths(strsplit(x, "\n", fixed = TRUE))
+  unique(c(w, x[which.max(lines)]))
+}
+
 .txt <- function(label, fontsize, rot = 0) {
   vellum::text_grob(label, rot = rot, gp = vellum::vl_gpar(fontsize = fontsize))
 }
@@ -118,12 +151,26 @@ NULL
 }
 
 # Width (mm) of the y tick-label gutter: the widest label (rotated as drawn),
-# times `n_dodge` staggered columns.
+# times `n_dodge` staggered columns. `label` may be several labels: the widest
+# counts.
 .track_w_axis <- function(el, label, pad_mm, rot = 0, n_dodge = 1L) {
   if (.is_blank(el)) {
     return(vellum::vl_unit(0, "mm"))
   }
   # tabular figures, as `.axis_text_grob()` draws the tick labels
+  if (length(label) > 1L) {
+    ws <- vapply(
+      label,
+      function(l) {
+        vellum::vl_convert(
+          vellum::grobwidth(.el_txt(l, el, rot, features = .TNUM)),
+          "mm"
+        )
+      },
+      numeric(1)
+    )
+    label <- label[[which.max(ws)]]
+  }
   w <- vellum::grobwidth(.el_txt(label, el, rot, features = .TNUM))
   if (n_dodge > 1L) {
     w <- vellum::vl_unit(
@@ -444,7 +491,7 @@ NULL
   yl <- if (.axis_shows_labels(vsc)) {
     .track_w_axis(
       rt[["axis.text.y"]],
-      .longest(v_labs),
+      .axis_probe(v_labs, rt[["axis.text.y"]]),
       tick + .PAD_MM,
       rot = yrot,
       n_dodge = ydodge
@@ -466,7 +513,7 @@ NULL
   y2l <- if (has_y_sec) {
     .track_w_axis(
       rt[["axis.text.y"]],
-      .longest(y_sec$labels),
+      .axis_probe(y_sec$labels, rt[["axis.text.y"]]),
       tick + .PAD_MM,
       rot = yrot
     )
@@ -477,7 +524,7 @@ NULL
   x2l <- if (has_x_sec) {
     .track_h_axis(
       rt[["axis.text.x"]],
-      .longest(x_sec$labels),
+      .axis_probe(x_sec$labels, rt[["axis.text.x"]]),
       tick + .PAD_MM,
       rot = xrot
     )
@@ -493,12 +540,12 @@ NULL
   # `strip` for the wrap / column strips, `row_strip` for the rotated row strips.
   strip <- .track_h(
     rt[["strip.text"]],
-    .strip_probe(c(fa$wrap_labels, fa$col_labels)),
+    .strip_probe(c(fa$wrap_labels, fa$col_labels), rt[["strip.text"]]),
     2 * .PAD_MM
   )
   row_strip <- .track_h(
     rt[["strip.text"]],
-    .strip_probe(fa$row_labels),
+    .strip_probe(fa$row_labels, rt[["strip.text"]]),
     2 * .PAD_MM
   )
   gap <- vellum::vl_unit(rt[["panel.spacing"]], "mm")
@@ -612,7 +659,7 @@ NULL
       el_x <- rt[["axis.text.x"]]
       natural <- vellum::vl_convert(
         vellum::grobwidth(.axis_text_grob(
-          .longest(h_labs),
+          .widest(h_labs, el_x),
           el_x,
           c("centre", "top")
         )),
@@ -631,7 +678,11 @@ NULL
         rt[["axis.text.x"]],
         # wrapped labels: the one with the most lines need not be the longest
         # (short words wrap more), so measure them all
-        if (is.finite(xwrap_mm)) unique(h_labs) else .longest(h_labs),
+        if (is.finite(xwrap_mm)) {
+          unique(h_labs)
+        } else {
+          .axis_probe(h_labs, rt[["axis.text.x"]])
+        },
         tick + .PAD_MM,
         rot = xrot,
         wrap_mm = xwrap_mm,
@@ -704,7 +755,8 @@ NULL
   # so an unlabelled plot's layout is unchanged.
   H <- .tracks()
   tag_row <- if (!is.null(labels$tag)) {
-    .tk_add(H, .track_h(rt[["plot.tag"]], labels$tag, .PAD_MM))
+    # measured as drawn, rotated by the element's angle (VP-137)
+    .tk_add(H, .track_h_band(rt[["plot.tag"]], labels$tag, .PAD_MM, NA_real_))
   } else {
     NA_integer_
   }

@@ -334,16 +334,13 @@ as_labeller <- function(x, default = label_value, multi_line = TRUE) {
 }
 
 # A probe string with as many lines as the tallest of `labs`, for sizing a
-# strip track.
-.strip_probe <- function(labs, fontsize = 10) {
+# strip track. Rich labels are measured in the strip element's font `el`
+# (VP-136), all at once, and the tallest one is the probe.
+.strip_probe <- function(labs, el = NULL) {
   if (is.list(labs)) {
     # Rich strips: the tallest label itself (a plain one by its line count).
     cand <- lapply(labs, function(l) if (.is_rich(l)) l else .strip_probe(l))
-    h <- vapply(
-      cand,
-      function(l) vellum::vl_strheight(l, fontsize = fontsize, unit = "pt"),
-      numeric(1)
-    )
+    h <- .el_strheight(.as_rich_list(cand), el)
     return(cand[[which.max(h)]])
   }
   n <- max(1L, lengths(strsplit(as.character(labs), "\n", fixed = TRUE)))

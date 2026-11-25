@@ -119,7 +119,7 @@ test_that("secondary axis gutters measure tick labels as drawn, tnum included (V
   expect_equal(h(lay$x2labels_row), h(lay$xlabels_row), tolerance = 1e-6)
   # and the y gutter holds the widest label drawn with tabular figures
   el <- rt[["axis.text.y"]]
-  lab <- vellumplot:::.longest(pl$scales$y$labels %||% "1200000")
+  lab <- vellumplot:::.widest(pl$scales$y$labels %||% "1200000", el)
   drawn <- mm(vellum::grobwidth(
     vellumplot:::.axis_text_grob(lab, el, c("left", "centre"))
   ))
