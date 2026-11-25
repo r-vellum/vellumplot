@@ -233,11 +233,13 @@ test_that("compass N and graticule labels draw in the theme font", {
 })
 
 test_that("significance bracket labels draw in the theme font", {
-  set.seed(1)
-  d <- data.frame(
-    g = rep(c("a", "b"), each = 20),
-    y = c(rnorm(20), rnorm(20, 1))
-  )
+  # a local seed, so later test files see the same random stream as before
+  d <- withr::with_seed(1, {
+    data.frame(
+      g = rep(c("a", "b"), each = 20),
+      y = c(rnorm(20), rnorm(20, 1))
+    )
+  })
   p <- vplot(d) |>
     mark_boxplot(x = g, y = y) |>
     mark_signif(x = g, y = y, label = "stars") |>
