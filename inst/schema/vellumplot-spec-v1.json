@@ -189,7 +189,11 @@
       "description": "Styling by preset name plus scalar settings; custom element overrides do not round-trip.",
       "properties": {
         "preset": { "enum": ["gray", "minimal", "bw", "classic", "void", "cyberpunk"] },
-        "settings": { "type": "object" }
+        "settings": { "type": "object" },
+        "deferred": {
+          "type": "boolean",
+          "description": "true: theme() settings on a plot with no theme of its own; the plot keeps its draw-time default theme and `preset` is ignored."
+        }
       }
     }
   }

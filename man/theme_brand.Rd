@@ -92,7 +92,9 @@ theme every plot that has no theme of its own with \code{theme_brand()}, found
 as for \code{brand = NULL}. \code{options(vellumplot.brand = "path/to/_brand.yml")}
 names the file. A plot with an explicit theme (\code{theme_bw()}, a
 \code{theme_brand()} of its own) keeps it; \code{\link[=theme]{theme()}} tweaks on an unthemed plot
-apply on top of the brand. The first branded plot of a session says which
+apply on top of the brand. The option is read when a plot is drawn, not when
+it is built, so tweaks made before the option is set still get the brand.
+The first branded plot of a session says which
 file it used. The option is off by default, so existing documents do not
 change their look. Add \code{options(vellumplot.brand.fetch_fonts = TRUE)} to
 fetch missing brand fonts there, as \code{fetch_fonts = TRUE} does.

@@ -10,6 +10,16 @@
   overflow the legend column or run into the axis title. Plots in the
   default font are unchanged.
 
+* `theme()` and `set_theme()` on a plot with no theme of its own store the
+  tweak and apply it to the default theme when the plot is drawn (VP-133).
+  They used to merge onto the default of the moment they were called, so
+  turning `options(vellumplot.brand)` on or off between building and
+  printing a plot had no effect on it. Plots with an explicit theme, a
+  `theme_brand()` of their own, and compositions behave as before. The
+  deferred tweak also survives `as_spec()` / `spec_to_json()` (as `deferred:
+  true` with its settings), so a plot read back still picks its default
+  theme when drawn.
+
 # vellumplot 0.24.0
 
 ## New features

@@ -376,8 +376,95 @@ test_that("auto-apply never overrides an explicit theme", {
   expect_identical(vellumplot:::.theme_of(dark), dark@theme)
   # theme() tweaks on an unthemed plot sit on top of the brand
   tw <- suppressMessages(pts() |> theme(legend.position = "none"))
-  expect_identical(tw@theme$plot.background@fill, "#fffdf7")
-  expect_identical(tw@theme$legend.position, "none")
+  th <- suppressMessages(vellumplot:::.theme_of(tw))
+  expect_identical(th$plot.background@fill, "#fffdf7")
+  expect_identical(th$legend.position, "none")
+})
+
+test_that("theme() on an unthemed plot resolves the brand at compile time (VP-133)", {
+  skip_if_not_installed("brand.yml")
+  local_brand_state()
+  path <- local_brand(palette_brand)
+  bg <- function(p) {
+    suppressMessages(vellumplot:::.resolve_theme(p@theme))[["plot.background"]]@fill
+  }
+  # built with the option off, compiled with it on: the brand applies
+  withr::with_options(list(vellumplot.brand = NULL), {
+    off <- pts() |> theme(legend.position = "none")
+    expect_null(attr(off@theme, "vp_brand"))
+  })
+  withr::with_options(list(vellumplot.brand = path), {
+    expect_identical(bg(off), "#fffdf7")
+    px <- suppressMessages(render_px(off))
+    expect_equal(px[2, 2, 1:3], c(255, 253, 247) / 255, tolerance = 0.01)
+    expect_identical(
+      suppressMessages(vellumplot:::.theme_palette(off, "discrete"))[1:2],
+      c("#1f3b5a", "#ef6f6c")
+    )
+    expect_identical(
+      suppressMessages(train_brand(off))$color$map("4"),
+      "#1f3b5a"
+    )
+    expect_identical(suppressMessages(vellumplot:::.theme_of(off))$legend.position, "none")
+    # built with the option on ...
+    on <- pts() |> theme(legend.position = "bottom")
+  })
+  # ... compiled with it off: the gray default, tweak kept
+  withr::with_options(list(vellumplot.brand = NULL), {
+    expect_identical(bg(on), "white")
+    expect_null(vellumplot:::.theme_palette(on, "discrete"))
+    expect_identical(vellumplot:::.theme_of(on)$legend.position, "bottom")
+  })
+  # successive tweaks replay in order, as when they merged at call time
+  two <- pts() |>
+    theme(text = element_text(size = rel(2))) |>
+    theme(text = element_text(size = rel(1.5)), legend.position = "top")
+  rt <- vellumplot:::.resolve_theme(two@theme)
+  expect_equal(rt[["axis.text.x"]]@size, 9 * 3)
+  expect_identical(rt[["legend.position"]], "top")
+  # set_theme() defers the same way
+  st <- withr::with_options(
+    list(vellumplot.brand = NULL),
+    pts() |> set_theme(panel_bg = "red")
+  )
+  withr::with_options(list(vellumplot.brand = path), {
+    expect_identical(bg(st), "#fffdf7")
+    expect_identical(
+      suppressMessages(vellumplot:::.resolve_theme(st@theme))[["panel.background"]]@fill,
+      "red"
+    )
+  })
+  # a hand-drawn theme keeps its sketch default under later tweaks
+  sk <- pts() |> theme_sketch() |> theme(legend.position = "none")
+  expect_s3_class(vellumplot:::.theme_sketch_default(sk), "vellum_sketch")
+  expect_null(vellumplot:::.theme_sketch_default(two))
+  # a spec round trip keeps the tweak deferred: still branded under the option
+  rt_off <- withr::with_options(
+    list(vellumplot.brand = NULL),
+    spec_from_json(spec_to_json(off), data = mtcars)
+  )
+  withr::with_options(list(vellumplot.brand = path), {
+    rt_on <- spec_from_json(
+      suppressMessages(spec_to_json(off)),
+      data = mtcars
+    )
+    expect_true(vellumplot:::.is_theme_tweak(rt_on@theme))
+    expect_identical(bg(rt_off), "#fffdf7")
+    expect_identical(bg(rt_on), "#fffdf7")
+    expect_identical(
+      suppressMessages(vellumplot:::.theme_of(rt_on))$legend.position,
+      "none"
+    )
+  })
+  withr::with_options(list(vellumplot.brand = NULL), {
+    expect_identical(bg(rt_on), "white")
+  })
+  # an explicit theme keeps merging at call time
+  withr::with_options(list(vellumplot.brand = path), {
+    bw <- pts() |> theme_bw() |> theme(legend.position = "none")
+    expect_identical(attr(bw@theme, "vp_preset"), "bw")
+    expect_identical(bg(bw), "white")
+  })
 })
 
 test_that("option TRUE finds the brand: Quarto first, then a file", {

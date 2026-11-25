@@ -554,11 +554,24 @@ NULL
       call = call
     )
   }
+  # Deferred theme() tweaks on an unthemed plot (VP-133) keep no base theme:
+  # they serialize as `deferred: true` plus the settings they set, so the read
+  # plot is unthemed again and picks its default (the brand under
+  # `options(vellumplot.brand)`) when drawn. `preset` stays "gray" so a reader
+  # that predates `deferred` still rebuilds what it used to.
+  deferred <- .is_theme_tweak(theme)
+  if (deferred) {
+    theme <- .theme_replay(list(), theme)
+  }
   preset <- attr(theme, "vp_preset") %||% "gray"
   settings <- theme[intersect(names(theme), .theme_setting_names)]
   # keep only plain settings (all are, defensively).
   settings <- settings[vapply(settings, .is_plain, logical(1))]
-  list(preset = preset, settings = settings)
+  out <- list(preset = preset, settings = settings)
+  if (deferred) {
+    out$deferred <- TRUE
+  }
+  out
 }
 
 # The pristine theme a preset name builds (before any user customisation), used
@@ -583,6 +596,13 @@ NULL
 .theme_from_ir <- function(rec) {
   if (is.null(rec)) {
     return(NULL)
+  }
+  # A deferred tweak (VP-133) comes back as one: its settings on no base theme.
+  if (isTRUE(rec$deferred)) {
+    if (!length(rec$settings)) {
+      return(NULL)
+    }
+    return(.theme_add_tweak(NULL, rec$settings, unblank = FALSE))
   }
   # Rebuild the complete theme from the preset name, then merge the scalar
   # settings back in.
@@ -851,7 +871,13 @@ as_spec <- function(plot) {
       .MARGINAL_FIELDS
     )
   }
-  th <- .theme_to_ir(plot@theme)
+  pth <- plot@theme
+  th <- .theme_to_ir(pth)
+  if (.is_theme_tweak(pth)) {
+    # deferred theme() tweaks (VP-133): the elements they set are dropped;
+    # judge them against the gray default, as when theme() merged at once
+    pth <- .theme_replay(.preset_theme("gray"), pth)
+  }
   if (!is.null(th)) {
     out$theme <- th
     # Warn only on element slots that actually DIFFER from the pristine preset:
@@ -863,15 +889,15 @@ as_spec <- function(plot) {
     # `theme()`.
     # The default palettes are compared too: a preset's own (cyberpunk's neon)
     # rebuilds from the name, but a brand or user palette is dropped.
-    elems <- setdiff(names(plot@theme %||% list()), .theme_setting_names)
+    elems <- setdiff(names(pth %||% list()), .theme_setting_names)
     if (length(elems)) {
-      pristine <- .preset_theme(attr(plot@theme, "vp_preset") %||% "gray")
+      pristine <- .preset_theme(attr(pth, "vp_preset") %||% "gray")
       dropped <- Filter(
-        function(nm) !identical(plot@theme[[nm]], pristine[[nm]]),
+        function(nm) !identical(pth[[nm]], pristine[[nm]]),
         elems
       )
       if (length(dropped)) {
-        brand <- attr(plot@theme, "vp_brand")
+        brand <- attr(pth, "vp_brand")
         cli::cli_warn(c(
           "Dropped custom theme elements ({.field {unlist(dropped)}}) \u2014 theme styling does not round-trip; the preset name is kept.",
           i = if (!is.null(brand)) {

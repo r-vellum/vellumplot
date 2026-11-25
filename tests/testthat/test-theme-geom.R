@@ -59,8 +59,9 @@ test_that("theme(geom =) merges onto the theme's geom element", {
   p <- geom_pt |>
     theme(geom = element_geom(ink = "red")) |>
     theme(geom = element_geom(paper = "navy"))
-  expect_identical(p@theme$geom@ink, "red")
-  expect_identical(p@theme$geom@paper, "navy")
+  th <- vellumplot:::.theme_of(p)
+  expect_identical(th$geom@ink, "red")
+  expect_identical(th$geom@paper, "navy")
 })
 
 test_that("light themes keep the built-in mark colours", {
