@@ -82,7 +82,12 @@ set_theme(
   point's radius – so tiny points keep readable keys; a size legend
   keeps its mapped sizes), `legend.spacing` (gap between stacked guides,
   mm), and `legend.margin` (inset around the legend block, one or four
-  millimetres, `t, r, b, l`).
+  millimetres, `t, r, b, l`). `strip.clip` sets whether facet strip text
+  is clipped to its strip, as in ggplot2: `"inherit"` (the default) and
+  `"on"` clip a label longer than its strip at the strip's edge; `"off"`
+  lets it run past the strip (a neighbouring strip drawn after it still
+  paints over it, as in ggplot2). To keep a long label whole, wrap it
+  with `labeller = label_wrap_gen()` instead.
 
 - panel_bg, grid_col, label_col, strip_bg:
 

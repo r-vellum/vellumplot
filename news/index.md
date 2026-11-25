@@ -2,6 +2,17 @@
 
 ## vellumplot (development version)
 
+### New features
+
+- `theme(strip.clip =)` sets whether facet strip text is clipped to its
+  strip, with ggplot2’s values: `"inherit"` (the default) and `"on"`
+  clip, `"off"` lets a long label run past the strip (VP-143). It
+  round-trips through
+  [`as_spec()`](https://r-vellum.github.io/vellumplot/reference/as_spec.md)
+  /
+  [`spec_to_json()`](https://r-vellum.github.io/vellumplot/reference/spec_to_json.md),
+  and an unknown value errors.
+
 ### Bug fixes
 
 - A composition’s auto-tags (`compose_annotation(tag_levels =)`) take a

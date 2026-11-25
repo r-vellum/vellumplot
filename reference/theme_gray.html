@@ -155,7 +155,13 @@ Legend geometry is tunable via <code>legend.key.size</code> (key/swatch side, mm
 with a constant <code>size</code> is drawn at, default 1 – an unsized point's
 radius – so tiny points keep readable keys; a size legend keeps its
 mapped sizes), <code>legend.spacing</code> (gap between stacked guides, mm), and <code>legend.margin</code>
-(inset around the legend block, one or four millimetres, <code>t, r, b, l</code>).</p></dd>
+(inset around the legend block, one or four millimetres, <code>t, r, b, l</code>).
+<code>strip.clip</code> sets whether facet strip text is clipped to its strip, as
+in ggplot2: <code>"inherit"</code> (the default) and <code>"on"</code> clip a label longer
+than its strip at the strip's edge; <code>"off"</code> lets it run past the strip
+(a neighbouring strip drawn after it still paints over it, as in
+ggplot2). To keep a long label whole, wrap it with
+<code>labeller = label_wrap_gen()</code> instead.</p></dd>
 
 
 <dt id="arg-panel-bg-grid-col-label-col-strip-bg">panel_bg, grid_col, label_col, strip_bg<a class="anchor" aria-label="anchor" href="#arg-panel-bg-grid-col-label-col-strip-bg"></a></dt>

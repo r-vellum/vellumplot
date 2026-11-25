@@ -65,6 +65,11 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
 <div class="section level3">
+<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li>
+<code>theme(strip.clip =)</code> sets whether facet strip text is clipped to its strip, with ggplot2’s values: <code>"inherit"</code> (the default) and <code>"on"</code> clip, <code>"off"</code> lets a long label run past the strip (VP-143). It round-trips through <code><a href="../reference/as_spec.html">as_spec()</a></code> / <code><a href="../reference/spec_to_json.html">spec_to_json()</a></code>, and an unknown value errors.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
 <ul><li><p>A composition’s auto-tags (<code>compose_annotation(tag_levels =)</code>) take a band above each row of cells, sized to the tallest tag as drawn and rotated by the <code>plot.tag</code> element’s <code>angle</code>, like a plot’s own tag (VP-142). They used to be drawn over the top-left corner of each panel at a fixed angle.</p></li>
 <li><p>Venn counts and set names, the compass “N”, graticule labels and significance-bracket labels use the theme’s base text family, face and weight (VP-139), as the other mark labels have since VP-135. Venn set names and the compass “N” stay bold (in the theme’s family). Plots in the default font are unchanged.</p></li>
