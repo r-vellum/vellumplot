@@ -648,16 +648,21 @@ NULL
     !free_x &&
     length(hsc$breaks) > 0L &&
     !.is_blank(rt[["axis.text.x"]])
-  if (can_wrap_x) {
+  natural_x <- NULL
+  # The x wrap budget for a panel column `per_mm` wide (NA: single-line).
+  x_wrap <- function(per_mm) {
     # Any track that does not resolve to a plain mm (a null width slipping
-    # through) leaves `per_panel_mm` non-finite -- fall back to single-line.
-    if (isTRUE(per_panel_mm > 0)) {
-      budget <- per_panel_mm / length(hsc$breaks)
-      # Only engage wrapping when the widest label actually overruns its budget,
-      # so every plot whose labels already fit keeps its exact single-line layout
-      # (measured through the same grob the drawer builds).
+    # through) leaves `per_mm` non-finite -- fall back to single-line.
+    if (!can_wrap_x || !isTRUE(per_mm > 0)) {
+      return(NA_real_)
+    }
+    budget <- per_mm / length(hsc$breaks)
+    # Only engage wrapping when the widest label actually overruns its budget,
+    # so every plot whose labels already fit keeps its exact single-line layout
+    # (measured through the same grob the drawer builds).
+    if (is.null(natural_x)) {
       el_x <- rt[["axis.text.x"]]
-      natural <- vellum::vl_convert(
+      natural_x <<- vellum::vl_convert(
         vellum::grobwidth(.axis_text_grob(
           .widest(h_labs, el_x),
           el_x,
@@ -665,32 +670,34 @@ NULL
         )),
         "mm"
       )
-      if (isTRUE(natural > budget)) {
-        xwrap_mm <- budget
-      }
     }
+    if (isTRUE(natural_x > budget)) budget else NA_real_
   }
+  # The x tick-label row height for a wrap budget.
+  x_track <- function(wrap_mm) {
+    if (!.axis_shows_labels(hsc)) {
+      return(vellum::vl_unit(0, "mm"))
+    }
+    .track_h_axis(
+      rt[["axis.text.x"]],
+      # wrapped labels: the one with the most lines need not be the longest
+      # (short words wrap more), so measure them all
+      if (is.finite(wrap_mm)) {
+        unique(h_labs)
+      } else {
+        .axis_probe(h_labs, rt[["axis.text.x"]])
+      },
+      tick + .PAD_MM,
+      rot = xrot,
+      wrap_mm = wrap_mm,
+      n_dodge = xdodge
+    )
+  }
+  xwrap_mm <- x_wrap(per_panel_mm)
   # The x tick-label row height, now that the wrap budget is known (deferred from
   # the gutter block above). Polar keeps the collapsed zero set earlier.
   if (!polar) {
-    xl <- if (.axis_shows_labels(hsc)) {
-      .track_h_axis(
-        rt[["axis.text.x"]],
-        # wrapped labels: the one with the most lines need not be the longest
-        # (short words wrap more), so measure them all
-        if (is.finite(xwrap_mm)) {
-          unique(h_labs)
-        } else {
-          .axis_probe(h_labs, rt[["axis.text.x"]])
-        },
-        tick + .PAD_MM,
-        rot = xrot,
-        wrap_mm = xwrap_mm,
-        n_dodge = xdodge
-      )
-    } else {
-      vellum::vl_unit(0, "mm")
-    }
+    xl <- x_track(xwrap_mm)
   }
 
   # --- columns: [ legend(left)? | ytitle | (ylabels panel gap)xC |
@@ -863,38 +870,82 @@ NULL
   # that; when they cannot (`plot.margin = 0` with nothing above the panels,
   # say) a spacer track reserves the rest (VP-138). Only knowable once the
   # page size is set; a plot that needs no spacer keeps its layout.
-  spacer <- c(t = 0, r = 0, b = 0, l = 0)
-  if (!polar && all(is.finite(pmm))) {
-    spacer <- .tick_overhang_spacer(
-      built,
-      flip,
-      rt,
-      pmm,
-      xrot,
-      yrot,
-      xwrap_mm,
-      W$u,
-      H$u,
-      coord,
-      list(
-        t = seq_len(panel_row[1] - 1L),
-        b = seq_along(H$u)[-seq_len(panel_row[R])],
-        l = seq_len(panel_col[1] - 1L),
-        r = seq_along(W$u)[-seq_len(panel_col[C])]
-      )
+  with_spacer <- function(wu, hu, s) {
+    sp <- function(side) list(vellum::vl_unit(s[[side]], "mm"))
+    if (s[["t"]] > 0) {
+      hu <- c(sp("t"), hu)
+    }
+    if (s[["b"]] > 0) {
+      hu <- c(hu, sp("b"))
+    }
+    if (s[["l"]] > 0) {
+      wu <- c(sp("l"), wu)
+    }
+    if (s[["r"]] > 0) {
+      wu <- c(wu, sp("r"))
+    }
+    list(w = wu, h = hu)
+  }
+  panel_mm_at <- function(s) {
+    tr <- with_spacer(W$u, H$u, s)
+    m <- .panel_mm(tr$w, tr$h, page_width, page_height, rt, respect)
+    c(
+      w = .null_weight(panel_w) * m[["w"]],
+      h = .null_weight(panel_h) * m[["h"]]
     )
   }
-  if (any(spacer > 0)) {
-    sp <- function(side) list(vellum::vl_unit(spacer[[side]], "mm"))
-    if (spacer[["t"]] > 0) H$u <- c(sp("t"), H$u)
-    if (spacer[["b"]] > 0) H$u <- c(H$u, sp("b"))
-    if (spacer[["l"]] > 0) W$u <- c(sp("l"), W$u)
-    if (spacer[["r"]] > 0) W$u <- c(W$u, sp("r"))
-    pmm <- .panel_mm(W$u, H$u, page_width, page_height, rt, respect)
-    pmm <- c(
-      w = .null_weight(panel_w) * pmm[["w"]],
-      h = .null_weight(panel_h) * pmm[["h"]]
+  spacer <- c(t = 0, r = 0, b = 0, l = 0)
+  if (!polar && all(is.finite(pmm))) {
+    outer <- list(
+      t = seq_len(panel_row[1] - 1L),
+      b = seq_along(H$u)[-seq_len(panel_row[R])],
+      l = seq_len(panel_col[1] - 1L),
+      r = seq_along(W$u)[-seq_len(panel_col[C])]
     )
+    # A left / right spacer narrows the panel columns, so the x wrap budget
+    # (and with it the x label row and the end labels' reach) follows it.
+    refresh_x <- function(s) {
+      if (s[["l"]] + s[["r"]] > 0 && can_wrap_x) {
+        xwrap_mm <<- x_wrap(per_panel_mm - (s[["l"]] + s[["r"]]) / C)
+        xl <<- x_track(xwrap_mm)
+        if (!is.na(shared_xl)) H$u[[shared_xl]] <<- xl
+      }
+    }
+    spacer <- .solve_overhang(function(s) {
+      refresh_x(s)
+      .tick_overhang_spacer(
+        built,
+        flip,
+        rt,
+        panel_mm_at(s),
+        xrot,
+        yrot,
+        xwrap_mm,
+        W$u,
+        H$u,
+        coord,
+        outer,
+        cur = s
+      )
+    })
+    # the budget the labels draw with is the returned spacer's
+    refresh_x(spacer)
+  }
+  if (any(spacer > 0)) {
+    tr <- with_spacer(W$u, H$u, spacer)
+    W$u <- tr$w
+    H$u <- tr$h
+    pmm <- panel_mm_at(c(t = 0, r = 0, b = 0, l = 0))
+    # Per-panel legends beside the panels: re-check the width they leave
+    # now that a left / right spacer took its share (VP-140).
+    if (spacer[["l"]] + spacer[["r"]] > 0) {
+      panel_legends_squeeze <- panel_legends_squeeze ||
+        (any(is.finite(pleg_w)) &&
+          isTRUE(
+            per_panel_mm - (spacer[["l"]] + spacer[["r"]]) / C <
+              .PANEL_LEGEND_MIN_MM
+          ))
+    }
   }
   # Per-panel legends above / below the panels that would leave them shorter
   # than `.PANEL_LEGEND_MIN_MM` on this page: collected, as for the width
@@ -1122,12 +1173,41 @@ NULL
   )
 }
 
+# Solve the end-tick spacers of all four sides together (VP-140). `need(s)`
+# returns the spacer each side needs given the spacers `s` already placed (the
+# panel shrunk by all of them). A spacer on one side shrinks the panel and so
+# the end gap on the opposite side too; solving each side alone left a
+# sub-millimetre clip there. Spacers only grow from pass to pass, so a side
+# that needed nothing extra keeps what the first pass gave it (one spacer
+# alone converges at once). The coupling is the end gaps' share of the panel,
+# which can be large when the end breaks sit well inside it, so iterate until
+# no side grows by more than `tol` mm (`max_passes` is only a safety cap). A
+# need that cannot be computed (the spacers left no panel: `.panel_mm()` is
+# NA) keeps the spacers found so far, as the single pass before VP-140 did.
+.solve_overhang <- function(need, tol = 1e-3, max_passes = 25L) {
+  s <- c(t = 0, r = 0, b = 0, l = 0)
+  for (i in seq_len(max_passes)) {
+    n <- need(s)
+    bad <- !is.finite(n)
+    n[bad] <- s[bad]
+    nxt <- pmax(s, n)
+    grew <- max(nxt - s)
+    s <- nxt
+    if (grew < tol) {
+      break
+    }
+  }
+  s
+}
+
 # The spacer (mm per side, t / r / b / l) the end tick labels need beyond what
 # the plot margin and the tracks between the panels and the page edge already
 # give them (VP-138). `outer` names, per side, the track indices outside the
-# panels; `pmm` is the panel's mm size before any spacer. A spacer shrinks the
-# panel, which moves the end break nearer its edge, so it is solved for that:
-# the reach `e` must fit in the room `avail` plus the end gap `g * (size - s)`.
+# panels (before any spacer); `pmm` is the panel's mm size with the spacers
+# `cur` in place. A side's own spacer shrinks the panel, which moves the end
+# break nearer its edge, so it is solved for that: the reach `e` must fit in
+# the room `avail` plus the end gap `g * (size - s)`, where `size` is the
+# panel with every other side's spacer taken (`.solve_overhang()`).
 .tick_overhang_spacer <- function(
   built,
   flip,
@@ -1139,7 +1219,8 @@ NULL
   wu,
   hu,
   coord,
-  outer
+  outer,
+  cur = c(t = 0, r = 0, b = 0, l = 0)
 ) {
   pm <- rep_len(rt[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
   # coord_trans draws its axes from break/domain-warped copies of the scales
@@ -1173,6 +1254,7 @@ NULL
   )
   need <- c(t = 0, r = 0, b = 0, l = 0)
   solve <- function(e, g, size, side) {
+    size <- size + cur[[side]] # the panel without this side's own spacer
     s <- if (g < 0.999) (e - g * size - avail[[side]]) / (1 - g) else 0
     need[[side]] <<- max(need[[side]], s)
   }

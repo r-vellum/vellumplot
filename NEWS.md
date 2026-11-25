@@ -9,6 +9,13 @@
 
 ## Bug fixes
 
+* End-tick spacers (VP-138) on opposite sides are solved together, so a top
+  and a bottom (or left and right) spacer no longer leave a sub-millimetre
+  clip; a left / right spacer also narrows the x-label wrap budget and is
+  counted in the per-panel legend width check (VP-140). Aligned compositions
+  that fill the page give the cells on their edges the same room, by
+  widening the figure's margin.
+
 * A composition's auto-tags (`compose_annotation(tag_levels =)`) take a band
   above each row of cells, sized to the tallest tag as drawn and rotated by
   the `plot.tag` element's `angle`, like a plot's own tag (VP-142). They
