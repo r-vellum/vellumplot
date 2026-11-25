@@ -118,7 +118,7 @@ guide_bins <- function(
   key_d <- .guide_key_d(g, m)
   labs <- .bins_labels(sc)
   shown <- .bins_shown(sc)
-  lw <- vapply(labs, .mm_tw, 0, fs = m$text_fs)
+  lw <- vapply(labs, .mm_tw, 0, fs = m$text_fs, el = m$text_el)
   lw[-(shown + 1L)] <- 0
   tick <- .LEGEND_TICK_MM
   gap <- m$lab_gap / 2
@@ -127,7 +127,7 @@ guide_bins <- function(
   } else {
     0
   }
-  tw <- if (th > 0) .mm_tw_any(sc$name, m$title_fs) else 0
+  tw <- if (th > 0) .mm_tw_any(sc$name, m$title_fs, m$title_el) else 0
   # an end label (show.limits) overhangs the key run by half its extent
   if (horizontal) {
     # neighbouring boundary labels sit one cell apart, centred on their ticks

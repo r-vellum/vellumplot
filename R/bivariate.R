@@ -575,12 +575,12 @@ guide_bivariate <- function(
   ticks <- .bi_tick_labels(bi)
   lab_gap <- 0.6
   s <- bi$key_size %||%
-    max(1.5 * m$key, .bi_tick_span(ticks$x, lab_fs))
+    max(1.5 * m$key, .bi_tick_span(ticks$x, lab_fs, m$text_el))
   side <- bi$dim * s
-  xw <- .mm_tw(bi$xlab, m$text_fs)
-  yw <- .mm_tw(bi$ylab, m$text_fs)
-  xlab_h <- if (!is.null(ticks$x)) .mm_th(lab_fs) + lab_gap else 0
-  ylab_w <- if (!is.null(ticks$y)) .mm_tw(ticks$y, lab_fs) + lab_gap else 0
+  xw <- .mm_tw(bi$xlab, m$text_fs, m$text_el)
+  yw <- .mm_tw(bi$ylab, m$text_fs, m$text_el)
+  xlab_h <- if (!is.null(ticks$x)) .mm_th(lab_fs, m$text_el) + lab_gap else 0
+  ylab_w <- if (!is.null(ticks$y)) .mm_tw(ticks$y, lab_fs, m$text_el) + lab_gap else 0
   show_title <- isTRUE(m$show_title) && !is.null(g$sc$name)
   # The y arrowhead reaches the grid's top edge, so a title gets a row gap more
   # clearance than a keyed legend's.
@@ -615,7 +615,7 @@ guide_bivariate <- function(
     cell = cell,
     width = max(
       m$pad + cell[1],
-      if (show_title) .mm_tw_any(g$sc$name, m$title_fs) else 0
+      if (show_title) .mm_tw_any(g$sc$name, m$title_fs, m$title_el) else 0
     ),
     height = th + cell[2] + m$row_gap
   )
@@ -627,11 +627,11 @@ guide_bivariate <- function(
 # theirs, so the first pair needs w1 + w2 / 2 and any later pair
 # (w[k] + w[k + 1]) / 2, plus a gap. Sizing to the widest label alone let the
 # left-justified first label run into the second.
-.bi_tick_span <- function(ticks, fs, gap = 1) {
+.bi_tick_span <- function(ticks, fs, el = NULL, gap = 1) {
   if (length(ticks) < 2L) {
     return(0)
   }
-  w <- vellum::vl_strwidth(as.character(ticks), "", "plain", fs, unit = "mm")
+  w <- .el_strwidth(as.character(ticks), el, fs)
   k <- length(w)
   need <- c(w[1] + w[2] / 2, if (k > 2L) (w[-c(1L, k)] + w[-c(1L, 2L)]) / 2)
   max(need) + gap
