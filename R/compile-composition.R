@@ -188,6 +188,12 @@ NULL
     }
   }
   Ttag <- Ttit <- Tsub <- Bxl <- Bxt <- Bcap <- vector("list", nr)
+  # The composition's own auto-tags (`tag_levels`) take a band above each row
+  # of cells, as tall as the row's tallest tag measured as drawn (rotated by
+  # the plot.tag element's angle), like a plot's own tag track (VP-142).
+  # Before, they were drawn over the top-left corner of each panel.
+  ctags <- .comp_tags(comp, length(plans), rt0)
+  Ctag <- vector("list", nr)
   Tleg <- Bleg <- vector("list", nr)
   for (r in seq_len(nr)) {
     ix <- in_row(r)
@@ -196,6 +202,11 @@ NULL
     }
     if (uses(ix, "bottom")) {
       Bleg[[r]] <- .umax(lapply(bands[ix], `[[`, "B_legend"))
+    }
+    if (!is.null(ctags)) {
+      Ctag[[r]] <- .umax(lapply(ix, function(i) {
+        .track_h_band(rt0[["plot.tag"]], ctags[i], .PAD_MM, NA_real_)
+      }))
     }
     Ttag[[r]] <- .umax(lapply(bands[ix], `[[`, "T_tag"))
     Ttit[[r]] <- .umax(lapply(bands[ix], `[[`, "T_title"))
@@ -278,8 +289,11 @@ NULL
   }
   tag_row <- title_row <- subtitle_row <- integer(nr)
   panel_row <- xlabels_row <- xtitle_row <- caption_row <- integer(nr)
-  tleg_row <- bleg_row <- rep(NA_integer_, nr)
+  tleg_row <- bleg_row <- ctag_row <- rep(NA_integer_, nr)
   for (r in seq_len(nr)) {
+    if (!is.null(Ctag[[r]])) {
+      ctag_row[r] <- .tk_add(H, Ctag[[r]])
+    }
     tag_row[r] <- .tk_add(H, Ttag[[r]])
     title_row[r] <- .tk_add(H, Ttit[[r]])
     subtitle_row[r] <- .tk_add(H, Tsub[[r]])
@@ -323,6 +337,7 @@ NULL
       xlabels_row = xlabels_row[e$r],
       xtitle_row = xtitle_row[e$r],
       tag_row = tag_row[e$r],
+      ctag_row = ctag_row[e$r],
       title_row = title_row[e$r],
       subtitle_row = subtitle_row[e$r],
       caption_row = caption_row[e$r],
@@ -341,6 +356,7 @@ NULL
     heights = .tk_units(H),
     ncol_total = length(W$u),
     map = map,
+    tags = ctags,
     figguides = figguides,
     figlegend_side = figside,
     figlegend_col = figlegend_col,
@@ -715,12 +731,8 @@ NULL
       subplot = i
     )
   }
-  if (!is.null(comp@tag)) {
-    tags <- .format_tags(length(plans), comp@tag)
-    for (i in seq_along(plans)) {
-      gm <- glo$map[[i]]
-      scene <- .draw_tag_corner(scene, gm$panel_row, gm$panel_col, tags[i], rt0)
-    }
+  for (i in seq_along(glo$tags)) {
+    scene <- .draw_tag_corner(scene, glo$map[[i]], glo$tags[i], rt0)
   }
   vellum::pop(vellum::pop(vellum::pop(scene)))
 }
@@ -839,22 +851,20 @@ NULL
   paste0(tag$prefix %||% "", body, tag$suffix %||% "")
 }
 
-# Draw a sub-plot tag in the top-left corner of its panel cell.
-.draw_tag_corner <- function(scene, row, col, text, rt) {
-  el <- rt[["plot.tag"]]
-  if (.is_blank(el)) {
-    return(scene)
+# A composition's auto-tag labels, one per sub-plot, or NULL when it has none
+# (no `tag_levels`, or a blank plot.tag element).
+.comp_tags <- function(comp, n, rt) {
+  if (is.null(comp@tag) || .is_blank(rt[["plot.tag"]])) {
+    return(NULL)
   }
-  scene <- vellum::push(scene, vellum::vl_viewport(row = row, col = col))
-  scene <- vellum::draw(
-    scene,
-    vellum::text_grob(
-      text,
-      x = vellum::vl_unit(0.04, "npc"),
-      y = vellum::vl_unit(0.96, "npc"),
-      just = c("left", "top"),
-      gp = .el_gpar_text(el)
-    )
-  )
-  vellum::pop(scene)
+  .format_tags(n, comp@tag)
+}
+
+# Draw a sub-plot's auto-tag in the band reserved above its row
+# (`ctag_row`, VP-142), across the cell's own columns: at its top-left
+# corner, as ggplot2 / patchwork place plot.tag, and rotated by the element's
+# angle as the plot tag is (VP-137).
+.draw_tag_corner <- function(scene, gm, text, rt) {
+  ncol <- gm$last_col - gm$first_col + 1L
+  .draw_tag(scene, gm$ctag_row, ncol, text, rt, col = gm$first_col)
 }
