@@ -295,32 +295,40 @@ test_that("spacers that eat the page never error (VP-140 review)", {
 })
 
 test_that("end breaks well inside the panel converge with no residual clip", {
-  for (br in list(c(17, 28), c(19, 26))) {
-    p <- vplot(mtcars, width = 4, height = 0.8) |>
-      mark_point(x = wt, y = mpg) |>
-      scale_y_continuous(limits = c(10, 35), breaks = br, expand = c(0, 0)) |>
-      theme(
-        plot.margin = 0,
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title = element_blank(),
-        axis.text.y = element_text(size = 55)
-      )
-    pl <- vellumplot:::.build_panels(p)
-    rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
-    lay <- lay_of(p)
-    h <- conv_mm(lay$heights)
-    n <- length(h)
-    panel <- p@height * 25.4 - sum(h, na.rm = TRUE)
-    ex <- vellumplot:::.end_tick_extent(
-      pl$scales$y,
-      rt[["axis.text.y"]],
-      0,
-      c("right", "centre"),
-      "y"
+  # end breaks a third of the way in (g ~ 0.36): each side's spacer shrinks
+  # the panel and so the other side's end gap a lot; a fixed 3-pass cap left
+  # ~0.2 mm clipped here
+  p <- vplot(mtcars, width = 4, height = 1.4) |>
+    mark_point(x = wt, y = mpg) |>
+    scale_y_continuous(
+      limits = c(10, 35),
+      breaks = c(19, 26),
+      expand = c(0, 0)
+    ) |>
+    theme(
+      plot.margin = 0,
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.title = element_blank(),
+      axis.text.y = element_text(size = 80)
     )
-    expect_gt(ex$g[1], 0.25)
-    expect_lte(ex$e[1] - (h[n] + ex$g[1] * panel), 2e-3)
-    expect_lte(ex$e[2] - (h[1] + ex$g[2] * panel), 2e-3)
-  }
+  pl <- vellumplot:::.build_panels(p)
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
+  lay <- lay_of(p)
+  h <- conv_mm(lay$heights)
+  n <- length(h)
+  # both spacers present and a real panel left (text widths vary by platform)
+  expect_identical(lay$panel_row, 2L)
+  panel <- p@height * 25.4 - sum(h, na.rm = TRUE)
+  expect_gt(panel, 10)
+  ex <- vellumplot:::.end_tick_extent(
+    pl$scales$y,
+    rt[["axis.text.y"]],
+    0,
+    c("right", "centre"),
+    "y"
+  )
+  expect_gt(ex$g[1], 0.3)
+  expect_lte(ex$e[1] - (h[n] + ex$g[1] * panel), 2e-3)
+  expect_lte(ex$e[2] - (h[1] + ex$g[2] * panel), 2e-3)
 })
