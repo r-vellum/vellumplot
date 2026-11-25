@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vellumplot</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.24.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,18 +59,18 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/r-vellum/vellumplot/blob/v0.25.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.25.0" id="vellumplot-0250">vellumplot 0.25.0<a class="anchor" aria-label="anchor" href="#vellumplot-0250"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-0-25-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0"></a></h3>
 <ul><li>
 <code>theme(strip.clip =)</code> sets whether facet strip text is clipped to its strip, with ggplot2’s values: <code>"inherit"</code> (the default) and <code>"on"</code> clip, <code>"off"</code> lets a long label run past the strip (VP-143). It round-trips through <code><a href="../reference/as_spec.html">as_spec()</a></code> / <code><a href="../reference/spec_to_json.html">spec_to_json()</a></code>, and an unknown value errors.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<h3 id="bug-fixes-0-25-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0"></a></h3>
 <ul><li><p>End-tick spacers (VP-138) on opposite sides are solved together, so a top and a bottom (or left and right) spacer no longer leave a sub-millimetre clip; a left / right spacer also narrows the x-label wrap budget and is counted in the per-panel legend width check (VP-140). Aligned compositions that fill the page give the cells on their edges the same room, by widening the figure’s margin.</p></li>
 <li><p>A composition’s auto-tags (<code>compose_annotation(tag_levels =)</code>) take a band above each row of cells, sized to the tallest tag as drawn and rotated by the <code>plot.tag</code> element’s <code>angle</code>, like a plot’s own tag (VP-142). They used to be drawn over the top-left corner of each panel at a fixed angle.</p></li>
 <li><p>Venn counts and set names, the compass “N”, graticule labels and significance-bracket labels use the theme’s base text family, face and weight (VP-139), as the other mark labels have since VP-135. Venn set names and the compass “N” stay bold (in the theme’s family). Plots in the default font are unchanged.</p></li>

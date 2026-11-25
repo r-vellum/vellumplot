@@ -1,6 +1,6 @@
 # Changelog
 
-## vellumplot (development version)
+## vellumplot 0.25.0
 
 ### New features
 
