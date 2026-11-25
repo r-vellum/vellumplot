@@ -170,3 +170,110 @@ test_that("animated chord label room is measured in the theme font", {
   # and the caller's font is put back
   expect_null(vellumplot:::.mark_ctx$text_font)
 })
+
+# VP-139: the last labels that ignored the theme font.
+
+serif <- function(p) {
+  theme(p, text = element_text(family = "Georgia", face = "italic"))
+}
+
+test_that("venn counts and set names draw in the theme font", {
+  v <- vvenn(list(Coffee = c("Ann", "Bo", "Cy"), Tea = c("Bo", "Di")))
+  f0 <- text_fonts(vellum::as_vellum_scene(v))
+  nm0 <- f0[f0$label %in% c("Coffee", "Tea"), ]
+  expect_true(all(is.na(nm0$family)))
+  expect_true(all(nm0$face == "bold"))
+  f <- text_fonts(vellum::as_vellum_scene(serif(v)))
+  nm <- f[f$label %in% c("Coffee", "Tea"), ]
+  ct <- f[f$label %in% c("1", "2"), ]
+  expect_identical(nrow(nm), 2L)
+  expect_true(all(nm$family == "Georgia"))
+  # set names stay bold: the fixed face replaces the theme's italic
+  expect_true(all(nm$face == "bold"))
+  expect_gte(nrow(ct), 2L)
+  expect_true(all(ct$family == "Georgia"))
+  expect_true(all(ct$face == "italic"))
+})
+
+test_that("a fixed face keeps the theme's family and lifts a light weight", {
+  assign(
+    "text_font",
+    list(family = "Verdana", weight = 300L),
+    envir = vellumplot:::.mark_ctx
+  )
+  on.exit(assign("text_font", NULL, envir = vellumplot:::.mark_ctx))
+  el <- vellumplot:::.mark_text_el(8, face = "bold")
+  expect_identical(el@family, "Verdana")
+  expect_identical(el@face, "bold")
+  expect_identical(vellumplot:::.el_weight(el), 700L)
+  # with no theme font the gpar is the plain bold one it always was
+  assign("text_font", NULL, envir = vellumplot:::.mark_ctx)
+  expect_identical(
+    vellumplot:::.mark_gpar_text(11, face = "bold"),
+    vellum::vl_gpar(fontsize = 11, fontface = "bold")
+  )
+})
+
+test_that("compass N and graticule labels draw in the theme font", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- vplot(nc) |>
+    mark_sf() |>
+    coord_sf(graticule = TRUE) |>
+    mark_compass() |>
+    serif()
+  f <- text_fonts(vellum::as_vellum_scene(p))
+  n <- f[f$label == "N", ]
+  expect_identical(nrow(n), 1L)
+  expect_identical(n$family, "Georgia")
+  expect_identical(n$face, "bold")
+  grat <- f[grepl("°", f$label), ]
+  expect_gte(nrow(grat), 2L)
+  expect_true(all(grat$family == "Georgia"))
+})
+
+test_that("significance bracket labels draw in the theme font", {
+  set.seed(1)
+  d <- data.frame(
+    g = rep(c("a", "b"), each = 20),
+    y = c(rnorm(20), rnorm(20, 1))
+  )
+  p <- vplot(d) |>
+    mark_boxplot(x = g, y = y) |>
+    mark_signif(x = g, y = y, label = "stars") |>
+    serif()
+  f <- text_fonts(vellum::as_vellum_scene(p))
+  st <- f[grepl("^(\\*+|ns)$", f$label), ]
+  expect_identical(nrow(st), 1L)
+  expect_identical(st$family, "Georgia")
+})
+
+# VP-141: the bold header is measured bold.
+
+test_that("vtable measures its header in the bold face it draws", {
+  d <- data.frame(Mileage = c(1, 2))
+  vt <- vtable(d)
+  bold <- vellum::vl_strwidth("Mileage", "", "bold", 9, unit = "mm")
+  plain <- vellum::vl_strwidth("Mileage", "", "plain", 9, unit = "mm")
+  expect_gt(bold, plain)
+  expect_equal(vt@col_widths[1], bold + 2 * vt@cell_pad, tolerance = 1e-9)
+  # no header row: the undrawn name keeps the cells' face
+  nh <- vtable(d, header = FALSE)
+  expect_equal(nh@col_widths[1], plain + 2 * nh@cell_pad, tolerance = 1e-9)
+  # a theme font re-measures the header in its bold
+  local_mocked_bindings(
+    .theme_auto = function() {
+      list(text = element_text(family = "Verdana", weight = 300L))
+    }
+  )
+  rv <- vellumplot:::.vtable_font(vt)
+  vb <- vellum::vl_strwidth(
+    "Mileage",
+    "Verdana",
+    "bold",
+    9,
+    unit = "mm",
+    fontweight = 700L
+  )
+  expect_equal(rv$vt@col_widths[1], vb + 2 * vt@cell_pad, tolerance = 1e-9)
+})

@@ -149,7 +149,7 @@ vtable <- function(
       fmt <- .fmt_col(data[[nm]])
       al <- (align %||% list())[[nm]] %||%
         (if (is.numeric(data[[nm]])) "right" else "left")
-      w <- max(.strw_mm(c(nm, fmt), font_size), na.rm = TRUE) + 2 * pad_mm
+      w <- .vtable_col_w(nm, fmt, font_size, NULL, isTRUE(header), pad_mm)
       list(
         name = nm,
         kind = "text",
@@ -177,6 +177,30 @@ vtable <- function(
     height = sum(row_heights) / 25.4,
     dpi = dpi
   )
+}
+
+# The font a header cell draws in: the cells' font, bold. A bold face means at
+# least weight 700, as `.vtable_text()` draws it.
+.vtable_bold <- function(font) {
+  font$face <- "bold"
+  if (!is.null(font$weight)) {
+    font$weight <- max(font$weight, 700L)
+  }
+  font
+}
+
+# The mm width a text column needs: its widest cell, and its header measured in
+# the bold face it draws in (VP-141), plus the cell padding either side. A table
+# without a header row keeps measuring the (undrawn) name in the cells' face,
+# as it always has.
+.vtable_col_w <- function(header, cells, fontsize, font, bold_header, pad_mm) {
+  hw <- .strw_mm(
+    header,
+    fontsize,
+    if (bold_header) .vtable_bold(font) else font
+  )
+  cw <- .strw_mm(cells, fontsize, font)
+  max(hw, cw, na.rm = TRUE) + 2 * pad_mm
 }
 
 # Draw a text cell at grid (row, col), aligned within it.
@@ -231,11 +255,14 @@ vtable <- function(
   for (c in seq_along(vt@descs)) {
     d <- vt@descs[[c]]
     if (identical(d$kind, "text")) {
-      w[c] <- max(
-        .strw_mm(c(d$header, d$cells), vt@font_size, font),
-        na.rm = TRUE
-      ) +
-        2 * vt@cell_pad
+      w[c] <- .vtable_col_w(
+        d$header,
+        d$cells,
+        vt@font_size,
+        font,
+        vt@header,
+        vt@cell_pad
+      )
     }
   }
   vt@width <- vt@width + (sum(w) - sum(vt@col_widths)) / 25.4
