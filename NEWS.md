@@ -1,5 +1,33 @@
 # vellumplot (development version)
 
+## New features
+
+* `theme_brand()` themes a plot from a brand.yml file, the format of Quarto's
+  `_brand.yml` (F-26). The brand's background becomes the page, its
+  foreground the ink of titles and unmapped marks (`element_geom()`), its
+  primary colour the accent, and the greys between are foreground/background
+  blends, as in brand.yml's `theme_brand_ggplot2()`. `color.palette` (or the
+  primary, secondary, ... colours) is the default discrete palette, padded
+  with vellumplot's own colours past its length, and the base and headings
+  font families go to the text and the titles and strips. It builds on
+  `theme_minimal()` (`base =` picks another preset) and keeps the preset's
+  blank elements blank. With no `brand =` it reads the brand Quarto resolved
+  for the document being rendered (light or dark, `mode =`), or else the
+  nearest `_brand.yml`. `fetch_fonts = TRUE` downloads Google/Bunny brand
+  fonts or registers the brand's font files for the session. Reading a file
+  needs the brand.yml package (Suggests).
+* `options(vellumplot.brand = TRUE)` (or a path) themes every plot that has
+  no theme of its own with the brand, and says once per session which file it
+  used (F-26). Explicit themes are never overridden. Off by default.
+  `options(vellumplot.brand.fetch_fonts = TRUE)` fetches missing brand fonts
+  for it.
+* A composition with no theme of its own draws its page background and
+  title bands from its first themed sub-plot's theme (the page was always
+  white), or from the brand when auto-apply is on and no sub-plot sets a
+  theme, so composed dark or branded plots have no white margin (F-26).
+* `as_spec()` now also warns when a theme's default palette is dropped (a
+  brand or custom palette; a preset's own palette still round-trips).
+
 # vellumplot 0.23.1
 
 ## Bug fixes

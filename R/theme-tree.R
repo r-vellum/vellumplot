@@ -219,7 +219,7 @@ NULL
 # resolving NULL left every element's size NULL, and a layout built from it
 # measured text at no size at all (VR-15).
 .resolve_theme <- function(theme) {
-  theme <- theme %||% .theme_default()
+  theme <- theme %||% .theme_auto()
   cache <- new.env(parent = emptyenv())
   out <- list()
   for (slot in .DRAWN_LEAVES) {

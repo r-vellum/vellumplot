@@ -34,6 +34,7 @@ Remotes:
     schochastics/edgebundle,
     schochastics/graphlayouts
 Suggests:
+    brand.yml,
     classInt,
     edgebundle (>= 1.0.0),
     gapminder,
@@ -50,6 +51,7 @@ Suggests:
     png,
     quantreg,
     sf,
+    systemfonts (>= 1.2.0),
     testthat (>= 3.0.0),
     vctrs,
     withr
@@ -77,6 +79,7 @@ Collate:
     'marks.R'
     'annotate.R'
     'bivariate.R'
+    'brand.R'
     'vgraph.R'
     'vplot.R'
     'sankey.R'

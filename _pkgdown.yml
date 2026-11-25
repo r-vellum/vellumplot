@@ -256,6 +256,7 @@ reference:
   contents:
   - theme_gray
   - theme_sketch
+  - theme_brand
   - element
   - element_geom
   - rel

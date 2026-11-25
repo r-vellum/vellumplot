@@ -74,8 +74,34 @@ NULL
   invisible()
 }
 
-# The resolved-or-default complete theme for a spec.
-.theme_of <- function(spec) spec@theme %||% .theme_default()
+# The resolved-or-default complete theme for a spec. The single theme
+# resolver: a spec with no theme of its own gets the automatic default.
+.theme_of <- function(spec) spec@theme %||% .theme_auto()
+
+# The default theme for a plot that sets none: the brand theme when
+# `options(vellumplot.brand)` asks for one and a brand is found (see
+# `theme_brand()`), else the gray default.
+.theme_auto <- function() .brand_auto_theme() %||% .theme_default()
+
+# The theme a composition's figure (page background, title bands, collected
+# legend chrome) draws with: the composition's own theme when it has one;
+# else, when any leaf plot sets a theme, the first leaf's (so composed dark or
+# branded plots get a matching page) with the figure-level settings
+# (legend placement, spacing, margins) left at their defaults; else the
+# automatic default (`.theme_auto()`), the brand when auto-apply is on.
+.comp_figure_theme <- function(comp) {
+  if (!is.null(comp@theme)) {
+    return(comp@theme)
+  }
+  leaves <- .composition_leaf_plots(comp)
+  themed <- vapply(leaves, function(p) !is.null(p@theme), logical(1))
+  if (!any(themed)) {
+    return(.theme_auto())
+  }
+  th <- .theme_of(leaves[[1]])
+  th[intersect(names(th), .theme_setting_names)] <- NULL
+  th
+}
 
 # Neon qualitative palette for theme_cyberpunk (bright saturated hues on a dark
 # canvas). Ordered so the first few series stay maximally distinct.
@@ -95,11 +121,8 @@ NULL
 # Rides the theme as a plain key, like `palette`; mark emitters read it as the
 # fallback when a layer sets no `sketch =` of its own (see `.mark_sketch`).
 .theme_sketch_default <- function(spec) {
-  th <- spec@theme
-  if (is.null(th)) {
-    return(NULL)
-  }
-  s <- th[["sketch"]]
+  # `.theme_of()` without building the gray default, which has no sketch.
+  s <- (spec@theme %||% .brand_auto_theme())[["sketch"]]
   if (inherits(s, "vellum_sketch")) s else NULL
 }
 
@@ -107,7 +130,8 @@ NULL
 # discrete scale, `palette.continuous` for continuous/binned. Read from the raw
 # theme list (these keys ride the theme but are not drawn elements).
 .theme_palette <- function(spec, kind) {
-  th <- spec@theme
+  # `.theme_of()` without building the gray default, which has no palette.
+  th <- spec@theme %||% .brand_auto_theme()
   if (is.null(th)) {
     return(NULL)
   }
@@ -468,7 +492,7 @@ theme <- function(plot, ...) {
   # legend, panel spacing, tags); merge onto its base like a plot's.
   if (S7::S7_inherits(plot, PlotComposition)) {
     plot@theme <- .mark_unblank(
-      .merge_theme(plot@theme %||% .theme_default(), args),
+      .merge_theme(plot@theme %||% .theme_auto(), args),
       args
     )
     return(plot)
