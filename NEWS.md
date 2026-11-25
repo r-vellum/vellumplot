@@ -16,6 +16,11 @@
   nearest `_brand.yml`. `fetch_fonts = TRUE` downloads Google/Bunny brand
   fonts or registers the brand's font files for the session. Reading a file
   needs the brand.yml package (Suggests).
+* `element_text(weight = )` sets a numeric font weight (100 to 900, or a
+  name such as `"light"` or `"semi-bold"`), drawn in that face of a
+  multi-weight family through vellum's new `vl_gpar(fontweight = )` (F-26).
+  `theme_brand()` maps the brand's `typography.base.weight` to all text and
+  `typography.headings.weight` to the title and strips.
 * `options(vellumplot.brand = TRUE)` (or a path) themes every plot that has
   no theme of its own with the brand, and says once per session which file it
   used (F-26). Explicit themes are never overridden. Off by default.

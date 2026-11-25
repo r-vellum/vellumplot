@@ -526,4 +526,59 @@ test_that("as_spec() warns that a brand theme is not kept", {
   expect_warning(as_spec(p), "theme_brand")
   # a preset's own palette still round-trips quietly
   expect_no_warning(as_spec(pts() |> theme_cyberpunk()))
+
+# --- font weights ---------------------------------------------------------------
+
+test_that("element_text(weight =) validates and reaches the text gpar", {
+  expect_identical(element_text(weight = "semi-bold")@weight, 600L)
+  expect_identical(element_text(weight = 300)@weight, 300L)
+  expect_null(element_text()@weight)
+  expect_error(element_text(weight = 250), "weight")
+  gp <- vellumplot:::.el_gpar_text(element_text(size = 11, weight = 300))
+  expect_identical(gp@fontweight, 300L)
+  # inherited down the theme tree like any text property
+  p <- pts() |> theme(text = element_text(weight = "light"))
+  rt <- vellumplot:::.resolve_theme(p@theme)
+  expect_identical(rt$axis.text.x@weight, 300L)
+})
+
+test_that("brand weights map to text and headings", {
+  skip_if_not_installed("brand.yml")
+  local_brand_state()
+  path <- local_brand(c(
+    keys_brand,
+    "typography:",
+    "  base:",
+    "    weight: 300",
+    "  headings:",
+    "    weight: semi-bold"
+  ))
+  th <- theme_brand(pts(), path)@theme
+  expect_identical(th$text@weight, 300L)
+  expect_identical(th$plot.title@weight, 600L)
+  expect_identical(th$strip.text@weight, 600L)
+  expect_null(theme_brand(pts(), path, fonts = FALSE)@theme$text@weight)
+})
+
+test_that("a weighted title draws in that face", {
+  sf <- systemfonts::system_fonts()
+  fams <- c("Helvetica Neue", "Inter", "Lato", "Roboto", "Open Sans", "Noto Sans", "DejaVu Sans")
+  fam <- Find(
+    function(f) {
+      w <- as.character(sf$weight[sf$family == f & !sf$italic])
+      all(c("light", "normal") %in% w)
+    },
+    fams
+  )
+  skip_if(is.null(fam), "no family with light and regular faces")
+  base <- pts() |>
+    labs(title = "Fuel use by weight") |>
+    theme_minimal(base_family = fam)
+  light <- base |> theme(plot.title = element_text(weight = 300))
+  svg_of <- function(p) vellum::scene_svg(p)
+  expect_match(svg_of(light), 'font-weight="300"', fixed = TRUE)
+  expect_false(identical(
+    vellum::scene_svg(light, text = "outline"),
+    vellum::scene_svg(base, text = "outline")
+  ))
 })

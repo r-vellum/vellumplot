@@ -63,8 +63,10 @@ and \code{danger} colours (those that are set and distinct). Entries in the
 background colour are left out. When a scale has
 more levels than the brand has colours, vellumplot's own qualitative
 colours follow. A \verb{scale_*()} palette still wins.
-\item \code{typography.base} sets the family of all text and \code{typography.headings}
-the family of the title, subtitle and facet strips.
+\item \code{typography.base} sets the family and weight of all text, and
+\code{typography.headings} the family of the title, subtitle and facet strips
+and the weight of the title and strips. Weights such as 300 (light) or
+\code{semi-bold} pick that face of a family that has it.
 }
 
 Elements the base preset leaves out (the axis ticks of \code{\link[=theme_minimal]{theme_minimal()}},

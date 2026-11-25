@@ -34,8 +34,10 @@ NULL
 #'   background colour are left out. When a scale has
 #'   more levels than the brand has colours, vellumplot's own qualitative
 #'   colours follow. A `scale_*()` palette still wins.
-#' * `typography.base` sets the family of all text and `typography.headings`
-#'   the family of the title, subtitle and facet strips.
+#' * `typography.base` sets the family and weight of all text, and
+#'   `typography.headings` the family of the title, subtitle and facet strips
+#'   and the weight of the title and strips. Weights such as 300 (light) or
+#'   `semi-bold` pick that face of a family that has it.
 #'
 #' Elements the base preset leaves out (the axis ticks of [theme_minimal()],
 #' say) stay out.
@@ -433,16 +435,26 @@ theme_brand <- function(
   if (nzchar(base_family)) {
     th <- .merge_theme(th, list(text = element_text(family = base_family)))
   }
+  base_weight <- if (fonts) .brand_weight(b$base$weight)
+  head_weight <- if (fonts) .brand_weight(b$headings$weight)
   over <- list(
-    text = element_text(colour = blend(0.1)),
+    text = element_text(colour = blend(0.1), weight = base_weight),
     title = element_text(colour = fg),
-    plot.title = element_text(colour = fg, family = head_family),
+    plot.title = element_text(
+      colour = fg,
+      family = head_family,
+      weight = head_weight
+    ),
     plot.subtitle = element_text(colour = fg, family = head_family),
     plot.caption = element_text(colour = blend(0.25)),
     plot.tag = element_text(colour = fg),
     axis.text = element_text(colour = blend(0.3)),
     legend.text = element_text(colour = blend(0.1)),
-    strip.text = element_text(colour = blend(0.1), family = head_family),
+    strip.text = element_text(
+      colour = blend(0.1),
+      family = head_family,
+      weight = head_weight
+    ),
     panel.grid = element_line(colour = blend(0.85)),
     panel.grid.major = element_line(colour = blend(0.85)),
     panel.grid.minor = element_line(colour = blend(0.9)),
@@ -512,6 +524,19 @@ theme_brand <- function(
 }
 
 # Fonts ------------------------------------------------------------------------
+
+# A brand.yml weight (a number, or a name such as "semi-bold") as a font
+# weight for element_text(), or NULL when unset or not one vellum knows (a
+# brand is not rejected for an odd weight; the text keeps its face).
+.brand_weight <- function(w) {
+  if (is.null(w) || length(w) != 1L) {
+    return(NULL)
+  }
+  tryCatch(
+    vellum::vl_gpar(fontweight = w)@fontweight,
+    error = function(e) NULL
+  )
+}
 
 # Is `family` installed (or registered)? With `fetch`, try the brand's source
 # for it first. A family that stays missing warns once per session and FALSE

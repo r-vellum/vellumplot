@@ -19,7 +19,8 @@ element_text(
   vjust = NULL,
   angle = NULL,
   lineheight = NULL,
-  margin = NULL
+  margin = NULL,
+  weight = NULL
 )
 
 element_line(
@@ -46,6 +47,12 @@ element_blank()
 \item{family, face, size, cex, colour, color, hjust, vjust, angle, lineheight, margin}{Text properties. \code{color} is an alias for \code{colour}; \code{size} is in points and
 \code{cex} is a relative multiplier on the inherited \code{size}; \code{margin} is a
 numeric vector of millimetres (recycled to length 4).}
+
+\item{weight}{Font weight for text: a number from \code{100} to \code{900} in steps
+of 100 (300 light, 400 regular, 600 semi-bold, 700 bold) or a CSS weight
+name such as \code{"light"} or \code{"semi-bold"}, for families that ship more than
+regular and bold (see \code{\link[vellum:vl_gpar]{vellum::vl_gpar()}}'s \code{fontweight}). It replaces the
+weight \code{face} implies and keeps its italic. \code{NULL} (default) inherits.}
 
 \item{linewidth, linetype, lineend}{Line properties.}
 

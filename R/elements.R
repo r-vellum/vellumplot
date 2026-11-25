@@ -23,7 +23,8 @@ NULL
     vjust = S7::class_any,
     angle = S7::class_any,
     lineheight = S7::class_any,
-    margin = S7::class_any # numeric length-4 (t, r, b, l) in mm
+    margin = S7::class_any, # numeric length-4 (t, r, b, l) in mm
+    weight = S7::class_any # numeric font weight 100..900 (F-26)
   )
 )
 
@@ -62,6 +63,11 @@ NULL
 #'   Text properties. `color` is an alias for `colour`; `size` is in points and
 #'   `cex` is a relative multiplier on the inherited `size`; `margin` is a
 #'   numeric vector of millimetres (recycled to length 4).
+#' @param weight Font weight for text: a number from `100` to `900` in steps
+#'   of 100 (300 light, 400 regular, 600 semi-bold, 700 bold) or a CSS weight
+#'   name such as `"light"` or `"semi-bold"`, for families that ship more than
+#'   regular and bold (see [vellum::vl_gpar()]'s `fontweight`). It replaces the
+#'   weight `face` implies and keeps its italic. `NULL` (default) inherits.
 #' @param linewidth,linetype,lineend Line properties.
 #' @param fill Fill colour (rectangles).
 #' @param sketch For [element_line()] / [element_rect()], a [sketch()] spec giving
@@ -87,11 +93,28 @@ element_text <- function(
   vjust = NULL,
   angle = NULL,
   lineheight = NULL,
-  margin = NULL
+  margin = NULL,
+  weight = NULL
 ) {
   colour <- colour %||% color
   if (!is.null(margin)) {
     margin <- rep_len(margin, 4L)
+  }
+  if (!is.null(weight)) {
+    # vellum validates and normalises a weight (a name becomes its number)
+    call <- environment()
+    weight <- tryCatch(
+      vellum::vl_gpar(fontweight = weight)@fontweight,
+      error = function(e) {
+        cli::cli_abort(
+          c(
+            "{.arg weight} must be a font weight from 100 to 900 in steps of 100, or a weight name.",
+            i = "For example {.code 300}, {.code \"light\"} or {.code \"semi-bold\"}."
+          ),
+          call = call
+        )
+      }
+    )
   }
   .element_text(
     family = family,
@@ -103,7 +126,8 @@ element_text <- function(
     vjust = vjust,
     angle = angle,
     lineheight = lineheight,
-    margin = margin
+    margin = margin,
+    weight = weight
   )
 }
 
@@ -320,6 +344,7 @@ print.rel <- function(x, ...) {
     col = el@colour,
     fontfamily = el@family,
     fontface = el@face,
+    fontweight = el@weight,
     lineheight = el@lineheight,
     features = features
   )
