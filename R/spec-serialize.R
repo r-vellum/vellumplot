@@ -861,10 +861,9 @@ as_spec <- function(plot) {
     # round-trip and should. The old `vp_preset`-is-null gate suppressed exactly
     # that case, because a preset keeps its `vp_preset` attribute through
     # `theme()`.
-    elems <- setdiff(
-      names(plot@theme %||% list()),
-      c(.theme_setting_names, "palette", "palette.continuous")
-    )
+    # The default palettes are compared too: a preset's own (cyberpunk's neon)
+    # rebuilds from the name, but a brand or user palette is dropped.
+    elems <- setdiff(names(plot@theme %||% list()), .theme_setting_names)
     if (length(elems)) {
       pristine <- .preset_theme(attr(plot@theme, "vp_preset") %||% "gray")
       dropped <- Filter(
@@ -872,9 +871,13 @@ as_spec <- function(plot) {
         elems
       )
       if (length(dropped)) {
-        cli::cli_warn(
-          "Dropped custom theme elements ({.field {unlist(dropped)}}) \u2014 theme styling does not round-trip; the preset name is kept."
-        )
+        brand <- attr(plot@theme, "vp_brand")
+        cli::cli_warn(c(
+          "Dropped custom theme elements ({.field {unlist(dropped)}}) \u2014 theme styling does not round-trip; the preset name is kept.",
+          i = if (!is.null(brand)) {
+            "The {.fn theme_brand} theme (from {.file {brand}}) is not kept; apply it again after reading the spec."
+          }
+        ))
       }
     }
   }

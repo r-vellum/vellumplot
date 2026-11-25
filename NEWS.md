@@ -21,9 +21,12 @@
   used (F-26). Explicit themes are never overridden. Off by default.
   `options(vellumplot.brand.fetch_fonts = TRUE)` fetches missing brand fonts
   for it.
-* A composition's page background follows its figure theme's
-  `plot.background` (it was always white), so a branded or dark figure has no
-  white margin.
+* A composition with no theme of its own draws its page background and
+  title bands from its first themed sub-plot's theme (the page was always
+  white), or from the brand when auto-apply is on and no sub-plot sets a
+  theme, so composed dark or branded plots have no white margin (F-26).
+* `as_spec()` now also warns when a theme's default palette is dropped (a
+  brand or custom palette; a preset's own palette still round-trips).
 
 # vellumplot 0.23.1
 

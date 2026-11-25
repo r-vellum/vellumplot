@@ -55,10 +55,12 @@ and fonts go onto a base preset (\code{\link[=theme_minimal]{theme_minimal()}} b
 unmapped marks; \code{primary} is the \code{accent} of smooths and contours. The
 greys in between (text, axis text, gridlines, caption) are blends of
 foreground and background, as in brand.yml's own
-\code{theme_brand_ggplot2()}, so a dark brand gives a dark plot.
+\code{theme_brand_ggplot2()} (axis text and caption a little darker, so they
+keep WCAG AA contrast), and a dark brand gives a dark plot.
 \item The discrete colour palette is \code{color.palette} in file order, or else the
 brand's \code{primary}, \code{secondary}, \code{tertiary}, \code{success}, \code{info}, \code{warning}
-and \code{danger} colours (those that are set and distinct). When a scale has
+and \code{danger} colours (those that are set and distinct). Entries in the
+background colour are left out. When a scale has
 more levels than the brand has colours, vellumplot's own qualitative
 colours follow. A \verb{scale_*()} palette still wins.
 \item \code{typography.base} sets the family of all text and \code{typography.headings}

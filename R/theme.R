@@ -83,6 +83,26 @@ NULL
 # `theme_brand()`), else the gray default.
 .theme_auto <- function() .brand_auto_theme() %||% .theme_default()
 
+# The theme a composition's figure (page background, title bands, collected
+# legend chrome) draws with: the composition's own theme when it has one;
+# else, when any leaf plot sets a theme, the first leaf's (so composed dark or
+# branded plots get a matching page) with the figure-level settings
+# (legend placement, spacing, margins) left at their defaults; else the
+# automatic default (`.theme_auto()`), the brand when auto-apply is on.
+.comp_figure_theme <- function(comp) {
+  if (!is.null(comp@theme)) {
+    return(comp@theme)
+  }
+  leaves <- .composition_leaf_plots(comp)
+  themed <- vapply(leaves, function(p) !is.null(p@theme), logical(1))
+  if (!any(themed)) {
+    return(.theme_auto())
+  }
+  th <- .theme_of(leaves[[1]])
+  th[intersect(names(th), .theme_setting_names)] <- NULL
+  th
+}
+
 # Neon qualitative palette for theme_cyberpunk (bright saturated hues on a dark
 # canvas). Ordered so the first few series stay maximally distinct.
 .NEON_QUAL <- c(

@@ -106,7 +106,7 @@ test_that("theme_brand maps background, foreground and primary", {
   # greys are foreground/background blends
   expect_identical(
     th$axis.text@colour,
-    vellumplot:::.col_mix("#1f3b5a", "#fffdf7", 0.4)
+    vellumplot:::.col_mix("#1f3b5a", "#fffdf7", 0.3)
   )
   expect_identical(attr(th, "vp_preset"), "minimal")
   expect_match(attr(th, "vp_brand"), "_brand.yml$")
@@ -185,28 +185,51 @@ test_that("brand fonts map to text and headings; missing ones fall back", {
   expect_null(q@theme$text@family)
 })
 
-test_that("a file font is registered with fetch_fonts = TRUE", {
+test_that("a file font is registered from a path relative to the brand", {
   skip_if_not_installed("brand.yml")
   skip_if_not_installed("systemfonts", "1.2.0")
   local_brand_state()
-  src <- system.file("fonts", package = "vellum")
-  ttf <- list.files(src, "\\.(ttf|otf)$", full.names = TRUE, recursive = TRUE)
-  skip_if(length(ttf) == 0L, "no bundled font file to register")
+  otf <- system.file("fonts", "STIXTwoMath-Regular.otf", package = "vellum")
+  skip_if(!nzchar(otf), "vellum's bundled STIX Two Math not found")
+  fam <- "STIX Two Math" # the family name inside the file
   path <- local_brand(c(
     keys_brand,
     "typography:",
     "  fonts:",
-    "    - family: F26 Brand Face",
+    paste0("    - family: ", fam),
     "      source: file",
     "      files:",
-    "        - path: brandface.otf",
-    "  base: F26 Brand Face"
+    "        - path: fonts/stix.otf",
+    paste0("  base: ", fam)
   ))
-  file.copy(ttf[1], file.path(dirname(path), "brandface.otf"))
-  # systemfonts registers the file under its own internal family name, so the
-  # check is that fetching ran without error and fell back with a warning if
-  # the name differs.
-  expect_no_error(suppressWarnings(theme_brand(pts(), path, fetch_fonts = TRUE)))
+  dir.create(file.path(dirname(path), "fonts"))
+  file.copy(otf, file.path(dirname(path), "fonts", "stix.otf"))
+  # from another working directory: the path resolves against the brand dir
+  withr::local_dir(tempdir())
+  b <- vellumplot:::.brand_resolve(path)
+  added <- NULL
+  with_mocked_bindings(
+    vellumplot:::.brand_fetch_font(fam, b),
+    add_fonts = function(files) added <<- files,
+    .package = "systemfonts"
+  )
+  expect_identical(
+    normalizePath(added),
+    normalizePath(file.path(dirname(path), "fonts", "stix.otf"))
+  )
+  # end to end, when the family is not installed already (vellum's math
+  # engine may have registered it)
+  skip_if(
+    fam %in% systemfonts::system_fonts()$family,
+    "STIX Two Math is already installed"
+  )
+  expect_warning(
+    p <- theme_brand(pts(), path, fetch_fonts = FALSE),
+    "not installed"
+  )
+  expect_null(p@theme$text@family)
+  expect_no_warning(p <- theme_brand(pts(), path, fetch_fonts = TRUE))
+  expect_identical(p@theme$text@family, fam)
 })
 
 test_that("a google font is fetched with fetch_fonts = TRUE", {
@@ -399,4 +422,108 @@ test_that("a bad auto brand warns and falls back instead of failing", {
   withr::local_options(vellumplot.brand = bad)
   expect_warning(th <- vellumplot:::.theme_of(pts()), "Could not apply")
   expect_identical(th, vellumplot:::.theme_default())
+})
+
+# --- review fixes ---------------------------------------------------------------
+
+test_that("brands without a primary colour work (no accent lookup error)", {
+  skip_if_not_installed("brand.yml")
+  local_brand_state()
+  cases <- list(
+    c("color:", "  foreground: '#111111'"),
+    c("color: {}"),
+    c("meta:", "  name: x"),
+    c("typography:", "  base: Helvetica"),
+    c("color:", "  palette:", "    a: '#ff0000'", "  foreground: '#111111'")
+  )
+  for (lines in cases) {
+    p <- suppressWarnings(theme_brand(pts(), local_brand(lines)))
+    expect_identical(p@theme$geom@accent, "#3366CC")
+  }
+  acc <- c("color:", "  palette:", "    accent: '#17bebb'")
+  expect_identical(
+    theme_brand(pts(), local_brand(acc))@theme$geom@accent,
+    "#17bebb"
+  )
+})
+
+test_that("palette entries in the background colour are left out", {
+  skip_if_not_installed("brand.yml")
+  local_brand_state()
+  path <- local_brand(c(
+    "color:",
+    "  palette:",
+    "    paper: '#fffdf7'",
+    "    coral: '#ef6f6c'",
+    "  background: paper"
+  ))
+  pal <- theme_brand(pts(), path)@theme[["palette"]]
+  expect_identical(pal[1], "#ef6f6c")
+  expect_false("#fffdf7" %in% tolower(pal))
+})
+
+test_that("unexpected execute-info JSON never breaks a plot", {
+  local_brand_state()
+  skip_if_not_installed("jsonlite")
+  bad <- local_tempfile(fileext = ".json")
+  withr::local_envvar(QUARTO_EXECUTE_INFO = bad)
+  withr::local_options(vellumplot.brand = TRUE)
+  for (json in c(
+    '{"format": {"render": {"brand": {"light": "x"}}}}',
+    '{"format": {"render": {"brand": true}}}',
+    '{"format": {"render": {"brand": {"light": {"processedData": 3}}}}}',
+    "{not json"
+  )) {
+    writeLines(json, bad)
+    vellumplot:::.brand_cache_reset()
+    expect_null(vellumplot:::.brand_quarto())
+    expect_no_error(render_px(pts()))
+  }
+})
+
+test_that("mode = 'dark' under Quarto with only a light brand warns", {
+  local_brand_state()
+  ei <- local_execute_info(list(light = quarto_entry(list(
+    foreground = "#1f3b5a",
+    background = "#fffdf7"
+  ))))
+  withr::local_envvar(QUARTO_EXECUTE_INFO = ei)
+  expect_warning(p <- theme_brand(pts(), mode = "dark"), "no \"dark\" brand")
+  expect_identical(p@theme$plot.background@fill, "#fffdf7")
+})
+
+test_that("a composition's page follows its themed plots, not the brand", {
+  skip_if_not_installed("brand.yml")
+  local_brand_state()
+  corner <- function(x) round(render_px(x)[2, 2, 1:3] * 255)
+  dark <- local_brand(dark_brand)
+  a <- vplot(mtcars, width = 3, height = 3) |> mark_point(x = wt, y = mpg)
+  bw <- theme_bw(a)
+  # option off: two dark theme_brand() plots get a dark page
+  d <- theme_brand(a, dark)
+  expect_identical(
+    corner(hconcat(d, d) |> compose_annotation(title = "T")),
+    c(17, 17, 17)
+  )
+  # option on: explicit theme_bw() plots keep a white page and title band
+  withr::local_options(vellumplot.brand = dark)
+  comp <- suppressMessages(hconcat(bw, bw) |> compose_annotation(title = "T"))
+  expect_identical(corner(comp), c(255, 255, 255))
+  # all leaves unthemed: the brand page
+  expect_identical(corner(suppressMessages(hconcat(a, a))), c(17, 17, 17))
+  # an own composition theme still wins
+  own <- suppressMessages(
+    hconcat(d, d) |> theme(plot.background = element_rect(fill = "white"))
+  )
+  expect_identical(corner(own), c(255, 255, 255))
+})
+
+test_that("as_spec() warns that a brand theme is not kept", {
+  skip_if_not_installed("brand.yml")
+  local_brand_state()
+  p <- theme_brand(pts(), local_brand(keys_brand))
+  expect_warning(as_spec(p), "palette")
+  expect_warning(as_spec(p), "theme_brand")
+  # a preset's own palette still round-trips quietly
+  expect_no_warning(as_spec(pts() |> theme_cyberpunk()))
 })

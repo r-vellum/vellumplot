@@ -26,10 +26,12 @@ NULL
 #'   unmapped marks; `primary` is the `accent` of smooths and contours. The
 #'   greys in between (text, axis text, gridlines, caption) are blends of
 #'   foreground and background, as in brand.yml's own
-#'   `theme_brand_ggplot2()`, so a dark brand gives a dark plot.
+#'   `theme_brand_ggplot2()` (axis text and caption a little darker, so they
+#'   keep WCAG AA contrast), and a dark brand gives a dark plot.
 #' * The discrete colour palette is `color.palette` in file order, or else the
 #'   brand's `primary`, `secondary`, `tertiary`, `success`, `info`, `warning`
-#'   and `danger` colours (those that are set and distinct). When a scale has
+#'   and `danger` colours (those that are set and distinct). Entries in the
+#'   background colour are left out. When a scale has
 #'   more levels than the brand has colours, vellumplot's own qualitative
 #'   colours follow. A `scale_*()` palette still wins.
 #' * `typography.base` sets the family of all text and `typography.headings`
@@ -203,6 +205,10 @@ theme_brand <- function(
 # Quarto; the caller then looks for a file). `processedData` is undocumented,
 # so anything unexpected is NULL rather than an error.
 .brand_quarto <- function(mode = "light") {
+  tryCatch(.brand_quarto_read(mode), error = function(e) NULL)
+}
+
+.brand_quarto_read <- function(mode) {
   info <- .brand_quarto_info()
   if (is.null(info)) {
     return(NULL)
@@ -223,8 +229,20 @@ theme_brand <- function(
   if (is.null(br) || !length(br)) {
     return(FALSE)
   }
-  one <- br[[mode]] %||% br[[setdiff(c("light", "dark"), mode)]]
-  if (is.null(one$processedData)) {
+  if (!is.list(br)) {
+    return(NULL)
+  }
+  one <- br[[mode]]
+  if (is.null(one)) {
+    other <- setdiff(c("light", "dark"), mode)
+    one <- br[[other]]
+    if (identical(mode, "dark") && !is.null(one)) {
+      cli::cli_warn(
+        "The Quarto document has no {.val dark} brand; using the {.val light} one."
+      )
+    }
+  }
+  if (!is.list(one) || !is.list(one$processedData)) {
     return(NULL)
   }
   .brand_from_quarto(one, path = info$path)
@@ -392,7 +410,9 @@ theme_brand <- function(
   col <- b$color
   bg <- col$background %||% "white"
   fg <- col$foreground %||% "black"
-  accent <- col$primary %||% b$palette[["accent"]] %||% "#3366CC"
+  accent <- col$primary %||%
+    (if ("accent" %in% names(b$palette)) b$palette[["accent"]]) %||%
+    "#3366CC"
   blend <- function(amount) .col_mix(fg, bg, amount)
 
   base_family <- ""
@@ -418,9 +438,9 @@ theme_brand <- function(
     title = element_text(colour = fg),
     plot.title = element_text(colour = fg, family = head_family),
     plot.subtitle = element_text(colour = fg, family = head_family),
-    plot.caption = element_text(colour = blend(0.3)),
+    plot.caption = element_text(colour = blend(0.25)),
     plot.tag = element_text(colour = fg),
-    axis.text = element_text(colour = blend(0.4)),
+    axis.text = element_text(colour = blend(0.3)),
     legend.text = element_text(colour = blend(0.1)),
     strip.text = element_text(colour = blend(0.1), family = head_family),
     panel.grid = element_line(colour = blend(0.85)),
@@ -471,6 +491,11 @@ theme_brand <- function(
       "danger"
     )
     pal <- unname(unlist(b$color[intersect(keys, names(b$color))]))
+  }
+  # a palette entry in the page colour would draw invisible marks
+  bg <- b$color$background
+  if (length(pal) && !is.null(bg)) {
+    pal <- pal[toupper(.brand_hex(pal)) != toupper(.brand_hex(bg))]
   }
   if (!length(pal)) {
     return(NULL)
