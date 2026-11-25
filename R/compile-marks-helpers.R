@@ -214,13 +214,18 @@ NULL
 # `family` / `fontface` (VP-135). A layer's own `fontface` replaces the
 # theme's face and its weight: `fontface = "plain"` on a light or heavy brand
 # draws the plain face, not the brand's weight.
-.mark_text_el <- function(fontsize, L = NULL) {
+#
+# `face` is a face the label always draws in (venn set names and the compass
+# "N" are bold, VP-139): it replaces the theme's face but keeps its family and
+# weight, so a heavy brand stays heavy and a light one is lifted to bold
+# (`.el_weight()`). A layer's own `fontface` still wins.
+.mark_text_el <- function(fontsize, L = NULL, face = NULL) {
   font <- .mark_ctx$text_font
   own_face <- .aes_param(L, "fontface", NULL)
   .element_text(
     size = fontsize,
     family = .aes_param(L, "family", font$family),
-    face = own_face %||% font$face,
+    face = own_face %||% face %||% font$face,
     weight = if (is.null(own_face)) font$weight
   )
 }
@@ -228,8 +233,8 @@ NULL
 # The gpar for a mark label: `.mark_text_el()`'s font plus a colour. With no
 # theme font set this is `vl_gpar(fontsize =, col =)` exactly, so a
 # default-font plot is unchanged.
-.mark_gpar_text <- function(fontsize, col = NULL, L = NULL) {
-  el <- .mark_text_el(fontsize, L)
+.mark_gpar_text <- function(fontsize, col = NULL, L = NULL, face = NULL) {
+  el <- .mark_text_el(fontsize, L, face)
   vellum::vl_gpar(
     fontsize = fontsize,
     col = col,
