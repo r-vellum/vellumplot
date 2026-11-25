@@ -572,7 +572,9 @@ compose_annotation <- function(
     width = comp@width,
     height = comp@height,
     dpi = comp@dpi,
-    bg = "white",
+    # The page takes the figure theme's plot.background (white by default; a
+    # brand's page colour under options(vellumplot.brand), F-26).
+    bg = .scene_bg(.resolve_theme(comp@theme %||% .theme_auto())),
     # Accessibility: the figure title (if any) names the composition and the
     # generated summary describes it. Additive; see R/alt.R.
     title = .alt_name(comp@labels),

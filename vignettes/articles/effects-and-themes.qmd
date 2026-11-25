@@ -2,8 +2,8 @@
 title: "Effects and themes"
 description: >
   The non-data look of a plot: built-in themes, custom theme elements, layer
-  effects like glow and shadow, gradient fills, and the one-line hand-drawn
-  sketch mode.
+  effects like glow and shadow, gradient fills, brand.yml themes, and the
+  one-line hand-drawn sketch mode.
 ---
 
 ```{r}
@@ -89,6 +89,68 @@ untouched, so a plain numeric axis is unchanged.
 vplot(gdp) |>
   mark_bar(x = country, y = score)
 ```
+
+## Brand themes from `_brand.yml`
+
+Quarto projects describe their visual identity in a
+[brand.yml](https://posit-dev.github.io/brand-yml/) file, `_brand.yml`: colours,
+a palette, and fonts. `theme_brand()` turns that file into a plot theme, so
+figures match the page around them. The brand's `background` becomes the page,
+`foreground` the ink of titles and unmapped marks, `primary` the accent of
+smooths, and `color.palette` the default discrete palette, and `typography.base` and
+`typography.headings` the font families of the text and the titles. The greys in between
+are blends of foreground and background, so a dark brand gives a dark plot.
+Here is a small brand:
+
+```yaml
+color:
+  palette:
+    ink: "#1d2b3a"
+    coral: "#e4572e"
+    teal: "#17bebb"
+    gold: "#ffc914"
+  foreground: ink
+  background: "#fbf8f1"
+  primary: coral
+```
+
+```{r}
+#| eval: !expr requireNamespace("brand.yml", quietly = TRUE)
+brand <- tempfile(fileext = ".yml")
+writeLines(c(
+  "color:",
+  "  palette:",
+  "    ink: '#1d2b3a'",
+  "    coral: '#e4572e'",
+  "    teal: '#17bebb'",
+  "    gold: '#ffc914'",
+  "  foreground: ink",
+  "  background: '#fbf8f1'",
+  "  primary: coral"
+), brand)
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+  mark_smooth(x = wt, y = mpg) |>
+  labs(title = "Fuel use by weight", color = "Cylinders") |>
+  theme_brand(brand)
+```
+
+With no `brand =`, `theme_brand()` finds the brand the way Quarto does: inside a
+Quarto render it reads the brand Quarto resolved for the document (including
+separate light and dark brands, picked with `mode = "dark"`), and elsewhere the
+nearest `_brand.yml` above the working directory. To brand every plot in a
+document without touching each one, set the option once in the setup chunk:
+
+```r
+options(vellumplot.brand = TRUE)
+```
+
+Plots that have no theme of their own then use the brand; a plot with
+`theme_bw()` or another explicit theme keeps it. A brand font that is not
+installed falls back to the default family with a warning, and
+`theme_brand(fetch_fonts = TRUE)` downloads Google and Bunny fonts (or
+registers font files shipped with the brand) for the session.
 
 ## Layer effects
 
