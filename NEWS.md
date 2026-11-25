@@ -7,6 +7,12 @@
   Use `labeller = label_wrap_gen()` to wrap long labels instead; the strip
   grows to hold every line.
 
+* End tick labels that hang past the panel get room when the plot margin
+  cannot hold them (VP-138). With `plot.margin = 0` the top y label (or the
+  last x label) was cut at the page edge; a small spacer now reserves only
+  the part the margin and the tracks beside the panels do not already
+  cover, so plots with the default margin are unchanged.
+
 * Axis gutters measure the widest tick label in the axis text font
   (VP-136). The y tick-label gutter (and the x label row, its wrap check and
   dodged-label spacing) used to measure only the label with the most
