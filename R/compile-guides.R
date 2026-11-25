@@ -703,10 +703,18 @@ NULL
   }
   st <- rt[["strip.text"]]
   if (!.is_blank(st)) {
+    # The text is clipped to the strip (VP-134), as ggplot2 clips its strips
+    # by default (`strip.clip = "inherit"`): a label longer than its panel is
+    # cut at the strip's edge instead of running into the next panel or off
+    # the page. `label_wrap_gen()` wraps long labels onto lines the strip track
+    # reserves. The background stays unclipped, so a hand-drawn strip keeps
+    # its whole outline.
+    scene <- vellum::push(scene, vellum::vl_viewport(clip = TRUE))
     scene <- vellum::draw(
       scene,
       .strip_text_grob(label, rot, .el_gpar_text(st))
     )
+    scene <- vellum::pop(scene)
   }
   vellum::pop(scene)
 }
