@@ -108,10 +108,7 @@ NULL
           vellum::vl_unit(rl * sin(mid[i]), "native"),
           just = c(if (flip) "right" else "left", "centre"),
           rot = .upright_rot(mid[i], "radius"),
-          gp = vellum::vl_gpar(
-            fontsize = fs,
-            col = .geom_paint("black", "neutral")
-          )
+          gp = .mark_gpar_text(fs, .geom_paint("black", "neutral"), L)
         )
       )
     }

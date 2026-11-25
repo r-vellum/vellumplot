@@ -13,6 +13,8 @@ VTable <- S7::new_class(
     n = S7::class_double, # body rows
     header = S7::new_property(S7::class_logical, default = TRUE),
     font_size = S7::new_property(S7::class_double, default = 9),
+    # cell padding (mm), kept so text columns can be re-measured when drawn
+    cell_pad = S7::new_property(S7::class_double, default = 1.5),
     width = S7::new_property(S7::class_double, default = 6),
     height = S7::new_property(S7::class_double, default = 4),
     dpi = S7::new_property(S7::class_double, default = 96)
@@ -49,10 +51,19 @@ VTable <- S7::new_class(
   }
 }
 
-.strw_mm <- function(labels, fontsize) {
+.strw_mm <- function(labels, fontsize, font = NULL) {
   vapply(
     labels,
-    function(s) vellum::vl_strwidth(s, fontsize = fontsize, unit = "mm"),
+    function(s) {
+      vellum::vl_strwidth(
+        s,
+        family = font$family %||% "",
+        fontface = font$face %||% "plain",
+        fontsize = fontsize,
+        unit = "mm",
+        fontweight = font$weight
+      )
+    },
     numeric(1)
   )
 }
@@ -161,6 +172,7 @@ vtable <- function(
     n = as.double(n),
     header = isTRUE(header),
     font_size = font_size,
+    cell_pad = pad_mm,
     width = sum(col_widths) / 25.4,
     height = sum(row_heights) / 25.4,
     dpi = dpi
@@ -168,7 +180,16 @@ vtable <- function(
 }
 
 # Draw a text cell at grid (row, col), aligned within it.
-.vtable_text <- function(scene, row, col, text, align, fontsize, bold) {
+.vtable_text <- function(
+  scene,
+  row,
+  col,
+  text,
+  align,
+  fontsize,
+  bold,
+  font = NULL
+) {
   x <- switch(align, left = 0.06, right = 0.94, 0.5)
   just <- switch(align, left = "left", right = "right", "centre")
   scene <- vellum::push(scene, vellum::vl_viewport(row = row, col = col))
@@ -181,15 +202,51 @@ vtable <- function(
       just = just,
       gp = vellum::vl_gpar(
         fontsize = fontsize,
-        fontface = if (bold) "bold" else "plain",
-        col = "grey15"
+        fontface = if (bold) "bold" else font$face %||% "plain",
+        col = "grey15",
+        fontfamily = font$family,
+        fontweight = if (bold && !is.null(font$weight)) {
+          max(font$weight, 700L)
+        } else {
+          font$weight
+        }
       )
     )
   )
   vellum::pop(scene)
 }
 
+# The font a table's cells draw in, and the column widths it needs: the
+# default theme's base text font (the brand's under `options(vellumplot.brand)`),
+# resolved when the table is drawn, as an unthemed plot's theme is (VP-133).
+# `vtable()` lays the text columns out in the default family; with a theme
+# font they are re-measured in it and the page widens or narrows by the
+# difference (VP-135). No theme font: the table as laid out.
+.vtable_font <- function(vt) {
+  font <- .text_font_of(.theme_auto())
+  if (is.null(font)) {
+    return(list(font = NULL, vt = vt))
+  }
+  w <- vt@col_widths
+  for (c in seq_along(vt@descs)) {
+    d <- vt@descs[[c]]
+    if (identical(d$kind, "text")) {
+      w[c] <- max(
+        .strw_mm(c(d$header, d$cells), vt@font_size, font),
+        na.rm = TRUE
+      ) +
+        2 * vt@cell_pad
+    }
+  }
+  vt@width <- vt@width + (sum(w) - sum(vt@col_widths)) / 25.4
+  vt@col_widths <- w
+  list(font = font, vt = vt)
+}
+
 .compile_vtable <- function(vt) {
+  rv <- .vtable_font(vt)
+  vt <- rv$vt
+  font <- rv$font
   .provenance_reset()
   scene <- vellum::vl_scene(
     width = vt@width,
@@ -211,7 +268,16 @@ vtable <- function(
   if (vt@header) {
     for (c in seq_len(ncol)) {
       d <- vt@descs[[c]]
-      scene <- .vtable_text(scene, 1L, c, d$header, d$align, vt@font_size, TRUE)
+      scene <- .vtable_text(
+        scene,
+        1L,
+        c,
+        d$header,
+        d$align,
+        vt@font_size,
+        TRUE,
+        font
+      )
     }
     # header underline: a rule spanning all columns at the header row's baseline.
     scene <- vellum::push(
@@ -259,7 +325,8 @@ vtable <- function(
           d$cells[[r]],
           d$align,
           vt@font_size,
-          FALSE
+          FALSE,
+          font
         )
       }
     }

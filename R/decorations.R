@@ -275,7 +275,7 @@ mark_compass <- function(
   ylab <- vellum::vl_unit(a$y0, "npc") +
     vellum::vl_unit(a$vdir * (pad + h + 1), "mm")
   lab_just <- c("centre", a$vjust)
-  gp_txt <- vellum::vl_gpar(fontsize = ts, col = color)
+  gp_txt <- .mark_gpar_text(ts, color) # the theme's text font (VP-135)
   x_zero <- if (a$hdir > 0) xat(0) else xat(1)
   x_dist <- if (a$hdir > 0) xat(1) else xat(0)
   scene <- .draw(

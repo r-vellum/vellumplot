@@ -465,10 +465,34 @@ NULL
 
 # Point the mark emitters and legend keys at a theme's default mark colours,
 # and at the colour the marks are drawn over (see `.geom_paint_visible()`).
+# Also at the theme's base text font, for the marks' own labels (VP-135).
 .set_geom_ctx <- function(theme) {
   assign("geom", .theme_geom(theme), envir = .mark_ctx)
   assign("geom_ground", .theme_ground(theme), envir = .mark_ctx)
+  .set_text_font(theme)
   invisible()
+}
+
+# Point the mark-label drawers at a theme's base `text` font (VP-135): the
+# family, face and weight of its root `text` element, keeping only what
+# differs from the default family in the plain face, so a default-font plot's
+# labels draw (and measure) exactly as before.
+.set_text_font <- function(theme) {
+  assign("text_font", .text_font_of(theme), envir = .mark_ctx)
+  invisible()
+}
+.text_font_of <- function(theme) {
+  el <- theme[["text"]]
+  if (!S7::S7_inherits(el, .element_text)) {
+    return(NULL)
+  }
+  font <- list(
+    family = if (nzchar(el@family %||% "")) el@family,
+    face = if (!identical(el@face %||% "plain", "plain")) el@face,
+    weight = el@weight
+  )
+  font <- font[!vapply(font, is.null, logical(1))]
+  if (length(font)) font
 }
 
 # The colour a theme draws its marks over: the panel background's fill, else

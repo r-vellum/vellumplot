@@ -20,6 +20,12 @@
   titles already did, and a rotated title band or tag is centred in its
   track instead of swinging half out of it.
 
+* Chord, sankey, treemap / sunburst / icicle / circle-pack and scale-bar
+  labels, and `vtable()` cells, use the family, face and weight of the
+  theme's base text font (VP-135), and are measured in it. They used to draw
+  in the default family whatever the theme or `theme_brand()` set. Plots in
+  the default font are unchanged.
+
 * Layout measures text in the font the theme draws it in (VP-132). Legend
   labels and titles, axis titles and tick labels, facet strips, the tag and
   the composition title bands used to reserve space for the default family
