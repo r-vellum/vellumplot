@@ -7,6 +7,19 @@
   Use `labeller = label_wrap_gen()` to wrap long labels instead; the strip
   grows to hold every line.
 
+* Axis gutters measure the widest tick label in the axis text font
+  (VP-136). The y tick-label gutter (and the x label row, its wrap check and
+  dodged-label spacing) used to measure only the label with the most
+  characters, which in a proportional font need not be the widest
+  ("iiiiiiii" against "WWWW"), so a wider label could run into the axis
+  title. Rich facet strips likewise pick their tallest label in the strip
+  font.
+
+* The plot tag and a composition's title, subtitle and caption reserve their
+  rotated extent when their element sets an `angle` (VP-137), as axis
+  titles already did, and a rotated title band or tag is centred in its
+  track instead of swinging half out of it.
+
 * Layout measures text in the font the theme draws it in (VP-132). Legend
   labels and titles, axis titles and tick labels, facet strips, the tag and
   the composition title bands used to reserve space for the default family
@@ -1677,7 +1690,6 @@
   outlined keys. Map `fill` to get the old look. The outline is no longer
   hard-coded: it follows `color` and defaults to `"grey20"`. Violins and ridges
   used to be outlined in `"grey30"`.
-
 
 * **Stats that reorder or summarise rows keep their colours aligned.** A stat
   that changes the row count or order used to hand its output the pre-stat

@@ -246,12 +246,28 @@ NULL
   # --- rows ----------------------------------------------------------------
   H <- .tracks()
   figtitle_row <- if (!is.null(comp@labels$title)) {
-    .tk_add(H, .track_h(rt0[["plot.title"]], comp@labels$title, 2 * .PAD_MM))
+    .tk_add(
+      H,
+      .track_h_band(
+        rt0[["plot.title"]],
+        comp@labels$title,
+        2 * .PAD_MM,
+        NA_real_
+      )
+    )
   } else {
     NA_integer_
   }
   figsubtitle_row <- if (!is.null(comp@labels$subtitle)) {
-    .tk_add(H, .track_h(rt0[["plot.subtitle"]], comp@labels$subtitle, .PAD_MM))
+    .tk_add(
+      H,
+      .track_h_band(
+        rt0[["plot.subtitle"]],
+        comp@labels$subtitle,
+        .PAD_MM,
+        NA_real_
+      )
+    )
   } else {
     NA_integer_
   }
@@ -284,7 +300,15 @@ NULL
     figlegend_row <- .tk_add(H, .legend_height(figguides, rt0))
   }
   figcaption_row <- if (!is.null(comp@labels$caption)) {
-    .tk_add(H, .track_h(rt0[["plot.caption"]], comp@labels$caption, .PAD_MM))
+    .tk_add(
+      H,
+      .track_h_band(
+        rt0[["plot.caption"]],
+        comp@labels$caption,
+        .PAD_MM,
+        NA_real_
+      )
+    )
   } else {
     NA_integer_
   }
