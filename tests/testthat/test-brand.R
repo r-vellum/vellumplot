@@ -438,6 +438,27 @@ test_that("theme() on an unthemed plot resolves the brand at compile time (VP-13
   sk <- pts() |> theme_sketch() |> theme(legend.position = "none")
   expect_s3_class(vellumplot:::.theme_sketch_default(sk), "vellum_sketch")
   expect_null(vellumplot:::.theme_sketch_default(two))
+  # a spec round trip keeps the tweak deferred: still branded under the option
+  rt_off <- withr::with_options(
+    list(vellumplot.brand = NULL),
+    spec_from_json(spec_to_json(off), data = mtcars)
+  )
+  withr::with_options(list(vellumplot.brand = path), {
+    rt_on <- spec_from_json(
+      suppressMessages(spec_to_json(off)),
+      data = mtcars
+    )
+    expect_true(vellumplot:::.is_theme_tweak(rt_on@theme))
+    expect_identical(bg(rt_off), "#fffdf7")
+    expect_identical(bg(rt_on), "#fffdf7")
+    expect_identical(
+      suppressMessages(vellumplot:::.theme_of(rt_on))$legend.position,
+      "none"
+    )
+  })
+  withr::with_options(list(vellumplot.brand = NULL), {
+    expect_identical(bg(rt_on), "white")
+  })
   # an explicit theme keeps merging at call time
   withr::with_options(list(vellumplot.brand = path), {
     bw <- pts() |> theme_bw() |> theme(legend.position = "none")

@@ -554,11 +554,24 @@ NULL
       call = call
     )
   }
+  # Deferred theme() tweaks on an unthemed plot (VP-133) keep no base theme:
+  # they serialize as `deferred: true` plus the settings they set, so the read
+  # plot is unthemed again and picks its default (the brand under
+  # `options(vellumplot.brand)`) when drawn. `preset` stays "gray" so a reader
+  # that predates `deferred` still rebuilds what it used to.
+  deferred <- .is_theme_tweak(theme)
+  if (deferred) {
+    theme <- .theme_replay(list(), theme)
+  }
   preset <- attr(theme, "vp_preset") %||% "gray"
   settings <- theme[intersect(names(theme), .theme_setting_names)]
   # keep only plain settings (all are, defensively).
   settings <- settings[vapply(settings, .is_plain, logical(1))]
-  list(preset = preset, settings = settings)
+  out <- list(preset = preset, settings = settings)
+  if (deferred) {
+    out$deferred <- TRUE
+  }
+  out
 }
 
 # The pristine theme a preset name builds (before any user customisation), used
@@ -583,6 +596,13 @@ NULL
 .theme_from_ir <- function(rec) {
   if (is.null(rec)) {
     return(NULL)
+  }
+  # A deferred tweak (VP-133) comes back as one: its settings on no base theme.
+  if (isTRUE(rec$deferred)) {
+    if (!length(rec$settings)) {
+      return(NULL)
+    }
+    return(.theme_add_tweak(NULL, rec$settings, unblank = FALSE))
   }
   # Rebuild the complete theme from the preset name, then merge the scalar
   # settings back in.
@@ -852,12 +872,12 @@ as_spec <- function(plot) {
     )
   }
   pth <- plot@theme
+  th <- .theme_to_ir(pth)
   if (.is_theme_tweak(pth)) {
-    # deferred theme() tweaks (VP-133) serialize as they did when theme()
-    # merged at call time: onto the gray preset (the default the spec rebuilds)
+    # deferred theme() tweaks (VP-133): the elements they set are dropped;
+    # judge them against the gray default, as when theme() merged at once
     pth <- .theme_replay(.preset_theme("gray"), pth)
   }
-  th <- .theme_to_ir(pth)
   if (!is.null(th)) {
     out$theme <- th
     # Warn only on element slots that actually DIFFER from the pristine preset:

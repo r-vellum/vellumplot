@@ -361,9 +361,17 @@ test_that("deferred theme() tweaks on an unthemed plot serialize (VP-133)", {
     mark_point(x = wt, y = mpg) |>
     theme(legend.position = "bottom", panel.spacing = 3)
   expect_no_warning(s <- as_spec(p))
+  expect_true(s$theme$deferred)
   expect_identical(s$theme$preset, "gray")
   expect_identical(s$theme$settings$legend.position, "bottom")
   expect_identical(s$theme$settings$panel.spacing, 3)
+  # it reads back as a deferred tweak, not an explicit gray theme
+  q <- from_spec(s, data = mtcars)
+  expect_true(vellumplot:::.is_theme_tweak(q@theme))
+  expect_identical(vellumplot:::.theme_of(q)$legend.position, "bottom")
+  j <- spec_from_json(spec_to_json(p), data = mtcars)
+  expect_true(vellumplot:::.is_theme_tweak(j@theme))
+  expect_equal(vellumplot:::.theme_of(j)$panel.spacing, 3)
   # an element tweak is reported as dropped, as when theme() merged at once
   q <- theme(p, axis.text = element_text(colour = "red"))
   expect_warning(as_spec(q), "axis.text")
