@@ -44,8 +44,10 @@ test_that("legend NA keys follow the theme", {
   d <- mtcars
   d$hp[c(2, 7)] <- NA
   p <- vplot(d) |> mark_point(x = wt, y = mpg, size = hp)
-  expect_true(all(c("grey70", "grey50") %in% chrome_paints(p)))
-  cp <- chrome_paints(theme_cyberpunk(p))
+  # (the NA rows draw no point, with a warning; VR-38)
+  quiet <- function(x) suppressWarnings(x, classes = "vellumplot_missing_rows")
+  expect_true(all(c("grey70", "grey50") %in% quiet(chrome_paints(p))))
+  cp <- quiet(chrome_paints(theme_cyberpunk(p)))
   expect_true(all(c(ck_mix(0.7), ck_mix(0.5)) %in% cp))
   expect_false("grey70" %in% cp)
 })

@@ -24,8 +24,12 @@ test_that("size / edge_width / alpha trainers are unified and consistent (H50)",
   a <- vellumplot:::.build_panels(
     vplot(dna) |> mark_point(x = x, y = y, alpha = w)
   )$scales$alpha
-  s <- vellumplot:::.build_panels(
-    vplot(dna) |> mark_point(x = x, y = y, size = w)
+  # (the NA row draws no point, with a warning; VR-38)
+  s <- suppressWarnings(
+    vellumplot:::.build_panels(
+      vplot(dna) |> mark_point(x = x, y = y, size = w)
+    ),
+    classes = "vellumplot_missing_rows"
   )$scales$size
   expect_true(isTRUE(a$na))
   expect_true(isTRUE(s$na))
