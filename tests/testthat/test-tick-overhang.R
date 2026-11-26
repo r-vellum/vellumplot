@@ -340,9 +340,30 @@ test_that(".solve_overhang() shrinks to the need when it falls as it grows", {
   # a wrap-like need: the bigger the spacer, the narrower the labels
   need <- function(s) c(t = 0, r = 10 - 0.5 * s[["r"]], b = 0, l = 0)
   s <- vellumplot:::.solve_overhang(need)
-  # the fixed point s = 10 - s / 2, not the first pass's 10
-  expect_equal(s[["r"]], 20 / 3, tolerance = 1e-3)
+  # the fixed point s = 10 - s / 2 (to 0.05 mm, from above), not the first
+  # pass's 10
+  expect_gte(s[["r"]], 20 / 3 - 1e-3)
+  expect_lte(s[["r"]], 20 / 3 + 0.05)
   expect_lte(need(s)[["r"]], s[["r"]] + 1e-3)
+  # two sides sharing one budget: the tight side grows a little so the other
+  # can shrink a lot (each needs 8 - (l + r) / 4, and the first pass leaves
+  # r far above it)
+  calls <- 0L
+  shared <- function(s) {
+    calls <<- calls + 1L
+    lr <- s[["l"]] + s[["r"]]
+    c(
+      t = 0,
+      r = if (lr == 0) 9 else 8 - lr / 4,
+      b = 0,
+      l = if (lr == 0) 4 else 8 - lr / 4
+    )
+  }
+  s2 <- vellumplot:::.solve_overhang(shared)
+  expect_equal(s2[["l"]], 16 / 3, tolerance = 0.05)
+  expect_equal(s2[["r"]], 16 / 3, tolerance = 0.05)
+  expect_true(all(shared(s2) <= s2 + 1e-3))
+  expect_lte(calls, 12L)
   # a need the shrunk spacer covers outright is taken as it is
   step <- function(s) c(t = 0, r = if (s[["r"]] > 0) 3 else 5, b = 0, l = 0)
   expect_identical(vellumplot:::.solve_overhang(step)[["r"]], 3)
@@ -384,4 +405,39 @@ test_that("wrapped end labels get the spacer they need, no more (VP-146)", {
   # the last label, wrapped at the final budget, fits its spacer plus the end
   # gap exactly: not clipped, and not ~2 mm over (as the first pass left it)
   expect_equal(ex$e[2], r + ex$g[2] * panel, tolerance = 1e-2)
+})
+
+test_that("long end labels at both ends share the wrap budget (VP-146 review)", {
+  labs <- c(
+    "A long label one",
+    "Another long label",
+    "Third long label here",
+    "End label WWWWWW"
+  )
+  p <- vplot(data.frame(x = 1:4, y = 1:4), width = 5.1, height = 2.5) |>
+    mark_point(x = x, y = y) |>
+    scale_x_continuous(breaks = 1:4, labels = labs, expand = c(0, 0)) |>
+    theme(plot.margin = 0)
+  lay <- lay_of(p)
+  w <- conv_mm(lay$widths)
+  pc <- lay$panel_col[1]
+  # the room each end label has outside the panel: every track on its side
+  l <- sum(w[seq_len(pc - 1L)], na.rm = TRUE)
+  r <- sum(w[-seq_len(pc)], na.rm = TRUE)
+  pl <- vellumplot:::.build_panels(p)
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
+  panel <- p@width * 25.4 - sum(w, na.rm = TRUE)
+  ex <- vellumplot:::.end_tick_extent(
+    pl$scales$x,
+    rt[["axis.text.x"]],
+    0,
+    c("centre", "top"),
+    "x",
+    wrap_mm = lay$xwrap_mm
+  )
+  # both end labels fit, and neither side is more than 0.1 mm over (the
+  # grow-then-shrink-down search left r ~2.3 mm over here)
+  slack <- c(l + ex$g[1] * panel - ex$e[1], r + ex$g[2] * panel - ex$e[2])
+  expect_true(all(slack >= -1e-2))
+  expect_true(all(slack <= 0.1))
 })

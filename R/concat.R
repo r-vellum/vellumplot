@@ -657,6 +657,27 @@ compose_annotation <- function(
       layout = vellum::grid_layout(wfun(comp@widths, ncol), heights)
     )
   )
+  # A cell's size (inches), when the figure's is known (`box_mm`): its share of
+  # the null tracks once the tag bands are taken. NULL otherwise.
+  ww <- rep_len(as.numeric(comp@widths %||% 1), ncol)
+  hh <- rep_len(as.numeric(comp@heights %||% 1), nrow)
+  band_mm <- if (!is.null(ctags)) {
+    sum(vapply(band, function(u) vellum::vl_convert(u, "mm"), numeric(1)))
+  } else {
+    0
+  }
+  cell_in <- function(a) {
+    if (is.null(box_mm) || !all(is.finite(box_mm))) {
+      return(NULL)
+    }
+    cs <- seq(a$c, length.out = a$cs)
+    rs <- seq(a$r, length.out = a$rs)
+    c(
+      box_mm[1] * sum(ww[cs]) / sum(ww),
+      (box_mm[2] - band_mm) * sum(hh[rs]) / sum(hh)
+    ) /
+      25.4
+  }
   # Insets aligned to the base plot's panel area or plot area are drawn by
   # `.draw_plot()` inside the plot's own layout grid (VP-127); that needs a
   # single base plot. The rest are placed in the whole figure.
@@ -722,7 +743,7 @@ compose_annotation <- function(
           box_mm = box_mm
         )
       }
-      scene <- .draw_plot(scene, p, insets = plot_insets)
+      scene <- .draw_plot(scene, p, insets = plot_insets, page = cell_in(a))
     }
     scene <- vellum::pop(scene)
   }

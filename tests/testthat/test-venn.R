@@ -100,3 +100,73 @@ test_that("long set names stay inside the panel (VP-148)", {
   # and the diagram renders
   render_ok(vvenn(list(A = 1:5, B = 3:8) |> setNames(c(word, long))))
 })
+
+test_that("set names fit the laid-out panel: margin, titles, cells (VP-148)", {
+  # the box the names are fitted to is the panel as laid out, not a guess
+  # from the page
+  orig <- vellumplot:::.venn_box_mm
+  got <- NULL
+  local_mocked_bindings(.venn_box_mm = function() {
+    v <- orig()
+    got <<- c(got, v)
+    v
+  })
+  panel_side <- function(x) {
+    sm <- vellum::scene_model(vellum::as_vellum_scene(x))
+    pan <- sm$panels[grepl("panel-", sm$panels$name), , drop = FALSE]
+    pmin(pan$px1 - pan$px0, pan$py1 - pan$py0) / x@dpi * 25.4
+  }
+  S3 <- list(
+    `A rather long set name that overflows the box` = 1:5,
+    `Another very long set name here` = 3:8,
+    `Third long-winded name for set` = c(1, 8, 9)
+  )
+  for (p in list(
+    vvenn(S3) |> theme(plot.margin = 20),
+    vvenn(S3) |> labs(title = "A title", subtitle = "Sub", caption = "Cap")
+  )) {
+    got <- NULL
+    side <- panel_side(p)
+    expect_equal(got[1], side, tolerance = 0.02)
+  }
+  # in an aligned composition: each cell's own panel
+  S2 <- S3[1:2]
+  comp <- hconcat(vvenn(S3), vvenn(S2), width = 8, height = 4)
+  got <- NULL
+  side <- panel_side(comp)
+  expect_length(got, 2L)
+  expect_lte(max(got), max(side) + 0.5)
+  expect_lt(max(got), 4 * 25.4 - 11) # not the cell-less 6in / page guess
+  # and in a non-aligned one (a faceted cell beside it)
+  f <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
+  got <- NULL
+  invisible(vellum::as_vellum_scene(hconcat(
+    f,
+    vvenn(S3),
+    width = 8,
+    height = 4
+  )))
+  expect_lt(got[1], 4 * 25.4)
+})
+
+test_that("wrapped names above the circles grow upward (VP-148 review)", {
+  gp <- vellumplot:::.mark_gpar_text(11, face = "bold")
+  long <- "A rather long set name that overflows the box"
+  g <- vellumplot:::.venn_name_grob(long, c(0.36, 0.76), 2L, gp, 116, up = 1)
+  y <- as.numeric(vctrs::field(g@y, "value"))
+  h <- vellum::vl_convert(vellum::grobheight(g), "mm") / 116
+  h1 <- vellum::vl_convert(
+    vellum::grobheight(vellum::text_grob(long, gp = gp)),
+    "mm"
+  ) /
+    116
+  # its bottom line sits where the single line would: bottom edge unchanged
+  expect_gt(h, 1.5 * h1)
+  expect_equal(y - h / 2, 0.76 - h1 / 2, tolerance = 1e-3)
+  # on a tiny panel the font shrinks so the name fits above the circles
+  tiny <- vellumplot:::.venn_name_grob(long, c(0.36, 0.76), 2L, gp, 30, up = 1)
+  ht <- vellum::vl_convert(vellum::grobheight(tiny), "mm") / 30
+  yt <- as.numeric(vctrs::field(tiny@y, "value"))
+  expect_lt(tiny@gp@fontsize, 11)
+  expect_lte(yt + ht / 2, 1)
+})

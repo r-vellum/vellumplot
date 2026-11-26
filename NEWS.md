@@ -26,14 +26,17 @@
 * The room reserved for end tick labels no longer comes out up to ~2 mm too
   wide when the x labels wrap. A left / right spacer narrows the panels, so
   the labels wrap narrower and reach less far than the first measurement
-  said. The spacer now shrinks back to what the wrapped labels need. Plots
-  whose x labels don't wrap keep their layout (VP-146).
+  said. The spacers now settle at what the wrapped labels need, with long
+  labels at both ends sharing the room. Plots whose x labels don't wrap keep
+  their layout (VP-146).
 
 * `vvenn()` keeps long set names inside the plot box. A name that fits is
-  drawn as before. A longer one is measured in the label font and wraps (with
-  two sets, within its own half, so the two names can't collide), shrinks
-  only when a single word is wider than its room, and moves inward as far as
-  it has to (VP-148).
+  drawn as before. A longer one is measured in the label font against the
+  panel as laid out (after the plot margin, titles and, in a composition, the
+  cell's share), and wraps: with two sets, within its own half, so the two
+  names can't collide. Extra lines grow away from the circles. The font
+  shrinks for a word too long for its room or, on a small plot, a name too
+  tall for it, and the name moves inward only as far as it has to (VP-148).
 
 # vellumplot 0.25.1
 
