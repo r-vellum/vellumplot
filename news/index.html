@@ -64,6 +64,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li><p>A row whose <code>size</code> is missing is no longer drawn as a <code>NaN</code>-sized mark (which crashed R in PDF output, VR-38). As in ggplot2, it is left out and counted in the layer’s one “Removed n rows containing missing values” warning, together with any missing positions; a size censored by <code>oob = "censor"</code> makes it say “missing values or values outside the scale range”. This covers an <code>NA</code> under a continuous size scale, an <code>NA</code> level of a discrete size scale with no <code>na.value</code>, and a constant <code>size = NA</code>, for <code><a href="../reference/mark_point.html">mark_point()</a></code>, <code><a href="../reference/mark_graph.html">mark_nodes()</a></code>, <code><a href="../reference/mark_boxplot.html">mark_pointrange()</a></code> (range and point), the text marks (<code><a href="../reference/mark_text.html">mark_text()</a></code>, <code><a href="../reference/mark_text.html">mark_label()</a></code>, <code><a href="../reference/mark_text_path.html">mark_text_path()</a></code>, node and edge text, <code><a href="../reference/mark_sf_label.html">mark_sf_label()</a></code>, which errored) and the point features of <code><a href="../reference/mark_sf.html">mark_sf()</a></code>. A graph node with a missing size no longer hides every edge.</p></li>
+<li><p>A continuous size legend no longer shows an “NA” key, since its missing rows draw no mark, matching ggplot2. A discrete size scale keeps the key when <code>na.value</code> gives those rows a size.</p></li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0" id="vellumplot-0250">vellumplot 0.25.0<a class="anchor" aria-label="anchor" href="#vellumplot-0250"></a></h2>
