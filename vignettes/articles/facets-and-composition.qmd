@@ -207,8 +207,10 @@ Each row of plots gets a band above it as tall as its tallest tag, and the tag
 sits in that band at the plot's top-left corner, so it never covers a title or
 a panel. The tags are drawn with the theme's `plot.tag` element, which sets
 their size, colour and `angle`; pass the composition to `theme()` to change it.
-This holds for compositions that can't line up their panels too (a faceted,
-polar or map cell, a `design`, insets); spacers get no tag.
+Tags are drawn the same way in compositions that can't line up their panels
+(a faceted, polar or map cell, a `design`, insets); spacers get no tag. The
+figure `title`, `subtitle` and `caption` are not drawn in that layout yet, so
+the example below has tags only.
 
 ```{r}
 faceted <- vplot(mtcars) |>
@@ -220,7 +222,9 @@ concat(faceted, p3, ncol = 2, widths = c(2, 1), width = 8, height = 3.4) |>
 ```
 
 Every composition carries its own annotation, so a nested composition can have
-a title and tags of its own.
+tags of its own. A composition that holds another composition is laid out in
+the non-aligned way too, so for now its figure title, subtitle and caption are
+not drawn either.
 
 ### Insets
 

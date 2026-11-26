@@ -22,10 +22,11 @@ library(vellumplot)
 # inlined as a data URI.
 show_frame <- function(animation, frame = NULL, alt = "") {
   f <- anim_frame(tempfile(fileext = ".png"), animation, frame = frame, scale = 2)
+  on.exit(unlink(f))
   knitr::asis_output(sprintf(
     '<img src="%s" alt="%s" style="width:100%%;max-width:576px">',
     knitr::image_uri(f),
-    alt
+    htmltools::htmlEscape(alt, attribute = TRUE)
   ))
 }
 ```
@@ -300,9 +301,9 @@ show_frame(af, 8, alt = "Two facet panels, am 0 and am 1, part-way from the four
 ```
 
 The scales are frozen across frames, so per-panel scales can't be honoured:
-`facet_wrap(scales = "free")` (or `"free_x"`, `"free_y"`) and an independent
-`resolve_scale()` on a position stop `animate()` with an error that says to use
-fixed scales. `transition_reveal()` works with facets too.
+`facet_wrap(scales = "free")` (or `"free_x"`, `"free_y"`) and any independent
+scale in `resolve_scale()` (position, colour or any other) stop `animate()`
+with an error that says to use shared scales. `transition_reveal()` works with facets too.
 
 ## Frame variables
 

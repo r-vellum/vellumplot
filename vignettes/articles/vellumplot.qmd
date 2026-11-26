@@ -94,9 +94,10 @@ PowerPoint slide all share it.
 ### Saving to PowerPoint
 
 A `.pptx` path writes a one-slide PowerPoint file of **editable shapes** at the
-plot's size. Every point, bar and line is a DrawingML shape, every label a text
-box you can retype, and each panel a named group you can ungroup, recolour or
-move in PowerPoint. No other package is needed.
+plot's size. Every point, bar and line is a DrawingML shape, every plain-text
+label a text box you can retype (math and haloed labels are outlines), and each
+panel a named group you can ungroup, recolour or move in PowerPoint. No other
+package is needed.
 
 ```{r}
 #| eval: false
