@@ -514,3 +514,38 @@ test_that("graph and sf marks report their missing sizes too (VP-149)", {
   p <- vplot(d) |> mark_text_path(x = x, y = y, group = g, label = g, size = s)
   expect_identical(spec_diagnose(p)$report$missing, 5L)
 })
+
+test_that("a layer repeated in every panel counts its rows once, in the warning and the report (VP-149)", {
+  removed <- function(p) {
+    n <- 0L
+    withCallingHandlers(
+      vellum::as_vellum_scene(p),
+      vellumplot_missing_rows = function(c) {
+        n <<- n + c$n_rows
+        invokeRestart("muffleWarning")
+      }
+    )
+    n
+  }
+  df <- data.frame(x = 1:4, y = c(1, 3, 2, 4), f = c("a", "a", "b", "b"))
+  # The annotation's data has no facet variable: it is drawn in both panels.
+  for (ann in list(
+    data.frame(x = 2.5, y = 2.5, s = NA_real_),
+    data.frame(x = NA_real_, y = 2.5, s = 1)
+  )) {
+    p <- vplot(df) |>
+      mark_point(x = x, y = y) |>
+      mark_point(data = ann, x = x, y = y, size = s) |>
+      facet_wrap(~f)
+    expect_identical(removed(p), 1L)
+    expect_identical(spec_diagnose(p)$report$missing, c(0L, 1L))
+  }
+})
+
+test_that("a row both off a log axis and missing its size keeps its first reason (VP-149)", {
+  df <- data.frame(x = c(1, -1, 3, 4), y = 1:4, s = c(1, NA, 3, 4))
+  r <- suppressWarnings(spec_diagnose(
+    vplot(df) |> mark_point(x = x, y = y, size = s) |> scale_x_log10()
+  ))$report
+  expect_identical(c(r$transform, r$missing, r$dropped), c(1L, 0L, 1L))
+})

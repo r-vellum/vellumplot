@@ -373,6 +373,9 @@ NULL
     # So are rows a position scale's `oob = "censor"` puts outside its limits
     # (before the stat, as in ggplot2), counted into the same warning.
     cens <- !miss & .censored_position_rows(spec, layer, d)
+    # Their input rows, so a layer repeated in several panels counts each once.
+    missing_rows <- idx[miss]
+    censored_rows <- idx[cens]
     if (any(miss | cens)) {
       d <- d[!(miss | cens), , drop = FALSE]
       idx <- idx[!(miss | cens)]
@@ -384,8 +387,8 @@ NULL
       res$stat_map
     )
     res$source <- .layer_source(res, layer, i, idx)
-    res$n_missing <- sum(miss)
-    res$n_censored <- sum(cens)
+    res$missing_rows <- as.integer(missing_rows)
+    res$censored_rows <- as.integer(censored_rows)
     res
   })
 }
@@ -449,32 +452,68 @@ NULL
   miss
 }
 
-# One warning per layer for the rows not drawn, summed over every panel, in
-# ggplot2's wording: the rows `.resolve_panel()` removed (a missing position, or
-# one a position scale's `oob` censors) and, given the trained `shared` scales,
-# the rows whose size is missing (`.missing_size_rows()`). A censored row makes
-# the wording name values outside the scale range, as ggplot2's does.
+# One warning per layer for the rows not drawn, in ggplot2's wording: the rows
+# `.resolve_panel()` removed (a missing position, or one a position scale's
+# `oob` censors) and, given the trained `shared` scales, the rows whose size is
+# missing (`.missing_size_rows()`), counted by `.layer_dropped_rows()`. A
+# censored row makes the wording name values outside the scale range, as
+# ggplot2's does.
 .warn_missing_positions <- function(spec, panels, shared = NULL) {
   for (i in seq_along(spec@layers)) {
-    count <- function(field) {
-      sum(vapply(
-        panels,
-        function(p) as.integer(p$resolved[[i]][[field]] %||% 0L),
-        integer(1)
-      ))
-    }
-    n_cens <- count("n_censored")
-    n_miss <- count("n_missing")
-    if (!is.null(shared)) {
-      for (p in panels) {
-        sz <- .panel_size_drops(p, i, shared)
-        n_miss <- n_miss + sum(sz$missing)
-        n_cens <- n_cens + sum(sz$censored)
-      }
-    }
+    dr <- .layer_dropped_rows(panels, i, shared)
+    n_miss <- length(dr$missing) + dr$loose_missing
+    n_cens <- length(dr$censored) + dr$loose_censored
     .warn_removed_rows(n_miss + n_cens, n_cens, i, spec@layers[[i]]@mark)
   }
   invisible()
+}
+
+# The input rows of layer `i` that the built `panels` do not draw: `missing`
+# (a missing position or size) and `censored` (a position or size its scale's
+# `oob = "censor"` puts outside the limits), each counted once even where the
+# layer is repeated in several panels (its data lacks the facet variable), as
+# ggplot2 counts its input rows (VP-149 review). Size drops are found against
+# the trained `shared` scales (`.panel_size_drops()`; none without them) and
+# mapped back to input rows through the resolved layer's source; where its
+# rows do not map back (a stat aggregated them) the dropped elements are
+# counted as they are, in `loose_missing` / `loose_censored`. The one tally of
+# rows not drawn, used by the compile warning and by `spec_diagnose()`'s
+# report, so the two agree.
+.layer_dropped_rows <- function(panels, i, shared = NULL) {
+  miss <- cens <- integer(0)
+  loose_miss <- loose_cens <- 0L
+  for (p in panels) {
+    L <- p$resolved[[i]]
+    miss <- c(miss, L$missing_rows)
+    cens <- c(cens, L$censored_rows)
+    if (is.null(shared)) {
+      next
+    }
+    sz <- .panel_size_drops(p, i, shared)
+    if (!any(sz$missing) && !any(sz$censored)) {
+      next
+    }
+    src <- L$source
+    if (!is.null(src$members)) {
+      to_input <- function(k) src$rows[unlist(src$members[k])]
+    } else if (isTRUE(src$per_row)) {
+      to_input <- function(k) src$rows[k]
+    } else {
+      loose_miss <- loose_miss + sum(sz$missing)
+      loose_cens <- loose_cens + sum(sz$censored)
+      next
+    }
+    miss <- c(miss, to_input(which(sz$missing)))
+    cens <- c(cens, to_input(which(sz$censored)))
+  }
+  miss <- unique(miss[!is.na(miss)])
+  cens <- setdiff(unique(cens[!is.na(cens)]), miss)
+  list(
+    missing = miss,
+    censored = cens,
+    loose_missing = as.integer(loose_miss),
+    loose_censored = as.integer(loose_cens)
+  )
 }
 
 # The "Removed n rows" warning for layer `i` (mark `mark`): `n` rows not drawn,

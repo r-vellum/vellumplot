@@ -1003,4 +1003,22 @@ test_that("animate() gives the missing-rows warning once per layer (VP-150)", {
   # A reveal accumulates rows: a dropped row counts once, not once per frame.
   r <- vplot(df) |> mark_point(x = y, y = y, size = s) |> transition_reveal(y)
   expect_identical(removed(animate(r, nframes = 6)), msg(1L, 1L, "point"))
+  # A row whose `along` value is missing is in no frame; it is still reported,
+  # as the static plot reports it.
+  rx <- vplot(df) |> mark_point(x = x, y = y)
+  expect_identical(removed(vellum::as_vellum_scene(rx)), msg(2L, 1L, "point"))
+  expect_identical(
+    removed(animate(rx |> transition_reveal(x), nframes = 6)),
+    msg(2L, 1L, "point")
+  )
+  # So is a row whose state is missing, in no keyframe of a transition.
+  na_state <- df
+  na_state$st[2] <- NA
+  ns <- vplot(na_state) |> mark_point(x = x, y = y, size = s)
+  expect_identical(removed(vellum::as_vellum_scene(ns)), msg(3L, 1L, "point"))
+  na_state$x[2] <- 2
+  expect_identical(
+    removed(animate(vplot(na_state) |> mark_point(x = x, y = y, size = s) |> transition_states(st), nframes = 6)),
+    msg(3L, 1L, "point")
+  )
 })

@@ -245,15 +245,21 @@ spec_fields <- function(data, n_examples = 3L) {
 # (`.resolve_panel()`: missing positions removed, then the stat) and mapping
 # each panel's `L$stat_dropped` back through its source rows. A panel that
 # cannot be resolved reports none here; the dry-run compile reports its error.
-.stat_dropped_rows <- function(plot) {
+.stat_dropped_rows <- function(plot, built = NULL) {
   out <- rep(list(integer(0)), length(plot@layers))
-  fa <- tryCatch(.facet_assign(plot), error = function(e) NULL)
-  panels <- lapply(fa$panels, function(p) {
-    tryCatch(
-      suppressWarnings(.resolve_panel(plot, p)),
-      error = function(e) NULL
-    )
-  })
+  panels <- if (!is.null(built)) {
+    # The panels the report already built (`.report_panels()`), resolved the
+    # same way.
+    lapply(built$panels, function(p) p$resolved)
+  } else {
+    fa <- tryCatch(.facet_assign(plot), error = function(e) NULL)
+    lapply(fa$panels, function(p) {
+      tryCatch(
+        suppressWarnings(.resolve_panel(plot, p)),
+        error = function(e) NULL
+      )
+    })
+  }
   for (res in panels) {
     for (i in seq_along(res)) {
       L <- res[[i]]
@@ -299,41 +305,45 @@ spec_fields <- function(data, n_examples = 3L) {
   list(oob = oob)
 }
 
-# Per layer, the rows of its input data drawn without a mark because their size
-# is missing (`missing`) or censored by the size scale (`censored`): the
-# compile's own tally (`.panel_size_drops()`, which feeds the "Removed n rows"
-# warning), taken from the panels built as the compile builds them and mapped
-# back through each resolved layer's source rows (VP-149). A layer whose rows do
-# not map back one-to-one (a stat aggregated them) reports none here.
-.size_dropped_rows <- function(plot) {
-  none <- list(missing = integer(0), censored = integer(0))
-  out <- rep(list(none), length(plot@layers))
+# Can a layer drop rows for a missing or censored size: a point or text mark
+# with a mapped size, or a constant missing one?
+.can_drop_size <- function(layer) {
+  layer@mark %in% .SIZE_DROP_MARKS &&
+    ("size" %in% names(layer@encoding) || anyNA(layer@params$size))
+}
+
+# The panels built as the compile builds them (scales trained), for the
+# report's size drops; `NULL` when no layer can drop rows for its size, which
+# the report then never needs (the build is the report's main cost), or when
+# the build fails.
+.report_panels <- function(plot) {
+  if (!any(vapply(plot@layers, .can_drop_size, logical(1)))) {
+    return(NULL)
+  }
   built <- tryCatch(
     suppressMessages(suppressWarnings(.build_panels(plot))),
     error = function(e) NULL
   )
-  if (is.null(built) || is.null(built$scales)) {
+  if (is.null(built) || is.null(built$scales)) NULL else built
+}
+
+# Per layer, the compile's own tally of the input rows it does not draw
+# (`.layer_dropped_rows()`, which feeds the "Removed n rows" warning), from the
+# `built` panels (`.report_panels()`), for the rows a missing or censored size
+# drops (the report finds the others itself) (VP-149).
+.size_dropped_rows <- function(plot, built = NULL) {
+  none <- list(
+    missing = integer(0),
+    censored = integer(0),
+    loose_missing = 0L,
+    loose_censored = 0L
+  )
+  out <- rep(list(none), length(plot@layers))
+  if (is.null(built)) {
     return(out)
   }
-  for (p in built$panels) {
-    for (i in seq_along(p$resolved)) {
-      sz <- .panel_size_drops(p, i, built$scales)
-      if (!any(sz$missing) && !any(sz$censored)) {
-        next
-      }
-      src <- p$resolved[[i]]$source
-      to_input <- function(k) {
-        if (!is.null(src$members)) {
-          src$rows[unlist(src$members[k])]
-        } else if (isTRUE(src$per_row)) {
-          src$rows[k]
-        } else {
-          integer(0)
-        }
-      }
-      out[[i]]$missing <- c(out[[i]]$missing, to_input(which(sz$missing)))
-      out[[i]]$censored <- c(out[[i]]$censored, to_input(which(sz$censored)))
-    }
+  for (i in which(vapply(plot@layers, .can_drop_size, logical(1)))) {
+    out[[i]] <- .layer_dropped_rows(built$panels, i, built$scales)
   }
   out
 }
@@ -342,8 +352,9 @@ spec_fields <- function(data, n_examples = 3L) {
 # many rows will not be shown for each reason, the total, and how many shown
 # rows have a non-position value outside its scale limits (`oob`).
 .compile_report <- function(plot) {
-  stat_rows <- .stat_dropped_rows(plot)
-  size_rows <- .size_dropped_rows(plot)
+  built <- .report_panels(plot)
+  stat_rows <- .stat_dropped_rows(plot, built)
+  size_rows <- .size_dropped_rows(plot, built)
   rows <- lapply(seq_along(plot@layers), function(i) {
     layer <- plot@layers[[i]]
     ld <- layer@data %||% plot@data
@@ -356,11 +367,12 @@ spec_fields <- function(data, n_examples = 3L) {
     oob <- 0L
     if (is.data.frame(ld)) {
       # A row drawn without a mark for a missing or censored size, counted as
-      # the compile warning counts it (VP-149). A missing size is a missing
-      # value, the first reason; a censored one is outside the limits, the last.
+      # the compile warning counts it (VP-149): a missing size is a missing
+      # value, a censored one is outside the limits. A row keeps the first
+      # reason that applies (one a log axis cannot map stays `transform`).
       shown_oob <- attr(why, "shown_oob") %||% FALSE
       sz <- size_rows[[i]]
-      why[seq_len(n) %in% sz$missing] <- "missing"
+      why[is.na(why) & seq_len(n) %in% sz$missing] <- "missing"
       why[is.na(why) & seq_len(n) %in% sz$censored] <- "limits"
       o <- .layer_oob_rows(plot, layer, ld)
       oob <- sum((o$oob | shown_oob) & is.na(why))
@@ -370,6 +382,10 @@ spec_fields <- function(data, n_examples = 3L) {
       function(r) sum(why == r, na.rm = TRUE),
       integer(1)
     )
+    # Size drops the compile could not map back to input rows (a stat
+    # aggregated them) are counted as the warning counts them.
+    counts[["missing"]] <- counts[["missing"]] + size_rows[[i]]$loose_missing
+    counts[["limits"]] <- counts[["limits"]] + size_rows[[i]]$loose_censored
     data.frame(
       layer = i,
       mark = layer@mark,
