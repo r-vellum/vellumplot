@@ -904,8 +904,9 @@ NULL
     )
     # A left / right spacer narrows the panel columns, so the x wrap budget
     # (and with it the x label row and the end labels' reach) follows it.
+    # (refreshed for a zero spacer too: the shrink step can return to it)
     refresh_x <- function(s) {
-      if (s[["l"]] + s[["r"]] > 0 && can_wrap_x) {
+      if (can_wrap_x) {
         xwrap_mm <<- x_wrap(per_panel_mm - (s[["l"]] + s[["r"]]) / C)
         xl <<- x_track(xwrap_mm)
         if (!is.na(shared_xl)) H$u[[shared_xl]] <<- xl
@@ -1184,12 +1185,33 @@ NULL
 # no side grows by more than `tol` mm (`max_passes` is only a safety cap). A
 # need that cannot be computed (the spacers left no panel: `.panel_mm()` is
 # NA) keeps the spacers found so far, as the single pass before VP-140 did.
-.solve_overhang <- function(need, tol = 1e-3, max_passes = 25L) {
+#
+# Growing alone can overshoot when the need falls as the spacers grow: a left /
+# right spacer narrows the panels, the x labels wrap to the narrower budget,
+# and the wrapped end labels reach less far than the wider ones the earlier
+# pass measured, so the first spacer can be ~2 mm more than its labels need at
+# the final wrap. The sides also share that budget: the side whose spacer is
+# just right may have to grow a little for the other to shrink a lot. So once
+# growth stops, search the spacers `n + lambda` (the last need, every side in
+# play raised by one offset) for the smallest offset that covers its own need,
+# re-measured at its wrap, to within `shrink_tol` mm, and keep it when it
+# reserves less in total than the grown spacers (VP-146). Where nothing wraps,
+# the last need already equals the spacers and no further pass runs.
+.solve_overhang <- function(
+  need,
+  tol = 1e-3,
+  max_passes = 25L,
+  shrink_tol = 0.05
+) {
   s <- c(t = 0, r = 0, b = 0, l = 0)
-  for (i in seq_len(max_passes)) {
-    n <- need(s)
+  fill <- function(n, s) {
     bad <- !is.finite(n)
     n[bad] <- s[bad]
+    n
+  }
+  n <- s
+  for (i in seq_len(max_passes)) {
+    n <- fill(need(s), s)
     nxt <- pmax(s, n)
     grew <- max(nxt - s)
     s <- nxt
@@ -1197,7 +1219,64 @@ NULL
       break
     }
   }
-  s
+  # `n` is the need at (within `tol` of) the grown spacers
+  if (max(s - n) < tol) {
+    return(s)
+  }
+  live <- s > 0 | n > 0
+  at <- function(lambda) n + lambda * live
+  # how far the spacers `n + lambda` fall short of their own need (<= tol:
+  # they cover it), on the sides in play (the others must still need nothing)
+  short <- function(lambda) {
+    x <- at(lambda)
+    d <- fill(need(x), x) - x
+    if (any(d[!live] > tol)) Inf else max(d[live])
+  }
+  lo <- 0
+  f_lo <- short(lo)
+  if (f_lo <= tol) {
+    return(at(lo))
+  }
+  # The far end raises every side in play to at least its grown spacer. Its
+  # shortfall is first estimated from the last need (the need barely moves
+  # between there and the grown spacers) and only measured if the search never
+  # lands on a covering offset of its own.
+  hi <- max(s - n)
+  f_hi <- max((n - at(hi))[live])
+  hi_known <- FALSE
+  # The shortfall falls about linearly in the offset, so false position (the
+  # Illinois variant) lands within `shrink_tol` of the need in a few passes;
+  # stop once a measured covering end is that close.
+  side <- 0L
+  for (i in seq_len(max_passes)) {
+    if (hi - lo <= shrink_tol || (hi_known && f_hi >= -shrink_tol)) {
+      break
+    }
+    mid <- (lo * f_hi - hi * f_lo) / (f_hi - f_lo)
+    mid <- min(max(mid, lo + shrink_tol / 4), hi - shrink_tol / 4)
+    f_mid <- short(mid)
+    if (f_mid <= tol) {
+      hi <- mid
+      f_hi <- f_mid
+      hi_known <- TRUE
+      if (side == 1L) {
+        f_lo <- f_lo / 2
+      }
+      side <- 1L
+    } else {
+      lo <- mid
+      f_lo <- f_mid
+      if (side == -1L) {
+        f_hi <- f_hi / 2
+      }
+      side <- -1L
+    }
+  }
+  if (!hi_known && short(hi) > tol) {
+    return(s)
+  }
+  best <- at(hi)
+  if (sum(best) < sum(s)) best else s
 }
 
 # The spacer (mm per side, t / r / b / l) the end tick labels need beyond what
@@ -1363,6 +1442,30 @@ NULL
     w <- h <- min(w, h)
   }
   c(w = w, h = h)
+}
+
+# One panel's mm size (w, h) in a laid-out plot drawn on a `page` (inches,
+# w / h): what the panel tracks get once every fixed track and the plot margin
+# are taken, the panel's own share of them, square when aspect-locked. NULL
+# when it cannot be known (no page, or no room left). For emitters that fit
+# text to the panel (VP-148).
+.lay_panel_mm <- function(lay, page, rt) {
+  if (is.null(page) || length(page) != 2L || !all(is.finite(page))) {
+    return(NULL)
+  }
+  as_list <- function(u) lapply(seq_along(u), function(i) u[i])
+  wu <- as_list(lay$widths)
+  hu <- as_list(lay$heights)
+  m <- .panel_mm(wu, hu, page[1], page[2], rt, isTRUE(lay$respect))
+  wt <- c(
+    w = max(vapply(wu, .null_weight, numeric(1))),
+    h = max(vapply(hu, .null_weight, numeric(1)))
+  )
+  out <- wt * m
+  if (isTRUE(lay$respect)) {
+    out[] <- min(out)
+  }
+  if (!all(is.finite(out)) || any(out <= 0)) NULL else out
 }
 
 # The weight of a plain `null` track unit (`vl_unit(2, "null")` -> 2), or 0 for

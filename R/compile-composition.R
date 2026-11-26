@@ -420,7 +420,8 @@ NULL
   plan,
   gm,
   collect,
-  subplot = NA_integer_
+  subplot = NA_integer_,
+  panel_mm = NULL
 ) {
   built <- plan$built
   rt <- plan$rt
@@ -488,6 +489,7 @@ NULL
   # `.draw_plot`): a cell declaring an interaction keys its marks, and a cell with
   # a `filter_by()` tags its elements so a host scopes the filter to this view.
   .set_interaction_ctx(plan$spec, cell)
+  .mark_ctx$panel_mm <- panel_mm
   # ... and its theme's default mark colours, for its marks and own legend.
   .set_geom_ctx(.theme_of(plan$spec))
   scene <- .compile_marks(scene, panel$resolved, psc, panel = pkey)
@@ -721,6 +723,33 @@ NULL
       orient = "horizontal"
     )
   }
+  # Each cell's panel mm size on the page, for emitters that fit text to it
+  # (VP-148); unknown (NULL) for a nested composition.
+  one <- if (!is.null(page)) {
+    as_list <- function(u) lapply(seq_along(u), function(i) u[i])
+    wu <- as_list(glo$widths)
+    hu <- as_list(glo$heights)
+    list(
+      wu = wu,
+      hu = hu,
+      mm = .panel_mm(wu, hu, page[1], page[2], list(plot.margin = m))
+    )
+  }
+  cell_panel_mm <- function(i) {
+    if (is.null(one) || !all(is.finite(one$mm))) {
+      return(NULL)
+    }
+    gm <- glo$map[[i]]
+    out <- c(
+      w = .null_weight(one$wu[[gm$panel_col]]),
+      h = .null_weight(one$hu[[gm$panel_row]])
+    ) *
+      one$mm
+    if (isTRUE(plans[[i]]$lay$respect)) {
+      out[] <- min(out)
+    }
+    if (all(out > 0)) out
+  }
   for (i in seq_along(plans)) {
     .comp_cell_next()
     scene <- .draw_subplot_aligned(
@@ -728,7 +757,8 @@ NULL
       plans[[i]],
       glo$map[[i]],
       collect,
-      subplot = i
+      subplot = i,
+      panel_mm = cell_panel_mm(i)
     )
   }
   for (i in seq_along(glo$tags)) {

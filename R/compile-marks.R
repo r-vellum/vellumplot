@@ -189,6 +189,9 @@ NULL
   # Page size (inches), for emitters that must compare device text extent to a
   # native span -- e.g. sunburst label fitting. NULL when unknown.
   .mark_ctx$page <- NULL
+  # One panel's laid-out size (mm, w / h), set by the drawer once the layout is
+  # known (`.lay_panel_mm()`); NULL until then or when the page is unknown.
+  .mark_ctx$panel_mm <- NULL
   if (!S7::S7_inherits(spec, PlotSpec)) {
     .mark_ctx$plot_interactive <- FALSE
     .mark_ctx$plot_filters <- NULL

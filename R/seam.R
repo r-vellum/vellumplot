@@ -863,12 +863,16 @@ NULL
 # `insets` (from `.compile_composition_independent()`) carries the insets of a
 # one-plot composition that are aligned to this plot's panel area or plot area
 # (VP-127): `list(insets, which, box_mm)`, drawn inside the plot's layout grid.
+# `page` is the size (inches, w / h) of the box the plot is drawn into when the
+# caller knows it and it is not the plot's own (a composition cell); it only
+# sizes the panel the mark emitters fit text to (`.mark_ctx$panel_mm`).
 .draw_plot <- function(
   scene,
   spec,
   frozen_scales = NULL,
   describe = FALSE,
-  insets = NULL
+  insets = NULL,
+  page = NULL
 ) {
   # Non-column single-value symbols are settings, not mappings (VP-126).
   spec <- .settle_constants(spec)
@@ -1017,6 +1021,14 @@ NULL
       page_width = spec@width
     )
   }
+  # The panel's mm size, for emitters that fit text to it (VP-148): on the box
+  # the plot is drawn into when the caller knows it (`page`, inches: a
+  # composition cell), else on the plot's own page.
+  .mark_ctx$panel_mm <- .lay_panel_mm(
+    lay,
+    page %||% c(spec@width, spec@height),
+    rt
+  )
 
   # The draw context threaded to the panel/axis/legend drawers below, so each is
   # a `(scene, dp)` helper rather than a call with a dozen positional locals.

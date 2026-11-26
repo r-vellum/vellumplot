@@ -86,6 +86,125 @@ NULL
 # Clamp an npc coordinate away from the panel edge so a label never clips.
 .venn_clamp <- function(v) pmin(0.98, pmax(0.02, v))
 
+# The panel's side (mm) the set names have to fit in: the laid-out panel the
+# drawer recorded (`.mark_ctx$panel_mm`; square, as the diagram is
+# aspect-locked), which takes the plot margin, titles and a composition cell's
+# size into account. When that is unknown, about the page's shorter side less
+# the default plot margins (5.5 mm a side), on the plot's own page or the 6in
+# default (VP-148).
+.venn_box_mm <- function() {
+  pm <- .mark_ctx$panel_mm
+  if (!is.null(pm) && all(is.finite(pm))) {
+    return(max(min(pm), 10))
+  }
+  pg <- .mark_ctx$page
+  max((if (!is.null(pg)) min(pg) else 6) * 25.4 - 11, 10)
+}
+
+# The text grob for one set name at its npc anchor `lab`. Each name owns a
+# horizontal span of the panel: the whole width with three sets, its own half
+# with two (so the two names cannot run into each other). A name whose box fits
+# its span (and the panel's height) at the clamped anchor is the plain
+# single-line label, as before. A longer one is measured in the label font and
+# wraps -- with three sets to the room centred on its anchor, with two to its
+# half. A word longer than that room shrinks the font (to 60% at most), then
+# widens the box; the font shrinks further only for a word wider than the whole
+# span, or for a name taller than the room on its side of the circles. Extra
+# lines grow away from the circles, and the name moves inward as little as
+# needed so its box stays inside (VP-148). `up` is +1 for a name above the
+# circles, -1 for one below.
+.venn_name_grob <- function(name, lab, k, gp, box_mm, up = 1) {
+  npc <- function(u) vellum::vl_unit(u, "npc")
+  pad <- 0.01
+  span <- if (k == 2L && lab[1] < 0.5) {
+    c(pad, 0.5 - pad)
+  } else if (k == 2L) {
+    c(0.5 + pad, 1 - pad)
+  } else {
+    c(pad, 1 - pad)
+  }
+  wrap_w <- if (k == 2L) {
+    diff(span)
+  } else {
+    2 * max(min(lab[1] - span[1], span[2] - lab[1]), 0.1)
+  }
+  ext <- function(g) {
+    c(
+      w = vellum::vl_convert(vellum::grobwidth(g), "mm") / box_mm,
+      h = vellum::vl_convert(vellum::grobheight(g), "mm") / box_mm
+    )
+  }
+  make <- function(x, y, fs = NULL, wrap = FALSE) {
+    g2 <- gp
+    if (!is.null(fs)) {
+      g2@fontsize <- fs
+    }
+    vellum::text_grob(
+      name,
+      npc(x),
+      npc(y),
+      width = if (wrap) vellum::vl_unit(wrap_w * box_mm, "mm"),
+      align = if (wrap) "centre" else "left",
+      gp = g2
+    )
+  }
+  x0 <- .venn_clamp(lab[1])
+  y0 <- .venn_clamp(lab[2])
+  plain <- vellum::text_grob(name, npc(x0), npc(y0), gp = gp)
+  e <- ext(plain)
+  if (
+    x0 - e[["w"]] / 2 >= span[1] &&
+      x0 + e[["w"]] / 2 <= span[2] &&
+      y0 - e[["h"]] / 2 >= 0 &&
+      y0 + e[["h"]] / 2 <= 1
+  ) {
+    return(plain)
+  }
+  fs <- gp@fontsize %||% 11
+  wrap <- e[["w"]] > wrap_w
+  if (wrap) {
+    # A wrapped grob measures as its wrap box, and a word longer than the box
+    # overflows it, so the longest word sets the box.
+    words <- strsplit(name, "[[:space:]]+")[[1]]
+    wmax <- max(vapply(
+      words,
+      function(w) ext(vellum::text_grob(w, gp = gp))[["w"]],
+      numeric(1)
+    ))
+    # first shrink (to 60% at most) so it fits the room around the anchor,
+    # then widen the box, and shrink further only past the whole span
+    if (wmax > wrap_w) {
+      f <- max(wrap_w / wmax, 0.6)
+      fs <- fs * f
+      wmax <- wmax * f
+    }
+    if (wmax > diff(span)) {
+      fs <- fs * diff(span) / wmax
+      wmax <- diff(span)
+    }
+    wrap_w <- max(wrap_w, wmax)
+    e <- ext(make(lab[1], lab[2], fs, wrap = TRUE))
+  }
+  # Extra lines grow away from the circles: a name above them keeps its first
+  # line where it was and grows upward, one below them grows downward. Taller
+  # than the room on that side (a small plot), the font shrinks until it fits.
+  h1 <- ext(make(lab[1], lab[2], fs))[["h"]]
+  for (i in 1:4) {
+    room <- if (up > 0) 1 - pad - lab[2] + h1 / 2 else lab[2] + h1 / 2 - pad
+    room <- min(max(room, 0.05), 1 - 2 * pad)
+    if (e[["h"]] <= room + 1e-6) {
+      break
+    }
+    fs <- fs * room / e[["h"]]
+    e <- ext(make(lab[1], lab[2], fs, wrap = wrap))
+    h1 <- ext(make(lab[1], lab[2], fs))[["h"]]
+  }
+  y <- lab[2] + up * (e[["h"]] - h1) / 2
+  x <- min(max(lab[1], span[1] + e[["w"]] / 2), span[2] - e[["w"]] / 2)
+  y <- min(max(y, pad + e[["h"]] / 2), 1 - pad - e[["h"]] / 2)
+  make(x, y, fs, wrap = wrap)
+}
+
 # A circle as a closed ring of npc-numeric coordinates (a plain list, so
 # vl_path_op reads it as one ring in a single coordinate space).
 .venn_circle <- function(cx, cy, r, n = 120L) {
@@ -191,7 +310,10 @@ NULL
   }
 
   # set-name labels. Two circles: above each (they sit low for the room). Three:
-  # pushed radially outward from the diagram centre. Both clamped inside the box.
+  # pushed radially outward from the diagram centre. A name that fits is drawn
+  # as before; a longer one wraps or moves to stay inside the box (VP-148).
+  gp <- .mark_gpar_text(11, L = L, face = "bold")
+  box_mm <- .venn_box_mm()
   for (j in seq_along(circ)) {
     cx <- mean(circ[[j]]$x)
     cy <- mean(circ[[j]]$y)
@@ -208,15 +330,8 @@ NULL
       }
       lab <- c(cx + dx / len * (v$r + 0.05), cy + dy / len * (v$r + 0.05))
     }
-    scene <- .draw(
-      scene,
-      vellum::text_grob(
-        nm[j],
-        npc(.venn_clamp(lab[1])),
-        npc(.venn_clamp(lab[2])),
-        gp = .mark_gpar_text(11, L = L, face = "bold")
-      )
-    )
+    up <- if (k == 2L || lab[2] >= v$cy) 1 else -1
+    scene <- .draw(scene, .venn_name_grob(nm[j], lab, k, gp, box_mm, up))
   }
   scene
 }
