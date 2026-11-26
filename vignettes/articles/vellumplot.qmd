@@ -80,13 +80,72 @@ summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
 ## Rendering to a file
 
 `render_plot()` writes the compiled scene; the format follows the file
-extension.
+extension: `.png`, `.svg`, `.pdf` or `.pptx`.
 
 ```{r}
 #| eval: false
 p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 render_plot(p, "cars.png")
 ```
+
+The layout is solved once, by vellum, so the PNG, the SVG, the PDF and the
+PowerPoint slide all share it.
+
+### Saving to PowerPoint
+
+A `.pptx` path writes a one-slide PowerPoint file of **editable shapes** at the
+plot's size. Every point, bar and line is a DrawingML shape, every plain-text
+label a text box you can retype (math and haloed labels are outlines), and each
+panel a named group you can ungroup, recolour or move in PowerPoint. No other
+package is needed.
+
+```{r}
+#| eval: false
+render_plot(p, "cars.pptx")
+```
+
+`vellum::pptx_pages()` writes several plots as the slides of one deck, also
+without officer:
+
+```{r}
+#| eval: false
+p2 <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
+vellum::pptx_pages(list(p, p2), "deck.pptx")
+```
+
+To put a plot on a slide of your own deck, built with
+[officer](https://davidgohel.github.io/officer/), wrap it in `vellum::as_dml()`
+and hand it to `officer::ph_with()`. The plot is laid out again at the size of
+the placeholder, so its text keeps its point size and nothing is stretched
+(`resize = FALSE` keeps the plot's own size).
+
+```{r}
+#| eval: false
+library(officer)
+
+deck <- read_pptx() |>
+  add_slide(layout = "Title and Content") |>
+  ph_with("Fuel economy", location = ph_location_type("title")) |>
+  ph_with(vellum::as_dml(p), location = ph_location_type("body"))
+print(deck, target = "fuel.pptx")
+```
+
+Fonts are named, not embedded: PowerPoint uses the font vellum measured the
+text with when the machine opening the deck has it, and substitutes another
+when it doesn't. `text = "outline"` (in `render_plot()`, `pptx_pages()` and
+`as_dml()`) writes glyph outlines instead, which look the same everywhere but
+can't be edited as text. DrawingML has no clipping, blend modes or masks, so
+vellum cuts clipped geometry in advance and draws the parts it can't express
+(a blur, a blend mode) as a picture, with a warning. PowerPoint output needs
+vellum 0.18.0 or later; see vellum's
+[`as_dml()`](https://r-vellum.github.io/vellum/reference/as_dml.html) and
+[`pptx_pages()`](https://r-vellum.github.io/vellum/reference/pptx_pages.html)
+for the details.
+
+For many figures at once, `pdf_pages()` and `render_all()` are covered in
+[Facets and composition](facets-and-composition.html#multi-page-and-batch-output).
+
+### Strings and documents
 
 `plot_svg()` returns the scene as an SVG string, and `plot_data_uri()` inlines a
 plot as a self-contained `data:` URI (vector by default, or `format = "png"`) for

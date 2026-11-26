@@ -55,6 +55,25 @@
   the node-pie legend, tapering flow-map branches and their widget keys, and
   `theme_void()`'s missing margin. `?guide_bins` no longer links to a
   `scale_alpha_binned()` that vellumplot doesn't have.
+* The animation article is brought up to date (D-17): faceted animations
+  (with per-panel scales refused), how marks are matched (`data_id`, then
+  group, then row order), `transition_reveal()` revealing along `along`,
+  morphing lines, frame variables in titles and `mark_text()`, `Date` /
+  `POSIXct` times, per-aesthetic `ease_aes()`, `start_pause` / `end_pause` /
+  `rewind`, `anim_frame()` posters, `.apng`, video and WebP advice, and the
+  one-per-animation missing-values warning. Its keyframe figure, which drew
+  nothing, now shows. `?anim_save` says which frame an animated SVG shows
+  under reduced motion.
+* The facets and composition article covers composition tags
+  (`compose_annotation(tag_levels =)` and the tag band), strip text clipping
+  with `label_wrap_gen()` and `theme(strip.clip = "off")`, and
+  `inset(align_to =)` (D-18).
+* Get started has a "Saving to PowerPoint" section (`render_plot(p,
+  "x.pptx")`, `vellum::pptx_pages()`, `vellum::as_dml()` with
+  `officer::ph_with()`), and `?render_plot` lists `.pptx` (D-19).
+* The README lists PowerPoint output, math labels, `theme_brand()`, faceted
+  animation, frame variables and the ggplot2-parity work, and the articles
+  no longer say output is PNG, SVG and PDF only (D-24).
 
 # vellumplot 0.25.1
 

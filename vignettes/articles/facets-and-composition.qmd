@@ -3,7 +3,7 @@ title: "Facets and composition"
 description: >
   Two ways to make many panels: facet one plot across a variable with shared
   or free scales, and combine separate plots into one figure with concat,
-  insets, and repeats.
+  tags, insets, and repeats.
 ---
 
 ```{r}
@@ -67,6 +67,41 @@ vplot(mtcars) |> mark_point(x = wt, y = mpg) |>
 vplot(mtcars) |> mark_point(x = wt, y = mpg) |>
   facet_wrap(~cyl) |> resolve_scale(y = "independent")
 ```
+
+### Long strip labels
+
+Strip text is clipped to its strip, as in ggplot2, so a label wider than its
+panel can't run into the next panel or off the page:
+
+```{r}
+regions <- data.frame(
+  x = rep(1:4, 3),
+  y = c(2, 3, 5, 4, 1, 2, 2, 3, 4, 3, 2, 1),
+  region = rep(c(
+    "Northern highlands and islands",
+    "Central belt",
+    "Southern uplands and the borders"
+  ), each = 4)
+)
+
+p_long <- vplot(regions, width = 6, height = 2.4) |>
+  mark_line(x = x, y = y) |>
+  facet_wrap(~region, ncol = 3)
+p_long
+```
+
+There are two ways out. `labeller = label_wrap_gen(width)` wraps each label
+at `width` characters, and the strip grows to hold every line:
+
+```{r}
+vplot(regions, width = 6, height = 2.4) |>
+  mark_line(x = x, y = y) |>
+  facet_wrap(~region, ncol = 3, labeller = label_wrap_gen(18))
+```
+
+Or turn the clipping off with `theme(strip.clip = "off")` (ggplot2's values:
+the default `"inherit"` and `"on"` clip, `"off"` doesn't), and let a label that
+is only a little too long run past its strip.
 
 ### Independent colour, size and other legends
 
@@ -156,6 +191,41 @@ when you have assembled them programmatically.
 concat(p1, p2, ncol = 1, heights = c(2, 1))
 ```
 
+### Titles and tags
+
+`compose_annotation()` adds text for the whole figure (`title`, `subtitle`,
+`caption`) and tags each plot: `tag_levels = "A"` labels them A, B, C, and
+`"a"`, `"1"`, `"i"` and `"I"` give the other styles. `tag_prefix` and
+`tag_suffix` wrap each tag, as in `"(a)"` or `"A."`.
+
+```{r}
+concat(p1, p2, p3, ncol = 3, width = 9, height = 3.2) |>
+  compose_annotation(title = "Fuel economy", tag_levels = "A")
+```
+
+Each row of plots gets a band above it as tall as its tallest tag, and the tag
+sits in that band at the plot's top-left corner, so it never covers a title or
+a panel. The tags are drawn with the theme's `plot.tag` element, which sets
+their size, colour and `angle`; pass the composition to `theme()` to change it.
+Tags are drawn the same way in compositions that can't line up their panels
+(a faceted, polar or map cell, a `design`, insets); spacers get no tag. The
+figure `title`, `subtitle` and `caption` are not drawn in that layout yet, so
+the example below has tags only.
+
+```{r}
+faceted <- vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  facet_wrap(~am, labeller = label_both)
+
+concat(faceted, p3, ncol = 2, widths = c(2, 1), width = 8, height = 3.4) |>
+  compose_annotation(tag_levels = "a", tag_prefix = "(", tag_suffix = ")")
+```
+
+Every composition carries its own annotation, so a nested composition can have
+tags of its own. A composition that holds another composition is laid out in
+the non-aligned way too, so for now its figure title, subtitle and caption are
+not drawn either.
+
 ### Insets
 
 `inset()` floats one plot over another, positioned by fractional coordinates of
@@ -166,6 +236,27 @@ main <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 mini <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 8)
 inset(main, mini, left = 0.5, bottom = 0.45, right = 1, top = 1)
 ```
+
+`align_to` chooses the reference box, as patchwork's `inset_element()` does:
+
+* `"panel"` (the default): the base plot's panel area. In a faceted plot this
+  spans all the panels, strips and gaps included.
+* `"plot"`: the base plot without its title, subtitle and caption, with its axes
+  and legends.
+* `"full"`: the whole base cell, plot margin included.
+
+The same fractions land in different places. Here the inset takes the top-right
+quarter of the whole cell, title and margins included:
+
+```{r}
+titled <- main |> labs(title = "Weight and fuel economy")
+inset(titled, mini, left = 0.5, bottom = 0.5, right = 1, top = 1, align_to = "full")
+```
+
+Before vellumplot 0.22.0 every inset was placed in the whole cell; pass
+`align_to = "full"` to get that placement back. When the base is a composition
+of several plots there is no single panel to align to, and insets are placed in
+the whole figure.
 
 ### Sparklines
 
@@ -305,6 +396,14 @@ vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   facet_wrap(~cyl) |>
   pdf_pages("by-cylinder.pdf")
+```
+
+For a slide deck you can edit, `vellum::pptx_pages()` takes the same kind of
+list and writes one PowerPoint slide per plot, as editable shapes (see
+[Saving to PowerPoint](vellumplot.html#saving-to-powerpoint)):
+
+```r
+vellum::pptx_pages(report, "report.pptx")
 ```
 
 `render_all()` goes the other way: a list of plots to *separate* files, rendered

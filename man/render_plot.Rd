@@ -11,28 +11,38 @@ render_plot(plot, path, text = "native", dpi = NULL, cvd = "none")
 
 \item{path}{Output file path.}
 
-\item{text}{For SVG output, how text is written (see \code{\link[vellum:render]{vellum::render()}}).}
+\item{text}{For SVG and PowerPoint output, how text is written: \code{"native"}
+(default) for selectable, editable text, \code{"outline"} for glyph outlines
+(see \code{\link[vellum:render]{vellum::render()}}). Ignored for PNG and PDF.}
 
 \item{dpi}{Output resolution in dots per inch. \code{NULL} (default) uses the
 plot's authored resolution (set on \code{\link[=vplot]{vplot()}}); a number overrides it for
 this render, so the PNG's pixel dimensions become \code{width * dpi} by
-\code{height * dpi}. Ignored for \code{.svg}/\code{.pdf}, which are resolution-independent.}
+\code{height * dpi}. Ignored for \code{.svg}, \code{.pdf} and \code{.pptx}, which are
+resolution-independent.}
 
 \item{cvd}{Colour-vision-deficiency simulation for a \code{.png} render: one of
 \code{"none"} (default), \code{"protanopia"}, \code{"deuteranopia"}, \code{"tritanopia"}, or
 \code{"achromatopsia"}. Use it to preview how a palette reads for a
 colour-blind viewer (pair with \code{\link[=plot_lint]{plot_lint()}}, which flags low contrast, and
 \code{\link[=scale_pattern]{scale_pattern()}} / \code{\link[=pattern_hatch]{pattern_hatch()}}, which add a redundant non-colour
-encoding). Simulation is raster-only; it is ignored for \code{.svg}/\code{.pdf}.}
+encoding). Simulation is raster-only: a \code{.svg}, \code{.pdf} or \code{.pptx} is
+written unsimulated, with a warning.}
 }
 \value{
 \code{path}, invisibly.
 }
 \description{
 Compiles a \link{PlotSpec} into a \code{\link[vellum:vl_scene]{vellum::vl_scene()}} and writes it. The output
-format is taken from the file extension (\code{.png}, \code{.svg}, \code{.pdf}).
+format is taken from the file extension (\code{.png}, \code{.svg}, \code{.pdf} or \code{.pptx}).
 \code{\link[vellum:render]{vellum::render()}} also works on a plot directly, dispatching through the
 \code{as_vellum_scene()} seam.
+}
+\details{
+A \code{.pptx} path writes a one-slide PowerPoint file of editable shapes at the
+plot's size (needs vellum 0.18.0 or later; no other package). For several
+slides use \code{\link[vellum:pptx_pages]{vellum::pptx_pages()}}, and to place a plot on a slide of an
+officer deck wrap it in \code{\link[vellum:as_dml]{vellum::as_dml()}} for \code{officer::ph_with()}.
 }
 \examples{
 p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
