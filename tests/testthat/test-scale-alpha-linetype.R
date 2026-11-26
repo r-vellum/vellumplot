@@ -32,7 +32,8 @@ test_that("size / edge_width / alpha trainers are unified and consistent (H50)",
     classes = "vellumplot_missing_rows"
   )$scales$size
   expect_true(isTRUE(a$na))
-  expect_true(isTRUE(s$na))
+  # a continuous size alone has no NA key: its NA rows draw no mark (VR-38)
+  expect_false(isTRUE(s$na))
   # the continuous rescale still works after unification
   expect_equal(a$map(range(dna$w, na.rm = TRUE)), c(0.1, 1))
 })
