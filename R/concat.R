@@ -612,13 +612,48 @@ compose_annotation <- function(
       vellum::vl_unit(rep_len(as.numeric(v), k), "null")
     }
   }
+  # Each cell's grid area: its top row, left column and spans.
+  area <- function(i) {
+    if (!is.null(comp@design)) {
+      a <- comp@design[[i]]
+      list(r = a$t, c = a$l, rs = a$b - a$t + 1L, cs = a$r - a$l + 1L)
+    } else {
+      pos <- .comp_cell(i, comp)
+      list(r = pos$r, c = pos$c, rs = 1L, cs = 1L)
+    }
+  }
+  # The composition's auto-tags (`tag_levels`), one per drawn cell (spacers get
+  # none), take a band above each row of cells as tall as the row's tallest
+  # tag, as in the aligned path (VP-142, VP-145). Before, this layout drew no
+  # tags at all.
+  drawn <- which(!vapply(comp@plots, S7::S7_inherits, NA, Spacer))
+  rt0 <- .resolve_theme(.comp_figure_theme(comp))
+  ctags <- .comp_tags(comp, length(drawn), rt0)
+  heights <- wfun(comp@heights, nrow)
+  row_of <- seq_len(nrow) # grid row of each composition row's cells
+  if (!is.null(ctags)) {
+    band <- lapply(seq_len(nrow), function(r) {
+      hit <- vapply(drawn, function(i) area(i)$r == r, NA)
+      .umax(lapply(ctags[hit], function(tg) {
+        .track_h_band(rt0[["plot.tag"]], tg, .PAD_MM, NA_real_)
+      }))
+    })
+    hw <- rep_len(as.numeric(comp@heights %||% 1), nrow)
+    heights <- do.call(
+      c,
+      unlist(
+        lapply(seq_len(nrow), function(r) {
+          list(band[[r]], vellum::vl_unit(hw[r], "null"))
+        }),
+        recursive = FALSE
+      )
+    )
+    row_of <- 2L * seq_len(nrow)
+  }
   scene <- vellum::push(
     scene,
     vellum::vl_viewport(
-      layout = vellum::grid_layout(
-        wfun(comp@widths, ncol),
-        wfun(comp@heights, nrow)
-      )
+      layout = vellum::grid_layout(wfun(comp@widths, ncol), heights)
     )
   )
   # Insets aligned to the base plot's panel area or plot area are drawn by
@@ -646,19 +681,25 @@ compose_annotation <- function(
     if (S7::S7_inherits(p, Spacer)) {
       next
     }
-    vp <- if (!is.null(comp@design)) {
-      a <- comp@design[[i]]
-      vellum::vl_viewport(
-        row = a$t,
-        col = a$l,
-        rowspan = a$b - a$t + 1,
-        colspan = a$r - a$l + 1
+    a <- area(i)
+    # with a tag band, rows interleave (band, cells): a cell spanning `rs`
+    # composition rows covers the bands between them too
+    top <- row_of[a$r]
+    span <- row_of[a$r + a$rs - 1L] - top + 1L
+    if (!is.null(ctags)) {
+      scene <- .draw_tag(
+        scene,
+        top - 1L,
+        a$cs,
+        ctags[match(i, drawn)],
+        rt0,
+        col = a$c
       )
-    } else {
-      pos <- .comp_cell(i, comp)
-      vellum::vl_viewport(row = pos$r, col = pos$c)
     }
-    scene <- vellum::push(scene, vp)
+    scene <- vellum::push(
+      scene,
+      vellum::vl_viewport(row = top, col = a$c, rowspan = span, colspan = a$cs)
+    )
     if (S7::S7_inherits(p, PlotComposition)) {
       # A nested composition is only drawn by the aligned path when it is itself
       # alignable; otherwise it needs the independent layout too (the aligned

@@ -17,6 +17,24 @@
   alike, and includes the rows that are in no frame: those with a missing
   transition state, or a missing `transition_reveal()` value (VP-150).
 
+* A composition that can't be aligned (a faceted, polar or sf cell, a
+  `design`, or insets) now draws its `tag_levels` tags. As in the aligned
+  layout, each row of cells gets a band above it as tall as its tallest tag,
+  and the tag sits at the cell's top-left corner. Spacers get no tag. Before,
+  this layout drew no tags at all (VP-145).
+
+* The room reserved for end tick labels no longer comes out up to ~2 mm too
+  wide when the x labels wrap. A left / right spacer narrows the panels, so
+  the labels wrap narrower and reach less far than the first measurement
+  said. The spacer now shrinks back to what the wrapped labels need. Plots
+  whose x labels don't wrap keep their layout (VP-146).
+
+* `vvenn()` keeps long set names inside the plot box. A name that fits is
+  drawn as before. A longer one is measured in the label font and wraps (with
+  two sets, within its own half, so the two names can't collide), shrinks
+  only when a single word is wider than its room, and moves inward as far as
+  it has to (VP-148).
+
 # vellumplot 0.25.1
 
 ## Bug fixes

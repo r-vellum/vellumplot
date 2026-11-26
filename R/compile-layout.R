@@ -904,8 +904,9 @@ NULL
     )
     # A left / right spacer narrows the panel columns, so the x wrap budget
     # (and with it the x label row and the end labels' reach) follows it.
+    # (refreshed for a zero spacer too: the shrink step can return to it)
     refresh_x <- function(s) {
-      if (s[["l"]] + s[["r"]] > 0 && can_wrap_x) {
+      if (can_wrap_x) {
         xwrap_mm <<- x_wrap(per_panel_mm - (s[["l"]] + s[["r"]]) / C)
         xl <<- x_track(xwrap_mm)
         if (!is.na(shared_xl)) H$u[[shared_xl]] <<- xl
@@ -1184,12 +1185,26 @@ NULL
 # no side grows by more than `tol` mm (`max_passes` is only a safety cap). A
 # need that cannot be computed (the spacers left no panel: `.panel_mm()` is
 # NA) keeps the spacers found so far, as the single pass before VP-140 did.
+#
+# Growing alone can overshoot when the need falls as the spacers grow: a left /
+# right spacer narrows the panels, the x labels wrap to the narrower budget,
+# and the wrapped end labels reach less far than the wider ones the earlier
+# pass measured, so the first spacer can be ~2 mm more than its labels need at
+# the final wrap. So once growth stops, the spacers shrink to the smallest
+# that still covers its own need, re-measured at that spacer's wrap: straight
+# to the last need if that covers itself, else by bisection between it and
+# the grown spacers (VP-146). Where nothing wraps, the last need already
+# equals the spacers and nothing shrinks (and no further pass runs).
 .solve_overhang <- function(need, tol = 1e-3, max_passes = 25L) {
   s <- c(t = 0, r = 0, b = 0, l = 0)
-  for (i in seq_len(max_passes)) {
-    n <- need(s)
+  fill <- function(n, s) {
     bad <- !is.finite(n)
     n[bad] <- s[bad]
+    n
+  }
+  n <- s
+  for (i in seq_len(max_passes)) {
+    n <- fill(need(s), s)
     nxt <- pmax(s, n)
     grew <- max(nxt - s)
     s <- nxt
@@ -1197,7 +1212,24 @@ NULL
       break
     }
   }
-  s
+  # `n` is the need at (within `tol` of) the grown spacers
+  lo <- pmin(s, n)
+  if (max(s - lo) < tol) {
+    return(s)
+  }
+  covers <- function(x) all(fill(need(x), x) <= x + tol)
+  if (covers(lo)) {
+    return(lo)
+  }
+  hi <- s
+  for (i in seq_len(max_passes)) {
+    if (max(hi - lo) < tol) {
+      break
+    }
+    mid <- (lo + hi) / 2
+    if (covers(mid)) hi <- mid else lo <- mid
+  }
+  hi
 }
 
 # The spacer (mm per side, t / r / b / l) the end tick labels need beyond what

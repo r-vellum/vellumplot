@@ -190,3 +190,34 @@ test_that("a composition tag no longer overlaps its panel (VP-142)", {
   # the panels moved down by the tag band
   expect_true(all(pan$py0 > plain$py0 + 5))
 })
+
+test_that("a non-aligned composition draws its tags too (VP-145)", {
+  faceted <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
+  bar <- vplot(mtcars) |> mark_bar(x = factor(gear))
+  comp <- concat(faceted, bar, plot_spacer(), bar, ncol = 2) |>
+    compose_annotation(tag_levels = "a", tag_suffix = ")")
+  expect_false(vellumplot:::.comp_alignable(comp))
+  sc <- vellum::as_vellum_scene(comp)
+  svg <- vellum::scene_svg(sc)
+  # one tag per drawn cell, the spacer skipped
+  for (tg in c("a)", "b)", "c)")) {
+    expect_match(svg, paste0(">", tg, "<"), fixed = TRUE)
+  }
+  expect_no_match(svg, ">d)<", fixed = TRUE)
+  # each row of cells gets its own band: the panels sit below the tags
+  sm <- vellum::scene_model(sc)
+  pan <- sm$panels[grepl("panel-", sm$panels$name), , drop = FALSE]
+  plain <- vellum::scene_model(vellum::as_vellum_scene(
+    concat(faceted, bar, plot_spacer(), bar, ncol = 2)
+  ))$panels
+  plain <- plain[grepl("panel-", plain$name), , drop = FALSE]
+  expect_identical(nrow(pan), nrow(plain))
+  expect_true(all(pan$py0 > plain$py0))
+  # a blank tag element takes no band and draws nothing
+  blank <- comp |> theme(plot.tag = element_blank())
+  expect_no_match(
+    vellum::scene_svg(vellum::as_vellum_scene(blank)),
+    ">a)<",
+    fixed = TRUE
+  )
+})

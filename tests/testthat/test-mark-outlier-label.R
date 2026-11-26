@@ -25,9 +25,11 @@ test_that("no mapped label falls back to the outlier's y value", {
 })
 
 test_that("outliers are detected within each colour group", {
+  # fixed data (VP-144): no RNG, so the result can't depend on test order
+  calm <- seq(-0.5, 0.5, length.out = 29)
   d <- data.frame(
     x = seq_len(60),
-    y = c(rnorm(29, 0, 0.5), 20, rnorm(29, 0, 0.5), -20),
+    y = c(calm, 20, rev(calm), -20),
     g = rep(c("a", "b"), each = 30)
   )
   L <- resolved2(

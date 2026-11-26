@@ -61,3 +61,42 @@ test_that("a data frame with no logical columns errors clearly", {
     "logical membership"
   )
 })
+
+test_that("long set names stay inside the panel (VP-148)", {
+  gp <- vellumplot:::.mark_gpar_text(11, face = "bold")
+  box <- 116 # mm, a 5in plot's panel
+  ext <- function(g) {
+    x <- as.numeric(vctrs::field(g@x, "value"))
+    y <- as.numeric(vctrs::field(g@y, "value"))
+    w <- vellum::vl_convert(vellum::grobwidth(g), "mm") / box
+    h <- vellum::vl_convert(vellum::grobheight(g), "mm") / box
+    c(l = x - w / 2, r = x + w / 2, b = y - h / 2, t = y + h / 2)
+  }
+  # a short name is the plain label at its anchor, as before
+  short <- vellumplot:::.venn_name_grob("Coffee", c(0.36, 0.76), 2L, gp, box)
+  npc <- function(u) vellum::vl_unit(u, "npc")
+  expect_identical(
+    short,
+    vellum::text_grob("Coffee", npc(0.36), npc(0.76), gp = gp)
+  )
+  # a long name wraps; its box stays inside the panel
+  long <- "A rather long set name that overflows the box"
+  for (lab in list(c(0.154, 0.27), c(0.846, 0.27), c(0.5, 0.92))) {
+    g <- vellumplot:::.venn_name_grob(long, lab, 3L, gp, box)
+    e <- ext(g)
+    expect_gte(e[["l"]], 0)
+    expect_lte(e[["r"]], 1)
+    expect_gte(e[["b"]], 0)
+    expect_lte(e[["t"]], 1)
+  }
+  # two sets: each name keeps to its own half, even one unbreakable word
+  word <- "Supercalifragilisticexpialidocious"
+  left <- ext(vellumplot:::.venn_name_grob(word, c(0.36, 0.76), 2L, gp, box))
+  right <- ext(vellumplot:::.venn_name_grob(long, c(0.64, 0.76), 2L, gp, box))
+  expect_gte(left[["l"]], 0)
+  expect_lte(left[["r"]], 0.5)
+  expect_gte(right[["l"]], 0.5)
+  expect_lte(right[["r"]], 1)
+  # and the diagram renders
+  render_ok(vvenn(list(A = 1:5, B = 3:8) |> setNames(c(word, long))))
+})

@@ -332,3 +332,56 @@ test_that("end breaks well inside the panel converge with no residual clip", {
   expect_lte(ex$e[1] - (h[n] + ex$g[1] * panel), 2e-3)
   expect_lte(ex$e[2] - (h[1] + ex$g[2] * panel), 2e-3)
 })
+
+# VP-146: a spacer that narrowed the wrap budget shrinks back to what the
+# wrapped end labels need.
+
+test_that(".solve_overhang() shrinks to the need when it falls as it grows", {
+  # a wrap-like need: the bigger the spacer, the narrower the labels
+  need <- function(s) c(t = 0, r = 10 - 0.5 * s[["r"]], b = 0, l = 0)
+  s <- vellumplot:::.solve_overhang(need)
+  # the fixed point s = 10 - s / 2, not the first pass's 10
+  expect_equal(s[["r"]], 20 / 3, tolerance = 1e-3)
+  expect_lte(need(s)[["r"]], s[["r"]] + 1e-3)
+  # a need the shrunk spacer covers outright is taken as it is
+  step <- function(s) c(t = 0, r = if (s[["r"]] > 0) 3 else 5, b = 0, l = 0)
+  expect_identical(vellumplot:::.solve_overhang(step)[["r"]], 3)
+})
+
+test_that("wrapped end labels get the spacer they need, no more (VP-146)", {
+  p <- vplot(data.frame(x = 1:4, y = 1:4), width = 3.2, height = 2.5) |>
+    mark_point(x = x, y = y) |>
+    scale_x_continuous(
+      breaks = 1:4,
+      labels = c(
+        "A long label one",
+        "Another long label",
+        "Third long label here",
+        "End label WWWWWW"
+      ),
+      expand = c(0.02, 0)
+    ) |>
+    theme(
+      plot.margin = 0,
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title = element_blank()
+    )
+  lay <- lay_of(p)
+  w <- conv_mm(lay$widths)
+  r <- w[length(w)]
+  panel <- p@width * 25.4 - w[1] - r
+  pl <- vellumplot:::.build_panels(p)
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_of(p))
+  ex <- vellumplot:::.end_tick_extent(
+    pl$scales$x,
+    rt[["axis.text.x"]],
+    0,
+    c("centre", "top"),
+    "x",
+    wrap_mm = lay$xwrap_mm
+  )
+  # the last label, wrapped at the final budget, fits its spacer plus the end
+  # gap exactly: not clipped, and not ~2 mm over (as the first pass left it)
+  expect_equal(ex$e[2], r + ex$g[2] * panel, tolerance = 1e-2)
+})
