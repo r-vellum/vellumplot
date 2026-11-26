@@ -630,7 +630,8 @@ compose_annotation <- function(
   rt0 <- .resolve_theme(.comp_figure_theme(comp))
   ctags <- .comp_tags(comp, length(drawn), rt0)
   heights <- wfun(comp@heights, nrow)
-  row_of <- seq_len(nrow) # grid row of each composition row's cells
+  # grid row of each composition row's cells (doubles, as `.comp_cell()` gives)
+  row_of <- as.double(seq_len(nrow))
   if (!is.null(ctags)) {
     band <- lapply(seq_len(nrow), function(r) {
       hit <- vapply(drawn, function(i) area(i)$r == r, NA)
@@ -648,7 +649,7 @@ compose_annotation <- function(
         recursive = FALSE
       )
     )
-    row_of <- 2L * seq_len(nrow)
+    row_of <- 2 * seq_len(nrow)
   }
   scene <- vellum::push(
     scene,
