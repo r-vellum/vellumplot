@@ -31,7 +31,8 @@ A theme sets the look of everything that is not a mark. vellumplot ships several
 `theme_gray()` is the default (grey panel, white gridlines); `theme_minimal()`
 drops the panel fill; `theme_bw()` is a white panel with light grey gridlines;
 `theme_classic()` gives axis lines and no gridlines; `theme_void()` strips
-everything but the marks, legend, and titles.
+everything but the marks, legend, and titles, and has no plot margin, so the
+plot fills its box edge to edge (handy for maps and insets).
 
 ```{r}
 vplot(mtcars) |>
@@ -58,6 +59,32 @@ vplot(mtcars) |>
   ) |>
   labs(title = "Fuel economy")
 ```
+
+### Font weight
+
+`face` picks plain, bold or italic. `weight` picks the stroke weight on a
+numeric scale from 100 to 900 (300 light, 400 regular, 600 semi-bold, 700
+bold), or by name (`"light"`, `"semi-bold"`). It shows best in a family that
+ships many weights; a family without the exact weight uses its nearest one.
+A bold `face` always draws at least 700, so a title set in `face = "bold"`
+stays bold under a light weight inherited from `text`.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  labs(title = "Fuel economy", subtitle = "Light text, heavy title") |>
+  theme(
+    text = element_text(weight = "light"),
+    plot.title = element_text(weight = 800)
+  )
+```
+
+The layout measures text in the font the theme draws it with, family, face,
+weight and size together. A wider or heavier font gets the room it needs: the
+legend column, the axis gutters and the facet strips grow to fit, so labels
+don't overflow into the panel. This holds for the labels of chord, sankey and
+treemap diagrams and of `vtable()` cells too, which draw in the theme's base
+font.
 
 ### Rotating and wrapping axis labels
 
@@ -89,6 +116,36 @@ untouched, so a plain numeric axis is unchanged.
 vplot(gdp) |>
   mark_bar(x = country, y = score)
 ```
+
+## Default mark colours
+
+A mark whose colour or fill is neither mapped nor set takes it from the theme.
+The `geom` slot holds an `element_geom()` with three colours, as in ggplot2:
+`ink` for points, lines, text and error bars, `paper` for the backgrounds of
+box plots, violins and labels, and `accent` for smooths and contour lines.
+Bars, histograms and areas fill with a mix of `ink` and `paper`. A light theme
+uses black ink on white paper, which gives the familiar black points and
+`"grey35"` bars. A dark theme sets a light ink, so unmapped marks stay visible
+on its panel.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_smooth(x = wt, y = mpg, method = "lm") |>
+  theme(
+    plot.background = element_rect(fill = "grey10"),
+    panel.background = element_rect(fill = "grey15"),
+    panel.grid = element_line(color = "grey25"),
+    text = element_text(color = "grey80"),
+    axis.text = element_text(color = "grey70"),
+    geom = element_geom(ink = "grey90", paper = "grey15", accent = "#ffb000")
+  )
+```
+
+`element_geom(colour =, fill =)` overrides the derived colours for every mark at
+once. A mapped scale and a constant `color =` or `fill =` on a mark still win.
+`theme_cyberpunk()`, `theme_brand()` and a `theme_sketch()` given its own
+colours all set the geom element this way.
 
 ## Brand themes from `_brand.yml`
 
@@ -151,6 +208,12 @@ Plots that have no theme of their own then use the brand; a plot with
 installed falls back to the default family with a warning, and
 `theme_brand(fetch_fonts = TRUE)` downloads Google and Bunny fonts (or
 registers font files shipped with the brand) for the session.
+
+Font weights come across too. `typography.base.weight` sets the weight of the
+body text and `typography.headings.weight` that of the title and the facet
+strips, through `element_text(weight =)`. Axis and legend text and the caption
+stay at least regular (400), so a thin brand weight doesn't make the small text
+unreadable.
 
 ## Layer effects
 

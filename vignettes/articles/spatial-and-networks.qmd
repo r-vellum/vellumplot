@@ -58,6 +58,7 @@ CRS as the geometry, so they always land where the feature is drawn, and crowded
 labels repel apart.
 
 ```{r}
+#| eval: !expr have_sf
 vplot(nc) |>
   mark_sf(fill = AREA) |>
   mark_sf_label(label = NAME, size = 5) |>
@@ -98,6 +99,10 @@ a projected CRS rather than being drawn as a naive straight grid.
 panel corner (`position = "bottomleft"`, `"topright"`, and so on); the scale bar
 reads the map's CRS to size itself, defaulting to a round distance near a quarter
 of the panel width.
+
+For a map without axes or panel, `theme_void()` drops all the furniture and the
+plot margin too, so the map fills its box edge to edge. Add a margin back with
+`theme(plot.margin = c(5.5, 5.5, 5.5, 5.5))` if the map needs room.
 
 ```{r}
 #| eval: !expr have_sf
@@ -303,6 +308,13 @@ angle-restricted spiral tree that needs only the edgebundle package.
 `type = "steiner"` builds an approximate Steiner tree instead (it additionally
 needs the \pkg{interp} package). The computed flow is mapped onto `width_range`,
 so the widest trunk near the root stays legible however lopsided the weights are.
+Each branch is a single ribbon whose width follows the flow, so where a Steiner
+tree gathers tributaries the branch tapers smoothly rather than in steps.
+
+In an interactive widget the branches are keyed like edges: a branch that
+reaches a destination stands for that edge, so it gets hover, a tooltip naming
+the root, the destination and the flow, and selection, and
+`select_neighbours()` lights up a node's flows.
 
 ### Dendrograms
 
@@ -397,7 +409,11 @@ vgraph(g, layout = "stress") |>
 
 `mark_node_pie()` replaces the node markers with pie (or donut, via `inner`)
 glyphs whose wedges come from a set of compositional columns -- one wedge per
-column, sized by that column's value at each vertex.
+column, sized by that column's value at each vertex. The column names are the
+categories of the fill scale, so the wedges get a legend (title it with
+`labs(fill =)`) and `scale_fill_manual()` or `scale_fill_brewer()` recolour
+them. `size` can be mapped too, with its own size legend. Edges stop at the rim
+of each pie, as they do at a node marker.
 
 ```{r}
 #| eval: !expr have_net
@@ -407,7 +423,8 @@ for (nm in c("x1", "x2", "x3")) {
 }
 vgraph(g, layout = "stress") |>
   mark_edges(alpha = 0.3) |>
-  mark_node_pie(cols = c("x1", "x2", "x3"), size = 5)
+  mark_node_pie(cols = c("x1", "x2", "x3"), size = 5) |>
+  labs(fill = "Share")
 ```
 
 ### Interactive neighbour highlighting

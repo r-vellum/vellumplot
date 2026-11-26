@@ -44,8 +44,8 @@ A guide specification for \code{\link[=guides]{guides()}} or a scale's \code{gui
 \code{guide_bins()} draws the legend of a \strong{binned} scale the way ggplot2's
 \code{guide_bins()} does: one key per bin, stacked edge to edge, with a small
 axis beside them whose ticks and labels mark the bin \strong{boundaries} rather
-than naming each bin as an interval. Use it for \code{\link[=scale_size_binned]{scale_size_binned()}},
-\code{\link[ggplot2:scale_alpha_binned]{scale_alpha_binned()}} and the binned colour scales (\code{\link[=scale_color_binned]{scale_color_binned()}},
+than naming each bin as an interval. Use it for \code{\link[=scale_size_binned]{scale_size_binned()}}
+and the binned colour scales (\code{\link[=scale_color_binned]{scale_color_binned()}},
 \verb{scale_*_steps()}, \verb{scale_*_fermenter()}, ...). It follows the legend's
 direction: keys run top to bottom (smallest first) in a left / right legend
 and left to right in a top / bottom one.

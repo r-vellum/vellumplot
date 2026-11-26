@@ -1,9 +1,10 @@
 ---
 title: "Statistical marks"
 description: >
-  Marks that transform data before drawing: histograms, densities, per-group
-  summaries, linear smooths, ECDFs, Q-Q plots, rugs, violins, ridgelines, and
-  dot plots, plus after_stat for reaching the computed variables and
+  Marks that transform data before drawing: histograms, frequency polygons,
+  densities, per-group summaries, smooths and quantile lines, ECDFs, Q-Q plots,
+  rugs, violins, ridgelines, dot plots, 2-D densities, and horizontal
+  layouts, plus after_stat for reaching the computed variables and
   mark_datashade for millions of points.
 ---
 
@@ -33,6 +34,35 @@ Control the resolution with `bins`.
 ```{r}
 vplot(faithful) |>
   mark_histogram(x = waiting, bins = 25)
+```
+
+Binning follows ggplot2's `geom_histogram()`, so the same arguments give the
+same counts. `bins` places the outer bins centred on the smallest and largest
+values. `binwidth` sets the width instead, and `boundary` or `center` aligns
+the bins: `boundary = 40` puts a bin edge at 40 (and so at every multiple of
+the width from it). `breaks` gives the edges outright, and the bins may then
+differ in width. `closed` says which side of each bin is closed (`"right"` by
+default).
+
+```{r}
+vplot(faithful) |>
+  mark_histogram(
+    x = waiting, binwidth = 5, boundary = 40,
+    fill = "grey35", color = "white"
+  )
+```
+
+`mark_freqpoly()` takes the same binning arguments and draws the counts as a
+frequency polygon: one line per group, with an empty bin added at each end so
+the line starts and ends at zero. Lines overlap better than stacked bars, so it
+is the easier way to compare a few groups. (Two of the penguins have no
+measurements; the first line drops them for the rest of this article, so the
+marks don't warn about them.)
+
+```{r}
+penguins <- penguins[!is.na(penguins$bill_len), ]
+vplot(penguins) |>
+  mark_freqpoly(x = bill_len, color = species, binwidth = 2)
 ```
 
 `mark_density()` draws a smooth kernel-density estimate of `x` as a filled
@@ -141,6 +171,18 @@ for small groups and `gam` for large ones.
 vplot(mtcars) |>
   mark_point(x = wt, y = mpg) |>
   mark_smooth(x = wt, y = mpg, method = "loess", span = 0.9)
+```
+
+`mark_quantile()` draws quantile regression lines, like ggplot2's
+`geom_quantile()`: one line for each of `quantiles` (the quartiles by default).
+The spread between them shows how the conditional distribution widens or
+narrows along `x`. It needs the quantreg package.
+
+```{r}
+#| eval: !expr requireNamespace("quantreg", quietly = TRUE)
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  mark_quantile(x = wt, y = mpg, quantiles = c(0.1, 0.5, 0.9))
 ```
 
 ## Group regions: ellipses and hulls
@@ -262,6 +304,46 @@ vplot(draws) |>
   mark_halfeye(x = model, y = estimate, .width = c(0.66, 0.95))
 ```
 
+These marks can lie on their side too; see the next section.
+
+## Horizontal layouts
+
+Box plots, violins, half-eyes and intervals take an `orientation`, inferred as
+in ggplot2: a discrete `y` with a continuous `x` draws them horizontally. Swap
+the two encodings and long category names read across instead of crowding the
+x axis. `orientation = "x"` or `"y"` forces either way.
+
+```{r}
+vplot(penguins) |>
+  mark_boxplot(x = bill_len, y = species, fill = species)
+```
+
+A horizontal half-eye puts its slab above each interval:
+
+```{r}
+vplot(draws) |>
+  mark_halfeye(x = estimate, y = model)
+```
+
+The interval marks `mark_errorbar()`, `mark_linerange()` and
+`mark_pointrange()` draw horizontally when given `xmin` and `xmax` but no
+`ymin` or `ymax`, like ggplot2's `geom_errorbarh()`. Dodging then works along
+`y`, the category axis.
+
+```{r}
+est <- data.frame(
+  term = c("age", "dose", "sex"),
+  estimate = c(0.4, 1.1, -0.3),
+  lo = c(0.1, 0.6, -0.8),
+  hi = c(0.7, 1.6, 0.2)
+)
+vplot(est) |>
+  mark_rule(xintercept = 0, color = "grey60") |>
+  mark_errorbar(y = term, xmin = lo, xmax = hi, width = 0.2) |>
+  mark_point(x = estimate, y = term, size = 3) |>
+  labs(x = "Estimate")
+```
+
 ## Raincloud plots
 
 A **raincloud** pairs the density "cloud" with the raw observations as "rain"
@@ -314,6 +396,19 @@ vplot(grid) |> mark_contour(x = x, y = y, z = z)
 
 Contour tracing is done by the engine (`vellum::vl_contour()`), so it needs no
 extra package; a density field additionally uses `MASS` for the estimate.
+
+`mark_density_2d()` and `mark_density_2d_filled()` are the ggplot2-compatible
+spellings, with `geom_density_2d()`'s arguments: `h` and `adjust` set the
+bandwidth, `contour_var` chooses what the levels are drawn on (`"density"`,
+`"ndensity"` scaled to a maximum of 1 per group, or `"count"`), and each group
+gets its own estimate. Map a colour and every group gets its own set of
+contours:
+
+```{r}
+vplot(penguins) |>
+  mark_point(x = bill_len, y = bill_dep, color = species, alpha = 0.4) |>
+  mark_density_2d(x = bill_len, y = bill_dep, color = species, bins = 5)
+```
 
 ## Reaching computed variables with after_stat
 

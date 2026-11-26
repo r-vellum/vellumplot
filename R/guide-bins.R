@@ -6,8 +6,8 @@ NULL
 #' `guide_bins()` draws the legend of a **binned** scale the way ggplot2's
 #' `guide_bins()` does: one key per bin, stacked edge to edge, with a small
 #' axis beside them whose ticks and labels mark the bin **boundaries** rather
-#' than naming each bin as an interval. Use it for [scale_size_binned()],
-#' [scale_alpha_binned()] and the binned colour scales ([scale_color_binned()],
+#' than naming each bin as an interval. Use it for [scale_size_binned()]
+#' and the binned colour scales ([scale_color_binned()],
 #' `scale_*_steps()`, `scale_*_fermenter()`, ...). It follows the legend's
 #' direction: keys run top to bottom (smallest first) in a left / right legend
 #' and left to right in a top / bottom one.
