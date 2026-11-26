@@ -124,13 +124,15 @@ NULL
   hj <- L$values$hjust %||% .aes_param(L, "hjust", "centre")
   vj <- L$values$vjust %||% .aes_param(L, "vjust", "centre")
   just <- c(hj[[1]], vj[[1]])
+  # A missing size draws no label, as in ggplot2 (VR-38).
   keep <- .repel_keep(
     repel_on,
     xn,
     yn,
     if (!rich_single && !rich_list) label
   ) &
-    !missing
+    !missing &
+    is.finite(fs)
   # In an animation, a plain label may carry frame variables (VP-93):
   # `label = "{round(frame_time)}"`. Each keyframe draws it filled in with
   # that keyframe's values; the render then swaps every frame's string in.
@@ -255,11 +257,14 @@ NULL
   pad <- vellum::vl_unit(1.2, "mm")
   # Build each text grob once, then take its width and height (two passes built
   # the grob twice).
-  txts <- lapply(seq_len(n), function(i) .txt(label[[i]], fs[i]))
+  # A missing size draws no label (VR-38); measure it at the default so the
+  # boxes can still be built, then leave it out below.
+  sized <- is.finite(fs)
+  txts <- lapply(seq_len(n), function(i) .txt(label[[i]], if (sized[i]) fs[i] else 8))
   ws <- do.call(c, lapply(txts, function(t) vellum::grobwidth(t) + pad))
   hs <- do.call(c, lapply(txts, function(t) vellum::grobheight(t) + pad))
   # A missing label draws neither text nor its background box.
-  keep <- .repel_keep(repel_on, xn, yn, if (!rich) label) & !missing
+  keep <- .repel_keep(repel_on, xn, yn, if (!rich) label) & !missing & sized
 
   gi <- 0L
   for (idx in .style_groups(
@@ -352,6 +357,9 @@ NULL
     lab <- label[idx[1]]
     if (is.na(lab) || !nzchar(lab) || length(idx) < 2L) {
       next # a path needs a label and at least two points
+    }
+    if (!is.finite(fs[idx[1]])) {
+      next # a missing size draws no label (VR-38)
     }
     xy <- .xy_path(scales, xn[idx], yn[idx])
     scene <- .draw(

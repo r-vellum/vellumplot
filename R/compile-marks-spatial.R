@@ -697,6 +697,10 @@ NULL
       xa <- ya <- sa <- ra <- list()
       k <- 0L
       for (i in idx) {
+        # a point feature with a missing size is not drawn (VR-38)
+        if (!is.finite(size[i])) {
+          next
+        }
         for (p in prims_of(i, "point")) {
           for (m in p$parts) {
             if (!nrow(m)) {

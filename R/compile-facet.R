@@ -449,11 +449,12 @@ NULL
   miss
 }
 
-# One warning per layer for the rows `.resolve_panel()` removed, summed over
-# every panel, in ggplot2's wording.
-# Rows censored by a position scale's `oob` count too, and then the wording
-# names them, as ggplot2's does.
-.warn_missing_positions <- function(spec, panels) {
+# One warning per layer for the rows not drawn, summed over every panel, in
+# ggplot2's wording: the rows `.resolve_panel()` removed (a missing position, or
+# one a position scale's `oob` censors) and, given the trained `shared` scales,
+# the rows whose size is missing (`.missing_size_rows()`). A censored row makes
+# the wording name values outside the scale range, as ggplot2's does.
+.warn_missing_positions <- function(spec, panels, shared = NULL) {
   for (i in seq_along(spec@layers)) {
     count <- function(field) {
       sum(vapply(
@@ -463,7 +464,18 @@ NULL
       ))
     }
     n_cens <- count("n_censored")
-    n <- count("n_missing") + n_cens
+    n_miss <- count("n_missing")
+    if (!is.null(shared)) {
+      for (p in panels) {
+        sz <- .missing_size_rows(
+          p$resolved[[i]],
+          p$aes_sc$size %||% shared$size
+        )
+        n_miss <- n_miss + sum(sz$missing)
+        n_cens <- n_cens + sum(sz$censored)
+      }
+    }
+    n <- n_miss + n_cens
     if (n > 0L) {
       mark <- spec@layers[[i]]@mark
       what <- if (n_cens > 0L) {
@@ -480,38 +492,58 @@ NULL
   invisible()
 }
 
-# One warning per point layer for the rows whose mapped `size` is missing,
-# summed over every panel, in ggplot2's wording: `.emit_point()` draws no point
-# for them (ggplot2's geom_point() removes them). A continuous size scale maps
-# `NA` to `NA` (a discrete one may give it `na.value`), and `oob = "censor"`
-# puts values outside its limits there too. Each panel's size scale is its own
-# when the aesthetic is independent, else the shared one (VR-38).
-.warn_missing_sizes <- function(spec, panels, shared) {
-  for (i in seq_along(spec@layers)) {
-    n <- 0L
-    for (p in panels) {
-      L <- p$resolved[[i]]
-      sc <- p$aes_sc$size %||% shared$size
-      v <- L$values$size
-      if (
-        is.null(sc) ||
-          is.null(v) ||
-          !L$mark %in% c("point", "nodes") ||
-          !isTRUE(length(v) == L$n)
-      ) {
-        next
-      }
-      n <- n + sum(!is.finite(sc$map(v)))
-    }
-    if (n > 0L) {
-      mark <- spec@layers[[i]]@mark
-      cli::cli_warn(
-        "Removed {n} row{?s} containing missing values (layer {i}, {.fn mark_{mark}}).",
-        class = "vellumplot_missing_rows"
-      )
-    }
+# The marks that draw nothing for a row whose size is missing: the point-like
+# marks, the text marks (a font size), and an sf layer's point features.
+.SIZE_DROP_MARKS <- c(
+  "point",
+  "nodes",
+  "pointrange",
+  "text",
+  "label",
+  "node_text",
+  "edge_text",
+  "sf_label",
+  "text_path",
+  "sf"
+)
+
+# Per row of resolved layer `L`, is its size missing, so that its emitter draws
+# nothing for it (VR-38)? `missing`: the value is `NA` (or a constant
+# `size = NA`); `censored`: a value the size scale `sc` maps to `NA`, i.e. one
+# its `oob = "censor"` puts outside the limits. Mirrors `.aes_size()`.
+.missing_size_rows <- function(L, sc) {
+  none <- list(missing = logical(0), censored = logical(0))
+  n <- L$n
+  if (!isTRUE(n > 0L) || !isTRUE(L$mark %in% .SIZE_DROP_MARKS)) {
+    return(none)
   }
-  invisible()
+  v <- L$values$size
+  if (!is.null(sc) && !is.null(v)) {
+    if (!length(v) %in% c(1L, n)) {
+      return(none)
+    }
+    v <- rep_len(v, n)
+    mapped <- rep_len(sc$map(v), n)
+  } else {
+    v <- L$params$size
+    if (is.null(v) || !(is.numeric(v) || all(is.na(v)))) {
+      return(none)
+    }
+    v <- rep_len(v, n)
+    mapped <- as.numeric(v)
+  }
+  gone <- !is.finite(mapped)
+  if (identical(L$mark, "sf")) {
+    has_point <- vapply(
+      L$sf %||% vector("list", n),
+      function(prims) {
+        any(vapply(prims, function(p) identical(p$kind, "point"), logical(1)))
+      },
+      logical(1)
+    )
+    gone <- gone & rep_len(has_point, n)
+  }
+  list(missing = gone & is.na(v), censored = gone & !is.na(v))
 }
 
 # Which table a resolved layer's rows come from, and where they sit in it -- the
@@ -579,7 +611,6 @@ NULL
     p
   })
   panels <- .share_dodge_n(panels)
-  .warn_missing_positions(spec, panels)
 
   all_res <- unlist(lapply(panels, function(p) p$resolved), recursive = FALSE)
   has_bar <- .needs_zero(all_res)
@@ -692,7 +723,10 @@ NULL
     }
   }
 
-  .warn_missing_sizes(spec, panels, shared)
+  # One "Removed n rows" warning per layer, for the rows removed before the
+  # stat (missing or censored positions) and those drawn without a mark
+  # because their size is missing, which needs the trained scales (VR-38).
+  .warn_missing_positions(spec, panels, shared)
 
   list(
     fa = fa,
