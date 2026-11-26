@@ -1,5 +1,13 @@
 # vellumplot (development version)
 
+## Bug fixes
+
+* A point whose mapped `size` is missing is no longer drawn as a `NaN`-sized
+  marker (which crashed R in PDF output, VR-38). As in ggplot2, such rows are
+  left out with a "Removed n rows containing missing values" warning: an `NA`
+  under a continuous size scale, a value `oob = "censor"` puts outside the
+  limits, or an `NA` level of a discrete size scale with no `na.value`.
+
 # vellumplot 0.25.0
 
 ## New features

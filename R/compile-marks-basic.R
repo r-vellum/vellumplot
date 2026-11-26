@@ -122,8 +122,12 @@ NULL
   # `.svg` file); those points are drawn as crisp vector `svg_grob()`s, the rest
   # as the usual batched `points_grob()`.
   dsvg <- .shape_svg_d(shape)
-  svg_i <- which(!is.na(dsvg))
-  pt_ok <- is.na(dsvg)
+  # A row whose mapped size is missing (an `NA` under a continuous size scale,
+  # or one `oob = "censor"` puts outside the limits) draws no point, as in
+  # ggplot2; `.warn_missing_sizes()` reports them (VR-38).
+  sized <- is.finite(size)
+  svg_i <- which(!is.na(dsvg) & sized)
+  pt_ok <- is.na(dsvg) & sized
 
   for (idx0 in .style_groups(
     n,

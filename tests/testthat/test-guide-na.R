@@ -23,7 +23,8 @@ test_that("NA in a size aesthetic adds an NA key", {
   df <- data.frame(x = 1:6, y = 1:6, s = c(1, 2, 3, 4, NA, NA))
   p <- vplot(df) |> mark_point(x = x, y = y, size = s)
   f <- local_tempfile(fileext = ".svg")
-  expect_no_error(render_plot(p, f))
+  # the two NA rows draw no point, with ggplot2's warning (VR-38)
+  expect_warning(render_plot(p, f), class = "vellumplot_missing_rows")
 
   sc <- .train_size(p, resolved_one("size", df$s))
   expect_true(isTRUE(sc$na))
@@ -66,4 +67,73 @@ test_that("no NA key when the aesthetic has no missing values (additive)", {
   sc_sz <- .train_size(ps, resolved_one("size", df$s))
   expect_false(isTRUE(sc_sz$na))
   expect_false("NA" %in% .guide_labels(list(kind = "size", sc = sc_sz)))
+})
+
+# VR-38: a missing mapped size drew a NaN-sized marker (a NaN path in SVG, a
+# crash in PDF). It is now left out, with ggplot2's "Removed n rows" warning.
+point_count <- function(p) {
+  m <- vellum::scene_model(suppressWarnings(vellum::as_vellum_scene(p)))
+  sum(m$elements$mark == "point" & grepl("^panel-", m$elements$panel))
+}
+
+test_that("rows with a missing size draw no point and warn (VR-38)", {
+  df <- data.frame(x = 1:6, y = 1:6, s = c(1, 2, 3, 4, NA, NA))
+  p <- vplot(df) |> mark_point(x = x, y = y, size = s)
+  expect_warning(
+    vellum::as_vellum_scene(p),
+    "Removed 2 rows containing missing values (layer 1, `mark_point()`).",
+    fixed = TRUE,
+    class = "vellumplot_missing_rows"
+  )
+  expect_identical(point_count(p), 4L)
+  f <- local_tempfile(fileext = ".svg")
+  suppressWarnings(render_plot(p, f))
+  expect_false(any(grepl("NaN", readLines(f, warn = FALSE), fixed = TRUE)))
+  # the warning is summed over panels: one per layer
+  pf <- p |> facet_wrap(~ x > 3)
+  w <- character(0)
+  withCallingHandlers(
+    vellum::as_vellum_scene(pf),
+    vellumplot_missing_rows = function(c) {
+      w <<- c(w, conditionMessage(c))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_length(w, 1L)
+  expect_match(w, "Removed 2 rows", fixed = TRUE)
+})
+
+test_that("a size censored by the scale limits warns too (VR-38)", {
+  df <- data.frame(x = 1:4, y = 1:4, s = c(1, 2, 3, 10))
+  p <- vplot(df) |>
+    mark_point(x = x, y = y, size = s) |>
+    scale_size(limits = c(1, 5), oob = "censor")
+  expect_warning(
+    vellum::as_vellum_scene(p),
+    "Removed 1 row containing",
+    class = "vellumplot_missing_rows"
+  )
+})
+
+test_that("a discrete size with na.value still draws its NA rows (VR-38)", {
+  df <- data.frame(x = 1:4, y = 1:4, g = c("a", "b", NA, "a"))
+  p <- vplot(df) |>
+    mark_point(x = x, y = y, size = g) |>
+    scale_size_manual(values = c(a = 2, b = 4), na.value = 1)
+  expect_no_warning(vellum::as_vellum_scene(p), class = "vellumplot_missing_rows")
+  expect_identical(point_count(p), 4L)
+  # without one the NA row has no size, so it is left out
+  q <- vplot(df) |>
+    mark_point(x = x, y = y, size = g) |>
+    scale_size_manual(values = c(a = 2, b = 4))
+  expect_warning(
+    vellum::as_vellum_scene(q),
+    "Removed 1 row containing",
+    class = "vellumplot_missing_rows"
+  )
+})
+
+test_that("no warning without missing sizes (VR-38)", {
+  p <- vplot(mtcars) |> mark_point(x = wt, y = mpg, size = hp)
+  expect_no_warning(vellum::as_vellum_scene(p), class = "vellumplot_missing_rows")
 })

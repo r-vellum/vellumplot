@@ -480,6 +480,40 @@ NULL
   invisible()
 }
 
+# One warning per point layer for the rows whose mapped `size` is missing,
+# summed over every panel, in ggplot2's wording: `.emit_point()` draws no point
+# for them (ggplot2's geom_point() removes them). A continuous size scale maps
+# `NA` to `NA` (a discrete one may give it `na.value`), and `oob = "censor"`
+# puts values outside its limits there too. Each panel's size scale is its own
+# when the aesthetic is independent, else the shared one (VR-38).
+.warn_missing_sizes <- function(spec, panels, shared) {
+  for (i in seq_along(spec@layers)) {
+    n <- 0L
+    for (p in panels) {
+      L <- p$resolved[[i]]
+      sc <- p$aes_sc$size %||% shared$size
+      v <- L$values$size
+      if (
+        is.null(sc) ||
+          is.null(v) ||
+          !L$mark %in% c("point", "nodes") ||
+          !isTRUE(length(v) == L$n)
+      ) {
+        next
+      }
+      n <- n + sum(!is.finite(sc$map(v)))
+    }
+    if (n > 0L) {
+      mark <- spec@layers[[i]]@mark
+      cli::cli_warn(
+        "Removed {n} row{?s} containing missing values (layer {i}, {.fn mark_{mark}}).",
+        class = "vellumplot_missing_rows"
+      )
+    }
+  }
+  invisible()
+}
+
 # Which table a resolved layer's rows come from, and where they sit in it -- the
 # provenance row-key mapping (see `R/provenance.R`). `idx` is the panel subset's
 # row indices into that table (the plot data, or the layer's own `data =`).
@@ -657,6 +691,8 @@ NULL
       )
     }
   }
+
+  .warn_missing_sizes(spec, panels, shared)
 
   list(
     fa = fa,
