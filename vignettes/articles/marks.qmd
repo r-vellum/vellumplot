@@ -76,12 +76,25 @@ vplot(mtcars) |>
   mark_bar(x = factor(cyl), fill = factor(gear), position = "dodge")
 ```
 
+For finer control, the `position` argument also takes a parameterised
+`position_*()` object. `position_dodge2()` fills each category's band by the
+groups actually *present* (so a ragged grouping stays centred); `position_nudge()`
+offsets by a constant; `position_jitter(width=, seed=)` and
+`position_jitterdodge()` control scatter for overplotted categorical points.
+
+```{r}
+vplot(mtcars) |>
+  mark_bar(x = factor(cyl), fill = factor(gear), position = position_dodge2(padding = 0.15))
+```
+
 ### Grouping rows into series
 
-A connected mark such as a line draws one series per group. By default the
-groups come from the first *discrete* `color` or `fill` mapping. The `group`
-aesthetic sets them without styling anything, which is what a spaghetti plot of
-many subjects needs. Without it, the rows below would be joined into one
+A connected mark such as a line draws one series per group. By default every
+*discrete* mapped aesthetic splits the groups (colour, fill, pattern,
+linetype, shape, alpha, size and linewidth), so the series are their
+combinations. A continuous colour never splits them; it varies along a series.
+The `group` aesthetic sets the groups without styling anything, which is what a
+spaghetti plot of many subjects needs. Without it, the rows below would be joined into one
 zig-zag line:
 
 ```{r}
@@ -97,17 +110,6 @@ vplot(visits) |>
 An explicit `group` always wins, and `group = 1` makes the whole layer one
 group. Stats run per group too, so `mark_smooth(group = id, color = arm)` fits
 one line per subject and colours each by its arm.
-
-For finer control, the `position` argument also takes a parameterised
-`position_*()` object. `position_dodge2()` fills each category's band by the
-groups actually *present* (so a ragged grouping stays centred); `position_nudge()`
-offsets by a constant; `position_jitter(width=, seed=)` and
-`position_jitterdodge()` control scatter for overplotted categorical points.
-
-```{r}
-vplot(mtcars) |>
-  mark_bar(x = factor(cyl), fill = factor(gear), position = position_dodge2(padding = 0.15))
-```
 
 ## Areas and intervals
 
@@ -199,8 +201,9 @@ shapes <- data.frame(
   y = c(0, 0, 1, 0, 0, 1)
 )
 links <- data.frame(x = 0.5, y = 1, xend = 2.5, yend = 1)
+band <- data.frame(xmin = 1.2, xmax = 1.8, ymin = 0, ymax = 1)
 vplot(shapes) |>
-  mark_rect(xmin = 1.2, xmax = 1.8, ymin = 0, ymax = 1, fill = "grey90") |>
+  mark_rect(data = band, xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = "grey75") |>
   mark_polygon(x = x, y = y, group = id, fill = id) |>
   mark_curve(data = links, x = x, y = y, xend = xend, yend = yend, curvature = 0.4)
 ```
@@ -374,7 +377,8 @@ vplot(mtcars) |>
 ## Missing values
 
 A row with a missing position has nowhere to go, so it is left out. A point or
-text row with a missing `size` is left out too, since it has no size to draw at.
+text row with a missing `size` is left out too, since it has no size to draw at
+(unless a discrete size scale's `na.value` gives those rows a size).
 Each layer that loses rows says so once, with a single "Removed n rows" warning
 that counts them all, as ggplot2 does:
 
@@ -389,9 +393,9 @@ vplot(gaps) |>
 ```
 
 The size legend shows no key for the missing size, since those rows draw no
-mark. A missing *colour* or *fill* is different: the row is drawn in the scale's
-`na.value` colour and keeps its legend key. A line, step or area leaves a gap at
-a missing value rather than joining across it.
+mark (again, unless a discrete size scale's `na.value` gives those rows a size). A missing *colour* or *fill* is different: the row is drawn in the scale's
+`na.value` colour and keeps its legend key. A line or step leaves a gap at a
+missing value rather than joining across it.
 
 To see which rows will not be drawn, and why, before rendering anything, ask
 `spec_diagnose()`. Its `report` counts them per layer from the same tally as the
@@ -401,8 +405,7 @@ warning, so the two agree:
 spec_diagnose(vplot(gaps) |> mark_point(x = x, y = y, size = n))$report
 ```
 
-The [Specs and agents](specs-and-agents.html) article has more on
-`spec_diagnose()`.
+`?spec_diagnose` describes each reason a row can be dropped.
 
 ## Layering is the point
 

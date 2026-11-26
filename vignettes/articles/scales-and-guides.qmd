@@ -380,8 +380,9 @@ vplot(mtcars) |>
 ```
 
 The date, date-time and time scales and the binned position scales
-(`scale_x_binned()`) take `guide =` as well. Breaks chosen with `date_breaks`
-are fitted to the guide, so a staggered or rotated axis gets denser breaks:
+(`scale_x_binned()`) take `guide =` as well. The automatic date breaks (when
+you give no `date_breaks`) are fitted to the guide, so a staggered or rotated
+axis gets denser breaks; an explicit `date_breaks` is used as given:
 
 ```{r}
 set.seed(1)

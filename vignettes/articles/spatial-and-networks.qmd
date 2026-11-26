@@ -100,10 +100,6 @@ panel corner (`position = "bottomleft"`, `"topright"`, and so on); the scale bar
 reads the map's CRS to size itself, defaulting to a round distance near a quarter
 of the panel width.
 
-For a map without axes or panel, `theme_void()` drops all the furniture and the
-plot margin too, so the map fills its box edge to edge. Add a margin back with
-`theme(plot.margin = c(5.5, 5.5, 5.5, 5.5))` if the map needs room.
-
 ```{r}
 #| eval: !expr have_sf
 vplot(nc) |>
@@ -113,6 +109,11 @@ vplot(nc) |>
   mark_scalebar(unit = "km") |>
   mark_compass()
 ```
+
+For a map without axes or panel, `theme_void()` drops the axes, gridlines and
+panel background, and the plot margin too, so the map fills its box edge to
+edge. Add a margin back with `theme(plot.margin = c(5.5, 5.5, 5.5, 5.5))` if the
+map needs room.
 
 ## Networks from igraph
 
@@ -312,9 +313,9 @@ Each branch is a single ribbon whose width follows the flow, so where a Steiner
 tree gathers tributaries the branch tapers smoothly rather than in steps.
 
 In an interactive widget the branches are keyed like edges: a branch that
-reaches a destination stands for that edge, so it gets hover, a tooltip naming
-the root, the destination and the flow, and selection, and
-`select_neighbours()` lights up a node's flows.
+reaches a destination stands for that edge. It gets hover and selection, and a
+tooltip naming the root, the destination and the flow; `select_neighbours()`
+lights up a node's flows.
 
 ### Dendrograms
 
