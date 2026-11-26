@@ -27,7 +27,7 @@ that announces itself as an image, a tagged PDF, and a widget you can operate
 without a mouse.
 
 A baseline is not compliance. A generated description can say what is plotted but
-not what it means. `plot_lint()` now checks your colour contrast and text
+not what it means. `plot_lint()` checks your colour contrast and text
 legibility (see below), but nothing decides whether your *takeaway* is legible.
 What the ecosystem removes is the boilerplate excuse: the mechanics are already
 in place, so the remaining work is editorial. This article is the cross-package
@@ -77,6 +77,19 @@ plot_alt(p)
 
 `labs(alt =)` always wins over the automatic text. `plot_alt()` returns whichever
 applies, so you can inspect exactly what assistive technology will receive.
+
+Rich labels are read as text. An `md()` title becomes the accessible name as
+plain words, without the markup, and an `md()` legend title appears the
+same way in the generated description. A `tex()` or `plotmath()` label
+contributes its source (`\alpha`), which a screen reader can spell out. Here
+the legend title reaches the description as "Power (hp)":
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  labs(title = md("Heavier cars use **more** fuel"), color = md("Power (*hp*)")) |>
+  plot_alt()
+```
 
 ## What the accessible SVG emits
 

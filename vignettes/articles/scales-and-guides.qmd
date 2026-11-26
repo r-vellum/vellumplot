@@ -50,7 +50,11 @@ ggplot2, the familiar named constructors are here too and are simply wrappers
 over `palette =`: `scale_color_viridis_c()` / `_d()` for the viridis maps,
 `scale_color_brewer()` (discrete) / `scale_color_distiller()` (continuous) for
 ColorBrewer-style palettes. Set `limits =` on a continuous colour scale to fix
-its mapped range.
+its mapped range. The rest of ggplot2's colour constructors are here as well,
+with ggplot2's argument names: `scale_color_hue()`, `scale_color_grey()` and
+`scale_color_ordinal()` for categories, and the binned `scale_color_steps()`,
+`scale_color_steps2()`, `scale_color_stepsn()`, `scale_color_fermenter()` and
+`scale_color_viridis_b()`. Each has its `colour` and `fill` spellings.
 
 For categories, `scale_color_manual()` maps levels to colours; naming the
 values pins each level to a specific colour.
@@ -154,6 +158,26 @@ vplot(mtcars) |>
   scale_size_area(max_size = 10)
 ```
 
+The other ggplot2 size constructors work too: `scale_radius()`,
+`scale_size_continuous()`, `scale_size_binned()` (sizes by class, see
+`guide_bins()` below), `scale_size_discrete()` / `scale_size_ordinal()` and
+`scale_size_manual()`. The shape, line-type and alpha scales have their
+`_manual()` and `_discrete()` forms, and `scale_shape_manual()` and
+`scale_linetype_manual()` also take ggplot2's numeric codes as `values`.
+
+A discrete scale drops the factor levels no row uses, as in ggplot2.
+`drop = FALSE` keeps them in the legend and in the palette, so a level keeps its
+key even when it is absent from this subset of the data. It works on every
+discrete scale: colour, fill, shape, line type, size and alpha.
+
+```{r}
+cars6 <- subset(mtcars, cyl != 6)
+cars6$cyl <- factor(cars6$cyl, levels = c(4, 6, 8), ordered = TRUE)
+vplot(cars6) |>
+  mark_point(x = wt, y = mpg, size = cyl) |>
+  scale_size_discrete(drop = FALSE)
+```
+
 ## Line width
 
 `linewidth` is a mapped aesthetic on `mark_line()`, `mark_step()` and
@@ -166,13 +190,12 @@ vplot(pressure) |>
   scale_linewidth(range = c(0.5, 6))
 ```
 
-Each *segment* is drawn at one width — the mean of its two endpoint values — so
-the width changes in steps at the vertices rather than tapering smoothly, and a
-sharp corner's round join does not quite fill. That is inherent to per-segment
-width. It also means the line becomes one path element per segment in SVG and
-PDF (no backend can stroke one path at several widths in a single call), which
-is worth knowing before mapping `linewidth` over a very dense series. A
-*constant* `linewidth =` is unaffected and still draws as a single stroke.
+Each series is drawn as one stroke whose width varies smoothly between the
+values at its vertices, so the line tapers instead of stepping, and it stays a
+single element in SVG and PDF. A few cases fall back to drawing each segment at
+one width, the mean of its two endpoint values: a continuous `color` mapped on
+the same line (each segment keeps its own colour), a dashed or dotted
+`linetype`, a sketch theme, and a missing width.
 
 Network edges keep their own scale: a mapped `linewidth` on `mark_edges()`
 trains `scale_edge_width()`, independently of `scale_linewidth()`, so one plot
@@ -328,6 +351,47 @@ vplot(econ) |>
   scale_x_date(date_breaks = "6 months", date_labels = "%b %Y")
 ```
 
+## Axis guides
+
+The axis of a position scale is a guide too. `guide_axis()` is the tool for
+crowded labels. `n.dodge = 2` staggers them over two rows, `angle` rotates
+them, and `check.overlap = TRUE` drops the ones that would collide. The label
+gutter is measured with the dodging and rotation, so nothing is clipped. Pass
+it through `guides(x = )` / `guides(y = )` or a scale's `guide =` argument.
+
+```{r}
+states <- data.frame(state = state.name[1:12], area = state.area[1:12] / 1000)
+vplot(states) |>
+  mark_bar(x = state, y = area) |>
+  guides(x = guide_axis(n.dodge = 2))
+```
+
+`minor.ticks = TRUE` adds short ticks between the breaks, and `cap` ends the
+axis line at the outermost breaks instead of running it along the whole panel
+(it needs a theme that draws an axis line, such as `theme_classic()`).
+`guide_axis_logticks()` draws long, middle and short ticks on a log10 axis, and
+`guides(x = "none")` keeps the axis but drops its labels and ticks.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg) |>
+  theme_classic() |>
+  guides(x = guide_axis(minor.ticks = TRUE, cap = "both"), y = guide_axis(cap = "both"))
+```
+
+The date, date-time and time scales and the binned position scales
+(`scale_x_binned()`) take `guide =` as well. The automatic date breaks (when
+you give no `date_breaks`) are fitted to the guide, so a staggered or rotated
+axis gets denser breaks; an explicit `date_breaks` is used as given:
+
+```{r}
+set.seed(1)
+months <- data.frame(day = as.Date("2024-01-01") + 0:365, value = cumsum(rnorm(366)))
+vplot(months) |>
+  mark_line(x = day, y = value) |>
+  scale_x_date(date_labels = "%b %Y", guide = guide_axis(angle = 45))
+```
+
 ## Guides come for free
 
 Every scale that needs a legend produces one, and vellumplot stacks multiple
@@ -406,6 +470,18 @@ vplot(mtcars) |>
   guides(color = guide_coloursteps())
 ```
 
+`guide_bins()` is ggplot2's legend for a binned scale: one key per bin, stacked
+edge to edge, with the bin boundaries on a small axis beside them rather than
+an interval label on each key. `show.limits = TRUE` also labels the outer
+limits. It works on `scale_size_binned()` and the binned colour scales.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, size = hp) |>
+  scale_size_binned() |>
+  guides(size = guide_bins(show.limits = TRUE))
+```
+
 A *size* legend defaults to stacked keys; `guide_legend(nested = TRUE)` draws it
 as a proportional-symbol legend --- concentric circles sharing a baseline, each
 with a leader to its label. It reads size directly and is compact, and suits a
@@ -417,6 +493,28 @@ vplot(mtcars) |>
   scale_size(range = c(2, 12)) |>
   guides(size = guide_legend(nested = TRUE))
 ```
+
+### Colour and fill together
+
+`color` and `fill` are separate scales, each with its own legend, so a plot can
+map outline and interior to different variables and style them independently.
+When both show the same variable under the same title, their legends merge into
+one: each key is filled by the fill scale and outlined by the colour scale.
+
+```{r}
+vplot(mtcars) |>
+  mark_point(
+    x = wt, y = mpg, fill = factor(cyl), color = factor(cyl),
+    shape = "circle filled", size = 3
+  ) |>
+  scale_color_manual(values = c("4" = "#1b9e77", "6" = "#d95f02", "8" = "#7570b3")) |>
+  scale_fill_manual(values = c("4" = "#b3e2cd", "6" = "#fdcdac", "8" = "#cbd5e8")) |>
+  labs(color = "Cylinders", fill = "Cylinders")
+```
+
+Give the two a different title, or map different variables, and you get two
+legends. `labs(fill =)`, `guides(fill =)` and `lims(fill =)` address the fill
+scale alone.
 
 ## Rich titles
 
