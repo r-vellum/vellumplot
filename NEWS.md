@@ -1,4 +1,4 @@
-# vellumplot (development version)
+# vellumplot 0.25.1
 
 ## Bug fixes
 
