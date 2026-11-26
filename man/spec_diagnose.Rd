@@ -65,8 +65,9 @@ layer, on the layer's input rows, attributing each row to the first reason
 that applies:
 \itemize{
 \item \code{missing}: a continuous position value (\code{x}, \code{y}, \code{xend}, \code{ymin}, ...) is
-\code{NA}. Such a row is removed from the plot with a warning, or leaves a gap
-in a line, step or area;
+\code{NA}, or the size of a point or text mark is. Such a row is removed from
+the plot with a warning (the rows that warning counts are counted here
+too), or leaves a gap in a line, step or area;
 \item \code{transform}: the axis transform cannot map the value, e.g. a value \verb{<= 0}
 on a log axis;
 \item \code{stat}: the layer's statistic leaves the row out, e.g. an infinite value
@@ -85,9 +86,10 @@ position, or a colour, fill, size, alpha or linewidth value (clamped to the
 end of the palette, given the NA colour, or extrapolated). They are not part
 of \code{dropped}.
 
-A missing \emph{non-position} value (colour, size, ...) is drawn with the scale's
-\code{NA} value, a missing discrete position as a trailing \code{"NA"} category, and a
-missing facet value in a trailing \code{"NA"} panel, so none of them is counted.
+A missing \emph{non-position} value other than such a size (colour, fill, ...) is
+drawn with the scale's \code{NA} value, a missing discrete position as a trailing
+\code{"NA"} category, and a missing facet value in a trailing \code{"NA"} panel, so
+none of them is counted.
 Each layer that loses rows also adds a \code{"warning"} diagnostic, so it shows in
 the printed summary.
 }

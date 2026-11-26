@@ -540,13 +540,18 @@ animate <- function(
   # pool them, and train ONCE over the union so every keyframe shares one frozen
   # set of scales. Training over the pooled resolved values gives the union domain
   # across states — the guardrail that keeps the animation non-reactive.
-  pooled <- unlist(
+  # The rows this pass drops are mostly dropped again by the keyframe compiles
+  # below; its own count is kept too, so a drop no keyframe repeats (one under
+  # a state's own scales) is still reported (VP-150).
+  pool <- .removed_rows_tally()
+  removed <- .removed_rows_tally()
+  pooled <- pool$collect(unlist(
     lapply(states, function(level) {
       bp <- .build_panels(state_spec(level))
       unlist(lapply(bp$panels, function(p) p$resolved), recursive = FALSE)
     }),
     recursive = FALSE
-  )
+  ))
   frozen <- .train_scales(base, pooled)
 
   # Key every mark by its data identity so the tween pairs marks across states
@@ -581,8 +586,35 @@ animate <- function(
     .mark_ctx$anim_state <- as.character(level)
     .mark_ctx$anim_k <- k
     .mark_ctx$anim_kvars <- .keyframe_vars(fvars, k)
-    .compile_plot(state_spec(level), frozen_scales = frozen)
+    removed$collect(.compile_plot(state_spec(level), frozen_scales = frozen))
   })
+  # One "Removed n rows" warning per layer (VP-150). Each state's rows are
+  # drawn in one keyframe only, so a layer's counts add up over the states,
+  # except a layer whose own data has no state column: it is drawn whole in
+  # every keyframe, so its rows count once. A row whose state is missing is in
+  # no keyframe at all: it is removed too, and counted.
+  persists <- vapply(
+    base@layers,
+    function(L) !is.null(L@data) && is.null(.layer_state_key(tr, L@data)),
+    logical(1)
+  )
+  combine <- function(i) if (isTRUE(persists[i])) max else sum
+  no_state <- vapply(
+    base@layers,
+    function(L) {
+      if (is.null(L@data)) {
+        return(sum(is.na(key)))
+      }
+      lk <- .layer_state_key(tr, L@data)
+      if (is.null(lk)) 0L else sum(is.na(lk))
+    },
+    integer(1)
+  )
+  .warn_removed_totals(
+    list(pool$totals(combine), removed$totals(combine)),
+    extra = no_state,
+    marks = vapply(base@layers, function(L) L@mark, character(1))
+  )
   .inform_row_order(.mark_ctx$anim_counts)
   labels <- .mark_ctx$anim_labels
   .warn_unpaired(scenes, en$labels %||% states, wrap = en$wrap)
@@ -1151,7 +1183,12 @@ animate <- function(
 
   # Freeze the scales over the whole data, so the axes, legends and colours
   # stay put while the rows arrive.
-  bp <- .build_panels(base)
+  # The base build counts every row once, revealed or not (a row whose `along`
+  # value is missing is in no frame); the frames count what they drop against
+  # the frozen scales. Each layer reports the larger (VP-150).
+  pool <- .removed_rows_tally()
+  removed <- .removed_rows_tally()
+  bp <- pool$collect(.build_panels(base))
   pooled <- unlist(lapply(bp$panels, function(p) p$resolved), recursive = FALSE)
   frozen <- .train_scales(base, pooled)
   # A data label's frame variables (VP-93) are filled in per frame too.
@@ -1167,8 +1204,15 @@ animate <- function(
       progress = i / length(cuts),
       frame_along = restore(cuts[[i]])
     )
-    .compile_plot(frame_spec(cuts[[i]], i), frozen_scales = frozen)
+    removed$collect(.compile_plot(frame_spec(cuts[[i]], i), frozen_scales = frozen))
   })
+  # One "Removed n rows" warning per layer (VP-150). The frames accumulate
+  # rows, so a row dropped from one is dropped from every later one: a layer's
+  # count is its largest over the frames (the last, which shows every row).
+  .warn_removed_totals(list(
+    pool$totals(function(i) max),
+    removed$totals(function(i) max)
+  ))
 
   vellum_animation(
     scenes = scenes,
@@ -1330,6 +1374,61 @@ animate <- function(
     }
   }
   row
+}
+
+# The compile's "Removed n rows" warnings (`vellumplot_missing_rows`) while an
+# animation compiles, given once per layer per animation rather than once per
+# pass and keyframe (VP-150). `collect(expr)` evaluates `expr` (a pass or a
+# keyframe compile), silencing the warnings and keeping each layer's counts;
+# `totals(combine)` then gives, per layer, those counts combined by
+# `combine(i)` (a function of the layer index returning `sum` or `max`), for
+# `.warn_removed_totals()`.
+.removed_rows_tally <- function() {
+  rec <- list()
+  collect <- function(expr) {
+    withCallingHandlers(
+      expr,
+      vellumplot_missing_rows = function(cnd) {
+        key <- as.character(cnd$layer)
+        r <- rec[[key]] %||% list(mark = cnd$mark, n = integer(0), cens = integer(0))
+        r$n <- c(r$n, cnd$n_rows)
+        r$cens <- c(r$cens, cnd$n_censored)
+        rec[[key]] <<- r
+        invokeRestart("muffleWarning")
+      }
+    )
+  }
+  totals <- function(combine) {
+    out <- lapply(names(rec), function(key) {
+      r <- rec[[key]]
+      f <- combine(as.integer(key))
+      list(n = f(r$n), cens = f(r$cens), mark = r$mark)
+    })
+    stats::setNames(out, names(rec))
+  }
+  list(collect = collect, totals = totals)
+}
+
+# One "Removed n rows" warning per layer from the per-layer `totals()` of
+# several tallies (`.removed_rows_tally()`): each layer reports the largest of
+# their counts, so a drop any pass saw is reported, plus `extra[i]` rows
+# removed for a reason no compile sees (a missing transition state). `marks`
+# names the layers' marks for an `extra`-only count.
+.warn_removed_totals <- function(totals, extra = integer(0), marks = character(0)) {
+  keys <- unique(c(
+    unlist(lapply(totals, names)),
+    as.character(which(extra > 0L))
+  ))
+  for (key in keys[order(as.integer(keys))]) {
+    i <- as.integer(key)
+    got <- Filter(Negate(is.null), lapply(totals, function(t) t[[key]]))
+    n <- max(0L, vapply(got, function(g) as.integer(g$n), integer(1)))
+    cens <- max(0L, vapply(got, function(g) as.integer(g$cens), integer(1)))
+    mark <- if (length(got)) got[[1]]$mark else marks[[i]]
+    add <- if (i <= length(extra)) extra[[i]] else 0L
+    .warn_removed_rows(n + add, cens, i, mark)
+  }
+  invisible()
 }
 
 # Enumerate a transition's states and the per-segment timing. Returns `key` (a
