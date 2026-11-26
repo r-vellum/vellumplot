@@ -4,8 +4,7 @@
 `guide_bins()` does: one key per bin, stacked edge to edge, with a small
 axis beside them whose ticks and labels mark the bin **boundaries**
 rather than naming each bin as an interval. Use it for
-[`scale_size_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md),
-[`scale_alpha_binned()`](https://ggplot2.tidyverse.org/reference/scale_alpha.html)
+[`scale_size_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_size.md)
 and the binned colour scales
 ([`scale_color_binned()`](https://r-vellum.github.io/vellumplot/reference/scale_fill_binned.md),
 `scale_*_steps()`, `scale_*_fermenter()`, ...). It follows the legend's

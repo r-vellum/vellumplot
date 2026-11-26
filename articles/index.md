@@ -14,8 +14,9 @@
   layer](https://r-vellum.github.io/vellumplot/articles/marks.md):
 
   A tour of the mark families: points, lines and bars, areas and
-  intervals, tiles and bins, text, images, and pie. How encodings map,
-  and how scales train across every layer on the panel.
+  intervals, free-form shapes, tiles and bins, text, images, and pie.
+  How encodings map, how rows group into series, what happens to missing
+  values, and how scales train across every layer on the panel.
 
 - [Scales and
   guides](https://r-vellum.github.io/vellumplot/articles/scales-and-guides.md):
@@ -51,9 +52,10 @@
 - [Statistical
   marks](https://r-vellum.github.io/vellumplot/articles/statistical-marks.md):
 
-  Marks that transform data before drawing: histograms, densities,
-  per-group summaries, linear smooths, ECDFs, Q-Q plots, rugs, violins,
-  ridgelines, and dot plots, plus after_stat for reaching the computed
+  Marks that transform data before drawing: histograms, frequency
+  polygons, densities, per-group summaries, smooths and quantile lines,
+  ECDFs, Q-Q plots, rugs, violins, ridgelines, dot plots, 2-D densities,
+  and horizontal layouts, plus after_stat for reaching the computed
   variables and mark_datashade for millions of points.
 
 - [Datashading a third of a billion

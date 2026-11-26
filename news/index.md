@@ -47,6 +47,38 @@
   name too tall for it, and the name moves inward only as far as it has
   to (VP-148).
 
+### Documentation
+
+- The articles cover more of the package (D-20 to D-23, D-25). “Effects
+  and themes” gains font weight, brand weights,
+  [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)
+  mark colours and the layout’s use of the theme font. “Statistical
+  marks” gains ggplot2-style histogram binning,
+  [`mark_freqpoly()`](https://r-vellum.github.io/vellumplot/reference/mark_histogram.md),
+  [`mark_quantile()`](https://r-vellum.github.io/vellumplot/reference/mark_quantile.md),
+  [`mark_density_2d()`](https://r-vellum.github.io/vellumplot/reference/mark_density_2d.md)
+  and horizontal box plots, half-eyes and error bars. “Marks, layer by
+  layer” gains the free-form marks
+  ([`mark_rect()`](https://r-vellum.github.io/vellumplot/reference/mark_rect.md),
+  [`mark_polygon()`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md),
+  [`mark_path()`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md),
+  [`mark_curve()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md),
+  [`mark_spoke()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md)),
+  the `group` aesthetic and a “Missing values” section. “Scales and
+  guides” gains
+  [`guide_axis()`](https://r-vellum.github.io/vellumplot/reference/guide_axis.md),
+  [`guide_bins()`](https://r-vellum.github.io/vellumplot/reference/guide_bins.md),
+  `guide =` on date scales, `drop =` on the discrete scales, the newer
+  scale constructors and merged colour + fill legends, and no longer
+  says a mapped `linewidth` steps at each vertex. “Accessibility” and
+  “Spatial and networks” describe rich-label alt text, the node-pie
+  legend, tapering flow-map branches and their widget keys, and
+  [`theme_void()`](https://r-vellum.github.io/vellumplot/reference/theme_gray.md)’s
+  missing margin.
+  [`?guide_bins`](https://r-vellum.github.io/vellumplot/reference/guide_bins.md)
+  no longer links to a `scale_alpha_binned()` that vellumplot doesn’t
+  have.
+
 ## vellumplot 0.25.1
 
 ### Bug fixes

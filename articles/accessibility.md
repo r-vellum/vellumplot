@@ -10,11 +10,11 @@ as an image, a tagged PDF, and a widget you can operate without a mouse.
 A baseline is not compliance. A generated description can say what is
 plotted but not what it means.
 [`plot_lint()`](https://r-vellum.github.io/vellumplot/reference/plot_lint.md)
-now checks your colour contrast and text legibility (see below), but
-nothing decides whether your *takeaway* is legible. What the ecosystem
-removes is the boilerplate excuse: the mechanics are already in place,
-so the remaining work is editorial. This article is the cross-package
-guide to both halves.
+checks your colour contrast and text legibility (see below), but nothing
+decides whether your *takeaway* is legible. What the ecosystem removes
+is the boilerplate excuse: the mechanics are already in place, so the
+remaining work is editorial. This article is the cross-package guide to
+both halves.
 
 The work is split across the three packages along the same seam as
 everything else:
@@ -68,6 +68,25 @@ plot_alt(p)
 [`plot_alt()`](https://r-vellum.github.io/vellumplot/reference/plot_alt.md)
 returns whichever applies, so you can inspect exactly what assistive
 technology will receive.
+
+Rich labels are read as text. An
+[`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) title
+becomes the accessible name as plain words, without the markup, and an
+[`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) legend
+title appears the same way in the generated description. A
+[`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md) or
+[`plotmath()`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+label contributes its source (`\alpha`), which a screen reader can spell
+out. Here the legend title reaches the description as “Power (hp)”:
+
+``` r
+
+vplot(mtcars) |>
+  mark_point(x = wt, y = mpg, color = hp) |>
+  labs(title = md("Heavier cars use **more** fuel"), color = md("Power (*hp*)")) |>
+  plot_alt()
+#> [1] "A scatter plot. It plots mpg (vertical axis) against wt (horizontal axis), where colour shows Power (hp). Based on 32 observations."
+```
 
 ## What the accessible SVG emits
 
@@ -201,7 +220,7 @@ vellum::display(vellum::vl_lint_overlay(scene, plot_lint(p_bad)))
 ```
 
 ![The plot above with boxes drawn around each linted
-element.](accessibility_files/figure-html/unnamed-chunk-9-1.png)
+element.](accessibility_files/figure-html/unnamed-chunk-10-1.png)
 
 And it can gate a test suite, which is the point of flagging things at
 all:
