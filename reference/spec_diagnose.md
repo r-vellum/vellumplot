@@ -86,8 +86,9 @@ layer, on the layer's input rows, attributing each row to the first
 reason that applies:
 
 - `missing`: a continuous position value (`x`, `y`, `xend`, `ymin`, ...)
-  is `NA`. Such a row is removed from the plot with a warning, or leaves
-  a gap in a line, step or area;
+  is `NA`, or the size of a point or text mark is. Such a row is removed
+  from the plot with a warning (the rows that warning counts are counted
+  here too), or leaves a gap in a line, step or area;
 
 - `transform`: the axis transform cannot map the value, e.g. a value
   `<= 0` on a log axis;
@@ -109,11 +110,11 @@ drawn: a squished position, or a colour, fill, size, alpha or linewidth
 value (clamped to the end of the palette, given the NA colour, or
 extrapolated). They are not part of `dropped`.
 
-A missing *non-position* value (colour, size, ...) is drawn with the
-scale's `NA` value, a missing discrete position as a trailing `"NA"`
-category, and a missing facet value in a trailing `"NA"` panel, so none
-of them is counted. Each layer that loses rows also adds a `"warning"`
-diagnostic, so it shows in the printed summary.
+A missing *non-position* value other than such a size (colour, fill,
+...) is drawn with the scale's `NA` value, a missing discrete position
+as a trailing `"NA"` category, and a missing facet value in a trailing
+`"NA"` panel, so none of them is counted. Each layer that loses rows
+also adds a `"warning"` diagnostic, so it shows in the printed summary.
 
 ## See also
 
@@ -138,7 +139,7 @@ spec_diagnose(p)
 #> Warning: NaNs produced
 #> Warning: NaNs produced
 #> <vellumplot diagnosis> ok: 0 errors, 1 warning
-#> * [warning] Layer 1 (point): 2 of 4 rows will not be shown: 1 missing a position value, 1 not mappable on a transformed axis (e.g. <= 0 on a log scale).
+#> * [warning] Layer 1 (point): 2 of 4 rows will not be shown: 1 missing a position or size value, 1 not mappable on a transformed axis (e.g. <= 0 on a log scale).
 #>     See `$report` for the per-layer counts.
 #> 
 #> Rows not shown, per layer (`oob`: drawn, outside a scale's limits):

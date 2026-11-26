@@ -64,6 +64,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="vellumplot-development-version">vellumplot (development version)<a class="anchor" aria-label="anchor" href="#vellumplot-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li><p><code><a href="../reference/spec_diagnose.html">spec_diagnose()</a></code> and its <code>$report</code> now count the rows a point or text mark draws nothing for because their size is missing (under <code>missing</code>) or censored by the size scale (under <code>limits</code>), from the same tally as the compile’s “Removed n rows” warning, so the two agree. The <code>missing</code> reason reads “missing a position or size value”. A layer drawn in every panel because its data lacks the facet variable now counts each of its rows once in the warning too, as in the report and in ggplot2 (VP-149).</p></li>
+<li><p><code><a href="../reference/animate.html">animate()</a></code> gives the “Removed n rows containing missing values” warning once per layer, as a static plot does, instead of once while pooling the states’ scales and again for every keyframe (or every frame of a reveal). The count covers the whole animation, for missing positions and sizes alike, and includes the rows that are in no frame: those with a missing transition state, or a missing <code><a href="../reference/transition_reveal.html">transition_reveal()</a></code> value (VP-150).</p></li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.1" id="vellumplot-0251">vellumplot 0.25.1<a class="anchor" aria-label="anchor" href="#vellumplot-0251"></a></h2>

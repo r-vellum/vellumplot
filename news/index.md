@@ -2,6 +2,28 @@
 
 ## vellumplot (development version)
 
+### Bug fixes
+
+- [`spec_diagnose()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
+  and its `$report` now count the rows a point or text mark draws
+  nothing for because their size is missing (under `missing`) or
+  censored by the size scale (under `limits`), from the same tally as
+  the compile’s “Removed n rows” warning, so the two agree. The
+  `missing` reason reads “missing a position or size value”. A layer
+  drawn in every panel because its data lacks the facet variable now
+  counts each of its rows once in the warning too, as in the report and
+  in ggplot2 (VP-149).
+
+- [`animate()`](https://r-vellum.github.io/vellumplot/reference/animate.md)
+  gives the “Removed n rows containing missing values” warning once per
+  layer, as a static plot does, instead of once while pooling the
+  states’ scales and again for every keyframe (or every frame of a
+  reveal). The count covers the whole animation, for missing positions
+  and sizes alike, and includes the rows that are in no frame: those
+  with a missing transition state, or a missing
+  [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md)
+  value (VP-150).
+
 ## vellumplot 0.25.1
 
 ### Bug fixes
