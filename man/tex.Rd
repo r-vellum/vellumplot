@@ -12,7 +12,7 @@ and \code{\link[vellum:plotmath]{vellum::plotmath()}}, re-exported. A math label
 label does: \code{\link[=labs]{labs()}} titles, scale names, discrete scale \verb{labels =}
 (a list, one label per key), \code{mark_text()} and \code{mark_label()} labels (one
 label, or a list with one per row; or \code{parse = TRUE} to parse a column),
-facet strips through \code{\link[ggplot2:label_parsed]{label_parsed()}}, and \code{\link[=annotate]{annotate()}}. \code{\link[=md]{md()}} labels can
+facet strips through \code{\link[=label_parsed]{label_parsed()}}, and \code{\link[=annotate]{annotate()}}. \code{\link[=md]{md()}} labels can
 carry inline math between \code{$} signs. The formula is typeset by vellum, the
 same in PNG, SVG and PDF; alt text and the widget's tooltips show its TeX
 source.

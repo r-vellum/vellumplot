@@ -1526,7 +1526,9 @@ animate <- function(
 #' * `.svg` — a single **animated SVG**: every frame is emitted as vector markup
 #'   and shown in turn by a CSS step animation. It is resolution-independent (crisp
 #'   at any size, in print and on retina) and honours `prefers-reduced-motion`
-#'   (a reader who has asked their system not to animate gets the first frame, held).
+#'   (a reader who has asked their system not to animate gets one still frame:
+#'   the last when the animation ends on its final state, else the first, the
+#'   same frame [anim_frame()] saves by default).
 #'
 #' # Choosing a format
 #'

@@ -28,7 +28,9 @@ viewers that do not know APNG show its first frame.
 \item \code{.svg} — a single \strong{animated SVG}: every frame is emitted as vector markup
 and shown in turn by a CSS step animation. It is resolution-independent (crisp
 at any size, in print and on retina) and honours \code{prefers-reduced-motion}
-(a reader who has asked their system not to animate gets the first frame, held).
+(a reader who has asked their system not to animate gets one still frame:
+the last when the animation ends on its final state, else the first, the
+same frame \code{\link[=anim_frame]{anim_frame()}} saves by default).
 }
 }
 \section{Choosing a format}{

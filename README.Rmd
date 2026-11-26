@@ -46,14 +46,16 @@ around afterwards, and a lot follows from that.
 Most of the following exists somewhere in R already. Having it in one grammar,
 from one spec, is the unusual part.
 
-* `render_plot()` writes PNG, SVG, or PDF from one compiled scene, so the layout
-  is solved once instead of once per device. The PDF carries a structure tree and
-  alt text, which lets a screen reader navigate it; tagged PDF output is rare for
-  R graphics.
+* `render_plot()` writes PNG, SVG, PDF, or PowerPoint from one compiled scene,
+  so the layout is solved once instead of once per device. The PDF carries a
+  structure tree and alt text, which lets a screen reader navigate it; tagged PDF
+  output is rare for R graphics. A `.pptx` slide holds editable shapes and text
+  boxes rather than a picture.
 * Accessibility is something you can check. Render through a
-  colour-vision-deficiency simulation (`render(cvd = "deutan")`) to see the figure
-  the way a colour-blind reader will, and run `plot_lint()` to catch tiny
-  text, low contrast, or a single-level legend before you publish.
+  colour-vision-deficiency simulation
+  (`render_plot(p, "p.png", cvd = "deuteranopia")`) to see the figure the way a
+  colour-blind reader will, and run `plot_lint()` to catch tiny text, low
+  contrast, or a single-level legend before you publish.
 * A compiled plot is a vellum scene, so every element keeps its data key and its
   resolved device-pixel box (`vellum::scene_model()`).
   [vellumwidget](https://github.com/r-vellum/vellumwidget)'s `as_widget()` reads
@@ -68,12 +70,19 @@ from one spec, is the unusual part.
   survives greyscale print and colour-vision deficiency. They render on every
   backend, PDF included.
 * `transition_states()` plus `animate()` compile one keyframe per state, with
-  scales frozen so the animation is non-reactive. `anim_save()` encodes a GIF, an
+  scales frozen so the animation is non-reactive. Faceted plots animate too, and
+  titles and text labels can count along with frame variables
+  (`labs(title = "Year: {round(frame_time)}")`). `anim_save()` encodes a GIF, an
   APNG, or a resolution-independent animated SVG that honours
-  `prefers-reduced-motion`.
+  `prefers-reduced-motion`, and `anim_frame()` saves one frame as a poster.
 * `theme_sketch()` (or a `sketch =` argument) gives a plot a wobbly, hand-drawn
   look. The engine generates it, so it is exact and comes out the same in PNG,
-  SVG, and PDF, unlike a post-hoc filter.
+  SVG, PDF, and PowerPoint, unlike a post-hoc filter.
+* Math is typeset by the engine, with no LaTeX installation: `tex()`,
+  `plotmath()`, and `$...$` inside `md()` work in titles, legend labels, text
+  marks, annotations, and facet strips (`label_parsed()`).
+* `theme_brand()` themes a plot from a brand.yml file (Quarto's `_brand.yml`):
+  its colours, palette, and fonts.
 * The spec is plain data. `summary()` shows a plot's structure without drawing it,
   and the spec round-trips, so you can inspect a plot, store it, and program
   against it.
@@ -155,11 +164,25 @@ The spec is just data, so `summary()` shows its structure without drawing:
 summary(vplot(mtcars) |> mark_point(x = wt, y = mpg, color = hp))
 ```
 
-Write to a file with `render_plot()` (the format follows the extension):
+Typeset math in any label with `tex()`, or between `$` signs in `md()`:
+
+```{r math}
+vplot(data.frame(x = seq(-3, 3, length.out = 200))) |>
+  mark_line(x = x, y = dnorm(x)) |>
+  annotate(
+    "text", x = 2, y = 0.34, size = 14,
+    label = tex("\\phi(x) = \\frac{1}{\\sqrt{2\\pi}}\\, e^{-x^2/2}")
+  ) |>
+  labs(title = "The standard normal density", y = md("density $\\phi(x)$"))
+```
+
+Write to a file with `render_plot()`; the format follows the extension (`.png`,
+`.svg`, `.pdf`, or `.pptx` for a slide of editable shapes):
 
 ```{r save, eval = FALSE}
 p <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
 render_plot(p, "cars.png")
+render_plot(p, "cars.pptx")
 ```
 
 ## What's included
@@ -177,6 +200,8 @@ render_plot(p, "cars.png")
   (stress layout by default, via `graphlayouts`), with `mark_edges()`,
   `mark_nodes()`, `mark_node_text()`, and `scale_edge_width()`.
 * Encodings (tidy-eval): `x`, `y`, `color`/`fill`, `size`, `shape`, `alpha`.
+  Point shapes take ggplot2's codes 0 to 25, drawn at R's sizes, as well as
+  names.
 * Position scales (`scale_x_continuous()`, `scale_y_continuous()`; linear and
   `log10`) with auto-trained, expanded domains; discrete band scales
   (`scale_x_discrete()`, `scale_y_discrete()`) for categorical axes.
@@ -184,9 +209,13 @@ render_plot(p, "cars.png")
   `scale_color_discrete()` / `scale_fill_discrete()`, `_gradient()`, `_binned()`,
   `_manual()`), `scale_shape()`, and trained `scale_size()` /
   `scale_linewidth()`, with stacked legends.
-* Trained axes, a panel with gridlines, and layering on one panel.
+* Trained axes, a panel with gridlines, and layering on one panel;
+  `guide_axis()` (`angle`, `n.dodge`, `check.overlap`, `cap`, minor ticks) and
+  `guide_axis_logticks()`.
 * Faceting (`facet_wrap()`, `facet_grid()`) with shared or free scales, via the
-  `resolve_scale()` lattice.
+  `resolve_scale()` lattice. ggplot2's labellers (`label_value()`,
+  `label_both()`, `label_wrap_gen()`, `label_parsed()`, `as_labeller()`), and
+  strip text clipped to its strip unless `theme(strip.clip = "off")`.
 * Statistical marks: `mark_histogram()`, `mark_density()`, `mark_summary()`,
   `mark_smooth()` (with `after_stat()`).
 * Coordinate systems: `coord_cartesian()`, `coord_flip()`, `coord_fixed()` /
@@ -195,11 +224,15 @@ render_plot(p, "cars.png")
 * Position adjustments: stack / dodge / fill bars, jittered points.
 * Per-mark `blend =` modes (CSS `mix-blend-mode`: `"multiply"`, `"screen"`, ...).
 * `mark_datashade()` for million-point density rasters.
-* Annotations: `annotate()`, `labs()`, and `md()` markdown titles.
+* Annotations: `annotate()`, `labs()`, `md()` markdown titles, and math
+  labels (`tex()`, `plotmath()`, `$...$` in `md()`, `parse = TRUE` on text
+  marks).
 * Themes (`theme_gray()` default, `theme_minimal()`, `theme_bw()`,
-  `theme_classic()`, `theme_void()`, `theme_cyberpunk()`, `theme()` /
-  `set_theme()`) and multi-plot composition (`hconcat()`, `vconcat()`,
-  `concat()`, `wrap_plots()`, `inset()`, `repeat_()`).
+  `theme_classic()`, `theme_light()`, `theme_dark()`, `theme_linedraw()`,
+  `theme_void()`, `theme_cyberpunk()`, `theme_brand()` from a brand.yml file,
+  `theme()` / `set_theme()`) and multi-plot composition (`hconcat()`,
+  `vconcat()`, `concat()`, `wrap_plots()`, `inset()`, `repeat_()`), with
+  figure titles and A/B/C tags from `compose_annotation()`.
 * Layer effects (`glow()`, `outline()`, `shadow()`, `motion()`, `echo()`) and
   gradient fills (`linear_gradient()`, `radial_gradient()`).
 * Pattern (hatch) fills: `pattern_stripe()`, `pattern_crosshatch()`,
@@ -213,15 +246,19 @@ render_plot(p, "cars.png")
   problems, colour-vision-deficiency simulation at render time, and font pinning
   for reproducible text.
 * Animation: `transition_states()` / `transition_time()` / `transition_reveal()`,
-  `ease_aes()`, `animate()`, and `anim_save()` to GIF / APNG / animated SVG.
-* Output: `render_plot()` (PNG/SVG/PDF), `pdf_pages()` (multi-page reports or
-  one page per facet), `render_all()` (parallel batch), and `plot_svg()` for an
-  inline SVG string (e.g. a sparkline inside a `gt` table).
+  `ease_aes()` (per aesthetic), `animate()` (with facets, pauses and rewind),
+  frame variables in titles and `mark_text()` labels, `anim_save()` to GIF /
+  APNG / animated SVG, and `anim_frame()` for a still of any frame.
+* Output: `render_plot()` (PNG/SVG/PDF/PowerPoint), `pdf_pages()` (multi-page
+  reports or one page per facet), `vellum::pptx_pages()` and `vellum::as_dml()`
+  for slide decks (with or without officer), `render_all()` (parallel batch),
+  and `plot_svg()` for an inline SVG string (e.g. a sparkline inside a `gt`
+  table).
 * Hand-drawn rendering: `sketch()` gives any geometry mark a wobbly, hachure-
   filled [Rough.js](https://roughjs.com) look (a `sketch =` argument on marks, an
   `element_line()` / `element_rect()` `sketch =` slot, or the plot-wide
   `theme_sketch()` one-liner). Generated natively in the engine, so it is exact
-  and works across PNG / SVG / PDF.
+  and works across PNG / SVG / PDF / PowerPoint.
 
 ## The vellum ecosystem
 
@@ -229,7 +266,7 @@ vellumplot is the grammar layer of a small ecosystem of packages that share the
 vellum scene model:
 
 - **[vellum](https://github.com/r-vellum/vellum)**, the parchment: the low-level
-  graphics backend (Rust scene graph, PNG/SVG/PDF renderer).
+  graphics backend (Rust scene graph, PNG/SVG/PDF/PowerPoint renderer).
 - **[vellumplot](https://github.com/r-vellum/vellumplot)**, the pen: this package.
 - **[vellumwidget](https://github.com/r-vellum/vellumwidget)**, the annotation:
   turns a vellumplot plot (or a raw vellum scene) into a client-side interactive

@@ -3,7 +3,8 @@ title: "Animation"
 description: >
   Non-reactive keyframe animation: compile a plot into one keyframe per state,
   train the scales once over every state and freeze them, then tween and encode
-  the in-between frames (GIF / APNG) in vellum's parallel Rust backend.
+  the in-between frames (GIF, APNG or animated SVG) in vellum's parallel Rust
+  backend.
 ---
 
 ```{r}
@@ -16,6 +17,17 @@ knitr::opts_chunk$set(
   eval = requireNamespace("vellumplot", quietly = TRUE)
 )
 library(vellumplot)
+
+# Show one frame of an animation in the page: anim_frame() to a temporary PNG,
+# inlined as a data URI.
+show_frame <- function(animation, frame = NULL, alt = "") {
+  f <- anim_frame(tempfile(fileext = ".png"), animation, frame = frame, scale = 2)
+  knitr::asis_output(sprintf(
+    '<img src="%s" alt="%s" style="width:100%%;max-width:576px">',
+    knitr::image_uri(f),
+    alt
+  ))
+}
 ```
 
 An animated plot is a sequence of still plots played in quick succession. In
@@ -54,9 +66,10 @@ vplot(gapminder) |>
 ```
 
 The output format follows the file extension: `.gif` for a looping animated GIF
-(universally viewable), `.png` for an animated PNG (APNG — lossless, with
-transparency), or `.svg` for an animated SVG. The tween, the parallel render across
-CPU cores, and the streaming encode all happen in one pass in vellum's Rust backend.
+(universally viewable), `.png` or `.apng` for an animated PNG (APNG — lossless,
+with transparency), or `.svg` for an animated SVG. The tween, the parallel render
+across CPU cores, and the streaming encode all happen in one pass in vellum's
+Rust backend.
 
 ### Animated SVG, and choosing a format
 
@@ -82,6 +95,21 @@ it gzipped (`.svgz`, or a web server with compression) to shrink it several-fold
 p |> animate() |> (\(a) anim_save("draw.svg", a))()
 ```
 
+### Video and WebP
+
+There is no video or animated WebP encoder among vellum's dependencies, so
+`anim_save()` does not write `.mp4`, `.webm` or `.webp`. Given one of those
+names it stops and tells you what to do instead: save an APNG or a GIF and
+convert it.
+
+```sh
+ffmpeg -i anim.png -pix_fmt yuv420p anim.mp4
+```
+
+```r
+magick::image_write(magick::image_read("anim.gif"), "anim.webp")
+```
+
 ## A bar chart race
 
 The viral "bar chart race" needs no special API — it is an ordinary
@@ -90,7 +118,6 @@ by its category, the tween slides bars past one another as their ranks change
 between states, and the frozen scales keep the value axis from jumping.
 
 ```r
-#| eval: false
 set.seed(1)
 cats <- c("A", "B", "C", "D", "E")
 race <- do.call(rbind, lapply(2000:2006, function(y)
@@ -111,19 +138,51 @@ categories within each year first if you want them sorted top-to-bottom.
 
 ## What a keyframe looks like
 
-`animate()` compiles one keyframe per state. Each is an ordinary scene, so you can
-inspect one directly — here the first state of an `mtcars`-by-cylinder animation:
+`animate()` compiles one keyframe per state. `anim_frame()` saves any single
+frame as a still PNG, SVG or PDF; here is the first frame of an
+`mtcars`-by-cylinder animation, the first state. Each car is its own mark,
+keyed by `data_id` (see [Which mark becomes which](#which-mark-becomes-which)):
 
 ```{r}
-#| fig-alt: "A scatter of weight against miles-per-gallon, one keyframe of an animation."
-a <- vplot(mtcars) |>
-  mark_point(x = wt, y = mpg, size = hp, color = factor(cyl)) |>
+cars <- transform(mtcars, car = rownames(mtcars))
+
+a <- vplot(cars) |>
+  mark_point(x = wt, y = mpg, size = hp, color = factor(cyl), data_id = car) |>
   transition_states(cyl) |>
   ease_aes("cubic-in-out") |>
   animate(nframes = 60, fps = 20)
+```
 
-# a@scenes holds one vellum scene per state; render the first as a still.
-vellum::render(a@scenes[[1]], tempfile(fileext = ".png"))
+```{r}
+#| eval: false
+anim_frame("keyframe.png", a, frame = 1)
+```
+
+```{r}
+#| echo: false
+show_frame(a, 1, alt = "A scatter of weight against miles per gallon showing only the four-cylinder cars, on axes that cover every car.")
+```
+
+The keyframes themselves are ordinary vellum scenes, in `a@scenes` (one per
+state), so you can also inspect one with vellum's tools.
+
+## Posters and stills
+
+`anim_frame(filename, animation, frame)` is the way to get a poster, a
+thumbnail, or the moment to put in print. The frame is drawn exactly as it
+appears in the animation, with the same frozen scales, tween and frame
+variables, so the poster matches the animation it stands for. A static plot
+built separately from one state would train its scales on that state alone.
+
+Frames are numbered as in the saved file, pauses and rewind included (see
+[Timing](#timing)). Leave `frame` out to get the frame a reader who asks for
+reduced motion sees: the final frame when the animation ends on its last state,
+otherwise the first.
+
+```{r}
+#| eval: false
+anim_frame("poster.png", a)              # the reduced-motion frame
+anim_frame("middle.svg", a, frame = 25)  # a mid-transition frame, as vector
 ```
 
 ## Frozen scales — the non-reactive guardrail
@@ -153,6 +212,20 @@ or both:
 `"cubic-in-out"` — slow start, quick middle, slow finish — reads as the most
 natural motion for most plots.
 
+The easing can differ per aesthetic. `ease` sets the default, and `position`,
+`color` (or `colour`), `size` and `alpha` each override it for one class of
+property:
+
+```{r}
+#| eval: false
+# Bars settle into place gently while the fill crossfades at a steady rate.
+ease_aes("cubic-in-out", color = "linear")
+```
+
+`position` covers x and y together (and every other coordinate, such as bar
+widths and path vertices); it also decides when discrete attributes switch.
+`alpha` covers the fade of marks entering and leaving.
+
 ## What tweens, and what does not
 
 Between two keyframes, an element's **position**, **size**, **alpha**, and
@@ -160,19 +233,123 @@ Between two keyframes, an element's **position**, **size**, **alpha**, and
 vivid instead of passing through grey. Discrete attributes (a marker shape, a line
 type, a text label) do not interpolate continuously; they snap at the midpoint.
 
-When the set of elements changes between states — a country that only has data in
-some years — give the animated mark a `data_id` identifying each element across
-states (`mark_point(..., data_id = country)`). Elements that appear **enter**
-(fade in) and elements that leave **exit** (fade out), while the ones present in
-both tween normally. Without a `data_id` a stable element set is assumed (elements
-are matched by position). Faceted animations are outside the current scope.
+### Which mark becomes which
+
+Marks tween by **identity**, as gganimate matches by group. A mark of one state
+moves into the mark that is the same thing in the next state, however the rows
+are ordered. A mark's identity is:
+
+1. its `data_id`, when the layer has one (`mark_point(..., data_id = country)`);
+2. otherwise its group: the `group` aesthetic if mapped, else the combination
+   of the layer's discrete mapped aesthetics (`color`, `fill`, `shape`, a
+   discrete `x`, and so on), so a bar race's bars keep their colours as they
+   slide between ranks;
+3. and within a group, the order of its rows.
+
+A line, path or area is one mark per series and is matched by its group.
+
+Row order is the last resort. It is enough when each group has one mark per
+state, but when a group has several rows and changes size between states, rows
+pair up by position and a point may jump to another row's place. `animate()`
+tells you once when that can happen and suggests a `data_id`; give the layer one
+(or a `group`) when its rows are individual observations.
+
+### Entering, leaving and morphing
+
+A mark found in only one of two adjacent states **enters** (fades in) or
+**exits** (fades out) on the alpha easing: points, bars, tiles, labels, lines
+and areas alike. A point whose colour group changes slides to its new place
+while its colour blends. A line, path or area whose number of points changes
+**morphs** from one outline into the other.
+
+What cannot move switches whole halfway through the transition: decoration
+without an identity that comes and goes, or a line that cannot be morphed (a
+line broken by missing values, say). `animate()` warns once when that will
+happen and names the states.
+
+Give each transition enough frames to be seen: `nframes` is spread over all
+the states, so 40 states in 80 frames leave two frames per state and nothing
+visibly moves.
+
+### Missing values
+
+Rows with a missing position or size draw nothing, as in a static plot, and
+`animate()` says so once per layer for the whole animation ("Removed n rows
+containing missing values"). The count includes rows that are in no frame at
+all, such as those with a missing state.
+
+## Faceted animations
+
+A faceted plot animates panel by panel. Every panel of the whole data is drawn
+in every frame: a state with no rows for a panel leaves that panel empty rather
+than changing the layout. A mark's identity includes its panel, so a mark never
+slides from one panel into another. A row whose facet value changes between
+states fades out of one panel and into the other.
+
+```{r}
+af <- vplot(cars) |>
+  mark_point(x = wt, y = mpg, color = factor(gear), data_id = car) |>
+  facet_wrap(~am, labeller = label_both) |>
+  transition_states(cyl) |>
+  animate(nframes = 30, fps = 10)
+```
+
+```{r}
+#| echo: false
+show_frame(af, 8, alt = "Two facet panels, am 0 and am 1, part-way from the four- to the six-cylinder state: the four-cylinder cars fade out as the six-cylinder cars fade in.")
+```
+
+The scales are frozen across frames, so per-panel scales can't be honoured:
+`facet_wrap(scales = "free")` (or `"free_x"`, `"free_y"`) and an independent
+`resolve_scale()` on a position stop `animate()` with an error that says to use
+fixed scales. `transition_reveal()` works with facets too.
+
+## Frame variables
+
+Titles can count along with the animation. A title, subtitle or caption set
+with `labs()` may embed frame variables in braces, glue-style, as in gganimate.
+Each `{...}` is an R expression evaluated for every frame, not only at the
+keyframes, so a `{frame_time}` title counts through the in-between times while
+the marks move. Write `{{` and `}}` for literal braces.
+
+* every transition: `frame`, `nframes`, `progress` (`frame / nframes`);
+* `transition_states()`: `closest_state`, `previous_state`, `next_state` and
+  `transitioning` (`TRUE` while moving);
+* `transition_time()`: `frame_time`, the time the frame has reached;
+* `transition_reveal()`: `frame_along`, the `along` value revealed so far.
+
+```{r}
+#| eval: false
+vplot(gapminder) |>
+  mark_point(x = gdpPercap, y = lifeExp, size = pop, color = continent) |>
+  scale_x_continuous(trans = "log10") |>
+  transition_time(year) |>
+  labs(title = "Year: {round(frame_time)}") |>
+  animate(nframes = 100, fps = 25)
+```
+
+A `mark_text()` label can use the same variables. The label is placed (and
+moves) like any mark, and only its string changes per frame, so a large year
+behind a bubble chart is one more layer:
+
+```{r}
+#| eval: false
+mark_text(
+  data = data.frame(x = 3000, y = 40), x = x, y = y,
+  label = "{round(frame_time)}", size = 60, color = "grey85"
+)
+```
+
+Repelled and rich-text labels are not templated. An ordinary data label whose
+string differs between two states takes the nearer state's string, switching
+halfway through.
 
 ## Continuous time
 
 `transition_time()` is the continuous-time sibling of `transition_states()`: it
-treats the column as a numeric time and allocates frames **in proportion to each
-time gap**, so the animation runs at a constant rate even when the times are
-unevenly spaced. Time flows once — no pause on a state, no wrap.
+treats the column as a time and allocates frames **in proportion to each time
+gap**, so the animation runs at a constant rate even when the times are unevenly
+spaced. Time flows once — no pause on a state, no wrap.
 
 ```{r}
 #| eval: false
@@ -184,22 +361,40 @@ vplot(gapminder) |>
   (\(a) anim_save("gapminder.gif", a))()
 ```
 
+The time may be numeric, `Date` or `POSIXct`. Dates and date-times are spaced
+by their day or second gaps, and `{frame_time}` keeps their class (and time
+zone), so `labs(title = "{format(frame_time, '%d %b %Y')}")` works.
+
 ## Reveal
 
-`transition_reveal()` is a different kind of animation: instead of tweening
-between states, it **wipes the plot into view** left to right — the classic "line
-draws itself". The full plot is compiled once and a clip rectangle grows across
-the panel, revealing the marks in order. The axes stay put; only the data wipes
-in.
+`transition_reveal(along)` is a different kind of animation: instead of tweening
+between states, it **reveals the data along `along`**, as gganimate does — the
+classic "line draws itself". Each frame shows the rows whose `along` value has
+been reached. Points appear as they are reached; a line, path, area, ribbon or
+step grows through its rows with an interpolated leading point, each series
+toward its own next row. The scales are frozen over the whole data, and the
+background, grid, axes and legends are drawn whole throughout.
 
 ```{r}
-#| eval: false
-vplot(data.frame(t = 1:100, y = cumsum(rnorm(100)))) |>
+set.seed(1)
+walk <- data.frame(t = 1:60, y = cumsum(rnorm(60)))
+
+ar <- vplot(walk) |>
   mark_line(x = t, y = y) |>
+  mark_point(x = t, y = y) |>
   transition_reveal(t) |>
-  animate(nframes = 80, fps = 25) |>
-  (\(a) anim_save("draw.gif", a))()
+  labs(title = "t = {round(frame_along)}") |>
+  animate(nframes = 30, fps = 10)
 ```
+
+```{r}
+#| echo: false
+show_frame(ar, 15, alt = "A random walk drawn up to about t = 30 of 60, on axes that already cover the whole series.")
+```
+
+`along` may be numeric, `Date` or `POSIXct`, and needn't be the x axis: a
+spiral revealed by angle, or a `coord_flip()` series, unrolls in data order.
+Each frame is its own keyframe, so `animate()` compiles `nframes` scenes.
 
 ## Timing
 
@@ -207,3 +402,18 @@ vplot(data.frame(t = 1:100, y = cumsum(rnorm(100)))) |>
 moving segments last versus the held pauses on each state. `nframes` is the total
 frame count and `fps` the playback rate, so the animation runs for `nframes / fps`
 seconds. `wrap = TRUE` (the default) loops the last state back to the first.
+
+`animate()` also takes gganimate's `start_pause`, `end_pause` and `rewind`.
+The pauses hold the first and last frame for that many frames, and
+`rewind = TRUE` plays the animation back to the start so the loop doesn't cut.
+They come out of `nframes`: `animate(nframes = 100, end_pause = 20)` moves for
+80 frames and rests on the final picture for 20. Every output follows them:
+`anim_save()` to GIF, APNG or SVG, the frame numbers of `anim_frame()`, and the
+frame scrubber of an animated vellumwidget.
+
+```{r}
+#| eval: false
+p |>
+  transition_states(year, wrap = FALSE) |>
+  animate(nframes = 100, fps = 25, end_pause = 25) # hold the end for a second
+```
