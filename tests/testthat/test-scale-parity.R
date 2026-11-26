@@ -54,7 +54,11 @@ test_that("infinite positions sit on the panel edge", {
 
 test_that("an all-missing continuous aesthetic draws no legend", {
   d <- data.frame(x = 1:3, y = 1:3, z = NA_real_)
-  b <- panels(vplot(d) |> mark_point(x = x, y = y, color = z, size = z))
+  # (no row has a size, so none draws, with a warning; VR-38)
+  b <- suppressWarnings(
+    panels(vplot(d) |> mark_point(x = x, y = y, color = z, size = z)),
+    classes = "vellumplot_missing_rows"
+  )
   expect_true(b$scales$color$no_guide)
   expect_true(b$scales$size$no_guide)
   expect_length(.legend_guides(b$scales), 0L)
@@ -201,11 +205,15 @@ test_that("oob on colour and size scales", {
   expect_identical(cc$map(0), cc$na_value)
   sq <- col("squish")
   expect_identical(sq$map(0), sq$map(2))
+  # (censored sizes draw no point, with a warning; VR-38)
   sz <- function(oob) {
-    panels(
-      vplot(d) |>
-        mark_point(x = x, y = y, size = v) |>
-        scale_size(limits = c(2, 8), range = c(1, 4), oob = oob)
+    suppressWarnings(
+      panels(
+        vplot(d) |>
+          mark_point(x = x, y = y, size = v) |>
+          scale_size(limits = c(2, 8), range = c(1, 4), oob = oob)
+      ),
+      classes = "vellumplot_missing_rows"
     )$scales$size
   }
   expect_true(is.na(sz("censor")$map(0)))

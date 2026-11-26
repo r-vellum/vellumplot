@@ -21,7 +21,7 @@ NULL
 
 # Error bars from ymin to ymax at each x (with caps across the band), or from
 # xmin to xmax at each y when horizontal (see `.range_orient()`).
-.emit_errorbar <- function(scene, L, scales, caps = TRUE) {
+.emit_errorbar <- function(scene, L, scales, caps = TRUE, keep = NULL) {
   n <- L$n
   orient <- .range_orient(L)
   ca <- if (identical(orient, "y")) "y" else "x"
@@ -39,6 +39,13 @@ NULL
 
   gi <- 0L
   for (idx in .style_groups(n, list(col = col, alpha = alpha, lty = lty))) {
+    # `keep`: the rows a caller draws (a point-range leaves out a missing size)
+    if (!is.null(keep)) {
+      idx <- idx[keep[idx]]
+      if (!length(idx)) {
+        next
+      }
+    }
     # (category position, value) endpoints, swapped below when horizontal
     x0 <- xn[idx]
     y0 <- ymin[idx]
@@ -123,15 +130,22 @@ NULL
 # An identity point-range: the ymin..ymax vertical (reusing the capless errorbar)
 # plus a point at (x, y). ggplot2's geom_pointrange.
 .emit_pointrange <- function(scene, L, scales) {
-  scene <- .emit_errorbar(scene, L, scales, caps = FALSE)
   n <- L$n
+  size <- rep_len(.aes_size(L, scales, 2.2), n)
+  # A row with a missing size is left out whole, range and point, as in
+  # ggplot2; `.warn_missing_positions()` reports it (VR-38).
+  sized <- is.finite(size)
+  scene <- .emit_errorbar(scene, L, scales, caps = FALSE, keep = sized)
   xn <- rep_len(scales$x$map(L$values$x), n)
   yn <- rep_len(scales$y$map(L$values$y), n)
   col <- rep_len(.aes_colour(L, scales, "black"), n)
   alpha <- rep_len(.aes_alpha(L, scales, NA_real_), n)
-  size <- rep_len(.aes_size(L, scales, 2.2), n)
   sk <- .mark_sketch(L, scales)
   for (idx in .style_groups(n, list(col = col, alpha = alpha, size = size))) {
+    idx <- idx[sized[idx]]
+    if (!length(idx)) {
+      next
+    }
     xy <- .xy_units(scales, xn[idx], yn[idx])
     scene <- .draw(
       scene,

@@ -1,5 +1,23 @@
 # vellumplot (development version)
 
+## Bug fixes
+
+* A row whose `size` is missing is no longer drawn as a `NaN`-sized mark
+  (which crashed R in PDF output, VR-38). As in ggplot2, it is left out and
+  counted in the layer's one "Removed n rows containing missing values"
+  warning, together with any missing positions; a size censored by
+  `oob = "censor"` makes it say "missing values or values outside the scale
+  range". This covers an `NA` under a continuous size scale, an `NA` level of
+  a discrete size scale with no `na.value`, and a constant `size = NA`, for
+  `mark_point()`, `mark_nodes()`, `mark_pointrange()` (range and point), the
+  text marks (`mark_text()`, `mark_label()`, `mark_text_path()`, node and edge
+  text, `mark_sf_label()`, which errored) and the point features of
+  `mark_sf()`. A graph node with a missing size no longer hides every edge.
+
+* A continuous size legend no longer shows an "NA" key, since its missing rows
+  draw no mark, matching ggplot2. A discrete size scale keeps the key when
+  `na.value` gives those rows a size.
+
 # vellumplot 0.25.0
 
 ## New features

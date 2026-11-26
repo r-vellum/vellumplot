@@ -24,11 +24,16 @@ test_that("size / edge_width / alpha trainers are unified and consistent (H50)",
   a <- vellumplot:::.build_panels(
     vplot(dna) |> mark_point(x = x, y = y, alpha = w)
   )$scales$alpha
-  s <- vellumplot:::.build_panels(
-    vplot(dna) |> mark_point(x = x, y = y, size = w)
+  # (the NA row draws no point, with a warning; VR-38)
+  s <- suppressWarnings(
+    vellumplot:::.build_panels(
+      vplot(dna) |> mark_point(x = x, y = y, size = w)
+    ),
+    classes = "vellumplot_missing_rows"
   )$scales$size
   expect_true(isTRUE(a$na))
-  expect_true(isTRUE(s$na))
+  # a continuous size alone has no NA key: its NA rows draw no mark (VR-38)
+  expect_false(isTRUE(s$na))
   # the continuous rescale still works after unification
   expect_equal(a$map(range(dna$w, na.rm = TRUE)), c(0.1, 1))
 })

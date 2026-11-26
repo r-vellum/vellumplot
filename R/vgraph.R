@@ -549,9 +549,14 @@ NULL
   for (L in pie_Ls) {
     r_mm <- pmax(
       r_mm,
-      .graph_vertex_radius(L, .node_pie_radius(L, scales, L$n), node_n)
+      .graph_vertex_radius(L, .node_pie_radius(L, scales, L$n), node_n),
+      na.rm = TRUE
     )
   }
+  # A node with a missing size is not drawn, so its edges run to its centre:
+  # an NA radius would otherwise make every cap, offset and arrowhead NA and
+  # hide all the edges (VR-38).
+  r_mm[!is.finite(r_mm)] <- 0
   # Per-edge perpendicular offset (mm): the signed parallel-edge index scaled by
   # the larger endpoint radius, so parallel/reciprocal edges spread across the
   # node face. Applied device-side by segments_grob(offset=) -> tracks the nodes.

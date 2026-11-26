@@ -1625,7 +1625,11 @@ NULL
     ))
   }
   v <- as.numeric(unlist(values, use.names = FALSE))
-  has_na <- anyNA(v) # detect before dropping non-finite, for the NA legend key
+  # Detect NA before dropping non-finite values, for the NA legend key. A
+  # continuous size has none: its missing rows draw no mark (VR-38), so a key
+  # would describe nothing, and ggplot2 shows none either. A discrete size keeps
+  # its key, which `na.value` gives a mark.
+  has_na <- anyNA(v) && !identical(aes, "size")
   v <- v[is.finite(v)]
   rng <- if (!is.null(scalespec) && !is.null(scalespec@domain)) {
     as.numeric(scalespec@domain)
@@ -1773,7 +1777,9 @@ NULL
     map = map,
     name = titles$title[[aes]],
     levels = levels,
-    na = anyNA(unlist(values, use.names = FALSE)),
+    # A size with no `na.value` draws no mark for NA (VR-38), so no key for it.
+    na = anyNA(unlist(values, use.names = FALSE)) &&
+      (!identical(aes, "size") || !is.null(na_out)),
     legend_breaks = levels,
     legend_labels = labels,
     !!!rlang::set_names(list(map(levels)), legend_field)
