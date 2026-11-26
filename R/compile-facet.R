@@ -467,29 +467,37 @@ NULL
     n_miss <- count("n_missing")
     if (!is.null(shared)) {
       for (p in panels) {
-        sz <- .missing_size_rows(
-          p$resolved[[i]],
-          p$aes_sc$size %||% shared$size
-        )
+        sz <- .panel_size_drops(p, i, shared)
         n_miss <- n_miss + sum(sz$missing)
         n_cens <- n_cens + sum(sz$censored)
       }
     }
-    n <- n_miss + n_cens
-    if (n > 0L) {
-      mark <- spec@layers[[i]]@mark
-      what <- if (n_cens > 0L) {
-        "missing values or values outside the scale range"
-      } else {
-        "missing values"
-      }
-      cli::cli_warn(
-        "Removed {n} row{?s} containing {what} (layer {i}, {.fn mark_{mark}}).",
-        class = "vellumplot_missing_rows"
-      )
-    }
+    .warn_removed_rows(n_miss + n_cens, n_cens, i, spec@layers[[i]]@mark)
   }
   invisible()
+}
+
+# The "Removed n rows" warning for layer `i` (mark `mark`): `n` rows not drawn,
+# `n_cens` of them censored. The counts ride on the condition (`n_rows`,
+# `n_censored`, `layer`, `mark`) so an animation can collect the warnings of its
+# keyframes and give one per layer instead (`.removed_rows_tally()`, VP-150).
+.warn_removed_rows <- function(n, n_cens, i, mark) {
+  if (n <= 0L) {
+    return(invisible())
+  }
+  what <- if (n_cens > 0L) {
+    "missing values or values outside the scale range"
+  } else {
+    "missing values"
+  }
+  cli::cli_warn(
+    "Removed {n} row{?s} containing {what} (layer {i}, {.fn mark_{mark}}).",
+    class = "vellumplot_missing_rows",
+    n_rows = as.integer(n),
+    n_censored = as.integer(n_cens),
+    layer = as.integer(i),
+    mark = mark
+  )
 }
 
 # The marks that draw nothing for a row whose size is missing: the point-like
@@ -506,6 +514,14 @@ NULL
   "text_path",
   "sf"
 )
+
+# `.missing_size_rows()` for layer `i` of built panel `p`, against the size
+# scale the compile maps it with: the panel's own (an independent size scale)
+# or the shared one. The one tally of size drops, used by the compile warning
+# and by `spec_diagnose()`'s report (VP-149), so the two count the same rows.
+.panel_size_drops <- function(p, i, shared) {
+  .missing_size_rows(p$resolved[[i]], p$aes_sc$size %||% shared$size)
+}
 
 # Per row of resolved layer `L`, is its size missing, so that its emitter draws
 # nothing for it (VR-38)? `missing`: the value is `NA` (or a constant

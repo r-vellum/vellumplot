@@ -1,5 +1,19 @@
 # vellumplot (development version)
 
+## Bug fixes
+
+* `spec_diagnose()` and its `$report` now count the rows a point or text mark
+  draws nothing for because their size is missing (under `missing`) or
+  censored by the size scale (under `limits`), from the same tally as the
+  compile's "Removed n rows" warning, so the two agree. The `missing` reason
+  reads "missing a position or size value" (VP-149).
+
+* `animate()` gives the "Removed n rows containing missing values" warning
+  once per layer, as a static plot does, instead of once while pooling the
+  states' scales and again for every keyframe (or every frame of a reveal).
+  The count covers the whole animation, for missing positions and sizes alike
+  (VP-150).
+
 # vellumplot 0.25.1
 
 ## Bug fixes

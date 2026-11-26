@@ -946,3 +946,61 @@ test_that("mark_text() labels can use frame variables (VP-93)", {
   expect_true(all(vellumplot:::.is_frame_template(c("{a}", "x {b} y")) ))
   expect_false(any(vellumplot:::.is_frame_template(c("{{a}}", "plain", NA))))
 })
+
+test_that("animate() gives the missing-rows warning once per layer (VP-150)", {
+  removed <- function(expr) {
+    w <- character(0)
+    withCallingHandlers(
+      expr,
+      vellumplot_missing_rows = function(c) {
+        w <<- c(w, conditionMessage(c))
+        invokeRestart("muffleWarning")
+      },
+      vellumplot_anim_cut = function(c) invokeRestart("muffleWarning")
+    )
+    w
+  }
+  msg <- function(n, i, mark) {
+    sprintf(
+      "Removed %d row%s containing missing values (layer %d, `mark_%s()`).",
+      n, if (n == 1L) "" else "s", i, mark
+    )
+  }
+  # Two missing positions and a missing size, over both states.
+  df <- data.frame(
+    x = c(1, NA, 3, 4, NA, 6),
+    y = 1:6,
+    s = c(1, 2, NA, 4, 5, 6),
+    st = rep(c("a", "b"), each = 3)
+  )
+  p <- vplot(df) |>
+    mark_point(x = x, y = y, size = s) |>
+    mark_text(x = x, y = y, label = "a", size = s)
+  # A static compile warns once per layer ...
+  expect_identical(removed(vellum::as_vellum_scene(p)), c(msg(3L, 1L, "point"), msg(3L, 2L, "text")))
+  # ... and so does the animation, its keyframes' counts added up: the scale
+  # pooling pass no longer repeats them.
+  expect_identical(
+    removed(animate(p |> transition_states(st), nframes = 6)),
+    c(msg(3L, 1L, "point"), msg(3L, 2L, "text"))
+  )
+  # Rows dropped in one keyframe only are still reported.
+  b_only <- df
+  b_only$x <- c(1, 2, 3, 4, NA, 6)
+  b_only$s <- 1
+  expect_identical(
+    removed(animate(vplot(b_only) |> mark_point(x = x, y = y) |> transition_states(st), nframes = 6)),
+    msg(1L, 1L, "point")
+  )
+  # A layer drawn whole in every keyframe (its own data has no state column)
+  # counts its rows once, not once per keyframe.
+  ann <- data.frame(x = c(1, NA), y = c(2, 3))
+  q <- vplot(df) |>
+    mark_point(x = y, y = y) |>
+    mark_point(data = ann, x = x, y = y) |>
+    transition_states(st)
+  expect_identical(removed(animate(q, nframes = 6)), msg(1L, 2L, "point"))
+  # A reveal accumulates rows: a dropped row counts once, not once per frame.
+  r <- vplot(df) |> mark_point(x = y, y = y, size = s) |> transition_reveal(y)
+  expect_identical(removed(animate(r, nframes = 6)), msg(1L, 1L, "point"))
+})

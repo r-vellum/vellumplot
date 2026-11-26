@@ -540,13 +540,16 @@ animate <- function(
   # pool them, and train ONCE over the union so every keyframe shares one frozen
   # set of scales. Training over the pooled resolved values gives the union domain
   # across states — the guardrail that keeps the animation non-reactive.
-  pooled <- unlist(
+  # The rows this pass drops are dropped again, and reported, by the keyframe
+  # compiles below, against the frozen scales the frames are drawn with.
+  removed <- .removed_rows_tally()
+  pooled <- removed$muffle(unlist(
     lapply(states, function(level) {
       bp <- .build_panels(state_spec(level))
       unlist(lapply(bp$panels, function(p) p$resolved), recursive = FALSE)
     }),
     recursive = FALSE
-  )
+  ))
   frozen <- .train_scales(base, pooled)
 
   # Key every mark by its data identity so the tween pairs marks across states
@@ -581,8 +584,18 @@ animate <- function(
     .mark_ctx$anim_state <- as.character(level)
     .mark_ctx$anim_k <- k
     .mark_ctx$anim_kvars <- .keyframe_vars(fvars, k)
-    .compile_plot(state_spec(level), frozen_scales = frozen)
+    removed$collect(.compile_plot(state_spec(level), frozen_scales = frozen))
   })
+  # One "Removed n rows" warning per layer (VP-150). Each state's rows are
+  # drawn in one keyframe only, so a layer's counts add up over the states,
+  # except a layer whose own data has no state column: it is drawn whole in
+  # every keyframe, so its rows count once.
+  persists <- vapply(
+    base@layers,
+    function(L) !is.null(L@data) && is.null(.layer_state_key(tr, L@data)),
+    logical(1)
+  )
+  removed$emit(function(i) if (isTRUE(persists[i])) max else sum)
   .inform_row_order(.mark_ctx$anim_counts)
   labels <- .mark_ctx$anim_labels
   .warn_unpaired(scenes, en$labels %||% states, wrap = en$wrap)
@@ -1151,7 +1164,8 @@ animate <- function(
 
   # Freeze the scales over the whole data, so the axes, legends and colours
   # stay put while the rows arrive.
-  bp <- .build_panels(base)
+  removed <- .removed_rows_tally()
+  bp <- removed$muffle(.build_panels(base))
   pooled <- unlist(lapply(bp$panels, function(p) p$resolved), recursive = FALSE)
   frozen <- .train_scales(base, pooled)
   # A data label's frame variables (VP-93) are filled in per frame too.
@@ -1167,8 +1181,12 @@ animate <- function(
       progress = i / length(cuts),
       frame_along = restore(cuts[[i]])
     )
-    .compile_plot(frame_spec(cuts[[i]], i), frozen_scales = frozen)
+    removed$collect(.compile_plot(frame_spec(cuts[[i]], i), frozen_scales = frozen))
   })
+  # One "Removed n rows" warning per layer (VP-150). The frames accumulate
+  # rows, so a row dropped from one is dropped from every later one: a layer's
+  # count is its largest over the frames (the last, which shows every row).
+  removed$emit(function(i) max)
 
   vellum_animation(
     scenes = scenes,
@@ -1330,6 +1348,46 @@ animate <- function(
     }
   }
   row
+}
+
+# The compile's "Removed n rows" warnings (`vellumplot_missing_rows`) while an
+# animation compiles, given once per layer per animation rather than once per
+# pass and keyframe (VP-150). `muffle(expr)` evaluates `expr` silencing them (a
+# pass whose rows the keyframes report again); `collect(expr)` evaluates a
+# keyframe compile, silencing them and keeping each layer's count; `emit(combine)`
+# then warns once per layer, its keyframe counts combined by `combine(i)` (a
+# function of the layer index returning `sum` or `max`).
+.removed_rows_tally <- function() {
+  rec <- list()
+  muffle <- function(expr) {
+    withCallingHandlers(
+      expr,
+      vellumplot_missing_rows = function(cnd) invokeRestart("muffleWarning")
+    )
+  }
+  collect <- function(expr) {
+    withCallingHandlers(
+      expr,
+      vellumplot_missing_rows = function(cnd) {
+        key <- as.character(cnd$layer)
+        r <- rec[[key]] %||% list(mark = cnd$mark, n = integer(0), cens = integer(0))
+        r$n <- c(r$n, cnd$n_rows)
+        r$cens <- c(r$cens, cnd$n_censored)
+        rec[[key]] <<- r
+        invokeRestart("muffleWarning")
+      }
+    )
+  }
+  emit <- function(combine) {
+    for (key in names(rec)[order(as.integer(names(rec)))]) {
+      r <- rec[[key]]
+      f <- combine(as.integer(key))
+      .warn_removed_rows(f(r$n), f(r$cens), as.integer(key), r$mark)
+    }
+    rec <<- list()
+    invisible()
+  }
+  list(muffle = muffle, collect = collect, emit = emit)
 }
 
 # Enumerate a transition's states and the per-segment timing. Returns `key` (a

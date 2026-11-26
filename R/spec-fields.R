@@ -96,6 +96,8 @@ spec_fields <- function(data, n_examples = 3L) {
 # `.resolve_trans()` the trainer asks, so it counts exactly what the compile
 # will do rather than re-deriving the rules. A missing discrete position or
 # facet value is drawn (as a trailing "NA" level or panel), so it is not counted.
+# Rows a point or text mark draws nothing for because their size is missing or
+# censored are taken from the compile's own tally (`.size_dropped_rows()`).
 #
 # Rows a stat leaves out itself (a non-finite value, a group too small for a
 # density or a fit) are read back from the stat: every stat that drops input
@@ -121,7 +123,7 @@ spec_fields <- function(data, n_examples = 3L) {
 # The reasons a row is not shown, in the order a row is attributed to one (a row
 # missing `x` AND outside the `y` limits counts once, as missing).
 .DIAG_DROP_REASONS <- c(
-  missing = "missing a position value",
+  missing = "missing a position or size value",
   transform = "not mappable on a transformed axis (e.g. <= 0 on a log scale)",
   stat = "left out by the layer's statistic (a non-finite value, or a group too small to summarise)",
   limits = "outside the scale limits"
@@ -266,15 +268,16 @@ spec_fields <- function(data, n_examples = 3L) {
 
 # Per row of `ld`, for the non-position channels (colour, fill, size, alpha,
 # linewidth) whose scale has explicit numeric limits: `oob` -- a value outside
-# the limits that is still drawn (colour clamps or takes the NA colour, size,
-# alpha and linewidth extrapolate) -- and `gone` -- a size censored to `NA`
-# (`scale_size(oob = "censor")`), which draws no mark.
+# the limits (colour clamps or takes the NA colour, size, alpha and linewidth
+# extrapolate). A size censored to `NA` (`scale_size(oob = "censor")`) draws no
+# mark instead; the report counts those from the compile's own tally
+# (`.size_dropped_rows()`) and leaves them out of `oob`.
 .layer_oob_rows <- function(plot, layer, ld) {
   n <- nrow(ld)
-  oob <- gone <- rep(FALSE, n)
+  oob <- rep(FALSE, n)
   L <- tryCatch(.resolve_layer(layer, ld), error = function(e) NULL)
   if (is.null(L)) {
-    return(list(oob = oob, gone = gone))
+    return(list(oob = oob))
   }
   for (ch in .DIAG_OOB_CHANNELS) {
     v <- L$values[[ch]]
@@ -291,11 +294,48 @@ spec_fields <- function(data, n_examples = 3L) {
       next
     }
     o <- .diag_oob(sc, as.numeric(v), as.numeric(dom))
-    lost <- if (ch == "size") o$gone else rep(FALSE, n)
-    gone <- gone | lost
-    oob <- oob | (o$out & !lost)
+    oob <- oob | o$out
   }
-  list(oob = oob, gone = gone)
+  list(oob = oob)
+}
+
+# Per layer, the rows of its input data drawn without a mark because their size
+# is missing (`missing`) or censored by the size scale (`censored`): the
+# compile's own tally (`.panel_size_drops()`, which feeds the "Removed n rows"
+# warning), taken from the panels built as the compile builds them and mapped
+# back through each resolved layer's source rows (VP-149). A layer whose rows do
+# not map back one-to-one (a stat aggregated them) reports none here.
+.size_dropped_rows <- function(plot) {
+  none <- list(missing = integer(0), censored = integer(0))
+  out <- rep(list(none), length(plot@layers))
+  built <- tryCatch(
+    suppressMessages(suppressWarnings(.build_panels(plot))),
+    error = function(e) NULL
+  )
+  if (is.null(built) || is.null(built$scales)) {
+    return(out)
+  }
+  for (p in built$panels) {
+    for (i in seq_along(p$resolved)) {
+      sz <- .panel_size_drops(p, i, built$scales)
+      if (!any(sz$missing) && !any(sz$censored)) {
+        next
+      }
+      src <- p$resolved[[i]]$source
+      to_input <- function(k) {
+        if (!is.null(src$members)) {
+          src$rows[unlist(src$members[k])]
+        } else if (isTRUE(src$per_row)) {
+          src$rows[k]
+        } else {
+          integer(0)
+        }
+      }
+      out[[i]]$missing <- c(out[[i]]$missing, to_input(which(sz$missing)))
+      out[[i]]$censored <- c(out[[i]]$censored, to_input(which(sz$censored)))
+    }
+  }
+  out
 }
 
 # The per-layer compile report: one row per layer with its input row count, how
@@ -303,6 +343,7 @@ spec_fields <- function(data, n_examples = 3L) {
 # rows have a non-position value outside its scale limits (`oob`).
 .compile_report <- function(plot) {
   stat_rows <- .stat_dropped_rows(plot)
+  size_rows <- .size_dropped_rows(plot)
   rows <- lapply(seq_along(plot@layers), function(i) {
     layer <- plot@layers[[i]]
     ld <- layer@data %||% plot@data
@@ -314,9 +355,15 @@ spec_fields <- function(data, n_examples = 3L) {
     }
     oob <- 0L
     if (is.data.frame(ld)) {
+      # A row drawn without a mark for a missing or censored size, counted as
+      # the compile warning counts it (VP-149). A missing size is a missing
+      # value, the first reason; a censored one is outside the limits, the last.
+      shown_oob <- attr(why, "shown_oob") %||% FALSE
+      sz <- size_rows[[i]]
+      why[seq_len(n) %in% sz$missing] <- "missing"
+      why[is.na(why) & seq_len(n) %in% sz$censored] <- "limits"
       o <- .layer_oob_rows(plot, layer, ld)
-      why[is.na(why) & o$gone] <- "limits"
-      oob <- sum((o$oob | (attr(why, "shown_oob") %||% FALSE)) & is.na(why))
+      oob <- sum((o$oob | shown_oob) & is.na(why))
     }
     counts <- vapply(
       names(.DIAG_DROP_REASONS),
@@ -556,8 +603,9 @@ spec_fields <- function(data, n_examples = 3L) {
 #' layer, on the layer's input rows, attributing each row to the first reason
 #' that applies:
 #' * `missing`: a continuous position value (`x`, `y`, `xend`, `ymin`, ...) is
-#'   `NA`. Such a row is removed from the plot with a warning, or leaves a gap
-#'   in a line, step or area;
+#'   `NA`, or the size of a point or text mark is. Such a row is removed from
+#'   the plot with a warning (the rows that warning counts are counted here
+#'   too), or leaves a gap in a line, step or area;
 #' * `transform`: the axis transform cannot map the value, e.g. a value `<= 0`
 #'   on a log axis;
 #' * `stat`: the layer's statistic leaves the row out, e.g. an infinite value
@@ -575,9 +623,10 @@ spec_fields <- function(data, n_examples = 3L) {
 #' end of the palette, given the NA colour, or extrapolated). They are not part
 #' of `dropped`.
 #'
-#' A missing *non-position* value (colour, size, ...) is drawn with the scale's
-#' `NA` value, a missing discrete position as a trailing `"NA"` category, and a
-#' missing facet value in a trailing `"NA"` panel, so none of them is counted.
+#' A missing *non-position* value other than such a size (colour, fill, ...) is
+#' drawn with the scale's `NA` value, a missing discrete position as a trailing
+#' `"NA"` category, and a missing facet value in a trailing `"NA"` panel, so
+#' none of them is counted.
 #' Each layer that loses rows also adds a `"warning"` diagnostic, so it shows in
 #' the printed summary.
 #'
@@ -689,8 +738,8 @@ spec_diagnose <- function(spec, data = NULL, env = globalenv()) {
   ) {
     ok_compile <- tryCatch(
       {
-        # Rows removed for a missing position are counted in the report below,
-        # so the compile's own warning about them would only repeat it.
+        # Rows removed for a missing position or size are counted in the report
+        # below, so the compile's own warning about them would only repeat it.
         withCallingHandlers(
           vellum::as_vellum_scene(plot),
           vellumplot_missing_rows = function(cnd) {
