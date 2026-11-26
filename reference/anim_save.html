@@ -104,7 +104,9 @@ viewers that do not know APNG show its first frame.</p></li>
 <li><p><code>.svg</code> — a single <strong>animated SVG</strong>: every frame is emitted as vector markup
 and shown in turn by a CSS step animation. It is resolution-independent (crisp
 at any size, in print and on retina) and honours <code>prefers-reduced-motion</code>
-(a reader who has asked their system not to animate gets the first frame, held).</p></li>
+(a reader who has asked their system not to animate gets one still frame:
+the last when the animation ends on its final state, else the first, the
+same frame <code><a href="anim_frame.html">anim_frame()</a></code> saves by default).</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="choosing-a-format">Choosing a format<a class="anchor" aria-label="anchor" href="#choosing-a-format"></a></h2>

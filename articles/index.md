@@ -31,7 +31,7 @@
 
   Two ways to make many panels: facet one plot across a variable with
   shared or free scales, and combine separate plots into one figure with
-  concat, insets, and repeats.
+  concat, tags, insets, and repeats.
 
 ### Beyond scatter plots
 
@@ -85,8 +85,8 @@
 
   Non-reactive keyframe animation: compile a plot into one keyframe per
   state, train the scales once over every state and freeze them, then
-  tween and encode the in-between frames (GIF / APNG) in vellum’s
-  parallel Rust backend.
+  tween and encode the in-between frames (GIF, APNG or animated SVG) in
+  vellum’s parallel Rust backend.
 
 ### Background
 

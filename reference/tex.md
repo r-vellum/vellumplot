@@ -17,7 +17,7 @@ and
 [`mark_label()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md)
 labels (one label, or a list with one per row; or `parse = TRUE` to
 parse a column), facet strips through
-[`label_parsed()`](https://ggplot2.tidyverse.org/reference/labellers.html),
+[`label_parsed()`](https://r-vellum.github.io/vellumplot/reference/labellers.md),
 and
 [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md).
 [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) labels

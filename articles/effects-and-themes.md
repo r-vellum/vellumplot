@@ -463,8 +463,8 @@ when you want a soft fade).
 [`theme_sketch()`](https://r-vellum.github.io/vellumplot/reference/theme_sketch.md)
 turns an entire plot hand-drawn in one line: wobbly gridlines, axis
 lines, and marks, on a warm paper background. The look is generated
-natively in the engine, so it is exact and works across PNG, SVG, and
-PDF.
+natively in the engine, so it is exact and works across PNG, SVG, PDF,
+and PowerPoint.
 
 ``` r
 

@@ -39,7 +39,10 @@ anim_save(filename, animation)
   markup and shown in turn by a CSS step animation. It is
   resolution-independent (crisp at any size, in print and on retina) and
   honours `prefers-reduced-motion` (a reader who has asked their system
-  not to animate gets the first frame, held).
+  not to animate gets one still frame: the last when the animation ends
+  on its final state, else the first, the same frame
+  [`anim_frame()`](https://r-vellum.github.io/vellumplot/reference/anim_frame.md)
+  saves by default).
 
 ## Choosing a format
 

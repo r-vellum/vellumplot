@@ -66,9 +66,9 @@ the output of the last:
     the panel.
 
 The result is a `vellum` scene: a resolution-independent description of
-the drawing that the backend can render to PNG, SVG, or PDF. vellumplot
-never touches a graphics device itself; it produces a scene and hands it
-to `vellum`.
+the drawing that the backend can render to PNG, SVG, PDF, or editable
+PowerPoint shapes. vellumplot never touches a graphics device itself; it
+produces a scene and hands it to `vellum`.
 
 ## Why this design pays off
 

@@ -78,6 +78,37 @@
   [`?guide_bins`](https://r-vellum.github.io/vellumplot/reference/guide_bins.md)
   no longer links to a `scale_alpha_binned()` that vellumplot doesn’t
   have.
+- The animation article is brought up to date (D-17): faceted animations
+  (with per-panel scales refused), how marks are matched (`data_id`,
+  then group, then row order),
+  [`transition_reveal()`](https://r-vellum.github.io/vellumplot/reference/transition_reveal.md)
+  revealing along `along`, morphing lines, frame variables in titles and
+  [`mark_text()`](https://r-vellum.github.io/vellumplot/reference/mark_text.md),
+  `Date` / `POSIXct` times, per-aesthetic
+  [`ease_aes()`](https://r-vellum.github.io/vellumplot/reference/ease_aes.md),
+  `start_pause` / `end_pause` / `rewind`,
+  [`anim_frame()`](https://r-vellum.github.io/vellumplot/reference/anim_frame.md)
+  posters, `.apng`, video and WebP advice, and the one-per-animation
+  missing-values warning. Its keyframe figure, which drew nothing, now
+  shows.
+  [`?anim_save`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
+  says which frame an animated SVG shows under reduced motion.
+- The facets and composition article covers composition tags
+  (`compose_annotation(tag_levels =)` and the tag band), strip text
+  clipping with
+  [`label_wrap_gen()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
+  and `theme(strip.clip = "off")`, and `inset(align_to =)` (D-18).
+- Get started has a “Saving to PowerPoint” section
+  (`render_plot(p, "x.pptx")`,
+  [`vellum::pptx_pages()`](https://r-vellum.github.io/vellum/reference/pptx_pages.html),
+  [`vellum::as_dml()`](https://r-vellum.github.io/vellum/reference/as_dml.html)
+  with `officer::ph_with()`), and
+  [`?render_plot`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+  lists `.pptx` (D-19).
+- The README lists PowerPoint output, math labels,
+  [`theme_brand()`](https://r-vellum.github.io/vellumplot/reference/theme_brand.md),
+  faceted animation, frame variables and the ggplot2-parity work, and
+  the articles no longer say output is PNG, SVG and PDF only (D-24).
 
 ## vellumplot 0.25.1
 

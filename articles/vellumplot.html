@@ -168,19 +168,48 @@
 </div>
 </section><section class="level2"><h2 id="rendering-to-a-file">Rendering to a file<a class="anchor" aria-label="anchor" href="#rendering-to-a-file"></a>
 </h2>
-<p><code><a href="../reference/render_plot.html">render_plot()</a></code> writes the compiled scene; the format follows the file extension.</p>
+<p><code><a href="../reference/render_plot.html">render_plot()</a></code> writes the compiled scene; the format follows the file extension: <code>.png</code>, <code>.svg</code>, <code>.pdf</code> or <code>.pptx</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/render_plot.html">render_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cars.png"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p><code><a href="../reference/plot_svg.html">plot_svg()</a></code> returns the scene as an SVG string, and <code><a href="../reference/plot_data_uri.html">plot_data_uri()</a></code> inlines a plot as a self-contained <code>data:</code> URI (vector by default, or <code>format = "png"</code>) for an <code>&lt;img&gt;</code>, a Markdown image, or an email — no separate file.</p>
+<p>The layout is solved once, by vellum, so the PNG, the SVG, the PDF and the PowerPoint slide all share it.</p>
+<section class="level3"><h3 id="saving-to-powerpoint">Saving to PowerPoint<a class="anchor" aria-label="anchor" href="#saving-to-powerpoint"></a>
+</h3>
+<p>A <code>.pptx</code> path writes a one-slide PowerPoint file of <strong>editable shapes</strong> at the plot’s size. Every point, bar and line is a DrawingML shape, every plain-text label a text box you can retype (math and haloed labels are outlines), and each panel a named group you can ungroup, recolour or move in PowerPoint. No other package is needed.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/render_plot.html">render_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cars.pptx"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p><code><a href="https://r-vellum.github.io/vellum/reference/pptx_pages.html" class="external-link">vellum::pptx_pages()</a></code> writes several plots as the slides of one deck, also without officer:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vplot.html">vplot</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/mark_histogram.html">mark_histogram</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">mpg</span>, bins <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="fu">vellum</span><span class="fu">::</span><span class="fu"><a href="https://r-vellum.github.io/vellum/reference/pptx_pages.html" class="external-link">pptx_pages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">p</span>, <span class="va">p2</span><span class="op">)</span>, <span class="st">"deck.pptx"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>To put a plot on a slide of your own deck, built with <a href="https://davidgohel.github.io/officer/" class="external-link">officer</a>, wrap it in <code><a href="https://r-vellum.github.io/vellum/reference/as_dml.html" class="external-link">vellum::as_dml()</a></code> and hand it to <code>officer::ph_with()</code>. The plot is laid out again at the size of the placeholder, so its text keeps its point size and nothing is stretched (<code>resize = FALSE</code> keeps the plot’s own size).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ardata-fr.github.io/officeverse/" class="external-link">officer</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">deck</span> <span class="op">&lt;-</span> <span class="fu">read_pptx</span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">add_slide</span><span class="op">(</span>layout <span class="op">=</span> <span class="st">"Title and Content"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">ph_with</span><span class="op">(</span><span class="st">"Fuel economy"</span>, location <span class="op">=</span> <span class="fu">ph_location_type</span><span class="op">(</span><span class="st">"title"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">ph_with</span><span class="op">(</span><span class="fu">vellum</span><span class="fu">::</span><span class="fu"><a href="https://r-vellum.github.io/vellum/reference/as_dml.html" class="external-link">as_dml</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span>, location <span class="op">=</span> <span class="fu">ph_location_type</span><span class="op">(</span><span class="st">"body"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">deck</span>, target <span class="op">=</span> <span class="st">"fuel.pptx"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Fonts are named, not embedded: PowerPoint uses the font vellum measured the text with when the machine opening the deck has it, and substitutes another when it doesn’t. <code>text = "outline"</code> (in <code><a href="../reference/render_plot.html">render_plot()</a></code>, <code>pptx_pages()</code> and <code>as_dml()</code>) writes glyph outlines instead, which look the same everywhere but can’t be edited as text. DrawingML has no clipping, blend modes or masks, so vellum cuts clipped geometry in advance and draws the parts it can’t express (a blur, a blend mode) as a picture, with a warning. PowerPoint output needs vellum 0.18.0 or later; see vellum’s <a href="https://r-vellum.github.io/vellum/reference/as_dml.html" class="external-link"><code>as_dml()</code></a> and <a href="https://r-vellum.github.io/vellum/reference/pptx_pages.html" class="external-link"><code>pptx_pages()</code></a> for the details.</p>
+<p>For many figures at once, <code><a href="../reference/pdf_pages.html">pdf_pages()</a></code> and <code><a href="../reference/render_all.html">render_all()</a></code> are covered in <a href="facets-and-composition.html#multi-page-and-batch-output">Facets and composition</a>.</p>
+</section><section class="level3"><h3 id="strings-and-documents">Strings and documents<a class="anchor" aria-label="anchor" href="#strings-and-documents"></a>
+</h3>
+<p><code><a href="../reference/plot_svg.html">plot_svg()</a></code> returns the scene as an SVG string, and <code><a href="../reference/plot_data_uri.html">plot_data_uri()</a></code> inlines a plot as a self-contained <code>data:</code> URI (vector by default, or <code>format = "png"</code>) for an <code>&lt;img&gt;</code>, a Markdown image, or an email — no separate file.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">uri</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/plot_data_uri.html">plot_data_uri</a></span><span class="op">(</span><span class="op">)</span>          <span class="co"># data:image/svg+xml;base64,...</span></span></code></pre></div>
 </div>
 <p>Inside a Quarto or R Markdown document you usually write nothing special: a plot printed in a chunk adapts to the target — a crisp inline <strong>SVG</strong> for HTML output, and the default vector/raster render for PDF or Word.</p>
-</section><section class="level2"><h2 id="where-to-next">Where to next<a class="anchor" aria-label="anchor" href="#where-to-next"></a>
+</section></section><section class="level2"><h2 id="where-to-next">Where to next<a class="anchor" aria-label="anchor" href="#where-to-next"></a>
 </h2>
 <ul>
 <li>

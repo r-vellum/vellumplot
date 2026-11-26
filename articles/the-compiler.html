@@ -145,7 +145,7 @@
 <li>
 <strong>Compile marks.</strong> Turn each layer into <code>vellum</code> grobs positioned in the panel.</li>
 </ol>
-<p>The result is a <code>vellum</code> scene: a resolution-independent description of the drawing that the backend can render to PNG, SVG, or PDF. vellumplot never touches a graphics device itself; it produces a scene and hands it to <code>vellum</code>.</p>
+<p>The result is a <code>vellum</code> scene: a resolution-independent description of the drawing that the backend can render to PNG, SVG, PDF, or editable PowerPoint shapes. vellumplot never touches a graphics device itself; it produces a scene and hands it to <code>vellum</code>.</p>
 </section><section class="level2"><h2 id="why-this-design-pays-off">Why this design pays off<a class="anchor" aria-label="anchor" href="#why-this-design-pays-off"></a>
 </h2>
 <p><strong>Scales that span layers.</strong> Training happens after every layer’s data is resolved, so a point cloud and a fitted line automatically land on the same axes. There is no drawing order to get wrong.</p>

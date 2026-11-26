@@ -5,7 +5,7 @@ Compiles a
 into a
 [`vellum::vl_scene()`](https://r-vellum.github.io/vellum/reference/vl_scene.html)
 and writes it. The output format is taken from the file extension
-(`.png`, `.svg`, `.pdf`).
+(`.png`, `.svg`, `.pdf` or `.pptx`).
 [`vellum::render()`](https://r-vellum.github.io/vellum/reference/vl_scene.html)
 also works on a plot directly, dispatching through the
 `as_vellum_scene()` seam.
@@ -29,8 +29,11 @@ render_plot(plot, path, text = "native", dpi = NULL, cvd = "none")
 
 - text:
 
-  For SVG output, how text is written (see
+  For SVG and PowerPoint output, how text is written: `"native"`
+  (default) for selectable, editable text, `"outline"` for glyph
+  outlines (see
   [`vellum::render()`](https://r-vellum.github.io/vellum/reference/vl_scene.html)).
+  Ignored for PNG and PDF.
 
 - dpi:
 
@@ -38,8 +41,8 @@ render_plot(plot, path, text = "native", dpi = NULL, cvd = "none")
   authored resolution (set on
   [`vplot()`](https://r-vellum.github.io/vellumplot/reference/vplot.md));
   a number overrides it for this render, so the PNG's pixel dimensions
-  become `width * dpi` by `height * dpi`. Ignored for `.svg`/`.pdf`,
-  which are resolution-independent.
+  become `width * dpi` by `height * dpi`. Ignored for `.svg`, `.pdf` and
+  `.pptx`, which are resolution-independent.
 
 - cvd:
 
@@ -52,12 +55,22 @@ render_plot(plot, path, text = "native", dpi = NULL, cvd = "none")
   [`scale_pattern()`](https://r-vellum.github.io/vellumplot/reference/scale_pattern.md)
   /
   [`pattern_hatch()`](https://r-vellum.github.io/vellumplot/reference/pattern_hatch.md),
-  which add a redundant non-colour encoding). Simulation is raster-only;
-  it is ignored for `.svg`/`.pdf`.
+  which add a redundant non-colour encoding). Simulation is raster-only:
+  a `.svg`, `.pdf` or `.pptx` is written unsimulated, with a warning.
 
 ## Value
 
 `path`, invisibly.
+
+## Details
+
+A `.pptx` path writes a one-slide PowerPoint file of editable shapes at
+the plot's size (needs vellum 0.18.0 or later; no other package). For
+several slides use
+[`vellum::pptx_pages()`](https://r-vellum.github.io/vellum/reference/pptx_pages.html),
+and to place a plot on a slide of an officer deck wrap it in
+[`vellum::as_dml()`](https://r-vellum.github.io/vellum/reference/as_dml.html)
+for `officer::ph_with()`.
 
 ## Examples
 
