@@ -407,6 +407,9 @@ after_stat <- function(x) x
     position <- rlang::eval_tidy(quos$position)
     quos <- quos[names(quos) != "position"]
   }
+  # A rule's `x` / `y` is its intercept (VP-156); renamed before the split, so
+  # a constant becomes the constant `xintercept` it means.
+  quos <- .rule_intercepts(mark, quos, list(), call = rlang::caller_env())$encoding
   split <- .split_encodings(quos)
   # Pre-evaluated always-constant params (e.g. mm nudges) bypass encoding
   # splitting, so a negative literal like `nudge_y = -3` is not mistaken for a
@@ -1014,7 +1017,7 @@ mark_rule <- function(
   .add_layer(
     plot,
     "rule",
-    .rule_intercepts(rlang::enquos(...)),
+    rlang::enquos(...),
     blend = blend,
     effects = effects,
     sketch = sketch,
@@ -1023,18 +1026,31 @@ mark_rule <- function(
   )
 }
 
-# `mark_rule()` draws at `xintercept` / `yintercept`; an `x` / `y` given
-# instead names the same thing (`mark_rule(x = 0)`), so it is read as the
-# intercept. Before, it was kept as a position nothing drew, so the rule
-# silently disappeared and the axis was titled "0" (VP-156). Given alongside
-# its intercept, `x` / `y` is dropped with a warning.
-.rule_intercepts <- function(dots, call = rlang::caller_env()) {
+# A rule layer draws at `xintercept` / `yintercept`; an `x` / `y` given
+# instead names the same thing (`mark_rule(x = 0)`, or a Vega-Lite `rule` with
+# only an `x` field), so it is read as the intercept. Before, it was kept as a
+# position nothing drew, so the rule silently disappeared and the axis could be
+# titled "0" (VP-156). Applied to every rule layer as it is built
+# (`.add_layer()`, `from_spec()` and so the Vega-Lite importer), to its
+# mapped `encoding` and its constant `params` alike. A rule with a second
+# position (`xend`, `xmax`, ... -- a Vega-Lite segment) is left alone. Given
+# alongside its intercept, `x` / `y` is dropped with a warning.
+.RULE_SPAN_FIELDS <- c("xend", "yend", "xmin", "xmax", "ymin", "ymax")
+
+.rule_intercepts <- function(mark, encoding, params, call = NULL) {
+  if (!identical(mark, "rule")) {
+    return(list(encoding = encoding, params = params))
+  }
+  given <- c(names(encoding), names(params))
+  if (any(.RULE_SPAN_FIELDS %in% given)) {
+    return(list(encoding = encoding, params = params))
+  }
   for (a in c("x", "y")) {
     ai <- paste0(a, "intercept")
-    if (!a %in% names(dots)) {
+    if (!a %in% given) {
       next
     }
-    if (ai %in% names(dots)) {
+    if (ai %in% given) {
       cli::cli_warn(
         c(
           "{.fn mark_rule} ignores {.arg {a}} when {.arg {ai}} is given.",
@@ -1042,12 +1058,14 @@ mark_rule <- function(
         ),
         call = call
       )
-      dots[[a]] <- NULL
+      encoding[[a]] <- NULL
+      params[[a]] <- NULL
     } else {
-      names(dots)[names(dots) == a] <- ai
+      names(encoding)[names(encoding) == a] <- ai
+      names(params)[names(params) == a] <- ai
     }
   }
-  dots
+  list(encoding = encoding, params = params)
 }
 
 #' Reference lines and function curves

@@ -178,10 +178,10 @@ NULL
 # radiate outward past it, so reserve room for the longest label or they clip at
 # the panel edge. A label's native width scales with the extent, so solve for the
 # extent that keeps the longest label (starting just past the ring) inside the
-# ~5%-expanded domain of a panel `side_mm` wide. Clamped. Before the layout
-# exists (when the compile sets the scale domain) the side is a guess: the
-# page's shorter side, or the 6in default. The emitter then fits the diagram to
-# the real panel (`.chord_fit()`, VP-155).
+# ~5%-expanded domain of a panel `side_mm` wide. Clamped. This sets the scale
+# domain, before the layout exists, so the side is a guess: the page's shorter
+# side, or the 6in default. The emitter then fits the diagram to the real
+# panel (`.chord_fit()`, VP-155).
 .chord_extent <- function(labels, has_labels, side_mm = NULL) {
   base <- .CHORD_R_OUT + 0.06
   if (!has_labels || !length(labels)) {
@@ -191,32 +191,64 @@ NULL
     pg <- .mark_ctx$page
     side_mm <- if (!is.null(pg)) min(pg) * 25.4 else 6 * 25.4
   }
-  # measured in the font the labels draw in (VP-135)
-  el <- .mark_text_el(.CHORD_LABEL_FS)
-  lw_mm <- max(
-    vapply(labels, .mm_tw, numeric(1), fs = .CHORD_LABEL_FS, el = el),
-    0
-  )
+  lw_mm <- .chord_label_mm(labels)
   inner <- .CHORD_R_OUT + 0.04 # radius where labels start
   denom <- 1.05 - 2.1 * lw_mm / side_mm
   ext <- if (denom > 0.2) 1.06 * inner / denom else 4
   max(base, min(ext, 4))
 }
 
-# The factor the chord emitter scales its radii by so the labels fit the panel
-# it is drawn in. The scale domain was set from `.chord_extent()` on a guessed
-# panel side (`ext`); once the layout is known (`.mark_ctx$panel_mm`, which
-# takes the plot margin, titles, legends and a composition cell into account)
-# the extent the labels really need is recomputed, and the ring, ribbons and
-# labels shrink (or grow) by their ratio, so the labels end inside the panel.
-# 1 when the panel size is unknown or there are no labels (VP-155).
+# The longest sector label's width (mm) at the label font size, measured in the
+# font the labels draw in (VP-135).
+.chord_label_mm <- function(labels) {
+  el <- .mark_text_el(.CHORD_LABEL_FS)
+  max(vapply(labels, .mm_tw, numeric(1), fs = .CHORD_LABEL_FS, el = el), 0)
+}
+
+# The smallest ring the fit keeps, as a fraction of the panel's half-side: a
+# panel too small for the labels at that size shrinks their font instead.
+.CHORD_MIN_RING <- 0.25
+# How far the label font may shrink (as Venn's set names do), before the
+# labels are left to clip.
+.CHORD_MIN_FONT <- 0.6
+
+# How the chord emitter fits the panel it is drawn in: `k`, the factor its
+# radii scale by, and `font`, the factor its label font scales by. The scale
+# domain was set from `.chord_extent()` on a guessed panel side (`ext`); once
+# the layout is known (`.mark_ctx$panel_mm`, which takes the plot margin,
+# titles, legends and a composition cell into account) the ring, ribbons and
+# labels scale so the longest label ends inside the panel. That is solved
+# without `.chord_extent()`'s upper clamps, so a small panel gets a small
+# ring (its floor still caps the ring for short labels). Below
+# `.CHORD_MIN_RING` the label font shrinks instead, down to `.CHORD_MIN_FONT`;
+# past that the ring stays at its minimum and the labels clip. `k = 1`,
+# `font = 1` when the panel size is unknown or there are no labels (VP-155).
 .chord_fit <- function(ch, has_labels) {
   ext <- ch$ext
   pm <- .mark_ctx$panel_mm
+  none <- list(k = 1, font = 1)
   if (is.null(ext) || !has_labels || is.null(pm) || !all(is.finite(pm))) {
-    return(1)
+    return(none)
   }
-  ext / .chord_extent(ch$sectors$node, TRUE, side_mm = max(min(pm), 10))
+  side <- max(min(pm), 1)
+  lw <- .chord_label_mm(ch$sectors$node)
+  inner <- .CHORD_R_OUT + 0.04
+  # The ring factor that puts a label of width `w` mm, starting at `k * inner`,
+  # 6% short of the panel edge (1.05 * ext native, with 2.1 * ext / side
+  # native units per mm) -- as `.chord_extent()` solves it.
+  k_for <- function(w) ext * (1.05 - 2.1 * w / side) / (1.06 * inner)
+  k_min <- .CHORD_MIN_RING * 1.05 * ext / .CHORD_R_OUT
+  # Short labels never grow the ring past the domain's own room for it (the
+  # `base` floor of `.chord_extent()`).
+  k_max <- ext / (.CHORD_R_OUT + 0.06)
+  k <- min(k_for(lw), k_max)
+  if (k >= k_min || lw <= 0) {
+    return(list(k = k, font = 1))
+  }
+  # The font that fits at the smallest ring, within its floor.
+  font <- (1.05 - 1.06 * inner * k_min / ext) * side / (2.1 * lw)
+  font <- min(1, max(.CHORD_MIN_FONT, font))
+  list(k = max(k_for(font * lw), k_min), font = font)
 }
 
 # Sample points along a circle arc (radius r) from angle a0 to a1, `nseg`+1 pts.

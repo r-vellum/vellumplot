@@ -23,8 +23,10 @@ NULL
   if (!nrow(sec)) {
     return(scene)
   }
-  # Every radius scales by `k` so the labels fit the real panel (VP-155).
-  k <- .chord_fit(ch, isTRUE(L$params$label))
+  # Every radius scales by `k`, and the label font by `fit$font`, so the
+  # labels fit the real panel (VP-155).
+  fit <- .chord_fit(ch, isTRUE(L$params$label))
+  k <- fit$k
   r_in <- k * .CHORD_R_IN
   r_out <- k * .CHORD_R_OUT
   dir <- L$params$direction %||% "gradient"
@@ -97,7 +99,7 @@ NULL
   # Upright-flipping reverses the reading direction on the left half, so the
   # justification that means "outward" flips with it.
   if (isTRUE(L$params$label)) {
-    fs <- .CHORD_LABEL_FS
+    fs <- .CHORD_LABEL_FS * fit$font
     rl <- k * (.CHORD_R_OUT + 0.04)
     mid <- (sec$theta0 + sec$theta1) / 2
     for (i in seq_len(n)) {

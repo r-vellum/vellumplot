@@ -38,3 +38,41 @@ test_that("x given alongside xintercept is dropped with a warning", {
   expect_named(p@layers[[1]]@params, "xintercept")
   expect_length(p@layers[[1]]@encoding, 0L)
 })
+
+test_that("from_spec() and Vega-Lite rules read x as the intercept (VP-156)", {
+  nrule <- function(p) {
+    prov <- suppressWarnings(plot_provenance(p))
+    length(Filter(function(e) e$mark == "rule" && e$kind == "mark", prov))
+  }
+  spec <- list(layers = list(
+    list(mark = "point", encoding = list(x = list(field = "wt"), y = list(field = "mpg"))),
+    list(mark = "rule", encoding = list(x = list(expr = "3")))
+  ))
+  p <- from_spec(spec, data = mtcars)
+  expect_named(c(p@layers[[2]]@encoding, p@layers[[2]]@params), "xintercept")
+  expect_identical(nrule(p), 1L)
+  skip_if_not_installed("jsonlite")
+  vl <- list(
+    data = list(values = lapply(1:3, function(i) list(a = i, b = i))),
+    layer = list(
+      list(mark = "point", encoding = list(
+        x = list(field = "a", type = "quantitative"),
+        y = list(field = "b", type = "quantitative")
+      )),
+      list(mark = "rule", encoding = list(x = list(field = "a", type = "quantitative")))
+    )
+  )
+  p3 <- spec_from_vegalite(as.character(jsonlite::toJSON(vl, auto_unbox = TRUE)))
+  expect_identical(nrule(p3), 1L)
+})
+
+test_that("a rule with a second position is left alone", {
+  ri <- vellumplot:::.rule_intercepts(
+    "rule",
+    list(x = 1, xmax = 2),
+    list()
+  )
+  expect_named(ri$encoding, c("x", "xmax"))
+  ri2 <- vellumplot:::.rule_intercepts("point", list(x = 1), list())
+  expect_named(ri2$encoding, "x")
+})

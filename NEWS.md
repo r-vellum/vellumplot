@@ -2,14 +2,21 @@
 
 ## Bug fixes
 
-* An area or ribbon now leaves a gap at a missing value, as a line does. A
-  stacked `mark_area()` used to draw a missing height as zero, dipping to the
-  baseline; an identity area or a `mark_ribbon()` dropped its first run and
-  joined across the gap with a diagonal face. Each series now splits into
-  runs at its missing values, a stacked area stacks each run (a missing
-  height adds nothing to the groups above it), and the missing rows are
-  counted once in the layer's "Removed n rows containing missing values"
-  warning and in `spec_diagnose()` (VP-162).
+* An area or ribbon now leaves a gap at a missing value (`NA`), as a line
+  does. A stacked `mark_area()` used to draw a missing height as zero,
+  dipping to the baseline; an identity area or a `mark_ribbon()` dropped its
+  first run and joined across the gap with a diagonal face. Each series is
+  still one element, drawn in runs between its missing values. In a stack,
+  the groups above a missing height keep their place: they sit on that
+  height interpolated from its neighbours in its own series (and, under
+  `position = "fill"`, it counts in the total), though the series itself
+  isn't drawn there. A missing height at the start or end of a series has no
+  neighbour to interpolate from, so the groups above it break there too. The
+  missing rows are counted once in the layer's "Removed n rows containing
+  missing values" warning and in `spec_diagnose()`. An infinite value is not
+  a gap. In an animation, an area that gains or loses a gap between states
+  switches to its new shape halfway through the transition instead of
+  morphing (VP-162).
 
 * `vconcat()` takes `heights` and `hconcat()` takes `widths`, passed on to
   `concat()`. Before, `vconcat(a, b, heights = c(3, 1))` went through to
@@ -81,28 +88,37 @@
   tall for it, and the name moves inward only as far as it has to (VP-148).
 
 * `mark_rule(x = 0)` now draws a vertical line at zero: an `x` or `y` given to
-  `mark_rule()` is read as `xintercept` / `yintercept`. Before, it was kept
-  as a position nothing drew, so the rule silently vanished, and when the
-  rule was the first layer the axis was titled "0". Given alongside its
-  intercept, `x` / `y` is dropped with a warning. `?mark_point` now
-  documents `xintercept` and `yintercept` (VP-156).
+  a rule is read as `xintercept` / `yintercept`. Before, it was kept as a
+  position nothing drew, so the rule silently vanished, and when the rule was
+  the first layer the axis was titled "0". A mapped `y = col`, which also
+  drew nothing, now draws one rule per row. The same holds for rules from
+  `from_spec()` and for a Vega-Lite `rule` with only an `x` or `y` field (one
+  with a second position, a Vega-Lite segment, is left alone). Given
+  alongside its intercept, `x` / `y` is dropped with a warning.
+  `?mark_point` now documents `xintercept` and `yintercept` (VP-156).
 
 * `animate()`'s hint to give marks a `data_id` now fires for an ungrouped
   layer (plain `mark_point(x, y)`) whose number of rows changes between
   states; it never did, because the layer's single group has an empty name.
-  It no longer fires for groups that appear in only one state (as with
-  `mark_point(color = factor(cyl)) |> transition_states(cyl)`), since those
-  marks enter and exit instead of pairing by row order (VP-159).
+  It now compares only states that play one after the other (and the last
+  with the first when the animation wraps), so it no longer fires for groups
+  that appear in only one state (as with
+  `mark_point(color = factor(cyl)) |> transition_states(cyl)`): those marks
+  enter and exit instead of pairing by row order (VP-159).
 
 * `vchord()` fits its sector labels to the panel it is actually drawn in.
   The label room was set from the page size before the layout existed, so a
   wide plot margin, a title or a composition cell left too little room and
   the labels were cut off at the panel edge. Once the panel is laid out the
-  ring, ribbons and labels now scale to fit it (VP-155).
+  ring, ribbons and labels now scale to fit it. In a panel too small for the
+  labels around a reasonable ring (a quarter of the panel's half-width) the
+  label font shrinks, to 60% at most; in a smaller panel still, the labels
+  can clip (VP-155).
 
 * A wrapped tick label at the end of an axis now reserves half its widest
-  line beyond the end break, not half its wrap width, so the end spacer is no
-  wider than the label needs (VP-153).
+  line beyond the end break, not half its wrap width: less for short lines,
+  and the full room for a word wider than the wrap width, which gets a line
+  of its own (VP-153).
 
 * `guide_axis(minor.ticks = TRUE, cap = "both")` caps the axis line at the
   outermost tick, major or minor, as ggplot2 does. Before, the line stopped
@@ -110,7 +126,11 @@
 
 * `labs()` typesets a plotmath expression: `labs(x = expression(alpha^2))`
   (or a quoted call) goes through `plotmath()` and draws as math, as in
-  ggplot2. Before, it drew the expression's source text, `alpha^2` (VP-163).
+  ggplot2. Before, it drew the expression's source text, `alpha^2`. The alt
+  text and the SVG title and description read it as plain text ("α^2"), not
+  as TeX. Only the first element of an `expression()` is used, with a
+  warning when there are more; `alt` must stay plain text. The math is set in
+  vellum's math font, not the theme's (VP-163).
 
 * vellumplot now requires vellum 0.18.0 or later, the first release that
   writes PowerPoint. With vellum 0.17.0 installed, `render_plot(p, "x.pptx")`
@@ -119,8 +139,9 @@
 ## Documentation
 
 * `?sec_axis`, which `?scale_x_continuous` points to for `sec.axis`, no
-  longer mentions the removed `|` and `/` composition operators: a secondary axis is not drawn in a composition made
-  with `hconcat()`, `vconcat()` or `concat()` (VP-164).
+  longer mentions the removed `|` and `/` composition operators: a
+  secondary axis is not drawn in a composition made with `hconcat()`,
+  `vconcat()` or `concat()` (VP-164).
 
 * The facets-and-composition article no longer prints a message or gt's
   startup output into the page; its bottom-legend facet example is taller so

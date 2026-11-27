@@ -861,6 +861,28 @@ test_that("the data_id hint fires for ungrouped layers, not one-state groups (VP
       transition_states(s) |> animate(nframes = 6),
     class = "vellumplot_anim_row_order"
   )
+  # Only consecutive states pair: a group drawn in A (3 rows) and C (1 row)
+  # but not B never pairs A with C, unless the animation wraps C -> A.
+  d4 <- data.frame(
+    s = c("A", "A", "A", "B", "B", "C"),
+    g = c("x", "x", "x", "y", "y", "x"),
+    x = c(1, 2, 3, 1, 2, 1),
+    y = 1:6
+  )
+  p4 <- vplot(d4) |> mark_point(x = x, y = y, color = g)
+  expect_no_message(
+    p4 |> transition_states(s, wrap = FALSE) |> animate(nframes = 6),
+    class = "vellumplot_anim_row_order"
+  )
+  expect_message(
+    p4 |> transition_states(s, wrap = TRUE) |> animate(nframes = 6),
+    class = "vellumplot_anim_row_order"
+  )
+  cnt <- list(l1 = list(A = c(x = 3), B = c(y = 2), C = c(x = 1)))
+  expect_false(vellumplot:::.inform_row_order(cnt, c("A", "B", "C")))
+  expect_true(suppressMessages(
+    vellumplot:::.inform_row_order(cnt, c("A", "B", "C"), wrap = TRUE)
+  ))
   # Unit check: a group absent from the other states never counts.
   counts <- list(l1 = list(A = c(a = 3), B = c(b = 2)))
   expect_false(vellumplot:::.inform_row_order(counts))

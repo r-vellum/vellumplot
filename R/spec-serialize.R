@@ -322,10 +322,16 @@ NULL
   for (nm in names(rec$encoding)) {
     enc[[nm]] <- .channel_from_ir(rec$encoding[[nm]], env)
   }
+  # A rule's `x` / `y` is its intercept (VP-156), as in `mark_rule()`.
+  ri <- .rule_intercepts(
+    rec[["mark"]],
+    enc,
+    .values_from_ir(rec[["params"]] %||% list())
+  )
   LayerSpec(
     mark = rec[["mark"]],
-    encoding = enc,
-    params = .values_from_ir(rec[["params"]] %||% list()),
+    encoding = ri$encoding,
+    params = ri$params,
     stat = rec[["stat"]] %||% "identity",
     stat_params = .values_from_ir(rec[["stat_params"]] %||% list()),
     position = rec[["position"]] %||% "identity",
@@ -864,7 +870,7 @@ as_spec <- function(plot) {
     if (!all(plain)) {
       .unserializable(
         "labels",
-        "a rich md() label is not serializable; use a plain string."
+        "a rich label (md(), tex(), plotmath() or a plotmath expression) is not serializable; use a plain string."
       )
     }
     out$labels <- labs

@@ -479,6 +479,22 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
     wrap_mm = wrap
   )
   expect_equal(ex$e[2], lw / 2)
+  # A word wider than the box reserves its full width, past the box.
+  big <- "Supercalifragilisticexpialidocious"
+  sc2 <- list(breaks = c(1, 10), labels = c("first", big), domain = c(1, 10))
+  ex2 <- vellumplot:::.end_tick_extent(
+    sc2,
+    el,
+    0,
+    c("centre", "top"),
+    "x",
+    wrap_mm = 10
+  )
+  expect_equal(
+    ex2$e[2],
+    vellumplot:::.el_strwidth(big, el, features = vellumplot:::.TNUM) / 2,
+    tolerance = 1e-6
+  )
   # Unwrapped, the reach is half the label as before.
   ex0 <- vellumplot:::.end_tick_extent(sc, el, 0, c("centre", "top"), "x")
   expect_equal(

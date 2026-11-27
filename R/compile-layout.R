@@ -1162,9 +1162,10 @@ NULL
     x <- c(-hj, 1 - hj, 1 - hj, -hj) * w
     # A wrapped label measures as its wrap box, but its lines are centred in
     # the box: it reaches half its widest line either side of the box centre,
-    # not half the box (VP-153).
+    # not half the box -- less for short lines, more for a word wider than the
+    # box, which takes a line of its own (VP-153).
     lw <- .wrapped_line_mm(labs[[i]], el, wrap_mm)
-    if (!is.na(lw) && lw < w) {
+    if (!is.na(lw)) {
       mid <- (0.5 - hj) * w
       x <- mid + c(-0.5, 0.5, 0.5, -0.5) * lw
     }

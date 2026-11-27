@@ -343,29 +343,71 @@ NULL
 # (`.align_area()`), so groups sampled at different x still stack.
 .position_stack <- function(L, fill = FALSE) {
   gap <- NULL
+  height <- NULL
   if (identical(L$mark, "area")) {
-    # A missing height stacks as zero (`.stack_spans()`), but an area keeps it
-    # missing, so its series leaves a gap there rather than dipping to the
-    # baseline (VP-162). `.align_area()` appends its rows after the input's.
-    gap <- !is.finite(as.numeric(rep_len(L$values$y, L$n)))
+    # A missing height leaves a gap in its own series (VP-162). `.align_area()`
+    # appends its rows after the input's, which are never gaps.
+    gap <- is.na(rep_len(L$values$y, L$n))
     L <- .align_area(L)
     gap <- c(gap, rep(FALSE, L$n - length(gap)))
+    if (any(gap)) {
+      height <- .area_gap_heights(L, gap)
+    }
   }
-  S <- .stack_spans(L, fill)
+  S <- .stack_spans(L, fill, height = height)
   L$values$ymin <- pmin(S$start, S$end)
   L$values$ymax <- pmax(S$start, S$end)
   L$values$y <- S$end # the far end, for any y reference / training
-  if (any(gap)) {
-    L$values$ymin[gap] <- NA_real_
-    L$values$ymax[gap] <- NA_real_
-    L$values$y[gap] <- NA_real_
+  hide <- if (is.null(gap)) S$unknown else gap | S$unknown
+  if (any(hide)) {
+    L$values$ymin[hide] <- NA_real_
+    L$values$ymax[hide] <- NA_real_
+    L$values$y[hide] <- NA_real_
   }
   L
 }
 
+# The heights a stacked area stacks with when some are missing (`gap`): its
+# own, with each missing one interpolated along its series (its group, in x
+# order) from the nearest known heights either side. The interpolated height
+# is never drawn -- the series leaves a gap there -- but it is the baseline of
+# the groups stacked above it, and part of the total under `position =
+# "fill"`, so those keep their place instead of dropping to the axis or
+# spiking to 100% (VP-162 review). A missing height at a series end has no
+# neighbour on one side, so it stays NA: `.stack_spans()` then breaks the
+# groups above it (under `fill`, every group) at that x too.
+.area_gap_heights <- function(L, gap) {
+  n <- L$n
+  y <- as.numeric(rep_len(L$values$y, n))
+  x <- as.numeric(rep_len(L$values$x, n))
+  grp <- .group_key(L)
+  g <- if (is.null(grp)) rep("", n) else as.character(grp)
+  for (rows in split(seq_len(n), g)) {
+    miss <- rows[gap[rows] & is.finite(x[rows])]
+    known <- rows[!gap[rows] & is.finite(x[rows]) & is.finite(y[rows])]
+    if (!length(miss) || length(known) < 2L) {
+      next
+    }
+    y[miss] <- stats::approx(
+      x[known],
+      y[known],
+      xout = x[miss],
+      ties = mean,
+      rule = 1
+    )$y
+  }
+  y
+}
+
 # The stacked extent of every row: `start` is the end nearer zero, `end` the far
 # end (below `start` for a negative height). See `.position_stack()`.
-.stack_spans <- function(L, fill = FALSE) {
+#
+# `height`, when given, replaces the rows' heights (`.area_gap_heights()`); an
+# NA in it is an unknown height. It stacks as zero, but no row it would hold
+# up has a known position -- the rows above it in its stack, and under `fill`
+# every row at its x, whose total it is part of -- so `unknown` marks them
+# (and the row itself).
+.stack_spans <- function(L, fill = FALSE, height = NULL) {
   n <- L$n
   # Recycle to n: a constant x (e.g. a pie's `x = factor(1)`) resolves to length
   # one, but stacking runs by row, so every value must be n long.
@@ -373,7 +415,8 @@ NULL
   if (is.factor(x)) {
     x <- as.character(x)
   }
-  y <- as.numeric(rep_len(L$values$y, n))
+  y <- as.numeric(rep_len(height %||% L$values$y, n))
+  unknown <- if (is.null(height)) rep(FALSE, n) else is.na(y)
   # A non-finite height would poison the whole stack's cumulative sum (and, under
   # fill, every proportion in it). ggplot2 drops NA rows before stacking; treat
   # non-finite as a zero-height contribution so the rest of the stack is sound.
@@ -394,6 +437,12 @@ NULL
         next
       }
       h <- y[r]
+      if (any(unknown[r])) {
+        # An unknown height (stacked as zero, so on the positive side) leaves
+        # every row above it unknown; under fill, every row at this x.
+        first <- which(unknown[r])[1]
+        unknown[if (fill) rows else r[seq_along(r) >= first]] <- TRUE
+      }
       cum <- cumsum(h)
       total <- abs(cum[length(cum)])
       if (fill && total > 0) {
@@ -404,7 +453,7 @@ NULL
       start[r] <- cum - h
     }
   }
-  list(start = start, end = end)
+  list(start = start, end = end, unknown = unknown)
 }
 
 # Interpolate a grouped area onto the union of its groups' x values, as
