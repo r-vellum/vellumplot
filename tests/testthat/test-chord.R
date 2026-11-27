@@ -240,17 +240,18 @@ test_that(".chord_fit() puts the longest label's end inside the panel (VP-155)",
   on.exit(ctx$panel_mm <- old)
   ctx$panel_mm <- NULL
   expect_identical(vellumplot:::.chord_fit(ch, TRUE), 1)
-  # (Sides that leave the label room: a narrower panel clamps the extent.)
-  for (side in c(100, 140, 200)) {
+  lw <- vellumplot:::.mm_tw(
+    labs[1],
+    fs = vellumplot:::.CHORD_LABEL_FS,
+    el = vellumplot:::.mark_text_el(vellumplot:::.CHORD_LABEL_FS)
+  )
+  # Sides that leave the label room (a narrower panel clamps the extent),
+  # taken from the measured width: text widths differ between platforms.
+  for (side in lw * c(3, 4, 6)) {
     ctx$panel_mm <- c(w = side, h = side)
     k <- vellumplot:::.chord_fit(ch, TRUE)
     # mm per native unit on the ~5%-expanded domain [-1.05 ext, 1.05 ext]
     mm <- side / (2.1 * ext)
-    lw <- vellumplot:::.mm_tw(
-      labs[1],
-      fs = vellumplot:::.CHORD_LABEL_FS,
-      el = vellumplot:::.mark_text_el(vellumplot:::.CHORD_LABEL_FS)
-    )
     reach <- k * (vellumplot:::.CHORD_R_OUT + 0.04) * mm + lw
     expect_lte(reach, side / 2)
   }
