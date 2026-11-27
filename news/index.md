@@ -47,6 +47,12 @@
   name too tall for it, and the name moves inward only as far as it has
   to (VP-148).
 
+- vellumplot now requires vellum 0.18.0 or later, the first release that
+  writes PowerPoint. With vellum 0.17.0 installed,
+  `render_plot(p, "x.pptx")` and
+  [`vellum::as_dml()`](https://r-vellum.github.io/vellum/reference/as_dml.html)
+  failed (VP-160).
+
 ### Documentation
 
 - The articles cover more of the package (D-20 to D-23, D-25). “Effects
@@ -109,6 +115,14 @@
   [`theme_brand()`](https://r-vellum.github.io/vellumplot/reference/theme_brand.md),
   faceted animation, frame variables and the ggplot2-parity work, and
   the articles no longer say output is PNG, SVG and PDF only (D-24).
+- [`?render_plot`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
+  has a PowerPoint example (VP-160), and Get started’s “Saving to
+  PowerPoint” section links to vellum’s PowerPoint article (D-36).
+- [`?mark_polygon`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md)
+  gives the default fill as the theme’s `col_mix(ink, paper, 0.2)` from
+  [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md),
+  which is `"grey20"` only on a black-ink, white-paper theme, rather
+  than a fixed `"grey20"` (VP-157).
 
 ## vellumplot 0.25.1
 

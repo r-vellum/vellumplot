@@ -124,7 +124,7 @@ written unsimulated, with a warning.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A <code>.pptx</code> path writes a one-slide PowerPoint file of editable shapes at the
-plot's size (needs vellum 0.18.0 or later; no other package). For several
+plot's size, with no other package needed. For several
 slides use <code><a href="https://r-vellum.github.io/vellum/reference/pptx_pages.html" class="external-link">vellum::pptx_pages()</a></code>, and to place a plot on a slide of an
 officer deck wrap it in <code><a href="https://r-vellum.github.io/vellum/reference/as_dml.html" class="external-link">vellum::as_dml()</a></code> for <code>officer::ph_with()</code>.</p>
     </div>
@@ -136,6 +136,9 @@ officer deck wrap it in <code><a href="https://r-vellum.github.io/vellum/referen
 <span class="r-in"><span><span class="fu">render_plot</span><span class="op">(</span><span class="va">p</span>, <span class="va">f</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">render_plot</span><span class="op">(</span><span class="va">p</span>, <span class="va">f</span>, dpi <span class="op">=</span> <span class="fl">300</span><span class="op">)</span> <span class="co"># denser raster, same physical size</span></span></span>
 <span class="r-in"><span><span class="fu">render_plot</span><span class="op">(</span><span class="va">p</span>, <span class="va">f</span>, cvd <span class="op">=</span> <span class="st">"deuteranopia"</span><span class="op">)</span> <span class="co"># preview for red-green colour blindness</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a one-slide PowerPoint file of editable shapes</span></span></span>
+<span class="r-in"><span><span class="fu">render_plot</span><span class="op">(</span><span class="va">p</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".pptx"</span><span class="op">)</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

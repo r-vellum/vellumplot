@@ -142,12 +142,9 @@ another when it doesn’t. `text = "outline"` (in
 the same everywhere but can’t be edited as text. DrawingML has no
 clipping, blend modes or masks, so vellum cuts clipped geometry in
 advance and draws the parts it can’t express (a blur, a blend mode) as a
-picture, with a warning. PowerPoint output needs vellum 0.18.0 or later;
-see vellum’s
-[`as_dml()`](https://r-vellum.github.io/vellum/reference/as_dml.html)
-and
-[`pptx_pages()`](https://r-vellum.github.io/vellum/reference/pptx_pages.html)
-for the details.
+picture, with a warning. vellum’s [PowerPoint
+article](https://r-vellum.github.io/vellum/articles/powerpoint.html)
+covers the details.
 
 For many figures at once,
 [`pdf_pages()`](https://r-vellum.github.io/vellumplot/reference/pdf_pages.md)

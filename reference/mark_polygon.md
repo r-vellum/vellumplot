@@ -101,9 +101,13 @@ The modified
 
 ## Details
 
-As in ggplot2, `fill` fills a polygon (default `"grey20"`) and `color`
-outlines it (no outline by default); a `color` given without any `fill`
-fills the polygon instead, as it does for the other filled marks.
+As in ggplot2, `fill` fills a polygon and `color` outlines it (no
+outline by default); a `color` given without any `fill` fills the
+polygon instead, as it does for the other filled marks. With neither, a
+polygon fills with `col_mix(ink, paper, 0.2)` from the theme's
+[`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)
+(`"grey20"` on a light theme), or with `element_geom(fill = )` when the
+theme sets one.
 
 ## Examples
 

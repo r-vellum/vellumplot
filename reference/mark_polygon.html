@@ -162,9 +162,11 @@ marks.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>As in ggplot2, <code>fill</code> fills a polygon (default <code>"grey20"</code>) and <code>color</code>
-outlines it (no outline by default); a <code>color</code> given without any <code>fill</code> fills
-the polygon instead, as it does for the other filled marks.</p>
+    <p>As in ggplot2, <code>fill</code> fills a polygon and <code>color</code> outlines it (no outline by
+default); a <code>color</code> given without any <code>fill</code> fills the polygon instead, as it
+does for the other filled marks. With neither, a polygon fills with
+<code>col_mix(ink, paper, 0.2)</code> from the theme's <code><a href="element_geom.html">element_geom()</a></code> (<code>"grey20"</code> on a
+light theme), or with <code>element_geom(fill = )</code> when the theme sets one.</p>
     </div>
 
     <div class="section level2">
