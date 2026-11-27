@@ -211,3 +211,17 @@ test_that("labs(x = NULL) blanks the axis title; an unpassed arg is untouched", 
   expect_null(labs(p, y = "MPG")@labels$x) # x not passed -> not set
   expect_identical(labs(p, colour = NULL)@labels$color, "") # alias, explicit NULL
 })
+
+test_that("labs() typesets a plotmath expression via plotmath() (VP-163)", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    labs(x = expression(alpha^2), y = quote(beta[i]), title = "Plain")
+  expect_s3_class(p@labels$x, "vellum::vellum_label")
+  expect_identical(p@labels$x, vellum::plotmath(expression(alpha^2)))
+  expect_identical(p@labels$y, vellum::plotmath(expression(beta[i])))
+  expect_identical(p@labels$title, "Plain")
+  # The drawn axis title is the typeset label, not the deparsed source.
+  svg <- plot_svg(p)
+  expect_false(grepl("alpha^2", svg, fixed = TRUE))
+  expect_match(plot_alt(p), "\\alpha^{2}", fixed = TRUE)
+})

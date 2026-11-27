@@ -29,6 +29,11 @@ NULL
 #'   generates automatically; see [plot_alt()]. Emitted into the accessible SVG
 #'   (`<desc>`) and tagged PDF (Figure `Alt`) by [render_plot()].
 #' @param ... Reserved; passing anything here is an error.
+#' @details
+#' Any label may be rich text: [md()] for Markdown, [tex()] for LaTeX math, or
+#' [plotmath()] for base R plotmath. A plotmath `expression()` (or a quoted
+#' call) is typeset through [plotmath()] for you, so
+#' `labs(x = expression(alpha^2))` draws \eqn{\alpha^2}, as in ggplot2.
 #' @return The modified [PlotSpec].
 #' @examples
 #' vplot(mtcars) |>
@@ -74,7 +79,20 @@ labs <- function(
   supplied <- c(intersect(names(candidates), passed), if (color_passed) "color")
   over <- candidates[unique(supplied)]
   # An explicitly-passed NULL blanks the label ("" also blanks it downstream).
-  over <- lapply(over, function(v) if (is.null(v)) "" else v)
+  over <- lapply(over, function(v) if (is.null(v)) "" else .labs_value(v))
   plot@labels <- utils::modifyList(plot@labels, over)
   plot
+}
+
+# A base-R plotmath expression (`expression(alpha^2)`, or a quoted call such as
+# `quote(alpha^2)`) is typeset through [plotmath()], as ggplot2 users expect.
+# Before, it was deparsed and drawn as its source text (VP-163).
+.labs_value <- function(v) {
+  if (is.language(v) && !is.expression(v)) {
+    v <- as.expression(list(v))
+  }
+  if (is.expression(v)) {
+    return(vellum::plotmath(v))
+  }
+  v
 }

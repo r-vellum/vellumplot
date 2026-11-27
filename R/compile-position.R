@@ -342,13 +342,24 @@ NULL
 # stack to `[-1, 0]`. Areas are first interpolated onto a common x grid
 # (`.align_area()`), so groups sampled at different x still stack.
 .position_stack <- function(L, fill = FALSE) {
+  gap <- NULL
   if (identical(L$mark, "area")) {
+    # A missing height stacks as zero (`.stack_spans()`), but an area keeps it
+    # missing, so its series leaves a gap there rather than dipping to the
+    # baseline (VP-162). `.align_area()` appends its rows after the input's.
+    gap <- !is.finite(as.numeric(rep_len(L$values$y, L$n)))
     L <- .align_area(L)
+    gap <- c(gap, rep(FALSE, L$n - length(gap)))
   }
   S <- .stack_spans(L, fill)
   L$values$ymin <- pmin(S$start, S$end)
   L$values$ymax <- pmax(S$start, S$end)
   L$values$y <- S$end # the far end, for any y reference / training
+  if (any(gap)) {
+    L$values$ymin[gap] <- NA_real_
+    L$values$ymax[gap] <- NA_real_
+    L$values$y[gap] <- NA_real_
+  }
   L
 }
 
@@ -416,16 +427,20 @@ NULL
   }
   x <- as.numeric(x0)
   y <- as.numeric(rep_len(L$values$y, n))
-  ok <- is.finite(x) & is.finite(y)
+  okx <- is.finite(x)
+  ok <- okx & is.finite(y)
   g <- as.character(grp)
   series <- split(which(ok), factor(g[ok], levels = unique(g[ok])))
   if (length(series) < 2L) {
     return(L)
   }
+  # A group's rows with a known x, its gap rows (a missing height) included:
+  # a gap row holds its x, so the group is not interpolated across it (VP-162).
+  grp_rows <- split(which(okx), factor(g[okx], levels = names(series)))
   ux <- sort(unique(x[ok]))
   shared <- vapply(
-    series,
-    function(idx) identical(sort(unique(x[idx])), ux),
+    names(series),
+    function(k) identical(sort(unique(x[grp_rows[[k]]])), ux),
     logical(1)
   )
   if (all(shared)) {
@@ -445,33 +460,45 @@ NULL
   new_y <- numeric(0)
   new_src <- integer(0)
   new_members <- list()
-  for (idx in series) {
-    idx <- idx[order(x[idx])]
-    xs <- x[idx]
-    r <- range(xs)
-    pad <- c(if (r[1] > lo) r[1] - adj, if (r[2] < hi) r[2] + adj)
-    inside <- grid[grid > r[1] & grid < r[2] & !grid %in% xs]
-    yi <- if (length(inside)) {
-      stats::approx(xs, y[idx], xout = inside, ties = mean)$y
-    } else {
-      numeric(0)
+  for (k in names(series)) {
+    idx <- series[[k]]
+    all_idx <- grp_rows[[k]]
+    all_idx <- all_idx[order(x[all_idx])]
+    # The group's runs between gap rows; each run is interpolated on its own.
+    run <- cumsum(!ok[all_idx])[ok[all_idx]]
+    idx <- all_idx[ok[all_idx]]
+    r <- range(x[idx])
+    for (ri in split(seq_along(idx), run)) {
+      ridx <- idx[ri]
+      xs <- x[ridx]
+      inside <- grid[grid > xs[1] & grid < xs[length(xs)] & !grid %in% xs]
+      # The group's own pads go with its first and last runs.
+      rpad <- c(
+        if (ri[1] == 1L && r[1] > lo) r[1] - adj,
+        if (ri[length(ri)] == length(idx) && r[2] < hi) r[2] + adj
+      )
+      yi <- if (length(inside)) {
+        stats::approx(xs, y[ridx], xout = inside, ties = mean)$y
+      } else {
+        numeric(0)
+      }
+      gx <- c(inside, rpad)
+      if (!length(gx)) {
+        next
+      }
+      # The run's nearest row at or left of each added x (its first row for a
+      # left pad); the right neighbour too, for provenance.
+      left <- findInterval(gx, xs)
+      right <- pmin(left + 1L, length(xs))
+      left[left < 1L] <- 1L
+      new_x <- c(new_x, gx)
+      new_y <- c(new_y, yi, rep(0, length(rpad)))
+      new_src <- c(new_src, ridx[left])
+      new_members <- c(
+        new_members,
+        Map(function(a, b) unique(c(a, b)), ridx[left], ridx[right])
+      )
     }
-    gx <- c(inside, pad)
-    if (!length(gx)) {
-      next
-    }
-    # The group's nearest row at or left of each added x (its first row for a
-    # left pad); the right neighbour too, for provenance.
-    left <- findInterval(gx, xs)
-    right <- pmin(left + 1L, length(xs))
-    left[left < 1L] <- 1L
-    new_x <- c(new_x, gx)
-    new_y <- c(new_y, yi, rep(0, length(pad)))
-    new_src <- c(new_src, idx[left])
-    new_members <- c(
-      new_members,
-      Map(function(a, b) unique(c(a, b)), idx[left], idx[right])
-    )
   }
   if (!length(new_x)) {
     return(L)

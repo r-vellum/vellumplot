@@ -178,14 +178,19 @@ NULL
 # radiate outward past it, so reserve room for the longest label or they clip at
 # the panel edge. A label's native width scales with the extent, so solve for the
 # extent that keeps the longest label (starting just past the ring) inside the
-# ~5%-expanded domain. Falls back to the default 6in page when unknown; clamped.
-.chord_extent <- function(labels, has_labels) {
+# ~5%-expanded domain of a panel `side_mm` wide. Clamped. Before the layout
+# exists (when the compile sets the scale domain) the side is a guess: the
+# page's shorter side, or the 6in default. The emitter then fits the diagram to
+# the real panel (`.chord_fit()`, VP-155).
+.chord_extent <- function(labels, has_labels, side_mm = NULL) {
   base <- .CHORD_R_OUT + 0.06
   if (!has_labels || !length(labels)) {
     return(base)
   }
-  pg <- .mark_ctx$page
-  page_mm <- if (!is.null(pg)) min(pg) * 25.4 else 6 * 25.4
+  if (is.null(side_mm)) {
+    pg <- .mark_ctx$page
+    side_mm <- if (!is.null(pg)) min(pg) * 25.4 else 6 * 25.4
+  }
   # measured in the font the labels draw in (VP-135)
   el <- .mark_text_el(.CHORD_LABEL_FS)
   lw_mm <- max(
@@ -193,9 +198,25 @@ NULL
     0
   )
   inner <- .CHORD_R_OUT + 0.04 # radius where labels start
-  denom <- 1.05 - 2.1 * lw_mm / page_mm
+  denom <- 1.05 - 2.1 * lw_mm / side_mm
   ext <- if (denom > 0.2) 1.06 * inner / denom else 4
   max(base, min(ext, 4))
+}
+
+# The factor the chord emitter scales its radii by so the labels fit the panel
+# it is drawn in. The scale domain was set from `.chord_extent()` on a guessed
+# panel side (`ext`); once the layout is known (`.mark_ctx$panel_mm`, which
+# takes the plot margin, titles, legends and a composition cell into account)
+# the extent the labels really need is recomputed, and the ring, ribbons and
+# labels shrink (or grow) by their ratio, so the labels end inside the panel.
+# 1 when the panel size is unknown or there are no labels (VP-155).
+.chord_fit <- function(ch, has_labels) {
+  ext <- ch$ext
+  pm <- .mark_ctx$panel_mm
+  if (is.null(ext) || !has_labels || is.null(pm) || !all(is.finite(pm))) {
+    return(1)
+  }
+  ext / .chord_extent(ch$sectors$node, TRUE, side_mm = max(min(pm), 10))
 }
 
 # Sample points along a circle arc (radius r) from angle a0 to a1, `nseg`+1 pts.

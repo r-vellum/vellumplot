@@ -1271,20 +1271,23 @@ NULL
 
   grad <- .paint_fill(L)
   if (!is.null(grad)) {
-    o <- order(xn)
-    poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
-    scene <- .draw(
-      scene,
-      vellum::polygon_grob(
-        poly$x,
-        poly$y,
-        sketch = sk,
-        gp = vellum::vl_gpar(fill = grad, col = NA)
-      ),
-      # PROVENANCE: one polygon over the whole layer, in x order.
-      rows = o
-    )
-    return(stroke(scene, o, fo$col[1], NA_real_, 0L))
+    for (o in .band_runs(order(xn), xn, ya, yb)) {
+      poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
+      scene <- .draw(
+        scene,
+        vellum::polygon_grob(
+          poly$x,
+          poly$y,
+          sketch = sk,
+          gp = vellum::vl_gpar(fill = grad, col = NA)
+        ),
+        # PROVENANCE: one polygon over the whole layer (each run of it), in x
+        # order.
+        rows = o
+      )
+      scene <- stroke(scene, o, fo$col[1], NA_real_, 0L)
+    }
+    return(scene)
   }
 
   .check_band_style(L, scales, n)
@@ -1304,23 +1307,37 @@ NULL
     n,
     list(fill = fill, alpha = alpha, col = fo$col)
   )) {
-    o <- idx[order(xn[idx])]
-    poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
-    scene <- .draw(
-      scene,
-      vellum::polygon_grob(
-        poly$x,
-        poly$y,
-        sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, fill_alpha, idx[1])
-      ),
-      # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
-      rows = o
-    )
-    scene <- stroke(scene, o, fo$col[idx[1]], alpha[idx[1]], gi)
+    for (o in .band_runs(idx[order(xn[idx])], xn, ya, yb)) {
+      poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
+      scene <- .draw(
+        scene,
+        vellum::polygon_grob(
+          poly$x,
+          poly$y,
+          sketch = .sketch_bump(sk, gi),
+          gp = .gp_fill(fill, fill_alpha, idx[1])
+        ),
+        # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
+        rows = o
+      )
+      scene <- stroke(scene, o, fo$col[idx[1]], alpha[idx[1]], gi)
+    }
     gi <- gi + 1L
   }
   scene
+}
+
+# The runs of a band's x-ordered rows `o` between its missing values: a row
+# whose x or either boundary (`ya`, `yb`, mapped) is missing ends one run and
+# isn't drawn, so the band leaves a gap there, as a line does, instead of
+# joining across it (VP-162). Rows with every value present give one run, `o`.
+.band_runs <- function(o, xn, ya, yb) {
+  bad <- is.na(xn[o]) | is.na(ya[o]) | is.na(yb[o])
+  if (!any(bad)) {
+    return(list(o))
+  }
+  run <- cumsum(bad)
+  unname(split(o[!bad], run[!bad]))
 }
 
 # A polygon takes a single fill, so a filled connected mark (area, ribbon,

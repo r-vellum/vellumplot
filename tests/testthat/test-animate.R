@@ -826,6 +826,50 @@ test_that("animate() suggests data_id when row order decides the pairing (VP-87)
   )
 })
 
+test_that("the data_id hint fires for ungrouped layers, not one-state groups (VP-159)", {
+  # An ungrouped layer's identity group is "", which `tab[""]` never matched:
+  # its changing size went unnoticed.
+  d <- data.frame(s = c("A", "A", "A", "B", "B"), x = c(1, 2, 3, 1, 2), y = 1:5)
+  expect_message(
+    vplot(d) |> mark_point(x = x, y = y) |>
+      transition_states(s) |> animate(nframes = 4),
+    class = "vellumplot_anim_row_order"
+  )
+  # Ungrouped and the same size in every state: no hint.
+  expect_no_message(
+    vplot(d[-3, ]) |> mark_point(x = x, y = y) |>
+      transition_states(s) |> animate(nframes = 4),
+    class = "vellumplot_anim_row_order"
+  )
+  # Each group in only one state (counts 11/0/0, ...): its marks enter and
+  # exit, they never pair by row order, so no hint.
+  expect_no_message(
+    vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl)) |>
+      transition_states(cyl) |> animate(nframes = 6),
+    class = "vellumplot_anim_row_order"
+  )
+  # A group present in two states with different sizes still hints, even when
+  # it is absent from a third.
+  d3 <- data.frame(
+    s = c("A", "A", "B", "C", "C", "C"),
+    g = c("x", "x", "x", "y", "y", "y"),
+    x = c(1, 2, 1, 1, 2, 3),
+    y = 1:6
+  )
+  expect_message(
+    vplot(d3) |> mark_point(x = x, y = y, color = g) |>
+      transition_states(s) |> animate(nframes = 6),
+    class = "vellumplot_anim_row_order"
+  )
+  # Unit check: a group absent from the other states never counts.
+  counts <- list(l1 = list(A = c(a = 3), B = c(b = 2)))
+  expect_false(vellumplot:::.inform_row_order(counts))
+  expect_true(suppressMessages(
+    vellumplot:::.inform_row_order(list(l1 = list(A = c(3), B = c(2)) |>
+      lapply(function(v) stats::setNames(v, "")))
+  )))
+})
+
 test_that("density shapes are one mark per group, so no row-order hint", {
   # A violin or ridge is one outline per group: its rows never pair up by
   # order, so groups that change size between states are no reason to suggest

@@ -67,7 +67,7 @@ that applies:
 \item \code{missing}: a continuous position value (\code{x}, \code{y}, \code{xend}, \code{ymin}, ...) is
 \code{NA}, or the size of a point or text mark is. Such a row is removed from
 the plot with a warning (the rows that warning counts are counted here
-too), or leaves a gap in a line, step or area;
+too), or leaves a gap in a line, step, area or ribbon;
 \item \code{transform}: the axis transform cannot map the value, e.g. a value \verb{<= 0}
 on a log axis;
 \item \code{stat}: the layer's statistic leaves the row out, e.g. an infinite value

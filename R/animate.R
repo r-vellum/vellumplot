@@ -1036,18 +1036,26 @@ animate <- function(
       next
     }
     ids <- unique(unlist(lapply(per_state, names)))
+    # Matched by position, not `tab[ids]`: an ungrouped layer's one identity
+    # group is named "", which name indexing never matches (VP-159).
     n <- vapply(
       per_state,
       function(tab) {
-        v <- tab[ids]
+        v <- unname(tab)[match(ids, names(tab))]
         v[is.na(v)] <- 0
         as.double(v)
       },
       numeric(length(ids))
     )
     n <- matrix(n, nrow = length(ids))
-    # A group with more than one row somewhere whose size is not constant.
-    if (any(apply(n, 1L, function(r) max(r) > 1 && length(unique(r)) > 1L))) {
+    # A group drawn in two or more states, with more than one row in one of
+    # them, whose size differs between those states. A group present in only
+    # one state enters and exits rather than pairing rows, so it never counts.
+    changes <- function(r) {
+      r <- r[r > 0]
+      length(r) > 1L && max(r) > 1 && length(unique(r)) > 1L
+    }
+    if (any(apply(n, 1L, changes))) {
       hit <- TRUE
       break
     }

@@ -67,7 +67,14 @@ as in ggplot2, the interaction of every discrete \code{color}, \code{fill},
 \code{pattern}, \code{linetype}, \code{shape}, \code{alpha}, \code{size} and \code{linewidth} mapping
 groups; a continuous colour never does, so a line mapped to one stays
 connected and changes colour along its length.
-\code{group = 1} makes the whole layer one group.}
+\code{group = 1} makes the whole layer one group.
+
+\code{mark_rule()} takes \code{yintercept} (horizontal lines) and \code{xintercept}
+(vertical lines), a constant (\code{yintercept = 0}) or a mapped column (one
+line per row), and draws each across the whole panel. An \code{x} or \code{y} given
+instead is read as \code{xintercept} / \code{yintercept}, so \code{mark_rule(x = 0)}
+draws a vertical line at zero. For a line between two points use
+\code{\link[=mark_segment]{mark_segment()}}; for a sloped line, \code{\link[=mark_abline]{mark_abline()}}.}
 
 \item{size, shape}{Convenience arguments for the point size (in mm) / shape;
 may be a constant or a mapped expression. A shape is a built-in marker

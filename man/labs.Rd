@@ -58,6 +58,11 @@ in a band below. Repeated \code{labs()} calls merge, with later values winning.
 Axis/legend overrides set here are used unless a matching \verb{scale_*(name = )}
 is also given, which takes precedence. With neither, the title is derived from
 the mapping.
+
+Any label may be rich text: \code{\link[=md]{md()}} for Markdown, \code{\link[=tex]{tex()}} for LaTeX math, or
+\code{\link[=plotmath]{plotmath()}} for base R plotmath. A plotmath \code{expression()} (or a quoted
+call) is typeset through \code{\link[=plotmath]{plotmath()}} for you, so
+\code{labs(x = expression(alpha^2))} draws \eqn{\alpha^2}, as in ggplot2.
 }
 \examples{
 vplot(mtcars) |>

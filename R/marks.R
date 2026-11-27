@@ -702,6 +702,13 @@ after_stat <- function(x) x
 #'   groups; a continuous colour never does, so a line mapped to one stays
 #'   connected and changes colour along its length.
 #'   `group = 1` makes the whole layer one group.
+#'
+#'   `mark_rule()` takes `yintercept` (horizontal lines) and `xintercept`
+#'   (vertical lines), a constant (`yintercept = 0`) or a mapped column (one
+#'   line per row), and draws each across the whole panel. An `x` or `y` given
+#'   instead is read as `xintercept` / `yintercept`, so `mark_rule(x = 0)`
+#'   draws a vertical line at zero. For a line between two points use
+#'   [mark_segment()]; for a sloped line, [mark_abline()].
 #' @param size,shape Convenience arguments for the point size (in mm) / shape;
 #'   may be a constant or a mapped expression. A shape is a built-in marker
 #'   (`"circle"`, `"square"`, `"triangle"`, `"diamond"`, `"plus"`, `"cross"`,
@@ -1007,13 +1014,40 @@ mark_rule <- function(
   .add_layer(
     plot,
     "rule",
-    rlang::enquos(...),
+    .rule_intercepts(rlang::enquos(...)),
     blend = blend,
     effects = effects,
     sketch = sketch,
     data = data,
     position = position
   )
+}
+
+# `mark_rule()` draws at `xintercept` / `yintercept`; an `x` / `y` given
+# instead names the same thing (`mark_rule(x = 0)`), so it is read as the
+# intercept. Before, it was kept as a position nothing drew, so the rule
+# silently disappeared and the axis was titled "0" (VP-156). Given alongside
+# its intercept, `x` / `y` is dropped with a warning.
+.rule_intercepts <- function(dots, call = rlang::caller_env()) {
+  for (a in c("x", "y")) {
+    ai <- paste0(a, "intercept")
+    if (!a %in% names(dots)) {
+      next
+    }
+    if (ai %in% names(dots)) {
+      cli::cli_warn(
+        c(
+          "{.fn mark_rule} ignores {.arg {a}} when {.arg {ai}} is given.",
+          i = "A rule is drawn at {.arg {ai}}."
+        ),
+        call = call
+      )
+      dots[[a]] <- NULL
+    } else {
+      names(dots)[names(dots) == a] <- ai
+    }
+  }
+  dots
 }
 
 #' Reference lines and function curves

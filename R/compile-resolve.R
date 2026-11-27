@@ -215,6 +215,7 @@ NULL
       chord$sectors$node,
       isTRUE(layer@params$label %||% TRUE)
     )
+    chord$ext <- ext
     values$x <- c(-ext, ext)
     values$y <- c(-ext, ext)
     types$x <- types$y <- "quantitative"

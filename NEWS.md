@@ -2,6 +2,15 @@
 
 ## Bug fixes
 
+* An area or ribbon now leaves a gap at a missing value, as a line does. A
+  stacked `mark_area()` used to draw a missing height as zero, dipping to the
+  baseline; an identity area or a `mark_ribbon()` dropped its first run and
+  joined across the gap with a diagonal face. Each series now splits into
+  runs at its missing values, a stacked area stacks each run (a missing
+  height adds nothing to the groups above it), and the missing rows are
+  counted once in the layer's "Removed n rows containing missing values"
+  warning and in `spec_diagnose()` (VP-162).
+
 * `vconcat()` takes `heights` and `hconcat()` takes `widths`, passed on to
   `concat()`. Before, `vconcat(a, b, heights = c(3, 1))` went through to
   `concat()` but still counted as a plot when sizing the grid, so it drew a
@@ -71,11 +80,47 @@
   shrinks for a word too long for its room or, on a small plot, a name too
   tall for it, and the name moves inward only as far as it has to (VP-148).
 
+* `mark_rule(x = 0)` now draws a vertical line at zero: an `x` or `y` given to
+  `mark_rule()` is read as `xintercept` / `yintercept`. Before, it was kept
+  as a position nothing drew, so the rule silently vanished, and when the
+  rule was the first layer the axis was titled "0". Given alongside its
+  intercept, `x` / `y` is dropped with a warning. `?mark_point` now
+  documents `xintercept` and `yintercept` (VP-156).
+
+* `animate()`'s hint to give marks a `data_id` now fires for an ungrouped
+  layer (plain `mark_point(x, y)`) whose number of rows changes between
+  states; it never did, because the layer's single group has an empty name.
+  It no longer fires for groups that appear in only one state (as with
+  `mark_point(color = factor(cyl)) |> transition_states(cyl)`), since those
+  marks enter and exit instead of pairing by row order (VP-159).
+
+* `vchord()` fits its sector labels to the panel it is actually drawn in.
+  The label room was set from the page size before the layout existed, so a
+  wide plot margin, a title or a composition cell left too little room and
+  the labels were cut off at the panel edge. Once the panel is laid out the
+  ring, ribbons and labels now scale to fit it (VP-155).
+
+* A wrapped tick label at the end of an axis now reserves half its widest
+  line beyond the end break, not half its wrap width, so the end spacer is no
+  wider than the label needs (VP-153).
+
+* `guide_axis(minor.ticks = TRUE, cap = "both")` caps the axis line at the
+  outermost tick, major or minor, as ggplot2 does. Before, the line stopped
+  at the end break and a minor tick hung past each end (VP-158).
+
+* `labs()` typesets a plotmath expression: `labs(x = expression(alpha^2))`
+  (or a quoted call) goes through `plotmath()` and draws as math, as in
+  ggplot2. Before, it drew the expression's source text, `alpha^2` (VP-163).
+
 * vellumplot now requires vellum 0.18.0 or later, the first release that
   writes PowerPoint. With vellum 0.17.0 installed, `render_plot(p, "x.pptx")`
   and `vellum::as_dml()` failed (VP-160).
 
 ## Documentation
+
+* `?sec_axis`, which `?scale_x_continuous` points to for `sec.axis`, no
+  longer mentions the removed `|` and `/` composition operators: a secondary axis is not drawn in a composition made
+  with `hconcat()`, `vconcat()` or `concat()` (VP-164).
 
 * The facets-and-composition article no longer prints a message or gt's
   startup output into the page; its bottom-legend facet example is taller so
@@ -1672,8 +1717,9 @@
     with three missing `cyl` values drew 29 of 32 rows.
   - A row missing a continuous position (`x`, `y`, `xend`, `ymin`, ...) is
     removed before the stat, with one warning per layer, "Removed n rows
-    containing missing values". Provenance no longer lists it as drawn. Lines,
-    steps, areas and ribbons keep such rows as a gap, as before.
+    containing missing values". Provenance no longer lists it as drawn. Lines
+    and steps keep such rows as a gap, as before. (Areas and ribbons did not
+    leave a gap until VP-162; see the development version.)
   - `spec_diagnose()` counts exactly those removed rows as `missing`. Its
     report loses the `facet` column, since a missing facet value is now
     drawn, and it no longer repeats the compile warning.

@@ -241,7 +241,9 @@ guide_colorsteps <- guide_coloursteps
 #'   breaks (on a continuous scale).
 #' @param cap Cap the axis line (theme element `axis.line`) at the outermost
 #'   breaks: `"none"` (default; the line spans the panel), `"both"`, `"upper"`
-#'   or `"lower"`. `TRUE` / `FALSE` mean `"both"` / `"none"`.
+#'   or `"lower"`. `TRUE` / `FALSE` mean `"both"` / `"none"`. With
+#'   `minor.ticks = TRUE` the line reaches the outermost tick, major or minor,
+#'   as in ggplot2.
 #' @return A guide specification for [guides()] or a scale's `guide`.
 #' @examples
 #' cars <- data.frame(model = rownames(mtcars), mpg = mtcars$mpg)

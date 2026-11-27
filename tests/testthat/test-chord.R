@@ -187,3 +187,71 @@ test_that("chord renders (data frame, matrix, sorted, target-coloured)", {
     expect_gt(file.info(f)$size, 0)
   }
 })
+
+# The chord's sector ring radius (native) and its panel's x domain, from the
+# compiled scene: the ring is the one sector grob.
+chord_ring <- function(p) {
+  s <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+  val <- function(x) if (is.list(x)) x$v %||% x else x
+  out <- NULL
+  walk <- function(node) {
+    if (identical(node$class, "grob_sector") && is.null(out)) {
+      out <<- max(unlist(val(node$r1$value)))
+    }
+    for (ch in node) {
+      if (is.list(ch)) walk(ch)
+    }
+  }
+  walk(s$root)
+  out
+}
+
+test_that("chord labels fit the real panel: margin, titles, composition (VP-155)", {
+  flows <- data.frame(
+    from = c("Northern Territories", "Basin and Range", "East"),
+    to = c("Basin and Range", "Northern Territories", "Northern Territories"),
+    value = c(3, 4, 2)
+  )
+  p <- vchord(flows, from, to, value)
+  alone <- chord_ring(p)
+  # A wide margin and a title leave a smaller panel, so the ring shrinks to
+  # keep the labels inside it; so does a composition cell.
+  boxed <- chord_ring(
+    p |> labs(title = "Title", subtitle = "Sub") |> theme(plot.margin = 20)
+  )
+  cell <- chord_ring(hconcat(p, p, width = 6, height = 3))
+  expect_lt(boxed, alone)
+  expect_lt(cell, alone)
+  # Without labels nothing needs room: the ring keeps its radius.
+  bare <- vchord(flows, from, to, value, label = FALSE)
+  expect_equal(chord_ring(bare), vellumplot:::.CHORD_R_OUT)
+  expect_equal(
+    chord_ring(bare |> theme(plot.margin = 20)),
+    vellumplot:::.CHORD_R_OUT
+  )
+})
+
+test_that(".chord_fit() puts the longest label's end inside the panel (VP-155)", {
+  labs <- c("Borussia Moenchengladbach", "X")
+  ext <- vellumplot:::.chord_extent(labs, TRUE)
+  ch <- list(ext = ext, sectors = data.frame(node = labs))
+  ctx <- vellumplot:::.mark_ctx
+  old <- ctx$panel_mm
+  on.exit(ctx$panel_mm <- old)
+  ctx$panel_mm <- NULL
+  expect_identical(vellumplot:::.chord_fit(ch, TRUE), 1)
+  # (Sides that leave the label room: a narrower panel clamps the extent.)
+  for (side in c(100, 140, 200)) {
+    ctx$panel_mm <- c(w = side, h = side)
+    k <- vellumplot:::.chord_fit(ch, TRUE)
+    # mm per native unit on the ~5%-expanded domain [-1.05 ext, 1.05 ext]
+    mm <- side / (2.1 * ext)
+    lw <- vellumplot:::.mm_tw(
+      labs[1],
+      fs = vellumplot:::.CHORD_LABEL_FS,
+      el = vellumplot:::.mark_text_el(vellumplot:::.CHORD_LABEL_FS)
+    )
+    reach <- k * (vellumplot:::.CHORD_R_OUT + 0.04) * mm + lw
+    expect_lte(reach, side / 2)
+  }
+})

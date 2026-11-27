@@ -621,7 +621,7 @@ spec_fields <- function(data, n_examples = 3L) {
 #' * `missing`: a continuous position value (`x`, `y`, `xend`, `ymin`, ...) is
 #'   `NA`, or the size of a point or text mark is. Such a row is removed from
 #'   the plot with a warning (the rows that warning counts are counted here
-#'   too), or leaves a gap in a line, step or area;
+#'   too), or leaves a gap in a line, step, area or ribbon;
 #' * `transform`: the axis transform cannot map the value, e.g. a value `<= 0`
 #'   on a log axis;
 #' * `stat`: the layer's statistic leaves the row out, e.g. an infinite value

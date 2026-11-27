@@ -45,7 +45,8 @@ Secondary axes are supported only on continuous position scales under the
 default Cartesian coordinate system, with \strong{shared} scales across facets.
 Combining \code{sec.axis} with \code{\link[=coord_flip]{coord_flip()}} / \code{\link[=coord_polar]{coord_polar()}} / \code{\link[=coord_trans]{coord_trans()}},
 with free facet scales, or with \code{\link[=add_marginal]{add_marginal()}} raises an error. In a plot
-composition (\code{|} / \code{/}) the secondary axis is not drawn.
+composition (\code{\link[=hconcat]{hconcat()}}, \code{\link[=vconcat]{vconcat()}}, \code{\link[=concat]{concat()}}) the secondary axis is not
+drawn.
 }
 
 \examples{
