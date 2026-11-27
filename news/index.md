@@ -4,6 +4,25 @@
 
 ### Bug fixes
 
+- A keyed line, path or polygon drawn from several rows
+  ([`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_path()`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md),
+  [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md),
+  … with `data_id`) now lists the keys of the rows it draws in a
+  `row_keys` element field, and their cross-view identities in
+  `row_joins` in a composition or facet. vellum keys such a mark with
+  one key, its first row’s, so a crosstalk filter in vellumwidget hid
+  the whole series when that row was filtered out, and a point layer
+  with the same `data_id` shared the line’s key. Such a mark now has a
+  series key of its own, `"<first row key>\u241fs<layer>"`, apart from
+  every row key. Rows the mark does not draw (a missing position) are
+  left out. Marks drawn from one row, series whose rows share one key,
+  and series whose keys follow no integer pattern beyond 1000 runs
+  (`r1`..`r20000`, in any order, is one run) keep their first row’s key
+  and no `row_keys`. Update vellumwidget along with this: an older
+  vellumwidget doesn’t know the series key, so a crosstalk filter hides
+  every such line and a linked selection never reaches it (X-15).
+
 - An area or ribbon now leaves a gap at a missing value (`NA`), as a
   line does. A stacked
   [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
