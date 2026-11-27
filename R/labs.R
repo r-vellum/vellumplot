@@ -250,8 +250,10 @@ labs <- function(
     return(x)
   }
   sym <- c(.GREEK_PLAIN, .TEX_SYMBOLS)
-  # Escaped braces stand aside (restored at the end) so they are not read as
-  # a group; other escaped characters are just the character.
+  # A line break `\\` reads as a space. Escaped braces stand aside (restored
+  # at the end) so they are not read as a group; other escaped characters are
+  # just the character.
+  x <- gsub("\\\\", " ", x, fixed = TRUE)
   x <- gsub("\\{", "\u0002", x, fixed = TRUE)
   x <- gsub("\\}", "\u0003", x, fixed = TRUE)
   x <- gsub("\\\\([$%&#_])", "\\1", x, perl = TRUE)
@@ -274,11 +276,19 @@ labs <- function(
     ifelse(nm %in% names(sym), unname(sym[nm]), cmd)
   })
   wrap <- function(a) if (nchar(a) > 1L) paste0("(", a, ")") else a
-  # Innermost brace groups first, until none is left.
+  roots <- c("2" = "\u221a", "3" = "\u221b", "4" = "\u221c")
+  # Innermost brace groups first, until none is left. `\frac` and `\sqrt`
+  # read once their arguments are flat, so a nested argument keeps its
+  # structure (`\frac{\alpha}{x^{2}}` reads "\u03b1/(x^2)").
   repeat {
     before <- x
     x <- .gsub_fn("\\\\frac\\{([^{}]*)\\}\\{([^{}]*)\\}", x, function(g) {
       paste0(wrap(trimws(g[1])), "/", wrap(trimws(g[2])))
+    })
+    x <- .gsub_fn("\\\\sqrt\\[([^][{}]*)\\]\\{([^{}]*)\\}", x, function(g) {
+      n <- trimws(g[1])
+      pre <- if (n %in% names(roots)) roots[[n]] else paste0("root", n)
+      paste0(pre, "(", trimws(g[2]), ")")
     })
     x <- .gsub_fn("\\\\sqrt\\{([^{}]*)\\}", x, function(g) {
       paste0("\u221a(", trimws(g[1]), ")")
@@ -288,15 +298,23 @@ labs <- function(
     x <- .gsub_fn("([\\^_])\\{([^{}]*)\\}", x, function(g) {
       paste0(g[1], wrap(trimws(g[2])))
     })
-    # A command with a group argument (style, accent, `\text{}`) keeps it.
-    x <- gsub("\\\\[A-Za-z]+\\*?\\{([^{}]*)\\}", "\\1", x, perl = TRUE)
-    x <- gsub("\\{([^{}]*)\\}", "\\1", x, perl = TRUE)
+    # A command with a group argument (style, accent, `\text{}`) keeps it;
+    # `\frac` and `\sqrt` are read above.
+    x <- gsub(
+      "\\\\(?!(?:frac|sqrt)(?![A-Za-z]))[A-Za-z]+\\*?\\{([^{}]*)\\}",
+      "\\1",
+      x,
+      perl = TRUE
+    )
+    # A bare group, not an argument of `\frac` / `\sqrt`.
+    x <- gsub("(?<![A-Za-z}\\]])\\{([^{}]*)\\}", "\\1", x, perl = TRUE)
     if (identical(x, before)) {
       break
     }
   }
-  # Any command left over reads as its name.
+  # Any command or brace left over reads as its name / drops out.
   x <- gsub("\\\\([A-Za-z]+)", "\\1", x, perl = TRUE)
+  x <- gsub("[{}]", "", x)
   x <- chartr("\u0002\u0003", "{}", x)
   trimws(gsub(" {2,}", " ", x))
 }
@@ -322,24 +340,26 @@ labs <- function(
 # The plain text of a rich label, for text-only outputs: a tex() or plotmath()
 # label's formula read by `.tex_plain()` (unless it carries a reading of its
 # own, as an expression typeset by `.math_label()` does), an md() label's
-# words without the markup and with each inline `$...$` formula read by
-# `.tex_plain()` (VP-172).
+# words without the markup, from its parsed runs, with each math run read by
+# `.tex_plain()` (VP-172). Reading the runs, not re-scanning the text, keeps a
+# literal or escaped `$` (a price) as text.
 .rich_plain <- function(x) {
   if (inherits(x, "vellum::vellum_tex_label")) {
     return(if (identical(x@text, x@tex)) .tex_plain(x@tex) else x@text)
   }
-  txt <- x@text
-  if (inherits(x, "vellum::vellum_md_label") && is.character(txt) &&
-    length(txt) == 1L && grepl("$", txt, fixed = TRUE)) {
-    m <- gregexpr("(?<!\\\\)\\$([^$]+)\\$", txt, perl = TRUE)
-    regmatches(txt, m) <- lapply(regmatches(txt, m), function(f) {
-      vapply(
-        f,
-        function(one) .tex_plain(substr(one, 2L, nchar(one) - 1L)),
-        "",
-        USE.NAMES = FALSE
-      )
-    })
+  if (inherits(x, "vellum::vellum_md_label") && length(x@runs)) {
+    parts <- vapply(
+      x@runs,
+      function(r) {
+        if (!is.null(r$math)) {
+          .tex_plain(r$math)
+        } else {
+          paste(as.character(r$text %||% ""), collapse = "")
+        }
+      },
+      character(1)
+    )
+    return(paste(parts, collapse = ""))
   }
-  txt
+  x@text
 }

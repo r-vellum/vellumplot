@@ -333,4 +333,24 @@ test_that(".tex_plain() reads common TeX (VP-172)", {
   expect_identical(tp("E = mc^2"), "E = mc^2")
   expect_identical(tp("\\left( a \\right)"), "( a )")
   expect_identical(tp("\\unknown x"), "unknown x")
+  # Nested arguments keep their structure (VP-172 review).
+  expect_identical(tp("\\frac{\\alpha}{x^{2}}"), "\u03b1/(x^2)")
+  expect_identical(tp("\\sqrt{x^{2}+1}"), "\u221a(x^2+1)")
+  expect_identical(tp("\\sqrt[3]{x}"), "\u221b(x)")
+  expect_identical(tp("\\sqrt[n]{x}"), "rootn(x)")
+  expect_identical(tp("a \\\\ b"), "a b")
+})
+
+test_that("md() titles keep a literal or escaped $ as text (VP-172 review)", {
+  rp <- vellumplot:::.rich_plain
+  expect_identical(
+    rp(md("Costs from $5 to $10 per **unit**")),
+    "Costs from $5 to $10 per unit"
+  )
+  expect_identical(rp(md("Price \\$5 and $\\beta$")), "Price $5 and \u03b2")
+  expect_identical(rp(md("Growth $\\alpha^{2}$ in *2020*")), "Growth \u03b1^2 in 2020")
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    labs(title = md("Costs from $5 to $10 per **unit**"))
+  expect_match(plot_svg(p), ">Costs from $5 to $10 per unit</title>", fixed = TRUE)
 })

@@ -32,6 +32,24 @@ NULL
       return(.channel_label(ch))
     }
   }
+  # A position axis no layer maps directly is titled by its mapped range
+  # channel (`xmin`, then `xmax`), as ggplot2 titles a horizontal ribbon or
+  # interval by its `xmin` (VP-169 review). A constant range end (`ymin = 0`)
+  # maps no variable, so it names nothing.
+  if (channel %in% c("x", "y")) {
+    for (chan in paste0(channel, c("min", "max"))) {
+      for (layer in spec@layers) {
+        ch <- layer@encoding[[chan]]
+        if (
+          !is.null(ch) &&
+            !isTRUE(ch@after) &&
+            length(all.vars(rlang::quo_get_expr(ch@expr))) > 0L
+        ) {
+          return(.channel_label(ch))
+        }
+      }
+    }
+  }
   NULL
 }
 

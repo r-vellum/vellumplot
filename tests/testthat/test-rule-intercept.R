@@ -100,6 +100,22 @@ test_that("rules alone draw over an empty cross axis (VP-173)", {
   expect_no_error(vellum::as_vellum_scene(
     vplot(df) |> mark_rule(x = v) |> facet_wrap(~f, scales = "free")
   ))
+  # Another layer with no y still asks for one (VP-173 review).
+  expect_error(
+    vellum::as_vellum_scene(
+      vplot(df) |> mark_rule(x = v) |> mark_point(x = v)
+    ),
+    "No layer maps"
+  )
+  # The empty axis keeps the user's limits and title.
+  lim <- vellumplot:::.build_panels(
+    vplot(d) |>
+      mark_rule(x = v) |>
+      scale_y_continuous(limits = c(0, 10)) |>
+      labs(y = "Level")
+  )$scales$y
+  expect_gt(length(lim$breaks), 0L)
+  expect_identical(lim$name, "Level")
   # A plot with no position at all still asks for one.
   expect_error(
     vellum::as_vellum_scene(vplot(d) |> mark_point()),

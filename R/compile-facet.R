@@ -370,7 +370,7 @@ NULL
     # are neither drawn nor counted as drawn by provenance. `.build_panels()`
     # sums the per-panel counts into one warning per layer.
     miss <- .missing_position_rows(layer, d)
-    # A path (area, ribbon, line, path, step) keeps such rows, so it can leave
+    # A path (area, ribbon, line, step) keeps such rows, so it can leave
     # a gap there, but they are not drawn and count in the same warning
     # (VP-162, VP-170).
     gap <- .missing_gap_rows(layer, d)
@@ -433,11 +433,12 @@ NULL
 
 # Paths that keep a row missing a continuous position (so they can split into
 # runs there and leave a gap) but don't draw it, so it counts as removed in the
-# "Removed n rows" warning: areas and ribbons (VP-162), and lines, paths and
-# steps, so their warning agrees with `spec_diagnose()`'s report (VP-170).
+# "Removed n rows" warning: areas and ribbons (VP-162), and lines (paths are
+# unsorted lines) and steps, so their warning agrees with `spec_diagnose()`'s
+# report (VP-170).
 # Only with the identity stat: a stat that reads the row (a density) drops it
 # with its own warning.
-.NA_GAP_MARKS <- c("area", "ribbon", "line", "path", "step")
+.NA_GAP_MARKS <- c("area", "ribbon", "line", "step")
 
 # Logical per row of `data`: is a continuous position channel (`x`, `y`, `xend`,
 # `ymin`, ...; see `.DIAG_POS_CHANNELS`) of `layer` missing? Only per-row data
@@ -486,7 +487,7 @@ NULL
     dr <- .layer_dropped_rows(panels, i, shared)
     n_miss <- length(dr$missing) + dr$loose_missing
     n_cens <- length(dr$censored) + dr$loose_censored
-    .warn_removed_rows(n_miss + n_cens, n_cens, i, spec@layers[[i]]@mark)
+    .warn_removed_rows(n_miss + n_cens, n_cens, i, .layer_fn_mark(spec@layers[[i]]))
   }
   invisible()
 }
@@ -543,6 +544,16 @@ NULL
 # `n_cens` of them censored. The counts ride on the condition (`n_rows`,
 # `n_censored`, `layer`, `mark`) so an animation can collect the warnings of its
 # keyframes and give one per layer instead (`.removed_rows_tally()`, VP-150).
+# The `mark_*()` constructor a layer came from, for a message: its mark, but
+# "path" for `mark_path()`, an unsorted line (VP-170 review).
+.layer_fn_mark <- function(layer) {
+  if (identical(layer@mark, "line") && isFALSE(layer@stat_params$sort)) {
+    "path"
+  } else {
+    layer@mark
+  }
+}
+
 .warn_removed_rows <- function(n, n_cens, i, mark) {
   if (n <= 0L) {
     return(invisible())

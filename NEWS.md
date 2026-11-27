@@ -20,14 +20,20 @@
 
 * `mark_ribbon(y =, xmin =, xmax =)` draws a horizontal ribbon along `y`.
   Before, a ribbon with an `xmin`/`xmax` range and no `ymin`/`ymax` drew
-  nothing (and warned about a missing value it never drew). As for a range
-  mark, the orientation is read from the data, and the horizontal ribbon
-  leaves gaps at missing values like a vertical one (VP-169).
+  nothing (and warned about a missing value it never drew). The orientation
+  is read from the range, or set with the new `orientation` argument; the
+  horizontal ribbon leaves gaps at missing values like a vertical one. An
+  axis no layer maps directly is now titled by its mapped range, as in
+  ggplot2: a horizontal ribbon's or interval's x axis by `xmin`, a ribbon's
+  y axis by `ymin`, instead of "x" / "y". A ribbon given both ranges,
+  half of one, neither, or an `orientation` that contradicts its range is
+  now an error instead of drawing nothing (VP-169).
 
 * A `mark_line()`, `mark_path()` or `mark_step()` with a missing value now
   counts the row in its "Removed n rows containing missing values" warning,
   as `spec_diagnose()` already reported it and as areas count theirs. The
-  line still breaks there, drawn as before (VP-170).
+  line still breaks there, drawn as before. The warning names `mark_path()`
+  for a path rather than `mark_line()` (VP-170).
 
 * A scale name or guide title given as a plotmath `expression()` or quoted
   call, such as `scale_x_continuous(name = expression(alpha^2))`,
@@ -40,19 +46,25 @@
   `md()` title, as plain text instead of TeX source: Greek letters and
   common symbols become Unicode characters, `\frac{a}{b}` reads "a/b",
   styling and spacing commands drop out, so `tex("\\alpha^{2}")` reads
-  "α^2" (VP-172).
+  "α^2". A literal or escaped `$` in an `md()` title (a price) stays as it
+  is (VP-172).
 
 * A plot of reference rules alone, such as `vplot(df) |> mark_rule(x = col)`,
   draws them over an empty cross axis, as a rug alone does, instead of
-  failing with "No layer maps y" (VP-173).
+  failing with "No layer maps y". The empty axis keeps a `labs()` title and
+  scale limits given for it. Any other layer without that position still
+  asks for one (VP-173).
 
 * A wrapped discrete x tick label with a word wider than its share of the
   panel no longer runs into the neighbouring label. The word wrap gave such
   a word a line of its own but never broke it, so it spread past its tick's
-  box. It is now broken across lines, at a hyphen it already has or between
-  letters with a hyphen added, so every piece fits the box. The labels keep
-  their size and none is dropped; labels without such a word draw exactly
-  as before, and numbers and codes are never broken (VP-174).
+  box. It is now broken across at most three lines, at a hyphen it already
+  has or between letters with a hyphen added, so every piece fits the box
+  (less a 1 mm gutter) with at least five letters a piece. The labels keep
+  their size and none is dropped. A word too long to break that way is left
+  whole, as before. Only Latin, Greek and Cyrillic words are broken, never
+  numbers, codes or other scripts; labels without such a word draw exactly
+  as before (VP-174).
 
 * An area or ribbon now leaves a gap at a missing value (`NA`), as a line
   does. A stacked `mark_area()` used to draw a missing height as zero,

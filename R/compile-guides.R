@@ -439,29 +439,77 @@ NULL
 # wider than it reaches into the neighbouring tick's label, and the word wrap
 # alone cannot help: it gives a long word a line of its own but never breaks
 # it. Such a word is broken at a hyphen it already has, else between letters
-# with a hyphen added, into pieces that each fit the box (at least
-# `.HYPHEN_MIN` letters a piece); the label keeps its font size and every
-# label stays. Only plain words of letters (and hyphens) are broken, never a
-# number or a code. A label with no overlong word is returned unchanged, so a
-# label that fits draws exactly as before.
-.HYPHEN_MIN <- 3L
+# with a hyphen added, into pieces that each fit the box less a small gutter
+# (`.HYPHEN_GUTTER_MM`, so neighbouring labels don't touch), at least
+# `.HYPHEN_MIN` letters a piece and at most `.HYPHEN_MAX_LINES` pieces. A word
+# that cannot be broken within those limits is left whole, as before: a
+# column too narrow for it would otherwise get a tower of fragments. Only
+# words of Latin, Greek or Cyrillic letters (and hyphens) are broken -- never
+# a number, a code, or a script that is not hyphenated this way (CJK, Arabic,
+# Hebrew). A combining accent stays with its letter, so a decomposed accent
+# reads as the composed one. A label with no overlong word is returned
+# unchanged, so a label that fits draws exactly as before. The result is
+# cached per label, width and font for the compile (`.provenance_reset()`
+# clears it), since the layout measures each label several times.
+.HYPHEN_MIN <- 5L
+.HYPHEN_MAX_LINES <- 3L
+.HYPHEN_GUTTER_MM <- 1
+
+# A letter of a hyphenated script, with any combining marks.
+.HYPHEN_LETTER <- "[\\p{Latin}\\p{Greek}\\p{Cyrillic}]\\p{M}*"
 
 .hyphenate_label <- function(label, el, wrap_mm) {
   if (!is.character(label) || length(label) != 1L || is.na(label)) {
     return(label)
   }
+  key <- paste(
+    label,
+    wrap_mm,
+    el@family %||% "",
+    el@face %||% "",
+    el@size %||% "",
+    el@cex %||% "",
+    .el_weight(el) %||% "",
+    sep = "\u0001"
+  )
+  cache <- .mark_ctx$hyphen
+  if (is.null(cache)) {
+    cache <- .mark_ctx$hyphen <- new.env(parent = emptyenv())
+  }
+  hit <- cache[[key]]
+  if (!is.null(hit)) {
+    return(hit)
+  }
+  out <- .hyphenate_label_uncached(enc2utf8(label), el, wrap_mm)
+  assign(key, out, envir = cache)
+  out
+}
+
+.hyphenate_label_uncached <- function(label, el, wrap_mm) {
+  box <- wrap_mm - .HYPHEN_GUTTER_MM
+  if (!isTRUE(box > 0)) {
+    return(label)
+  }
   width <- function(x) .el_strwidth(x, el, features = .TNUM)
-  words <- unique(strsplit(label, "[ \t\n]+")[[1]])
-  words <- words[grepl("^[[:alpha:]][[:alpha:]-]*[[:alpha:]]$", words)]
-  words <- words[nchar(words) >= 2L * .HYPHEN_MIN]
+  L <- .HYPHEN_LETTER
+  words <- unique(regmatches(label, gregexpr("\\S+", label, perl = TRUE))[[1]])
+  words <- words[grepl(
+    paste0("^", L, "(?:", L, "|-)*", L, "$"),
+    words,
+    perl = TRUE
+  )]
   if (!length(words)) {
     return(label)
   }
   long <- words[width(words) > wrap_mm]
   for (w in long) {
+    rep <- .hyphenate_word(w, width, box)
+    if (is.null(rep)) {
+      next
+    }
     label <- gsub(
-      paste0("(?<![[:alpha:]-])", w, "(?![[:alpha:]-])"),
-      .hyphenate_word(w, width, wrap_mm),
+      paste0("(?<![\\p{L}\\p{M}-])", w, "(?![\\p{L}\\p{M}-])"),
+      rep,
       label,
       perl = TRUE
     )
@@ -469,30 +517,59 @@ NULL
   label
 }
 
-# Break the word `w` into lines no wider than `wrap_mm` (by `width()`, in mm):
-# greedily, the longest piece that fits, after one of its own hyphens if one
-# fits, else between letters with a hyphen added, keeping `.HYPHEN_MIN`
-# letters on each side of a break. A piece that cannot fit even at the
-# minimum keeps the minimum.
-.hyphenate_word <- function(w, width, wrap_mm) {
+# Break the word `w` into at most `.HYPHEN_MAX_LINES` lines no wider than
+# `box` (by `width()`, in mm): greedily, the longest piece that fits, after
+# one of its own hyphens if one fits, else between letters with a hyphen
+# added (found by bisection, as the width grows with the piece), keeping
+# `.HYPHEN_MIN` letters on each side of a break and never parting a letter
+# from its combining marks. NULL when the word cannot be broken that way.
+.hyphenate_word <- function(w, width, box) {
+  m <- .HYPHEN_MIN
   out <- character(0)
   rest <- w
-  m <- .HYPHEN_MIN
-  while (width(rest) > wrap_mm && nchar(rest) >= 2L * m) {
-    k <- seq.int(m, nchar(rest) - m)
-    pre <- substring(rest, 1L, k)
-    own <- endsWith(pre, "-")
-    piece <- ifelse(own, pre, paste0(pre, "-"))
-    fits <- width(piece) <= wrap_mm
-    pick <- if (any(fits & own)) {
-      max(which(fits & own))
-    } else if (any(fits & !own)) {
-      max(which(fits & !own))
-    } else {
-      1L
+  while (width(rest) > box) {
+    if (length(out) >= .HYPHEN_MAX_LINES - 1L) {
+      return(NULL)
     }
-    out <- c(out, piece[pick])
-    rest <- substring(rest, k[pick] + 1L)
+    ch <- strsplit(rest, "")[[1]]
+    n <- length(ch)
+    base <- !grepl("^[\\p{M}-]$", ch, perl = TRUE)
+    left <- cumsum(base)
+    right <- sum(base) - left
+    # A break after character k: not before a combining mark, with enough
+    # letters on each side.
+    nxt_mark <- c(grepl("^\\p{M}$", ch[-1], perl = TRUE), TRUE)
+    ok <- which(!nxt_mark & left >= m & right >= m)
+    ok <- ok[ok < n]
+    if (!length(ok)) {
+      return(NULL)
+    }
+    own <- ok[ch[ok] == "-"]
+    k <- NA_integer_
+    if (length(own)) {
+      fits <- own[width(substring(rest, 1L, own)) <= box]
+      if (length(fits)) {
+        k <- max(fits)
+      }
+    }
+    if (is.na(k)) {
+      cand <- ok[ch[ok] != "-" & c(ch[-1], "")[ok] != "-"]
+      piece_w <- function(i) width(paste0(substring(rest, 1L, cand[i]), "-"))
+      if (!length(cand) || piece_w(1L) > box) {
+        return(NULL)
+      }
+      lo <- 1L
+      hi <- length(cand)
+      while (lo < hi) {
+        mid <- (lo + hi + 1L) %/% 2L
+        if (piece_w(mid) <= box) lo <- mid else hi <- mid - 1L
+      }
+      k <- cand[lo]
+      out <- c(out, paste0(substring(rest, 1L, k), "-"))
+    } else {
+      out <- c(out, substring(rest, 1L, k))
+    }
+    rest <- substring(rest, k + 1L)
   }
   paste(c(out, rest), collapse = "\n")
 }

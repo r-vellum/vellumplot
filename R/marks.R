@@ -1679,6 +1679,12 @@ mark_datashade <- function(
 #' `mark_ribbon()` fills between `ymin` and `ymax`; `mark_step()` draws a
 #' staircase line. All connect points in `x` order.
 #'
+#' A ribbon is horizontal when it is given `y`, `xmin` and `xmax` instead of
+#' `x`, `ymin` and `ymax`: it fills between `xmin` and `xmax` along `y`,
+#' connecting points in `y` order (ggplot2's `orientation = "y"`). The
+#' orientation is read from the ranges; a ribbon needs one complete range,
+#' `ymin` and `ymax` or `xmin` and `xmax`, and not both.
+#'
 #' An area or ribbon is drawn as one polygon per series (per `group`, or per
 #' level of a discrete `fill`/`color`), and a polygon has a single fill. A
 #' continuous `fill`, `color` or `alpha` must therefore be constant within each
@@ -1690,7 +1696,8 @@ mark_datashade <- function(
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`,
-#'   `ymax` for ribbon; plus `color`/`fill`/`alpha`. `mark_step()` also takes
+#'   `ymax` for ribbon (or `y`, `xmin`, `xmax` for a horizontal one); plus
+#'   `color`/`fill`/`alpha`. `mark_step()` also takes
 #'   `linewidth` and `linetype`; a mapped `linewidth` varies the staircase's
 #'   width per tread (see [scale_linewidth()]).
 #' @param position For `mark_area()`, how areas sharing an `x` combine when
@@ -1699,10 +1706,17 @@ mark_datashade <- function(
 #'   baseline. With no fill mapping all three are equivalent (a single area).
 #' @param direction For `mark_step()`, `"hv"` (horizontal then vertical, default)
 #'   or `"vh"`.
+#' @param orientation For `mark_ribbon()`, `NA` (default) to read it from the
+#'   ranges, or `"x"` (vertical, `ymin`/`ymax`) / `"y"` (horizontal,
+#'   `xmin`/`xmax`), which must agree with the range given.
 #' @return The modified [PlotSpec].
 #' @seealso [scale_linewidth()]
 #' @examples
 #' vplot(pressure) |> mark_area(x = temperature, y = pressure)
+#'
+#' # a horizontal ribbon: xmin..xmax along y
+#' band <- data.frame(depth = 1:6, lo = c(2, 3, 2, 4, 3, 5))
+#' vplot(band) |> mark_ribbon(y = depth, xmin = lo, xmax = lo + 2)
 #' @export
 mark_area <- function(
   plot,
@@ -1730,20 +1744,73 @@ mark_ribbon <- function(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
 ) {
   .check_plot(plot)
+  dots <- rlang::enquos(...)
+  orientation <- .check_ribbon_ranges(names(dots), .check_orientation(orientation))
   .add_layer(
     plot,
     "ribbon",
-    rlang::enquos(...),
+    dots,
+    stat_params = list(orientation = orientation),
     blend = blend,
     sketch = sketch,
     data = data,
     position = position
   )
+}
+
+# A ribbon needs one complete range: `ymin` and `ymax` (vertical, along `x`)
+# or `xmin` and `xmax` (horizontal, along `y`), not both and not half of one,
+# and an explicit `orientation` must name the range given. Returns the
+# orientation (`"x"` / `"y"`) so the emitter need not guess (VP-169 review).
+.check_ribbon_ranges <- function(nm, orientation, call = rlang::caller_env()) {
+  v <- c("ymin", "ymax") %in% nm
+  h <- c("xmin", "xmax") %in% nm
+  if (any(v) && any(h)) {
+    cli::cli_abort(
+      c(
+        "{.fn mark_ribbon} takes one range, not both {.field ymin}/{.field ymax} and {.field xmin}/{.field xmax}.",
+        i = "Give {.field x}, {.field ymin} and {.field ymax} for a vertical ribbon, or {.field y}, {.field xmin} and {.field xmax} for a horizontal one."
+      ),
+      call = call
+    )
+  }
+  half <- if (sum(v) == 1L) c("ymin", "ymax") else if (sum(h) == 1L) c("xmin", "xmax")
+  if (!is.null(half)) {
+    cli::cli_abort(
+      "{.fn mark_ribbon} needs both {.field {half[1]}} and {.field {half[2]}}.",
+      call = call
+    )
+  }
+  if (!any(v) && !any(h)) {
+    cli::cli_abort(
+      c(
+        "{.fn mark_ribbon} needs a range: {.field ymin} and {.field ymax}, or {.field xmin} and {.field xmax}.",
+        i = "Give {.field x}, {.field ymin} and {.field ymax} for a vertical ribbon, or {.field y}, {.field xmin} and {.field xmax} for a horizontal one."
+      ),
+      call = call
+    )
+  }
+  given <- if (all(h)) "y" else "x"
+  if (!is.na(orientation) && !identical(orientation, given)) {
+    cli::cli_abort(
+      c(
+        "{.code orientation = \"{orientation}\"} doesn't match the range given.",
+        i = if (identical(given, "y")) {
+          "{.field xmin}/{.field xmax} make a horizontal ribbon ({.code orientation = \"y\"})."
+        } else {
+          "{.field ymin}/{.field ymax} make a vertical ribbon ({.code orientation = \"x\"})."
+        }
+      ),
+      call = call
+    )
+  }
+  given
 }
 
 #' @rdname mark_area

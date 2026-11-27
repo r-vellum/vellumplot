@@ -260,3 +260,32 @@ test_that("lines, paths and steps count their gap rows in the warning (VP-170)",
     vplot(data.frame(x = 1:3, y = 1:3)) |> mark_line(x = x, y = y)
   ))
 })
+
+test_that("a ribbon checks its ranges and titles a horizontal x axis (VP-169)", {
+  dv <- data.frame(y = 1:4, lo = c(0, 1, 0, 1), hi = c(2, 3, 3, 2))
+  b <- vplot(dv)
+  expect_error(
+    b |> mark_ribbon(y = y, xmin = lo, xmax = hi, ymin = lo, ymax = hi),
+    "takes one range"
+  )
+  expect_error(b |> mark_ribbon(y = y, xmin = lo), "needs both")
+  expect_error(b |> mark_ribbon(x = y, ymax = hi), "needs both")
+  expect_error(b |> mark_ribbon(x = y, y = hi), "needs a range")
+  expect_error(
+    b |> mark_ribbon(y = y, xmin = lo, xmax = hi, orientation = "x"),
+    "doesn't match"
+  )
+  h <- b |> mark_ribbon(y = y, xmin = lo, xmax = hi, orientation = "y")
+  expect_identical(h@layers[[1]]@stat_params$orientation, "y")
+  # The x axis is titled by xmin, as in ggplot2, and the alt text says so.
+  expect_identical(vellumplot:::.plot_titles(h)$title[["x"]], "lo")
+  expect_match(plot_alt(h), "lo (horizontal axis)", fixed = TRUE)
+})
+
+test_that("mark_path()'s warning names mark_path() (VP-170 review)", {
+  expect_warning(
+    vellum::as_vellum_scene(vplot(d1) |> mark_path(x = x, y = y)),
+    "`mark_path()`",
+    fixed = TRUE
+  )
+})

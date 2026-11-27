@@ -107,6 +107,8 @@ NULL
   .mark_ctx$seq <- 0L
   .mark_ctx$panel <- NA_character_
   .mark_ctx$kind <- "mark"
+  # per-compile caches start empty too (the hyphenated tick labels, VP-174)
+  .mark_ctx$hyphen <- NULL
   invisible(NULL)
 }
 
