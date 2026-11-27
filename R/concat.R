@@ -169,7 +169,7 @@ concat <- function(
   ref <- .first_real_plot(plots)
   w0 <- .comp_unit_size(ref, "width")
   h0 <- .comp_unit_size(ref, "height")
-  PlotComposition(
+  comp <- PlotComposition(
     plots = plots,
     nrow = nrow,
     ncol = ncol,
@@ -182,6 +182,21 @@ concat <- function(
     height = height %||% (nrow * h0),
     dpi = as.double(dpi %||% .comp_dpi(ref))
   )
+  # the dimensions it takes from a first plot that left them at the default,
+  # which a knitr chunk's figure size may set (`.knit_svg()`, VP-165)
+  ref_free <- if (is.null(ref)) {
+    c(width = TRUE, height = TRUE)
+  } else {
+    .size_defaults(ref)
+  }
+  free <- c(
+    width = is.null(width) && ref_free[["width"]],
+    height = is.null(height) && ref_free[["height"]]
+  )
+  if (any(free)) {
+    attr(comp, "vp_default_size") <- free
+  }
+  comp
 }
 
 # `widths` / `heights`: NULL, or positive finite weights, one per column / row

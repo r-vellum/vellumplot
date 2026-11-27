@@ -29,12 +29,21 @@ vplot <- function(data, width = 6, height = 4, dpi = 96) {
   .check_dim(width, "width")
   .check_dim(height, "height")
   .check_dpi(dpi)
-  PlotSpec(
+  p <- PlotSpec(
     data = data,
     width = as.double(width),
     height = as.double(height),
     dpi = as.double(dpi)
   )
+  # the dimensions left at their default, which a knitr chunk's figure size
+  # may set (`.knit_svg()`, VP-165)
+  if (missing(width) || missing(height)) {
+    attr(p, "vp_default_size") <- c(
+      width = missing(width),
+      height = missing(height)
+    )
+  }
+  p
 }
 
 # A page dimension / resolution must be a single positive finite number.

@@ -159,13 +159,17 @@ plot printed in a chunk adapts to the target — a crisp inline **SVG** for HTML
 output, and the default vector/raster render for PDF or Word.
 
 In HTML the SVG fills the column at the plot's own aspect. A chunk's
-`fig-width` / `fig-height` (`fig.width` / `fig.height` in R Markdown) sizes a
-plot that has no size of its own: `vplot(df)` without `width` / `height` (or
-a composition of such plots) is laid out at that size, and is shown no wider
-than `fig-width`, so a small figure stays small. A plot given a size, such as
-`vplot(df, width = 5, height = 2)` or a sparkline, keeps it and fills the
-column. Only values set on the chunk count; the document's defaults leave
-plots as they are.
+`fig-width` / `fig-height` / `fig-asp` (`fig.width` / `fig.height` /
+`fig.asp` in R Markdown) sizes the dimensions a plot was not given:
+`vplot(df)` without `width` / `height` (or a composition of such plots) is
+laid out at that size, and a chunk's `fig-width` also caps how wide it is
+shown, so a small figure stays small. A `fig-asp` alone sets the height to
+the plot's width times the aspect. A size passed to `vplot()` or to the
+composition, even `width = 6, height = 4`, is kept (so is a sparkline's or
+a table's), and the plot fills the column. Only values the chunk changes
+count: a chunk value equal to the document's default (or the document-wide
+`fig-asp`) leaves plots as they are. A chunk's `out-width` sets the
+figure's CSS width.
 
 ## Where to next
 

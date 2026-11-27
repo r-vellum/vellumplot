@@ -7,23 +7,29 @@
   compositions used `"subplot-<N>"` (`"subplot-2:p1-1:l1:7"`, now
   `"cell-2:p1-1:l1:7"`), while the cell-by-cell layout already used
   `"cell-<k>"`, so a host matching keys on `subplot-` missed half the cases.
-  The prefix also reaches series keys, `row_keys`, repel label names and the
-  provenance `panel` column. Before, two aligned compositions nested in one
-  figure both numbered their cells from 1, so their default keys collided;
-  they now get distinct cell ids. Hosts that match on the `subplot-` prefix
-  must match on `cell-` instead; vellumwidget treats keys as opaque and needs
-  no change (VP-167).
+  Series keys and `row_keys` carry the same prefix. Two aligned compositions
+  nested in one figure both numbered their cells from 1, so their default
+  keys collided; they now get distinct cell ids. Repel label names and the
+  provenance `panel` column name the cell in both layouts too (`"cell-2"`
+  for an aligned cell, `"cell-2-panel-1-1"` for a cell laid out on its own);
+  before, every cell laid out on its own used `"panel-r-c"`, so they
+  collided. Hosts that match on the `subplot-` prefix must match on `cell-`
+  instead; vellumwidget treats keys as opaque and needs no change (VP-167).
 
 ## Bug fixes
 
-* In HTML output the chunk options `fig-width` / `fig-height`
-  (`fig.width` / `fig.height`) now size a plot that has no size of its own
-  (a `vplot()` without `width` / `height`, or a composition of such plots).
-  The plot is laid out at that size and shown no wider than `fig-width`, so
-  it still shrinks to a narrower column but a small figure is no longer
-  stretched to fill it. Before, the inline SVG always filled the column and
-  these chunk options did nothing. Plots with an explicit size, and chunks
-  that leave the size at the document's default, are unchanged (VP-165).
+* In HTML output the chunk options `fig-width` / `fig-height` / `fig-asp`
+  (`fig.width` / `fig.height` / `fig.asp`) now size the dimensions a plot
+  was not given: a `vplot()` without `width` / `height`, or a composition of
+  such plots without its own size, is laid out at that size, and a chunk's
+  `fig-width` also caps its display width (CSS `max-width`), so it still
+  shrinks to a narrower column but a small figure is no longer stretched to
+  fill it. A `fig-asp` alone sets the height to the plot's width times the
+  aspect. A chunk's `out-width` becomes the figure's CSS width. Before, the
+  inline SVG always filled the column and these options did nothing. A size
+  passed to `vplot()` or a composition (even `width = 6, height = 4`) is
+  kept, and so is the plot's size when a chunk sets a value equal to the
+  document's default, or only a document-wide `fig-asp` applies (VP-165).
 * A nested composition in the first or last row of a composition with a
   figure title, subtitle, caption or collected legend band now drops its own
   outer margin on the band's side, as plot cells there already did. Before,

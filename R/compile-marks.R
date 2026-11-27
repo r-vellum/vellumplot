@@ -439,6 +439,22 @@ NULL
   )
 }
 
+# The enclosing panel's figure-wide id, for provenance and repel label names.
+# A composition cell laid out on its own names its panels "panel-r-c" like a
+# lone plot, so those get the cell id in front ("cell-2-panel-1-1", the panel's
+# viewport name); an aligned cell's "cell-<k>" and a lone plot's "panel-r-c"
+# (or NA) pass through (VP-167).
+.mark_panel_id <- function() {
+  pn <- .mark_ctx$panel
+  cell <- .mark_ctx$panel_cell
+  if (
+    is.null(pn) || is.na(pn) || is.null(cell) || !startsWith(pn, "panel-")
+  ) {
+    return(pn)
+  }
+  .cell_panel_name(pn, cell)
+}
+
 # A grob vellum treats as ONE element however many rows it draws (a line,
 # path, or polygon series): `scene_model()` keeps only its first meta record.
 .is_single_shape <- function(grob) {
