@@ -236,7 +236,12 @@ NULL
   # The ring factor that puts a label of width `w` mm, starting at `k * inner`,
   # 6% short of the panel edge (1.05 * ext native, with 2.1 * ext / side
   # native units per mm) -- as `.chord_extent()` solves it.
-  k_for <- function(w) ext * (1.05 - 2.1 * w / side) / (1.06 * inner)
+  # (Written as `.chord_extent()` computes its extent, so an unclamped fit
+  # gives the same value to the last digit.)
+  k_for <- function(w) {
+    denom <- 1.05 - 2.1 * w / side
+    if (denom <= 0) -Inf else ext / (1.06 * inner / denom)
+  }
   k_min <- .CHORD_MIN_RING * 1.05 * ext / .CHORD_R_OUT
   # Short labels never grow the ring past the domain's own room for it (the
   # `base` floor of `.chord_extent()`).
