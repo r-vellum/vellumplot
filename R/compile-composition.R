@@ -12,8 +12,9 @@ NULL
 # up across sub-plots even when their axis labels differ (patchwork's killer
 # feature). Identical legends are collected into one (guides = "collect").
 #
-# Phase scope: single-panel, non-polar, non-sf sub-plots on a regular grid.
-# Faceted / polar / sf sub-plots fall back to the independent layout (see
+# Phase scope: single-panel, non-polar, non-sf, free-aspect sub-plots on a
+# regular grid. Faceted / polar / sf / fixed-aspect sub-plots fall back to the
+# independent layout (see
 # .compile_composition), where each is drawn through .draw_plot() (so an sf map
 # is projected and its graticule drawn, which the aligned path does not do).
 # ============================================================================
@@ -36,9 +37,22 @@ NULL
       # skips `.dp_setup_coord`). Fall back to the independent layout, where
       # `.draw_plot` projects it correctly.
       !identical(.coord_of(p)@kind, "sf") &&
-      !.has_sf_layer(p)
+      !.has_sf_layer(p) &&
+      !.aspect_locked(p)
   }
   all(vapply(comp@plots, ok, logical(1)))
+}
+
+# Does a plot lock its panel's aspect (`coord_fixed()`, a Venn diagram, a
+# theme `aspect.ratio`)? The shared grid gives every cell in a row / column the
+# same panel track, so it would stretch such a panel to the track's shape (a
+# Venn's circles drew as ellipses, VP-154). Rather than letterbox the panel
+# inside the shared tracks -- which would break the alignment the grid is for
+# anyway -- these cells take the independent layout, where `.draw_plot()`
+# keeps the aspect inside its own cell, as polar and sf cells already do.
+.aspect_locked <- function(p) {
+  identical(.coord_of(p)@kind, "fixed") ||
+    !is.null(.resolve_theme(.theme_of(p))[["aspect.ratio"]])
 }
 
 # Front half of .draw_plot(): everything needed to measure and place a plot,
@@ -47,6 +61,8 @@ NULL
 .plan_plot <- function(spec) {
   spec <- .settle_constants(spec)
   rt <- .resolve_theme(.theme_of(spec))
+  # keyed legend swatches for an interactive cell, as `.draw_plot()` sets
+  rt[[".interactive"]] <- .spec_interactive(spec)
   built <- .build_panels(spec)
   guides <- .facet_legend_guides(built)
   co <- .coord_of(spec)
@@ -645,6 +661,14 @@ NULL
   # else the first themed sub-plot's (see `.comp_figure_theme()`). Sub-plots
   # resolve their own theme in `.plan_plot`.
   rt0 <- .resolve_theme(.comp_figure_theme(comp))
+  # The collected legend keys its swatches (a hoverable element per series)
+  # when any cell is interactive, as a single plot's legend does; before, it
+  # never did (VP-152 review).
+  rt0[[".interactive"]] <- any(vapply(
+    plans,
+    function(pl) .spec_interactive(pl$spec),
+    NA
+  ))
   glo <- .composition_grid(plans, comp, collect, rt0)
   # Default mark colours: each cell sets its own theme's; the collected legend
   # keys take the composition theme's, else the first sub-plot's. Put the

@@ -277,7 +277,9 @@ test_that("a composition prefixes graph edge endpoints like its node keys", {
   src <- vapply(seg$meta, function(m) m$source %||% NA_character_, "")
   tgt <- vapply(seg$meta, function(m) m$target %||% NA_character_, "")
   expect_true(all(c(src, tgt) %in% pts$key))
-  expect_true(all(startsWith(src, "subplot-")))
+  # a graph locks its aspect, so its cells take the cell-by-cell layout
+  # (VP-154), whose keys carry the cell id
+  expect_true(all(startsWith(src, "cell-")))
 })
 
 # VP-64: a faceted graph draws, in each panel, only the edges whose two

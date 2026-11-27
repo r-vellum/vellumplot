@@ -35,9 +35,23 @@ wrap_plots(
   dpi = NULL
 )
 
-hconcat(..., guides = c("collect", "keep"), height = NULL)
+hconcat(
+  ...,
+  widths = NULL,
+  guides = c("collect", "keep"),
+  width = NULL,
+  height = NULL,
+  dpi = NULL
+)
 
-vconcat(..., guides = c("collect", "keep"), width = NULL)
+vconcat(
+  ...,
+  heights = NULL,
+  guides = c("collect", "keep"),
+  width = NULL,
+  height = NULL,
+  dpi = NULL
+)
 }
 \arguments{
 \item{...}{\link{PlotSpec}s or \code{PlotComposition}s to arrange.}
@@ -47,7 +61,8 @@ vconcat(..., guides = c("collect", "keep"), width = NULL)
 \item{byrow}{Fill the grid by row (default) or by column.}
 
 \item{widths, heights}{Relative panel sizes per column / row (recycled numeric
-vector), or \code{NULL} for equal panels.}
+vector), or \code{NULL} for equal panels. \code{hconcat()} takes \code{widths} and
+\code{vconcat()} takes \code{heights}.}
 
 \item{guides}{\code{"collect"} (default) to dedupe identical legends across
 sub-plots into one, or \code{"keep"} to leave each sub-plot's legend in place.
