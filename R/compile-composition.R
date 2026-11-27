@@ -436,7 +436,6 @@ NULL
   plan,
   gm,
   collect,
-  subplot = NA_integer_,
   panel_mm = NULL
 ) {
   built <- plan$built
@@ -500,7 +499,9 @@ NULL
       co_g@graticule
     )
   }
-  pkey <- if (is.na(subplot)) NA_character_ else sprintf("subplot-%d", subplot)
+  # The cell id ("cell-<k>", numbered across the whole figure) prefixes the
+  # cell's mark keys, as in the cell-by-cell layout (VP-167).
+  pkey <- cell %||% NA_character_
   # Per-cell interaction context (the aligned path does not go through
   # `.draw_plot`): a cell declaring an interaction keys its marks, and a cell with
   # a `filter_by()` tags its elements so a host scopes the filter to this view.
@@ -689,6 +690,8 @@ NULL
   # plot does (`.dp_push_frame()`); before, the first row's panels touched the
   # top edge and the last column's the right edge (VP-50).
   m <- rep_len(rt0[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  # nested next to its parent's figure band: no margin on that side (VP-168)
+  m <- .comp_apply_band_trim(m, comp)
   # End tick labels of the cells on the figure's edge get the room the margin
   # and the tracks outside them cannot give, as a single plot's do (VP-138,
   # VP-140): the spacer widens the margin frame, so no grid index moves.
@@ -781,7 +784,6 @@ NULL
       plans[[i]],
       glo$map[[i]],
       collect,
-      subplot = i,
       panel_mm = cell_panel_mm(i)
     )
   }

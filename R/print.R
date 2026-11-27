@@ -191,10 +191,60 @@ S7::method(summary, PlotSpec) <- function(object, ...) {
   if (
     requireNamespace("knitr", quietly = TRUE) && isTRUE(knitr::is_html_output())
   ) {
-    return(knitr::asis_output(plot_svg(x, scaling = "fit", inline = TRUE)))
+    return(knitr::asis_output(.knit_svg(x)))
   }
   print(x)
   invisible(x)
+}
+
+# The inline SVG a plot knits to in HTML. By default it fills the column
+# (`scaling = "fit"`), at the plot's own aspect. A chunk that sets
+# `fig-width` / `fig-height` (a value other than the document's default) gives
+# a plot without an explicit size (`.has_default_size()`) that page size, and
+# caps the figure at that width (CSS `max-width`): it still shrinks to a
+# narrower column, but a small figure stays small instead of being stretched
+# to the column. A plot with an explicit size keeps it and fills the column as
+# before (VP-165).
+.knit_svg <- function(x) {
+  fs <- .knit_fig_size()
+  if ((is.null(fs$width) && is.null(fs$height)) || !.has_default_size(x)) {
+    return(plot_svg(x, scaling = "fit", inline = TRUE))
+  }
+  svg <- plot_svg(x, width = fs$width, height = fs$height, inline = TRUE)
+  sub(
+    '(<svg[^>]*?)width="([0-9.]+)" height="[0-9.]+"',
+    '\\1width="100%" height="100%" style="max-width:\\2px"',
+    svg
+  )
+}
+
+# The figure size the current chunk asks for: `fig.width` / `fig.height`
+# (inches) where the chunk's value differs from the document default
+# (`knitr::opts_chunk`), NULL otherwise. Outside a chunk both are NULL.
+.knit_fig_size <- function() {
+  pick <- function(o) {
+    cur <- knitr::opts_current$get(o)
+    ok <- is.numeric(cur) && length(cur) == 1L && is.finite(cur) && cur > 0
+    if (ok && !identical(cur, knitr::opts_chunk$get(o))) as.double(cur)
+  }
+  list(width = pick("fig.width"), height = pick("fig.height"))
+}
+
+# Was the plot left at its default size? A plot from `vplot()` without
+# `width` / `height` is 6 x 4 inches, and a composition of such plots without
+# its own size is 6 x 4 per grid cell. A plot set to exactly that size counts
+# as default-sized too; anything else (a sparkline, a table, a plot or
+# composition given a size) has an explicit size.
+.has_default_size <- function(x) {
+  if (S7::S7_inherits(x, PlotSpec)) {
+    return(x@width == 6 && x@height == 4)
+  }
+  if (S7::S7_inherits(x, PlotComposition)) {
+    return(
+      isTRUE(all.equal(c(x@width, x@height), c(x@ncol * 6, x@nrow * 4)))
+    )
+  }
+  FALSE
 }
 
 .register_knit_print <- function() {

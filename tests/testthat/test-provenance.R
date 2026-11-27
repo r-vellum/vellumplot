@@ -176,7 +176,7 @@ test_that("composition accumulates provenance across sub-plots", {
   expect_equal(length(unique(ids)), length(ids))
   expect_setequal(
     unique(vapply(prov, `[[`, character(1), "panel")),
-    c("subplot-1", "subplot-2")
+    c("cell-1", "cell-2")
   )
 })
 

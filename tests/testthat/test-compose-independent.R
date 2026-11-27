@@ -214,6 +214,34 @@ test_that("a figure band takes the cells' margin on its side (VP-152 review)", {
   expect_equal(indep, aligned, tolerance = 1.5 / 50)
 })
 
+test_that("a nested composition next to a figure band drops its margin there (VP-168)", {
+  p1 <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  p3 <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
+  ann <- function(x) compose_annotation(x, title = "Title", caption = "cap")
+  edges <- function(first, last) {
+    top <- panels_of(ann(concat(first, p3, ncol = 1)))
+    bottom <- panels_of(ann(concat(p3, last, ncol = 1)))
+    c(top = min(top$py0), bottom = max(bottom$py1))
+  }
+  # a plot cell there: the band's margin row alone separates it
+  ref <- edges(p1, p1)
+  # an aligned nested composition, and one laid out cell by cell
+  aligned <- concat(p1, p1, ncol = 2)
+  indep <- concat(p1, p1 |> facet_wrap(~am), ncol = 2)
+  expect_true(vellumplot:::.comp_alignable(aligned))
+  expect_false(vellumplot:::.comp_alignable(indep))
+  expect_equal(edges(aligned, aligned), ref, tolerance = 1.5 / 600)
+  expect_equal(edges(indep, indep), ref, tolerance = 1.5 / 600)
+  # with a title of its own, the nested composition drops its outer margin
+  # row above that title: it starts where the plot cell's title band would
+  titled <- indep |> compose_annotation(title = "inner")
+  plain <- edges(indep, indep)
+  got <- edges(titled, titled)
+  # its title band only (about 29 px; with its margin row too, 50 px)
+  expect_lt(got[["top"]] - plain[["top"]], 40)
+  expect_equal(got[["bottom"]], plain[["bottom"]], tolerance = 1.5 / 600)
+})
+
 test_that("aligned compositions leave fixed-aspect cells unstretched (VP-154)", {
   sets <- list(A = 1:10, B = 5:15)
   v <- vvenn(sets)

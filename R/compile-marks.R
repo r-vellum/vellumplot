@@ -402,8 +402,8 @@ NULL
 # source-table row the element draws when the layer maps one-to-one onto its
 # input rows (provenance's `.layer_source()`), and its position in the layer
 # otherwise. Two layers never share a default key; layers meant to link share
-# an explicit `data_id`. Composition cells add their `subplot-N` / `cell-k`
-# prefix in front in `.compile_marks()`.
+# an explicit `data_id`. Composition cells add their cell id (`cell-<k>`) in
+# front in `.compile_marks()`.
 #
 # Besides `key`, returns `join` -- the cross-view identity a host matches
 # filters on: the source row in a facet panel (so the same datum drawn in two
@@ -1237,7 +1237,7 @@ NULL
     # In a composition, each cell is a separate plot compiled independently, so
     # cells share keys that would collide in one host runtime (hiding one cell's
     # "p1-1:l1:3" would hit every cell's). So a composition cell's DOM key is
-    # made unique (prefixed with its `subplot-N` panel), while a cross-view
+    # made unique (prefixed with its cell id, `cell-<k>`), while a cross-view
     # identity is kept as `join` -- what a host matches on (brush cell A ->
     # filter cell B's rows with the same join): a declared `data_id` as given, a
     # default key's row (`.default_keys()`). A single plot gets no prefix, and a
@@ -1252,7 +1252,7 @@ NULL
     if (
       !is.null(.mark_ctx$data_id) &&
         !is.na(.mark_ctx$panel) &&
-        startsWith(.mark_ctx$panel, "subplot-")
+        startsWith(.mark_ctx$panel, "cell-")
     ) {
       .mark_ctx$join <- .mark_ctx$join %||%
         default_cross %||%

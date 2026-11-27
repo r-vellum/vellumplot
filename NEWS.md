@@ -1,7 +1,34 @@
 # vellumplot (development version)
 
+## Breaking changes
+
+* Composition cells now use one key prefix in every layout: the cell id,
+  `"cell-<k>"`, numbered depth-first across the whole figure. Aligned
+  compositions used `"subplot-<N>"` (`"subplot-2:p1-1:l1:7"`, now
+  `"cell-2:p1-1:l1:7"`), while the cell-by-cell layout already used
+  `"cell-<k>"`, so a host matching keys on `subplot-` missed half the cases.
+  The prefix also reaches series keys, `row_keys`, repel label names and the
+  provenance `panel` column. Before, two aligned compositions nested in one
+  figure both numbered their cells from 1, so their default keys collided;
+  they now get distinct cell ids. Hosts that match on the `subplot-` prefix
+  must match on `cell-` instead; vellumwidget treats keys as opaque and needs
+  no change (VP-167).
+
 ## Bug fixes
 
+* In HTML output the chunk options `fig-width` / `fig-height`
+  (`fig.width` / `fig.height`) now size a plot that has no size of its own
+  (a `vplot()` without `width` / `height`, or a composition of such plots).
+  The plot is laid out at that size and shown no wider than `fig-width`, so
+  it still shrinks to a narrower column but a small figure is no longer
+  stretched to fill it. Before, the inline SVG always filled the column and
+  these chunk options did nothing. Plots with an explicit size, and chunks
+  that leave the size at the document's default, are unchanged (VP-165).
+* A nested composition in the first or last row of a composition with a
+  figure title, subtitle, caption or collected legend band now drops its own
+  outer margin on the band's side, as plot cells there already did. Before,
+  the gap between the band and the nested panels was one plot margin larger
+  than beside a plot cell (VP-168).
 * A keyed line, path or polygon drawn from several rows (`mark_line()`,
   `mark_path()`, `mark_area()`, ... with `data_id`) now lists the keys of the
   rows it draws in a `row_keys` element field, and their cross-view

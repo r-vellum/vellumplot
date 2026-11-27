@@ -222,9 +222,38 @@ test_that("aligned composition cells prefix the default key, row as join", {
   expect_false(anyDuplicated(el$key) > 0L)
   expect_identical(
     el$key,
-    paste0("subplot-", rep(1:2, each = 32), ":p1-1:l1:", 1:32)
+    paste0("cell-", rep(1:2, each = 32), ":p1-1:l1:", 1:32)
   )
   expect_identical(.fk_join(el), as.character(rep(1:32, 2)))
+})
+
+test_that("aligned and cell-by-cell cells share one key prefix (VP-167)", {
+  sp <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> select_point("s")
+  # the same plot, aligned and (beside a faceted cell) laid out cell by cell
+  al <- .fk_keyed(hconcat(sp, sp))
+  cb <- .fk_keyed(hconcat(sp, sp |> facet_wrap(~am)))
+  pre <- function(el) unique(sub(":.*", "", el$key))
+  expect_identical(pre(al), c("cell-1", "cell-2"))
+  expect_identical(pre(cb), c("cell-1", "cell-2"))
+  expect_identical(
+    al$key[startsWith(al$key, "cell-1:")],
+    cb$key[startsWith(cb$key, "cell-1:")]
+  )
+})
+
+test_that("two aligned compositions nested in one keep their keys apart (VP-167)", {
+  sp <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> select_point("s")
+  # the outer layout is cell by cell (a title band); each inner one is aligned
+  comp <- vconcat(hconcat(sp, sp), hconcat(sp, sp)) |>
+    compose_annotation(title = "nested")
+  el <- .fk_keyed(comp)
+  expect_equal(nrow(el), 4L * nrow(mtcars))
+  # before, both inner compositions numbered their cells subplot-1, subplot-2
+  expect_false(anyDuplicated(el$key) > 0L)
+  expect_identical(
+    unique(sub(":.*", "", el$key)),
+    paste0("cell-", 1:4)
+  )
 })
 
 test_that("annotate() layers stay unkeyed under a plot-level selection", {

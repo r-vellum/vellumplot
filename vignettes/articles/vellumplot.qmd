@@ -158,6 +158,15 @@ Inside a Quarto or R Markdown document you usually write nothing special: a
 plot printed in a chunk adapts to the target — a crisp inline **SVG** for HTML
 output, and the default vector/raster render for PDF or Word.
 
+In HTML the SVG fills the column at the plot's own aspect. A chunk's
+`fig-width` / `fig-height` (`fig.width` / `fig.height` in R Markdown) sizes a
+plot that has no size of its own: `vplot(df)` without `width` / `height` (or
+a composition of such plots) is laid out at that size, and is shown no wider
+than `fig-width`, so a small figure stays small. A plot given a size, such as
+`vplot(df, width = 5, height = 2)` or a sparkline, keeps it and fills the
+column. Only values set on the chunk count; the document's defaults leave
+plots as they are.
+
 ## Where to next
 
 - **[Reference](../reference/index.html)**: every mark, scale, coord, facet,

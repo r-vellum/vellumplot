@@ -200,7 +200,7 @@ test_that("composition cells get unique keys + a join id; single plots do not", 
   kc <- vellum::scene_model(vellum::as_vellum_scene(comp))$elements
   kc <- kc[!is.na(kc$key), , drop = FALSE]
   expect_equal(length(unique(kc$key)), nrow(kc)) # all keys unique
-  expect_true(all(grepl("^subplot-", kc$key)))
+  expect_true(all(grepl("^cell-", kc$key)))
   joins <- vapply(kc$meta, function(m) m$join, character(1))
   expect_setequal(joins, as.character(rep(seq_len(nrow(df)), 2))) # shared identity
 })
