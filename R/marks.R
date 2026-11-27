@@ -3558,9 +3558,11 @@ mark_spoke <- function(
 #' data, unlike [mark_line()], which sorts them by `x` (ggplot2's
 #' `geom_path()`).
 #'
-#' As in ggplot2, `fill` fills a polygon (default `"grey20"`) and `color`
-#' outlines it (no outline by default); a `color` given without any `fill` fills
-#' the polygon instead, as it does for the other filled marks.
+#' As in ggplot2, `fill` fills a polygon and `color` outlines it (no outline by
+#' default); a `color` given without any `fill` fills the polygon instead, as it
+#' does for the other filled marks. With neither, a polygon fills with
+#' `col_mix(ink, paper, 0.2)` from the theme's [element_geom()] (`"grey20"` on a
+#' light theme), or with `element_geom(fill = )` when the theme sets one.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `group` (one polygon / path per

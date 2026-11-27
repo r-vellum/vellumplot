@@ -136,11 +136,9 @@ when it doesn't. `text = "outline"` (in `render_plot()`, `pptx_pages()` and
 `as_dml()`) writes glyph outlines instead, which look the same everywhere but
 can't be edited as text. DrawingML has no clipping, blend modes or masks, so
 vellum cuts clipped geometry in advance and draws the parts it can't express
-(a blur, a blend mode) as a picture, with a warning. PowerPoint output needs
-vellum 0.18.0 or later; see vellum's
-[`as_dml()`](https://r-vellum.github.io/vellum/reference/as_dml.html) and
-[`pptx_pages()`](https://r-vellum.github.io/vellum/reference/pptx_pages.html)
-for the details.
+(a blur, a blend mode) as a picture, with a warning. vellum's
+[PowerPoint article](https://r-vellum.github.io/vellum/articles/powerpoint.html)
+covers the details.
 
 For many figures at once, `pdf_pages()` and `render_all()` are covered in
 [Facets and composition](facets-and-composition.html#multi-page-and-batch-output).

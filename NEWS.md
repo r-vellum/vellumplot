@@ -38,6 +38,10 @@
   shrinks for a word too long for its room or, on a small plot, a name too
   tall for it, and the name moves inward only as far as it has to (VP-148).
 
+* vellumplot now requires vellum 0.18.0 or later, the first release that
+  writes PowerPoint. With vellum 0.17.0 installed, `render_plot(p, "x.pptx")`
+  and `vellum::as_dml()` failed (VP-160).
+
 ## Documentation
 
 * The articles cover more of the package (D-20 to D-23, D-25). "Effects and
@@ -74,6 +78,11 @@
 * The README lists PowerPoint output, math labels, `theme_brand()`, faceted
   animation, frame variables and the ggplot2-parity work, and the articles
   no longer say output is PNG, SVG and PDF only (D-24).
+* `?render_plot` has a PowerPoint example (VP-160), and Get started's
+  "Saving to PowerPoint" section links to vellum's PowerPoint article (D-36).
+* `?mark_polygon` gives the default fill as the theme's
+  `col_mix(ink, paper, 0.2)` from `element_geom()`, which is `"grey20"` only
+  on a black-ink, white-paper theme, rather than a fixed `"grey20"` (VP-157).
 
 # vellumplot 0.25.1
 

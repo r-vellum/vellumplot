@@ -40,7 +40,7 @@ format is taken from the file extension (\code{.png}, \code{.svg}, \code{.pdf} o
 }
 \details{
 A \code{.pptx} path writes a one-slide PowerPoint file of editable shapes at the
-plot's size (needs vellum 0.18.0 or later; no other package). For several
+plot's size, with no other package needed. For several
 slides use \code{\link[vellum:pptx_pages]{vellum::pptx_pages()}}, and to place a plot on a slide of an
 officer deck wrap it in \code{\link[vellum:as_dml]{vellum::as_dml()}} for \code{officer::ph_with()}.
 }
@@ -50,4 +50,7 @@ f <- tempfile(fileext = ".png")
 render_plot(p, f)
 render_plot(p, f, dpi = 300) # denser raster, same physical size
 render_plot(p, f, cvd = "deuteranopia") # preview for red-green colour blindness
+
+# a one-slide PowerPoint file of editable shapes
+render_plot(p, tempfile(fileext = ".pptx"))
 }

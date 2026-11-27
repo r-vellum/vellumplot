@@ -71,9 +71,11 @@ data, unlike \code{\link[=mark_line]{mark_line()}}, which sorts them by \code{x}
 \code{geom_path()}).
 }
 \details{
-As in ggplot2, \code{fill} fills a polygon (default \code{"grey20"}) and \code{color}
-outlines it (no outline by default); a \code{color} given without any \code{fill} fills
-the polygon instead, as it does for the other filled marks.
+As in ggplot2, \code{fill} fills a polygon and \code{color} outlines it (no outline by
+default); a \code{color} given without any \code{fill} fills the polygon instead, as it
+does for the other filled marks. With neither, a polygon fills with
+\code{col_mix(ink, paper, 0.2)} from the theme's \code{\link[=element_geom]{element_geom()}} (\code{"grey20"} on a
+light theme), or with \code{element_geom(fill = )} when the theme sets one.
 }
 \examples{
 tri <- data.frame(
