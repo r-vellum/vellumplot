@@ -370,11 +370,14 @@ NULL
     # are neither drawn nor counted as drawn by provenance. `.build_panels()`
     # sums the per-panel counts into one warning per layer.
     miss <- .missing_position_rows(layer, d)
+    # An area or ribbon keeps such rows, so it can leave a gap there, but they
+    # are not drawn and count in the same warning (VP-162).
+    gap <- .missing_gap_rows(layer, d)
     # So are rows a position scale's `oob = "censor"` puts outside its limits
     # (before the stat, as in ggplot2), counted into the same warning.
     cens <- !miss & .censored_position_rows(spec, layer, d)
     # Their input rows, so a layer repeated in several panels counts each once.
-    missing_rows <- idx[miss]
+    missing_rows <- idx[miss | gap]
     censored_rows <- idx[cens]
     if (any(miss | cens)) {
       d <- d[!(miss | cens), , drop = FALSE]
@@ -396,8 +399,9 @@ NULL
 # Marks that draw one element per row and simply leave out a row whose
 # position is missing. Their missing rows are removed (with a warning) rather
 # than reaching the emitter at NaN. Paths (line, step, area, ribbon) keep theirs:
-# an interior NA breaks the path into a gap, as in ggplot2. Layout and graph
-# marks compute their own positions.
+# an interior NA breaks the path into a gap, as in ggplot2. An area or ribbon
+# splits into runs there and counts the rows as removed (`.NA_GAP_MARKS`).
+# Layout and graph marks compute their own positions.
 .NA_REMOVE_MARKS <- c(
   "point",
   "bar",
@@ -426,13 +430,20 @@ NULL
   is.numeric(v) || inherits(v, c("Date", "POSIXt"))
 }
 
+# Filled paths that keep a row missing a continuous position (so they can split
+# into runs there and leave a gap) but don't draw it, so it counts as removed in
+# the "Removed n rows" warning. Only with the identity stat: a stat that reads
+# the row (a density) drops it with its own warning.
+.NA_GAP_MARKS <- c("area", "ribbon")
+
 # Logical per row of `data`: is a continuous position channel (`x`, `y`, `xend`,
 # `ymin`, ...; see `.DIAG_POS_CHANNELS`) of `layer` missing? Only per-row data
 # channels count: a constant, or an `after_stat()` channel, describes no row.
-.missing_position_rows <- function(layer, data) {
+# Only for the marks in `marks`.
+.missing_position_rows <- function(layer, data, marks = .NA_REMOVE_MARKS) {
   n <- nrow(data)
   miss <- rep(FALSE, n)
-  if (!n || !layer@mark %in% .NA_REMOVE_MARKS) {
+  if (!n || !layer@mark %in% marks) {
     return(miss)
   }
   chans <- intersect(
@@ -450,6 +461,15 @@ NULL
     }
   }
   miss
+}
+
+# The rows an area or ribbon keeps as a gap: `.missing_position_rows()` for
+# the marks in `.NA_GAP_MARKS` under the identity stat.
+.missing_gap_rows <- function(layer, data) {
+  if (!identical(layer@stat, "identity")) {
+    return(rep(FALSE, nrow(data)))
+  }
+  .missing_position_rows(layer, data, marks = .NA_GAP_MARKS)
 }
 
 # One warning per layer for the rows not drawn, in ggplot2's wording: the rows

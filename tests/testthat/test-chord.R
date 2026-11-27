@@ -187,3 +187,121 @@ test_that("chord renders (data frame, matrix, sorted, target-coloured)", {
     expect_gt(file.info(f)$size, 0)
   }
 })
+
+# The chord's sector ring radius (native) and its panel's x domain, from the
+# compiled scene: the ring is the one sector grob.
+chord_ring <- function(p) {
+  s <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+  val <- function(x) if (is.list(x)) x$v %||% x else x
+  out <- NULL
+  walk <- function(node) {
+    if (identical(node$class, "grob_sector") && is.null(out)) {
+      out <<- max(unlist(val(node$r1$value)))
+    }
+    for (ch in node) {
+      if (is.list(ch)) walk(ch)
+    }
+  }
+  walk(s$root)
+  out
+}
+
+test_that("chord labels fit the real panel: margin, titles, composition (VP-155)", {
+  flows <- data.frame(
+    from = c("Northern Territories", "Basin and Range", "East"),
+    to = c("Basin and Range", "Northern Territories", "Northern Territories"),
+    value = c(3, 4, 2)
+  )
+  p <- vchord(flows, from, to, value)
+  alone <- chord_ring(p)
+  # A wide margin and a title leave a smaller panel, so the ring shrinks to
+  # keep the labels inside it; so does a composition cell.
+  boxed <- chord_ring(
+    p |> labs(title = "Title", subtitle = "Sub") |> theme(plot.margin = 20)
+  )
+  cell <- chord_ring(hconcat(p, p, width = 6, height = 3))
+  expect_lt(boxed, alone)
+  expect_lt(cell, alone)
+  # Without labels nothing needs room: the ring keeps its radius.
+  bare <- vchord(flows, from, to, value, label = FALSE)
+  expect_equal(chord_ring(bare), vellumplot:::.CHORD_R_OUT)
+  expect_equal(
+    chord_ring(bare |> theme(plot.margin = 20)),
+    vellumplot:::.CHORD_R_OUT
+  )
+})
+
+test_that(".chord_fit() puts the longest label's end inside the panel (VP-155)", {
+  labs <- c("Borussia Moenchengladbach", "X")
+  ext <- vellumplot:::.chord_extent(labs, TRUE)
+  ch <- list(ext = ext, sectors = data.frame(node = labs))
+  ctx <- vellumplot:::.mark_ctx
+  old <- ctx$panel_mm
+  on.exit(ctx$panel_mm <- old)
+  ctx$panel_mm <- NULL
+  expect_identical(vellumplot:::.chord_fit(ch, TRUE), list(k = 1, font = 1))
+  lw <- vellumplot:::.mm_tw(
+    labs[1],
+    fs = vellumplot:::.CHORD_LABEL_FS,
+    el = vellumplot:::.mark_text_el(vellumplot:::.CHORD_LABEL_FS)
+  )
+  # Sides that leave the label room (a narrower panel clamps the extent),
+  # taken from the measured width: text widths differ between platforms.
+  for (side in lw * c(3, 4, 6)) {
+    ctx$panel_mm <- c(w = side, h = side)
+    fit <- vellumplot:::.chord_fit(ch, TRUE)
+    expect_identical(fit$font, 1)
+    k <- fit$k
+    # mm per native unit on the ~5%-expanded domain [-1.05 ext, 1.05 ext]
+    mm <- side / (2.1 * ext)
+    reach <- k * (vellumplot:::.CHORD_R_OUT + 0.04) * mm + lw
+    expect_lte(reach, side / 2)
+  }
+})
+
+test_that("a small chord panel shrinks the ring, then the label font (VP-155)", {
+  labs <- c("Borussia Moenchengladbach", "X")
+  ext <- vellumplot:::.chord_extent(labs, TRUE)
+  ch <- list(ext = ext, sectors = data.frame(node = labs))
+  ctx <- vellumplot:::.mark_ctx
+  old <- ctx$panel_mm
+  on.exit(ctx$panel_mm <- old)
+  lw <- vellumplot:::.chord_label_mm(labs)
+  inner <- vellumplot:::.CHORD_R_OUT + 0.04
+  reach <- function(fit, side) {
+    fit$k * inner * side / (2.1 * ext) + fit$font * lw
+  }
+  # A panel with room for the labels around a ring of at least
+  # `.CHORD_MIN_RING` of its half-side: the ring alone shrinks.
+  side <- 3 * lw
+  ctx$panel_mm <- c(w = side, h = side)
+  fit <- vellumplot:::.chord_fit(ch, TRUE)
+  expect_identical(fit$font, 1)
+  expect_lte(reach(fit, side), side / 2)
+  # Smaller, the ring stops at its minimum and the font shrinks to fit.
+  side <- 2.2 * lw
+  ctx$panel_mm <- c(w = side, h = side)
+  fit <- vellumplot:::.chord_fit(ch, TRUE)
+  expect_lt(fit$font, 1)
+  expect_gt(fit$font, vellumplot:::.CHORD_MIN_FONT)
+  expect_lte(reach(fit, side), side / 2 + 1e-9)
+  # Too small even at the smallest font: the labels are left to clip.
+  side <- 1.2 * lw
+  ctx$panel_mm <- c(w = side, h = side)
+  fit <- vellumplot:::.chord_fit(ch, TRUE)
+  expect_identical(fit$font, vellumplot:::.CHORD_MIN_FONT)
+  expect_gt(fit$k, 0)
+})
+
+test_that("chord labels fit three stacked cells (VP-155)", {
+  flows <- data.frame(
+    from = c("Northern Territories", "Basin and Range", "Coastal Plain Region"),
+    to = c("Basin and Range", "Coastal Plain Region", "Northern Territories"),
+    value = c(3, 4, 2)
+  )
+  p <- vchord(flows, from, to, value)
+  big <- chord_ring(p)
+  small <- chord_ring(vconcat(p, p, p, width = 4, height = 8))
+  expect_lt(small, big)
+  expect_gt(small, 0)
+})

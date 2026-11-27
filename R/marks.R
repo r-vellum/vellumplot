@@ -407,6 +407,9 @@ after_stat <- function(x) x
     position <- rlang::eval_tidy(quos$position)
     quos <- quos[names(quos) != "position"]
   }
+  # A rule's `x` / `y` is its intercept (VP-156); renamed before the split, so
+  # a constant becomes the constant `xintercept` it means.
+  quos <- .rule_intercepts(mark, quos, list(), call = rlang::caller_env())$encoding
   split <- .split_encodings(quos)
   # Pre-evaluated always-constant params (e.g. mm nudges) bypass encoding
   # splitting, so a negative literal like `nudge_y = -3` is not mistaken for a
@@ -702,6 +705,13 @@ after_stat <- function(x) x
 #'   groups; a continuous colour never does, so a line mapped to one stays
 #'   connected and changes colour along its length.
 #'   `group = 1` makes the whole layer one group.
+#'
+#'   `mark_rule()` takes `yintercept` (horizontal lines) and `xintercept`
+#'   (vertical lines), a constant (`yintercept = 0`) or a mapped column (one
+#'   line per row), and draws each across the whole panel. An `x` or `y` given
+#'   instead is read as `xintercept` / `yintercept`, so `mark_rule(x = 0)`
+#'   draws a vertical line at zero. For a line between two points use
+#'   [mark_segment()]; for a sloped line, [mark_abline()].
 #' @param size,shape Convenience arguments for the point size (in mm) / shape;
 #'   may be a constant or a mapped expression. A shape is a built-in marker
 #'   (`"circle"`, `"square"`, `"triangle"`, `"diamond"`, `"plus"`, `"cross"`,
@@ -1014,6 +1024,48 @@ mark_rule <- function(
     data = data,
     position = position
   )
+}
+
+# A rule layer draws at `xintercept` / `yintercept`; an `x` / `y` given
+# instead names the same thing (`mark_rule(x = 0)`, or a Vega-Lite `rule` with
+# only an `x` field), so it is read as the intercept. Before, it was kept as a
+# position nothing drew, so the rule silently disappeared and the axis could be
+# titled "0" (VP-156). Applied to every rule layer as it is built
+# (`.add_layer()`, `from_spec()` and so the Vega-Lite importer), to its
+# mapped `encoding` and its constant `params` alike. A rule with a second
+# position (`xend`, `xmax`, ... -- a Vega-Lite segment) is left alone. Given
+# alongside its intercept, `x` / `y` is dropped with a warning.
+.RULE_SPAN_FIELDS <- c("xend", "yend", "xmin", "xmax", "ymin", "ymax")
+
+.rule_intercepts <- function(mark, encoding, params, call = NULL) {
+  if (!identical(mark, "rule")) {
+    return(list(encoding = encoding, params = params))
+  }
+  given <- c(names(encoding), names(params))
+  if (any(.RULE_SPAN_FIELDS %in% given)) {
+    return(list(encoding = encoding, params = params))
+  }
+  for (a in c("x", "y")) {
+    ai <- paste0(a, "intercept")
+    if (!a %in% given) {
+      next
+    }
+    if (ai %in% given) {
+      cli::cli_warn(
+        c(
+          "{.fn mark_rule} ignores {.arg {a}} when {.arg {ai}} is given.",
+          i = "A rule is drawn at {.arg {ai}}."
+        ),
+        call = call
+      )
+      encoding[[a]] <- NULL
+      params[[a]] <- NULL
+    } else {
+      names(encoding)[names(encoding) == a] <- ai
+      names(params)[names(params) == a] <- ai
+    }
+  }
+  list(encoding = encoding, params = params)
 }
 
 #' Reference lines and function curves

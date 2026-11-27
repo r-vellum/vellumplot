@@ -23,11 +23,16 @@ NULL
   if (!nrow(sec)) {
     return(scene)
   }
-  r_in <- .CHORD_R_IN
+  # Every radius scales by `k`, and the label font by `fit$font`, so the
+  # labels fit the real panel (VP-155).
+  fit <- .chord_fit(ch, isTRUE(L$params$label))
+  k <- fit$k
+  r_in <- k * .CHORD_R_IN
+  r_out <- k * .CHORD_R_OUT
   dir <- L$params$direction %||% "gradient"
   grad <- dir %in% c("gradient", "both")
   # "gap" pulls the target end short of the ring, leaving a directional gap.
-  r_tgt <- if (dir %in% c("gap", "both")) r_in - .CHORD_GAP else r_in
+  r_tgt <- if (dir %in% c("gap", "both")) r_in - k * .CHORD_GAP else r_in
 
   # Ribbons: a closed polygon bounded by the source sub-arc, a Bezier through the
   # centre to the target sub-arc, the target sub-arc, and a Bezier back. The
@@ -81,7 +86,7 @@ NULL
       x = vellum::vl_unit(rep(0, n), "native"),
       y = vellum::vl_unit(rep(0, n), "native"),
       r0 = vellum::vl_unit(rep(r_in, n), "native"),
-      r1 = vellum::vl_unit(rep(.CHORD_R_OUT, n), "native"),
+      r1 = vellum::vl_unit(rep(r_out, n), "native"),
       theta0 = sec$theta0,
       theta1 = sec$theta1,
       fill = sec$colour,
@@ -94,8 +99,8 @@ NULL
   # Upright-flipping reverses the reading direction on the left half, so the
   # justification that means "outward" flips with it.
   if (isTRUE(L$params$label)) {
-    fs <- .CHORD_LABEL_FS
-    rl <- .CHORD_R_OUT + 0.04
+    fs <- .CHORD_LABEL_FS * fit$font
+    rl <- k * (.CHORD_R_OUT + 0.04)
     mid <- (sec$theta0 + sec$theta1) / 2
     for (i in seq_len(n)) {
       deg <- ((mid[i] * 180 / pi + 180) %% 360) - 180

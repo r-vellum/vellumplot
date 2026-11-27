@@ -45,7 +45,9 @@ breaks (on a continuous scale).}
 
 \item{cap}{Cap the axis line (theme element \code{axis.line}) at the outermost
 breaks: \code{"none"} (default; the line spans the panel), \code{"both"}, \code{"upper"}
-or \code{"lower"}. \code{TRUE} / \code{FALSE} mean \code{"both"} / \code{"none"}.}
+or \code{"lower"}. \code{TRUE} / \code{FALSE} mean \code{"both"} / \code{"none"}. With
+\code{minor.ticks = TRUE} the line reaches the outermost tick, major or minor,
+as in ggplot2.}
 
 \item{long, mid, short}{Lengths of the ticks at 10^k, 5 x 10^k and the other
 multiples, relative to the theme's \code{axis.ticks.length}.}

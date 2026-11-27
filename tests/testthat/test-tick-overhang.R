@@ -441,3 +441,65 @@ test_that("long end labels at both ends share the wrap budget (VP-146 review)", 
   expect_true(all(slack >= -1e-2))
   expect_true(all(slack <= 0.1))
 })
+
+# VP-153: a wrapped end label measures as its wrap box, but its lines are
+# centred in the box, so it reaches half its widest line, not half the box.
+test_that("a wrapped end label reaches half its widest line (VP-153)", {
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
+  el <- rt[["axis.text.x"]]
+  lab <- "last break here wrapped"
+  wrap <- 25
+  lw <- vellumplot:::.wrapped_line_mm(lab, el, wrap)
+  # greedy wrap: "last break here" / "wrapped"
+  expect_equal(
+    lw,
+    vellumplot:::.el_strwidth("last break here", el, features = vellumplot:::.TNUM)
+  )
+  expect_lt(lw, wrap)
+  # Not wrapped, or not a plain string: nothing to measure.
+  expect_true(is.na(vellumplot:::.wrapped_line_mm(lab, el, NA_real_)))
+  expect_true(is.na(vellumplot:::.wrapped_line_mm(NA_character_, el, wrap)))
+  # A word wider than the box takes a line of its own, as vellum wraps it.
+  long <- "Antidisestablishmentarianism x"
+  expect_equal(
+    vellumplot:::.wrapped_line_mm(long, el, 5),
+    vellumplot:::.el_strwidth(
+      "Antidisestablishmentarianism",
+      el,
+      features = vellumplot:::.TNUM
+    )
+  )
+  sc <- list(breaks = c(1, 10), labels = c("first", lab), domain = c(1, 10))
+  ex <- vellumplot:::.end_tick_extent(
+    sc,
+    el,
+    0,
+    c("centre", "top"),
+    "x",
+    wrap_mm = wrap
+  )
+  expect_equal(ex$e[2], lw / 2)
+  # A word wider than the box reserves its full width, past the box.
+  big <- "Supercalifragilisticexpialidocious"
+  sc2 <- list(breaks = c(1, 10), labels = c("first", big), domain = c(1, 10))
+  ex2 <- vellumplot:::.end_tick_extent(
+    sc2,
+    el,
+    0,
+    c("centre", "top"),
+    "x",
+    wrap_mm = 10
+  )
+  expect_equal(
+    ex2$e[2],
+    vellumplot:::.el_strwidth(big, el, features = vellumplot:::.TNUM) / 2,
+    tolerance = 1e-6
+  )
+  # Unwrapped, the reach is half the label as before.
+  ex0 <- vellumplot:::.end_tick_extent(sc, el, 0, c("centre", "top"), "x")
+  expect_equal(
+    ex0$e[2],
+    vellumplot:::.el_strwidth(lab, el, features = vellumplot:::.TNUM) / 2,
+    tolerance = 1e-3
+  )
+})

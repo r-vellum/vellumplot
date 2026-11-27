@@ -1160,6 +1160,15 @@ NULL
     w <- vellum::vl_convert(vellum::grobwidth(g), "mm")
     h <- vellum::vl_convert(vellum::grobheight(g), "mm")
     x <- c(-hj, 1 - hj, 1 - hj, -hj) * w
+    # A wrapped label measures as its wrap box, but its lines are centred in
+    # the box: it reaches half its widest line either side of the box centre,
+    # not half the box -- less for short lines, more for a word wider than the
+    # box, which takes a line of its own (VP-153).
+    lw <- .wrapped_line_mm(labs[[i]], el, wrap_mm)
+    if (!is.na(lw)) {
+      mid <- (0.5 - hj) * w
+      x <- mid + c(-0.5, 0.5, 0.5, -0.5) * lw
+    }
     y <- c(-vj, -vj, 1 - vj, 1 - vj) * h
     along <- if (axis == "y") {
       x * sin(th) + y * cos(th)
@@ -1172,6 +1181,41 @@ NULL
     e = c(reach(lo)[["lo"]], reach(hi)[["hi"]]),
     g = c(frac[lo], 1 - frac[hi])
   )
+}
+
+# The widest line (mm) of a plain tick label wrapped at `wrap_mm` as
+# `.axis_text_grob()` draws it: vellum's greedy word wrap (words fill a line
+# while it fits; a word wider than the box gets a line of its own), measured in
+# the element's font. NA when the label is not wrapped or not a plain string.
+.wrapped_line_mm <- function(label, el, wrap_mm) {
+  if (
+    !(length(wrap_mm) == 1L && is.finite(wrap_mm) && wrap_mm > 0) ||
+      !is.character(label) ||
+      length(label) != 1L ||
+      is.na(label)
+  ) {
+    return(NA_real_)
+  }
+  width <- function(x) .el_strwidth(x, el, features = .TNUM)
+  out <- 0
+  for (para in strsplit(label, "\n", fixed = TRUE)[[1]]) {
+    words <- strsplit(para, "[ \t]+")[[1]]
+    words <- words[nzchar(words)]
+    i <- 1L
+    while (i <= length(words)) {
+      cand <- vapply(
+        seq.int(i, length(words)),
+        function(k) paste(words[i:k], collapse = " "),
+        character(1)
+      )
+      w <- width(cand)
+      fits <- which(w <= wrap_mm)
+      take <- if (length(fits)) max(fits) else 1L
+      out <- max(out, w[take])
+      i <- i + take
+    }
+  }
+  out
 }
 
 # Solve the end-tick spacers of all four sides together (VP-140). `need(s)`

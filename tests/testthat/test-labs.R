@@ -211,3 +211,46 @@ test_that("labs(x = NULL) blanks the axis title; an unpassed arg is untouched", 
   expect_null(labs(p, y = "MPG")@labels$x) # x not passed -> not set
   expect_identical(labs(p, colour = NULL)@labels$color, "") # alias, explicit NULL
 })
+
+test_that("labs() typesets a plotmath expression via plotmath() (VP-163)", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    labs(x = expression(alpha^2), y = quote(beta[i]), title = "Plain")
+  expect_s3_class(p@labels$x, "vellum::vellum_label")
+  expect_identical(p@labels$x@tex, vellum::plotmath(expression(alpha^2))@tex)
+  expect_identical(p@labels$y@tex, vellum::plotmath(expression(beta[i]))@tex)
+  expect_identical(p@labels$title, "Plain")
+  # The drawn axis title is the typeset label, not the deparsed source.
+  svg <- plot_svg(p)
+  # The alt text, <title> and <desc> read a plain rendering, not TeX source.
+  expect_false(grepl("\\alpha", svg, fixed = TRUE))
+  expect_match(plot_alt(p), "\u03b1^2 (horizontal axis)", fixed = TRUE)
+  expect_match(plot_alt(p), "\u03b2_i (vertical axis)", fixed = TRUE)
+  t <- plot_svg(p |> labs(title = expression(paste("Effect of ", mu))))
+  expect_match(t, "<title[^>]*>Effect of \u03bc</title>")
+})
+
+test_that("labs() refuses an expression for alt and warns on a long one", {
+  b <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_error(labs(b, alt = expression(alpha)), "must be plain text")
+  expect_warning(
+    p <- labs(b, x = expression(a, b)),
+    "uses only the first element"
+  )
+  expect_identical(p@labels$x@text, "a")
+  expect_error(
+    spec_to_json(labs(b, x = expression(alpha))),
+    "plotmath"
+  )
+})
+
+test_that(".plotmath_plain() reads common plotmath (VP-163)", {
+  pp <- vellumplot:::.plotmath_plain
+  expect_identical(pp(quote(alpha^2)), "\u03b1^2")
+  expect_identical(pp(quote(beta[i])), "\u03b2_i")
+  expect_identical(pp(quote(R^2 == 0.75)), "R^2 = 0.75")
+  expect_identical(pp(quote(list(a, b))), "a, b")
+  expect_identical(pp(quote(hat(mu) * "/s")), "\u03bc/s")
+  expect_identical(pp(quote(frac(1, 2))), "1/2")
+  expect_identical(pp(quote(-x)), "-x")
+})

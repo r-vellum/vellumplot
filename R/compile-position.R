@@ -342,19 +342,72 @@ NULL
 # stack to `[-1, 0]`. Areas are first interpolated onto a common x grid
 # (`.align_area()`), so groups sampled at different x still stack.
 .position_stack <- function(L, fill = FALSE) {
+  gap <- NULL
+  height <- NULL
   if (identical(L$mark, "area")) {
+    # A missing height leaves a gap in its own series (VP-162). `.align_area()`
+    # appends its rows after the input's, which are never gaps.
+    gap <- is.na(rep_len(L$values$y, L$n))
     L <- .align_area(L)
+    gap <- c(gap, rep(FALSE, L$n - length(gap)))
+    if (any(gap)) {
+      height <- .area_gap_heights(L, gap)
+    }
   }
-  S <- .stack_spans(L, fill)
+  S <- .stack_spans(L, fill, height = height)
   L$values$ymin <- pmin(S$start, S$end)
   L$values$ymax <- pmax(S$start, S$end)
   L$values$y <- S$end # the far end, for any y reference / training
+  hide <- if (is.null(gap)) S$unknown else gap | S$unknown
+  if (any(hide)) {
+    L$values$ymin[hide] <- NA_real_
+    L$values$ymax[hide] <- NA_real_
+    L$values$y[hide] <- NA_real_
+  }
   L
+}
+
+# The heights a stacked area stacks with when some are missing (`gap`): its
+# own, with each missing one interpolated along its series (its group, in x
+# order) from the nearest known heights either side. The interpolated height
+# is never drawn -- the series leaves a gap there -- but it is the baseline of
+# the groups stacked above it, and part of the total under `position =
+# "fill"`, so those keep their place instead of dropping to the axis or
+# spiking to 100% (VP-162 review). A missing height at a series end has no
+# neighbour on one side, so it stays NA: `.stack_spans()` then breaks the
+# groups above it (under `fill`, every group) at that x too.
+.area_gap_heights <- function(L, gap) {
+  n <- L$n
+  y <- as.numeric(rep_len(L$values$y, n))
+  x <- as.numeric(rep_len(L$values$x, n))
+  grp <- .group_key(L)
+  g <- if (is.null(grp)) rep("", n) else as.character(grp)
+  for (rows in split(seq_len(n), g)) {
+    miss <- rows[gap[rows] & is.finite(x[rows])]
+    known <- rows[!gap[rows] & is.finite(x[rows]) & is.finite(y[rows])]
+    if (!length(miss) || length(known) < 2L) {
+      next
+    }
+    y[miss] <- stats::approx(
+      x[known],
+      y[known],
+      xout = x[miss],
+      ties = mean,
+      rule = 1
+    )$y
+  }
+  y
 }
 
 # The stacked extent of every row: `start` is the end nearer zero, `end` the far
 # end (below `start` for a negative height). See `.position_stack()`.
-.stack_spans <- function(L, fill = FALSE) {
+#
+# `height`, when given, replaces the rows' heights (`.area_gap_heights()`); an
+# NA in it is an unknown height. It stacks as zero, but no row it would hold
+# up has a known position -- the rows above it in its stack, and under `fill`
+# every row at its x, whose total it is part of -- so `unknown` marks them
+# (and the row itself).
+.stack_spans <- function(L, fill = FALSE, height = NULL) {
   n <- L$n
   # Recycle to n: a constant x (e.g. a pie's `x = factor(1)`) resolves to length
   # one, but stacking runs by row, so every value must be n long.
@@ -362,7 +415,8 @@ NULL
   if (is.factor(x)) {
     x <- as.character(x)
   }
-  y <- as.numeric(rep_len(L$values$y, n))
+  y <- as.numeric(rep_len(height %||% L$values$y, n))
+  unknown <- if (is.null(height)) rep(FALSE, n) else is.na(y)
   # A non-finite height would poison the whole stack's cumulative sum (and, under
   # fill, every proportion in it). ggplot2 drops NA rows before stacking; treat
   # non-finite as a zero-height contribution so the rest of the stack is sound.
@@ -383,6 +437,12 @@ NULL
         next
       }
       h <- y[r]
+      if (any(unknown[r])) {
+        # An unknown height (stacked as zero, so on the positive side) leaves
+        # every row above it unknown; under fill, every row at this x.
+        first <- which(unknown[r])[1]
+        unknown[if (fill) rows else r[seq_along(r) >= first]] <- TRUE
+      }
       cum <- cumsum(h)
       total <- abs(cum[length(cum)])
       if (fill && total > 0) {
@@ -393,7 +453,7 @@ NULL
       start[r] <- cum - h
     }
   }
-  list(start = start, end = end)
+  list(start = start, end = end, unknown = unknown)
 }
 
 # Interpolate a grouped area onto the union of its groups' x values, as
@@ -416,16 +476,20 @@ NULL
   }
   x <- as.numeric(x0)
   y <- as.numeric(rep_len(L$values$y, n))
-  ok <- is.finite(x) & is.finite(y)
+  okx <- is.finite(x)
+  ok <- okx & is.finite(y)
   g <- as.character(grp)
   series <- split(which(ok), factor(g[ok], levels = unique(g[ok])))
   if (length(series) < 2L) {
     return(L)
   }
+  # A group's rows with a known x, its gap rows (a missing height) included:
+  # a gap row holds its x, so the group is not interpolated across it (VP-162).
+  grp_rows <- split(which(okx), factor(g[okx], levels = names(series)))
   ux <- sort(unique(x[ok]))
   shared <- vapply(
-    series,
-    function(idx) identical(sort(unique(x[idx])), ux),
+    names(series),
+    function(k) identical(sort(unique(x[grp_rows[[k]]])), ux),
     logical(1)
   )
   if (all(shared)) {
@@ -445,33 +509,45 @@ NULL
   new_y <- numeric(0)
   new_src <- integer(0)
   new_members <- list()
-  for (idx in series) {
-    idx <- idx[order(x[idx])]
-    xs <- x[idx]
-    r <- range(xs)
-    pad <- c(if (r[1] > lo) r[1] - adj, if (r[2] < hi) r[2] + adj)
-    inside <- grid[grid > r[1] & grid < r[2] & !grid %in% xs]
-    yi <- if (length(inside)) {
-      stats::approx(xs, y[idx], xout = inside, ties = mean)$y
-    } else {
-      numeric(0)
+  for (k in names(series)) {
+    idx <- series[[k]]
+    all_idx <- grp_rows[[k]]
+    all_idx <- all_idx[order(x[all_idx])]
+    # The group's runs between gap rows; each run is interpolated on its own.
+    run <- cumsum(!ok[all_idx])[ok[all_idx]]
+    idx <- all_idx[ok[all_idx]]
+    r <- range(x[idx])
+    for (ri in split(seq_along(idx), run)) {
+      ridx <- idx[ri]
+      xs <- x[ridx]
+      inside <- grid[grid > xs[1] & grid < xs[length(xs)] & !grid %in% xs]
+      # The group's own pads go with its first and last runs.
+      rpad <- c(
+        if (ri[1] == 1L && r[1] > lo) r[1] - adj,
+        if (ri[length(ri)] == length(idx) && r[2] < hi) r[2] + adj
+      )
+      yi <- if (length(inside)) {
+        stats::approx(xs, y[ridx], xout = inside, ties = mean)$y
+      } else {
+        numeric(0)
+      }
+      gx <- c(inside, rpad)
+      if (!length(gx)) {
+        next
+      }
+      # The run's nearest row at or left of each added x (its first row for a
+      # left pad); the right neighbour too, for provenance.
+      left <- findInterval(gx, xs)
+      right <- pmin(left + 1L, length(xs))
+      left[left < 1L] <- 1L
+      new_x <- c(new_x, gx)
+      new_y <- c(new_y, yi, rep(0, length(rpad)))
+      new_src <- c(new_src, ridx[left])
+      new_members <- c(
+        new_members,
+        Map(function(a, b) unique(c(a, b)), ridx[left], ridx[right])
+      )
     }
-    gx <- c(inside, pad)
-    if (!length(gx)) {
-      next
-    }
-    # The group's nearest row at or left of each added x (its first row for a
-    # left pad); the right neighbour too, for provenance.
-    left <- findInterval(gx, xs)
-    right <- pmin(left + 1L, length(xs))
-    left[left < 1L] <- 1L
-    new_x <- c(new_x, gx)
-    new_y <- c(new_y, yi, rep(0, length(pad)))
-    new_src <- c(new_src, idx[left])
-    new_members <- c(
-      new_members,
-      Map(function(a, b) unique(c(a, b)), idx[left], idx[right])
-    )
   }
   if (!length(new_x)) {
     return(L)

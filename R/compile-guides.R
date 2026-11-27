@@ -184,9 +184,7 @@ NULL
 # major tick length, halfway between the breaks, inside the panel like the
 # major ones.
 .minor_ticks <- function(scene, sc, tlen, el, axis) {
-  m <- .minor_breaks(sc$breaks)
-  dom <- range(sc$domain)
-  m <- m[m >= dom[1] & m <= dom[2]]
+  m <- .minor_in_domain(sc)
   k <- length(m)
   if (!k) {
     return(scene)
@@ -214,6 +212,13 @@ NULL
     )
   }
   vellum::draw(scene, g)
+}
+
+# The minor breaks of scale `sc` inside its domain: where the minor ticks go.
+.minor_in_domain <- function(sc) {
+  m <- .minor_breaks(sc$breaks)
+  dom <- range(sc$domain)
+  m[m >= dom[1] & m <= dom[2]]
 }
 
 # Log10 axis ticks (`guide_axis_logticks()`), each `len` x the theme tick
@@ -533,7 +538,13 @@ NULL
   }
   scene <- vellum::push(scene, vp)
   if (!.is_blank(aline)) {
-    s <- .axis_line_seg(geom$seg, sc, guide$cap, is_y)
+    s <- .axis_line_seg(
+      geom$seg,
+      sc,
+      guide$cap,
+      is_y,
+      minor = isTRUE(guide$minor.ticks) && !isTRUE(sc$discrete)
+    )
     scene <- vellum::draw(
       scene,
       vellum::segments_grob(
@@ -627,10 +638,15 @@ NULL
 }
 
 # The axis line's endpoints (npc, or native along the axis when capped at the
-# outermost breaks by `guide_axis(cap =)`).
-.axis_line_seg <- function(seg, sc, cap, is_y) {
+# outermost breaks by `guide_axis(cap =)`). With `minor` ticks drawn the cap
+# reaches the outermost tick, major or minor, as ggplot2's does: before, the
+# line stopped at the end break and a minor tick hung past it (VP-158).
+.axis_line_seg <- function(seg, sc, cap, is_y, minor = FALSE) {
   u <- lapply(seg, vellum::vl_unit, units = "npc")
   b <- sc$breaks[is.finite(sc$breaks)]
+  if (minor && length(b)) {
+    b <- c(b, .minor_in_domain(sc))
+  }
   if (is.null(cap) || identical(cap, "none") || !length(b)) {
     return(u)
   }

@@ -561,7 +561,8 @@ scale_y_reverse <- function(plot, ...) {
 #' default Cartesian coordinate system, with **shared** scales across facets.
 #' Combining `sec.axis` with [coord_flip()] / [coord_polar()] / [coord_trans()],
 #' with free facet scales, or with [add_marginal()] raises an error. In a plot
-#' composition (`|` / `/`) the secondary axis is not drawn.
+#' composition ([hconcat()], [vconcat()], [concat()]) the secondary axis is not
+#' drawn.
 #'
 #' @param transform The primary-to-secondary mapping: a formula using `.`
 #'   (e.g. `~ . * 1.8 + 32`), a function, or a [scales::transform_log10()]-style

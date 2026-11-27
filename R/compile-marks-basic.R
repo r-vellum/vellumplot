@@ -1248,13 +1248,17 @@ NULL
   sk <- .mark_sketch(L, scales)
   fo <- .fill_and_outline(L, scales, "grey20", n)
   lwd <- .aes_param(L, "linewidth", 0.5)
-  # the boundary line(s) of the rows `o` (x-ordered), stroked in colour `cc`
-  stroke <- function(scene, o, cc, a, gi) {
+  # The boundary line(s) of a series, stroked in colour `cc`. `runs` are its
+  # x-ordered rows between missing values (`.band_runs()`): one line per
+  # boundary, broken (NA) between runs, so a series stays one object.
+  stroke <- function(scene, runs, cc, a, gi) {
     if (is.na(cc)) {
       return(scene)
     }
     for (yy in if (identical(outline, "both")) list(ya, yb) else list(ya)) {
-      ln <- .xy_path(scales, xn[o], yy[o])
+      ln <- .band_join(lapply(runs, function(o) {
+        .xy_path(scales, xn[o], yy[o])
+      }))
       scene <- .draw(
         scene,
         vellum::lines_grob(
@@ -1263,28 +1267,48 @@ NULL
           sketch = .sketch_bump(sk, gi + 50L),
           gp = vellum::vl_gpar(col = cc, lwd = lwd, alpha = gp_alpha(a))
         ),
-        rows = o
+        rows = unlist(runs)
       )
     }
     scene
   }
+  # One series' fill: a polygon, or -- split by missing values into several
+  # runs -- one path with a sub-path per run, so the series is still a single
+  # element (one key, one provenance record) that an animation tweens or
+  # switches whole instead of morphing into its first run (VP-162 review).
+  fill_series <- function(scene, runs, sketch, gp) {
+    polys <- lapply(runs, function(o) {
+      .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
+    })
+    g <- if (length(runs) == 1L) {
+      vellum::polygon_grob(polys[[1]]$x, polys[[1]]$y, sketch = sketch, gp = gp)
+    } else {
+      vellum::path_grob(
+        do.call(c, lapply(polys, `[[`, "x")),
+        do.call(c, lapply(polys, `[[`, "y")),
+        id = rep(seq_along(polys), vapply(polys, function(p) length(p$x), 1L)),
+        sketch = sketch,
+        gp = gp
+      )
+    }
+    # PROVENANCE: the layer rows this series draws (x-ordered, run by run).
+    .draw(scene, g, rows = unlist(runs))
+  }
 
   grad <- .paint_fill(L)
   if (!is.null(grad)) {
-    o <- order(xn)
-    poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
-    scene <- .draw(
+    # One element over the whole layer, in x order.
+    runs <- .band_runs(order(xn), xn, ya, yb)
+    if (!length(runs)) {
+      return(scene)
+    }
+    scene <- fill_series(
       scene,
-      vellum::polygon_grob(
-        poly$x,
-        poly$y,
-        sketch = sk,
-        gp = vellum::vl_gpar(fill = grad, col = NA)
-      ),
-      # PROVENANCE: one polygon over the whole layer, in x order.
-      rows = o
+      runs,
+      sk,
+      vellum::vl_gpar(fill = grad, col = NA)
     )
-    return(stroke(scene, o, fo$col[1], NA_real_, 0L))
+    return(stroke(scene, runs, fo$col[1], NA_real_, 0L))
   }
 
   .check_band_style(L, scales, n)
@@ -1304,23 +1328,49 @@ NULL
     n,
     list(fill = fill, alpha = alpha, col = fo$col)
   )) {
-    o <- idx[order(xn[idx])]
-    poly <- .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
-    scene <- .draw(
-      scene,
-      vellum::polygon_grob(
-        poly$x,
-        poly$y,
-        sketch = .sketch_bump(sk, gi),
-        gp = .gp_fill(fill, fill_alpha, idx[1])
-      ),
-      # PROVENANCE: `o` are the layer rows this polygon draws (x-ordered).
-      rows = o
-    )
-    scene <- stroke(scene, o, fo$col[idx[1]], alpha[idx[1]], gi)
+    runs <- .band_runs(idx[order(xn[idx])], xn, ya, yb)
+    if (length(runs)) {
+      scene <- fill_series(
+        scene,
+        runs,
+        .sketch_bump(sk, gi),
+        .gp_fill(fill, fill_alpha, idx[1])
+      )
+      scene <- stroke(scene, runs, fo$col[idx[1]], alpha[idx[1]], gi)
+    }
     gi <- gi + 1L
   }
   scene
+}
+
+# The runs of a band's x-ordered rows `o` between its missing values: a row
+# whose x or either boundary (`ya`, `yb`, mapped) is missing ends one run and
+# isn't drawn, so the band leaves a gap there, as a line does, instead of
+# joining across it (VP-162). Rows with every value present give one run, `o`.
+.band_runs <- function(o, xn, ya, yb) {
+  bad <- is.na(xn[o]) | is.na(ya[o]) | is.na(yb[o])
+  if (!any(bad)) {
+    return(list(o))
+  }
+  run <- cumsum(bad)
+  unname(split(o[!bad], run[!bad]))
+}
+
+# Join the mapped paths (`.xy_path()` results) of a series' runs into one line,
+# broken by a missing point between runs.
+.band_join <- function(paths) {
+  if (length(paths) == 1L) {
+    return(paths[[1]])
+  }
+  gap <- vellum::vl_unit(NA_real_, "native")
+  pick <- function(k) {
+    out <- paths[[1]][[k]]
+    for (p in paths[-1]) {
+      out <- c(out, gap, p[[k]])
+    }
+    out
+  }
+  list(x = pick("x"), y = pick("y"))
 }
 
 # A polygon takes a single fill, so a filled connected mark (area, ribbon,

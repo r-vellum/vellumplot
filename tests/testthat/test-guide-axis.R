@@ -164,6 +164,35 @@ test_that("minor ticks, a capped axis line and guides(x = 'none')", {
   expect_lt(x_row_mm(none), x_row_mm(base))
 })
 
+test_that("a capped line with minor ticks reaches the outermost minor tick (VP-158)", {
+  # As ggplot2 does: the cap takes in the minor ticks, so none hangs past the
+  # line's end.
+  sc <- list(breaks = c(2, 3, 4, 5), domain = c(1.3, 5.6))
+  seg <- c(0, 1, 1, 1)
+  u <- vellumplot:::.axis_line_seg(seg, sc, "both", FALSE, minor = TRUE)
+  expect_equal(vctrs_field(u[[1]], "value"), 1.5)
+  expect_equal(vctrs_field(u[[3]], "value"), 5.5)
+  # Without minor ticks it stops at the end breaks, as before.
+  u0 <- vellumplot:::.axis_line_seg(seg, sc, "both", FALSE)
+  expect_equal(vctrs_field(u0[[1]], "value"), 2)
+  expect_equal(vctrs_field(u0[[3]], "value"), 5)
+  # A minor tick outside the domain is not drawn, so the cap ignores it.
+  sc2 <- list(breaks = c(2, 3, 4, 5), domain = c(1.8, 5.2))
+  u2 <- vellumplot:::.axis_line_seg(seg, sc2, "upper", FALSE, minor = TRUE)
+  expect_equal(vctrs_field(u2[[3]], "value"), 5)
+  # End to end: the capped x line widens to take in the minor ticks.
+  base <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> theme_classic()
+  line_w <- function(p) {
+    el <- vellum::scene_model(vellum::as_vellum_scene(p))$elements
+    s <- el[el$mark == "segment" & startsWith(el$panel, "axis-x-"), ]
+    max(s$w)
+  }
+  expect_gt(
+    line_w(base |> guides(x = guide_axis(cap = "both", minor.ticks = TRUE))),
+    line_w(base |> guides(x = guide_axis(cap = "both")))
+  )
+})
+
 test_that("wrapped tick labels reserve the height of the tallest wrap", {
   lay <- layout_of(bars())
   skip_if_not(is.finite(lay$xwrap_mm))

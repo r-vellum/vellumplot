@@ -615,7 +615,11 @@ animate <- function(
     extra = no_state,
     marks = vapply(base@layers, function(L) L@mark, character(1))
   )
-  .inform_row_order(.mark_ctx$anim_counts)
+  .inform_row_order(
+    .mark_ctx$anim_counts,
+    states = as.character(states),
+    wrap = isTRUE(en$wrap)
+  )
   labels <- .mark_ctx$anim_labels
   .warn_unpaired(scenes, en$labels %||% states, wrap = en$wrap)
   frame_text <- list()
@@ -1027,28 +1031,54 @@ animate <- function(
 # Tell the user, once per `animate()` call, when marks without a `data_id`
 # fall back to row order within a group whose size changes between states:
 # the k-th row of a group in one state then pairs with the k-th row in the
-# next, which need not be the same observation (VP-87).
-.inform_row_order <- function(counts) {
+# next, which need not be the same observation (VP-87). Only states that play
+# one after the other pair up: each state with the next in `states` order, and
+# the last with the first when the animation `wrap`s. A group missing from
+# either state of a pair enters or exits there instead (VP-159). (A rewind
+# plays the same pairs backwards, so it adds none.) `states` defaults to the
+# order the counts were recorded in.
+.inform_row_order <- function(counts, states = NULL, wrap = FALSE) {
   hit <- FALSE
   for (pfx in names(counts)) {
     per_state <- counts[[pfx]]
-    if (length(per_state) < 2L) {
+    st <- states %||% names(per_state)
+    if (length(st) < 2L) {
       next
     }
     ids <- unique(unlist(lapply(per_state, names)))
+    # Matched by position, not `tab[ids]`: an ungrouped layer's one identity
+    # group is named "", which name indexing never matches (VP-159).
     n <- vapply(
-      per_state,
-      function(tab) {
-        v <- tab[ids]
+      st,
+      function(s) {
+        tab <- per_state[[s]]
+        if (is.null(tab)) {
+          return(rep(0, length(ids)))
+        }
+        v <- unname(tab)[match(ids, names(tab))]
         v[is.na(v)] <- 0
         as.double(v)
       },
       numeric(length(ids))
     )
     n <- matrix(n, nrow = length(ids))
-    # A group with more than one row somewhere whose size is not constant.
-    if (any(apply(n, 1L, function(r) max(r) > 1 && length(unique(r)) > 1L))) {
-      hit <- TRUE
+    from <- seq_len(ncol(n) - 1L)
+    to <- from + 1L
+    if (wrap && ncol(n) > 2L) {
+      from <- c(from, ncol(n))
+      to <- c(to, 1L)
+    }
+    # A pair of states in which a group is drawn in both, with more than one
+    # row in one of them, and a different number in each.
+    for (j in seq_along(from)) {
+      a <- n[, from[j]]
+      b <- n[, to[j]]
+      if (any(a > 0 & b > 0 & pmax(a, b) > 1 & a != b)) {
+        hit <- TRUE
+        break
+      }
+    }
+    if (hit) {
       break
     }
   }
