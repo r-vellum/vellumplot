@@ -350,7 +350,22 @@ NULL
           row.names = .set_row_names(1L)
         )
       }
-      m$row_keys <- list(rk)
+      # The series gets a key of its own, apart from every row key, so a
+      # layer keyed by the same `data_id` (points on the line) never shares
+      # its first row's key: "<first row key>\u241fs<layer>" (U+241F, the
+      # symbol for the unit separator: valid in XML, unlike the "\001" a
+      # flow branch appends, so a static SVG stays well-formed). Its rows are
+      # `row_keys`, and in a composition or facet their cross-view
+      # identities `row_joins`.
+      grob@keys <- paste0(
+        rk$keys[[1L]],
+        .SERIES_KEY_SEP,
+        .mark_ctx$layer %||% 0L
+      )
+      m$row_keys <- list(rk$keys)
+      if (!is.null(rk$joins)) {
+        m$row_joins <- list(rk$joins)
+      }
     }
     if (!is.null(m)) {
       grob@meta <- m
@@ -433,11 +448,16 @@ NULL
   )
 }
 
-# The keys of every row a single-shape element draws (X-15), for its `row_keys`
-# meta field. vellum keys a line, path or polygon by its first row, so a host
-# matching rows (a crosstalk filter or selection) would otherwise see only that
-# row. NULL when the element draws one distinct key, in an animation keyframe
-# (keyed by series), or when the emitter overrides its key (`elem$key`).
+# The keys of every row a single-shape element draws (X-15), for its
+# `row_keys` meta field, and their cross-view `join`s (`row_joins`) where the
+# layer has them. vellum keys a line, path or polygon by one key, so a host
+# matching rows (a crosstalk filter or selection, a cross-view filter_by())
+# would otherwise see only its first row. Rows not drawn (a missing position)
+# are left out. NULL -- the element keeps its first row's key -- when it draws
+# one distinct key, in an animation keyframe (keyed by series), when the
+# emitter overrides its key (`elem$key`), or when the keys don't compress into
+# at most `.ROW_KEYS_MAX_RUNS` runs (ids with no integer pattern), to keep the
+# payload small.
 .single_shape_row_keys <- function(grob, rows, elem = NULL) {
   if (
     length(rows) < 2L ||
@@ -447,9 +467,68 @@ NULL
   ) {
     return(NULL)
   }
-  k <- unique(as.character(.mark_ctx$data_id[rows]))
-  k <- k[!is.na(k)]
-  if (length(k) < 2L) NULL else k
+  rows <- .grob_drawn_rows(grob, rows)
+  k <- as.character(.mark_ctx$data_id[rows])
+  keep <- !is.na(k) & !duplicated(k)
+  k <- k[keep]
+  if (length(k) < 2L || .key_runs(k) > .ROW_KEYS_MAX_RUNS) {
+    return(NULL)
+  }
+  j <- .mark_ctx$join
+  joins <- if (!is.null(j)) {
+    jj <- as.character(j[rows][keep])
+    jj <- unique(jj[!is.na(jj)])
+    if (length(jj) && .key_runs(jj) <= .ROW_KEYS_MAX_RUNS) jj
+  }
+  list(keys = k, joins = joins)
+}
+
+# Joins a multi-row mark's first row key to "s<layer>" in its own key (X-15).
+.SERIES_KEY_SEP <- "\u241fs"
+
+# The most runs a multi-row mark's row keys may take (X-15, see
+# `.key_runs()`); above it the mark keeps its first row's key and ships no
+# `row_keys`.
+.ROW_KEYS_MAX_RUNS <- 1000L
+
+# The rows of `rows` a line, path or polygon grob draws: those whose x and y
+# are finite, when the grob's coordinates align with `rows` (one vertex per
+# row); all of them otherwise.
+.grob_drawn_rows <- function(grob, rows) {
+  val <- function(u) {
+    v <- tryCatch(unclass(u)$value, error = function(e) NULL)
+    if (is.numeric(v) && length(v) == length(rows)) v
+  }
+  x <- val(grob@x)
+  y <- val(grob@y)
+  if (is.null(x) || is.null(y)) {
+    return(rows)
+  }
+  rows[is.finite(x) & is.finite(y)]
+}
+
+# How many runs keys `k` (distinct) pack into, as vellumwidget ships them: a
+# run is keys sharing a text prefix whose integer suffixes (no leading zero,
+# at most 9 digits) count up by one once sorted; any other key is a run of
+# its own.
+.key_runs <- function(k) {
+  m <- regexpr("(0|[1-9][0-9]{0,8})$", k)
+  hit <- m > 0L
+  if (!any(hit)) {
+    return(length(k))
+  }
+  pre <- substring(k[hit], 1L, m[hit] - 1L)
+  num <- as.numeric(substring(k[hit], m[hit]))
+  o <- order(pre, num)
+  pre <- pre[o]
+  num <- num[o]
+  n <- length(num)
+  brk <- if (n > 1L) {
+    sum(pre[-1L] != pre[-n] | num[-1L] != num[-n] + 1)
+  } else {
+    0L
+  }
+  sum(!hit) + 1L + brk
 }
 
 # For a single-shape element drawn from several rows, widen its numeric interval
