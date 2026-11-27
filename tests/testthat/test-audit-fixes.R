@@ -119,7 +119,8 @@ test_that("C2: transition_time drops NA-time rows from every keyframe", {
   d2 <- d[is.finite(d$t), ]
   p <- vplot(d) |> mark_point(x = x, y = y) |> transition_time(t)
   p2 <- vplot(d2) |> mark_point(x = x, y = y) |> transition_time(t)
-  a <- animate(p, nframes = 6)
+  # the NA-time row is dropped with the usual missing-values warning (VP-150)
+  expect_warning(a <- animate(p, nframes = 6), "Removed 1 row")
   a2 <- animate(p2, nframes = 6)
   # Same states, and identical per-keyframe element counts: the NA-time row must
   # not be injected as an all-NA point into any frame.

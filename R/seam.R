@@ -1459,7 +1459,7 @@ S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
 #' `as_vellum_scene()` seam.
 #'
 #' A `.pptx` path writes a one-slide PowerPoint file of editable shapes at the
-#' plot's size (needs vellum 0.18.0 or later; no other package). For several
+#' plot's size, with no other package needed. For several
 #' slides use [vellum::pptx_pages()], and to place a plot on a slide of an
 #' officer deck wrap it in [vellum::as_dml()] for `officer::ph_with()`.
 #'
@@ -1487,6 +1487,9 @@ S7::method(.as_vellum_scene, PlotSpec) <- function(x, ...) {
 #' render_plot(p, f)
 #' render_plot(p, f, dpi = 300) # denser raster, same physical size
 #' render_plot(p, f, cvd = "deuteranopia") # preview for red-green colour blindness
+#'
+#' # a one-slide PowerPoint file of editable shapes
+#' render_plot(p, tempfile(fileext = ".pptx"))
 #' @export
 render_plot <- function(plot, path, text = "native", dpi = NULL, cvd = "none") {
   # An animation is not a still plot: point at `anim_save()` rather than the
