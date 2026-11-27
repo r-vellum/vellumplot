@@ -217,9 +217,10 @@ a panel. The tags are drawn with the theme's `plot.tag` element, which sets
 their size, colour and `angle`; pass the composition to `theme()` to change it.
 Titles and tags are drawn the same way in compositions that can't line up
 their panels (a faceted, polar, map or fixed-aspect cell, a `design`, insets,
-a nested composition); spacers get no tag. Identical legends are collected
-there too, except a legend inside a panel or beside each facet panel, which
-stays with its panel.
+a nested composition); spacers get no tag. Legends are collected there too:
+every legend outside a panel moves to the figure's legend, identical ones
+drawn once, while a legend inside a panel or beside each facet panel stays
+with its panel.
 
 ```{r}
 faceted <- vplot(mtcars) |>
@@ -288,7 +289,10 @@ plain `PlotSpec` — render it, or `inset()` it into a figure. Three shapes: a
 micro-chart, and a `"winloss"` chart of equal up/down bars.
 
 ```{=html}
-<style>.sparkline-out .cell-output-display { max-width: 240px; margin-bottom: 1em; }</style>
+<style>
+.sparkline-out .cell-output-display { max-width: 240px; margin-bottom: 1em; }
+.vtable-out .cell-output-display { max-width: 360px; margin-bottom: 1em; }
+</style>
 ```
 
 ```{r}
@@ -318,6 +322,7 @@ The whole table is one vector scene, so it prints and exports like any plot —
 chart-in-table without leaving the plotting pipeline.
 
 ```{r}
+#| classes: vtable-out
 set.seed(1)
 df <- data.frame(
   metric = c("Revenue", "Users", "Latency", "Errors"),

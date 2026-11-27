@@ -61,6 +61,8 @@ NULL
 .plan_plot <- function(spec) {
   spec <- .settle_constants(spec)
   rt <- .resolve_theme(.theme_of(spec))
+  # keyed legend swatches for an interactive cell, as `.draw_plot()` sets
+  rt[[".interactive"]] <- .spec_interactive(spec)
   built <- .build_panels(spec)
   guides <- .facet_legend_guides(built)
   co <- .coord_of(spec)
@@ -659,6 +661,14 @@ NULL
   # else the first themed sub-plot's (see `.comp_figure_theme()`). Sub-plots
   # resolve their own theme in `.plan_plot`.
   rt0 <- .resolve_theme(.comp_figure_theme(comp))
+  # The collected legend keys its swatches (a hoverable element per series)
+  # when any cell is interactive, as a single plot's legend does; before, it
+  # never did (VP-152 review).
+  rt0[[".interactive"]] <- any(vapply(
+    plans,
+    function(pl) .spec_interactive(pl$spec),
+    NA
+  ))
   glo <- .composition_grid(plans, comp, collect, rt0)
   # Default mark colours: each cell sets its own theme's; the collected legend
   # keys take the composition theme's, else the first sub-plot's. Put the

@@ -42,6 +42,38 @@ test_that("hconcat() / vconcat() reject non-plots and foreign arguments (VP-151)
   expect_error(hconcat(a, "x"), "Argument 2")
 })
 
+test_that("concat() errors name the function the user called (VP-151 review)", {
+  a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  call_of <- function(expr) {
+    deparse(conditionCall(tryCatch(expr, error = function(e) e)))[1]
+  }
+  expect_match(call_of(hconcat(a, a, dpi = -1)), "^hconcat\\(")
+  expect_match(call_of(vconcat(a, 3)), "^vconcat\\(")
+  expect_match(
+    call_of(wrap_plots(list(a, a), design = "AB\nA")),
+    "^wrap_plots\\("
+  )
+  expect_match(call_of(concat(a, a, width = 0)), "^concat\\(")
+  # the plots are not spliced into the call
+  expect_lt(nchar(call_of(hconcat(a, a, dpi = -1))), 60)
+})
+
+test_that("widths and heights must be positive weights, one or one per track (VP-151 review)", {
+  a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  expect_error(concat(a, a, ncol = 2, widths = "a"), "positive numbers")
+  expect_error(concat(a, a, ncol = 2, widths = c(1, NA)), "positive numbers")
+  expect_error(concat(a, a, ncol = 2, widths = c(1, -1)), "positive numbers")
+  expect_error(concat(a, a, ncol = 2, widths = c(1, Inf)), "positive numbers")
+  expect_error(hconcat(a, a, widths = c(1, 2, 3)), "one per column")
+  expect_error(vconcat(a, a, heights = c(1, 2, 3)), "one per row")
+  expect_error(
+    wrap_plots(list(a, a), ncol = 1, heights = numeric(0)),
+    "positive"
+  )
+  expect_identical(concat(a, a, ncol = 2, widths = 2L)@widths, 2)
+  expect_identical(vconcat(a, a, heights = c(3, 1))@heights, c(3, 1))
+})
+
 test_that("a non-aligned composition draws its title, subtitle and caption (VP-152)", {
   p3 <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
   faceted <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~am)
@@ -124,7 +156,62 @@ test_that("legends inside a panel or beside each facet panel stay put (VP-152)",
     vellumplot:::.resolve_theme(vellumplot:::.theme_default())
   )
   expect_length(col$figguides, 1L)
-  expect_null(col$comp@plots[[1]]@theme)
+  # the faceted cell gives up nothing; the plain one its colour legend
+  expect_null(attr(col$comp@plots[[1]], "vp_collected_keys"))
+  expect_length(attr(col$comp@plots[[2]], "vp_collected_keys"), 1L)
+})
+
+test_that("a cell with inside and outside legends gives up only the outside ones (VP-152)", {
+  pc <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  fac <- pc |> facet_wrap(~am)
+  mix <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg, color = factor(cyl), size = hp) |>
+    guides(size = guide_legend(position = "inside"))
+  svg <- svg_of(concat(fac, mix, ncol = 2))
+  # one collected colour legend, the size legend still inside its panel
+  expect_identical(n_text(svg, "factor(cyl)"), 1L)
+  expect_identical(n_text(svg, "hp"), 1L)
+  # as in the aligned layout
+  al <- svg_of(concat(pc, mix, ncol = 2))
+  expect_identical(n_text(al, "factor(cyl)"), 1L)
+  expect_identical(n_text(al, "hp"), 1L)
+})
+
+test_that("the collected legend keys its swatches for interactive cells (VP-152)", {
+  d <- mtcars
+  d$id <- rownames(d)
+  a <- vplot(d) |>
+    mark_point(x = wt, y = mpg, data_id = id, color = factor(cyl)) |>
+    select_point("s")
+  b <- vplot(d) |>
+    mark_point(x = hp, y = qsec, data_id = id, color = factor(cyl))
+  swatches <- function(x) {
+    el <- vellum::scene_model(vellum::as_vellum_scene(x))$elements
+    sort(el$key[!is.na(el$key) & startsWith(el$key, "legend:color:")])
+  }
+  want <- paste0("legend:color:", c(4, 6, 8))
+  # independent (a faceted cell) and aligned layouts alike, one per level
+  expect_identical(swatches(hconcat(a |> facet_wrap(~am), b)), want)
+  expect_identical(swatches(hconcat(a, b)), want)
+  # a non-interactive figure keys none
+  plain <- vplot(d) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  expect_length(swatches(hconcat(plain |> facet_wrap(~am), plain)), 0L)
+})
+
+test_that("a figure band takes the cells' margin on its side (VP-152 review)", {
+  p1 <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  gap <- function(design) {
+    base <- concat(p1, p1, ncol = 2, design = design)
+    comp <- base |> compose_annotation(title = "Title", caption = "cap")
+    b <- panels_of(base)
+    t <- panels_of(comp)
+    c(top = t$py0[1] - b$py0[1], bottom = b$py1[1] - t$py1[1])
+  }
+  aligned <- gap(NULL)
+  indep <- gap("AB")
+  expect_false(vellumplot:::.comp_alignable(concat(p1, p1, design = "AB")))
+  # the bands cost the same room in both layouts (to within a pixel)
+  expect_equal(indep, aligned, tolerance = 1.5 / 50)
 })
 
 test_that("aligned compositions leave fixed-aspect cells unstretched (VP-154)", {

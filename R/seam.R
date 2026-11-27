@@ -874,6 +874,15 @@ NULL
   insets = NULL,
   page = NULL
 ) {
+  # The guides a composition collected into its figure legend (VP-152), which
+  # this cell leaves out; read before the spec is rebuilt below.
+  collected <- attr(spec, "vp_collected_keys", exact = TRUE)
+  drop_collected <- function(guides) {
+    if (!length(collected)) {
+      return(guides)
+    }
+    Filter(function(g) !.guide_key(g) %in% collected, guides)
+  }
   # Non-column single-value symbols are settings, not mappings (VP-126).
   spec <- .settle_constants(spec)
   spec0 <- spec # as the user wrote it, for the alt text
@@ -953,7 +962,7 @@ NULL
   # (a keyed, hoverable element per series) so a host can highlight/select a whole
   # series from the legend. Read by the guide drawers (see `.tag_legend_swatch`).
   rt[[".interactive"]] <- .spec_interactive(spec)
-  guides <- .facet_legend_guides(built)
+  guides <- drop_collected(.facet_legend_guides(built))
   # coord_flip swaps which trained scale drives the horizontal vs vertical axis.
   flip <- identical(co@kind, "flip")
   polar <- identical(co@kind, "polar")
@@ -1008,7 +1017,7 @@ NULL
         "Make the plot wider, or place the legends with {.code guide_legend(position = )}."
       }
     ))
-    guides <- .facet_legend_guides(built, collect = TRUE)
+    guides <- drop_collected(.facet_legend_guides(built, collect = TRUE))
     lay <- .build_layout(
       built,
       guides,

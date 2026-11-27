@@ -9,17 +9,24 @@
   `width`, `height` and `dpi` now: `hconcat(a, b, width = 8)` set the width
   but drew a three-column grid for the same reason. Other `concat()`
   arguments given to `hconcat()` / `vconcat()` (`ncol`, `nrow`, the other
-  axis's weights), and anything in `...` that is not a plot, are now errors
-  (VP-151).
+  axis's weights), and anything in `...` that is not a plot, are now errors.
+  `widths` and `heights` must be positive, finite numbers, one for all
+  tracks or one per column / row; a string, `NA`, a negative or a surplus
+  weight used to draw without complaint. Errors from `hconcat()`,
+  `vconcat()` and `wrap_plots()` now name the function you called (VP-151).
 
 * A composition that can't be aligned (a faceted, polar, sf or fixed-aspect
   cell, a `design`, insets, or a nested composition) now draws its figure
   `title`, `subtitle` and `caption`, in bands above and below the cells as in
   the aligned layout, and collects identical legends into one under
   `guides = "collect"` (the default), placed by the composition's
-  `legend.position`. A legend inside a panel, or beside each facet panel,
-  stays with its cell. Before, this layout drew the title only into the SVG
-  alt text and kept every cell's legend. A composition holding another
+  `legend.position`. As in the aligned layout, every legend outside a panel
+  is collected (identical ones once), while a legend inside a panel, or
+  beside each facet panel, stays with its cell. Before, this layout drew the
+  title only into the SVG alt text and kept every cell's legend. The
+  collected legend of either layout keys its swatches when a cell is
+  interactive, so vellumwidget can highlight a series from it; an aligned
+  composition's never did. A composition holding another
   composition takes this layout, so its own title is drawn now too (VP-152).
 
 * Aligned compositions no longer stretch fixed-aspect plots: a cell with
