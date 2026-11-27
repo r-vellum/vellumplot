@@ -129,14 +129,15 @@ test_that("set names fit the laid-out panel: margin, titles, cells (VP-148)", {
     side <- panel_side(p)
     expect_equal(got[1], side, tolerance = 0.02)
   }
-  # in an aligned composition: each cell's own panel
+  # in a composition of Venns (laid out cell by cell, since a Venn locks its
+  # aspect, VP-154): each cell's own panel, within its 4in x 4in cell
   S2 <- S3[1:2]
   comp <- hconcat(vvenn(S3), vvenn(S2), width = 8, height = 4)
   got <- NULL
   side <- panel_side(comp)
   expect_length(got, 2L)
   expect_lte(max(got), max(side) + 0.5)
-  expect_lt(max(got), 4 * 25.4 - 11) # not the cell-less 6in / page guess
+  expect_lt(max(got), 4 * 25.4) # not the cell-less 6in / page guess
   # and in a non-aligned one (a faceted cell beside it)
   f <- vplot(mtcars) |> mark_point(x = wt, y = mpg) |> facet_wrap(~cyl)
   got <- NULL

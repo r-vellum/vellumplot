@@ -5,9 +5,12 @@
 * `vconcat()` takes `heights` and `hconcat()` takes `widths`, passed on to
   `concat()`. Before, `vconcat(a, b, heights = c(3, 1))` went through to
   `concat()` but still counted as a plot when sizing the grid, so it drew a
-  three-row grid with an empty last row and no error. Other `concat()`
-  arguments given to `hconcat()` / `vconcat()`, and anything in `...` that is
-  not a plot, are now errors (VP-151).
+  three-row grid with an empty last row and no error. Both also take
+  `width`, `height` and `dpi` now: `hconcat(a, b, width = 8)` set the width
+  but drew a three-column grid for the same reason. Other `concat()`
+  arguments given to `hconcat()` / `vconcat()` (`ncol`, `nrow`, the other
+  axis's weights), and anything in `...` that is not a plot, are now errors
+  (VP-151).
 
 * A composition that can't be aligned (a faceted, polar, sf or fixed-aspect
   cell, a `design`, insets, or a nested composition) now draws its figure

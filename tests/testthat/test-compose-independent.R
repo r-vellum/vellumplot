@@ -23,6 +23,10 @@ test_that("vconcat() takes heights and hconcat() takes widths (VP-151)", {
   h <- hconcat(a, b, widths = c(2, 1))
   expect_identical(h@ncol, 2)
   expect_identical(h@widths, c(2, 1))
+  # the page size goes to the composition, not into the grid
+  s <- hconcat(a, b, width = 8, height = 3, dpi = 120)
+  expect_identical(c(s@ncol, s@width, s@height, s@dpi), c(2, 8, 3, 120))
+  expect_identical(vconcat(a, b, width = 5)@nrow, 2)
   # the panels follow the weights
   pan <- panels_of(v)
   ht <- pan$py1 - pan$py0

@@ -117,7 +117,8 @@ test_that("a composition prefixes every flow key", {
   expect_false(anyDuplicated(el$key) > 0)
   fl <- el[el$mark == "line", ]
   pts <- el[el$mark == "point", ]
-  expect_true(all(startsWith(fl$key, "subplot-")))
+  # aspect-locked graph cells take the cell-by-cell layout (VP-154)
+  expect_true(all(startsWith(fl$key, "cell-")))
   ends <- c(vp71_meta(fl, "source"), vp71_meta(fl, "target"))
   ends <- ends[!is.na(ends)]
   expect_gt(length(ends), 0L)

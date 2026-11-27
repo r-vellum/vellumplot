@@ -35,9 +35,23 @@ wrap_plots(
   dpi = NULL
 )
 
-hconcat(..., widths = NULL, guides = c("collect", "keep"), height = NULL)
+hconcat(
+  ...,
+  widths = NULL,
+  guides = c("collect", "keep"),
+  width = NULL,
+  height = NULL,
+  dpi = NULL
+)
 
-vconcat(..., heights = NULL, guides = c("collect", "keep"), width = NULL)
+vconcat(
+  ...,
+  heights = NULL,
+  guides = c("collect", "keep"),
+  width = NULL,
+  height = NULL,
+  dpi = NULL
+)
 }
 \arguments{
 \item{...}{\link{PlotSpec}s or \code{PlotComposition}s to arrange.}

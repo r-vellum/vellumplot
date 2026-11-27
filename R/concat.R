@@ -453,7 +453,9 @@ hconcat <- function(
   ...,
   widths = NULL,
   guides = c("collect", "keep"),
-  height = NULL
+  width = NULL,
+  height = NULL,
+  dpi = NULL
 ) {
   plots <- .concat_dots(list(...), "hconcat")
   do.call(
@@ -465,7 +467,9 @@ hconcat <- function(
         nrow = 1,
         widths = widths,
         guides = match.arg(guides),
-        height = height
+        width = width,
+        height = height,
+        dpi = dpi
       )
     )
   )
@@ -477,7 +481,9 @@ vconcat <- function(
   ...,
   heights = NULL,
   guides = c("collect", "keep"),
-  width = NULL
+  width = NULL,
+  height = NULL,
+  dpi = NULL
 ) {
   plots <- .concat_dots(list(...), "vconcat")
   do.call(
@@ -489,7 +495,9 @@ vconcat <- function(
         nrow = length(plots),
         heights = heights,
         guides = match.arg(guides),
-        width = width
+        width = width,
+        height = height,
+        dpi = dpi
       )
     )
   )
@@ -498,8 +506,9 @@ vconcat <- function(
 # The plots passed in `...` to `hconcat()` / `vconcat()`. A named argument
 # that is not one of the function's own (e.g. `heights =` to `hconcat()`)
 # used to slip through to `concat()` and still count towards the grid size, so
-# `vconcat(a, b, heights = c(3, 1))` made a three-row grid (VP-151). Reject
-# those, and any non-plot, with a clear error.
+# `vconcat(a, b, heights = c(3, 1))` made a three-row grid, and
+# `hconcat(a, b, width = 8)` a three-column one (VP-151). Reject those, and
+# any non-plot, with a clear error.
 .concat_dots <- function(dots, fn) {
   nm <- names(dots) %||% rep("", length(dots))
   bad <- nzchar(nm) & nm %in% names(formals(concat))
