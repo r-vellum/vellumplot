@@ -1185,8 +1185,9 @@ NULL
 
 # The widest line (mm) of a plain tick label wrapped at `wrap_mm` as
 # `.axis_text_grob()` draws it: vellum's greedy word wrap (words fill a line
-# while it fits; a word wider than the box gets a line of its own), measured in
-# the element's font. NA when the label is not wrapped or not a plain string.
+# while it fits) after `.hyphenate_label()` breaks any word wider than the
+# box, measured in the element's font. NA when the label is not wrapped or
+# not a plain string.
 .wrapped_line_mm <- function(label, el, wrap_mm) {
   if (
     !(length(wrap_mm) == 1L && is.finite(wrap_mm) && wrap_mm > 0) ||
@@ -1197,6 +1198,8 @@ NULL
     return(NA_real_)
   }
   width <- function(x) .el_strwidth(x, el, features = .TNUM)
+  # an overlong word breaks as `.axis_text_grob()` breaks it (VP-174)
+  label <- .hyphenate_label(label, el, wrap_mm)
   out <- 0
   for (para in strsplit(label, "\n", fixed = TRUE)[[1]]) {
     words <- strsplit(para, "[ \t]+")[[1]]

@@ -193,3 +193,99 @@ test_that("an animated area keeps one element when a state has a gap", {
   expect_identical(px(0.6), px(1))
   expect_false(identical(px(0), px(1)))
 })
+
+# VP-169: a ribbon over `y` from `xmin` to `xmax` drew nothing; it is now a
+# horizontal band, with the same gaps at missing values.
+test_that("a ribbon with xmin/xmax and no ymin/ymax is horizontal (VP-169)", {
+  dh <- data.frame(y = 1:7, lo = 0, hi = c(1, 2, 3, NA, 3, 4, 2))
+  p <- vplot(dh) |> mark_ribbon(y = y, xmin = lo, xmax = hi)
+  expect_warning(
+    vellum::as_vellum_scene(p),
+    "Removed 1 row containing missing values (layer 1, `mark_ribbon()`)",
+    fixed = TRUE
+  )
+  expect_identical(band_rows(p, "ribbon"), list(c(1:3, 5:7)))
+  expect_equal(unname(band_shapes(p)[, "runs"]), 2)
+  # Without the gap, the band is the vertical ribbon of the swapped data
+  # turned on its side: the same polygon with x and y exchanged.
+  dv <- data.frame(y = 1:4, lo = c(0, 1, 0, 1), hi = c(2, 3, 3, 2))
+  h <- vplot(dv) |> mark_ribbon(y = y, xmin = lo, xmax = hi)
+  v <- vplot(dv) |> mark_ribbon(x = y, ymin = lo, ymax = hi)
+  poly <- function(p) {
+    s <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+    val <- function(x) if (is.list(x) && !is.null(x$v)) x$v else x
+    out <- NULL
+    walk <- function(node) {
+      if (identical(node$class, "grob_polygon")) {
+        out <<- list(
+          x = unlist(val(node$x$value)),
+          y = unlist(val(node$y$value))
+        )
+      }
+      for (ch in node) if (is.list(ch)) walk(ch)
+    }
+    walk(s$root)
+    out
+  }
+  ph <- poly(h)
+  pv <- poly(v)
+  expect_length(ph$x, 8L)
+  expect_equal(ph$x, pv$y)
+  expect_equal(ph$y, pv$x)
+  # Grouped horizontal ribbons draw one band per group.
+  dg <- rbind(transform(dv, g = "a"), transform(dv, lo = lo + 4, hi = hi + 4, g = "b"))
+  g <- vplot(dg) |> mark_ribbon(y = y, xmin = lo, xmax = hi, fill = g)
+  expect_identical(band_rows(g, "ribbon"), list(1:4, 5:8))
+})
+
+# VP-170: a line, path or step with a missing value leaves a gap and now counts
+# the row in the "Removed n rows" warning, as spec_diagnose() reports it.
+test_that("lines, paths and steps count their gap rows in the warning (VP-170)", {
+  for (mk in list(mark_line, mark_path, mark_step)) {
+    p <- vplot(d1) |> mk(x = x, y = y)
+    rep <- spec_diagnose(p)$report
+    expect_identical(rep$missing[rep$layer == 1L], 1L)
+    w <- character()
+    withCallingHandlers(
+      vellum::as_vellum_scene(p),
+      warning = function(cnd) {
+        w <<- c(w, conditionMessage(cnd))
+        invokeRestart("muffleWarning")
+      }
+    )
+    expect_length(grep("Removed 1 row containing missing values", w), 1L)
+  }
+  # A line with no missing value gives no warning.
+  expect_no_warning(vellum::as_vellum_scene(
+    vplot(data.frame(x = 1:3, y = 1:3)) |> mark_line(x = x, y = y)
+  ))
+})
+
+test_that("a ribbon checks its ranges and titles a horizontal x axis (VP-169)", {
+  dv <- data.frame(y = 1:4, lo = c(0, 1, 0, 1), hi = c(2, 3, 3, 2))
+  b <- vplot(dv)
+  expect_error(
+    b |> mark_ribbon(y = y, xmin = lo, xmax = hi, ymin = lo, ymax = hi),
+    "takes one range"
+  )
+  expect_error(b |> mark_ribbon(y = y, xmin = lo), "needs both")
+  expect_error(b |> mark_ribbon(x = y, ymax = hi), "needs both")
+  expect_error(b |> mark_ribbon(x = y, y = hi), "needs a range")
+  expect_error(
+    b |> mark_ribbon(y = y, xmin = lo, xmax = hi, orientation = "x"),
+    "doesn't match"
+  )
+  h <- b |> mark_ribbon(y = y, xmin = lo, xmax = hi, orientation = "y")
+  expect_identical(h@layers[[1]]@stat_params$orientation, "y")
+  # The x axis is titled by xmin, as in ggplot2, and the alt text says so.
+  expect_identical(vellumplot:::.plot_titles(h)$title[["x"]], "lo")
+  expect_match(plot_alt(h), "lo (horizontal axis)", fixed = TRUE)
+})
+
+test_that("mark_path()'s warning names mark_path() (VP-170 review)", {
+  expect_warning(
+    vellum::as_vellum_scene(vplot(d1) |> mark_path(x = x, y = y)),
+    "`mark_path()`",
+    fixed = TRUE
+  )
+})

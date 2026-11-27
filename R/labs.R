@@ -98,13 +98,7 @@ labs <- function(
 # itself, so it takes no expression. Only the first element of an expression
 # is drawn, as in ggplot2; more is a warning.
 .labs_value <- function(v, name, call = rlang::caller_env()) {
-  if (is.language(v) && !is.expression(v)) {
-    v <- as.expression(list(v))
-  }
-  if (!is.expression(v)) {
-    return(v)
-  }
-  if (identical(name, "alt")) {
+  if (identical(name, "alt") && (is.language(v) || is.expression(v))) {
     cli::cli_abort(
       c(
         "{.arg alt} must be plain text, not an expression.",
@@ -113,11 +107,36 @@ labs <- function(
       call = call
     )
   }
+  .math_label(v, name, fn = "labs", call = call)
+}
+
+# A title given as a plotmath `expression()` or quoted call, typeset through
+# [plotmath()] with a plain-text reading (`.plotmath_plain()`) for text-only
+# outputs; any other value is returned as it is. Shared by `labs()`, the scale
+# names (`.add_scale()`), the guide titles (`guide_*(title = )`, through
+# `.set_guide()` and a scale's `guide`) and `sec_axis(name = )`, so a title
+# reads the same wherever it is set (VP-163, VP-171). Only the first element of
+# an expression is drawn, as in ggplot2; more is a warning naming `fn` and
+# the argument `what`.
+.math_label <- function(v, what, fn = NULL, call = rlang::caller_env()) {
+  if (is.language(v) && !is.expression(v)) {
+    v <- as.expression(list(v))
+  }
+  if (!is.expression(v)) {
+    return(v)
+  }
   if (length(v) > 1L) {
-    cli::cli_warn(
-      "{.fn labs} uses only the first element of the expression for {.arg {name}}.",
-      call = call
-    )
+    if (is.null(fn)) {
+      cli::cli_warn(
+        "Only the first element of the expression for {.arg {what}} is used.",
+        call = call
+      )
+    } else {
+      cli::cli_warn(
+        "{.fn {fn}} uses only the first element of the expression for {.arg {what}}.",
+        call = call
+      )
+    }
   }
   v <- v[1]
   out <- vellum::plotmath(v)
@@ -125,23 +144,54 @@ labs <- function(
   out
 }
 
+# A guide spec (`guide_legend()`, `guide_axis()`, ...) with its `title` read
+# through `.math_label()`; any other guide (`"none"`, NULL) as it is.
+.guide_math_title <- function(guide, call = rlang::caller_env()) {
+  if (is.list(guide) && !is.null(guide$title)) {
+    guide$title <- .math_label(guide$title, "title", call = call)
+  }
+  guide
+}
+
+# Greek letter names and their letters, for the plain-text readings of math
+# labels (`.plotmath_plain()`, `.tex_plain()`).
+.GREEK_PLAIN <- c(
+  alpha = "\u03b1", beta = "\u03b2", gamma = "\u03b3", delta = "\u03b4",
+  epsilon = "\u03b5", zeta = "\u03b6", eta = "\u03b7", theta = "\u03b8",
+  iota = "\u03b9", kappa = "\u03ba", lambda = "\u03bb", mu = "\u03bc",
+  nu = "\u03bd", xi = "\u03be", omicron = "\u03bf", pi = "\u03c0",
+  rho = "\u03c1", sigma = "\u03c3", tau = "\u03c4", upsilon = "\u03c5",
+  phi = "\u03c6", chi = "\u03c7", psi = "\u03c8", omega = "\u03c9",
+  Gamma = "\u0393", Delta = "\u0394", Theta = "\u0398", Lambda = "\u039b",
+  Xi = "\u039e", Pi = "\u03a0", Sigma = "\u03a3", Phi = "\u03a6",
+  Psi = "\u03a8", Omega = "\u03a9"
+)
+
+# TeX symbol commands beyond the Greek letters, and their Unicode characters.
+.TEX_SYMBOLS <- c(
+  varepsilon = "\u03b5", vartheta = "\u03b8", varphi = "\u03c6",
+  varpi = "\u03c0", varrho = "\u03c1", varsigma = "\u03c2",
+  times = "\u00d7", cdot = "\u00b7", pm = "\u00b1", mp = "\u2213",
+  div = "\u00f7", le = "\u2264", leq = "\u2264", ge = "\u2265",
+  geq = "\u2265", ne = "\u2260", neq = "\u2260", approx = "\u2248",
+  equiv = "\u2261", sim = "~", propto = "\u221d", infty = "\u221e",
+  partial = "\u2202", nabla = "\u2207", sum = "\u03a3", prod = "\u03a0",
+  int = "\u222b", to = "\u2192", rightarrow = "\u2192",
+  leftarrow = "\u2190", Rightarrow = "\u21d2", leftrightarrow = "\u2194",
+  "in" = "\u2208", notin = "\u2209", subset = "\u2282", cup = "\u222a",
+  cap = "\u2229", forall = "\u2200", exists = "\u2203", ell = "\u2113",
+  circ = "\u2218", degree = "\u00b0", ldots = "\u2026", dots = "\u2026",
+  cdots = "\u22ef", prime = "\u2032", hbar = "\u0127", star = "*",
+  ast = "*", lt = "<", gt = ">"
+)
+
 # A plain-text reading of a plotmath expression, for text-only outputs: Greek
 # letter names become the letters, `paste()` / `*` join their parts, `list()`
 # separates them with commas, a superscript keeps `^`, a subscript becomes
 # `_`, styling functions (`bold()`, `italic()`, `hat()`, ...) drop out, and an
 # operator keeps its symbol. `alpha^2` reads "\u03b1^2", `beta[i]` "\u03b2_i".
 .plotmath_plain <- function(e) {
-  greek <- c(
-    alpha = "\u03b1", beta = "\u03b2", gamma = "\u03b3", delta = "\u03b4",
-    epsilon = "\u03b5", zeta = "\u03b6", eta = "\u03b7", theta = "\u03b8",
-    iota = "\u03b9", kappa = "\u03ba", lambda = "\u03bb", mu = "\u03bc",
-    nu = "\u03bd", xi = "\u03be", omicron = "\u03bf", pi = "\u03c0",
-    rho = "\u03c1", sigma = "\u03c3", tau = "\u03c4", upsilon = "\u03c5",
-    phi = "\u03c6", chi = "\u03c7", psi = "\u03c8", omega = "\u03c9",
-    Gamma = "\u0393", Delta = "\u0394", Theta = "\u0398", Lambda = "\u039b",
-    Xi = "\u039e", Pi = "\u03a0", Sigma = "\u03a3", Phi = "\u03a6",
-    Psi = "\u03a8", Omega = "\u03a9"
-  )
+  greek <- .GREEK_PLAIN
   walk <- function(e) {
     if (is.symbol(e)) {
       nm <- as.character(e)
@@ -185,4 +235,131 @@ labs <- function(
     paste(deparse(e), collapse = "")
   }
   walk(e)
+}
+
+# A plain-text reading of a TeX formula, for text-only outputs (the alt text,
+# the SVG <title>/<desc>), in the style of `.plotmath_plain()`: Greek letters
+# and common symbols become their Unicode characters, a superscript keeps `^`
+# and a subscript becomes `_` (with parentheses around more than one
+# character), `\frac{a}{b}` reads "a/b" and `\sqrt{x}` "\u221a(x)", styling
+# and accent commands (`\mathrm{}`, `\hat{}`, ...) keep their argument, and
+# spacing commands become a space (VP-172). `\alpha^{2}` reads "\u03b1^2",
+# `\beta_{i}` "\u03b2_i".
+.tex_plain <- function(x) {
+  if (!is.character(x) || length(x) != 1L || is.na(x)) {
+    return(x)
+  }
+  sym <- c(.GREEK_PLAIN, .TEX_SYMBOLS)
+  # A line break `\\` reads as a space. Escaped braces stand aside (restored
+  # at the end) so they are not read as a group; other escaped characters are
+  # just the character.
+  x <- gsub("\\\\", " ", x, fixed = TRUE)
+  x <- gsub("\\{", "\u0002", x, fixed = TRUE)
+  x <- gsub("\\}", "\u0003", x, fixed = TRUE)
+  x <- gsub("\\\\([$%&#_])", "\\1", x, perl = TRUE)
+  # Spacing: `\,` `\:` `\;` `\ ` `~` `\quad` read as a space, `\!` as none.
+  x <- gsub("\\\\[,:;> ]|~|\\\\q?quad(?![A-Za-z])", " ", x, perl = TRUE)
+  x <- gsub("\\!", "", x, fixed = TRUE)
+  x <- gsub(
+    paste0(
+      "\\\\(left|right|[bB]igg?[lr]?|displaystyle|textstyle|scriptstyle|",
+      "scriptscriptstyle|limits|nolimits)(?![A-Za-z])"
+    ),
+    "",
+    x,
+    perl = TRUE
+  )
+  # Symbol commands (a whole command name, so `\in` leaves `\int` alone).
+  m <- gregexpr("\\\\[A-Za-z]+", x, perl = TRUE)
+  regmatches(x, m) <- lapply(regmatches(x, m), function(cmd) {
+    nm <- substring(cmd, 2L)
+    ifelse(nm %in% names(sym), unname(sym[nm]), cmd)
+  })
+  wrap <- function(a) if (nchar(a) > 1L) paste0("(", a, ")") else a
+  roots <- c("2" = "\u221a", "3" = "\u221b", "4" = "\u221c")
+  # Innermost brace groups first, until none is left. `\frac` and `\sqrt`
+  # read once their arguments are flat, so a nested argument keeps its
+  # structure (`\frac{\alpha}{x^{2}}` reads "\u03b1/(x^2)").
+  repeat {
+    before <- x
+    x <- .gsub_fn("\\\\frac\\{([^{}]*)\\}\\{([^{}]*)\\}", x, function(g) {
+      paste0(wrap(trimws(g[1])), "/", wrap(trimws(g[2])))
+    })
+    x <- .gsub_fn("\\\\sqrt\\[([^][{}]*)\\]\\{([^{}]*)\\}", x, function(g) {
+      n <- trimws(g[1])
+      pre <- if (n %in% names(roots)) roots[[n]] else paste0("root", n)
+      paste0(pre, "(", trimws(g[2]), ")")
+    })
+    x <- .gsub_fn("\\\\sqrt\\{([^{}]*)\\}", x, function(g) {
+      paste0("\u221a(", trimws(g[1]), ")")
+    })
+    # A script reads as `^`/`_` and its argument, in parentheses when it is
+    # longer than one character.
+    x <- .gsub_fn("([\\^_])\\{([^{}]*)\\}", x, function(g) {
+      paste0(g[1], wrap(trimws(g[2])))
+    })
+    # A command with a group argument (style, accent, `\text{}`) keeps it;
+    # `\frac` and `\sqrt` are read above.
+    x <- gsub(
+      "\\\\(?!(?:frac|sqrt)(?![A-Za-z]))[A-Za-z]+\\*?\\{([^{}]*)\\}",
+      "\\1",
+      x,
+      perl = TRUE
+    )
+    # A bare group, not an argument of `\frac` / `\sqrt`.
+    x <- gsub("(?<![A-Za-z}\\]])\\{([^{}]*)\\}", "\\1", x, perl = TRUE)
+    if (identical(x, before)) {
+      break
+    }
+  }
+  # Any command or brace left over reads as its name / drops out.
+  x <- gsub("\\\\([A-Za-z]+)", "\\1", x, perl = TRUE)
+  x <- gsub("[{}]", "", x)
+  x <- chartr("\u0002\u0003", "{}", x)
+  trimws(gsub(" {2,}", " ", x))
+}
+
+# `gsub()` with a function of the captured groups as the replacement.
+.gsub_fn <- function(pattern, x, fn) {
+  m <- regexpr(pattern, x, perl = TRUE)
+  while (m > 0L) {
+    st <- attr(m, "capture.start")
+    ln <- attr(m, "capture.length")
+    groups <- substring(x, st, st + ln - 1L)
+    rep <- fn(groups)
+    x <- paste0(
+      substr(x, 1L, m - 1L),
+      rep,
+      substr(x, m + attr(m, "match.length"), nchar(x))
+    )
+    m <- regexpr(pattern, x, perl = TRUE)
+  }
+  x
+}
+
+# The plain text of a rich label, for text-only outputs: a tex() or plotmath()
+# label's formula read by `.tex_plain()` (unless it carries a reading of its
+# own, as an expression typeset by `.math_label()` does), an md() label's
+# words without the markup, from its parsed runs, with each math run read by
+# `.tex_plain()` (VP-172). Reading the runs, not re-scanning the text, keeps a
+# literal or escaped `$` (a price) as text.
+.rich_plain <- function(x) {
+  if (inherits(x, "vellum::vellum_tex_label")) {
+    return(if (identical(x@text, x@tex)) .tex_plain(x@tex) else x@text)
+  }
+  if (inherits(x, "vellum::vellum_md_label") && length(x@runs)) {
+    parts <- vapply(
+      x@runs,
+      function(r) {
+        if (!is.null(r$math)) {
+          .tex_plain(r$math)
+        } else {
+          paste(as.character(r$text %||% ""), collapse = "")
+        }
+      },
+      character(1)
+    )
+    return(paste(parts, collapse = ""))
+  }
+  x@text
 }

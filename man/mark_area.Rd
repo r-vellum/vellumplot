@@ -19,6 +19,7 @@ mark_ribbon(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -40,7 +41,8 @@ mark_step(
 \item{plot}{A \link{PlotSpec} (from \code{\link[=vplot]{vplot()}}).}
 
 \item{...}{Encodings (tidy-eval): \code{x} and \code{y} for area/step; \code{x}, \code{ymin},
-\code{ymax} for ribbon; plus \code{color}/\code{fill}/\code{alpha}. \code{mark_step()} also takes
+\code{ymax} for ribbon (or \code{y}, \code{xmin}, \code{xmax} for a horizontal one); plus
+\code{color}/\code{fill}/\code{alpha}. \code{mark_step()} also takes
 \code{linewidth} and \code{linetype}; a mapped \code{linewidth} varies the staircase's
 width per tread (see \code{\link[=scale_linewidth]{scale_linewidth()}}).}
 
@@ -60,6 +62,10 @@ plot-wide \code{\link[=theme_sketch]{theme_sketch()}}), or \code{NULL} (default)
 accept it; text, raster, hex and datashade marks do not.}
 
 \item{data}{Optional layer data frame; overrides the plot data for this layer.}
+
+\item{orientation}{For \code{mark_ribbon()}, \code{NA} (default) to read it from the
+ranges, or \code{"x"} (vertical, \code{ymin}/\code{ymax}) / \code{"y"} (horizontal,
+\code{xmin}/\code{xmax}), which must agree with the range given.}
 
 \item{direction}{For \code{mark_step()}, \code{"hv"} (horizontal then vertical, default)
 or \code{"vh"}.}
@@ -88,6 +94,12 @@ The modified \link{PlotSpec}.
 staircase line. All connect points in \code{x} order.
 }
 \details{
+A ribbon is horizontal when it is given \code{y}, \code{xmin} and \code{xmax} instead of
+\code{x}, \code{ymin} and \code{ymax}: it fills between \code{xmin} and \code{xmax} along \code{y},
+connecting points in \code{y} order (ggplot2's \code{orientation = "y"}). The
+orientation is read from the ranges; a ribbon needs one complete range,
+\code{ymin} and \code{ymax} or \code{xmin} and \code{xmax}, and not both.
+
 An area or ribbon is drawn as one polygon per series (per \code{group}, or per
 level of a discrete \code{fill}/\code{color}), and a polygon has a single fill. A
 continuous \code{fill}, \code{color} or \code{alpha} must therefore be constant within each
@@ -99,6 +111,10 @@ with ggplot2's default, \code{col_mix(ink, paper, 0.2)} from the theme's
 }
 \examples{
 vplot(pressure) |> mark_area(x = temperature, y = pressure)
+
+# a horizontal ribbon: xmin..xmax along y
+band <- data.frame(depth = 1:6, lo = c(2, 3, 2, 4, 3, 5))
+vplot(band) |> mark_ribbon(y = depth, xmin = lo, xmax = lo + 2)
 }
 \seealso{
 \code{\link[=scale_linewidth]{scale_linewidth()}}

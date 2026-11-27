@@ -1242,9 +1242,36 @@ NULL
     !"alpha" %in% names(L$params)
 }
 
-.emit_band <- function(scene, L, scales, ya, yb, outline = "upper") {
+.emit_band <- function(
+  scene,
+  L,
+  scales,
+  ya,
+  yb,
+  outline = "upper",
+  horizontal = FALSE
+) {
   n <- L$n
-  xn <- rep_len(scales$x$map(L$values$x), n)
+  # `xn` is the position along the band, `ya`/`yb` its two boundaries across
+  # it: x and y for a vertical band, y and x for a horizontal one (a ribbon
+  # over `y` from `xmin` to `xmax`, VP-169), which `path()`/`area()` swap back.
+  xn <- rep_len(scales[[if (horizontal) "y" else "x"]]$map(
+    L$values[[if (horizontal) "y" else "x"]]
+  ), n)
+  path <- function(along, across) {
+    if (horizontal) {
+      .xy_path(scales, across, along)
+    } else {
+      .xy_path(scales, along, across)
+    }
+  }
+  area <- function(along, a, b) {
+    if (horizontal) {
+      .xy_area(scales, a, along, b, along)
+    } else {
+      .xy_area(scales, along, a, along, b)
+    }
+  }
   sk <- .mark_sketch(L, scales)
   fo <- .fill_and_outline(L, scales, "grey20", n)
   lwd <- .aes_param(L, "linewidth", 0.5)
@@ -1257,7 +1284,7 @@ NULL
     }
     for (yy in if (identical(outline, "both")) list(ya, yb) else list(ya)) {
       ln <- .band_join(lapply(runs, function(o) {
-        .xy_path(scales, xn[o], yy[o])
+        path(xn[o], yy[o])
       }))
       scene <- .draw(
         scene,
@@ -1278,7 +1305,7 @@ NULL
   # switches whole instead of morphing into its first run (VP-162 review).
   fill_series <- function(scene, runs, sketch, gp) {
     polys <- lapply(runs, function(o) {
-      .xy_area(scales, xn[o], ya[o], xn[o], yb[o])
+      area(xn[o], ya[o], yb[o])
     })
     g <- if (length(runs) == 1L) {
       vellum::polygon_grob(polys[[1]]$x, polys[[1]]$y, sketch = sketch, gp = gp)
@@ -1422,12 +1449,24 @@ NULL
   invisible()
 }
 
-# A filled ribbon between ymin and ymax, one polygon per style group.
+# A filled ribbon between ymin and ymax, one polygon per style group; or,
+# horizontal, between xmin and xmax along y: a ribbon with an `xmin`/`xmax`
+# range and no `ymin`/`ymax` is horizontal, as `.range_orient()` reads a range
+# mark (VP-169).
 .emit_ribbon <- function(scene, L, scales) {
   n <- L$n
-  ymin <- rep_len(scales$y$map(L$values$ymin), n)
-  ymax <- rep_len(scales$y$map(L$values$ymax), n)
-  .emit_band(scene, L, scales, ymin, ymax, outline = "both")
+  va <- if (identical(.range_orient(L), "y")) "x" else "y"
+  lo <- rep_len(scales[[va]]$map(L$values[[paste0(va, "min")]]), n)
+  hi <- rep_len(scales[[va]]$map(L$values[[paste0(va, "max")]]), n)
+  .emit_band(
+    scene,
+    L,
+    scales,
+    lo,
+    hi,
+    outline = "both",
+    horizontal = identical(va, "x")
+  )
 }
 
 # An area mark: the region between `y` and the zero baseline, or between a

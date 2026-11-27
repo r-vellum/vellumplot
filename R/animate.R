@@ -613,7 +613,7 @@ animate <- function(
   .warn_removed_totals(
     list(pool$totals(combine), removed$totals(combine)),
     extra = no_state,
-    marks = vapply(base@layers, function(L) L@mark, character(1))
+    marks = vapply(base@layers, .layer_fn_mark, character(1))
   )
   .inform_row_order(
     .mark_ctx$anim_counts,

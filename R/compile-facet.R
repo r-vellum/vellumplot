@@ -370,8 +370,9 @@ NULL
     # are neither drawn nor counted as drawn by provenance. `.build_panels()`
     # sums the per-panel counts into one warning per layer.
     miss <- .missing_position_rows(layer, d)
-    # An area or ribbon keeps such rows, so it can leave a gap there, but they
-    # are not drawn and count in the same warning (VP-162).
+    # A path (area, ribbon, line, step) keeps such rows, so it can leave
+    # a gap there, but they are not drawn and count in the same warning
+    # (VP-162, VP-170).
     gap <- .missing_gap_rows(layer, d)
     # So are rows a position scale's `oob = "censor"` puts outside its limits
     # (before the stat, as in ggplot2), counted into the same warning.
@@ -399,8 +400,8 @@ NULL
 # Marks that draw one element per row and simply leave out a row whose
 # position is missing. Their missing rows are removed (with a warning) rather
 # than reaching the emitter at NaN. Paths (line, step, area, ribbon) keep theirs:
-# an interior NA breaks the path into a gap, as in ggplot2. An area or ribbon
-# splits into runs there and counts the rows as removed (`.NA_GAP_MARKS`).
+# an interior NA breaks the path into a gap, as in ggplot2, and the rows count
+# as removed (`.NA_GAP_MARKS`).
 # Layout and graph marks compute their own positions.
 .NA_REMOVE_MARKS <- c(
   "point",
@@ -430,11 +431,14 @@ NULL
   is.numeric(v) || inherits(v, c("Date", "POSIXt"))
 }
 
-# Filled paths that keep a row missing a continuous position (so they can split
-# into runs there and leave a gap) but don't draw it, so it counts as removed in
-# the "Removed n rows" warning. Only with the identity stat: a stat that reads
-# the row (a density) drops it with its own warning.
-.NA_GAP_MARKS <- c("area", "ribbon")
+# Paths that keep a row missing a continuous position (so they can split into
+# runs there and leave a gap) but don't draw it, so it counts as removed in the
+# "Removed n rows" warning: areas and ribbons (VP-162), and lines (paths are
+# unsorted lines) and steps, so their warning agrees with `spec_diagnose()`'s
+# report (VP-170).
+# Only with the identity stat: a stat that reads the row (a density) drops it
+# with its own warning.
+.NA_GAP_MARKS <- c("area", "ribbon", "line", "step")
 
 # Logical per row of `data`: is a continuous position channel (`x`, `y`, `xend`,
 # `ymin`, ...; see `.DIAG_POS_CHANNELS`) of `layer` missing? Only per-row data
@@ -463,7 +467,7 @@ NULL
   miss
 }
 
-# The rows an area or ribbon keeps as a gap: `.missing_position_rows()` for
+# The rows a path keeps as a gap: `.missing_position_rows()` for
 # the marks in `.NA_GAP_MARKS` under the identity stat.
 .missing_gap_rows <- function(layer, data) {
   if (!identical(layer@stat, "identity")) {
@@ -483,7 +487,7 @@ NULL
     dr <- .layer_dropped_rows(panels, i, shared)
     n_miss <- length(dr$missing) + dr$loose_missing
     n_cens <- length(dr$censored) + dr$loose_censored
-    .warn_removed_rows(n_miss + n_cens, n_cens, i, spec@layers[[i]]@mark)
+    .warn_removed_rows(n_miss + n_cens, n_cens, i, .layer_fn_mark(spec@layers[[i]]))
   }
   invisible()
 }
@@ -540,6 +544,16 @@ NULL
 # `n_cens` of them censored. The counts ride on the condition (`n_rows`,
 # `n_censored`, `layer`, `mark`) so an animation can collect the warnings of its
 # keyframes and give one per layer instead (`.removed_rows_tally()`, VP-150).
+# The `mark_*()` constructor a layer came from, for a message: its mark, but
+# "path" for `mark_path()`, an unsorted line (VP-170 review).
+.layer_fn_mark <- function(layer) {
+  if (identical(layer@mark, "line") && isFALSE(layer@stat_params$sort)) {
+    "path"
+  } else {
+    layer@mark
+  }
+}
+
 .warn_removed_rows <- function(n, n_cens, i, mark) {
   if (n <= 0L) {
     return(invisible())
@@ -725,6 +739,12 @@ NULL
   }
   train_free <- function(aes, intercept, title, inc0, lim) {
     function(res) {
+      values <- .axis_pool(res, aes, intercept)
+      # An axis no layer maps (rules or a rug alone, VP-173) stays the empty
+      # axis the shared training gave it.
+      if (is.null(values)) {
+        return(shared[[aes]])
+      }
       .train_axis(
         spec,
         res,
@@ -732,7 +752,7 @@ NULL
         title,
         include_zero = inc0,
         lim = lim,
-        values = .axis_pool(res, aes, intercept),
+        values = values,
         fit_ctx = fit_ctx
       )
     }

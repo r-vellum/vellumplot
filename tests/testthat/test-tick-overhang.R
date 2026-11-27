@@ -459,8 +459,10 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
   # Not wrapped, or not a plain string: nothing to measure.
   expect_true(is.na(vellumplot:::.wrapped_line_mm(lab, el, NA_real_)))
   expect_true(is.na(vellumplot:::.wrapped_line_mm(NA_character_, el, wrap)))
-  # A word wider than the box takes a line of its own, as vellum wraps it.
+  # A word wider than the box is broken to fit it (VP-174), when it can be
+  # in three lines; else it keeps a line of its own, as vellum wraps it.
   long <- "Antidisestablishmentarianism x"
+  expect_lte(vellumplot:::.wrapped_line_mm(long, el, 25), 25)
   expect_equal(
     vellumplot:::.wrapped_line_mm(long, el, 5),
     vellumplot:::.el_strwidth(
@@ -479,7 +481,9 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
     wrap_mm = wrap
   )
   expect_equal(ex$e[2], lw / 2)
-  # A word wider than the box reserves its full width, past the box.
+  # A word wider than the box is broken to fit it, so it reaches no further
+  # than half the box (VP-174); one too long for three lines in the box
+  # reserves its full width, past the box, as before.
   big <- "Supercalifragilisticexpialidocious"
   sc2 <- list(breaks = c(1, 10), labels = c("first", big), domain = c(1, 10))
   ex2 <- vellumplot:::.end_tick_extent(
@@ -488,10 +492,19 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
     0,
     c("centre", "top"),
     "x",
+    wrap_mm = 30
+  )
+  expect_lte(ex2$e[2], 30 / 2)
+  ex3 <- vellumplot:::.end_tick_extent(
+    sc2,
+    el,
+    0,
+    c("centre", "top"),
+    "x",
     wrap_mm = 10
   )
   expect_equal(
-    ex2$e[2],
+    ex3$e[2],
     vellumplot:::.el_strwidth(big, el, features = vellumplot:::.TNUM) / 2,
     tolerance = 1e-6
   )
@@ -502,4 +515,84 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
     vellumplot:::.el_strwidth(lab, el, features = vellumplot:::.TNUM) / 2,
     tolerance = 1e-3
   )
+})
+
+# VP-174: a word wider than its wrap box ran into the neighbouring tick's
+# label. It is broken across lines (at its own hyphen, else between letters
+# with a hyphen added) so every piece fits the box.
+test_that("an overlong word in a wrapped tick label is hyphenated (VP-174)", {
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
+  el <- rt[["axis.text.x"]]
+  w <- function(x) vellumplot:::.el_strwidth(x, el, features = vellumplot:::.TNUM)
+  hy <- function(x, mm) vellumplot:::.hyphenate_label(x, el, mm)
+  gutter <- vellumplot:::.HYPHEN_GUTTER_MM
+  big <- "Antidisestablishment of the old regime"
+  out <- hy(big, 20)
+  first <- strsplit(out, " ")[[1]][1]
+  pieces <- strsplit(first, "\n")[[1]]
+  expect_gt(length(pieces), 1L)
+  expect_lte(length(pieces), vellumplot:::.HYPHEN_MAX_LINES)
+  expect_true(endsWith(pieces[1], "-"))
+  # the pieces put back together are the word, each fits the box less the
+  # gutter, and each keeps at least .HYPHEN_MIN letters
+  expect_identical(gsub("-\n", "", first), "Antidisestablishment")
+  expect_true(all(w(pieces) <= 20 - gutter))
+  expect_true(all(nchar(sub("-$", "", pieces)) >= vellumplot:::.HYPHEN_MIN))
+  # the rest of the label is left to the word wrap
+  expect_match(out, " of the old regime$")
+  # An existing hyphen is the preferred break.
+  hw <- hy("Counter-revolutionaries", w("Counter-revolution") + gutter)
+  expect_identical(hw, "Counter-\nrevolutionaries")
+  # A word that needs more than three lines in the box is left whole, as
+  # before, rather than stacked into a tower of fragments.
+  long <- "Pneumonoultramicroscopicsilicovolcanoconiosis"
+  expect_identical(hy(long, 12), long)
+  # Greek and Cyrillic break; CJK, Arabic, Hebrew, numbers and codes don't.
+  expect_match(hy("\u042d\u043b\u0435\u043a\u0442\u0440\u043e\u044d\u043d\u0446\u0435\u0444\u0430\u043b\u043e\u0433\u0440\u0430\u0444\u0438\u044f", 25), "-\n", fixed = TRUE)
+  cjk <- "\u56fd\u969b\u6a19\u6e96\u5316\u6a5f\u69cb\u59d4\u54e1\u4f1a\u7dcf\u4f1a\u8b70\u4e8b\u9332"
+  expect_identical(hy(cjk, 20), cjk)
+  heb <- "\u05d1\u05d9\u05ea\u05d4\u05e1\u05e4\u05e8\u05d4\u05d2\u05d1\u05d5\u05d4\u05dc\u05de\u05d3\u05e2\u05d9\u05d4\u05e8\u05d5\u05d7"
+  expect_identical(hy(heb, 20), heb)
+  expect_identical(hy("1000000000", 3), "1000000000")
+  expect_identical(hy("ABC123XYZ789", 3), "ABC123XYZ789")
+  # A decomposed accent breaks like the composed one and stays on its letter.
+  nfc <- "\u00e9l\u00e9vationpr\u00e9sidentielle"
+  nfd <- "e\u0301le\u0301vationpre\u0301sidentielle"
+  hc <- hy(nfc, 20)
+  hd <- hy(nfd, 20)
+  expect_match(hc, "-\n", fixed = TRUE)
+  expect_match(hd, "-\n", fixed = TRUE)
+  expect_false(grepl("\n\u0301", hd, fixed = TRUE))
+  # Labels whose words fit are unchanged; so are NA and rich labels.
+  expect_identical(hy("North region sales", 12), "North region sales")
+  expect_identical(hy(NA_character_, 3), NA_character_)
+  m <- md("**Supercalifragilistic**")
+  expect_identical(hy(m, 3), m)
+})
+
+test_that("wrapped tick labels with an overlong word no longer overlap (VP-174)", {
+  d <- data.frame(
+    k = c("Antidisestablishment of the old regime", "b", "c", "d", "e", "f"),
+    v = 1:6
+  )
+  p <- vplot(d, width = 4, height = 3) |> mark_bar(x = k, y = v)
+  s <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+  labs <- character()
+  walk <- function(node) {
+    if (identical(node$class, "grob_text")) {
+      v <- node$label
+      if (is.list(v) && !is.null(v$v)) v <- v$v
+      labs <<- c(labs, unlist(v))
+    }
+    for (ch in node) if (is.list(ch)) walk(ch)
+  }
+  walk(s$root)
+  expect_true(any(grepl("^Antidis[a-z]*-\n", labs)))
+  # A label that fits draws as before.
+  d2 <- data.frame(k = c("North region sales", "South region", "East"), v = 1:3)
+  p2 <- vplot(d2, width = 3, height = 3) |> mark_bar(x = k, y = v)
+  s2 <- vellum::as_scene_spec(vellum::as_vellum_scene(p2))
+  labs <- character()
+  walk(s2$root)
+  expect_false(any(grepl("-\n", labs)))
 })

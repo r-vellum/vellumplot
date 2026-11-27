@@ -254,3 +254,103 @@ test_that(".plotmath_plain() reads common plotmath (VP-163)", {
   expect_identical(pp(quote(frac(1, 2))), "1/2")
   expect_identical(pp(quote(-x)), "-x")
 })
+
+# VP-171: a scale name or guide title given as an expression was drawn as its
+# source text; it is typeset as labs() typesets one.
+test_that("scale names and guide titles typeset plotmath (VP-171)", {
+  b <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
+  p <- b |> scale_x_continuous(name = expression(alpha^2))
+  nm <- p@scales[[1]]@name
+  expect_s3_class(nm, "vellum::vellum_label")
+  expect_identical(nm@tex, vellum::plotmath(expression(alpha^2))@tex)
+  expect_identical(nm@text, "\u03b1^2")
+  expect_match(plot_alt(p), "\u03b1^2 (horizontal axis)", fixed = TRUE)
+  # A quoted call too, and the guide title by guides() or the scale's guide.
+  q <- b |> scale_y_continuous(name = quote(beta[i]))
+  expect_identical(q@scales[[1]]@name@text, "\u03b2_i")
+  g <- b |> guides(color = guide_legend(title = expression(gamma)))
+  expect_s3_class(g@scales[[1]]@guide$title, "vellum::vellum_label")
+  g2 <- b |>
+    scale_x_continuous(guide = guide_axis(title = quote(gamma^2)))
+  expect_identical(g2@scales[[1]]@guide$title@text, "\u03b3^2")
+  a <- b |> guides(x = guide_axis(title = quote(delta)))
+  expect_identical(a@scales[[1]]@guide$title@text, "\u03b4")
+  s <- sec_axis(~ . * 2, name = expression(mu))
+  expect_identical(s@name@text, "\u03bc")
+  # The drawn title is the typeset label, not the source text.
+  svg <- plot_svg(p |> guides(color = guide_legend(title = expression(gamma))))
+  expect_false(grepl("alpha^2", svg, fixed = TRUE))
+  expect_false(grepl(">gamma<", svg, fixed = TRUE))
+  # Plain names are untouched; only the first element of an expression draws.
+  expect_identical(
+    (b |> scale_x_continuous(name = "Weight"))@scales[[1]]@name,
+    "Weight"
+  )
+  expect_warning(
+    w <- b |> scale_x_continuous(name = expression(a, b)),
+    "first element"
+  )
+  expect_identical(w@scales[[1]]@name@text, "a")
+})
+
+# VP-172: a tex() title leaked its TeX source into the alt text and the SVG's
+# <title>/<desc>; they read it as plain text now.
+test_that("tex() titles read as plain text in alt text and SVG (VP-172)", {
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    labs(
+      title = tex("\\alpha^{2} + \\frac{a}{b}"),
+      x = tex("\\mathrm{wt}\\ (10^3\\,\\mathrm{lb})"),
+      y = md("Fit $\\hat{y} = \\beta_{0}$ **now**")
+    )
+  alt <- plot_alt(p)
+  expect_match(alt, "wt (10^3 lb) (horizontal axis)", fixed = TRUE)
+  expect_match(alt, "Fit y = \u03b2_0 now (vertical axis)", fixed = TRUE)
+  svg <- plot_svg(p)
+  expect_match(svg, ">\u03b1^2 + a/b</title>", fixed = TRUE)
+  expect_false(grepl("\\alpha", svg, fixed = TRUE))
+  expect_false(grepl("\\mathrm", svg, fixed = TRUE))
+  # plotmath() labels read the same way.
+  q <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    labs(x = plotmath("alpha^2"))
+  expect_match(plot_alt(q), "\u03b1^2 (horizontal axis)", fixed = TRUE)
+})
+
+test_that(".tex_plain() reads common TeX (VP-172)", {
+  tp <- vellumplot:::.tex_plain
+  expect_identical(tp("\\alpha^{2}"), "\u03b1^2")
+  expect_identical(tp("\\beta_{i}"), "\u03b2_i")
+  expect_identical(tp("x^{ab}"), "x^(ab)")
+  expect_identical(tp("\\frac{1}{n}"), "1/n")
+  expect_identical(tp("\\frac{x+1}{2}"), "(x+1)/2")
+  expect_identical(tp("\\sqrt{x}"), "\u221a(x)")
+  expect_identical(tp("\\hat{y} = \\bar{x}"), "y = x")
+  expect_identical(tp("a \\leq b \\times c"), "a \u2264 b \u00d7 c")
+  expect_identical(tp("\\int_0^\\infty"), "\u222b_0^\u221e")
+  expect_identical(tp("\\text{mean}\\,x"), "mean x")
+  expect_identical(tp("\\{x\\}"), "{x}")
+  expect_identical(tp("E = mc^2"), "E = mc^2")
+  expect_identical(tp("\\left( a \\right)"), "( a )")
+  expect_identical(tp("\\unknown x"), "unknown x")
+  # Nested arguments keep their structure (VP-172 review).
+  expect_identical(tp("\\frac{\\alpha}{x^{2}}"), "\u03b1/(x^2)")
+  expect_identical(tp("\\sqrt{x^{2}+1}"), "\u221a(x^2+1)")
+  expect_identical(tp("\\sqrt[3]{x}"), "\u221b(x)")
+  expect_identical(tp("\\sqrt[n]{x}"), "rootn(x)")
+  expect_identical(tp("a \\\\ b"), "a b")
+})
+
+test_that("md() titles keep a literal or escaped $ as text (VP-172 review)", {
+  rp <- vellumplot:::.rich_plain
+  expect_identical(
+    rp(md("Costs from $5 to $10 per **unit**")),
+    "Costs from $5 to $10 per unit"
+  )
+  expect_identical(rp(md("Price \\$5 and $\\beta$")), "Price $5 and \u03b2")
+  expect_identical(rp(md("Growth $\\alpha^{2}$ in *2020*")), "Growth \u03b1^2 in 2020")
+  p <- vplot(mtcars) |>
+    mark_point(x = wt, y = mpg) |>
+    labs(title = md("Costs from $5 to $10 per **unit**"))
+  expect_match(plot_svg(p), ">Costs from $5 to $10 per unit</title>", fixed = TRUE)
+})

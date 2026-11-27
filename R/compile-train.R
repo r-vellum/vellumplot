@@ -2483,10 +2483,15 @@ NULL
   xs <- .axis_pool(resolved, "x", "xintercept")
   ys <- .axis_pool(resolved, "y", "yintercept")
   # A rug draws on whichever axes it has, so `mark_rug(x = )` alone trains an
-  # empty y axis (as ggplot2 does) instead of asking for a y encoding.
-  has_rug <- any(vapply(resolved, function(L) identical(L$mark, "rug"), NA))
+  # empty y axis (as ggplot2 does) instead of asking for a y encoding. So does
+  # a plot of reference rules (and rugs) alone, as the rules span the whole
+  # panel: `mark_rule(x = )` draws its vertical rules over an empty y axis
+  # (VP-173). Any other layer with no y still asks for one.
+  marks <- vapply(resolved, function(L) L$mark, character(1))
+  spans <- "rug" %in% marks ||
+    (length(marks) > 0L && all(marks %in% c("rug", "rule")))
   blank <- NULL
-  if (has_rug && xor(is.null(xs), is.null(ys))) {
+  if (spans && xor(is.null(xs), is.null(ys))) {
     blank <- if (is.null(xs)) "x" else "y"
     if (is.null(xs)) xs <- list(numeric(0)) else ys <- list(numeric(0))
   }
@@ -2557,12 +2562,21 @@ NULL
   pos[[ha]] <- train(ha, c(aes_sc, pos))
   scales <- list(x = pos$x, y = pos$y)
   if (!is.null(blank)) {
-    scales[[blank]] <- .scale_set(
-      scales[[blank]],
-      breaks = numeric(0),
-      labels = character(0),
-      name = NULL
-    )
+    # The empty axis keeps what the user asked of it: limits (a scale's or the
+    # coord's) keep their breaks, a `labs()` / scale name keeps the title.
+    ss <- .scale_for(spec, blank)
+    has_lim <- (!is.null(ss) && !is.null(ss@domain)) ||
+      !is.null(if (identical(blank, "x")) co@xlim else co@ylim)
+    if (!has_lim) {
+      scales[[blank]] <- .scale_set(
+        scales[[blank]],
+        breaks = numeric(0),
+        labels = character(0)
+      )
+    }
+    if (is.null(titles$named[[blank]])) {
+      scales[[blank]] <- .scale_set(scales[[blank]], name = NULL)
+    }
   }
   # The registered scales follow x and y, in registry (legend) order; an
   # untrained one stays as a NULL entry so every key is always present.

@@ -496,6 +496,7 @@ guide_axis_logticks <- function(
 # the data at train time, exactly as if no scale had been declared).
 .set_guide <- function(plot, aesthetic, guide) {
   aesthetic <- .canonical_lim_aes(aesthetic)
+  guide <- .guide_math_title(guide, call = rlang::caller_env())
   idx <- which(vapply(
     plot@scales,
     function(s) identical(s@aesthetic, aesthetic),

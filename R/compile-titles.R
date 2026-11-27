@@ -13,10 +13,11 @@ NULL
 # ---------------------------------------------------------------------------
 
 # A single non-empty plain string, else NULL. A rich label stands in by its
-# text: an md() label's words without the markup, a tex() label's TeX source.
+# plain text (`.rich_plain()`): an md() label's words without the markup, a
+# tex() label's formula read as Unicode text, not its TeX source (VP-172).
 .plain_title <- function(x) {
   if (.is_rich(x)) {
-    x <- x@text
+    x <- .rich_plain(x)
   }
   if (is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)) x else NULL
 }
@@ -29,6 +30,24 @@ NULL
     ch <- layer@encoding[[channel]]
     if (!is.null(ch) && !.cond_constant(ch, channel)) {
       return(.channel_label(ch))
+    }
+  }
+  # A position axis no layer maps directly is titled by its mapped range
+  # channel (`xmin`, then `xmax`), as ggplot2 titles a horizontal ribbon or
+  # interval by its `xmin` (VP-169 review). A constant range end (`ymin = 0`)
+  # maps no variable, so it names nothing.
+  if (channel %in% c("x", "y")) {
+    for (chan in paste0(channel, c("min", "max"))) {
+      for (layer in spec@layers) {
+        ch <- layer@encoding[[chan]]
+        if (
+          !is.null(ch) &&
+            !isTRUE(ch@after) &&
+            length(all.vars(rlang::quo_get_expr(ch@expr))) > 0L
+        ) {
+          return(.channel_label(ch))
+        }
+      }
     }
   }
   NULL
