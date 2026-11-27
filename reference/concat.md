@@ -36,9 +36,23 @@ wrap_plots(
   dpi = NULL
 )
 
-hconcat(..., guides = c("collect", "keep"), height = NULL)
+hconcat(
+  ...,
+  widths = NULL,
+  guides = c("collect", "keep"),
+  width = NULL,
+  height = NULL,
+  dpi = NULL
+)
 
-vconcat(..., guides = c("collect", "keep"), width = NULL)
+vconcat(
+  ...,
+  heights = NULL,
+  guides = c("collect", "keep"),
+  width = NULL,
+  height = NULL,
+  dpi = NULL
+)
 ```
 
 ## Arguments
@@ -59,7 +73,8 @@ vconcat(..., guides = c("collect", "keep"), width = NULL)
 - widths, heights:
 
   Relative panel sizes per column / row (recycled numeric vector), or
-  `NULL` for equal panels.
+  `NULL` for equal panels. `hconcat()` takes `widths` and `vconcat()`
+  takes `heights`.
 
 - guides:
 

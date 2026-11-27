@@ -4,6 +4,56 @@
 
 ### Bug fixes
 
+- [`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  takes `heights` and
+  [`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  takes `widths`, passed on to
+  [`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md).
+  Before, `vconcat(a, b, heights = c(3, 1))` went through to
+  [`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  but still counted as a plot when sizing the grid, so it drew a
+  three-row grid with an empty last row and no error. Both also take
+  `width`, `height` and `dpi` now: `hconcat(a, b, width = 8)` set the
+  width but drew a three-column grid for the same reason. Other
+  [`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  arguments given to
+  [`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  /
+  [`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  (`ncol`, `nrow`, the other axis’s weights), and anything in `...` that
+  is not a plot, are now errors. `widths` and `heights` must be
+  positive, finite numbers, one for all tracks or one per column / row;
+  a string, `NA`, a negative or a surplus weight used to draw without
+  complaint. Errors from
+  [`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+  [`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  and
+  [`wrap_plots()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  now name the function you called (VP-151).
+
+- A composition that can’t be aligned (a faceted, polar, sf or
+  fixed-aspect cell, a `design`, insets, or a nested composition) now
+  draws its figure `title`, `subtitle` and `caption`, in bands above and
+  below the cells as in the aligned layout, and collects identical
+  legends into one under `guides = "collect"` (the default), placed by
+  the composition’s `legend.position`. As in the aligned layout, every
+  legend outside a panel is collected (identical ones once), while a
+  legend inside a panel, or beside each facet panel, stays with its
+  cell. Before, this layout drew the title only into the SVG alt text
+  and kept every cell’s legend. The collected legend of either layout
+  keys its swatches when a cell is interactive, so vellumwidget can
+  highlight a series from it; an aligned composition’s never did. A
+  composition holding another composition takes this layout, so its own
+  title is drawn now too (VP-152).
+
+- Aligned compositions no longer stretch fixed-aspect plots: a cell with
+  [`coord_fixed()`](https://r-vellum.github.io/vellumplot/reference/coord_cartesian.md),
+  a theme `aspect.ratio` or a Venn diagram
+  ([`vvenn()`](https://r-vellum.github.io/vellumplot/reference/vvenn.md))
+  now takes the cell-by-cell layout, as polar and sf cells do, and keeps
+  its aspect inside its cell. `hconcat(vvenn(a), vvenn(b))` drew its
+  circles as ellipses (VP-154).
+
 - [`spec_diagnose()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
   and its `$report` now count the rows a point or text mark draws
   nothing for because their size is missing (under `missing`) or
@@ -55,6 +105,13 @@
 
 ### Documentation
 
+- The facets-and-composition article no longer prints a message or gt’s
+  startup output into the page; its bottom-legend facet example is
+  taller so the per-panel legends fit, the three-plot
+  [`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md)
+  and the sparklines get explicit sizes, and the non-aligned and nested
+  composition examples now show their titles (D-35).
+
 - The articles cover more of the package (D-20 to D-23, D-25). “Effects
   and themes” gains font weight, brand weights,
   [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md)
@@ -84,6 +141,7 @@
   [`?guide_bins`](https://r-vellum.github.io/vellumplot/reference/guide_bins.md)
   no longer links to a `scale_alpha_binned()` that vellumplot doesn’t
   have.
+
 - The animation article is brought up to date (D-17): faceted animations
   (with per-panel scales refused), how marks are matched (`data_id`,
   then group, then row order),
@@ -99,11 +157,13 @@
   shows.
   [`?anim_save`](https://r-vellum.github.io/vellumplot/reference/anim_save.md)
   says which frame an animated SVG shows under reduced motion.
+
 - The facets and composition article covers composition tags
   (`compose_annotation(tag_levels =)` and the tag band), strip text
   clipping with
   [`label_wrap_gen()`](https://r-vellum.github.io/vellumplot/reference/labellers.md)
   and `theme(strip.clip = "off")`, and `inset(align_to =)` (D-18).
+
 - Get started has a “Saving to PowerPoint” section
   (`render_plot(p, "x.pptx")`,
   [`vellum::pptx_pages()`](https://r-vellum.github.io/vellum/reference/pptx_pages.html),
@@ -111,13 +171,16 @@
   with `officer::ph_with()`), and
   [`?render_plot`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
   lists `.pptx` (D-19).
+
 - The README lists PowerPoint output, math labels,
   [`theme_brand()`](https://r-vellum.github.io/vellumplot/reference/theme_brand.md),
   faceted animation, frame variables and the ggplot2-parity work, and
   the articles no longer say output is PNG, SVG and PDF only (D-24).
+
 - [`?render_plot`](https://r-vellum.github.io/vellumplot/reference/render_plot.md)
   has a PowerPoint example (VP-160), and Get started’s “Saving to
   PowerPoint” section links to vellum’s PowerPoint article (D-36).
+
 - [`?mark_polygon`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md)
   gives the default fill as the theme’s `col_mix(ink, paper, 0.2)` from
   [`element_geom()`](https://r-vellum.github.io/vellumplot/reference/element_geom.md),

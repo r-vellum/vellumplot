@@ -106,9 +106,23 @@ composition, not faceting).</p>
 <span>  dpi <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">hconcat</span><span class="op">(</span><span class="va">...</span>, guides <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"collect"</span>, <span class="st">"keep"</span><span class="op">)</span>, height <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">hconcat</span><span class="op">(</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  widths <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  guides <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"collect"</span>, <span class="st">"keep"</span><span class="op">)</span>,</span>
+<span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  height <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dpi <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">vconcat</span><span class="op">(</span><span class="va">...</span>, guides <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"collect"</span>, <span class="st">"keep"</span><span class="op">)</span>, width <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">vconcat</span><span class="op">(</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  heights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  guides <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"collect"</span>, <span class="st">"keep"</span><span class="op">)</span>,</span>
+<span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  height <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dpi <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -129,7 +143,8 @@ composition, not faceting).</p>
 
 <dt id="arg-widths-heights">widths, heights<a class="anchor" aria-label="anchor" href="#arg-widths-heights"></a></dt>
 <dd><p>Relative panel sizes per column / row (recycled numeric
-vector), or <code>NULL</code> for equal panels.</p></dd>
+vector), or <code>NULL</code> for equal panels. <code>hconcat()</code> takes <code>widths</code> and
+<code>vconcat()</code> takes <code>heights</code>.</p></dd>
 
 
 <dt id="arg-guides">guides<a class="anchor" aria-label="anchor" href="#arg-guides"></a></dt>
