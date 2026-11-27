@@ -233,7 +233,7 @@ A layer without `data_id` still gets keys when it has a `tooltip`, a
 `condition()`, or the plot declares a selection. These default keys name the
 panel, the layer and the row: `"p1-1:l2:7"` is row 7 of layer 2 in the first
 (or only) panel, and a line or area series takes the key of its first row. In a
-composition the cell id goes in front (`"subplot-2:p1-1:l1:7"`). So no two
+composition the cell id goes in front (`"cell-2:p1-1:l1:7"`). So no two
 layers ever share a default key, and selecting a point never selects a line by
 accident. When two layers *should* react together, give them the same
 `data_id`:

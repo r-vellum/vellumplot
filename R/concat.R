@@ -169,7 +169,7 @@ concat <- function(
   ref <- .first_real_plot(plots)
   w0 <- .comp_unit_size(ref, "width")
   h0 <- .comp_unit_size(ref, "height")
-  PlotComposition(
+  comp <- PlotComposition(
     plots = plots,
     nrow = nrow,
     ncol = ncol,
@@ -182,6 +182,21 @@ concat <- function(
     height = height %||% (nrow * h0),
     dpi = as.double(dpi %||% .comp_dpi(ref))
   )
+  # the dimensions it takes from a first plot that left them at the default,
+  # which a knitr chunk's figure size may set (`.knit_svg()`, VP-165)
+  ref_free <- if (is.null(ref)) {
+    c(width = TRUE, height = TRUE)
+  } else {
+    .size_defaults(ref)
+  }
+  free <- c(
+    width = is.null(width) && ref_free[["width"]],
+    height = is.null(height) && ref_free[["height"]]
+  )
+  if (any(free)) {
+    attr(comp, "vp_default_size") <- free
+  }
+  comp
 }
 
 # `widths` / `heights`: NULL, or positive finite weights, one per column / row
@@ -748,15 +763,22 @@ compose_annotation <- function(
   side <- .fig_legend_side(rt0)
   has <- function(x) !is.null(x) && !identical(x, "")
   lab <- comp@labels
+  # A nested composition next to its parent's figure band drops its own
+  # margin on that side (VP-168): its cells' plot margins there, and its own
+  # margin row above / below its bands.
+  trim <- attr(comp, "vp_band_trim")
+  trim_top <- isTRUE(trim[["top"]])
+  trim_bottom <- isTRUE(trim[["bottom"]])
   if (
     !has(lab$title) &&
       !has(lab$subtitle) &&
       !has(lab$caption) &&
       !length(figguides)
   ) {
+    comp <- .comp_trim_band_margins(comp, trim_top, trim_bottom)
     return(.comp_independent_cells(scene, comp, box_mm, rt0))
   }
-  m <- rep_len(rt0[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  m <- .comp_apply_band_trim(rep_len(rt0[["plot.margin"]] %||% 0, 4L), comp)
   # columns: margin, [left legend], cells, [right legend], margin. The cells
   # also cover the margin columns (each cell keeps its own plot margin), the
   # title bands sit inside them.
@@ -778,7 +800,7 @@ compose_annotation <- function(
     has(lab$subtitle) ||
     (length(figguides) && side == "top")
   bottom <- has(lab$caption) || (length(figguides) && side == "bottom")
-  comp <- .comp_trim_band_margins(comp, top, bottom)
+  comp <- .comp_trim_band_margins(comp, top || trim_top, bottom || trim_bottom)
   if (top) {
     .tk_add(H, vellum::vl_unit(m[1], "mm"))
   }
@@ -977,8 +999,10 @@ compose_annotation <- function(
 # A cell's own plot margin on the side of a figure band (`side`: "top" or
 # "bottom") is dropped: the band's own margin row already separates the cell
 # from the page edge, so keeping both left twice the gap the aligned layout
-# has between a title and the panels (VP-152 review). Only plot cells in the
-# first (top) / last (bottom) row of the grid.
+# has between a title and the panels (VP-152 review). Only cells in the first
+# (top) / last (bottom) row of the grid. A nested composition there is marked
+# (attribute `vp_band_trim`) to drop its own outer margin on that side when
+# drawn (`.comp_apply_band_trim()`, VP-168).
 .comp_trim_band_margins <- function(comp, top, bottom) {
   if (!top && !bottom) {
     return(comp)
@@ -986,7 +1010,8 @@ compose_annotation <- function(
   plots <- comp@plots
   for (i in seq_along(plots)) {
     p <- plots[[i]]
-    if (!S7::S7_inherits(p, PlotSpec)) {
+    nested <- S7::S7_inherits(p, PlotComposition)
+    if (!S7::S7_inherits(p, PlotSpec) && !nested) {
       next
     }
     if (!is.null(comp@design)) {
@@ -994,6 +1019,15 @@ compose_annotation <- function(
       r1 <- comp@design[[i]]$b
     } else {
       r0 <- r1 <- .comp_cell(i, comp)$r
+    }
+    if (nested) {
+      edge <- c(top = top && r0 == 1, bottom = bottom && r1 == comp@nrow)
+      if (any(edge)) {
+        old <- attr(p, "vp_band_trim") %||% c(top = FALSE, bottom = FALSE)
+        attr(p, "vp_band_trim") <- edge | old
+        plots[[i]] <- p
+      }
+      next
     }
     m <- rep_len(
       .resolve_theme(.theme_of(p))[["plot.margin"]] %||% 0,
@@ -1012,6 +1046,19 @@ compose_annotation <- function(
   }
   comp@plots <- plots
   comp
+}
+
+# A nested composition's outer margin (t, r, b, l mm) less the sides its
+# parent marked as next to a figure band (`.comp_trim_band_margins()`).
+.comp_apply_band_trim <- function(m, comp) {
+  trim <- attr(comp, "vp_band_trim")
+  if (isTRUE(trim[["top"]])) {
+    m[1] <- 0
+  }
+  if (isTRUE(trim[["bottom"]])) {
+    m[3] <- 0
+  }
+  m
 }
 
 # The cell grid of an independently laid-out composition, drawn into the

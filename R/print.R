@@ -191,10 +191,104 @@ S7::method(summary, PlotSpec) <- function(object, ...) {
   if (
     requireNamespace("knitr", quietly = TRUE) && isTRUE(knitr::is_html_output())
   ) {
-    return(knitr::asis_output(plot_svg(x, scaling = "fit", inline = TRUE)))
+    return(knitr::asis_output(.knit_svg(x)))
   }
   print(x)
   invisible(x)
+}
+
+# The inline SVG a plot knits to in HTML. By default it fills the column
+# (`scaling = "fit"`), at the plot's own aspect. The chunk's figure size
+# (`.knit_fig_size()`) sizes the dimensions a plot was given no value for
+# (`.size_defaults()`): it is laid out at that size, and a chunk-set
+# `fig-width` also caps the figure at that width (CSS `max-width`, 96 px per
+# inch), so it still shrinks to a narrower column but a small figure is not
+# stretched to fill it. A chunk's `out-width` becomes the figure's CSS width.
+# A plot given a size keeps it and fills the column as before (VP-165).
+.knit_svg <- function(x) {
+  fs <- .knit_fig_size()
+  free <- .size_defaults(x)
+  w <- if (free[["width"]]) fs$width
+  h <- NULL
+  if (free[["height"]]) {
+    h <- if (!is.null(fs$asp)) (w %||% x@width) * fs$asp else fs$height
+  }
+  svg <- plot_svg(x, width = w, height = h, scaling = "fit", inline = TRUE)
+  style <- c(
+    if (!is.null(fs$out_width)) paste0("width:", fs$out_width),
+    if (!is.null(w)) sprintf("max-width:%spx", format(w * 96, digits = 7))
+  )
+  if (!length(style)) {
+    return(svg)
+  }
+  sub(
+    '(<svg[^>]*?width="100%" height="100%")',
+    paste0('\\1 style="', paste(style, collapse = ";"), '"'),
+    svg
+  )
+}
+
+# The figure size the current chunk asks for, in inches: `width` and `height`
+# where the chunk's value differs from the document's default
+# (`knitr::opts_chunk`), else NULL; `asp`, the chunk's own `fig.asp` (else
+# NULL), which then sets the height from the width; and `out_width`, the
+# chunk's `out.width` (as a CSS length; NULL when unset or knitr's own). A value equal to the document default
+# counts as not set. knitr folds a `fig.asp` into the chunk's `fig.height`,
+# so under a document-wide `fig.asp` the default height is
+# `fig.width * fig.asp`. Outside a chunk everything is NULL.
+.knit_fig_size <- function() {
+  num <- function(v) is.numeric(v) && length(v) == 1L && is.finite(v) && v > 0
+  same <- function(a, b) num(b) && isTRUE(all.equal(a, b))
+  cur <- knitr::opts_current$get
+  doc <- knitr::opts_chunk$get
+  w <- cur("fig.width")
+  w0 <- doc("fig.width")
+  width <- if (num(w) && !same(w, w0)) as.double(w)
+  a <- cur("fig.asp")
+  a0 <- doc("fig.asp")
+  asp <- if (num(a) && !same(a, a0)) as.double(a)
+  height <- NULL
+  if (is.null(asp)) {
+    h <- cur("fig.height")
+    h0 <- if (num(a0) && num(w0)) w0 * a0 else doc("fig.height")
+    height <- if (num(h) && !same(h, h0)) as.double(h)
+  }
+  ow <- cur("out.width")
+  # under `fig.retina`, knitr fills an unset `out.width` with the figure's
+  # pixel width (`fig.width * dpi`, before it scales `dpi` by the retina
+  # factor); that one is not the author's
+  r <- cur("fig.retina")
+  auto <- num(ow) &&
+    num(w) &&
+    num(cur("dpi")) &&
+    num(r) &&
+    r != 1 &&
+    (same(ow, w * cur("dpi") / r) || same(ow, w * cur("dpi")))
+  out_width <- if (auto) {
+    NULL
+  } else if (is.numeric(ow) && length(ow) == 1L && is.finite(ow)) {
+    paste0(ow, "px")
+  } else if (is.character(ow) && length(ow) == 1L && nzchar(ow)) {
+    ow
+  }
+  list(width = width, height = height, asp = asp, out_width = out_width)
+}
+
+# Which of the plot's dimensions were left at their default, so a knitr chunk
+# may size them: `vplot()` records the `width` / `height` it was not given
+# (attribute `vp_default_size`), and a composition the ones it was not given
+# whose first plot left them at the default too. Anything else (a table, a
+# sparkline, a spec read back from JSON) counts as sized.
+.size_defaults <- function(x) {
+  d <- attr(x, "vp_default_size")
+  if (
+    !is.logical(d) ||
+      !all(c("width", "height") %in% names(d)) ||
+      !(S7::S7_inherits(x, PlotSpec) || S7::S7_inherits(x, PlotComposition))
+  ) {
+    return(c(width = FALSE, height = FALSE))
+  }
+  c(width = isTRUE(d[["width"]]), height = isTRUE(d[["height"]]))
 }
 
 .register_knit_print <- function() {

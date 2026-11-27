@@ -564,6 +564,7 @@ test_that("row keys follow a composition cell's key prefix, with joins (X-15)", 
   for (i in which(keep)) {
     rk <- e$meta$row_keys[[i]]
     pre <- sub(":.*$", ":", e$key[[i]])
+    expect_match(pre, "^cell-[12]:$") # one prefix in every layout (VP-167)
     expect_identical(paste0(rk[[1]], "\u241fs1"), e$key[[i]])
     expect_true(all(startsWith(rk, pre)))
     expect_identical(e$meta$row_joins[[i]], sub("^[^:]*:", "", rk))

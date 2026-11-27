@@ -61,9 +61,10 @@ NULL
 
 # The node name a repel label (or its background) carries, unique per panel so a
 # faceted layer's per-panel copies never collide. `.mark_ctx$panel` is the
-# enclosing panel ("panel-r-c" / "subplot-N"), or absent for a lone panel.
+# enclosing panel (`.mark_panel_id()`: "panel-r-c", "cell-<k>" or
+# "cell-<k>-panel-r-c"), or absent for a lone panel.
 .repel_name <- function(gi, bg = FALSE) {
-  pn <- .mark_ctx$panel
+  pn <- .mark_panel_id()
   if (is.null(pn) || is.na(pn)) {
     pn <- "p"
   }

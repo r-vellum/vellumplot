@@ -176,8 +176,35 @@ test_that("composition accumulates provenance across sub-plots", {
   expect_equal(length(unique(ids)), length(ids))
   expect_setequal(
     unique(vapply(prov, `[[`, character(1), "panel")),
-    c("subplot-1", "subplot-2")
+    c("cell-1", "cell-2")
   )
+})
+
+test_that("cells laid out on their own name their panels per cell (VP-167)", {
+  a <- vplot(mtcars) |> mark_point(x = wt, y = mpg)
+  prov <- plot_provenance(hconcat(a, a |> facet_wrap(~am)))
+  expect_setequal(
+    unique(vapply(prov, `[[`, character(1), "panel")),
+    c("cell-1-panel-1-1", "cell-2-panel-1-1", "cell-2-panel-1-2")
+  )
+})
+
+test_that("repel label names stay unique across composition cells (VP-167)", {
+  d <- data.frame(x = 1:6, y = c(2, 3, 1, 5, 4, 6), l = letters[1:6])
+  rp <- vplot(d) |> mark_text(x = x, y = y, label = l, repel = TRUE)
+  names_of <- function(x) {
+    grep(
+      "^repel:",
+      vellum::node_names(vellum::as_vellum_scene(x)),
+      value = TRUE
+    )
+  }
+  for (comp in list(hconcat(rp, rp), hconcat(rp, rp |> coord_fixed()))) {
+    nm <- names_of(comp)
+    expect_length(nm, 2L)
+    expect_false(anyDuplicated(nm) > 0L)
+    expect_true(all(grepl("^repel:cell-[12][:-]", nm)))
+  }
 })
 
 test_that("effect underlay copies are tagged kind = 'effect'", {

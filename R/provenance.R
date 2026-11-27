@@ -30,7 +30,9 @@ NULL
 #   layer    int   1-based layer index within the (sub-)plot spec
 #   mark     chr   mark type ("point", "line", ...)
 #   kind     chr   "mark" (the core layer) or "effect" (a decorative underlay copy)
-#   panel    chr   facet panel key ("panel-r-c"), or NA for a single panel
+#   panel    chr   facet panel key ("panel-r-c"), or NA for a single panel; in
+#                  a composition the cell's: "cell-<k>" (aligned) or
+#                  "cell-<k>-panel-r-c" (cell by cell)
 #   channels list  aesthetic -> list(scale=, type=, domain=): the SCALE-REF half
 #   rows     int   original input-data row indices this grob draws: the ROW-KEY half
 #   source   chr   the table `rows` index: "plot" (the plot data) or "layer:<i>"
@@ -135,7 +137,7 @@ NULL
     layer = .mark_ctx$layer,
     mark = .mark_ctx$mark,
     kind = .mark_ctx$kind %||% "mark",
-    panel = .mark_ctx$panel %||% NA_character_,
+    panel = .mark_panel_id() %||% NA_character_,
     channels = .mark_ctx$channels %||% list(),
     rows = .source_rows(rows %||% .mark_ctx$rows, src),
     source = src$name %||% NA_character_
@@ -180,7 +182,9 @@ NULL
 #'   \item{`layer`}{1-based layer index within the (sub-)plot spec.}
 #'   \item{`mark`}{mark type (`"point"`, `"line"`, …).}
 #'   \item{`kind`}{`"mark"` (the core layer) or `"effect"` (a decorative underlay).}
-#'   \item{`panel`}{facet panel key (`"panel-r-c"`), or `NA` for a single panel.}
+#'   \item{`panel`}{facet panel key (`"panel-r-c"`), or `NA` for a single panel.
+#'     In a composition, the cell's id: `"cell-<k>"` for an aligned cell,
+#'     `"cell-<k>-panel-r-c"` for a cell laid out on its own.}
 #'   \item{`channels`}{aesthetic → trained-scale reference (`scale`, `type`, `domain`).}
 #'   \item{`rows`}{the original input-data row indices this grob draws: rows of
 #'     the whole source table (not of a facet panel's subset).}

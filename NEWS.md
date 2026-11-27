@@ -1,7 +1,40 @@
 # vellumplot (development version)
 
+## Breaking changes
+
+* Composition cells now use one key prefix in every layout: the cell id,
+  `"cell-<k>"`, numbered depth-first across the whole figure. Aligned
+  compositions used `"subplot-<N>"` (`"subplot-2:p1-1:l1:7"`, now
+  `"cell-2:p1-1:l1:7"`), while the cell-by-cell layout already used
+  `"cell-<k>"`, so a host matching keys on `subplot-` missed half the cases.
+  Series keys and `row_keys` carry the same prefix. Two aligned compositions
+  nested in one figure both numbered their cells from 1, so their default
+  keys collided; they now get distinct cell ids. Repel label names and the
+  provenance `panel` column name the cell in both layouts too (`"cell-2"`
+  for an aligned cell, `"cell-2-panel-1-1"` for a cell laid out on its own);
+  before, every cell laid out on its own used `"panel-r-c"`, so they
+  collided. Hosts that match on the `subplot-` prefix must match on `cell-`
+  instead; vellumwidget treats keys as opaque and needs no change (VP-167).
+
 ## Bug fixes
 
+* In HTML output the chunk options `fig-width` / `fig-height` / `fig-asp`
+  (`fig.width` / `fig.height` / `fig.asp`) now size the dimensions a plot
+  was not given: a `vplot()` without `width` / `height`, or a composition of
+  such plots without its own size, is laid out at that size, and a chunk's
+  `fig-width` also caps its display width (CSS `max-width`), so it still
+  shrinks to a narrower column but a small figure is no longer stretched to
+  fill it. A `fig-asp` alone sets the height to the plot's width times the
+  aspect. A chunk's `out-width` becomes the figure's CSS width. Before, the
+  inline SVG always filled the column and these options did nothing. A size
+  passed to `vplot()` or a composition (even `width = 6, height = 4`) is
+  kept, and so is the plot's size when a chunk sets a value equal to the
+  document's default, or only a document-wide `fig-asp` applies (VP-165).
+* A nested composition in the first or last row of a composition with a
+  figure title, subtitle, caption or collected legend band now drops its own
+  outer margin on the band's side, as plot cells there already did. Before,
+  the gap between the band and the nested panels was one plot margin larger
+  than beside a plot cell (VP-168).
 * A keyed line, path or polygon drawn from several rows (`mark_line()`,
   `mark_path()`, `mark_area()`, ... with `data_id`) now lists the keys of the
   rows it draws in a `row_keys` element field, and their cross-view
