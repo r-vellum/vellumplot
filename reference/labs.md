@@ -80,6 +80,19 @@ Axis/legend overrides set here are used unless a matching
 `scale_*(name = )` is also given, which takes precedence. With neither,
 the title is derived from the mapping.
 
+Any label may be rich text:
+[`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) for
+Markdown,
+[`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md) for
+LaTeX math, or
+[`plotmath()`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+for base R plotmath. A plotmath
+[`expression()`](https://rdrr.io/r/base/expression.html) (or a quoted
+call) is typeset through
+[`plotmath()`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+for you, so `labs(x = expression(alpha^2))` draws \\\alpha^2\\, as in
+ggplot2.
+
 ## Examples
 
 ``` r

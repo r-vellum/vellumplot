@@ -148,6 +148,10 @@ generates automatically; see <code><a href="plot_alt.html">plot_alt()</a></code>
     <p>Axis/legend overrides set here are used unless a matching <code>scale_*(name = )</code>
 is also given, which takes precedence. With neither, the title is derived from
 the mapping.</p>
+<p>Any label may be rich text: <code><a href="md.html">md()</a></code> for Markdown, <code><a href="tex.html">tex()</a></code> for LaTeX math, or
+<code><a href="tex.html">plotmath()</a></code> for base R plotmath. A plotmath <code><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression()</a></code> (or a quoted
+call) is typeset through <code><a href="tex.html">plotmath()</a></code> for you, so
+<code>labs(x = expression(alpha^2))</code> draws \(\alpha^2\), as in ggplot2.</p>
     </div>
 
     <div class="section level2">

@@ -148,7 +148,13 @@ as in ggplot2, the interaction of every discrete <code>color</code>, <code>fill<
 <code>pattern</code>, <code>linetype</code>, <code>shape</code>, <code>alpha</code>, <code>size</code> and <code>linewidth</code> mapping
 groups; a continuous colour never does, so a line mapped to one stays
 connected and changes colour along its length.
-<code>group = 1</code> makes the whole layer one group.</p></dd>
+<code>group = 1</code> makes the whole layer one group.</p>
+<p><code>mark_rule()</code> takes <code>yintercept</code> (horizontal lines) and <code>xintercept</code>
+(vertical lines), a constant (<code>yintercept = 0</code>) or a mapped column (one
+line per row), and draws each across the whole panel. An <code>x</code> or <code>y</code> given
+instead is read as <code>xintercept</code> / <code>yintercept</code>, so <code>mark_rule(x = 0)</code>
+draws a vertical line at zero. For a line between two points use
+<code><a href="mark_segment.html">mark_segment()</a></code>; for a sloped line, <code><a href="mark_abline.html">mark_abline()</a></code>.</p></dd>
 
 
 <dt id="arg-size-shape">size, shape<a class="anchor" aria-label="anchor" href="#arg-size-shape"></a></dt>

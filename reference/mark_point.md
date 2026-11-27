@@ -86,6 +86,16 @@ mark_bar(
   mapped to one stays connected and changes colour along its length.
   `group = 1` makes the whole layer one group.
 
+  `mark_rule()` takes `yintercept` (horizontal lines) and `xintercept`
+  (vertical lines), a constant (`yintercept = 0`) or a mapped column
+  (one line per row), and draws each across the whole panel. An `x` or
+  `y` given instead is read as `xintercept` / `yintercept`, so
+  `mark_rule(x = 0)` draws a vertical line at zero. For a line between
+  two points use
+  [`mark_segment()`](https://r-vellum.github.io/vellumplot/reference/mark_segment.md);
+  for a sloped line,
+  [`mark_abline()`](https://r-vellum.github.io/vellumplot/reference/mark_abline.md).
+
 - size, shape:
 
   Convenience arguments for the point size (in mm) / shape; may be a

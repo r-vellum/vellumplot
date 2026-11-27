@@ -63,8 +63,11 @@ facets. Combining `sec.axis` with
 [`coord_trans()`](https://r-vellum.github.io/vellumplot/reference/coord_trans.md),
 with free facet scales, or with
 [`add_marginal()`](https://r-vellum.github.io/vellumplot/reference/add_marginal.md)
-raises an error. In a plot composition (`|` / `/`) the secondary axis is
-not drawn.
+raises an error. In a plot composition
+([`hconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+[`vconcat()`](https://r-vellum.github.io/vellumplot/reference/concat.md),
+[`concat()`](https://r-vellum.github.io/vellumplot/reference/concat.md))
+the secondary axis is not drawn.
 
 ## See also
 

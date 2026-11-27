@@ -74,7 +74,9 @@ guide_axis_logticks(
 
   Cap the axis line (theme element `axis.line`) at the outermost breaks:
   `"none"` (default; the line spans the panel), `"both"`, `"upper"` or
-  `"lower"`. `TRUE` / `FALSE` mean `"both"` / `"none"`.
+  `"lower"`. `TRUE` / `FALSE` mean `"both"` / `"none"`. With
+  `minor.ticks = TRUE` the line reaches the outermost tick, major or
+  minor, as in ggplot2.
 
 - long, mid, short:
 
