@@ -64,7 +64,8 @@ PlotComposition <- S7::new_class(
 #' @param ncol,nrow Grid dimensions for `concat()` (defaults to roughly square).
 #' @param byrow Fill the grid by row (default) or by column.
 #' @param widths,heights Relative panel sizes per column / row (recycled numeric
-#'   vector), or `NULL` for equal panels.
+#'   vector), or `NULL` for equal panels. `hconcat()` takes `widths` and
+#'   `vconcat()` takes `heights`.
 #' @param guides `"collect"` (default) to dedupe identical legends across
 #'   sub-plots into one, or `"keep"` to leave each sub-plot's legend in place.
 #'   The collected legend goes where the composition's theme puts it
@@ -448,26 +449,68 @@ wrap_plots <- function(
 
 #' @rdname concat
 #' @export
-hconcat <- function(..., guides = c("collect", "keep"), height = NULL) {
-  concat(
-    ...,
-    ncol = ...length(),
-    nrow = 1,
-    guides = match.arg(guides),
-    height = height
+hconcat <- function(
+  ...,
+  widths = NULL,
+  guides = c("collect", "keep"),
+  height = NULL
+) {
+  plots <- .concat_dots(list(...), "hconcat")
+  do.call(
+    concat,
+    c(
+      plots,
+      list(
+        ncol = length(plots),
+        nrow = 1,
+        widths = widths,
+        guides = match.arg(guides),
+        height = height
+      )
+    )
   )
 }
 
 #' @rdname concat
 #' @export
-vconcat <- function(..., guides = c("collect", "keep"), width = NULL) {
-  concat(
-    ...,
-    ncol = 1,
-    nrow = ...length(),
-    guides = match.arg(guides),
-    width = width
+vconcat <- function(
+  ...,
+  heights = NULL,
+  guides = c("collect", "keep"),
+  width = NULL
+) {
+  plots <- .concat_dots(list(...), "vconcat")
+  do.call(
+    concat,
+    c(
+      plots,
+      list(
+        ncol = 1,
+        nrow = length(plots),
+        heights = heights,
+        guides = match.arg(guides),
+        width = width
+      )
+    )
   )
+}
+
+# The plots passed in `...` to `hconcat()` / `vconcat()`. A named argument
+# that is not one of the function's own (e.g. `heights =` to `hconcat()`)
+# used to slip through to `concat()` and still count towards the grid size, so
+# `vconcat(a, b, heights = c(3, 1))` made a three-row grid (VP-151). Reject
+# those, and any non-plot, with a clear error.
+.concat_dots <- function(dots, fn) {
+  nm <- names(dots) %||% rep("", length(dots))
+  bad <- nzchar(nm) & nm %in% names(formals(concat))
+  if (any(bad)) {
+    own <- setdiff(names(formals(fn)), "...")
+    cli::cli_abort(c(
+      "{.fn {fn}} does not take {.arg {nm[bad]}}.",
+      i = "Its arguments are {.arg {own}}; use {.fn concat} for full control."
+    ))
+  }
+  .collect_plots(unname(dots))
 }
 
 #' Annotate a composition
@@ -599,10 +642,252 @@ compose_annotation <- function(
 }
 
 # Legacy layout: an outer grid of equal null cells, each holding one sub-plot
-# rendered with .draw_plot() (its own grid_layout inside the cell). No alignment
-# or guide collection. Used as a fallback for sub-plots the aligned path can't
-# yet place (facets, polar coords).
+# rendered with .draw_plot() (its own grid_layout inside the cell). No panel
+# alignment. Used as a fallback for sub-plots the aligned path can't place
+# (facets, polar / sf / fixed-aspect coords, designs, insets, nested
+# compositions).
+#
+# The figure title / subtitle / caption and the collected legend
+# (`guides = "collect"`) take bands around the cell grid, drawn by the aligned
+# path's own helpers; before, this layout dropped them all (VP-152). A
+# composition with none of them draws exactly as before.
 .compile_composition_independent <- function(scene, comp, box_mm = NULL) {
+  rt0 <- .resolve_theme(.comp_figure_theme(comp))
+  col <- .comp_collect_independent(comp, rt0)
+  comp <- col$comp
+  figguides <- col$figguides
+  side <- .fig_legend_side(rt0)
+  has <- function(x) !is.null(x) && !identical(x, "")
+  lab <- comp@labels
+  if (
+    !has(lab$title) &&
+      !has(lab$subtitle) &&
+      !has(lab$caption) &&
+      !length(figguides)
+  ) {
+    return(.comp_independent_cells(scene, comp, box_mm, rt0))
+  }
+  m <- rep_len(rt0[["plot.margin"]] %||% 0, 4L) # (t, r, b, l) mm
+  # columns: margin, [left legend], cells, [right legend], margin. The cells
+  # also cover the margin columns (each cell keeps its own plot margin), the
+  # title bands sit inside them.
+  W <- .tracks()
+  H <- .tracks()
+  .tk_add(W, vellum::vl_unit(m[4], "mm"))
+  leg_col <- leg_row <- NA_integer_
+  if (length(figguides) && side == "left") {
+    leg_col <- .tk_add(W, .legend_width(figguides, rt0))
+  }
+  cells_col <- .tk_add(W, vellum::vl_unit(1, "null"))
+  if (length(figguides) && side == "right") {
+    leg_col <- .tk_add(W, .legend_width(figguides, rt0))
+  }
+  .tk_add(W, vellum::vl_unit(m[2], "mm"))
+  # rows: [margin, title, subtitle, top legend], cells, [bottom legend,
+  # caption, margin]; a margin row only on a side with a band.
+  top <- has(lab$title) ||
+    has(lab$subtitle) ||
+    (length(figguides) && side == "top")
+  bottom <- has(lab$caption) || (length(figguides) && side == "bottom")
+  if (top) {
+    .tk_add(H, vellum::vl_unit(m[1], "mm"))
+  }
+  band_row <- function(label, el, pad) {
+    if (has(label)) {
+      .tk_add(H, .track_h_band(rt0[[el]], label, pad, NA_real_))
+    } else {
+      NA_integer_
+    }
+  }
+  glo <- list(
+    figtitle_row = band_row(lab$title, "plot.title", 2 * .PAD_MM),
+    figsubtitle_row = band_row(lab$subtitle, "plot.subtitle", .PAD_MM)
+  )
+  if (length(figguides) && side == "top") {
+    leg_row <- .tk_add(H, .legend_height(figguides, rt0))
+  }
+  cells_row <- .tk_add(H, vellum::vl_unit(1, "null"))
+  if (length(figguides) && side == "bottom") {
+    leg_row <- .tk_add(H, .legend_height(figguides, rt0))
+  }
+  glo$figcaption_row <- band_row(lab$caption, "plot.caption", .PAD_MM)
+  if (bottom) {
+    .tk_add(H, vellum::vl_unit(m[3], "mm"))
+  }
+  widths <- .tk_units(W)
+  heights <- .tk_units(H)
+  nw <- length(W$u)
+  # the cells span every column but the legend's, every row but the bands'
+  c0 <- if (!is.na(leg_col) && side == "left") cells_col else 1L
+  c1 <- if (!is.na(leg_col) && side == "right") cells_col else nw
+  # Insets placed in the whole figure keep the whole figure, bands and
+  # legend included, as their reference box.
+  fig_ins <- which(!.comp_insets_in_plot(comp))
+  scene <- .draw_insets(
+    scene,
+    comp,
+    on_top = FALSE,
+    box_mm = box_mm,
+    which = fig_ins
+  )
+  fig_box <- box_mm
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(layout = vellum::grid_layout(widths, heights))
+  )
+  # the bands span the columns inside the margins (`.draw_band()` takes the
+  # first column and a count)
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      row = 1,
+      col = 2,
+      rowspan = length(H$u),
+      colspan = nw - 2L
+    )
+  )
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(
+      layout = vellum::grid_layout(widths[seq(2, nw - 1L)], heights)
+    )
+  )
+  glo$ncol_total <- nw - 2L
+  scene <- .draw_figure_bands(scene, comp, glo, rt0)
+  scene <- vellum::pop(vellum::pop(scene))
+  # The collected legend's keys take the composition theme's default mark
+  # colours, else the first plot's, as in the aligned path; the caller's are
+  # put back afterwards.
+  old_geom <- .mark_ctx$geom
+  old_ground <- .mark_ctx$geom_ground
+  on.exit(assign("geom", old_geom, envir = .mark_ctx), add = TRUE)
+  on.exit(assign("geom_ground", old_ground, envir = .mark_ctx), add = TRUE)
+  first <- .first_real_plot(comp@plots)
+  .set_geom_ctx(
+    if (
+      !is.null(.theme_geom(comp@theme)) || !S7::S7_inherits(first, PlotSpec)
+    ) {
+      comp@theme
+    } else {
+      .theme_of(first)
+    }
+  )
+  if (!is.na(leg_col)) {
+    scene <- .draw_legends(
+      scene,
+      list(row = cells_row, col = leg_col),
+      figguides,
+      rt0,
+      orient = "vertical"
+    )
+  }
+  if (!is.na(leg_row)) {
+    scene <- .draw_legends(
+      scene,
+      list(row = leg_row, col = cells_col),
+      figguides,
+      rt0,
+      orient = "horizontal"
+    )
+  }
+  # The cells' box: the figure's less the bands and the legend.
+  if (!is.null(box_mm)) {
+    mm <- function(u) {
+      sum(vapply(seq_along(u), function(i) vellum::vl_convert(u[i], "mm"), 0))
+    }
+    keep_w <- setdiff(seq_len(nw), seq(c0, c1))
+    keep_h <- setdiff(seq_along(H$u), cells_row)
+    box_mm <- box_mm - c(mm(widths[keep_w]), mm(heights[keep_h]))
+  }
+  scene <- vellum::push(
+    scene,
+    vellum::vl_viewport(row = cells_row, col = c0, colspan = c1 - c0 + 1L)
+  )
+  scene <- .comp_independent_cells(
+    scene,
+    comp,
+    box_mm,
+    rt0,
+    figure_insets = FALSE
+  )
+  scene <- vellum::pop(vellum::pop(scene))
+  .draw_insets(scene, comp, on_top = TRUE, box_mm = fig_box, which = fig_ins)
+}
+
+# Which of a composition's insets are aligned to its base plot's panel or
+# plot area and drawn by `.draw_plot()` inside the plot's own layout grid
+# (VP-127)? That needs a single base plot; the rest are placed in the whole
+# figure.
+.comp_insets_in_plot <- function(comp) {
+  single <- is.null(comp@design) &&
+    length(comp@plots) == 1L &&
+    S7::S7_inherits(comp@plots[[1]], PlotSpec)
+  vapply(
+    comp@insets,
+    function(ins) single && !identical(ins$align_to %||% "full", "full"),
+    logical(1)
+  )
+}
+
+# The collected legend of an independently laid-out composition
+# (`guides = "collect"`): the outside legends of its plot cells, pooled and
+# deduplicated as the aligned path does (`.pool_guides()`). A cell whose
+# legends all sit outside its panel gives them up (it is drawn with
+# `legend.position = "none"`); one with a legend inside its panel or beside
+# each facet panel (`position = "panel"`, independent facet scales) keeps
+# them all, since those belong to its panels. Nested compositions collect
+# their own; a single-plot composition collects nothing. Returns the
+# composition with the collected cells' legends switched off, and the pooled
+# guides (none under `legend.position = "none"` on the composition, which
+# drops them, as in the aligned path).
+.comp_collect_independent <- function(comp, rt0) {
+  out <- list(comp = comp, figguides = list())
+  # A lone plot (an `inset()` base) has nothing to share its legend with, and
+  # its insets are placed against its own panel / plot box, legend included.
+  if (!identical(comp@guides, "collect") || length(comp@plots) < 2L) {
+    return(out)
+  }
+  plans <- list()
+  plots <- comp@plots
+  for (i in seq_along(plots)) {
+    p <- plots[[i]]
+    if (!S7::S7_inherits(p, PlotSpec) || !length(p@layers)) {
+      next
+    }
+    plan <- .plan_plot(p)
+    lg <- .subplot_legend_groups(plan)
+    if (
+      length(lg$inside) ||
+        !is.null(plan$lay$panel_legends) ||
+        !length(.subplot_legend_sides(lg))
+    ) {
+      next
+    }
+    plans <- c(plans, list(plan))
+    plots[[i]] <- theme(p, legend.position = "none")
+  }
+  if (!length(plans)) {
+    return(out)
+  }
+  out$comp@plots <- plots
+  if (!identical(.fig_legend_side(rt0), "none")) {
+    out$figguides <- .pool_guides(plans)
+  }
+  out
+}
+
+# The cell grid of an independently laid-out composition, drawn into the
+# current viewport (`box_mm` its size in mm, when known). `rt0` is the figure
+# theme, resolved before `.comp_collect_independent()` themed any cell.
+# `figure_insets = FALSE` leaves the insets placed in the whole figure to the
+# caller.
+.comp_independent_cells <- function(
+  scene,
+  comp,
+  box_mm = NULL,
+  rt0,
+  figure_insets = TRUE
+) {
   ncol <- comp@ncol
   nrow <- comp@nrow
   wfun <- function(v, k) {
@@ -627,7 +912,6 @@ compose_annotation <- function(
   # tag, as in the aligned path (VP-142, VP-145). Before, this layout drew no
   # tags at all.
   drawn <- which(!vapply(comp@plots, S7::S7_inherits, NA, Spacer))
-  rt0 <- .resolve_theme(.comp_figure_theme(comp))
   ctags <- .comp_tags(comp, length(drawn), rt0)
   heights <- wfun(comp@heights, nrow)
   # grid row of each composition row's cells (doubles, as `.comp_cell()` gives)
@@ -681,14 +965,9 @@ compose_annotation <- function(
   # Insets aligned to the base plot's panel area or plot area are drawn by
   # `.draw_plot()` inside the plot's own layout grid (VP-127); that needs a
   # single base plot. The rest are placed in the whole figure.
-  single <- is.null(comp@design) &&
-    length(comp@plots) == 1L &&
-    S7::S7_inherits(comp@plots[[1]], PlotSpec)
-  aligned <- vapply(
-    comp@insets,
-    function(ins) single && !identical(ins$align_to %||% "full", "full"),
-    logical(1)
-  )
+  aligned <- .comp_insets_in_plot(comp)
+  # under figure bands, the figure-wide insets are drawn by the caller
+  fig_ins <- if (figure_insets) which(!aligned) else integer(0)
   # Insets with `on_top = FALSE` sit behind the base plots (visible only through
   # gaps); the rest overlay after the cells are drawn.
   scene <- .draw_insets(
@@ -696,7 +975,7 @@ compose_annotation <- function(
     comp,
     on_top = FALSE,
     box_mm = box_mm,
-    which = which(!aligned)
+    which = fig_ins
   )
   for (i in seq_along(comp@plots)) {
     p <- comp@plots[[i]]
@@ -752,7 +1031,7 @@ compose_annotation <- function(
     comp,
     on_top = TRUE,
     box_mm = box_mm,
-    which = which(!aligned)
+    which = fig_ins
   )
   vellum::pop(scene)
 }

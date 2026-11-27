@@ -138,11 +138,15 @@ The per-panel legends sit right of each panel by default; each column of panels
 gets a legend track as wide as the widest legend in it. They follow
 `theme(legend.position = )`, so `"bottom"` puts them under each panel (one
 track per row of panels, for `facet_grid()` too) and `"inside"` inside each
-panel, and `legend.justification` aligns them along the panel edge.
+panel, and `legend.justification` aligns them along the panel edge. Under
+each panel they take height from the panels, so this example makes the plot
+taller; on a page where they would leave the panels shorter than 25 mm, they
+are collected into the plot's legend instead, with a message.
 
 ```{r}
 #| fig-width: 8
-vplot(mtcars) |>
+#| fig-height: 6
+vplot(mtcars, width = 8, height = 6) |>
   mark_point(x = wt, y = mpg, color = factor(carb)) |>
   facet_grid(am ~ cyl, labeller = label_both) |>
   resolve_scale(color = "independent") |>
@@ -179,8 +183,12 @@ p1 <- vplot(mtcars) |> mark_point(x = wt, y = mpg, color = factor(cyl))
 p2 <- vplot(mtcars) |> mark_boxplot(x = factor(cyl), y = mpg)
 p3 <- vplot(mtcars) |> mark_histogram(x = mpg, bins = 10)
 
-concat(p1, p2, p3, ncol = 3)
+concat(p1, p2, p3, ncol = 3, width = 9, height = 3.2)
 ```
+
+Each sub-plot brings its own size, so three 6-inch-wide plots in a row make an
+18-inch figure; pass `width` and `height` to size the whole figure instead.
+`hconcat()` takes `widths` and `vconcat()` takes `heights` as well.
 
 Control the shape with `ncol`/`nrow`, the relative sizes with
 `widths`/`heights`, and irregular layouts with a `design` string.
@@ -207,10 +215,11 @@ Each row of plots gets a band above it as tall as its tallest tag, and the tag
 sits in that band at the plot's top-left corner, so it never covers a title or
 a panel. The tags are drawn with the theme's `plot.tag` element, which sets
 their size, colour and `angle`; pass the composition to `theme()` to change it.
-Tags are drawn the same way in compositions that can't line up their panels
-(a faceted, polar or map cell, a `design`, insets); spacers get no tag. The
-figure `title`, `subtitle` and `caption` are not drawn in that layout yet, so
-the example below has tags only.
+Titles and tags are drawn the same way in compositions that can't line up
+their panels (a faceted, polar, map or fixed-aspect cell, a `design`, insets,
+a nested composition); spacers get no tag. Identical legends are collected
+there too, except a legend inside a panel or beside each facet panel, which
+stays with its panel.
 
 ```{r}
 faceted <- vplot(mtcars) |>
@@ -218,13 +227,25 @@ faceted <- vplot(mtcars) |>
   facet_wrap(~am, labeller = label_both)
 
 concat(faceted, p3, ncol = 2, widths = c(2, 1), width = 8, height = 3.4) |>
-  compose_annotation(tag_levels = "a", tag_prefix = "(", tag_suffix = ")")
+  compose_annotation(
+    title = "Weight, fuel economy and transmission",
+    tag_levels = "a", tag_prefix = "(", tag_suffix = ")"
+  )
 ```
 
 Every composition carries its own annotation, so a nested composition can have
-tags of its own. A composition that holds another composition is laid out in
-the non-aligned way too, so for now its figure title, subtitle and caption are
-not drawn either.
+a title and tags of its own:
+
+```{r}
+inner <- concat(p1, p2, ncol = 2) |>
+  compose_annotation(title = "By cylinders", tag_levels = "i")
+concat(inner, p3, ncol = 1, width = 7, height = 6) |>
+  compose_annotation(title = "Fuel economy", tag_levels = "A")
+```
+
+A fixed-aspect plot (`coord_fixed()`, a theme `aspect.ratio`, a Venn diagram,
+a map) keeps its shape in a composition: the figure gives it its own cell
+instead of stretching its panel to line up with the others.
 
 ### Insets
 
@@ -266,12 +287,18 @@ plain `PlotSpec` — render it, or `inset()` it into a figure. Three shapes: a
 `"line"` trend (with a dot on its extremes or last point), a `"bar"` column
 micro-chart, and a `"winloss"` chart of equal up/down bars.
 
+```{=html}
+<style>.sparkline-out .cell-output-display { max-width: 240px; margin-bottom: 1em; }</style>
+```
+
 ```{r}
+#| classes: sparkline-out
 set.seed(1)
 vsparkline(cumsum(rnorm(40)), width = 60, height = 16)
 ```
 
 ```{r}
+#| classes: sparkline-out
 vsparkline(rpois(24, 6), type = "bar", color = "steelblue", width = 60, height = 16)
 ```
 
@@ -333,6 +360,7 @@ sparklines (HTML output).
 
 ```{r}
 #| eval: !expr requireNamespace("gt", quietly = TRUE)
+#| message: false
 library(gt)
 set.seed(1)
 df <- data.frame(metric = c("Revenue", "Users", "Latency", "Errors"))

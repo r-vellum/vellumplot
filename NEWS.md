@@ -2,6 +2,29 @@
 
 ## Bug fixes
 
+* `vconcat()` takes `heights` and `hconcat()` takes `widths`, passed on to
+  `concat()`. Before, `vconcat(a, b, heights = c(3, 1))` went through to
+  `concat()` but still counted as a plot when sizing the grid, so it drew a
+  three-row grid with an empty last row and no error. Other `concat()`
+  arguments given to `hconcat()` / `vconcat()`, and anything in `...` that is
+  not a plot, are now errors (VP-151).
+
+* A composition that can't be aligned (a faceted, polar, sf or fixed-aspect
+  cell, a `design`, insets, or a nested composition) now draws its figure
+  `title`, `subtitle` and `caption`, in bands above and below the cells as in
+  the aligned layout, and collects identical legends into one under
+  `guides = "collect"` (the default), placed by the composition's
+  `legend.position`. A legend inside a panel, or beside each facet panel,
+  stays with its cell. Before, this layout drew the title only into the SVG
+  alt text and kept every cell's legend. A composition holding another
+  composition takes this layout, so its own title is drawn now too (VP-152).
+
+* Aligned compositions no longer stretch fixed-aspect plots: a cell with
+  `coord_fixed()`, a theme `aspect.ratio` or a Venn diagram (`vvenn()`) now
+  takes the cell-by-cell layout, as polar and sf cells do, and keeps its
+  aspect inside its cell. `hconcat(vvenn(a), vvenn(b))` drew its circles as
+  ellipses (VP-154).
+
 * `spec_diagnose()` and its `$report` now count the rows a point or text mark
   draws nothing for because their size is missing (under `missing`) or
   censored by the size scale (under `limits`), from the same tally as the
@@ -43,6 +66,12 @@
   and `vellum::as_dml()` failed (VP-160).
 
 ## Documentation
+
+* The facets-and-composition article no longer prints a message or gt's
+  startup output into the page; its bottom-legend facet example is taller so
+  the per-panel legends fit, the three-plot `concat()` and the sparklines get
+  explicit sizes, and the non-aligned and nested composition examples now
+  show their titles (D-35).
 
 * The articles cover more of the package (D-20 to D-23, D-25). "Effects and
   themes" gains font weight, brand weights, `element_geom()` mark colours and
