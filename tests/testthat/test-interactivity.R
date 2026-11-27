@@ -421,3 +421,151 @@ test_that("mark_interval / mark_halfeye key their interval bars to the datum", {
   expect_setequal(keyed$key, c("4", "6", "8"))
   expect_true(all(c("polygon", "segment", "point") %in% keyed$mark))
 })
+
+test_that("a multi-row mark lists the keys of the rows it draws (X-15)", {
+  d <- data.frame(
+    id = paste0("r", 1:30),
+    t = rep(1:10, 3),
+    y = sin(1:30),
+    g = rep(c("a", "b", "c"), each = 10)
+  )
+  els <- function(p) {
+    m <- vellum::scene_model(vellum::as_vellum_scene(p), meta = "columns")
+    e <- m$elements
+    e[!is.na(e$key) & !startsWith(e$key, "legend:"), , drop = FALSE]
+  }
+  sk <- function(k, layer = 1L) paste0(k, "\u241fs", layer)
+  # a line gets a series key of its own and lists all ten rows
+  e <- els(vplot(d) |> mark_line(x = t, y = y, color = g, data_id = id))
+  expect_identical(e$key, sk(c("r1", "r11", "r21")))
+  expect_identical(
+    e$meta$row_keys,
+    list(paste0("r", 1:10), paste0("r", 11:20), paste0("r", 21:30))
+  )
+  expect_false("row_joins" %in% names(e$meta)) # a single plot has no joins
+  # a line with no other meta still carries them
+  e <- els(vplot(d) |> mark_line(x = t, y = y, group = g, data_id = id))
+  expect_identical(names(e$meta), "row_keys")
+  expect_identical(e$meta$row_keys[[2]], paste0("r", 11:20))
+  # an area series too
+  e <- els(vplot(d) |> mark_area(x = t, y = y, fill = g, data_id = id))
+  expect_true(all(lengths(e$meta$row_keys) == 10L))
+  # one-row-per-element marks carry none
+  e <- els(vplot(d) |> mark_point(x = t, y = y, data_id = id))
+  expect_false("row_keys" %in% names(e$meta))
+  # a data_id constant per series (one distinct key) keeps that key
+  e <- els(vplot(d) |> mark_line(x = t, y = y, color = g, data_id = g))
+  expect_false("row_keys" %in% names(e$meta))
+  expect_identical(e$key, c("a", "b", "c"))
+  # a static plot is unchanged: no keys, no meta
+  m <- vellum::scene_model(
+    vellum::as_vellum_scene(vplot(d) |> mark_line(x = t, y = y, color = g)),
+    meta = "columns"
+  )
+  expect_false("row_keys" %in% names(m$elements$meta))
+  # a static SVG with series keys stays well-formed XML
+  skip_if_not_installed("xml2")
+  svg <- vellum::scene_svg(vellum::as_vellum_scene(
+    vplot(d) |> mark_line(x = t, y = y, color = g, data_id = id)
+  ))
+  expect_no_error(xml2::read_xml(svg))
+})
+
+test_that("a series key never collides with a point layer's row key (X-15)", {
+  d <- data.frame(
+    id = paste0("r", 1:12),
+    t = rep(1:6, 2),
+    y = 1:12,
+    g = rep(c("a", "b"), each = 6)
+  )
+  for (line_first in c(TRUE, FALSE)) {
+    p <- vplot(d)
+    p <- if (line_first) {
+      p |>
+        mark_line(x = t, y = y, color = g, data_id = id) |>
+        mark_point(x = t, y = y, color = g, data_id = id)
+    } else {
+      p |>
+        mark_point(x = t, y = y, color = g, data_id = id) |>
+        mark_line(x = t, y = y, color = g, data_id = id)
+    }
+    m <- vellum::scene_model(vellum::as_vellum_scene(p), meta = "columns")
+    e <- m$elements[!is.na(m$elements$key), , drop = FALSE]
+    e <- e[!startsWith(e$key, "legend:"), , drop = FALSE]
+    has <- lengths(e$meta$row_keys) > 0L
+    expect_identical(sum(has), 2L)
+    expect_identical(sort(e$key[!has]), sort(d$id))
+    expect_length(intersect(e$key[has], e$key[!has]), 0L)
+    layer <- if (line_first) 1L else 2L
+    expect_identical(e$key[has], paste0(c("r1", "r7"), "\u241fs", layer))
+  }
+})
+
+test_that("row keys leave out rows a line does not draw (X-15)", {
+  s <- data.frame(
+    id = paste0("r", 1:6),
+    t = 1:6,
+    y = c(1, 2, NA, 4, 5, 6)
+  )
+  m <- suppressWarnings(vellum::scene_model(
+    vellum::as_vellum_scene(
+      vplot(s) |> mark_line(x = t, y = y, data_id = id)
+    ),
+    meta = "columns"
+  ))
+  e <- m$elements[!is.na(m$elements$key), , drop = FALSE]
+  expect_false("r3" %in% unlist(e$meta$row_keys))
+  expect_setequal(unlist(e$meta$row_keys), c("r1", "r2", "r4", "r5", "r6"))
+})
+
+test_that("ids with no pattern above the cap keep the first-row key (X-15)", {
+  n <- vellumplot:::.ROW_KEYS_MAX_RUNS + 1L
+  set.seed(1)
+  ids <- vapply(
+    seq_len(n),
+    function(i) paste(sample(letters, 10, TRUE), collapse = ""),
+    ""
+  )
+  d <- data.frame(t = seq_len(n), y = seq_len(n), id = ids)
+  m <- vellum::scene_model(
+    vellum::as_vellum_scene(vplot(d) |> mark_line(x = t, y = y, data_id = id)),
+    meta = "columns"
+  )
+  e <- m$elements[!is.na(m$elements$key), , drop = FALSE]
+  expect_identical(e$key, ids[[1]])
+  expect_false("row_keys" %in% names(e$meta))
+  # shuffled integer ids compress to one run whatever their order
+  d$id <- paste0("r", sample(n))
+  m <- vellum::scene_model(
+    vellum::as_vellum_scene(vplot(d) |> mark_line(x = t, y = y, data_id = id)),
+    meta = "columns"
+  )
+  e <- m$elements[!is.na(m$elements$key), , drop = FALSE]
+  expect_length(e$meta$row_keys[[1]], n)
+  expect_identical(vellumplot:::.key_runs(e$meta$row_keys[[1]]), 1L)
+  expect_identical(vellumplot:::.key_runs(c("a", "b", "x1", "x2", "y1")), 4L)
+})
+
+test_that("row keys follow a composition cell's key prefix, with joins (X-15)", {
+  d <- data.frame(
+    id = paste0("r", 1:6),
+    t = rep(1:3, 2),
+    y = 1:6,
+    g = rep(c("a", "b"), each = 3)
+  )
+  p <- vplot(d) |> mark_line(x = t, y = y, color = g, data_id = id)
+  m <- vellum::scene_model(
+    vellum::as_vellum_scene(hconcat(p, p)),
+    meta = "columns"
+  )
+  e <- m$elements
+  keep <- !is.na(e$key) & lengths(e$meta$row_keys) > 0L
+  expect_identical(sum(keep), 4L)
+  for (i in which(keep)) {
+    rk <- e$meta$row_keys[[i]]
+    pre <- sub(":.*$", ":", e$key[[i]])
+    expect_identical(paste0(rk[[1]], "\u241fs1"), e$key[[i]])
+    expect_true(all(startsWith(rk, pre)))
+    expect_identical(e$meta$row_joins[[i]], sub("^[^:]*:", "", rk))
+  }
+})

@@ -142,7 +142,8 @@ test_that("default keys never equal another layer's user data_id", {
     line <- el$key[el$mark == "line"]
     pts <- el$key[el$mark == "point"]
     expect_identical(pts, as.character(ts$t)) # user ids as given
-    expect_identical(line, "p1-1:l1:1")
+    # a series key of its own (X-15): its first row's + "\u241fs<layer>"
+    expect_identical(line, "p1-1:l1:1\u241fs1")
     expect_length(intersect(line, pts), 0L)
   }
 })
@@ -164,7 +165,7 @@ test_that("two default-keyed layers never share a key (VP-55)", {
   el <- el[!grepl("^legend:", el$key), , drop = FALSE]
   line <- el$key[el$mark == "line"]
   pts <- el$key[el$mark == "point"]
-  expect_identical(line, c("p1-1:l1:1", "p1-1:l1:4"))
+  expect_identical(line, paste0(c("p1-1:l1:1", "p1-1:l1:4"), "\u241fs1"))
   expect_identical(pts, paste0("p1-1:l2:", 1:6))
   expect_length(intersect(line, pts), 0L)
   # a tooltip-only second layer too
