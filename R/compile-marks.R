@@ -340,6 +340,18 @@ NULL
         }
       }
     }
+    rk <- .single_shape_row_keys(grob, rows, elem)
+    if (!is.null(rk)) {
+      if (is.null(m)) {
+        m <- structure(
+          list(),
+          names = character(),
+          class = "data.frame",
+          row.names = .set_row_names(1L)
+        )
+      }
+      m$row_keys <- list(rk)
+    }
     if (!is.null(m)) {
       grob@meta <- m
     }
@@ -419,6 +431,25 @@ NULL
     grob,
     c("vellum::grob_lines", "vellum::grob_path", "vellum::grob_polygon")
   )
+}
+
+# The keys of every row a single-shape element draws (X-15), for its `row_keys`
+# meta field. vellum keys a line, path or polygon by its first row, so a host
+# matching rows (a crosstalk filter or selection) would otherwise see only that
+# row. NULL when the element draws one distinct key, in an animation keyframe
+# (keyed by series), or when the emitter overrides its key (`elem$key`).
+.single_shape_row_keys <- function(grob, rows, elem = NULL) {
+  if (
+    length(rows) < 2L ||
+      !.is_single_shape(grob) ||
+      !is.null(.mark_ctx$anim_series) ||
+      !is.null(elem$key)
+  ) {
+    return(NULL)
+  }
+  k <- unique(as.character(.mark_ctx$data_id[rows]))
+  k <- k[!is.na(k)]
+  if (length(k) < 2L) NULL else k
 }
 
 # For a single-shape element drawn from several rows, widen its numeric interval

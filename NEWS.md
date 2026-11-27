@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+* A keyed line, path or polygon drawn from several rows (`mark_line()`,
+  `mark_path()`, `mark_area()`, ... with `data_id`) now lists the keys of all
+  its rows in a `row_keys` element field. vellum keys such a mark by its first
+  row, so a crosstalk filter in vellumwidget hid the whole series when that
+  row was filtered out. Marks drawn from one row, and series whose rows share
+  one key, carry no `row_keys` (X-15).
 * An area or ribbon now leaves a gap at a missing value (`NA`), as a line
   does. A stacked `mark_area()` used to draw a missing height as zero,
   dipping to the baseline; an identity area or a `mark_ribbon()` dropped its

@@ -421,3 +421,66 @@ test_that("mark_interval / mark_halfeye key their interval bars to the datum", {
   expect_setequal(keyed$key, c("4", "6", "8"))
   expect_true(all(c("polygon", "segment", "point") %in% keyed$mark))
 })
+
+test_that("a multi-row mark lists the keys of the rows it draws (X-15)", {
+  d <- data.frame(
+    id = paste0("r", 1:30),
+    t = rep(1:10, 3),
+    y = sin(1:30),
+    g = rep(c("a", "b", "c"), each = 10)
+  )
+  els <- function(p) {
+    m <- vellum::scene_model(vellum::as_vellum_scene(p), meta = "columns")
+    e <- m$elements
+    e[!is.na(e$key) & !startsWith(e$key, "legend:"), , drop = FALSE]
+  }
+  # a line keyed by its first row lists all ten rows
+  e <- els(vplot(d) |> mark_line(x = t, y = y, color = g, data_id = id))
+  expect_identical(e$key, c("r1", "r11", "r21"))
+  expect_identical(
+    e$meta$row_keys,
+    list(paste0("r", 1:10), paste0("r", 11:20), paste0("r", 21:30))
+  )
+  # a line with no other meta still carries them
+  e <- els(vplot(d) |> mark_line(x = t, y = y, group = g, data_id = id))
+  expect_identical(names(e$meta), "row_keys")
+  expect_identical(e$meta$row_keys[[2]], paste0("r", 11:20))
+  # an area series too
+  e <- els(vplot(d) |> mark_area(x = t, y = y, fill = g, data_id = id))
+  expect_true(all(lengths(e$meta$row_keys) == 10L))
+  # one-row-per-element marks carry none
+  e <- els(vplot(d) |> mark_point(x = t, y = y, data_id = id))
+  expect_false("row_keys" %in% names(e$meta))
+  # a data_id constant per series (one distinct key) carries none
+  e <- els(vplot(d) |> mark_line(x = t, y = y, color = g, data_id = g))
+  expect_false("row_keys" %in% names(e$meta))
+  # a static plot is unchanged: no keys, no meta
+  m <- vellum::scene_model(
+    vellum::as_vellum_scene(vplot(d) |> mark_line(x = t, y = y, color = g)),
+    meta = "columns"
+  )
+  expect_false("row_keys" %in% names(m$elements$meta))
+})
+
+test_that("row keys follow a composition cell's key prefix (X-15)", {
+  d <- data.frame(
+    id = paste0("r", 1:6),
+    t = rep(1:3, 2),
+    y = 1:6,
+    g = rep(c("a", "b"), each = 3)
+  )
+  p <- vplot(d) |> mark_line(x = t, y = y, color = g, data_id = id)
+  m <- vellum::scene_model(
+    vellum::as_vellum_scene(hconcat(p, p)),
+    meta = "columns"
+  )
+  e <- m$elements
+  keep <- !is.na(e$key) & lengths(e$meta$row_keys) > 0L
+  expect_identical(sum(keep), 4L)
+  for (i in which(keep)) {
+    rk <- e$meta$row_keys[[i]]
+    expect_identical(rk[[1]], e$key[[i]])
+    pre <- sub(":[^:]*$", ":", e$key[[i]])
+    expect_true(all(startsWith(rk, pre)))
+  }
+})
