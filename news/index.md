@@ -23,6 +23,75 @@
   vellumwidget doesn’t know the series key, so a crosstalk filter hides
   every such line and a linked selection never reaches it (X-15).
 
+- `mark_ribbon(y =, xmin =, xmax =)` draws a horizontal ribbon along
+  `y`. Before, a ribbon with an `xmin`/`xmax` range and no `ymin`/`ymax`
+  drew nothing (and warned about a missing value it never drew). The
+  orientation is read from the range, or set with the new `orientation`
+  argument; the horizontal ribbon leaves gaps at missing values like a
+  vertical one. An axis no layer maps directly is now titled by its
+  mapped range, as in ggplot2: a horizontal ribbon’s or interval’s x
+  axis by `xmin`, a ribbon’s y axis by `ymin`, instead of “x” / “y”. A
+  ribbon given both ranges, half of one, neither, or an `orientation`
+  that contradicts its range is now an error instead of drawing nothing
+  (VP-169).
+
+- A
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md),
+  [`mark_path()`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md)
+  or
+  [`mark_step()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)
+  with a missing value now counts the row in its “Removed n rows
+  containing missing values” warning, as
+  [`spec_diagnose()`](https://r-vellum.github.io/vellumplot/reference/spec_diagnose.md)
+  already reported it and as areas count theirs. The line still breaks
+  there, drawn as before. The warning names
+  [`mark_path()`](https://r-vellum.github.io/vellumplot/reference/mark_polygon.md)
+  for a path rather than
+  [`mark_line()`](https://r-vellum.github.io/vellumplot/reference/mark_point.md)
+  (VP-170).
+
+- A scale name or guide title given as a plotmath
+  [`expression()`](https://rdrr.io/r/base/expression.html) or quoted
+  call, such as `scale_x_continuous(name = expression(alpha^2))`,
+  `guide_legend(title = quote(beta[i]))` or `sec_axis(name = )`, is
+  typeset as
+  [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md)
+  typesets one, instead of drawing its source text. The alt text reads
+  it as plain text (“α^2”) (VP-171).
+
+- The alt text
+  ([`plot_alt()`](https://r-vellum.github.io/vellumplot/reference/plot_alt.md))
+  and the SVG’s accessible `<title>`/`<desc>` read a
+  [`tex()`](https://r-vellum.github.io/vellumplot/reference/tex.md) or
+  [`plotmath()`](https://r-vellum.github.io/vellumplot/reference/tex.md)
+  title, and inline `$...$` math in an
+  [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) title,
+  as plain text instead of TeX source: Greek letters and common symbols
+  become Unicode characters, `\frac{a}{b}` reads “a/b”, styling and
+  spacing commands drop out, so `tex("\\alpha^{2}")` reads “α^2”. A
+  literal or escaped `$` in an
+  [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) title
+  (a price) stays as it is (VP-172).
+
+- A plot of reference rules alone, such as
+  `vplot(df) |> mark_rule(x = col)`, draws them over an empty cross
+  axis, as a rug alone does, instead of failing with “No layer maps y”.
+  The empty axis keeps a
+  [`labs()`](https://r-vellum.github.io/vellumplot/reference/labs.md)
+  title and scale limits given for it. Any other layer without that
+  position still asks for one (VP-173).
+
+- A wrapped discrete x tick label with a word wider than its share of
+  the panel no longer runs into the neighbouring label. The word wrap
+  gave such a word a line of its own but never broke it, so it spread
+  past its tick’s box. It is now broken across at most three lines, at a
+  hyphen it already has or between letters with a hyphen added, so every
+  piece fits the box (less a 1 mm gutter) with at least five letters a
+  piece. The labels keep their size and none is dropped. A word too long
+  to break that way is left whole, as before. Only Latin, Greek and
+  Cyrillic words are broken, never numbers, codes or other scripts;
+  labels without such a word draw exactly as before (VP-174).
+
 - An area or ribbon now leaves a gap at a missing value (`NA`), as a
   line does. A stacked
   [`mark_area()`](https://r-vellum.github.io/vellumplot/reference/mark_area.md)

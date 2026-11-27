@@ -88,6 +88,7 @@ staircase line. All connect points in <code>x</code> order.</p>
 <span>  <span class="va">plot</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  blend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sketch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -116,7 +117,8 @@ staircase line. All connect points in <code>x</code> order.</p>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Encodings (tidy-eval): <code>x</code> and <code>y</code> for area/step; <code>x</code>, <code>ymin</code>,
-<code>ymax</code> for ribbon; plus <code>color</code>/<code>fill</code>/<code>alpha</code>. <code>mark_step()</code> also takes
+<code>ymax</code> for ribbon (or <code>y</code>, <code>xmin</code>, <code>xmax</code> for a horizontal one); plus
+<code>color</code>/<code>fill</code>/<code>alpha</code>. <code>mark_step()</code> also takes
 <code>linewidth</code> and <code>linetype</code>; a mapped <code>linewidth</code> varies the staircase's
 width per tread (see <code><a href="scale_linewidth.html">scale_linewidth()</a></code>).</p></dd>
 
@@ -144,6 +146,12 @@ accept it; text, raster, hex and datashade marks do not.</p></dd>
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>Optional layer data frame; overrides the plot data for this layer.</p></dd>
+
+
+<dt id="arg-orientation">orientation<a class="anchor" aria-label="anchor" href="#arg-orientation"></a></dt>
+<dd><p>For <code>mark_ribbon()</code>, <code>NA</code> (default) to read it from the
+ranges, or <code>"x"</code> (vertical, <code>ymin</code>/<code>ymax</code>) / <code>"y"</code> (horizontal,
+<code>xmin</code>/<code>xmax</code>), which must agree with the range given.</p></dd>
 
 
 <dt id="arg-direction">direction<a class="anchor" aria-label="anchor" href="#arg-direction"></a></dt>
@@ -176,7 +184,12 @@ marks.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>An area or ribbon is drawn as one polygon per series (per <code>group</code>, or per
+    <p>A ribbon is horizontal when it is given <code>y</code>, <code>xmin</code> and <code>xmax</code> instead of
+<code>x</code>, <code>ymin</code> and <code>ymax</code>: it fills between <code>xmin</code> and <code>xmax</code> along <code>y</code>,
+connecting points in <code>y</code> order (ggplot2's <code>orientation = "y"</code>). The
+orientation is read from the ranges; a ribbon needs one complete range,
+<code>ymin</code> and <code>ymax</code> or <code>xmin</code> and <code>xmax</code>, and not both.</p>
+<p>An area or ribbon is drawn as one polygon per series (per <code>group</code>, or per
 level of a discrete <code>fill</code>/<code>color</code>), and a polygon has a single fill. A
 continuous <code>fill</code>, <code>color</code> or <code>alpha</code> must therefore be constant within each
 series; one that varies along a series is an error. A <code>color</code> given
@@ -194,6 +207,11 @@ with ggplot2's default, <code>col_mix(ink, paper, 0.2)</code> from the theme's
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">pressure</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_area</span><span class="op">(</span>x <span class="op">=</span> <span class="va">temperature</span>, y <span class="op">=</span> <span class="va">pressure</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_area-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a horizontal ribbon: xmin..xmax along y</span></span></span>
+<span class="r-in"><span><span class="va">band</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>depth <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, lo <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="vplot.html">vplot</a></span><span class="op">(</span><span class="va">band</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_ribbon</span><span class="op">(</span>y <span class="op">=</span> <span class="va">depth</span>, xmin <span class="op">=</span> <span class="va">lo</span>, xmax <span class="op">=</span> <span class="va">lo</span> <span class="op">+</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="mark_area-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

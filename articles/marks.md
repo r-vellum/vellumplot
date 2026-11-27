@@ -516,8 +516,8 @@ no mark (again, unless a discrete size scale’s `na.value` gives those
 rows a size). A missing *colour* or *fill* is different: the row is
 drawn in the scale’s `na.value` colour and keeps its legend key. A line,
 step, area or ribbon leaves a gap at a missing value rather than joining
-across it; an area or ribbon counts the missing rows in the warning,
-since they draw nothing:
+across it, and counts the missing rows in the warning, since they draw
+nothing:
 
 ``` r
 

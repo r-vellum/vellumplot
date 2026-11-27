@@ -20,6 +20,7 @@ mark_ribbon(
   plot,
   ...,
   position = "identity",
+  orientation = NA,
   blend = NULL,
   sketch = NULL,
   data = NULL
@@ -50,9 +51,10 @@ mark_step(
 - ...:
 
   Encodings (tidy-eval): `x` and `y` for area/step; `x`, `ymin`, `ymax`
-  for ribbon; plus `color`/`fill`/`alpha`. `mark_step()` also takes
-  `linewidth` and `linetype`; a mapped `linewidth` varies the
-  staircase's width per tread (see
+  for ribbon (or `y`, `xmin`, `xmax` for a horizontal one); plus
+  `color`/`fill`/`alpha`. `mark_step()` also takes `linewidth` and
+  `linetype`; a mapped `linewidth` varies the staircase's width per
+  tread (see
   [`scale_linewidth()`](https://r-vellum.github.io/vellumplot/reference/scale_linewidth.md)).
 
 - position:
@@ -83,6 +85,12 @@ mark_step(
 - data:
 
   Optional layer data frame; overrides the plot data for this layer.
+
+- orientation:
+
+  For `mark_ribbon()`, `NA` (default) to read it from the ranges, or
+  `"x"` (vertical, `ymin`/`ymax`) / `"y"` (horizontal, `xmin`/`xmax`),
+  which must agree with the range given.
 
 - direction:
 
@@ -132,6 +140,12 @@ The modified
 
 ## Details
 
+A ribbon is horizontal when it is given `y`, `xmin` and `xmax` instead
+of `x`, `ymin` and `ymax`: it fills between `xmin` and `xmax` along `y`,
+connecting points in `y` order (ggplot2's `orientation = "y"`). The
+orientation is read from the ranges; a ribbon needs one complete range,
+`ymin` and `ymax` or `xmin` and `xmax`, and not both.
+
 An area or ribbon is drawn as one polygon per series (per `group`, or
 per level of a discrete `fill`/`color`), and a polygon has a single
 fill. A continuous `fill`, `color` or `alpha` must therefore be constant
@@ -151,4 +165,9 @@ an area or ribbon fills with ggplot2's default,
 
 ``` r
 vplot(pressure) |> mark_area(x = temperature, y = pressure)
+
+
+# a horizontal ribbon: xmin..xmax along y
+band <- data.frame(depth = 1:6, lo = c(2, 3, 2, 4, 3, 5))
+vplot(band) |> mark_ribbon(y = depth, xmin = lo, xmax = lo + 2)
 ```

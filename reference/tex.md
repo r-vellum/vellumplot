@@ -22,8 +22,12 @@ and
 [`annotate()`](https://r-vellum.github.io/vellumplot/reference/annotate.md).
 [`md()`](https://r-vellum.github.io/vellumplot/reference/md.md) labels
 can carry inline math between `$` signs. The formula is typeset by
-vellum, the same in PNG, SVG and PDF; alt text and the widget's tooltips
-show its TeX source.
+vellum, the same in PNG, SVG and PDF. Alt text
+([`plot_alt()`](https://r-vellum.github.io/vellumplot/reference/plot_alt.md))
+and the SVG's accessible `<title>`/`<desc>` read a math title as plain
+text instead (Greek letters and common symbols as Unicode:
+`tex("\\alpha^{2}")` reads "α^2"); the widget's tooltips show its TeX
+source.
 
 ## Examples
 
