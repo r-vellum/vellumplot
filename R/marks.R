@@ -3562,7 +3562,7 @@ mark_spoke <- function(
 #' default); a `color` given without any `fill` fills the polygon instead, as it
 #' does for the other filled marks. With neither, a polygon fills with
 #' `col_mix(ink, paper, 0.2)` from the theme's [element_geom()] (`"grey20"` on a
-#' light theme), or with its `fill` when one is set.
+#' light theme), or with `element_geom(fill = )` when the theme sets one.
 #'
 #' @inheritParams mark_point
 #' @param ... Encodings (tidy-eval): `x`, `y`, `group` (one polygon / path per

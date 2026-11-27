@@ -75,7 +75,7 @@ As in ggplot2, \code{fill} fills a polygon and \code{color} outlines it (no outl
 default); a \code{color} given without any \code{fill} fills the polygon instead, as it
 does for the other filled marks. With neither, a polygon fills with
 \code{col_mix(ink, paper, 0.2)} from the theme's \code{\link[=element_geom]{element_geom()}} (\code{"grey20"} on a
-light theme), or with its \code{fill} when one is set.
+light theme), or with \code{element_geom(fill = )} when the theme sets one.
 }
 \examples{
 tri <- data.frame(
