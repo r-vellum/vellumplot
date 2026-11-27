@@ -14,8 +14,10 @@ label does: \code{\link[=labs]{labs()}} titles, scale names, discrete scale \ver
 label, or a list with one per row; or \code{parse = TRUE} to parse a column),
 facet strips through \code{\link[=label_parsed]{label_parsed()}}, and \code{\link[=annotate]{annotate()}}. \code{\link[=md]{md()}} labels can
 carry inline math between \code{$} signs. The formula is typeset by vellum, the
-same in PNG, SVG and PDF; alt text and the widget's tooltips show its TeX
-source.
+same in PNG, SVG and PDF. Alt text (\code{\link[=plot_alt]{plot_alt()}}) and the SVG's accessible
+\verb{<title>}/\verb{<desc>} read a math title as plain text instead (Greek letters
+and common symbols as Unicode: \code{tex("\\\\alpha^{2}")} reads "α^2"); the
+widget's tooltips show its TeX source.
 }
 \examples{
 vplot(mtcars) |>

@@ -2483,10 +2483,16 @@ NULL
   xs <- .axis_pool(resolved, "x", "xintercept")
   ys <- .axis_pool(resolved, "y", "yintercept")
   # A rug draws on whichever axes it has, so `mark_rug(x = )` alone trains an
-  # empty y axis (as ggplot2 does) instead of asking for a y encoding.
-  has_rug <- any(vapply(resolved, function(L) identical(L$mark, "rug"), NA))
+  # empty y axis (as ggplot2 does) instead of asking for a y encoding. So does
+  # a reference rule, which spans the whole panel: `mark_rule(x = )` alone
+  # draws its vertical rules over an empty y axis (VP-173).
+  spans <- any(vapply(
+    resolved,
+    function(L) L$mark %in% c("rug", "rule"),
+    NA
+  ))
   blank <- NULL
-  if (has_rug && xor(is.null(xs), is.null(ys))) {
+  if (spans && xor(is.null(xs), is.null(ys))) {
     blank <- if (is.null(xs)) "x" else "y"
     if (is.null(xs)) xs <- list(numeric(0)) else ys <- list(numeric(0))
   }

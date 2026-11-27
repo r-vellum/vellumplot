@@ -40,8 +40,10 @@ NULL
 #' label, or a list with one per row; or `parse = TRUE` to parse a column),
 #' facet strips through [label_parsed()], and [annotate()]. [md()] labels can
 #' carry inline math between `$` signs. The formula is typeset by vellum, the
-#' same in PNG, SVG and PDF; alt text and the widget's tooltips show its TeX
-#' source.
+#' same in PNG, SVG and PDF. Alt text ([plot_alt()]) and the SVG's accessible
+#' `<title>`/`<desc>` read a math title as plain text instead (Greek letters
+#' and common symbols as Unicode: `tex("\\alpha^{2}")` reads "α^2"); the
+#' widget's tooltips show its TeX source.
 #'
 #' @examples
 #' vplot(mtcars) |>

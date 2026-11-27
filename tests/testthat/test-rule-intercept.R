@@ -76,3 +76,33 @@ test_that("a rule with a second position is left alone", {
   ri2 <- vellumplot:::.rule_intercepts("point", list(x = 1), list())
   expect_named(ri2$encoding, "x")
 })
+
+# VP-173: a plot of rules alone errored "No layer maps y"; the axis the rules
+# span is drawn empty, as for a rug alone.
+test_that("rules alone draw over an empty cross axis (VP-173)", {
+  d <- data.frame(v = c(1, 3, 4))
+  p <- vplot(d) |> mark_rule(x = v)
+  expect_no_error(sc <- vellum::as_vellum_scene(p))
+  segs <- Filter(
+    function(e) e$mark == "rule" && e$kind == "mark",
+    plot_provenance(p)
+  )
+  expect_length(segs, 1L)
+  built <- vellumplot:::.build_panels(p)
+  expect_length(built$scales$y$breaks, 0L)
+  expect_null(built$scales$y$name)
+  expect_equal(range(built$scales$x$breaks), c(1, 4))
+  # The same for horizontal rules, and for constant intercepts.
+  expect_no_error(vellum::as_vellum_scene(vplot(d) |> mark_rule(y = v)))
+  expect_no_error(vellum::as_vellum_scene(vplot(d) |> mark_rule(xintercept = 2)))
+  # Faceted, with free scales too.
+  df <- data.frame(v = c(1, 3, 4), f = c("a", "b", "b"))
+  expect_no_error(vellum::as_vellum_scene(
+    vplot(df) |> mark_rule(x = v) |> facet_wrap(~f, scales = "free")
+  ))
+  # A plot with no position at all still asks for one.
+  expect_error(
+    vellum::as_vellum_scene(vplot(d) |> mark_point()),
+    "No layer maps"
+  )
+})

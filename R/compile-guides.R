@@ -434,6 +434,69 @@ NULL
   }
 }
 
+# A wrapped tick label with each word wider than its wrap box broken across
+# lines (VP-174). The box is the tick's whole share of the panel, so a word
+# wider than it reaches into the neighbouring tick's label, and the word wrap
+# alone cannot help: it gives a long word a line of its own but never breaks
+# it. Such a word is broken at a hyphen it already has, else between letters
+# with a hyphen added, into pieces that each fit the box (at least
+# `.HYPHEN_MIN` letters a piece); the label keeps its font size and every
+# label stays. Only plain words of letters (and hyphens) are broken, never a
+# number or a code. A label with no overlong word is returned unchanged, so a
+# label that fits draws exactly as before.
+.HYPHEN_MIN <- 3L
+
+.hyphenate_label <- function(label, el, wrap_mm) {
+  if (!is.character(label) || length(label) != 1L || is.na(label)) {
+    return(label)
+  }
+  width <- function(x) .el_strwidth(x, el, features = .TNUM)
+  words <- unique(strsplit(label, "[ \t\n]+")[[1]])
+  words <- words[grepl("^[[:alpha:]][[:alpha:]-]*[[:alpha:]]$", words)]
+  words <- words[nchar(words) >= 2L * .HYPHEN_MIN]
+  if (!length(words)) {
+    return(label)
+  }
+  long <- words[width(words) > wrap_mm]
+  for (w in long) {
+    label <- gsub(
+      paste0("(?<![[:alpha:]-])", w, "(?![[:alpha:]-])"),
+      .hyphenate_word(w, width, wrap_mm),
+      label,
+      perl = TRUE
+    )
+  }
+  label
+}
+
+# Break the word `w` into lines no wider than `wrap_mm` (by `width()`, in mm):
+# greedily, the longest piece that fits, after one of its own hyphens if one
+# fits, else between letters with a hyphen added, keeping `.HYPHEN_MIN`
+# letters on each side of a break. A piece that cannot fit even at the
+# minimum keeps the minimum.
+.hyphenate_word <- function(w, width, wrap_mm) {
+  out <- character(0)
+  rest <- w
+  m <- .HYPHEN_MIN
+  while (width(rest) > wrap_mm && nchar(rest) >= 2L * m) {
+    k <- seq.int(m, nchar(rest) - m)
+    pre <- substring(rest, 1L, k)
+    own <- endsWith(pre, "-")
+    piece <- ifelse(own, pre, paste0(pre, "-"))
+    fits <- width(piece) <= wrap_mm
+    pick <- if (any(fits & own)) {
+      max(which(fits & own))
+    } else if (any(fits & !own)) {
+      max(which(fits & !own))
+    } else {
+      1L
+    }
+    out <- c(out, piece[pick])
+    rest <- substring(rest, k[pick] + 1L)
+  }
+  paste(c(out, rest), collapse = "\n")
+}
+
 # The `text_grob` for one tick label. When `wrap_mm` (the mm width a single tick
 # gets) is finite and the label is unrotated, the text wraps to that width and
 # its lines centre under the tick; otherwise it is an ordinary single line drawn
@@ -449,6 +512,9 @@ NULL
   wrap_mm = NA_real_
 ) {
   wrap <- length(wrap_mm) == 1L && is.finite(wrap_mm) && wrap_mm > 0 && rot == 0
+  if (wrap) {
+    label <- .hyphenate_label(label, el, wrap_mm)
+  }
   # Tabular figures on tick labels: digits keep a constant advance width, so a
   # column of numbers does not jitter left/right from tick to tick. Harmless on
   # non-numeric labels (only digit glyphs are affected).

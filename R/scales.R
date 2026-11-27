@@ -25,6 +25,9 @@ NULL
 # Append a scale, replacing any existing scale for the same aesthetic
 # (last-one-wins).
 .add_scale <- function(plot, scale) {
+  # A plotmath name or guide title is typeset, as in `labs()` (VP-171).
+  scale@name <- .math_label(scale@name, "name", call = rlang::caller_env())
+  scale@guide <- .guide_math_title(scale@guide, call = rlang::caller_env())
   keep <- !vapply(
     plot@scales,
     function(s) identical(s@aesthetic, scale@aesthetic),
@@ -594,7 +597,7 @@ sec_axis <- function(
 ) {
   SecAxisSpec(
     transform = .as_sec_fun(transform),
-    name = name,
+    name = .math_label(name, "name"),
     breaks = breaks,
     labels = labels,
     dup = FALSE
@@ -611,7 +614,7 @@ dup_axis <- function(
 ) {
   SecAxisSpec(
     transform = .as_sec_fun(transform),
-    name = name,
+    name = .math_label(name, "name"),
     breaks = breaks,
     labels = labels,
     dup = TRUE

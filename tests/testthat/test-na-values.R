@@ -88,11 +88,14 @@ test_that("a missing continuous position is removed with one warning per layer",
   expect_identical(rows, c(1L, 3L, 6L))
 })
 
-test_that("a line keeps its missing rows as a gap, without a warning", {
+test_that("a line keeps its missing rows as a gap, counted in the warning", {
+  # The row is not drawn, so it counts in "Removed n rows", as
+  # spec_diagnose() counts it (VP-170).
   df <- data.frame(x = 1:5, y = c(1, 2, NA, 4, 5))
-  expect_no_warning(vellum::as_vellum_scene(
-    vplot(df) |> mark_line(x = x, y = y)
-  ))
+  expect_warning(
+    vellum::as_vellum_scene(vplot(df) |> mark_line(x = x, y = y)),
+    "Removed 1 row containing missing values"
+  )
 })
 
 test_that("spec_diagnose counts the removed rows the compile removes", {

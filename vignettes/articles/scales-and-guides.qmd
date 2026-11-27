@@ -536,7 +536,10 @@ math between `$` signs. vellum typesets the math itself, the same in PNG, SVG,
 PDF and the widget. A math label goes in every title, a discrete legend's
 `labels =` (a list, one label per key), `mark_text()` / `mark_label()`
 (`parse = TRUE` reads a column as plotmath), `annotate()`, and the facet
-strips through `label_parsed`. Alt text and tooltips show the TeX source.
+strips through `label_parsed`. A plotmath `expression()` given to `labs()`, a
+scale's `name` or a guide's `title` is typeset through `plotmath()` for you.
+Alt text and the SVG's accessible title and description read a math title as
+plain text (`tex("\\alpha^{2}")` reads "α^2"); tooltips show the TeX source.
 
 ```{r}
 #| fig.height: 4

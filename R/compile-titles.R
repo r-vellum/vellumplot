@@ -13,10 +13,11 @@ NULL
 # ---------------------------------------------------------------------------
 
 # A single non-empty plain string, else NULL. A rich label stands in by its
-# text: an md() label's words without the markup, a tex() label's TeX source.
+# plain text (`.rich_plain()`): an md() label's words without the markup, a
+# tex() label's formula read as Unicode text, not its TeX source (VP-172).
 .plain_title <- function(x) {
   if (.is_rich(x)) {
-    x <- x@text
+    x <- .rich_plain(x)
   }
   if (is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)) x else NULL
 }

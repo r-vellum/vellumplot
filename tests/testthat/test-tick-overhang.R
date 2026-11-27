@@ -459,16 +459,9 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
   # Not wrapped, or not a plain string: nothing to measure.
   expect_true(is.na(vellumplot:::.wrapped_line_mm(lab, el, NA_real_)))
   expect_true(is.na(vellumplot:::.wrapped_line_mm(NA_character_, el, wrap)))
-  # A word wider than the box takes a line of its own, as vellum wraps it.
+  # A word wider than the box is broken to fit it (VP-174).
   long <- "Antidisestablishmentarianism x"
-  expect_equal(
-    vellumplot:::.wrapped_line_mm(long, el, 5),
-    vellumplot:::.el_strwidth(
-      "Antidisestablishmentarianism",
-      el,
-      features = vellumplot:::.TNUM
-    )
-  )
+  expect_lte(vellumplot:::.wrapped_line_mm(long, el, 15), 15)
   sc <- list(breaks = c(1, 10), labels = c("first", lab), domain = c(1, 10))
   ex <- vellumplot:::.end_tick_extent(
     sc,
@@ -479,7 +472,8 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
     wrap_mm = wrap
   )
   expect_equal(ex$e[2], lw / 2)
-  # A word wider than the box reserves its full width, past the box.
+  # A word wider than the box is broken to fit it, so it reaches no further
+  # than half the box (VP-174).
   big <- "Supercalifragilisticexpialidocious"
   sc2 <- list(breaks = c(1, 10), labels = c("first", big), domain = c(1, 10))
   ex2 <- vellumplot:::.end_tick_extent(
@@ -490,11 +484,7 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
     "x",
     wrap_mm = 10
   )
-  expect_equal(
-    ex2$e[2],
-    vellumplot:::.el_strwidth(big, el, features = vellumplot:::.TNUM) / 2,
-    tolerance = 1e-6
-  )
+  expect_lte(ex2$e[2], 10 / 2)
   # Unwrapped, the reach is half the label as before.
   ex0 <- vellumplot:::.end_tick_extent(sc, el, 0, c("centre", "top"), "x")
   expect_equal(
@@ -502,4 +492,63 @@ test_that("a wrapped end label reaches half its widest line (VP-153)", {
     vellumplot:::.el_strwidth(lab, el, features = vellumplot:::.TNUM) / 2,
     tolerance = 1e-3
   )
+})
+
+# VP-174: a word wider than its wrap box ran into the neighbouring tick's
+# label. It is broken across lines (at its own hyphen, else between letters
+# with a hyphen added) so every piece fits the box.
+test_that("an overlong word in a wrapped tick label is hyphenated (VP-174)", {
+  rt <- vellumplot:::.resolve_theme(vellumplot:::.theme_default())
+  el <- rt[["axis.text.x"]]
+  w <- function(x) vellumplot:::.el_strwidth(x, el, features = vellumplot:::.TNUM)
+  hy <- function(x, mm) vellumplot:::.hyphenate_label(x, el, mm)
+  big <- "Antidisestablishment of the old regime"
+  out <- hy(big, 12)
+  pieces <- strsplit(out, "\n")[[1]]
+  expect_gt(length(pieces), 1L)
+  expect_true(endsWith(pieces[1], "-"))
+  # the pieces put back together are the word
+  first <- strsplit(out, " ")[[1]][1]
+  expect_identical(gsub("-\n", "", first), "Antidisestablishment")
+  expect_true(all(w(strsplit(first, "\n")[[1]]) <= 12))
+  # the rest of the label is left to the word wrap
+  expect_match(out, " of the old regime$")
+  # An existing hyphen is the preferred break.
+  hw <- hy("well-established", w("established") + 1)
+  expect_identical(hw, "well-\nestablished")
+  # Labels whose words fit, numbers and codes are unchanged.
+  expect_identical(hy("North region sales", 12), "North region sales")
+  expect_identical(hy("1000000000", 3), "1000000000")
+  expect_identical(hy("ABC123XYZ789", 3), "ABC123XYZ789")
+  expect_identical(hy(NA_character_, 3), NA_character_)
+  # Rich labels are left alone.
+  m <- md("**Supercalifragilistic**")
+  expect_identical(hy(m, 3), m)
+})
+
+test_that("wrapped tick labels with an overlong word no longer overlap (VP-174)", {
+  d <- data.frame(
+    k = c("Antidisestablishment of the old regime", "b", "c", "d", "e", "f"),
+    v = 1:6
+  )
+  p <- vplot(d, width = 4, height = 3) |> mark_bar(x = k, y = v)
+  s <- vellum::as_scene_spec(vellum::as_vellum_scene(p))
+  labs <- character()
+  walk <- function(node) {
+    if (identical(node$class, "grob_text")) {
+      v <- node$label
+      if (is.list(v) && !is.null(v$v)) v <- v$v
+      labs <<- c(labs, unlist(v))
+    }
+    for (ch in node) if (is.list(ch)) walk(ch)
+  }
+  walk(s$root)
+  expect_true(any(grepl("^Antidis[a-z]*-\n", labs)))
+  # A label that fits draws as before.
+  d2 <- data.frame(k = c("North region sales", "South region", "East"), v = 1:3)
+  p2 <- vplot(d2, width = 3, height = 3) |> mark_bar(x = k, y = v)
+  s2 <- vellum::as_scene_spec(vellum::as_vellum_scene(p2))
+  labs <- character()
+  walk(s2$root)
+  expect_false(any(grepl("-\n", labs)))
 })
